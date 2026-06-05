@@ -24,6 +24,8 @@ clean.
 - `projected_links()` for viewing the same lossless network as concrete syntax,
   abstract syntax, or semantic-only data by stripping lower-level preservation
   links from the view.
+- `NetworkSnapshot` and `MutableNetworkSnapshot` for immutable versioned
+  snapshots, editable forks, provenance, and forward commits.
 - `ParseConfiguration` with containment-link, token-link, or combined trivia
   attachment policies.
 - Mixed-region links for Markdown fenced code and HTML regions, plus HTML

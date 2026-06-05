@@ -5,6 +5,7 @@ pub mod mixed_regions;
 pub mod parity;
 pub mod query;
 pub mod semantics;
+pub mod snapshots;
 pub mod source;
 pub mod substitution;
 pub mod verification;
@@ -21,6 +22,7 @@ pub use parity::{
 };
 pub use query::LinkQuery;
 pub use semantics::TruthValue;
+pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot};
 pub use source::{ByteRange, Point, SourceSpan};
 pub use substitution::{SubstitutionReport, SubstitutionRule};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};

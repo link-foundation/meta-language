@@ -1,9 +1,9 @@
 use meta_language::{
     ByteRange, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery, LinkType, NetworkProjection,
-    ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan, SubstitutionRule,
-    TriviaAttachmentPolicy, TruthValue, VerificationIssueKind, GRAMMAR_EMBEDDING_TARGETS,
-    LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES,
-    PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
+    ParityCapability, ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan,
+    SubstitutionRule, TriviaAttachmentPolicy, TruthValue, VerificationIssueKind,
+    GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
+    NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -185,6 +185,38 @@ fn projections_strip_lower_level_data_without_mutating_the_network() {
     assert_eq!(syntax_count, network.len());
     assert!(abstract_count < lossless_count);
     assert_eq!(NetworkProjection::AbstractSyntax.label(), "abstract syntax");
+}
+
+#[test]
+fn immutable_and_mutable_snapshots_version_network_over_time() {
+    let network = LinkNetwork::parse("alpha", "plain-text", ParseConfiguration::default());
+    let snapshot = network.snapshot(1, "initial parse");
+    let cloned_snapshot = snapshot.clone();
+
+    assert_eq!(snapshot.version(), 1);
+    assert_eq!(snapshot.parent_version(), None);
+    assert_eq!(snapshot.provenance(), "initial parse");
+    assert_eq!(snapshot.shared_snapshot_count(), 2);
+    assert_eq!(cloned_snapshot.network().reconstruct_text(), "alpha");
+
+    let mut mutable = snapshot.to_mutable("add shared concept");
+    let concept = mutable.network_mut().insert_point("shared concept");
+
+    assert_eq!(mutable.base_version(), 1);
+    assert_eq!(mutable.network().find_term("shared concept"), Some(concept));
+    assert_eq!(snapshot.network().find_term("shared concept"), None);
+    assert_eq!(cloned_snapshot.network().find_term("shared concept"), None);
+
+    let committed = mutable.commit();
+
+    assert_eq!(committed.version(), 2);
+    assert_eq!(committed.parent_version(), Some(1));
+    assert_eq!(committed.provenance(), "add shared concept");
+    assert_eq!(
+        committed.network().find_term("shared concept"),
+        Some(concept)
+    );
+    assert_eq!(snapshot.network().reconstruct_text(), "alpha");
 }
 
 #[test]
@@ -406,6 +438,9 @@ fn parity_targets_track_competitor_and_ecosystem_test_sources() {
     assert!(PARITY_TARGETS
         .iter()
         .all(|target| target.test_plan().contains("Executable fixture")));
+    assert!(PARITY_TARGETS.iter().any(|target| target
+        .capabilities()
+        .contains(&ParityCapability::SnapshotVersioning)));
 }
 
 #[test]

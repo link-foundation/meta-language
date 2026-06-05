@@ -25,6 +25,8 @@ pub enum ParityCapability {
     FormalizationRoundTrip,
     /// Describe the meta language with links in the same network.
     SelfDescription,
+    /// Capture immutable snapshots, edit mutable forks, and commit versions.
+    SnapshotVersioning,
 }
 
 /// Upstream project whose feature set and tests should be tracked.
@@ -112,6 +114,7 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
             ParityCapability::LosslessParsing,
             ParityCapability::TriviaPreservation,
             ParityCapability::SameLanguageReconstruction,
+            ParityCapability::SnapshotVersioning,
         ],
         test_plan: "Executable fixture covers persistent syntax and trivia preservation behavior.",
     },
@@ -122,6 +125,7 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
             ParityCapability::LosslessParsing,
             ParityCapability::TriviaPreservation,
             ParityCapability::SameLanguageReconstruction,
+            ParityCapability::SnapshotVersioning,
         ],
         test_plan: "Executable fixture covers Rust concrete syntax and checkpoint behavior.",
     },
@@ -308,6 +312,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
             ParityCapability::LosslessParsing,
             ParityCapability::TriviaPreservation,
             ParityCapability::SameLanguageReconstruction,
+            ParityCapability::SnapshotVersioning,
         ],
     },
     ParityFixture {
@@ -320,6 +325,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
             ParityCapability::LosslessParsing,
             ParityCapability::TriviaPreservation,
             ParityCapability::SameLanguageReconstruction,
+            ParityCapability::SnapshotVersioning,
         ],
     },
     ParityFixture {

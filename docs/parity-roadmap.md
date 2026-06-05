@@ -38,8 +38,8 @@ parse/reconstruction fixture.
 | LibCST | Python lossless parsing, trivia preservation, metadata, same-language reconstruction | Python indentation fixture round-trips through `reconstruct_text()` |
 | Recast | JavaScript and TypeScript parse-print preservation | JavaScript comment-preservation fixture round-trips through `reconstruct_text()` |
 | jscodeshift | Transform workflows over JavaScript and TypeScript syntax | JavaScript transform source fixture plus `SubstitutionRule` tests |
-| Rowan | Persistent concrete syntax representation and trivia preservation | Rust trivia fixture round-trips through `reconstruct_text()` |
-| cstree | Rust concrete syntax representation and checkpoint behavior | Rust checkpoint fixture round-trips through `reconstruct_text()` |
+| Rowan | Persistent concrete syntax representation, immutable snapshots, and trivia preservation | Rust trivia fixture round-trips through `reconstruct_text()` plus snapshot version tests |
+| cstree | Rust concrete syntax representation, immutable snapshots, and checkpoint behavior | Rust checkpoint fixture round-trips through `reconstruct_text()` plus snapshot version tests |
 | Roslyn | C# syntax, trivia, diagnostics, and formatting | C# diagnostic fixture plus recovery tests |
 | links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | LiNo tuple fixture plus self-reference tests |
 | link-cli | Single match-and-substitute operation | Create, update, delete, and swap substitution tests |
@@ -70,6 +70,7 @@ Additional behavior-specific tests cover:
 - query matching by link type, term, language, and named flag;
 - link-cli-style create, update, delete, and swap substitutions;
 - concept-to-language reconstruction for English and Spanish syntax;
+- immutable snapshots, mutable forks, provenance, and forward version commits;
 - object identity and circular-reference representation through shared links;
 - many-valued and paradox-compatible truth values.
 
