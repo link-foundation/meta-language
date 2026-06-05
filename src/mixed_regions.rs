@@ -9,7 +9,7 @@ pub struct EmbeddedRegion {
 }
 
 impl EmbeddedRegion {
-    pub(crate) fn new(language: String, span: SourceSpan) -> Self {
+    pub(crate) const fn new(language: String, span: SourceSpan) -> Self {
         Self { language, span }
     }
 

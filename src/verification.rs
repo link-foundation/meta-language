@@ -59,7 +59,7 @@ pub struct VerificationReport {
 }
 
 impl VerificationReport {
-    pub(crate) fn new(issues: Vec<VerificationIssue>) -> Self {
+    pub(crate) const fn new(issues: Vec<VerificationIssue>) -> Self {
         Self { issues }
     }
 

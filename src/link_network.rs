@@ -408,10 +408,8 @@ impl LinkNetwork {
             let token = network.insert_link([document], metadata);
             match character {
                 '(' => open_parentheses.push(token),
-                ')' => {
-                    if open_parentheses.pop().is_none() {
-                        network.set_flags(token, LinkFlags::error());
-                    }
+                ')' if open_parentheses.pop().is_none() => {
+                    network.set_flags(token, LinkFlags::error());
                 }
                 _ => {}
             }
