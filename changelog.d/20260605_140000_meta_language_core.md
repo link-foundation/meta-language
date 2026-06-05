@@ -8,3 +8,7 @@ bump: minor
 - Added the default lossless `parse` entry point, projection views, and a
   tested parity roadmap for competitor features, grammar embedding, and language
   coverage targets.
+- Added exact reconstruction, mixed-region detection, query matching,
+  substitution rules, concept reconstruction, object identity helpers,
+  many-valued truth values, and executable parity fixtures for every tracked
+  competitor target.

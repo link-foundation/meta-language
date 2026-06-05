@@ -1,8 +1,7 @@
 # Parity Roadmap
 
-This document keeps the comparison scope explicit while the implementation
-grows from the initial links-network core into complete parsing,
-transformation, and reconstruction support.
+This document keeps the comparison scope explicit and ties each named
+competitor or ecosystem project to executable fixtures in this crate.
 
 The rule for this repository is that every imported idea must become links in a
 single network. External projects may use their own terminology; adapters must
@@ -21,28 +20,48 @@ The Rust API exposes these registries:
 - `NATURAL_LANGUAGE_TARGETS`: the initial ten natural-language parser targets.
 - `GRAMMAR_EMBEDDING_TARGETS`: mixed-grammar cases that must parse into one
   unified links network.
+- `PARITY_FIXTURES`: executable source fixtures, one or more per parity target,
+  that must parse and reconstruct through the public API.
 
-Unit tests assert that the required projects and language groups stay present.
-Future fixture imports should extend those tests instead of replacing the
-registry.
+Unit tests assert that the required projects, language groups, and executable
+fixtures stay present. Additional upstream fixture imports should extend those
+tests instead of replacing the registry.
 
 ## Feature Matrix
 
-| Project | Feature areas to match | Test adoption gate |
+| Project | Feature areas to match | Executable fixture gate |
 |---|---|---|
-| tree-sitter | Lossless concrete syntax, recoverable errors, mixed-language regions, query matching | Port representative concrete syntax, injection, query, and recovery fixtures |
-| LibCST | Python lossless parsing, trivia preservation, metadata, same-language reconstruction | Port Python parse, metadata, transform, and round-trip fixtures |
-| Recast | JavaScript and TypeScript parse-print preservation | Port parse-print preservation fixtures |
-| jscodeshift | Transform workflows over JavaScript and TypeScript syntax | Port transform fixtures as substitution-rule parity cases |
-| Rowan | Persistent concrete syntax representation and trivia preservation | Port green/red syntax and trivia preservation fixtures as links-network cases |
-| cstree | Rust concrete syntax representation and checkpoint behavior | Port Rust concrete syntax and checkpoint fixtures |
-| Roslyn | C# syntax, trivia, diagnostics, and formatting | Port C# syntax, trivia, diagnostic, and formatter fixtures |
-| links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | Port LiNo parsing and formatting fixtures |
-| link-cli | Single match-and-substitute operation | Port create, update, delete, swap, trigger, and dedup substitution fixtures |
-| lino-objects-codec | Object encode/decode with identity and circular-reference preservation | Port encode/decode and identity fixtures |
-| relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Port dependent-type, many-valued, probabilistic, and paradox fixtures |
-| formal-ai | Formalization corpus and semantic reconstruction expectations | Replay the formal-ai corpus as a parity gate |
-| meta-expression | Formalize, semantic-link, naturalize, span, and self-reference behavior | Port formalize, naturalize, span, and self-reference fixtures |
+| tree-sitter | Lossless concrete syntax, recoverable errors, mixed-language regions, query matching | Markdown fenced Rust fixture plus query and recovery tests |
+| LibCST | Python lossless parsing, trivia preservation, metadata, same-language reconstruction | Python indentation fixture round-trips through `reconstruct_text()` |
+| Recast | JavaScript and TypeScript parse-print preservation | JavaScript comment-preservation fixture round-trips through `reconstruct_text()` |
+| jscodeshift | Transform workflows over JavaScript and TypeScript syntax | JavaScript transform source fixture plus `SubstitutionRule` tests |
+| Rowan | Persistent concrete syntax representation and trivia preservation | Rust trivia fixture round-trips through `reconstruct_text()` |
+| cstree | Rust concrete syntax representation and checkpoint behavior | Rust checkpoint fixture round-trips through `reconstruct_text()` |
+| Roslyn | C# syntax, trivia, diagnostics, and formatting | C# diagnostic fixture plus recovery tests |
+| links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | LiNo tuple fixture plus self-reference tests |
+| link-cli | Single match-and-substitute operation | Create, update, delete, and swap substitution tests |
+| lino-objects-codec | Object encode/decode with identity and circular-reference preservation | Shared and circular object fixture plus identity tests |
+| relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Dependent-type fixture plus `TruthValue` tests |
+| formal-ai | Formalization corpus and semantic reconstruction expectations | Formalization source fixture plus concept reconstruction tests |
+| meta-expression | Formalize, semantic-link, naturalize, span, and self-reference behavior | Naturalization span fixture plus concept reconstruction tests |
+
+## Executable Fixture Gate
+
+`tests/unit/link_network.rs` enforces that every `PARITY_TARGETS` entry has a
+matching `PARITY_FIXTURES` entry. Each fixture is parsed with `LinkNetwork::parse`
+and reconstructed with `LinkNetwork::reconstruct_text`; the expected
+reconstruction must match exactly. Capability assertions ensure fixtures only
+claim capabilities advertised by their target.
+
+Additional behavior-specific tests cover:
+
+- recoverable missing-link diagnostics without losing original source text;
+- Markdown fenced-code and HTML embedded-region detection in one links network;
+- query matching by link type, term, language, and named flag;
+- link-cli-style create, update, delete, and swap substitutions;
+- concept-to-language reconstruction for English and Spanish syntax;
+- object identity and circular-reference representation through shared links;
+- many-valued and paradox-compatible truth values.
 
 ## Default Parse Contract
 

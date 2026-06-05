@@ -1,7 +1,8 @@
 use meta_language::{
-    ByteRange, LinkFlags, LinkNetwork, LinkType, NetworkProjection, ParseConfiguration, Point,
-    RegionDetectionPolicy, SourceSpan, TriviaAttachmentPolicy, VerificationIssueKind,
-    GRAMMAR_EMBEDDING_TARGETS, MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_TARGETS,
+    ByteRange, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery, LinkType, NetworkProjection,
+    ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan, SubstitutionRule,
+    TriviaAttachmentPolicy, TruthValue, VerificationIssueKind, GRAMMAR_EMBEDDING_TARGETS,
+    MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS,
     PROGRAMMING_LANGUAGE_TARGETS,
 };
 
@@ -154,6 +155,7 @@ fn parse_is_lossless_by_default_and_matches_explicit_lossless_boundary() {
         LinkNetwork::parse_lossless_text("alpha beta", "plain-text", ParseConfiguration::default());
 
     assert_eq!(parsed, explicit);
+    assert_eq!(parsed.reconstruct_text(), "alpha beta");
     assert!(parsed
         .projected_links(NetworkProjection::Lossless)
         .any(|link| link.metadata().flags().is_extra()));
@@ -183,6 +185,158 @@ fn projections_strip_lower_level_data_without_mutating_the_network() {
     assert_eq!(syntax_count, network.len());
     assert!(abstract_count < lossless_count);
     assert_eq!(NetworkProjection::AbstractSyntax.label(), "abstract syntax");
+}
+
+#[test]
+fn reconstruct_text_round_trips_lossless_competitor_sources() {
+    for (language, source) in [
+        ("Python", "def f(x):\n    return x + 1\n"),
+        ("JavaScript", "const x = 1; // keep trivia\n"),
+        ("C#", "class C { void M() { } }\n"),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(network.reconstruct_text(), source);
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{language} fixture should parse cleanly"
+        );
+    }
+}
+
+#[test]
+fn parse_marks_recovery_errors_without_losing_original_text() {
+    let network = LinkNetwork::parse("call(", "JavaScript", ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    assert_eq!(network.reconstruct_text(), "call(");
+    assert!(!report.is_clean());
+    assert!(report
+        .issues()
+        .iter()
+        .any(|issue| issue.kind() == VerificationIssueKind::MissingLink));
+}
+
+#[test]
+fn mixed_language_regions_are_embedded_in_one_network() {
+    let source = "Intro\n```rust\nfn main() {}\n```\n<strong>HTML</strong>\n";
+    let network = LinkNetwork::parse(source, "Markdown", ParseConfiguration::default());
+    let regions = network.embedded_regions();
+    let languages = regions
+        .iter()
+        .map(meta_language::EmbeddedRegion::language)
+        .collect::<Vec<_>>();
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(languages.contains(&"rust"));
+    assert!(languages.contains(&"HTML"));
+    assert!(regions
+        .iter()
+        .all(|region| region.span().byte_range().end() <= source.len()));
+}
+
+#[test]
+fn query_matching_finds_tokens_by_type_term_and_language() {
+    let network = LinkNetwork::parse("let x = x + 1", "JavaScript", ParseConfiguration::default());
+    let query = LinkQuery::new()
+        .with_link_type(LinkType::Token)
+        .with_term("x")
+        .with_language("JavaScript")
+        .with_named(true);
+
+    let matches = network.query_links(&query);
+
+    assert_eq!(matches.len(), 2);
+    assert!(matches
+        .iter()
+        .all(|link| link.metadata().term() == Some("x")));
+}
+
+#[test]
+fn link_cli_style_substitution_can_create_update_delete_and_swap() {
+    let mut network = LinkNetwork::new();
+    let one = network.insert_point("1");
+    let two = network.insert_point("2");
+    let relation = network.insert_link(
+        [one, one],
+        LinkMetadata::new().with_link_type(LinkType::Relation),
+    );
+
+    let update = network.apply_substitution(&SubstitutionRule::new([one, one], [one, two]));
+    assert_eq!(update.updated(), &[relation]);
+    assert_eq!(
+        network.link(relation).expect("updated link").references(),
+        &[one, two]
+    );
+
+    let create = network.apply_substitution(&SubstitutionRule::create([two, one]));
+    assert_eq!(create.created().len(), 1);
+
+    let created = create.created()[0];
+    let swap = network.apply_substitution(&SubstitutionRule::new([two, one], [one, two]));
+    assert_eq!(swap.updated(), &[created]);
+    assert_eq!(
+        network.link(created).expect("swapped link").references(),
+        &[one, two]
+    );
+
+    let delete = network.apply_substitution(&SubstitutionRule::delete([one, two]));
+    assert_eq!(delete.deleted().len(), 2);
+    assert!(network.link(relation).is_none());
+    assert!(network.link(created).is_none());
+}
+
+#[test]
+fn concept_links_reconstruct_to_target_language_syntax() {
+    let mut network = LinkNetwork::self_describing();
+
+    network.insert_concept_mapping("statehood", "English", "Hawaii is a state.");
+    network.insert_concept_mapping("statehood", "Spanish", "Hawaii es un estado.");
+
+    assert_eq!(
+        network.reconstruct_concept("statehood", "English"),
+        Some("Hawaii is a state.")
+    );
+    assert_eq!(
+        network.reconstruct_concept("statehood", "Spanish"),
+        Some("Hawaii es un estado.")
+    );
+    assert!(network
+        .projected_links(NetworkProjection::Semantic)
+        .any(|link| link.metadata().link_type() == Some(LinkType::Concept)));
+}
+
+#[test]
+fn object_identity_and_circular_references_are_native_links() {
+    let mut network = LinkNetwork::new();
+    let root = network.insert_object("root");
+    let shared = network.insert_object("shared");
+
+    let left = network.insert_field(root, "left", shared);
+    let right = network.insert_field(root, "right", shared);
+
+    assert_eq!(
+        network.link(shared).expect("shared").references(),
+        &[shared]
+    );
+    assert_eq!(
+        network.link(left).expect("left field").references()[2],
+        network.link(right).expect("right field").references()[2]
+    );
+}
+
+#[test]
+fn semantic_truth_values_cover_many_valued_and_paradox_cases() {
+    assert_eq!(
+        TruthValue::True.and(TruthValue::Unknown),
+        TruthValue::Unknown
+    );
+    assert_eq!(TruthValue::True.and(TruthValue::Both), TruthValue::Both);
+    assert_eq!(
+        TruthValue::False.or(TruthValue::Unknown),
+        TruthValue::Unknown
+    );
+    assert_eq!(TruthValue::Both.negate(), TruthValue::Both);
 }
 
 #[test]
@@ -216,12 +370,49 @@ fn parity_targets_track_competitor_and_ecosystem_test_sources() {
     assert!(PARITY_TARGETS
         .iter()
         .all(|target| !target.capabilities().is_empty()));
-    assert!(
-        PARITY_TARGETS
-            .iter()
-            .all(|target| target.test_plan().contains("Port")
-                || target.test_plan().contains("Replay"))
-    );
+    assert!(PARITY_TARGETS
+        .iter()
+        .all(|target| target.test_plan().contains("Executable fixture")));
+}
+
+#[test]
+fn every_parity_target_has_an_executable_fixture_that_passes_core_contract() {
+    for target in PARITY_TARGETS {
+        assert!(
+            PARITY_FIXTURES
+                .iter()
+                .any(|fixture| fixture.target_name() == target.name()),
+            "missing executable fixture for {}",
+            target.name()
+        );
+    }
+
+    for fixture in PARITY_FIXTURES {
+        let network = LinkNetwork::parse(
+            fixture.source(),
+            fixture.language(),
+            ParseConfiguration::default(),
+        );
+
+        assert_eq!(
+            network.reconstruct_text(),
+            fixture.expected_reconstruction(),
+            "{} fixture failed reconstruction",
+            fixture.name()
+        );
+
+        for capability in fixture.capabilities() {
+            assert!(
+                fixture
+                    .target()
+                    .capabilities()
+                    .iter()
+                    .any(|target_capability| target_capability == capability),
+                "{} fixture advertises capability outside its target",
+                fixture.name()
+            );
+        }
+    }
 }
 
 #[test]

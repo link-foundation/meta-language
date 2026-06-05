@@ -1,7 +1,13 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
+use crate::configuration::{ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy};
+use crate::link_flags::LinkFlags;
+use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
+use crate::query::LinkQuery;
+use crate::source::{ByteRange, Point, SourceSpan};
+use crate::substitution::{SubstitutionReport, SubstitutionRule};
+use crate::verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 /// Stable identifier for a link inside a [`LinkNetwork`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -21,188 +27,6 @@ impl fmt::Display for LinkId {
     }
 }
 
-/// Half-open byte range in source text.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ByteRange {
-    start: usize,
-    end: usize,
-}
-
-impl ByteRange {
-    /// Creates a byte range.
-    ///
-    /// # Panics
-    ///
-    /// Panics when `start` is greater than `end`.
-    #[must_use]
-    pub const fn new(start: usize, end: usize) -> Self {
-        assert!(start <= end, "byte range start must not exceed end");
-        Self { start, end }
-    }
-
-    /// First byte in the range.
-    #[must_use]
-    pub const fn start(self) -> usize {
-        self.start
-    }
-
-    /// Byte immediately after the range.
-    #[must_use]
-    pub const fn end(self) -> usize {
-        self.end
-    }
-
-    /// Returns `true` when this range intersects `other`.
-    #[must_use]
-    pub const fn intersects(self, other: Self) -> bool {
-        if self.start == self.end || other.start == other.end {
-            self.start <= other.end && other.start <= self.end
-        } else {
-            self.start < other.end && other.start < self.end
-        }
-    }
-}
-
-/// Row and column point in source text.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Point {
-    row: usize,
-    column: usize,
-}
-
-impl Point {
-    /// Creates a row/column point.
-    #[must_use]
-    pub const fn new(row: usize, column: usize) -> Self {
-        Self { row, column }
-    }
-
-    /// Zero-based row.
-    #[must_use]
-    pub const fn row(self) -> usize {
-        self.row
-    }
-
-    /// Zero-based column.
-    #[must_use]
-    pub const fn column(self) -> usize {
-        self.column
-    }
-}
-
-/// Source span attached to a link.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct SourceSpan {
-    byte_range: ByteRange,
-    start_point: Point,
-    end_point: Point,
-}
-
-impl SourceSpan {
-    /// Creates a source span from byte and point ranges.
-    #[must_use]
-    pub const fn new(byte_range: ByteRange, start_point: Point, end_point: Point) -> Self {
-        Self {
-            byte_range,
-            start_point,
-            end_point,
-        }
-    }
-
-    /// Byte range covered by the span.
-    #[must_use]
-    pub const fn byte_range(self) -> ByteRange {
-        self.byte_range
-    }
-
-    /// Start row/column point.
-    #[must_use]
-    pub const fn start_point(self) -> Point {
-        self.start_point
-    }
-
-    /// End row/column point.
-    #[must_use]
-    pub const fn end_point(self) -> Point {
-        self.end_point
-    }
-}
-
-/// Tree-sitter-compatible parse status flags modeled as link metadata.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct LinkFlags {
-    bits: u8,
-}
-
-impl LinkFlags {
-    const IS_ERROR: u8 = 0b0001;
-    const HAS_ERROR: u8 = 0b0010;
-    const IS_MISSING: u8 = 0b0100;
-    const IS_EXTRA: u8 = 0b1000;
-
-    /// Clean link flags.
-    #[must_use]
-    pub const fn clean() -> Self {
-        Self { bits: 0 }
-    }
-
-    /// Flags for an error link.
-    #[must_use]
-    pub const fn error() -> Self {
-        Self {
-            bits: Self::IS_ERROR,
-        }
-    }
-
-    /// Flags for a link that contains an error below it.
-    #[must_use]
-    pub const fn containing_error() -> Self {
-        Self {
-            bits: Self::HAS_ERROR,
-        }
-    }
-
-    /// Flags for a missing link.
-    #[must_use]
-    pub const fn missing() -> Self {
-        Self {
-            bits: Self::IS_MISSING,
-        }
-    }
-
-    /// Flags for an extra/trivia link.
-    #[must_use]
-    pub const fn extra() -> Self {
-        Self {
-            bits: Self::IS_EXTRA,
-        }
-    }
-
-    /// Whether this link is an error link.
-    #[must_use]
-    pub const fn is_error(self) -> bool {
-        self.bits & Self::IS_ERROR != 0
-    }
-
-    /// Whether this link contains an error below it.
-    #[must_use]
-    pub const fn has_error(self) -> bool {
-        self.bits & Self::HAS_ERROR != 0
-    }
-
-    /// Whether this link is missing from the source text.
-    #[must_use]
-    pub const fn is_missing(self) -> bool {
-        self.bits & Self::IS_MISSING != 0
-    }
-
-    /// Whether this link is extra source trivia.
-    #[must_use]
-    pub const fn is_extra(self) -> bool {
-        self.bits & Self::IS_EXTRA != 0
-    }
-}
-
 /// Coarse role for a link in the meta-language network.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LinkType {
@@ -219,6 +43,8 @@ pub enum LinkType {
     Token,
     Document,
     Semantic,
+    Region,
+    Object,
 }
 
 /// View of a links network with lower-level data optionally stripped away.
@@ -278,6 +104,8 @@ impl fmt::Display for LinkType {
             Self::Token => "token",
             Self::Document => "document",
             Self::Semantic => "semantic",
+            Self::Region => "region",
+            Self::Object => "object",
         };
         formatter.write_str(name)
     }
@@ -426,71 +254,13 @@ impl Link {
     }
 }
 
-/// Verification issue kind for a full-match check.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VerificationIssueKind {
-    /// A link explicitly marks a parse error.
-    ErrorLink,
-    /// A link marks source text missing from the parse.
-    MissingLink,
-    /// A link contains a parse error below it.
-    HasErrorLink,
-}
-
-/// One verification issue tied to a link.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct VerificationIssue {
-    link_id: LinkId,
-    kind: VerificationIssueKind,
-    span: Option<SourceSpan>,
-}
-
-impl VerificationIssue {
-    /// Link that caused the issue.
-    #[must_use]
-    pub const fn link_id(&self) -> LinkId {
-        self.link_id
-    }
-
-    /// Issue kind.
-    #[must_use]
-    pub const fn kind(&self) -> VerificationIssueKind {
-        self.kind
-    }
-
-    /// Source span attached to the issue link, when available.
-    #[must_use]
-    pub const fn span(&self) -> Option<SourceSpan> {
-        self.span
-    }
-}
-
-/// Result of verifying that a source region fully matches a language.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct VerificationReport {
-    issues: Vec<VerificationIssue>,
-}
-
-impl VerificationReport {
-    /// Whether the verified region has no error or missing links.
-    #[must_use]
-    pub fn is_clean(&self) -> bool {
-        self.issues.is_empty()
-    }
-
-    /// Verification issues found in the region.
-    #[must_use]
-    pub fn issues(&self) -> &[VerificationIssue] {
-        &self.issues
-    }
-}
-
 /// Mutable links network for CST, AST, semantic, and self-description links.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct LinkNetwork {
     next_id: u64,
     links: BTreeMap<LinkId, Link>,
     terms: BTreeMap<String, LinkId>,
+    concept_syntax: BTreeMap<(String, String), String>,
 }
 
 impl LinkNetwork {
@@ -501,6 +271,7 @@ impl LinkNetwork {
             next_id: 1,
             links: BTreeMap::new(),
             terms: BTreeMap::new(),
+            concept_syntax: BTreeMap::new(),
         }
     }
 
@@ -558,6 +329,16 @@ impl LinkNetwork {
             LinkType::Trivia,
             Some("Trivia is source text preserved by explicit attachment links."),
         );
+        network.insert_typed_point(
+            "region",
+            LinkType::Region,
+            Some("A region is a source span with a selected or detected language."),
+        );
+        network.insert_typed_point(
+            "object",
+            LinkType::Object,
+            Some("An object identity is represented by a link that other links can share."),
+        );
         network
     }
 
@@ -573,8 +354,8 @@ impl LinkNetwork {
 
     /// Parses plain source text into a lossless token network.
     ///
-    /// This is a minimal parser boundary: it preserves source spans and trivia
-    /// links while language-specific parsers are added behind the same network
+    /// This parser boundary preserves source spans, trivia links, recovery
+    /// markers, and mixed-region metadata behind the same network
     /// representation.
     #[must_use]
     pub fn parse_lossless_text(
@@ -601,6 +382,7 @@ impl LinkNetwork {
 
         let mut row = 0;
         let mut column = 0;
+        let mut open_parentheses = Vec::new();
         for (start, character) in text.char_indices() {
             let start_point = Point::new(row, column);
             let end = start + character.len_utf8();
@@ -624,6 +406,15 @@ impl LinkNetwork {
             }
 
             let token = network.insert_link([document], metadata);
+            match character {
+                '(' => open_parentheses.push(token),
+                ')' => {
+                    if open_parentheses.pop().is_none() {
+                        network.set_flags(token, LinkFlags::error());
+                    }
+                }
+                _ => {}
+            }
             if character.is_whitespace() {
                 network.attach_trivia(
                     document,
@@ -633,6 +424,32 @@ impl LinkNetwork {
                 );
             }
         }
+
+        let missing_span = SourceSpan::new(
+            ByteRange::new(text.len(), text.len()),
+            end_point_for_text(text),
+            end_point_for_text(text),
+        );
+        for open_parenthesis in open_parentheses {
+            network.set_flags(open_parenthesis, LinkFlags::containing_error());
+            network.insert_link(
+                [document],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Token)
+                    .with_named(false)
+                    .with_term(")")
+                    .with_language(language)
+                    .with_span(missing_span)
+                    .with_flags(LinkFlags::missing()),
+            );
+        }
+
+        network.attach_embedded_regions(
+            document,
+            text,
+            language,
+            configuration.region_detection_policy(),
+        );
 
         network
     }
@@ -659,9 +476,54 @@ impl LinkNetwork {
         self.links().filter(move |link| projection.includes(link))
     }
 
+    /// Reconstructs source text from non-missing token links ordered by span.
+    #[must_use]
+    pub fn reconstruct_text(&self) -> String {
+        let mut tokens = self
+            .links()
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Token))
+            .filter(|link| !link.metadata().flags().is_missing())
+            .filter_map(|link| {
+                Some((
+                    link.metadata().span()?.byte_range().start(),
+                    link.id().as_u64(),
+                    link.metadata().term()?.to_string(),
+                ))
+            })
+            .collect::<Vec<_>>();
+
+        tokens.sort_by_key(|(start, id, _term)| (*start, *id));
+        tokens.into_iter().map(|(_start, _id, term)| term).collect()
+    }
+
+    /// Returns embedded mixed-language regions discovered during parse.
+    #[must_use]
+    pub fn embedded_regions(&self) -> Vec<EmbeddedRegion> {
+        self.links()
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Region))
+            .filter_map(|link| {
+                Some(EmbeddedRegion::new(
+                    link.metadata().language()?.to_string(),
+                    link.metadata().span()?,
+                ))
+            })
+            .collect()
+    }
+
+    /// Returns links matching a structural query.
+    #[must_use]
+    pub fn query_links(&self, query: &LinkQuery) -> Vec<&Link> {
+        self.links().filter(|link| query.matches(link)).collect()
+    }
+
     /// Inserts a self-referential point link for a term.
     pub fn insert_point(&mut self, term: &str) -> LinkId {
         self.insert_typed_point(term, LinkType::Concept, None)
+    }
+
+    /// Inserts an object-identity point link.
+    pub fn insert_object(&mut self, term: &str) -> LinkId {
+        self.insert_typed_point(term, LinkType::Object, None)
     }
 
     /// Inserts a relation link with source span metadata.
@@ -708,6 +570,82 @@ impl LinkNetwork {
             },
         );
         id
+    }
+
+    /// Inserts a concept-to-language syntax mapping.
+    pub fn insert_concept_mapping(
+        &mut self,
+        concept: &str,
+        language: &str,
+        syntax: &str,
+    ) -> LinkId {
+        let concept_link = self.insert_typed_point(
+            concept,
+            LinkType::Concept,
+            Some("A concept mapping connects shared meaning to language syntax."),
+        );
+        let language_link = self.insert_typed_point(language, LinkType::Language, None);
+        let mapping = self.insert_link(
+            [concept_link, language_link],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Semantic)
+                .with_named(true)
+                .with_term(syntax)
+                .with_language(language),
+        );
+        self.concept_syntax.insert(
+            (concept.to_string(), language.to_string()),
+            syntax.to_string(),
+        );
+        mapping
+    }
+
+    /// Reconstructs a concept using a target language syntax mapping.
+    #[must_use]
+    pub fn reconstruct_concept(&self, concept: &str, language: &str) -> Option<&str> {
+        self.concept_syntax
+            .get(&(concept.to_string(), language.to_string()))
+            .map(String::as_str)
+    }
+
+    /// Applies a match-and-substitute rule over exact reference lists.
+    pub fn apply_substitution(&mut self, rule: &SubstitutionRule) -> SubstitutionReport {
+        let mut report = SubstitutionReport::default();
+
+        if rule.pattern().is_empty() {
+            if !rule.replacement().is_empty() {
+                let created = self.insert_dynamic_link(
+                    rule.replacement(),
+                    LinkMetadata::new().with_link_type(LinkType::Relation),
+                );
+                report.created.push(created);
+            }
+            return report;
+        }
+
+        let matched = self
+            .links()
+            .filter(|link| link.references() == rule.pattern())
+            .map(Link::id)
+            .collect::<Vec<_>>();
+
+        if rule.replacement().is_empty() {
+            for id in matched {
+                if self.links.remove(&id).is_some() {
+                    report.deleted.push(id);
+                }
+            }
+            return report;
+        }
+
+        for id in matched {
+            if let Some(link) = self.links.get_mut(&id) {
+                link.references = rule.replacement().to_vec();
+                report.updated.push(id);
+            }
+        }
+
+        report
     }
 
     /// Returns a link by id.
@@ -765,14 +703,14 @@ impl LinkNetwork {
                     return None;
                 };
 
-                Some(VerificationIssue {
-                    link_id: link.id(),
+                Some(VerificationIssue::new(
+                    link.id(),
                     kind,
-                    span: link.metadata().span(),
-                })
+                    link.metadata().span(),
+                ))
             })
             .collect();
-        VerificationReport { issues }
+        VerificationReport::new(issues)
     }
 
     fn insert_typed_point(
@@ -851,6 +789,41 @@ impl LinkNetwork {
                 .with_span(span)
                 .with_flags(LinkFlags::extra()),
         );
+    }
+
+    fn insert_dynamic_link(&mut self, references: &[LinkId], metadata: LinkMetadata) -> LinkId {
+        let id = self.allocate_id();
+        self.links.insert(
+            id,
+            Link {
+                id,
+                references: references.to_vec(),
+                metadata,
+            },
+        );
+        id
+    }
+
+    fn attach_embedded_regions(
+        &mut self,
+        document: LinkId,
+        text: &str,
+        language: &str,
+        policy: RegionDetectionPolicy,
+    ) {
+        for region in detect_embedded_regions(text, language, policy) {
+            let region_language = region.language().to_string();
+            let language_link = self.insert_typed_point(&region_language, LinkType::Language, None);
+            self.insert_link(
+                [document, language_link],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Region)
+                    .with_named(true)
+                    .with_term(format!("{region_language} region"))
+                    .with_language(region_language)
+                    .with_span(region.span()),
+            );
+        }
     }
 
     const fn allocate_id(&mut self) -> LinkId {

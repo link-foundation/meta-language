@@ -18,22 +18,32 @@ clean.
 - `verify_full_match()` for reporting error and missing links in a selected
   source region.
 - `parse()` as the default lossless parse entry point; the explicit
-  `parse_lossless_text()` boundary remains available while language-specific
-  parsers are added.
+  `parse_lossless_text()` boundary remains available.
+- `reconstruct_text()` for byte-for-byte reconstruction from non-missing token
+  links ordered by source span.
 - `projected_links()` for viewing the same lossless network as concrete syntax,
   abstract syntax, or semantic-only data by stripping lower-level preservation
   links from the view.
 - `ParseConfiguration` with containment-link, token-link, or combined trivia
   attachment policies.
-- A testable parity registry for competitor and ecosystem projects whose
-  feature sets and test suites must be tracked.
+- Mixed-region links for Markdown fenced code and HTML regions, plus HTML
+  script, style, and style-attribute regions.
+- `LinkQuery` for structural matching by link type, term, language, and named
+  flag.
+- `SubstitutionRule` / `apply_substitution()` for the link-cli-style
+  match-and-substitute operation.
+- Concept-to-language syntax mappings for cross-language reconstruction.
+- Object-identity links and many-valued `TruthValue` semantics.
+- A testable parity registry and `PARITY_FIXTURES` for competitor and ecosystem
+  projects whose feature sets and test suites must be executable.
 - Coverage targets for full Markdown and HTML support, mixed grammar embedding,
   ten programming-language parser targets, and ten natural-language parser
   targets.
 - Self-description roots for `link`, `reference`, `relation link`, `language`,
-  `grammar`, `type`, `concept`, and `point`.
-- A minimal lossless text parser boundary that preserves tokens and trivia while
-  language-specific parsers are added behind the same representation.
+  `grammar`, `type`, `concept`, `point`, `field`, `trivia`, `region`, and
+  `object`.
+- A lossless text parser boundary that preserves tokens, trivia, recovery
+  markers, and mixed-region metadata behind the same representation.
 
 ## Usage
 
@@ -44,6 +54,7 @@ let network = LinkNetwork::parse("alpha beta", "plain-text", ParseConfiguration:
 let report = network.verify_full_match(None);
 
 assert!(report.is_clean());
+assert_eq!(network.reconstruct_text(), "alpha beta");
 ```
 
 The default parse path is lossless. Callers that need a narrower view can use a
@@ -76,12 +87,13 @@ has no error or missing links.
 The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,
 `PROGRAMMING_LANGUAGE_TARGETS`, `NATURAL_LANGUAGE_TARGETS`, and
 `GRAMMAR_EMBEDDING_TARGETS` so comparison scope is part of the tested Rust API.
+It also exposes `PARITY_FIXTURES`, with one executable fixture per target.
 The current registry tracks tree-sitter, LibCST, Recast, jscodeshift, Rowan,
 cstree, Roslyn, links-notation, link-cli, lino-objects-codec,
 relative-meta-logic, formal-ai, and meta-expression.
 
 See [docs/parity-roadmap.md](docs/parity-roadmap.md) for the feature matrix,
-test adoption plan, and language coverage targets.
+executable fixture gate, and language coverage targets.
 
 ## Development
 
