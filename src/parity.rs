@@ -439,6 +439,34 @@ impl LanguageTarget {
     }
 }
 
+/// Executable lossless parse fixture for a required language target.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LanguageFixture {
+    language: &'static str,
+    source: &'static str,
+    description: &'static str,
+}
+
+impl LanguageFixture {
+    /// Language label used by the parser.
+    #[must_use]
+    pub const fn language(&self) -> &'static str {
+        self.language
+    }
+
+    /// Source text that must parse and reconstruct losslessly.
+    #[must_use]
+    pub const fn source(&self) -> &'static str {
+        self.source
+    }
+
+    /// Behavior represented by this fixture.
+    #[must_use]
+    pub const fn description(&self) -> &'static str {
+        self.description
+    }
+}
+
 /// Required document-container languages.
 pub const MARKUP_LANGUAGE_TARGETS: &[LanguageTarget] = &[
     LanguageTarget {
@@ -558,6 +586,120 @@ pub const NATURAL_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         name: "Urdu",
         family: LanguageFamily::Natural,
         basis: "Ethnologue/Britannica total-speaker top 10",
+    },
+];
+
+/// Executable fixtures for every language target requested by the founding issue.
+pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
+    LanguageFixture {
+        language: "Markdown",
+        source: "# Title\n\n```rust\nfn main() {}\n```\n",
+        description: "Markdown document with embedded fenced code",
+    },
+    LanguageFixture {
+        language: "HTML",
+        source: "<script>const x = 1;</script><style>.x { color: red; }</style><p style=\"color: blue\">text</p>\n",
+        description: "HTML document with script, style, and style-attribute regions",
+    },
+    LanguageFixture {
+        language: "Python",
+        source: "def f(x):\n    return x + 1\n",
+        description: "Python function with indentation",
+    },
+    LanguageFixture {
+        language: "C",
+        source: "int main(void) { return 0; }\n",
+        description: "C entry point",
+    },
+    LanguageFixture {
+        language: "Java",
+        source: "class Main { public static void main(String[] args) {} }\n",
+        description: "Java class entry point",
+    },
+    LanguageFixture {
+        language: "C++",
+        source: "int main() { return 0; }\n",
+        description: "C++ entry point",
+    },
+    LanguageFixture {
+        language: "C#",
+        source: "class C { static void Main() {} }\n",
+        description: "C# class entry point",
+    },
+    LanguageFixture {
+        language: "JavaScript",
+        source: "const value = 1;\n",
+        description: "JavaScript binding",
+    },
+    LanguageFixture {
+        language: "Visual Basic",
+        source: "Module Program\nEnd Module\n",
+        description: "Visual Basic module",
+    },
+    LanguageFixture {
+        language: "R",
+        source: "value <- 1\n",
+        description: "R assignment",
+    },
+    LanguageFixture {
+        language: "SQL",
+        source: "SELECT 1;\n",
+        description: "SQL select statement",
+    },
+    LanguageFixture {
+        language: "Delphi/Object Pascal",
+        source: "program Demo;\nbegin\nend.\n",
+        description: "Delphi/Object Pascal program",
+    },
+    LanguageFixture {
+        language: "English",
+        source: "Hawaii is a state.\n",
+        description: "English formalization sentence",
+    },
+    LanguageFixture {
+        language: "Mandarin Chinese",
+        source: "你好。\n",
+        description: "Mandarin Chinese sentence",
+    },
+    LanguageFixture {
+        language: "Hindi",
+        source: "नमस्ते।\n",
+        description: "Hindi sentence",
+    },
+    LanguageFixture {
+        language: "Spanish",
+        source: "Hawaii es un estado.\n",
+        description: "Spanish reconstruction sentence",
+    },
+    LanguageFixture {
+        language: "French",
+        source: "Hawaii est un etat.\n",
+        description: "French reconstruction sentence",
+    },
+    LanguageFixture {
+        language: "Modern Standard Arabic",
+        source: "مرحبا.\n",
+        description: "Modern Standard Arabic sentence",
+    },
+    LanguageFixture {
+        language: "Bengali",
+        source: "নমস্কার।\n",
+        description: "Bengali sentence",
+    },
+    LanguageFixture {
+        language: "Russian",
+        source: "Гавайи это штат.\n",
+        description: "Russian reconstruction sentence",
+    },
+    LanguageFixture {
+        language: "Portuguese",
+        source: "Hawaii e um estado.\n",
+        description: "Portuguese reconstruction sentence",
+    },
+    LanguageFixture {
+        language: "Urdu",
+        source: "سلام۔\n",
+        description: "Urdu sentence",
     },
 ];
 

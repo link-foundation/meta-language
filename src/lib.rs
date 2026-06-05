@@ -14,9 +14,10 @@ pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use mixed_regions::EmbeddedRegion;
 pub use parity::{
-    GrammarEmbeddingTarget, LanguageFamily, LanguageTarget, ParityCapability, ParityFixture,
-    ParityTarget, GRAMMAR_EMBEDDING_TARGETS, MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS,
-    PARITY_FIXTURES, PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
+    GrammarEmbeddingTarget, LanguageFamily, LanguageFixture, LanguageTarget, ParityCapability,
+    ParityFixture, ParityTarget, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES,
+    MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS,
+    PROGRAMMING_LANGUAGE_TARGETS,
 };
 pub use query::LinkQuery;
 pub use semantics::TruthValue;

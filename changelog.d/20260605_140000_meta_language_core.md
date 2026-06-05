@@ -12,3 +12,5 @@ bump: minor
   substitution rules, concept reconstruction, object identity helpers,
   many-valued truth values, and executable parity fixtures for every tracked
   competitor target.
+- Added executable language fixtures and tests for every requested Markdown,
+  HTML, top-ten programming-language, and top-ten natural-language target.

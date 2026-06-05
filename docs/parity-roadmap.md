@@ -1,4 +1,4 @@
-# Parity Roadmap
+# Parity Implementation
 
 This document keeps the comparison scope explicit and ties each named
 competitor or ecosystem project to executable fixtures in this crate.
@@ -22,10 +22,13 @@ The Rust API exposes these registries:
   unified links network.
 - `PARITY_FIXTURES`: executable source fixtures, one or more per parity target,
   that must parse and reconstruct through the public API.
+- `LANGUAGE_FIXTURES`: executable source fixtures for every markup,
+  programming-language, and natural-language target named by the founding issue.
 
 Unit tests assert that the required projects, language groups, and executable
-fixtures stay present. Additional upstream fixture imports should extend those
-tests instead of replacing the registry.
+fixtures stay present. They also assert that every advertised parity capability
+is covered by fixtures and that every language target has a lossless
+parse/reconstruction fixture.
 
 ## Feature Matrix
 
@@ -45,13 +48,20 @@ tests instead of replacing the registry.
 | formal-ai | Formalization corpus and semantic reconstruction expectations | Formalization source fixture plus concept reconstruction tests |
 | meta-expression | Formalize, semantic-link, naturalize, span, and self-reference behavior | Naturalization span fixture plus concept reconstruction tests |
 
-## Executable Fixture Gate
+## Executable Fixture Gates
 
 `tests/unit/link_network.rs` enforces that every `PARITY_TARGETS` entry has a
-matching `PARITY_FIXTURES` entry. Each fixture is parsed with `LinkNetwork::parse`
-and reconstructed with `LinkNetwork::reconstruct_text`; the expected
-reconstruction must match exactly. Capability assertions ensure fixtures only
-claim capabilities advertised by their target.
+matching `PARITY_FIXTURES` entry. Each fixture is parsed with
+`LinkNetwork::parse` and reconstructed with `LinkNetwork::reconstruct_text`; the
+expected reconstruction must match exactly. Capability assertions ensure
+fixtures only claim capabilities advertised by their target and that every
+capability advertised by every target is exercised by at least one fixture for
+that target.
+
+The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
+`MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`, and
+`NATURAL_LANGUAGE_TARGETS`. These fixtures include UTF-8 natural-language
+samples so lossless reconstruction covers non-ASCII byte ranges.
 
 Additional behavior-specific tests cover:
 
@@ -81,12 +91,12 @@ Current projections:
 
 ## Language Coverage Targets
 
-Full document-container targets:
+Document-container targets:
 
 - Markdown
 - HTML
 
-Initial programming-language targets use the TIOBE May 2026 top-ten list:
+Programming-language targets use the TIOBE May 2026 top-ten list:
 
 1. Python
 2. C
@@ -101,7 +111,7 @@ Initial programming-language targets use the TIOBE May 2026 top-ten list:
 
 Source: <https://www.tiobe.com/tiobe-index/>
 
-Initial natural-language targets use the Britannica/Ethnologue total-speaker
+Natural-language targets use the Britannica/Ethnologue total-speaker
 top-ten list:
 
 1. English
@@ -119,9 +129,9 @@ Source: <https://www.britannica.com/topic/languages-by-total-number-of-speakers-
 
 ## Mixed Grammar Targets
 
-The first mixed-grammar targets are:
+The mixed-grammar targets are:
 
-- Markdown fenced code regions, detected by language tag and later by content.
+- Markdown fenced code regions, detected by language tag and by content.
 - Markdown inline or block HTML.
 - HTML script elements containing JavaScript.
 - HTML style elements and style attributes containing CSS.

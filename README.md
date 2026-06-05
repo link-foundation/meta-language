@@ -34,8 +34,10 @@ clean.
   match-and-substitute operation.
 - Concept-to-language syntax mappings for cross-language reconstruction.
 - Object-identity links and many-valued `TruthValue` semantics.
-- A testable parity registry and `PARITY_FIXTURES` for competitor and ecosystem
-  projects whose feature sets and test suites must be executable.
+- A testable parity registry and `PARITY_FIXTURES` for executable competitor
+  and ecosystem feature gates.
+- `LANGUAGE_FIXTURES` with lossless parse/reconstruction samples for every
+  required markup, programming-language, and natural-language target.
 - Coverage targets for full Markdown and HTML support, mixed grammar embedding,
   ten programming-language parser targets, and ten natural-language parser
   targets.
@@ -82,18 +84,20 @@ cargo run -- verify --language plain-text --text "alpha beta"
 with the lossless text boundary and exits successfully when the resulting region
 has no error or missing links.
 
-## Parity Roadmap
+## Parity Implementation
 
 The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,
 `PROGRAMMING_LANGUAGE_TARGETS`, `NATURAL_LANGUAGE_TARGETS`, and
 `GRAMMAR_EMBEDDING_TARGETS` so comparison scope is part of the tested Rust API.
-It also exposes `PARITY_FIXTURES`, with one executable fixture per target.
+It also exposes `PARITY_FIXTURES`, with executable fixtures covering every
+advertised target capability, and `LANGUAGE_FIXTURES`, with a lossless fixture
+for every requested language target.
 The current registry tracks tree-sitter, LibCST, Recast, jscodeshift, Rowan,
 cstree, Roslyn, links-notation, link-cli, lino-objects-codec,
 relative-meta-logic, formal-ai, and meta-expression.
 
 See [docs/parity-roadmap.md](docs/parity-roadmap.md) for the feature matrix,
-executable fixture gate, and language coverage targets.
+executable fixture gates, and language coverage targets.
 
 ## Development
 

@@ -2,8 +2,8 @@ use meta_language::{
     ByteRange, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery, LinkType, NetworkProjection,
     ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan, SubstitutionRule,
     TriviaAttachmentPolicy, TruthValue, VerificationIssueKind, GRAMMAR_EMBEDDING_TARGETS,
-    MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS,
-    PROGRAMMING_LANGUAGE_TARGETS,
+    LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES,
+    PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -236,6 +236,39 @@ fn mixed_language_regions_are_embedded_in_one_network() {
 }
 
 #[test]
+fn content_driven_and_html_region_detection_cover_embedding_targets() {
+    let markdown = "# Query\n```\nSELECT 1;\n```\n";
+    let markdown_network = LinkNetwork::parse(
+        markdown,
+        "Markdown",
+        ParseConfiguration::default()
+            .with_region_detection_policy(RegionDetectionPolicy::ContentDriven),
+    );
+    let markdown_regions = markdown_network.embedded_regions();
+    assert!(markdown_regions
+        .iter()
+        .map(meta_language::EmbeddedRegion::language)
+        .any(|language| language == "SQL"));
+
+    let html = "<script>const x = 1;</script><style>.x { color: red; }</style><p style=\"color: blue\">text</p>";
+    let html_network = LinkNetwork::parse(html, "HTML", ParseConfiguration::default());
+    let html_regions = html_network.embedded_regions();
+    let html_languages = html_regions
+        .iter()
+        .map(meta_language::EmbeddedRegion::language)
+        .collect::<Vec<_>>();
+
+    assert!(html_languages.contains(&"JavaScript"));
+    assert_eq!(
+        html_languages
+            .iter()
+            .filter(|language| **language == "CSS")
+            .count(),
+        2
+    );
+}
+
+#[test]
 fn query_matching_finds_tokens_by_type_term_and_language() {
     let network = LinkNetwork::parse("let x = x + 1", "JavaScript", ParseConfiguration::default());
     let query = LinkQuery::new()
@@ -416,6 +449,26 @@ fn every_parity_target_has_an_executable_fixture_that_passes_core_contract() {
 }
 
 #[test]
+fn every_parity_target_capability_is_exercised_by_fixtures() {
+    for target in PARITY_TARGETS {
+        let covered_capabilities = PARITY_FIXTURES
+            .iter()
+            .filter(|fixture| fixture.target_name() == target.name())
+            .flat_map(|fixture| fixture.capabilities().iter().copied())
+            .collect::<Vec<_>>();
+
+        for capability in target.capabilities() {
+            assert!(
+                covered_capabilities.contains(capability),
+                "{} target capability is not covered by an executable fixture: {:?}",
+                target.name(),
+                capability
+            );
+        }
+    }
+}
+
+#[test]
 fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
     assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 2);
     assert_eq!(PROGRAMMING_LANGUAGE_TARGETS.len(), 10);
@@ -442,4 +495,51 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
     assert!(NATURAL_LANGUAGE_TARGETS
         .iter()
         .all(|target| target.basis().contains("Ethnologue/Britannica")));
+}
+
+#[test]
+fn every_language_target_has_an_executable_lossless_fixture() {
+    let target_languages = MARKUP_LANGUAGE_TARGETS
+        .iter()
+        .chain(PROGRAMMING_LANGUAGE_TARGETS.iter())
+        .chain(NATURAL_LANGUAGE_TARGETS.iter())
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+
+    assert_eq!(LANGUAGE_FIXTURES.len(), target_languages.len());
+
+    for language in &target_languages {
+        assert!(
+            LANGUAGE_FIXTURES
+                .iter()
+                .any(|fixture| fixture.language() == *language),
+            "missing executable language fixture for {language}"
+        );
+    }
+
+    for fixture in LANGUAGE_FIXTURES {
+        assert!(
+            target_languages.contains(&fixture.language()),
+            "{} fixture is not tied to a requested language target",
+            fixture.language()
+        );
+
+        let network = LinkNetwork::parse(
+            fixture.source(),
+            fixture.language(),
+            ParseConfiguration::default(),
+        );
+
+        assert_eq!(
+            network.reconstruct_text(),
+            fixture.source(),
+            "{} fixture failed reconstruction",
+            fixture.description()
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{} fixture should parse cleanly",
+            fixture.description()
+        );
+    }
 }
