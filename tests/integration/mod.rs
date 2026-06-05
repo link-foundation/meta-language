@@ -1,1 +1,1 @@
-mod sum;
+mod cli;

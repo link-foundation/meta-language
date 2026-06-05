@@ -1,18 +1,67 @@
-use lino_arguments::Parser;
+use clap::{Parser, Subcommand};
 
-use example_sum_package_name::sum;
+use meta_language::{LinkNetwork, ParseConfiguration};
 
 #[derive(Parser, Debug)]
-#[command(name = "example-sum-package-name", about = "Sum two numbers")]
-struct Args {
-    #[arg(long, env = "A", default_value = "0", allow_hyphen_values = true)]
-    a: i64,
+#[command(
+    name = "meta-language",
+    about = "Build and verify self-describing links networks"
+)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
 
-    #[arg(long, env = "B", default_value = "0", allow_hyphen_values = true)]
-    b: i64,
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Print the built-in self-description roots.
+    Describe,
+    /// Parse text into a lossless token network and verify it is clean.
+    Verify {
+        /// Language label for the parsed region.
+        #[arg(long)]
+        language: String,
+        /// Source text to parse.
+        #[arg(long)]
+        text: String,
+    },
 }
 
 fn main() {
-    let args = Args::parse();
-    println!("{}", sum(args.a, args.b));
+    let cli = Cli::parse();
+
+    match cli.command {
+        Command::Describe => describe(),
+        Command::Verify { language, text } => verify(&language, &text),
+    }
+}
+
+fn describe() {
+    let network = LinkNetwork::self_describing();
+    let roots = [
+        "link",
+        "reference",
+        "relation link",
+        "language",
+        "grammar",
+        "type",
+        "concept",
+        "point",
+    ];
+    println!("self-description roots: {}", roots.join(", "));
+    println!("links: {}", network.len());
+}
+
+fn verify(language: &str, text: &str) {
+    let network = LinkNetwork::parse(text, language, ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    if report.is_clean() {
+        println!("clean");
+    } else {
+        for issue in report.issues() {
+            eprintln!("{}: {:?}", issue.link_id(), issue.kind());
+        }
+        std::process::exit(1);
+    }
 }

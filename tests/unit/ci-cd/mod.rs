@@ -3,6 +3,8 @@ mod changelog_parsing;
 mod check_crate_size;
 #[path = "../../../scripts/check-file-size.rs"]
 mod check_file_size;
+#[path = "../../../scripts/check-no-src-tests.rs"]
+mod check_no_src_tests;
 #[path = "../../../scripts/create-github-release.rs"]
 mod create_github_release;
 #[path = "../../../scripts/rust-paths.rs"]

@@ -1,7 +1,9 @@
-use example_sum_package_name::sum;
+use meta_language::{LinkNetwork, ParseConfiguration};
 
 fn main() {
-    println!("2 + 3 = {}", sum(2, 3));
-    println!("-5 + 10 = {}", sum(-5, 10));
-    println!("1000 + 2000 = {}", sum(1000, 2000));
+    let network = LinkNetwork::parse("alpha beta", "plain-text", ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    println!("links: {}", network.len());
+    println!("clean: {}", report.is_clean());
 }
