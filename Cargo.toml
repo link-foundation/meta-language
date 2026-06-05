@@ -1,14 +1,14 @@
 [package]
-name = "example-sum-package-name"
+name = "meta-language"
 version = "0.18.0"
 edition = "2021"
-description = "A Rust package template for AI-driven development"
+description = "A self-describing links-network core for lossless language representation"
 readme = "README.md"
 license = "Unlicense"
-keywords = ["template", "rust", "ai-driven"]
-categories = ["development-tools"]
-repository = "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template"
-documentation = "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template"
+keywords = ["links", "language", "cst", "ast"]
+categories = ["parser-implementations", "data-structures"]
+repository = "https://github.com/link-foundation/meta-language"
+documentation = "https://github.com/link-foundation/meta-language"
 rust-version = "1.70"
 
 # Narrow allowlist of files shipped in the published `.crate` archive.
@@ -24,15 +24,14 @@ include = [
 ]
 
 [lib]
-name = "example_sum_package_name"
+name = "meta_language"
 path = "src/lib.rs"
 
 [[bin]]
-name = "example-sum-package-name"
+name = "meta-language"
 path = "src/main.rs"
 
 [dependencies]
-lino-arguments = "0.3"
 clap = { version = "4.4", features = ["derive", "env"] }
 
 [dev-dependencies]
