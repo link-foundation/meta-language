@@ -1,6 +1,8 @@
 use meta_language::{
-    ByteRange, LinkFlags, LinkNetwork, LinkType, ParseConfiguration, Point, RegionDetectionPolicy,
-    SourceSpan, TriviaAttachmentPolicy, VerificationIssueKind,
+    ByteRange, LinkFlags, LinkNetwork, LinkType, NetworkProjection, ParseConfiguration, Point,
+    RegionDetectionPolicy, SourceSpan, TriviaAttachmentPolicy, VerificationIssueKind,
+    GRAMMAR_EMBEDDING_TARGETS, MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_TARGETS,
+    PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -143,4 +145,110 @@ fn self_description_contains_common_roots() {
     let link = network.find_term("link").expect("link term");
     let definition = network.definition_for(link).expect("link definition");
     assert!(definition.contains("n-tuple of references"));
+}
+
+#[test]
+fn parse_is_lossless_by_default_and_matches_explicit_lossless_boundary() {
+    let parsed = LinkNetwork::parse("alpha beta", "plain-text", ParseConfiguration::default());
+    let explicit =
+        LinkNetwork::parse_lossless_text("alpha beta", "plain-text", ParseConfiguration::default());
+
+    assert_eq!(parsed, explicit);
+    assert!(parsed
+        .projected_links(NetworkProjection::Lossless)
+        .any(|link| link.metadata().flags().is_extra()));
+    assert!(parsed
+        .projected_links(NetworkProjection::ConcreteSyntax)
+        .any(|link| link.metadata().link_type() == Some(LinkType::Trivia)));
+    assert!(parsed
+        .projected_links(NetworkProjection::AbstractSyntax)
+        .all(|link| !matches!(
+            link.metadata().link_type(),
+            Some(LinkType::Token | LinkType::Trivia)
+        )));
+}
+
+#[test]
+fn projections_strip_lower_level_data_without_mutating_the_network() {
+    let network = LinkNetwork::parse("a b", "plain-text", ParseConfiguration::default());
+    let lossless_count = network.projected_links(NetworkProjection::Lossless).count();
+    let syntax_count = network
+        .projected_links(NetworkProjection::ConcreteSyntax)
+        .count();
+    let abstract_count = network
+        .projected_links(NetworkProjection::AbstractSyntax)
+        .count();
+
+    assert_eq!(lossless_count, network.len());
+    assert_eq!(syntax_count, network.len());
+    assert!(abstract_count < lossless_count);
+    assert_eq!(NetworkProjection::AbstractSyntax.label(), "abstract syntax");
+}
+
+#[test]
+fn parity_targets_track_competitor_and_ecosystem_test_sources() {
+    let target_names = PARITY_TARGETS
+        .iter()
+        .map(meta_language::ParityTarget::name)
+        .collect::<Vec<_>>();
+
+    for expected in [
+        "tree-sitter",
+        "LibCST",
+        "Recast",
+        "jscodeshift",
+        "Rowan",
+        "cstree",
+        "Roslyn",
+        "links-notation",
+        "link-cli",
+        "lino-objects-codec",
+        "relative-meta-logic",
+        "formal-ai",
+        "meta-expression",
+    ] {
+        assert!(
+            target_names.contains(&expected),
+            "missing parity target: {expected}"
+        );
+    }
+
+    assert!(PARITY_TARGETS
+        .iter()
+        .all(|target| !target.capabilities().is_empty()));
+    assert!(
+        PARITY_TARGETS
+            .iter()
+            .all(|target| target.test_plan().contains("Port")
+                || target.test_plan().contains("Replay"))
+    );
+}
+
+#[test]
+fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
+    assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 2);
+    assert_eq!(PROGRAMMING_LANGUAGE_TARGETS.len(), 10);
+    assert_eq!(NATURAL_LANGUAGE_TARGETS.len(), 10);
+
+    let markup_names = MARKUP_LANGUAGE_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+    assert!(markup_names.contains(&"Markdown"));
+    assert!(markup_names.contains(&"HTML"));
+
+    assert!(GRAMMAR_EMBEDDING_TARGETS.iter().any(|target| {
+        target.host_language() == "Markdown"
+            && target.embedded_language() == "Programming language region"
+    }));
+    assert!(GRAMMAR_EMBEDDING_TARGETS.iter().any(|target| {
+        target.host_language() == "HTML" && target.embedded_language() == "JavaScript"
+    }));
+
+    assert!(PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .all(|target| target.basis().contains("TIOBE May 2026")));
+    assert!(NATURAL_LANGUAGE_TARGETS
+        .iter()
+        .all(|target| target.basis().contains("Ethnologue/Britannica")));
 }

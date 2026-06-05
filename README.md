@@ -17,8 +17,19 @@ clean.
   points, and `is_error`, `has_error`, `is_missing`, `is_extra` flags.
 - `verify_full_match()` for reporting error and missing links in a selected
   source region.
+- `parse()` as the default lossless parse entry point; the explicit
+  `parse_lossless_text()` boundary remains available while language-specific
+  parsers are added.
+- `projected_links()` for viewing the same lossless network as concrete syntax,
+  abstract syntax, or semantic-only data by stripping lower-level preservation
+  links from the view.
 - `ParseConfiguration` with containment-link, token-link, or combined trivia
   attachment policies.
+- A testable parity registry for competitor and ecosystem projects whose
+  feature sets and test suites must be tracked.
+- Coverage targets for full Markdown and HTML support, mixed grammar embedding,
+  ten programming-language parser targets, and ten natural-language parser
+  targets.
 - Self-description roots for `link`, `reference`, `relation link`, `language`,
   `grammar`, `type`, `concept`, and `point`.
 - A minimal lossless text parser boundary that preserves tokens and trivia while
@@ -29,11 +40,24 @@ clean.
 ```rust
 use meta_language::{LinkNetwork, ParseConfiguration};
 
-let network =
-    LinkNetwork::parse_lossless_text("alpha beta", "plain-text", ParseConfiguration::default());
+let network = LinkNetwork::parse("alpha beta", "plain-text", ParseConfiguration::default());
 let report = network.verify_full_match(None);
 
 assert!(report.is_clean());
+```
+
+The default parse path is lossless. Callers that need a narrower view can use a
+projection without mutating the original network:
+
+```rust
+use meta_language::{LinkNetwork, NetworkProjection, ParseConfiguration};
+
+let network = LinkNetwork::parse("alpha beta", "plain-text", ParseConfiguration::default());
+let abstract_links = network
+    .projected_links(NetworkProjection::AbstractSyntax)
+    .count();
+
+assert!(abstract_links < network.len());
 ```
 
 ## CLI
@@ -46,6 +70,18 @@ cargo run -- verify --language plain-text --text "alpha beta"
 `describe` prints the built-in self-description roots. `verify` parses the text
 with the lossless text boundary and exits successfully when the resulting region
 has no error or missing links.
+
+## Parity Roadmap
+
+The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,
+`PROGRAMMING_LANGUAGE_TARGETS`, `NATURAL_LANGUAGE_TARGETS`, and
+`GRAMMAR_EMBEDDING_TARGETS` so comparison scope is part of the tested Rust API.
+The current registry tracks tree-sitter, LibCST, Recast, jscodeshift, Rowan,
+cstree, Roslyn, links-notation, link-cli, lino-objects-codec,
+relative-meta-logic, formal-ai, and meta-expression.
+
+See [docs/parity-roadmap.md](docs/parity-roadmap.md) for the feature matrix,
+test adoption plan, and language coverage targets.
 
 ## Development
 

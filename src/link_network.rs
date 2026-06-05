@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
+use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
+
 /// Stable identifier for a link inside a [`LinkNetwork`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LinkId(u64);
@@ -219,6 +221,47 @@ pub enum LinkType {
     Semantic,
 }
 
+/// View of a links network with lower-level data optionally stripped away.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NetworkProjection {
+    /// Full lossless network, including all source-preservation links.
+    Lossless,
+    /// Concrete syntax view, including tokens, trivia, fields, and spans.
+    ConcreteSyntax,
+    /// Abstract syntax view, excluding lossless token and trivia links.
+    AbstractSyntax,
+    /// Meaning-focused view, keeping semantic, concept, type, and language links.
+    Semantic,
+}
+
+impl NetworkProjection {
+    /// Human-readable projection name.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Lossless => "lossless",
+            Self::ConcreteSyntax => "concrete syntax",
+            Self::AbstractSyntax => "abstract syntax",
+            Self::Semantic => "semantic",
+        }
+    }
+
+    fn includes(self, link: &Link) -> bool {
+        match self {
+            Self::Lossless => true,
+            Self::ConcreteSyntax => link.metadata().link_type() != Some(LinkType::Semantic),
+            Self::AbstractSyntax => !matches!(
+                link.metadata().link_type(),
+                Some(LinkType::Token | LinkType::Trivia)
+            ),
+            Self::Semantic => matches!(
+                link.metadata().link_type(),
+                Some(LinkType::Semantic | LinkType::Concept | LinkType::Type | LinkType::Language)
+            ),
+        }
+    }
+}
+
 impl fmt::Display for LinkType {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
@@ -383,74 +426,6 @@ impl Link {
     }
 }
 
-/// Trivia attachment strategy.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TriviaAttachmentPolicy {
-    /// Attach trivia to the containing syntax link.
-    ContainmentLink,
-    /// Attach trivia to the token link.
-    TokenLink,
-    /// Emit both attachment links when they can coexist.
-    Both,
-}
-
-/// Region detection strategy for mixed-language parsing.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RegionDetectionPolicy {
-    /// Use explicit region names such as fenced-code language tags.
-    NameDriven,
-    /// Use content sniffing.
-    ContentDriven,
-    /// Use name-driven detection first and content-driven detection as a fallback.
-    Both,
-}
-
-/// Configuration for parse-to-network operations.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ParseConfiguration {
-    trivia_attachment_policy: TriviaAttachmentPolicy,
-    region_detection_policy: RegionDetectionPolicy,
-}
-
-impl ParseConfiguration {
-    /// Creates parse configuration with the supplied trivia policy.
-    #[must_use]
-    pub const fn new(trivia_attachment_policy: TriviaAttachmentPolicy) -> Self {
-        Self {
-            trivia_attachment_policy,
-            region_detection_policy: RegionDetectionPolicy::Both,
-        }
-    }
-
-    /// Returns configuration with a mixed-language region detection policy.
-    #[must_use]
-    pub const fn with_region_detection_policy(
-        mut self,
-        region_detection_policy: RegionDetectionPolicy,
-    ) -> Self {
-        self.region_detection_policy = region_detection_policy;
-        self
-    }
-
-    /// Trivia attachment policy.
-    #[must_use]
-    pub const fn trivia_attachment_policy(self) -> TriviaAttachmentPolicy {
-        self.trivia_attachment_policy
-    }
-
-    /// Mixed-language region detection policy.
-    #[must_use]
-    pub const fn region_detection_policy(self) -> RegionDetectionPolicy {
-        self.region_detection_policy
-    }
-}
-
-impl Default for ParseConfiguration {
-    fn default() -> Self {
-        Self::new(TriviaAttachmentPolicy::Both)
-    }
-}
-
 /// Verification issue kind for a full-match check.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VerificationIssueKind {
@@ -588,6 +563,16 @@ impl LinkNetwork {
 
     /// Parses plain source text into a lossless token network.
     ///
+    /// This is the default parse operation. It is lossless by construction; use
+    /// [`LinkNetwork::projected_links`] when a lower-level view should be
+    /// stripped away for CST, AST, or semantic-only work.
+    #[must_use]
+    pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
+        Self::parse_lossless_text(text, language, configuration)
+    }
+
+    /// Parses plain source text into a lossless token network.
+    ///
     /// This is a minimal parser boundary: it preserves source spans and trivia
     /// links while language-specific parsers are added behind the same network
     /// representation.
@@ -644,7 +629,7 @@ impl LinkNetwork {
                     document,
                     token,
                     span,
-                    configuration.trivia_attachment_policy,
+                    configuration.trivia_attachment_policy(),
                 );
             }
         }
@@ -667,6 +652,11 @@ impl LinkNetwork {
     /// Iterates over links in identifier order.
     pub fn links(&self) -> impl Iterator<Item = &Link> {
         self.links.values()
+    }
+
+    /// Iterates over links included in the selected projection.
+    pub fn projected_links(&self, projection: NetworkProjection) -> impl Iterator<Item = &Link> {
+        self.links().filter(move |link| projection.includes(link))
     }
 
     /// Inserts a self-referential point link for a term.

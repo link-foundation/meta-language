@@ -53,7 +53,7 @@ fn describe() {
 }
 
 fn verify(language: &str, text: &str) {
-    let network = LinkNetwork::parse_lossless_text(text, language, ParseConfiguration::default());
+    let network = LinkNetwork::parse(text, language, ParseConfiguration::default());
     let report = network.verify_full_match(None);
 
     if report.is_clean() {
