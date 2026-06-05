@@ -26,6 +26,13 @@ repos:
         types: [rust]
         pass_filenames: false
 
+      - id: no-src-tests
+        name: reject tests in src
+        entry: rust-script scripts/check-no-src-tests.rs
+        language: system
+        types: [rust]
+        pass_filenames: false
+
       - id: cargo-test
         name: cargo test
         entry: cargo test

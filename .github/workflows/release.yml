@@ -166,6 +166,9 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
+      - name: Reject tests in src
+        run: rust-script scripts/check-no-src-tests.rs
+
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
 

@@ -225,6 +225,21 @@ fn build_job_checks_crate_size() {
 }
 
 #[test]
+fn lint_job_rejects_tests_under_src() {
+    let workflow = release_workflow();
+    let lint = job_block(&workflow, "lint");
+
+    assert!(
+        lint.contains("- name: Reject tests in src"),
+        "lint job should make tests-under-src failures visible on PRs"
+    );
+    assert!(
+        lint.contains("rust-script scripts/check-no-src-tests.rs"),
+        "lint job should run the no-src-tests guard script"
+    );
+}
+
+#[test]
 fn crate_size_guard_uses_documented_crates_io_limit() {
     let script = fs::read_to_string(format!(
         "{}/scripts/check-crate-size.rs",

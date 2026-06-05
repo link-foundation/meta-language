@@ -28,6 +28,8 @@ aligned with the issue requirements.
   links-network model internally.
 - Prefer explicit metadata links or typed metadata over side tables.
 - Add focused tests for each new behavior.
+- Keep Rust tests under `tests/`; CI rejects `#[test]`, `#[cfg(test)]`, and
+  `mod tests` markers under `src/`.
 - Use Rust documentation comments for public APIs.
 - Keep generated experiments in `experiments/` and real usage examples in
   `examples/`.
@@ -40,6 +42,7 @@ Run these before pushing code:
 cargo fmt --check
 cargo clippy --all-targets --all-features
 cargo test --all-features
+rust-script scripts/check-no-src-tests.rs
 rust-script scripts/check-file-size.rs
 rust-script scripts/check-crate-size.rs
 ```

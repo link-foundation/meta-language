@@ -101,6 +101,7 @@ executable fixture gate, and language coverage targets.
 cargo fmt --check
 cargo clippy --all-targets --all-features
 cargo test --all-features
+rust-script scripts/check-no-src-tests.rs
 ```
 
 This repository uses changelog fragments in `changelog.d/`; code changes should
