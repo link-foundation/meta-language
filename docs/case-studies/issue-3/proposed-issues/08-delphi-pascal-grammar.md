@@ -11,7 +11,8 @@ Delphi/Object Pascal is TIOBE `#10`. Only a **generic** `tree-sitter-pascal`
 
 ## Scope
 
-- Adopt `tree-sitter-pascal` and wire it through the `#03` adapter.
+- Adopt `tree-sitter-pascal` and wire it through the
+  [#7](https://github.com/link-foundation/meta-language/issues/7) adapter.
 - Document the Delphi-specific constructs the generic grammar misses (units,
   properties, attributes, generics, inline variables).
 - Decide whether to extend/fork for Delphi coverage or accept generic-Pascal scope
@@ -29,4 +30,4 @@ Delphi/Object Pascal is TIOBE `#10`. Only a **generic** `tree-sitter-pascal`
 - Survey: [`rust-libraries-survey.md`](../rust-libraries-survey.md) §A
 - Solution: [`solution-plans.md`](../solution-plans.md) Solution 2
 - Requirement: LANG-PL (Delphi/Object Pascal)
-- Blocked by: `#03`
+- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)

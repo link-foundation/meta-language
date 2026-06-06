@@ -17,7 +17,8 @@ grammar covering all SQL. See
   `sql-postgres`, `sql-sqlite`, `sql-bigquery`) rather than one `sql` grammar
   (NFR-5: coexisting dialects → register each).
 - Adopt `tree-sitter-sequel` as the baseline; map at least one dialect end-to-end
-  through the `#03` adapter.
+  through the [#7](https://github.com/link-foundation/meta-language/issues/7)
+  adapter.
 - Document which constructs each adopted dialect grammar covers/misses.
 
 ## Acceptance criteria
@@ -33,4 +34,4 @@ grammar covering all SQL. See
 - Survey: [`rust-libraries-survey.md`](../rust-libraries-survey.md) §A
 - Solution: [`solution-plans.md`](../solution-plans.md) Solution 2
 - Requirement: LANG-PL (SQL)
-- Blocked by: `#03`
+- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)

@@ -15,8 +15,9 @@ same-language only today. See
 
 ## Scope
 
-- Implement cross-language reconstruction: walk concept links (`#13`) → target-language
-  concrete syntax.
+- Implement cross-language reconstruction: walk concept links
+  ([#17](https://github.com/link-foundation/meta-language/issues/17)) →
+  target-language concrete syntax.
 - Validate with meta-expression's worked example: "Hawaii is a state." (Q782 /
   Q35657) → "Гавайи это штат." (en → ru).
 - Add configurable (de)formalization to `ParseConfiguration`: formalization levels
@@ -37,4 +38,4 @@ same-language only today. See
 - Ecosystem: [`ecosystem-foundations.md`](../ecosystem-foundations.md)
 - Solution: [`solution-plans.md`](../solution-plans.md) Solution 8
 - Requirements: CORE-16/17, PAR-12
-- Blocked by: `#13`
+- Blocked by: [#17](https://github.com/link-foundation/meta-language/issues/17)

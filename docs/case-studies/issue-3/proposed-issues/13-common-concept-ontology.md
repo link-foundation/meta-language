@@ -35,4 +35,4 @@ meta-expression already ships `semantic-lexicon.json` (**351 concepts**, en/hi/r
 - Ecosystem: [`ecosystem-foundations.md`](../ecosystem-foundations.md)
 - Solution: [`solution-plans.md`](../solution-plans.md) Solution 8
 - Requirement: CORE-10
-- Blocked by: `#12`
+- Blocked by: [#16](https://github.com/link-foundation/meta-language/issues/16)

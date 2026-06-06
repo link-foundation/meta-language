@@ -44,4 +44,5 @@ Prefer LibCST `_nodes/tests/` (plain MIT) over `_parser/parso/` (dual MIT/PSF).
 - Suites: [`competitor-test-suites.md`](../competitor-test-suites.md)
 - Solution: [`solution-plans.md`](../solution-plans.md) Solution 9
 - Requirements: I3-2, PAR-1…6
-- Blocked by: `#03` (real grammars make many fixtures meaningful)
+- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)
+  (real grammars make many fixtures meaningful)

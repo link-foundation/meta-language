@@ -6,8 +6,8 @@
 > [issue #1](https://github.com/link-foundation/meta-language/issues/1), each given
 > a stable ID, traced to the **current implementation state** in this repository,
 > and marked with a gap classification. Solution approaches for each ID are in
-> [`solution-plans.md`](./solution-plans.md); ready-to-file issue specs are in
-> [`proposed-issues/`](./proposed-issues/).
+> [`solution-plans.md`](./solution-plans.md); filed implementation issues and
+> their source specs are in [`proposed-issues/`](./proposed-issues/).
 
 ## How to read the "Current state" column
 
@@ -49,20 +49,20 @@ These are the requirements the issue places on *this* deliverable (the case stud
 
 | ID | Requirement (verbatim intent) | Current state | Status |
 |---|---|---|---|
-| **I3-1** | "create issues in this repository, to make sure our rust libraries include everything required to process for in and out for all top 10 programming and top 10 natural languages, as well as full support for txt, markdown and html in mixed mode" | Proposed-issue specs drafted in [`proposed-issues/`](./proposed-issues/) with a `gh` creation script; **not auto-filed** (outward-facing — see note below) | **Addressed (specs ready)** |
-| **I3-2** | "copy all the tests from competitors and make sure we support all the features similar projects already support, so we beat them all, and their users can smoothly transition to our library" | Test-suite locations, formats, licenses, and per-project adaptation plans documented in [`competitor-test-suites.md`](./competitor-test-suites.md); turned into proposed issues | **Planned** |
+| **I3-1** | "create issues in this repository, to make sure our rust libraries include everything required to process for in and out for all top 10 programming and top 10 natural languages, as well as full support for txt, markdown and html in mixed mode" | 16 implementation issues filed with `gh` as [#5](https://github.com/link-foundation/meta-language/issues/5) through [#20](https://github.com/link-foundation/meta-language/issues/20); source specs and the idempotent creation script remain in [`proposed-issues/`](./proposed-issues/) | **Done** |
+| **I3-2** | "copy all the tests from competitors and make sure we support all the features similar projects already support, so we beat them all, and their users can smoothly transition to our library" | Test-suite locations, formats, licenses, and per-project adaptation plans documented in [`competitor-test-suites.md`](./competitor-test-suites.md); tracked by implementation issues [#19](https://github.com/link-foundation/meta-language/issues/19) and [#20](https://github.com/link-foundation/meta-language/issues/20) | **Planned** |
 | **I3-3** | "See issue #1 for vision and initial implementation" | Vision requirements extracted verbatim into Part C below; issue #1 raw JSON in [`raw-data/issue-1.json`](./raw-data/issue-1.json) | **Done** |
 | **I3-4** | "collect data … compile that data to `./docs/case-studies/issue-{id}` folder" | `docs/case-studies/issue-3/` created: `raw-data/` (issues #1/#3, PR #2/#4 JSON) + research docs | **Done** |
 | **I3-5** | "do deep case study analysis (also make sure to search online for additional facts and data)" | Three live-sourced research docs + [`online-research.md`](./online-research.md); rankings re-verified; founding-issue figures corrected | **Done** |
 | **I3-6** | "list of each and all requirements from the issue" | This document (Parts A–E) | **Done** |
 | **I3-7** | "propose possible solutions and solution plans for each requirement (check known existing components/libraries)" | [`solution-plans.md`](./solution-plans.md) + [`rust-libraries-survey.md`](./rust-libraries-survey.md) | **Done** |
 
-**Note on I3-1 (creating issues):** filing 20+ GitHub issues is an outward-facing,
-hard-to-reverse action. Following this repo's operating guidance ("for actions that
-are hard to reverse or outward-facing, confirm first unless durably authorized"),
-the case study ships **ready-to-file issue specifications** plus an idempotent
-`gh` creation script ([`proposed-issues/create-issues.sh`](./proposed-issues/create-issues.sh))
-rather than auto-creating them. A maintainer runs one command to file them.
+**Note on I3-1 (creating issues):** the first draft left the issues as specs
+because creating public GitHub issues is an outward-facing action. After maintainer
+feedback on PR #4 explicitly requested creation, `create-issues.sh --create` was
+run on 2026-06-06 and filed issues [#5](https://github.com/link-foundation/meta-language/issues/5)
+through [#20](https://github.com/link-foundation/meta-language/issues/20). The
+script is idempotent and now skips those issues by exact title.
 
 ---
 
@@ -86,8 +86,8 @@ mode." "In and out" = parse (in) **and** reconstruct (out), losslessly.
   appears in the issue title and body but `MARKUP_LANGUAGE_TARGETS` has only
   Markdown and HTML. Plain text is the degenerate container (entire content is one
   prose/trivia region), and is also the fallback when content-sniffing fails — so
-  it is both a real target and an architectural default. Proposed issue **`#01`**
-  adds it.
+  it is both a real target and an architectural default. Implementation issue
+  [#5](https://github.com/link-foundation/meta-language/issues/5) adds it.
 - **Visual Basic, SQL, Delphi** have no off-the-shelf Rust/tree-sitter grammar
   (see [`rust-libraries-survey.md`](./rust-libraries-survey.md) §A). These three
   are the long-pole programming targets.
@@ -179,7 +179,9 @@ Each project is a "test suite to satisfy." Detail + adaptation plans:
 
 For each `PAR-x`, "Tracked" means one illustrative fixture exists; the **bulk
 adoption** of each upstream's real corpus (I3-2's "copy **all** the tests") is the
-outstanding work, planned as proposed issues.
+outstanding work, tracked by implementation issues
+[#19](https://github.com/link-foundation/meta-language/issues/19) and
+[#20](https://github.com/link-foundation/meta-language/issues/20).
 
 ---
 
@@ -189,7 +191,7 @@ outstanding work, planned as proposed issues.
 |---|---|---|---|
 | **NFR-1** | Terminology: **never use "graph"**; everything is links / links network; translate external node/edge/tree vocabulary at the adapter boundary | issue #1 terminology note | Honored in code + docs |
 | **NFR-2** | Tests live under `tests/` only — CI rejects `#[test]`/`#[cfg(test)]`/`mod tests` under `src/` | `CONTRIBUTING.md` | Honored |
-| **NFR-3** | Changelog fragment in `changelog.d/` per change (bump: major/minor/patch) | `CONTRIBUTING.md` | This PR adds one |
+| **NFR-3** | Changelog fragment in `changelog.d/` per user-facing runtime change (bump: major/minor/patch) | `CONTRIBUTING.md` + CI change classifier | This PR is docs-only and does not trigger the changelog gate; each filed implementation issue includes a changelog-fragment acceptance criterion |
 | **NFR-4** | Crate-size / file-size limits enforced by `scripts/check-*.rs` | `CONTRIBUTING.md` | Must keep docs out of crate package |
 | **NFR-5** | "Try both if no conflicts; both as configurable alternatives if they conflict" — coexisting solutions should both be supported, conflicting ones offered as configuration | konard on issue #1 (`raw-data/issue-1-comments.json`) | Drives the "configurable policy" stance (e.g. trivia policy, region detection) |
 | **NFR-6** | First implementation language is **Rust**; other languages may follow (parity tradition) | issue #1 §5 | Rust crate in place |
@@ -200,7 +202,8 @@ outstanding work, planned as proposed issues.
 ## Traceability summary
 
 - **Process requirements (I3-1…I3-7):** all addressed by this case study; I3-1
-  delivers ready-to-file specs rather than auto-filing.
+  delivers filed GitHub implementation issues [#5](https://github.com/link-foundation/meta-language/issues/5)
+  through [#20](https://github.com/link-foundation/meta-language/issues/20).
 - **Coverage requirements (Part B):** 20 languages + Markdown + HTML are **Tracked**
   (registry + fixture, scaffold-backed); **txt is the one missing registry entry**;
   mixed mode is **Partial**.

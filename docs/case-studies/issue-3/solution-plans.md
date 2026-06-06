@@ -62,7 +62,9 @@ gives PAR-1 (tree-sitter parity) almost for free.
 **Plan.** (1) Define the `LanguageParser` trait + tree-sitter adapter. (2) Wire the
 7 official grammars, replacing each scaffold `LANGUAGE_FIXTURES` entry's backing
 with a real parse while keeping the byte-exact round-trip assertion. (3) Add query
-lowering (tree-sitter S-expr → `LinkQuery`). → proposed issues **`#03`, `#11`**.
+lowering (tree-sitter S-expr → `LinkQuery`). → implementation issues
+[#7](https://github.com/link-foundation/meta-language/issues/7) and
+[#15](https://github.com/link-foundation/meta-language/issues/15).
 
 ---
 
@@ -83,7 +85,10 @@ lowering (tree-sitter S-expr → `LinkQuery`). → proposed issues **`#03`, `#11
 - **Delphi/Object Pascal** — only generic `tree-sitter-pascal` exists; adopt it and
   document the Delphi-specific constructs it misses; extend or fork as needed.
 
-**Plan.** One proposed issue per gap language (**`#06`, `#07`, `#08`**) since each is an
+**Plan.** One implementation issue per gap language: Visual Basic
+[#10](https://github.com/link-foundation/meta-language/issues/10), SQL
+[#11](https://github.com/link-foundation/meta-language/issues/11), and Delphi
+[#12](https://github.com/link-foundation/meta-language/issues/12). Each is an
 independent, sizeable grammar-acquisition effort with its own risk profile.
 
 ---
@@ -102,8 +107,9 @@ fall back to a single `txt` region. No external library needed.
 
 **Why it matters.** It is explicitly named in the issue title/body, it closes the
 one un-tracked target, and it makes the mixed-mode contract total (every byte
-belongs to *some* region, even if that region is "plain text"). → proposed issue
-**`#01`** (small, do first).
+belongs to *some* region, even if that region is "plain text"). → implementation
+issue [#5](https://github.com/link-foundation/meta-language/issues/5) (small, do
+first).
 
 ---
 
@@ -127,7 +133,7 @@ belongs to *some* region, even if that region is "plain text"). → proposed iss
 **Plan.** A `NaturalLanguageSegmenter` layer emitting `Token`/`Semantic` links over
 the existing lossless text, with a script-aware dispatch (CJK→lindera, else→
 unicode-segmentation). Identification populates a `Language` link per region. →
-proposed issue **`#05`**.
+implementation issue [#9](https://github.com/link-foundation/meta-language/issues/9).
 
 ---
 
@@ -153,7 +159,8 @@ offset data as a cross-check for Markdown fence spans.
 
 **Plan.** Extend `mixed_regions.rs` from detection-only to detect-then-parse-then-
 link; add fixtures for all four embedding targets asserting a single connected
-network + byte-exact whole-document reconstruction. → proposed issue **`#04`**.
+network + byte-exact whole-document reconstruction. → implementation issue
+[#8](https://github.com/link-foundation/meta-language/issues/8).
 
 ---
 
@@ -179,7 +186,8 @@ substrate), `doublets` (persistence). These are *references and options*, not
 mandatory dependencies — the current scaffold already satisfies the API shape.
 
 **Plan.** Decide green/red vs current representation; implement persistent sharing
-for `NetworkSnapshot`; benchmark interning. → proposed issue **`#10`**.
+for `NetworkSnapshot`; benchmark interning. → implementation issue
+[#14](https://github.com/link-foundation/meta-language/issues/14).
 
 ---
 
@@ -206,7 +214,9 @@ transform-then-reserialize-preserving-unchanged-bytes guarantee to match).
 
 **Plan.** (1) Confirm create/update/delete/swap parity with link-cli's own tests.
 (2) Add S-expression query surface lowering to `LinkQuery`. (3) Add the host
-predicate hook. → proposed issues **`#09`, `#11`**.
+predicate hook. → implementation issues
+[#13](https://github.com/link-foundation/meta-language/issues/13) and
+[#15](https://github.com/link-foundation/meta-language/issues/15).
 
 ---
 
@@ -243,7 +253,10 @@ reusable.
 **Plan.** (1) Seed self-description roots as links with in-language definitions.
 (2) Import the semantic lexicon as concept links. (3) Per-language concept→syntax
 maps for the initial language set. (4) Cross-language reconstruction + the Hawaii
-fixture. (5) Formalization-level config. → proposed issues **`#12`, `#13`, `#14`**.
+fixture. (5) Formalization-level config. → implementation issues
+[#16](https://github.com/link-foundation/meta-language/issues/16),
+[#17](https://github.com/link-foundation/meta-language/issues/17), and
+[#18](https://github.com/link-foundation/meta-language/issues/18).
 
 ---
 
@@ -279,8 +292,10 @@ actual files); links-notation cross-language identity suite (~138 tests/lang);
 link-cli create/update/delete/swap; lino-objects-codec shared+circular round-trip;
 meta-expression Hawaii / "1+1=2" / "this statement is false" cases.
 
-**Plan.** One proposed issue per upstream cluster so the porting is reviewable in
-slices (**`#15`** external suites, **`#16`** ecosystem corpora).
+**Plan.** One implementation issue per upstream cluster so the porting is
+reviewable in slices: external suites
+[#19](https://github.com/link-foundation/meta-language/issues/19), ecosystem
+corpora [#20](https://github.com/link-foundation/meta-language/issues/20).
 
 ---
 
@@ -309,18 +324,31 @@ reused component is permissively licensed and compatible with this repo's Unlice
 
 ## Suggested phasing (maps to `proposed-issues/`)
 
-1. **Phase 0 — close tracking gaps (small, immediate):** txt container (`#01`),
-   natural-language ordering note (`#02`).
-2. **Phase 1 — the keystone:** tree-sitter adapter + 7 grammars (`#03`), mixed-mode
-   embedding (`#04`), NL segmentation/ID (`#05`).
-3. **Phase 2 — gap grammars (parallelizable, independent):** Visual Basic (`#06`),
-   SQL dialects (`#07`), Delphi (`#08`).
-4. **Phase 3 — transform & representation:** substitution/query enrichment (`#09`),
-   persistent snapshots (`#10`), unified query+transform surface (`#11`).
-5. **Phase 4 — semantics (deepest):** self-description roots (`#12`), common concept
-   ontology (`#13`), cross-language reconstruction + formalization config (`#14`).
-6. **Phase 5 — corpus adoption (broad, ongoing):** external competitor suites (`#15`),
-   ecosystem corpora (`#16`).
+1. **Phase 0 — close tracking gaps (small, immediate):** txt container
+   ([#5](https://github.com/link-foundation/meta-language/issues/5)),
+   natural-language ordering note
+   ([#6](https://github.com/link-foundation/meta-language/issues/6)).
+2. **Phase 1 — the keystone:** tree-sitter adapter + 7 grammars
+   ([#7](https://github.com/link-foundation/meta-language/issues/7)), mixed-mode
+   embedding ([#8](https://github.com/link-foundation/meta-language/issues/8)), NL
+   segmentation/ID ([#9](https://github.com/link-foundation/meta-language/issues/9)).
+3. **Phase 2 — gap grammars (parallelizable, independent):** Visual Basic
+   ([#10](https://github.com/link-foundation/meta-language/issues/10)), SQL
+   dialects ([#11](https://github.com/link-foundation/meta-language/issues/11)),
+   Delphi ([#12](https://github.com/link-foundation/meta-language/issues/12)).
+4. **Phase 3 — transform & representation:** substitution/query enrichment
+   ([#13](https://github.com/link-foundation/meta-language/issues/13)), persistent
+   snapshots ([#14](https://github.com/link-foundation/meta-language/issues/14)),
+   unified query+transform surface
+   ([#15](https://github.com/link-foundation/meta-language/issues/15)).
+5. **Phase 4 — semantics (deepest):** self-description roots
+   ([#16](https://github.com/link-foundation/meta-language/issues/16)), common
+   concept ontology ([#17](https://github.com/link-foundation/meta-language/issues/17)),
+   cross-language reconstruction + formalization config
+   ([#18](https://github.com/link-foundation/meta-language/issues/18)).
+6. **Phase 5 — corpus adoption (broad, ongoing):** external competitor suites
+   ([#19](https://github.com/link-foundation/meta-language/issues/19)), ecosystem
+   corpora ([#20](https://github.com/link-foundation/meta-language/issues/20)).
 
 This phasing front-loads cheap wins and the keystone, parallelizes the independent
 gap grammars, and defers the deepest semantic work — while every phase keeps the

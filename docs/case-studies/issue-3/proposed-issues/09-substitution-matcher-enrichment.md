@@ -21,8 +21,9 @@ See [`ecosystem-foundations.md`](../ecosystem-foundations.md) (link-cli) and
 - Add **by-type** matching (match on `LinkType`/type links).
 - Keep predicates a **pluggable host-evaluated layer** (engine binds captures; host
   runs regex/eq/semantic) — mirror tree-sitter's engine/host split (CORE-15).
-- (Match-by-meaning depends on the concept layer `#13` — out of scope here; leave the
-  hook.)
+- (Match-by-meaning depends on the concept layer
+  [#17](https://github.com/link-foundation/meta-language/issues/17) — out of
+  scope here; leave the hook.)
 
 ## Acceptance criteria
 

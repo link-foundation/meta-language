@@ -21,10 +21,12 @@ Solution 5.
 - Detect regions **both** ways (NFR-5): name-driven (fence tag, `<script type>`,
   extension) **and** content-driven (sniff the body; `lingua`/`whatlang` for prose,
   lightweight signatures for code). Default documented.
-- Parse each region via the appropriate grammar adapter (from `#03`) and link it into
-  the host network keyed on its byte range.
+- Parse each region via the appropriate grammar adapter (from
+  [#7](https://github.com/link-foundation/meta-language/issues/7)) and link it
+  into the host network keyed on its byte range.
 - Whole-document `reconstruct_text()` stays byte-exact.
-- Fall back to a `txt` region (`#01`) when sniffing fails.
+- Fall back to a `txt` region ([#5](https://github.com/link-foundation/meta-language/issues/5))
+  when sniffing fails.
 
 ## Acceptance criteria
 
@@ -39,4 +41,4 @@ Solution 5.
 
 - Solution: [`solution-plans.md`](../solution-plans.md) Solution 5
 - Requirements: LANG-MIX, CORE-7
-- Blocked by: `#03`
+- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)

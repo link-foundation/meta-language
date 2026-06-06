@@ -46,7 +46,9 @@ CORE-1/3/4/5/7 and PAR-1.
 ## Notes
 
 - Visual Basic, SQL, and Delphi are **not** covered here (no official grammars) —
-  see `#06`, `#07`, `#08`.
+  see [#10](https://github.com/link-foundation/meta-language/issues/10),
+  [#11](https://github.com/link-foundation/meta-language/issues/11), and
+  [#12](https://github.com/link-foundation/meta-language/issues/12).
 - A native-Rust JS alternative (`biome_js_parser`) may be added later as a second
   source (NFR-5 "try both"); out of scope for this issue.
 
