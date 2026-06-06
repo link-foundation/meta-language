@@ -1,13 +1,14 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use crate::configuration::{ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy};
+use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::link_flags::LinkFlags;
 use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
 use crate::query::LinkQuery;
 use crate::source::{ByteRange, Point, SourceSpan};
 use crate::substitution::{SubstitutionReport, SubstitutionRule};
+use crate::tree_sitter_adapter;
 use crate::verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 /// Stable identifier for a link inside a [`LinkNetwork`].
@@ -428,12 +429,7 @@ impl LinkNetwork {
             );
         }
 
-        network.attach_embedded_regions(
-            document,
-            text,
-            language,
-            configuration.region_detection_policy(),
-        );
+        network.attach_embedded_regions(document, text, language, configuration);
 
         network
     }
@@ -489,15 +485,24 @@ impl LinkNetwork {
             .filter(|link| !link.metadata().flags().is_missing())
             .filter_map(|link| {
                 Some((
-                    link.metadata().span()?.byte_range().start(),
+                    link.metadata().span()?.byte_range(),
                     link.id().as_u64(),
                     link.metadata().term()?.to_string(),
                 ))
             })
             .collect::<Vec<_>>();
 
-        tokens.sort_by_key(|(start, id, _term)| (*start, *id));
-        tokens.into_iter().map(|(_start, _id, term)| term).collect()
+        tokens.sort_by_key(|(range, id, _term)| (range.start(), *id));
+        let mut reconstructed = String::new();
+        let mut covered_until = 0;
+        for (range, _id, term) in tokens {
+            if range.start() < covered_until {
+                continue;
+            }
+            reconstructed.push_str(&term);
+            covered_until = range.end();
+        }
+        reconstructed
     }
 
     /// Returns embedded mixed-language regions discovered during parse.
@@ -813,12 +818,13 @@ impl LinkNetwork {
         document: LinkId,
         text: &str,
         language: &str,
-        policy: RegionDetectionPolicy,
+        configuration: ParseConfiguration,
     ) {
+        let policy = configuration.region_detection_policy();
         for region in detect_embedded_regions(text, language, policy) {
             let region_language = region.language().to_string();
             let language_link = self.insert_typed_point(&region_language, LinkType::Language, None);
-            self.insert_link(
+            let region_link = self.insert_link(
                 [document, language_link],
                 LinkMetadata::new()
                     .with_link_type(LinkType::Region)
@@ -826,6 +832,16 @@ impl LinkNetwork {
                     .with_term(format!("{region_language} region"))
                     .with_language(region_language)
                     .with_span(region.span()),
+            );
+            let range = region.span().byte_range();
+            let region_text = &text[range.start()..range.end()];
+            let _ = tree_sitter_adapter::parse_embedded_region_into(
+                self,
+                region_link,
+                region_text,
+                region.language(),
+                region.span(),
+                configuration,
             );
         }
     }

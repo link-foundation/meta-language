@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use tree_sitter::{Language, Node, Parser};
 
 use crate::{
@@ -13,14 +15,40 @@ pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> O
 
     let (mut network, document) = LinkNetwork::new_parse_document(text, language);
     let root = parsed.root_node();
-    convert_node(&mut network, document, root, text, language, configuration);
-    network.attach_embedded_regions(
-        document,
+    let context = ConvertContext::new(
         text,
         language,
-        configuration.region_detection_policy(),
+        configuration,
+        SpanOffset::zero(),
+        text.len(),
     );
+    convert_node(&mut network, document, root, context);
+    network.attach_embedded_regions(document, text, language, configuration);
     Some(network)
+}
+
+pub fn parse_embedded_region_into(
+    network: &mut LinkNetwork,
+    region: LinkId,
+    text: &str,
+    language: &str,
+    span: SourceSpan,
+    configuration: ParseConfiguration,
+) -> Option<LinkId> {
+    let grammar = grammar_for_language(language)?;
+    let parse_text = embedded_parse_text(text, language);
+    let mut parser = Parser::new();
+    parser.set_language(grammar).ok()?;
+    let parsed = parser.parse(parse_text.as_ref(), None)?;
+    let root = parsed.root_node();
+    let context = ConvertContext::new(
+        parse_text.as_ref(),
+        language,
+        configuration,
+        SpanOffset::new(span.byte_range().start(), span.start_point()),
+        text.len(),
+    );
+    Some(convert_node(network, region, root, context))
 }
 
 fn grammar_for_language(language: &str) -> Option<Language> {
@@ -36,8 +64,14 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_c_sharp::language())
     } else if language.eq_ignore_ascii_case("javascript") || language.eq_ignore_ascii_case("js") {
         Some(tree_sitter_javascript::language())
+    } else if language.eq_ignore_ascii_case("rust") {
+        Some(tree_sitter_rust::language())
     } else if language == "R" || language == "r" {
         Some(tree_sitter_r::language())
+    } else if language.eq_ignore_ascii_case("html") {
+        Some(tree_sitter_html::language())
+    } else if language.eq_ignore_ascii_case("css") {
+        Some(tree_sitter_css::language())
     } else {
         None
     }
@@ -47,9 +81,7 @@ fn convert_node(
     network: &mut LinkNetwork,
     parent: LinkId,
     node: Node<'_>,
-    text: &str,
-    language: &str,
-    configuration: ParseConfiguration,
+    context: ConvertContext<'_>,
 ) -> LinkId {
     let node_id = network.insert_link(
         [parent],
@@ -57,13 +89,18 @@ fn convert_node(
             .with_link_type(LinkType::Syntax)
             .with_named(node.is_named())
             .with_term(node.kind())
-            .with_language(language)
-            .with_span(span_for_node(node))
+            .with_language(context.language)
+            .with_span(span_for_node(
+                node,
+                context.text,
+                context.source_len,
+                context.offset,
+            ))
             .with_flags(flags_for_node(node)),
     );
 
     if node.child_count() == 0 {
-        insert_leaf_token(network, node_id, node, text, language, configuration);
+        insert_leaf_token(network, node_id, node, context);
         return node_id;
     }
 
@@ -72,34 +109,21 @@ fn convert_node(
         let child = node
             .child(child_index)
             .expect("tree-sitter child index should be valid");
-        insert_gap_token(
-            network,
-            node_id,
-            text,
-            covered_until,
-            child.start_byte(),
-            language,
-            configuration,
-        );
+        if context.has_synthetic_suffix() && child.start_byte() >= context.source_len {
+            break;
+        }
+        insert_gap_token(network, node_id, covered_until, child.start_byte(), context);
 
-        let child_id = convert_node(network, node_id, child, text, language, configuration);
+        let child_id = convert_node(network, node_id, child, context);
         if let Some(label) = node.field_name_for_child(
             u32::try_from(child_index).expect("tree-sitter child index fits in u32"),
         ) {
             network.insert_field(node_id, label, child_id);
         }
-        covered_until = child.end_byte();
+        covered_until = child.end_byte().min(context.source_len);
     }
 
-    insert_gap_token(
-        network,
-        node_id,
-        text,
-        covered_until,
-        node.end_byte(),
-        language,
-        configuration,
-    );
+    insert_gap_token(network, node_id, covered_until, node.end_byte(), context);
     node_id
 }
 
@@ -107,61 +131,67 @@ fn insert_leaf_token(
     network: &mut LinkNetwork,
     owner: LinkId,
     node: Node<'_>,
-    text: &str,
-    language: &str,
-    configuration: ParseConfiguration,
+    context: ConvertContext<'_>,
 ) {
-    if node.is_missing() || node.start_byte() == node.end_byte() {
+    let start = node.start_byte();
+    let end = node.end_byte().min(context.source_len);
+    if node.is_missing() || start >= end {
         return;
     }
 
-    let span = span_for_node(node);
+    let span = span_for_range(context.text, start, end, context.offset);
     let flags = flags_for_node(node);
     let token = network.insert_link(
         [owner],
         LinkMetadata::new()
             .with_link_type(LinkType::Token)
             .with_named(node.is_named())
-            .with_term(&text[node.start_byte()..node.end_byte()])
-            .with_language(language)
+            .with_term(&context.text[start..end])
+            .with_language(context.language)
             .with_span(span)
             .with_flags(flags),
     );
 
     if flags.is_extra() {
-        network.attach_trivia(owner, token, span, configuration.trivia_attachment_policy());
+        network.attach_trivia(
+            owner,
+            token,
+            span,
+            context.configuration.trivia_attachment_policy(),
+        );
     }
 }
 
 fn insert_gap_token(
     network: &mut LinkNetwork,
     owner: LinkId,
-    text: &str,
     start: usize,
     end: usize,
-    language: &str,
-    configuration: ParseConfiguration,
+    context: ConvertContext<'_>,
 ) {
+    let start = start.min(context.source_len);
+    let end = end.min(context.source_len);
     if start == end {
         return;
     }
 
-    let span = SourceSpan::new(
-        ByteRange::new(start, end),
-        point_at_byte(text, start),
-        point_at_byte(text, end),
-    );
+    let span = span_for_range(context.text, start, end, context.offset);
     let token = network.insert_link(
         [owner],
         LinkMetadata::new()
             .with_link_type(LinkType::Token)
             .with_named(false)
-            .with_term(&text[start..end])
-            .with_language(language)
+            .with_term(&context.text[start..end])
+            .with_language(context.language)
             .with_span(span)
             .with_flags(LinkFlags::extra()),
     );
-    network.attach_trivia(owner, token, span, configuration.trivia_attachment_policy());
+    network.attach_trivia(
+        owner,
+        token,
+        span,
+        context.configuration.trivia_attachment_policy(),
+    );
 }
 
 fn flags_for_node(node: Node<'_>) -> LinkFlags {
@@ -181,16 +211,18 @@ fn flags_for_node(node: Node<'_>) -> LinkFlags {
     flags
 }
 
-fn span_for_node(node: Node<'_>) -> SourceSpan {
-    SourceSpan::new(
-        ByteRange::new(node.start_byte(), node.end_byte()),
-        point_from_tree_sitter(node.start_position()),
-        point_from_tree_sitter(node.end_position()),
-    )
+fn span_for_node(node: Node<'_>, text: &str, source_len: usize, offset: SpanOffset) -> SourceSpan {
+    let start = node.start_byte().min(source_len);
+    let end = node.end_byte().min(source_len);
+    span_for_range(text, start, end, offset)
 }
 
-const fn point_from_tree_sitter(point: tree_sitter::Point) -> Point {
-    Point::new(point.row, point.column)
+fn span_for_range(text: &str, start: usize, end: usize, offset: SpanOffset) -> SourceSpan {
+    SourceSpan::new(
+        ByteRange::new(offset.byte + start, offset.byte + end),
+        offset.point(point_at_byte(text, start)),
+        offset.point(point_at_byte(text, end)),
+    )
 }
 
 fn point_at_byte(text: &str, byte: usize) -> Point {
@@ -203,4 +235,77 @@ fn point_at_byte(text: &str, byte: usize) -> Point {
         }
     }
     Point::new(row, byte - line_start)
+}
+
+fn embedded_parse_text<'a>(text: &'a str, language: &str) -> Cow<'a, str> {
+    if language.eq_ignore_ascii_case("css") && css_declaration_list_needs_semicolon(text) {
+        Cow::Owned(format!("{text};"))
+    } else {
+        Cow::Borrowed(text)
+    }
+}
+
+fn css_declaration_list_needs_semicolon(text: &str) -> bool {
+    let trimmed = text.trim_end();
+    !trimmed.is_empty()
+        && !trimmed.ends_with(';')
+        && !trimmed.ends_with('}')
+        && !trimmed.contains('{')
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct SpanOffset {
+    byte: usize,
+    point: Point,
+}
+
+impl SpanOffset {
+    const fn new(byte: usize, point: Point) -> Self {
+        Self { byte, point }
+    }
+
+    const fn zero() -> Self {
+        Self::new(0, Point::new(0, 0))
+    }
+
+    const fn point(self, point: Point) -> Point {
+        let row = self.point.row() + point.row();
+        let column = if point.row() == 0 {
+            self.point.column() + point.column()
+        } else {
+            point.column()
+        };
+        Point::new(row, column)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct ConvertContext<'a> {
+    text: &'a str,
+    language: &'a str,
+    configuration: ParseConfiguration,
+    offset: SpanOffset,
+    source_len: usize,
+}
+
+impl<'a> ConvertContext<'a> {
+    const fn new(
+        text: &'a str,
+        language: &'a str,
+        configuration: ParseConfiguration,
+        offset: SpanOffset,
+        source_len: usize,
+    ) -> Self {
+        Self {
+            text,
+            language,
+            configuration,
+            offset,
+            source_len,
+        }
+    }
+
+    const fn has_synthetic_suffix(self) -> bool {
+        self.source_len < self.text.len()
+    }
 }
