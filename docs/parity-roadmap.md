@@ -113,18 +113,18 @@ Programming-language targets use the TIOBE May 2026 top-ten list:
 
 Source: <https://www.tiobe.com/tiobe-index/>
 
-Natural-language targets use the Britannica/Ethnologue total-speaker
-top-ten list:
+Natural-language targets use the Ethnologue 2025 total-speaker order for the
+Britannica/Ethnologue top-ten set:
 
 1. English
 2. Mandarin Chinese
 3. Hindi
 4. Spanish
-5. French
-6. Modern Standard Arabic
+5. Modern Standard Arabic
+6. French
 7. Bengali
-8. Russian
-9. Portuguese
+8. Portuguese
+9. Russian
 10. Urdu
 
 Source: <https://www.britannica.com/topic/languages-by-total-number-of-speakers-2228881>

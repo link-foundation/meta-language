@@ -575,6 +575,30 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
 }
 
 #[test]
+fn natural_language_targets_follow_ethnologue_2025_total_speaker_order() {
+    let target_names = NATURAL_LANGUAGE_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        target_names,
+        vec![
+            "English",
+            "Mandarin Chinese",
+            "Hindi",
+            "Spanish",
+            "Modern Standard Arabic",
+            "French",
+            "Bengali",
+            "Portuguese",
+            "Russian",
+            "Urdu",
+        ]
+    );
+}
+
+#[test]
 fn every_language_target_has_an_executable_lossless_fixture() {
     let target_languages = MARKUP_LANGUAGE_TARGETS
         .iter()
