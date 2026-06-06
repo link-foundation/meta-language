@@ -263,6 +263,10 @@ fn windows_test_job_configures_aws_lc_cmake_before_running_tests() {
     assert!(test.contains("vswhere.exe"));
     assert!(test.contains("vcvars64.bat"));
     assert!(test.contains("GITHUB_PATH"));
+    assert!(test.contains("VCToolsInstallDir was not set by vcvars64.bat"));
+    assert!(test.contains("bin\\Hostx64\\x64\\link.exe"));
+    assert!(test.contains("MSVC link.exe not found at $msvcLinker"));
+    assert!(test.contains("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker"));
     assert!(test.contains("\"$name=$value\" | Out-File -FilePath $env:GITHUB_ENV -Append"));
     assert!(test.contains("AWS_LC_SYS_C_STD=11"));
     assert!(test.contains("CMAKE_GENERATOR=Ninja"));
