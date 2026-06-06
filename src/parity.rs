@@ -546,7 +546,7 @@ pub const PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
     },
 ];
 
-/// Initial top-ten natural-language parser targets by total speakers.
+/// Initial top-ten natural-language parser targets in Ethnologue 2025 total-speaker order.
 pub const NATURAL_LANGUAGE_TARGETS: &[LanguageTarget] = &[
     LanguageTarget {
         name: "English",
@@ -569,12 +569,12 @@ pub const NATURAL_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         basis: "Ethnologue/Britannica total-speaker top 10",
     },
     LanguageTarget {
-        name: "French",
+        name: "Modern Standard Arabic",
         family: LanguageFamily::Natural,
         basis: "Ethnologue/Britannica total-speaker top 10",
     },
     LanguageTarget {
-        name: "Modern Standard Arabic",
+        name: "French",
         family: LanguageFamily::Natural,
         basis: "Ethnologue/Britannica total-speaker top 10",
     },
@@ -584,12 +584,12 @@ pub const NATURAL_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         basis: "Ethnologue/Britannica total-speaker top 10",
     },
     LanguageTarget {
-        name: "Russian",
+        name: "Portuguese",
         family: LanguageFamily::Natural,
         basis: "Ethnologue/Britannica total-speaker top 10",
     },
     LanguageTarget {
-        name: "Portuguese",
+        name: "Russian",
         family: LanguageFamily::Natural,
         basis: "Ethnologue/Britannica total-speaker top 10",
     },
