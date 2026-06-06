@@ -196,7 +196,32 @@ jobs:
 
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installationPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installationPath) {
+            throw "Visual Studio with C++ tools not found"
+          }
+
+          $vcvars = Join-Path $installationPath "VC\Auxiliary\Build\vcvars64.bat"
+          if (-not (Test-Path $vcvars)) {
+            throw "vcvars64.bat not found at $vcvars"
+          }
+
+          cmd /s /c "`"$vcvars`" && set" | ForEach-Object {
+            if ($_ -match "^(.*?)=(.*)$") {
+              $name = $matches[1]
+              $value = $matches[2]
+              if ($name -eq "Path") {
+                $value -split ";" | Where-Object { $_ } | ForEach-Object {
+                  $_ | Out-File -FilePath $env:GITHUB_PATH -Append
+                }
+              } elseif ($name -match "^(INCLUDE|LIB|LIBPATH|VCINSTALLDIR|VCToolsInstallDir|VCToolsVersion|VSINSTALLDIR|WindowsSdkDir|WindowsSDKVersion|UniversalCRTSdkDir|UCRTVersion)$") {
+                "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Append
+              }
+            }
+          }
 
       - name: Configure AWS-LC CMake on Windows
         if: runner.os == 'Windows'

@@ -259,7 +259,10 @@ fn windows_test_job_configures_aws_lc_cmake_before_running_tests() {
         "Windows build setup should run before cargo test"
     );
     assert!(test.contains("if: runner.os == 'Windows'"));
-    assert!(test.contains("uses: ilammy/msvc-dev-cmd@v1"));
+    assert!(!test.contains("ilammy/msvc-dev-cmd@v1"));
+    assert!(test.contains("vswhere.exe"));
+    assert!(test.contains("vcvars64.bat"));
+    assert!(test.contains("GITHUB_PATH"));
     assert!(test.contains("AWS_LC_SYS_C_STD=11"));
     assert!(test.contains("CMAKE_GENERATOR=Ninja"));
 }
