@@ -401,6 +401,43 @@ fn content_driven_and_html_region_detection_cover_embedding_targets() {
 }
 
 #[test]
+fn embedded_regions_are_parsed_and_connected_to_region_links() {
+    let markdown =
+        "Intro\n```JavaScript\nconst value = 1;\n```\n<section><em>HTML</em></section>\n";
+    let markdown_network = LinkNetwork::parse(markdown, "Markdown", ParseConfiguration::default());
+
+    assert_eq!(markdown_network.reconstruct_text(), markdown);
+    assert_region_has_connected_syntax(&markdown_network, "JavaScript");
+    assert_region_has_connected_syntax(&markdown_network, "HTML");
+    assert!(markdown_network.links().any(|link| {
+        link.metadata().link_type() == Some(LinkType::Token)
+            && link.metadata().language() == Some("JavaScript")
+            && link.metadata().term() == Some("value")
+    }));
+
+    let html = "<script>const value = 1;</script><style>.x { color: red; }</style><p style=\"color: blue\">text</p>";
+    let html_network = LinkNetwork::parse(html, "HTML", ParseConfiguration::default());
+
+    assert_eq!(html_network.reconstruct_text(), html);
+    assert_region_has_connected_syntax(&html_network, "JavaScript");
+    assert_region_has_connected_syntax(&html_network, "CSS");
+}
+
+#[test]
+fn content_driven_embedded_regions_are_parsed() {
+    let markdown = "Intro\n```\nconst value = 1;\n```\n";
+    let network = LinkNetwork::parse(
+        markdown,
+        "Markdown",
+        ParseConfiguration::default()
+            .with_region_detection_policy(RegionDetectionPolicy::ContentDriven),
+    );
+
+    assert_eq!(network.reconstruct_text(), markdown);
+    assert_region_has_connected_syntax(&network, "JavaScript");
+}
+
+#[test]
 fn content_driven_detection_falls_back_to_txt_region() {
     let markdown = "Notes\n```\nplain prose\ncafe au lait\n```\n";
     let network = LinkNetwork::parse(
@@ -423,6 +460,31 @@ fn content_driven_detection_falls_back_to_txt_region() {
                 .rfind("```")
                 .expect("region ends before closing fence"),
         )
+    );
+}
+
+fn assert_region_has_connected_syntax(network: &LinkNetwork, language: &str) {
+    let region_ids = network
+        .links()
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Region))
+        .filter(|link| link.metadata().language() == Some(language))
+        .map(meta_language::Link::id)
+        .collect::<Vec<_>>();
+
+    assert!(
+        !region_ids.is_empty(),
+        "expected at least one {language} region"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some(language)
+                && link
+                    .references()
+                    .iter()
+                    .any(|reference| region_ids.contains(reference))
+        }),
+        "expected {language} syntax rooted at a region link"
     );
 }
 
