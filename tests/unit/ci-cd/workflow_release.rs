@@ -240,6 +240,31 @@ fn lint_job_rejects_tests_under_src() {
 }
 
 #[test]
+fn windows_test_job_configures_aws_lc_cmake_before_running_tests() {
+    let workflow = release_workflow();
+    let test = job_block(&workflow, "test");
+
+    let msvc_setup = test
+        .find("- name: Setup MSVC environment")
+        .expect("Windows test job should initialize MSVC build environment");
+    let aws_lc_setup = test
+        .find("- name: Configure AWS-LC CMake on Windows")
+        .expect("Windows test job should configure AWS-LC's CMake fallback");
+    let run_tests = test
+        .find("- name: Run tests")
+        .expect("test job should run the Rust test suite");
+
+    assert!(
+        msvc_setup < aws_lc_setup && aws_lc_setup < run_tests,
+        "Windows build setup should run before cargo test"
+    );
+    assert!(test.contains("if: runner.os == 'Windows'"));
+    assert!(test.contains("uses: ilammy/msvc-dev-cmd@v1"));
+    assert!(test.contains("AWS_LC_SYS_C_STD=11"));
+    assert!(test.contains("CMAKE_GENERATOR=Ninja"));
+}
+
+#[test]
 fn crate_size_guard_uses_documented_crates_io_limit() {
     let script = fs::read_to_string(format!(
         "{}/scripts/check-crate-size.rs",
