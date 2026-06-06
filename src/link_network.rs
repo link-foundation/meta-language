@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use crate::configuration::{ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy};
+use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::link_flags::LinkFlags;
 use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
 use crate::query::LinkQuery;
@@ -349,7 +350,7 @@ impl LinkNetwork {
     /// stripped away for CST, AST, or semantic-only work.
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
-        Self::parse_lossless_text(text, language, configuration)
+        BuiltInLanguageParser.parse_source(text, language, configuration)
     }
 
     /// Parses plain source text into a lossless token network.
@@ -363,22 +364,7 @@ impl LinkNetwork {
         language: &str,
         configuration: ParseConfiguration,
     ) -> Self {
-        let mut network = Self::self_describing();
-        let language_link = network.insert_typed_point(language, LinkType::Language, None);
-        let document_span = SourceSpan::new(
-            ByteRange::new(0, text.len()),
-            Point::new(0, 0),
-            end_point_for_text(text),
-        );
-        let document = network.insert_link(
-            [language_link],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Document)
-                .with_named(true)
-                .with_term(format!("{language} document"))
-                .with_language(language)
-                .with_span(document_span),
-        );
+        let (mut network, document) = Self::new_parse_document(text, language);
 
         let mut row = 0;
         let mut column = 0;
@@ -450,6 +436,26 @@ impl LinkNetwork {
         );
 
         network
+    }
+
+    pub(crate) fn new_parse_document(text: &str, language: &str) -> (Self, LinkId) {
+        let mut network = Self::self_describing();
+        let language_link = network.insert_typed_point(language, LinkType::Language, None);
+        let document_span = SourceSpan::new(
+            ByteRange::new(0, text.len()),
+            Point::new(0, 0),
+            end_point_for_text(text),
+        );
+        let document = network.insert_link(
+            [language_link],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Document)
+                .with_named(true)
+                .with_term(format!("{language} document"))
+                .with_language(language)
+                .with_span(document_span),
+        );
+        (network, document)
     }
 
     /// Number of links in the network.
@@ -746,7 +752,7 @@ impl LinkNetwork {
         id
     }
 
-    fn attach_trivia(
+    pub(crate) fn attach_trivia(
         &mut self,
         document: LinkId,
         token: LinkId,
@@ -802,7 +808,7 @@ impl LinkNetwork {
         id
     }
 
-    fn attach_embedded_regions(
+    pub(crate) fn attach_embedded_regions(
         &mut self,
         document: LinkId,
         text: &str,
