@@ -301,6 +301,47 @@ fn content_driven_and_html_region_detection_cover_embedding_targets() {
 }
 
 #[test]
+fn content_driven_detection_falls_back_to_txt_region() {
+    let markdown = "Notes\n```\nplain prose\ncafe au lait\n```\n";
+    let network = LinkNetwork::parse(
+        markdown,
+        "Markdown",
+        ParseConfiguration::default()
+            .with_region_detection_policy(RegionDetectionPolicy::ContentDriven),
+    );
+    let regions = network.embedded_regions();
+
+    assert_eq!(regions.len(), 1);
+    assert_eq!(regions[0].language(), "txt");
+    assert_eq!(
+        regions[0].span().byte_range(),
+        ByteRange::new(
+            markdown
+                .find("plain prose")
+                .expect("region starts at prose"),
+            markdown
+                .rfind("```")
+                .expect("region ends before closing fence"),
+        )
+    );
+}
+
+#[test]
+fn txt_parse_exposes_whole_buffer_as_single_region() {
+    let source = "Plain text region\nUTF-8 line: café\n";
+    let network = LinkNetwork::parse(source, "txt", ParseConfiguration::default());
+    let regions = network.embedded_regions();
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert_eq!(regions.len(), 1);
+    assert_eq!(regions[0].language(), "txt");
+    assert_eq!(
+        regions[0].span().byte_range(),
+        ByteRange::new(0, source.len())
+    );
+}
+
+#[test]
 fn query_matching_finds_tokens_by_type_term_and_language() {
     let network = LinkNetwork::parse("let x = x + 1", "JavaScript", ParseConfiguration::default());
     let query = LinkQuery::new()
@@ -505,7 +546,7 @@ fn every_parity_target_capability_is_exercised_by_fixtures() {
 
 #[test]
 fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
-    assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 2);
+    assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 3);
     assert_eq!(PROGRAMMING_LANGUAGE_TARGETS.len(), 10);
     assert_eq!(NATURAL_LANGUAGE_TARGETS.len(), 10);
 
@@ -513,6 +554,7 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
         .iter()
         .map(meta_language::LanguageTarget::name)
         .collect::<Vec<_>>();
+    assert!(markup_names.contains(&"txt"));
     assert!(markup_names.contains(&"Markdown"));
     assert!(markup_names.contains(&"HTML"));
 
