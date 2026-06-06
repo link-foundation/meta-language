@@ -94,6 +94,7 @@ Current projections:
 
 Document-container targets:
 
+- txt
 - Markdown
 - HTML
 

@@ -1,6 +1,8 @@
 use crate::configuration::RegionDetectionPolicy;
 use crate::source::{ByteRange, Point, SourceSpan};
 
+const TXT_LANGUAGE: &str = "txt";
+
 /// Embedded region discovered inside a mixed-language document.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EmbeddedRegion {
@@ -33,6 +35,7 @@ pub(crate) fn detect_embedded_regions(
 ) -> Vec<EmbeddedRegion> {
     let mut regions = Vec::new();
     match language.to_ascii_lowercase().as_str() {
+        TXT_LANGUAGE => regions.push(region_for(text, TXT_LANGUAGE.to_string(), 0, text.len())),
         "markdown" => {
             regions.extend(detect_markdown_fenced_regions(text, policy));
             regions.extend(detect_markdown_html_regions(text));
@@ -100,10 +103,12 @@ fn region_language_from_tag_or_content(
         RegionDetectionPolicy::NameDriven => {
             (!language_tag.is_empty()).then(|| language_tag.to_string())
         }
-        RegionDetectionPolicy::ContentDriven => sniff_language(content).map(str::to_string),
+        RegionDetectionPolicy::ContentDriven => {
+            Some(sniff_language(content).unwrap_or(TXT_LANGUAGE).to_string())
+        }
         RegionDetectionPolicy::Both => {
             if language_tag.is_empty() {
-                sniff_language(content).map(str::to_string)
+                Some(sniff_language(content).unwrap_or(TXT_LANGUAGE).to_string())
             } else {
                 Some(language_tag.to_string())
             }

@@ -476,6 +476,11 @@ impl LanguageFixture {
 /// Required document-container languages.
 pub const MARKUP_LANGUAGE_TARGETS: &[LanguageTarget] = &[
     LanguageTarget {
+        name: "txt",
+        family: LanguageFamily::Markup,
+        basis: "Issue #5 degenerate plain-text container target",
+    },
+    LanguageTarget {
         name: "Markdown",
         family: LanguageFamily::Markup,
         basis: "Founding issue full-document target",
@@ -597,6 +602,11 @@ pub const NATURAL_LANGUAGE_TARGETS: &[LanguageTarget] = &[
 
 /// Executable fixtures for every language target requested by the founding issue.
 pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
+    LanguageFixture {
+        language: "txt",
+        source: "Plain text region\ncafe au lait\nUTF-8 line: café\n",
+        description: "Plain-text UTF-8 prose with trailing newline",
+    },
     LanguageFixture {
         language: "Markdown",
         source: "# Title\n\n```rust\nfn main() {}\n```\n",

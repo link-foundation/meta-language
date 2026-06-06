@@ -29,7 +29,8 @@ clean.
 - `ParseConfiguration` with containment-link, token-link, or combined trivia
   attachment policies.
 - Mixed-region links for Markdown fenced code and HTML regions, plus HTML
-  script, style, and style-attribute regions.
+  script, style, and style-attribute regions, with `txt` fallback for prose
+  regions that content sniffing cannot classify.
 - `LinkQuery` for structural matching by link type, term, language, and named
   flag.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style
@@ -40,9 +41,9 @@ clean.
   and ecosystem feature gates.
 - `LANGUAGE_FIXTURES` with lossless parse/reconstruction samples for every
   required markup, programming-language, and natural-language target.
-- Coverage targets for full Markdown and HTML support, mixed grammar embedding,
-  ten programming-language parser targets, and ten natural-language parser
-  targets.
+- Coverage targets for full `txt`, Markdown, and HTML support, mixed grammar
+  embedding, ten programming-language parser targets, and ten natural-language
+  parser targets.
 - Self-description roots for `link`, `reference`, `relation link`, `language`,
   `grammar`, `type`, `concept`, `point`, `field`, `trivia`, `region`, and
   `object`.
