@@ -263,6 +263,7 @@ fn windows_test_job_configures_aws_lc_cmake_before_running_tests() {
     assert!(test.contains("vswhere.exe"));
     assert!(test.contains("vcvars64.bat"));
     assert!(test.contains("GITHUB_PATH"));
+    assert!(test.contains("\"$name=$value\" | Out-File -FilePath $env:GITHUB_ENV -Append"));
     assert!(test.contains("AWS_LC_SYS_C_STD=11"));
     assert!(test.contains("CMAKE_GENERATOR=Ninja"));
 }

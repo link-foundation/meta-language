@@ -214,6 +214,7 @@ jobs:
               $name = $matches[1]
               $value = $matches[2]
               if ($name -eq "Path") {
+                "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Append
                 $value -split ";" | Where-Object { $_ } | ForEach-Object {
                   $_ | Out-File -FilePath $env:GITHUB_PATH -Append
                 }
