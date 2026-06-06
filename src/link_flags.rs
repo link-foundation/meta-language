@@ -48,6 +48,34 @@ impl LinkFlags {
         }
     }
 
+    /// Returns flags with the error bit enabled.
+    #[must_use]
+    pub const fn with_error(mut self) -> Self {
+        self.bits |= Self::IS_ERROR;
+        self
+    }
+
+    /// Returns flags with the containing-error bit enabled.
+    #[must_use]
+    pub const fn with_containing_error(mut self) -> Self {
+        self.bits |= Self::HAS_ERROR;
+        self
+    }
+
+    /// Returns flags with the missing bit enabled.
+    #[must_use]
+    pub const fn with_missing(mut self) -> Self {
+        self.bits |= Self::IS_MISSING;
+        self
+    }
+
+    /// Returns flags with the extra/trivia bit enabled.
+    #[must_use]
+    pub const fn with_extra(mut self) -> Self {
+        self.bits |= Self::IS_EXTRA;
+        self
+    }
+
     /// Whether this link is an error link.
     #[must_use]
     pub const fn is_error(self) -> bool {

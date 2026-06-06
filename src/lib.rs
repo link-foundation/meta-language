@@ -1,4 +1,5 @@
 pub mod configuration;
+pub mod language_parser;
 pub mod link_flags;
 pub mod link_network;
 pub mod mixed_regions;
@@ -11,6 +12,7 @@ pub mod substitution;
 pub mod verification;
 
 pub use configuration::{ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy};
+pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use mixed_regions::EmbeddedRegion;
@@ -26,3 +28,5 @@ pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot};
 pub use source::{ByteRange, Point, SourceSpan};
 pub use substitution::{SubstitutionReport, SubstitutionRule};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
+
+mod tree_sitter_adapter;
