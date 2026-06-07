@@ -74,6 +74,8 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_rust::LANGUAGE.into())
     } else if language == "R" || language == "r" {
         Some(tree_sitter_r::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("sql-ansi") {
+        Some(tree_sitter_sequel::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("html") {
         Some(tree_sitter_html::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("css") {

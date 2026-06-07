@@ -250,7 +250,7 @@ fn content_driven_and_html_region_detection_cover_embedding_targets() {
     assert!(markdown_regions
         .iter()
         .map(meta_language::EmbeddedRegion::language)
-        .any(|language| language == "SQL"));
+        .any(|language| language == "sql-ansi"));
 
     let html = "<script>const x = 1;</script><style>.x { color: red; }</style><p style=\"color: blue\">text</p>";
     let html_network = LinkNetwork::parse(html, "HTML", ParseConfiguration::default());
@@ -751,6 +751,9 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
     assert!(PROGRAMMING_LANGUAGE_TARGETS
         .iter()
         .all(|target| target.basis().contains("TIOBE May 2026")));
+    assert!(PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .any(|target| target.name() == "sql-ansi"));
     assert!(NATURAL_LANGUAGE_TARGETS
         .iter()
         .all(|target| target.basis().contains("Ethnologue/Britannica")));

@@ -30,6 +30,7 @@ fn grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip() {
         "JavaScript",
         "Visual Basic",
         "R",
+        "sql-ansi",
     ];
 
     for language in grammar_backed_languages {
@@ -78,6 +79,15 @@ fn grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip() {
                         && link.metadata().term() == Some("module_block")
                 }),
                 "{language} should emit Visual Basic grammar node kinds"
+            );
+        } else if language == "sql-ansi" {
+            assert!(
+                network.links().any(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link.metadata().language() == Some(language)
+                        && link.metadata().term() == Some("select")
+                }),
+                "{language} should emit SQL grammar node kinds"
             );
         } else {
             assert!(
@@ -147,6 +157,26 @@ fn grammar_backed_parse_emits_field_labels_as_links() {
             && link.metadata().flags().is_extra()
             && link.metadata().span().is_some()
     }));
+}
+
+#[test]
+fn sql_ansi_fixture_uses_tree_sitter_grammar() {
+    let source = "SELECT id, name FROM users WHERE active = TRUE;\n";
+    let network = LinkNetwork::parse(source, "sql-ansi", ParseConfiguration::default());
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(
+        network.verify_full_match(None).is_clean(),
+        "sql-ansi fixture should parse cleanly"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some("sql-ansi")
+                && link.metadata().term() == Some("select")
+        }),
+        "sql-ansi should emit tree-sitter SQL syntax nodes"
+    );
 }
 
 #[test]

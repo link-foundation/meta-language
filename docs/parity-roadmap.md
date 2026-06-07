@@ -108,7 +108,7 @@ Programming-language targets use the TIOBE May 2026 top-ten list:
 6. JavaScript
 7. Visual Basic
 8. R
-9. SQL
+9. SQL family, represented by the `sql-ansi` baseline dialect fixture
 10. Delphi/Object Pascal
 
 Source: <https://www.tiobe.com/tiobe-index/>
@@ -140,3 +140,16 @@ The mixed-grammar targets are:
 
 All of these must produce one network with source spans and cross-language
 links, rather than separate disconnected parse results.
+
+## SQL Dialect Coverage
+
+`sql-ansi` is the first registered SQL-family dialect key. It uses
+`tree-sitter-sequel` 0.3.11 as the baseline SQL grammar, published under the
+MIT license from <https://github.com/derekstride/tree-sitter-sql.git>.
+
+Coverage currently includes common `SELECT`, DDL, DML, function, trigger, and
+window-function syntax from a permissive general SQL grammar. The upstream
+grammar references PostgreSQL, MariaDB, and SQLite syntax sources and carries
+some dialect-aware productions, but this crate only advertises the adopted
+`sql-ansi` baseline until separate dialect grammars such as BigQuery, SQLite,
+PostgreSQL, or T-SQL are wired and tested under their own keys.
