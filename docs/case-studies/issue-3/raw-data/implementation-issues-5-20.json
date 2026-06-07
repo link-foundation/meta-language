@@ -1,0 +1,242 @@
+[
+  {
+    "body": "\n## Context\n\nIssue #3 asks for \"full support for **txt**, markdown and html in mixed mode,\" but\n`MARKUP_LANGUAGE_TARGETS` (`src/parity.rs`) currently lists only Markdown and HTML.\nPlain text is the one explicitly-named container with no registry entry. See\n[`docs/case-studies/issue-3/requirements.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/requirements.md) → **LANG-TXT**.\n\nPlain text is also architecturally important: it is the **degenerate container**\n(the whole buffer is a single prose/region link) and the **fallback** when\ncontent-sniffing cannot identify an embedded region's language, which makes the\nmixed-mode contract total — every byte belongs to some region.\n\n## Scope\n\n- Add a `Txt` entry to `MARKUP_LANGUAGE_TARGETS`.\n- Add a `LANGUAGE_FIXTURES` entry: a multi-line UTF-8 plain-text sample that\n  round-trips byte-for-byte through `reconstruct_text()`.\n- Make the region detector in `src/mixed_regions.rs` fall back to a single `txt`\n  region when no language is detected.\n- No external dependency required.\n\n## Acceptance criteria\n\n- [ ] `MARKUP_LANGUAGE_TARGETS` includes `txt`; the parity gate in\n      `tests/unit/link_network.rs` passes.\n- [ ] A `txt` `LANGUAGE_FIXTURES` entry parses and reconstructs exactly (including a\n      trailing newline and a non-ASCII line).\n- [ ] Content-sniffing with no match yields one `txt` region rather than an error.\n- [ ] Changelog fragment added (`bump: minor`).\n\n## References\n\n- Requirement: [`requirements.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/requirements.md) LANG-TXT\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 3\n- Founding vision: #1 §3.2 (mixed-language parsing)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/01-plain-text-container-target.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-06T17:13:48Z",
+    "comments": [],
+    "number": 5,
+    "state": "CLOSED",
+    "title": "Add plain-text (txt) as a first-class container target",
+    "url": "https://github.com/link-foundation/meta-language/issues/5"
+  },
+  {
+    "body": "\n## Context\n\n`NATURAL_LANGUAGE_TARGETS` (`src/parity.rs`) and `docs/parity-roadmap.md` pin the\n10 natural languages to the Britannica/Ethnologue total-speaker list. The **set of\n10 is correct and verified**, but the **ordering** drifts from Ethnologue 2025 in\ntwo places (see\n[`docs/case-studies/issue-3/online-research.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/online-research.md) §2):\n\n| Position | Repo | Ethnologue 2025 |\n|---|---|---|\n| 5 | French | Modern Standard Arabic |\n| 6 | Modern Standard Arabic | French |\n| 8 | Russian | Portuguese |\n| 9 | Portuguese | Russian |\n\nBecause fixtures are keyed by language name (not rank), this is **cosmetic** — no\ncode behavior depends on it — but the doc comment should not claim an order the\ncited source contradicts.\n\n## Scope\n\nPick one:\n- **(a)** Reorder to match Ethnologue 2025 (Arabic #5, French #6, Bengali #7,\n  Portuguese #8, Russian #9), or\n- **(b)** Add a note that ranks are approximate (sources/years disagree on the\n  Arabic/French and Portuguese/Russian pairs) and the *set* is what is pinned.\n\n## Acceptance criteria\n\n- [ ] `NATURAL_LANGUAGE_TARGETS` ordering and `docs/parity-roadmap.md` agree with the\n      cited source, or carry an explicit \"approximate order\" note.\n- [ ] Parity gate still passes (all 10 present).\n- [ ] Changelog fragment added (`bump: patch`).\n\n## References\n\n- Data: [`online-research.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/online-research.md) §2\n- Source: <https://www.britannica.com/topic/languages-by-total-number-of-speakers-2228881>\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/02-natural-language-ordering-note.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-06T18:06:26Z",
+    "comments": [],
+    "number": 6,
+    "state": "CLOSED",
+    "title": "Reconcile natural-language target ordering with Ethnologue 2025",
+    "url": "https://github.com/link-foundation/meta-language/issues/6"
+  },
+  {
+    "body": "\n## Context\n\nThe crate currently parses every fixture with a generic, language-agnostic\nscaffold parser (`src/link_network.rs`); the only dependency is `clap`. To deliver\nreal \"in and out\" support for the programming-language targets (issue #3) we need\ngrammar-aware parsing. tree-sitter is the highest-leverage choice: one adapter\nyields lossless spans, error recovery, queries, and language injection across\n**every** grammar that exists. See\n[`docs/case-studies/issue-3/rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md)\n§A and [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 1.\n\nThis single adapter covers **7 of 10** TIOBE targets immediately (Python, C, Java,\nC++, C#, JavaScript, R — all have official MIT grammar crates) and underpins\nCORE-1/3/4/5/7 and PAR-1.\n\n## Scope\n\n- Define a `LanguageParser` trait and a `tree-sitter` → links adapter that, per\n  node, emits a link with `LinkType`, named/anonymous flag, field label\n  (tree-sitter fields → `LinkType::Field`), `ByteRange`, and row/col `Point`s;\n  synthesizes `Trivia`/`Token` links from inter-child byte gaps; maps `ERROR`/\n  `MISSING` nodes to `LinkFlags`.\n- Add deps: `tree-sitter` + `tree-sitter-python`, `-c`, `-java`, `-cpp`,\n  `-c-sharp`, `-javascript`, `-r`.\n- Re-back the 7 corresponding `LANGUAGE_FIXTURES` entries with real parses, keeping\n  the byte-exact round-trip assertion.\n- Keep the generic scaffold parser as the fallback for languages without a grammar.\n- Honor NFR-1: translate tree-sitter \"node/tree\" vocabulary to links at the\n  boundary; never expose it.\n\n## Acceptance criteria\n\n- [ ] The 7 languages parse with their real grammars and `reconstruct_text() ==\n      input` byte-for-byte for each fixture.\n- [ ] An error fixture (e.g. truncated `if (`) produces `is_error`/`is_missing`\n      links **and** still round-trips the original bytes.\n- [ ] tree-sitter fields appear as `LinkType::Field` labeled links.\n- [ ] `cargo test --all-features` passes; crate-size/file-size gates still pass.\n- [ ] Changelog fragment added (`bump: minor`).\n\n## Notes\n\n- Visual Basic, SQL, and Delphi are **not** covered here (no official grammars) —\n  see [#10](https://github.com/link-foundation/meta-language/issues/10),\n  [#11](https://github.com/link-foundation/meta-language/issues/11), and\n  [#12](https://github.com/link-foundation/meta-language/issues/12).\n- A native-Rust JS alternative (`biome_js_parser`) may be added later as a second\n  source (NFR-5 \"try both\"); out of scope for this issue.\n\n## References\n\n- Survey: [`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §A, §B\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 1\n- Requirements: LANG-PL, CORE-1/3/4/5/7, PAR-1\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/03-tree-sitter-front-end.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-06T19:17:08Z",
+    "comments": [],
+    "number": 7,
+    "state": "CLOSED",
+    "title": "Integrate tree-sitter as the universal lossless parser front-end (+7 official grammars)",
+    "url": "https://github.com/link-foundation/meta-language/issues/7"
+  },
+  {
+    "body": "\n## Context\n\nIssue #3 requires txt/markdown/html \"in **mixed mode**.\" The crate already tracks\nthe four `GRAMMAR_EMBEDDING_TARGETS` (Markdown+code, Markdown+HTML, HTML+JS,\nHTML+CSS) and has detection-only scaffolding in `src/mixed_regions.rs`. The\nremaining work is to actually parse each embedded region with its own grammar and\nattach the results to the host as **one** links network with cross-language links\non shared byte ranges — the explicit divergence from tree-sitter's N-disjoint-trees\nmodel named in issue #1 §1. See [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md)\nSolution 5.\n\n## Scope\n\n- Use tree-sitter **injection** to model fenced-code / `<script>` / `<style>`\n  embedding.\n- Detect regions **both** ways (NFR-5): name-driven (fence tag, `<script type>`,\n  extension) **and** content-driven (sniff the body; `lingua`/`whatlang` for prose,\n  lightweight signatures for code). Default documented.\n- Parse each region via the appropriate grammar adapter (from\n  [#7](https://github.com/link-foundation/meta-language/issues/7)) and link it\n  into the host network keyed on its byte range.\n- Whole-document `reconstruct_text()` stays byte-exact.\n- Fall back to a `txt` region ([#5](https://github.com/link-foundation/meta-language/issues/5))\n  when sniffing fails.\n\n## Acceptance criteria\n\n- [ ] Each of the four embedding targets produces **one connected** network (not\n      separate parse results), with cross-language links on shared byte ranges.\n- [ ] Whole-document reconstruction is byte-for-byte exact for all four fixtures.\n- [ ] Both name-driven and content-driven detection are exercised by fixtures.\n- [ ] `cargo test --all-features` passes.\n- [ ] Changelog fragment added (`bump: minor`).\n\n## References\n\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 5\n- Requirements: LANG-MIX, CORE-7\n- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/04-mixed-mode-embedding.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-06T20:08:25Z",
+    "comments": [],
+    "number": 8,
+    "state": "CLOSED",
+    "title": "Mixed-mode embedding via tree-sitter injection (one unified links network)",
+    "url": "https://github.com/link-foundation/meta-language/issues/8"
+  },
+  {
+    "body": "\n## Context\n\nIssue #3 requires \"in and out\" for the 10 natural languages. Byte-exact\nreconstruction is already a storage property (the scaffold keeps UTF-8 bytes +\nspans), so the added value is a **segmentation + identification** link layer that\nannotates the text without ever mutating the stored bytes. See\n[`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §D and\n[`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 4.\n\n## Scope\n\n- **Segmentation:** `unicode-segmentation` (UAX#29) for the 9 space/delimiter\n  scripts; `lindera` (CJK dictionary) for **Mandarin**, which UAX#29 cannot\n  word-segment.\n- **Identification:** `lingua` (default; 75 languages incl. all 10) with `whatlang`\n  as a configurable alternative (NFR-5).\n- **Normalization/bidi:** `unicode-normalization` (NFC/NFD) and `unicode-bidi`\n  (Arabic/Urdu RTL) as annotation only.\n- Emit `Token`/`Semantic`/`Language` links over the existing lossless text via a\n  script-aware dispatch (CJK → lindera, else → unicode-segmentation).\n\n## Acceptance criteria\n\n- [ ] All 10 natural-language fixtures still reconstruct byte-for-byte (stored bytes\n      untouched).\n- [ ] Mandarin (`你好。`) is word-segmented via `lindera`; a Latin sample via\n      `unicode-segmentation`; an Arabic/Urdu sample carries bidi/normalization\n      annotation.\n- [ ] Language identification populates a `Language` link per region; detector is\n      switchable (`lingua`/`whatlang`).\n- [ ] `cargo test --all-features` passes.\n- [ ] Changelog fragment added (`bump: minor`).\n\n## References\n\n- Survey: [`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §D\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 4\n- Requirements: LANG-NL, CORE-5/6\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/05-natural-language-segmentation.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T00:36:42Z",
+    "comments": [],
+    "number": 9,
+    "state": "CLOSED",
+    "title": "Natural-language segmentation & identification layer",
+    "url": "https://github.com/link-foundation/meta-language/issues/9"
+  },
+  {
+    "body": "\n## Context\n\nVisual Basic is TIOBE #7 but has **no official tree-sitter grammar and no\nmaintained Rust parser** — the single biggest parser gap in the target set. See\n[`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §A and\n[`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 2.\n\n## Scope (in priority order)\n\n1. Evaluate third-party grammars: `arborium-vb` and CodeAnt-AI's `tree-sitter-vb`\n   fork. Assess coverage, license, and maintenance.\n2. If one is adequate: vendor/depend on it, harden against our fixture set, wire it\n   through the [#7](https://github.com/link-foundation/meta-language/issues/7)\n   adapter.\n3. If none is adequate: author a tree-sitter grammar for the VB.NET subset we need,\n   starting from the official language reference.\n\n## Acceptance criteria\n\n- [ ] A Visual Basic sample parses with real grammar coverage and reconstructs\n      byte-for-byte.\n- [ ] An error fixture produces `is_error`/`is_missing` links and still round-trips.\n- [ ] The grammar's provenance and license are documented; license is compatible\n      with this repo's Unlicense.\n- [ ] Changelog fragment added (`bump: minor`).\n\n## References\n\n- Survey: [`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §A\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 2\n- Requirement: LANG-PL (Visual Basic)\n- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)\n  (adapter contract)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/06-visual-basic-grammar.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T01:07:19Z",
+    "comments": [],
+    "number": 10,
+    "state": "CLOSED",
+    "title": "Acquire a Visual Basic grammar (biggest parser gap)",
+    "url": "https://github.com/link-foundation/meta-language/issues/10"
+  },
+  {
+    "body": "\n## Context\n\nSQL is TIOBE #9. tree-sitter SQL support is **fragmented across dialect-specific\ngrammars** (`tree-sitter-sequel` is the most maintained; also\n`tree-sitter-sql-bigquery`, DerekStride's `tree-sitter-sql`). There is no single\ngrammar covering all SQL. See\n[`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §A.\n\n## Scope\n\n- Treat SQL as a **language family**: register dialect keys (e.g. `sql-ansi`,\n  `sql-postgres`, `sql-sqlite`, `sql-bigquery`) rather than one `sql` grammar\n  (NFR-5: coexisting dialects → register each).\n- Adopt `tree-sitter-sequel` as the baseline; map at least one dialect end-to-end\n  through the [#7](https://github.com/link-foundation/meta-language/issues/7)\n  adapter.\n- Document which constructs each adopted dialect grammar covers/misses.\n\n## Acceptance criteria\n\n- [ ] At least one SQL dialect parses with a real grammar and reconstructs\n      byte-for-byte.\n- [ ] The SQL `LANGUAGE_FIXTURES` entry is keyed to a specific dialect.\n- [ ] Dialect coverage/gaps documented; grammar license recorded.\n- [ ] Changelog fragment added (`bump: minor`).\n\n## References\n\n- Survey: [`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §A\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 2\n- Requirement: LANG-PL (SQL)\n- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/07-sql-dialect-grammars.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T15:30:59Z",
+    "comments": [],
+    "number": 11,
+    "state": "CLOSED",
+    "title": "Acquire SQL dialect grammars",
+    "url": "https://github.com/link-foundation/meta-language/issues/11"
+  },
+  {
+    "body": "\n## Context\n\nDelphi/Object Pascal is TIOBE `#10`. Only a **generic** `tree-sitter-pascal`\n(Isopod/maxxnino) exists — not Delphi-specific. See\n[`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §A.\n\n## Scope\n\n- Adopt `tree-sitter-pascal` and wire it through the\n  [#7](https://github.com/link-foundation/meta-language/issues/7) adapter.\n- Document the Delphi-specific constructs the generic grammar misses (units,\n  properties, attributes, generics, inline variables).\n- Decide whether to extend/fork for Delphi coverage or accept generic-Pascal scope\n  for now (record the decision).\n\n## Acceptance criteria\n\n- [ ] A Pascal/Delphi sample parses with the grammar and reconstructs byte-for-byte.\n- [ ] Gaps vs full Delphi documented.\n- [ ] Grammar license recorded; compatible with Unlicense.\n- [ ] Changelog fragment added (`bump: minor`).\n\n## References\n\n- Survey: [`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §A\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 2\n- Requirement: LANG-PL (Delphi/Object Pascal)\n- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/08-delphi-pascal-grammar.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T15:51:14Z",
+    "comments": [],
+    "number": 12,
+    "state": "CLOSED",
+    "title": "Acquire a Delphi/Object Pascal grammar",
+    "url": "https://github.com/link-foundation/meta-language/issues/12"
+  },
+  {
+    "body": "\n## Context\n\nThe transform engine adopts link-cli's single match→substitute operation\n(`src/substitution.rs`: create/update/delete/swap). The matcher today\n(`src/query.rs` `LinkQuery`) matches only by link type / term / language / named\nflag. Issue #1 §3.6 requires **advanced matching** by syntax, meaning, and type.\nSee [`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md) (link-cli) and\n[`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 7.\n\n## Scope\n\n- Confirm create/update/delete/swap parity against link-cli's own test forms\n  (including variable binding `$index`/`$source`/`$target`).\n- Add a **tree-sitter-query-like S-expression** matcher over links: quantifiers,\n  alternation, anchors, captures, fields, negated fields → lowered to `LinkQuery`.\n- Add **by-type** matching (match on `LinkType`/type links).\n- Keep predicates a **pluggable host-evaluated layer** (engine binds captures; host\n  runs regex/eq/semantic) — mirror tree-sitter's engine/host split (CORE-15).\n- (Match-by-meaning depends on the concept layer\n  [#17](https://github.com/link-foundation/meta-language/issues/17) — out of\n  scope here; leave the hook.)\n\n## Acceptance criteria\n\n- [ ] create/update/delete/swap fixtures match link-cli's documented behavior.\n- [ ] An S-expression query selects a target link by structure with captures.\n- [ ] A by-type query selects links of a given `LinkType`.\n- [ ] A host predicate hook is exercised by a fixture.\n- [ ] `cargo test --all-features` passes; changelog fragment (`bump: minor`).\n\n## References\n\n- Ecosystem: [`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md) (link-cli)\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 7\n- Requirements: CORE-13/14/15, PAR-8\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/09-substitution-matcher-enrichment.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T16:27:50Z",
+    "comments": [],
+    "number": 13,
+    "state": "CLOSED",
+    "title": "Enrich the substitution/query matcher (S-expressions, by-type matching)",
+    "url": "https://github.com/link-foundation/meta-language/issues/13"
+  },
+  {
+    "body": "\n## Context\n\n`src/snapshots.rs` provides `NetworkSnapshot` + `MutableNetworkSnapshot` with\nprovenance and forward version commits, but without persistent structural sharing.\nIssue #1 §3.5 requires immutable snapshots that are \"persistent, structurally\nshared.\" The rowan/cstree green/red model is the reference. See\n[`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §B and\n[`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 6.\n\n## Scope\n\n- Implement structural sharing for `NetworkSnapshot` along the green/red model\n  (deduplicated, position-independent green links; lazily-resolved absolute\n  offsets).\n- Evaluate **string interning** (cstree-style) so identical terms share storage —\n  consistent with \"identical terms are the same link.\"\n- Optionally evaluate the ecosystem-native **`doublets`** crate (Unlicense) as a\n  file-backed substrate for large networks (`Doublets` trait).\n- Keep both trivia attachment policies working across snapshots (NFR-5).\n\n## Acceptance criteria\n\n- [ ] Forking a `MutableNetworkSnapshot`, editing one link, and committing leaves\n      the original snapshot reconstructing the **old** bytes while the fork\n      reconstructs the **new** bytes.\n- [ ] Unchanged subtrees are structurally shared (no full deep copy) — demonstrated\n      by a test/benchmark.\n- [ ] `cargo test --all-features` passes; changelog fragment (`bump: minor`).\n\n## References\n\n- Survey: [`rust-libraries-survey.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/rust-libraries-survey.md) §B, §E\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 6\n- Requirements: CORE-11/12, PAR-5\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/10-persistent-snapshots.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T16:52:12Z",
+    "comments": [],
+    "number": 14,
+    "state": "CLOSED",
+    "title": "Persistent immutable snapshots (green/red model; optional doublets substrate)",
+    "url": "https://github.com/link-foundation/meta-language/issues/14"
+  },
+  {
+    "body": "\n## Context\n\nOnce the tree-sitter adapter\n([#7](https://github.com/link-foundation/meta-language/issues/7)) and the enriched\nmatcher ([#13](https://github.com/link-foundation/meta-language/issues/13)) exist, the\ncodemod story (jscodeshift/Recast parity, PAR-3/PAR-4) needs a single ergonomic\nsurface: select links with a query, transform with a substitution rule, and\nre-serialize preserving every unchanged byte. See\n[`competitor-test-suites.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/competitor-test-suites.md) (Recast/jscodeshift) and\n[`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solutions 1 & 7.\n\n## Scope\n\n- A `find(query) -> captures` + `replace(rule)` API over the network, delegating\n  matching to [#13](https://github.com/link-foundation/meta-language/issues/13)'s\n  S-expression matcher and rewriting via `apply_substitution`.\n- Guarantee that a transform touching one target leaves all other bytes identical\n  (the Recast `strictEqual(source, code)` / jscodeshift `__testfixtures__`\n  guarantee).\n- Port one jscodeshift-style input/output fixture pair (e.g. identifier rename) and\n  one Recast-style \"change only the literal\" fixture.\n\n## Acceptance criteria\n\n- [ ] A query selects exactly the intended links; a transform rewrites only those.\n- [ ] Output equals input except for the intended bytes (whitespace/comments of\n      unchanged regions preserved).\n- [ ] `cargo test --all-features` passes; changelog fragment (`bump: minor`).\n\n## References\n\n- Suites: [`competitor-test-suites.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/competitor-test-suites.md) §3, §4\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solutions 1, 7\n- Requirements: CORE-14, PAR-1/3/4/8\n- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7),\n  [#13](https://github.com/link-foundation/meta-language/issues/13)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/11-unified-query-transform-surface.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T18:29:27Z",
+    "comments": [
+      {
+        "id": "IC_kwDOSyCSfs8AAAABFMNlKw",
+        "author": {
+          "login": "konard"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "## 🚨 Solution Draft Failed\n\nThe automated solver stopped before creating a pull request, so no PR was opened for this issue.\n\n### Failure\n- **Repository**: `link-foundation/meta-language`\n- **Issue**: #15\n- **Tool**: `codex`\n- **Requested model**: `gpt-5.5`\n\n**Reason**\n```text\nSystem checks failed\n```\n\n### What you can do\n- Resolve the repository, account, permissions, or environment problem described above, then rerun the solver.\n- If this requires elevated Hive Mind access, ask a Hive Mind administrator to handle the specific failure described above.\n\nAdministrator-only CLI details, if any, are printed in the solver terminal log rather than in this issue comment.\n\nLog attachment was attempted but failed. Check the solver terminal log for the complete failure output.\n",
+        "createdAt": "2026-06-07T16:52:31Z",
+        "includesCreatedEdit": false,
+        "isMinimized": false,
+        "minimizedReason": "",
+        "reactionGroups": [],
+        "url": "https://github.com/link-foundation/meta-language/issues/15#issuecomment-4643317035",
+        "viewerDidAuthor": true
+      }
+    ],
+    "number": 15,
+    "state": "CLOSED",
+    "title": "Unified query + transform surface over links",
+    "url": "https://github.com/link-foundation/meta-language/issues/15"
+  },
+  {
+    "body": "\n## Context\n\nThe \"meta\" in meta-language (issue #1 §3.3) requires the system to **describe\nitself in its own terms**: `link`, `reference`, `relation link`, `language`,\n`grammar`, `type`, `concept`, `point`, `field`, `trivia`, `region`, `object` should\nbe actual links whose definitions are written in those same terms. The README lists\nthese roots and `LinkMetadata` has a `definition` field, but the roots are not yet\nmaterialized as a seeded network. See\n[`requirements.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/requirements.md) CORE-8/9 and\n[`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md) (meta-theory definitions).\n\n## Scope\n\n- Seed a self-description network where each root term is a link with a\n  `definition` written in the controlled vocabulary (e.g. a \"point\" is defined as a\n  link that references only itself in every position — meta-theory line 101).\n- Seed the \"common roots of common ontologies\" from relative-meta-logic's\n  `(Type: Type Type)` self-referential root.\n- Expose it via the existing `describe` CLI subcommand.\n- Honor NFR-1: \"node\" = self-referential link, \"edge\" = connecting link; never the\n  word \"graph.\"\n\n## Acceptance criteria\n\n- [ ] Each root term resolves to a link whose definition references only other\n      defined root links (no undefined terms; no external vocabulary).\n- [ ] `describe` emits the self-description network and it round-trips losslessly.\n- [ ] A test asserts the definition closure is complete (every referenced term is\n      itself defined).\n- [ ] `cargo test --all-features` passes; changelog fragment (`bump: minor`).\n\n## References\n\n- Ecosystem: [`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md) (meta-theory)\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 8\n- Requirements: CORE-8/9\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/12-self-description-roots.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T18:58:49Z",
+    "comments": [
+      {
+        "id": "IC_kwDOSyCSfs8AAAABFMNn6A",
+        "author": {
+          "login": "konard"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "## 🚨 Solution Draft Failed\n\nThe automated solver stopped before creating a pull request, so no PR was opened for this issue.\n\n### Failure\n- **Repository**: `link-foundation/meta-language`\n- **Issue**: #16\n- **Tool**: `codex`\n- **Requested model**: `gpt-5.5`\n\n**Reason**\n```text\nSystem checks failed\n```\n\n### What you can do\n- Resolve the repository, account, permissions, or environment problem described above, then rerun the solver.\n- If this requires elevated Hive Mind access, ask a Hive Mind administrator to handle the specific failure described above.\n\nAdministrator-only CLI details, if any, are printed in the solver terminal log rather than in this issue comment.\n\nLog attachment was attempted but failed. Check the solver terminal log for the complete failure output.\n",
+        "createdAt": "2026-06-07T16:52:47Z",
+        "includesCreatedEdit": false,
+        "isMinimized": false,
+        "minimizedReason": "",
+        "reactionGroups": [],
+        "url": "https://github.com/link-foundation/meta-language/issues/16#issuecomment-4643317736",
+        "viewerDidAuthor": true
+      }
+    ],
+    "number": 16,
+    "state": "CLOSED",
+    "title": "Materialize self-description roots as links defined in their own terms",
+    "url": "https://github.com/link-foundation/meta-language/issues/16"
+  },
+  {
+    "body": "\n## Context\n\nCross-language transformation is only meaningful if two languages sharing a concept\nreference the **same** concept link (issue #1 §3.4, CORE-10). `LinkType::Concept`\nand the `Semantic` projection exist, but no concept ontology is populated.\nmeta-expression already ships `semantic-lexicon.json` (**351 concepts**, en/hi/ru/zh\n— verified, correcting issue #1's \"328\"). See\n[`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md) (meta-expression) and\n[`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 8.\n\n## Scope\n\n- Import meta-expression's `semantic-lexicon.json` as concept links (anchored to\n  Wikidata QIDs where present, e.g. Hawaii Q782, U.S. state Q35657).\n- Seed a shared set of structural concepts for functional/procedural languages\n  (function, binding, application, sequence, branch, loop, …).\n- Map each concept to per-language concrete syntax for the initial language set;\n  enforce dedup (one concept link shared across languages, not duplicated).\n\n## Acceptance criteria\n\n- [ ] The lexicon imports as concept links; the count matches the source file.\n- [ ] Two languages expressing the same concept reference the **same** concept link\n      (asserted by a test).\n- [ ] The `Semantic` projection surfaces the concept layer.\n- [ ] `cargo test --all-features` passes; changelog fragment (`bump: minor`).\n\n## References\n\n- Ecosystem: [`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md)\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 8\n- Requirement: CORE-10\n- Blocked by: [#16](https://github.com/link-foundation/meta-language/issues/16)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/13-common-concept-ontology.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T19:32:08Z",
+    "comments": [
+      {
+        "id": "IC_kwDOSyCSfs8AAAABFMNqew",
+        "author": {
+          "login": "konard"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "## 🚨 Solution Draft Failed\n\nThe automated solver stopped before creating a pull request, so no PR was opened for this issue.\n\n### Failure\n- **Repository**: `link-foundation/meta-language`\n- **Issue**: #17\n- **Tool**: `codex`\n- **Requested model**: `gpt-5.5`\n\n**Reason**\n```text\nSystem checks failed\n```\n\n### What you can do\n- Resolve the repository, account, permissions, or environment problem described above, then rerun the solver.\n- If this requires elevated Hive Mind access, ask a Hive Mind administrator to handle the specific failure described above.\n\nAdministrator-only CLI details, if any, are printed in the solver terminal log rather than in this issue comment.\n\nLog attachment was attempted but failed. Check the solver terminal log for the complete failure output.\n",
+        "createdAt": "2026-06-07T16:53:03Z",
+        "includesCreatedEdit": false,
+        "isMinimized": false,
+        "minimizedReason": "",
+        "reactionGroups": [],
+        "url": "https://github.com/link-foundation/meta-language/issues/17#issuecomment-4643318395",
+        "viewerDidAuthor": true
+      }
+    ],
+    "number": 17,
+    "state": "CLOSED",
+    "title": "Seed the common concept ontology from meta-expression's semantic lexicon",
+    "url": "https://github.com/link-foundation/meta-language/issues/17"
+  },
+  {
+    "body": "\n## Context\n\nThe crate's deepest novelty (issue #1 §3.7, CORE-16/17): reconstruct a network into\na **different** target language via the common concept layer, and make text→network\nand network→text **configurable** — the exact knob formal-ai and meta-expression\nneed (formalization levels 1–4, naturalization). `reconstruct_text()` is\nsame-language only today. See\n[`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md) (meta-expression) and\n[`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 8.\n\n## Scope\n\n- Implement cross-language reconstruction: walk concept links\n  ([#17](https://github.com/link-foundation/meta-language/issues/17)) →\n  target-language concrete syntax.\n- Validate with meta-expression's worked example: \"Hawaii is a state.\" (Q782 /\n  Q35657) → \"Гавайи это штат.\" (en → ru).\n- Add configurable (de)formalization to `ParseConfiguration`: formalization levels\n  1–4, naturalization direction; expose without leaking consumer internals.\n- Keep `TruthValue` (many-valued/paradox) available for the semantic-match path\n  (relative-meta-logic).\n\n## Acceptance criteria\n\n- [ ] A network parsed from English reconstructs into Russian for the Hawaii fixture\n      (and the reverse).\n- [ ] Same-language reconstruction stays byte-exact for unchanged regions.\n- [ ] Formalization level is configurable and changes output as documented.\n- [ ] `cargo test --all-features` passes; changelog fragment (`bump: minor`).\n\n## References\n\n- Ecosystem: [`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md)\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 8\n- Requirements: CORE-16/17, PAR-12\n- Blocked by: [#17](https://github.com/link-foundation/meta-language/issues/17)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/14-cross-language-reconstruction.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T20:02:39Z",
+    "comments": [
+      {
+        "id": "IC_kwDOSyCSfs8AAAABFMNtAg",
+        "author": {
+          "login": "konard"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "## 🚨 Solution Draft Failed\n\nThe automated solver stopped before creating a pull request, so no PR was opened for this issue.\n\n### Failure\n- **Repository**: `link-foundation/meta-language`\n- **Issue**: #18\n- **Tool**: `codex`\n- **Requested model**: `gpt-5.5`\n\n**Reason**\n```text\nSystem checks failed\n```\n\n### What you can do\n- Resolve the repository, account, permissions, or environment problem described above, then rerun the solver.\n- If this requires elevated Hive Mind access, ask a Hive Mind administrator to handle the specific failure described above.\n\nAdministrator-only CLI details, if any, are printed in the solver terminal log rather than in this issue comment.\n\nLog attachment was attempted but failed. Check the solver terminal log for the complete failure output.\n",
+        "createdAt": "2026-06-07T16:53:19Z",
+        "includesCreatedEdit": false,
+        "isMinimized": false,
+        "minimizedReason": "",
+        "reactionGroups": [],
+        "url": "https://github.com/link-foundation/meta-language/issues/18#issuecomment-4643319042",
+        "viewerDidAuthor": true
+      }
+    ],
+    "number": 18,
+    "state": "CLOSED",
+    "title": "Cross-language reconstruction + configurable formalization/naturalization",
+    "url": "https://github.com/link-foundation/meta-language/issues/18"
+  },
+  {
+    "body": "\n## Context\n\nIssue #3 says to \"copy **all** the tests from competitors.\" Each external upstream\nis currently represented by a single illustrative fixture; the bulk corpus adoption\nis outstanding. Test locations, formats, licenses, and per-project adaptation plans\nare documented in\n[`competitor-test-suites.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/competitor-test-suites.md). All six upstreams are\nMIT or Apache-2.0/MIT — compatible with this repo's Unlicense.\n\n## Scope\n\nPort the canonical assertion shapes into `PARITY_FIXTURES`, retaining a provenance\ncomment (upstream path + license) on each ported case. Use the four universal\npillars as the template for every fixture:\n\n1. **Lossless round-trip** — tree-sitter `:cst` corpus, LibCST\n   `assertEqual(mod.code, src)`, Recast `strictEqual(source, code)`, Roslyn\n   `ToFullString()`.\n2. **Explicit trivia** — comment + blank-line cases under each\n   `TriviaAttachmentPolicy`.\n3. **Error recovery** — tree-sitter `error_corpus`, Roslyn `_MissingIdentifiers`,\n   LibCST `test_parse_errors` (assert error/missing links + round-trip of broken\n   source).\n4. **Query + transform** — tree-sitter S-expr queries + jscodeshift\n   `__testfixtures__` input/output pairs.\n\nPrefer LibCST `_nodes/tests/` (plain MIT) over `_parser/parso/` (dual MIT/PSF).\n\n## Acceptance criteria\n\n- [ ] Each of the six upstreams contributes multiple ported fixtures (not just one),\n      each with a provenance comment.\n- [ ] All four pillars are represented for at least tree-sitter, LibCST, Recast/\n      jscodeshift, and Roslyn.\n- [ ] `cargo test --all-features` passes; changelog fragment (`bump: minor`).\n\n## References\n\n- Suites: [`competitor-test-suites.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/competitor-test-suites.md)\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 9\n- Requirements: I3-2, PAR-1…6\n- Blocked by: [#7](https://github.com/link-foundation/meta-language/issues/7)\n  (real grammars make many fixtures meaningful)\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/15-adopt-external-competitor-corpora.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T20:30:27Z",
+    "comments": [
+      {
+        "id": "IC_kwDOSyCSfs8AAAABFMNvOw",
+        "author": {
+          "login": "konard"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "## 🚨 Solution Draft Failed\n\nThe automated solver stopped before creating a pull request, so no PR was opened for this issue.\n\n### Failure\n- **Repository**: `link-foundation/meta-language`\n- **Issue**: #19\n- **Tool**: `codex`\n- **Requested model**: `gpt-5.5`\n\n**Reason**\n```text\nSystem checks failed\n```\n\n### What you can do\n- Resolve the repository, account, permissions, or environment problem described above, then rerun the solver.\n- If this requires elevated Hive Mind access, ask a Hive Mind administrator to handle the specific failure described above.\n\nAdministrator-only CLI details, if any, are printed in the solver terminal log rather than in this issue comment.\n\nLog attachment was attempted but failed. Check the solver terminal log for the complete failure output.\n",
+        "createdAt": "2026-06-07T16:53:35Z",
+        "includesCreatedEdit": false,
+        "isMinimized": false,
+        "minimizedReason": "",
+        "reactionGroups": [],
+        "url": "https://github.com/link-foundation/meta-language/issues/19#issuecomment-4643319611",
+        "viewerDidAuthor": true
+      }
+    ],
+    "number": 19,
+    "state": "CLOSED",
+    "title": "Adopt external competitor test corpora (tree-sitter, LibCST, Recast, jscodeshift, rowan/cstree, Roslyn)",
+    "url": "https://github.com/link-foundation/meta-language/issues/19"
+  },
+  {
+    "body": "\n## Context\n\nThe link-foundation / linksplatform projects are \"internal competitors\" whose\ncorpora this crate must subsume (issue #1 §6, I3-2). APIs, test shapes, and verified\ncorrections are documented in\n[`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md). All are\nUnlicense/permissive.\n\n## Scope\n\n- **links-notation** — port the doublet/triplet/N-tuple/indented/self-reference\n  parsing tests (cross-language identity; ~138 tests/language binding).\n- **link-cli** — create `() ((1 1))`, update `((1: 1 1)) ((1: 1 2))`, delete\n  `((1 1)) ()`, swap `((($index: $source $target)) (($index: $target $source)))`.\n- **lino-objects-codec** — `decode(encode(x)) == x`, shared + circular references.\n- **relative-meta-logic** — dependent types, many-valued, liar-paradox cases →\n  `TruthValue`.\n- **formal-ai** — replay `data/seed/*.lino` + `data/benchmarks/*.lino` as a\n  no-regression gate (cite the actual files, **not** issue #1's unverified \"706\").\n- **meta-expression** — formalize→naturalize round-trip (\"Hawaii is a state.\" →\n  \"Гавайи это штат.\"), \"1 + 1 = 2\", \"this statement is false\"; cite the verified\n  **351**-concept lexicon (not \"328\").\n\n## Acceptance criteria\n\n- [ ] Each ecosystem project contributes ported fixtures with provenance comments.\n- [ ] The formal-ai corpus runs as a regression gate against the actual `.lino`\n      files.\n- [ ] Verified figures (351 concepts, ~138 tests/lang, doublets crate name) are used\n      in comments — not the founding-issue estimates.\n- [ ] `cargo test --all-features` passes; changelog fragment (`bump: minor`).\n\n## References\n\n- Ecosystem: [`ecosystem-foundations.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/ecosystem-foundations.md)\n- Solution: [`solution-plans.md`](https://github.com/link-foundation/meta-language/blob/main/docs/case-studies/issue-3/solution-plans.md) Solution 9\n- Requirements: I3-2, PAR-7…12\n\n---\n_Filed from `docs/case-studies/issue-3/proposed-issues/16-adopt-ecosystem-corpora.md`. Part of the implementation plan for #3._\n",
+    "closedAt": "2026-06-07T21:02:18Z",
+    "comments": [
+      {
+        "id": "IC_kwDOSyCSfs8AAAABFMNxbg",
+        "author": {
+          "login": "konard"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "## 🚨 Solution Draft Failed\n\nThe automated solver stopped before creating a pull request, so no PR was opened for this issue.\n\n### Failure\n- **Repository**: `link-foundation/meta-language`\n- **Issue**: #20\n- **Tool**: `codex`\n- **Requested model**: `gpt-5.5`\n\n**Reason**\n```text\nSystem checks failed\n```\n\n### What you can do\n- Resolve the repository, account, permissions, or environment problem described above, then rerun the solver.\n- If this requires elevated Hive Mind access, ask a Hive Mind administrator to handle the specific failure described above.\n\nAdministrator-only CLI details, if any, are printed in the solver terminal log rather than in this issue comment.\n\nLog attachment was attempted but failed. Check the solver terminal log for the complete failure output.\n",
+        "createdAt": "2026-06-07T16:53:52Z",
+        "includesCreatedEdit": false,
+        "isMinimized": false,
+        "minimizedReason": "",
+        "reactionGroups": [],
+        "url": "https://github.com/link-foundation/meta-language/issues/20#issuecomment-4643320174",
+        "viewerDidAuthor": true
+      }
+    ],
+    "number": 20,
+    "state": "CLOSED",
+    "title": "Adopt ecosystem test corpora (links-notation, link-cli, lino-objects-codec, relative-meta-logic, formal-ai, meta-expression)",
+    "url": "https://github.com/link-foundation/meta-language/issues/20"
+  }
+]

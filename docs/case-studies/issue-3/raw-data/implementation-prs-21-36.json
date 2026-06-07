@@ -1,0 +1,930 @@
+[
+  {
+    "body": "## Summary\n\nFixes #5.\n\nThis PR adds `txt` as a first-class document-container target and makes plain text participate in mixed-region detection instead of being an implicit gap.\n\n## Implementation\n\n- Adds `txt` to `MARKUP_LANGUAGE_TARGETS`.\n- Adds a multi-line UTF-8 `txt` entry to `LANGUAGE_FIXTURES` that reconstructs byte-for-byte with a trailing newline.\n- Treats top-level `txt` parses as a single whole-buffer `txt` region.\n- Makes content-driven Markdown fenced-region sniffing fall back to `txt` when no language is identified.\n- Updates README/parity roadmap language coverage notes.\n- Adds a `bump: minor` changelog fragment.\n\n## Reproduction / Tests\n\nThe reproducing failure was `content_driven_detection_falls_back_to_txt_region`: before the fix, content-driven detection of an untagged prose fenced block produced zero embedded regions. It now produces one `txt` region covering the fenced content. `txt_parse_exposes_whole_buffer_as_single_region` covers the degenerate plain-text container contract.\n\nLocal verification passed:\n\n- `cargo fmt --all -- --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs`\n- `rust-script scripts/check-crate-size.rs`\n- `rust-script scripts/check-changelog-fragment.rs`\n- `git diff --check`\n\n## Notes\n\nThis is not a UI change, so screenshots are not included.\n",
+    "files": [
+      {
+        "path": "README.md",
+        "additions": 5,
+        "deletions": 4,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260606_170500_plain_text_container_target.md",
+        "additions": 7,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "docs/parity-roadmap.md",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/mixed_regions.rs",
+        "additions": 7,
+        "deletions": 2,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/parity.rs",
+        "additions": 10,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 43,
+        "deletions": 1,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-5-b1da96634021",
+    "mergedAt": "2026-06-06T17:13:47Z",
+    "number": 21,
+    "title": "Add plain-text (txt) as a first-class container target",
+    "url": "https://github.com/link-foundation/meta-language/pull/21"
+  },
+  {
+    "body": "## Summary\n\nFixes #6.\n\nThis PR reconciles the natural-language target ordering with the Ethnologue 2025 total-speaker order cited by the parity roadmap. It moves Modern Standard Arabic ahead of French and Portuguese ahead of Russian in both the public registry and the roadmap list.\n\n## Implementation\n\n- Updates `NATURAL_LANGUAGE_TARGETS` and its doc comment to use Ethnologue 2025 total-speaker order.\n- Updates `docs/parity-roadmap.md` to the same natural-language order.\n- Adds `natural_language_targets_follow_ethnologue_2025_total_speaker_order` as a regression test for the public target ordering.\n- Adds a `bump: patch` changelog fragment.\n\n## Reproduction / Tests\n\nThe reproducing failure was `cargo test --test unit natural_language_targets_follow_ethnologue_2025_total_speaker_order`: before the fix, the registry order was `French` before `Modern Standard Arabic` and `Russian` before `Portuguese`. The test now verifies the Ethnologue 2025 order directly.\n\nLocal verification passed:\n\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs`\n- `rust-script scripts/check-crate-size.rs`\n- `GITHUB_BASE_REF=main rust-script scripts/check-changelog-fragment.rs`\n- `GITHUB_EVENT_NAME=pull_request GITHUB_HEAD_REF=issue-6-ec52a5201823 GITHUB_BASE_REF=main rust-script scripts/check-version-modification.rs`\n- `git diff --check`\n\n## Notes\n\nThis is not a UI change, so screenshots are not included.\n",
+    "files": [
+      {
+        "path": "changelog.d/20260606_180000_natural_language_target_order.md",
+        "additions": 7,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "docs/parity-roadmap.md",
+        "additions": 6,
+        "deletions": 6,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/parity.rs",
+        "additions": 5,
+        "deletions": 5,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 24,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-6-ec52a5201823",
+    "mergedAt": "2026-06-06T18:06:25Z",
+    "number": 22,
+    "title": "Reconcile natural-language target ordering with Ethnologue 2025",
+    "url": "https://github.com/link-foundation/meta-language/pull/22"
+  },
+  {
+    "body": "Fixes #7\n\n## Summary\n- Added a `LanguageParser` boundary and grammar-backed parser registry for Python, C, Java, C++, C#, JavaScript, and R.\n- Converted grammar parse output into links with syntax spans, named/anonymous metadata, field-label links, gap token/trivia preservation, and error/missing flags.\n- Kept the scaffold parser as fallback for unsupported languages and added a minor changelog fragment.\n\n## Tests\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `RUST_LOG=off rust-script scripts/check-no-src-tests.rs`\n- `RUST_LOG=off rust-script scripts/check-file-size.rs`\n- `RUST_LOG=off rust-script scripts/check-crate-size.rs`\n- `RUST_LOG=off rust-script scripts/check-changelog-fragment.rs`",
+    "files": [
+      {
+        "path": "Cargo.lock",
+        "additions": 94,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "Cargo.toml",
+        "additions": 8,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260606_190000_tree_sitter_front_end.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/language_parser.rs",
+        "additions": 28,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/lib.rs",
+        "additions": 4,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/link_flags.rs",
+        "additions": 28,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/link_network.rs",
+        "additions": 25,
+        "deletions": 19,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/tree_sitter_adapter.rs",
+        "additions": 206,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 102,
+        "deletions": 2,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-7-5d386a11dea9",
+    "mergedAt": "2026-06-06T19:17:07Z",
+    "number": 23,
+    "title": "Integrate tree-sitter lossless parser front end",
+    "url": "https://github.com/link-foundation/meta-language/pull/23"
+  },
+  {
+    "body": "## Summary\n\nFixes #8.\n\nThis PR turns mixed-region detection into embedded grammar parsing for supported targets while keeping the result in one links network.\n\n## Implementation\n\n- Adds tree-sitter grammars for Rust, HTML, and CSS alongside the existing programming-language grammars.\n- Parses detected embedded regions under their `Region` link so embedded syntax is connected to the host network by the shared byte range.\n- Keeps reconstruction byte-exact when host and embedded token links overlap by reconstructing each source byte range once.\n- Handles CSS style-attribute declaration lists such as `color: blue` by parsing with a synthetic trailing semicolon while clamping inserted spans to the original region.\n- Adds a minor changelog fragment and an experiment script for inspecting the HTML mixed-mode fixture.\n\n## Reproduction / Tests\n\nThe reproducing gap was that mixed-region tests only asserted detected `Region` metadata. `embedded_regions_are_parsed_and_connected_to_region_links` now fails unless Markdown fenced JavaScript, Markdown HTML, HTML `<script>`, HTML `<style>`, and style attributes produce grammar-backed syntax links rooted at their region links while still reconstructing the host document exactly. `content_driven_embedded_regions_are_parsed` covers untagged content-driven fenced-code detection.\n\nLocal verification passed:\n\n- `cargo fmt --all -- --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs`\n- `rust-script scripts/check-crate-size.rs`\n- `rust-script scripts/check-changelog-fragment.rs`\n- `git diff --check`\n\n## Notes\n\nThis is not a UI change, so screenshots are not included.",
+    "files": [
+      {
+        "path": "Cargo.lock",
+        "additions": 33,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "Cargo.toml",
+        "additions": 3,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260606_195500_mixed_mode_injection.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "experiments/inspect-html-embedding.rs",
+        "additions": 47,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/link_network.rs",
+        "additions": 28,
+        "deletions": 12,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/tree_sitter_adapter.rs",
+        "additions": 162,
+        "deletions": 57,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 62,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-8-3ffb483c78fd",
+    "mergedAt": "2026-06-06T20:08:24Z",
+    "number": 24,
+    "title": "Add mixed-mode embedded grammar parsing",
+    "url": "https://github.com/link-foundation/meta-language/pull/24"
+  },
+  {
+    "body": "Fixes #9.\n\n### Summary\n- Adds a natural-language annotation layer over existing lossless text parses for the 10 natural-language targets.\n- Emits region-scoped Language, Semantic, and word Token links without changing stored source bytes.\n- Adds detector configuration with Lingua as the default backend and Whatlang as the alternative.\n\n### Implementation\n- Uses `lingua` for default language identification, `whatlang` when configured, `unicode-segmentation` for non-CJK word segmentation, and `lindera` Jieba segmentation for Mandarin.\n- Annotates NFC/NFD normalization stability and bidi direction as Semantic links over the existing source span.\n- Adds the NLP dependencies with required language features plus a minor changelog fragment.\n- Initializes the Windows MSVC environment, configures AWS-LC CMake settings, and pins Cargo's Windows MSVC linker to Visual Studio `link.exe` so Git for Windows `link.exe` cannot shadow it during the transitive Lindera Jieba build.\n\n### Reproduction Tests\n- `natural_language_parse_adds_segmentation_language_and_unicode_annotations` covers Latin segmentation, Mandarin `你好。` segmentation, and Arabic bidi/normalization annotations.\n- `natural_language_identifier_backend_is_switchable` verifies the configurable Whatlang detector path.\n- `natural_language_fixtures_keep_byte_exact_reconstruction_with_language_regions` verifies all 10 natural-language fixtures reconstruct byte-for-byte and get region-scoped Language links.\n- `windows_test_job_configures_aws_lc_cmake_before_running_tests` guards the Windows workflow setup needed by the new Lindera dependency chain, including the explicit Cargo MSVC linker path.\n\n### Local Verification\n- `cargo fmt --all -- --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs` (passes; warns `tests/unit/link_network.rs` is near the line-count threshold)\n- `rust-script scripts/check-crate-size.rs`\n- `git diff --check`\n\n### CI Verification\n- `CI/CD Pipeline` run `27076870156` passed for commit `8ee657816642ea04e4fde7bcceb4be17b551e969`.\n",
+    "files": [
+      {
+        "path": ".github/workflows/release.yml",
+        "additions": 51,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "Cargo.lock",
+        "additions": 2701,
+        "deletions": 135,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "Cargo.toml",
+        "additions": 17,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260606_211500_natural_language_annotations.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/configuration.rs",
+        "additions": 27,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/lib.rs",
+        "additions": 5,
+        "deletions": 1,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/link_network.rs",
+        "additions": 2,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/natural_language.rs",
+        "additions": 324,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/ci-cd/workflow_release.rs",
+        "additions": 33,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 154,
+        "deletions": 4,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-9-fea3265b37e2",
+    "mergedAt": "2026-06-07T00:36:41Z",
+    "number": 25,
+    "title": "Add natural-language segmentation and identification",
+    "url": "https://github.com/link-foundation/meta-language/pull/25"
+  },
+  {
+    "body": "Fixes #10\n\n## Summary\n- Added grammar-backed Visual Basic parsing through `tree-sitter-vb-dotnet` 0.1.0, with aliases for `Visual Basic`, `vb`, `vb.net`, and `vbnet`.\n- Refreshed the existing tree-sitter grammar bindings to the safe `LANGUAGE.into()` API required by the selected Visual Basic grammar crate.\n- Added issue #10 provenance notes documenting evaluated candidates, selected MIT-licensed source, and compatibility with the repository Unlicense model.\n- Added a minor changelog fragment and moved grammar-backed parser tests into a focused unit module.\n\n## Reproduction And Verification\nBefore this branch, adding Visual Basic to the grammar-backed fixture coverage failed because it did not emit real tree-sitter syntax links. The malformed Visual Basic recovery fixture also provides a focused regression for `ErrorLink` and `MissingLink` while preserving byte-exact reconstruction.\n\nAutomated tests added or extended:\n- `tests/unit/grammar_parsing.rs::grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip`\n- `tests/unit/grammar_parsing.rs::visual_basic_recovery_errors_round_trip_with_flags`\n- `tests/unit/grammar_parsing.rs::parse_marks_recovery_errors_without_losing_original_text`\n\nLocal checks run:\n- `cargo fmt --all -- --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `RUST_LOG=off rust-script scripts/check-no-src-tests.rs`\n- `RUST_LOG=off rust-script scripts/check-file-size.rs`\n- `RUST_LOG=off rust-script scripts/check-crate-size.rs`\n- `RUST_LOG=off rust-script scripts/check-changelog-fragment.rs`\n- `git diff --check`\n\nScreenshots are not applicable; this is parser/backend behavior.\n\n## Provenance\nSelected `tree-sitter-vb-dotnet` 0.1.0 from crates.io because it is MIT licensed, exposes the current safe tree-sitter `LanguageFn` API, and covers VB.NET modules, types, procedures, properties, events/delegates, and common control flow. `arborium-vb` was not selected because it would require Rust 1.85; the CodeAnt-AI fork was not selected directly because repository license metadata was not exposed during evaluation.",
+    "files": [
+      {
+        "path": "Cargo.lock",
+        "additions": 77,
+        "deletions": 36,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "Cargo.toml",
+        "additions": 13,
+        "deletions": 12,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_004700_visual_basic_grammar.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "docs/case-studies/issue-10/README.md",
+        "additions": 48,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "experiments/inspect-csharp-recovery.rs",
+        "additions": 52,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "experiments/inspect-vb-recovery.rs",
+        "additions": 69,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/tree_sitter_adapter.rs",
+        "additions": 18,
+        "deletions": 12,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/grammar_parsing.rs",
+        "additions": 171,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 0,
+        "deletions": 130,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/mod.rs",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-10-8fb744dd30bc",
+    "mergedAt": "2026-06-07T01:07:18Z",
+    "number": 26,
+    "title": "Add Visual Basic grammar support",
+    "url": "https://github.com/link-foundation/meta-language/pull/26"
+  },
+  {
+    "body": "Fixes #11\n\n## Summary\n- Added grammar-backed `sql-ansi` parsing through `tree-sitter-sequel` 0.3.11.\n- Replaced the generic SQL language fixture/target key with the dialect-specific `sql-ansi` key and updated content-driven Markdown SQL detection to emit that dialect label.\n- Documented SQL dialect coverage, gaps, upstream repository, and MIT license in `docs/parity-roadmap.md`.\n- Added a minor changelog fragment and removed the initial placeholder `.gitkeep` scaffold file.\n\n## Reproduction And Verification\nBefore this branch, parsing `sql-ansi` fell back to plain lossless text and emitted no tree-sitter syntax links. `sql_ansi_fixture_uses_tree_sitter_grammar` reproduces that gap by requiring byte-exact reconstruction, a clean verification report, and a SQL `select` syntax node for the `sql-ansi` fixture.\n\nAutomated tests added or extended:\n- `tests/unit/grammar_parsing.rs::sql_ansi_fixture_uses_tree_sitter_grammar`\n- `tests/unit/grammar_parsing.rs::grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip`\n- `tests/unit/link_network.rs::content_driven_and_html_region_detection_cover_embedding_targets`\n- `tests/unit/link_network.rs::language_targets_cover_markup_programming_natural_and_embedding_scope`\n\nLocal checks run:\n- `cargo fmt --check`\n- `cargo test --all-features`\n- `cargo clippy --all-targets --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs`\n- `rust-script scripts/check-crate-size.rs`\n- `rust-script scripts/check-changelog-fragment.rs`\n- `git diff --check`\n\nScreenshots are not applicable; this is parser/backend behavior.\n\n## Provenance\nSelected `tree-sitter-sequel` 0.3.11 from crates.io because it is the requested baseline SQL grammar, is MIT licensed, and exposes the current tree-sitter `LANGUAGE.into()` API. The adopted key is intentionally `sql-ansi`; other SQL-family dialects such as BigQuery, SQLite, PostgreSQL, and T-SQL remain unadvertised until their own grammars are wired and tested under separate dialect keys.\n",
+    "files": [
+      {
+        "path": "Cargo.lock",
+        "additions": 11,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "Cargo.toml",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_153000_sql_ansi_grammar.md",
+        "additions": 4,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "docs/parity-roadmap.md",
+        "additions": 14,
+        "deletions": 1,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/mixed_regions.rs",
+        "additions": 1,
+        "deletions": 1,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/parity.rs",
+        "additions": 5,
+        "deletions": 5,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/tree_sitter_adapter.rs",
+        "additions": 2,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/grammar_parsing.rs",
+        "additions": 30,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 4,
+        "deletions": 1,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-11-da8ab5f3ca36",
+    "mergedAt": "2026-06-07T15:30:59Z",
+    "number": 27,
+    "title": "Add sql-ansi grammar support",
+    "url": "https://github.com/link-foundation/meta-language/pull/27"
+  },
+  {
+    "body": "Fixes #12\n\n## Summary\n- Added grammar-backed `Delphi/Object Pascal` parsing through `tree-sitter-pascal` 0.10.2, with aliases for `Delphi`, `Object Pascal`, and `Pascal`.\n- Replaced the minimal Pascal fixture with a Delphi-style unit that exercises a generic class, RTTI-style attribute, and property while preserving byte-exact reconstruction.\n- Documented the selected grammar, MIT license compatibility, accepted generic-Pascal baseline decision, and remaining limits versus full Delphi compiler coverage.\n- Added a minor changelog fragment and removed the initial placeholder `.gitkeep` scaffold file.\n\n## Reproduction And Verification\nBefore this branch, adding `Delphi/Object Pascal` to the grammar-backed fixture coverage failed because the adapter fell back to plain lossless token parsing and emitted no tree-sitter syntax links. The updated fixture coverage reproduces that gap by requiring byte-exact reconstruction, a clean verification report, and Pascal grammar syntax nodes.\n\nAutomated tests added or extended:\n- `tests/unit/grammar_parsing.rs::grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip`\n- `tests/unit/grammar_parsing.rs::delphi_object_pascal_fixture_uses_tree_sitter_pascal`\n- `tests/unit/grammar_parsing.rs::pascal_aliases_use_tree_sitter_pascal`\n\nLocal checks run:\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs`\n- `rust-script scripts/check-crate-size.rs`\n- `rust-script scripts/check-changelog-fragment.rs`\n- `git diff --check`\n\nScreenshots are not applicable; this is parser/backend behavior.\n\n## Provenance\nSelected `tree-sitter-pascal` 0.10.2 from crates.io because it is MIT licensed, exposes the same safe `LANGUAGE` binding API used by the existing tree-sitter grammar crates, and advertises Pascal dialect coverage for Delphi and Free Pascal constructs. The project accepts this published grammar as the initial baseline rather than forking; version-specific Delphi and Free Pascal mode differences, conditional compilation variants, package/library projects, design-time artifacts, and semantic compiler checks remain outside advertised grammar-backed scope until dedicated fixtures are added.",
+    "files": [
+      {
+        "path": "Cargo.lock",
+        "additions": 11,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "Cargo.toml",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_160000_delphi_object_pascal_grammar.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "docs/case-studies/issue-12/README.md",
+        "additions": 54,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "docs/parity-roadmap.md",
+        "additions": 18,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/parity.rs",
+        "additions": 2,
+        "deletions": 2,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/tree_sitter_adapter.rs",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/grammar_parsing.rs",
+        "additions": 64,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-12-95f3408282fa",
+    "mergedAt": "2026-06-07T15:51:13Z",
+    "number": 28,
+    "title": "Add Delphi/Object Pascal grammar support",
+    "url": "https://github.com/link-foundation/meta-language/pull/28"
+  },
+  {
+    "body": "Fixes #13\n\n## Summary\n- Add tree-sitter-query-like S-expression matching for `LinkQuery`, including captures, field constraints, negated fields, alternation, anchors, quantifiers, and host-evaluated predicates.\n- Add `LinkQuery::by_type`, capture-aware `query_matches` APIs, and public predicate/capture result types.\n- Add link-cli-style variable substitution bindings for `$index`, `$source`, and `$target` while preserving exact create/update/delete/swap substitution behavior.\n\n## Reproduction and Verification\n- Added `tests/unit/query_matching.rs` for by-type selection and structural S-expression matching with captures plus a host predicate hook.\n- Added `tests/unit/substitution.rs` for the documented link-cli-style swap shape using `$index`, `$source`, and `$target` bindings.\n- Existing substitution fixtures continue to cover create/update/delete/swap behavior.\n\n## Local Checks\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs` (passes; warns that `src/query.rs` and `src/link_network.rs` are above 900 lines but below the 1000-line hard limit)\n- `rust-script scripts/check-crate-size.rs`\n",
+    "files": [
+      {
+        "path": "README.md",
+        "additions": 2,
+        "deletions": 2,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_160527_query_matcher_enrichment.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/lib.rs",
+        "additions": 8,
+        "deletions": 2,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/link_network.rs",
+        "additions": 77,
+        "deletions": 3,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/query.rs",
+        "additions": 907,
+        "deletions": 2,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/substitution.rs",
+        "additions": 144,
+        "deletions": 1,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/mod.rs",
+        "additions": 2,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/query_matching.rs",
+        "additions": 113,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/substitution.rs",
+        "additions": 37,
+        "deletions": 0,
+        "changeType": "ADDED"
+      }
+    ],
+    "headRefName": "issue-13-6c6e54a14d90",
+    "mergedAt": "2026-06-07T16:27:49Z",
+    "number": 29,
+    "title": "Enrich substitution and query matcher",
+    "url": "https://github.com/link-foundation/meta-language/pull/29"
+  },
+  {
+    "body": "## Summary\n- Store links, reference lists, metadata text, term indexes, and concept syntax entries with shared `Arc` storage so snapshot forks retain unchanged allocations.\n- Route existing link mutations through copy-on-write with `Arc::make_mut` so edited links detach while unchanged links remain shared.\n- Add diagnostics and regression tests proving parent/fork byte reconstruction, unchanged-link sharing, trivia-policy coverage, and metadata string interning.\n- Add a minor changelog fragment and remove the temporary PR scaffold `.gitkeep`.\n\n## Reproduction\nBefore this change, `NetworkSnapshot::to_mutable` cloned the whole `LinkNetwork` value into the mutable fork. The new `mutable_snapshot_edits_preserve_parent_bytes_and_share_unchanged_links` test demonstrates the expected behavior by forking a parsed network, editing one token link in the fork, and asserting the parent still reconstructs the original bytes while unchanged links stay shared.\n\n## Tests\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `RUST_LOG=warn rust-script scripts/check-no-src-tests.rs`\n- `RUST_LOG=warn rust-script scripts/check-file-size.rs` (passes with near-limit warnings)\n- `RUST_LOG=warn rust-script scripts/check-crate-size.rs`\n\nFixes #14\n",
+    "files": [
+      {
+        "path": "changelog.d/20260607_170000_persistent_snapshot_sharing.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/link_network.rs",
+        "additions": 73,
+        "deletions": 40,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 76,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-14-ac0bd15b1618",
+    "mergedAt": "2026-06-07T16:52:11Z",
+    "number": 30,
+    "title": "Add persistent snapshot structural sharing",
+    "url": "https://github.com/link-foundation/meta-language/pull/30"
+  },
+  {
+    "body": "Fixes #15\n\n## Summary\n- Add a public `find()` / `replace()` transform surface over `LinkNetwork`, backed by the existing S-expression query matcher and capture results.\n- Add `ReplacementRule::captured_text` for codemod-style source edits that rewrite only captured token ranges while preserving every untouched byte.\n- Add structural `ReplacementRule` variants that delegate to the existing substitution APIs.\n- Add README usage docs and a minor changelog fragment; remove the temporary PR scaffold `.gitkeep`.\n\n## Reproduction And Verification\nBefore this branch, callers had separate query and substitution primitives but no single ergonomic surface for selecting captures, applying a replacement, and asserting Recast/jscodeshift-style unchanged-byte preservation.\n\nAutomated fixtures added:\n- `query_transform::jscodeshift_style_identifier_fixture_renames_only_captured_identifiers` selects JavaScript `identifier` captures, renames only the two intended occurrences, preserves a comment containing the same text, and verifies the output is exactly the original source with only reported ranges replaced.\n- `query_transform::recast_style_literal_fixture_changes_only_the_literal_bytes` changes a JavaScript numeric literal while preserving surrounding formatting and comments.\n- `query_transform::replace_can_delegate_structural_rules_to_apply_substitution` verifies the new `replace()` wrapper can route structural rules through `apply_substitution`.\n\n## Local Checks\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs`\n- `rust-script scripts/check-crate-size.rs`\n- `rust-script scripts/check-changelog-fragment.rs`\n\nScreenshots are not applicable; this is backend/API behavior.\n",
+    "files": [
+      {
+        "path": "README.md",
+        "additions": 30,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_183000_query_transform_surface.md",
+        "additions": 7,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/lib.rs",
+        "additions": 2,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/link_network.rs",
+        "additions": 9,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/transform.rs",
+        "additions": 377,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/mod.rs",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/query_transform.rs",
+        "additions": 124,
+        "deletions": 0,
+        "changeType": "ADDED"
+      }
+    ],
+    "headRefName": "issue-15-ed005ee50e0e",
+    "mergedAt": "2026-06-07T18:29:26Z",
+    "number": 31,
+    "title": "Add query transform surface",
+    "url": "https://github.com/link-foundation/meta-language/pull/31"
+  },
+  {
+    "body": "Fixes #16\n\n## Summary\n- Replace prose self-description seed definitions with a closed root table, including the RML root `(Type: Type Type)`.\n- Materialize each root as a self-referential link and add structural relation links from each root to its definition references, without adding extra term labels outside the root vocabulary.\n- Change `describe` to emit LiNo-style definition lines that round-trip through `parse()` and `reconstruct_text()`.\n- Update README coverage and add a minor changelog fragment.\n\n## Reproduction And Verification\nBefore this branch, `describe` printed summary prose instead of the self-description network, and root definitions used external words such as prose descriptions rather than terms from the seeded closure. The new tests reproduce that gap by requiring closed root definitions, materialized root-definition relation links, no non-root term labels in the self-description seed, and lossless CLI output reconstruction.\n\nAutomated tests added or extended:\n- `tests/unit/self_description.rs::self_description_contains_common_roots`\n- `tests/unit/self_description.rs::self_description_definition_links_reference_only_roots`\n- `tests/unit/self_description.rs::self_description_term_labels_are_only_roots`\n- `tests/integration/cli.rs::describe_cli_reports_self_description_roots`\n- `tests/unit/query_matching.rs::by_type_query_selects_links_of_the_requested_link_type`\n\n## Local Checks\n- `cargo fmt --check`\n- `RUSTFLAGS=-Dwarnings cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs` (passes with existing near-limit warnings for `src/query.rs` and `src/link_network.rs`)\n- `rust-script scripts/check-crate-size.rs`\n- `rust-script scripts/check-changelog-fragment.rs`\n- `git diff --check`\n- `rg -n \"\\bgraph\\b\" src README.md tests changelog.d/20260607_190000_self_description_roots.md` (no matches)\n\nScreenshots are not applicable; this is backend/CLI behavior.",
+    "files": [
+      {
+        "path": "README.md",
+        "additions": 6,
+        "deletions": 5,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_190000_self_description_roots.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/lib.rs",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/link_network.rs",
+        "additions": 44,
+        "deletions": 60,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/main.rs",
+        "additions": 1,
+        "deletions": 12,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/self_description.rs",
+        "additions": 87,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/integration/cli.rs",
+        "additions": 11,
+        "deletions": 3,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 0,
+        "deletions": 22,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/mod.rs",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/query_matching.rs",
+        "additions": 5,
+        "deletions": 2,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/self_description.rs",
+        "additions": 165,
+        "deletions": 0,
+        "changeType": "ADDED"
+      }
+    ],
+    "headRefName": "issue-16-0591ac3e90a8",
+    "mergedAt": "2026-06-07T18:58:48Z",
+    "number": 32,
+    "title": "Materialize self-description roots",
+    "url": "https://github.com/link-foundation/meta-language/pull/32"
+  },
+  {
+    "body": "Fixes #17\n\n## Summary\n- Embed meta-expression's `semantic-lexicon.json` and seed its 351 concepts as shared concept links.\n- Add semantic mapping links from each concept to per-language syntax across the lexicon languages, deduplicating concept links across mappings.\n- Add structural programming-language concepts such as function, binding, application, sequence, branch, loop, parameter, argument, return, and assignment.\n- Surface the seeded concept layer through the existing semantic projection and document the new API.\n\n## Verification\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs`\n- `rust-script scripts/check-crate-size.rs`\n\n## Release\n- Added a `bump: minor` changelog fragment.\n",
+    "files": [
+      {
+        "path": ".gitkeep",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "Cargo.toml",
+        "additions": 2,
+        "deletions": 1,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "README.md",
+        "additions": 3,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_190802_common_concept_ontology.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/concept_ontology.rs",
+        "additions": 546,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/data/semantic-lexicon.json",
+        "additions": 4354,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/lib.rs",
+        "additions": 2,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/link_network.rs",
+        "additions": 21,
+        "deletions": 29,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/concept_ontology.rs",
+        "additions": 99,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/mod.rs",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-17-23eafb73cf23",
+    "mergedAt": "2026-06-07T19:32:07Z",
+    "number": 33,
+    "title": "Seed common concept ontology",
+    "url": "https://github.com/link-foundation/meta-language/pull/33"
+  },
+  {
+    "body": "## Summary\n- Add `ParseConfiguration` formalization/naturalization controls and the public `LinkNetwork::reconstruct_text_as()` reconstruction API.\n- Add semantic statehood proposition links for the Hawaii worked example, including Q782/Q35657 mappings and English/Russian naturalization.\n- Add regression tests for English→Russian, Russian→English, same-language byte-exact reconstruction, formalization levels, and the direction knob.\n- Document the API in README and add a `bump: minor` changelog fragment.\n\nFixes #18\n\n## Reproduction\n- Before the fix, `LinkNetwork::parse(\"Hawaii is a state.\\n\", \"English\", ...)` only reconstructed the original token stream; there was no target-language reconstruction API or formalization configuration.\n- The new `tests/unit/cross_language_reconstruction.rs` coverage exercises the previously missing behavior.\n\n## Verification\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `RUST_LOG=warn rust-script scripts/check-no-src-tests.rs`\n- `RUST_LOG=warn rust-script scripts/check-file-size.rs` (passes with existing soft warnings for `src/query.rs` and `src/link_network.rs` above 900 lines)\n- `RUST_LOG=warn rust-script scripts/check-crate-size.rs`",
+    "files": [
+      {
+        "path": ".gitkeep",
+        "additions": 0,
+        "deletions": 1,
+        "changeType": "DELETED"
+      },
+      {
+        "path": "README.md",
+        "additions": 27,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_193500_cross_language_reconstruction.md",
+        "additions": 7,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "src/concept_ontology.rs",
+        "additions": 67,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/configuration.rs",
+        "additions": 58,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/lib.rs",
+        "additions": 3,
+        "deletions": 2,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/natural_language.rs",
+        "additions": 37,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/reconstruction.rs",
+        "additions": 119,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/cross_language_reconstruction.rs",
+        "additions": 94,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/mod.rs",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-18-5ba046ed25d5",
+    "mergedAt": "2026-06-07T20:02:38Z",
+    "number": 34,
+    "title": "Add cross-language reconstruction",
+    "url": "https://github.com/link-foundation/meta-language/pull/34"
+  },
+  {
+    "body": "Fixes #19\n\n## Summary\n- Expand `PARITY_FIXTURES` with multiple upstream-provenanced fixtures for tree-sitter, LibCST, Recast, jscodeshift, Rowan, cstree, and Roslyn.\n- Add fixture-level verification expectations for clean versus recoverable parses, plus executable query/transform expectations.\n- Strengthen the parity unit tests to validate provenance, recovery diagnostics, transform output, capability coverage, and multiple external fixtures per competitor target.\n- Update the README, parity roadmap, and minor changelog fragment for the expanded fixture registry.\n\n## Reproduction\n- Before this branch, a guard requiring multiple ported fixtures for tree-sitter, LibCST, Recast, jscodeshift, Rowan, cstree, and Roslyn fails because the registry only had one illustrative fixture per target.\n- The new `tests/unit/link_network.rs::external_competitor_corpora_contribute_multiple_fixtures` test captures that gap, and the extended core contract test verifies provenance, recovery, and transform behavior.\n\n## Verification\n- `cargo fmt --check`\n- `cargo clippy --all-targets --all-features`\n- `cargo test --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs` (passes with existing soft warnings for `src/query.rs`, `src/link_network.rs`, and `tests/unit/link_network.rs` above 900 lines)\n- `rust-script scripts/check-crate-size.rs`\n- `rust-script scripts/check-changelog-fragment.rs`\n- `git diff --check`\n\n## Release\n- Added a `bump: minor` changelog fragment.\n",
+    "files": [
+      {
+        "path": "README.md",
+        "additions": 5,
+        "deletions": 5,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_203000_external_competitor_corpora.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "docs/parity-roadmap.md",
+        "additions": 16,
+        "deletions": 8,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/lib.rs",
+        "additions": 4,
+        "deletions": 3,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/parity.rs",
+        "additions": 78,
+        "deletions": 160,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/parity_fixtures.rs",
+        "additions": 536,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 95,
+        "deletions": 4,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "headRefName": "issue-19-3b570e20c466",
+    "mergedAt": "2026-06-07T20:30:26Z",
+    "number": 35,
+    "title": "Adopt external parity fixtures",
+    "url": "https://github.com/link-foundation/meta-language/pull/35"
+  },
+  {
+    "body": "## Summary\n\n- Expanded `PARITY_FIXTURES` with upstream-provenanced ecosystem fixtures for links-notation, link-cli, lino-objects-codec, relative-meta-logic, formal-ai, and meta-expression.\n- Added `tests/unit/parity_corpora.rs` gates for required fixture counts, issue-specific provenance, actual formal-ai `data/seed/` and `data/benchmarks/` paths, and the verified 351-concept meta-expression lexicon.\n- Updated parity target plans, README, roadmap, and changelog fragment; removed the branch placeholder file.\n\n## Reproduction And Verification\n\nThe regression is captured by `parity_corpora::ecosystem_corpora_contribute_required_internal_fixtures`; on the previous fixture set it failed because links-notation only contributed one ecosystem fixture.\n\nLocal checks:\n\n- `cargo fmt --check`\n- `cargo test --test unit parity_corpora -- --nocapture`\n- `cargo test --all-features`\n- `cargo clippy --all-targets --all-features`\n- `rust-script scripts/check-no-src-tests.rs`\n- `rust-script scripts/check-file-size.rs`\n- `rust-script scripts/check-crate-size.rs`\n- `rust-script scripts/check-changelog-fragment.rs`\n- `git diff --check`\n\nNo UI changes; screenshots are not applicable.\n\nFixes #20\n",
+    "files": [
+      {
+        "path": "README.md",
+        "additions": 6,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "changelog.d/20260607_213000_adopt_ecosystem_corpora.md",
+        "additions": 7,
+        "deletions": 0,
+        "changeType": "ADDED"
+      },
+      {
+        "path": "docs/parity-roadmap.md",
+        "additions": 16,
+        "deletions": 7,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/parity.rs",
+        "additions": 4,
+        "deletions": 4,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "src/parity_fixtures.rs",
+        "additions": 263,
+        "deletions": 29,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/link_network.rs",
+        "additions": 2,
+        "deletions": 192,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/mod.rs",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      },
+      {
+        "path": "tests/unit/parity_corpora.rs",
+        "additions": 289,
+        "deletions": 0,
+        "changeType": "ADDED"
+      }
+    ],
+    "headRefName": "issue-20-21cf548e1c01",
+    "mergedAt": "2026-06-07T21:02:17Z",
+    "number": 36,
+    "title": "Adopt ecosystem test corpora",
+    "url": "https://github.com/link-foundation/meta-language/pull/36"
+  }
+]
