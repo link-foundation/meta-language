@@ -606,34 +606,6 @@ impl LinkNetwork {
         id
     }
 
-    /// Inserts a concept-to-language syntax mapping.
-    pub fn insert_concept_mapping(
-        &mut self,
-        concept: &str,
-        language: &str,
-        syntax: &str,
-    ) -> LinkId {
-        let concept_link = self.insert_typed_point(
-            concept,
-            LinkType::Concept,
-            Some("A concept mapping connects shared meaning to language syntax."),
-        );
-        let language_link = self.insert_typed_point(language, LinkType::Language, None);
-        let mapping = self.insert_link(
-            [concept_link, language_link],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Semantic)
-                .with_named(true)
-                .with_term(syntax)
-                .with_language(language),
-        );
-        let concept = self.intern_arc(Arc::from(concept));
-        let language = self.intern_arc(Arc::from(language));
-        let syntax = self.intern_arc(Arc::from(syntax));
-        self.concept_syntax.insert((concept, language), syntax);
-        mapping
-    }
-
     /// Reconstructs a concept using a target language syntax mapping.
     #[must_use]
     pub fn reconstruct_concept(&self, concept: &str, language: &str) -> Option<&str> {
@@ -805,7 +777,7 @@ impl LinkNetwork {
         VerificationReport::new(issues)
     }
 
-    fn insert_typed_point(
+    pub(crate) fn insert_typed_point(
         &mut self,
         term: &str,
         link_type: LinkType,
@@ -840,6 +812,26 @@ impl LinkNetwork {
         );
         self.terms.insert(term, id);
         id
+    }
+
+    pub(crate) fn cache_concept_syntax(
+        &mut self,
+        concept: &str,
+        language: &str,
+        syntax: &str,
+        update_reconstruction: bool,
+    ) {
+        let concept = self.intern_arc(Arc::from(concept));
+        let language = self.intern_arc(Arc::from(language));
+        let syntax = self.intern_arc(Arc::from(syntax));
+
+        if update_reconstruction
+            || !self
+                .concept_syntax
+                .contains_key(&(Arc::clone(&concept), Arc::clone(&language)))
+        {
+            self.concept_syntax.insert((concept, language), syntax);
+        }
     }
 
     pub(crate) fn attach_trivia(

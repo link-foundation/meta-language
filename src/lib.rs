@@ -1,3 +1,4 @@
+mod concept_ontology;
 pub mod configuration;
 pub mod language_parser;
 pub mod link_flags;
@@ -13,6 +14,7 @@ pub mod substitution;
 pub mod transform;
 pub mod verification;
 
+pub use concept_ontology::ConceptOntologySeedReport;
 pub use configuration::{
     LanguageIdentificationDetector, ParseConfiguration, RegionDetectionPolicy,
     TriviaAttachmentPolicy,
