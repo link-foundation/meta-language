@@ -38,18 +38,7 @@ fn main() {
 
 fn describe() {
     let network = LinkNetwork::self_describing();
-    let roots = [
-        "link",
-        "reference",
-        "relation link",
-        "language",
-        "grammar",
-        "type",
-        "concept",
-        "point",
-    ];
-    println!("self-description roots: {}", roots.join(", "));
-    println!("links: {}", network.len());
+    print!("{}", network.self_description_text());
 }
 
 fn verify(language: &str, text: &str) {

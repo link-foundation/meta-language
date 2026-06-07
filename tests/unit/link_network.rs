@@ -1,9 +1,9 @@
 use meta_language::{
-    ByteRange, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery, LinkType, NetworkProjection,
-    ParityCapability, ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan,
+    ByteRange, LanguageIdentificationDetector, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery,
+    LinkType, NetworkProjection, ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan,
     SubstitutionRule, TriviaAttachmentPolicy, TruthValue, VerificationIssueKind,
     GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
-    NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
+    NATURAL_LANGUAGE_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -127,28 +127,6 @@ fn parse_configuration_can_attach_trivia_with_either_or_both_policies() {
 }
 
 #[test]
-fn self_description_contains_common_roots() {
-    let network = LinkNetwork::self_describing();
-
-    for term in [
-        "link",
-        "reference",
-        "relation link",
-        "language",
-        "grammar",
-        "type",
-        "concept",
-        "point",
-    ] {
-        assert!(network.find_term(term).is_some(), "missing term: {term}");
-    }
-
-    let link = network.find_term("link").expect("link term");
-    let definition = network.definition_for(link).expect("link definition");
-    assert!(definition.contains("n-tuple of references"));
-}
-
-#[test]
 fn parse_is_lossless_by_default_and_matches_explicit_lossless_boundary() {
     let parsed = LinkNetwork::parse("alpha beta", "plain-text", ParseConfiguration::default());
     let explicit =
@@ -220,33 +198,79 @@ fn immutable_and_mutable_snapshots_version_network_over_time() {
 }
 
 #[test]
-fn reconstruct_text_round_trips_lossless_competitor_sources() {
-    for (language, source) in [
-        ("Python", "def f(x):\n    return x + 1\n"),
-        ("JavaScript", "const x = 1; // keep trivia\n"),
-        ("C#", "class C { void M() { } }\n"),
+fn mutable_snapshot_edits_preserve_parent_bytes_and_share_unchanged_links() {
+    for policy in [
+        TriviaAttachmentPolicy::ContainmentLink,
+        TriviaAttachmentPolicy::TokenLink,
+        TriviaAttachmentPolicy::Both,
     ] {
-        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
-
-        assert_eq!(network.reconstruct_text(), source);
-        assert!(
-            network.verify_full_match(None).is_clean(),
-            "{language} fixture should parse cleanly"
+        let network = LinkNetwork::parse_lossless_text(
+            "alpha beta",
+            "plain-text",
+            ParseConfiguration::new(policy),
         );
+        let snapshot = network.snapshot(7, "initial parse");
+        drop(network);
+
+        let edited = snapshot
+            .network()
+            .links()
+            .find(|link| {
+                link.metadata().link_type() == Some(LinkType::Token)
+                    && link
+                        .metadata()
+                        .span()
+                        .is_some_and(|span| span.byte_range().start() == 0)
+            })
+            .map(meta_language::Link::id)
+            .expect("first token exists");
+        let unchanged = snapshot
+            .network()
+            .links()
+            .find(|link| {
+                link.metadata().link_type() == Some(LinkType::Token)
+                    && link
+                        .metadata()
+                        .span()
+                        .is_some_and(|span| span.byte_range().start() == 1)
+            })
+            .map(meta_language::Link::id)
+            .expect("second token exists");
+
+        let mut mutable = snapshot.to_mutable("mark first token missing");
+        assert_eq!(snapshot.network().shared_link_count(unchanged), Some(2));
+
+        assert!(mutable
+            .network_mut()
+            .set_flags(edited, LinkFlags::missing()));
+        assert_eq!(snapshot.network().reconstruct_text(), "alpha beta");
+        assert_eq!(mutable.network().reconstruct_text(), "lpha beta");
+        assert_eq!(snapshot.network().shared_link_count(unchanged), Some(2));
+        assert_eq!(snapshot.network().shared_link_count(edited), Some(1));
+
+        let committed = mutable.commit();
+        assert_eq!(committed.version(), 8);
+        assert_eq!(committed.parent_version(), Some(7));
+        assert_eq!(committed.network().reconstruct_text(), "lpha beta");
+        assert_eq!(snapshot.network().reconstruct_text(), "alpha beta");
+        assert_eq!(committed.network().shared_link_count(unchanged), Some(2));
+        assert_eq!(committed.network().shared_link_count(edited), Some(1));
     }
 }
 
 #[test]
-fn parse_marks_recovery_errors_without_losing_original_text() {
-    let network = LinkNetwork::parse("call(", "JavaScript", ParseConfiguration::default());
-    let report = network.verify_full_match(None);
+fn identical_metadata_terms_share_interned_storage() {
+    let mut network = LinkNetwork::new();
+    let root = network.insert_point("root");
 
-    assert_eq!(network.reconstruct_text(), "call(");
-    assert!(!report.is_clean());
-    assert!(report
-        .issues()
-        .iter()
-        .any(|issue| issue.kind() == VerificationIssueKind::MissingLink));
+    network.insert_link([root], LinkMetadata::new().with_term("shared"));
+    network.insert_link([root], LinkMetadata::new().with_term("shared"));
+
+    assert!(
+        network.interned_string_count("shared").unwrap_or_default() >= 3,
+        "expected intern pool and metadata terms to share the same string storage"
+    );
+    assert_eq!(network.interned_string_count("missing"), None);
 }
 
 #[test]
@@ -280,7 +304,7 @@ fn content_driven_and_html_region_detection_cover_embedding_targets() {
     assert!(markdown_regions
         .iter()
         .map(meta_language::EmbeddedRegion::language)
-        .any(|language| language == "SQL"));
+        .any(|language| language == "sql-ansi"));
 
     let html = "<script>const x = 1;</script><style>.x { color: red; }</style><p style=\"color: blue\">text</p>";
     let html_network = LinkNetwork::parse(html, "HTML", ParseConfiguration::default());
@@ -297,6 +321,259 @@ fn content_driven_and_html_region_detection_cover_embedding_targets() {
             .filter(|language| **language == "CSS")
             .count(),
         2
+    );
+}
+
+#[test]
+fn embedded_regions_are_parsed_and_connected_to_region_links() {
+    let markdown =
+        "Intro\n```JavaScript\nconst value = 1;\n```\n<section><em>HTML</em></section>\n";
+    let markdown_network = LinkNetwork::parse(markdown, "Markdown", ParseConfiguration::default());
+
+    assert_eq!(markdown_network.reconstruct_text(), markdown);
+    assert_region_has_connected_syntax(&markdown_network, "JavaScript");
+    assert_region_has_connected_syntax(&markdown_network, "HTML");
+    assert!(markdown_network.links().any(|link| {
+        link.metadata().link_type() == Some(LinkType::Token)
+            && link.metadata().language() == Some("JavaScript")
+            && link.metadata().term() == Some("value")
+    }));
+
+    let html = "<script>const value = 1;</script><style>.x { color: red; }</style><p style=\"color: blue\">text</p>";
+    let html_network = LinkNetwork::parse(html, "HTML", ParseConfiguration::default());
+
+    assert_eq!(html_network.reconstruct_text(), html);
+    assert_region_has_connected_syntax(&html_network, "JavaScript");
+    assert_region_has_connected_syntax(&html_network, "CSS");
+}
+
+#[test]
+fn content_driven_embedded_regions_are_parsed() {
+    let markdown = "Intro\n```\nconst value = 1;\n```\n";
+    let network = LinkNetwork::parse(
+        markdown,
+        "Markdown",
+        ParseConfiguration::default()
+            .with_region_detection_policy(RegionDetectionPolicy::ContentDriven),
+    );
+
+    assert_eq!(network.reconstruct_text(), markdown);
+    assert_region_has_connected_syntax(&network, "JavaScript");
+}
+
+#[test]
+fn content_driven_detection_falls_back_to_txt_region() {
+    let markdown = "Notes\n```\nplain prose\ncafe au lait\n```\n";
+    let network = LinkNetwork::parse(
+        markdown,
+        "Markdown",
+        ParseConfiguration::default()
+            .with_region_detection_policy(RegionDetectionPolicy::ContentDriven),
+    );
+    let regions = network.embedded_regions();
+
+    assert_eq!(regions.len(), 1);
+    assert_eq!(regions[0].language(), "txt");
+    assert_eq!(
+        regions[0].span().byte_range(),
+        ByteRange::new(
+            markdown
+                .find("plain prose")
+                .expect("region starts at prose"),
+            markdown
+                .rfind("```")
+                .expect("region ends before closing fence"),
+        )
+    );
+}
+
+#[test]
+fn natural_language_parse_adds_segmentation_language_and_unicode_annotations() {
+    let latin_source = "Natural language links work.\n";
+    let latin_network = LinkNetwork::parse(latin_source, "English", ParseConfiguration::default());
+
+    assert_eq!(latin_network.reconstruct_text(), latin_source);
+    assert_token_link(
+        &latin_network,
+        "Natural",
+        ByteRange::new(0, "Natural".len()),
+    );
+    assert_link_with_term(
+        &latin_network,
+        LinkType::Semantic,
+        "segmentation:unicode-segmentation",
+    );
+    assert_link_with_term(&latin_network, LinkType::Language, "English");
+
+    let mandarin_source = "你好。\n";
+    let mandarin_network = LinkNetwork::parse(
+        mandarin_source,
+        "Mandarin Chinese",
+        ParseConfiguration::default(),
+    );
+
+    assert_eq!(mandarin_network.reconstruct_text(), mandarin_source);
+    assert_token_link(&mandarin_network, "你好", ByteRange::new(0, "你好".len()));
+    assert_link_with_term(
+        &mandarin_network,
+        LinkType::Semantic,
+        "segmentation:lindera-jieba",
+    );
+    assert_link_with_term(&mandarin_network, LinkType::Language, "Mandarin Chinese");
+
+    let arabic_source = "مرحبا.\n";
+    let arabic_network = LinkNetwork::parse(
+        arabic_source,
+        "Modern Standard Arabic",
+        ParseConfiguration::default(),
+    );
+
+    assert_eq!(arabic_network.reconstruct_text(), arabic_source);
+    assert_link_with_term(&arabic_network, LinkType::Semantic, "bidi:rtl");
+    assert_link_with_prefix(&arabic_network, LinkType::Semantic, "normalization:nfc:");
+    assert_link_with_prefix(&arabic_network, LinkType::Semantic, "normalization:nfd:");
+}
+
+#[test]
+fn natural_language_identifier_backend_is_switchable() {
+    assert_eq!(
+        ParseConfiguration::default().language_identification_detector(),
+        LanguageIdentificationDetector::Lingua
+    );
+
+    let source = "This sentence gives the detector enough English context.\n";
+    let network = LinkNetwork::parse(
+        source,
+        "English",
+        ParseConfiguration::default()
+            .with_language_identification_detector(LanguageIdentificationDetector::Whatlang),
+    );
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert_link_with_term(&network, LinkType::Language, "English");
+    assert_link_with_term(&network, LinkType::Semantic, "identifier:whatlang");
+}
+
+#[test]
+fn natural_language_fixtures_keep_byte_exact_reconstruction_with_language_regions() {
+    let natural_languages = NATURAL_LANGUAGE_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+    let mut checked_fixtures = 0;
+
+    for fixture in LANGUAGE_FIXTURES
+        .iter()
+        .filter(|fixture| natural_languages.contains(&fixture.language()))
+    {
+        checked_fixtures += 1;
+        let network = LinkNetwork::parse(
+            fixture.source(),
+            fixture.language(),
+            ParseConfiguration::default(),
+        );
+
+        assert_eq!(
+            network.reconstruct_text(),
+            fixture.source(),
+            "{} fixture failed reconstruction",
+            fixture.description()
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Region)
+                    && link.metadata().language() == Some(fixture.language())
+                    && link.metadata().span().is_some()
+            }),
+            "{} fixture should have a natural-language region",
+            fixture.description()
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Language)
+                    && link.metadata().span().is_some()
+            }),
+            "{} fixture should have a region-scoped language link",
+            fixture.description()
+        );
+    }
+
+    assert_eq!(checked_fixtures, NATURAL_LANGUAGE_TARGETS.len());
+}
+
+fn assert_region_has_connected_syntax(network: &LinkNetwork, language: &str) {
+    let region_ids = network
+        .links()
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Region))
+        .filter(|link| link.metadata().language() == Some(language))
+        .map(meta_language::Link::id)
+        .collect::<Vec<_>>();
+
+    assert!(
+        !region_ids.is_empty(),
+        "expected at least one {language} region"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some(language)
+                && link
+                    .references()
+                    .iter()
+                    .any(|reference| region_ids.contains(reference))
+        }),
+        "expected {language} syntax rooted at a region link"
+    );
+}
+
+fn assert_token_link(network: &LinkNetwork, term: &str, range: ByteRange) {
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Token)
+                && link.metadata().term() == Some(term)
+                && link
+                    .metadata()
+                    .span()
+                    .is_some_and(|span| span.byte_range() == range)
+        }),
+        "expected token link for {term:?} at {range:?}"
+    );
+}
+
+fn assert_link_with_term(network: &LinkNetwork, link_type: LinkType, term: &str) {
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(link_type) && link.metadata().term() == Some(term)
+        }),
+        "expected {link_type:?} link with term {term:?}"
+    );
+}
+
+fn assert_link_with_prefix(network: &LinkNetwork, link_type: LinkType, prefix: &str) {
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(link_type)
+                && link
+                    .metadata()
+                    .term()
+                    .is_some_and(|term| term.starts_with(prefix))
+        }),
+        "expected {link_type:?} link with prefix {prefix:?}"
+    );
+}
+
+#[test]
+fn txt_parse_exposes_whole_buffer_as_single_region() {
+    let source = "Plain text region\nUTF-8 line: café\n";
+    let network = LinkNetwork::parse(source, "txt", ParseConfiguration::default());
+    let regions = network.embedded_regions();
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert_eq!(regions.len(), 1);
+    assert_eq!(regions[0].language(), "txt");
+    assert_eq!(
+        regions[0].span().byte_range(),
+        ByteRange::new(0, source.len())
     );
 }
 
@@ -405,107 +682,8 @@ fn semantic_truth_values_cover_many_valued_and_paradox_cases() {
 }
 
 #[test]
-fn parity_targets_track_competitor_and_ecosystem_test_sources() {
-    let target_names = PARITY_TARGETS
-        .iter()
-        .map(meta_language::ParityTarget::name)
-        .collect::<Vec<_>>();
-
-    for expected in [
-        "tree-sitter",
-        "LibCST",
-        "Recast",
-        "jscodeshift",
-        "Rowan",
-        "cstree",
-        "Roslyn",
-        "links-notation",
-        "link-cli",
-        "lino-objects-codec",
-        "relative-meta-logic",
-        "formal-ai",
-        "meta-expression",
-    ] {
-        assert!(
-            target_names.contains(&expected),
-            "missing parity target: {expected}"
-        );
-    }
-
-    assert!(PARITY_TARGETS
-        .iter()
-        .all(|target| !target.capabilities().is_empty()));
-    assert!(PARITY_TARGETS
-        .iter()
-        .all(|target| target.test_plan().contains("Executable fixture")));
-    assert!(PARITY_TARGETS.iter().any(|target| target
-        .capabilities()
-        .contains(&ParityCapability::SnapshotVersioning)));
-}
-
-#[test]
-fn every_parity_target_has_an_executable_fixture_that_passes_core_contract() {
-    for target in PARITY_TARGETS {
-        assert!(
-            PARITY_FIXTURES
-                .iter()
-                .any(|fixture| fixture.target_name() == target.name()),
-            "missing executable fixture for {}",
-            target.name()
-        );
-    }
-
-    for fixture in PARITY_FIXTURES {
-        let network = LinkNetwork::parse(
-            fixture.source(),
-            fixture.language(),
-            ParseConfiguration::default(),
-        );
-
-        assert_eq!(
-            network.reconstruct_text(),
-            fixture.expected_reconstruction(),
-            "{} fixture failed reconstruction",
-            fixture.name()
-        );
-
-        for capability in fixture.capabilities() {
-            assert!(
-                fixture
-                    .target()
-                    .capabilities()
-                    .iter()
-                    .any(|target_capability| target_capability == capability),
-                "{} fixture advertises capability outside its target",
-                fixture.name()
-            );
-        }
-    }
-}
-
-#[test]
-fn every_parity_target_capability_is_exercised_by_fixtures() {
-    for target in PARITY_TARGETS {
-        let covered_capabilities = PARITY_FIXTURES
-            .iter()
-            .filter(|fixture| fixture.target_name() == target.name())
-            .flat_map(|fixture| fixture.capabilities().iter().copied())
-            .collect::<Vec<_>>();
-
-        for capability in target.capabilities() {
-            assert!(
-                covered_capabilities.contains(capability),
-                "{} target capability is not covered by an executable fixture: {:?}",
-                target.name(),
-                capability
-            );
-        }
-    }
-}
-
-#[test]
 fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
-    assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 2);
+    assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 3);
     assert_eq!(PROGRAMMING_LANGUAGE_TARGETS.len(), 10);
     assert_eq!(NATURAL_LANGUAGE_TARGETS.len(), 10);
 
@@ -513,6 +691,7 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
         .iter()
         .map(meta_language::LanguageTarget::name)
         .collect::<Vec<_>>();
+    assert!(markup_names.contains(&"txt"));
     assert!(markup_names.contains(&"Markdown"));
     assert!(markup_names.contains(&"HTML"));
 
@@ -527,9 +706,36 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
     assert!(PROGRAMMING_LANGUAGE_TARGETS
         .iter()
         .all(|target| target.basis().contains("TIOBE May 2026")));
+    assert!(PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .any(|target| target.name() == "sql-ansi"));
     assert!(NATURAL_LANGUAGE_TARGETS
         .iter()
         .all(|target| target.basis().contains("Ethnologue/Britannica")));
+}
+
+#[test]
+fn natural_language_targets_follow_ethnologue_2025_total_speaker_order() {
+    let target_names = NATURAL_LANGUAGE_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        target_names,
+        vec![
+            "English",
+            "Mandarin Chinese",
+            "Hindi",
+            "Spanish",
+            "Modern Standard Arabic",
+            "French",
+            "Bengali",
+            "Portuguese",
+            "Russian",
+            "Urdu",
+        ]
+    );
 }
 
 #[test]

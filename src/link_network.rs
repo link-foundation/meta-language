@@ -1,12 +1,19 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+use std::sync::Arc;
 
-use crate::configuration::{ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy};
+use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
+use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::link_flags::LinkFlags;
 use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
-use crate::query::LinkQuery;
+use crate::natural_language::annotate_natural_language;
+use crate::query::{LinkQuery, QueryMatch, QueryPredicateHost, RejectPredicateHost};
+use crate::self_description::{definition_expression, SELF_DESCRIPTION_ROOTS};
 use crate::source::{ByteRange, Point, SourceSpan};
-use crate::substitution::{SubstitutionReport, SubstitutionRule};
+use crate::substitution::{
+    SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
+};
+use crate::tree_sitter_adapter;
 use crate::verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 /// Stable identifier for a link inside a [`LinkNetwork`].
@@ -116,9 +123,9 @@ impl fmt::Display for LinkType {
 pub struct LinkMetadata {
     link_type: Option<LinkType>,
     named: bool,
-    term: Option<String>,
-    definition: Option<String>,
-    language: Option<String>,
+    term: Option<Arc<str>>,
+    definition: Option<Arc<str>>,
+    language: Option<Arc<str>>,
     span: Option<SourceSpan>,
     flags: LinkFlags,
 }
@@ -147,21 +154,21 @@ impl LinkMetadata {
     /// Returns metadata with a term label.
     #[must_use]
     pub fn with_term(mut self, term: impl Into<String>) -> Self {
-        self.term = Some(term.into());
+        self.term = Some(Arc::from(term.into()));
         self
     }
 
     /// Returns metadata with a self-description definition.
     #[must_use]
     pub fn with_definition(mut self, definition: impl Into<String>) -> Self {
-        self.definition = Some(definition.into());
+        self.definition = Some(Arc::from(definition.into()));
         self
     }
 
     /// Returns metadata with a language label.
     #[must_use]
     pub fn with_language(mut self, language: impl Into<String>) -> Self {
-        self.language = Some(language.into());
+        self.language = Some(Arc::from(language.into()));
         self
     }
 
@@ -226,7 +233,7 @@ impl LinkMetadata {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Link {
     id: LinkId,
-    references: Vec<LinkId>,
+    references: Arc<[LinkId]>,
     metadata: LinkMetadata,
 }
 
@@ -258,9 +265,10 @@ impl Link {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct LinkNetwork {
     next_id: u64,
-    links: BTreeMap<LinkId, Link>,
-    terms: BTreeMap<String, LinkId>,
-    concept_syntax: BTreeMap<(String, String), String>,
+    links: BTreeMap<LinkId, Arc<Link>>,
+    terms: BTreeMap<Arc<str>, LinkId>,
+    concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
+    strings: BTreeSet<Arc<str>>,
 }
 
 impl LinkNetwork {
@@ -272,6 +280,7 @@ impl LinkNetwork {
             links: BTreeMap::new(),
             terms: BTreeMap::new(),
             concept_syntax: BTreeMap::new(),
+            strings: BTreeSet::new(),
         }
     }
 
@@ -279,67 +288,50 @@ impl LinkNetwork {
     #[must_use]
     pub fn self_describing() -> Self {
         let mut network = Self::new();
-        network.insert_typed_point(
-            "link",
-            LinkType::Link,
-            Some("A link is an n-tuple of references to links."),
-        );
-        network.insert_typed_point(
-            "reference",
-            LinkType::Reference,
-            Some("A reference is one position in a link that points to another link."),
-        );
-        network.insert_typed_point(
-            "relation link",
-            LinkType::Relation,
-            Some("A relation link connects references to other links and is itself a link."),
-        );
-        network.insert_typed_point(
-            "language",
-            LinkType::Language,
-            Some("A language is a set of grammar, syntax, and semantic links."),
-        );
-        network.insert_typed_point(
-            "grammar",
-            LinkType::Grammar,
-            Some("A grammar describes which syntax links fully match a language."),
-        );
-        network.insert_typed_point(
-            "type",
-            LinkType::Type,
-            Some("A type is a link that constrains or classifies other links."),
-        );
-        network.insert_typed_point(
-            "concept",
-            LinkType::Concept,
-            Some("A concept is a shared meaning link that multiple languages can reference."),
-        );
-        network.insert_typed_point(
-            "point",
-            LinkType::Concept,
-            Some("A point is represented as a self-referential link."),
-        );
-        network.insert_typed_point(
-            "field",
-            LinkType::Field,
-            Some("A field is a labeled relation link from a parent link to a child link."),
-        );
-        network.insert_typed_point(
-            "trivia",
-            LinkType::Trivia,
-            Some("Trivia is source text preserved by explicit attachment links."),
-        );
-        network.insert_typed_point(
-            "region",
-            LinkType::Region,
-            Some("A region is a source span with a selected or detected language."),
-        );
-        network.insert_typed_point(
-            "object",
-            LinkType::Object,
-            Some("An object identity is represented by a link that other links can share."),
-        );
+        for root in SELF_DESCRIPTION_ROOTS {
+            let definition = definition_expression(root.term, root.references);
+            network.insert_typed_point(root.term, root.link_type, Some(&definition));
+        }
+
+        for root in SELF_DESCRIPTION_ROOTS {
+            let mut references = Vec::with_capacity(root.references.len() + 1);
+            references.push(
+                network
+                    .find_term(root.term)
+                    .expect("seeded self-description root exists"),
+            );
+            for reference in root.references {
+                references.push(
+                    network
+                        .find_term(reference)
+                        .expect("seeded self-description reference exists"),
+                );
+            }
+
+            network.insert_dynamic_link(
+                &references,
+                LinkMetadata::new().with_link_type(LinkType::Relation),
+            );
+        }
+
         network
+    }
+
+    /// Serializes the seeded self-description roots as LiNo-style definition lines.
+    #[must_use]
+    pub fn self_description_text(&self) -> String {
+        let mut output = String::new();
+        for root in SELF_DESCRIPTION_ROOTS {
+            let Some(id) = self.find_term(root.term) else {
+                continue;
+            };
+            let Some(definition) = self.definition_for(id) else {
+                continue;
+            };
+            output.push_str(definition);
+            output.push('\n');
+        }
+        output
     }
 
     /// Parses plain source text into a lossless token network.
@@ -349,7 +341,7 @@ impl LinkNetwork {
     /// stripped away for CST, AST, or semantic-only work.
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
-        Self::parse_lossless_text(text, language, configuration)
+        BuiltInLanguageParser.parse_source(text, language, configuration)
     }
 
     /// Parses plain source text into a lossless token network.
@@ -363,22 +355,7 @@ impl LinkNetwork {
         language: &str,
         configuration: ParseConfiguration,
     ) -> Self {
-        let mut network = Self::self_describing();
-        let language_link = network.insert_typed_point(language, LinkType::Language, None);
-        let document_span = SourceSpan::new(
-            ByteRange::new(0, text.len()),
-            Point::new(0, 0),
-            end_point_for_text(text),
-        );
-        let document = network.insert_link(
-            [language_link],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Document)
-                .with_named(true)
-                .with_term(format!("{language} document"))
-                .with_language(language)
-                .with_span(document_span),
-        );
+        let (mut network, document) = Self::new_parse_document(text, language);
 
         let mut row = 0;
         let mut column = 0;
@@ -442,14 +419,30 @@ impl LinkNetwork {
             );
         }
 
-        network.attach_embedded_regions(
-            document,
-            text,
-            language,
-            configuration.region_detection_policy(),
-        );
+        network.attach_embedded_regions(document, text, language, configuration);
+        annotate_natural_language(&mut network, document, text, language, configuration);
 
         network
+    }
+
+    pub(crate) fn new_parse_document(text: &str, language: &str) -> (Self, LinkId) {
+        let mut network = Self::self_describing();
+        let language_link = network.insert_typed_point(language, LinkType::Language, None);
+        let document_span = SourceSpan::new(
+            ByteRange::new(0, text.len()),
+            Point::new(0, 0),
+            end_point_for_text(text),
+        );
+        let document = network.insert_link(
+            [language_link],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Document)
+                .with_named(true)
+                .with_term(format!("{language} document"))
+                .with_language(language)
+                .with_span(document_span),
+        );
+        (network, document)
     }
 
     /// Number of links in the network.
@@ -464,9 +457,21 @@ impl LinkNetwork {
         self.links.is_empty()
     }
 
+    /// Number of network handles sharing one immutable link allocation.
+    #[must_use]
+    pub fn shared_link_count(&self, id: LinkId) -> Option<usize> {
+        self.links.get(&id).map(Arc::strong_count)
+    }
+
+    /// Number of internal handles sharing an interned string value.
+    #[must_use]
+    pub fn interned_string_count(&self, value: &str) -> Option<usize> {
+        self.strings.get(value).map(Arc::strong_count)
+    }
+
     /// Iterates over links in identifier order.
     pub fn links(&self) -> impl Iterator<Item = &Link> {
-        self.links.values()
+        self.links.values().map(Arc::as_ref)
     }
 
     /// Iterates over links included in the selected projection.
@@ -483,15 +488,24 @@ impl LinkNetwork {
             .filter(|link| !link.metadata().flags().is_missing())
             .filter_map(|link| {
                 Some((
-                    link.metadata().span()?.byte_range().start(),
+                    link.metadata().span()?.byte_range(),
                     link.id().as_u64(),
                     link.metadata().term()?.to_string(),
                 ))
             })
             .collect::<Vec<_>>();
 
-        tokens.sort_by_key(|(start, id, _term)| (*start, *id));
-        tokens.into_iter().map(|(_start, _id, term)| term).collect()
+        tokens.sort_by_key(|(range, id, _term)| (range.start(), *id));
+        let mut reconstructed = String::new();
+        let mut covered_until = 0;
+        for (range, _id, term) in tokens {
+            if range.start() < covered_until {
+                continue;
+            }
+            reconstructed.push_str(&term);
+            covered_until = range.end();
+        }
+        reconstructed
     }
 
     /// Returns embedded mixed-language regions discovered during parse.
@@ -511,7 +525,28 @@ impl LinkNetwork {
     /// Returns links matching a structural query.
     #[must_use]
     pub fn query_links(&self, query: &LinkQuery) -> Vec<&Link> {
-        self.links().filter(|link| query.matches(link)).collect()
+        self.query_matches(query)
+            .into_iter()
+            .filter_map(|query_match| self.link(query_match.link_id()))
+            .collect()
+    }
+
+    /// Returns query matches with capture bindings.
+    #[must_use]
+    pub fn query_matches(&self, query: &LinkQuery) -> Vec<QueryMatch> {
+        self.query_matches_with(query, &RejectPredicateHost)
+    }
+
+    /// Returns query matches with host-evaluated predicate support.
+    #[must_use]
+    pub fn query_matches_with(
+        &self,
+        query: &LinkQuery,
+        predicate_host: &impl QueryPredicateHost,
+    ) -> Vec<QueryMatch> {
+        self.links()
+            .flat_map(|link| query.matches_in_network(self, link, predicate_host))
+            .collect()
     }
 
     /// Inserts a self-referential point link for a term.
@@ -559,51 +594,23 @@ impl LinkNetwork {
         metadata: LinkMetadata,
     ) -> LinkId {
         let id = self.allocate_id();
+        let metadata = self.intern_metadata(metadata);
         self.links.insert(
             id,
-            Link {
+            Arc::new(Link {
                 id,
-                references: references.to_vec(),
+                references: Arc::from(references.to_vec()),
                 metadata,
-            },
+            }),
         );
         id
-    }
-
-    /// Inserts a concept-to-language syntax mapping.
-    pub fn insert_concept_mapping(
-        &mut self,
-        concept: &str,
-        language: &str,
-        syntax: &str,
-    ) -> LinkId {
-        let concept_link = self.insert_typed_point(
-            concept,
-            LinkType::Concept,
-            Some("A concept mapping connects shared meaning to language syntax."),
-        );
-        let language_link = self.insert_typed_point(language, LinkType::Language, None);
-        let mapping = self.insert_link(
-            [concept_link, language_link],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Semantic)
-                .with_named(true)
-                .with_term(syntax)
-                .with_language(language),
-        );
-        self.concept_syntax.insert(
-            (concept.to_string(), language.to_string()),
-            syntax.to_string(),
-        );
-        mapping
     }
 
     /// Reconstructs a concept using a target language syntax mapping.
     #[must_use]
     pub fn reconstruct_concept(&self, concept: &str, language: &str) -> Option<&str> {
-        self.concept_syntax
-            .get(&(concept.to_string(), language.to_string()))
-            .map(String::as_str)
+        let key = (Arc::<str>::from(concept), Arc::<str>::from(language));
+        self.concept_syntax.get(&key).map(Arc::as_ref)
     }
 
     /// Applies a match-and-substitute rule over exact reference lists.
@@ -638,8 +645,59 @@ impl LinkNetwork {
 
         for id in matched {
             if let Some(link) = self.links.get_mut(&id) {
-                link.references = rule.replacement().to_vec();
+                Arc::make_mut(link).references = Arc::from(rule.replacement().to_vec());
                 report.updated.push(id);
+            }
+        }
+
+        report
+    }
+
+    /// Applies a match-and-substitute rule with link-cli-style variables.
+    pub fn apply_variable_substitution(
+        &mut self,
+        rule: &VariableSubstitutionRule,
+    ) -> SubstitutionReport {
+        let mut report = SubstitutionReport::default();
+
+        if rule.pattern().is_empty() {
+            let bindings = SubstitutionBindings::default();
+            if let Some(references) = bindings.resolve_values(rule.replacement()) {
+                if !references.is_empty() {
+                    let created = self.insert_dynamic_link(
+                        &references,
+                        LinkMetadata::new().with_link_type(LinkType::Relation),
+                    );
+                    report.created.push(created);
+                    report.bindings.push(bindings);
+                }
+            }
+            return report;
+        }
+
+        let matched = self
+            .links()
+            .filter_map(|link| rule.match_link(link).map(|bindings| (link.id(), bindings)))
+            .collect::<Vec<_>>();
+
+        if rule.replacement().is_empty() {
+            for (id, bindings) in matched {
+                if self.links.remove(&id).is_some() {
+                    report.deleted.push(id);
+                    report.bindings.push(bindings);
+                }
+            }
+            return report;
+        }
+
+        for (id, bindings) in matched {
+            let Some(references) = bindings.resolve_values(rule.replacement()) else {
+                continue;
+            };
+            if let Some(link) = self.links.get_mut(&id) {
+                Arc::make_mut(link).references = Arc::from(references);
+                report.updated.push(id);
+                report.bindings.push(bindings);
             }
         }
 
@@ -649,7 +707,7 @@ impl LinkNetwork {
     /// Returns a link by id.
     #[must_use]
     pub fn link(&self, id: LinkId) -> Option<&Link> {
-        self.links.get(&id)
+        self.links.get(&id).map(Arc::as_ref)
     }
 
     /// Finds a self-description or named term link.
@@ -669,7 +727,7 @@ impl LinkNetwork {
         let Some(link) = self.links.get_mut(&id) else {
             return false;
         };
-        link.metadata_mut().span = Some(span);
+        Arc::make_mut(link).metadata_mut().span = Some(span);
         true
     }
 
@@ -678,7 +736,16 @@ impl LinkNetwork {
         let Some(link) = self.links.get_mut(&id) else {
             return false;
         };
-        link.metadata_mut().flags = flags;
+        Arc::make_mut(link).metadata_mut().flags = flags;
+        true
+    }
+
+    pub(crate) fn set_term(&mut self, id: LinkId, term: impl Into<String>) -> bool {
+        let term = self.intern_arc(Arc::from(term.into()));
+        let Some(link) = self.links.get_mut(&id) else {
+            return false;
+        };
+        Arc::make_mut(link).metadata_mut().term = Some(term);
         true
     }
 
@@ -686,8 +753,7 @@ impl LinkNetwork {
     #[must_use]
     pub fn verify_full_match(&self, region: Option<ByteRange>) -> VerificationReport {
         let issues = self
-            .links
-            .values()
+            .links()
             .filter(|link| link_is_in_region(link, region))
             .filter_map(|link| {
                 let flags = link.metadata().flags();
@@ -711,42 +777,64 @@ impl LinkNetwork {
         VerificationReport::new(issues)
     }
 
-    fn insert_typed_point(
+    pub(crate) fn insert_typed_point(
         &mut self,
         term: &str,
         link_type: LinkType,
         definition: Option<&str>,
     ) -> LinkId {
+        let definition = definition.map(|definition| self.intern_arc(Arc::from(definition)));
         if let Some(id) = self.terms.get(term).copied() {
             if let Some(definition) = definition {
                 if let Some(link) = self.links.get_mut(&id) {
-                    link.metadata_mut().definition = Some(definition.to_string());
+                    Arc::make_mut(link).metadata_mut().definition = Some(definition);
                 }
             }
             return id;
         }
 
         let id = self.allocate_id();
+        let term = self.intern_arc(Arc::from(term));
         let mut metadata = LinkMetadata::new()
             .with_link_type(link_type)
-            .with_named(true)
-            .with_term(term);
+            .with_named(true);
+        metadata.term = Some(Arc::clone(&term));
         if let Some(definition) = definition {
-            metadata = metadata.with_definition(definition);
+            metadata.definition = Some(definition);
         }
         self.links.insert(
             id,
-            Link {
+            Arc::new(Link {
                 id,
-                references: vec![id],
+                references: Arc::from(vec![id]),
                 metadata,
-            },
+            }),
         );
-        self.terms.insert(term.to_string(), id);
+        self.terms.insert(term, id);
         id
     }
 
-    fn attach_trivia(
+    pub(crate) fn cache_concept_syntax(
+        &mut self,
+        concept: &str,
+        language: &str,
+        syntax: &str,
+        update_reconstruction: bool,
+    ) {
+        let concept = self.intern_arc(Arc::from(concept));
+        let language = self.intern_arc(Arc::from(language));
+        let syntax = self.intern_arc(Arc::from(syntax));
+
+        if update_reconstruction
+            || !self
+                .concept_syntax
+                .contains_key(&(Arc::clone(&concept), Arc::clone(&language)))
+        {
+            self.concept_syntax.insert((concept, language), syntax);
+        }
+    }
+
+    pub(crate) fn attach_trivia(
         &mut self,
         document: LinkId,
         token: LinkId,
@@ -791,28 +879,30 @@ impl LinkNetwork {
 
     fn insert_dynamic_link(&mut self, references: &[LinkId], metadata: LinkMetadata) -> LinkId {
         let id = self.allocate_id();
+        let metadata = self.intern_metadata(metadata);
         self.links.insert(
             id,
-            Link {
+            Arc::new(Link {
                 id,
-                references: references.to_vec(),
+                references: Arc::from(references.to_vec()),
                 metadata,
-            },
+            }),
         );
         id
     }
 
-    fn attach_embedded_regions(
+    pub(crate) fn attach_embedded_regions(
         &mut self,
         document: LinkId,
         text: &str,
         language: &str,
-        policy: RegionDetectionPolicy,
+        configuration: ParseConfiguration,
     ) {
+        let policy = configuration.region_detection_policy();
         for region in detect_embedded_regions(text, language, policy) {
             let region_language = region.language().to_string();
             let language_link = self.insert_typed_point(&region_language, LinkType::Language, None);
-            self.insert_link(
+            let region_link = self.insert_link(
                 [document, language_link],
                 LinkMetadata::new()
                     .with_link_type(LinkType::Region)
@@ -821,7 +911,33 @@ impl LinkNetwork {
                     .with_language(region_language)
                     .with_span(region.span()),
             );
+            let range = region.span().byte_range();
+            let region_text = &text[range.start()..range.end()];
+            let _ = tree_sitter_adapter::parse_embedded_region_into(
+                self,
+                region_link,
+                region_text,
+                region.language(),
+                region.span(),
+                configuration,
+            );
         }
+    }
+
+    fn intern_metadata(&mut self, mut metadata: LinkMetadata) -> LinkMetadata {
+        metadata.term = metadata.term.map(|value| self.intern_arc(value));
+        metadata.definition = metadata.definition.map(|value| self.intern_arc(value));
+        metadata.language = metadata.language.map(|value| self.intern_arc(value));
+        metadata
+    }
+
+    fn intern_arc(&mut self, value: Arc<str>) -> Arc<str> {
+        if let Some(interned) = self.strings.get(value.as_ref()) {
+            return Arc::clone(interned);
+        }
+
+        self.strings.insert(Arc::clone(&value));
+        value
     }
 
     const fn allocate_id(&mut self) -> LinkId {
