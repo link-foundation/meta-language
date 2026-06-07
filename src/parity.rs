@@ -154,13 +154,13 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
             ParityCapability::ObjectRoundTrip,
             ParityCapability::SelfDescription,
         ],
-        test_plan: "Executable fixture covers doublet, triplet, N-tuple, and indented LiNo behavior.",
+        test_plan: "Executable fixtures cover doublet, triplet, N-tuple, indented, and nested self-reference LiNo behavior.",
     },
     ParityTarget {
         name: "link-cli",
         upstream: "https://github.com/link-foundation/link-cli",
         capabilities: &[ParityCapability::TransformBySubstitution],
-        test_plan: "Executable fixture covers create, update, delete, swap, trigger, and dedup substitution behavior.",
+        test_plan: "Executable fixtures cover create, update, delete, and swap substitution behavior.",
     },
     ParityTarget {
         name: "lino-objects-codec",
@@ -185,7 +185,7 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
             ParityCapability::SemanticEvaluation,
             ParityCapability::CrossLanguageReconstruction,
         ],
-        test_plan: "Executable fixture covers formalization corpus and cross-language reconstruction behavior.",
+        test_plan: "Executable fixtures cover actual data/seed/*.lino and data/benchmarks/*.lino corpus sources plus cross-language reconstruction behavior.",
     },
     ParityTarget {
         name: "meta-expression",
@@ -195,7 +195,7 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
             ParityCapability::TriviaPreservation,
             ParityCapability::CrossLanguageReconstruction,
         ],
-        test_plan: "Executable fixture covers formalize, semantic-link, naturalize, span, and self-reference behavior.",
+        test_plan: "Executable fixtures cover Hawaii naturalization, 1 + 1 formalization, self-reference behavior, and the verified 351-concept lexicon.",
     },
 ];
 
