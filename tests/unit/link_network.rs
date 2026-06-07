@@ -1,8 +1,8 @@
 use meta_language::{
-    ByteRange, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery, LinkType, NetworkProjection,
-    ParityCapability, ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan,
-    SubstitutionRule, TriviaAttachmentPolicy, TruthValue, VerificationIssueKind,
-    GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
+    ByteRange, LanguageIdentificationDetector, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery,
+    LinkType, NetworkProjection, ParityCapability, ParseConfiguration, Point,
+    RegionDetectionPolicy, SourceSpan, SubstitutionRule, TriviaAttachmentPolicy, TruthValue,
+    VerificationIssueKind, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
     NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
 
@@ -463,6 +463,120 @@ fn content_driven_detection_falls_back_to_txt_region() {
     );
 }
 
+#[test]
+fn natural_language_parse_adds_segmentation_language_and_unicode_annotations() {
+    let latin_source = "Natural language links work.\n";
+    let latin_network = LinkNetwork::parse(latin_source, "English", ParseConfiguration::default());
+
+    assert_eq!(latin_network.reconstruct_text(), latin_source);
+    assert_token_link(
+        &latin_network,
+        "Natural",
+        ByteRange::new(0, "Natural".len()),
+    );
+    assert_link_with_term(
+        &latin_network,
+        LinkType::Semantic,
+        "segmentation:unicode-segmentation",
+    );
+    assert_link_with_term(&latin_network, LinkType::Language, "English");
+
+    let mandarin_source = "你好。\n";
+    let mandarin_network = LinkNetwork::parse(
+        mandarin_source,
+        "Mandarin Chinese",
+        ParseConfiguration::default(),
+    );
+
+    assert_eq!(mandarin_network.reconstruct_text(), mandarin_source);
+    assert_token_link(&mandarin_network, "你好", ByteRange::new(0, "你好".len()));
+    assert_link_with_term(
+        &mandarin_network,
+        LinkType::Semantic,
+        "segmentation:lindera-jieba",
+    );
+    assert_link_with_term(&mandarin_network, LinkType::Language, "Mandarin Chinese");
+
+    let arabic_source = "مرحبا.\n";
+    let arabic_network = LinkNetwork::parse(
+        arabic_source,
+        "Modern Standard Arabic",
+        ParseConfiguration::default(),
+    );
+
+    assert_eq!(arabic_network.reconstruct_text(), arabic_source);
+    assert_link_with_term(&arabic_network, LinkType::Semantic, "bidi:rtl");
+    assert_link_with_prefix(&arabic_network, LinkType::Semantic, "normalization:nfc:");
+    assert_link_with_prefix(&arabic_network, LinkType::Semantic, "normalization:nfd:");
+}
+
+#[test]
+fn natural_language_identifier_backend_is_switchable() {
+    assert_eq!(
+        ParseConfiguration::default().language_identification_detector(),
+        LanguageIdentificationDetector::Lingua
+    );
+
+    let source = "This sentence gives the detector enough English context.\n";
+    let network = LinkNetwork::parse(
+        source,
+        "English",
+        ParseConfiguration::default()
+            .with_language_identification_detector(LanguageIdentificationDetector::Whatlang),
+    );
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert_link_with_term(&network, LinkType::Language, "English");
+    assert_link_with_term(&network, LinkType::Semantic, "identifier:whatlang");
+}
+
+#[test]
+fn natural_language_fixtures_keep_byte_exact_reconstruction_with_language_regions() {
+    let natural_languages = NATURAL_LANGUAGE_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+    let mut checked_fixtures = 0;
+
+    for fixture in LANGUAGE_FIXTURES
+        .iter()
+        .filter(|fixture| natural_languages.contains(&fixture.language()))
+    {
+        checked_fixtures += 1;
+        let network = LinkNetwork::parse(
+            fixture.source(),
+            fixture.language(),
+            ParseConfiguration::default(),
+        );
+
+        assert_eq!(
+            network.reconstruct_text(),
+            fixture.source(),
+            "{} fixture failed reconstruction",
+            fixture.description()
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Region)
+                    && link.metadata().language() == Some(fixture.language())
+                    && link.metadata().span().is_some()
+            }),
+            "{} fixture should have a natural-language region",
+            fixture.description()
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Language)
+                    && link.metadata().span().is_some()
+            }),
+            "{} fixture should have a region-scoped language link",
+            fixture.description()
+        );
+    }
+
+    assert_eq!(checked_fixtures, NATURAL_LANGUAGE_TARGETS.len());
+}
+
 fn assert_region_has_connected_syntax(network: &LinkNetwork, language: &str) {
     let region_ids = network
         .links()
@@ -485,6 +599,42 @@ fn assert_region_has_connected_syntax(network: &LinkNetwork, language: &str) {
                     .any(|reference| region_ids.contains(reference))
         }),
         "expected {language} syntax rooted at a region link"
+    );
+}
+
+fn assert_token_link(network: &LinkNetwork, term: &str, range: ByteRange) {
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Token)
+                && link.metadata().term() == Some(term)
+                && link
+                    .metadata()
+                    .span()
+                    .is_some_and(|span| span.byte_range() == range)
+        }),
+        "expected token link for {term:?} at {range:?}"
+    );
+}
+
+fn assert_link_with_term(network: &LinkNetwork, link_type: LinkType, term: &str) {
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(link_type) && link.metadata().term() == Some(term)
+        }),
+        "expected {link_type:?} link with term {term:?}"
+    );
+}
+
+fn assert_link_with_prefix(network: &LinkNetwork, link_type: LinkType, prefix: &str) {
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(link_type)
+                && link
+                    .metadata()
+                    .term()
+                    .is_some_and(|term| term.starts_with(prefix))
+        }),
+        "expected {link_type:?} link with prefix {prefix:?}"
     );
 }
 

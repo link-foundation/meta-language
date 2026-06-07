@@ -20,11 +20,21 @@ pub enum RegionDetectionPolicy {
     Both,
 }
 
+/// Natural-language identification backend.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LanguageIdentificationDetector {
+    /// Use `lingua` for language identification.
+    Lingua,
+    /// Use `whatlang` for language identification.
+    Whatlang,
+}
+
 /// Configuration for parse-to-network operations.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ParseConfiguration {
     trivia_attachment_policy: TriviaAttachmentPolicy,
     region_detection_policy: RegionDetectionPolicy,
+    language_identification_detector: LanguageIdentificationDetector,
 }
 
 impl ParseConfiguration {
@@ -34,6 +44,7 @@ impl ParseConfiguration {
         Self {
             trivia_attachment_policy,
             region_detection_policy: RegionDetectionPolicy::Both,
+            language_identification_detector: LanguageIdentificationDetector::Lingua,
         }
     }
 
@@ -47,6 +58,16 @@ impl ParseConfiguration {
         self
     }
 
+    /// Returns configuration with a natural-language identification backend.
+    #[must_use]
+    pub const fn with_language_identification_detector(
+        mut self,
+        detector: LanguageIdentificationDetector,
+    ) -> Self {
+        self.language_identification_detector = detector;
+        self
+    }
+
     /// Trivia attachment policy.
     #[must_use]
     pub const fn trivia_attachment_policy(self) -> TriviaAttachmentPolicy {
@@ -57,6 +78,12 @@ impl ParseConfiguration {
     #[must_use]
     pub const fn region_detection_policy(self) -> RegionDetectionPolicy {
         self.region_detection_policy
+    }
+
+    /// Natural-language identification backend.
+    #[must_use]
+    pub const fn language_identification_detector(self) -> LanguageIdentificationDetector {
+        self.language_identification_detector
     }
 }
 

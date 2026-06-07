@@ -194,6 +194,57 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup MSVC environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installationPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installationPath) {
+            throw "Visual Studio with C++ tools not found"
+          }
+
+          $vcvars = Join-Path $installationPath "VC\Auxiliary\Build\vcvars64.bat"
+          if (-not (Test-Path $vcvars)) {
+            throw "vcvars64.bat not found at $vcvars"
+          }
+
+          $vcvarsEnvironment = @{}
+          cmd /s /c "`"$vcvars`" && set" | ForEach-Object {
+            if ($_ -match "^(.*?)=(.*)$") {
+              $name = $matches[1]
+              $value = $matches[2]
+              $vcvarsEnvironment[$name] = $value
+              if ($name -eq "Path") {
+                "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Append
+                $value -split ";" | Where-Object { $_ } | ForEach-Object {
+                  $_ | Out-File -FilePath $env:GITHUB_PATH -Append
+                }
+              } elseif ($name -match "^(INCLUDE|LIB|LIBPATH|VCINSTALLDIR|VCToolsInstallDir|VCToolsVersion|VSINSTALLDIR|WindowsSdkDir|WindowsSDKVersion|UniversalCRTSdkDir|UCRTVersion)$") {
+                "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Append
+              }
+            }
+          }
+
+          $vctoolsInstallDir = $vcvarsEnvironment["VCToolsInstallDir"]
+          if (-not $vctoolsInstallDir) {
+            throw "VCToolsInstallDir was not set by vcvars64.bat"
+          }
+
+          $msvcLinker = Join-Path $vctoolsInstallDir "bin\Hostx64\x64\link.exe"
+          if (-not (Test-Path $msvcLinker)) {
+            throw "MSVC link.exe not found at $msvcLinker"
+          }
+
+          "CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Configure AWS-LC CMake on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "AWS_LC_SYS_C_STD=11" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CMAKE_GENERATOR=Ninja" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Cache cargo registry
         uses: actions/cache@v5
         with:

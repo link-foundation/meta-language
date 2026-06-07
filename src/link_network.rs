@@ -5,6 +5,7 @@ use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::link_flags::LinkFlags;
 use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
+use crate::natural_language::annotate_natural_language;
 use crate::query::LinkQuery;
 use crate::source::{ByteRange, Point, SourceSpan};
 use crate::substitution::{SubstitutionReport, SubstitutionRule};
@@ -430,6 +431,7 @@ impl LinkNetwork {
         }
 
         network.attach_embedded_regions(document, text, language, configuration);
+        annotate_natural_language(&mut network, document, text, language, configuration);
 
         network
     }
