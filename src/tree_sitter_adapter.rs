@@ -10,7 +10,7 @@ use crate::{
 pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Option<LinkNetwork> {
     let grammar = grammar_for_language(language)?;
     let mut parser = Parser::new();
-    parser.set_language(grammar).ok()?;
+    parser.set_language(&grammar).ok()?;
     let parsed = parser.parse(text, None)?;
 
     let (mut network, document) = LinkNetwork::new_parse_document(text, language);
@@ -38,7 +38,7 @@ pub fn parse_embedded_region_into(
     let grammar = grammar_for_language(language)?;
     let parse_text = embedded_parse_text(text, language);
     let mut parser = Parser::new();
-    parser.set_language(grammar).ok()?;
+    parser.set_language(&grammar).ok()?;
     let parsed = parser.parse(parse_text.as_ref(), None)?;
     let root = parsed.root_node();
     let context = ConvertContext::new(
@@ -53,25 +53,31 @@ pub fn parse_embedded_region_into(
 
 fn grammar_for_language(language: &str) -> Option<Language> {
     if language.eq_ignore_ascii_case("python") {
-        Some(tree_sitter_python::language())
+        Some(tree_sitter_python::LANGUAGE.into())
     } else if language == "C" || language == "c" {
-        Some(tree_sitter_c::language())
+        Some(tree_sitter_c::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("java") {
-        Some(tree_sitter_java::language())
+        Some(tree_sitter_java::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("c++") || language.eq_ignore_ascii_case("cpp") {
-        Some(tree_sitter_cpp::language())
+        Some(tree_sitter_cpp::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("c#") || language.eq_ignore_ascii_case("csharp") {
-        Some(tree_sitter_c_sharp::language())
+        Some(tree_sitter_c_sharp::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("javascript") || language.eq_ignore_ascii_case("js") {
-        Some(tree_sitter_javascript::language())
+        Some(tree_sitter_javascript::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("visual basic")
+        || language.eq_ignore_ascii_case("vb")
+        || language.eq_ignore_ascii_case("vb.net")
+        || language.eq_ignore_ascii_case("vbnet")
+    {
+        Some(tree_sitter_vb_dotnet::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("rust") {
-        Some(tree_sitter_rust::language())
+        Some(tree_sitter_rust::LANGUAGE.into())
     } else if language == "R" || language == "r" {
-        Some(tree_sitter_r::language())
+        Some(tree_sitter_r::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("html") {
-        Some(tree_sitter_html::language())
+        Some(tree_sitter_html::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("css") {
-        Some(tree_sitter_css::language())
+        Some(tree_sitter_css::LANGUAGE.into())
     } else {
         None
     }

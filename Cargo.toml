@@ -9,7 +9,7 @@ keywords = ["links", "language", "cst", "ast"]
 categories = ["parser-implementations", "data-structures"]
 repository = "https://github.com/link-foundation/meta-language"
 documentation = "https://github.com/link-foundation/meta-language"
-rust-version = "1.70"
+rust-version = "1.77"
 
 # Narrow allowlist of files shipped in the published `.crate` archive.
 # Keeping this list tight prevents docs, case studies, generated CI artifacts,
@@ -46,17 +46,18 @@ lingua = { version = "1.8.0", default-features = false, features = [
     "spanish",
     "urdu",
 ] }
-tree-sitter = "0.20.10"
-tree-sitter-c = "0.20.8"
-tree-sitter-c-sharp = "0.20.0"
-tree-sitter-cpp = "0.20.5"
-tree-sitter-css = "=0.20.0"
-tree-sitter-html = "=0.20.0"
-tree-sitter-java = "0.20.2"
-tree-sitter-javascript = "0.20.4"
-tree-sitter-python = "0.20.4"
-tree-sitter-r = "0.19.5"
-tree-sitter-rust = "=0.20.4"
+tree-sitter = "0.25.8"
+tree-sitter-c = "0.24.2"
+tree-sitter-c-sharp = "0.23.5"
+tree-sitter-cpp = "0.23.4"
+tree-sitter-css = "0.25.0"
+tree-sitter-html = "0.23.2"
+tree-sitter-java = "0.23.5"
+tree-sitter-javascript = "0.25.0"
+tree-sitter-python = "0.25.0"
+tree-sitter-r = "1.2.0"
+tree-sitter-rust = "0.24.2"
+tree-sitter-vb-dotnet = "0.1.0"
 unicode-bidi = "0.3.18"
 unicode-normalization = "0.1.25"
 unicode-segmentation = "1.13.3"
