@@ -33,6 +33,8 @@ clean.
   regions that content sniffing cannot classify.
 - `LinkQuery` for structural matching by link type, term, language, named flag,
   tree-sitter-query-like S-expressions, captures, and host predicates.
+- `find()` / `replace()` for codemod-style query transforms over captured links
+  while preserving unchanged source bytes.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style
   match-and-substitute operation.
 - Concept-to-language syntax mappings for cross-language reconstruction.
@@ -74,6 +76,34 @@ let abstract_links = network
     .count();
 
 assert!(abstract_links < network.len());
+```
+
+Codemod-style transforms can select links with an S-expression query and replace
+only captured source ranges:
+
+```rust
+use meta_language::{LinkNetwork, LinkQuery, ParseConfiguration, ReplacementRule};
+
+let mut network = LinkNetwork::parse(
+    "const oldName = call(oldName);\n",
+    "JavaScript",
+    ParseConfiguration::default(),
+);
+let query = LinkQuery::from_sexpression(
+    r#"
+    (identifier) @target
+    (#eq? @target "oldName")
+    "#,
+)
+.expect("query parses");
+let captures = network.find(&query);
+
+network.replace(
+    &captures,
+    &ReplacementRule::captured_text("target", "newName"),
+);
+
+assert_eq!(network.reconstruct_text(), "const newName = call(newName);\n");
 ```
 
 ## CLI

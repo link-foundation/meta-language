@@ -784,6 +784,15 @@ impl LinkNetwork {
         true
     }
 
+    pub(crate) fn set_term(&mut self, id: LinkId, term: impl Into<String>) -> bool {
+        let term = self.intern_arc(Arc::from(term.into()));
+        let Some(link) = self.links.get_mut(&id) else {
+            return false;
+        };
+        Arc::make_mut(link).metadata_mut().term = Some(term);
+        true
+    }
+
     /// Verifies that the selected region has no error or missing links.
     #[must_use]
     pub fn verify_full_match(&self, region: Option<ByteRange>) -> VerificationReport {

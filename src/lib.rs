@@ -10,6 +10,7 @@ pub mod semantics;
 pub mod snapshots;
 pub mod source;
 pub mod substitution;
+pub mod transform;
 pub mod verification;
 
 pub use configuration::{
@@ -37,6 +38,7 @@ pub use substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, SubstitutionValue,
     VariableSubstitutionRule,
 };
+pub use transform::{ReplacementReport, ReplacementRule, SourceTextPredicateHost, TextReplacement};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 mod tree_sitter_adapter;
