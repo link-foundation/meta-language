@@ -6,9 +6,11 @@ use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::link_flags::LinkFlags;
 use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
 use crate::natural_language::annotate_natural_language;
-use crate::query::LinkQuery;
+use crate::query::{LinkQuery, QueryMatch, QueryPredicateHost, RejectPredicateHost};
 use crate::source::{ByteRange, Point, SourceSpan};
-use crate::substitution::{SubstitutionReport, SubstitutionRule};
+use crate::substitution::{
+    SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
+};
 use crate::tree_sitter_adapter;
 use crate::verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
@@ -524,7 +526,28 @@ impl LinkNetwork {
     /// Returns links matching a structural query.
     #[must_use]
     pub fn query_links(&self, query: &LinkQuery) -> Vec<&Link> {
-        self.links().filter(|link| query.matches(link)).collect()
+        self.query_matches(query)
+            .into_iter()
+            .filter_map(|query_match| self.link(query_match.link_id()))
+            .collect()
+    }
+
+    /// Returns query matches with capture bindings.
+    #[must_use]
+    pub fn query_matches(&self, query: &LinkQuery) -> Vec<QueryMatch> {
+        self.query_matches_with(query, &RejectPredicateHost)
+    }
+
+    /// Returns query matches with host-evaluated predicate support.
+    #[must_use]
+    pub fn query_matches_with(
+        &self,
+        query: &LinkQuery,
+        predicate_host: &impl QueryPredicateHost,
+    ) -> Vec<QueryMatch> {
+        self.links()
+            .flat_map(|link| query.matches_in_network(self, link, predicate_host))
+            .collect()
     }
 
     /// Inserts a self-referential point link for a term.
@@ -653,6 +676,57 @@ impl LinkNetwork {
             if let Some(link) = self.links.get_mut(&id) {
                 link.references = rule.replacement().to_vec();
                 report.updated.push(id);
+            }
+        }
+
+        report
+    }
+
+    /// Applies a match-and-substitute rule with link-cli-style variables.
+    pub fn apply_variable_substitution(
+        &mut self,
+        rule: &VariableSubstitutionRule,
+    ) -> SubstitutionReport {
+        let mut report = SubstitutionReport::default();
+
+        if rule.pattern().is_empty() {
+            let bindings = SubstitutionBindings::default();
+            if let Some(references) = bindings.resolve_values(rule.replacement()) {
+                if !references.is_empty() {
+                    let created = self.insert_dynamic_link(
+                        &references,
+                        LinkMetadata::new().with_link_type(LinkType::Relation),
+                    );
+                    report.created.push(created);
+                    report.bindings.push(bindings);
+                }
+            }
+            return report;
+        }
+
+        let matched = self
+            .links()
+            .filter_map(|link| rule.match_link(link).map(|bindings| (link.id(), bindings)))
+            .collect::<Vec<_>>();
+
+        if rule.replacement().is_empty() {
+            for (id, bindings) in matched {
+                if self.links.remove(&id).is_some() {
+                    report.deleted.push(id);
+                    report.bindings.push(bindings);
+                }
+            }
+            return report;
+        }
+
+        for (id, bindings) in matched {
+            let Some(references) = bindings.resolve_values(rule.replacement()) else {
+                continue;
+            };
+            if let Some(link) = self.links.get_mut(&id) {
+                link.references = references;
+                report.updated.push(id);
+                report.bindings.push(bindings);
             }
         }
 
