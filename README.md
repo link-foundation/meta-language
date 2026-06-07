@@ -159,6 +159,12 @@ lossless fixture for every requested language target.
 The current registry tracks tree-sitter, LibCST, Recast, jscodeshift, Rowan,
 cstree, Roslyn, links-notation, link-cli, lino-objects-codec,
 relative-meta-logic, formal-ai, and meta-expression.
+Internal ecosystem fixtures now cover links-notation doublet, triplet, tuple,
+indented, and self-reference cases; link-cli create/update/delete/swap
+substitutions; lino object round-trip, shared-reference, and circular-reference
+cases; relative-meta-logic dependent, many-valued, and liar-paradox cases;
+formal-ai seed and benchmark `.lino` corpora; and meta-expression formalize and
+naturalize examples backed by the verified 351-concept lexicon.
 
 See [docs/parity-roadmap.md](docs/parity-roadmap.md) for the feature matrix,
 executable fixture gates, and language coverage targets.

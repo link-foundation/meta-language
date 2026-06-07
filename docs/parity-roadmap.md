@@ -42,12 +42,12 @@ parse/reconstruction fixture.
 | Rowan | Persistent concrete syntax representation, immutable snapshots, and trivia preservation | Rust trivia fixture round-trips through `reconstruct_text()` plus snapshot version tests |
 | cstree | Rust concrete syntax representation, immutable snapshots, and checkpoint behavior | Rust checkpoint fixture round-trips through `reconstruct_text()` plus snapshot version tests |
 | Roslyn | C# syntax, trivia, diagnostics, query/traversal, transforms, and formatting | Multiple ported `ToFullString`, skipped-token, trivia, and replacement fixtures |
-| links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | LiNo tuple fixture plus self-reference tests |
-| link-cli | Single match-and-substitute operation | Create, update, delete, and swap substitution tests |
-| lino-objects-codec | Object encode/decode with identity and circular-reference preservation | Shared and circular object fixture plus identity tests |
-| relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Dependent-type fixture plus `TruthValue` tests |
-| formal-ai | Formalization corpus and semantic reconstruction expectations | Formalization source fixture plus concept reconstruction tests |
-| meta-expression | Formalize, semantic-link, naturalize, span, and self-reference behavior | Naturalization span fixture plus concept reconstruction tests |
+| links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | Ported doublet, triplet, tuple, indented-id, and nested self-reference fixtures; provenance records the verified cross-language test comparison as Python 137, JavaScript 138, Rust 138, and C# 140 |
+| link-cli | Single match-and-substitute operation | Ported create, update, delete, and swap fixtures from the `Foundation.Data.Doublets.Cli.Tests` suite plus substitution behavior tests |
+| lino-objects-codec | Object encode/decode with identity and circular-reference preservation | Ported primitive round-trip, shared-reference, and circular-reference fixtures plus identity tests |
+| relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Ported dependent-type, many-valued truth, and liar-paradox fixtures plus `TruthValue` tests |
+| formal-ai | Formalization corpus and semantic reconstruction expectations | Ported fixtures from actual `data/seed/*.lino` and `data/benchmarks/*.lino` files plus concept reconstruction tests |
+| meta-expression | Formalize, semantic-link, naturalize, span, and self-reference behavior | Hawaii naturalization, `1 + 1 = 2`, and liar self-reference fixtures plus the verified 351-concept semantic lexicon seed |
 
 ## Executable Fixture Gates
 
@@ -64,7 +64,16 @@ Capability assertions ensure fixtures only claim capabilities advertised by
 their target and that every capability advertised by every target is exercised
 by at least one fixture for that target. Additional coverage gates require
 multiple fixtures for tree-sitter, LibCST, Recast, jscodeshift, Rowan, cstree,
-and Roslyn so upstream corpora do not collapse back to one illustrative case.
+Roslyn, links-notation, link-cli, lino-objects-codec, relative-meta-logic,
+formal-ai, and meta-expression so upstream corpora do not collapse back to one
+illustrative case.
+
+The ecosystem coverage gate also asserts issue-specific provenance contracts:
+links-notation records the verified `TEST_CASE_COMPARISON.md` counts
+`137/138/138/140`; link-cli fixtures cite the C# `Foundation.Data.Doublets.Cli.Tests`
+project; formal-ai fixtures cite actual `data/seed/` and `data/benchmarks/`
+files instead of an unverified corpus-size estimate; and meta-expression
+continues to seed the verified 351-concept semantic lexicon.
 
 The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
 `MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`, and
