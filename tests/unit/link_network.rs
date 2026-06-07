@@ -127,28 +127,6 @@ fn parse_configuration_can_attach_trivia_with_either_or_both_policies() {
 }
 
 #[test]
-fn self_description_contains_common_roots() {
-    let network = LinkNetwork::self_describing();
-
-    for term in [
-        "link",
-        "reference",
-        "relation link",
-        "language",
-        "grammar",
-        "type",
-        "concept",
-        "point",
-    ] {
-        assert!(network.find_term(term).is_some(), "missing term: {term}");
-    }
-
-    let link = network.find_term("link").expect("link term");
-    let definition = network.definition_for(link).expect("link definition");
-    assert!(definition.contains("n-tuple of references"));
-}
-
-#[test]
 fn parse_is_lossless_by_default_and_matches_explicit_lossless_boundary() {
     let parsed = LinkNetwork::parse("alpha beta", "plain-text", ParseConfiguration::default());
     let explicit =

@@ -41,4 +41,5 @@ pub use substitution::{
 pub use transform::{ReplacementReport, ReplacementRule, SourceTextPredicateHost, TextReplacement};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
+mod self_description;
 mod tree_sitter_adapter;

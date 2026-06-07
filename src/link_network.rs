@@ -8,6 +8,7 @@ use crate::link_flags::LinkFlags;
 use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
 use crate::natural_language::annotate_natural_language;
 use crate::query::{LinkQuery, QueryMatch, QueryPredicateHost, RejectPredicateHost};
+use crate::self_description::{definition_expression, SELF_DESCRIPTION_ROOTS};
 use crate::source::{ByteRange, Point, SourceSpan};
 use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
@@ -287,67 +288,50 @@ impl LinkNetwork {
     #[must_use]
     pub fn self_describing() -> Self {
         let mut network = Self::new();
-        network.insert_typed_point(
-            "link",
-            LinkType::Link,
-            Some("A link is an n-tuple of references to links."),
-        );
-        network.insert_typed_point(
-            "reference",
-            LinkType::Reference,
-            Some("A reference is one position in a link that points to another link."),
-        );
-        network.insert_typed_point(
-            "relation link",
-            LinkType::Relation,
-            Some("A relation link connects references to other links and is itself a link."),
-        );
-        network.insert_typed_point(
-            "language",
-            LinkType::Language,
-            Some("A language is a set of grammar, syntax, and semantic links."),
-        );
-        network.insert_typed_point(
-            "grammar",
-            LinkType::Grammar,
-            Some("A grammar describes which syntax links fully match a language."),
-        );
-        network.insert_typed_point(
-            "type",
-            LinkType::Type,
-            Some("A type is a link that constrains or classifies other links."),
-        );
-        network.insert_typed_point(
-            "concept",
-            LinkType::Concept,
-            Some("A concept is a shared meaning link that multiple languages can reference."),
-        );
-        network.insert_typed_point(
-            "point",
-            LinkType::Concept,
-            Some("A point is represented as a self-referential link."),
-        );
-        network.insert_typed_point(
-            "field",
-            LinkType::Field,
-            Some("A field is a labeled relation link from a parent link to a child link."),
-        );
-        network.insert_typed_point(
-            "trivia",
-            LinkType::Trivia,
-            Some("Trivia is source text preserved by explicit attachment links."),
-        );
-        network.insert_typed_point(
-            "region",
-            LinkType::Region,
-            Some("A region is a source span with a selected or detected language."),
-        );
-        network.insert_typed_point(
-            "object",
-            LinkType::Object,
-            Some("An object identity is represented by a link that other links can share."),
-        );
+        for root in SELF_DESCRIPTION_ROOTS {
+            let definition = definition_expression(root.term, root.references);
+            network.insert_typed_point(root.term, root.link_type, Some(&definition));
+        }
+
+        for root in SELF_DESCRIPTION_ROOTS {
+            let mut references = Vec::with_capacity(root.references.len() + 1);
+            references.push(
+                network
+                    .find_term(root.term)
+                    .expect("seeded self-description root exists"),
+            );
+            for reference in root.references {
+                references.push(
+                    network
+                        .find_term(reference)
+                        .expect("seeded self-description reference exists"),
+                );
+            }
+
+            network.insert_dynamic_link(
+                &references,
+                LinkMetadata::new().with_link_type(LinkType::Relation),
+            );
+        }
+
         network
+    }
+
+    /// Serializes the seeded self-description roots as LiNo-style definition lines.
+    #[must_use]
+    pub fn self_description_text(&self) -> String {
+        let mut output = String::new();
+        for root in SELF_DESCRIPTION_ROOTS {
+            let Some(id) = self.find_term(root.term) else {
+                continue;
+            };
+            let Some(definition) = self.definition_for(id) else {
+                continue;
+            };
+            output.push_str(definition);
+            output.push('\n');
+        }
+        output
     }
 
     /// Parses plain source text into a lossless token network.
