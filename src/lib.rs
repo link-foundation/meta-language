@@ -6,6 +6,7 @@ pub mod link_network;
 pub mod mixed_regions;
 mod natural_language;
 pub mod parity;
+mod parity_fixtures;
 pub mod query;
 mod reconstruction;
 pub mod semantics;
@@ -26,9 +27,9 @@ pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, Networ
 pub use mixed_regions::EmbeddedRegion;
 pub use parity::{
     GrammarEmbeddingTarget, LanguageFamily, LanguageFixture, LanguageTarget, ParityCapability,
-    ParityFixture, ParityTarget, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES,
-    MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS,
-    PROGRAMMING_LANGUAGE_TARGETS,
+    ParityFixture, ParityTarget, ParityTransformExpectation, ParityVerificationExpectation,
+    GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
+    NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,

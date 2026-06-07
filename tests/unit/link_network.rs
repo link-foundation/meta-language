@@ -1,8 +1,9 @@
 use meta_language::{
     ByteRange, LanguageIdentificationDetector, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery,
-    LinkType, NetworkProjection, ParityCapability, ParseConfiguration, Point,
-    RegionDetectionPolicy, SourceSpan, SubstitutionRule, TriviaAttachmentPolicy, TruthValue,
-    VerificationIssueKind, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
+    LinkType, NetworkProjection, ParityCapability, ParityVerificationExpectation,
+    ParseConfiguration, Point, RegionDetectionPolicy, ReplacementRule, SourceSpan,
+    SubstitutionRule, TriviaAttachmentPolicy, TruthValue, VerificationIssueKind,
+    GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
     NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
 
@@ -733,11 +734,23 @@ fn every_parity_target_has_an_executable_fixture_that_passes_core_contract() {
     }
 
     for fixture in PARITY_FIXTURES {
-        let network = LinkNetwork::parse(
+        assert!(
+            fixture.provenance().contains('/'),
+            "{} fixture provenance should include an upstream path",
+            fixture.name()
+        );
+        assert!(
+            fixture.provenance().contains("license: "),
+            "{} fixture provenance should include a license",
+            fixture.name()
+        );
+
+        let mut network = LinkNetwork::parse(
             fixture.source(),
             fixture.language(),
             ParseConfiguration::default(),
         );
+        let verification = network.verify_full_match(None);
 
         assert_eq!(
             network.reconstruct_text(),
@@ -745,6 +758,61 @@ fn every_parity_target_has_an_executable_fixture_that_passes_core_contract() {
             "{} fixture failed reconstruction",
             fixture.name()
         );
+
+        match fixture.verification_expectation() {
+            ParityVerificationExpectation::Clean => {
+                assert!(
+                    verification.is_clean(),
+                    "{} fixture should parse cleanly: {:?}",
+                    fixture.name(),
+                    verification.issues()
+                );
+            }
+            ParityVerificationExpectation::Recoverable => {
+                assert!(
+                    !verification.is_clean(),
+                    "{} fixture should expose recovery diagnostics",
+                    fixture.name()
+                );
+                assert!(
+                    verification.issues().iter().any(|issue| matches!(
+                        issue.kind(),
+                        VerificationIssueKind::ErrorLink
+                            | VerificationIssueKind::HasErrorLink
+                            | VerificationIssueKind::MissingLink
+                    )),
+                    "{} fixture should report error, has-error, or missing links",
+                    fixture.name()
+                );
+            }
+        }
+
+        if let Some(transform) = fixture.transform_expectation() {
+            let query =
+                LinkQuery::from_sexpression(transform.query()).expect("fixture query parses");
+            let captures = network.find(&query);
+            assert!(
+                !captures.is_empty(),
+                "{} fixture transform query should capture links",
+                fixture.name()
+            );
+            let report = network.replace(
+                &captures,
+                &ReplacementRule::captured_text(transform.capture_name(), transform.replacement()),
+            );
+
+            assert!(
+                !report.is_empty(),
+                "{} fixture transform should make a change",
+                fixture.name()
+            );
+            assert_eq!(
+                network.reconstruct_text(),
+                transform.expected_output(),
+                "{} fixture transform output mismatch",
+                fixture.name()
+            );
+        }
 
         for capability in fixture.capabilities() {
             assert!(
@@ -777,6 +845,29 @@ fn every_parity_target_capability_is_exercised_by_fixtures() {
                 capability
             );
         }
+    }
+}
+
+#[test]
+fn external_competitor_corpora_contribute_multiple_fixtures() {
+    for target_name in [
+        "tree-sitter",
+        "LibCST",
+        "Recast",
+        "jscodeshift",
+        "Rowan",
+        "cstree",
+        "Roslyn",
+    ] {
+        let fixture_count = PARITY_FIXTURES
+            .iter()
+            .filter(|fixture| fixture.target_name() == target_name)
+            .count();
+
+        assert!(
+            fixture_count >= 2,
+            "{target_name} should contribute multiple ported upstream fixtures, got {fixture_count}"
+        );
     }
 }
 
