@@ -535,9 +535,9 @@ pub const PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         basis: "TIOBE May 2026 top 10",
     },
     LanguageTarget {
-        name: "SQL",
+        name: "sql-ansi",
         family: LanguageFamily::Programming,
-        basis: "TIOBE May 2026 top 10",
+        basis: "TIOBE May 2026 top 10 SQL family baseline dialect",
     },
     LanguageTarget {
         name: "Delphi/Object Pascal",
@@ -658,9 +658,9 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
         description: "R assignment",
     },
     LanguageFixture {
-        language: "SQL",
-        source: "SELECT 1;\n",
-        description: "SQL select statement",
+        language: "sql-ansi",
+        source: "SELECT id, name FROM users WHERE active = TRUE;\n",
+        description: "ANSI SQL select statement",
     },
     LanguageFixture {
         language: "Delphi/Object Pascal",

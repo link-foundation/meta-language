@@ -222,7 +222,7 @@ fn sniff_language(content: &str) -> Option<&'static str> {
     {
         Some("JavaScript")
     } else if upper.starts_with("SELECT ") {
-        Some("SQL")
+        Some("sql-ansi")
     } else {
         None
     }
