@@ -121,6 +121,34 @@ struct StructuralConcept {
     syntax: &'static [(&'static str, &'static str)],
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct StatehoodConceptIds {
+    pub proposition: LinkId,
+    pub subject: LinkId,
+    pub object: LinkId,
+}
+
+const STATEHOOD_PROPOSITION_SYNTAX: &[(&str, &str)] = &[
+    ("English", "Hawaii is a state."),
+    ("en", "Hawaii is a state."),
+    ("Russian", "Гавайи это штат."),
+    ("ru", "Гавайи это штат."),
+];
+
+const HAWAII_ENTITY_SYNTAX: &[(&str, &str)] = &[
+    ("English", "Hawaii"),
+    ("en", "Hawaii"),
+    ("Russian", "Гавайи"),
+    ("ru", "Гавайи"),
+];
+
+const UNITED_STATES_STATE_SYNTAX: &[(&str, &str)] = &[
+    ("English", "state"),
+    ("en", "state"),
+    ("Russian", "штат"),
+    ("ru", "штат"),
+];
+
 const STRUCTURAL_CONCEPTS: &[StructuralConcept] = &[
     StructuralConcept {
         id: "function",
@@ -295,6 +323,40 @@ const STRUCTURAL_CONCEPTS: &[StructuralConcept] = &[
 ];
 
 impl LinkNetwork {
+    pub(crate) fn seed_statehood_worked_example(&mut self) -> StatehoodConceptIds {
+        let proposition = self.insert_typed_point(
+            "statehood",
+            LinkType::Concept,
+            Some("Statehood proposition connecting Hawaii (Q782) to U.S. state (Q35657)."),
+        );
+        let subject = self.insert_typed_point(
+            "Q782",
+            LinkType::Concept,
+            Some("Wikidata Q782; Hawaii; state of the United States."),
+        );
+        let object = self.insert_typed_point(
+            "Q35657",
+            LinkType::Concept,
+            Some("Wikidata Q35657; state of the United States."),
+        );
+
+        for (language, syntax) in STATEHOOD_PROPOSITION_SYNTAX {
+            self.insert_concept_syntax_mapping(proposition, "statehood", language, syntax, true);
+        }
+        for (language, syntax) in HAWAII_ENTITY_SYNTAX {
+            self.insert_concept_syntax_mapping(subject, "Q782", language, syntax, true);
+        }
+        for (language, syntax) in UNITED_STATES_STATE_SYNTAX {
+            self.insert_concept_syntax_mapping(object, "Q35657", language, syntax, true);
+        }
+
+        StatehoodConceptIds {
+            proposition,
+            subject,
+            object,
+        }
+    }
+
     /// Seeds the network with the shared common concept ontology.
     ///
     /// The seed combines meta-expression's semantic lexicon with structural
@@ -339,6 +401,11 @@ impl LinkNetwork {
                 syntax_mappings += 1;
             }
         }
+
+        let _ = self.seed_statehood_worked_example();
+        syntax_mappings += STATEHOOD_PROPOSITION_SYNTAX.len()
+            + HAWAII_ENTITY_SYNTAX.len()
+            + UNITED_STATES_STATE_SYNTAX.len();
 
         ConceptOntologySeedReport::new(
             lexicon.concept_count,

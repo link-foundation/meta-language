@@ -7,6 +7,7 @@ pub mod mixed_regions;
 mod natural_language;
 pub mod parity;
 pub mod query;
+mod reconstruction;
 pub mod semantics;
 pub mod snapshots;
 pub mod source;
@@ -16,8 +17,8 @@ pub mod verification;
 
 pub use concept_ontology::ConceptOntologySeedReport;
 pub use configuration::{
-    LanguageIdentificationDetector, ParseConfiguration, RegionDetectionPolicy,
-    TriviaAttachmentPolicy,
+    FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,
+    ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use link_flags::LinkFlags;

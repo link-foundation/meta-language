@@ -29,12 +29,36 @@ pub enum LanguageIdentificationDetector {
     Whatlang,
 }
 
+/// Configured amount of formal meaning to expose during reconstruction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FormalizationLevel {
+    /// Natural surface text in the requested target language.
+    Natural,
+    /// Predicate form using target-language labels where they are available.
+    Lexical,
+    /// Predicate form using shared concept identifiers.
+    Concept,
+    /// Link-like proposition form including the truth marker.
+    Logical,
+}
+
+/// Direction for text/network conversion.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NaturalizationDirection {
+    /// Prefer target-language natural text when reconstructing.
+    Naturalize,
+    /// Prefer the configured formal representation when reconstructing.
+    Formalize,
+}
+
 /// Configuration for parse-to-network operations.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ParseConfiguration {
     trivia_attachment_policy: TriviaAttachmentPolicy,
     region_detection_policy: RegionDetectionPolicy,
     language_identification_detector: LanguageIdentificationDetector,
+    formalization_level: FormalizationLevel,
+    naturalization_direction: NaturalizationDirection,
 }
 
 impl ParseConfiguration {
@@ -45,6 +69,8 @@ impl ParseConfiguration {
             trivia_attachment_policy,
             region_detection_policy: RegionDetectionPolicy::Both,
             language_identification_detector: LanguageIdentificationDetector::Lingua,
+            formalization_level: FormalizationLevel::Natural,
+            naturalization_direction: NaturalizationDirection::Naturalize,
         }
     }
 
@@ -68,6 +94,26 @@ impl ParseConfiguration {
         self
     }
 
+    /// Returns configuration with a formalization detail level.
+    #[must_use]
+    pub const fn with_formalization_level(
+        mut self,
+        formalization_level: FormalizationLevel,
+    ) -> Self {
+        self.formalization_level = formalization_level;
+        self
+    }
+
+    /// Returns configuration with a naturalization/formalization direction.
+    #[must_use]
+    pub const fn with_naturalization_direction(
+        mut self,
+        naturalization_direction: NaturalizationDirection,
+    ) -> Self {
+        self.naturalization_direction = naturalization_direction;
+        self
+    }
+
     /// Trivia attachment policy.
     #[must_use]
     pub const fn trivia_attachment_policy(self) -> TriviaAttachmentPolicy {
@@ -84,6 +130,18 @@ impl ParseConfiguration {
     #[must_use]
     pub const fn language_identification_detector(self) -> LanguageIdentificationDetector {
         self.language_identification_detector
+    }
+
+    /// Formalization detail level.
+    #[must_use]
+    pub const fn formalization_level(self) -> FormalizationLevel {
+        self.formalization_level
+    }
+
+    /// Naturalization/formalization direction.
+    #[must_use]
+    pub const fn naturalization_direction(self) -> NaturalizationDirection {
+        self.naturalization_direction
     }
 }
 
