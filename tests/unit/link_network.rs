@@ -220,6 +220,82 @@ fn immutable_and_mutable_snapshots_version_network_over_time() {
 }
 
 #[test]
+fn mutable_snapshot_edits_preserve_parent_bytes_and_share_unchanged_links() {
+    for policy in [
+        TriviaAttachmentPolicy::ContainmentLink,
+        TriviaAttachmentPolicy::TokenLink,
+        TriviaAttachmentPolicy::Both,
+    ] {
+        let network = LinkNetwork::parse_lossless_text(
+            "alpha beta",
+            "plain-text",
+            ParseConfiguration::new(policy),
+        );
+        let snapshot = network.snapshot(7, "initial parse");
+        drop(network);
+
+        let edited = snapshot
+            .network()
+            .links()
+            .find(|link| {
+                link.metadata().link_type() == Some(LinkType::Token)
+                    && link
+                        .metadata()
+                        .span()
+                        .is_some_and(|span| span.byte_range().start() == 0)
+            })
+            .map(meta_language::Link::id)
+            .expect("first token exists");
+        let unchanged = snapshot
+            .network()
+            .links()
+            .find(|link| {
+                link.metadata().link_type() == Some(LinkType::Token)
+                    && link
+                        .metadata()
+                        .span()
+                        .is_some_and(|span| span.byte_range().start() == 1)
+            })
+            .map(meta_language::Link::id)
+            .expect("second token exists");
+
+        let mut mutable = snapshot.to_mutable("mark first token missing");
+        assert_eq!(snapshot.network().shared_link_count(unchanged), Some(2));
+
+        assert!(mutable
+            .network_mut()
+            .set_flags(edited, LinkFlags::missing()));
+        assert_eq!(snapshot.network().reconstruct_text(), "alpha beta");
+        assert_eq!(mutable.network().reconstruct_text(), "lpha beta");
+        assert_eq!(snapshot.network().shared_link_count(unchanged), Some(2));
+        assert_eq!(snapshot.network().shared_link_count(edited), Some(1));
+
+        let committed = mutable.commit();
+        assert_eq!(committed.version(), 8);
+        assert_eq!(committed.parent_version(), Some(7));
+        assert_eq!(committed.network().reconstruct_text(), "lpha beta");
+        assert_eq!(snapshot.network().reconstruct_text(), "alpha beta");
+        assert_eq!(committed.network().shared_link_count(unchanged), Some(2));
+        assert_eq!(committed.network().shared_link_count(edited), Some(1));
+    }
+}
+
+#[test]
+fn identical_metadata_terms_share_interned_storage() {
+    let mut network = LinkNetwork::new();
+    let root = network.insert_point("root");
+
+    network.insert_link([root], LinkMetadata::new().with_term("shared"));
+    network.insert_link([root], LinkMetadata::new().with_term("shared"));
+
+    assert!(
+        network.interned_string_count("shared").unwrap_or_default() >= 3,
+        "expected intern pool and metadata terms to share the same string storage"
+    );
+    assert_eq!(network.interned_string_count("missing"), None);
+}
+
+#[test]
 fn mixed_language_regions_are_embedded_in_one_network() {
     let source = "Intro\n```rust\nfn main() {}\n```\n<strong>HTML</strong>\n";
     let network = LinkNetwork::parse(source, "Markdown", ParseConfiguration::default());
