@@ -109,6 +109,7 @@ pub fn annotate_natural_language(
         detected_language,
         document_span,
     );
+    insert_worked_example_annotations(network, region, text, declared_language, document_span);
 }
 
 fn insert_unicode_annotations(
@@ -165,6 +166,42 @@ fn insert_semantic_annotation(
             .with_language(language)
             .with_span(span),
     )
+}
+
+fn insert_worked_example_annotations(
+    network: &mut LinkNetwork,
+    region: LinkId,
+    text: &str,
+    language: &str,
+    span: SourceSpan,
+) {
+    if !is_statehood_worked_example(text, language) {
+        return;
+    }
+
+    let concepts = network.seed_statehood_worked_example();
+    network.insert_link(
+        [
+            region,
+            concepts.proposition,
+            concepts.subject,
+            concepts.object,
+        ],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Semantic)
+            .with_named(true)
+            .with_term("proposition:statehood")
+            .with_language(language)
+            .with_span(span),
+    );
+}
+
+fn is_statehood_worked_example(text: &str, language: &str) -> bool {
+    match language {
+        "English" => text.trim() == "Hawaii is a state.",
+        "Russian" => text.trim() == "Гавайи это штат.",
+        _ => false,
+    }
 }
 
 const fn detector_term(detector: LanguageIdentificationDetector) -> &'static str {

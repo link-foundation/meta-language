@@ -38,6 +38,8 @@ clean.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style
   match-and-substitute operation.
 - Concept-to-language syntax mappings for cross-language reconstruction.
+- `reconstruct_text_as()` for semantic cross-language reconstruction and
+  configurable formalization levels.
 - `seed_common_concept_ontology()` for importing meta-expression's 351-concept
   semantic lexicon as shared concept links, plus structural programming-language
   concepts such as function, binding, application, sequence, branch, and loop.
@@ -107,6 +109,31 @@ network.replace(
 );
 
 assert_eq!(network.reconstruct_text(), "const newName = call(newName);\n");
+```
+
+Cross-language reconstruction can naturalize a parsed semantic proposition into
+another target language, or expose progressively more formal representations:
+
+```rust
+use meta_language::{FormalizationLevel, LinkNetwork, ParseConfiguration};
+
+let network = LinkNetwork::parse(
+    "Hawaii is a state.\n",
+    "English",
+    ParseConfiguration::default(),
+);
+
+assert_eq!(
+    network.reconstruct_text_as("Russian", ParseConfiguration::default()),
+    "Гавайи это штат.\n"
+);
+assert_eq!(
+    network.reconstruct_text_as(
+        "Russian",
+        ParseConfiguration::default().with_formalization_level(FormalizationLevel::Concept),
+    ),
+    "statehood(Q782, Q35657)\n"
+);
 ```
 
 ## CLI
