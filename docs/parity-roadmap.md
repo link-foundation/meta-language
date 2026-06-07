@@ -153,3 +153,21 @@ grammar references PostgreSQL, MariaDB, and SQLite syntax sources and carries
 some dialect-aware productions, but this crate only advertises the adopted
 `sql-ansi` baseline until separate dialect grammars such as BigQuery, SQLite,
 PostgreSQL, or T-SQL are wired and tested under their own keys.
+
+## Delphi/Object Pascal Coverage
+
+`Delphi/Object Pascal` uses `tree-sitter-pascal` 0.10.2 from
+<https://github.com/Isopod/tree-sitter-pascal>. The crate is published under
+the MIT license, which is compatible with this repository's Unlicense model.
+
+The adopted fixture parses a Delphi-style unit containing a generic class,
+RTTI-style attribute, and property, then reconstructs the source byte-for-byte.
+The selected grammar also parsed local probes for inline variable declarations
+and constrained generics without recovery errors.
+
+The decision for now is to accept the published generic Pascal grammar rather
+than fork. It provides a useful Delphi/Object Pascal syntax baseline, but this
+crate does not claim full Delphi compiler coverage: version-specific Delphi and
+Free Pascal mode differences, conditional compilation variants, packages,
+libraries, resource/design-time files, and semantic checks remain outside the
+advertised grammar-backed scope until dedicated fixtures are added.
