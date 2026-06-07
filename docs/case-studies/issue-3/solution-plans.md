@@ -7,6 +7,15 @@
 > [`competitor-test-suites.md`](./competitor-test-suites.md), and
 > [`ecosystem-foundations.md`](./ecosystem-foundations.md).
 
+> **Implementation note (2026-06-07):** this document is the historical plan used
+> to file implementation issues [#5](https://github.com/link-foundation/meta-language/issues/5)
+> through [#20](https://github.com/link-foundation/meta-language/issues/20).
+> Those issues are now closed via PRs
+> [#21](https://github.com/link-foundation/meta-language/pull/21) through
+> [#36](https://github.com/link-foundation/meta-language/pull/36). Current
+> implementation status is tracked in [`README.md`](./README.md) and
+> [`requirements.md`](./requirements.md).
+
 ## Guiding principles (from the issue thread)
 
 1. **Reuse over reinvent** (issue #1 §2, I3-7): adopt existing permissively-licensed

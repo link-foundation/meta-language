@@ -15,6 +15,14 @@ creation, the specs were filed with `gh` on 2026-06-06 as issues
 [#5](https://github.com/link-foundation/meta-language/issues/5) through
 [#20](https://github.com/link-foundation/meta-language/issues/20).
 
+After the June 7 default-branch audit, all 16 filed implementation issues were
+confirmed closed via merged PRs
+[#21](https://github.com/link-foundation/meta-language/pull/21) through
+[#36](https://github.com/link-foundation/meta-language/pull/36). These files
+remain as the immutable source specs that were filed, not as the current
+implementation status. See [`../README.md`](../README.md) and
+[`../requirements.md`](../requirements.md) for the current audit.
+
 The script remains in the tree for traceability and repeatability:
 
 ```sh
