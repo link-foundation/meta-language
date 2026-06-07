@@ -47,8 +47,8 @@ clean.
   embedding, ten programming-language parser targets, and ten natural-language
   parser targets.
 - Self-description roots for `link`, `reference`, `relation link`, `language`,
-  `grammar`, `type`, `concept`, `point`, `field`, `trivia`, `region`, and
-  `object`.
+  `grammar`, `type`, `Type`, `concept`, `point`, `field`, `trivia`, `region`,
+  and `object`.
 - A lossless text parser boundary that preserves tokens, trivia, recovery
   markers, and mixed-region metadata behind the same representation.
 
@@ -113,9 +113,10 @@ cargo run -- describe
 cargo run -- verify --language plain-text --text "alpha beta"
 ```
 
-`describe` prints the built-in self-description roots. `verify` parses the text
-with the lossless text boundary and exits successfully when the resulting region
-has no error or missing links.
+`describe` prints the built-in self-description network as LiNo-style definition
+lines that round-trip through `parse()` and `reconstruct_text()`. `verify` parses
+the text with the lossless text boundary and exits successfully when the
+resulting region has no error or missing links.
 
 ## Parity Implementation
 

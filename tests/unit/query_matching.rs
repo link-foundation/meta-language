@@ -9,9 +9,12 @@ fn by_type_query_selects_links_of_the_requested_link_type() {
     let query = LinkQuery::by_type(LinkType::Type);
 
     let matches = network.query_links(&query);
+    let terms = matches
+        .iter()
+        .filter_map(|link| link.metadata().term())
+        .collect::<Vec<_>>();
 
-    assert_eq!(matches.len(), 1);
-    assert_eq!(matches[0].metadata().term(), Some("type"));
+    assert_eq!(terms, vec!["type", "Type"]);
 }
 
 #[test]
