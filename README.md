@@ -44,8 +44,8 @@ clean.
   semantic lexicon as shared concept links, plus structural programming-language
   concepts such as function, binding, application, sequence, branch, and loop.
 - Object-identity links and many-valued `TruthValue` semantics.
-- A testable parity registry and `PARITY_FIXTURES` for executable competitor
-  and ecosystem feature gates.
+- A testable parity registry and upstream-provenanced `PARITY_FIXTURES` for
+  executable competitor and ecosystem feature gates.
 - `LANGUAGE_FIXTURES` with lossless parse/reconstruction samples for every
   required markup, programming-language, and natural-language target.
 - Coverage targets for full `txt`, Markdown, and HTML support, mixed grammar
@@ -153,9 +153,9 @@ resulting region has no error or missing links.
 The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,
 `PROGRAMMING_LANGUAGE_TARGETS`, `NATURAL_LANGUAGE_TARGETS`, and
 `GRAMMAR_EMBEDDING_TARGETS` so comparison scope is part of the tested Rust API.
-It also exposes `PARITY_FIXTURES`, with executable fixtures covering every
-advertised target capability, and `LANGUAGE_FIXTURES`, with a lossless fixture
-for every requested language target.
+It also exposes `PARITY_FIXTURES`, with executable, provenance-tracked fixtures
+covering every advertised target capability, and `LANGUAGE_FIXTURES`, with a
+lossless fixture for every requested language target.
 The current registry tracks tree-sitter, LibCST, Recast, jscodeshift, Rowan,
 cstree, Roslyn, links-notation, link-cli, lino-objects-codec,
 relative-meta-logic, formal-ai, and meta-expression.

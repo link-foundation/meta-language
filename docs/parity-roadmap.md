@@ -21,7 +21,8 @@ The Rust API exposes these registries:
 - `GRAMMAR_EMBEDDING_TARGETS`: mixed-grammar cases that must parse into one
   unified links network.
 - `PARITY_FIXTURES`: executable source fixtures, one or more per parity target,
-  that must parse and reconstruct through the public API.
+  with upstream path and license provenance, that must parse and reconstruct
+  through the public API.
 - `LANGUAGE_FIXTURES`: executable source fixtures for every markup,
   programming-language, and natural-language target named by the founding issue.
 
@@ -34,13 +35,13 @@ parse/reconstruction fixture.
 
 | Project | Feature areas to match | Executable fixture gate |
 |---|---|---|
-| tree-sitter | Lossless concrete syntax, recoverable errors, mixed-language regions, query matching | Markdown fenced Rust fixture plus query and recovery tests |
-| LibCST | Python lossless parsing, trivia preservation, metadata, same-language reconstruction | Python indentation fixture round-trips through `reconstruct_text()` |
+| tree-sitter | Lossless concrete syntax, explicit extras/trivia, recoverable errors, mixed-language regions, query matching | Multiple ported corpus, error-corpus, query-doc, and fenced-code fixtures round-trip with provenance |
+| LibCST | Python lossless parsing, trivia preservation, parser errors, metadata, query/transform, same-language reconstruction | Multiple ported round-trip, empty-line, parse-error, and transformer-style fixtures |
 | Recast | JavaScript and TypeScript parse-print preservation | JavaScript comment-preservation fixture round-trips through `reconstruct_text()` |
 | jscodeshift | Transform workflows over JavaScript and TypeScript syntax | JavaScript transform source fixture plus `SubstitutionRule` tests |
 | Rowan | Persistent concrete syntax representation, immutable snapshots, and trivia preservation | Rust trivia fixture round-trips through `reconstruct_text()` plus snapshot version tests |
 | cstree | Rust concrete syntax representation, immutable snapshots, and checkpoint behavior | Rust checkpoint fixture round-trips through `reconstruct_text()` plus snapshot version tests |
-| Roslyn | C# syntax, trivia, diagnostics, and formatting | C# diagnostic fixture plus recovery tests |
+| Roslyn | C# syntax, trivia, diagnostics, query/traversal, transforms, and formatting | Multiple ported `ToFullString`, skipped-token, trivia, and replacement fixtures |
 | links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | LiNo tuple fixture plus self-reference tests |
 | link-cli | Single match-and-substitute operation | Create, update, delete, and swap substitution tests |
 | lino-objects-codec | Object encode/decode with identity and circular-reference preservation | Shared and circular object fixture plus identity tests |
@@ -53,10 +54,17 @@ parse/reconstruction fixture.
 `tests/unit/link_network.rs` enforces that every `PARITY_TARGETS` entry has a
 matching `PARITY_FIXTURES` entry. Each fixture is parsed with
 `LinkNetwork::parse` and reconstructed with `LinkNetwork::reconstruct_text`; the
-expected reconstruction must match exactly. Capability assertions ensure
-fixtures only claim capabilities advertised by their target and that every
-capability advertised by every target is exercised by at least one fixture for
-that target.
+expected reconstruction must match exactly. Each fixture records upstream path
+and license provenance. Recovery fixtures must expose error, has-error, or
+missing-link diagnostics while still reconstructing their original source.
+Query/transform fixtures can attach an executable transform expectation that is
+run through `LinkQuery` and `ReplacementRule`.
+
+Capability assertions ensure fixtures only claim capabilities advertised by
+their target and that every capability advertised by every target is exercised
+by at least one fixture for that target. Additional coverage gates require
+multiple fixtures for tree-sitter, LibCST, Recast, jscodeshift, Rowan, cstree,
+and Roslyn so upstream corpora do not collapse back to one illustrative case.
 
 The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
 `MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`, and

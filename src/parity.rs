@@ -71,6 +71,7 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
         upstream: "https://github.com/tree-sitter/tree-sitter",
         capabilities: &[
             ParityCapability::LosslessParsing,
+            ParityCapability::TriviaPreservation,
             ParityCapability::ErrorRecovery,
             ParityCapability::MixedLanguageRegions,
             ParityCapability::QueryMatching,
@@ -83,6 +84,9 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
         capabilities: &[
             ParityCapability::LosslessParsing,
             ParityCapability::TriviaPreservation,
+            ParityCapability::ErrorRecovery,
+            ParityCapability::QueryMatching,
+            ParityCapability::TransformBySubstitution,
             ParityCapability::SameLanguageReconstruction,
         ],
         test_plan: "Executable fixture covers Python parse, metadata, transform, and round-trip behavior.",
@@ -136,6 +140,8 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
             ParityCapability::LosslessParsing,
             ParityCapability::TriviaPreservation,
             ParityCapability::ErrorRecovery,
+            ParityCapability::QueryMatching,
+            ParityCapability::TransformBySubstitution,
             ParityCapability::SameLanguageReconstruction,
         ],
         test_plan: "Executable fixture covers C# syntax, trivia, diagnostics, and formatting behavior.",
@@ -193,15 +199,62 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
     },
 ];
 
+/// Expected verification result for an executable parity fixture.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParityVerificationExpectation {
+    /// Fixture should parse without recovery diagnostics.
+    Clean,
+    /// Fixture should round-trip while exposing recovery diagnostics.
+    Recoverable,
+}
+
+/// Text transform expectation attached to a query/transform parity fixture.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ParityTransformExpectation {
+    pub(crate) query: &'static str,
+    pub(crate) capture_name: &'static str,
+    pub(crate) replacement: &'static str,
+    pub(crate) expected_output: &'static str,
+}
+
+impl ParityTransformExpectation {
+    /// Query used to select the links to replace.
+    #[must_use]
+    pub const fn query(&self) -> &'static str {
+        self.query
+    }
+
+    /// Capture name whose source text should be replaced.
+    #[must_use]
+    pub const fn capture_name(&self) -> &'static str {
+        self.capture_name
+    }
+
+    /// Replacement source text.
+    #[must_use]
+    pub const fn replacement(&self) -> &'static str {
+        self.replacement
+    }
+
+    /// Expected reconstructed source after applying the transform.
+    #[must_use]
+    pub const fn expected_output(&self) -> &'static str {
+        self.expected_output
+    }
+}
+
 /// Executable source fixture tied to a parity target.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ParityFixture {
-    target_name: &'static str,
-    name: &'static str,
-    language: &'static str,
-    source: &'static str,
-    expected_reconstruction: &'static str,
-    capabilities: &'static [ParityCapability],
+    pub(crate) target_name: &'static str,
+    pub(crate) name: &'static str,
+    pub(crate) language: &'static str,
+    pub(crate) source: &'static str,
+    pub(crate) expected_reconstruction: &'static str,
+    pub(crate) provenance: &'static str,
+    pub(crate) verification_expectation: ParityVerificationExpectation,
+    pub(crate) transform_expectation: Option<ParityTransformExpectation>,
+    pub(crate) capabilities: &'static [ParityCapability],
 }
 
 impl ParityFixture {
@@ -235,6 +288,24 @@ impl ParityFixture {
         self.expected_reconstruction
     }
 
+    /// Upstream source path and license for this ported fixture.
+    #[must_use]
+    pub const fn provenance(&self) -> &'static str {
+        self.provenance
+    }
+
+    /// Expected verification result after parsing this fixture.
+    #[must_use]
+    pub const fn verification_expectation(&self) -> ParityVerificationExpectation {
+        self.verification_expectation
+    }
+
+    /// Optional query/transform assertion for this fixture.
+    #[must_use]
+    pub const fn transform_expectation(&self) -> Option<ParityTransformExpectation> {
+        self.transform_expectation
+    }
+
     /// Capabilities exercised by this fixture.
     #[must_use]
     pub const fn capabilities(&self) -> &'static [ParityCapability] {
@@ -251,160 +322,7 @@ impl ParityFixture {
     }
 }
 
-/// Executable fixtures for every parity target called out by the founding issue.
-pub const PARITY_FIXTURES: &[ParityFixture] = &[
-    ParityFixture {
-        target_name: "tree-sitter",
-        name: "markdown fenced rust with queryable tokens",
-        language: "Markdown",
-        source: "Intro\n```rust\nfn main() {}\n```\n",
-        expected_reconstruction: "Intro\n```rust\nfn main() {}\n```\n",
-        capabilities: &[
-            ParityCapability::LosslessParsing,
-            ParityCapability::ErrorRecovery,
-            ParityCapability::MixedLanguageRegions,
-            ParityCapability::QueryMatching,
-        ],
-    },
-    ParityFixture {
-        target_name: "LibCST",
-        name: "python round trip with indentation",
-        language: "Python",
-        source: "def f(x):\n    return x + 1\n",
-        expected_reconstruction: "def f(x):\n    return x + 1\n",
-        capabilities: &[
-            ParityCapability::LosslessParsing,
-            ParityCapability::TriviaPreservation,
-            ParityCapability::SameLanguageReconstruction,
-        ],
-    },
-    ParityFixture {
-        target_name: "Recast",
-        name: "javascript comment preservation",
-        language: "JavaScript",
-        source: "const value = 1; // keep trivia\n",
-        expected_reconstruction: "const value = 1; // keep trivia\n",
-        capabilities: &[
-            ParityCapability::LosslessParsing,
-            ParityCapability::TriviaPreservation,
-            ParityCapability::SameLanguageReconstruction,
-        ],
-    },
-    ParityFixture {
-        target_name: "jscodeshift",
-        name: "javascript transform input",
-        language: "JavaScript",
-        source: "const oldName = call(oldName);\n",
-        expected_reconstruction: "const oldName = call(oldName);\n",
-        capabilities: &[
-            ParityCapability::QueryMatching,
-            ParityCapability::TransformBySubstitution,
-            ParityCapability::SameLanguageReconstruction,
-        ],
-    },
-    ParityFixture {
-        target_name: "Rowan",
-        name: "rust trivia preservation",
-        language: "Rust",
-        source: "fn main() {\n    // keep\n}\n",
-        expected_reconstruction: "fn main() {\n    // keep\n}\n",
-        capabilities: &[
-            ParityCapability::LosslessParsing,
-            ParityCapability::TriviaPreservation,
-            ParityCapability::SameLanguageReconstruction,
-            ParityCapability::SnapshotVersioning,
-        ],
-    },
-    ParityFixture {
-        target_name: "cstree",
-        name: "rust checkpoint source",
-        language: "Rust",
-        source: "let checkpoint = value + 1;\n",
-        expected_reconstruction: "let checkpoint = value + 1;\n",
-        capabilities: &[
-            ParityCapability::LosslessParsing,
-            ParityCapability::TriviaPreservation,
-            ParityCapability::SameLanguageReconstruction,
-            ParityCapability::SnapshotVersioning,
-        ],
-    },
-    ParityFixture {
-        target_name: "Roslyn",
-        name: "csharp diagnostic recovery source",
-        language: "C#",
-        source: "class C { void M() { Console.WriteLine(1); } }\n",
-        expected_reconstruction: "class C { void M() { Console.WriteLine(1); } }\n",
-        capabilities: &[
-            ParityCapability::LosslessParsing,
-            ParityCapability::TriviaPreservation,
-            ParityCapability::ErrorRecovery,
-            ParityCapability::SameLanguageReconstruction,
-        ],
-    },
-    ParityFixture {
-        target_name: "links-notation",
-        name: "lino tuple forms",
-        language: "LiNo",
-        source: "(lovesMama: loves mama)\npapa has car\n",
-        expected_reconstruction: "(lovesMama: loves mama)\npapa has car\n",
-        capabilities: &[
-            ParityCapability::LosslessParsing,
-            ParityCapability::ObjectRoundTrip,
-            ParityCapability::SelfDescription,
-        ],
-    },
-    ParityFixture {
-        target_name: "link-cli",
-        name: "substitution patterns",
-        language: "LiNo",
-        source: "((1: 1 1)) ((1: 1 2))\n",
-        expected_reconstruction: "((1: 1 1)) ((1: 1 2))\n",
-        capabilities: &[ParityCapability::TransformBySubstitution],
-    },
-    ParityFixture {
-        target_name: "lino-objects-codec",
-        name: "shared and circular references",
-        language: "LiNo",
-        source: "(object: object object)\n(shared: object object)\n",
-        expected_reconstruction: "(object: object object)\n(shared: object object)\n",
-        capabilities: &[ParityCapability::ObjectRoundTrip],
-    },
-    ParityFixture {
-        target_name: "relative-meta-logic",
-        name: "dependent type and paradox source",
-        language: "RML",
-        source: "(Type: Type Type)\n(this_statement_is_false)\n",
-        expected_reconstruction: "(Type: Type Type)\n(this_statement_is_false)\n",
-        capabilities: &[
-            ParityCapability::SemanticEvaluation,
-            ParityCapability::SelfDescription,
-        ],
-    },
-    ParityFixture {
-        target_name: "formal-ai",
-        name: "formalization reconstruction source",
-        language: "English",
-        source: "Hawaii is a state.\n",
-        expected_reconstruction: "Hawaii is a state.\n",
-        capabilities: &[
-            ParityCapability::FormalizationRoundTrip,
-            ParityCapability::SemanticEvaluation,
-            ParityCapability::CrossLanguageReconstruction,
-        ],
-    },
-    ParityFixture {
-        target_name: "meta-expression",
-        name: "naturalization span source",
-        language: "English",
-        source: "1 + 1 = 2\n",
-        expected_reconstruction: "1 + 1 = 2\n",
-        capabilities: &[
-            ParityCapability::FormalizationRoundTrip,
-            ParityCapability::TriviaPreservation,
-            ParityCapability::CrossLanguageReconstruction,
-        ],
-    },
-];
+pub use crate::parity_fixtures::PARITY_FIXTURES;
 
 /// Family of language coverage targets.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
