@@ -70,6 +70,12 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         || language.eq_ignore_ascii_case("vbnet")
     {
         Some(tree_sitter_vb_dotnet::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("delphi/object pascal")
+        || language.eq_ignore_ascii_case("delphi")
+        || language.eq_ignore_ascii_case("object pascal")
+        || language.eq_ignore_ascii_case("pascal")
+    {
+        Some(tree_sitter_pascal::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("rust") {
         Some(tree_sitter_rust::LANGUAGE.into())
     } else if language == "R" || language == "r" {

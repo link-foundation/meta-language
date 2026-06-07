@@ -31,6 +31,7 @@ fn grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip() {
         "Visual Basic",
         "R",
         "sql-ansi",
+        "Delphi/Object Pascal",
     ];
 
     for language in grammar_backed_languages {
@@ -89,6 +90,15 @@ fn grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip() {
                 }),
                 "{language} should emit SQL grammar node kinds"
             );
+        } else if language == "Delphi/Object Pascal" {
+            assert!(
+                network.links().any(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link.metadata().language() == Some(language)
+                        && link.metadata().term() == Some("unit")
+                }),
+                "{language} should emit Pascal grammar node kinds"
+            );
         } else {
             assert!(
                 network
@@ -99,6 +109,60 @@ fn grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip() {
                 "{language} should preserve anonymous syntax metadata"
             );
         }
+    }
+}
+
+#[test]
+fn delphi_object_pascal_fixture_uses_tree_sitter_pascal() {
+    let fixture = LANGUAGE_FIXTURES
+        .iter()
+        .find(|fixture| fixture.language() == "Delphi/Object Pascal")
+        .expect("Delphi/Object Pascal fixture exists");
+    let network = LinkNetwork::parse(
+        fixture.source(),
+        fixture.language(),
+        ParseConfiguration::default(),
+    );
+
+    assert_eq!(network.reconstruct_text(), fixture.source());
+    assert!(
+        network.verify_full_match(None).is_clean(),
+        "{} fixture should parse cleanly",
+        fixture.description()
+    );
+
+    for term in ["unit", "declClass", "declProp", "rttiAttributes"] {
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some("Delphi/Object Pascal")
+                    && link.metadata().term() == Some(term)
+            }),
+            "Delphi/Object Pascal should emit {term} syntax nodes"
+        );
+    }
+}
+
+#[test]
+fn pascal_aliases_use_tree_sitter_pascal() {
+    let source = "program Demo;\nbegin\nend.\n";
+
+    for language in ["Delphi", "Object Pascal", "Pascal"] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(network.reconstruct_text(), source);
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{language} alias should parse cleanly"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some("program")
+            }),
+            "{language} alias should emit Pascal grammar nodes"
+        );
     }
 }
 

@@ -664,8 +664,8 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
     },
     LanguageFixture {
         language: "Delphi/Object Pascal",
-        source: "program Demo;\nbegin\nend.\n",
-        description: "Delphi/Object Pascal program",
+        source: "unit DemoUnit;\n\ninterface\n\ntype\n  TBox<T> = class\n  private\n    FValue: T;\n  public\n    [Stored]\n    property Value: T read FValue write FValue;\n  end;\n\nimplementation\n\nend.\n",
+        description: "Delphi/Object Pascal unit with a generic class property",
     },
     LanguageFixture {
         language: "English",
