@@ -26,11 +26,17 @@ pub use parity::{
     MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS,
     PROGRAMMING_LANGUAGE_TARGETS,
 };
-pub use query::LinkQuery;
+pub use query::{
+    LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
+    QueryPredicateArgument, QueryPredicateHost,
+};
 pub use semantics::TruthValue;
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot};
 pub use source::{ByteRange, Point, SourceSpan};
-pub use substitution::{SubstitutionReport, SubstitutionRule};
+pub use substitution::{
+    SubstitutionBindings, SubstitutionReport, SubstitutionRule, SubstitutionValue,
+    VariableSubstitutionRule,
+};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 mod tree_sitter_adapter;

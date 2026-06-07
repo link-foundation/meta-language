@@ -31,8 +31,8 @@ clean.
 - Mixed-region links for Markdown fenced code and HTML regions, plus HTML
   script, style, and style-attribute regions, with `txt` fallback for prose
   regions that content sniffing cannot classify.
-- `LinkQuery` for structural matching by link type, term, language, and named
-  flag.
+- `LinkQuery` for structural matching by link type, term, language, named flag,
+  tree-sitter-query-like S-expressions, captures, and host predicates.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style
   match-and-substitute operation.
 - Concept-to-language syntax mappings for cross-language reconstruction.
