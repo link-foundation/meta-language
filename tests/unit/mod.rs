@@ -1,6 +1,7 @@
 mod grammar_parsing;
 mod link_network;
 mod query_matching;
+mod query_transform;
 mod substitution;
 
 #[path = "ci-cd/mod.rs"]
