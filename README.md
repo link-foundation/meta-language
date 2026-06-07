@@ -38,6 +38,9 @@ clean.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style
   match-and-substitute operation.
 - Concept-to-language syntax mappings for cross-language reconstruction.
+- `seed_common_concept_ontology()` for importing meta-expression's 351-concept
+  semantic lexicon as shared concept links, plus structural programming-language
+  concepts such as function, binding, application, sequence, branch, and loop.
 - Object-identity links and many-valued `TruthValue` semantics.
 - A testable parity registry and `PARITY_FIXTURES` for executable competitor
   and ecosystem feature gates.

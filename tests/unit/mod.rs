@@ -1,3 +1,4 @@
+mod concept_ontology;
 mod grammar_parsing;
 mod link_network;
 mod query_matching;

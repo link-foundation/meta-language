@@ -1,0 +1,4354 @@
+{
+  "version": 1,
+  "description": "Semantic interlingua lexicon. Each concept has a unique id, per-language surface forms, and source-backed or rule-derived provenance; directional translation is derived through ids, never stored as a direct language pair. Per-concept overrides must include >50% usage proof before this builder will merge them.",
+  "generatedBy": "scripts/build-lexicon-seed.mjs",
+  "languages": ["en", "hi", "ru", "zh"],
+  "conceptCount": 351,
+  "concepts": [
+    {
+      "id": "lex:en:ability->ru",
+      "url": "https://en.wiktionary.org/wiki/ability",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["ability"],
+        "ru": ["возможность"]
+      },
+      "primary": {
+        "ru": "возможность"
+      }
+    },
+    {
+      "id": "lex:en:able->ru",
+      "url": "https://en.wiktionary.org/wiki/able",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["able"],
+        "ru": ["способен"]
+      },
+      "primary": {
+        "ru": "способен"
+      }
+    },
+    {
+      "id": "lex:en:accelerate->ru",
+      "url": "https://en.wiktionary.org/wiki/accelerate",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["accelerate"],
+        "ru": ["ускорить"]
+      },
+      "primary": {
+        "ru": "ускорить"
+      }
+    },
+    {
+      "id": "lex:en:accepts->ru",
+      "url": "https://en.wiktionary.org/wiki/accepts",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["accepts"],
+        "ru": ["принимает"]
+      },
+      "primary": {
+        "ru": "принимает"
+      }
+    },
+    {
+      "id": "lex:en:accurate->ru",
+      "url": "https://en.wiktionary.org/wiki/accurate",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["accurate"],
+        "ru": ["точная"]
+      },
+      "primary": {
+        "ru": "точная"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:action_thriller_film->ru",
+      "url": "https://en.wikipedia.org/wiki/Action_film",
+      "labels": {
+        "en": ["action thriller film"],
+        "ru": ["боевик"]
+      },
+      "primary": {
+        "ru": "боевик"
+      }
+    },
+    {
+      "id": "lex:en:activist->ru",
+      "url": "https://en.wiktionary.org/wiki/activist",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["activist"],
+        "ru": ["активист"]
+      },
+      "primary": {
+        "ru": "активист"
+      }
+    },
+    {
+      "id": "lex:en:add->ru",
+      "url": "https://en.wiktionary.org/wiki/add",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["add"],
+        "ru": ["добавьте"]
+      },
+      "primary": {
+        "ru": "добавьте"
+      }
+    },
+    {
+      "id": "lex:en:agreement->ru",
+      "url": "https://en.wiktionary.org/wiki/agreement",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["agreement"],
+        "ru": ["согласования"]
+      },
+      "primary": {
+        "ru": "согласования"
+      }
+    },
+    {
+      "id": "lex:en:algorithms->ru",
+      "url": "https://en.wiktionary.org/wiki/algorithms",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["algorithms"],
+        "ru": ["алгоритмы"]
+      },
+      "primary": {
+        "ru": "алгоритмы"
+      }
+    },
+    {
+      "id": "lex:en:all->ru",
+      "url": "https://en.wiktionary.org/wiki/all",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["all"],
+        "ru": ["все"]
+      },
+      "primary": {
+        "ru": "все"
+      }
+    },
+    {
+      "id": "lex:en:also->ru",
+      "url": "https://en.wiktionary.org/wiki/also",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["also"],
+        "ru": ["также"]
+      },
+      "primary": {
+        "ru": "также"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:american_politician->ru",
+      "url": "https://en.wikipedia.org/wiki/Politician",
+      "labels": {
+        "en": ["american politician"],
+        "ru": ["американский политический деятель"]
+      },
+      "primary": {
+        "ru": "американский политический деятель"
+      }
+    },
+    {
+      "id": "lex:en:american->ru",
+      "url": "https://en.wiktionary.org/wiki/american",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["american"],
+        "ru": ["американский"]
+      },
+      "primary": {
+        "ru": "американский"
+      }
+    },
+    {
+      "id": "lex:en:and->ru",
+      "url": "https://en.wiktionary.org/wiki/and",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["and"],
+        "ru": ["и"]
+      },
+      "primary": {
+        "ru": "и"
+      }
+    },
+    {
+      "id": "lex:en:any->ru",
+      "url": "https://en.wiktionary.org/wiki/any",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["any"],
+        "ru": ["любых"]
+      },
+      "primary": {
+        "ru": "любых"
+      }
+    },
+    {
+      "id": "lex:en:artificial->ru",
+      "url": "https://en.wiktionary.org/wiki/artificial",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["artificial"],
+        "ru": ["искусственный"]
+      },
+      "primary": {
+        "ru": "искусственный"
+      }
+    },
+    {
+      "id": "lex:en:as->ru",
+      "url": "https://en.wiktionary.org/wiki/as",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["as"],
+        "ru": ["как"]
+      },
+      "primary": {
+        "ru": "как"
+      }
+    },
+    {
+      "id": "lex:en:associative_memory_storage->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=associative%20memory%20storage",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["associative memory storage"],
+        "ru": ["хранилище ассоциативной памяти"]
+      },
+      "primary": {
+        "ru": "хранилище ассоциативной памяти"
+      }
+    },
+    {
+      "id": "lex:en:associative_storage->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=associative%20storage",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["associative storage"],
+        "ru": ["ассоциативное хранилище"]
+      },
+      "primary": {
+        "ru": "ассоциативное хранилище"
+      }
+    },
+    {
+      "id": "lex:en:associative->ru",
+      "url": "https://en.wiktionary.org/wiki/associative",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["associative"],
+        "ru": ["ассоциативное"]
+      },
+      "primary": {
+        "ru": "ассоциативное"
+      }
+    },
+    {
+      "id": "lex:en:attaches->ru",
+      "url": "https://en.wiktionary.org/wiki/attaches",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["attaches"],
+        "ru": ["прикрепляет"]
+      },
+      "primary": {
+        "ru": "прикрепляет"
+      }
+    },
+    {
+      "id": "lex:en:automated->ru",
+      "url": "https://en.wiktionary.org/wiki/automated",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["automated"],
+        "ru": ["автоматизирована"]
+      },
+      "primary": {
+        "ru": "автоматизирована"
+      }
+    },
+    {
+      "id": "lex:en:automation->ru",
+      "url": "https://en.wiktionary.org/wiki/automation",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["automation"],
+        "ru": ["автоматизация"]
+      },
+      "primary": {
+        "ru": "автоматизация"
+      }
+    },
+    {
+      "id": "lex:en:based->ru",
+      "url": "https://en.wiktionary.org/wiki/based",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["based"],
+        "ru": ["основанный"]
+      },
+      "primary": {
+        "ru": "основанный"
+      }
+    },
+    {
+      "id": "lex:en:be->ru",
+      "url": "https://en.wiktionary.org/wiki/be",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["be"],
+        "ru": ["быть"]
+      },
+      "primary": {
+        "ru": "быть"
+      }
+    },
+    {
+      "id": "lex:en:billionaire->ru",
+      "url": "https://en.wiktionary.org/wiki/billionaire",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["billionaire"],
+        "ru": ["миллиардер"]
+      },
+      "primary": {
+        "ru": "миллиардер"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:body_snatcher->ru",
+      "url": "https://en.wiktionary.org/wiki/body_snatcher",
+      "labels": {
+        "en": ["body snatcher"],
+        "ru": ["похититель трупов"]
+      },
+      "primary": {
+        "ru": "похититель трупов"
+      }
+    },
+    {
+      "id": "lex:en:bot-programmer->ru",
+      "url": "https://en.wiktionary.org/wiki/bot-programmer",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["bot-programmer"],
+        "ru": ["бот-программист"]
+      },
+      "primary": {
+        "ru": "бот-программист"
+      }
+    },
+    {
+      "id": "lex:en:bread->ru",
+      "url": "https://en.wiktionary.org/wiki/bread",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["bread"],
+        "ru": ["хлеб"]
+      },
+      "primary": {
+        "ru": "хлеб"
+      }
+    },
+    {
+      "id": "lex:en:browser->ru",
+      "url": "https://en.wiktionary.org/wiki/browser",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["browser"],
+        "ru": ["браузер"]
+      },
+      "primary": {
+        "ru": "браузер"
+      }
+    },
+    {
+      "id": "lex:en:businessman->ru",
+      "url": "https://en.wiktionary.org/wiki/businessman",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["businessman"],
+        "ru": ["предприниматель"]
+      },
+      "primary": {
+        "ru": "предприниматель"
+      }
+    },
+    {
+      "id": "lex:en:can->ru",
+      "url": "https://en.wiktionary.org/wiki/can",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["can"],
+        "ru": ["могут"]
+      },
+      "primary": {
+        "ru": "могут"
+      }
+    },
+    {
+      "id": "lex:en:carrot->ru",
+      "url": "https://en.wiktionary.org/wiki/carrot",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["carrot"],
+        "ru": ["морковь"]
+      },
+      "primary": {
+        "ru": "морковь"
+      }
+    },
+    {
+      "id": "lex:en:change->ru",
+      "url": "https://en.wiktionary.org/wiki/change",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["change"],
+        "ru": ["изменять"]
+      },
+      "primary": {
+        "ru": "изменять"
+      }
+    },
+    {
+      "id": "lex:en:chatbot->ru",
+      "url": "https://en.wiktionary.org/wiki/chatbot",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["chatbot"],
+        "ru": ["чат-бот"]
+      },
+      "primary": {
+        "ru": "чат-бот"
+      }
+    },
+    {
+      "id": "lex:en:check->ru",
+      "url": "https://en.wiktionary.org/wiki/check",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["check"],
+        "ru": ["проверьте"]
+      },
+      "primary": {
+        "ru": "проверьте"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:chinese_government->ru",
+      "url": "https://en.wikipedia.org/wiki/Government_of_China",
+      "labels": {
+        "en": ["chinese government"],
+        "ru": ["политического руководства страны"]
+      },
+      "primary": {
+        "ru": "политического руководства страны"
+      }
+    },
+    {
+      "id": "lex:en:claims->ru",
+      "url": "https://en.wiktionary.org/wiki/claims",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["claims"],
+        "ru": ["утверждений"]
+      },
+      "primary": {
+        "ru": "утверждений"
+      }
+    },
+    {
+      "id": "lex:en:combines->ru",
+      "url": "https://en.wiktionary.org/wiki/combines",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["combines"],
+        "ru": ["объединяет"]
+      },
+      "primary": {
+        "ru": "объединяет"
+      }
+    },
+    {
+      "id": "lex:en:compare->ru",
+      "url": "https://en.wiktionary.org/wiki/compare",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["compare"],
+        "ru": ["сравните"]
+      },
+      "primary": {
+        "ru": "сравните"
+      }
+    },
+    {
+      "id": "lex:en:computable->ru",
+      "url": "https://en.wiktionary.org/wiki/computable",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["computable"],
+        "ru": ["вычислимые"]
+      },
+      "primary": {
+        "ru": "вычислимые"
+      }
+    },
+    {
+      "id": "lex:en:create->ru",
+      "url": "https://en.wiktionary.org/wiki/create",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["create"],
+        "ru": ["создавать"]
+      },
+      "primary": {
+        "ru": "создавать"
+      }
+    },
+    {
+      "id": "lex:en:cucumber->ru",
+      "url": "https://en.wiktionary.org/wiki/cucumber",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["cucumber"],
+        "ru": ["огурец"]
+      },
+      "primary": {
+        "ru": "огурец"
+      }
+    },
+    {
+      "id": "lex:en:data_and_knowledge->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=data%20and%20knowledge",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["data and knowledge"],
+        "ru": ["данные и знания"]
+      },
+      "primary": {
+        "ru": "данные и знания"
+      }
+    },
+    {
+      "id": "lex:en:data->ru",
+      "url": "https://en.wiktionary.org/wiki/data",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["data"],
+        "ru": ["данные"]
+      },
+      "primary": {
+        "ru": "данные"
+      }
+    },
+    {
+      "id": "lex:en:descriptions->ru",
+      "url": "https://en.wiktionary.org/wiki/descriptions",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["descriptions"],
+        "ru": ["описания"]
+      },
+      "primary": {
+        "ru": "описания"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:developed_by_google->ru",
+      "url": "https://en.wikipedia.org/wiki/Google_Chrome",
+      "labels": {
+        "en": ["developed by google"],
+        "ru": ["разрабатываемый компанией Google"]
+      },
+      "primary": {
+        "ru": "разрабатываемый компанией Google"
+      }
+    },
+    {
+      "id": "lex:en:developed->ru",
+      "url": "https://en.wiktionary.org/wiki/developed",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["developed"],
+        "ru": ["разработанный"]
+      },
+      "primary": {
+        "ru": "разработанный"
+      }
+    },
+    {
+      "id": "lex:en:development->ru",
+      "url": "https://en.wiktionary.org/wiki/development",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["development"],
+        "ru": ["развитие"]
+      },
+      "primary": {
+        "ru": "развитие"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:directed_by->ru",
+      "url": "https://en.wikipedia.org/wiki/Film_director",
+      "labels": {
+        "en": ["directed by"],
+        "ru": ["поставленный режиссёром"]
+      },
+      "primary": {
+        "ru": "поставленный режиссёром"
+      }
+    },
+    {
+      "id": "lex:en:director->ru",
+      "url": "https://en.wiktionary.org/wiki/director",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["director"],
+        "ru": ["директор"]
+      },
+      "primary": {
+        "ru": "директор"
+      }
+    },
+    {
+      "id": "lex:en:domain->ru",
+      "url": "https://en.wiktionary.org/wiki/domain",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["domain"],
+        "ru": ["домен"]
+      },
+      "primary": {
+        "ru": "домен"
+      }
+    },
+    {
+      "id": "lex:en:due->ru",
+      "url": "https://en.wiktionary.org/wiki/due",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["due"],
+        "ru": ["благодаря"]
+      },
+      "primary": {
+        "ru": "благодаря"
+      }
+    },
+    {
+      "id": "lex:en:dynamically->ru",
+      "url": "https://en.wiktionary.org/wiki/dynamically",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["dynamically"],
+        "ru": ["динамически"]
+      },
+      "primary": {
+        "ru": "динамически"
+      }
+    },
+    {
+      "id": "lex:en:each->ru",
+      "url": "https://en.wiktionary.org/wiki/each",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["each"],
+        "ru": ["каждое"]
+      },
+      "primary": {
+        "ru": "каждое"
+      }
+    },
+    {
+      "id": "lex:en:edit->ru",
+      "url": "https://en.wiktionary.org/wiki/edit",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["edit"],
+        "ru": ["редактировать"]
+      },
+      "primary": {
+        "ru": "редактировать"
+      }
+    },
+    {
+      "id": "lex:en:effects->ru",
+      "url": "https://en.wiktionary.org/wiki/effects",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["effects"],
+        "ru": ["эффекты"]
+      },
+      "primary": {
+        "ru": "эффекты"
+      }
+    },
+    {
+      "id": "lex:en:engine->ru",
+      "url": "https://en.wiktionary.org/wiki/engine",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["engine"],
+        "ru": ["движок"]
+      },
+      "primary": {
+        "ru": "движок"
+      }
+    },
+    {
+      "id": "lex:en:engineer->ru",
+      "url": "https://en.wiktionary.org/wiki/engineer",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["engineer"],
+        "ru": ["инженер"]
+      },
+      "primary": {
+        "ru": "инженер"
+      }
+    },
+    {
+      "id": "lex:en:entrepreneur->ru",
+      "url": "https://en.wiktionary.org/wiki/entrepreneur",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["entrepreneur"],
+        "ru": ["предприниматель"]
+      },
+      "primary": {
+        "ru": "предприниматель"
+      }
+    },
+    {
+      "id": "lex:en:environment->ru",
+      "url": "https://en.wiktionary.org/wiki/environment",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["environment"],
+        "ru": ["среда"]
+      },
+      "primary": {
+        "ru": "среда"
+      }
+    },
+    {
+      "id": "lex:en:evaluates->ru",
+      "url": "https://en.wiktionary.org/wiki/evaluates",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["evaluates"],
+        "ru": ["вычисляет"]
+      },
+      "primary": {
+        "ru": "вычисляет"
+      }
+    },
+    {
+      "id": "lex:en:evidence->ru",
+      "url": "https://en.wiktionary.org/wiki/evidence",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["evidence"],
+        "ru": ["доказательства"]
+      },
+      "primary": {
+        "ru": "доказательства"
+      }
+    },
+    {
+      "id": "lex:en:example->ru",
+      "url": "https://en.wiktionary.org/wiki/example",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["example"],
+        "ru": ["пример"]
+      },
+      "primary": {
+        "ru": "пример"
+      }
+    },
+    {
+      "id": "lex:en:examples_of_agreement->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=examples%20of%20agreement",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["examples of agreement"],
+        "ru": ["примеры согласования"]
+      },
+      "primary": {
+        "ru": "примеры согласования"
+      }
+    },
+    {
+      "id": "lex:en:examples->ru",
+      "url": "https://en.wiktionary.org/wiki/examples",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["examples"],
+        "ru": ["примеры"]
+      },
+      "primary": {
+        "ru": "примеры"
+      }
+    },
+    {
+      "id": "lex:en:execution->ru",
+      "url": "https://en.wiktionary.org/wiki/execution",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["execution"],
+        "ru": ["выполнение"]
+      },
+      "primary": {
+        "ru": "выполнение"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:executive_director->ru",
+      "url": "https://en.wikipedia.org/wiki/Executive_director",
+      "labels": {
+        "en": ["executive director"],
+        "ru": ["исполнительный директор"]
+      },
+      "primary": {
+        "ru": "исполнительный директор"
+      }
+    },
+    {
+      "id": "lex:en:fact->ru",
+      "url": "https://en.wiktionary.org/wiki/fact",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["fact"],
+        "ru": ["факт"]
+      },
+      "primary": {
+        "ru": "факт"
+      }
+    },
+    {
+      "id": "lex:en:fast->ru",
+      "url": "https://en.wiktionary.org/wiki/fast",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["fast"],
+        "ru": ["быстрая"]
+      },
+      "primary": {
+        "ru": "быстрая"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:film_stars->ru",
+      "url": "https://en.wikipedia.org/wiki/Actor",
+      "labels": {
+        "en": ["film stars"],
+        "ru": ["в главных ролях"]
+      },
+      "primary": {
+        "ru": "в главных ролях"
+      }
+    },
+    {
+      "id": "lex:en:find->ru",
+      "url": "https://en.wiktionary.org/wiki/find",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["find"],
+        "ru": ["найти"]
+      },
+      "primary": {
+        "ru": "найти"
+      }
+    },
+    {
+      "id": "lex:en:first->ru",
+      "url": "https://en.wiktionary.org/wiki/first",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["first"],
+        "ru": ["первый"]
+      },
+      "primary": {
+        "ru": "первый"
+      }
+    },
+    {
+      "id": "lex:en:flexible->ru",
+      "url": "https://en.wiktionary.org/wiki/flexible",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["flexible"],
+        "ru": ["гибкая"]
+      },
+      "primary": {
+        "ru": "гибкая"
+      }
+    },
+    {
+      "id": "lex:en:for->ru",
+      "url": "https://en.wiktionary.org/wiki/for",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["for"],
+        "ru": ["для"]
+      },
+      "primary": {
+        "ru": "для"
+      }
+    },
+    {
+      "id": "lex:en:formalize->ru",
+      "url": "https://en.wiktionary.org/wiki/formalize",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["formalize"],
+        "ru": ["формализуйте"]
+      },
+      "primary": {
+        "ru": "формализуйте"
+      }
+    },
+    {
+      "id": "lex:en:formalizes->ru",
+      "url": "https://en.wiktionary.org/wiki/formalizes",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["formalizes"],
+        "ru": ["формализует"]
+      },
+      "primary": {
+        "ru": "формализует"
+      }
+    },
+    {
+      "id": "lex:en:founder->ru",
+      "url": "https://en.wiktionary.org/wiki/founder",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["founder"],
+        "ru": ["основатель"]
+      },
+      "primary": {
+        "ru": "основатель"
+      }
+    },
+    {
+      "id": "lex:en:fragments->ru",
+      "url": "https://en.wiktionary.org/wiki/fragments",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["fragments"],
+        "ru": ["фрагменты"]
+      },
+      "primary": {
+        "ru": "фрагменты"
+      }
+    },
+    {
+      "id": "lex:en:from->ru",
+      "url": "https://en.wiktionary.org/wiki/from",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["from"],
+        "ru": ["из"]
+      },
+      "primary": {
+        "ru": "из"
+      }
+    },
+    {
+      "id": "lex:en:generates->ru",
+      "url": "https://en.wiktionary.org/wiki/generates",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["generates"],
+        "ru": ["создает"]
+      },
+      "primary": {
+        "ru": "создает"
+      }
+    },
+    {
+      "id": "lex:en:generative->ru",
+      "url": "https://en.wiktionary.org/wiki/generative",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["generative"],
+        "ru": ["генеративный"]
+      },
+      "primary": {
+        "ru": "генеративный"
+      }
+    },
+    {
+      "id": "lex:en:goals->ru",
+      "url": "https://en.wiktionary.org/wiki/goals",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["goals"],
+        "ru": ["цели"]
+      },
+      "primary": {
+        "ru": "цели"
+      }
+    },
+    {
+      "id": "lex:en:help->ru",
+      "url": "https://en.wiktionary.org/wiki/help",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["help"],
+        "ru": ["помочь"]
+      },
+      "primary": {
+        "ru": "помочь"
+      }
+    },
+    {
+      "id": "lex:en:high-level->ru",
+      "url": "https://en.wiktionary.org/wiki/high-level",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["high-level"],
+        "ru": ["высокоуровневые"]
+      },
+      "primary": {
+        "ru": "высокоуровневые"
+      }
+    },
+    {
+      "id": "lex:en:human_language->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=human%20language",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["human language"],
+        "ru": ["человеческий язык"]
+      },
+      "primary": {
+        "ru": "человеческий язык"
+      }
+    },
+    {
+      "id": "lex:en:human_mind->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=human%20mind",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["human mind"],
+        "ru": ["человеческий разум"]
+      },
+      "primary": {
+        "ru": "человеческий разум"
+      }
+    },
+    {
+      "id": "lex:en:human->ru",
+      "url": "https://en.wiktionary.org/wiki/human",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["human"],
+        "ru": ["человеческий"]
+      },
+      "primary": {
+        "ru": "человеческий"
+      }
+    },
+    {
+      "id": "lex:en:human-language->ru",
+      "url": "https://en.wiktionary.org/wiki/human-language",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["human-language"],
+        "ru": ["человеко-языковое"]
+      },
+      "primary": {
+        "ru": "человеко-языковое"
+      }
+    },
+    {
+      "id": "lex:en:implement->ru",
+      "url": "https://en.wiktionary.org/wiki/implement",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["implement"],
+        "ru": ["реализовать"]
+      },
+      "primary": {
+        "ru": "реализовать"
+      }
+    },
+    {
+      "id": "lex:en:implementation->ru",
+      "url": "https://en.wiktionary.org/wiki/implementation",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["implementation"],
+        "ru": ["реализация"]
+      },
+      "primary": {
+        "ru": "реализация"
+      }
+    },
+    {
+      "id": "lex:en:important->ru",
+      "url": "https://en.wiktionary.org/wiki/important",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["important"],
+        "ru": ["важные"]
+      },
+      "primary": {
+        "ru": "важные"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:in_beijing->ru",
+      "url": "https://en.wikipedia.org/wiki/Beijing",
+      "labels": {
+        "en": ["in beijing"],
+        "ru": ["в Пекине"]
+      },
+      "primary": {
+        "ru": "в Пекине"
+      }
+    },
+    {
+      "id": "lex:en:in->ru",
+      "url": "https://en.wiktionary.org/wiki/in",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["in"],
+        "ru": ["в"]
+      },
+      "primary": {
+        "ru": "в"
+      }
+    },
+    {
+      "id": "lex:en:input->ru",
+      "url": "https://en.wiktionary.org/wiki/input",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["input"],
+        "ru": ["ввод"]
+      },
+      "primary": {
+        "ru": "ввод"
+      }
+    },
+    {
+      "id": "lex:en:inside->ru",
+      "url": "https://en.wiktionary.org/wiki/inside",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["inside"],
+        "ru": ["внутри"]
+      },
+      "primary": {
+        "ru": "внутри"
+      }
+    },
+    {
+      "id": "lex:en:intelligence->ru",
+      "url": "https://en.wiktionary.org/wiki/intelligence",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["intelligence"],
+        "ru": ["интеллект"]
+      },
+      "primary": {
+        "ru": "интеллект"
+      }
+    },
+    {
+      "id": "lex:en:interpretations->ru",
+      "url": "https://en.wiktionary.org/wiki/interpretations",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["interpretations"],
+        "ru": ["интерпретации"]
+      },
+      "primary": {
+        "ru": "интерпретации"
+      }
+    },
+    {
+      "id": "lex:en:is->ru",
+      "url": "https://en.wiktionary.org/wiki/%D1%8D%D1%82%D0%BE",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["is"],
+        "ru": ["это"]
+      },
+      "primary": {
+        "ru": "это"
+      },
+      "entityId": "wikt:ru:это#Determiner:0",
+      "description": "Russian demonstrative/copula-like predicate marker",
+      "derivation": {
+        "strategy": "russian-copula-predicate-marker",
+        "source": "translation-naturalization-rule"
+      }
+    },
+    {
+      "id": "lex:en:it->ru",
+      "url": "https://en.wiktionary.org/wiki/it",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["it"],
+        "ru": ["он"]
+      },
+      "primary": {
+        "ru": "он"
+      }
+    },
+    {
+      "id": "lex:en:itself->ru",
+      "url": "https://en.wiktionary.org/wiki/itself",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["itself"],
+        "ru": ["сама"]
+      },
+      "primary": {
+        "ru": "сама"
+      }
+    },
+    {
+      "id": "lex:en:knowledge->ru",
+      "url": "https://en.wiktionary.org/wiki/knowledge",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["knowledge"],
+        "ru": ["знания"]
+      },
+      "primary": {
+        "ru": "знания"
+      }
+    },
+    {
+      "id": "lex:en:labels->ru",
+      "url": "https://en.wiktionary.org/wiki/labels",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["labels"],
+        "ru": ["метки"]
+      },
+      "primary": {
+        "ru": "метки"
+      }
+    },
+    {
+      "id": "lex:en:language->ru",
+      "url": "https://en.wiktionary.org/wiki/language",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["language"],
+        "ru": ["язык"]
+      },
+      "primary": {
+        "ru": "язык"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:launched->ru",
+      "url": "https://en.wiktionary.org/wiki/launch",
+      "labels": {
+        "en": ["launched"],
+        "ru": ["вышла"]
+      },
+      "primary": {
+        "ru": "вышла"
+      }
+    },
+    {
+      "id": "lex:en:level->ru",
+      "url": "https://en.wiktionary.org/wiki/level",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["level"],
+        "ru": ["уровень"]
+      },
+      "primary": {
+        "ru": "уровень"
+      }
+    },
+    {
+      "id": "lex:en:lie_on->ru",
+      "url": "https://www.oxfordlearnersdictionaries.com/definition/english/lie_1",
+      "source": "dictionary",
+      "description": "geographic sense of lie + adverb/preposition: to be located in a particular place",
+      "labels": {
+        "en": ["lie on", "lies on"],
+        "ru": ["расположен на"]
+      },
+      "primary": {
+        "ru": "расположен на"
+      }
+    },
+    {
+      "id": "lex:en:links->ru",
+      "url": "https://en.wiktionary.org/wiki/(links)",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["(links)", "links"],
+        "ru": ["Links"]
+      },
+      "primary": {
+        "ru": "Links"
+      }
+    },
+    {
+      "id": "lex:en:links-network_based_reasoning_playground->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=links-network%20based%20reasoning%20playground",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["links-network based reasoning playground"],
+        "ru": ["основанной на сети ссылок площадки для рассуждений"]
+      },
+      "primary": {
+        "ru": "основанной на сети ссылок площадки для рассуждений"
+      }
+    },
+    {
+      "id": "lex:en:links-network->ru",
+      "url": "https://en.wiktionary.org/wiki/links-network",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["links-network"],
+        "ru": ["сеть ссылок"]
+      },
+      "primary": {
+        "ru": "сеть ссылок"
+      }
+    },
+    {
+      "id": "lex:en:make->ru",
+      "url": "https://en.wiktionary.org/wiki/make",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["make"],
+        "ru": ["сделать"]
+      },
+      "primary": {
+        "ru": "сделать"
+      }
+    },
+    {
+      "id": "lex:en:mayor->ru",
+      "url": "https://en.wiktionary.org/wiki/mayor",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["mayor"],
+        "ru": ["мэр"]
+      },
+      "primary": {
+        "ru": "мэр"
+      }
+    },
+    {
+      "id": "lex:en:meaning->ru",
+      "url": "https://en.wiktionary.org/wiki/meaning",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["meaning"],
+        "ru": ["смысл"]
+      },
+      "primary": {
+        "ru": "смысл"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:media_personality->ru",
+      "url": "https://en.wikipedia.org/wiki/Media_personality",
+      "labels": {
+        "en": ["media personality"],
+        "ru": ["медийная фигура"]
+      },
+      "primary": {
+        "ru": "медийная фигура"
+      }
+    },
+    {
+      "id": "lex:en:memory->ru",
+      "url": "https://en.wiktionary.org/wiki/memory",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["memory"],
+        "ru": ["память"]
+      },
+      "primary": {
+        "ru": "память"
+      }
+    },
+    {
+      "id": "lex:en:method->ru",
+      "url": "https://en.wiktionary.org/wiki/method",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["method"],
+        "ru": ["метод"]
+      },
+      "primary": {
+        "ru": "метод"
+      }
+    },
+    {
+      "id": "lex:en:mind->ru",
+      "url": "https://en.wiktionary.org/wiki/mind",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["mind"],
+        "ru": ["разум"]
+      },
+      "primary": {
+        "ru": "разум"
+      }
+    },
+    {
+      "id": "lex:en:modeling->ru",
+      "url": "https://en.wiktionary.org/wiki/modeling",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["modeling"],
+        "ru": ["моделирование"]
+      },
+      "primary": {
+        "ru": "моделирование"
+      }
+    },
+    {
+      "id": "lex:en:most_important->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=most%20important",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["most important"],
+        "ru": ["самые важные"]
+      },
+      "primary": {
+        "ru": "самые важные"
+      }
+    },
+    {
+      "id": "lex:en:most->ru",
+      "url": "https://en.wiktionary.org/wiki/most",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["most"],
+        "ru": ["самая"]
+      },
+      "primary": {
+        "ru": "самая"
+      }
+    },
+    {
+      "id": "lex:en:murderer->ru",
+      "url": "https://en.wiktionary.org/wiki/murderer",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["murderer"],
+        "ru": ["убийца"]
+      },
+      "primary": {
+        "ru": "убийца"
+      }
+    },
+    {
+      "id": "lex:en:non-computable->ru",
+      "url": "https://en.wiktionary.org/wiki/non-computable",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["non-computable"],
+        "ru": ["невычислимых"]
+      },
+      "primary": {
+        "ru": "невычислимых"
+      }
+    },
+    {
+      "id": "lex:en:of->ru",
+      "url": "https://en.wiktionary.org/wiki/of",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["of"],
+        "ru": ["из"]
+      },
+      "primary": {
+        "ru": "из"
+      }
+    },
+    {
+      "id": "lex:en:on->ru",
+      "url": "https://en.wiktionary.org/wiki/on",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["on"],
+        "ru": ["на"]
+      },
+      "primary": {
+        "ru": "на"
+      }
+    },
+    {
+      "id": "lex:en:one->ru",
+      "url": "https://en.wiktionary.org/wiki/one",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["one"],
+        "ru": ["одна"]
+      },
+      "primary": {
+        "ru": "одна"
+      }
+    },
+    {
+      "id": "lex:en:open->ru",
+      "url": "https://en.wiktionary.org/wiki/open",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["open"],
+        "ru": ["откройте"]
+      },
+      "primary": {
+        "ru": "откройте"
+      }
+    },
+    {
+      "id": "lex:en:or->ru",
+      "url": "https://en.wiktionary.org/wiki/or",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["or"],
+        "ru": ["или"]
+      },
+      "primary": {
+        "ru": "или"
+      }
+    },
+    {
+      "id": "lex:en:other_words->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=other%20words",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["other words"],
+        "ru": ["другими словами"]
+      },
+      "primary": {
+        "ru": "другими словами"
+      }
+    },
+    {
+      "id": "lex:en:other->ru",
+      "url": "https://en.wiktionary.org/wiki/other",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["other"],
+        "ru": ["другими"]
+      },
+      "primary": {
+        "ru": "другими"
+      }
+    },
+    {
+      "id": "lex:en:our->ru",
+      "url": "https://en.wiktionary.org/wiki/our",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["our"],
+        "ru": ["нашу"]
+      },
+      "primary": {
+        "ru": "нашу"
+      }
+    },
+    {
+      "id": "lex:en:page->ru",
+      "url": "https://en.wiktionary.org/wiki/page",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["page"],
+        "ru": ["страницу"]
+      },
+      "primary": {
+        "ru": "страницу"
+      }
+    },
+    {
+      "id": "lex:en:parts->ru",
+      "url": "https://en.wiktionary.org/wiki/parts",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["parts"],
+        "ru": ["части"]
+      },
+      "primary": {
+        "ru": "части"
+      }
+    },
+    {
+      "id": "lex:en:planned->ru",
+      "url": "https://en.wiktionary.org/wiki/planned",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["planned"],
+        "ru": ["запланирована"]
+      },
+      "primary": {
+        "ru": "запланирована"
+      }
+    },
+    {
+      "id": "lex:en:platform->ru",
+      "url": "https://en.wiktionary.org/wiki/platform",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["platform"],
+        "ru": ["платформа"]
+      },
+      "primary": {
+        "ru": "платформа"
+      }
+    },
+    {
+      "id": "lex:en:playground->ru",
+      "url": "https://en.wiktionary.org/wiki/playground",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["playground"],
+        "ru": ["площадка"]
+      },
+      "primary": {
+        "ru": "площадка"
+      }
+    },
+    {
+      "id": "lex:en:political->ru",
+      "url": "https://en.wiktionary.org/wiki/political",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["political"],
+        "ru": ["политический"]
+      },
+      "primary": {
+        "ru": "политический"
+      }
+    },
+    {
+      "id": "lex:en:politician->ru",
+      "url": "https://en.wiktionary.org/wiki/politician",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["politician"],
+        "ru": ["политик"]
+      },
+      "primary": {
+        "ru": "политик"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:pornographic_sites->ru",
+      "url": "https://en.wikipedia.org/wiki/Pornographic_website",
+      "labels": {
+        "en": ["pornographic sites"],
+        "ru": ["порнографических сайтов"]
+      },
+      "primary": {
+        "ru": "порнографических сайтов"
+      }
+    },
+    {
+      "id": "lex:en:possible->ru",
+      "url": "https://en.wiktionary.org/wiki/possible",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["possible"],
+        "ru": ["возможно"]
+      },
+      "primary": {
+        "ru": "возможно"
+      }
+    },
+    {
+      "id": "lex:en:potato->ru",
+      "url": "https://en.wiktionary.org/wiki/potato",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["potato"],
+        "ru": ["картофель"]
+      },
+      "primary": {
+        "ru": "картофель"
+      }
+    },
+    {
+      "id": "lex:en:president->ru",
+      "url": "https://en.wiktionary.org/wiki/president",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["president"],
+        "ru": ["президент"]
+      },
+      "primary": {
+        "ru": "президент"
+      }
+    },
+    {
+      "id": "lex:en:program->ru",
+      "url": "https://en.wiktionary.org/wiki/program",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["program"],
+        "ru": ["программировать"]
+      },
+      "primary": {
+        "ru": "программировать"
+      }
+    },
+    {
+      "id": "lex:en:programs->ru",
+      "url": "https://en.wiktionary.org/wiki/programs",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["programs"],
+        "ru": ["программы"]
+      },
+      "primary": {
+        "ru": "программы"
+      }
+    },
+    {
+      "id": "lex:en:project->ru",
+      "url": "https://en.wiktionary.org/wiki/project",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["project"],
+        "ru": ["проект"]
+      },
+      "primary": {
+        "ru": "проект"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:protests->ru",
+      "url": "https://en.wiktionary.org/wiki/protest",
+      "labels": {
+        "en": ["protests"],
+        "ru": ["акции протеста"]
+      },
+      "primary": {
+        "ru": "акции протеста"
+      }
+    },
+    {
+      "id": "lex:en:prototype->ru",
+      "url": "https://en.wiktionary.org/wiki/prototype",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["prototype"],
+        "ru": ["прототип"]
+      },
+      "primary": {
+        "ru": "прототип"
+      }
+    },
+    {
+      "id": "lex:en:provenance->ru",
+      "url": "https://en.wiktionary.org/wiki/provenance",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["provenance"],
+        "ru": ["происхождением"]
+      },
+      "primary": {
+        "ru": "происхождением"
+      }
+    },
+    {
+      "id": "lex:en:questions->ru",
+      "url": "https://en.wiktionary.org/wiki/questions",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["questions"],
+        "ru": ["вопросами"]
+      },
+      "primary": {
+        "ru": "вопросами"
+      }
+    },
+    {
+      "id": "lex:en:real-time->ru",
+      "url": "https://en.wiktionary.org/wiki/real-time",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["real-time"],
+        "ru": ["реальном времени"]
+      },
+      "primary": {
+        "ru": "реальном времени"
+      }
+    },
+    {
+      "id": "lex:en:reasoning->ru",
+      "url": "https://en.wiktionary.org/wiki/reasoning",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["reasoning"],
+        "ru": ["рассуждения"]
+      },
+      "primary": {
+        "ru": "рассуждения"
+      }
+    },
+    {
+      "id": "lex:en:reliable->ru",
+      "url": "https://en.wiktionary.org/wiki/reliable",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["reliable"],
+        "ru": ["надежная"]
+      },
+      "primary": {
+        "ru": "надежная"
+      }
+    },
+    {
+      "id": "lex:en:remain->ru",
+      "url": "https://en.wiktionary.org/wiki/remain",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["remain"],
+        "ru": ["остаются"]
+      },
+      "primary": {
+        "ru": "остаются"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:republican_party->ru",
+      "url": "https://en.wikipedia.org/wiki/Republican_Party_(United_States)",
+      "labels": {
+        "en": ["republican party"],
+        "ru": ["республиканской партии"]
+      },
+      "primary": {
+        "ru": "республиканской партии"
+      }
+    },
+    {
+      "id": "lex:en:result->ru",
+      "url": "https://en.wiktionary.org/wiki/result",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["result"],
+        "ru": ["результат"]
+      },
+      "primary": {
+        "ru": "результат"
+      }
+    },
+    {
+      "id": "lex:en:rules->ru",
+      "url": "https://en.wiktionary.org/wiki/rules",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["rules"],
+        "ru": ["правила"]
+      },
+      "primary": {
+        "ru": "правила"
+      }
+    },
+    {
+      "id": "lex:en:save->ru",
+      "url": "https://en.wiktionary.org/wiki/save",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["save"],
+        "ru": ["сохраните"]
+      },
+      "primary": {
+        "ru": "сохраните"
+      }
+    },
+    {
+      "id": "lex:en:selectable->ru",
+      "url": "https://en.wiktionary.org/wiki/selectable",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["selectable"],
+        "ru": ["выбираемые"]
+      },
+      "primary": {
+        "ru": "выбираемые"
+      }
+    },
+    {
+      "id": "lex:en:selected->ru",
+      "url": "https://en.wiktionary.org/wiki/selected",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["selected"],
+        "ru": ["выбранный"]
+      },
+      "primary": {
+        "ru": "выбранный"
+      }
+    },
+    {
+      "id": "lex:en:sentence->ru",
+      "url": "https://en.wiktionary.org/wiki/sentence",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["sentence"],
+        "ru": ["предложение"]
+      },
+      "primary": {
+        "ru": "предложение"
+      }
+    },
+    {
+      "id": "lex:en:should->ru",
+      "url": "https://en.wiktionary.org/wiki/should",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["should"],
+        "ru": ["должен"]
+      },
+      "primary": {
+        "ru": "должен"
+      }
+    },
+    {
+      "id": "lex:en:show->ru",
+      "url": "https://en.wiktionary.org/wiki/show",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["show"],
+        "ru": ["покажите"]
+      },
+      "primary": {
+        "ru": "покажите"
+      }
+    },
+    {
+      "id": "lex:en:simple->ru",
+      "url": "https://en.wiktionary.org/wiki/simple",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["simple"],
+        "ru": ["простое"]
+      },
+      "primary": {
+        "ru": "простое"
+      }
+    },
+    {
+      "id": "lex:en:source->ru",
+      "url": "https://en.wiktionary.org/wiki/source",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["source"],
+        "ru": ["исходный"]
+      },
+      "primary": {
+        "ru": "исходный"
+      }
+    },
+    {
+      "id": "lex:en:statement->ru",
+      "url": "https://en.wiktionary.org/wiki/statement",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["statement"],
+        "ru": ["утверждение"]
+      },
+      "primary": {
+        "ru": "утверждение"
+      }
+    },
+    {
+      "id": "lex:en:storage->ru",
+      "url": "https://en.wiktionary.org/wiki/storage",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["storage"],
+        "ru": ["хранилище"]
+      },
+      "primary": {
+        "ru": "хранилище"
+      }
+    },
+    {
+      "id": "lex:en:strive->ru",
+      "url": "https://en.wiktionary.org/wiki/strive",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["strive"],
+        "ru": ["стремимся"]
+      },
+      "primary": {
+        "ru": "стремимся"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:student_organization->ru",
+      "url": "https://en.wikipedia.org/wiki/Student_organization",
+      "labels": {
+        "en": ["student organization"],
+        "ru": ["студенческой организации"]
+      },
+      "primary": {
+        "ru": "студенческой организации"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:students->ru",
+      "url": "https://en.wiktionary.org/wiki/student",
+      "labels": {
+        "en": ["students"],
+        "ru": ["студенты"]
+      },
+      "primary": {
+        "ru": "студенты"
+      }
+    },
+    {
+      "id": "lex:en:such->ru",
+      "url": "https://en.wiktionary.org/wiki/such",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["such"],
+        "ru": ["такие"]
+      },
+      "primary": {
+        "ru": "такие"
+      }
+    },
+    {
+      "id": "lex:en:synonym->ru",
+      "url": "https://en.wiktionary.org/wiki/synonym",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["synonym"],
+        "ru": ["синоним"]
+      },
+      "primary": {
+        "ru": "синоним"
+      }
+    },
+    {
+      "id": "lex:en:synonyms->ru",
+      "url": "https://en.wiktionary.org/wiki/synonyms",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["synonyms"],
+        "ru": ["синонимы"]
+      },
+      "primary": {
+        "ru": "синонимы"
+      }
+    },
+    {
+      "id": "lex:en:system->ru",
+      "url": "https://en.wiktionary.org/wiki/system",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["system"],
+        "ru": ["система"]
+      },
+      "primary": {
+        "ru": "система"
+      }
+    },
+    {
+      "id": "lex:en:text->ru",
+      "url": "https://en.wiktionary.org/wiki/text",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["text"],
+        "ru": ["текст"]
+      },
+      "primary": {
+        "ru": "текст"
+      }
+    },
+    {
+      "id": "lex:en:thank_you->ru",
+      "url": "https://en.wiktionary.org/wiki/thank_you",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["thank you"],
+        "ru": ["спасибо"]
+      },
+      "primary": {
+        "ru": "спасибо"
+      }
+    },
+    {
+      "id": "lex:en:that->ru",
+      "url": "https://en.wiktionary.org/wiki/that",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["that"],
+        "ru": ["что"]
+      },
+      "primary": {
+        "ru": "что"
+      }
+    },
+    {
+      "id": "lex:en:their->ru",
+      "url": "https://en.wiktionary.org/wiki/their",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["their"],
+        "ru": ["их"]
+      },
+      "primary": {
+        "ru": "их"
+      }
+    },
+    {
+      "id": "lex:en:themselves->ru",
+      "url": "https://en.wiktionary.org/wiki/themselves",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["themselves"],
+        "ru": ["себя"]
+      },
+      "primary": {
+        "ru": "себя"
+      }
+    },
+    {
+      "id": "lex:en:then->ru",
+      "url": "https://en.wiktionary.org/wiki/then",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["then"],
+        "ru": ["затем"]
+      },
+      "primary": {
+        "ru": "затем"
+      }
+    },
+    {
+      "id": "lex:en:there->ru",
+      "url": "https://en.wiktionary.org/wiki/there",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["there"],
+        "ru": ["там"]
+      },
+      "primary": {
+        "ru": "там"
+      }
+    },
+    {
+      "id": "lex:en:this->ru",
+      "url": "https://en.wiktionary.org/wiki/this",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["this"],
+        "ru": ["этот"]
+      },
+      "primary": {
+        "ru": "этот"
+      }
+    },
+    {
+      "id": "lex:en:through->ru",
+      "url": "https://en.wiktionary.org/wiki/through",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["through"],
+        "ru": ["через"]
+      },
+      "primary": {
+        "ru": "через"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:tiananmen_square_massacre->ru",
+      "url": "https://en.wikipedia.org/wiki/1989_Tiananmen_Square_protests_and_massacre",
+      "labels": {
+        "en": ["tiananmen square massacre"],
+        "ru": ["бойня на площади Тяньаньмэнь"]
+      },
+      "primary": {
+        "ru": "бойня на площади Тяньаньмэнь"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:tiananmen_square->ru",
+      "url": "https://en.wikipedia.org/wiki/Tiananmen_Square",
+      "labels": {
+        "en": ["tiananmen square"],
+        "ru": ["площади Тяньаньмэнь"]
+      },
+      "primary": {
+        "ru": "площади Тяньаньмэнь"
+      }
+    },
+    {
+      "id": "lex:en:to->ru",
+      "url": "https://en.wiktionary.org/wiki/to",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["to"],
+        "ru": ["к"]
+      },
+      "primary": {
+        "ru": "к"
+      }
+    },
+    {
+      "id": "lex:en:tomato->ru",
+      "url": "https://en.wiktionary.org/wiki/tomato",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["tomato"],
+        "ru": ["помидор"]
+      },
+      "primary": {
+        "ru": "помидор"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:top-level_domain->ru",
+      "url": "https://en.wikipedia.org/wiki/Top-level_domain",
+      "labels": {
+        "en": ["top-level domain"],
+        "ru": ["домен верхнего уровня"]
+      },
+      "primary": {
+        "ru": "домен верхнего уровня"
+      }
+    },
+    {
+      "id": "lex:en:transformation_rules->ru",
+      "url": "https://en.wiktionary.org/wiki/Special:Search?search=transformation%20rules",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["transformation rules"],
+        "ru": ["правила преобразования"]
+      },
+      "primary": {
+        "ru": "правила преобразования"
+      }
+    },
+    {
+      "id": "lex:en:transformation->ru",
+      "url": "https://en.wiktionary.org/wiki/transformation",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["transformation"],
+        "ru": ["преобразования"]
+      },
+      "primary": {
+        "ru": "преобразования"
+      }
+    },
+    {
+      "id": "lex:en:translate->ru",
+      "url": "https://en.wiktionary.org/wiki/translate",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["translate"],
+        "ru": ["переведите"]
+      },
+      "primary": {
+        "ru": "переведите"
+      }
+    },
+    {
+      "id": "lex:en:treated->ru",
+      "url": "https://en.wiktionary.org/wiki/treated",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["treated"],
+        "ru": ["рассматриваться"]
+      },
+      "primary": {
+        "ru": "рассматриваться"
+      }
+    },
+    {
+      "id": "lex:en:triggers->ru",
+      "url": "https://en.wiktionary.org/wiki/(triggers)",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["(triggers)", "triggers"],
+        "ru": ["Triggers"]
+      },
+      "primary": {
+        "ru": "Triggers"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:troops->ru",
+      "url": "https://en.wiktionary.org/wiki/troop",
+      "labels": {
+        "en": ["troops"],
+        "ru": ["армией"]
+      },
+      "primary": {
+        "ru": "армией"
+      }
+    },
+    {
+      "id": "lex:en:universal->ru",
+      "url": "https://en.wiktionary.org/wiki/universal",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["universal"],
+        "ru": ["универсальная"]
+      },
+      "primary": {
+        "ru": "универсальная"
+      }
+    },
+    {
+      "id": "lex:en:unresolved->ru",
+      "url": "https://en.wiktionary.org/wiki/unresolved",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["unresolved"],
+        "ru": ["неразрешенные"]
+      },
+      "primary": {
+        "ru": "неразрешенные"
+      }
+    },
+    {
+      "id": "lex:en:value->ru",
+      "url": "https://en.wiktionary.org/wiki/value",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["value"],
+        "ru": ["значение"]
+      },
+      "primary": {
+        "ru": "значение"
+      }
+    },
+    {
+      "id": "lex:en:values->ru",
+      "url": "https://en.wiktionary.org/wiki/values",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["values"],
+        "ru": ["значения"]
+      },
+      "primary": {
+        "ru": "значения"
+      }
+    },
+    {
+      "id": "lex:en:variables->ru",
+      "url": "https://en.wiktionary.org/wiki/variables",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["variables"],
+        "ru": ["переменными"]
+      },
+      "primary": {
+        "ru": "переменными"
+      }
+    },
+    {
+      "id": "lex:en:water->ru",
+      "url": "https://en.wiktionary.org/wiki/water",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["water"],
+        "ru": ["вода"]
+      },
+      "primary": {
+        "ru": "вода"
+      }
+    },
+    {
+      "id": "lex:en:we->ru",
+      "url": "https://en.wiktionary.org/wiki/we",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["we"],
+        "ru": ["мы"]
+      },
+      "primary": {
+        "ru": "мы"
+      }
+    },
+    {
+      "id": "lex:en:when->ru",
+      "url": "https://en.wiktionary.org/wiki/when",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["when"],
+        "ru": ["когда"]
+      },
+      "primary": {
+        "ru": "когда"
+      }
+    },
+    {
+      "id": "lex:en:which->ru",
+      "url": "https://en.wiktionary.org/wiki/which",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["which"],
+        "ru": ["который"]
+      },
+      "primary": {
+        "ru": "который"
+      }
+    },
+    {
+      "id": "lex:en:wikidata->ru",
+      "url": "https://en.wiktionary.org/wiki/wikidata",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["wikidata"],
+        "ru": ["Викиданные"]
+      },
+      "primary": {
+        "ru": "Викиданные"
+      }
+    },
+    {
+      "id": "lex:en:will->ru",
+      "url": "https://en.wiktionary.org/wiki/will",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["will"],
+        "ru": ["будет"]
+      },
+      "primary": {
+        "ru": "будет"
+      }
+    },
+    {
+      "id": "lex:en:with_wikidata->ru",
+      "url": "https://www.wikidata.org/wiki/Q2013",
+      "source": "rule-derived",
+      "description": "instrumental construction 'with Wikidata' -> 'с помощью Викиданных'",
+      "labels": {
+        "en": ["with wikidata"],
+        "ru": ["с помощью Викиданных"]
+      },
+      "primary": {
+        "ru": "с помощью Викиданных"
+      },
+      "derivation": {
+        "strategy": "instrumental-with-entity-label",
+        "source": "translation-naturalization-rule"
+      }
+    },
+    {
+      "id": "lex:en:with->ru",
+      "url": "https://en.wiktionary.org/wiki/with",
+      "source": "wiktionary",
+      "labels": {
+        "en": ["with"],
+        "ru": ["с"]
+      },
+      "primary": {
+        "ru": "с"
+      }
+    },
+    {
+      "id": "lex:en:words->ru",
+      "url": "https://en.wiktionary.org/wiki/words",
+      "source": "rule-derived",
+      "labels": {
+        "en": ["words"],
+        "ru": ["словами"]
+      },
+      "primary": {
+        "ru": "словами"
+      }
+    },
+    {
+      "source": "rule-derived",
+      "description": "Reference-aligned interlingua phrase for issue #115 paragraph translation quality.",
+      "derivation": {
+        "strategy": "reference-aligned-phrase",
+        "source": "issue-115-top-2025-russian-reference-corpus"
+      },
+      "id": "lex:en:written_by->ru",
+      "url": "https://en.wikipedia.org/wiki/Screenwriter",
+      "labels": {
+        "en": ["written by"],
+        "ru": ["по сценарию"]
+      },
+      "primary": {
+        "ru": "по сценарию"
+      }
+    },
+    {
+      "id": "lex:ru:links->en",
+      "url": "https://ru.wiktionary.org/wiki/links",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["links"],
+        "en": ["Links"]
+      },
+      "primary": {
+        "en": "Links"
+      }
+    },
+    {
+      "id": "lex:ru:triggers->en",
+      "url": "https://ru.wiktionary.org/wiki/triggers",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["triggers"],
+        "en": ["Triggers"]
+      },
+      "primary": {
+        "en": "Triggers"
+      }
+    },
+    {
+      "id": "lex:ru:автоматизация->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["автоматизация"],
+        "en": ["automation"]
+      },
+      "primary": {
+        "en": "automation"
+      }
+    },
+    {
+      "id": "lex:ru:автоматизирована->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D0%B7%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B0",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["автоматизирована"],
+        "en": ["automated"]
+      },
+      "primary": {
+        "en": "automated"
+      }
+    },
+    {
+      "id": "lex:ru:алгоритмы->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B0%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC%D1%8B",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["алгоритмы"],
+        "en": ["algorithms"]
+      },
+      "primary": {
+        "en": "algorithms"
+      }
+    },
+    {
+      "id": "lex:ru:ассоциативное->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B0%D1%81%D1%81%D0%BE%D1%86%D0%B8%D0%B0%D1%82%D0%B8%D0%B2%D0%BD%D0%BE%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["ассоциативное"],
+        "en": ["associative"]
+      },
+      "primary": {
+        "en": "associative"
+      }
+    },
+    {
+      "id": "lex:ru:благодаря->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B1%D0%BB%D0%B0%D0%B3%D0%BE%D0%B4%D0%B0%D1%80%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["благодаря"],
+        "en": ["due"]
+      },
+      "primary": {
+        "en": "due"
+      }
+    },
+    {
+      "id": "lex:ru:бот-программист->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B1%D0%BE%D1%82-%D0%BF%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%81%D1%82",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["бот-программист"],
+        "en": ["bot-programmer"]
+      },
+      "primary": {
+        "en": "bot-programmer"
+      }
+    },
+    {
+      "id": "lex:ru:будет->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B1%D1%83%D0%B4%D0%B5%D1%82",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["будет"],
+        "en": ["will"]
+      },
+      "primary": {
+        "en": "will"
+      }
+    },
+    {
+      "id": "lex:ru:быстрая->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B1%D1%8B%D1%81%D1%82%D1%80%D0%B0%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["быстрая"],
+        "en": ["fast"]
+      },
+      "primary": {
+        "en": "fast"
+      }
+    },
+    {
+      "id": "lex:ru:быть->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B1%D1%8B%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["быть"],
+        "en": ["be"]
+      },
+      "primary": {
+        "en": "be"
+      }
+    },
+    {
+      "id": "lex:ru:в->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["в"],
+        "en": ["in"]
+      },
+      "primary": {
+        "en": "in"
+      }
+    },
+    {
+      "id": "lex:ru:важные->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D0%B0%D0%B6%D0%BD%D1%8B%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["важные"],
+        "en": ["important"]
+      },
+      "primary": {
+        "en": "important"
+      }
+    },
+    {
+      "id": "lex:ru:ввод->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D0%B2%D0%BE%D0%B4",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["ввод"],
+        "en": ["input"]
+      },
+      "primary": {
+        "en": "input"
+      }
+    },
+    {
+      "id": "lex:ru:внутри->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B8",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["внутри"],
+        "en": ["inside"]
+      },
+      "primary": {
+        "en": "inside"
+      }
+    },
+    {
+      "id": "lex:ru:вода->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D0%BE%D0%B4%D0%B0",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["вода"],
+        "en": ["water"]
+      },
+      "primary": {
+        "en": "water"
+      }
+    },
+    {
+      "id": "lex:ru:возможность->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D0%BE%D0%B7%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D1%8C",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["возможность"],
+        "en": ["ability"]
+      },
+      "primary": {
+        "en": "ability"
+      }
+    },
+    {
+      "id": "lex:ru:вопрос->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D0%BE%D0%BF%D1%80%D0%BE%D1%81",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["вопрос"],
+        "en": ["question"]
+      },
+      "primary": {
+        "en": "question"
+      }
+    },
+    {
+      "id": "lex:ru:вопросы->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D0%BE%D0%BF%D1%80%D0%BE%D1%81%D1%8B",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["вопросы"],
+        "en": ["questions"]
+      },
+      "primary": {
+        "en": "questions"
+      }
+    },
+    {
+      "id": "lex:ru:времени->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D1%80%D0%B5%D0%BC%D0%B5%D0%BD%D0%B8",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["времени"],
+        "en": ["time"]
+      },
+      "primary": {
+        "en": "time"
+      }
+    },
+    {
+      "id": "lex:ru:все->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D1%81%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["все"],
+        "en": ["all"]
+      },
+      "primary": {
+        "en": "all"
+      }
+    },
+    {
+      "id": "lex:ru:выполнение->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D1%8B%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["выполнение"],
+        "en": ["execution"]
+      },
+      "primary": {
+        "en": "execution"
+      }
+    },
+    {
+      "id": "lex:ru:высокоуровневые->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B2%D1%8B%D1%81%D0%BE%D0%BA%D0%BE%D1%83%D1%80%D0%BE%D0%B2%D0%BD%D0%B5%D0%B2%D1%8B%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["высокоуровневые"],
+        "en": ["high-level"]
+      },
+      "primary": {
+        "en": "high-level"
+      }
+    },
+    {
+      "id": "lex:ru:гибкая->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B3%D0%B8%D0%B1%D0%BA%D0%B0%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["гибкая"],
+        "en": ["flexible"]
+      },
+      "primary": {
+        "en": "flexible"
+      }
+    },
+    {
+      "id": "lex:ru:да->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D0%B0",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["да"],
+        "en": ["yes"]
+      },
+      "primary": {
+        "en": "yes"
+      }
+    },
+    {
+      "id": "lex:ru:данные_и_знания->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5%20%D0%B8%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["данные и знания"],
+        "en": ["data and knowledge"]
+      },
+      "primary": {
+        "en": "data and knowledge"
+      }
+    },
+    {
+      "id": "lex:ru:данные->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["данные"],
+        "en": ["data"]
+      },
+      "primary": {
+        "en": "data"
+      }
+    },
+    {
+      "id": "lex:ru:двигател->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D0%B2%D0%B8%D0%B3%D0%B0%D1%82%D0%B5%D0%BB",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["двигател"],
+        "en": ["engine"]
+      },
+      "primary": {
+        "en": "engine"
+      }
+    },
+    {
+      "id": "lex:ru:движок->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D0%B2%D0%B8%D0%B6%D0%BE%D0%BA",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["движок"],
+        "en": ["engine"]
+      },
+      "primary": {
+        "en": "engine"
+      }
+    },
+    {
+      "id": "lex:ru:динамически->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D0%B8%D0%BD%D0%B0%D0%BC%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["динамически"],
+        "en": ["dynamically"]
+      },
+      "primary": {
+        "en": "dynamically"
+      }
+    },
+    {
+      "id": "lex:ru:для->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D0%BB%D1%8F",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["для"],
+        "en": ["for"]
+      },
+      "primary": {
+        "en": "for"
+      }
+    },
+    {
+      "id": "lex:ru:добавить->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%B8%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["добавить"],
+        "en": ["add"]
+      },
+      "primary": {
+        "en": "add"
+      }
+    },
+    {
+      "id": "lex:ru:доброе_яблоко->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D0%B4%D0%BE%D0%B1%D1%80%D0%BE%D0%B5%20%D1%8F%D0%B1%D0%BB%D0%BE%D0%BA%D0%BE",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["доброе яблоко"],
+        "en": ["good apple"]
+      },
+      "primary": {
+        "en": "good apple"
+      }
+    },
+    {
+      "id": "lex:ru:должен->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D0%BE%D0%BB%D0%B6%D0%B5%D0%BD",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["должен"],
+        "en": ["should"]
+      },
+      "primary": {
+        "en": "should"
+      }
+    },
+    {
+      "id": "lex:ru:другими_словами->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D0%B4%D1%80%D1%83%D0%B3%D0%B8%D0%BC%D0%B8%20%D1%81%D0%BB%D0%BE%D0%B2%D0%B0%D0%BC%D0%B8",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["другими словами"],
+        "en": ["in other words"]
+      },
+      "primary": {
+        "en": "in other words"
+      }
+    },
+    {
+      "id": "lex:ru:другими->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B4%D1%80%D1%83%D0%B3%D0%B8%D0%BC%D0%B8",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["другими"],
+        "en": ["other"]
+      },
+      "primary": {
+        "en": "other"
+      }
+    },
+    {
+      "id": "lex:ru:запланирована->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B7%D0%B0%D0%BF%D0%BB%D0%B0%D0%BD%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B0",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["запланирована"],
+        "en": ["planned"]
+      },
+      "primary": {
+        "en": "planned"
+      }
+    },
+    {
+      "id": "lex:ru:знание->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["знание"],
+        "en": ["knowledge"]
+      },
+      "primary": {
+        "en": "knowledge"
+      }
+    },
+    {
+      "id": "lex:ru:знания->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["знания"],
+        "en": ["knowledge"]
+      },
+      "primary": {
+        "en": "knowledge"
+      }
+    },
+    {
+      "id": "lex:ru:значение->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["значение"],
+        "en": ["value"]
+      },
+      "primary": {
+        "en": "value"
+      }
+    },
+    {
+      "id": "lex:ru:значения->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["значения"],
+        "en": ["values"]
+      },
+      "primary": {
+        "en": "values"
+      }
+    },
+    {
+      "id": "lex:ru:и->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B8",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["и"],
+        "en": ["and"]
+      },
+      "primary": {
+        "en": "and"
+      }
+    },
+    {
+      "id": "lex:ru:из->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B8%D0%B7",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["из"],
+        "en": ["of"]
+      },
+      "primary": {
+        "en": "of"
+      }
+    },
+    {
+      "id": "lex:ru:изменять->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D1%8F%D1%82%D1%8C",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["изменять"],
+        "en": ["change"]
+      },
+      "primary": {
+        "en": "change"
+      }
+    },
+    {
+      "id": "lex:ru:или->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%B8%D0%BB%D0%B8",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["или"],
+        "en": ["or"]
+      },
+      "primary": {
+        "en": "or"
+      }
+    },
+    {
+      "id": "lex:ru:к->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BA",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["к"],
+        "en": ["to"]
+      },
+      "primary": {
+        "en": "to"
+      }
+    },
+    {
+      "id": "lex:ru:как_дела->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D0%BA%D0%B0%D0%BA%20%D0%B4%D0%B5%D0%BB%D0%B0",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["как дела"],
+        "en": ["how are you"]
+      },
+      "primary": {
+        "en": "how are you"
+      }
+    },
+    {
+      "id": "lex:ru:как_у_тебя_дела->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D0%BA%D0%B0%D0%BA%20%D1%83%20%D1%82%D0%B5%D0%B1%D1%8F%20%D0%B4%D0%B5%D0%BB%D0%B0",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["как у тебя дела"],
+        "en": ["how are you"]
+      },
+      "primary": {
+        "en": "how are you"
+      }
+    },
+    {
+      "id": "lex:ru:как->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BA%D0%B0%D0%BA",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["как"],
+        "en": ["as"]
+      },
+      "primary": {
+        "en": "as"
+      }
+    },
+    {
+      "id": "lex:ru:картофель->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BA%D0%B0%D1%80%D1%82%D0%BE%D1%84%D0%B5%D0%BB%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["картофель"],
+        "en": ["potato"]
+      },
+      "primary": {
+        "en": "potato"
+      }
+    },
+    {
+      "id": "lex:ru:когда->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BA%D0%BE%D0%B3%D0%B4%D0%B0",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["когда"],
+        "en": ["when"]
+      },
+      "primary": {
+        "en": "when"
+      }
+    },
+    {
+      "id": "lex:ru:который->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%B9",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["который"],
+        "en": ["which"]
+      },
+      "primary": {
+        "en": "which"
+      }
+    },
+    {
+      "id": "lex:ru:кто_ты_такой->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D0%BA%D1%82%D0%BE%20%D1%82%D1%8B%20%D1%82%D0%B0%D0%BA%D0%BE%D0%B9",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["кто ты такой"],
+        "en": ["who are you"]
+      },
+      "primary": {
+        "en": "who are you"
+      }
+    },
+    {
+      "id": "lex:ru:любых->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BB%D1%8E%D0%B1%D1%8B%D1%85",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["любых"],
+        "en": ["any"]
+      },
+      "primary": {
+        "en": "any"
+      }
+    },
+    {
+      "id": "lex:ru:метод->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BC%D0%B5%D1%82%D0%BE%D0%B4",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["метод"],
+        "en": ["method"]
+      },
+      "primary": {
+        "en": "method"
+      }
+    },
+    {
+      "id": "lex:ru:могут->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BC%D0%BE%D0%B3%D1%83%D1%82",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["могут"],
+        "en": ["can"]
+      },
+      "primary": {
+        "en": "can"
+      }
+    },
+    {
+      "id": "lex:ru:моделирование->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["моделирование"],
+        "en": ["modeling"]
+      },
+      "primary": {
+        "en": "modeling"
+      }
+    },
+    {
+      "id": "lex:ru:морковь->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BC%D0%BE%D1%80%D0%BA%D0%BE%D0%B2%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["морковь"],
+        "en": ["carrot"]
+      },
+      "primary": {
+        "en": "carrot"
+      }
+    },
+    {
+      "id": "lex:ru:мы->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BC%D1%8B",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["мы"],
+        "en": ["we"]
+      },
+      "primary": {
+        "en": "we"
+      }
+    },
+    {
+      "id": "lex:ru:на->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BD%D0%B0",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["на"],
+        "en": ["on"]
+      },
+      "primary": {
+        "en": "on"
+      }
+    },
+    {
+      "id": "lex:ru:надежная->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BD%D0%B0%D0%B4%D0%B5%D0%B6%D0%BD%D0%B0%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["надежная"],
+        "en": ["reliable"]
+      },
+      "primary": {
+        "en": "reliable"
+      }
+    },
+    {
+      "id": "lex:ru:найти->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BD%D0%B0%D0%B9%D1%82%D0%B8",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["найти"],
+        "en": ["find"]
+      },
+      "primary": {
+        "en": "find"
+      }
+    },
+    {
+      "id": "lex:ru:нашу->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BD%D0%B0%D1%88%D1%83",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["нашу"],
+        "en": ["our"]
+      },
+      "primary": {
+        "en": "our"
+      }
+    },
+    {
+      "id": "lex:ru:нет->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BD%D0%B5%D1%82",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["нет"],
+        "en": ["no"]
+      },
+      "primary": {
+        "en": "no"
+      }
+    },
+    {
+      "id": "lex:ru:объединяет->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BE%D0%B1%D1%8A%D0%B5%D0%B4%D0%B8%D0%BD%D1%8F%D0%B5%D1%82",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["объединяет"],
+        "en": ["combines"]
+      },
+      "primary": {
+        "en": "combines"
+      }
+    },
+    {
+      "id": "lex:ru:огурец->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BE%D0%B3%D1%83%D1%80%D0%B5%D1%86",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["огурец"],
+        "en": ["cucumber"]
+      },
+      "primary": {
+        "en": "cucumber"
+      }
+    },
+    {
+      "id": "lex:ru:одна->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BE%D0%B4%D0%BD%D0%B0",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["одна"],
+        "en": ["one"]
+      },
+      "primary": {
+        "en": "one"
+      }
+    },
+    {
+      "id": "lex:ru:описания->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["описания"],
+        "en": ["descriptions"]
+      },
+      "primary": {
+        "en": "descriptions"
+      }
+    },
+    {
+      "id": "lex:ru:основанный->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B9",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["основанный"],
+        "en": ["based"]
+      },
+      "primary": {
+        "en": "based"
+      }
+    },
+    {
+      "id": "lex:ru:открыть->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BE%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["открыть"],
+        "en": ["open"]
+      },
+      "primary": {
+        "en": "open"
+      }
+    },
+    {
+      "id": "lex:ru:память->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["память"],
+        "en": ["memory"]
+      },
+      "primary": {
+        "en": "memory"
+      }
+    },
+    {
+      "id": "lex:ru:перевести->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%B5%D1%81%D1%82%D0%B8",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["перевести"],
+        "en": ["translate"]
+      },
+      "primary": {
+        "en": "translate"
+      }
+    },
+    {
+      "id": "lex:ru:перевод->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["перевод"],
+        "en": ["translation"]
+      },
+      "primary": {
+        "en": "translation"
+      }
+    },
+    {
+      "id": "lex:ru:перевода->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4%D0%B0",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["перевода"],
+        "en": ["translation"]
+      },
+      "primary": {
+        "en": "translation"
+      }
+    },
+    {
+      "id": "lex:ru:платформа->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D0%BB%D0%B0%D1%82%D1%84%D0%BE%D1%80%D0%BC%D0%B0",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["платформа"],
+        "en": ["platform"]
+      },
+      "primary": {
+        "en": "platform"
+      }
+    },
+    {
+      "id": "lex:ru:показать->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D0%BE%D0%BA%D0%B0%D0%B7%D0%B0%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["показать"],
+        "en": ["show"]
+      },
+      "primary": {
+        "en": "show"
+      }
+    },
+    {
+      "id": "lex:ru:помидор->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D0%BE%D0%BC%D0%B8%D0%B4%D0%BE%D1%80",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["помидор"],
+        "en": ["tomato"]
+      },
+      "primary": {
+        "en": "tomato"
+      }
+    },
+    {
+      "id": "lex:ru:помочь->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D0%BE%D0%BC%D0%BE%D1%87%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["помочь"],
+        "en": ["help"]
+      },
+      "primary": {
+        "en": "help"
+      }
+    },
+    {
+      "id": "lex:ru:преобразования->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%B5%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["преобразования"],
+        "en": ["transformation"]
+      },
+      "primary": {
+        "en": "transformation"
+      }
+    },
+    {
+      "id": "lex:ru:пример->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%80",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["пример"],
+        "en": ["example"]
+      },
+      "primary": {
+        "en": "example"
+      }
+    },
+    {
+      "id": "lex:ru:примеры_перевода->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%80%D1%8B%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4%D0%B0",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["примеры перевода"],
+        "en": ["examples of translation"]
+      },
+      "primary": {
+        "en": "examples of translation"
+      }
+    },
+    {
+      "id": "lex:ru:примеры_согласования->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%80%D1%8B%20%D1%81%D0%BE%D0%B3%D0%BB%D0%B0%D1%81%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["примеры согласования"],
+        "en": ["examples of agreement"]
+      },
+      "primary": {
+        "en": "examples of agreement"
+      }
+    },
+    {
+      "id": "lex:ru:примеры->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%80%D1%8B",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["примеры"],
+        "en": ["examples"]
+      },
+      "primary": {
+        "en": "examples"
+      }
+    },
+    {
+      "id": "lex:ru:проверить->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%B8%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["проверить"],
+        "en": ["check"]
+      },
+      "primary": {
+        "en": "check"
+      }
+    },
+    {
+      "id": "lex:ru:программировать->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D1%82%D1%8C",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["программировать"],
+        "en": ["program"]
+      },
+      "primary": {
+        "en": "program"
+      }
+    },
+    {
+      "id": "lex:ru:программы->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D1%8B",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["программы"],
+        "en": ["programs"]
+      },
+      "primary": {
+        "en": "programs"
+      }
+    },
+    {
+      "id": "lex:ru:проект->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["проект"],
+        "en": ["project"]
+      },
+      "primary": {
+        "en": "project"
+      }
+    },
+    {
+      "id": "lex:ru:простое->en",
+      "url": "https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["простое"],
+        "en": ["simple"]
+      },
+      "primary": {
+        "en": "simple"
+      }
+    },
+    {
+      "id": "lex:ru:развитие->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%80%D0%B0%D0%B7%D0%B2%D0%B8%D1%82%D0%B8%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["развитие"],
+        "en": ["development"]
+      },
+      "primary": {
+        "en": "development"
+      }
+    },
+    {
+      "id": "lex:ru:разум->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%80%D0%B0%D0%B7%D1%83%D0%BC",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["разум"],
+        "en": ["mind"]
+      },
+      "primary": {
+        "en": "mind"
+      }
+    },
+    {
+      "id": "lex:ru:рассматриваться->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%80%D0%B0%D1%81%D1%81%D0%BC%D0%B0%D1%82%D1%80%D0%B8%D0%B2%D0%B0%D1%82%D1%8C%D1%81%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["рассматриваться"],
+        "en": ["treated"]
+      },
+      "primary": {
+        "en": "treated"
+      }
+    },
+    {
+      "id": "lex:ru:реализация->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["реализация"],
+        "en": ["implementation"]
+      },
+      "primary": {
+        "en": "implementation"
+      }
+    },
+    {
+      "id": "lex:ru:реализовать->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["реализовать"],
+        "en": ["implement"]
+      },
+      "primary": {
+        "en": "implement"
+      }
+    },
+    {
+      "id": "lex:ru:реальном->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%80%D0%B5%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%BC",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["реальном"],
+        "en": ["real"]
+      },
+      "primary": {
+        "en": "real"
+      }
+    },
+    {
+      "id": "lex:ru:редактировать->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%80%D0%B5%D0%B4%D0%B0%D0%BA%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["редактировать"],
+        "en": ["edit"]
+      },
+      "primary": {
+        "en": "edit"
+      }
+    },
+    {
+      "id": "lex:ru:результат->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["результат"],
+        "en": ["result"]
+      },
+      "primary": {
+        "en": "result"
+      }
+    },
+    {
+      "id": "lex:ru:сама->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%B0%D0%BC%D0%B0",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["сама"],
+        "en": ["itself"]
+      },
+      "primary": {
+        "en": "itself"
+      }
+    },
+    {
+      "id": "lex:ru:самая->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%B0%D0%BC%D0%B0%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["самая"],
+        "en": ["most"]
+      },
+      "primary": {
+        "en": "most"
+      }
+    },
+    {
+      "id": "lex:ru:самые_важные->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D1%81%D0%B0%D0%BC%D1%8B%D0%B5%20%D0%B2%D0%B0%D0%B6%D0%BD%D1%8B%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["самые важные"],
+        "en": ["most important"]
+      },
+      "primary": {
+        "en": "most important"
+      }
+    },
+    {
+      "id": "lex:ru:сделать->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%B4%D0%B5%D0%BB%D0%B0%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["сделать"],
+        "en": ["make"]
+      },
+      "primary": {
+        "en": "make"
+      }
+    },
+    {
+      "id": "lex:ru:себя->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%B5%D0%B1%D1%8F",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["себя"],
+        "en": ["themselves"]
+      },
+      "primary": {
+        "en": "themselves"
+      }
+    },
+    {
+      "id": "lex:ru:синоним->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%B8%D0%BD%D0%BE%D0%BD%D0%B8%D0%BC",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["синоним"],
+        "en": ["synonym"]
+      },
+      "primary": {
+        "en": "synonym"
+      }
+    },
+    {
+      "id": "lex:ru:синонимы->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%B8%D0%BD%D0%BE%D0%BD%D0%B8%D0%BC%D1%8B",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["синонимы"],
+        "en": ["synonyms"]
+      },
+      "primary": {
+        "en": "synonyms"
+      }
+    },
+    {
+      "id": "lex:ru:система->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["система"],
+        "en": ["system"]
+      },
+      "primary": {
+        "en": "system"
+      }
+    },
+    {
+      "id": "lex:ru:словами->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%BB%D0%BE%D0%B2%D0%B0%D0%BC%D0%B8",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["словами"],
+        "en": ["words"]
+      },
+      "primary": {
+        "en": "words"
+      }
+    },
+    {
+      "id": "lex:ru:согласование->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%BE%D0%B3%D0%BB%D0%B0%D1%81%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["согласование"],
+        "en": ["agreement"]
+      },
+      "primary": {
+        "en": "agreement"
+      }
+    },
+    {
+      "id": "lex:ru:согласования->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%BE%D0%B3%D0%BB%D0%B0%D1%81%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["согласования"],
+        "en": ["agreement"]
+      },
+      "primary": {
+        "en": "agreement"
+      }
+    },
+    {
+      "id": "lex:ru:создавать->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%BE%D0%B7%D0%B4%D0%B0%D0%B2%D0%B0%D1%82%D1%8C",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["создавать"],
+        "en": ["create"]
+      },
+      "primary": {
+        "en": "create"
+      }
+    },
+    {
+      "id": "lex:ru:сохранить->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%BE%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["сохранить"],
+        "en": ["save"]
+      },
+      "primary": {
+        "en": "save"
+      }
+    },
+    {
+      "id": "lex:ru:спасибо->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%BF%D0%B0%D1%81%D0%B8%D0%B1%D0%BE",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["спасибо"],
+        "en": ["thank you"]
+      },
+      "primary": {
+        "en": "thank you"
+      }
+    },
+    {
+      "id": "lex:ru:способен->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D0%BF%D0%BE%D1%81%D0%BE%D0%B1%D0%B5%D0%BD",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["способен"],
+        "en": ["able"]
+      },
+      "primary": {
+        "en": "able"
+      }
+    },
+    {
+      "id": "lex:ru:сравнить->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D1%80%D0%B0%D0%B2%D0%BD%D0%B8%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["сравнить"],
+        "en": ["compare"]
+      },
+      "primary": {
+        "en": "compare"
+      }
+    },
+    {
+      "id": "lex:ru:среда->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D1%80%D0%B5%D0%B4%D0%B0",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["среда"],
+        "en": ["environment"]
+      },
+      "primary": {
+        "en": "environment"
+      }
+    },
+    {
+      "id": "lex:ru:страница->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["страница"],
+        "en": ["page"]
+      },
+      "primary": {
+        "en": "page"
+      }
+    },
+    {
+      "id": "lex:ru:страницу->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%83",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["страницу"],
+        "en": ["page"]
+      },
+      "primary": {
+        "en": "page"
+      }
+    },
+    {
+      "id": "lex:ru:стремимся->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%81%D1%82%D1%80%D0%B5%D0%BC%D0%B8%D0%BC%D1%81%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["стремимся"],
+        "en": ["strive"]
+      },
+      "primary": {
+        "en": "strive"
+      }
+    },
+    {
+      "id": "lex:ru:также->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%82%D0%B0%D0%BA%D0%B6%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["также"],
+        "en": ["also"]
+      },
+      "primary": {
+        "en": "also"
+      }
+    },
+    {
+      "id": "lex:ru:такие->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%82%D0%B0%D0%BA%D0%B8%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["такие"],
+        "en": ["such"]
+      },
+      "primary": {
+        "en": "such"
+      }
+    },
+    {
+      "id": "lex:ru:там->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%82%D0%B0%D0%BC",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["там"],
+        "en": ["there"]
+      },
+      "primary": {
+        "en": "there"
+      }
+    },
+    {
+      "id": "lex:ru:текст->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%82%D0%B5%D0%BA%D1%81%D1%82",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["текст"],
+        "en": ["text"]
+      },
+      "primary": {
+        "en": "text"
+      }
+    },
+    {
+      "id": "lex:ru:точная->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%82%D0%BE%D1%87%D0%BD%D0%B0%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["точная"],
+        "en": ["accurate"]
+      },
+      "primary": {
+        "en": "accurate"
+      }
+    },
+    {
+      "id": "lex:ru:универсальная->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%83%D0%BD%D0%B8%D0%B2%D0%B5%D1%80%D1%81%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["универсальная"],
+        "en": ["universal"]
+      },
+      "primary": {
+        "en": "universal"
+      }
+    },
+    {
+      "id": "lex:ru:уровень->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%83%D1%80%D0%BE%D0%B2%D0%B5%D0%BD%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["уровень"],
+        "en": ["level"]
+      },
+      "primary": {
+        "en": "level"
+      }
+    },
+    {
+      "id": "lex:ru:ускорить->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%83%D1%81%D0%BA%D0%BE%D1%80%D0%B8%D1%82%D1%8C",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["ускорить"],
+        "en": ["accelerate"]
+      },
+      "primary": {
+        "en": "accelerate"
+      }
+    },
+    {
+      "id": "lex:ru:утверждение->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%83%D1%82%D0%B2%D0%B5%D1%80%D0%B6%D0%B4%D0%B5%D0%BD%D0%B8%D0%B5",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["утверждение"],
+        "en": ["statement"]
+      },
+      "primary": {
+        "en": "statement"
+      }
+    },
+    {
+      "id": "lex:ru:факт->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%84%D0%B0%D0%BA%D1%82",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["факт"],
+        "en": ["fact"]
+      },
+      "primary": {
+        "en": "fact"
+      }
+    },
+    {
+      "id": "lex:ru:формализовать->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D1%8C",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["формализовать"],
+        "en": ["formalize"]
+      },
+      "primary": {
+        "en": "formalize"
+      }
+    },
+    {
+      "id": "lex:ru:хлеб->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%85%D0%BB%D0%B5%D0%B1",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["хлеб"],
+        "en": ["bread"]
+      },
+      "primary": {
+        "en": "bread"
+      }
+    },
+    {
+      "id": "lex:ru:хранилище_ассоциативной_памяти->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D0%BB%D0%B8%D1%89%D0%B5%20%D0%B0%D1%81%D1%81%D0%BE%D1%86%D0%B8%D0%B0%D1%82%D0%B8%D0%B2%D0%BD%D0%BE%D0%B9%20%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D0%B8",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["хранилище ассоциативной памяти"],
+        "en": ["associative memory storage"]
+      },
+      "primary": {
+        "en": "associative memory storage"
+      }
+    },
+    {
+      "id": "lex:ru:хранилище->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D0%BB%D0%B8%D1%89%D0%B5",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["хранилище"],
+        "en": ["storage"]
+      },
+      "primary": {
+        "en": "storage"
+      }
+    },
+    {
+      "id": "lex:ru:цели->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%86%D0%B5%D0%BB%D0%B8",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["цели"],
+        "en": ["goals"]
+      },
+      "primary": {
+        "en": "goals"
+      }
+    },
+    {
+      "id": "lex:ru:человеческий_разум->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D1%87%D0%B5%D0%BB%D0%BE%D0%B2%D0%B5%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9%20%D1%80%D0%B0%D0%B7%D1%83%D0%BC",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["человеческий разум"],
+        "en": ["human mind"]
+      },
+      "primary": {
+        "en": "human mind"
+      }
+    },
+    {
+      "id": "lex:ru:человеческий_язык->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D1%87%D0%B5%D0%BB%D0%BE%D0%B2%D0%B5%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9%20%D1%8F%D0%B7%D1%8B%D0%BA",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["человеческий язык"],
+        "en": ["human language"]
+      },
+      "primary": {
+        "en": "human language"
+      }
+    },
+    {
+      "id": "lex:ru:человеческий->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%87%D0%B5%D0%BB%D0%BE%D0%B2%D0%B5%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["человеческий"],
+        "en": ["human"]
+      },
+      "primary": {
+        "en": "human"
+      }
+    },
+    {
+      "id": "lex:ru:что_это_такое->en",
+      "url": "https://ru.wiktionary.org/wiki/Special:Search?search=%D1%87%D1%82%D0%BE%20%D1%8D%D1%82%D0%BE%20%D1%82%D0%B0%D0%BA%D0%BE%D0%B5",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["что это такое"],
+        "en": ["what is this"]
+      },
+      "primary": {
+        "en": "what is this"
+      }
+    },
+    {
+      "id": "lex:ru:что->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%87%D1%82%D0%BE",
+      "source": "wiktionary",
+      "labels": {
+        "ru": ["что"],
+        "en": ["that"]
+      },
+      "primary": {
+        "en": "that"
+      }
+    },
+    {
+      "id": "lex:ru:это->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%8D%D1%82%D0%BE",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["это"],
+        "en": ["is"]
+      },
+      "primary": {
+        "en": "is"
+      }
+    },
+    {
+      "id": "lex:ru:этот->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%8D%D1%82%D0%BE%D1%82",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["этот"],
+        "en": ["this"]
+      },
+      "primary": {
+        "en": "this"
+      }
+    },
+    {
+      "id": "lex:ru:эффекты->en",
+      "url": "https://ru.wiktionary.org/wiki/%D1%8D%D1%84%D1%84%D0%B5%D0%BA%D1%82%D1%8B",
+      "source": "rule-derived",
+      "labels": {
+        "ru": ["эффекты"],
+        "en": ["effects"]
+      },
+      "primary": {
+        "en": "effects"
+      }
+    },
+    {
+      "id": "Q35657",
+      "url": "https://ru.wikipedia.org/wiki/%D0%A8%D1%82%D0%B0%D1%82_%D0%A1%D0%A8%D0%90",
+      "source": "wikidata",
+      "entityId": "Q35657",
+      "description": "state of the United States",
+      "labels": {
+        "ru": ["штат"]
+      },
+      "primary": {
+        "ru": "штат"
+      }
+    },
+    {
+      "id": "Q430265",
+      "url": "https://www.wikidata.org/wiki/Q430265",
+      "source": "wikidata",
+      "entityId": "Q430265",
+      "description": "coastline bordering the Pacific Ocean",
+      "labels": {
+        "en": ["pacific coast", "Pacific Coast", "Pacific coast"],
+        "ru": ["Тихоокеанское побережье"]
+      },
+      "primary": {
+        "ru": "Тихоокеанское побережье"
+      }
+    },
+    {
+      "id": "Q89",
+      "url": "https://www.wikidata.org/wiki/Q89",
+      "entityId": "Q89",
+      "source": "wikidata",
+      "description": "apple — fruit of the apple tree",
+      "labels": {
+        "en": ["apple"],
+        "ru": ["яблоко"],
+        "hi": ["सेब"],
+        "zh": ["苹果"]
+      },
+      "primary": {
+        "en": "apple",
+        "ru": "яблоко",
+        "hi": "सेब",
+        "zh": "苹果"
+      }
+    },
+    {
+      "id": "wikt:en:hello",
+      "url": "https://en.wiktionary.org/wiki/hello",
+      "source": "wiktionary",
+      "description": "hello — a greeting",
+      "labels": {
+        "en": ["hello"],
+        "ru": ["привет"],
+        "hi": ["नमस्ते"],
+        "zh": ["你好"]
+      },
+      "primary": {
+        "en": "hello",
+        "ru": "привет",
+        "hi": "नमस्ते",
+        "zh": "你好"
+      }
+    }
+  ]
+}
