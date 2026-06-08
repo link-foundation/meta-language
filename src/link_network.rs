@@ -877,9 +877,14 @@ impl LinkNetwork {
         );
     }
 
-    fn insert_dynamic_link(&mut self, references: &[LinkId], metadata: LinkMetadata) -> LinkId {
+    pub(crate) fn insert_dynamic_link(
+        &mut self,
+        references: &[LinkId],
+        metadata: LinkMetadata,
+    ) -> LinkId {
         let id = self.allocate_id();
         let metadata = self.intern_metadata(metadata);
+        let term = metadata.term.clone();
         self.links.insert(
             id,
             Arc::new(Link {
@@ -888,7 +893,18 @@ impl LinkNetwork {
                 metadata,
             }),
         );
+        if let Some(term) = term {
+            self.terms.insert(term, id);
+        }
         id
+    }
+
+    pub(crate) fn set_references(&mut self, id: LinkId, references: &[LinkId]) -> bool {
+        let Some(link) = self.links.get_mut(&id) else {
+            return false;
+        };
+        Arc::make_mut(link).references = Arc::from(references.to_vec());
+        true
     }
 
     pub(crate) fn attach_embedded_regions(

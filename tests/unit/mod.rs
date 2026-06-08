@@ -2,6 +2,7 @@ mod concept_ontology;
 mod cross_language_reconstruction;
 mod grammar_parsing;
 mod link_network;
+mod links_notation;
 mod parity_corpora;
 mod query_matching;
 mod query_transform;

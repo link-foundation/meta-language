@@ -3,6 +3,7 @@ pub mod configuration;
 pub mod language_parser;
 pub mod link_flags;
 pub mod link_network;
+mod lino_parser;
 pub mod mixed_regions;
 mod natural_language;
 pub mod parity;
