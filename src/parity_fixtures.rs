@@ -644,7 +644,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
     // Upstream: link-foundation/relative-meta-logic examples/liar-paradox.lino; license: Unlicense.
     ParityFixture {
         target_name: "relative-meta-logic",
-        name: "liar paradox fixture",
+        name: "probabilistic liar paradox fixture",
         language: "RML",
         source: "(s: s is s)\n((s = false) has probability 0.5)\n(? (s = false))\n(? (not (s = false)))\n",
         expected_reconstruction:

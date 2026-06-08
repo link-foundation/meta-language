@@ -43,7 +43,8 @@ clean.
 - `seed_common_concept_ontology()` for importing meta-expression's 351-concept
   semantic lexicon as shared concept links, plus structural programming-language
   concepts such as function, binding, application, sequence, branch, and loop.
-- Object-identity links and many-valued `TruthValue` semantics.
+- Object-identity links, many-valued `TruthValue` semantics, and fixed-point
+  `ProbabilisticTruthValue` confidence semantics.
 - A testable parity registry and upstream-provenanced `PARITY_FIXTURES` for
   executable competitor and ecosystem feature gates.
 - Structural LiNo parsing for links-notation doublets, triplets, named links,
@@ -164,7 +165,8 @@ relative-meta-logic, formal-ai, and meta-expression.
 Internal ecosystem fixtures now structurally parse links-notation doublet,
 triplet, tuple, indented, and self-reference cases; link-cli create/update/delete/swap
 substitutions; lino object round-trip, shared-reference, and circular-reference
-cases; relative-meta-logic dependent, many-valued, and liar-paradox cases;
+cases; relative-meta-logic dependent, many-valued, probabilistic, and
+liar-paradox cases;
 formal-ai seed and benchmark `.lino` corpora; and meta-expression formalize and
 naturalize examples backed by the verified 351-concept lexicon.
 

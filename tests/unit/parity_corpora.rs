@@ -244,7 +244,7 @@ fn ecosystem_corpora_contribute_required_internal_fixtures() {
     }
 
     let rml_fixtures = fixtures_for("relative-meta-logic");
-    for expected_name in ["dependent", "many-valued", "liar"] {
+    for expected_name in ["dependent", "many-valued", "probabilistic", "liar"] {
         assert_fixture_named(&rml_fixtures, expected_name);
     }
 

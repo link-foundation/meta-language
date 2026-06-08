@@ -1,8 +1,8 @@
 use meta_language::{
     ByteRange, LanguageIdentificationDetector, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery,
-    LinkType, NetworkProjection, ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan,
-    SubstitutionRule, TriviaAttachmentPolicy, TruthValue, VerificationIssueKind,
-    GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
+    LinkType, NetworkProjection, ParseConfiguration, Point, ProbabilisticTruthValue, Probability,
+    RegionDetectionPolicy, SourceSpan, SubstitutionRule, TriviaAttachmentPolicy, TruthValue,
+    VerificationIssueKind, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
     NATURAL_LANGUAGE_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
 
@@ -679,6 +679,22 @@ fn semantic_truth_values_cover_many_valued_and_paradox_cases() {
         TruthValue::Unknown
     );
     assert_eq!(TruthValue::Both.negate(), TruthValue::Both);
+}
+
+#[test]
+fn probabilistic_truth_values_cover_relative_meta_logic_probability_cases() {
+    let half = Probability::from_ratio(1, 2).expect("valid probability");
+    let likely = Probability::from_basis_points(7_500).expect("valid probability");
+
+    let liar = ProbabilisticTruthValue::new(half);
+    let event = ProbabilisticTruthValue::new(likely);
+
+    assert_eq!(liar.true_probability().basis_points(), 5_000);
+    assert_eq!(liar.false_probability().basis_points(), 5_000);
+    assert_eq!(liar.negate(), liar);
+    assert_eq!(event.negate().true_probability().basis_points(), 2_500);
+    assert_eq!(liar.and(event).true_probability().basis_points(), 3_750);
+    assert_eq!(liar.or(event).true_probability().basis_points(), 8_750);
 }
 
 #[test]

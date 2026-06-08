@@ -36,7 +36,7 @@ pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
     QueryPredicateArgument, QueryPredicateHost,
 };
-pub use semantics::TruthValue;
+pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot};
 pub use source::{ByteRange, Point, SourceSpan};
 pub use substitution::{

@@ -45,7 +45,7 @@ parse/reconstruction fixture.
 | links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | Ported doublet, triplet, tuple, indented-id, and nested self-reference fixtures structurally parse into relation links; provenance records the verified cross-language test comparison as Python 137, JavaScript 138, Rust 138, and C# 140 |
 | link-cli | Single match-and-substitute operation | Ported create, update, delete, and swap fixtures from the `Foundation.Data.Doublets.Cli.Tests` suite plus substitution behavior tests |
 | lino-objects-codec | Object encode/decode with identity and circular-reference preservation | Ported primitive round-trip, shared-reference, and circular-reference fixtures plus identity tests |
-| relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Ported dependent-type, many-valued truth, and liar-paradox fixtures plus `TruthValue` tests |
+| relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Ported dependent-type, many-valued truth, and probabilistic liar-paradox fixtures plus `TruthValue` and `ProbabilisticTruthValue` tests |
 | formal-ai | Formalization corpus and semantic reconstruction expectations | Ported fixtures from actual `data/seed/*.lino` and `data/benchmarks/*.lino` files plus concept reconstruction tests |
 | meta-expression | Formalize, semantic-link, naturalize, span, and self-reference behavior | Hawaii naturalization, `1 + 1 = 2`, and liar self-reference fixtures plus the verified 351-concept semantic lexicon seed |
 
@@ -91,7 +91,7 @@ Additional behavior-specific tests cover:
 - concept-to-language reconstruction for English and Spanish syntax;
 - immutable snapshots, mutable forks, provenance, and forward version commits;
 - object identity and circular-reference representation through shared links;
-- many-valued and paradox-compatible truth values.
+- many-valued, probabilistic, and paradox-compatible truth values.
 
 ## Default Parse Contract
 
