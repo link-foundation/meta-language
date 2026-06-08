@@ -42,7 +42,7 @@ parse/reconstruction fixture.
 | Rowan | Persistent concrete syntax representation, immutable snapshots, and trivia preservation | Rust trivia fixture round-trips through `reconstruct_text()` plus snapshot version tests |
 | cstree | Rust concrete syntax representation, immutable snapshots, and checkpoint behavior | Rust checkpoint fixture round-trips through `reconstruct_text()` plus snapshot version tests |
 | Roslyn | C# syntax, trivia, diagnostics, query/traversal, transforms, and formatting | Multiple ported `ToFullString`, skipped-token, trivia, and replacement fixtures |
-| links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | Ported doublet, triplet, tuple, indented-id, and nested self-reference fixtures; provenance records the verified cross-language test comparison as Python 137, JavaScript 138, Rust 138, and C# 140 |
+| links-notation | LiNo doublets, triplets, N-tuples, indentation, and self-reference | Ported doublet, triplet, tuple, indented-id, and nested self-reference fixtures structurally parse into relation links; provenance records the verified cross-language test comparison as Python 137, JavaScript 138, Rust 138, and C# 140 |
 | link-cli | Single match-and-substitute operation | Ported create, update, delete, and swap fixtures from the `Foundation.Data.Doublets.Cli.Tests` suite plus substitution behavior tests |
 | lino-objects-codec | Object encode/decode with identity and circular-reference preservation | Ported primitive round-trip, shared-reference, and circular-reference fixtures plus identity tests |
 | relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Ported dependent-type, many-valued truth, and liar-paradox fixtures plus `TruthValue` tests |
@@ -70,10 +70,12 @@ illustrative case.
 
 The ecosystem coverage gate also asserts issue-specific provenance contracts:
 links-notation records the verified `TEST_CASE_COMPARISON.md` counts
-`137/138/138/140`; link-cli fixtures cite the C# `Foundation.Data.Doublets.Cli.Tests`
-project; formal-ai fixtures cite actual `data/seed/` and `data/benchmarks/`
-files instead of an unverified corpus-size estimate; and meta-expression
-continues to seed the verified 351-concept semantic lexicon.
+`137/138/138/140` and parses its fixture surface into relation links, including
+named and self-referential links; link-cli fixtures cite the C#
+`Foundation.Data.Doublets.Cli.Tests` project; formal-ai fixtures cite actual
+`data/seed/` and `data/benchmarks/` files instead of an unverified corpus-size
+estimate; and meta-expression continues to seed the verified 351-concept
+semantic lexicon.
 
 The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
 `MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`, and
