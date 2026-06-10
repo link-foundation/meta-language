@@ -298,6 +298,72 @@ fn sql_ansi_fixture_uses_tree_sitter_grammar() {
 }
 
 #[test]
+fn typescript_fixture_uses_tree_sitter_typescript() {
+    let source = "interface Box<T> {\n    value: T;\n}\n\nconst value: number = 1;\n";
+    let network = LinkNetwork::parse(source, "TypeScript", ParseConfiguration::default());
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(
+        network.verify_full_match(None).is_clean(),
+        "TypeScript fixture should parse cleanly"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some("TypeScript")
+                && link.metadata().term() == Some("program")
+                && link.metadata().is_named()
+        }),
+        "TypeScript should emit the tree-sitter program root node"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some("TypeScript")
+                && link.metadata().term() == Some("interface_declaration")
+        }),
+        "TypeScript should emit type-system grammar nodes"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some("TypeScript")
+                && !link.metadata().is_named()
+        }),
+        "TypeScript should preserve anonymous syntax metadata"
+    );
+}
+
+#[test]
+fn typescript_aliases_and_tsx_use_tree_sitter_typescript() {
+    for (language, source) in [
+        ("ts", "let count: number = 0;\n"),
+        ("typescript", "type Id = string;\n"),
+        ("tsx", "const view = <div>hi</div>;\n"),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} fixture failed reconstruction"
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{language} fixture should parse cleanly"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some("program")
+            }),
+            "{language} should emit grammar-backed syntax links"
+        );
+    }
+}
+
+#[test]
 fn go_source_uses_tree_sitter_grammar() {
     let source = "package main\n\nfunc main() {\n\tprintln(\"hi\")\n}\n";
 
@@ -330,6 +396,24 @@ fn go_source_uses_tree_sitter_grammar() {
             "{language} should produce grammar-backed concrete syntax links"
         );
     }
+}
+
+#[test]
+fn typescript_recovery_errors_round_trip_with_flags() {
+    let source = "function f(: number {\n";
+    let network = LinkNetwork::parse(source, "TypeScript", ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(!report.is_clean());
+    assert!(report
+        .issues()
+        .iter()
+        .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink
+            || issue.kind() == VerificationIssueKind::MissingLink));
+    assert!(network
+        .links()
+        .any(|link| link.metadata().flags().has_error() || link.metadata().flags().is_missing()));
 }
 
 #[test]
