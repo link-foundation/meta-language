@@ -64,6 +64,10 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_c_sharp::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("javascript") || language.eq_ignore_ascii_case("js") {
         Some(tree_sitter_javascript::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("tsx") {
+        Some(tree_sitter_typescript::LANGUAGE_TSX.into())
+    } else if language.eq_ignore_ascii_case("typescript") || language.eq_ignore_ascii_case("ts") {
+        Some(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
     } else if language.eq_ignore_ascii_case("visual basic")
         || language.eq_ignore_ascii_case("vb")
         || language.eq_ignore_ascii_case("vb.net")
