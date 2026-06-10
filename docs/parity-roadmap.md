@@ -18,13 +18,16 @@ The Rust API exposes these registries:
 - `PROGRAMMING_LANGUAGE_TARGETS`: the initial ten programming-language parser
   targets.
 - `NATURAL_LANGUAGE_TARGETS`: the initial ten natural-language parser targets.
+- `DATA_FORMAT_TARGETS`: data-exchange / interchange formats that require full
+  grammar support.
 - `GRAMMAR_EMBEDDING_TARGETS`: mixed-grammar cases that must parse into one
   unified links network.
 - `PARITY_FIXTURES`: executable source fixtures, one or more per parity target,
   with upstream path and license provenance, that must parse and reconstruct
   through the public API.
 - `LANGUAGE_FIXTURES`: executable source fixtures for every markup,
-  programming-language, and natural-language target named by the founding issue.
+  programming-language, natural-language, and data-exchange-format target named
+  by the founding issue.
 
 Unit tests assert that the required projects, language groups, and executable
 fixtures stay present. They also assert that every advertised parity capability
@@ -78,9 +81,10 @@ estimate; and meta-expression continues to seed the verified 351-concept
 semantic lexicon.
 
 The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
-`MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`, and
-`NATURAL_LANGUAGE_TARGETS`. These fixtures include UTF-8 natural-language
-samples so lossless reconstruction covers non-ASCII byte ranges.
+`MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`,
+`NATURAL_LANGUAGE_TARGETS`, and `DATA_FORMAT_TARGETS`. These fixtures include
+UTF-8 natural-language samples and UTF-8 data-format values so lossless
+reconstruction covers non-ASCII byte ranges.
 
 Additional behavior-specific tests cover:
 
@@ -148,6 +152,16 @@ Britannica/Ethnologue top-ten set:
 
 Source: <https://www.britannica.com/topic/languages-by-total-number-of-speakers-2228881>
 
+Data-exchange / interchange format targets (`DATA_FORMAT_TARGETS`):
+
+1. JSON
+2. YAML
+3. TOML
+4. XML
+5. INI
+6. protobuf (Protocol Buffers)
+7. GraphQL
+
 ## Mixed Grammar Targets
 
 The mixed-grammar targets are:
@@ -202,3 +216,53 @@ under the MIT license. The grammar's root rule is `source_file` and its
 byte-for-byte. Go is not part of the curated TIOBE top-ten programming targets,
 but the grammar is available for downstream consumers (for example
 `link-assistant/formal-ai`) that need a real Go CST/AST.
+
+## Data-Exchange Format Coverage
+
+`DATA_FORMAT_TARGETS` lists the seven data-exchange / interchange formats wired
+through `src/tree_sitter_adapter.rs`. Each parses through
+`LinkNetwork::parse(source, format, ParseConfiguration::default())`, emits real
+`LinkType::Syntax` concrete-syntax links, and reconstructs the source
+byte-for-byte. Every target has a UTF-8 `LANGUAGE_FIXTURES` round-trip entry,
+and `tests/unit/grammar_parsing.rs` additionally covers case-insensitive label
+aliases, recovery diagnostics (a malformed JSON fixture), and a mixed-region
+case where a ` ```json ` fence inside Markdown parses into the same links
+network as the host document.
+
+| Format | Labels (case-insensitive) | Crate | Version | License | Grammar root |
+|---|---|---|---|---|---|
+| JSON | `JSON` | [`tree-sitter-json`](https://github.com/tree-sitter/tree-sitter-json) | 0.24.8 | MIT | `document` |
+| YAML | `YAML`, `yml` | [`tree-sitter-yaml`](https://github.com/tree-sitter-grammars/tree-sitter-yaml) | 0.7.2 | MIT | `stream` |
+| TOML | `TOML` | [`tree-sitter-toml-ng`](https://github.com/tree-sitter-grammars/tree-sitter-toml) | 0.7.0 | MIT | `document` |
+| XML | `XML` (`DTD` also wired) | [`tree-sitter-xml`](https://github.com/tree-sitter-grammars/tree-sitter-xml) | 0.7.0 | MIT | `document` |
+| INI | `INI` | [`tree-sitter-ini`](https://github.com/justinmk/tree-sitter-ini) | 1.4.0 | Apache-2.0 | `document` |
+| Protocol Buffers | `protobuf`, `proto`, `Protocol Buffers` | [`tree-sitter-proto`](https://github.com/coder3101/tree-sitter-proto) | 0.4.0 | MIT | `source_file` |
+| GraphQL | `GraphQL`, `gql` | [`tree-sitter-graphql`](https://github.com/joowani/tree-sitter-graphql) | 0.1.0 | MIT | `source_file` |
+
+All seven crates use the modern `tree-sitter-language` ABI binding (they list
+`tree-sitter` only as a dev-dependency), so they link cleanly against the
+project's `tree-sitter 0.25.8` front end. The Apache-2.0 license on
+`tree-sitter-ini` is compatible with this repository's Unlicense model.
+
+### CSV and JSON5: explicit deferral
+
+CSV and JSON5 are **not** wired. Their crates.io grammar bindings still declare a
+*normal* dependency on `tree-sitter ~0.20`, which is incompatible with the
+project's `tree-sitter 0.25.x` toolchain as published:
+
+- **CSV** — [`tree-sitter-csv`](https://crates.io/crates/tree-sitter-csv) 1.2.0
+  pins `tree-sitter ~0.20.10`. The maintained repo at
+  `tree-sitter-grammars/tree-sitter-csv` still pins `~0.20.10` on master; no
+  fixed release exists. Adopting it requires vendoring the generated `parser.c`
+  behind `tree-sitter-language`, or a hand-rolled RFC 4180 lossless lexer.
+- **JSON5** — [`tree-sitter-json5`](https://crates.io/crates/tree-sitter-json5)
+  0.1.0 pins `tree-sitter ~0.20.0`. Upstream
+  [`Joakker/tree-sitter-json5`](https://github.com/Joakker/tree-sitter-json5)
+  already targets `tree-sitter = "0.25"` on master and is usable as a git or
+  vendored dependency once published.
+
+Both are tracked for a follow-up once compatible bindings are published or
+vendored; see issue
+[#50](https://github.com/link-foundation/meta-language/issues/50) and
+`docs/case-studies/issue-47/formats-storage-apis.md` Part A for the verified
+binding-compatibility research.
