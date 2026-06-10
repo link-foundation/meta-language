@@ -333,6 +333,8 @@ pub enum LanguageFamily {
     Programming,
     /// Natural languages.
     Natural,
+    /// Data-exchange / interchange formats.
+    DataFormat,
 }
 
 /// Language whose grammar or natural-language parser should be supported.
@@ -407,6 +409,51 @@ pub const MARKUP_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         name: "HTML",
         family: LanguageFamily::Markup,
         basis: "Founding issue full-document target",
+    },
+];
+
+/// Required data-exchange / interchange format targets.
+///
+/// Each entry has a wired tree-sitter grammar in `src/tree_sitter_adapter.rs`
+/// and a round-trip [`LANGUAGE_FIXTURES`] entry. CSV and JSON5 are intentionally
+/// absent: their crates.io grammar bindings still pin `tree-sitter ~0.20` and
+/// are incompatible with the project's `tree-sitter 0.25.x` front end. See
+/// `docs/parity-roadmap.md` for the explicit deferral.
+pub const DATA_FORMAT_TARGETS: &[LanguageTarget] = &[
+    LanguageTarget {
+        name: "JSON",
+        family: LanguageFamily::DataFormat,
+        basis: "Issue #47 R-3 data-exchange format target",
+    },
+    LanguageTarget {
+        name: "YAML",
+        family: LanguageFamily::DataFormat,
+        basis: "Issue #47 R-3 data-exchange format target",
+    },
+    LanguageTarget {
+        name: "TOML",
+        family: LanguageFamily::DataFormat,
+        basis: "Issue #47 R-3 data-exchange format target",
+    },
+    LanguageTarget {
+        name: "XML",
+        family: LanguageFamily::DataFormat,
+        basis: "Issue #47 R-3 data-exchange format target",
+    },
+    LanguageTarget {
+        name: "INI",
+        family: LanguageFamily::DataFormat,
+        basis: "Issue #47 R-3 data-exchange format target",
+    },
+    LanguageTarget {
+        name: "protobuf",
+        family: LanguageFamily::DataFormat,
+        basis: "Issue #47 R-3 data-exchange format target",
+    },
+    LanguageTarget {
+        name: "GraphQL",
+        family: LanguageFamily::DataFormat,
+        basis: "Issue #47 R-4 schema/interface-definition target",
     },
 ];
 
@@ -634,6 +681,41 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
         language: "Urdu",
         source: "سلام۔\n",
         description: "Urdu sentence",
+    },
+    LanguageFixture {
+        language: "JSON",
+        source: "{\n  \"name\": \"café\",\n  \"items\": [1, 2, 3]\n}\n",
+        description: "JSON object with UTF-8 string and array",
+    },
+    LanguageFixture {
+        language: "YAML",
+        source: "name: café\nitems:\n  - 1\n  - 2\n",
+        description: "YAML mapping with UTF-8 value and sequence",
+    },
+    LanguageFixture {
+        language: "TOML",
+        source: "title = \"café\"\n\n[owner]\nname = \"Tom\"\n",
+        description: "TOML document with a UTF-8 value and a table",
+    },
+    LanguageFixture {
+        language: "XML",
+        source: "<note lang=\"en\">\n  <body>café</body>\n</note>\n",
+        description: "XML element tree with attribute and UTF-8 text",
+    },
+    LanguageFixture {
+        language: "INI",
+        source: "; comment\n[owner]\nname = café\n",
+        description: "INI section with a comment and a UTF-8 value",
+    },
+    LanguageFixture {
+        language: "protobuf",
+        source: "syntax = \"proto3\";\n\nmessage Person {\n  string name = 1;\n}\n",
+        description: "Protocol Buffers message definition",
+    },
+    LanguageFixture {
+        language: "GraphQL",
+        source: "type Person {\n  name: String!\n}\n",
+        description: "GraphQL schema-definition type",
     },
 ];
 
