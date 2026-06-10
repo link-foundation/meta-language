@@ -1,3 +1,4 @@
+pub mod access;
 mod concept_ontology;
 pub mod configuration;
 pub mod language_parser;
@@ -17,9 +18,10 @@ pub mod substitution;
 pub mod transform;
 pub mod verification;
 
+pub use access::{EngineNetwork, ReadOnlyNetwork, ReadOnlyViolation};
 pub use concept_ontology::ConceptOntologySeedReport;
 pub use configuration::{
-    FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,
+    AccessMode, FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};

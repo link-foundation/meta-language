@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::access::ReadOnlyNetwork;
 use crate::link_network::LinkNetwork;
 
 /// Immutable versioned view of a links network.
@@ -51,6 +52,30 @@ impl NetworkSnapshot {
     #[must_use]
     pub fn shared_snapshot_count(&self) -> usize {
         Arc::strong_count(&self.network)
+    }
+
+    /// Builds an immutable snapshot from a frozen read-only view.
+    ///
+    /// The read-only view's `Arc<LinkNetwork>` is reused directly, so freezing
+    /// and snapshot versioning share one network allocation.
+    #[must_use]
+    pub fn from_read_only(
+        version: u64,
+        view: &ReadOnlyNetwork,
+        provenance: impl Into<String>,
+    ) -> Self {
+        Self {
+            version,
+            parent_version: None,
+            provenance: provenance.into(),
+            network: view.shared().clone(),
+        }
+    }
+
+    /// Returns a read-only view sharing this snapshot's network allocation.
+    #[must_use]
+    pub fn as_read_only(&self) -> ReadOnlyNetwork {
+        ReadOnlyNetwork::from_shared(self.network.clone())
     }
 
     /// Creates an editable snapshot fork from this immutable snapshot.
