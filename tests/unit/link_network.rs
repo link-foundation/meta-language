@@ -2,8 +2,8 @@ use meta_language::{
     ByteRange, LanguageIdentificationDetector, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery,
     LinkType, NetworkProjection, ParseConfiguration, Point, ProbabilisticTruthValue, Probability,
     RegionDetectionPolicy, SourceSpan, SubstitutionRule, TriviaAttachmentPolicy, TruthValue,
-    VerificationIssueKind, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
-    NATURAL_LANGUAGE_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
+    VerificationIssueKind, DATA_FORMAT_TARGETS, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES,
+    MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -731,6 +731,32 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
 }
 
 #[test]
+fn data_format_targets_cover_interchange_format_scope() {
+    assert_eq!(DATA_FORMAT_TARGETS.len(), 7);
+
+    let names = DATA_FORMAT_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        names,
+        vec!["JSON", "YAML", "TOML", "XML", "INI", "protobuf", "GraphQL"]
+    );
+
+    assert!(DATA_FORMAT_TARGETS
+        .iter()
+        .all(|target| target.family() == meta_language::LanguageFamily::DataFormat));
+    assert!(DATA_FORMAT_TARGETS
+        .iter()
+        .all(|target| target.basis().contains("Issue #47")));
+
+    // CSV and JSON5 are explicitly deferred (stale tree-sitter 0.20 bindings),
+    // so they must not silently appear as wired targets.
+    assert!(!names.contains(&"CSV"));
+    assert!(!names.contains(&"JSON5"));
+}
+
+#[test]
 fn natural_language_targets_follow_ethnologue_2025_total_speaker_order() {
     let target_names = NATURAL_LANGUAGE_TARGETS
         .iter()
@@ -760,6 +786,7 @@ fn every_language_target_has_an_executable_lossless_fixture() {
         .iter()
         .chain(PROGRAMMING_LANGUAGE_TARGETS.iter())
         .chain(NATURAL_LANGUAGE_TARGETS.iter())
+        .chain(DATA_FORMAT_TARGETS.iter())
         .map(meta_language::LanguageTarget::name)
         .collect::<Vec<_>>();
 

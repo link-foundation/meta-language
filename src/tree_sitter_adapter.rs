@@ -94,6 +94,25 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_html::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("css") {
         Some(tree_sitter_css::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("json") {
+        Some(tree_sitter_json::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("yaml") || language.eq_ignore_ascii_case("yml") {
+        Some(tree_sitter_yaml::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("toml") {
+        Some(tree_sitter_toml_ng::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("xml") {
+        Some(tree_sitter_xml::LANGUAGE_XML.into())
+    } else if language.eq_ignore_ascii_case("dtd") {
+        Some(tree_sitter_xml::LANGUAGE_DTD.into())
+    } else if language.eq_ignore_ascii_case("ini") {
+        Some(tree_sitter_ini::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("protobuf")
+        || language.eq_ignore_ascii_case("proto")
+        || language.eq_ignore_ascii_case("protocol buffers")
+    {
+        Some(tree_sitter_proto::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("graphql") || language.eq_ignore_ascii_case("gql") {
+        Some(tree_sitter_graphql::LANGUAGE.into())
     } else {
         None
     }
