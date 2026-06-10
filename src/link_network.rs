@@ -344,23 +344,6 @@ impl LinkNetwork {
         BuiltInLanguageParser.parse_source(text, language, configuration)
     }
 
-    /// Parses source text honouring the configured engine access mode.
-    ///
-    /// Under [`AccessMode::Mutable`](crate::configuration::AccessMode::Mutable)
-    /// (the default) this returns an editable network; under
-    /// [`AccessMode::ReadOnly`](crate::configuration::AccessMode::ReadOnly) it
-    /// returns the frozen form, where mutation attempts at the engine boundary
-    /// fail with a clear diagnostic.
-    #[must_use]
-    pub fn parse_engine(
-        text: &str,
-        language: &str,
-        configuration: ParseConfiguration,
-    ) -> crate::access::EngineNetwork {
-        let network = Self::parse(text, language, configuration);
-        crate::access::EngineNetwork::with_access_mode(network, configuration.access_mode())
-    }
-
     /// Parses plain source text into a lossless token network.
     ///
     /// This parser boundary preserves source spans, trivia links, recovery

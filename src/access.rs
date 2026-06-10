@@ -17,7 +17,7 @@ use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use crate::configuration::AccessMode;
+use crate::configuration::{AccessMode, ParseConfiguration};
 use crate::link_network::LinkNetwork;
 
 /// Error raised when a mutation is attempted through a read-only engine handle.
@@ -160,6 +160,22 @@ impl LinkNetwork {
     #[must_use]
     pub fn as_read_only(&self) -> ReadOnlyNetwork {
         ReadOnlyNetwork::new(self.clone())
+    }
+
+    /// Parses source text honouring the configured engine access mode.
+    ///
+    /// Under [`AccessMode::Mutable`] (the default) this returns an editable
+    /// network; under [`AccessMode::ReadOnly`] it returns the frozen form,
+    /// where mutation attempts at the engine boundary fail with a clear
+    /// diagnostic.
+    #[must_use]
+    pub fn parse_engine(
+        text: &str,
+        language: &str,
+        configuration: ParseConfiguration,
+    ) -> EngineNetwork {
+        let network = Self::parse(text, language, configuration);
+        EngineNetwork::with_access_mode(network, configuration.access_mode())
     }
 }
 
