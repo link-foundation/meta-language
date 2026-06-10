@@ -22,6 +22,16 @@ the real relationships are wired with the GitHub sub-issue and dependency
 APIs after filing, and the filed-issue table in
 [`../README.md`](../README.md) records the mapping.
 
+## Filing status
+
+The 15 specs were filed on 2026-06-10 as issues
+[#49](https://github.com/link-foundation/meta-language/issues/49) through
+[#63](https://github.com/link-foundation/meta-language/issues/63) (spec `#01`
+→ #49 ... spec `#15` → #63), attached as sub-issues of #47, with the
+blocked-by table below wired via the native dependencies API. The mapping
+table with real numbers lives in [`../README.md`](../README.md). These files
+remain the immutable source specs that were filed.
+
 ## Filing
 
 ```sh

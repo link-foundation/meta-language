@@ -71,26 +71,31 @@ Research and audit date: 2026-06-10.
 
 ## Filed implementation sub-issues
 
-The filing record below is updated after `proposed-issues/create-issues.sh
---create` runs; specs remain the immutable source.
+The 15 specs were filed on 2026-06-10 with
+`proposed-issues/create-issues.sh --create` as issues
+[#49](https://github.com/link-foundation/meta-language/issues/49) through
+[#63](https://github.com/link-foundation/meta-language/issues/63), attached as
+GitHub sub-issues of #47 (`sub_issues` API), with blocked-by relationships
+wired through the native issue-dependencies API. Specs remain the immutable
+source.
 
 | Spec | GitHub issue | Blocked by |
 |---|---|---|
-| `#01` Readonly/mutable engine configuration | _pending filing_ | - |
-| `#02` Data-exchange format grammars | _pending filing_ | - |
-| `#03` Programming-language grammar wave | _pending filing_ | - |
-| `#04` Pluggable language-parser registry | _pending filing_ | - |
-| `#05` LiNo network serialization | _pending filing_ | - |
-| `#06` Doublets binary storage backend | _pending filing_ | `#01`, `#05` |
-| `#07` Rust types/traits ↔ links codec | _pending filing_ | `#05` |
-| `#08` Natural-language grammar parsing | _pending filing_ | - |
-| `#09` Exact-match shared concept space | _pending filing_ | - |
-| `#10` Translation-rule registry | _pending filing_ | `#04`, `#09` |
-| `#11` Language restriction profiles | _pending filing_ | `#10` |
-| `#12` Query/transform algebra enrichment | _pending filing_ | - |
-| `#13` Incremental re-parse + structural sharing | _pending filing_ | - |
-| `#14` API-style parity contract | _pending filing_ | `#06`, `#10` |
-| `#15` Competitor corpora wave 2 + coverage gate | _pending filing_ | `#02`, `#08`, `#12`, `#14` |
+| `#01` Readonly/mutable engine configuration | [#49](https://github.com/link-foundation/meta-language/issues/49) | - |
+| `#02` Data-exchange format grammars | [#50](https://github.com/link-foundation/meta-language/issues/50) | - |
+| `#03` Programming-language grammar wave | [#51](https://github.com/link-foundation/meta-language/issues/51) | - |
+| `#04` Pluggable language-parser registry | [#52](https://github.com/link-foundation/meta-language/issues/52) | - |
+| `#05` LiNo network serialization | [#53](https://github.com/link-foundation/meta-language/issues/53) | - |
+| `#06` Doublets binary storage backend | [#54](https://github.com/link-foundation/meta-language/issues/54) | #49, #53 |
+| `#07` Rust types/traits ↔ links codec | [#55](https://github.com/link-foundation/meta-language/issues/55) | #53 |
+| `#08` Natural-language grammar parsing | [#56](https://github.com/link-foundation/meta-language/issues/56) | - |
+| `#09` Exact-match shared concept space | [#57](https://github.com/link-foundation/meta-language/issues/57) | - |
+| `#10` Translation-rule registry | [#58](https://github.com/link-foundation/meta-language/issues/58) | #52, #57 |
+| `#11` Language restriction profiles | [#59](https://github.com/link-foundation/meta-language/issues/59) | #58 |
+| `#12` Query/transform algebra enrichment | [#60](https://github.com/link-foundation/meta-language/issues/60) | - |
+| `#13` Incremental re-parse + structural sharing | [#61](https://github.com/link-foundation/meta-language/issues/61) | - |
+| `#14` API-style parity contract | [#62](https://github.com/link-foundation/meta-language/issues/62) | #54, #58 |
+| `#15` Competitor corpora wave 2 + coverage gate | [#63](https://github.com/link-foundation/meta-language/issues/63) | #50, #56, #60, #62 |
 
 ## Document index
 
