@@ -114,6 +114,59 @@ fn grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip() {
 }
 
 #[test]
+fn ruby_fixture_uses_tree_sitter_ruby() {
+    let source = "def greet(name)\n  puts \"Hello, #{name}\"\nend\n";
+    let network = LinkNetwork::parse(source, "Ruby", ParseConfiguration::default());
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(
+        network.verify_full_match(None).is_clean(),
+        "Ruby fixture should parse cleanly"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some("Ruby")
+                && link.metadata().span().is_some()
+        }),
+        "Ruby should emit grammar-backed syntax links"
+    );
+    for term in ["program", "method", "call"] {
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some("Ruby")
+                    && link.metadata().term() == Some(term)
+            }),
+            "Ruby should emit the {term} grammar node kind"
+        );
+    }
+}
+
+#[test]
+fn ruby_alias_uses_tree_sitter_ruby() {
+    let source = "value = 1\n";
+
+    for language in ["ruby", "rb"] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(network.reconstruct_text(), source);
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{language} alias should parse cleanly"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some("program")
+            }),
+            "{language} alias should emit Ruby grammar nodes"
+        );
+    }
+}
+
+#[test]
 fn delphi_object_pascal_fixture_uses_tree_sitter_pascal() {
     let fixture = LANGUAGE_FIXTURES
         .iter()
