@@ -1,5 +1,6 @@
 use meta_language::{
-    LinkNetwork, LinkType, ParseConfiguration, VerificationIssueKind, LANGUAGE_FIXTURES,
+    LinkNetwork, LinkType, NetworkProjection, ParseConfiguration, VerificationIssueKind,
+    LANGUAGE_FIXTURES,
 };
 
 #[test]
@@ -241,6 +242,41 @@ fn sql_ansi_fixture_uses_tree_sitter_grammar() {
         }),
         "sql-ansi should emit tree-sitter SQL syntax nodes"
     );
+}
+
+#[test]
+fn go_source_uses_tree_sitter_grammar() {
+    let source = "package main\n\nfunc main() {\n\tprintln(\"hi\")\n}\n";
+
+    for language in ["Go", "go", "golang"] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} fixture failed reconstruction"
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{language} fixture should parse cleanly"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some("function_declaration")
+            }),
+            "{language} should emit tree-sitter Go syntax nodes"
+        );
+        let concrete_syntax_links = network
+            .projected_links(NetworkProjection::ConcreteSyntax)
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+            .count();
+        assert!(
+            concrete_syntax_links > 0,
+            "{language} should produce grammar-backed concrete syntax links"
+        );
+    }
 }
 
 #[test]
