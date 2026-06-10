@@ -1,5 +1,6 @@
 use meta_language::{
-    LinkNetwork, LinkType, ParseConfiguration, VerificationIssueKind, LANGUAGE_FIXTURES,
+    LinkNetwork, LinkType, NetworkProjection, ParseConfiguration, VerificationIssueKind,
+    LANGUAGE_FIXTURES,
 };
 
 #[test]
@@ -109,6 +110,59 @@ fn grammar_backed_programming_fixtures_emit_syntax_links_and_round_trip() {
                 "{language} should preserve anonymous syntax metadata"
             );
         }
+    }
+}
+
+#[test]
+fn ruby_fixture_uses_tree_sitter_ruby() {
+    let source = "def greet(name)\n  puts \"Hello, #{name}\"\nend\n";
+    let network = LinkNetwork::parse(source, "Ruby", ParseConfiguration::default());
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(
+        network.verify_full_match(None).is_clean(),
+        "Ruby fixture should parse cleanly"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some("Ruby")
+                && link.metadata().span().is_some()
+        }),
+        "Ruby should emit grammar-backed syntax links"
+    );
+    for term in ["program", "method", "call"] {
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some("Ruby")
+                    && link.metadata().term() == Some(term)
+            }),
+            "Ruby should emit the {term} grammar node kind"
+        );
+    }
+}
+
+#[test]
+fn ruby_alias_uses_tree_sitter_ruby() {
+    let source = "value = 1\n";
+
+    for language in ["ruby", "rb"] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(network.reconstruct_text(), source);
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{language} alias should parse cleanly"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some("program")
+            }),
+            "{language} alias should emit Ruby grammar nodes"
+        );
     }
 }
 
@@ -305,6 +359,41 @@ fn typescript_aliases_and_tsx_use_tree_sitter_typescript() {
                     && link.metadata().term() == Some("program")
             }),
             "{language} should emit grammar-backed syntax links"
+        );
+    }
+}
+
+#[test]
+fn go_source_uses_tree_sitter_grammar() {
+    let source = "package main\n\nfunc main() {\n\tprintln(\"hi\")\n}\n";
+
+    for language in ["Go", "go", "golang"] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} fixture failed reconstruction"
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{language} fixture should parse cleanly"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some("function_declaration")
+            }),
+            "{language} should emit tree-sitter Go syntax nodes"
+        );
+        let concrete_syntax_links = network
+            .projected_links(NetworkProjection::ConcreteSyntax)
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+            .count();
+        assert!(
+            concrete_syntax_links > 0,
+            "{language} should produce grammar-backed concrete syntax links"
         );
     }
 }

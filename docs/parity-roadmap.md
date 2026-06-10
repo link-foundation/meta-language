@@ -190,3 +190,15 @@ crate does not claim full Delphi compiler coverage: version-specific Delphi and
 Free Pascal mode differences, conditional compilation variants, packages,
 libraries, resource/design-time files, and semantic checks remain outside the
 advertised grammar-backed scope until dedicated fixtures are added.
+
+## Go Coverage
+
+`Go` (also accepted as `go` and `golang`) uses the official `tree-sitter-go`
+0.25.0 grammar from <https://github.com/tree-sitter/tree-sitter-go>, published
+under the MIT license. The grammar's root rule is `source_file` and its
+`LANGUAGE` symbol is wired the same way as the other grammar-backed targets, so
+`LinkNetwork::parse(source, "Go", ParseConfiguration::default())` produces real
+`LinkType::Syntax` concrete-syntax links and reconstructs the source
+byte-for-byte. Go is not part of the curated TIOBE top-ten programming targets,
+but the grammar is available for downstream consumers (for example
+`link-assistant/formal-ai`) that need a real Go CST/AST.
