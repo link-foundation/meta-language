@@ -13,6 +13,7 @@ mod parity_fixtures;
 pub mod parser_registry;
 pub mod query;
 mod reconstruction;
+pub mod rust_codec;
 pub mod semantics;
 pub mod snapshots;
 pub mod source;
@@ -42,6 +43,10 @@ pub use parser_registry::ParserRegistry;
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
     QueryPredicateArgument, QueryPredicateHost,
+};
+pub use rust_codec::{
+    FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
+    RustTypeKind, RustTypeShape, ToLinks,
 };
 pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot};
