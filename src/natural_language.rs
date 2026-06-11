@@ -14,6 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::configuration::{LanguageIdentificationDetector, ParseConfiguration};
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
+use crate::natural_language_grammar::annotate_morphosyntax;
 use crate::source::{ByteRange, Point, SourceSpan};
 
 const LINGUA_LANGUAGES: [Language; 10] = [
@@ -101,6 +102,7 @@ pub fn annotate_natural_language(
         );
     }
 
+    annotate_morphosyntax(network, region, text, declared_language, document_span);
     insert_unicode_annotations(
         network,
         region,

@@ -64,6 +64,9 @@ clean.
   simple indented definitions, and self-references.
 - `LANGUAGE_FIXTURES` with lossless parse/reconstruction samples for every
   required markup, programming-language, and natural-language target.
+- `NATURAL_LANGUAGE_GRAMMAR_FIXTURES` with pass/fail grammaticality fixtures
+  for the ten natural-language targets, including provenance for the
+  repo-authored sentences and UD-derived tag vocabulary.
 - Coverage targets for full `txt`, Markdown, and HTML support, mixed grammar
   embedding, ten programming-language parser targets, and ten natural-language
   parser targets.

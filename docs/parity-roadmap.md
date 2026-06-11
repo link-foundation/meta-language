@@ -30,6 +30,10 @@ The Rust API exposes these registries:
 - `LANGUAGE_FIXTURES`: executable source fixtures for every markup,
   programming-language, second-tier-programming-language, natural-language, and
   data-exchange-format target named by the founding issue.
+- `NATURAL_LANGUAGE_GRAMMAR_FIXTURES`: grammatical and ungrammatical
+  natural-language pass/fail fixtures for the ten target languages, with
+  provenance for the repo-authored sentence pairs and the UD-derived
+  morphosyntax vocabulary.
 
 Unit tests assert that the required projects, language groups, and executable
 fixtures stay present. They also assert that every advertised parity capability
@@ -88,6 +92,18 @@ The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
 `DATA_FORMAT_TARGETS`. These fixtures include UTF-8 natural-language samples,
 UTF-8 source-string literals in the second-tier programming fixtures, and UTF-8
 data-format values so lossless reconstruction covers non-ASCII byte ranges.
+
+`tests/unit/natural_language_grammar.rs` enforces the starter grammaticality gate
+for `NATURAL_LANGUAGE_GRAMMAR_FIXTURES`: every target has one grammatical
+fixture whose parse verifies cleanly, one registered ungrammatical fixture that
+emits a recoverable error link while reconstructing byte-for-byte, and queryable
+UD-style `upos:*`, `ufeat:*`, and `deprel:*` morphosyntax links. Unregistered
+natural-language text remains lossless and clean during this starter stage, so
+existing formalization fixtures are not rejected just because the starter
+lexicon is intentionally small. The sentences are repo-authored and no UD
+treebank sentence data is imported; UD currently supplies the shared tag
+vocabulary. GF/RGL or a native PMCFG reader remains the long-term path for
+broad-coverage natural-language grammars.
 
 Additional behavior-specific tests cover:
 
@@ -166,6 +182,21 @@ Britannica/Ethnologue top-ten set:
 10. Urdu
 
 Source: <https://www.britannica.com/topic/languages-by-total-number-of-speakers-2228881>
+
+## Natural-Language Grammar Coverage
+
+The first grammar-correctness layer is intentionally fixture-gated and
+deterministic. Natural-language parses emit a `natural-language:sentence`
+syntax link plus UD-style `upos:*`, `ufeat:*`, and `deprel:*` links for known
+starter forms. For the accepted fixture pattern, `verify_full_match()` stays
+clean. For registered ungrammatical starter fixtures, unknown forms or
+sentence-pattern mismatches emit recoverable `natural-language:error:*` syntax
+links with `is_error` flags, so `verify_full_match()` answers the staged
+grammaticality question while `reconstruct_text()` remains byte-exact.
+
+This is not yet a bundled GF/RGL runtime or imported UD treebank corpus. The
+starter registry keeps the ten target languages gated and preserves provenance
+while leaving broad-coverage grammar assets to later staged work.
 
 Data-exchange / interchange format targets (`DATA_FORMAT_TARGETS`):
 

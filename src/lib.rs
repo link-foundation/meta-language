@@ -8,6 +8,7 @@ mod lino_parser;
 pub mod lino_serialization;
 pub mod mixed_regions;
 mod natural_language;
+mod natural_language_grammar;
 pub mod parity;
 mod parity_fixtures;
 pub mod parser_registry;
@@ -33,6 +34,9 @@ pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use lino_serialization::LinoSerializationError;
 pub use mixed_regions::EmbeddedRegion;
+pub use natural_language_grammar::{
+    NaturalLanguageGrammarFixture, NATURAL_LANGUAGE_GRAMMAR_FIXTURES,
+};
 pub use parity::{
     GrammarEmbeddingTarget, LanguageFamily, LanguageFixture, LanguageTarget, ParityCapability,
     ParityFixture, ParityTarget, ParityTransformExpectation, ParityVerificationExpectation,
