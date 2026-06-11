@@ -1,4 +1,5 @@
 mod access_mode;
+mod api_style_parity;
 mod concept_ontology;
 mod cross_language_reconstruction;
 mod doublets_storage;

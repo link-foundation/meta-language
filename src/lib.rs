@@ -1,4 +1,5 @@
 pub mod access;
+pub mod api_styles;
 mod concept_ontology;
 pub mod configuration;
 mod incremental;
@@ -28,6 +29,11 @@ pub mod translation_rules;
 pub mod verification;
 
 pub use access::{EngineNetwork, ReadOnlyNetwork, ReadOnlyViolation};
+pub use api_styles::{
+    run_api_style_fixture, ApiOperation, ApiOperationEntry, ApiStyle, ApiStyleCell,
+    ApiStyleFixture, FluentNetworkApi, FluentPipeline, LinkCliSubstitution,
+    LinkCliSubstitutionError, LinkCliSubstitutionKind, API_OPERATIONS,
+};
 pub use concept_ontology::{ConceptOntologyImportReport, ConceptOntologySeedReport};
 pub use configuration::{
     AccessMode, FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,
