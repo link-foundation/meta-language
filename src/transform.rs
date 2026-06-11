@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 
+use crate::language_profile::LanguageProfile;
 use crate::link_network::{Link, LinkId, LinkNetwork, LinkType};
 use crate::query::{LinkQuery, QueryCaptures, QueryMatch, QueryPredicate, QueryPredicateHost};
 use crate::source::{ByteRange, SourceSpan};
@@ -59,6 +60,7 @@ enum ReplacementKind {
 pub struct ReplacementReport {
     text_replacements: Vec<TextReplacement>,
     substitution: SubstitutionReport,
+    profile_diagnostics: Vec<LinkId>,
 }
 
 impl ReplacementReport {
@@ -74,6 +76,12 @@ impl ReplacementReport {
         &self.substitution
     }
 
+    /// Diagnostic links created when a language profile rejected a replacement.
+    #[must_use]
+    pub fn profile_diagnostics(&self) -> &[LinkId] {
+        &self.profile_diagnostics
+    }
+
     /// Returns whether the replacement made no text or structural changes.
     #[must_use]
     pub fn is_empty(&self) -> bool {
@@ -81,6 +89,7 @@ impl ReplacementReport {
             && self.substitution.created().is_empty()
             && self.substitution.updated().is_empty()
             && self.substitution.deleted().is_empty()
+            && self.profile_diagnostics.is_empty()
     }
 }
 
@@ -197,6 +206,7 @@ impl LinkNetwork {
             } => ReplacementReport {
                 text_replacements: self.replace_captured_text(matches, capture_name, replacement),
                 substitution: SubstitutionReport::default(),
+                profile_diagnostics: Vec::new(),
             },
             ReplacementKind::Substitution(rule) => {
                 if matches.is_empty() {
@@ -205,6 +215,7 @@ impl LinkNetwork {
                     ReplacementReport {
                         text_replacements: Vec::new(),
                         substitution: self.apply_substitution(rule),
+                        profile_diagnostics: Vec::new(),
                     }
                 }
             }
@@ -215,7 +226,45 @@ impl LinkNetwork {
                     ReplacementReport {
                         text_replacements: Vec::new(),
                         substitution: self.apply_variable_substitution(rule),
+                        profile_diagnostics: Vec::new(),
                     }
+                }
+            }
+        }
+    }
+
+    /// Applies a replacement only when the result stays inside a language profile.
+    ///
+    /// The replacement is first evaluated on a cloned network. If the candidate
+    /// network validates against the profile, it is committed to `self`. If the
+    /// profile rejects it, `self` keeps its original source text and receives a
+    /// queryable `language-profile:unsupported-feature` diagnostic link.
+    pub fn replace_with_profile(
+        &mut self,
+        matches: &[QueryMatch],
+        rule: &ReplacementRule,
+        profile: &LanguageProfile,
+    ) -> ReplacementReport {
+        let mut candidate = self.clone();
+        let report = candidate.replace(matches, rule);
+        if report.is_empty() {
+            return report;
+        }
+
+        match profile.validate_transform_result(&candidate) {
+            Ok(()) => {
+                *self = candidate;
+                report
+            }
+            Err(violation) => {
+                let diagnostic = profile.insert_diagnostic(
+                    self,
+                    &violation,
+                    matches.first().map(QueryMatch::link_id),
+                );
+                ReplacementReport {
+                    profile_diagnostics: vec![diagnostic],
+                    ..ReplacementReport::default()
                 }
             }
         }

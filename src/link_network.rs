@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
+use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
 use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
 use crate::natural_language::annotate_natural_language;
@@ -41,7 +42,7 @@ impl fmt::Display for LinkId {
 }
 
 /// Coarse role for a link in the meta-language network.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LinkType {
     Link,
     Reference,
@@ -347,7 +348,11 @@ impl LinkNetwork {
     /// stripped away for CST, AST, or semantic-only work.
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
-        BuiltInLanguageParser.parse_source(text, language, configuration)
+        let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
+        if let Some(profile) = configuration.profile().and_then(LanguageProfile::builtin) {
+            profile.declare_in(&mut network);
+        }
+        network
     }
 
     /// Parses plain source text into a lossless token network.
