@@ -273,8 +273,8 @@ pub struct LinkNetwork {
     pub(crate) next_id: u64,
     pub(crate) links: BTreeMap<LinkId, Arc<Link>>,
     pub(crate) terms: BTreeMap<Arc<str>, LinkId>,
-    concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
-    strings: BTreeSet<Arc<str>>,
+    pub(crate) concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
+    pub(crate) strings: BTreeSet<Arc<str>>,
 }
 
 impl LinkNetwork {
