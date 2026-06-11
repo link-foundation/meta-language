@@ -10,6 +10,7 @@ pub struct LinkQuery {
     language: Option<String>,
     named: Option<bool>,
     pattern: Option<QueryPattern>,
+    pattern_source: Option<String>,
     predicates: Vec<QueryPredicate>,
 }
 
@@ -36,6 +37,7 @@ impl LinkQuery {
         let (pattern, predicates) = parser.parse()?;
         Ok(Self {
             pattern: Some(pattern),
+            pattern_source: Some(source.to_string()),
             predicates,
             ..Self::default()
         })
@@ -110,6 +112,26 @@ impl LinkQuery {
             && self
                 .named
                 .map_or(true, |named| metadata.is_named() == named)
+    }
+
+    pub(crate) const fn link_type_filter(&self) -> Option<LinkType> {
+        self.link_type
+    }
+
+    pub(crate) fn term_filter(&self) -> Option<&str> {
+        self.term.as_deref()
+    }
+
+    pub(crate) fn language_filter(&self) -> Option<&str> {
+        self.language.as_deref()
+    }
+
+    pub(crate) const fn named_filter(&self) -> Option<bool> {
+        self.named
+    }
+
+    pub(crate) fn pattern_source(&self) -> Option<&str> {
+        self.pattern_source.as_deref()
     }
 }
 
@@ -270,7 +292,7 @@ pub struct QueryParseError {
 }
 
 impl QueryParseError {
-    fn new(message: impl Into<String>) -> Self {
+    pub(crate) fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
         }
