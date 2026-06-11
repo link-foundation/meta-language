@@ -96,6 +96,7 @@ pub struct ParseConfiguration {
     formalization_level: FormalizationLevel,
     naturalization_direction: NaturalizationDirection,
     access_mode: AccessMode,
+    profile: Option<&'static str>,
 }
 
 impl ParseConfiguration {
@@ -109,6 +110,7 @@ impl ParseConfiguration {
             formalization_level: FormalizationLevel::Natural,
             naturalization_direction: NaturalizationDirection::Naturalize,
             access_mode: AccessMode::Mutable,
+            profile: None,
         }
     }
 
@@ -159,6 +161,17 @@ impl ParseConfiguration {
         self
     }
 
+    /// Returns configuration with a language capability profile name.
+    ///
+    /// Built-in profiles such as `"JavaScript"` are materialized as queryable
+    /// links during parsing. User-declared profiles can be supplied directly to
+    /// transform-time APIs.
+    #[must_use]
+    pub const fn with_profile(mut self, profile: &'static str) -> Self {
+        self.profile = Some(profile);
+        self
+    }
+
     /// Trivia attachment policy.
     #[must_use]
     pub const fn trivia_attachment_policy(self) -> TriviaAttachmentPolicy {
@@ -193,6 +206,12 @@ impl ParseConfiguration {
     #[must_use]
     pub const fn access_mode(self) -> AccessMode {
         self.access_mode
+    }
+
+    /// Configured language capability profile name.
+    #[must_use]
+    pub const fn profile(self) -> Option<&'static str> {
+        self.profile
     }
 }
 

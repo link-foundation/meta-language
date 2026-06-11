@@ -3,6 +3,7 @@ mod concept_ontology;
 mod cross_language_reconstruction;
 mod doublets_storage;
 mod grammar_parsing;
+mod language_profile;
 mod link_network;
 mod links_notation;
 mod lino_serialization;

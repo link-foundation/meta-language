@@ -2,6 +2,7 @@ pub mod access;
 mod concept_ontology;
 pub mod configuration;
 pub mod language_parser;
+pub mod language_profile;
 pub mod link_flags;
 pub mod link_network;
 mod lino_parser;
@@ -31,6 +32,7 @@ pub use configuration::{
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
+pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
 pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use lino_serialization::LinoSerializationError;
