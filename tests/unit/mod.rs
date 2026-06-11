@@ -6,6 +6,7 @@ mod link_network;
 mod links_notation;
 mod lino_serialization;
 mod parity_corpora;
+mod parser_registry;
 mod query_matching;
 mod query_transform;
 mod self_description;

@@ -514,6 +514,43 @@ pub const PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
     },
 ];
 
+/// Second-tier programming-language parser targets immediately below the TIOBE
+/// top ten.
+///
+/// Each entry has a wired tree-sitter grammar in `src/tree_sitter_adapter.rs`
+/// and a round-trip [`LANGUAGE_FIXTURES`] entry. Perl is intentionally absent:
+/// its only published binding (`tree-sitter-perl 1.1.2`) declares a *normal*
+/// dependency on `tree-sitter ^0.26.3`, which is incompatible with the
+/// project's `tree-sitter 0.25.x` front end. See `docs/parity-roadmap.md` for
+/// the explicit deferral.
+pub const SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
+    LanguageTarget {
+        name: "PHP",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Swift",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Kotlin",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Scala",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Lua",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+];
+
 /// Initial top-ten natural-language parser targets in Ethnologue 2025 total-speaker order.
 pub const NATURAL_LANGUAGE_TARGETS: &[LanguageTarget] = &[
     LanguageTarget {
@@ -719,6 +756,31 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
         language: "GraphQL",
         source: "type Person {\n  name: String!\n}\n",
         description: "GraphQL schema-definition type",
+    },
+    LanguageFixture {
+        language: "PHP",
+        source: "<?php\nfunction greet($name) {\n    return \"café \" . $name;\n}\n",
+        description: "PHP function returning a UTF-8 string",
+    },
+    LanguageFixture {
+        language: "Swift",
+        source: "func greet(_ name: String) -> String {\n    return \"café \\(name)\"\n}\n",
+        description: "Swift function with a UTF-8 interpolated string",
+    },
+    LanguageFixture {
+        language: "Kotlin",
+        source: "fun greet(name: String): String {\n    return \"café $name\"\n}\n",
+        description: "Kotlin function with a UTF-8 template string",
+    },
+    LanguageFixture {
+        language: "Scala",
+        source: "object Demo {\n  def greet(name: String): String = s\"café $name\"\n}\n",
+        description: "Scala object with a UTF-8 interpolated method",
+    },
+    LanguageFixture {
+        language: "Lua",
+        source: "local function greet(name)\n  return \"café \" .. name\nend\n",
+        description: "Lua function concatenating a UTF-8 string",
     },
 ];
 
