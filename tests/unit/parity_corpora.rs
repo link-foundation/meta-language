@@ -146,6 +146,27 @@ fn every_parity_target_has_an_executable_fixture_that_passes_core_contract() {
                 fixture.name()
             );
         }
+
+        if fixture
+            .capabilities()
+            .contains(&ParityCapability::LinoSerialization)
+        {
+            let lino = network.to_lino();
+            let restored = LinkNetwork::from_lino(&lino)
+                .expect("from_lino reconstructs the serialized network");
+            assert_eq!(
+                restored.to_lino(),
+                lino,
+                "{} fixture serialization is not round-trip stable",
+                fixture.name()
+            );
+            assert_eq!(
+                restored.links().count(),
+                network.links().count(),
+                "{} fixture serialization lost links",
+                fixture.name()
+            );
+        }
     }
 }
 

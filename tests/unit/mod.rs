@@ -4,6 +4,7 @@ mod cross_language_reconstruction;
 mod grammar_parsing;
 mod link_network;
 mod links_notation;
+mod lino_serialization;
 mod parity_corpora;
 mod parser_registry;
 mod query_matching;
