@@ -22,6 +22,7 @@ pub mod rust_codec;
 pub mod semantics;
 pub mod snapshots;
 pub mod source;
+mod source_generation;
 pub mod storage;
 pub mod substitution;
 pub mod transform;
