@@ -13,6 +13,7 @@ pub mod parity;
 mod parity_fixtures;
 pub mod parser_registry;
 pub mod query;
+pub mod query_algebra;
 mod reconstruction;
 pub mod rust_codec;
 pub mod semantics;
@@ -50,6 +51,11 @@ pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
     QueryPredicateArgument, QueryPredicateHost,
 };
+pub use query_algebra::{
+    LinkRule, LinkRuleCapture, LinkRuleCaptures, LinkRuleMatch, LinkRuleParseError,
+    LinkRuleRegistry, LinkRuleSnapshotCase, LinkRuleSnapshotExpectation, LinkRuleSnapshotReport,
+    LinkRuleSnapshotResult, LinkRuleSnapshotSuite, TraversalReport, TraversalStrategy,
+};
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
     RustTypeKind, RustTypeShape, ToLinks,
@@ -64,7 +70,10 @@ pub use substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, SubstitutionValue,
     VariableSubstitutionRule,
 };
-pub use transform::{ReplacementReport, ReplacementRule, SourceTextPredicateHost, TextReplacement};
+pub use transform::{
+    QuasiquoteError, QuasiquoteTemplate, ReplacementReport, ReplacementRule,
+    SourceTextPredicateHost, TextReplacement,
+};
 pub use translation_rules::{
     TranslationRule, TranslationRuleRegistry, TranslationRuleSet, TranslationRuleSetLoadError,
     TranslationTemplate,
