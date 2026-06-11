@@ -519,6 +519,22 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
             ParityCapability::ObjectRoundTrip,
         ],
     },
+    // Upstream: link-foundation/links-notation README documents parse_lino_to_links/format_links as the round-trip API the 0.13 crate exposes; license: Unlicense.
+    ParityFixture {
+        target_name: "links-notation",
+        name: "whole network serialization fixture",
+        language: "LiNo",
+        source: "(papa loves mama)\n",
+        expected_reconstruction: "(papa loves mama)\n",
+        provenance:
+            "link-foundation/links-notation README parse_lino_to_links/format_links round-trip API; license: Unlicense",
+        verification_expectation: ParityVerificationExpectation::Clean,
+        transform_expectation: None,
+        capabilities: &[
+            ParityCapability::LosslessParsing,
+            ParityCapability::LinoSerialization,
+        ],
+    },
     // Upstream: link-foundation/link-cli uses the Foundation.Data.Doublets.Cli.Tests project name in C#; license: Unlicense.
     ParityFixture {
         target_name: "link-cli",

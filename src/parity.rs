@@ -27,6 +27,8 @@ pub enum ParityCapability {
     SelfDescription,
     /// Capture immutable snapshots, edit mutable forks, and commit versions.
     SnapshotVersioning,
+    /// Serialize the whole network to links-notation text and read it back.
+    LinoSerialization,
 }
 
 /// Upstream project whose feature set and tests should be tracked.
@@ -153,8 +155,9 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
             ParityCapability::LosslessParsing,
             ParityCapability::ObjectRoundTrip,
             ParityCapability::SelfDescription,
+            ParityCapability::LinoSerialization,
         ],
-        test_plan: "Executable fixtures cover doublet, triplet, N-tuple, indented, and nested self-reference LiNo behavior.",
+        test_plan: "Executable fixtures cover doublet, triplet, N-tuple, indented, nested self-reference, and whole-network serialization LiNo behavior.",
     },
     ParityTarget {
         name: "link-cli",
