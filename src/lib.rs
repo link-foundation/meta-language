@@ -21,6 +21,7 @@ pub mod source;
 pub mod storage;
 pub mod substitution;
 pub mod transform;
+pub mod translation_rules;
 pub mod verification;
 
 pub use access::{EngineNetwork, ReadOnlyNetwork, ReadOnlyViolation};
@@ -64,6 +65,10 @@ pub use substitution::{
     VariableSubstitutionRule,
 };
 pub use transform::{ReplacementReport, ReplacementRule, SourceTextPredicateHost, TextReplacement};
+pub use translation_rules::{
+    TranslationRule, TranslationRuleRegistry, TranslationRuleSet, TranslationRuleSetLoadError,
+    TranslationTemplate,
+};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 mod self_description;

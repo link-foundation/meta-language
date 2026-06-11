@@ -1,5 +1,6 @@
 use crate::{
     FormalizationLevel, LinkNetwork, LinkType, NaturalizationDirection, ParseConfiguration,
+    TranslationRuleRegistry, TranslationRuleSet,
 };
 
 impl LinkNetwork {
@@ -23,64 +24,122 @@ impl LinkNetwork {
             return source;
         }
 
-        if !self.has_statehood_proposition() {
-            return source;
-        }
-
-        self.reconstruct_statehood(target_language, configuration, &source)
-            .unwrap_or(source)
+        self.reconstruct_text_as_with_rules(
+            target_language,
+            configuration,
+            &TranslationRuleSet::statehood_demo(),
+        )
     }
 
-    fn reconstruct_concept_for_language(&self, concept: &str, language: &str) -> Option<&str> {
-        self.reconstruct_concept(concept, language).or_else(|| {
-            canonical_reconstruction_language(language)
-                .and_then(|canonical| self.reconstruct_concept(concept, canonical))
-        })
-    }
-
-    fn reconstruct_statehood(
+    /// Reconstructs text using a caller-supplied translation rule set.
+    #[must_use]
+    pub fn reconstruct_text_as_with_rules(
         &self,
         target_language: &str,
         configuration: ParseConfiguration,
-        source: &str,
-    ) -> Option<String> {
-        let level = match (
-            configuration.naturalization_direction(),
-            configuration.formalization_level(),
-        ) {
-            (NaturalizationDirection::Formalize, FormalizationLevel::Natural) => {
-                FormalizationLevel::Lexical
-            }
-            (_, level) => level,
-        };
+        rule_set: &TranslationRuleSet,
+    ) -> String {
+        let source = self.reconstruct_text();
+        if self.is_document_language(target_language)
+            && configuration.formalization_level() == FormalizationLevel::Natural
+            && configuration.naturalization_direction() == NaturalizationDirection::Naturalize
+        {
+            return source;
+        }
 
-        let body = match level {
-            FormalizationLevel::Natural => self
-                .reconstruct_concept_for_language("statehood", target_language)?
-                .to_string(),
-            FormalizationLevel::Lexical => {
-                let subject = self
-                    .reconstruct_concept_for_language("Q782", target_language)
-                    .unwrap_or("Q782");
-                let object = self
-                    .reconstruct_concept_for_language("Q35657", target_language)
-                    .unwrap_or("Q35657");
-                format!("statehood({subject}, {object})")
-            }
-            FormalizationLevel::Concept => "statehood(Q782, Q35657)".to_string(),
-            FormalizationLevel::Logical => {
-                "(proposition: statehood (subject: Q782) (object: Q35657) (truth: true))"
-                    .to_string()
-            }
-        };
-
-        Some(with_source_trailing_newline(body, source))
+        rule_set
+            .render(self, target_language, configuration)
+            .unwrap_or(source)
     }
 
-    fn has_statehood_proposition(&self) -> bool {
+    /// Reconstructs text through the active rule set in a registry.
+    #[must_use]
+    pub fn reconstruct_text_as_with_registry(
+        &self,
+        target_language: &str,
+        configuration: ParseConfiguration,
+        registry: &TranslationRuleRegistry,
+    ) -> String {
+        registry.active_rule_set().map_or_else(
+            || self.reconstruct_text(),
+            |rule_set| {
+                self.reconstruct_text_as_with_rules(target_language, configuration, rule_set)
+            },
+        )
+    }
+
+    /// Reconstructs text and records diagnostic links when no rule can render it.
+    pub fn reconstruct_text_as_with_rules_mut(
+        &mut self,
+        target_language: &str,
+        configuration: ParseConfiguration,
+        rule_set: &TranslationRuleSet,
+    ) -> String {
+        let source = self.reconstruct_text();
+        if self.is_document_language(target_language)
+            && configuration.formalization_level() == FormalizationLevel::Natural
+            && configuration.naturalization_direction() == NaturalizationDirection::Naturalize
+        {
+            return source;
+        }
+
+        if let Some(rendered) = rule_set.render(self, target_language, configuration) {
+            return rendered;
+        }
+
+        self.insert_missing_translation_diagnostics(target_language);
+        source
+    }
+
+    fn insert_missing_translation_diagnostics(&mut self, target_language: &str) {
+        let unmatched = self
+            .links()
+            .filter(|link| {
+                link.metadata().link_type() == Some(LinkType::Semantic)
+                    && !link
+                        .metadata()
+                        .term()
+                        .is_some_and(|term| term.starts_with("translation-rule:"))
+            })
+            .map(|link| {
+                (
+                    link.id(),
+                    link.metadata()
+                        .term()
+                        .unwrap_or("semantic link")
+                        .to_string(),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        for (link_id, term) in unmatched {
+            if self.has_missing_translation_diagnostic(link_id, target_language) {
+                continue;
+            }
+            self.insert_link(
+                [link_id],
+                crate::LinkMetadata::new()
+                    .with_link_type(LinkType::Semantic)
+                    .with_named(true)
+                    .with_term("translation-rule:missing")
+                    .with_language(target_language)
+                    .with_definition(format!(
+                        "Missing translation rule for `{term}` targeting `{target_language}`."
+                    )),
+            );
+        }
+    }
+
+    fn has_missing_translation_diagnostic(
+        &self,
+        link_id: crate::LinkId,
+        target_language: &str,
+    ) -> bool {
         self.links().any(|link| {
-            link.metadata().link_type() == Some(LinkType::Semantic)
-                && link.metadata().term() == Some("proposition:statehood")
+            link.references() == [link_id]
+                && link.metadata().link_type() == Some(LinkType::Semantic)
+                && link.metadata().term() == Some("translation-rule:missing")
+                && link.metadata().language() == Some(target_language)
         })
     }
 
@@ -109,11 +168,4 @@ fn languages_match(source_language: Option<&str>, target_language: &str) -> bool
         || canonical_reconstruction_language(source_language)
             .zip(canonical_reconstruction_language(target_language))
             .is_some_and(|(source, target)| source == target)
-}
-
-fn with_source_trailing_newline(mut body: String, source: &str) -> String {
-    if source.ends_with('\n') {
-        body.push('\n');
-    }
-    body
 }

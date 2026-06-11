@@ -15,6 +15,7 @@ mod rust_codec;
 mod self_description;
 mod storage;
 mod substitution;
+mod translation_rules;
 
 #[path = "ci-cd/mod.rs"]
 mod ci_cd;
