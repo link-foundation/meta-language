@@ -17,6 +17,8 @@ The Rust API exposes these registries:
   grammar support.
 - `PROGRAMMING_LANGUAGE_TARGETS`: the initial ten programming-language parser
   targets.
+- `SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`: popular programming languages
+  immediately below the TIOBE top ten that require full grammar support.
 - `NATURAL_LANGUAGE_TARGETS`: the initial ten natural-language parser targets.
 - `DATA_FORMAT_TARGETS`: data-exchange / interchange formats that require full
   grammar support.
@@ -26,8 +28,8 @@ The Rust API exposes these registries:
   with upstream path and license provenance, that must parse and reconstruct
   through the public API.
 - `LANGUAGE_FIXTURES`: executable source fixtures for every markup,
-  programming-language, natural-language, and data-exchange-format target named
-  by the founding issue.
+  programming-language, second-tier-programming-language, natural-language, and
+  data-exchange-format target named by the founding issue.
 
 Unit tests assert that the required projects, language groups, and executable
 fixtures stay present. They also assert that every advertised parity capability
@@ -82,9 +84,10 @@ semantic lexicon.
 
 The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
 `MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`,
-`NATURAL_LANGUAGE_TARGETS`, and `DATA_FORMAT_TARGETS`. These fixtures include
-UTF-8 natural-language samples and UTF-8 data-format values so lossless
-reconstruction covers non-ASCII byte ranges.
+`SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`, `NATURAL_LANGUAGE_TARGETS`, and
+`DATA_FORMAT_TARGETS`. These fixtures include UTF-8 natural-language samples,
+UTF-8 source-string literals in the second-tier programming fixtures, and UTF-8
+data-format values so lossless reconstruction covers non-ASCII byte ranges.
 
 Additional behavior-specific tests cover:
 
@@ -135,6 +138,18 @@ Programming-language targets use the TIOBE May 2026 top-ten list:
 10. Delphi/Object Pascal
 
 Source: <https://www.tiobe.com/tiobe-index/>
+
+Second-tier programming-language targets (`SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`)
+cover popular languages immediately below the TIOBE top ten:
+
+1. PHP
+2. Swift
+3. Kotlin
+4. Scala
+5. Lua
+
+Perl is part of the same wave but is **deferred**; see
+[Second-Tier Programming Language Coverage](#second-tier-programming-language-coverage).
 
 Natural-language targets use the Ethnologue 2025 total-speaker order for the
 Britannica/Ethnologue top-ten set:
@@ -266,3 +281,47 @@ vendored; see issue
 [#50](https://github.com/link-foundation/meta-language/issues/50) and
 `docs/case-studies/issue-47/formats-storage-apis.md` Part A for the verified
 binding-compatibility research.
+
+## Second-Tier Programming Language Coverage
+
+`SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS` lists the popular programming
+languages immediately below the TIOBE top ten that are wired through
+`src/tree_sitter_adapter.rs`. Each parses through
+`LinkNetwork::parse(source, language, ParseConfiguration::default())`, emits real
+`LinkType::Syntax` concrete-syntax links, and reconstructs the source
+byte-for-byte. Every target has a UTF-8 `LANGUAGE_FIXTURES` round-trip entry, and
+`tests/unit/grammar_parsing.rs` additionally covers case-insensitive label
+aliases and a per-language recovery fixture whose malformed source still
+reconstructs while exposing error/missing diagnostics.
+
+| Language | Labels (case-insensitive) | Crate | Version | License | Grammar root |
+|---|---|---|---|---|---|
+| PHP | `PHP` | [`tree-sitter-php`](https://github.com/tree-sitter/tree-sitter-php) | 0.24.2 | MIT | `program` |
+| Swift | `Swift` | [`tree-sitter-swift`](https://github.com/alex-pinkus/tree-sitter-swift) | 0.7.3 | MIT | `source_file` |
+| Kotlin | `Kotlin`, `kt` | [`tree-sitter-kotlin-ng`](https://github.com/tree-sitter-grammars/tree-sitter-kotlin) | 1.1.0 | MIT | `source_file` |
+| Scala | `Scala` | [`tree-sitter-scala`](https://github.com/tree-sitter/tree-sitter-scala) | 0.25.1 | MIT | `compilation_unit` |
+| Lua | `Lua` | [`tree-sitter-lua`](https://github.com/tree-sitter-grammars/tree-sitter-lua) | 0.2.0 | MIT | `chunk` |
+
+All five crates use the modern `tree-sitter-language` ABI binding (they list
+`tree-sitter` only as a dev-dependency), so they link cleanly against the
+project's `tree-sitter 0.25.x` front end. `tree-sitter-php` is wired through its
+`LANGUAGE_PHP` symbol (the full PHP-with-template grammar) rather than the
+`LANGUAGE_PHP_ONLY` variant. `tree-sitter-scala` is pinned to 0.25.1 and
+`tree-sitter-lua` to 0.2.0 — both generated against a `tree-sitter 0.25`/`0.23`
+CLI — so the emitted parser ABI loads under the project's 0.25.x runtime; the
+newer 0.26-generated releases of those crates are deferred until the runtime is
+upgraded.
+
+### Perl: explicit deferral
+
+Perl is **not** wired. Its only published binding,
+[`tree-sitter-perl`](https://crates.io/crates/tree-sitter-perl) 1.1.2, declares a
+*normal* dependency on `tree-sitter ^0.26.3`, which would force the whole project
+off its `tree-sitter 0.25.x` front end. Unlike the five wired second-tier
+grammars — which expose only `tree-sitter-language` as a normal dependency — the
+Perl crate couples the parser directly to the newer runtime.
+
+It is tracked for a follow-up once the project upgrades to `tree-sitter 0.26.x`,
+the binding is vendored behind `tree-sitter-language`, or an upstream release
+lists `tree-sitter` only as a dev-dependency; see issue
+[#70](https://github.com/link-foundation/meta-language/issues/70).
