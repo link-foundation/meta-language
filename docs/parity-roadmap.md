@@ -207,9 +207,7 @@ cover popular languages immediately below the TIOBE top ten:
 3. Kotlin
 4. Scala
 5. Lua
-
-Perl is part of the same wave but is **deferred**; see
-[Second-Tier Programming Language Coverage](#second-tier-programming-language-coverage).
+6. Perl
 
 Natural-language targets use the Ethnologue 2025 total-speaker order for the
 Britannica/Ethnologue top-ten set:
@@ -331,14 +329,14 @@ network as the host document.
 
 All seven crates use the modern `tree-sitter-language` ABI binding (they list
 `tree-sitter` only as a dev-dependency), so they link cleanly against the
-project's `tree-sitter 0.25.8` front end. The Apache-2.0 license on
+project's `tree-sitter 0.26.x` front end. The Apache-2.0 license on
 `tree-sitter-ini` is compatible with this repository's Unlicense model.
 
 ### CSV and JSON5: explicit deferral
 
 CSV and JSON5 are **not** wired. Their crates.io grammar bindings still declare a
 *normal* dependency on `tree-sitter ~0.20`, which is incompatible with the
-project's `tree-sitter 0.25.x` toolchain as published:
+project's current tree-sitter toolchain as published:
 
 - **CSV** — [`tree-sitter-csv`](https://crates.io/crates/tree-sitter-csv) 1.2.0
   pins `tree-sitter ~0.20.10`. The maintained repo at
@@ -376,27 +374,14 @@ reconstructs while exposing error/missing diagnostics.
 | Kotlin | `Kotlin`, `kt` | [`tree-sitter-kotlin-ng`](https://github.com/tree-sitter-grammars/tree-sitter-kotlin) | 1.1.0 | MIT | `source_file` |
 | Scala | `Scala` | [`tree-sitter-scala`](https://github.com/tree-sitter/tree-sitter-scala) | 0.25.1 | MIT | `compilation_unit` |
 | Lua | `Lua` | [`tree-sitter-lua`](https://github.com/tree-sitter-grammars/tree-sitter-lua) | 0.2.0 | MIT | `chunk` |
+| Perl | `Perl`, `pl` | [`tree-sitter-perl`](https://github.com/ganezdragon/tree-sitter-perl) | 1.1.2 | MIT | `source_file` |
 
-All five crates use the modern `tree-sitter-language` ABI binding (they list
-`tree-sitter` only as a dev-dependency), so they link cleanly against the
-project's `tree-sitter 0.25.x` front end. `tree-sitter-php` is wired through its
+The PHP, Swift, Kotlin, Scala, and Lua crates use the modern
+`tree-sitter-language` ABI binding and list `tree-sitter` only as a
+dev-dependency. `tree-sitter-perl` 1.1.2 declares a normal dependency on
+`tree-sitter ^0.26.3`, so issue
+[#70](https://github.com/link-foundation/meta-language/issues/70) is resolved by
+upgrading the project front end to `tree-sitter 0.26.x` and wiring Perl through
+the published binding directly. `tree-sitter-php` is wired through its
 `LANGUAGE_PHP` symbol (the full PHP-with-template grammar) rather than the
-`LANGUAGE_PHP_ONLY` variant. `tree-sitter-scala` is pinned to 0.25.1 and
-`tree-sitter-lua` to 0.2.0 — both generated against a `tree-sitter 0.25`/`0.23`
-CLI — so the emitted parser ABI loads under the project's 0.25.x runtime; the
-newer 0.26-generated releases of those crates are deferred until the runtime is
-upgraded.
-
-### Perl: explicit deferral
-
-Perl is **not** wired. Its only published binding,
-[`tree-sitter-perl`](https://crates.io/crates/tree-sitter-perl) 1.1.2, declares a
-*normal* dependency on `tree-sitter ^0.26.3`, which would force the whole project
-off its `tree-sitter 0.25.x` front end. Unlike the five wired second-tier
-grammars — which expose only `tree-sitter-language` as a normal dependency — the
-Perl crate couples the parser directly to the newer runtime.
-
-It is tracked for a follow-up once the project upgrades to `tree-sitter 0.26.x`,
-the binding is vendored behind `tree-sitter-language`, or an upstream release
-lists `tree-sitter` only as a dev-dependency; see issue
-[#70](https://github.com/link-foundation/meta-language/issues/70).
+`LANGUAGE_PHP_ONLY` variant.
