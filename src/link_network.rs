@@ -21,6 +21,12 @@ use crate::verification::{VerificationIssue, VerificationIssueKind, Verification
 pub struct LinkId(pub(crate) u64);
 
 impl LinkId {
+    /// Builds a link identifier from its numeric representation.
+    #[must_use]
+    pub const fn from_u64(value: u64) -> Self {
+        Self(value)
+    }
+
     /// Returns the numeric identifier.
     #[must_use]
     pub const fn as_u64(self) -> u64 {

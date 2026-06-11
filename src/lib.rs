@@ -16,6 +16,7 @@ mod reconstruction;
 pub mod semantics;
 pub mod snapshots;
 pub mod source;
+pub mod storage;
 pub mod substitution;
 pub mod transform;
 pub mod verification;
@@ -46,6 +47,9 @@ pub use query::{
 pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot};
 pub use source::{ByteRange, Point, SourceSpan};
+#[cfg(feature = "doublets")]
+pub use storage::DoubletsLinkStore;
+pub use storage::{EngineLinkStore, LinkStore, LinkStoreBackend, LinkStoreQuery, StorageError};
 pub use substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, SubstitutionValue,
     VariableSubstitutionRule,
