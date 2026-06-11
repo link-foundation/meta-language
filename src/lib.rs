@@ -5,6 +5,7 @@ pub mod language_parser;
 pub mod link_flags;
 pub mod link_network;
 mod lino_parser;
+pub mod lino_serialization;
 pub mod mixed_regions;
 mod natural_language;
 pub mod parity;
@@ -27,6 +28,7 @@ pub use configuration::{
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
+pub use lino_serialization::LinoSerializationError;
 pub use mixed_regions::EmbeddedRegion;
 pub use parity::{
     GrammarEmbeddingTarget, LanguageFamily, LanguageFixture, LanguageTarget, ParityCapability,
