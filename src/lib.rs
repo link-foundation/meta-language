@@ -9,6 +9,7 @@ pub mod mixed_regions;
 mod natural_language;
 pub mod parity;
 mod parity_fixtures;
+pub mod parser_registry;
 pub mod query;
 mod reconstruction;
 pub mod semantics;
@@ -34,6 +35,7 @@ pub use parity::{
     DATA_FORMAT_TARGETS, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
     NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
 };
+pub use parser_registry::ParserRegistry;
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
     QueryPredicateArgument, QueryPredicateHost,
