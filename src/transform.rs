@@ -1,4 +1,5 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
+use std::fmt;
 
 use crate::language_profile::LanguageProfile;
 use crate::link_network::{Link, LinkId, LinkNetwork, LinkType};
@@ -43,6 +44,20 @@ impl ReplacementRule {
             kind: ReplacementKind::VariableSubstitution(rule),
         }
     }
+
+    /// Replaces captured source text with a quasiquote template.
+    ///
+    /// Placeholders use `{{capture_name}}` and are resolved from the same query
+    /// match before each replacement is applied.
+    #[must_use]
+    pub fn quasiquote(capture_name: impl Into<String>, template: QuasiquoteTemplate) -> Self {
+        Self {
+            kind: ReplacementKind::Quasiquote {
+                capture_name: normalize_capture_name(capture_name),
+                template,
+            },
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -50,6 +65,10 @@ enum ReplacementKind {
     CapturedText {
         capture_name: String,
         replacement: String,
+    },
+    Quasiquote {
+        capture_name: String,
+        template: QuasiquoteTemplate,
     },
     Substitution(SubstitutionRule),
     VariableSubstitution(VariableSubstitutionRule),
@@ -59,6 +78,7 @@ enum ReplacementKind {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ReplacementReport {
     text_replacements: Vec<TextReplacement>,
+    template_errors: Vec<QuasiquoteError>,
     substitution: SubstitutionReport,
     profile_diagnostics: Vec<LinkId>,
 }
@@ -68,6 +88,12 @@ impl ReplacementReport {
     #[must_use]
     pub fn text_replacements(&self) -> &[TextReplacement] {
         &self.text_replacements
+    }
+
+    /// Template rendering errors that prevented replacements.
+    #[must_use]
+    pub fn template_errors(&self) -> &[QuasiquoteError] {
+        &self.template_errors
     }
 
     /// Structural substitution result, when the rule delegates to substitution.
@@ -86,6 +112,7 @@ impl ReplacementReport {
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.text_replacements.is_empty()
+            && self.template_errors.is_empty()
             && self.substitution.created().is_empty()
             && self.substitution.updated().is_empty()
             && self.substitution.deleted().is_empty()
@@ -186,6 +213,109 @@ impl QueryPredicateHost for SourceTextPredicateHost {
     }
 }
 
+/// Quasiquote replacement template with `{{capture}}` placeholders.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct QuasiquoteTemplate {
+    parts: Vec<TemplatePart>,
+}
+
+impl QuasiquoteTemplate {
+    /// Parses a template source string.
+    pub fn parse(source: impl Into<String>) -> Result<Self, QuasiquoteError> {
+        let source = source.into();
+        let mut parts = Vec::new();
+        let mut rest = source.as_str();
+        while let Some(start) = rest.find("{{") {
+            if start > 0 {
+                parts.push(TemplatePart::Literal(rest[..start].to_string()));
+            }
+            let after_open = &rest[start + 2..];
+            let Some(end) = after_open.find("}}") else {
+                return Err(QuasiquoteError::Parse(
+                    "unterminated quasiquote placeholder".to_string(),
+                ));
+            };
+            let name = normalize_capture_name(after_open[..end].trim());
+            if name.is_empty() {
+                return Err(QuasiquoteError::Parse(
+                    "quasiquote placeholder is empty".to_string(),
+                ));
+            }
+            parts.push(TemplatePart::Placeholder(name));
+            rest = &after_open[end + 2..];
+        }
+        if !rest.is_empty() {
+            parts.push(TemplatePart::Literal(rest.to_string()));
+        }
+        if parts.is_empty() {
+            parts.push(TemplatePart::Literal(source));
+        }
+        Ok(Self { parts })
+    }
+
+    fn render(
+        &self,
+        network: &LinkNetwork,
+        query_match: &QueryMatch,
+        old_text: &str,
+    ) -> Result<String, QuasiquoteError> {
+        let mut values = BTreeMap::<String, String>::new();
+        for part in &self.parts {
+            if let TemplatePart::Placeholder(name) = part {
+                if values.contains_key(name) {
+                    continue;
+                }
+                let Some(text) = captured_text(network, query_match.captures().first(name)) else {
+                    return Err(QuasiquoteError::MissingPlaceholder(name.clone()));
+                };
+                values.insert(name.clone(), text);
+            }
+        }
+
+        let mut rendered = String::new();
+        for part in &self.parts {
+            match part {
+                TemplatePart::Literal(literal) => rendered.push_str(literal),
+                TemplatePart::Placeholder(name) => {
+                    let Some(value) = values.get(name) else {
+                        return Err(QuasiquoteError::MissingPlaceholder(name.clone()));
+                    };
+                    rendered.push_str(value);
+                }
+            }
+        }
+        Ok(preserve_parentheses(old_text, rendered))
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum TemplatePart {
+    Literal(String),
+    Placeholder(String),
+}
+
+/// Error returned while parsing or rendering a quasiquote template.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum QuasiquoteError {
+    /// Template source is malformed.
+    Parse(String),
+    /// Template references a capture that is not bound by the query match.
+    MissingPlaceholder(String),
+}
+
+impl fmt::Display for QuasiquoteError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Parse(message) => formatter.write_str(message),
+            Self::MissingPlaceholder(name) => {
+                write!(formatter, "quasiquote placeholder `{name}` is not captured")
+            }
+        }
+    }
+}
+
+impl std::error::Error for QuasiquoteError {}
+
 impl LinkNetwork {
     /// Finds query matches using the transform surface's source-text predicates.
     ///
@@ -205,15 +335,29 @@ impl LinkNetwork {
                 replacement,
             } => ReplacementReport {
                 text_replacements: self.replace_captured_text(matches, capture_name, replacement),
+                template_errors: Vec::new(),
                 substitution: SubstitutionReport::default(),
                 profile_diagnostics: Vec::new(),
             },
+            ReplacementKind::Quasiquote {
+                capture_name,
+                template,
+            } => {
+                let (text_replacements, template_errors) =
+                    self.replace_captured_quasiquote(matches, capture_name, template);
+                ReplacementReport {
+                    text_replacements,
+                    template_errors,
+                    substitution: SubstitutionReport::default(),
+                }
+            }
             ReplacementKind::Substitution(rule) => {
                 if matches.is_empty() {
                     ReplacementReport::default()
                 } else {
                     ReplacementReport {
                         text_replacements: Vec::new(),
+                        template_errors: Vec::new(),
                         substitution: self.apply_substitution(rule),
                         profile_diagnostics: Vec::new(),
                     }
@@ -225,6 +369,7 @@ impl LinkNetwork {
                 } else {
                     ReplacementReport {
                         text_replacements: Vec::new(),
+                        template_errors: Vec::new(),
                         substitution: self.apply_variable_substitution(rule),
                         profile_diagnostics: Vec::new(),
                     }
@@ -322,10 +467,84 @@ impl LinkNetwork {
 
         replacements
     }
+
+    fn replace_captured_quasiquote(
+        &mut self,
+        matches: &[QueryMatch],
+        capture_name: &str,
+        template: &QuasiquoteTemplate,
+    ) -> (Vec<TextReplacement>, Vec<QuasiquoteError>) {
+        let mut touched_tokens = BTreeSet::new();
+        let mut replacements = Vec::new();
+        let mut errors = Vec::new();
+
+        for query_match in matches {
+            for capture in query_match
+                .captures()
+                .iter()
+                .filter(|capture| capture.name() == capture_name)
+            {
+                let token_ids = source_token_ids(self, capture.link_id());
+                if token_ids.is_empty()
+                    || token_ids
+                        .iter()
+                        .any(|token_id| touched_tokens.contains(token_id))
+                {
+                    continue;
+                }
+
+                let old_text = text_for_tokens(self, &token_ids);
+                let replacement = match template.render(self, query_match, &old_text) {
+                    Ok(replacement) => replacement,
+                    Err(error) => {
+                        errors.push(error);
+                        continue;
+                    }
+                };
+                if old_text == replacement {
+                    continue;
+                }
+
+                let span = span_for_tokens(self, &token_ids);
+                let first_token = token_ids[0];
+                if !self.set_term(first_token, replacement.clone()) {
+                    continue;
+                }
+                for token_id in token_ids.iter().skip(1) {
+                    let _ = self.set_term(*token_id, String::new());
+                }
+
+                touched_tokens.extend(token_ids.iter().copied());
+                replacements.push(TextReplacement::new(
+                    capture_name,
+                    capture.link_id(),
+                    token_ids,
+                    span,
+                    old_text,
+                    &replacement,
+                ));
+            }
+        }
+
+        (replacements, errors)
+    }
 }
 
 fn normalize_capture_name(name: impl Into<String>) -> String {
     name.into().trim_start_matches('@').to_string()
+}
+
+fn preserve_parentheses(old_text: &str, rendered: String) -> String {
+    let trimmed_old = old_text.trim();
+    let trimmed_rendered = rendered.trim();
+    if trimmed_old.starts_with('(')
+        && trimmed_old.ends_with(')')
+        && !(trimmed_rendered.starts_with('(') && trimmed_rendered.ends_with(')'))
+    {
+        format!("({rendered})")
+    } else {
+        rendered
+    }
 }
 
 fn capture_literal_arguments(predicate: &QueryPredicate) -> Option<(&str, &str)> {
