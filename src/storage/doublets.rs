@@ -154,7 +154,7 @@ impl DoubletsLinkStore {
         &mut self,
         id: LinkId,
         references: &[LinkId],
-        metadata: LinkMetadata,
+        metadata: &LinkMetadata,
         registered_term: bool,
     ) -> Result<(), StorageError> {
         if self.latest_record(id)?.is_some() {
@@ -162,7 +162,7 @@ impl DoubletsLinkStore {
                 "link id {id} already exists in doublets store"
             )));
         }
-        self.append_record(id, references, &metadata, registered_term, false)?;
+        self.append_record(id, references, metadata, registered_term, false)?;
         self.persist_snapshot()
     }
 
@@ -264,13 +264,13 @@ impl DoubletsLinkStore {
     fn decode_all_records(&self) -> Result<Vec<StoredLinkRecord>, StorageError> {
         self.headers()
             .into_iter()
-            .map(|header| self.decode_header(header))
+            .map(|header| self.decode_header(&header))
             .collect()
     }
 
     fn decode_header(
         &self,
-        header: ::doublets::Link<u64>,
+        header: &::doublets::Link<u64>,
     ) -> Result<StoredLinkRecord, StorageError> {
         let mut references = BTreeMap::new();
         let mut metadata_bytes = BTreeMap::new();
@@ -685,7 +685,7 @@ fn flag_bits(flags: LinkFlags) -> u8 {
 }
 
 #[cfg(feature = "doublets")]
-fn parse_flags(bits: u8) -> LinkFlags {
+const fn parse_flags(bits: u8) -> LinkFlags {
     let mut flags = LinkFlags::clean();
     if bits & 0b0001 != 0 {
         flags = flags.with_error();
@@ -703,7 +703,7 @@ fn parse_flags(bits: u8) -> LinkFlags {
 }
 
 #[cfg(feature = "doublets")]
-fn link_type_code(link_type: Option<LinkType>) -> u8 {
+const fn link_type_code(link_type: Option<LinkType>) -> u8 {
     match link_type {
         None => 0,
         Some(LinkType::Link) => 1,

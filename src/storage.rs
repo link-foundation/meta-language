@@ -63,7 +63,7 @@ impl From<std::io::Error> for StorageError {
 /// Storage backend names used by downstream engine configuration.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LinkStoreBackend {
-    /// Store and exchange networks through canonical LiNo text.
+    /// Store and exchange networks through canonical `LiNo` text.
     LinoProjection,
     /// Store networks in `doublets-rs` file-mapped binary doublets.
     DoubletsRs,
@@ -421,7 +421,7 @@ pub enum EngineLinkStore<S> {
 impl<S> EngineLinkStore<S> {
     /// Wraps a store according to the configured access mode.
     #[must_use]
-    pub fn with_access_mode(store: S, access_mode: AccessMode) -> Self {
+    pub const fn with_access_mode(store: S, access_mode: AccessMode) -> Self {
         match access_mode {
             AccessMode::Mutable => Self::Mutable(store),
             AccessMode::ReadOnly => Self::ReadOnly(store),
