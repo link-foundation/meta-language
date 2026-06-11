@@ -57,10 +57,30 @@ parse/reconstruction fixture.
 | relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Ported dependent-type, many-valued truth, and probabilistic liar-paradox fixtures plus `TruthValue` and `ProbabilisticTruthValue` tests |
 | formal-ai | Formalization corpus and semantic reconstruction expectations | Ported fixtures from actual `data/seed/*.lino` and `data/benchmarks/*.lino` files plus concept reconstruction tests |
 | meta-expression | Formalize, semantic-link, naturalize, span, and self-reference behavior | Hawaii naturalization, `1 + 1 = 2`, and liar self-reference fixtures plus the verified 351-concept semantic lexicon seed |
+| ast-grep | Rule-test-style structural matching and rewrite assertions | Sampled JavaScript identifier replacement fixture with rule-test provenance |
+| Semgrep | Pattern corpus matching and autofix behavior | Sampled Python pattern/autofix fixture with paired `.sgrep`-style provenance |
+| Comby | Structural search-and-replace over source text | Sampled JavaScript template rewrite fixture with generic test provenance |
+| GritQL | Snippet pattern matching and rewrite effects | Sampled JavaScript rewrite fixture with Grit pattern-test provenance |
+| srcML | Source-to-XML markup and lossless reconstruction | Sampled XML source-markup round-trip fixture from `test/parser/testsuite` |
+| difftastic | Syntax-aware before/after snapshots for structural diffing | Sampled Rust source snapshot fixture from `sample_files` |
+| Babel | JavaScript parser-fixture input/output behavior | Sampled parser fixture with executable JavaScript replacement expectation |
+| SWC | TypeScript parser corpus reconstruction | Sampled TypeScript round-trip fixture from parser corpus provenance |
+| OpenRewrite | Java recipe before/after rewrites | Sampled Java identifier replacement fixture in `RewriteTest` style |
+| Spoon | Java template and pretty-printer transformations | Sampled Java identifier replacement fixture with template-test provenance |
+| JavaParser | Lexical-preserving Java source rewrites | Sampled Java identifier replacement fixture with lexical-preservation provenance |
+| Rascal | In-language syntax tests and reconstruction | Sampled Rascal-style test declaration round-trip fixture |
+| Stratego/Spoofax | SPT embedded-fragment parse/transform expectations | Sampled JavaScript embedded-fragment replacement fixture |
+| TXL | By-example source transformation rules | Sampled C source replacement fixture with TXL example provenance |
+| MPS | Projectional model serialization and self-description | Sampled XML model round-trip fixture |
+| Coccinelle | C input/semantic-patch/result transform triples | Sampled C identifier replacement fixture with `.cocci` triple provenance |
+| GF | Grammar parse/linearization-style formalization | Sampled English statehood linearization fixture |
+| Universal Dependencies | Natural-language morphosyntax vocabulary alignment | Sampled English fixture tied to UD tag vocabulary provenance |
+| LanguageTool | Negative grammar-rule examples and recoverable diagnostics | Sampled ungrammatical English fixture that must verify as recoverable |
+| doublets-rs | Binary doublets storage round-trip and snapshot gates | Sampled LiNo storage fixture tied to doublets storage API provenance |
 
 ## Executable Fixture Gates
 
-`tests/unit/link_network.rs` enforces that every `PARITY_TARGETS` entry has a
+`tests/unit/parity_corpora.rs` enforces that every `PARITY_TARGETS` entry has a
 matching `PARITY_FIXTURES` entry. Each fixture is parsed with
 `LinkNetwork::parse` and reconstructed with `LinkNetwork::reconstruct_text`; the
 expected reconstruction must match exactly. Each fixture records upstream path
@@ -85,6 +105,30 @@ named and self-referential links; link-cli fixtures cite the C#
 `data/seed/` and `data/benchmarks/` files instead of an unverified corpus-size
 estimate; and meta-expression continues to seed the verified 351-concept
 semantic lexicon.
+
+Wave two adds sampled gates for ast-grep, Semgrep, Comby, GritQL, srcML,
+difftastic, Babel, SWC, OpenRewrite, Spoon, JavaParser, Rascal,
+Stratego/Spoofax, TXL, MPS, Coccinelle, GF, Universal Dependencies,
+LanguageTool, and doublets-rs. These fixtures intentionally port representative
+assertion shapes, not whole upstream suites: pattern/autofix rewrites,
+before/after recipe transforms, XML/source-markup round trips, syntax-aware
+snapshots, projectional model serialization, grammar linearization, UD
+vocabulary alignment, recoverable grammar-rule negatives, and doublets storage
+round-trip gates.
+
+The remaining "copy all competitor tests" goal is tracked by the open parent
+comparison issue [#47](https://github.com/link-foundation/meta-language/issues/47).
+Issue [#63](https://github.com/link-foundation/meta-language/issues/63) is the
+ratcheted wave-two slice: it raises the executable target surface and records a
+coverage floor without claiming that every upstream corpus has been imported.
+Known concrete deferrals remain split out where the blocker is narrower: CSV
+and JSON5 grammar bindings are tracked by
+[#50](https://github.com/link-foundation/meta-language/issues/50), and Perl's
+tree-sitter runtime mismatch is tracked by
+[#70](https://github.com/link-foundation/meta-language/issues/70). SQL dialect
+keys and Delphi-specific compiler coverage are not advertised as implemented;
+until they receive dedicated fixtures, they remain under the open #47 parent
+scope rather than silent roadmap promises.
 
 The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
 `MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`,

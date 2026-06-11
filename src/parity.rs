@@ -66,6 +66,43 @@ impl ParityTarget {
     }
 }
 
+const QUERY_TRANSFORM_RECONSTRUCT: &[ParityCapability] = &[
+    ParityCapability::QueryMatching,
+    ParityCapability::TransformBySubstitution,
+    ParityCapability::SameLanguageReconstruction,
+];
+const LOSSLESS_RECONSTRUCT: &[ParityCapability] = &[
+    ParityCapability::LosslessParsing,
+    ParityCapability::SameLanguageReconstruction,
+];
+const LOSSLESS_TRIVIA_RECONSTRUCT: &[ParityCapability] = &[
+    ParityCapability::LosslessParsing,
+    ParityCapability::TriviaPreservation,
+    ParityCapability::SameLanguageReconstruction,
+];
+const LOSSLESS_SNAPSHOT: &[ParityCapability] = &[
+    ParityCapability::LosslessParsing,
+    ParityCapability::SnapshotVersioning,
+];
+const FORMALIZATION_CROSS_LANGUAGE: &[ParityCapability] = &[
+    ParityCapability::FormalizationRoundTrip,
+    ParityCapability::CrossLanguageReconstruction,
+];
+
+const fn parity_target(
+    name: &'static str,
+    upstream: &'static str,
+    capabilities: &'static [ParityCapability],
+    test_plan: &'static str,
+) -> ParityTarget {
+    ParityTarget {
+        name,
+        upstream,
+        capabilities,
+        test_plan,
+    }
+}
+
 /// Competitor and ecosystem projects called out by the founding issue.
 pub const PARITY_TARGETS: &[ParityTarget] = &[
     ParityTarget {
@@ -200,6 +237,126 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
         ],
         test_plan: "Executable fixtures cover Hawaii naturalization, 1 + 1 formalization, self-reference behavior, and the verified 351-concept lexicon.",
     },
+    parity_target(
+        "ast-grep",
+        "https://github.com/ast-grep/ast-grep",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers structural rule-test-style matching and replacement.",
+    ),
+    parity_target(
+        "Semgrep",
+        "https://github.com/semgrep/semgrep",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers pattern-corpus-style matching and autofix replacement.",
+    ),
+    parity_target(
+        "Comby",
+        "https://github.com/comby-tools/comby",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers structural search-and-replace over original source bytes.",
+    ),
+    parity_target(
+        "GritQL",
+        "https://github.com/getgrit/gritql",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers snippet-pattern matching and rewrite effects.",
+    ),
+    parity_target(
+        "srcML",
+        "https://github.com/srcML/srcML",
+        LOSSLESS_TRIVIA_RECONSTRUCT,
+        "Executable fixture covers XML source-markup round-trip behavior.",
+    ),
+    parity_target(
+        "difftastic",
+        "https://github.com/Wilfred/difftastic",
+        LOSSLESS_SNAPSHOT,
+        "Executable fixture covers syntax-aware source snapshots used for structural diffing.",
+    ),
+    parity_target(
+        "Babel",
+        "https://github.com/babel/babel",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers parser-fixture-style JavaScript transform behavior.",
+    ),
+    parity_target(
+        "SWC",
+        "https://github.com/swc-project/swc",
+        LOSSLESS_RECONSTRUCT,
+        "Executable fixture covers TypeScript parser corpus round-trip behavior.",
+    ),
+    parity_target(
+        "OpenRewrite",
+        "https://github.com/openrewrite/rewrite",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers before/after recipe-style Java source replacement.",
+    ),
+    parity_target(
+        "Spoon",
+        "https://github.com/INRIA/spoon",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers template-style Java source replacement.",
+    ),
+    parity_target(
+        "JavaParser",
+        "https://github.com/javaparser/javaparser",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers lexical-preserving Java replacement.",
+    ),
+    parity_target(
+        "Rascal",
+        "https://github.com/usethesource/rascal",
+        LOSSLESS_RECONSTRUCT,
+        "Executable fixture covers in-language syntax-test source round-trip behavior.",
+    ),
+    parity_target(
+        "Stratego/Spoofax",
+        "https://github.com/metaborg/spoofax",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers SPT-style embedded-fragment replacement.",
+    ),
+    parity_target(
+        "TXL",
+        "https://www.txl.ca",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers by-example C source transformation.",
+    ),
+    parity_target(
+        "MPS",
+        "https://github.com/JetBrains/MPS",
+        &[ParityCapability::ObjectRoundTrip, ParityCapability::SelfDescription],
+        "Executable fixture covers projectional model serialization as source data.",
+    ),
+    parity_target(
+        "Coccinelle",
+        "https://github.com/coccinelle/coccinelle",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers input/semantic-patch/result triple transform behavior.",
+    ),
+    parity_target(
+        "GF",
+        "https://github.com/GrammaticalFramework/gf-rgl",
+        FORMALIZATION_CROSS_LANGUAGE,
+        "Executable fixture covers grammar parse/linearization-style formalization.",
+    ),
+    parity_target(
+        "Universal Dependencies",
+        "https://universaldependencies.org",
+        &[ParityCapability::LosslessParsing],
+        "Executable fixture covers UD morphosyntax vocabulary links over natural-language text.",
+    ),
+    parity_target(
+        "LanguageTool",
+        "https://github.com/languagetool-org/languagetool",
+        &[ParityCapability::ErrorRecovery],
+        "Executable fixture covers negative grammar-rule example recovery.",
+    ),
+    parity_target(
+        "doublets-rs",
+        "https://github.com/linksplatform/doublets-rs",
+        &[ParityCapability::ObjectRoundTrip, ParityCapability::SnapshotVersioning],
+        "Executable fixture covers binary doublets storage round-trip gates.",
+    ),
 ];
 
 /// Expected verification result for an executable parity fixture.

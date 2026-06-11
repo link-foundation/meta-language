@@ -24,6 +24,26 @@ fn parity_targets_track_competitor_and_ecosystem_test_sources() {
         "relative-meta-logic",
         "formal-ai",
         "meta-expression",
+        "ast-grep",
+        "Semgrep",
+        "Comby",
+        "GritQL",
+        "srcML",
+        "difftastic",
+        "Babel",
+        "SWC",
+        "OpenRewrite",
+        "Spoon",
+        "JavaParser",
+        "Rascal",
+        "Stratego/Spoofax",
+        "TXL",
+        "MPS",
+        "Coccinelle",
+        "GF",
+        "Universal Dependencies",
+        "LanguageTool",
+        "doublets-rs",
     ] {
         assert!(
             target_names.contains(&expected),
@@ -291,6 +311,82 @@ fn ecosystem_corpora_contribute_required_internal_fixtures() {
             .lexicon_concepts(),
         351
     );
+}
+
+#[test]
+fn wave_two_competitor_corpora_are_sampled_with_expected_fixture_shapes() {
+    for target_name in [
+        "ast-grep",
+        "Semgrep",
+        "Comby",
+        "GritQL",
+        "srcML",
+        "difftastic",
+        "Babel",
+        "SWC",
+        "OpenRewrite",
+        "Spoon",
+        "JavaParser",
+        "Rascal",
+        "Stratego/Spoofax",
+        "TXL",
+        "MPS",
+        "Coccinelle",
+        "GF",
+        "Universal Dependencies",
+        "LanguageTool",
+        "doublets-rs",
+    ] {
+        let fixtures = fixtures_for(target_name);
+        assert!(
+            !fixtures.is_empty(),
+            "{target_name} should have at least one sampled, executable fixture"
+        );
+        assert!(
+            fixtures
+                .iter()
+                .all(|fixture| fixture.provenance().contains("license:")),
+            "{target_name} fixtures should record license provenance"
+        );
+    }
+
+    for target_name in [
+        "ast-grep",
+        "Semgrep",
+        "Comby",
+        "GritQL",
+        "Babel",
+        "OpenRewrite",
+        "Spoon",
+        "JavaParser",
+        "Stratego/Spoofax",
+        "TXL",
+        "Coccinelle",
+    ] {
+        assert!(
+            fixtures_for(target_name)
+                .iter()
+                .any(|fixture| fixture.transform_expectation().is_some()),
+            "{target_name} should include a transform-expectation fixture"
+        );
+    }
+
+    assert!(fixtures_for("srcML")
+        .iter()
+        .any(|fixture| fixture.provenance().contains("test/parser/testsuite")));
+    assert!(fixtures_for("difftastic")
+        .iter()
+        .any(|fixture| fixture.provenance().contains("sample_files")));
+    assert!(fixtures_for("Coccinelle")
+        .iter()
+        .any(|fixture| fixture.provenance().contains(".cocci")));
+    assert!(fixtures_for("Universal Dependencies")
+        .iter()
+        .any(|fixture| fixture.provenance().contains("Universal Dependencies")));
+    assert!(fixtures_for("LanguageTool")
+        .iter()
+        .any(|fixture| fixture.verification_expectation()
+            == ParityVerificationExpectation::Recoverable));
 }
 
 fn fixtures_for(target_name: &str) -> Vec<&meta_language::ParityFixture> {
