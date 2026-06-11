@@ -18,7 +18,7 @@ use crate::verification::{VerificationIssue, VerificationIssueKind, Verification
 
 /// Stable identifier for a link inside a [`LinkNetwork`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct LinkId(u64);
+pub struct LinkId(pub(crate) u64);
 
 impl LinkId {
     /// Returns the numeric identifier.
@@ -232,9 +232,9 @@ impl LinkMetadata {
 /// A link is an n-tuple of references to other links.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Link {
-    id: LinkId,
-    references: Arc<[LinkId]>,
-    metadata: LinkMetadata,
+    pub(crate) id: LinkId,
+    pub(crate) references: Arc<[LinkId]>,
+    pub(crate) metadata: LinkMetadata,
 }
 
 impl Link {
@@ -264,9 +264,9 @@ impl Link {
 /// Mutable links network for CST, AST, semantic, and self-description links.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct LinkNetwork {
-    next_id: u64,
-    links: BTreeMap<LinkId, Arc<Link>>,
-    terms: BTreeMap<Arc<str>, LinkId>,
+    pub(crate) next_id: u64,
+    pub(crate) links: BTreeMap<LinkId, Arc<Link>>,
+    pub(crate) terms: BTreeMap<Arc<str>, LinkId>,
     concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
     strings: BTreeSet<Arc<str>>,
 }
