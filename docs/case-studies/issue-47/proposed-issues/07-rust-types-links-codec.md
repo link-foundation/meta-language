@@ -32,6 +32,15 @@ provides the codec's text form).
   the existing self-description roots (`type`, `Type`, `field`) so type shape
   is queryable data.
 
+## Implementation decision
+
+The initial implementation uses explicit `ToLinks` / `FromLinks` traits plus a
+`LinksObject` helper for identity-bearing user structs. This keeps the public
+API in the main crate, avoids a proc-macro crate, and avoids committing to a
+serde Serializer/Deserializer shape before the link encoding has stabilized.
+The trait surface still leaves room for a serde adapter later because user
+fields are encoded through the same `LinksEncoder::encode_field` boundary.
+
 ## Acceptance criteria
 
 - [ ] A user struct with nesting, sharing, and a cycle round-trips through
