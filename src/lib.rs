@@ -34,6 +34,7 @@ pub use parity::{
     ParityFixture, ParityTarget, ParityTransformExpectation, ParityVerificationExpectation,
     DATA_FORMAT_TARGETS, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
     NATURAL_LANGUAGE_TARGETS, PARITY_FIXTURES, PARITY_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
+    SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
 };
 pub use parser_registry::ParserRegistry;
 pub use query::{

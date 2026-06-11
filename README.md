@@ -174,7 +174,8 @@ resulting region has no error or missing links.
 ## Parity Implementation
 
 The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,
-`PROGRAMMING_LANGUAGE_TARGETS`, `NATURAL_LANGUAGE_TARGETS`, and
+`PROGRAMMING_LANGUAGE_TARGETS`, `SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`,
+`NATURAL_LANGUAGE_TARGETS`, `DATA_FORMAT_TARGETS`, and
 `GRAMMAR_EMBEDDING_TARGETS` so comparison scope is part of the tested Rust API.
 It also exposes `PARITY_FIXTURES`, with executable, provenance-tracked fixtures
 covering every advertised target capability, and `LANGUAGE_FIXTURES`, with a

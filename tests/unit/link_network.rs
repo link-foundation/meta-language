@@ -4,6 +4,7 @@ use meta_language::{
     RegionDetectionPolicy, SourceSpan, SubstitutionRule, TriviaAttachmentPolicy, TruthValue,
     VerificationIssueKind, DATA_FORMAT_TARGETS, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES,
     MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
+    SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -757,6 +758,29 @@ fn data_format_targets_cover_interchange_format_scope() {
 }
 
 #[test]
+fn second_tier_programming_targets_cover_next_grammar_wave_scope() {
+    assert_eq!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.len(), 5);
+
+    let names = SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+    assert_eq!(names, vec!["PHP", "Swift", "Kotlin", "Scala", "Lua"]);
+
+    assert!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .all(|target| target.family() == meta_language::LanguageFamily::Programming));
+    assert!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .all(|target| target.basis().contains("Issue #47 R-2")));
+
+    // Perl is explicitly deferred: its only published binding pins
+    // `tree-sitter ^0.26.3` as a normal dependency, which clashes with the
+    // project's `tree-sitter 0.25.x` front end. It must not silently appear.
+    assert!(!names.contains(&"Perl"));
+}
+
+#[test]
 fn natural_language_targets_follow_ethnologue_2025_total_speaker_order() {
     let target_names = NATURAL_LANGUAGE_TARGETS
         .iter()
@@ -785,6 +809,7 @@ fn every_language_target_has_an_executable_lossless_fixture() {
     let target_languages = MARKUP_LANGUAGE_TARGETS
         .iter()
         .chain(PROGRAMMING_LANGUAGE_TARGETS.iter())
+        .chain(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.iter())
         .chain(NATURAL_LANGUAGE_TARGETS.iter())
         .chain(DATA_FORMAT_TARGETS.iter())
         .map(meta_language::LanguageTarget::name)

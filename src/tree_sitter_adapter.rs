@@ -113,6 +113,16 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_proto::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("graphql") || language.eq_ignore_ascii_case("gql") {
         Some(tree_sitter_graphql::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("php") {
+        Some(tree_sitter_php::LANGUAGE_PHP.into())
+    } else if language.eq_ignore_ascii_case("swift") {
+        Some(tree_sitter_swift::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("kotlin") || language.eq_ignore_ascii_case("kt") {
+        Some(tree_sitter_kotlin_ng::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("scala") {
+        Some(tree_sitter_scala::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("lua") {
+        Some(tree_sitter_lua::LANGUAGE.into())
     } else {
         None
     }

@@ -1,6 +1,6 @@
 use meta_language::{
     Link, LinkNetwork, LinkType, NetworkProjection, ParseConfiguration, VerificationIssueKind,
-    DATA_FORMAT_TARGETS, LANGUAGE_FIXTURES,
+    DATA_FORMAT_TARGETS, LANGUAGE_FIXTURES, SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -574,4 +574,142 @@ fn json_in_markdown_fence_parses_as_connected_region() {
         }),
         "embedded JSON region should connect grammar-backed syntax into one network"
     );
+}
+
+#[test]
+fn second_tier_programming_fixtures_emit_grammar_backed_syntax_and_round_trip() {
+    // Root node kind emitted by each wired second-tier programming grammar.
+    let expected_root = |language: &str| match language {
+        "PHP" => "program",
+        "Swift" | "Kotlin" => "source_file",
+        "Scala" => "compilation_unit",
+        "Lua" => "chunk",
+        other => panic!("unexpected second-tier programming target {other}"),
+    };
+
+    for target in SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS {
+        let language = target.name();
+        let fixture = LANGUAGE_FIXTURES
+            .iter()
+            .find(|fixture| fixture.language() == language)
+            .expect("second-tier programming language fixture exists");
+        let network = LinkNetwork::parse(
+            fixture.source(),
+            fixture.language(),
+            ParseConfiguration::default(),
+        );
+
+        assert_eq!(
+            network.reconstruct_text(),
+            fixture.source(),
+            "{} fixture failed reconstruction",
+            fixture.description()
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{} fixture should parse cleanly",
+            fixture.description()
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().span().is_some()
+            }),
+            "{language} should emit grammar-backed syntax links"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some(expected_root(language))
+                    && link.metadata().is_named()
+            }),
+            "{language} should emit the {} grammar root node",
+            expected_root(language)
+        );
+        let concrete_syntax_links = network
+            .projected_links(NetworkProjection::ConcreteSyntax)
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+            .count();
+        assert!(
+            concrete_syntax_links > 0,
+            "{language} should produce grammar-backed concrete syntax links"
+        );
+    }
+}
+
+#[test]
+fn second_tier_programming_aliases_use_their_tree_sitter_grammar() {
+    for (language, source) in [
+        ("php", "<?php\n$x = 1;\n"),
+        ("swift", "let x = 1\n"),
+        ("kotlin", "val x = 1\n"),
+        ("kt", "val x = 1\n"),
+        ("scala", "val x = 1\n"),
+        ("lua", "local x = 1\n"),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} alias failed reconstruction"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().span().is_some()
+            }),
+            "{language} alias should emit grammar-backed syntax links"
+        );
+    }
+}
+
+#[test]
+fn second_tier_programming_recovery_errors_round_trip_with_flags() {
+    // Each malformed fixture must still reconstruct byte-for-byte while exposing
+    // recoverable error/missing diagnostics.
+    for (language, source) in [
+        ("PHP", "<?php\nfunction greet($name {\n    return $name;\n"),
+        (
+            "Swift",
+            "func greet(_ name: String -> String {\n    return name\n",
+        ),
+        ("Kotlin", "fun greet(name: String {\n    return name\n"),
+        (
+            "Scala",
+            "object Demo {\n  def greet(name: String = s\"$name\"\n",
+        ),
+        ("Lua", "local function greet(name\n  return name\n"),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        let report = network.verify_full_match(None);
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} recovery fixture failed reconstruction"
+        );
+        assert!(
+            !report.is_clean(),
+            "{language} recovery fixture should expose diagnostics"
+        );
+        assert!(
+            report
+                .issues()
+                .iter()
+                .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink
+                    || issue.kind() == VerificationIssueKind::MissingLink),
+            "{language} recovery fixture should report error/missing diagnostics"
+        );
+        assert!(
+            network
+                .links()
+                .any(|link| link.metadata().flags().has_error()
+                    || link.metadata().flags().is_missing()),
+            "{language} recovery fixture should flag error/missing links"
+        );
+    }
 }
