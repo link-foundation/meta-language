@@ -50,6 +50,9 @@ clean.
   while preserving unchanged source bytes.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style
   match-and-substitute operation.
+- `apply_edit()` for incremental source reparsing with stable outside-edit link
+  ids, snapshot fork sharing for unchanged links, and structural diff sets for
+  changed, added, and removed links.
 - Concept-to-language syntax mappings for cross-language reconstruction.
 - `reconstruct_text_as()` for semantic cross-language reconstruction and
   configurable formalization levels.

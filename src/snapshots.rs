@@ -1,7 +1,56 @@
+use std::collections::BTreeSet;
 use std::sync::Arc;
 
 use crate::access::ReadOnlyNetwork;
-use crate::link_network::LinkNetwork;
+use crate::link_network::{LinkId, LinkNetwork};
+
+/// Changed, added, and removed link identifiers between two network versions.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct StructuralDiff {
+    changed: BTreeSet<LinkId>,
+    added: BTreeSet<LinkId>,
+    removed: BTreeSet<LinkId>,
+}
+
+impl StructuralDiff {
+    /// Creates a structural diff from its changed, added, and removed sets.
+    #[must_use]
+    pub const fn new(
+        changed: BTreeSet<LinkId>,
+        added: BTreeSet<LinkId>,
+        removed: BTreeSet<LinkId>,
+    ) -> Self {
+        Self {
+            changed,
+            added,
+            removed,
+        }
+    }
+
+    /// Link ids present in both versions whose references or metadata changed.
+    #[must_use]
+    pub const fn changed(&self) -> &BTreeSet<LinkId> {
+        &self.changed
+    }
+
+    /// Link ids present only in the newer version.
+    #[must_use]
+    pub const fn added(&self) -> &BTreeSet<LinkId> {
+        &self.added
+    }
+
+    /// Link ids present only in the older version.
+    #[must_use]
+    pub const fn removed(&self) -> &BTreeSet<LinkId> {
+        &self.removed
+    }
+
+    /// Whether the two versions contain the same structural links.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.changed.is_empty() && self.added.is_empty() && self.removed.is_empty()
+    }
+}
 
 /// Immutable versioned view of a links network.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -76,6 +125,12 @@ impl NetworkSnapshot {
     #[must_use]
     pub fn as_read_only(&self) -> ReadOnlyNetwork {
         ReadOnlyNetwork::from_shared(self.network.clone())
+    }
+
+    /// Computes changed, added, and removed link ids against another snapshot.
+    #[must_use]
+    pub fn structural_diff(&self, other: &Self) -> StructuralDiff {
+        self.network().structural_diff(other.network())
     }
 
     /// Creates an editable snapshot fork from this immutable snapshot.
@@ -161,5 +216,28 @@ impl LinkNetwork {
     #[must_use]
     pub fn snapshot(&self, version: u64, provenance: impl Into<String>) -> NetworkSnapshot {
         NetworkSnapshot::new(version, self.clone(), provenance)
+    }
+
+    /// Computes changed, added, and removed link ids against another network.
+    #[must_use]
+    pub fn structural_diff(&self, other: &Self) -> StructuralDiff {
+        let old_ids = self
+            .links()
+            .map(crate::link_network::Link::id)
+            .collect::<BTreeSet<_>>();
+        let new_ids = other
+            .links()
+            .map(crate::link_network::Link::id)
+            .collect::<BTreeSet<_>>();
+
+        let removed = old_ids.difference(&new_ids).copied().collect();
+        let added = new_ids.difference(&old_ids).copied().collect();
+        let changed = old_ids
+            .intersection(&new_ids)
+            .copied()
+            .filter(|id| self.link(*id) != other.link(*id))
+            .collect();
+
+        StructuralDiff::new(changed, added, removed)
     }
 }

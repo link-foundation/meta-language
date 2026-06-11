@@ -1,6 +1,7 @@
 pub mod access;
 mod concept_ontology;
 pub mod configuration;
+mod incremental;
 pub mod language_parser;
 pub mod language_profile;
 pub mod link_flags;
@@ -57,7 +58,7 @@ pub use rust_codec::{
     RustTypeKind, RustTypeShape, ToLinks,
 };
 pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
-pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot};
+pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot, StructuralDiff};
 pub use source::{ByteRange, Point, SourceSpan};
 #[cfg(feature = "doublets")]
 pub use storage::DoubletsLinkStore;

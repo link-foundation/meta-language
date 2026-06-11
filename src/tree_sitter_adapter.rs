@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use tree_sitter::{Language, Node, Parser};
+use tree_sitter::{InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Tree};
 
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point,
@@ -13,6 +13,38 @@ pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> O
     parser.set_language(&grammar).ok()?;
     let parsed = parser.parse(text, None)?;
 
+    Some(network_from_tree(text, language, configuration, &parsed))
+}
+
+pub fn parse_incremental(
+    old_text: &str,
+    range: ByteRange,
+    replacement: &str,
+    language: &str,
+    configuration: ParseConfiguration,
+) -> Option<LinkNetwork> {
+    let grammar = grammar_for_language(language)?;
+    let edited_text = apply_text_edit(old_text, range, replacement)?;
+    let mut parser = Parser::new();
+    parser.set_language(&grammar).ok()?;
+    let mut old_tree = parser.parse(old_text, None)?;
+    old_tree.edit(&input_edit(old_text, range, replacement));
+    let parsed = parser.parse(&edited_text, Some(&old_tree))?;
+
+    Some(network_from_tree(
+        &edited_text,
+        language,
+        configuration,
+        &parsed,
+    ))
+}
+
+fn network_from_tree(
+    text: &str,
+    language: &str,
+    configuration: ParseConfiguration,
+    parsed: &Tree,
+) -> LinkNetwork {
     let (mut network, document) = LinkNetwork::new_parse_document(text, language);
     let root = parsed.root_node();
     let context = ConvertContext::new(
@@ -24,7 +56,56 @@ pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> O
     );
     convert_node(&mut network, document, root, context);
     network.attach_embedded_regions(document, text, language, configuration);
-    Some(network)
+    network
+}
+
+fn apply_text_edit(old_text: &str, range: ByteRange, replacement: &str) -> Option<String> {
+    if range.end() > old_text.len()
+        || !old_text.is_char_boundary(range.start())
+        || !old_text.is_char_boundary(range.end())
+    {
+        return None;
+    }
+
+    let mut edited =
+        String::with_capacity(old_text.len() - (range.end() - range.start()) + replacement.len());
+    edited.push_str(&old_text[..range.start()]);
+    edited.push_str(replacement);
+    edited.push_str(&old_text[range.end()..]);
+    Some(edited)
+}
+
+fn input_edit(old_text: &str, range: ByteRange, replacement: &str) -> InputEdit {
+    let start_position = point_at_byte(old_text, range.start());
+    let old_end_position = point_at_byte(old_text, range.end());
+    let new_end_position = point_after_text(start_position, replacement);
+
+    InputEdit {
+        start_byte: range.start(),
+        old_end_byte: range.end(),
+        new_end_byte: range.start() + replacement.len(),
+        start_position: tree_sitter_point(start_position),
+        old_end_position: tree_sitter_point(old_end_position),
+        new_end_position: tree_sitter_point(new_end_position),
+    }
+}
+
+fn point_after_text(start: Point, text: &str) -> Point {
+    let mut row = start.row();
+    let mut column = start.column();
+    for byte in text.bytes() {
+        if byte == b'\n' {
+            row += 1;
+            column = 0;
+        } else {
+            column += 1;
+        }
+    }
+    Point::new(row, column)
+}
+
+const fn tree_sitter_point(point: Point) -> TreeSitterPoint {
+    TreeSitterPoint::new(point.row(), point.column())
 }
 
 pub fn parse_embedded_region_into(
