@@ -21,6 +21,9 @@ clean.
   `parse_lossless_text()` boundary remains available.
 - `reconstruct_text()` for byte-for-byte reconstruction from non-missing token
   links ordered by source span.
+- `insert_source_token()`, `insert_syntax_node()`, and `render_source()` for
+  emitting target-language source from programmatically constructed syntax
+  networks whose token leaves do not come from a prior parse.
 - `projected_links()` for viewing the same lossless network as concrete syntax,
   abstract syntax, or semantic-only data by stripping lower-level preservation
   links from the view.
@@ -104,6 +107,28 @@ let abstract_links = network
     .count();
 
 assert!(abstract_links < network.len());
+```
+
+Construct source directly as a syntax network when code should be generated
+before validation:
+
+```rust
+use meta_language::{LinkNetwork, ParseConfiguration};
+
+let mut network = LinkNetwork::new();
+let tokens = [
+    network.insert_source_token("JavaScript", "const answer = "),
+    network.insert_source_token("JavaScript", "42"),
+    network.insert_source_token("JavaScript", ";\n"),
+];
+let declaration = network.insert_syntax_node("JavaScript", "lexical_declaration", tokens);
+network.insert_syntax_node("JavaScript", "program", [declaration]);
+
+let source = network.render_source("JavaScript");
+assert_eq!(source, "const answer = 42;\n");
+assert!(LinkNetwork::parse(&source, "JavaScript", ParseConfiguration::default())
+    .verify_full_match(None)
+    .is_clean());
 ```
 
 Configure the engine read-only when a parsed network must never be mutated. The
