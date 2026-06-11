@@ -26,6 +26,11 @@ clean.
   links from the view.
 - `NetworkSnapshot` and `MutableNetworkSnapshot` for immutable versioned
   snapshots, editable forks, provenance, and forward commits.
+- `AccessMode` for a read-only or mutable engine per user configuration:
+  `freeze()` / `as_read_only()` yield a `ReadOnlyNetwork` view whose mutators
+  are unreachable at compile time, and `parse_engine()` returns an
+  `EngineNetwork` that rejects mutation with a clear diagnostic under
+  `AccessMode::ReadOnly`; the frozen form reuses snapshot `Arc` sharing.
 - `ParseConfiguration` with containment-link, token-link, or combined trivia
   attachment policies.
 - Mixed-region links for Markdown fenced code and HTML regions, plus HTML
@@ -84,6 +89,21 @@ let abstract_links = network
     .count();
 
 assert!(abstract_links < network.len());
+```
+
+Configure the engine read-only when a parsed network must never be mutated. The
+frozen view exposes every read operation but no mutators (calling one is a
+compile error), and the `EngineNetwork` boundary rejects mutation at runtime:
+
+```rust
+use meta_language::{AccessMode, LinkNetwork, ParseConfiguration};
+
+let configuration = ParseConfiguration::default().with_access_mode(AccessMode::ReadOnly);
+let mut engine = LinkNetwork::parse_engine("alpha beta", "plain-text", configuration);
+
+assert!(engine.is_read_only());
+assert_eq!(engine.reconstruct_text(), "alpha beta");
+assert!(engine.as_mutable().is_err()); // read-only engine rejects mutation
 ```
 
 Codemod-style transforms can select links with an S-expression query and replace
