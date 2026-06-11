@@ -84,6 +84,15 @@ pub struct ReplacementReport {
 }
 
 impl ReplacementReport {
+    pub(crate) const fn from_substitution(substitution: SubstitutionReport) -> Self {
+        Self {
+            text_replacements: Vec::new(),
+            template_errors: Vec::new(),
+            substitution,
+            profile_diagnostics: Vec::new(),
+        }
+    }
+
     /// Source-text replacements made for captured links.
     #[must_use]
     pub fn text_replacements(&self) -> &[TextReplacement] {
@@ -349,6 +358,7 @@ impl LinkNetwork {
                     text_replacements,
                     template_errors,
                     substitution: SubstitutionReport::default(),
+                    profile_diagnostics: Vec::new(),
                 }
             }
             ReplacementKind::Substitution(rule) => {
