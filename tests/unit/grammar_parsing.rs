@@ -581,7 +581,7 @@ fn second_tier_programming_fixtures_emit_grammar_backed_syntax_and_round_trip() 
     // Root node kind emitted by each wired second-tier programming grammar.
     let expected_root = |language: &str| match language {
         "PHP" => "program",
-        "Swift" | "Kotlin" => "source_file",
+        "Swift" | "Kotlin" | "Perl" => "source_file",
         "Scala" => "compilation_unit",
         "Lua" => "chunk",
         other => panic!("unexpected second-tier programming target {other}"),
@@ -648,6 +648,8 @@ fn second_tier_programming_aliases_use_their_tree_sitter_grammar() {
         ("kt", "val x = 1\n"),
         ("scala", "val x = 1\n"),
         ("lua", "local x = 1\n"),
+        ("perl", "my $x = 1;\n"),
+        ("pl", "my $x = 1;\n"),
     ] {
         let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
 
@@ -683,6 +685,10 @@ fn second_tier_programming_recovery_errors_round_trip_with_flags() {
             "object Demo {\n  def greet(name: String = s\"$name\"\n",
         ),
         ("Lua", "local function greet(name\n  return name\n"),
+        (
+            "Perl",
+            "sub greet {\n    my ($name = @_;\n    return $name;\n",
+        ),
     ] {
         let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
         let report = network.verify_full_match(None);

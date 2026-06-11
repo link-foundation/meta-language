@@ -204,6 +204,8 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_scala::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("lua") {
         Some(tree_sitter_lua::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("perl") || language.eq_ignore_ascii_case("pl") {
+        Some(tree_sitter_perl::LANGUAGE.into())
     } else {
         None
     }
@@ -238,8 +240,10 @@ fn convert_node(
 
     let mut covered_until = node.start_byte();
     for child_index in 0..node.child_count() {
+        let child_index_u32 =
+            u32::try_from(child_index).expect("tree-sitter child index fits in u32");
         let child = node
-            .child(child_index)
+            .child(child_index_u32)
             .expect("tree-sitter child index should be valid");
         if context.has_synthetic_suffix() && child.start_byte() >= context.source_len {
             break;
@@ -247,9 +251,7 @@ fn convert_node(
         insert_gap_token(network, node_id, covered_until, child.start_byte(), context);
 
         let child_id = convert_node(network, node_id, child, context);
-        if let Some(label) = node.field_name_for_child(
-            u32::try_from(child_index).expect("tree-sitter child index fits in u32"),
-        ) {
+        if let Some(label) = node.field_name_for_child(child_index_u32) {
             network.insert_field(node_id, label, child_id);
         }
         covered_until = child.end_byte().min(context.source_len);
