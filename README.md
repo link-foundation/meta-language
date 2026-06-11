@@ -31,6 +31,14 @@ clean.
   are unreachable at compile time, and `parse_engine()` returns an
   `EngineNetwork` that rejects mutation with a clear diagnostic under
   `AccessMode::ReadOnly`; the frozen form reuses snapshot `Arc` sharing.
+- `LinkStore` and `EngineLinkStore` for storage-backed create/read/update/delete
+  and search operations: reads take `&self`, writes take `&mut self`, the
+  default store is the in-memory `LinkNetwork`, and read-only access mode
+  rejects writes through the same storage boundary.
+- Optional `doublets` feature support for a file-mapped `DoubletsLinkStore`
+  using `doublets-rs` 0.4, with lossless network round trips and a documented
+  `doublets-web` backend label for browser/WASM exchange of the same binary
+  graph layout.
 - `ParseConfiguration` with containment-link, token-link, or combined trivia
   attachment policies.
 - Mixed-region links for Markdown fenced code and HTML regions, plus HTML
@@ -105,6 +113,33 @@ assert!(engine.is_read_only());
 assert_eq!(engine.reconstruct_text(), "alpha beta");
 assert!(engine.as_mutable().is_err()); // read-only engine rejects mutation
 ```
+
+Use the storage trait directly when links need to move between in-memory and
+binary stores. The optional doublets backend is enabled with
+`--features doublets`:
+
+```rust
+use meta_language::{
+    DoubletsLinkStore, LinkNetwork, LinkStore, LinkStoreQuery, ParseConfiguration,
+};
+
+let network = LinkNetwork::parse("const answer = 42;\n", "JavaScript", ParseConfiguration::default());
+let mut store = DoubletsLinkStore::create_file("network.doublets").expect("create doublets store");
+store.replace_with_network(&network).expect("write network");
+
+let restored = DoubletsLinkStore::open_file("network.doublets")
+    .expect("open doublets store")
+    .to_network()
+    .expect("read network");
+assert_eq!(restored.to_lino(), network.to_lino());
+
+let links = LinkStore::search(&restored, &LinkStoreQuery::new()).expect("search links");
+assert_eq!(links.len(), restored.len());
+```
+
+`LinkStoreBackend::DoubletsWeb` names the WASM/browser exchange target for this
+binary graph representation; native code uses `DoubletsLinkStore`, while a
+browser host can map the same logical records through `doublets-web`.
 
 Codemod-style transforms can select links with an S-expression query and replace
 only captured source ranges:

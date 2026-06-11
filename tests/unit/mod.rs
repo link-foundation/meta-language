@@ -1,6 +1,7 @@
 mod access_mode;
 mod concept_ontology;
 mod cross_language_reconstruction;
+mod doublets_storage;
 mod grammar_parsing;
 mod link_network;
 mod links_notation;
@@ -11,6 +12,7 @@ mod query_matching;
 mod query_transform;
 mod rust_codec;
 mod self_description;
+mod storage;
 mod substitution;
 
 #[path = "ci-cd/mod.rs"]

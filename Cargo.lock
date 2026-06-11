@@ -24,6 +24,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
+name = "allocator-api2"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c880a97d28a3681c0267bd29cff89621202715b065127cd445fa0f0fe0aa2880"
+
+[[package]]
 name = "anstream"
 version = "0.6.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -119,6 +125,12 @@ name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
+name = "beef"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a8241f3ebb85c056b509d4327ad0358fbbba6ffb340bf388f26350aeda225b1"
 
 [[package]]
 name = "bindgen"
@@ -483,6 +495,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "doublets"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fec36305f729ca75677ebe6be2f45020a52894c32cac4842e18d4ad320f7a31f"
+dependencies = [
+ "cfg-if",
+ "leak_slice",
+ "platform-data",
+ "platform-mem",
+ "platform-num",
+ "platform-trees",
+ "tap",
+ "thiserror",
+]
+
+[[package]]
 name = "dunce"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -674,7 +702,7 @@ version = "0.15.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
 dependencies = [
- "allocator-api2",
+ "allocator-api2 0.2.21",
  "equivalent",
  "foldhash",
 ]
@@ -1070,6 +1098,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
+name = "leak_slice"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecf3387da9fb41906394e1306ddd3cd26dd9b7177af11c19b45b364b743aed26"
+
+[[package]]
 name = "libc"
 version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1362,9 +1396,11 @@ name = "meta-language"
 version = "0.39.0"
 dependencies = [
  "clap",
+ "doublets",
  "lindera",
  "lingua",
  "links-notation",
+ "platform-mem",
  "regex",
  "serde_json",
  "tree-sitter",
@@ -1530,6 +1566,47 @@ name = "pin-project-lite"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
+
+[[package]]
+name = "platform-data"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6782bc71345465116de96d250a36dcf49336010a2320d958d12a5d4390186c90"
+dependencies = [
+ "beef",
+ "platform-num",
+ "thiserror",
+]
+
+[[package]]
+name = "platform-mem"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f27cff7c92440ac926c8c91ea3151db6e52a262f602d0c157f254e422fc15b12"
+dependencies = [
+ "allocator-api2 0.4.0",
+ "memmap2",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "platform-num"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c4ca8e18138b1c90ad802aff931f946a0e6bd760c35af30f1ff2489489ab54a"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "platform-trees"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40e25a531617fa762c8505826c930f6c1cfcc226f63dea09882b56ae0b8ed078"
+dependencies = [
+ "platform-num",
+]
 
 [[package]]
 name = "potential_utf"
@@ -2264,6 +2341,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "tap"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
+
+[[package]]
 name = "tar"
 version = "0.4.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2272,6 +2355,19 @@ dependencies = [
  "filetime",
  "libc",
  "xattr",
+]
+
+[[package]]
+name = "tempfile"
+version = "3.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
+dependencies = [
+ "fastrand",
+ "getrandom 0.3.4",
+ "once_cell",
+ "rustix 1.1.4",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
