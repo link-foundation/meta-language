@@ -861,13 +861,16 @@ fn data_format_targets_cover_interchange_format_scope() {
 
 #[test]
 fn second_tier_programming_targets_cover_next_grammar_wave_scope() {
-    assert_eq!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.len(), 5);
+    assert_eq!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.len(), 6);
 
     let names = SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
         .iter()
         .map(meta_language::LanguageTarget::name)
         .collect::<Vec<_>>();
-    assert_eq!(names, vec!["PHP", "Swift", "Kotlin", "Scala", "Lua"]);
+    assert_eq!(
+        names,
+        vec!["PHP", "Swift", "Kotlin", "Scala", "Lua", "Perl"]
+    );
 
     assert!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
         .iter()
@@ -876,10 +879,7 @@ fn second_tier_programming_targets_cover_next_grammar_wave_scope() {
         .iter()
         .all(|target| target.basis().contains("Issue #47 R-2")));
 
-    // Perl is explicitly deferred: its only published binding pins
-    // `tree-sitter ^0.26.3` as a normal dependency, which clashes with the
-    // project's `tree-sitter 0.25.x` front end. It must not silently appear.
-    assert!(!names.contains(&"Perl"));
+    assert!(names.contains(&"Perl"));
 }
 
 #[test]

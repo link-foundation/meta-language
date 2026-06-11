@@ -420,8 +420,8 @@ pub const MARKUP_LANGUAGE_TARGETS: &[LanguageTarget] = &[
 /// Each entry has a wired tree-sitter grammar in `src/tree_sitter_adapter.rs`
 /// and a round-trip [`LANGUAGE_FIXTURES`] entry. CSV and JSON5 are intentionally
 /// absent: their crates.io grammar bindings still pin `tree-sitter ~0.20` and
-/// are incompatible with the project's `tree-sitter 0.25.x` front end. See
-/// `docs/parity-roadmap.md` for the explicit deferral.
+/// remain incompatible with the project's tree-sitter front end as published.
+/// See `docs/parity-roadmap.md` for the explicit deferral.
 pub const DATA_FORMAT_TARGETS: &[LanguageTarget] = &[
     LanguageTarget {
         name: "JSON",
@@ -518,11 +518,7 @@ pub const PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
 /// top ten.
 ///
 /// Each entry has a wired tree-sitter grammar in `src/tree_sitter_adapter.rs`
-/// and a round-trip [`LANGUAGE_FIXTURES`] entry. Perl is intentionally absent:
-/// its only published binding (`tree-sitter-perl 1.1.2`) declares a *normal*
-/// dependency on `tree-sitter ^0.26.3`, which is incompatible with the
-/// project's `tree-sitter 0.25.x` front end. See `docs/parity-roadmap.md` for
-/// the explicit deferral.
+/// and a round-trip [`LANGUAGE_FIXTURES`] entry.
 pub const SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
     LanguageTarget {
         name: "PHP",
@@ -548,6 +544,11 @@ pub const SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         name: "Lua",
         family: LanguageFamily::Programming,
         basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Perl",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10; issue #70 deferred Perl grammar follow-up",
     },
 ];
 
@@ -781,6 +782,11 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
         language: "Lua",
         source: "local function greet(name)\n  return \"café \" .. name\nend\n",
         description: "Lua function concatenating a UTF-8 string",
+    },
+    LanguageFixture {
+        language: "Perl",
+        source: "use utf8;\nsub greet {\n    my ($name) = @_;\n    return \"café $name\";\n}\n",
+        description: "Perl subroutine returning a UTF-8 interpolated string",
     },
 ];
 
