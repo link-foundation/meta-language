@@ -53,9 +53,10 @@ clean.
 - Concept-to-language syntax mappings for cross-language reconstruction.
 - `reconstruct_text_as()` for semantic cross-language reconstruction and
   configurable formalization levels.
-- `seed_common_concept_ontology()` for importing meta-expression's 351-concept
-  semantic lexicon as shared concept links, plus structural programming-language
-  concepts such as function, binding, application, sequence, branch, and loop.
+- Exact-match concept interning with language-bound expression links,
+  queryable external-id aliases, LiNo concept-set import, and
+  `seed_common_concept_ontology()` for the default 351-concept semantic
+  lexicon plus structural programming-language concepts.
 - Object-identity links, many-valued `TruthValue` semantics, and fixed-point
   `ProbabilisticTruthValue` confidence semantics.
 - A testable parity registry and upstream-provenanced `PARITY_FIXTURES` for

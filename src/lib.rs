@@ -23,7 +23,7 @@ pub mod transform;
 pub mod verification;
 
 pub use access::{EngineNetwork, ReadOnlyNetwork, ReadOnlyViolation};
-pub use concept_ontology::ConceptOntologySeedReport;
+pub use concept_ontology::{ConceptOntologyImportReport, ConceptOntologySeedReport};
 pub use configuration::{
     AccessMode, FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
