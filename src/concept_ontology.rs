@@ -2,13 +2,53 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
+use crate::lino_serialization::LinoSerializationError;
 use serde_json::Value;
+
+const EXTERNAL_ID_VOCABULARY_PREFIX: &str = "external-id:";
+
+/// Summary returned after importing concept links from an ontology source.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ConceptOntologyImportReport {
+    concepts: usize,
+    alias_links: usize,
+    syntax_mappings: usize,
+}
+
+impl ConceptOntologyImportReport {
+    const fn new(concepts: usize, alias_links: usize, syntax_mappings: usize) -> Self {
+        Self {
+            concepts,
+            alias_links,
+            syntax_mappings,
+        }
+    }
+
+    /// Number of language-free concepts imported from the source.
+    #[must_use]
+    pub const fn concepts(self) -> usize {
+        self.concepts
+    }
+
+    /// Number of external-id alias links imported from the source.
+    #[must_use]
+    pub const fn alias_links(self) -> usize {
+        self.alias_links
+    }
+
+    /// Number of language-bound expression mappings imported from the source.
+    #[must_use]
+    pub const fn syntax_mappings(self) -> usize {
+        self.syntax_mappings
+    }
+}
 
 /// Summary returned after seeding the shared concept ontology into a network.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ConceptOntologySeedReport {
     lexicon_concepts: usize,
     structural_concepts: usize,
+    alias_links: usize,
     syntax_mappings: usize,
 }
 
@@ -16,11 +56,13 @@ impl ConceptOntologySeedReport {
     const fn new(
         lexicon_concepts: usize,
         structural_concepts: usize,
+        alias_links: usize,
         syntax_mappings: usize,
     ) -> Self {
         Self {
             lexicon_concepts,
             structural_concepts,
+            alias_links,
             syntax_mappings,
         }
     }
@@ -35,6 +77,12 @@ impl ConceptOntologySeedReport {
     #[must_use]
     pub const fn structural_concepts(self) -> usize {
         self.structural_concepts
+    }
+
+    /// Number of external-id alias links attached to seeded concepts.
+    #[must_use]
+    pub const fn alias_links(self) -> usize {
+        self.alias_links
     }
 
     /// Number of semantic concrete-syntax mapping links surfaced by the seed.
@@ -365,12 +413,13 @@ impl LinkNetwork {
     #[must_use]
     pub fn seed_common_concept_ontology(&mut self) -> ConceptOntologySeedReport {
         let lexicon = semantic_lexicon();
+        let mut alias_links = 0;
         let mut syntax_mappings = 0;
 
         for concept in &lexicon.concepts {
             let definition = concept.definition();
-            let concept_link =
-                self.insert_typed_point(concept.id(), LinkType::Concept, Some(&definition));
+            let concept_link = self.intern_concept(concept.id(), Some(&definition));
+            alias_links += self.insert_external_aliases(concept_link, concept);
 
             for entry in concept.syntax_entries() {
                 self.insert_concept_syntax_mapping(
@@ -387,8 +436,7 @@ impl LinkNetwork {
         let mut structural_concepts = BTreeSet::new();
         for concept in STRUCTURAL_CONCEPTS {
             structural_concepts.insert(concept.id);
-            let concept_link =
-                self.insert_typed_point(concept.id, LinkType::Concept, Some(concept.definition));
+            let concept_link = self.intern_concept(concept.id, Some(concept.definition));
 
             for (language, syntax) in concept.syntax {
                 self.insert_concept_syntax_mapping(
@@ -402,7 +450,16 @@ impl LinkNetwork {
             }
         }
 
-        let _ = self.seed_statehood_worked_example();
+        let statehood = self.seed_statehood_worked_example();
+        for (concept_link, external_id) in
+            [(statehood.subject, "Q782"), (statehood.object, "Q35657")]
+        {
+            let (_alias, inserted) =
+                self.insert_concept_alias_link(concept_link, "Wikidata", external_id);
+            if inserted {
+                alias_links += 1;
+            }
+        }
         syntax_mappings += STATEHOOD_PROPOSITION_SYNTAX.len()
             + HAWAII_ENTITY_SYNTAX.len()
             + UNITED_STATES_STATE_SYNTAX.len();
@@ -410,8 +467,37 @@ impl LinkNetwork {
         ConceptOntologySeedReport::new(
             lexicon.concept_count,
             structural_concepts.len(),
+            alias_links,
             syntax_mappings,
         )
+    }
+
+    /// Interns a language-free concept by exact identifier.
+    ///
+    /// The identifier is matched exactly: case changes, diacritic changes, or
+    /// sense suffixes are distinct concept ids and therefore produce distinct
+    /// concept links.
+    pub fn intern_concept(&mut self, exact_id: &str, definition: Option<&str>) -> LinkId {
+        self.insert_typed_point(exact_id, LinkType::Concept, definition)
+    }
+
+    /// Inserts a language-bound expression linked to a language-free concept.
+    ///
+    /// The concept is reused only when `concept` exactly matches an existing
+    /// concept id; otherwise a new concept link is minted.
+    pub fn insert_concept_expression(
+        &mut self,
+        concept: &str,
+        language: &str,
+        expression: &str,
+    ) -> LinkId {
+        let concept_link = self.find_term(concept).unwrap_or_else(|| {
+            self.intern_concept(
+                concept,
+                Some("A language-free concept shared by exact interlingual id."),
+            )
+        });
+        self.insert_concept_syntax_mapping(concept_link, concept, language, expression, true)
     }
 
     /// Inserts a concept-to-language syntax mapping and returns the semantic link id.
@@ -421,12 +507,159 @@ impl LinkNetwork {
         language: &str,
         syntax: &str,
     ) -> LinkId {
-        let concept_link = self.insert_typed_point(
-            concept,
-            LinkType::Concept,
-            Some("A concept mapping connects shared meaning to language syntax."),
+        self.insert_concept_expression(concept, language, syntax)
+    }
+
+    /// Attaches an external vocabulary id to a concept without changing its exact concept id.
+    pub fn insert_concept_alias(
+        &mut self,
+        concept_link: LinkId,
+        vocabulary: &str,
+        external_id: &str,
+    ) -> LinkId {
+        self.insert_concept_alias_link(concept_link, vocabulary, external_id)
+            .0
+    }
+
+    /// Imports concept, expression, and alias links from canonical `LiNo` text.
+    ///
+    /// The input is the links-notation text produced by [`LinkNetwork::to_lino`].
+    /// Importing the same text repeatedly is idempotent because concepts,
+    /// expressions, and aliases are all deduplicated by exact link shape.
+    pub fn import_concept_ontology_lino(
+        &mut self,
+        text: &str,
+    ) -> Result<ConceptOntologyImportReport, LinoSerializationError> {
+        let source = Self::from_lino(text)?;
+        Ok(self.import_concept_ontology_network(&source))
+    }
+
+    fn import_concept_ontology_network(&mut self, source: &Self) -> ConceptOntologyImportReport {
+        let mut concept_links: BTreeMap<LinkId, (LinkId, String)> = BTreeMap::new();
+        let mut concepts = 0;
+        let mut alias_links = 0;
+        let mut syntax_mappings = 0;
+
+        for link in source.links() {
+            if link.metadata().link_type() != Some(LinkType::Concept) {
+                continue;
+            }
+            let Some(term) = link.metadata().term() else {
+                continue;
+            };
+            let concept_link = self.intern_concept(term, link.metadata().definition());
+            concept_links.insert(link.id(), (concept_link, term.to_string()));
+            concepts += 1;
+        }
+
+        for link in source.links() {
+            if link.metadata().link_type() != Some(LinkType::Semantic) {
+                continue;
+            }
+            let [source_concept, source_context] = link.references() else {
+                continue;
+            };
+            let Some((target_concept, concept_id)) = concept_links.get(source_concept) else {
+                continue;
+            };
+            let Some(context) = source.link(*source_context) else {
+                continue;
+            };
+            let Some(term) = link.metadata().term() else {
+                continue;
+            };
+
+            match context.metadata().link_type() {
+                Some(LinkType::Language) => {
+                    if let Some(language) = link
+                        .metadata()
+                        .language()
+                        .or_else(|| context.metadata().term())
+                    {
+                        self.insert_concept_syntax_mapping(
+                            *target_concept,
+                            concept_id,
+                            language,
+                            term,
+                            false,
+                        );
+                        syntax_mappings += 1;
+                    }
+                }
+                Some(LinkType::Type) => {
+                    let vocabulary = link.metadata().language().or_else(|| {
+                        context
+                            .metadata()
+                            .term()
+                            .and_then(external_vocabulary_from_term)
+                    });
+                    if let Some(vocabulary) = vocabulary {
+                        self.insert_concept_alias(*target_concept, vocabulary, term);
+                        alias_links += 1;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        ConceptOntologyImportReport::new(concepts, alias_links, syntax_mappings)
+    }
+
+    fn insert_external_aliases(
+        &mut self,
+        concept_link: LinkId,
+        concept: &SemanticLexiconConcept,
+    ) -> usize {
+        let mut aliases = BTreeSet::new();
+        if let Some(vocabulary) = external_vocabulary_for_id(concept.id()) {
+            aliases.insert((vocabulary, concept.id()));
+        }
+        if let Some(entity_id) = concept.entity_id.as_deref() {
+            if let Some(vocabulary) = external_vocabulary_for_id(entity_id) {
+                aliases.insert((vocabulary, entity_id));
+            }
+        }
+
+        aliases
+            .into_iter()
+            .filter(|(vocabulary, external_id)| {
+                let (_alias, inserted) =
+                    self.insert_concept_alias_link(concept_link, vocabulary, external_id);
+                inserted
+            })
+            .count()
+    }
+
+    fn insert_concept_alias_link(
+        &mut self,
+        concept_link: LinkId,
+        vocabulary: &str,
+        external_id: &str,
+    ) -> (LinkId, bool) {
+        let vocabulary_term = external_vocabulary_term(vocabulary);
+        let vocabulary_link = self.insert_typed_point(
+            &vocabulary_term,
+            LinkType::Type,
+            Some("External concept identifier vocabulary."),
         );
-        self.insert_concept_syntax_mapping(concept_link, concept, language, syntax, true)
+
+        if let Some(existing) =
+            self.find_concept_alias(concept_link, vocabulary_link, vocabulary, external_id)
+        {
+            return (existing, false);
+        }
+
+        (
+            self.insert_link(
+                [concept_link, vocabulary_link],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Semantic)
+                    .with_named(true)
+                    .with_term(external_id)
+                    .with_language(vocabulary),
+            ),
+            true,
+        )
     }
 
     fn insert_concept_syntax_mapping(
@@ -472,6 +705,26 @@ impl LinkNetwork {
                     && references[1] == language_link
                     && link.metadata().term() == Some(syntax)
                     && link.metadata().language() == Some(language)
+            })
+            .map(Link::id)
+    }
+
+    fn find_concept_alias(
+        &self,
+        concept_link: LinkId,
+        vocabulary_link: LinkId,
+        vocabulary: &str,
+        external_id: &str,
+    ) -> Option<LinkId> {
+        self.links()
+            .find(|link| {
+                let references = link.references();
+                link.metadata().link_type() == Some(LinkType::Semantic)
+                    && references.len() == 2
+                    && references[0] == concept_link
+                    && references[1] == vocabulary_link
+                    && link.metadata().term() == Some(external_id)
+                    && link.metadata().language() == Some(vocabulary)
             })
             .map(Link::id)
     }
@@ -610,4 +863,26 @@ fn is_wikidata_qid(value: &str) -> bool {
     value.strip_prefix('Q').is_some_and(|suffix| {
         !suffix.is_empty() && suffix.chars().all(|character| character.is_ascii_digit())
     })
+}
+
+fn is_wordnet_cili_id(value: &str) -> bool {
+    value.starts_with("ili:") || value.starts_with("ili-")
+}
+
+fn external_vocabulary_for_id(value: &str) -> Option<&'static str> {
+    if is_wikidata_qid(value) {
+        Some("Wikidata")
+    } else if is_wordnet_cili_id(value) {
+        Some("WordNet CILI")
+    } else {
+        None
+    }
+}
+
+fn external_vocabulary_term(vocabulary: &str) -> String {
+    format!("{EXTERNAL_ID_VOCABULARY_PREFIX}{vocabulary}")
+}
+
+fn external_vocabulary_from_term(term: &str) -> Option<&str> {
+    term.strip_prefix(EXTERNAL_ID_VOCABULARY_PREFIX)
 }
