@@ -116,6 +116,21 @@ fn release_workflow_jobs_have_explicit_timeouts() {
 }
 
 #[test]
+fn coverage_job_enforces_recorded_line_coverage_floor() {
+    let workflow = release_workflow();
+    let coverage = job_block(&workflow, "coverage");
+
+    assert!(
+        coverage.contains("cargo llvm-cov --all-features --lcov --output-path lcov.info"),
+        "coverage job should keep producing an lcov artifact"
+    );
+    assert!(
+        coverage.contains("--fail-under-lines 84.30"),
+        "coverage job should fail below the recorded 84.30% line coverage floor"
+    );
+}
+
+#[test]
 fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible() {
     let workflow = release_workflow();
 

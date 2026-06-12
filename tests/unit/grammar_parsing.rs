@@ -1,6 +1,6 @@
 use meta_language::{
-    LinkNetwork, LinkType, NetworkProjection, ParseConfiguration, VerificationIssueKind,
-    LANGUAGE_FIXTURES,
+    Link, LinkNetwork, LinkType, NetworkProjection, ParseConfiguration, VerificationIssueKind,
+    DATA_FORMAT_TARGETS, LANGUAGE_FIXTURES, SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -435,4 +435,321 @@ fn parse_marks_recovery_errors_without_losing_original_text() {
     assert!(network
         .links()
         .any(|link| link.metadata().flags().has_error()));
+}
+
+#[test]
+fn data_format_fixtures_emit_structured_syntax_and_round_trip() {
+    // Root node kind emitted by each wired data-exchange parser.
+    let expected_root = |language: &str| match language {
+        "JSON" | "TOML" | "XML" | "INI" | "JSON5" => "document",
+        "YAML" => "stream",
+        "protobuf" | "GraphQL" => "source_file",
+        "CSV" => "csv_file",
+        other => panic!("unexpected data-format target {other}"),
+    };
+
+    for target in DATA_FORMAT_TARGETS {
+        let language = target.name();
+        let fixture = LANGUAGE_FIXTURES
+            .iter()
+            .find(|fixture| fixture.language() == language)
+            .expect("data-format language fixture exists");
+        let network = LinkNetwork::parse(
+            fixture.source(),
+            fixture.language(),
+            ParseConfiguration::default(),
+        );
+
+        assert_eq!(
+            network.reconstruct_text(),
+            fixture.source(),
+            "{} fixture failed reconstruction",
+            fixture.description()
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{} fixture should parse cleanly",
+            fixture.description()
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().span().is_some()
+            }),
+            "{language} should emit structured syntax links"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some(expected_root(language))
+                    && link.metadata().is_named()
+            }),
+            "{language} should emit the {} grammar root node",
+            expected_root(language)
+        );
+        let concrete_syntax_links = network
+            .projected_links(NetworkProjection::ConcreteSyntax)
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+            .count();
+        assert!(
+            concrete_syntax_links > 0,
+            "{language} should produce structured concrete syntax links"
+        );
+    }
+}
+
+#[test]
+fn csv_recovery_errors_round_trip_with_flags() {
+    let source = "name,city\n\"unterminated,Lisbon\n";
+    let network = LinkNetwork::parse(source, "CSV", ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(!report.is_clean());
+    assert!(report
+        .issues()
+        .iter()
+        .any(|issue| issue.kind() == VerificationIssueKind::HasErrorLink));
+}
+
+#[test]
+fn json5_recovery_errors_round_trip_with_flags() {
+    let source = "{\n  key: 'unterminated,\n}\n";
+    let network = LinkNetwork::parse(source, "JSON5", ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(!report.is_clean());
+    assert!(report.issues().iter().any(|issue| {
+        issue.kind() == VerificationIssueKind::ErrorLink
+            || issue.kind() == VerificationIssueKind::HasErrorLink
+    }));
+}
+
+#[test]
+fn data_format_aliases_use_their_structured_parser() {
+    for (language, source) in [
+        ("json", "{\"a\": 1}\n"),
+        ("yml", "a: 1\n"),
+        ("toml", "a = 1\n"),
+        ("xml", "<a>1</a>\n"),
+        ("ini", "[a]\nb = 1\n"),
+        ("proto", "syntax = \"proto3\";\n"),
+        ("gql", "type A { b: Int }\n"),
+        ("csv", "name,city\nAna,Lisbon\n"),
+        ("json5", "{name: 'Ana',}\n"),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} alias failed reconstruction"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link
+                        .metadata()
+                        .language()
+                        .is_some_and(|actual| actual.eq_ignore_ascii_case(language))
+                    && link.metadata().span().is_some()
+            }),
+            "{language} alias should emit structured syntax links"
+        );
+    }
+}
+
+#[test]
+fn json_recovery_errors_round_trip_with_flags() {
+    let source = "{\n  \"name\": ,\n  \"items\": [1, 2\n}\n";
+    let network = LinkNetwork::parse(source, "JSON", ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(!report.is_clean());
+    assert!(report
+        .issues()
+        .iter()
+        .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink
+            || issue.kind() == VerificationIssueKind::MissingLink));
+    assert!(network
+        .links()
+        .any(|link| link.metadata().flags().has_error() || link.metadata().flags().is_missing()));
+}
+
+#[test]
+fn json_in_markdown_fence_parses_as_connected_region() {
+    let source = "# Config\n\n```json\n{\n  \"enabled\": true\n}\n```\n";
+    let network = LinkNetwork::parse(source, "Markdown", ParseConfiguration::default());
+
+    assert_eq!(network.reconstruct_text(), source);
+
+    let region_ids = network
+        .links()
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Region))
+        .filter(|link| link.metadata().language() == Some("json"))
+        .map(Link::id)
+        .collect::<Vec<_>>();
+    assert!(
+        !region_ids.is_empty(),
+        "JSON fence should produce an embedded json region"
+    );
+    assert!(
+        network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link.metadata().language() == Some("json")
+                && link
+                    .references()
+                    .iter()
+                    .any(|reference| region_ids.contains(reference))
+        }),
+        "embedded JSON region should connect grammar-backed syntax into one network"
+    );
+}
+
+#[test]
+fn second_tier_programming_fixtures_emit_grammar_backed_syntax_and_round_trip() {
+    // Root node kind emitted by each wired second-tier programming grammar.
+    let expected_root = |language: &str| match language {
+        "PHP" => "program",
+        "Swift" | "Kotlin" | "Perl" => "source_file",
+        "Scala" => "compilation_unit",
+        "Lua" => "chunk",
+        other => panic!("unexpected second-tier programming target {other}"),
+    };
+
+    for target in SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS {
+        let language = target.name();
+        let fixture = LANGUAGE_FIXTURES
+            .iter()
+            .find(|fixture| fixture.language() == language)
+            .expect("second-tier programming language fixture exists");
+        let network = LinkNetwork::parse(
+            fixture.source(),
+            fixture.language(),
+            ParseConfiguration::default(),
+        );
+
+        assert_eq!(
+            network.reconstruct_text(),
+            fixture.source(),
+            "{} fixture failed reconstruction",
+            fixture.description()
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{} fixture should parse cleanly",
+            fixture.description()
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().span().is_some()
+            }),
+            "{language} should emit grammar-backed syntax links"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().term() == Some(expected_root(language))
+                    && link.metadata().is_named()
+            }),
+            "{language} should emit the {} grammar root node",
+            expected_root(language)
+        );
+        let concrete_syntax_links = network
+            .projected_links(NetworkProjection::ConcreteSyntax)
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+            .count();
+        assert!(
+            concrete_syntax_links > 0,
+            "{language} should produce grammar-backed concrete syntax links"
+        );
+    }
+}
+
+#[test]
+fn second_tier_programming_aliases_use_their_tree_sitter_grammar() {
+    for (language, source) in [
+        ("php", "<?php\n$x = 1;\n"),
+        ("swift", "let x = 1\n"),
+        ("kotlin", "val x = 1\n"),
+        ("kt", "val x = 1\n"),
+        ("scala", "val x = 1\n"),
+        ("lua", "local x = 1\n"),
+        ("perl", "my $x = 1;\n"),
+        ("pl", "my $x = 1;\n"),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} alias failed reconstruction"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().language() == Some(language)
+                    && link.metadata().span().is_some()
+            }),
+            "{language} alias should emit grammar-backed syntax links"
+        );
+    }
+}
+
+#[test]
+fn second_tier_programming_recovery_errors_round_trip_with_flags() {
+    // Each malformed fixture must still reconstruct byte-for-byte while exposing
+    // recoverable error/missing diagnostics.
+    for (language, source) in [
+        ("PHP", "<?php\nfunction greet($name {\n    return $name;\n"),
+        (
+            "Swift",
+            "func greet(_ name: String -> String {\n    return name\n",
+        ),
+        ("Kotlin", "fun greet(name: String {\n    return name\n"),
+        (
+            "Scala",
+            "object Demo {\n  def greet(name: String = s\"$name\"\n",
+        ),
+        ("Lua", "local function greet(name\n  return name\n"),
+        (
+            "Perl",
+            "sub greet {\n    my ($name = @_;\n    return $name;\n",
+        ),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        let report = network.verify_full_match(None);
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} recovery fixture failed reconstruction"
+        );
+        assert!(
+            !report.is_clean(),
+            "{language} recovery fixture should expose diagnostics"
+        );
+        assert!(
+            report
+                .issues()
+                .iter()
+                .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink
+                    || issue.kind() == VerificationIssueKind::MissingLink),
+            "{language} recovery fixture should report error/missing diagnostics"
+        );
+        assert!(
+            network
+                .links()
+                .any(|link| link.metadata().flags().has_error()
+                    || link.metadata().flags().is_missing()),
+            "{language} recovery fixture should flag error/missing links"
+        );
+    }
 }

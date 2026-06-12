@@ -3,9 +3,11 @@ use std::fmt;
 use std::sync::Arc;
 
 use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
+use crate::embedded_region_parser;
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
+use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
-use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
+use crate::mixed_regions::EmbeddedRegion;
 use crate::natural_language::annotate_natural_language;
 use crate::query::{LinkQuery, QueryMatch, QueryPredicateHost, RejectPredicateHost};
 use crate::self_description::{definition_expression, SELF_DESCRIPTION_ROOTS};
@@ -13,14 +15,19 @@ use crate::source::{ByteRange, Point, SourceSpan};
 use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
 };
-use crate::tree_sitter_adapter;
 use crate::verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 /// Stable identifier for a link inside a [`LinkNetwork`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct LinkId(u64);
+pub struct LinkId(pub(crate) u64);
 
 impl LinkId {
+    /// Builds a link identifier from its numeric representation.
+    #[must_use]
+    pub const fn from_u64(value: u64) -> Self {
+        Self(value)
+    }
+
     /// Returns the numeric identifier.
     #[must_use]
     pub const fn as_u64(self) -> u64 {
@@ -35,7 +42,7 @@ impl fmt::Display for LinkId {
 }
 
 /// Coarse role for a link in the meta-language network.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LinkType {
     Link,
     Reference,
@@ -232,9 +239,9 @@ impl LinkMetadata {
 /// A link is an n-tuple of references to other links.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Link {
-    id: LinkId,
-    references: Arc<[LinkId]>,
-    metadata: LinkMetadata,
+    pub(crate) id: LinkId,
+    pub(crate) references: Arc<[LinkId]>,
+    pub(crate) metadata: LinkMetadata,
 }
 
 impl Link {
@@ -264,11 +271,11 @@ impl Link {
 /// Mutable links network for CST, AST, semantic, and self-description links.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct LinkNetwork {
-    next_id: u64,
-    links: BTreeMap<LinkId, Arc<Link>>,
-    terms: BTreeMap<Arc<str>, LinkId>,
-    concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
-    strings: BTreeSet<Arc<str>>,
+    pub(crate) next_id: u64,
+    pub(crate) links: BTreeMap<LinkId, Arc<Link>>,
+    pub(crate) terms: BTreeMap<Arc<str>, LinkId>,
+    pub(crate) concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
+    pub(crate) strings: BTreeSet<Arc<str>>,
 }
 
 impl LinkNetwork {
@@ -341,7 +348,11 @@ impl LinkNetwork {
     /// stripped away for CST, AST, or semantic-only work.
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
-        BuiltInLanguageParser.parse_source(text, language, configuration)
+        let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
+        if let Some(profile) = configuration.profile().and_then(LanguageProfile::builtin) {
+            profile.declare_in(&mut network);
+        }
+        network
     }
 
     /// Parses plain source text into a lossless token network.
@@ -914,30 +925,13 @@ impl LinkNetwork {
         language: &str,
         configuration: ParseConfiguration,
     ) {
-        let policy = configuration.region_detection_policy();
-        for region in detect_embedded_regions(text, language, policy) {
-            let region_language = region.language().to_string();
-            let language_link = self.insert_typed_point(&region_language, LinkType::Language, None);
-            let region_link = self.insert_link(
-                [document, language_link],
-                LinkMetadata::new()
-                    .with_link_type(LinkType::Region)
-                    .with_named(true)
-                    .with_term(format!("{region_language} region"))
-                    .with_language(region_language)
-                    .with_span(region.span()),
-            );
-            let range = region.span().byte_range();
-            let region_text = &text[range.start()..range.end()];
-            let _ = tree_sitter_adapter::parse_embedded_region_into(
-                self,
-                region_link,
-                region_text,
-                region.language(),
-                region.span(),
-                configuration,
-            );
-        }
+        embedded_region_parser::attach_embedded_regions(
+            self,
+            document,
+            text,
+            language,
+            configuration,
+        );
     }
 
     fn intern_metadata(&mut self, mut metadata: LinkMetadata) -> LinkMetadata {

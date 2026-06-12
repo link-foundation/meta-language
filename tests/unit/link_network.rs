@@ -1,9 +1,10 @@
 use meta_language::{
-    ByteRange, LanguageIdentificationDetector, LinkFlags, LinkMetadata, LinkNetwork, LinkQuery,
-    LinkType, NetworkProjection, ParseConfiguration, Point, ProbabilisticTruthValue, Probability,
-    RegionDetectionPolicy, SourceSpan, SubstitutionRule, TriviaAttachmentPolicy, TruthValue,
-    VerificationIssueKind, GRAMMAR_EMBEDDING_TARGETS, LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS,
-    NATURAL_LANGUAGE_TARGETS, PROGRAMMING_LANGUAGE_TARGETS,
+    ByteRange, LanguageIdentificationDetector, LinkFlags, LinkId, LinkMetadata, LinkNetwork,
+    LinkQuery, LinkType, NetworkProjection, ParseConfiguration, Point, ProbabilisticTruthValue,
+    Probability, RegionDetectionPolicy, SourceSpan, SubstitutionRule, TriviaAttachmentPolicy,
+    TruthValue, VerificationIssueKind, DATA_FORMAT_TARGETS, GRAMMAR_EMBEDDING_TARGETS,
+    LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS,
+    PROGRAMMING_LANGUAGE_TARGETS, SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
 };
 
 #[test]
@@ -256,6 +257,88 @@ fn mutable_snapshot_edits_preserve_parent_bytes_and_share_unchanged_links() {
         assert_eq!(committed.network().shared_link_count(unchanged), Some(2));
         assert_eq!(committed.network().shared_link_count(edited), Some(1));
     }
+}
+
+#[test]
+fn apply_edit_reconstructs_fresh_parse_and_preserves_outside_link_ids() {
+    let source = "let alpha = 1;\nlet beta = alpha + 1;\n";
+    let mut network = LinkNetwork::parse(source, "JavaScript", ParseConfiguration::default());
+
+    let alpha_range = find_range(source, "alpha");
+    let before_edit_beta = token_id(&network, "beta", source.find("beta").expect("beta exists"));
+
+    assert!(network.apply_edit(alpha_range, "gamma"));
+
+    let edited_source = source.replacen("alpha", "gamma", 1);
+    let fresh = LinkNetwork::parse(&edited_source, "JavaScript", ParseConfiguration::default());
+
+    assert_eq!(network, fresh);
+    assert_eq!(network.reconstruct_text(), edited_source);
+    assert_eq!(
+        token_id(
+            &network,
+            "beta",
+            edited_source.find("beta").expect("beta remains")
+        ),
+        before_edit_beta
+    );
+}
+
+#[test]
+fn apply_edit_keeps_ids_stable_when_new_links_shift_the_fresh_parse_order() {
+    let source = "let alpha = 1;\nlet beta = 2;\n";
+    let mut network = LinkNetwork::parse(source, "JavaScript", ParseConfiguration::default());
+    let before_edit_beta = token_id(&network, "beta", source.find("beta").expect("beta exists"));
+
+    assert!(network.apply_edit(ByteRange::new(0, 0), "let prefix = 0;\n"));
+
+    let edited_source = "let prefix = 0;\nlet alpha = 1;\nlet beta = 2;\n";
+    assert_eq!(network.reconstruct_text(), edited_source);
+    assert_eq!(
+        token_id(
+            &network,
+            "beta",
+            edited_source.find("beta").expect("beta remains")
+        ),
+        before_edit_beta
+    );
+}
+
+#[test]
+fn snapshot_diff_reports_structural_changes_from_an_edited_fork() {
+    let source = "let alpha = 1;\nlet beta = 2;\n";
+    let network = LinkNetwork::parse(source, "JavaScript", ParseConfiguration::default());
+    let snapshot = network.snapshot(1, "initial parse");
+    drop(network);
+    let beta = token_id(
+        snapshot.network(),
+        "beta",
+        source.find("beta").expect("beta exists"),
+    );
+    let alpha = token_id(
+        snapshot.network(),
+        "alpha",
+        source.find("alpha").expect("alpha exists"),
+    );
+
+    let mut mutable = snapshot.to_mutable("rename alpha");
+    assert!(mutable
+        .network_mut()
+        .apply_edit(find_range(source, "alpha"), "gamma"));
+    assert_eq!(snapshot.network().shared_link_count(beta), Some(2));
+    let committed = mutable.commit();
+
+    let diff = snapshot.structural_diff(&committed);
+
+    assert!(diff.changed().contains(&alpha) || diff.removed().contains(&alpha));
+    assert!(!diff.changed().contains(&beta));
+    assert!(!diff.added().contains(&beta));
+    assert!(!diff.removed().contains(&beta));
+    assert_eq!(committed.network().shared_link_count(beta), Some(2));
+    assert_eq!(
+        committed.network().reconstruct_text(),
+        source.replacen("alpha", "gamma", 1)
+    );
 }
 
 #[test]
@@ -562,6 +645,26 @@ fn assert_link_with_prefix(network: &LinkNetwork, link_type: LinkType, prefix: &
     );
 }
 
+fn find_range(source: &str, needle: &str) -> ByteRange {
+    let start = source.find(needle).expect("needle exists in source");
+    ByteRange::new(start, start + needle.len())
+}
+
+fn token_id(network: &LinkNetwork, term: &str, start: usize) -> LinkId {
+    network
+        .links()
+        .find(|link| {
+            link.metadata().link_type() == Some(LinkType::Token)
+                && link.metadata().term() == Some(term)
+                && link
+                    .metadata()
+                    .span()
+                    .is_some_and(|span| span.byte_range().start() == start)
+        })
+        .map(meta_language::Link::id)
+        .expect("token exists")
+}
+
 #[test]
 fn txt_parse_exposes_whole_buffer_as_single_region() {
     let source = "Plain text region\nUTF-8 line: café\n";
@@ -731,6 +834,53 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
 }
 
 #[test]
+fn data_format_targets_cover_interchange_format_scope() {
+    assert_eq!(DATA_FORMAT_TARGETS.len(), 9);
+
+    let names = DATA_FORMAT_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        names,
+        vec!["JSON", "YAML", "TOML", "XML", "INI", "protobuf", "GraphQL", "CSV", "JSON5"]
+    );
+
+    assert!(DATA_FORMAT_TARGETS
+        .iter()
+        .all(|target| target.family() == meta_language::LanguageFamily::DataFormat));
+    assert!(DATA_FORMAT_TARGETS
+        .iter()
+        .all(|target| target.basis().contains("Issue #47")));
+
+    assert!(names.contains(&"CSV"));
+    assert!(names.contains(&"JSON5"));
+}
+
+#[test]
+fn second_tier_programming_targets_cover_next_grammar_wave_scope() {
+    assert_eq!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.len(), 6);
+
+    let names = SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .map(meta_language::LanguageTarget::name)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        names,
+        vec!["PHP", "Swift", "Kotlin", "Scala", "Lua", "Perl"]
+    );
+
+    assert!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .all(|target| target.family() == meta_language::LanguageFamily::Programming));
+    assert!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
+        .iter()
+        .all(|target| target.basis().contains("Issue #47 R-2")));
+
+    assert!(names.contains(&"Perl"));
+}
+
+#[test]
 fn natural_language_targets_follow_ethnologue_2025_total_speaker_order() {
     let target_names = NATURAL_LANGUAGE_TARGETS
         .iter()
@@ -759,7 +909,9 @@ fn every_language_target_has_an_executable_lossless_fixture() {
     let target_languages = MARKUP_LANGUAGE_TARGETS
         .iter()
         .chain(PROGRAMMING_LANGUAGE_TARGETS.iter())
+        .chain(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.iter())
         .chain(NATURAL_LANGUAGE_TARGETS.iter())
+        .chain(DATA_FORMAT_TARGETS.iter())
         .map(meta_language::LanguageTarget::name)
         .collect::<Vec<_>>();
 

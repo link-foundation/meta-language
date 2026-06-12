@@ -51,6 +51,42 @@ pub enum NaturalizationDirection {
     Formalize,
 }
 
+/// Whether the engine produces a mutable network or an enforced read-only one.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum AccessMode {
+    /// The network is editable: mutators such as `insert_link` and
+    /// `apply_substitution` are available on `&mut LinkNetwork`.
+    #[default]
+    Mutable,
+    /// The network is frozen: only `&self` operations (query, project,
+    /// reconstruct, verify, serialize) are reachable, and mutation attempts at
+    /// the engine boundary fail with a clear diagnostic.
+    ReadOnly,
+}
+
+impl AccessMode {
+    /// Human-readable access-mode name.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Mutable => "mutable",
+            Self::ReadOnly => "read-only",
+        }
+    }
+
+    /// Whether this access mode permits mutation.
+    #[must_use]
+    pub const fn is_mutable(self) -> bool {
+        matches!(self, Self::Mutable)
+    }
+
+    /// Whether this access mode forbids mutation.
+    #[must_use]
+    pub const fn is_read_only(self) -> bool {
+        matches!(self, Self::ReadOnly)
+    }
+}
+
 /// Configuration for parse-to-network operations.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ParseConfiguration {
@@ -59,6 +95,8 @@ pub struct ParseConfiguration {
     language_identification_detector: LanguageIdentificationDetector,
     formalization_level: FormalizationLevel,
     naturalization_direction: NaturalizationDirection,
+    access_mode: AccessMode,
+    profile: Option<&'static str>,
 }
 
 impl ParseConfiguration {
@@ -71,6 +109,8 @@ impl ParseConfiguration {
             language_identification_detector: LanguageIdentificationDetector::Lingua,
             formalization_level: FormalizationLevel::Natural,
             naturalization_direction: NaturalizationDirection::Naturalize,
+            access_mode: AccessMode::Mutable,
+            profile: None,
         }
     }
 
@@ -114,6 +154,24 @@ impl ParseConfiguration {
         self
     }
 
+    /// Returns configuration with a read-only or mutable engine access mode.
+    #[must_use]
+    pub const fn with_access_mode(mut self, access_mode: AccessMode) -> Self {
+        self.access_mode = access_mode;
+        self
+    }
+
+    /// Returns configuration with a language capability profile name.
+    ///
+    /// Built-in profiles such as `"JavaScript"` are materialized as queryable
+    /// links during parsing. User-declared profiles can be supplied directly to
+    /// transform-time APIs.
+    #[must_use]
+    pub const fn with_profile(mut self, profile: &'static str) -> Self {
+        self.profile = Some(profile);
+        self
+    }
+
     /// Trivia attachment policy.
     #[must_use]
     pub const fn trivia_attachment_policy(self) -> TriviaAttachmentPolicy {
@@ -142,6 +200,18 @@ impl ParseConfiguration {
     #[must_use]
     pub const fn naturalization_direction(self) -> NaturalizationDirection {
         self.naturalization_direction
+    }
+
+    /// Read-only or mutable engine access mode.
+    #[must_use]
+    pub const fn access_mode(self) -> AccessMode {
+        self.access_mode
+    }
+
+    /// Configured language capability profile name.
+    #[must_use]
+    pub const fn profile(self) -> Option<&'static str> {
+        self.profile
     }
 }
 

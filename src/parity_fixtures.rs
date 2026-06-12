@@ -2,6 +2,8 @@ use crate::parity::{
     ParityCapability, ParityFixture, ParityTransformExpectation, ParityVerificationExpectation,
 };
 
+mod wave_two;
+
 pub const PARITY_FIXTURES: &[ParityFixture] = &[
     // Upstream: tree-sitter/tree-sitter test/fixtures/test_grammars/readme_grammar/corpus.txt; license: MIT.
     ParityFixture {
@@ -519,6 +521,22 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
             ParityCapability::ObjectRoundTrip,
         ],
     },
+    // Upstream: link-foundation/links-notation README documents parse_lino_to_links/format_links as the round-trip API the 0.13 crate exposes; license: Unlicense.
+    ParityFixture {
+        target_name: "links-notation",
+        name: "whole network serialization fixture",
+        language: "LiNo",
+        source: "(papa loves mama)\n",
+        expected_reconstruction: "(papa loves mama)\n",
+        provenance:
+            "link-foundation/links-notation README parse_lino_to_links/format_links round-trip API; license: Unlicense",
+        verification_expectation: ParityVerificationExpectation::Clean,
+        transform_expectation: None,
+        capabilities: &[
+            ParityCapability::LosslessParsing,
+            ParityCapability::LinoSerialization,
+        ],
+    },
     // Upstream: link-foundation/link-cli uses the Foundation.Data.Doublets.Cli.Tests project name in C#; license: Unlicense.
     ParityFixture {
         target_name: "link-cli",
@@ -767,4 +785,24 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
             ParityCapability::TriviaPreservation,
         ],
     },
+    wave_two::AST_GREP_FIXTURE,
+    wave_two::SEMGREP_FIXTURE,
+    wave_two::COMBY_FIXTURE,
+    wave_two::GRITQL_FIXTURE,
+    wave_two::SRCML_FIXTURE,
+    wave_two::DIFFTASTIC_FIXTURE,
+    wave_two::BABEL_FIXTURE,
+    wave_two::SWC_FIXTURE,
+    wave_two::OPENREWRITE_FIXTURE,
+    wave_two::SPOON_FIXTURE,
+    wave_two::JAVAPARSER_FIXTURE,
+    wave_two::RASCAL_FIXTURE,
+    wave_two::STRATEGO_SPOOFAX_FIXTURE,
+    wave_two::TXL_FIXTURE,
+    wave_two::MPS_FIXTURE,
+    wave_two::COCCINELLE_FIXTURE,
+    wave_two::GF_FIXTURE,
+    wave_two::UNIVERSAL_DEPENDENCIES_FIXTURE,
+    wave_two::LANGUAGETOOL_FIXTURE,
+    wave_two::DOUBLETS_RS_FIXTURE,
 ];

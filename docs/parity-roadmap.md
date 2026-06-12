@@ -17,14 +17,23 @@ The Rust API exposes these registries:
   grammar support.
 - `PROGRAMMING_LANGUAGE_TARGETS`: the initial ten programming-language parser
   targets.
+- `SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`: popular programming languages
+  immediately below the TIOBE top ten that require full grammar support.
 - `NATURAL_LANGUAGE_TARGETS`: the initial ten natural-language parser targets.
+- `DATA_FORMAT_TARGETS`: data-exchange / interchange formats that require full
+  structured parser support.
 - `GRAMMAR_EMBEDDING_TARGETS`: mixed-grammar cases that must parse into one
   unified links network.
 - `PARITY_FIXTURES`: executable source fixtures, one or more per parity target,
   with upstream path and license provenance, that must parse and reconstruct
   through the public API.
 - `LANGUAGE_FIXTURES`: executable source fixtures for every markup,
-  programming-language, and natural-language target named by the founding issue.
+  programming-language, second-tier-programming-language, natural-language, and
+  data-exchange-format target named by the founding issue.
+- `NATURAL_LANGUAGE_GRAMMAR_FIXTURES`: grammatical and ungrammatical
+  natural-language pass/fail fixtures for the ten target languages, with
+  provenance for the repo-authored sentence pairs and the UD-derived
+  morphosyntax vocabulary.
 
 Unit tests assert that the required projects, language groups, and executable
 fixtures stay present. They also assert that every advertised parity capability
@@ -48,10 +57,30 @@ parse/reconstruction fixture.
 | relative-meta-logic | Dependent types, many-valued evaluation, probabilistic evaluation, paradox cases | Ported dependent-type, many-valued truth, and probabilistic liar-paradox fixtures plus `TruthValue` and `ProbabilisticTruthValue` tests |
 | formal-ai | Formalization corpus and semantic reconstruction expectations | Ported fixtures from actual `data/seed/*.lino` and `data/benchmarks/*.lino` files plus concept reconstruction tests |
 | meta-expression | Formalize, semantic-link, naturalize, span, and self-reference behavior | Hawaii naturalization, `1 + 1 = 2`, and liar self-reference fixtures plus the verified 351-concept semantic lexicon seed |
+| ast-grep | Rule-test-style structural matching and rewrite assertions | Sampled JavaScript identifier replacement fixture with rule-test provenance |
+| Semgrep | Pattern corpus matching and autofix behavior | Sampled Python pattern/autofix fixture with paired `.sgrep`-style provenance |
+| Comby | Structural search-and-replace over source text | Sampled JavaScript template rewrite fixture with generic test provenance |
+| GritQL | Snippet pattern matching and rewrite effects | Sampled JavaScript rewrite fixture with Grit pattern-test provenance |
+| srcML | Source-to-XML markup and lossless reconstruction | Sampled XML source-markup round-trip fixture from `test/parser/testsuite` |
+| difftastic | Syntax-aware before/after snapshots for structural diffing | Sampled Rust source snapshot fixture from `sample_files` |
+| Babel | JavaScript parser-fixture input/output behavior | Sampled parser fixture with executable JavaScript replacement expectation |
+| SWC | TypeScript parser corpus reconstruction | Sampled TypeScript round-trip fixture from parser corpus provenance |
+| OpenRewrite | Java recipe before/after rewrites | Sampled Java identifier replacement fixture in `RewriteTest` style |
+| Spoon | Java template and pretty-printer transformations | Sampled Java identifier replacement fixture with template-test provenance |
+| JavaParser | Lexical-preserving Java source rewrites | Sampled Java identifier replacement fixture with lexical-preservation provenance |
+| Rascal | In-language syntax tests and reconstruction | Sampled Rascal-style test declaration round-trip fixture |
+| Stratego/Spoofax | SPT embedded-fragment parse/transform expectations | Sampled JavaScript embedded-fragment replacement fixture |
+| TXL | By-example source transformation rules | Sampled C source replacement fixture with TXL example provenance |
+| MPS | Projectional model serialization and self-description | Sampled XML model round-trip fixture |
+| Coccinelle | C input/semantic-patch/result transform triples | Sampled C identifier replacement fixture with `.cocci` triple provenance |
+| GF | Grammar parse/linearization-style formalization | Sampled English statehood linearization fixture |
+| Universal Dependencies | Natural-language morphosyntax vocabulary alignment | Sampled English fixture tied to UD tag vocabulary provenance |
+| LanguageTool | Negative grammar-rule examples and recoverable diagnostics | Sampled ungrammatical English fixture that must verify as recoverable |
+| doublets-rs | Binary doublets storage round-trip and snapshot gates | Sampled LiNo storage fixture tied to doublets storage API provenance |
 
 ## Executable Fixture Gates
 
-`tests/unit/link_network.rs` enforces that every `PARITY_TARGETS` entry has a
+`tests/unit/parity_corpora.rs` enforces that every `PARITY_TARGETS` entry has a
 matching `PARITY_FIXTURES` entry. Each fixture is parsed with
 `LinkNetwork::parse` and reconstructed with `LinkNetwork::reconstruct_text`; the
 expected reconstruction must match exactly. Each fixture records upstream path
@@ -77,10 +106,50 @@ named and self-referential links; link-cli fixtures cite the C#
 estimate; and meta-expression continues to seed the verified 351-concept
 semantic lexicon.
 
+Wave two adds sampled gates for ast-grep, Semgrep, Comby, GritQL, srcML,
+difftastic, Babel, SWC, OpenRewrite, Spoon, JavaParser, Rascal,
+Stratego/Spoofax, TXL, MPS, Coccinelle, GF, Universal Dependencies,
+LanguageTool, and doublets-rs. These fixtures intentionally port representative
+assertion shapes, not whole upstream suites: pattern/autofix rewrites,
+before/after recipe transforms, XML/source-markup round trips, syntax-aware
+snapshots, projectional model serialization, grammar linearization, UD
+vocabulary alignment, recoverable grammar-rule negatives, and doublets storage
+round-trip gates.
+
+The remaining "copy all competitor tests" goal is tracked by the open parent
+comparison issue [#47](https://github.com/link-foundation/meta-language/issues/47).
+Issue [#63](https://github.com/link-foundation/meta-language/issues/63) is the
+ratcheted wave-two slice: it raises the executable target surface and records a
+coverage floor without claiming that every upstream corpus has been imported.
+The previous CSV/JSON5 crate-binding blocker from
+[#50](https://github.com/link-foundation/meta-language/issues/50) is resolved in
+this PR by using lossless in-repo parsers for those two formats while retaining
+tree-sitter for the seven compatible data-format grammars. Perl's grammar
+follow-up [#70](https://github.com/link-foundation/meta-language/issues/70) is
+resolved through `ts-parser-perl`, the crate published by the tree-sitter-perl
+grammar used by difftastic, Helix, Zed, and nvim-treesitter. SQL dialect keys
+and Delphi-specific compiler coverage are not advertised as implemented; until
+they receive dedicated fixtures, they remain outside the advertised target
+surface rather than silent roadmap promises.
+
 The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
-`MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`, and
-`NATURAL_LANGUAGE_TARGETS`. These fixtures include UTF-8 natural-language
-samples so lossless reconstruction covers non-ASCII byte ranges.
+`MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`,
+`SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`, `NATURAL_LANGUAGE_TARGETS`, and
+`DATA_FORMAT_TARGETS`. These fixtures include UTF-8 natural-language samples,
+UTF-8 source-string literals in the second-tier programming fixtures, and UTF-8
+data-format values so lossless reconstruction covers non-ASCII byte ranges.
+
+`tests/unit/natural_language_grammar.rs` enforces the starter grammaticality gate
+for `NATURAL_LANGUAGE_GRAMMAR_FIXTURES`: every target has one grammatical
+fixture whose parse verifies cleanly, one registered ungrammatical fixture that
+emits a recoverable error link while reconstructing byte-for-byte, and queryable
+UD-style `upos:*`, `ufeat:*`, and `deprel:*` morphosyntax links. Unregistered
+natural-language text remains lossless and clean during this starter stage, so
+existing formalization fixtures are not rejected just because the starter
+lexicon is intentionally small. The sentences are repo-authored and no UD
+treebank sentence data is imported; UD currently supplies the shared tag
+vocabulary. GF/RGL or a native PMCFG reader remains the long-term path for
+broad-coverage natural-language grammars.
 
 Additional behavior-specific tests cover:
 
@@ -132,6 +201,16 @@ Programming-language targets use the TIOBE May 2026 top-ten list:
 
 Source: <https://www.tiobe.com/tiobe-index/>
 
+Second-tier programming-language targets (`SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`)
+cover popular languages immediately below the TIOBE top ten:
+
+1. PHP
+2. Swift
+3. Kotlin
+4. Scala
+5. Lua
+6. Perl
+
 Natural-language targets use the Ethnologue 2025 total-speaker order for the
 Britannica/Ethnologue top-ten set:
 
@@ -147,6 +226,33 @@ Britannica/Ethnologue top-ten set:
 10. Urdu
 
 Source: <https://www.britannica.com/topic/languages-by-total-number-of-speakers-2228881>
+
+## Natural-Language Grammar Coverage
+
+The first grammar-correctness layer is intentionally fixture-gated and
+deterministic. Natural-language parses emit a `natural-language:sentence`
+syntax link plus UD-style `upos:*`, `ufeat:*`, and `deprel:*` links for known
+starter forms. For the accepted fixture pattern, `verify_full_match()` stays
+clean. For registered ungrammatical starter fixtures, unknown forms or
+sentence-pattern mismatches emit recoverable `natural-language:error:*` syntax
+links with `is_error` flags, so `verify_full_match()` answers the staged
+grammaticality question while `reconstruct_text()` remains byte-exact.
+
+This is not yet a bundled GF/RGL runtime or imported UD treebank corpus. The
+starter registry keeps the ten target languages gated and preserves provenance
+while leaving broad-coverage grammar assets to later staged work.
+
+Data-exchange / interchange format targets (`DATA_FORMAT_TARGETS`):
+
+1. JSON
+2. YAML
+3. TOML
+4. XML
+5. INI
+6. protobuf (Protocol Buffers)
+7. GraphQL
+8. CSV
+9. JSON5
 
 ## Mixed Grammar Targets
 
@@ -202,3 +308,69 @@ under the MIT license. The grammar's root rule is `source_file` and its
 byte-for-byte. Go is not part of the curated TIOBE top-ten programming targets,
 but the grammar is available for downstream consumers (for example
 `link-assistant/formal-ai`) that need a real Go CST/AST.
+
+## Data-Exchange Format Coverage
+
+`DATA_FORMAT_TARGETS` lists the nine data-exchange / interchange formats wired
+through structured parsers. JSON, YAML, TOML, XML, INI, protobuf, and GraphQL
+use tree-sitter grammars through `src/tree_sitter_adapter.rs`; CSV and JSON5 use
+lossless parsers in `src/data_format_parser.rs` because the published
+tree-sitter bindings for those two formats still target the incompatible
+`tree-sitter ~0.20` ABI. Each target parses through
+`LinkNetwork::parse(source, format, ParseConfiguration::default())`, emits real
+`LinkType::Syntax` concrete-syntax links, and reconstructs the source
+byte-for-byte. Every target has a UTF-8 `LANGUAGE_FIXTURES` round-trip entry,
+and `tests/unit/grammar_parsing.rs` additionally covers case-insensitive label
+aliases, recovery diagnostics for malformed JSON, CSV, and JSON5 fixtures, and
+a mixed-region case where a ` ```json ` fence inside Markdown parses into the
+same links network as the host document.
+
+| Format | Labels (case-insensitive) | Parser | Version | License | Root |
+|---|---|---|---|---|---|
+| JSON | `JSON` | [`tree-sitter-json`](https://github.com/tree-sitter/tree-sitter-json) | 0.24.8 | MIT | `document` |
+| YAML | `YAML`, `yml` | [`tree-sitter-yaml`](https://github.com/tree-sitter-grammars/tree-sitter-yaml) | 0.7.2 | MIT | `stream` |
+| TOML | `TOML` | [`tree-sitter-toml-ng`](https://github.com/tree-sitter-grammars/tree-sitter-toml) | 0.7.0 | MIT | `document` |
+| XML | `XML` (`DTD` also wired) | [`tree-sitter-xml`](https://github.com/tree-sitter-grammars/tree-sitter-xml) | 0.7.0 | MIT | `document` |
+| INI | `INI` | [`tree-sitter-ini`](https://github.com/justinmk/tree-sitter-ini) | 1.4.0 | Apache-2.0 | `document` |
+| Protocol Buffers | `protobuf`, `proto`, `Protocol Buffers` | [`tree-sitter-proto`](https://github.com/coder3101/tree-sitter-proto) | 0.4.0 | MIT | `source_file` |
+| GraphQL | `GraphQL`, `gql` | [`tree-sitter-graphql`](https://github.com/joowani/tree-sitter-graphql) | 0.1.0 | MIT | `source_file` |
+| CSV | `CSV` | In-repo lossless CSV parser validated with [`csv`](https://github.com/BurntSushi/rust-csv) | 1.4.0 | MIT/Unlicense | `csv_file` |
+| JSON5 | `JSON5` | In-repo lossless JSON5 parser validated with [`json5_nodes`](https://github.com/jlyonsmith/json5-nodes) | 2.0.2 | Unlicense | `document` |
+
+The seven tree-sitter crates use the modern `tree-sitter-language` ABI binding
+(they list `tree-sitter` only as a dev-dependency), so they link cleanly against
+the project's `tree-sitter 0.25.x` front end. CSV and JSON5 intentionally avoid
+their stale crates.io tree-sitter bindings: `tree-sitter-csv` 1.2.0 and
+`tree-sitter-json5` 0.1.0 both declare normal `tree-sitter ~0.20` dependencies.
+The Apache-2.0 license on `tree-sitter-ini` and the MIT/Unlicense validation
+dependency licenses are compatible with this repository's Unlicense model.
+
+## Second-Tier Programming Language Coverage
+
+`SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS` lists the popular programming
+languages immediately below the TIOBE top ten that are wired through
+`src/tree_sitter_adapter.rs`. Each parses through
+`LinkNetwork::parse(source, language, ParseConfiguration::default())`, emits real
+`LinkType::Syntax` concrete-syntax links, and reconstructs the source
+byte-for-byte. Every target has a UTF-8 `LANGUAGE_FIXTURES` round-trip entry, and
+`tests/unit/grammar_parsing.rs` additionally covers case-insensitive label
+aliases and a per-language recovery fixture whose malformed source still
+reconstructs while exposing error/missing diagnostics.
+
+| Language | Labels (case-insensitive) | Crate | Version | License | Grammar root |
+|---|---|---|---|---|---|
+| PHP | `PHP` | [`tree-sitter-php`](https://github.com/tree-sitter/tree-sitter-php) | 0.24.2 | MIT | `program` |
+| Swift | `Swift` | [`tree-sitter-swift`](https://github.com/alex-pinkus/tree-sitter-swift) | 0.7.3 | MIT | `source_file` |
+| Kotlin | `Kotlin`, `kt` | [`tree-sitter-kotlin-ng`](https://github.com/tree-sitter-grammars/tree-sitter-kotlin) | 1.1.0 | MIT | `source_file` |
+| Scala | `Scala` | [`tree-sitter-scala`](https://github.com/tree-sitter/tree-sitter-scala) | 0.25.1 | MIT | `compilation_unit` |
+| Lua | `Lua` | [`tree-sitter-lua`](https://github.com/tree-sitter-grammars/tree-sitter-lua) | 0.2.0 | MIT | `chunk` |
+| Perl | `Perl`, `pl` | [`ts-parser-perl`](https://github.com/tree-sitter-perl/tree-sitter-perl) | 1.1.2 | MIT | `source_file` |
+
+All six crates use the modern `tree-sitter-language` ABI binding and list
+`tree-sitter` only as a dev-dependency, so the second-tier wave stays on the
+project's existing `tree-sitter 0.25.x` front end. Perl is wired through
+`ts-parser-perl`, the canonical crates.io package for the tree-sitter-perl
+grammar; the older `tree-sitter-perl` package points at a different grammar and
+forces a normal `tree-sitter ^0.26.3` dependency. `tree-sitter-php` is wired
+through its `LANGUAGE_PHP` symbol (the full PHP-with-template grammar) rather
+than the `LANGUAGE_PHP_ONLY` variant.

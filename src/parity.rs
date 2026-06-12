@@ -27,6 +27,8 @@ pub enum ParityCapability {
     SelfDescription,
     /// Capture immutable snapshots, edit mutable forks, and commit versions.
     SnapshotVersioning,
+    /// Serialize the whole network to links-notation text and read it back.
+    LinoSerialization,
 }
 
 /// Upstream project whose feature set and tests should be tracked.
@@ -61,6 +63,43 @@ impl ParityTarget {
     #[must_use]
     pub const fn test_plan(&self) -> &'static str {
         self.test_plan
+    }
+}
+
+const QUERY_TRANSFORM_RECONSTRUCT: &[ParityCapability] = &[
+    ParityCapability::QueryMatching,
+    ParityCapability::TransformBySubstitution,
+    ParityCapability::SameLanguageReconstruction,
+];
+const LOSSLESS_RECONSTRUCT: &[ParityCapability] = &[
+    ParityCapability::LosslessParsing,
+    ParityCapability::SameLanguageReconstruction,
+];
+const LOSSLESS_TRIVIA_RECONSTRUCT: &[ParityCapability] = &[
+    ParityCapability::LosslessParsing,
+    ParityCapability::TriviaPreservation,
+    ParityCapability::SameLanguageReconstruction,
+];
+const LOSSLESS_SNAPSHOT: &[ParityCapability] = &[
+    ParityCapability::LosslessParsing,
+    ParityCapability::SnapshotVersioning,
+];
+const FORMALIZATION_CROSS_LANGUAGE: &[ParityCapability] = &[
+    ParityCapability::FormalizationRoundTrip,
+    ParityCapability::CrossLanguageReconstruction,
+];
+
+const fn parity_target(
+    name: &'static str,
+    upstream: &'static str,
+    capabilities: &'static [ParityCapability],
+    test_plan: &'static str,
+) -> ParityTarget {
+    ParityTarget {
+        name,
+        upstream,
+        capabilities,
+        test_plan,
     }
 }
 
@@ -153,8 +192,9 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
             ParityCapability::LosslessParsing,
             ParityCapability::ObjectRoundTrip,
             ParityCapability::SelfDescription,
+            ParityCapability::LinoSerialization,
         ],
-        test_plan: "Executable fixtures cover doublet, triplet, N-tuple, indented, and nested self-reference LiNo behavior.",
+        test_plan: "Executable fixtures cover doublet, triplet, N-tuple, indented, nested self-reference, and whole-network serialization LiNo behavior.",
     },
     ParityTarget {
         name: "link-cli",
@@ -197,6 +237,126 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
         ],
         test_plan: "Executable fixtures cover Hawaii naturalization, 1 + 1 formalization, self-reference behavior, and the verified 351-concept lexicon.",
     },
+    parity_target(
+        "ast-grep",
+        "https://github.com/ast-grep/ast-grep",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers structural rule-test-style matching and replacement.",
+    ),
+    parity_target(
+        "Semgrep",
+        "https://github.com/semgrep/semgrep",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers pattern-corpus-style matching and autofix replacement.",
+    ),
+    parity_target(
+        "Comby",
+        "https://github.com/comby-tools/comby",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers structural search-and-replace over original source bytes.",
+    ),
+    parity_target(
+        "GritQL",
+        "https://github.com/getgrit/gritql",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers snippet-pattern matching and rewrite effects.",
+    ),
+    parity_target(
+        "srcML",
+        "https://github.com/srcML/srcML",
+        LOSSLESS_TRIVIA_RECONSTRUCT,
+        "Executable fixture covers XML source-markup round-trip behavior.",
+    ),
+    parity_target(
+        "difftastic",
+        "https://github.com/Wilfred/difftastic",
+        LOSSLESS_SNAPSHOT,
+        "Executable fixture covers syntax-aware source snapshots used for structural diffing.",
+    ),
+    parity_target(
+        "Babel",
+        "https://github.com/babel/babel",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers parser-fixture-style JavaScript transform behavior.",
+    ),
+    parity_target(
+        "SWC",
+        "https://github.com/swc-project/swc",
+        LOSSLESS_RECONSTRUCT,
+        "Executable fixture covers TypeScript parser corpus round-trip behavior.",
+    ),
+    parity_target(
+        "OpenRewrite",
+        "https://github.com/openrewrite/rewrite",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers before/after recipe-style Java source replacement.",
+    ),
+    parity_target(
+        "Spoon",
+        "https://github.com/INRIA/spoon",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers template-style Java source replacement.",
+    ),
+    parity_target(
+        "JavaParser",
+        "https://github.com/javaparser/javaparser",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers lexical-preserving Java replacement.",
+    ),
+    parity_target(
+        "Rascal",
+        "https://github.com/usethesource/rascal",
+        LOSSLESS_RECONSTRUCT,
+        "Executable fixture covers in-language syntax-test source round-trip behavior.",
+    ),
+    parity_target(
+        "Stratego/Spoofax",
+        "https://github.com/metaborg/spoofax",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers SPT-style embedded-fragment replacement.",
+    ),
+    parity_target(
+        "TXL",
+        "https://www.txl.ca",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers by-example C source transformation.",
+    ),
+    parity_target(
+        "MPS",
+        "https://github.com/JetBrains/MPS",
+        &[ParityCapability::ObjectRoundTrip, ParityCapability::SelfDescription],
+        "Executable fixture covers projectional model serialization as source data.",
+    ),
+    parity_target(
+        "Coccinelle",
+        "https://github.com/coccinelle/coccinelle",
+        QUERY_TRANSFORM_RECONSTRUCT,
+        "Executable fixture covers input/semantic-patch/result triple transform behavior.",
+    ),
+    parity_target(
+        "GF",
+        "https://github.com/GrammaticalFramework/gf-rgl",
+        FORMALIZATION_CROSS_LANGUAGE,
+        "Executable fixture covers grammar parse/linearization-style formalization.",
+    ),
+    parity_target(
+        "Universal Dependencies",
+        "https://universaldependencies.org",
+        &[ParityCapability::LosslessParsing],
+        "Executable fixture covers UD morphosyntax vocabulary links over natural-language text.",
+    ),
+    parity_target(
+        "LanguageTool",
+        "https://github.com/languagetool-org/languagetool",
+        &[ParityCapability::ErrorRecovery],
+        "Executable fixture covers negative grammar-rule example recovery.",
+    ),
+    parity_target(
+        "doublets-rs",
+        "https://github.com/linksplatform/doublets-rs",
+        &[ParityCapability::ObjectRoundTrip, ParityCapability::SnapshotVersioning],
+        "Executable fixture covers binary doublets storage round-trip gates.",
+    ),
 ];
 
 /// Expected verification result for an executable parity fixture.
@@ -333,6 +493,8 @@ pub enum LanguageFamily {
     Programming,
     /// Natural languages.
     Natural,
+    /// Data-exchange / interchange formats.
+    DataFormat,
 }
 
 /// Language whose grammar or natural-language parser should be supported.
@@ -360,6 +522,21 @@ impl LanguageTarget {
     #[must_use]
     pub const fn basis(&self) -> &'static str {
         self.basis
+    }
+}
+
+const DATA_FORMAT_BASIS: &str = "Issue #47 R-3 data-exchange format target";
+const SCHEMA_BASIS: &str = "Issue #47 R-4 schema/interface-definition target";
+
+const fn language_target(
+    name: &'static str,
+    family: LanguageFamily,
+    basis: &'static str,
+) -> LanguageTarget {
+    LanguageTarget {
+        name,
+        family,
+        basis,
     }
 }
 
@@ -393,21 +570,39 @@ impl LanguageFixture {
 
 /// Required document-container languages.
 pub const MARKUP_LANGUAGE_TARGETS: &[LanguageTarget] = &[
-    LanguageTarget {
-        name: "txt",
-        family: LanguageFamily::Markup,
-        basis: "Issue #5 degenerate plain-text container target",
-    },
-    LanguageTarget {
-        name: "Markdown",
-        family: LanguageFamily::Markup,
-        basis: "Founding issue full-document target",
-    },
-    LanguageTarget {
-        name: "HTML",
-        family: LanguageFamily::Markup,
-        basis: "Founding issue full-document target",
-    },
+    language_target(
+        "txt",
+        LanguageFamily::Markup,
+        "Issue #5 degenerate plain-text container target",
+    ),
+    language_target(
+        "Markdown",
+        LanguageFamily::Markup,
+        "Founding issue full-document target",
+    ),
+    language_target(
+        "HTML",
+        LanguageFamily::Markup,
+        "Founding issue full-document target",
+    ),
+];
+
+/// Required data-exchange / interchange format targets.
+///
+/// Each entry has a wired parser and a round-trip [`LANGUAGE_FIXTURES`] entry.
+/// JSON, YAML, TOML, XML, INI, protobuf, and GraphQL use tree-sitter grammars;
+/// CSV and JSON5 use small lossless parsers because their published
+/// tree-sitter bindings still target the incompatible `tree-sitter ~0.20` ABI.
+pub const DATA_FORMAT_TARGETS: &[LanguageTarget] = &[
+    language_target("JSON", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("YAML", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("TOML", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("XML", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("INI", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("protobuf", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("GraphQL", LanguageFamily::DataFormat, SCHEMA_BASIS),
+    language_target("CSV", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("JSON5", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
 ];
 
 /// Initial top-ten programming-language parser targets.
@@ -461,6 +656,44 @@ pub const PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         name: "Delphi/Object Pascal",
         family: LanguageFamily::Programming,
         basis: "TIOBE May 2026 top 10",
+    },
+];
+
+/// Second-tier programming-language parser targets immediately below the TIOBE
+/// top ten.
+///
+/// Each entry has a wired tree-sitter grammar in `src/tree_sitter_adapter.rs`
+/// and a round-trip [`LANGUAGE_FIXTURES`] entry.
+pub const SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
+    LanguageTarget {
+        name: "PHP",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Swift",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Kotlin",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Scala",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Lua",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10",
+    },
+    LanguageTarget {
+        name: "Perl",
+        family: LanguageFamily::Programming,
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10; issue #70 Perl grammar follow-up resolved via ts-parser-perl",
     },
 ];
 
@@ -634,6 +867,81 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
         language: "Urdu",
         source: "سلام۔\n",
         description: "Urdu sentence",
+    },
+    LanguageFixture {
+        language: "JSON",
+        source: "{\n  \"name\": \"café\",\n  \"items\": [1, 2, 3]\n}\n",
+        description: "JSON object with UTF-8 string and array",
+    },
+    LanguageFixture {
+        language: "YAML",
+        source: "name: café\nitems:\n  - 1\n  - 2\n",
+        description: "YAML mapping with UTF-8 value and sequence",
+    },
+    LanguageFixture {
+        language: "TOML",
+        source: "title = \"café\"\n\n[owner]\nname = \"Tom\"\n",
+        description: "TOML document with a UTF-8 value and a table",
+    },
+    LanguageFixture {
+        language: "XML",
+        source: "<note lang=\"en\">\n  <body>café</body>\n</note>\n",
+        description: "XML element tree with attribute and UTF-8 text",
+    },
+    LanguageFixture {
+        language: "INI",
+        source: "; comment\n[owner]\nname = café\n",
+        description: "INI section with a comment and a UTF-8 value",
+    },
+    LanguageFixture {
+        language: "protobuf",
+        source: "syntax = \"proto3\";\n\nmessage Person {\n  string name = 1;\n}\n",
+        description: "Protocol Buffers message definition",
+    },
+    LanguageFixture {
+        language: "GraphQL",
+        source: "type Person {\n  name: String!\n}\n",
+        description: "GraphQL schema-definition type",
+    },
+    LanguageFixture {
+        language: "CSV",
+        source: "name,city\n\"Ana, Maria\",Lisbon\nBao,北京\n",
+        description: "CSV records with a quoted comma and UTF-8 field",
+    },
+    LanguageFixture {
+        language: "JSON5",
+        source: "{\n  // JSON5 accepts comments and unquoted keys\n  name: 'café',\n  items: [1, 2, 3,],\n}\n",
+        description: "JSON5 object with comments, unquoted keys, single quotes, and trailing commas",
+    },
+    LanguageFixture {
+        language: "PHP",
+        source: "<?php\nfunction greet($name) {\n    return \"café \" . $name;\n}\n",
+        description: "PHP function returning a UTF-8 string",
+    },
+    LanguageFixture {
+        language: "Swift",
+        source: "func greet(_ name: String) -> String {\n    return \"café \\(name)\"\n}\n",
+        description: "Swift function with a UTF-8 interpolated string",
+    },
+    LanguageFixture {
+        language: "Kotlin",
+        source: "fun greet(name: String): String {\n    return \"café $name\"\n}\n",
+        description: "Kotlin function with a UTF-8 template string",
+    },
+    LanguageFixture {
+        language: "Scala",
+        source: "object Demo {\n  def greet(name: String): String = s\"café $name\"\n}\n",
+        description: "Scala object with a UTF-8 interpolated method",
+    },
+    LanguageFixture {
+        language: "Lua",
+        source: "local function greet(name)\n  return \"café \" .. name\nend\n",
+        description: "Lua function concatenating a UTF-8 string",
+    },
+    LanguageFixture {
+        language: "Perl",
+        source: "use utf8;\nsub greet {\n    my ($name) = @_;\n    return \"café $name\";\n}\n",
+        description: "Perl subroutine returning a UTF-8 interpolated string",
     },
 ];
 

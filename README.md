@@ -21,11 +21,27 @@ clean.
   `parse_lossless_text()` boundary remains available.
 - `reconstruct_text()` for byte-for-byte reconstruction from non-missing token
   links ordered by source span.
+- `insert_source_token()`, `insert_syntax_node()`, and `render_source()` for
+  emitting target-language source from programmatically constructed syntax
+  networks whose token leaves do not come from a prior parse.
 - `projected_links()` for viewing the same lossless network as concrete syntax,
   abstract syntax, or semantic-only data by stripping lower-level preservation
   links from the view.
 - `NetworkSnapshot` and `MutableNetworkSnapshot` for immutable versioned
   snapshots, editable forks, provenance, and forward commits.
+- `AccessMode` for a read-only or mutable engine per user configuration:
+  `freeze()` / `as_read_only()` yield a `ReadOnlyNetwork` view whose mutators
+  are unreachable at compile time, and `parse_engine()` returns an
+  `EngineNetwork` that rejects mutation with a clear diagnostic under
+  `AccessMode::ReadOnly`; the frozen form reuses snapshot `Arc` sharing.
+- `LinkStore` and `EngineLinkStore` for storage-backed create/read/update/delete
+  and search operations: reads take `&self`, writes take `&mut self`, the
+  default store is the in-memory `LinkNetwork`, and read-only access mode
+  rejects writes through the same storage boundary.
+- Optional `doublets` feature support for a file-mapped `DoubletsLinkStore`
+  using `doublets-rs` 0.4, with lossless network round trips and a documented
+  `doublets-web` backend label for browser/WASM exchange of the same binary
+  graph layout.
 - `ParseConfiguration` with containment-link, token-link, or combined trivia
   attachment policies.
 - Mixed-region links for Markdown fenced code and HTML regions, plus HTML
@@ -37,12 +53,16 @@ clean.
   while preserving unchanged source bytes.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style
   match-and-substitute operation.
+- `apply_edit()` for incremental source reparsing with stable outside-edit link
+  ids, snapshot fork sharing for unchanged links, and structural diff sets for
+  changed, added, and removed links.
 - Concept-to-language syntax mappings for cross-language reconstruction.
 - `reconstruct_text_as()` for semantic cross-language reconstruction and
   configurable formalization levels.
-- `seed_common_concept_ontology()` for importing meta-expression's 351-concept
-  semantic lexicon as shared concept links, plus structural programming-language
-  concepts such as function, binding, application, sequence, branch, and loop.
+- Exact-match concept interning with language-bound expression links,
+  queryable external-id aliases, LiNo concept-set import, and
+  `seed_common_concept_ontology()` for the default 351-concept semantic
+  lexicon plus structural programming-language concepts.
 - Object-identity links, many-valued `TruthValue` semantics, and fixed-point
   `ProbabilisticTruthValue` confidence semantics.
 - A testable parity registry and upstream-provenanced `PARITY_FIXTURES` for
@@ -51,6 +71,9 @@ clean.
   simple indented definitions, and self-references.
 - `LANGUAGE_FIXTURES` with lossless parse/reconstruction samples for every
   required markup, programming-language, and natural-language target.
+- `NATURAL_LANGUAGE_GRAMMAR_FIXTURES` with pass/fail grammaticality fixtures
+  for the ten natural-language targets, including provenance for the
+  repo-authored sentences and UD-derived tag vocabulary.
 - Coverage targets for full `txt`, Markdown, and HTML support, mixed grammar
   embedding, ten programming-language parser targets, and ten natural-language
   parser targets.
@@ -85,6 +108,70 @@ let abstract_links = network
 
 assert!(abstract_links < network.len());
 ```
+
+Construct source directly as a syntax network when code should be generated
+before validation:
+
+```rust
+use meta_language::{LinkNetwork, ParseConfiguration};
+
+let mut network = LinkNetwork::new();
+let tokens = [
+    network.insert_source_token("JavaScript", "const answer = "),
+    network.insert_source_token("JavaScript", "42"),
+    network.insert_source_token("JavaScript", ";\n"),
+];
+let declaration = network.insert_syntax_node("JavaScript", "lexical_declaration", tokens);
+network.insert_syntax_node("JavaScript", "program", [declaration]);
+
+let source = network.render_source("JavaScript");
+assert_eq!(source, "const answer = 42;\n");
+assert!(LinkNetwork::parse(&source, "JavaScript", ParseConfiguration::default())
+    .verify_full_match(None)
+    .is_clean());
+```
+
+Configure the engine read-only when a parsed network must never be mutated. The
+frozen view exposes every read operation but no mutators (calling one is a
+compile error), and the `EngineNetwork` boundary rejects mutation at runtime:
+
+```rust
+use meta_language::{AccessMode, LinkNetwork, ParseConfiguration};
+
+let configuration = ParseConfiguration::default().with_access_mode(AccessMode::ReadOnly);
+let mut engine = LinkNetwork::parse_engine("alpha beta", "plain-text", configuration);
+
+assert!(engine.is_read_only());
+assert_eq!(engine.reconstruct_text(), "alpha beta");
+assert!(engine.as_mutable().is_err()); // read-only engine rejects mutation
+```
+
+Use the storage trait directly when links need to move between in-memory and
+binary stores. The optional doublets backend is enabled with
+`--features doublets`:
+
+```rust
+use meta_language::{
+    DoubletsLinkStore, LinkNetwork, LinkStore, LinkStoreQuery, ParseConfiguration,
+};
+
+let network = LinkNetwork::parse("const answer = 42;\n", "JavaScript", ParseConfiguration::default());
+let mut store = DoubletsLinkStore::create_file("network.doublets").expect("create doublets store");
+store.replace_with_network(&network).expect("write network");
+
+let restored = DoubletsLinkStore::open_file("network.doublets")
+    .expect("open doublets store")
+    .to_network()
+    .expect("read network");
+assert_eq!(restored.to_lino(), network.to_lino());
+
+let links = LinkStore::search(&restored, &LinkStoreQuery::new()).expect("search links");
+assert_eq!(links.len(), restored.len());
+```
+
+`LinkStoreBackend::DoubletsWeb` names the WASM/browser exchange target for this
+binary graph representation; native code uses `DoubletsLinkStore`, while a
+browser host can map the same logical records through `doublets-web`.
 
 Codemod-style transforms can select links with an S-expression query and replace
 only captured source ranges:
@@ -154,7 +241,8 @@ resulting region has no error or missing links.
 ## Parity Implementation
 
 The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,
-`PROGRAMMING_LANGUAGE_TARGETS`, `NATURAL_LANGUAGE_TARGETS`, and
+`PROGRAMMING_LANGUAGE_TARGETS`, `SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`,
+`NATURAL_LANGUAGE_TARGETS`, `DATA_FORMAT_TARGETS`, and
 `GRAMMAR_EMBEDDING_TARGETS` so comparison scope is part of the tested Rust API.
 It also exposes `PARITY_FIXTURES`, with executable, provenance-tracked fixtures
 covering every advertised target capability, and `LANGUAGE_FIXTURES`, with a
