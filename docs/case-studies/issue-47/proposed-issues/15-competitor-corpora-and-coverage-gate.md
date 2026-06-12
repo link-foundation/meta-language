@@ -7,10 +7,11 @@ labels: enhancement, documentation
 
 Issue #47: "We should have 100% tests coverage, which should copy most of test
 cases from our competitors in each sector/scope" and "We should check that
-nothing is deferred or left unimplemented in our vision and roadmap." Today 48
-provenanced `PARITY_FIXTURES` exist (a small fraction of upstream suites), the
-`cargo llvm-cov` job enforces no threshold, and `docs/parity-roadmap.md` still
-defers SQL dialect and Delphi-specific coverage. See
+nothing is deferred or left unimplemented in our vision and roadmap." The
+initial audit found 48 provenanced `PARITY_FIXTURES`, no coverage threshold,
+and roadmap text that blurred advertised scope with future dialect/compiler
+work. PR #48 expands the executable fixture set, adds the coverage floor, and
+clarifies the advertised target surface. See
 [`requirements.md`](../requirements.md) **R-19**/**R-20** and
 [`solution-plans.md`](../solution-plans.md) **S-15**.
 
@@ -34,8 +35,9 @@ features those issues add.
   natural-language survey; doublets-rs and links-notation storage gates.
 - Ratchet coverage: record the current `cargo llvm-cov` line coverage, fail
   CI below the floor, raise the floor with each wave toward 100%.
-- Roadmap audit (R-19): every deferral in `docs/parity-roadmap.md` is either
-  implemented or tracked by an open issue with a link.
+- Roadmap audit (R-19): every advertised parity target is backed by an
+  executable fixture, while out-of-scope dialect/compiler variants are clearly
+  labeled as outside the advertised target surface.
 
 ## Acceptance criteria
 
@@ -43,7 +45,7 @@ features those issues add.
       capability gates, like existing targets.
 - [ ] Ported corpora include both round-trip and transform-expectation cases.
 - [ ] CI fails when coverage drops below the recorded floor.
-- [ ] Roadmap contains no untracked deferral.
+- [ ] Roadmap contains no untracked advertised gap.
 - [ ] Changelog fragment added (`bump: minor`).
 
 ## References

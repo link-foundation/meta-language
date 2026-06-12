@@ -21,7 +21,7 @@ The Rust API exposes these registries:
   immediately below the TIOBE top ten that require full grammar support.
 - `NATURAL_LANGUAGE_TARGETS`: the initial ten natural-language parser targets.
 - `DATA_FORMAT_TARGETS`: data-exchange / interchange formats that require full
-  grammar support.
+  structured parser support.
 - `GRAMMAR_EMBEDDING_TARGETS`: mixed-grammar cases that must parse into one
   unified links network.
 - `PARITY_FIXTURES`: executable source fixtures, one or more per parity target,
@@ -121,14 +121,16 @@ comparison issue [#47](https://github.com/link-foundation/meta-language/issues/4
 Issue [#63](https://github.com/link-foundation/meta-language/issues/63) is the
 ratcheted wave-two slice: it raises the executable target surface and records a
 coverage floor without claiming that every upstream corpus has been imported.
-Known concrete deferrals remain split out where the blocker is narrower: CSV
-and JSON5 grammar bindings are tracked by
-[#50](https://github.com/link-foundation/meta-language/issues/50), and Perl's
-tree-sitter runtime mismatch is tracked by
-[#70](https://github.com/link-foundation/meta-language/issues/70). SQL dialect
-keys and Delphi-specific compiler coverage are not advertised as implemented;
-until they receive dedicated fixtures, they remain under the open #47 parent
-scope rather than silent roadmap promises.
+The previous CSV/JSON5 crate-binding blocker from
+[#50](https://github.com/link-foundation/meta-language/issues/50) is resolved in
+this PR by using lossless in-repo parsers for those two formats while retaining
+tree-sitter for the seven compatible data-format grammars. Perl's grammar
+follow-up [#70](https://github.com/link-foundation/meta-language/issues/70) is
+resolved through `ts-parser-perl`, the crate published by the tree-sitter-perl
+grammar used by difftastic, Helix, Zed, and nvim-treesitter. SQL dialect keys
+and Delphi-specific compiler coverage are not advertised as implemented; until
+they receive dedicated fixtures, they remain outside the advertised target
+surface rather than silent roadmap promises.
 
 The same test file enforces `LANGUAGE_FIXTURES` coverage for every entry in
 `MARKUP_LANGUAGE_TARGETS`, `PROGRAMMING_LANGUAGE_TARGETS`,
@@ -249,6 +251,8 @@ Data-exchange / interchange format targets (`DATA_FORMAT_TARGETS`):
 5. INI
 6. protobuf (Protocol Buffers)
 7. GraphQL
+8. CSV
+9. JSON5
 
 ## Mixed Grammar Targets
 
@@ -307,17 +311,21 @@ but the grammar is available for downstream consumers (for example
 
 ## Data-Exchange Format Coverage
 
-`DATA_FORMAT_TARGETS` lists the seven data-exchange / interchange formats wired
-through `src/tree_sitter_adapter.rs`. Each parses through
+`DATA_FORMAT_TARGETS` lists the nine data-exchange / interchange formats wired
+through structured parsers. JSON, YAML, TOML, XML, INI, protobuf, and GraphQL
+use tree-sitter grammars through `src/tree_sitter_adapter.rs`; CSV and JSON5 use
+lossless parsers in `src/data_format_parser.rs` because the published
+tree-sitter bindings for those two formats still target the incompatible
+`tree-sitter ~0.20` ABI. Each target parses through
 `LinkNetwork::parse(source, format, ParseConfiguration::default())`, emits real
 `LinkType::Syntax` concrete-syntax links, and reconstructs the source
 byte-for-byte. Every target has a UTF-8 `LANGUAGE_FIXTURES` round-trip entry,
 and `tests/unit/grammar_parsing.rs` additionally covers case-insensitive label
-aliases, recovery diagnostics (a malformed JSON fixture), and a mixed-region
-case where a ` ```json ` fence inside Markdown parses into the same links
-network as the host document.
+aliases, recovery diagnostics for malformed JSON, CSV, and JSON5 fixtures, and
+a mixed-region case where a ` ```json ` fence inside Markdown parses into the
+same links network as the host document.
 
-| Format | Labels (case-insensitive) | Crate | Version | License | Grammar root |
+| Format | Labels (case-insensitive) | Parser | Version | License | Root |
 |---|---|---|---|---|---|
 | JSON | `JSON` | [`tree-sitter-json`](https://github.com/tree-sitter/tree-sitter-json) | 0.24.8 | MIT | `document` |
 | YAML | `YAML`, `yml` | [`tree-sitter-yaml`](https://github.com/tree-sitter-grammars/tree-sitter-yaml) | 0.7.2 | MIT | `stream` |
@@ -326,34 +334,16 @@ network as the host document.
 | INI | `INI` | [`tree-sitter-ini`](https://github.com/justinmk/tree-sitter-ini) | 1.4.0 | Apache-2.0 | `document` |
 | Protocol Buffers | `protobuf`, `proto`, `Protocol Buffers` | [`tree-sitter-proto`](https://github.com/coder3101/tree-sitter-proto) | 0.4.0 | MIT | `source_file` |
 | GraphQL | `GraphQL`, `gql` | [`tree-sitter-graphql`](https://github.com/joowani/tree-sitter-graphql) | 0.1.0 | MIT | `source_file` |
+| CSV | `CSV` | In-repo lossless CSV parser validated with [`csv`](https://github.com/BurntSushi/rust-csv) | 1.4.0 | MIT/Unlicense | `csv_file` |
+| JSON5 | `JSON5` | In-repo lossless JSON5 parser validated with [`json5_nodes`](https://github.com/jlyonsmith/json5-nodes) | 2.0.2 | Unlicense | `document` |
 
-All seven crates use the modern `tree-sitter-language` ABI binding (they list
-`tree-sitter` only as a dev-dependency), so they link cleanly against the
-project's `tree-sitter 0.26.x` front end. The Apache-2.0 license on
-`tree-sitter-ini` is compatible with this repository's Unlicense model.
-
-### CSV and JSON5: explicit deferral
-
-CSV and JSON5 are **not** wired. Their crates.io grammar bindings still declare a
-*normal* dependency on `tree-sitter ~0.20`, which is incompatible with the
-project's current tree-sitter toolchain as published:
-
-- **CSV** — [`tree-sitter-csv`](https://crates.io/crates/tree-sitter-csv) 1.2.0
-  pins `tree-sitter ~0.20.10`. The maintained repo at
-  `tree-sitter-grammars/tree-sitter-csv` still pins `~0.20.10` on master; no
-  fixed release exists. Adopting it requires vendoring the generated `parser.c`
-  behind `tree-sitter-language`, or a hand-rolled RFC 4180 lossless lexer.
-- **JSON5** — [`tree-sitter-json5`](https://crates.io/crates/tree-sitter-json5)
-  0.1.0 pins `tree-sitter ~0.20.0`. Upstream
-  [`Joakker/tree-sitter-json5`](https://github.com/Joakker/tree-sitter-json5)
-  already targets `tree-sitter = "0.25"` on master and is usable as a git or
-  vendored dependency once published.
-
-Both are tracked for a follow-up once compatible bindings are published or
-vendored; see issue
-[#50](https://github.com/link-foundation/meta-language/issues/50) and
-`docs/case-studies/issue-47/formats-storage-apis.md` Part A for the verified
-binding-compatibility research.
+The seven tree-sitter crates use the modern `tree-sitter-language` ABI binding
+(they list `tree-sitter` only as a dev-dependency), so they link cleanly against
+the project's `tree-sitter 0.25.x` front end. CSV and JSON5 intentionally avoid
+their stale crates.io tree-sitter bindings: `tree-sitter-csv` 1.2.0 and
+`tree-sitter-json5` 0.1.0 both declare normal `tree-sitter ~0.20` dependencies.
+The Apache-2.0 license on `tree-sitter-ini` and the MIT/Unlicense validation
+dependency licenses are compatible with this repository's Unlicense model.
 
 ## Second-Tier Programming Language Coverage
 
@@ -374,14 +364,13 @@ reconstructs while exposing error/missing diagnostics.
 | Kotlin | `Kotlin`, `kt` | [`tree-sitter-kotlin-ng`](https://github.com/tree-sitter-grammars/tree-sitter-kotlin) | 1.1.0 | MIT | `source_file` |
 | Scala | `Scala` | [`tree-sitter-scala`](https://github.com/tree-sitter/tree-sitter-scala) | 0.25.1 | MIT | `compilation_unit` |
 | Lua | `Lua` | [`tree-sitter-lua`](https://github.com/tree-sitter-grammars/tree-sitter-lua) | 0.2.0 | MIT | `chunk` |
-| Perl | `Perl`, `pl` | [`tree-sitter-perl`](https://github.com/ganezdragon/tree-sitter-perl) | 1.1.2 | MIT | `source_file` |
+| Perl | `Perl`, `pl` | [`ts-parser-perl`](https://github.com/tree-sitter-perl/tree-sitter-perl) | 1.1.2 | MIT | `source_file` |
 
-The PHP, Swift, Kotlin, Scala, and Lua crates use the modern
-`tree-sitter-language` ABI binding and list `tree-sitter` only as a
-dev-dependency. `tree-sitter-perl` 1.1.2 declares a normal dependency on
-`tree-sitter ^0.26.3`, so issue
-[#70](https://github.com/link-foundation/meta-language/issues/70) is resolved by
-upgrading the project front end to `tree-sitter 0.26.x` and wiring Perl through
-the published binding directly. `tree-sitter-php` is wired through its
-`LANGUAGE_PHP` symbol (the full PHP-with-template grammar) rather than the
-`LANGUAGE_PHP_ONLY` variant.
+All six crates use the modern `tree-sitter-language` ABI binding and list
+`tree-sitter` only as a dev-dependency, so the second-tier wave stays on the
+project's existing `tree-sitter 0.25.x` front end. Perl is wired through
+`ts-parser-perl`, the canonical crates.io package for the tree-sitter-perl
+grammar; the older `tree-sitter-perl` package points at a different grammar and
+forces a normal `tree-sitter ^0.26.3` dependency. `tree-sitter-php` is wired
+through its `LANGUAGE_PHP` symbol (the full PHP-with-template grammar) rather
+than the `LANGUAGE_PHP_ONLY` variant.

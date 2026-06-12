@@ -1,4 +1,6 @@
-use crate::{lino_parser, tree_sitter_adapter, LinkNetwork, ParseConfiguration};
+use crate::{
+    data_format_parser, lino_parser, tree_sitter_adapter, LinkNetwork, ParseConfiguration,
+};
 
 /// Parser boundary that produces lossless links networks for source text.
 pub trait LanguageParser {
@@ -24,6 +26,10 @@ impl LanguageParser for BuiltInLanguageParser {
     ) -> LinkNetwork {
         if language.eq_ignore_ascii_case("lino") {
             return lino_parser::parse(text, language, configuration);
+        }
+
+        if let Some(network) = data_format_parser::parse(text, language, configuration) {
+            return network;
         }
 
         tree_sitter_adapter::parse(text, language, configuration)

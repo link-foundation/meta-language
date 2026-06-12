@@ -3,10 +3,11 @@ use std::fmt;
 use std::sync::Arc;
 
 use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
+use crate::embedded_region_parser;
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
-use crate::mixed_regions::{detect_embedded_regions, EmbeddedRegion};
+use crate::mixed_regions::EmbeddedRegion;
 use crate::natural_language::annotate_natural_language;
 use crate::query::{LinkQuery, QueryMatch, QueryPredicateHost, RejectPredicateHost};
 use crate::self_description::{definition_expression, SELF_DESCRIPTION_ROOTS};
@@ -14,7 +15,6 @@ use crate::source::{ByteRange, Point, SourceSpan};
 use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
 };
-use crate::tree_sitter_adapter;
 use crate::verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 /// Stable identifier for a link inside a [`LinkNetwork`].
@@ -925,30 +925,13 @@ impl LinkNetwork {
         language: &str,
         configuration: ParseConfiguration,
     ) {
-        let policy = configuration.region_detection_policy();
-        for region in detect_embedded_regions(text, language, policy) {
-            let region_language = region.language().to_string();
-            let language_link = self.insert_typed_point(&region_language, LinkType::Language, None);
-            let region_link = self.insert_link(
-                [document, language_link],
-                LinkMetadata::new()
-                    .with_link_type(LinkType::Region)
-                    .with_named(true)
-                    .with_term(format!("{region_language} region"))
-                    .with_language(region_language)
-                    .with_span(region.span()),
-            );
-            let range = region.span().byte_range();
-            let region_text = &text[range.start()..range.end()];
-            let _ = tree_sitter_adapter::parse_embedded_region_into(
-                self,
-                region_link,
-                region_text,
-                region.language(),
-                region.span(),
-                configuration,
-            );
-        }
+        embedded_region_parser::attach_embedded_regions(
+            self,
+            document,
+            text,
+            language,
+            configuration,
+        );
     }
 
     fn intern_metadata(&mut self, mut metadata: LinkMetadata) -> LinkMetadata {

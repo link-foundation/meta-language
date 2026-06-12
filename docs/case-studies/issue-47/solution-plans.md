@@ -77,8 +77,8 @@ tokens.
   `tree-sitter-ini` 1.4.0, `tree-sitter-proto` 0.4.0, `tree-sitter-graphql`
   0.1.0.
 - CSV and JSON5 lack modern-binding crates.io releases (both pin tree-sitter
-  ~0.20); vendor the upstream grammars or defer those two to a follow-up noted
-  in the roadmap (no silent gaps).
+  ~0.20); the PR resolves them with in-repo lossless parsers validated by
+  `csv` and `json5_nodes`, avoiding a tree-sitter runtime split.
 - Add a `DATA_FORMAT_TARGETS` registry in `src/parity.rs` mirroring
   `MARKUP_LANGUAGE_TARGETS`, with `LANGUAGE_FIXTURES` round-trip fixtures per
   format and mixed-region detection (e.g. JSON in Markdown fences).
@@ -97,11 +97,12 @@ TIOBE top-20 with maintained official tree-sitter grammars.
 **Plan.**
 - Wire `tree-sitter-php`, `tree-sitter-swift`, `tree-sitter-kotlin` (community,
   verify binding generation), `tree-sitter-scala`, `tree-sitter-lua`, and
-  `tree-sitter-perl`, following the exact pattern of PR #44-#46.
+  canonical Perl via `ts-parser-perl`, following the exact pattern of PR
+  #44-#46 while staying on the project `tree-sitter 0.25.x` front end.
 - Extend `PROGRAMMING_LANGUAGE_TARGETS` (or add a `TIOBE_11_20_TARGETS` tier)
   plus per-language `LANGUAGE_FIXTURES` with UTF-8 and recovery cases.
 - Document the acquisition order and any grammar whose crates.io release pins
-  an old tree-sitter (vendor or defer explicitly).
+  an old tree-sitter, plus the selected compatible parser strategy.
 
 **Reuse.** Same adapter seam as S-2; TIOBE source already cited in
 `docs/parity-roadmap.md`.
@@ -341,9 +342,9 @@ operations in all styles".
 
 ## S-15: Competitor corpora wave 2 + coverage gate (R-19, R-20) - blocked by 02, 08, 12, 14
 
-**Problem.** 48 ported fixtures are a small fraction of upstream suites; the
-llvm-cov job enforces no threshold; the roadmap still defers SQL dialects and
-Delphi-specific coverage.
+**Problem.** The initial audit found 48 ported fixtures, no llvm-cov threshold,
+and roadmap text that blurred advertised scope with future SQL dialect and
+Delphi compiler-variant work.
 
 **Plan.**
 - Port the five highest-value suites identified in
@@ -362,7 +363,8 @@ Delphi-specific coverage.
 - Turn the existing `cargo llvm-cov` job into a ratcheted gate: record current
   line coverage, fail CI below the recorded floor, raise the floor with each
   wave toward the issue's 100% goal; audit `docs/parity-roadmap.md` so every
-  deferral is either implemented or tracked by an open issue (R-19).
+  advertised target is implemented and every future variant is clearly labeled
+  outside the advertised target surface (R-19).
 
 ## Phasing
 

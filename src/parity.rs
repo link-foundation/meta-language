@@ -525,6 +525,21 @@ impl LanguageTarget {
     }
 }
 
+const DATA_FORMAT_BASIS: &str = "Issue #47 R-3 data-exchange format target";
+const SCHEMA_BASIS: &str = "Issue #47 R-4 schema/interface-definition target";
+
+const fn language_target(
+    name: &'static str,
+    family: LanguageFamily,
+    basis: &'static str,
+) -> LanguageTarget {
+    LanguageTarget {
+        name,
+        family,
+        basis,
+    }
+}
+
 /// Executable lossless parse fixture for a required language target.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct LanguageFixture {
@@ -555,66 +570,39 @@ impl LanguageFixture {
 
 /// Required document-container languages.
 pub const MARKUP_LANGUAGE_TARGETS: &[LanguageTarget] = &[
-    LanguageTarget {
-        name: "txt",
-        family: LanguageFamily::Markup,
-        basis: "Issue #5 degenerate plain-text container target",
-    },
-    LanguageTarget {
-        name: "Markdown",
-        family: LanguageFamily::Markup,
-        basis: "Founding issue full-document target",
-    },
-    LanguageTarget {
-        name: "HTML",
-        family: LanguageFamily::Markup,
-        basis: "Founding issue full-document target",
-    },
+    language_target(
+        "txt",
+        LanguageFamily::Markup,
+        "Issue #5 degenerate plain-text container target",
+    ),
+    language_target(
+        "Markdown",
+        LanguageFamily::Markup,
+        "Founding issue full-document target",
+    ),
+    language_target(
+        "HTML",
+        LanguageFamily::Markup,
+        "Founding issue full-document target",
+    ),
 ];
 
 /// Required data-exchange / interchange format targets.
 ///
-/// Each entry has a wired tree-sitter grammar in `src/tree_sitter_adapter.rs`
-/// and a round-trip [`LANGUAGE_FIXTURES`] entry. CSV and JSON5 are intentionally
-/// absent: their crates.io grammar bindings still pin `tree-sitter ~0.20` and
-/// remain incompatible with the project's tree-sitter front end as published.
-/// See `docs/parity-roadmap.md` for the explicit deferral.
+/// Each entry has a wired parser and a round-trip [`LANGUAGE_FIXTURES`] entry.
+/// JSON, YAML, TOML, XML, INI, protobuf, and GraphQL use tree-sitter grammars;
+/// CSV and JSON5 use small lossless parsers because their published
+/// tree-sitter bindings still target the incompatible `tree-sitter ~0.20` ABI.
 pub const DATA_FORMAT_TARGETS: &[LanguageTarget] = &[
-    LanguageTarget {
-        name: "JSON",
-        family: LanguageFamily::DataFormat,
-        basis: "Issue #47 R-3 data-exchange format target",
-    },
-    LanguageTarget {
-        name: "YAML",
-        family: LanguageFamily::DataFormat,
-        basis: "Issue #47 R-3 data-exchange format target",
-    },
-    LanguageTarget {
-        name: "TOML",
-        family: LanguageFamily::DataFormat,
-        basis: "Issue #47 R-3 data-exchange format target",
-    },
-    LanguageTarget {
-        name: "XML",
-        family: LanguageFamily::DataFormat,
-        basis: "Issue #47 R-3 data-exchange format target",
-    },
-    LanguageTarget {
-        name: "INI",
-        family: LanguageFamily::DataFormat,
-        basis: "Issue #47 R-3 data-exchange format target",
-    },
-    LanguageTarget {
-        name: "protobuf",
-        family: LanguageFamily::DataFormat,
-        basis: "Issue #47 R-3 data-exchange format target",
-    },
-    LanguageTarget {
-        name: "GraphQL",
-        family: LanguageFamily::DataFormat,
-        basis: "Issue #47 R-4 schema/interface-definition target",
-    },
+    language_target("JSON", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("YAML", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("TOML", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("XML", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("INI", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("protobuf", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("GraphQL", LanguageFamily::DataFormat, SCHEMA_BASIS),
+    language_target("CSV", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
+    language_target("JSON5", LanguageFamily::DataFormat, DATA_FORMAT_BASIS),
 ];
 
 /// Initial top-ten programming-language parser targets.
@@ -705,7 +693,7 @@ pub const SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS: &[LanguageTarget] = &[
     LanguageTarget {
         name: "Perl",
         family: LanguageFamily::Programming,
-        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10; issue #70 deferred Perl grammar follow-up",
+        basis: "Issue #47 R-2 popular language immediately below the TIOBE top 10; issue #70 Perl grammar follow-up resolved via ts-parser-perl",
     },
 ];
 
@@ -914,6 +902,16 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
         language: "GraphQL",
         source: "type Person {\n  name: String!\n}\n",
         description: "GraphQL schema-definition type",
+    },
+    LanguageFixture {
+        language: "CSV",
+        source: "name,city\n\"Ana, Maria\",Lisbon\nBao,北京\n",
+        description: "CSV records with a quoted comma and UTF-8 field",
+    },
+    LanguageFixture {
+        language: "JSON5",
+        source: "{\n  // JSON5 accepts comments and unquoted keys\n  name: 'café',\n  items: [1, 2, 3,],\n}\n",
+        description: "JSON5 object with comments, unquoted keys, single quotes, and trailing commas",
     },
     LanguageFixture {
         language: "PHP",

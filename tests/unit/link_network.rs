@@ -835,7 +835,7 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
 
 #[test]
 fn data_format_targets_cover_interchange_format_scope() {
-    assert_eq!(DATA_FORMAT_TARGETS.len(), 7);
+    assert_eq!(DATA_FORMAT_TARGETS.len(), 9);
 
     let names = DATA_FORMAT_TARGETS
         .iter()
@@ -843,7 +843,7 @@ fn data_format_targets_cover_interchange_format_scope() {
         .collect::<Vec<_>>();
     assert_eq!(
         names,
-        vec!["JSON", "YAML", "TOML", "XML", "INI", "protobuf", "GraphQL"]
+        vec!["JSON", "YAML", "TOML", "XML", "INI", "protobuf", "GraphQL", "CSV", "JSON5"]
     );
 
     assert!(DATA_FORMAT_TARGETS
@@ -853,10 +853,8 @@ fn data_format_targets_cover_interchange_format_scope() {
         .iter()
         .all(|target| target.basis().contains("Issue #47")));
 
-    // CSV and JSON5 are explicitly deferred (stale tree-sitter 0.20 bindings),
-    // so they must not silently appear as wired targets.
-    assert!(!names.contains(&"CSV"));
-    assert!(!names.contains(&"JSON5"));
+    assert!(names.contains(&"CSV"));
+    assert!(names.contains(&"JSON5"));
 }
 
 #[test]

@@ -14,11 +14,10 @@ Kotlin, Scala, Lua, Perl - have no grammar and fall back to plain text. See
 
 ## Scope
 
-- Wire `tree-sitter-php`, `tree-sitter-swift`, `tree-sitter-kotlin`,
-  `tree-sitter-scala`, `tree-sitter-lua`, `tree-sitter-perl` through
+- Wire `tree-sitter-php`, `tree-sitter-swift`, `tree-sitter-kotlin-ng`,
+  `tree-sitter-scala`, `tree-sitter-lua`, `ts-parser-perl` through
   `src/tree_sitter_adapter.rs`, following the PR #44-#46 acquisition pattern
-  (verify each crate's tree-sitter binding compatibility first; vendor or
-  explicitly defer any that pin an old runtime).
+  (verify each crate's tree-sitter binding compatibility first).
 - Extend `PROGRAMMING_LANGUAGE_TARGETS` (or add an explicit second-tier
   registry) plus per-language `LANGUAGE_FIXTURES` with UTF-8 and recovery
   fixtures.
@@ -29,8 +28,7 @@ Kotlin, Scala, Lua, Perl - have no grammar and fall back to plain text. See
 - [ ] Each newly wired language parses and reconstructs byte-for-byte,
       including a recovery fixture with error/missing diagnostics.
 - [ ] Registry gates in `tests/unit/link_network.rs` cover the new entries.
-- [ ] Any language that cannot be wired yet is recorded in the roadmap with a
-      reason and follow-up issue, not silently skipped.
+- [ ] Roadmap records the selected crate and root node for each language.
 - [ ] Changelog fragment added (`bump: minor`).
 
 ## References

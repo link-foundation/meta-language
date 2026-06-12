@@ -16,8 +16,8 @@ tree-sitter 0.25.8 ([`formats-storage-apis.md`](../formats-storage-apis.md)
 Part A): `tree-sitter-json` 0.24.8, `tree-sitter-yaml` 0.7.2,
 `tree-sitter-toml-ng` 0.7.0, `tree-sitter-xml` 0.7.0 (XML + DTD),
 `tree-sitter-ini` 1.4.0, `tree-sitter-proto` 0.4.0, `tree-sitter-graphql`
-0.1.0. CSV and JSON5 crates still pin tree-sitter ~0.20 (vendor upstream or
-defer explicitly).
+0.1.0. CSV and JSON5 crates still pin tree-sitter ~0.20, so PR #48 handles
+them with in-repo lossless parsers validated by `csv` and `json5_nodes`.
 
 ## Scope
 
@@ -28,8 +28,8 @@ defer explicitly).
 - Add `LANGUAGE_FIXTURES` round-trip fixtures per format (UTF-8 + recovery
   cases) and mixed-region cases (e.g. JSON in Markdown fences, YAML
   frontmatter).
-- Record CSV/JSON5 status in `docs/parity-roadmap.md` (vendored or tracked as
-  an explicit deferral with an issue reference).
+- Record CSV/JSON5 status in `docs/parity-roadmap.md` with the in-repo parser
+  rationale and compatibility notes.
 
 ## Acceptance criteria
 

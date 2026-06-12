@@ -2,6 +2,8 @@ pub mod access;
 pub mod api_styles;
 mod concept_ontology;
 pub mod configuration;
+mod data_format_parser;
+mod embedded_region_parser;
 mod incremental;
 pub mod language_parser;
 pub mod language_profile;

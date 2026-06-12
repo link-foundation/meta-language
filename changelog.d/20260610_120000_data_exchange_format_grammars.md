@@ -16,8 +16,13 @@ bump: minor
 - Added per-format UTF-8 `LANGUAGE_FIXTURES` round-trip entries plus
   recovery-case and mixed-region tests (a `json` fence embedded in Markdown
   parses into the host links network).
+- Added lossless CSV and JSON5 parsers for the two formats whose published
+  tree-sitter crates still pin the incompatible `tree-sitter ~0.20` runtime.
+  CSV is validated with the Rust `csv` crate and JSON5 is validated with
+  `json5_nodes`; both emit structured syntax links and reconstruct
+  byte-for-byte.
 
 ### Documentation
-- Documented the seven wired grammars (crate, version, license, root node) and
-  the explicit CSV/JSON5 deferral — both still pin `tree-sitter ~0.20` — in
-  `docs/parity-roadmap.md` so the coverage gap is recorded, not silent.
+- Documented the nine wired data-format parsers (parser, version, license, root
+  node) in `docs/parity-roadmap.md`, including the tree-sitter compatibility
+  rationale for the in-repo CSV and JSON5 parsers.

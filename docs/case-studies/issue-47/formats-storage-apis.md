@@ -4,6 +4,14 @@ Research date: **2026-06-10**. All crate versions, repository states, and dates 
 against the crates.io API, the npm registry, and the GitHub API on that date unless explicitly
 marked *(unverified)*.
 
+Implementation update (2026-06-12): PR
+[#48](https://github.com/link-foundation/meta-language/pull/48) adopted the
+seven ready tree-sitter data-format grammars and resolved the CSV/JSON5
+binding gap with in-repo lossless parsers. CSV is validated with the Rust
+`csv` crate; JSON5 is validated with `json5_nodes`. The compatibility table
+below remains the research record explaining why the stale tree-sitter CSV and
+JSON5 crates were not used directly.
+
 Context: [issue #47](https://github.com/link-foundation/meta-language/issues/47) asks
 `meta-language` to (1) add full lossless CST/AST support for popular data-exchange formats,
 (2) add storage backends — [links notation](https://github.com/link-foundation/links-notation)
@@ -55,7 +63,9 @@ declare `tree-sitter ~0.20` as a *normal* dependency (CSV, JSON5 below) are **no
   preservation); only useful for semantic cross-checks.
 
 **Formats lacking a good tree-sitter crate today: CSV and JSON5** (both have grammars but stale
-crates.io bindings pinned to tree-sitter 0.20). Everything else is adoptable as-is.
+crates.io bindings pinned to tree-sitter 0.20). PR #48 handles them with
+lossless in-repo parsers instead of waiting for compatible tree-sitter crates.
+Everything else is adoptable as-is.
 
 ---
 

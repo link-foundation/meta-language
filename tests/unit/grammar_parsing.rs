@@ -438,12 +438,13 @@ fn parse_marks_recovery_errors_without_losing_original_text() {
 }
 
 #[test]
-fn data_format_fixtures_emit_grammar_backed_syntax_and_round_trip() {
-    // Root node kind emitted by each wired data-exchange grammar.
+fn data_format_fixtures_emit_structured_syntax_and_round_trip() {
+    // Root node kind emitted by each wired data-exchange parser.
     let expected_root = |language: &str| match language {
-        "JSON" | "TOML" | "XML" | "INI" => "document",
+        "JSON" | "TOML" | "XML" | "INI" | "JSON5" => "document",
         "YAML" => "stream",
         "protobuf" | "GraphQL" => "source_file",
+        "CSV" => "csv_file",
         other => panic!("unexpected data-format target {other}"),
     };
 
@@ -476,7 +477,7 @@ fn data_format_fixtures_emit_grammar_backed_syntax_and_round_trip() {
                     && link.metadata().language() == Some(language)
                     && link.metadata().span().is_some()
             }),
-            "{language} should emit grammar-backed syntax links"
+            "{language} should emit structured syntax links"
         );
         assert!(
             network.links().any(|link| {
@@ -494,13 +495,41 @@ fn data_format_fixtures_emit_grammar_backed_syntax_and_round_trip() {
             .count();
         assert!(
             concrete_syntax_links > 0,
-            "{language} should produce grammar-backed concrete syntax links"
+            "{language} should produce structured concrete syntax links"
         );
     }
 }
 
 #[test]
-fn data_format_aliases_use_their_tree_sitter_grammar() {
+fn csv_recovery_errors_round_trip_with_flags() {
+    let source = "name,city\n\"unterminated,Lisbon\n";
+    let network = LinkNetwork::parse(source, "CSV", ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(!report.is_clean());
+    assert!(report
+        .issues()
+        .iter()
+        .any(|issue| issue.kind() == VerificationIssueKind::HasErrorLink));
+}
+
+#[test]
+fn json5_recovery_errors_round_trip_with_flags() {
+    let source = "{\n  key: 'unterminated,\n}\n";
+    let network = LinkNetwork::parse(source, "JSON5", ParseConfiguration::default());
+    let report = network.verify_full_match(None);
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(!report.is_clean());
+    assert!(report.issues().iter().any(|issue| {
+        issue.kind() == VerificationIssueKind::ErrorLink
+            || issue.kind() == VerificationIssueKind::HasErrorLink
+    }));
+}
+
+#[test]
+fn data_format_aliases_use_their_structured_parser() {
     for (language, source) in [
         ("json", "{\"a\": 1}\n"),
         ("yml", "a: 1\n"),
@@ -509,6 +538,8 @@ fn data_format_aliases_use_their_tree_sitter_grammar() {
         ("ini", "[a]\nb = 1\n"),
         ("proto", "syntax = \"proto3\";\n"),
         ("gql", "type A { b: Int }\n"),
+        ("csv", "name,city\nAna,Lisbon\n"),
+        ("json5", "{name: 'Ana',}\n"),
     ] {
         let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
 
@@ -520,10 +551,13 @@ fn data_format_aliases_use_their_tree_sitter_grammar() {
         assert!(
             network.links().any(|link| {
                 link.metadata().link_type() == Some(LinkType::Syntax)
-                    && link.metadata().language() == Some(language)
+                    && link
+                        .metadata()
+                        .language()
+                        .is_some_and(|actual| actual.eq_ignore_ascii_case(language))
                     && link.metadata().span().is_some()
             }),
-            "{language} alias should emit grammar-backed syntax links"
+            "{language} alias should emit structured syntax links"
         );
     }
 }

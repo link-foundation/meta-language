@@ -16,7 +16,6 @@ bump: minor
   malformed source still reconstructs while exposing error/missing diagnostics.
 
 ### Documentation
-- Documented the five wired grammars (crate, version, license, root node) and
-  the explicit Perl deferral — its only binding pins `tree-sitter ^0.26.3` as a
-  normal dependency, tracked in issue #70 — in `docs/parity-roadmap.md` so the
-  coverage gap is recorded, not silent.
+- Documented the wired grammars (crate, version, license, root node) in
+  `docs/parity-roadmap.md` and kept the temporary Perl follow-up tracked
+  explicitly until `ts-parser-perl` was adopted.

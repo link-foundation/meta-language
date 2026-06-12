@@ -205,7 +205,7 @@ fn grammar_for_language(language: &str) -> Option<Language> {
     } else if language.eq_ignore_ascii_case("lua") {
         Some(tree_sitter_lua::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("perl") || language.eq_ignore_ascii_case("pl") {
-        Some(tree_sitter_perl::LANGUAGE.into())
+        Some(ts_parser_perl::LANGUAGE.into())
     } else {
         None
     }
@@ -243,7 +243,7 @@ fn convert_node(
         let child_index_u32 =
             u32::try_from(child_index).expect("tree-sitter child index fits in u32");
         let child = node
-            .child(child_index_u32)
+            .child(child_index)
             .expect("tree-sitter child index should be valid");
         if context.has_synthetic_suffix() && child.start_byte() >= context.source_len {
             break;

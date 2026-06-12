@@ -23,16 +23,23 @@ links-ecosystem storage), per-requirement solution plans, and the source
 specs for the filed implementation sub-issues.
 
 Research and audit date: 2026-06-10.
+Implementation update date: 2026-06-12.
 
 ## Key findings
 
-- **Audit:** 22 requirements were extracted; 2 are Implemented, 15 Partial,
+- **Initial audit:** 22 requirements were extracted; 2 were Implemented, 15 Partial,
   5 Missing on the audit date. The largest gaps: no data-exchange format
   grammars, no binary doublets storage, no grammatical-correctness parsing
   for natural languages, no engine-level readonly configuration, no general
   network→LiNo serializer, cross-language translation gated on a hard-coded
   demo, and no API-style parity contract. See
   [`requirements.md`](./requirements.md).
+- **Implementation update:** PR
+  [#48](https://github.com/link-foundation/meta-language/pull/48) now contains
+  runtime code, fixtures, tests, docs, and changelog fragments for the 15 filed
+  sub-issues plus follow-ups #64 and #70. The register in
+  [`requirements.md`](./requirements.md) remains the initial audit snapshot;
+  the table below records the current branch status.
 - **Code tooling:** 22 competitor projects surveyed. Top capabilities to
   match: incremental re-parse and red/green structural sharing (tree-sitter,
   Roslyn, rowan), composable rule algebra and snapshot rule tests (ast-grep),
@@ -51,10 +58,11 @@ Research and audit date: 2026-06-10.
   [`competitors-natural-language.md`](./competitors-natural-language.md).
 - **Formats and storage:** seven tree-sitter format grammars are
   drop-in-compatible with the project's tree-sitter 0.25.8 (JSON, YAML,
-  TOML, XML, INI, protobuf, GraphQL); CSV and JSON5 need vendoring.
-  `doublets` 0.4.0 is a viable binary backend (stable Rust, Unlicense,
-  file-mapped persistence), and formal-ai - the heaviest planned user -
-  already defines a `LinkStoreBackend { LinoProjection, DoubletsRs,
+  TOML, XML, INI, protobuf, GraphQL). CSV and JSON5 are covered by in-repo
+  lossless parsers because their published tree-sitter crates still pin
+  `tree-sitter ~0.20`. `doublets` 0.4.0 is a viable binary backend (stable Rust,
+  Unlicense, file-mapped persistence), and formal-ai - the heaviest planned
+  user - already defines a `LinkStoreBackend { LinoProjection, DoubletsRs,
   DoubletsWeb }` stack to match. See
   [`formats-storage-apis.md`](./formats-storage-apis.md).
 
@@ -62,9 +70,9 @@ Research and audit date: 2026-06-10.
 
 | Ask | Delivered by |
 |---|---|
-| Compare all competitors in all scopes | Three research documents + new parity targets planned in spec `#15` |
-| List each and all requirements | [`requirements.md`](./requirements.md) (R-1 ... R-22) |
-| Propose solutions and plans, checking existing components/libraries | [`solution-plans.md`](./solution-plans.md) (S-1 ... S-15, phased) |
+| Compare all competitors in all scopes | Three research documents plus executable `PARITY_TARGETS` / `PARITY_FIXTURES` gates in PR #48 |
+| List each and all requirements | [`requirements.md`](./requirements.md) (R-1 ... R-22 initial audit) |
+| Propose solutions and plans, checking existing components/libraries | [`solution-plans.md`](./solution-plans.md) (S-1 ... S-15, then implemented in PR #48) |
 | Compile data to `docs/case-studies/issue-47` | This folder, including [`raw-data/`](./raw-data/) |
 | Create GitHub issues with blocked-by markings, as subtasks of #47 | [`proposed-issues/`](./proposed-issues/) specs, filed as sub-issues with native dependency links (table below) |
 | Execute all tasks on this issue's branch, one big PR | Stated in every filed issue; branch `issue-47-76af108c0f24`, [PR #48](https://github.com/link-foundation/meta-language/pull/48) |
@@ -97,6 +105,28 @@ source.
 | `#14` API-style parity contract | [#62](https://github.com/link-foundation/meta-language/issues/62) | #54, #58 |
 | `#15` Competitor corpora wave 2 + coverage gate | [#63](https://github.com/link-foundation/meta-language/issues/63) | #50, #56, #60, #62 |
 
+## PR #48 implementation status
+
+| Issue | Branch status | Evidence |
+|---|---|---|
+| [#49](https://github.com/link-foundation/meta-language/issues/49) Readonly/mutable engine | Complete on branch | `src/access.rs`, `ParseConfiguration::with_access_mode`, `tests/unit/access_mode.rs` |
+| [#50](https://github.com/link-foundation/meta-language/issues/50) Data-exchange formats | Complete on branch | `DATA_FORMAT_TARGETS`, `src/data_format_parser.rs`, `src/tree_sitter_adapter.rs`, `tests/unit/grammar_parsing.rs` |
+| [#51](https://github.com/link-foundation/meta-language/issues/51) Programming grammar wave | Complete on branch | `SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS`, `ts-parser-perl`, second-tier grammar tests |
+| [#52](https://github.com/link-foundation/meta-language/issues/52) Parser registry | Complete on branch | `src/parser_registry.rs`, parser registry unit tests, `examples/custom_parser_registry.rs` |
+| [#53](https://github.com/link-foundation/meta-language/issues/53) LiNo serialization | Complete on branch | `src/lino_serialization.rs`, `LinkNetwork::to_lino`, LiNo serialization tests |
+| [#54](https://github.com/link-foundation/meta-language/issues/54) Doublets storage | Complete on branch | `src/storage.rs`, optional `doublets` feature, doublets storage tests |
+| [#55](https://github.com/link-foundation/meta-language/issues/55) Rust types/traits codec | Complete on branch | `src/rust_codec.rs`, `ToLinks` / `FromLinks`, Rust codec tests |
+| [#56](https://github.com/link-foundation/meta-language/issues/56) Natural-language grammar | Complete on branch | `src/natural_language_grammar.rs`, `NATURAL_LANGUAGE_GRAMMAR_FIXTURES`, grammar tests |
+| [#57](https://github.com/link-foundation/meta-language/issues/57) Exact-match concept space | Complete on branch | `src/concept_ontology.rs`, concept alias/import tests |
+| [#58](https://github.com/link-foundation/meta-language/issues/58) Translation-rule registry | Complete on branch | `src/translation_rules.rs`, configurable rule-set tests |
+| [#59](https://github.com/link-foundation/meta-language/issues/59) Language profiles | Complete on branch | `src/language_profile.rs`, profile violation tests |
+| [#60](https://github.com/link-foundation/meta-language/issues/60) Query/transform algebra | Complete on branch | `src/query_algebra.rs`, `src/transform.rs`, rule snapshot tests |
+| [#61](https://github.com/link-foundation/meta-language/issues/61) Incremental reparse/sharing | Complete on branch | `src/incremental.rs`, `src/snapshots.rs`, structural diff tests |
+| [#62](https://github.com/link-foundation/meta-language/issues/62) API-style parity | Complete on branch | `src/api_styles.rs`, `API_OPERATIONS`, API parity tests |
+| [#63](https://github.com/link-foundation/meta-language/issues/63) Corpora wave + coverage | Complete on branch | expanded `PARITY_FIXTURES`, coverage floor in CI, parity corpora tests |
+| [#64](https://github.com/link-foundation/meta-language/issues/64) Source generation/unparse | Complete on branch | `src/source_generation.rs`, `render_source`, `examples/source_generation.rs` |
+| [#70](https://github.com/link-foundation/meta-language/issues/70) Perl grammar follow-up | Complete on branch | canonical `ts-parser-perl` binding, Perl fixture/recovery tests |
+
 ## Document index
 
 | File | Purpose |
@@ -111,7 +141,7 @@ source.
 
 ## Status
 
-Research, requirement extraction, solution planning, and sub-issue
-specification are complete. Implementation proceeds through the filed
-sub-issues in the phased order above, on branch `issue-47-76af108c0f24`,
-merging through [PR #48](https://github.com/link-foundation/meta-language/pull/48).
+Research, requirement extraction, solution planning, sub-issue specification,
+and branch implementation are complete for PR #48. The GitHub issues remain
+open until the PR merges to the default branch, but the branch contains the
+code, tests, documentation, and changelog fragments listed above.

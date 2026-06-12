@@ -11,6 +11,11 @@ The issue body snapshot is stored at
 [`raw-data/issue-47.json`](./raw-data/issue-47.json). The register style follows
 the prior [issue #3 requirements register](../issue-3/requirements.md).
 
+This file is the initial audit snapshot from 2026-06-10. The implementation
+status after PR #48 work is summarized in
+[`README.md`](./README.md#pr-48-implementation-status); the detailed findings
+below are kept as traceable evidence for why the sub-issues were filed.
+
 ## Status Vocabulary
 
 | Status | Meaning |
@@ -115,12 +120,12 @@ SQL (`sql-ansi` via `tree-sitter-sequel`, documented in
 `relative-meta-logic` fixtures exercise an `"RML"` language label
 (`src/parity_fixtures.rs`).
 
-**Gap.** `"RML"` has no grammar in
+**Initial audit gap.** `"RML"` has no grammar in
 `src/tree_sitter_adapter.rs:grammar_for_language`, so those fixtures rely
 on the plain-text fallback. No grammars exist for regular expressions,
 BNF/EBNF, lambda calculus, mathematical notation, or logic languages, and
-the roadmap explicitly defers SQL dialect keys (BigQuery, SQLite,
-PostgreSQL, T-SQL).
+the roadmap records SQL dialect keys (BigQuery, SQLite, PostgreSQL, T-SQL)
+as outside the advertised target surface until separate grammars are selected.
 
 ### R-5 - Natural languages with actual grammatical-correctness parsing
 
@@ -353,19 +358,15 @@ only, R-8) cannot be replaced by the end user.
 
 > "We should check that nothing is defered or left unimplemented in our vision and roadmap"
 
-**Status: Partial.**
+**Status: Complete on PR #48.**
 Roadmap audit issues #37 and #39 ("Implement unimplemented in our vision
 and roadmap") are closed, and registry tests in
 `tests/unit/link_network.rs` keep every advertised target, capability, and
-fixture present.
-
-**Gap.** `docs/parity-roadmap.md` still contains explicit deferrals: SQL
-dialects are advertised "until separate dialect grammars such as BigQuery,
-SQLite, PostgreSQL, or T-SQL are wired and tested under their own keys",
-and Delphi "version-specific ... differences ... remain outside the
-advertised grammar-backed scope". The natural-language grammar gap (R-5),
-data-exchange gap (R-3), and doublets gap (R-8) are likewise unimplemented
-vision items.
+fixture present. PR #48 resolves the former data-exchange, Perl grammar,
+source-generation, doublets storage, natural-language grammar, configurable
+rules, API-style, and coverage-gate gaps, while `docs/parity-roadmap.md`
+labels SQL dialect keys and Delphi compiler variants as outside the advertised
+target surface rather than advertised-but-unimplemented targets.
 
 ### R-20 - 100% test coverage copying competitor test cases
 
