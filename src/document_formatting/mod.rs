@@ -18,11 +18,15 @@ mod document;
 mod docx;
 mod opc;
 mod pdf;
+mod profile;
 
 pub use document::{parse_markup_document, BlockNode, FormattingDocument, InlineNode};
 pub use docx::{docx_profile_is_recognized, parse_docx_document, render_docx_document};
 pub use opc::{docx_package_is_recognized, parse_docx_package, render_docx_package};
 pub use pdf::{parse_pdf_document, pdf_profile_is_recognized, render_pdf_document};
+pub use profile::{
+    canonical_document_format, document_format_profile, CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS,
+};
 
 use std::collections::BTreeMap;
 

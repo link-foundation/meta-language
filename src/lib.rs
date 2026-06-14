@@ -47,11 +47,12 @@ pub use configuration::{
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
 };
 pub use document_formatting::{
-    docx_package_is_recognized, docx_profile_is_recognized, parse_docx_document,
-    parse_docx_package, parse_markup_document, parse_pdf_document, pdf_profile_is_recognized,
-    render_docx_document, render_docx_package, render_pdf_document, BlockNode,
-    DocumentFormatInstance, DocumentFormatMatch, DocumentFormattingSeedReport, FormattingDocument,
-    InlineNode,
+    canonical_document_format, document_format_profile, docx_package_is_recognized,
+    docx_profile_is_recognized, parse_docx_document, parse_docx_package, parse_markup_document,
+    parse_pdf_document, pdf_profile_is_recognized, render_docx_document, render_docx_package,
+    render_pdf_document, BlockNode, DocumentFormatInstance, DocumentFormatMatch,
+    DocumentFormattingSeedReport, FormattingDocument, InlineNode, CROSS_FORMAT_CONCEPTS,
+    DOCUMENT_FORMATS,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
