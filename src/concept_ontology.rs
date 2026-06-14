@@ -48,6 +48,7 @@ impl ConceptOntologyImportReport {
 pub struct ConceptOntologySeedReport {
     lexicon_concepts: usize,
     structural_concepts: usize,
+    formatting_concepts: usize,
     alias_links: usize,
     syntax_mappings: usize,
 }
@@ -56,12 +57,14 @@ impl ConceptOntologySeedReport {
     const fn new(
         lexicon_concepts: usize,
         structural_concepts: usize,
+        formatting_concepts: usize,
         alias_links: usize,
         syntax_mappings: usize,
     ) -> Self {
         Self {
             lexicon_concepts,
             structural_concepts,
+            formatting_concepts,
             alias_links,
             syntax_mappings,
         }
@@ -77,6 +80,12 @@ impl ConceptOntologySeedReport {
     #[must_use]
     pub const fn structural_concepts(self) -> usize {
         self.structural_concepts
+    }
+
+    /// Number of shared document-formatting concepts seeded.
+    #[must_use]
+    pub const fn formatting_concepts(self) -> usize {
+        self.formatting_concepts
     }
 
     /// Number of external-id alias links attached to seeded concepts.
@@ -450,6 +459,9 @@ impl LinkNetwork {
             }
         }
 
+        let formatting = self.seed_document_formatting_concepts();
+        syntax_mappings += formatting.syntax_mappings();
+
         let statehood = self.seed_statehood_worked_example();
         for (concept_link, external_id) in
             [(statehood.subject, "Q782"), (statehood.object, "Q35657")]
@@ -467,6 +479,7 @@ impl LinkNetwork {
         ConceptOntologySeedReport::new(
             lexicon.concept_count,
             structural_concepts.len(),
+            formatting.concepts(),
             alias_links,
             syntax_mappings,
         )
@@ -662,7 +675,7 @@ impl LinkNetwork {
         )
     }
 
-    fn insert_concept_syntax_mapping(
+    pub(crate) fn insert_concept_syntax_mapping(
         &mut self,
         concept_link: LinkId,
         concept: &str,

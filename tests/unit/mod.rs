@@ -2,6 +2,7 @@ mod access_mode;
 mod api_style_parity;
 mod concept_ontology;
 mod cross_language_reconstruction;
+mod document_formatting;
 mod doublets_storage;
 mod grammar_parsing;
 mod language_profile;
