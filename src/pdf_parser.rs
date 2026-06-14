@@ -19,11 +19,7 @@ use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration};
 
 /// Parses PDF `text` into a lossless network enriched with concept-tagged
 /// document-structure links.
-pub(crate) fn parse(
-    text: &str,
-    language: &str,
-    configuration: ParseConfiguration,
-) -> LinkNetwork {
+pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
     let mut network = LinkNetwork::parse_lossless_text(text, language, configuration);
 
     let document = parse_pdf_document(text);

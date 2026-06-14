@@ -802,7 +802,7 @@ fn probabilistic_truth_values_cover_relative_meta_logic_probability_cases() {
 
 #[test]
 fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
-    assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 3);
+    assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 4);
     assert_eq!(PROGRAMMING_LANGUAGE_TARGETS.len(), 10);
     assert_eq!(NATURAL_LANGUAGE_TARGETS.len(), 10);
 
@@ -813,6 +813,7 @@ fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
     assert!(markup_names.contains(&"txt"));
     assert!(markup_names.contains(&"Markdown"));
     assert!(markup_names.contains(&"HTML"));
+    assert!(markup_names.contains(&"PDF"));
 
     assert!(GRAMMAR_EMBEDDING_TARGETS.iter().any(|target| {
         target.host_language() == "Markdown"

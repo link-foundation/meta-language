@@ -585,6 +585,11 @@ pub const MARKUP_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         LanguageFamily::Markup,
         "Founding issue full-document target",
     ),
+    language_target(
+        "PDF",
+        LanguageFamily::Markup,
+        "Issue #84 binary document container target (text PDF profile)",
+    ),
 ];
 
 /// Required data-exchange / interchange format targets.
@@ -767,6 +772,11 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
         language: "HTML",
         source: "<script>const x = 1;</script><style>.x { color: red; }</style><p style=\"color: blue\">text</p>\n",
         description: "HTML document with script, style, and style-attribute regions",
+    },
+    LanguageFixture {
+        language: "PDF",
+        source: "%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> >> /Contents 7 0 R >>\nendobj\n4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>\nendobj\n7 0 obj\n<< /Length 163 >>\nstream\n/H1 BDC\nBT\n72 720 Td\n/F1 24 Tf\n(Status Report) Tj\nET\nEMC\n/P BDC\nBT\n72 698 Td\n/F1 12 Tf\n(The system is ) Tj\n/F2 12 Tf\n(ready) Tj\n/F1 12 Tf\n( for launch.) Tj\nET\nEMC\nendstream\nendobj\nxref\n0 8\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000261 00000 n \n0000000331 00000 n \n0000000406 00000 n \n0000000484 00000 n \ntrailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n697\n%%EOF\n",
+        description: "Text PDF profile with bold + heading + paragraph (issue #84)",
     },
     LanguageFixture {
         language: "Python",
