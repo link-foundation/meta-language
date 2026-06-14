@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>meta-language — a self-describing links network for lossless language representation</title>
+  <meta name="description" content="meta-language is a Rust foundation for a universal, self-describing meta language backed by a links network: lossless parsing, byte-for-byte reconstruction, and cross-language transforms." />
+  <link rel="canonical" href="https://link-foundation.github.io/meta-language/" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav">
+      <span class="brand">meta-language</span>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#demo">Demo</a>
+        <a href="#quickstart">Quick start</a>
+        <a href="./api/">API docs</a>
+        <a href="https://github.com/link-foundation/meta-language">GitHub</a>
+      </div>
+    </nav>
+
+    <div class="hero-inner">
+      <h1>meta-language</h1>
+      <p class="tagline">
+        A self-describing <strong>links network</strong> for lossless language representation.
+      </p>
+      <p class="subtitle">
+        Parse source from dozens of languages into one uniform, byte-for-byte
+        reconstructible graph — then query, transform, and reconstruct it across
+        languages. Written in Rust.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#demo">Try the demo</a>
+        <a class="btn" href="./api/">Read the API docs</a>
+        <a class="btn" href="https://crates.io/crates/meta-language">crates.io</a>
+      </div>
+      <div class="badges">
+        <a href="https://crates.io/crates/meta-language"><img alt="crates.io" src="https://img.shields.io/crates/v/meta-language.svg" /></a>
+        <a href="./api/"><img alt="docs" src="https://img.shields.io/badge/docs-API-blue.svg" /></a>
+        <a href="https://github.com/link-foundation/meta-language/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Unlicense-green.svg" /></a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="about" class="section">
+      <h2>What is it?</h2>
+      <p>
+        <code>meta-language</code> is a Rust crate that represents code and data
+        as a single <em>links network</em>: every token, syntax node, field
+        label, and relation is just a link with ordered references to other
+        links. The parse is <strong>lossless</strong> — every byte of the source
+        is preserved, so the original text can be reconstructed exactly — while
+        the same network can be projected as concrete syntax, abstract syntax, or
+        semantics-only views.
+      </p>
+      <p>
+        Because the model is self-describing, the same substrate works for source
+        code (via tree-sitter grammars), natural language, structured data
+        formats, and documents — and supports cross-language reconstruction,
+        codemod-style queries, incremental reparsing, and snapshots.
+      </p>
+    </section>
+
+    <section id="features" class="section">
+      <h2>Features</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Lossless parsing</h3>
+          <p>Every byte is preserved. <code>reconstruct_text()</code> rebuilds the source exactly from the network.</p>
+        </div>
+        <div class="card">
+          <h3>One uniform model</h3>
+          <p>Tokens, nodes, fields, and relations are all links — no side tables, no special primitives.</p>
+        </div>
+        <div class="card">
+          <h3>Many languages</h3>
+          <p>Backed by tree-sitter grammars for C, C++, C#, Go, Java, JavaScript, Python, Rust, and many more.</p>
+        </div>
+        <div class="card">
+          <h3>Projections</h3>
+          <p>View the same network as concrete syntax, abstract syntax, or semantics-only data.</p>
+        </div>
+        <div class="card">
+          <h3>Query &amp; transform</h3>
+          <p>S-expression-style queries with captures, plus <code>find()</code>/<code>replace()</code> codemods.</p>
+        </div>
+        <div class="card">
+          <h3>Incremental &amp; versioned</h3>
+          <p>Stable link ids across edits, immutable snapshots, editable forks, and provenance.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="section">
+      <h2>Interactive demo — Links Notation playground</h2>
+      <p>
+        The meta language serializes its network as
+        <a href="https://crates.io/crates/links-notation">links notation</a> —
+        the structural substrate of the whole model. This playground parses links
+        notation entirely in your browser via WebAssembly (compiled from the same
+        Rust <code>links-notation</code> crate the project uses). Type below and
+        watch it parse live.
+      </p>
+
+      <div class="demo">
+        <div class="demo-controls">
+          <label for="example-select">Example:</label>
+          <select id="example-select" aria-label="Choose an example">
+            <option value="point">Point (self-referential link)</option>
+            <option value="relation">Relation link</option>
+            <option value="identified">Identified links</option>
+            <option value="nested">Nested structure</option>
+            <option value="multi">Multiple statements</option>
+          </select>
+        </div>
+
+        <div class="demo-io">
+          <div class="demo-pane">
+            <label for="demo-input">Links notation input</label>
+            <textarea id="demo-input" spellcheck="false" aria-label="Links notation input">(1: 1 1)</textarea>
+          </div>
+          <div class="demo-pane">
+            <label>Parsed result</label>
+            <div id="demo-status" class="demo-status" role="status">Loading WebAssembly…</div>
+            <pre id="demo-output" class="demo-output" aria-live="polite"></pre>
+          </div>
+        </div>
+        <p class="demo-note">
+          Runs offline — no network calls. Source:
+          <a href="https://github.com/link-foundation/meta-language/tree/main/web">web/</a>.
+        </p>
+      </div>
+    </section>
+
+    <section id="example" class="section">
+      <h2>Example: the self-description</h2>
+      <p>
+        The network can describe itself. Running <code>meta-language describe</code>
+        prints the built-in self-description roots in links notation — the same
+        format the demo above understands:
+      </p>
+      <pre class="code-block"><code>(link: reference reference)
+(reference: link link)
+(relation link: link reference)
+(language: grammar concept)
+(grammar: language relation link)
+(type: Type concept)
+(concept: link language)
+(point: point point)
+(field: relation link reference)</code></pre>
+    </section>
+
+    <section id="quickstart" class="section">
+      <h2>Quick start</h2>
+      <h3>Add the crate</h3>
+      <pre class="code-block"><code>cargo add meta-language</code></pre>
+
+      <h3>Use the library</h3>
+      <pre class="code-block"><code>use meta_language::{LinkNetwork, ParseConfiguration};
+
+let network = LinkNetwork::parse("fn main() {}", "rust", ParseConfiguration::default());
+let report = network.verify_full_match(None);
+assert!(report.is_clean());
+
+// Byte-for-byte reconstruction of the original source.
+assert_eq!(network.reconstruct_text(), "fn main() {}");</code></pre>
+
+      <h3>Use the CLI</h3>
+      <pre class="code-block"><code># Print the built-in self-description roots
+meta-language describe
+
+# Parse text and verify the parse is lossless and clean
+meta-language verify --language rust --text 'fn main() {}'</code></pre>
+    </section>
+
+    <section id="docs" class="section">
+      <h2>Documentation &amp; resources</h2>
+      <ul class="links-list">
+        <li><a href="./api/">Full Rust API documentation</a> (rustdoc)</li>
+        <li><a href="https://github.com/link-foundation/meta-language/blob/main/README.md">README</a></li>
+        <li><a href="https://github.com/link-foundation/meta-language/blob/main/docs/parity-roadmap.md">Parity roadmap</a></li>
+        <li><a href="https://github.com/link-foundation/meta-language/tree/main/docs/case-studies">Case studies</a></li>
+        <li><a href="https://github.com/link-foundation/meta-language/tree/main/examples">Examples</a></li>
+        <li><a href="https://crates.io/crates/meta-language">crates.io package</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>
+      <a href="https://github.com/link-foundation/meta-language">link-foundation/meta-language</a>
+      · Released into the public domain under the <a href="https://github.com/link-foundation/meta-language/blob/main/LICENSE">Unlicense</a>.
+    </p>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
