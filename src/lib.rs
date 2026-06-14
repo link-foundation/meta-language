@@ -6,6 +6,7 @@ mod data_format_parser;
 pub mod document_formatting;
 mod embedded_region_parser;
 mod incremental;
+mod language_fixtures;
 pub mod language_parser;
 pub mod language_profile;
 pub mod link_flags;
