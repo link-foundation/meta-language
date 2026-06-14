@@ -6,6 +6,7 @@ mod data_format_parser;
 pub mod document_formatting;
 mod embedded_region_parser;
 mod incremental;
+mod language_fixtures;
 pub mod language_parser;
 pub mod language_profile;
 pub mod link_flags;
@@ -18,6 +19,7 @@ mod natural_language_grammar;
 pub mod parity;
 mod parity_fixtures;
 pub mod parser_registry;
+mod pdf_parser;
 pub mod query;
 pub mod query_algebra;
 mod reconstruction;
@@ -44,8 +46,9 @@ pub use configuration::{
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
 };
 pub use document_formatting::{
-    parse_markup_document, BlockNode, DocumentFormatInstance, DocumentFormatMatch,
-    DocumentFormattingSeedReport, FormattingDocument, InlineNode,
+    parse_markup_document, parse_pdf_document, pdf_profile_is_recognized, render_pdf_document,
+    BlockNode, DocumentFormatInstance, DocumentFormatMatch, DocumentFormattingSeedReport,
+    FormattingDocument, InlineNode,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
