@@ -44,8 +44,9 @@ pub use configuration::{
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
 };
 pub use document_formatting::{
-    parse_markup_document, BlockNode, DocumentFormatInstance, DocumentFormatMatch,
-    DocumentFormattingSeedReport, FormattingDocument, InlineNode,
+    parse_markup_document, parse_pdf_document, pdf_profile_is_recognized, render_pdf_document,
+    BlockNode, DocumentFormatInstance, DocumentFormatMatch, DocumentFormattingSeedReport,
+    FormattingDocument, InlineNode,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};

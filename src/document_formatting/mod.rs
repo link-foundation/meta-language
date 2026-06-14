@@ -15,8 +15,10 @@
 //! Markdown `#` run, `{level}` for the HTML digit).
 
 mod document;
+mod pdf;
 
 pub use document::{parse_markup_document, BlockNode, FormattingDocument, InlineNode};
+pub use pdf::{parse_pdf_document, pdf_profile_is_recognized, render_pdf_document};
 
 use std::collections::BTreeMap;
 
