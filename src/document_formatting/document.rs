@@ -79,6 +79,9 @@ impl LinkNetwork {
         if language == "PDF" {
             return super::render_pdf_document(document);
         }
+        if language == "DOCX" {
+            return super::render_docx_document(document);
+        }
         let block_separator = if language == "Markdown" { "\n\n" } else { "\n" };
         document
             .blocks
@@ -177,6 +180,7 @@ pub fn parse_markup_document(language: &str, text: &str) -> Option<FormattingDoc
         "Markdown" => Some(parse_markdown_document(text)),
         "HTML" => Some(parse_html_document(text)),
         "PDF" => Some(super::parse_pdf_document(text)),
+        "DOCX" => Some(super::parse_docx_document(text)),
         _ => None,
     }
 }
