@@ -3,6 +3,7 @@ pub mod api_styles;
 mod concept_ontology;
 pub mod configuration;
 mod data_format_parser;
+pub mod document_formatting;
 mod embedded_region_parser;
 mod incremental;
 pub mod language_parser;
@@ -41,6 +42,10 @@ pub use concept_ontology::{ConceptOntologyImportReport, ConceptOntologySeedRepor
 pub use configuration::{
     AccessMode, FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
+};
+pub use document_formatting::{
+    parse_markup_document, BlockNode, DocumentFormatInstance, DocumentFormatMatch,
+    DocumentFormattingSeedReport, FormattingDocument, InlineNode,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
