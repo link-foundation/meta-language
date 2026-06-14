@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt;
 
@@ -18,6 +18,9 @@ pub struct LanguageProfile {
     link_types: BTreeSet<LinkType>,
     concepts: BTreeSet<String>,
     translation_rules: BTreeSet<String>,
+    /// Concepts the target cannot represent natively, each mapped to the
+    /// documented lossy fallback applied when the concept is encountered.
+    fallbacks: BTreeMap<String, String>,
 }
 
 impl LanguageProfile {
@@ -30,6 +33,7 @@ impl LanguageProfile {
             link_types: BTreeSet::new(),
             concepts: BTreeSet::new(),
             translation_rules: BTreeSet::new(),
+            fallbacks: BTreeMap::new(),
         }
     }
 
@@ -122,6 +126,17 @@ impl LanguageProfile {
         &self.translation_rules
     }
 
+    /// Unsupported concepts mapped to their documented lossy fallback.
+    ///
+    /// Each entry records a concept the target cannot represent natively
+    /// together with the fallback applied when the concept is encountered (for
+    /// example a heading rendered as a plain paragraph in `txt`). This is the
+    /// per-target fidelity report required by issue #86.
+    #[must_use]
+    pub const fn fallbacks(&self) -> &BTreeMap<String, String> {
+        &self.fallbacks
+    }
+
     /// Returns a copy with a supported link type.
     #[must_use]
     pub fn with_link_type(mut self, link_type: LinkType) -> Self {
@@ -141,6 +156,28 @@ impl LanguageProfile {
     pub fn with_translation_rule(mut self, rule: impl Into<String>) -> Self {
         self.translation_rules.insert(rule.into());
         self
+    }
+
+    /// Returns a copy that records an unsupported concept and its lossy fallback.
+    ///
+    /// Use this to declare features the target cannot represent natively, so the
+    /// profile can report them as documented lossy fallbacks rather than silent
+    /// data loss.
+    #[must_use]
+    pub fn with_concept_fallback(
+        mut self,
+        concept: impl Into<String>,
+        fallback: impl Into<String>,
+    ) -> Self {
+        self.fallbacks.insert(concept.into(), fallback.into());
+        self
+    }
+
+    /// The documented lossy fallback for a concept the target cannot represent,
+    /// or `None` when the concept is natively supported or unknown.
+    #[must_use]
+    pub fn concept_fallback(&self, concept: &str) -> Option<&str> {
+        self.fallbacks.get(concept).map(String::as_str)
     }
 
     /// Whether this profile supports a link type.

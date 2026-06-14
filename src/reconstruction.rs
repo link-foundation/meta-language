@@ -17,17 +17,10 @@ impl LinkNetwork {
         configuration: ParseConfiguration,
     ) -> String {
         let source = self.reconstruct_text();
-        if target_language.eq_ignore_ascii_case("pdf") {
-            return self.reconstruct_as_pdf(source);
-        }
-        if target_language.eq_ignore_ascii_case("docx") {
-            return self.reconstruct_as_docx(source);
-        }
-        if self.is_document_language(target_language)
-            && configuration.formalization_level() == FormalizationLevel::Natural
-            && configuration.naturalization_direction() == NaturalizationDirection::Naturalize
+        if let Some(target_format) =
+            crate::document_formatting::canonical_document_format(target_language)
         {
-            return source;
+            return self.reconstruct_as_document_format(target_format, source);
         }
 
         self.reconstruct_text_as_with_rules(
@@ -149,63 +142,39 @@ impl LinkNetwork {
         })
     }
 
-    /// Renders the network's document as a structurally equivalent PDF in the
-    /// text PDF profile.
+    /// Renders the network's document as a structurally equivalent document in a
+    /// target format (`txt`, `Markdown`, `HTML`, `PDF`, or `DOCX`).
     ///
-    /// The source document is recovered through the shared formatting concept
-    /// layer: a PDF source re-renders byte-for-byte, while a Markdown/HTML
-    /// source is translated into an equivalent PDF carrying the same
-    /// heading/paragraph/list and bold/italic structure. When no document
-    /// structure is recoverable the byte-exact `source` is returned unchanged.
-    fn reconstruct_as_pdf(&self, source: String) -> String {
-        let document = match self.document_source_language().as_deref() {
-            Some(language) if language.eq_ignore_ascii_case("pdf") => {
-                crate::document_formatting::parse_pdf_document(&source)
-            }
-            Some(language) => {
-                match crate::document_formatting::parse_markup_document(language, &source) {
-                    Some(document) => document,
-                    None => return source,
-                }
-            }
-            None => return source,
+    /// The source document is recovered through the shared, language-free
+    /// formatting concept layer (issue #83): a same-format target re-renders the
+    /// byte-exact source, while a cross-format target is translated into an
+    /// equivalent document carrying the same heading/paragraph/list and
+    /// bold/italic/link structure. Concepts the target cannot represent degrade
+    /// through the documented per-format fallbacks
+    /// (see [`crate::document_format_profile`]). When no document structure is
+    /// recoverable the byte-exact `source` is returned unchanged.
+    fn reconstruct_as_document_format(&self, target_format: &str, source: String) -> String {
+        let Some(source_language) = self.document_source_language() else {
+            return source;
         };
+        let Some(source_format) =
+            crate::document_formatting::canonical_document_format(&source_language)
+        else {
+            return source;
+        };
+        if source_format == target_format {
+            return source;
+        }
 
+        let Some(document) =
+            crate::document_formatting::parse_markup_document(source_format, &source)
+        else {
+            return source;
+        };
         if document.blocks.is_empty() {
             return source;
         }
-        crate::document_formatting::render_pdf_document(&document)
-    }
-
-    /// Renders the network's document as a structurally equivalent DOCX
-    /// `word/document.xml` in the OOXML text profile.
-    ///
-    /// The source document is recovered through the shared formatting concept
-    /// layer: a DOCX source re-renders byte-for-byte, while a Markdown/HTML/PDF
-    /// source is translated into equivalent OOXML carrying the same
-    /// heading/paragraph/list and bold/italic structure. When no document
-    /// structure is recoverable the byte-exact `source` is returned unchanged.
-    fn reconstruct_as_docx(&self, source: String) -> String {
-        let document = match self.document_source_language().as_deref() {
-            Some(language) if language.eq_ignore_ascii_case("docx") => {
-                crate::document_formatting::parse_docx_document(&source)
-            }
-            Some(language) if language.eq_ignore_ascii_case("pdf") => {
-                crate::document_formatting::parse_pdf_document(&source)
-            }
-            Some(language) => {
-                match crate::document_formatting::parse_markup_document(language, &source) {
-                    Some(document) => document,
-                    None => return source,
-                }
-            }
-            None => return source,
-        };
-
-        if document.blocks.is_empty() {
-            return source;
-        }
-        crate::document_formatting::render_docx_document(&document)
+        self.render_markup_document(target_format, &document)
     }
 
     /// The language recorded on the network's document root, if any.

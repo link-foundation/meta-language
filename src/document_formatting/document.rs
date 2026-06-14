@@ -82,6 +82,9 @@ impl LinkNetwork {
         if language == "DOCX" {
             return super::render_docx_document(document);
         }
+        if language == "txt" {
+            return render_txt_document(document);
+        }
         let block_separator = if language == "Markdown" { "\n\n" } else { "\n" };
         document
             .blocks
@@ -181,8 +184,91 @@ pub fn parse_markup_document(language: &str, text: &str) -> Option<FormattingDoc
         "HTML" => Some(parse_html_document(text)),
         "PDF" => Some(super::parse_pdf_document(text)),
         "DOCX" => Some(super::parse_docx_document(text)),
+        "txt" => Some(parse_txt_document(text)),
         _ => None,
     }
+}
+
+/// Parses plain `txt` into the concept layer.
+///
+/// `txt` carries no formatting markup, so each blank-line-separated run of text
+/// becomes one [`BlockNode::Paragraph`] of literal text. This is the lossy
+/// fallback target: a document reconstructed as `txt` keeps its prose but drops
+/// heading levels, list structure, and inline styling (see the per-format
+/// fidelity matrix and [`super::document_format_profile`]).
+fn parse_txt_document(text: &str) -> FormattingDocument {
+    let mut blocks = Vec::new();
+    let mut group: Vec<&str> = Vec::new();
+
+    for line in text.lines() {
+        if line.trim().is_empty() {
+            flush_txt_block(&mut blocks, &group);
+            group.clear();
+        } else {
+            group.push(line);
+        }
+    }
+    flush_txt_block(&mut blocks, &group);
+
+    FormattingDocument { blocks }
+}
+
+fn flush_txt_block(blocks: &mut Vec<BlockNode>, lines: &[&str]) {
+    if lines.is_empty() {
+        return;
+    }
+    blocks.push(BlockNode::Paragraph {
+        children: vec![InlineNode::Text(lines.join(" "))],
+    });
+}
+
+/// Renders the concept layer into plain `txt`, flattening every formatting
+/// concept to its text content.
+fn render_txt_document(document: &FormattingDocument) -> String {
+    document
+        .blocks
+        .iter()
+        .map(render_txt_block)
+        .collect::<Vec<_>>()
+        .join("\n\n")
+}
+
+fn render_txt_block(block: &BlockNode) -> String {
+    match block {
+        BlockNode::Heading { children, .. } | BlockNode::Paragraph { children } => {
+            flatten_inline_text(children)
+        }
+        BlockNode::List { concept, items } => {
+            let ordered = concept == "ordered-list";
+            items
+                .iter()
+                .enumerate()
+                .map(|(index, item)| {
+                    let marker = if ordered {
+                        format!("{}. ", index + 1)
+                    } else {
+                        "- ".to_string()
+                    };
+                    format!("{marker}{}", flatten_inline_text(item))
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        }
+    }
+}
+
+/// Concatenates the text content of inline nodes, discarding all formatting.
+fn flatten_inline_text(nodes: &[InlineNode]) -> String {
+    let mut output = String::new();
+    for node in nodes {
+        match node {
+            InlineNode::Text(text) => output.push_str(text),
+            InlineNode::Wrapped { children, .. } => {
+                output.push_str(&flatten_inline_text(children));
+            }
+        }
+    }
+    output
 }
 
 fn parse_markdown_document(text: &str) -> FormattingDocument {

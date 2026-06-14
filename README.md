@@ -99,6 +99,15 @@ description, an interactive WebAssembly demo, and the full
   `reconstruct_text_as("DOCX", …)` renders a structurally equivalent DOCX through
   the shared concept layer. See `docs/docx-fidelity.md` for the round-trip
   fidelity matrix.
+- Cross-format document reconstruction (issue #86): `reconstruct_text_as("txt" |
+  "Markdown" | "HTML" | "PDF" | "DOCX", …)` reconstructs a document parsed from
+  any supported format into any other over the shared concept layer (same-format
+  targets stay byte-exact), with `txt` added as a first-class format and the lossy
+  fallback floor. Per-format capability profiles (`document_format_profile`,
+  `DOCUMENT_FORMATS`, `CROSS_FORMAT_CONCEPTS`) report, for every concept, either
+  native support or a documented `LanguageProfile` fallback. See
+  `docs/cross-format-fidelity.md` for the cross-format entry point and the
+  per-format fidelity matrix.
 - Self-description roots for `link`, `reference`, `relation link`, `language`,
   `grammar`, `type`, `Type`, `concept`, `point`, `field`, `trivia`, `region`,
   and `object`.
@@ -246,6 +255,31 @@ assert_eq!(
     ),
     "statehood(Q782, Q35657)\n"
 );
+```
+
+The same `reconstruct_text_as` entry point translates a document parsed from one
+markup/document format into another over the shared formatting concept layer.
+Same-format targets stay byte-exact; cross-format targets carry the document's
+heading/paragraph/list and bold/italic/link structure, degrading through the
+documented per-format fallbacks (see `docs/cross-format-fidelity.md`):
+
+```rust
+use meta_language::{LinkNetwork, ParseConfiguration};
+
+let network = LinkNetwork::parse(
+    "# Status Report\n\nThe system is **ready** for *launch*.",
+    "Markdown",
+    ParseConfiguration::default(),
+);
+
+let html = network.reconstruct_text_as("HTML", ParseConfiguration::default());
+assert!(html.contains("<h1>Status Report</h1>"));
+assert!(html.contains("<strong>ready</strong>"));
+
+// txt is the lossy fallback floor: prose survives, markup is dropped.
+let txt = network.reconstruct_text_as("txt", ParseConfiguration::default());
+assert!(txt.contains("The system is ready for launch"));
+assert!(!txt.contains('#'));
 ```
 
 ## CLI
