@@ -590,6 +590,11 @@ pub const MARKUP_LANGUAGE_TARGETS: &[LanguageTarget] = &[
         LanguageFamily::Markup,
         "Issue #84 binary document container target (text PDF profile)",
     ),
+    language_target(
+        "DOCX",
+        LanguageFamily::Markup,
+        "Issue #85 OOXML document container target (DOCX OPC profile)",
+    ),
 ];
 
 /// Required data-exchange / interchange format targets.

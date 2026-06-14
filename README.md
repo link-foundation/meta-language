@@ -78,7 +78,7 @@ description, an interactive WebAssembly demo, and the full
 - `NATURAL_LANGUAGE_GRAMMAR_FIXTURES` with pass/fail grammaticality fixtures
   for the ten natural-language targets, including provenance for the
   repo-authored sentences and UD-derived tag vocabulary.
-- Coverage targets for full `txt`, Markdown, HTML, and PDF support, mixed
+- Coverage targets for full `txt`, Markdown, HTML, PDF, and DOCX support, mixed
   grammar embedding, ten programming-language parser targets, and ten
   natural-language parser targets.
 - A documented text PDF profile (issue #84): `render_pdf_document()` /
@@ -88,6 +88,16 @@ description, an interactive WebAssembly demo, and the full
   network with additive concept-tagged structure links, and
   `reconstruct_text_as("PDF", …)` renders a structurally equivalent PDF through
   the shared concept layer. See `docs/pdf-fidelity.md` for the round-trip
+  fidelity matrix.
+- A documented DOCX (OOXML) profile (issue #85): `render_docx_document()` /
+  `parse_docx_document()` map a language-free formatting document onto
+  WordprocessingML `word/document.xml` (`<w:pStyle>` headings, `<w:numPr>` lists,
+  `<w:b/>`/`<w:i/>` bold/italic runs), a binary OPC layer
+  (`render_docx_package()` / `parse_docx_package()`) assembles a valid `.docx`
+  ZIP with no new dependencies, `parse("…", "docx", …)` builds a byte-exact
+  lossless network with additive concept-tagged structure links, and
+  `reconstruct_text_as("DOCX", …)` renders a structurally equivalent DOCX through
+  the shared concept layer. See `docs/docx-fidelity.md` for the round-trip
   fidelity matrix.
 - Self-description roots for `link`, `reference`, `relation link`, `language`,
   `grammar`, `type`, `Type`, `concept`, `point`, `field`, `trivia`, `region`,

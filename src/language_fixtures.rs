@@ -26,6 +26,11 @@ pub const LANGUAGE_FIXTURES: &[LanguageFixture] = &[
         description: "Text PDF profile with bold + heading + paragraph (issue #84)",
     },
     LanguageFixture {
+        language: "DOCX",
+        source: "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body><w:p><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr><w:r><w:t xml:space=\"preserve\">Status Report</w:t></w:r></w:p><w:p><w:r><w:t xml:space=\"preserve\">The system is </w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t xml:space=\"preserve\">ready</w:t></w:r><w:r><w:t xml:space=\"preserve\"> for launch.</w:t></w:r></w:p><w:p><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:r><w:t xml:space=\"preserve\">First item</w:t></w:r></w:p><w:p><w:pPr><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:r><w:t xml:space=\"preserve\">Second </w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t xml:space=\"preserve\">strong</w:t></w:r><w:r><w:t xml:space=\"preserve\"> item</w:t></w:r></w:p><w:sectPr/></w:body></w:document>\n",
+        description: "OOXML document.xml profile with heading + bold + bullet list (issue #85)",
+    },
+    LanguageFixture {
         language: "Python",
         source: "def f(x):\n    return x + 1\n",
         description: "Python function with indentation",

@@ -1,5 +1,5 @@
 use crate::{
-    data_format_parser, lino_parser, pdf_parser, tree_sitter_adapter, LinkNetwork,
+    data_format_parser, docx_parser, lino_parser, pdf_parser, tree_sitter_adapter, LinkNetwork,
     ParseConfiguration,
 };
 
@@ -31,6 +31,10 @@ impl LanguageParser for BuiltInLanguageParser {
 
         if language.eq_ignore_ascii_case("pdf") {
             return pdf_parser::parse(text, language, configuration);
+        }
+
+        if language.eq_ignore_ascii_case("docx") {
+            return docx_parser::parse(text, language, configuration);
         }
 
         if let Some(network) = data_format_parser::parse(text, language, configuration) {
