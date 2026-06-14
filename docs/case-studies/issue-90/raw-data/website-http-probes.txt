@@ -1,0 +1,5 @@
+=== HTTP probes ===
+GET / -> 404
+GET /meta_language/ -> 200
+GET /index.html -> 404
+GET /api/ -> 404
