@@ -711,8 +711,18 @@ jobs:
             2. Merge this PR to main
             3. The automated release workflow will publish to crates.io and create a GitHub release
 
-  # === DEPLOY DOCUMENTATION ===
-  # Deploy Rust API documentation to GitHub Pages after a successful package build.
+  # === DEPLOY WEBSITE ===
+  # Deploy the project website to GitHub Pages after a successful package build.
+  # The website is assembled by scripts/build-site.rs into the `_site/` tree.
+  #   /          -> landing page (description + interactive demo + docs links)
+  #   /demo/pkg/ -> WebAssembly demo built from the web/ crate
+  #   /api/      -> rustdoc, with a root redirect index.html
+  #
+  # Deploying the assembled `_site/` (instead of raw `target/doc`) fixes issue
+  # #90: `cargo doc` writes `target/doc/<crate>/index.html` but never a root
+  # `target/doc/index.html`, so deploying `target/doc` directly made the Pages
+  # root URL return HTTP 404. The landing page now lives at the root.
+  #
   # Keep this independent from package/GitHub release publication so the website
   # still updates when the release path fails. Use the official Pages artifact
   # deployment path so repositories configured with "GitHub Actions" as their
@@ -721,9 +731,9 @@ jobs:
   # One-time setup: in the repository's Settings -> Pages, set Source to
   # "GitHub Actions". Without this, the first run fails on actions/deploy-pages
   # with "Get Pages site failed" / "Failed to create deployment". This cannot be
-  # configured from a workflow. See README.md "Deploying API documentation".
+  # configured from a workflow. See README.md "Deploying the website".
   deploy-docs:
-    name: Deploy Rust Documentation
+    name: Deploy Website
     needs: [build]
     if: |
       !cancelled() &&
@@ -732,7 +742,7 @@ jobs:
         (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'instant')
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
       pages: write
@@ -747,9 +757,29 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install rust-script
+        run: cargo install rust-script
+
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
 
       - name: Build documentation
         run: cargo doc --no-deps --all-features
+
+      - name: Build WebAssembly demo
+        working-directory: web
+        run: wasm-pack build --release --target web --out-dir pkg
+
+      - name: Assemble website
+        run: rust-script scripts/build-site.rs --assemble-only
+
+      - name: List built site
+        run: find _site -maxdepth 2 -print
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
@@ -757,7 +787,7 @@ jobs:
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: target/doc
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

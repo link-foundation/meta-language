@@ -73,7 +73,14 @@ fn documentation_deploy_uses_github_pages_artifact_flow() {
     assert!(deploy_docs.contains("url: ${{ steps.deployment.outputs.page_url }}"));
     assert!(deploy_docs.contains("uses: actions/configure-pages@v6"));
     assert!(deploy_docs.contains("uses: actions/upload-pages-artifact@v5"));
-    assert!(deploy_docs.contains("path: target/doc"));
+    // The job now publishes an assembled website (landing page + WASM demo +
+    // rustdoc under /api/) with a real root index.html, not the raw `cargo doc`
+    // output which has no top-level index.html and made the Pages root 404 (#90).
+    assert!(deploy_docs.contains("path: _site"));
+    assert!(!deploy_docs.contains("path: target/doc"));
+    assert!(deploy_docs.contains("rust-script scripts/build-site.rs"));
+    assert!(deploy_docs.contains("wasm-pack build"));
+    assert!(deploy_docs.contains("find _site"));
     assert!(deploy_docs.contains("id: deployment"));
     assert!(deploy_docs.contains("uses: actions/deploy-pages@v5"));
     assert!(!deploy_docs.contains("contents: write"));
@@ -95,7 +102,7 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("auto-release", 30),
         ("manual-release", 30),
         ("changelog-pr", 10),
-        ("deploy-docs", 15),
+        ("deploy-docs", 20),
     ];
 
     let actual_jobs = workflow_job_names(&workflow);

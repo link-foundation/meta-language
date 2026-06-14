@@ -6,6 +6,10 @@ links, references, source spans, parse status metadata, configurable trivia
 attachment, self-description roots, and verification that a parsed region is
 clean.
 
+**Website:** <https://link-foundation.github.io/meta-language> — project
+description, an interactive WebAssembly demo, and the full
+[Rust API documentation](https://link-foundation.github.io/meta-language/api/).
+
 ## What Is Implemented
 
 - A mutable `LinkNetwork` where every item is a link.
@@ -279,6 +283,39 @@ naturalize examples backed by the verified 351-concept lexicon.
 See [docs/parity-roadmap.md](docs/parity-roadmap.md) for the feature matrix,
 executable fixture gates, and language coverage targets.
 
+## Website
+
+The project website at <https://link-foundation.github.io/meta-language> is
+built and deployed by the `Deploy Website` job in
+[`.github/workflows/release.yml`](.github/workflows/release.yml). It is assembled
+by [`scripts/build-site.rs`](scripts/build-site.rs) into `_site/`:
+
+| Path | Contents |
+| --- | --- |
+| `/` | Landing page (description, interactive demo, docs links) — [`docs/site/`](docs/site) |
+| `/demo/pkg/` | WebAssembly demo built from the [`web/`](web) crate (wraps `links-notation`) |
+| `/api/` | `rustdoc` output, with a root redirect so `/api/` does not 404 |
+
+Build and preview the site locally:
+
+```bash
+# Requires the wasm32-unknown-unknown target and wasm-pack:
+#   rustup target add wasm32-unknown-unknown
+#   cargo install wasm-pack
+rust-script scripts/build-site.rs
+python3 -m http.server -d _site 8000   # open http://localhost:8000
+```
+
+Deploying `cargo doc` output directly used to make the Pages root URL return
+HTTP 404 because `cargo doc` writes `target/doc/<crate>/index.html` but no root
+`index.html` (see [issue #90](https://github.com/link-foundation/meta-language/issues/90)
+and [docs/case-studies/issue-90](docs/case-studies/issue-90)). The assembled
+site puts the landing page at the root and keeps the API docs under `/api/`.
+
+**One-time setup:** in the repository's *Settings → Pages*, set *Source* to
+*GitHub Actions*. Without this, the first deploy fails on `actions/deploy-pages`
+with "Get Pages site failed". This cannot be configured from a workflow.
+
 ## Development
 
 ```bash
@@ -286,6 +323,13 @@ cargo fmt --check
 cargo clippy --all-targets --all-features
 cargo test --all-features
 rust-script scripts/check-no-src-tests.rs
+```
+
+The WebAssembly demo crate in [`web/`](web) is standalone (not part of the
+published crate). Check it with:
+
+```bash
+cd web && cargo test && cargo clippy --all-targets
 ```
 
 This repository uses changelog fragments in `changelog.d/`; code changes should

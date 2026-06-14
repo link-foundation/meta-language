@@ -1,0 +1,1635 @@
+﻿2026-06-14T11:55:58.1937284Z Current runner version: '2.335.1'
+2026-06-14T11:55:58.1972495Z ##[group]Runner Image Provisioner
+2026-06-14T11:55:58.1973885Z Hosted Compute Agent
+2026-06-14T11:55:58.1974915Z Version: 20260527.539
+2026-06-14T11:55:58.1975881Z Commit: a891dd388383b896fa6ac04a82c0b75cec981078
+2026-06-14T11:55:58.1977172Z Build Date: 2026-05-27T21:39:57Z
+2026-06-14T11:55:58.1978234Z Worker ID: {785cc750-4bcb-4021-b867-1a6833152eca}
+2026-06-14T11:55:58.1979578Z Azure Region: eastus2
+2026-06-14T11:55:58.1980561Z ##[endgroup]
+2026-06-14T11:55:58.1983409Z ##[group]Operating System
+2026-06-14T11:55:58.1984526Z Ubuntu
+2026-06-14T11:55:58.1985376Z 24.04.4
+2026-06-14T11:55:58.1986243Z LTS
+2026-06-14T11:55:58.1987152Z ##[endgroup]
+2026-06-14T11:55:58.1988077Z ##[group]Runner Image
+2026-06-14T11:55:58.1989177Z Image: ubuntu-24.04
+2026-06-14T11:55:58.1990064Z Version: 20260607.184.1
+2026-06-14T11:55:58.1992472Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260607.184/images/ubuntu/Ubuntu2404-Readme.md
+2026-06-14T11:55:58.1995016Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260607.184
+2026-06-14T11:55:58.1996819Z ##[endgroup]
+2026-06-14T11:55:58.1998660Z ##[group]GITHUB_TOKEN Permissions
+2026-06-14T11:55:58.2001739Z Contents: read
+2026-06-14T11:55:58.2002967Z Metadata: read
+2026-06-14T11:55:58.2003936Z Pages: write
+2026-06-14T11:55:58.2004808Z ##[endgroup]
+2026-06-14T11:55:58.2007855Z Secret source: Actions
+2026-06-14T11:55:58.2009443Z Prepare workflow directory
+2026-06-14T11:55:58.2728478Z Prepare all required actions
+2026-06-14T11:55:58.2781667Z Getting action download info
+2026-06-14T11:55:58.6389984Z Download action repository 'actions/checkout@v6' (SHA:df4cb1c069e1874edd31b4311f1884172cec0e10)
+2026-06-14T11:55:58.8506234Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:29eef336d9b2848a0b548edc03f92a220660cdb8)
+2026-06-14T11:55:58.9295198Z Download action repository 'actions/configure-pages@v6' (SHA:45bfe0192ca1faeb007ade9deae92b16b8254a0d)
+2026-06-14T11:55:59.0967160Z Download action repository 'actions/upload-pages-artifact@v5' (SHA:fc324d3547104276b827a68afc52ff2a11cc49c9)
+2026-06-14T11:55:59.2104353Z Download action repository 'actions/deploy-pages@v5' (SHA:cd2ce8fcbc39b97be8ca5fce6e763baed58fa128)
+2026-06-14T11:55:59.5870802Z Getting action download info
+2026-06-14T11:55:59.7324993Z Download action repository 'actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f' (SHA:bbbca2ddaa5d8feaa63e36b76fdaad77386f024f)
+2026-06-14T11:55:59.8878070Z Complete job name: Deploy Rust Documentation
+2026-06-14T11:55:59.9662850Z ##[group]Run actions/checkout@v6
+2026-06-14T11:55:59.9664196Z with:
+2026-06-14T11:55:59.9664970Z   ref: main
+2026-06-14T11:55:59.9665872Z   repository: link-foundation/meta-language
+2026-06-14T11:55:59.9675325Z   token: ***
+2026-06-14T11:55:59.9676163Z   ssh-strict: true
+2026-06-14T11:55:59.9677012Z   ssh-user: git
+2026-06-14T11:55:59.9677883Z   persist-credentials: true
+2026-06-14T11:55:59.9678832Z   clean: true
+2026-06-14T11:55:59.9679720Z   sparse-checkout-cone-mode: true
+2026-06-14T11:55:59.9680733Z   fetch-depth: 1
+2026-06-14T11:55:59.9681567Z   fetch-tags: false
+2026-06-14T11:55:59.9682569Z   show-progress: true
+2026-06-14T11:55:59.9683441Z   lfs: false
+2026-06-14T11:55:59.9684240Z   submodules: false
+2026-06-14T11:55:59.9685107Z   set-safe-directory: true
+2026-06-14T11:55:59.9686331Z env:
+2026-06-14T11:55:59.9687130Z   CARGO_TERM_COLOR: always
+2026-06-14T11:55:59.9688075Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:55:59.9689244Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:55:59.9690382Z   CARGO_TOKEN: ***
+2026-06-14T11:55:59.9691240Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:55:59.9692232Z ##[endgroup]
+2026-06-14T11:56:00.0765183Z Syncing repository: link-foundation/meta-language
+2026-06-14T11:56:00.0768036Z ##[group]Getting Git version info
+2026-06-14T11:56:00.0769485Z Working directory is '/home/runner/work/meta-language/meta-language'
+2026-06-14T11:56:00.0771591Z [command]/usr/bin/git version
+2026-06-14T11:56:00.0815859Z git version 2.54.0
+2026-06-14T11:56:00.0868168Z ##[endgroup]
+2026-06-14T11:56:00.0882861Z Temporarily overriding HOME='/home/runner/work/_temp/0b327602-364f-462e-a64c-485e8fd4da33' before making global git config changes
+2026-06-14T11:56:00.0886854Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-14T11:56:00.0890254Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/meta-language/meta-language
+2026-06-14T11:56:00.0937125Z Deleting the contents of '/home/runner/work/meta-language/meta-language'
+2026-06-14T11:56:00.0940089Z ##[group]Determining repository object format
+2026-06-14T11:56:00.2370267Z ##[endgroup]
+2026-06-14T11:56:00.2375805Z ##[group]Initializing the repository
+2026-06-14T11:56:00.2378651Z [command]/usr/bin/git init /home/runner/work/meta-language/meta-language
+2026-06-14T11:56:00.2508330Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-14T11:56:00.2511546Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-14T11:56:00.2514831Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-14T11:56:00.2520012Z hint: call:
+2026-06-14T11:56:00.2521456Z hint:
+2026-06-14T11:56:00.2523492Z hint: 	git config --global init.defaultBranch <name>
+2026-06-14T11:56:00.2525477Z hint:
+2026-06-14T11:56:00.2527694Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-14T11:56:00.2530323Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-14T11:56:00.2532004Z hint:
+2026-06-14T11:56:00.2533367Z hint: 	git branch -m <name>
+2026-06-14T11:56:00.2534389Z hint:
+2026-06-14T11:56:00.2535613Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-14T11:56:00.2537643Z Initialized empty Git repository in /home/runner/work/meta-language/meta-language/.git/
+2026-06-14T11:56:00.2544473Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/meta-language
+2026-06-14T11:56:00.2604290Z ##[endgroup]
+2026-06-14T11:56:00.2606666Z ##[group]Disabling automatic garbage collection
+2026-06-14T11:56:00.2608924Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-14T11:56:00.2645685Z ##[endgroup]
+2026-06-14T11:56:00.2647708Z ##[group]Setting up auth
+2026-06-14T11:56:00.2649233Z Removing SSH command configuration
+2026-06-14T11:56:00.2655330Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-14T11:56:00.2711713Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-14T11:56:00.3066751Z Removing HTTP extra header
+2026-06-14T11:56:00.3073199Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-14T11:56:00.3108933Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-14T11:56:00.3339303Z Removing includeIf entries pointing to credentials config files
+2026-06-14T11:56:00.3346051Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-14T11:56:00.3382536Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-14T11:56:00.3619987Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-14T11:56:00.3660176Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/meta-language/meta-language/.git.path /home/runner/work/_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:56:00.3693455Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:56:00.3731161Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:56:00.3765527Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:56:00.3795634Z ##[endgroup]
+2026-06-14T11:56:00.3797298Z ##[group]Fetching the repository
+2026-06-14T11:56:00.3804130Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/main*:refs/remotes/origin/main* +refs/tags/main*:refs/tags/main*
+2026-06-14T11:56:00.7960341Z From https://github.com/link-foundation/meta-language
+2026-06-14T11:56:00.7962039Z  * [new branch]      main       -> origin/main
+2026-06-14T11:56:00.7996093Z ##[endgroup]
+2026-06-14T11:56:00.7998313Z ##[group]Determining the checkout info
+2026-06-14T11:56:00.8003672Z [command]/usr/bin/git branch --list --remote origin/main
+2026-06-14T11:56:00.8034172Z   origin/main
+2026-06-14T11:56:00.8040683Z ##[endgroup]
+2026-06-14T11:56:00.8044839Z [command]/usr/bin/git sparse-checkout disable
+2026-06-14T11:56:00.8091878Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-14T11:56:00.8125862Z ##[group]Checking out the ref
+2026-06-14T11:56:00.8127414Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-06-14T11:56:00.8398718Z Switched to a new branch 'main'
+2026-06-14T11:56:00.8400596Z branch 'main' set up to track 'origin/main'.
+2026-06-14T11:56:00.8450310Z ##[endgroup]
+2026-06-14T11:56:00.8455655Z [command]/usr/bin/git log -1 --format=%H
+2026-06-14T11:56:00.8482930Z ba2389e6ecd3ae96ff9619637953ca8f64f3f187
+2026-06-14T11:56:00.9017250Z ##[group]Run dtolnay/rust-toolchain@stable
+2026-06-14T11:56:00.9018367Z with:
+2026-06-14T11:56:00.9019160Z   toolchain: stable
+2026-06-14T11:56:00.9020044Z env:
+2026-06-14T11:56:00.9020831Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:00.9021778Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:00.9023240Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:00.9024347Z   CARGO_TOKEN: ***
+2026-06-14T11:56:00.9025196Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:00.9026054Z ##[endgroup]
+2026-06-14T11:56:00.9173862Z ##[group]Run : parse toolchain version
+2026-06-14T11:56:00.9175077Z [36;1m: parse toolchain version[0m
+2026-06-14T11:56:00.9176133Z [36;1mif [[ -z $toolchain ]]; then[0m
+2026-06-14T11:56:00.9177893Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2026-06-14T11:56:00.9179812Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2026-06-14T11:56:00.9180940Z [36;1m  exit 1[0m
+2026-06-14T11:56:00.9182349Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2026-06-14T11:56:00.9183844Z [36;1m  if [[ Linux == macOS ]]; then[0m
+2026-06-14T11:56:00.9185659Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:00.9187451Z [36;1m  else[0m
+2026-06-14T11:56:00.9188887Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:00.9190515Z [36;1m  fi[0m
+2026-06-14T11:56:00.9191623Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2026-06-14T11:56:00.9193641Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:00.9195285Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2026-06-14T11:56:00.9197121Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:00.9198882Z [36;1melse[0m
+2026-06-14T11:56:00.9199819Z [36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:00.9201170Z [36;1mfi[0m
+2026-06-14T11:56:00.9356627Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:00.9357878Z env:
+2026-06-14T11:56:00.9358654Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:00.9359577Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:00.9360798Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:00.9361871Z   CARGO_TOKEN: ***
+2026-06-14T11:56:00.9363034Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:00.9363870Z   toolchain: stable
+2026-06-14T11:56:00.9364688Z ##[endgroup]
+2026-06-14T11:56:00.9544950Z ##[group]Run : construct rustup command line
+2026-06-14T11:56:00.9546158Z [36;1m: construct rustup command line[0m
+2026-06-14T11:56:00.9547765Z [36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:00.9549985Z [36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:00.9551759Z [36;1mecho "downgrade=" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:00.9585457Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:00.9586721Z env:
+2026-06-14T11:56:00.9587549Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:00.9588535Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:00.9589762Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:00.9590950Z   CARGO_TOKEN: ***
+2026-06-14T11:56:00.9591823Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:00.9592913Z   targets: 
+2026-06-14T11:56:00.9593732Z   components: 
+2026-06-14T11:56:00.9594563Z ##[endgroup]
+2026-06-14T11:56:00.9713933Z ##[group]Run : set $CARGO_HOME
+2026-06-14T11:56:00.9714957Z [36;1m: set $CARGO_HOME[0m
+2026-06-14T11:56:00.9716175Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+2026-06-14T11:56:00.9749824Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:00.9751267Z env:
+2026-06-14T11:56:00.9752311Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:00.9753275Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:00.9754488Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:00.9755628Z   CARGO_TOKEN: ***
+2026-06-14T11:56:00.9756514Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:00.9757382Z ##[endgroup]
+2026-06-14T11:56:00.9878433Z ##[group]Run : install rustup if needed
+2026-06-14T11:56:00.9879562Z [36;1m: install rustup if needed[0m
+2026-06-14T11:56:00.9880732Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2026-06-14T11:56:00.9883470Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+2026-06-14T11:56:00.9885985Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+2026-06-14T11:56:00.9887110Z [36;1mfi[0m
+2026-06-14T11:56:00.9920197Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:00.9921450Z env:
+2026-06-14T11:56:00.9922391Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:00.9923344Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:00.9924567Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:00.9925693Z   CARGO_TOKEN: ***
+2026-06-14T11:56:00.9926563Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:00.9927469Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:00.9928459Z ##[endgroup]
+2026-06-14T11:56:01.0083115Z ##[group]Run rustup toolchain install stable --profile minimal --no-self-update
+2026-06-14T11:56:01.0084979Z [36;1mrustup toolchain install stable --profile minimal --no-self-update[0m
+2026-06-14T11:56:01.0119255Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:01.0120462Z env:
+2026-06-14T11:56:01.0121255Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.0122338Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.0123578Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.0124671Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.0125522Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.0126407Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.0127440Z   RUSTUP_PERMIT_COPY_RENAME: 1
+2026-06-14T11:56:01.0128392Z ##[endgroup]
+2026-06-14T11:56:01.1698971Z info: syncing channel updates for stable-x86_64-unknown-linux-gnu
+2026-06-14T11:56:01.2775003Z 
+2026-06-14T11:56:01.2868605Z   stable-x86_64-unknown-linux-gnu unchanged - rustc 1.96.0 (ac68faa20 2026-05-25)
+2026-06-14T11:56:01.2870279Z 
+2026-06-14T11:56:01.2943201Z ##[group]Run rustup default stable
+2026-06-14T11:56:01.2944269Z [36;1mrustup default stable[0m
+2026-06-14T11:56:01.2985836Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:01.2987047Z env:
+2026-06-14T11:56:01.2987843Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.2988781Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.2990062Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.2991181Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.2992015Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.2993142Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.2994123Z ##[endgroup]
+2026-06-14T11:56:01.3117746Z info: using existing install for stable-x86_64-unknown-linux-gnu
+2026-06-14T11:56:01.3125064Z info: default toolchain set to stable-x86_64-unknown-linux-gnu
+2026-06-14T11:56:01.3126589Z 
+2026-06-14T11:56:01.3214228Z   stable-x86_64-unknown-linux-gnu unchanged - rustc 1.96.0 (ac68faa20 2026-05-25)
+2026-06-14T11:56:01.3215984Z 
+2026-06-14T11:56:01.3274782Z ##[group]Run : create cachekey
+2026-06-14T11:56:01.3275800Z [36;1m: create cachekey[0m
+2026-06-14T11:56:01.3277542Z [36;1mDATE=$(rustc +stable --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+2026-06-14T11:56:01.3279759Z [36;1mHASH=$(rustc +stable --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+2026-06-14T11:56:01.3281493Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+2026-06-14T11:56:01.3319137Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:01.3320346Z env:
+2026-06-14T11:56:01.3321143Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.3322286Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.3323858Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.3324996Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.3325847Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.3326753Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.3327724Z ##[endgroup]
+2026-06-14T11:56:01.3784188Z ##[group]Run : disable incremental compilation
+2026-06-14T11:56:01.3785436Z [36;1m: disable incremental compilation[0m
+2026-06-14T11:56:01.3786643Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+2026-06-14T11:56:01.3787888Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+2026-06-14T11:56:01.3788978Z [36;1mfi[0m
+2026-06-14T11:56:01.3827143Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:01.3828363Z env:
+2026-06-14T11:56:01.3829162Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.3830097Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.3831339Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.3832628Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.3833482Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.3834384Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.3835366Z ##[endgroup]
+2026-06-14T11:56:01.3945893Z ##[group]Run : enable colors in Cargo output
+2026-06-14T11:56:01.3947066Z [36;1m: enable colors in Cargo output[0m
+2026-06-14T11:56:01.3948225Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+2026-06-14T11:56:01.3949494Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+2026-06-14T11:56:01.3950613Z [36;1mfi[0m
+2026-06-14T11:56:01.3986321Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:01.3987532Z env:
+2026-06-14T11:56:01.3988337Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.3989268Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.3990485Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.3991630Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.3992577Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.3993472Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.3994493Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:56:01.3995372Z ##[endgroup]
+2026-06-14T11:56:01.4108871Z ##[group]Run : enable Cargo sparse registry
+2026-06-14T11:56:01.4110031Z [36;1m: enable Cargo sparse registry[0m
+2026-06-14T11:56:01.4111378Z [36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70[0m
+2026-06-14T11:56:01.4114234Z [36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then[0m
+2026-06-14T11:56:01.4116714Z [36;1m  if rustc +stable --version --verbose | grep -q '^release: 1\.6[89]\.'; then[0m
+2026-06-14T11:56:01.4118703Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-06-14T11:56:01.4120604Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV[0m
+2026-06-14T11:56:01.4122771Z [36;1m  elif rustc +stable --version --verbose | grep -q '^release: 1\.6[67]\.'; then[0m
+2026-06-14T11:56:01.4124806Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-06-14T11:56:01.4126723Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV[0m
+2026-06-14T11:56:01.4128030Z [36;1m  fi[0m
+2026-06-14T11:56:01.4128825Z [36;1mfi[0m
+2026-06-14T11:56:01.4165811Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:01.4167039Z env:
+2026-06-14T11:56:01.4167829Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.4168757Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.4169954Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.4171038Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.4171863Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.4172959Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.4173961Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:56:01.4174838Z ##[endgroup]
+2026-06-14T11:56:01.4586661Z ##[group]Run : work around spurious network errors in curl 8.0
+2026-06-14T11:56:01.4588132Z [36;1m: work around spurious network errors in curl 8.0[0m
+2026-06-14T11:56:01.4589995Z [36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation[0m
+2026-06-14T11:56:01.4592467Z [36;1mif rustc +stable --version --verbose | grep -q '^release: 1\.7[01]\.'; then[0m
+2026-06-14T11:56:01.4594100Z [36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV[0m
+2026-06-14T11:56:01.4595289Z [36;1mfi[0m
+2026-06-14T11:56:01.4634473Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:01.4635655Z env:
+2026-06-14T11:56:01.4636442Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.4637358Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.4638577Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.4639665Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.4640490Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.4641358Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.4642619Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:56:01.4643480Z ##[endgroup]
+2026-06-14T11:56:01.4903963Z ##[group]Run rustc +stable --version --verbose
+2026-06-14T11:56:01.4905175Z [36;1mrustc +stable --version --verbose[0m
+2026-06-14T11:56:01.4942881Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-14T11:56:01.4944112Z env:
+2026-06-14T11:56:01.4944900Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.4945828Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.4947078Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.4948164Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.4948996Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.4949872Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.4950862Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:56:01.4951718Z ##[endgroup]
+2026-06-14T11:56:01.5146059Z rustc 1.96.0 (ac68faa20 2026-05-25)
+2026-06-14T11:56:01.5147467Z binary: rustc
+2026-06-14T11:56:01.5149125Z commit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96
+2026-06-14T11:56:01.5151125Z commit-date: 2026-05-25
+2026-06-14T11:56:01.5152842Z host: x86_64-unknown-linux-gnu
+2026-06-14T11:56:01.5154372Z release: 1.96.0
+2026-06-14T11:56:01.5155648Z LLVM version: 22.1.2
+2026-06-14T11:56:01.5263215Z ##[group]Run cargo doc --no-deps --all-features
+2026-06-14T11:56:01.5264455Z [36;1mcargo doc --no-deps --all-features[0m
+2026-06-14T11:56:01.5301918Z shell: /usr/bin/bash -e {0}
+2026-06-14T11:56:01.5302946Z env:
+2026-06-14T11:56:01.5303720Z   CARGO_TERM_COLOR: always
+2026-06-14T11:56:01.5304639Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:56:01.5306054Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:56:01.5307138Z   CARGO_TOKEN: ***
+2026-06-14T11:56:01.5307964Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:56:01.5308826Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:56:01.5309790Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:56:01.5310634Z ##[endgroup]
+2026-06-14T11:56:01.6702267Z [1m[92m    Updating[0m crates.io index
+2026-06-14T11:56:02.7182732Z [1m[92m Downloading[0m crates ...
+2026-06-14T11:56:02.8216415Z [1m[92m  Downloaded[0m adler2 v2.0.1
+2026-06-14T11:56:02.8365213Z [1m[92m  Downloaded[0m bytecheck_derive v0.8.2
+2026-06-14T11:56:02.8390125Z [1m[92m  Downloaded[0m colorchoice v1.0.5
+2026-06-14T11:56:02.8411856Z [1m[92m  Downloaded[0m itoa v1.0.18
+2026-06-14T11:56:02.8439681Z [1m[92m  Downloaded[0m cmake v0.1.53
+2026-06-14T11:56:02.8467132Z [1m[92m  Downloaded[0m json5_nodes v2.0.2
+2026-06-14T11:56:02.8493451Z [1m[92m  Downloaded[0m md5 v0.8.0
+2026-06-14T11:56:02.8516075Z [1m[92m  Downloaded[0m icu_provider v2.2.0
+2026-06-14T11:56:02.8574018Z [1m[92m  Downloaded[0m maplit v1.0.2
+2026-06-14T11:56:02.8590493Z [1m[92m  Downloaded[0m heck v0.5.0
+2026-06-14T11:56:02.8626462Z [1m[92m  Downloaded[0m lindera-jieba v3.0.7
+2026-06-14T11:56:02.8644703Z [1m[92m  Downloaded[0m include_dir_macros v0.7.4
+2026-06-14T11:56:02.8657702Z [1m[92m  Downloaded[0m include_dir v0.7.4
+2026-06-14T11:56:02.8687398Z [1m[92m  Downloaded[0m log v0.4.32
+2026-06-14T11:56:02.8727934Z [1m[92m  Downloaded[0m http-body v1.0.1
+2026-06-14T11:56:02.8755751Z [1m[92m  Downloaded[0m strum v0.27.2
+2026-06-14T11:56:02.8785658Z [1m[92m  Downloaded[0m strum v0.28.0
+2026-06-14T11:56:02.8811946Z [1m[92m  Downloaded[0m hyper-rustls v0.27.9
+2026-06-14T11:56:02.8869835Z [1m[92m  Downloaded[0m tower-service v0.3.3
+2026-06-14T11:56:02.8894775Z [1m[92m  Downloaded[0m tower-layer v0.3.3
+2026-06-14T11:56:02.8933114Z [1m[92m  Downloaded[0m tokio-rustls v0.26.4
+2026-06-14T11:56:02.9004647Z [1m[92m  Downloaded[0m tree-sitter-json v0.24.8
+2026-06-14T11:56:02.9060227Z [1m[92m  Downloaded[0m tree-sitter-proto v0.4.0
+2026-06-14T11:56:02.9110562Z [1m[92m  Downloaded[0m tree-sitter-toml-ng v0.7.0
+2026-06-14T11:56:02.9151410Z [1m[92m  Downloaded[0m tree-sitter-javascript v0.25.0
+2026-06-14T11:56:02.9242880Z [1m[92m  Downloaded[0m utf8_iter v1.0.4
+2026-06-14T11:56:02.9266538Z [1m[92m  Downloaded[0m try-lock v0.2.5
+2026-06-14T11:56:02.9297514Z [1m[92m  Downloaded[0m zerofrom-derive v0.1.7
+2026-06-14T11:56:02.9326880Z [1m[92m  Downloaded[0m zeroize v1.8.2
+2026-06-14T11:56:02.9353173Z [1m[92m  Downloaded[0m zmij v1.0.21
+2026-06-14T11:56:02.9391916Z [1m[92m  Downloaded[0m writeable v0.6.3
+2026-06-14T11:56:02.9421422Z [1m[92m  Downloaded[0m unicode-segmentation v1.13.3
+2026-06-14T11:56:02.9467431Z [1m[92m  Downloaded[0m zerotrie v0.2.4
+2026-06-14T11:56:02.9530618Z [1m[92m  Downloaded[0m whatlang v0.18.0
+2026-06-14T11:56:02.9596752Z [1m[92m  Downloaded[0m tracing v0.1.44
+2026-06-14T11:56:02.9778537Z [1m[92m  Downloaded[0m zerovec v0.11.6
+2026-06-14T11:56:02.9858750Z [1m[92m  Downloaded[0m tree-sitter-rust v0.24.2
+2026-06-14T11:56:02.9982999Z [1m[92m  Downloaded[0m tree-sitter-css v0.25.0
+2026-06-14T11:56:03.0018141Z [1m[92m  Downloaded[0m tempfile v3.27.0
+2026-06-14T11:56:03.0061188Z [1m[92m  Downloaded[0m rustls-platform-verifier v0.7.0
+2026-06-14T11:56:03.0114214Z [1m[92m  Downloaded[0m rustls-webpki v0.103.4
+2026-06-14T11:56:03.0170821Z [1m[92m  Downloaded[0m serde v1.0.228
+2026-06-14T11:56:03.0220707Z [1m[92m  Downloaded[0m zerocopy v0.8.50
+2026-06-14T11:56:03.0462384Z [1m[92m  Downloaded[0m tree-sitter-vb-dotnet v0.1.0
+2026-06-14T11:56:03.0630284Z [1m[92m  Downloaded[0m tree-sitter-ruby v0.23.1
+2026-06-14T11:56:03.0845148Z [1m[92m  Downloaded[0m tree-sitter-php v0.24.2
+2026-06-14T11:56:03.1066512Z [1m[92m  Downloaded[0m serde_json v1.0.150
+2026-06-14T11:56:03.1157737Z [1m[92m  Downloaded[0m rayon v1.12.0
+2026-06-14T11:56:03.1268962Z [1m[92m  Downloaded[0m tree-sitter-r v1.2.0
+2026-06-14T11:56:03.1352961Z [1m[92m  Downloaded[0m lingua-bengali-language-model v1.3.0
+2026-06-14T11:56:03.1423118Z [1m[92m  Downloaded[0m quinn-proto v0.11.14
+2026-06-14T11:56:03.1501416Z [1m[92m  Downloaded[0m platform-trees v0.3.4
+2026-06-14T11:56:03.1594360Z [1m[92m  Downloaded[0m reqwest v0.13.4
+2026-06-14T11:56:03.1666926Z [1m[92m  Downloaded[0m syn v2.0.111
+2026-06-14T11:56:03.1785933Z [1m[92m  Downloaded[0m rkyv v0.8.16
+2026-06-14T11:56:03.1958716Z [1m[92m  Downloaded[0m csv v1.4.0
+2026-06-14T11:56:03.2191815Z [1m[92m  Downloaded[0m rustls v0.23.31
+2026-06-14T11:56:03.2340730Z [1m[92m  Downloaded[0m regex-syntax v0.8.10
+2026-06-14T11:56:03.2417202Z [1m[92m  Downloaded[0m lingua-hindi-language-model v1.3.0
+2026-06-14T11:56:03.2464922Z [1m[92m  Downloaded[0m regex v1.12.3
+2026-06-14T11:56:03.2527669Z [1m[92m  Downloaded[0m rustix v1.1.4
+2026-06-14T11:56:03.2807543Z [1m[92m  Downloaded[0m tree-sitter-typescript v0.23.2
+2026-06-14T11:56:03.3080502Z [1m[92m  Downloaded[0m tree-sitter-cpp v0.23.4
+2026-06-14T11:56:03.3346379Z [1m[92m  Downloaded[0m rand v0.10.1
+2026-06-14T11:56:03.3389709Z [1m[92m  Downloaded[0m pest v2.8.6
+2026-06-14T11:56:03.3450443Z [1m[92m  Downloaded[0m nom v8.0.0
+2026-06-14T11:56:03.3517805Z [1m[92m  Downloaded[0m rand v0.9.4
+2026-06-14T11:56:03.3565559Z [1m[92m  Downloaded[0m tree-sitter-go v0.25.0
+2026-06-14T11:56:03.3620084Z [1m[92m  Downloaded[0m mio v1.2.1
+2026-06-14T11:56:03.3687541Z [1m[92m  Downloaded[0m regex-automata v0.4.14
+2026-06-14T11:56:03.3842855Z [1m[92m  Downloaded[0m tree-sitter-sequel v0.3.11
+2026-06-14T11:56:03.4111069Z [1m[92m  Downloaded[0m memchr v2.8.0
+2026-06-14T11:56:03.4171981Z [1m[92m  Downloaded[0m tree-sitter-kotlin-ng v1.1.0
+2026-06-14T11:56:03.4487937Z [1m[92m  Downloaded[0m lindera-dictionary v3.0.7
+2026-06-14T11:56:03.4530500Z [1m[92m  Downloaded[0m tree-sitter-c-sharp v0.23.5
+2026-06-14T11:56:03.4919116Z [1m[92m  Downloaded[0m quinn v0.11.9
+2026-06-14T11:56:03.4955505Z [1m[92m  Downloaded[0m lindera v3.0.7
+2026-06-14T11:56:03.5006530Z [1m[92m  Downloaded[0m kanaria v0.2.0
+2026-06-14T11:56:03.5101462Z [1m[92m  Downloaded[0m libc v0.2.186
+2026-06-14T11:56:03.5504553Z [1m[92m  Downloaded[0m tree-sitter-swift v0.7.3
+2026-06-14T11:56:03.5809152Z [1m[92m  Downloaded[0m platform-mem v0.3.0
+2026-06-14T11:56:03.5861259Z [1m[92m  Downloaded[0m encoding_rs v0.8.35
+2026-06-14T11:56:03.6070431Z [1m[92m  Downloaded[0m miniz_oxide v0.8.9
+2026-06-14T11:56:03.6098737Z [1m[92m  Downloaded[0m socket2 v0.6.4
+2026-06-14T11:56:03.6124492Z [1m[92m  Downloaded[0m serde_derive v1.0.228
+2026-06-14T11:56:03.6158859Z [1m[92m  Downloaded[0m serde_core v1.0.228
+2026-06-14T11:56:03.6193195Z [1m[92m  Downloaded[0m ryu v1.0.23
+2026-06-14T11:56:03.6230657Z [1m[92m  Downloaded[0m tokio v1.52.3
+2026-06-14T11:56:03.6685969Z [1m[92m  Downloaded[0m fst v0.4.7
+2026-06-14T11:56:03.6930467Z [1m[92m  Downloaded[0m platform-data v2.0.0
+2026-06-14T11:56:03.6972998Z [1m[92m  Downloaded[0m pest_meta v2.8.6
+2026-06-14T11:56:03.7000063Z [1m[92m  Downloaded[0m tree-sitter-graphql v0.1.0
+2026-06-14T11:56:03.7024697Z [1m[92m  Downloaded[0m serde_yaml_ng v0.10.0
+2026-06-14T11:56:03.7062875Z [1m[92m  Downloaded[0m rustls-pki-types v1.14.1
+2026-06-14T11:56:03.7097318Z [1m[92m  Downloaded[0m rayon-core v1.13.0
+2026-06-14T11:56:03.7156171Z [1m[92m  Downloaded[0m proc-macro2 v1.0.103
+2026-06-14T11:56:03.7190283Z [1m[92m  Downloaded[0m pest_derive v2.8.6
+2026-06-14T11:56:03.7219330Z [1m[92m  Downloaded[0m litemap v0.8.2
+2026-06-14T11:56:03.7246212Z [1m[92m  Downloaded[0m shlex v2.0.1
+2026-06-14T11:56:03.7262701Z [1m[92m  Downloaded[0m tree-sitter-scala v0.25.1
+2026-06-14T11:56:03.7772281Z [1m[92m  Downloaded[0m parking_lot_core v0.9.12
+2026-06-14T11:56:03.7796213Z [1m[92m  Downloaded[0m once_cell v1.21.4
+2026-06-14T11:56:03.7825097Z [1m[92m  Downloaded[0m memmap2 v0.9.10
+2026-06-14T11:56:03.7845778Z [1m[92m  Downloaded[0m streaming-iterator v0.1.9
+2026-06-14T11:56:03.7860948Z [1m[92m  Downloaded[0m simdutf8 v0.1.5
+2026-06-14T11:56:03.7887934Z [1m[92m  Downloaded[0m simd-adler32 v0.3.9
+2026-06-14T11:56:03.7910569Z [1m[92m  Downloaded[0m sha2 v0.10.9
+2026-06-14T11:56:03.7941132Z [1m[92m  Downloaded[0m rustls-native-certs v0.8.4
+2026-06-14T11:56:03.7958269Z [1m[92m  Downloaded[0m rkyv_derive v0.8.16
+2026-06-14T11:56:03.7980130Z [1m[92m  Downloaded[0m rand_chacha v0.9.0
+2026-06-14T11:56:03.7996074Z [1m[92m  Downloaded[0m quinn-udp v0.5.14
+2026-06-14T11:56:03.8018312Z [1m[92m  Downloaded[0m links-notation v0.13.0
+2026-06-14T11:56:03.8043811Z [1m[92m  Downloaded[0m tree-sitter-language v0.1.7
+2026-06-14T11:56:03.8063840Z [1m[92m  Downloaded[0m num-traits v0.2.19
+2026-06-14T11:56:03.8095274Z [1m[92m  Downloaded[0m unicode-normalization v0.1.25
+2026-06-14T11:56:03.8134923Z [1m[92m  Downloaded[0m ts-parser-perl v1.1.2
+2026-06-14T11:56:03.8517192Z [1m[92m  Downloaded[0m ring v0.17.9
+2026-06-14T11:56:03.8929337Z [1m[92m  Downloaded[0m typenum v1.20.1
+2026-06-14T11:56:03.8967416Z [1m[92m  Downloaded[0m thiserror v2.0.18
+2026-06-14T11:56:03.9040137Z [1m[92m  Downloaded[0m slab v0.4.12
+2026-06-14T11:56:03.9055891Z [1m[92m  Downloaded[0m uuid v1.23.2
+2026-06-14T11:56:03.9087998Z [1m[92m  Downloaded[0m quote v1.0.45
+2026-06-14T11:56:03.9118000Z [1m[92m  Downloaded[0m ppv-lite86 v0.2.21
+2026-06-14T11:56:03.9133225Z [1m[92m  Downloaded[0m pest_generator v2.8.6
+2026-06-14T11:56:03.9153696Z [1m[92m  Downloaded[0m leak_slice v0.2.0
+2026-06-14T11:56:03.9164243Z [1m[92m  Downloaded[0m zerovec-derive v0.11.3
+2026-06-14T11:56:03.9182543Z [1m[92m  Downloaded[0m ucd-trie v0.1.7
+2026-06-14T11:56:03.9200357Z [1m[92m  Downloaded[0m zerofrom v0.1.8
+2026-06-14T11:56:03.9212914Z [1m[92m  Downloaded[0m xattr v1.6.1
+2026-06-14T11:56:03.9236178Z [1m[92m  Downloaded[0m version_check v0.9.5
+2026-06-14T11:56:03.9251959Z [1m[92m  Downloaded[0m utf8parse v0.2.2
+2026-06-14T11:56:03.9265438Z [1m[92m  Downloaded[0m url v2.5.8
+2026-06-14T11:56:03.9296474Z [1m[92m  Downloaded[0m unicode-blocks v0.1.9
+2026-06-14T11:56:03.9317702Z [1m[92m  Downloaded[0m yoke-derive v0.8.2
+2026-06-14T11:56:03.9331122Z [1m[92m  Downloaded[0m yoke v0.8.3
+2026-06-14T11:56:03.9353070Z [1m[92m  Downloaded[0m want v0.3.1
+2026-06-14T11:56:03.9364865Z [1m[92m  Downloaded[0m unsafe-libyaml v0.2.11
+2026-06-14T11:56:03.9400792Z [1m[92m  Downloaded[0m unicode-bidi v0.3.18
+2026-06-14T11:56:03.9430015Z [1m[92m  Downloaded[0m tree-sitter-pascal v0.10.2
+2026-06-14T11:56:03.9501378Z [1m[92m  Downloaded[0m tokio-macros v2.7.0
+2026-06-14T11:56:03.9514952Z [1m[92m  Downloaded[0m stable_deref_trait v1.2.1
+2026-06-14T11:56:03.9526579Z [1m[92m  Downloaded[0m rancor v0.1.1
+2026-06-14T11:56:03.9542819Z [1m[92m  Downloaded[0m tree-sitter-yaml v0.7.2
+2026-06-14T11:56:03.9590315Z [1m[92m  Downloaded[0m tree-sitter-xml v0.7.0
+2026-06-14T11:56:03.9628296Z [1m[92m  Downloaded[0m untrusted v0.9.0
+2026-06-14T11:56:03.9648575Z [1m[92m  Downloaded[0m unicode-ident v1.0.22
+2026-06-14T11:56:03.9678918Z [1m[92m  Downloaded[0m tree-sitter-python v0.25.0
+2026-06-14T11:56:03.9760704Z [1m[92m  Downloaded[0m tree-sitter-c v0.24.2
+2026-06-14T11:56:03.9845926Z [1m[92m  Downloaded[0m scopeguard v1.2.0
+2026-06-14T11:56:03.9861231Z [1m[92m  Downloaded[0m rend v0.5.3
+2026-06-14T11:56:03.9881665Z [1m[92m  Downloaded[0m platform-num v0.8.0
+2026-06-14T11:56:03.9904086Z [1m[92m  Downloaded[0m tree-sitter-java v0.23.5
+2026-06-14T11:56:03.9963742Z [1m[92m  Downloaded[0m tree-sitter v0.25.10
+2026-06-14T11:56:04.0028319Z [1m[92m  Downloaded[0m smallvec v1.15.1
+2026-06-14T11:56:04.0054319Z [1m[92m  Downloaded[0m rand_core v0.10.1
+2026-06-14T11:56:04.0074874Z [1m[92m  Downloaded[0m rand_core v0.9.5
+2026-06-14T11:56:04.0091153Z [1m[92m  Downloaded[0m aws-lc-rs v1.13.3
+2026-06-14T11:56:04.0196011Z [1m[92m  Downloaded[0m tower-http v0.6.11
+2026-06-14T11:56:04.0293658Z [1m[92m  Downloaded[0m lingua-portuguese-language-model v1.3.0
+2026-06-14T11:56:04.0487993Z [1m[92m  Downloaded[0m tower v0.5.3
+2026-06-14T11:56:04.0593078Z [1m[92m  Downloaded[0m ptr_meta_derive v0.3.1
+2026-06-14T11:56:04.0603786Z [1m[92m  Downloaded[0m percent-encoding v2.3.2
+2026-06-14T11:56:04.0614437Z [1m[92m  Downloaded[0m num_cpus v1.17.0
+2026-06-14T11:56:04.0648997Z [1m[92m  Downloaded[0m idna v1.1.0
+2026-06-14T11:56:04.0687897Z [1m[92m  Downloaded[0m icu_properties_data v2.2.0
+2026-06-14T11:56:04.0799415Z [1m[92m  Downloaded[0m hyper v1.10.1
+2026-06-14T11:56:04.0871080Z [1m[92m  Downloaded[0m hashbrown v0.17.1
+2026-06-14T11:56:04.0927215Z [1m[92m  Downloaded[0m hashbrown v0.15.5
+2026-06-14T11:56:04.0979105Z [1m[92m  Downloaded[0m futures-util v0.3.32
+2026-06-14T11:56:04.1113929Z [1m[92m  Downloaded[0m tree-sitter-lua v0.2.0
+2026-06-14T11:56:04.1137840Z [1m[92m  Downloaded[0m tree-sitter-ini v1.4.0
+2026-06-14T11:56:04.1156277Z [1m[92m  Downloaded[0m lingua-spanish-language-model v1.3.0
+2026-06-14T11:56:04.1364988Z [1m[92m  Downloaded[0m lingua-french-language-model v1.3.0
+2026-06-14T11:56:04.1579099Z [1m[92m  Downloaded[0m tracing-core v0.1.36
+2026-06-14T11:56:04.1607716Z [1m[92m  Downloaded[0m lingua-english-language-model v1.3.0
+2026-06-14T11:56:04.1824845Z [1m[92m  Downloaded[0m rustc-hash v2.1.2
+2026-06-14T11:56:04.1839598Z [1m[92m  Downloaded[0m pin-project-lite v0.2.17
+2026-06-14T11:56:04.1900581Z [1m[92m  Downloaded[0m openssl-probe v0.2.1
+2026-06-14T11:56:04.1914584Z [1m[92m  Downloaded[0m munge_macro v0.4.7
+2026-06-14T11:56:04.1924133Z [1m[92m  Downloaded[0m indexmap v2.14.0
+2026-06-14T11:56:04.1970793Z [1m[92m  Downloaded[0m icu_normalizer v2.2.0
+2026-06-14T11:56:04.2010773Z [1m[92m  Downloaded[0m icu_collections v2.2.0
+2026-06-14T11:56:04.2076274Z [1m[92m  Downloaded[0m hyper-util v0.1.20
+2026-06-14T11:56:04.2140675Z [1m[92m  Downloaded[0m http v1.4.1
+2026-06-14T11:56:04.2213159Z [1m[92m  Downloaded[0m hashbrown v0.14.5
+2026-06-14T11:56:04.2274109Z [1m[92m  Downloaded[0m clap_builder v4.5.60
+2026-06-14T11:56:04.2385770Z [1m[92m  Downloaded[0m tree-sitter-html v0.23.2
+2026-06-14T11:56:04.2404761Z [1m[92m  Downloaded[0m tinyvec v1.11.0
+2026-06-14T11:56:04.2431162Z [1m[92m  Downloaded[0m tar v0.4.46
+2026-06-14T11:56:04.2462531Z [1m[92m  Downloaded[0m potential_utf v0.1.5
+2026-06-14T11:56:04.2474848Z [1m[92m  Downloaded[0m icu_locale_core v2.2.0
+2026-06-14T11:56:04.2547936Z [1m[92m  Downloaded[0m flate2 v1.1.9
+2026-06-14T11:56:04.2602781Z [1m[92m  Downloaded[0m darling_core v0.20.11
+2026-06-14T11:56:04.2659547Z [1m[92m  Downloaded[0m daachorse v2.1.1
+2026-06-14T11:56:04.2702464Z [1m[92m  Downloaded[0m base64 v0.22.1
+2026-06-14T11:56:04.2749666Z [1m[92m  Downloaded[0m aho-corasick v1.1.4
+2026-06-14T11:56:04.2892002Z [1m[92m  Downloaded[0m icu_normalizer_data v2.2.0
+2026-06-14T11:56:04.2919497Z [1m[92m  Downloaded[0m getrandom v0.3.4
+2026-06-14T11:56:04.2961177Z [1m[92m  Downloaded[0m tinystr v0.8.3
+2026-06-14T11:56:04.2988658Z [1m[92m  Downloaded[0m thiserror-impl v2.0.18
+2026-06-14T11:56:04.3007223Z [1m[92m  Downloaded[0m synstructure v0.13.2
+2026-06-14T11:56:04.3019528Z [1m[92m  Downloaded[0m linux-raw-sys v0.12.1
+2026-06-14T11:56:04.3669452Z [1m[92m  Downloaded[0m strum_macros v0.27.2
+2026-06-14T11:56:04.3694453Z [1m[92m  Downloaded[0m ptr_meta v0.3.1
+2026-06-14T11:56:04.3703848Z [1m[92m  Downloaded[0m munge v0.4.7
+2026-06-14T11:56:04.3724388Z [1m[92m  Downloaded[0m lingua-chinese-language-model v1.3.0
+2026-06-14T11:56:04.3746695Z [1m[92m  Downloaded[0m itertools v0.14.0
+2026-06-14T11:56:04.3818771Z [1m[92m  Downloaded[0m icu_properties v2.2.0
+2026-06-14T11:56:04.3844132Z [1m[92m  Downloaded[0m futures-channel v0.3.32
+2026-06-14T11:56:04.3863304Z [1m[92m  Downloaded[0m foldhash v0.1.5
+2026-06-14T11:56:04.3877581Z [1m[92m  Downloaded[0m encoding_rs_io v0.1.7
+2026-06-14T11:56:04.3891219Z [1m[92m  Downloaded[0m either v1.16.0
+2026-06-14T11:56:04.3907602Z [1m[92m  Downloaded[0m lingua v1.8.0
+2026-06-14T11:56:04.7371964Z [1m[92m  Downloaded[0m lingua-russian-language-model v1.3.0
+2026-06-14T11:56:04.7638516Z [1m[92m  Downloaded[0m doublets v0.4.0
+2026-06-14T11:56:04.7682536Z [1m[92m  Downloaded[0m darling v0.20.11
+2026-06-14T11:56:04.7732747Z [1m[92m  Downloaded[0m crossbeam-utils v0.8.21
+2026-06-14T11:56:04.7760380Z [1m[92m  Downloaded[0m crossbeam-deque v0.8.6
+2026-06-14T11:56:04.7774804Z [1m[92m  Downloaded[0m bitflags v2.13.0
+2026-06-14T11:56:04.7821925Z [1m[92m  Downloaded[0m tinyvec_macros v0.1.1
+2026-06-14T11:56:04.7830778Z [1m[92m  Downloaded[0m tap v1.0.1
+2026-06-14T11:56:04.7840938Z [1m[92m  Downloaded[0m sync_wrapper v1.0.2
+2026-06-14T11:56:04.7849202Z [1m[92m  Downloaded[0m subtle v2.6.1
+2026-06-14T11:56:04.7861406Z [1m[92m  Downloaded[0m strum_macros v0.28.0
+2026-06-14T11:56:04.7886975Z [1m[92m  Downloaded[0m lingua-urdu-language-model v1.3.0
+2026-06-14T11:56:04.8189242Z [1m[92m  Downloaded[0m ipnet v2.12.0
+2026-06-14T11:56:04.8207051Z [1m[92m  Downloaded[0m find-msvc-tools v0.1.9
+2026-06-14T11:56:04.8223471Z [1m[92m  Downloaded[0m filetime v0.2.29
+2026-06-14T11:56:04.8240161Z [1m[92m  Downloaded[0m dunce v1.0.5
+2026-06-14T11:56:04.8249572Z [1m[92m  Downloaded[0m digest v0.10.7
+2026-06-14T11:56:04.8268253Z [1m[92m  Downloaded[0m derive_builder v0.20.2
+2026-06-14T11:56:04.8320337Z [1m[92m  Downloaded[0m csv-core v0.1.13
+2026-06-14T11:56:04.8334109Z [1m[92m  Downloaded[0m crc32fast v1.5.0
+2026-06-14T11:56:04.8353050Z [1m[92m  Downloaded[0m http-body-util v0.1.3
+2026-06-14T11:56:04.8371128Z [1m[92m  Downloaded[0m hashlink v0.10.0
+2026-06-14T11:56:04.8389692Z [1m[92m  Downloaded[0m getrandom v0.2.17
+2026-06-14T11:56:04.8420112Z [1m[92m  Downloaded[0m fs_extra v1.3.0
+2026-06-14T11:56:04.8437133Z [1m[92m  Downloaded[0m fastrand v2.4.1
+2026-06-14T11:56:04.8451175Z [1m[92m  Downloaded[0m displaydoc v0.2.6
+2026-06-14T11:56:04.8471620Z [1m[92m  Downloaded[0m dashmap v6.2.1
+2026-06-14T11:56:04.8498267Z [1m[92m  Downloaded[0m crossbeam-epoch v0.9.18
+2026-06-14T11:56:04.8522835Z [1m[92m  Downloaded[0m anyhow v1.0.102
+2026-06-14T11:56:04.8572751Z [1m[92m  Downloaded[0m anstyle-parse v0.2.7
+2026-06-14T11:56:04.8588968Z [1m[92m  Downloaded[0m strsim v0.11.1
+2026-06-14T11:56:04.8602660Z [1m[92m  Downloaded[0m idna_adapter v1.2.2
+2026-06-14T11:56:04.8612557Z [1m[92m  Downloaded[0m derive_builder_core v0.20.2
+2026-06-14T11:56:04.8632558Z [1m[92m  Downloaded[0m httparse v1.10.1
+2026-06-14T11:56:04.8658698Z [1m[92m  Downloaded[0m equivalent v1.0.2
+2026-06-14T11:56:04.8669866Z [1m[92m  Downloaded[0m bitflags v1.3.2
+2026-06-14T11:56:04.8702879Z [1m[92m  Downloaded[0m atomic-waker v1.1.2
+2026-06-14T11:56:04.8714969Z [1m[92m  Downloaded[0m derive_builder_macro v0.20.2
+2026-06-14T11:56:04.8722848Z [1m[92m  Downloaded[0m beef v0.5.2
+2026-06-14T11:56:04.8740945Z [1m[92m  Downloaded[0m futures-core v0.3.32
+2026-06-14T11:56:04.8755095Z [1m[92m  Downloaded[0m fnv v1.0.7
+2026-06-14T11:56:04.8763964Z [1m[92m  Downloaded[0m errno v0.3.14
+2026-06-14T11:56:04.8779573Z [1m[92m  Downloaded[0m darling_macro v0.20.11
+2026-06-14T11:56:04.8786485Z [1m[92m  Downloaded[0m cpufeatures v0.2.17
+2026-06-14T11:56:04.8800470Z [1m[92m  Downloaded[0m ident_case v1.0.1
+2026-06-14T11:56:04.8809595Z [1m[92m  Downloaded[0m cc v1.2.63
+2026-06-14T11:56:04.8840201Z [1m[92m  Downloaded[0m bytes v1.11.1
+2026-06-14T11:56:04.8883392Z [1m[92m  Downloaded[0m lru-slab v0.1.2
+2026-06-14T11:56:04.8907810Z [1m[92m  Downloaded[0m lock_api v0.4.14
+2026-06-14T11:56:04.8921002Z [1m[92m  Downloaded[0m glob v0.3.3
+2026-06-14T11:56:04.8935868Z [1m[92m  Downloaded[0m generic-array v0.14.7
+2026-06-14T11:56:04.8950371Z [1m[92m  Downloaded[0m form_urlencoded v1.2.2
+2026-06-14T11:56:04.8958547Z [1m[92m  Downloaded[0m crypto-common v0.1.7
+2026-06-14T11:56:04.8968373Z [1m[92m  Downloaded[0m counter v0.7.1
+2026-06-14T11:56:04.8989464Z [1m[92m  Downloaded[0m cfg-if v1.0.4
+2026-06-14T11:56:04.9002393Z [1m[92m  Downloaded[0m autocfg v1.5.1
+2026-06-14T11:56:04.9022207Z [1m[92m  Downloaded[0m anstyle-query v1.1.5
+2026-06-14T11:56:04.9033945Z [1m[92m  Downloaded[0m clap_lex v1.1.0
+2026-06-14T11:56:04.9044721Z [1m[92m  Downloaded[0m clap_derive v4.5.55
+2026-06-14T11:56:04.9066172Z [1m[92m  Downloaded[0m jobserver v0.1.34
+2026-06-14T11:56:04.9086789Z [1m[92m  Downloaded[0m futures-task v0.3.32
+2026-06-14T11:56:04.9098865Z [1m[92m  Downloaded[0m clap v4.5.60
+2026-06-14T11:56:04.9194494Z [1m[92m  Downloaded[0m byteorder v1.5.0
+2026-06-14T11:56:04.9210662Z [1m[92m  Downloaded[0m allocator-api2 v0.4.0
+2026-06-14T11:56:04.9235598Z [1m[92m  Downloaded[0m is_terminal_polyfill v1.70.2
+2026-06-14T11:56:04.9245452Z [1m[92m  Downloaded[0m anstyle v1.0.14
+2026-06-14T11:56:04.9259982Z [1m[92m  Downloaded[0m cfg_aliases v0.2.1
+2026-06-14T11:56:04.9269695Z [1m[92m  Downloaded[0m bytecheck v0.8.2
+2026-06-14T11:56:04.9279714Z [1m[92m  Downloaded[0m block-buffer v0.10.4
+2026-06-14T11:56:04.9289962Z [1m[92m  Downloaded[0m anstream v0.6.21
+2026-06-14T11:56:04.9310582Z [1m[92m  Downloaded[0m allocator-api2 v0.2.21
+2026-06-14T11:56:04.9349216Z [1m[92m  Downloaded[0m lingua-arabic-language-model v1.3.0
+2026-06-14T11:56:04.9889018Z [1m[92m  Downloaded[0m aws-lc-sys v0.30.0
+2026-06-14T11:56:05.3188128Z [1m[92m   Compiling[0m libc v0.2.186
+2026-06-14T11:56:05.3189139Z [1m[92m   Compiling[0m find-msvc-tools v0.1.9
+2026-06-14T11:56:05.3189696Z [1m[92m   Compiling[0m shlex v2.0.1
+2026-06-14T11:56:05.3190233Z [1m[92m   Compiling[0m proc-macro2 v1.0.103
+2026-06-14T11:56:05.6143614Z [1m[92m   Compiling[0m quote v1.0.45
+2026-06-14T11:56:05.6483878Z [1m[92m   Compiling[0m unicode-ident v1.0.22
+2026-06-14T11:56:05.7078215Z [1m[92m   Compiling[0m tree-sitter-language v0.1.7
+2026-06-14T11:56:05.8090468Z [1m[92m   Compiling[0m serde_core v1.0.228
+2026-06-14T11:56:05.8551328Z [1m[92m   Compiling[0m stable_deref_trait v1.2.1
+2026-06-14T11:56:05.8884704Z [1m[92m   Compiling[0m memchr v2.8.0
+2026-06-14T11:56:06.0074055Z [1m[92m   Compiling[0m itoa v1.0.18
+2026-06-14T11:56:06.1363909Z [1m[92m   Compiling[0m icu_normalizer_data v2.2.0
+2026-06-14T11:56:06.2494236Z [1m[92m   Compiling[0m icu_properties_data v2.2.0
+2026-06-14T11:56:06.4983556Z [1m[92m   Compiling[0m dunce v1.0.5
+2026-06-14T11:56:06.5208013Z [1m[92m   Compiling[0m syn v2.0.111
+2026-06-14T11:56:06.5458022Z [1m[92m   Compiling[0m fs_extra v1.3.0
+2026-06-14T11:56:06.5613913Z [1m[92m   Compiling[0m pin-project-lite v0.2.17
+2026-06-14T11:56:06.6029223Z [1m[92m   Compiling[0m bytes v1.11.1
+2026-06-14T11:56:06.6943701Z [1m[92m   Compiling[0m jobserver v0.1.34
+2026-06-14T11:56:06.7683629Z [1m[92m   Compiling[0m futures-core v0.3.32
+2026-06-14T11:56:06.9862029Z [1m[92m   Compiling[0m cc v1.2.63
+2026-06-14T11:56:07.1864289Z [1m[92m   Compiling[0m smallvec v1.15.1
+2026-06-14T11:56:07.2231439Z [1m[92m   Compiling[0m zeroize v1.8.2
+2026-06-14T11:56:07.3334287Z [1m[92m   Compiling[0m zmij v1.0.21
+2026-06-14T11:56:07.3403341Z [1m[92m   Compiling[0m litemap v0.8.2
+2026-06-14T11:56:07.4764304Z [1m[92m   Compiling[0m writeable v0.6.3
+2026-06-14T11:56:07.5064241Z [1m[92m   Compiling[0m aws-lc-rs v1.13.3
+2026-06-14T11:56:07.6541752Z [1m[92m   Compiling[0m socket2 v0.6.4
+2026-06-14T11:56:07.6603110Z [1m[92m   Compiling[0m mio v1.2.1
+2026-06-14T11:56:08.0525154Z [1m[92m   Compiling[0m cmake v0.1.53
+2026-06-14T11:56:08.0623589Z [1m[92m   Compiling[0m strsim v0.11.1
+2026-06-14T11:56:08.3093860Z [1m[92m   Compiling[0m once_cell v1.21.4
+2026-06-14T11:56:08.3544024Z [1m[92m   Compiling[0m heck v0.5.0
+2026-06-14T11:56:08.4570800Z [1m[92m   Compiling[0m ident_case v1.0.1
+2026-06-14T11:56:08.5004366Z [1m[92m   Compiling[0m aws-lc-sys v0.30.0
+2026-06-14T11:56:08.5053518Z [1m[92m   Compiling[0m fnv v1.0.7
+2026-06-14T11:56:08.5264170Z [1m[92m   Compiling[0m utf8_iter v1.0.4
+2026-06-14T11:56:08.5474187Z [1m[92m   Compiling[0m rustls-pki-types v1.14.1
+2026-06-14T11:56:08.6049763Z [1m[92m   Compiling[0m http v1.4.1
+2026-06-14T11:56:08.9353856Z [1m[92m   Compiling[0m include_dir_macros v0.7.4
+2026-06-14T11:56:09.4635634Z [1m[92m   Compiling[0m thiserror v2.0.18
+2026-06-14T11:56:09.6158098Z [1m[92m    Checking[0m cfg-if v1.0.4
+2026-06-14T11:56:09.6883184Z [1m[92m   Compiling[0m synstructure v0.13.2
+2026-06-14T11:56:09.9134641Z [1m[92m   Compiling[0m darling_core v0.20.11
+2026-06-14T11:56:10.1703588Z [1m[92m   Compiling[0m http-body v1.0.1
+2026-06-14T11:56:10.2563418Z [1m[92m    Checking[0m include_dir v0.7.4
+2026-06-14T11:56:11.2610851Z [1m[92m   Compiling[0m zerofrom-derive v0.1.7
+2026-06-14T11:56:11.9884434Z [1m[92m   Compiling[0m yoke-derive v0.8.2
+2026-06-14T11:56:12.1698794Z [1m[92m   Compiling[0m zerovec-derive v0.11.3
+2026-06-14T11:56:12.3441186Z [1m[92m   Compiling[0m displaydoc v0.2.6
+2026-06-14T11:56:12.7844066Z [1m[92m   Compiling[0m zerofrom v0.1.8
+2026-06-14T11:56:12.7987718Z [1m[92m   Compiling[0m ptr_meta_derive v0.3.1
+2026-06-14T11:56:12.8546647Z [1m[92m   Compiling[0m yoke v0.8.3
+2026-06-14T11:56:13.0173909Z [1m[92m   Compiling[0m zerovec v0.11.6
+2026-06-14T11:56:13.0248214Z [1m[92m   Compiling[0m zerotrie v0.2.4
+2026-06-14T11:56:13.1534157Z [1m[92m   Compiling[0m tokio-macros v2.7.0
+2026-06-14T11:56:13.2051872Z [1m[92m   Compiling[0m bytecheck_derive v0.8.2
+2026-06-14T11:56:13.4803440Z [1m[92m   Compiling[0m tinystr v0.8.3
+2026-06-14T11:56:13.5517056Z [1m[92m   Compiling[0m potential_utf v0.1.5
+2026-06-14T11:56:13.6077363Z [1m[92m   Compiling[0m icu_locale_core v2.2.0
+2026-06-14T11:56:13.6353889Z [1m[92m   Compiling[0m icu_collections v2.2.0
+2026-06-14T11:56:13.6642931Z [1m[92m   Compiling[0m tokio v1.52.3
+2026-06-14T11:56:14.2658563Z [1m[92m   Compiling[0m darling_macro v0.20.11
+2026-06-14T11:56:14.4527226Z [1m[92m   Compiling[0m icu_provider v2.2.0
+2026-06-14T11:56:14.5734966Z [1m[92m   Compiling[0m thiserror-impl v2.0.18
+2026-06-14T11:56:14.6343800Z [1m[92m   Compiling[0m serde v1.0.228
+2026-06-14T11:56:14.7658737Z [1m[92m   Compiling[0m percent-encoding v2.3.2
+2026-06-14T11:56:14.8716738Z [1m[92m   Compiling[0m slab v0.4.12
+2026-06-14T11:56:14.9755437Z [1m[92m   Compiling[0m httparse v1.10.1
+2026-06-14T11:56:15.1737437Z [1m[92m   Compiling[0m rustls v0.23.31
+2026-06-14T11:56:15.2597571Z [1m[92m   Compiling[0m untrusted v0.9.0
+2026-06-14T11:56:15.3133912Z [1m[92m   Compiling[0m futures-task v0.3.32
+2026-06-14T11:56:15.4312792Z [1m[92m   Compiling[0m hashbrown v0.17.1
+2026-06-14T11:56:15.6040013Z [1m[92m   Compiling[0m futures-util v0.3.32
+2026-06-14T11:56:16.0284540Z [1m[92m   Compiling[0m icu_normalizer v2.2.0
+2026-06-14T11:56:16.4746832Z [1m[92m   Compiling[0m icu_properties v2.2.0
+2026-06-14T11:56:17.1382313Z [1m[92m   Compiling[0m darling v0.20.11
+2026-06-14T11:56:17.1793557Z [1m[92m   Compiling[0m munge_macro v0.4.7
+2026-06-14T11:56:17.5301728Z [1m[92m   Compiling[0m serde_derive v1.0.228
+2026-06-14T11:56:17.5533830Z [1m[92m   Compiling[0m bitflags v2.13.0
+2026-06-14T11:56:17.6025636Z [1m[92m   Compiling[0m tower-service v0.3.3
+2026-06-14T11:56:17.6436416Z [1m[92m   Compiling[0m subtle v2.6.1
+2026-06-14T11:56:17.7014019Z [1m[92m   Compiling[0m try-lock v0.2.5
+2026-06-14T11:56:17.7243454Z [1m[92m   Compiling[0m equivalent v1.0.2
+2026-06-14T11:56:17.7522684Z [1m[92m   Compiling[0m serde_json v1.0.150
+2026-06-14T11:56:17.7608461Z [1m[92m   Compiling[0m indexmap v2.14.0
+2026-06-14T11:56:17.8614512Z [1m[92m   Compiling[0m want v0.3.1
+2026-06-14T11:56:17.9484272Z [1m[92m   Compiling[0m idna_adapter v1.2.2
+2026-06-14T11:56:17.9987779Z [1m[92m   Compiling[0m derive_builder_core v0.20.2
+2026-06-14T11:56:18.5820784Z [1m[92m   Compiling[0m ptr_meta v0.3.1
+2026-06-14T11:56:18.6464650Z [1m[92m   Compiling[0m tracing-core v0.1.36
+2026-06-14T11:56:19.0227523Z [1m[92m   Compiling[0m futures-channel v0.3.32
+2026-06-14T11:56:19.0883930Z [1m[92m   Compiling[0m rustix v1.1.4
+2026-06-14T11:56:19.1611255Z [1m[92m   Compiling[0m anyhow v1.0.102
+2026-06-14T11:56:19.2963792Z [1m[92m   Compiling[0m autocfg v1.5.1
+2026-06-14T11:56:19.3334222Z [1m[92m   Compiling[0m atomic-waker v1.1.2
+2026-06-14T11:56:19.3874183Z [1m[92m   Compiling[0m hyper v1.10.1
+2026-06-14T11:56:19.5753128Z [1m[92m   Compiling[0m num-traits v0.2.19
+2026-06-14T11:56:20.2307142Z [1m[92m   Compiling[0m tracing v0.1.44
+2026-06-14T11:56:20.3268332Z [1m[92m   Compiling[0m derive_builder_macro v0.20.2
+2026-06-14T11:56:20.3753951Z [1m[92m   Compiling[0m rancor v0.1.1
+2026-06-14T11:56:20.4761344Z [1m[92m   Compiling[0m idna v1.1.0
+2026-06-14T11:56:20.5033949Z [1m[92m   Compiling[0m form_urlencoded v1.2.2
+2026-06-14T11:56:20.6984587Z [1m[92m   Compiling[0m strum_macros v0.28.0
+2026-06-14T11:56:20.7694341Z [1m[92m   Compiling[0m rkyv_derive v0.8.16
+2026-06-14T11:56:21.0170281Z [1m[92m   Compiling[0m sync_wrapper v1.0.2
+2026-06-14T11:56:22.3486622Z [1m[92m   Compiling[0m crossbeam-utils v0.8.21
+2026-06-14T11:56:22.4684888Z [1m[92m   Compiling[0m ipnet v2.12.0
+2026-06-14T11:56:22.5014477Z [1m[92m   Compiling[0m base64 v0.22.1
+2026-06-14T11:56:22.7483872Z [1m[92m   Compiling[0m linux-raw-sys v0.12.1
+2026-06-14T11:56:22.7684054Z [1m[92m   Compiling[0m openssl-probe v0.2.1
+2026-06-14T11:56:22.8483887Z [1m[92m   Compiling[0m tower-layer v0.3.3
+2026-06-14T11:56:22.8644254Z [1m[92m   Compiling[0m simdutf8 v0.1.5
+2026-06-14T11:56:22.9607030Z [1m[92m   Compiling[0m crc32fast v1.5.0
+2026-06-14T11:56:23.0953115Z [1m[92m   Compiling[0m bytecheck v0.8.2
+2026-06-14T11:56:23.1143100Z [1m[92m   Compiling[0m tower v0.5.3
+2026-06-14T11:56:23.2576065Z [1m[92m   Compiling[0m rustls-native-certs v0.8.4
+2026-06-14T11:56:23.4494224Z [1m[92m   Compiling[0m hyper-util v0.1.20
+2026-06-14T11:56:24.1391139Z [1m[92m   Compiling[0m url v2.5.8
+2026-06-14T11:56:24.6845200Z [1m[92m    Checking[0m aho-corasick v1.1.4
+2026-06-14T11:56:24.7820842Z [1m[92m    Checking[0m regex-syntax v0.8.10
+2026-06-14T11:56:25.3816909Z [1m[92m   Compiling[0m adler2 v2.0.1
+2026-06-14T11:56:25.9183612Z [1m[92m   Compiling[0m simd-adler32 v0.3.9
+2026-06-14T11:56:26.0451535Z [1m[92m   Compiling[0m log v0.4.32
+2026-06-14T11:56:26.3326953Z [1m[92m   Compiling[0m miniz_oxide v0.8.9
+2026-06-14T11:56:26.5051178Z [1m[92m    Checking[0m regex-automata v0.4.14
+2026-06-14T11:56:27.6945062Z [1m[92m   Compiling[0m tower-http v0.6.11
+2026-06-14T11:56:27.9913609Z [1m[92m   Compiling[0m xattr v1.6.1
+2026-06-14T11:56:28.4104222Z [1m[92m   Compiling[0m rend v0.5.3
+2026-06-14T11:56:28.5638141Z [1m[92m   Compiling[0m munge v0.4.7
+2026-06-14T11:56:28.6623689Z [1m[92m   Compiling[0m filetime v0.2.29
+2026-06-14T11:56:28.7693897Z [1m[92m   Compiling[0m encoding_rs v0.8.35
+2026-06-14T11:56:29.7203681Z [1m[92m   Compiling[0m http-body-util v0.1.3
+2026-06-14T11:56:29.9084177Z [1m[92m   Compiling[0m csv-core v0.1.13
+2026-06-14T11:56:30.2963791Z [1m[92m   Compiling[0m ryu v1.0.23
+2026-06-14T11:56:30.4104554Z [1m[92m   Compiling[0m rand_core v0.10.1
+2026-06-14T11:56:30.5123733Z [1m[92m   Compiling[0m rand v0.10.1
+2026-06-14T11:56:30.5893679Z [1m[92m   Compiling[0m csv v1.4.0
+2026-06-14T11:56:31.0094256Z [1m[92m   Compiling[0m encoding_rs_io v0.1.7
+2026-06-14T11:56:31.0634225Z [1m[92m   Compiling[0m tar v0.4.46
+2026-06-14T11:56:31.1204209Z [1m[92m   Compiling[0m regex v1.12.3
+2026-06-14T11:56:31.4833715Z [1m[92m   Compiling[0m flate2 v1.1.9
+2026-06-14T11:56:31.7624222Z [1m[92m   Compiling[0m rkyv v0.8.16
+2026-06-14T11:56:32.0674115Z [1m[92m   Compiling[0m strum v0.28.0
+2026-06-14T11:56:32.1281339Z [1m[92m   Compiling[0m derive_builder v0.20.2
+2026-06-14T11:56:32.5654283Z [1m[92m    Checking[0m memmap2 v0.9.10
+2026-06-14T11:56:32.6744653Z [1m[92m   Compiling[0m num_cpus v1.17.0
+2026-06-14T11:56:32.9123873Z [1m[92m   Compiling[0m ucd-trie v0.1.7
+2026-06-14T11:56:33.1557314Z [1m[92m   Compiling[0m getrandom v0.3.4
+2026-06-14T11:56:33.1903673Z [1m[92m   Compiling[0m glob v0.3.3
+2026-06-14T11:56:33.3436200Z [1m[92m   Compiling[0m md5 v0.8.0
+2026-06-14T11:56:33.4382693Z [1m[92m   Compiling[0m byteorder v1.5.0
+2026-06-14T11:56:33.5553193Z [1m[92m   Compiling[0m daachorse v2.1.1
+2026-06-14T11:56:33.6520152Z [1m[92m   Compiling[0m pest v2.8.6
+2026-06-14T11:56:34.5964149Z [1m[92m    Checking[0m crossbeam-epoch v0.9.18
+2026-06-14T11:56:35.4580120Z [1m[92m    Checking[0m utf8parse v0.2.2
+2026-06-14T11:56:35.5033643Z [1m[92m    Checking[0m foldhash v0.1.5
+2026-06-14T11:56:35.5759378Z [1m[92m   Compiling[0m parking_lot_core v0.9.12
+2026-06-14T11:56:35.6140489Z [1m[92m    Checking[0m fastrand v2.4.1
+2026-06-14T11:56:35.7034181Z [1m[92m    Checking[0m allocator-api2 v0.2.21
+2026-06-14T11:56:35.8289183Z [1m[92m   Compiling[0m rayon-core v1.13.0
+2026-06-14T11:56:35.9193824Z [1m[92m    Checking[0m hashbrown v0.15.5
+2026-06-14T11:56:36.3990333Z [1m[92m    Checking[0m anstyle-parse v0.2.7
+2026-06-14T11:56:37.3143532Z [1m[92m    Checking[0m crossbeam-deque v0.8.6
+2026-06-14T11:56:37.4288510Z [1m[92m   Compiling[0m pest_meta v2.8.6
+2026-06-14T11:56:37.5051267Z [1m[92m    Checking[0m platform-num v0.8.0
+2026-06-14T11:56:37.8980802Z [1m[92m    Checking[0m anstyle v1.0.14
+2026-06-14T11:56:38.0153677Z [1m[92m   Compiling[0m fst v0.4.7
+2026-06-14T11:56:38.1339443Z [1m[92m    Checking[0m anstyle-query v1.1.5
+2026-06-14T11:56:38.1646008Z [1m[92m    Checking[0m either v1.16.0
+2026-06-14T11:56:38.7068806Z [1m[92m    Checking[0m is_terminal_polyfill v1.70.2
+2026-06-14T11:56:38.7436233Z [1m[92m    Checking[0m colorchoice v1.0.5
+2026-06-14T11:56:38.7845774Z [1m[92m    Checking[0m tinyvec_macros v0.1.1
+2026-06-14T11:56:38.8121793Z [1m[92m    Checking[0m scopeguard v1.2.0
+2026-06-14T11:56:38.9544291Z [1m[92m    Checking[0m lock_api v0.4.14
+2026-06-14T11:56:39.0104451Z [1m[92m    Checking[0m tinyvec v1.11.0
+2026-06-14T11:56:39.1023719Z [1m[92m    Checking[0m anstream v0.6.21
+2026-06-14T11:56:39.2744327Z [1m[92m   Compiling[0m pest_generator v2.8.6
+2026-06-14T11:56:39.2917208Z [1m[92m    Checking[0m tempfile v3.27.0
+2026-06-14T11:56:39.3267584Z [1m[92m    Checking[0m lindera-dictionary v3.0.7
+2026-06-14T11:56:39.9243950Z [1m[92m   Compiling[0m tree-sitter v0.25.10
+2026-06-14T11:56:40.0631415Z [1m[92m   Compiling[0m tree-sitter-go v0.25.0
+2026-06-14T11:56:40.1921077Z [1m[92m   Compiling[0m tree-sitter-cpp v0.23.4
+2026-06-14T11:56:40.3051679Z [1m[92m   Compiling[0m ts-parser-perl v1.1.2
+2026-06-14T11:56:40.3578548Z [1m[92m   Compiling[0m tree-sitter-javascript v0.25.0
+2026-06-14T11:56:40.3838444Z [1m[92m   Compiling[0m tree-sitter-pascal v0.10.2
+2026-06-14T11:56:40.4453433Z [1m[92m   Compiling[0m tree-sitter-scala v0.25.1
+2026-06-14T11:56:40.4723891Z [1m[92m   Compiling[0m tree-sitter-java v0.23.5
+2026-06-14T11:56:40.5129010Z [1m[92m   Compiling[0m tree-sitter-swift v0.7.3
+2026-06-14T11:56:40.5673189Z [1m[92m   Compiling[0m tree-sitter-toml-ng v0.7.0
+2026-06-14T11:56:40.5886326Z [1m[92m   Compiling[0m tree-sitter-r v1.2.0
+2026-06-14T11:56:40.6241770Z [1m[92m   Compiling[0m tree-sitter-yaml v0.7.2
+2026-06-14T11:56:40.6843888Z [1m[92m   Compiling[0m tree-sitter-c-sharp v0.23.5
+2026-06-14T11:56:40.6980336Z [1m[92m   Compiling[0m tree-sitter-graphql v0.1.0
+2026-06-14T11:56:40.7444278Z [1m[92m   Compiling[0m tree-sitter-html v0.23.2
+2026-06-14T11:56:40.8290675Z [1m[92m   Compiling[0m tree-sitter-php v0.24.2
+2026-06-14T11:56:40.8445504Z [1m[92m   Compiling[0m tree-sitter-proto v0.4.0
+2026-06-14T11:56:40.8567552Z [1m[92m   Compiling[0m tree-sitter-lua v0.2.0
+2026-06-14T11:56:40.9421177Z [1m[92m   Compiling[0m tree-sitter-ruby v0.23.1
+2026-06-14T11:56:40.9479426Z [1m[92m   Compiling[0m tree-sitter-typescript v0.23.2
+2026-06-14T11:56:40.9660283Z [1m[92m   Compiling[0m tree-sitter-xml v0.7.0
+2026-06-14T11:56:41.0763636Z [1m[92m   Compiling[0m tree-sitter-json v0.24.8
+2026-06-14T11:56:41.0800627Z [1m[92m   Compiling[0m tree-sitter-css v0.25.0
+2026-06-14T11:56:41.0933578Z [1m[92m   Compiling[0m tree-sitter-ini v1.4.0
+2026-06-14T11:56:41.2054223Z [1m[92m   Compiling[0m tree-sitter-python v0.25.0
+2026-06-14T11:56:41.2173694Z [1m[92m   Compiling[0m tree-sitter-vb-dotnet v0.1.0
+2026-06-14T11:56:41.2304964Z [1m[92m   Compiling[0m tree-sitter-c v0.24.2
+2026-06-14T11:56:41.3306364Z [1m[92m   Compiling[0m tree-sitter-kotlin-ng v1.1.0
+2026-06-14T11:56:41.3383595Z [1m[92m   Compiling[0m tree-sitter-rust v0.24.2
+2026-06-14T11:56:41.3847068Z [1m[92m   Compiling[0m tree-sitter-sequel v0.3.11
+2026-06-14T11:56:41.4496405Z [1m[92m    Checking[0m clap_lex v1.1.0
+2026-06-14T11:56:41.4833673Z [1m[92m    Checking[0m bitflags v1.3.2
+2026-06-14T11:56:41.5161513Z [1m[92m    Checking[0m hashbrown v0.14.5
+2026-06-14T11:56:41.5173725Z [1m[92m    Checking[0m beef v0.5.2
+2026-06-14T11:56:41.5366802Z [1m[92m    Checking[0m allocator-api2 v0.4.0
+2026-06-14T11:56:41.5993622Z [1m[92m    Checking[0m unsafe-libyaml v0.2.11
+2026-06-14T11:56:41.9565554Z [1m[92m    Checking[0m dashmap v6.2.1
+2026-06-14T11:56:42.0263834Z [1m[92m    Checking[0m serde_yaml_ng v0.10.0
+2026-06-14T11:56:42.1836131Z [1m[92m    Checking[0m clap_builder v4.5.60
+2026-06-14T11:56:42.7899976Z [1m[92m    Checking[0m platform-mem v0.3.0
+2026-06-14T11:56:42.8332924Z [1m[92m    Checking[0m platform-data v2.0.0
+2026-06-14T11:56:42.9455835Z [1m[92m    Checking[0m kanaria v0.2.0
+2026-06-14T11:56:58.3346484Z [1m[92m   Compiling[0m pest_derive v2.8.6
+2026-06-14T11:56:58.5913675Z [1m[92m    Checking[0m rayon v1.12.0
+2026-06-14T11:56:58.9103568Z [1m[92m    Checking[0m unicode-normalization v0.1.25
+2026-06-14T11:56:59.1364143Z [1m[92m    Checking[0m itertools v0.14.0
+2026-06-14T11:56:59.2219534Z [1m[92m    Checking[0m platform-trees v0.3.4
+2026-06-14T11:56:59.3073896Z [1m[92m    Checking[0m hashlink v0.10.0
+2026-06-14T11:56:59.5184733Z [1m[92m    Checking[0m counter v0.7.1
+2026-06-14T11:56:59.6184219Z [1m[92m   Compiling[0m strum_macros v0.27.2
+2026-06-14T11:57:00.0693582Z [1m[92m   Compiling[0m clap_derive v4.5.55
+2026-06-14T11:57:00.2264089Z [1m[92m    Checking[0m lingua-hindi-language-model v1.3.0
+2026-06-14T11:57:00.2664069Z [1m[92m    Checking[0m lingua-portuguese-language-model v1.3.0
+2026-06-14T11:57:00.3143871Z [1m[92m    Checking[0m lingua-bengali-language-model v1.3.0
+2026-06-14T11:57:00.3574272Z [1m[92m    Checking[0m lingua-arabic-language-model v1.3.0
+2026-06-14T11:57:00.4121294Z [1m[92m    Checking[0m lingua-chinese-language-model v1.3.0
+2026-06-14T11:57:00.4411323Z [1m[92m    Checking[0m lingua-russian-language-model v1.3.0
+2026-06-14T11:57:00.4758654Z [1m[92m    Checking[0m lingua-spanish-language-model v1.3.0
+2026-06-14T11:57:00.5089049Z [1m[92m    Checking[0m lingua-french-language-model v1.3.0
+2026-06-14T11:57:00.5421317Z [1m[92m    Checking[0m lingua-english-language-model v1.3.0
+2026-06-14T11:57:00.5751382Z [1m[92m    Checking[0m lingua-urdu-language-model v1.3.0
+2026-06-14T11:57:00.6187918Z [1m[92m    Checking[0m nom v8.0.0
+2026-06-14T11:57:01.3892835Z [1m[92m    Checking[0m unicode-blocks v0.1.9
+2026-06-14T11:57:01.4536537Z [1m[92m    Checking[0m maplit v1.0.2
+2026-06-14T11:57:01.4813401Z [1m[92m    Checking[0m strum v0.27.2
+2026-06-14T11:57:01.5194064Z [1m[92m    Checking[0m tap v1.0.1
+2026-06-14T11:57:01.5673483Z [1m[92m    Checking[0m leak_slice v0.2.0
+2026-06-14T11:57:01.6044351Z [1m[92m    Checking[0m streaming-iterator v0.1.9
+2026-06-14T11:57:01.6281883Z [1m[92m    Checking[0m unicode-segmentation v1.13.3
+2026-06-14T11:57:01.9172626Z [1m[92m    Checking[0m clap v4.5.60
+2026-06-14T11:57:01.9563551Z [1m[92m    Checking[0m doublets v0.4.0
+2026-06-14T11:57:02.0841440Z [1m[92m    Checking[0m lingua v1.8.0
+2026-06-14T11:57:02.4364719Z [1m[92m    Checking[0m json5_nodes v2.0.2
+2026-06-14T11:57:02.8033860Z [1m[92m    Checking[0m links-notation v0.13.0
+2026-06-14T11:57:03.0591938Z [1m[92m    Checking[0m whatlang v0.18.0
+2026-06-14T11:57:03.0634617Z [1m[92m    Checking[0m unicode-bidi v0.3.18
+2026-06-14T11:57:06.2169812Z [1m[92m   Compiling[0m rustls-webpki v0.103.4
+2026-06-14T11:57:08.6289335Z [1m[92m   Compiling[0m tokio-rustls v0.26.4
+2026-06-14T11:57:08.6290184Z [1m[92m   Compiling[0m rustls-platform-verifier v0.7.0
+2026-06-14T11:57:08.8203703Z [1m[92m   Compiling[0m hyper-rustls v0.27.9
+2026-06-14T11:57:08.9513832Z [1m[92m   Compiling[0m reqwest v0.13.4
+2026-06-14T11:57:11.4434996Z [1m[92m   Compiling[0m lindera-jieba v3.0.7
+2026-06-14T11:57:23.4264450Z [1m[92m    Checking[0m lindera v3.0.7
+2026-06-14T11:57:23.6970575Z [1m[92m Documenting[0m meta-language v0.41.0 (/home/runner/work/meta-language/meta-language)
+2026-06-14T11:57:25.4729129Z [1m[33mwarning[0m[1m: redundant explicit link target[0m
+2026-06-14T11:57:25.4729716Z  [1m[94m--> [0msrc/access.rs:4:20
+2026-06-14T11:57:25.4730120Z   [1m[94m|[0m
+2026-06-14T11:57:25.4736945Z [1m[94m4[0m [1m[94m|[0m //! [`AccessMode`](crate::configuration::AccessMode)-driven counterpart: a
+2026-06-14T11:57:25.4737753Z   [1m[94m|[0m      [1m[94m------------[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[33mexplicit target is redundant[0m
+2026-06-14T11:57:25.4738292Z   [1m[94m|[0m      [1m[94m|[0m
+2026-06-14T11:57:25.4738778Z   [1m[94m|[0m      [1m[94mbecause label contains path that resolves to same destination[0m
+2026-06-14T11:57:25.4739228Z   [1m[94m|[0m
+2026-06-14T11:57:25.4739614Z   [1m[94m= [0m[1mnote[0m: when a link's destination is not specified,
+2026-06-14T11:57:25.4740037Z           the label is used to resolve intra-doc links
+2026-06-14T11:57:25.4740616Z   [1m[94m= [0m[1mnote[0m: `#[warn(rustdoc::redundant_explicit_links)]` on by default
+2026-06-14T11:57:25.4741089Z [1m[96mhelp[0m: remove explicit link target
+2026-06-14T11:57:25.4741409Z   [1m[94m|[0m
+2026-06-14T11:57:25.4741949Z [1m[94m4[0m [91m- [0m//! [91m[`AccessMode`](crate::configuration::AccessMode)[0m-driven counterpart: a
+2026-06-14T11:57:25.4742734Z [1m[94m4[0m [92m+ [0m//! [92m[`AccessMode`][0m-driven counterpart: a
+2026-06-14T11:57:25.4743107Z   [1m[94m|[0m
+2026-06-14T11:57:25.4743238Z 
+2026-06-14T11:57:25.4774102Z [1m[33mwarning[0m[1m: redundant explicit link target[0m
+2026-06-14T11:57:25.4774744Z    [1m[94m--> [0msrc/access.rs:185:20
+2026-06-14T11:57:25.4775223Z     [1m[94m|[0m
+2026-06-14T11:57:25.4776100Z [1m[94m185[0m [1m[94m|[0m /// [`AccessMode`](crate::configuration::AccessMode) is enforced: a read-only
+2026-06-14T11:57:25.4777246Z     [1m[94m|[0m      [1m[94m------------[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[33mexplicit target is redundant[0m
+2026-06-14T11:57:25.4777910Z     [1m[94m|[0m      [1m[94m|[0m
+2026-06-14T11:57:25.4778397Z     [1m[94m|[0m      [1m[94mbecause label contains path that resolves to same destination[0m
+2026-06-14T11:57:25.4778853Z     [1m[94m|[0m
+2026-06-14T11:57:25.4779239Z     [1m[94m= [0m[1mnote[0m: when a link's destination is not specified,
+2026-06-14T11:57:25.4779677Z             the label is used to resolve intra-doc links
+2026-06-14T11:57:25.4780079Z [1m[96mhelp[0m: remove explicit link target
+2026-06-14T11:57:25.4780412Z     [1m[94m|[0m
+2026-06-14T11:57:25.4780960Z [1m[94m185[0m [91m- [0m/// [91m[`AccessMode`](crate::configuration::AccessMode)[0m is enforced: a read-only
+2026-06-14T11:57:25.4781579Z [1m[94m185[0m [92m+ [0m/// [92m[`AccessMode`][0m is enforced: a read-only
+2026-06-14T11:57:25.4781957Z     [1m[94m|[0m
+2026-06-14T11:57:25.4782270Z 
+2026-06-14T11:57:25.4785690Z [1m[33mwarning[0m[1m: redundant explicit link target[0m
+2026-06-14T11:57:25.4786319Z  [1m[94m--> [0msrc/storage.rs:5:40
+2026-06-14T11:57:25.4786760Z   [1m[94m|[0m
+2026-06-14T11:57:25.4787807Z [1m[94m5[0m [1m[94m|[0m //! existing in-memory [`LinkNetwork`](crate::LinkNetwork). The optional
+2026-06-14T11:57:25.4788929Z   [1m[94m|[0m                         [1m[94m-------------[0m  [1m[33m^^^^^^^^^^^^^^^^^^[0m [1m[33mexplicit target is redundant[0m
+2026-06-14T11:57:25.4789692Z   [1m[94m|[0m                         [1m[94m|[0m
+2026-06-14T11:57:25.4790372Z   [1m[94m|[0m                         [1m[94mbecause label contains path that resolves to same destination[0m
+2026-06-14T11:57:25.4790840Z   [1m[94m|[0m
+2026-06-14T11:57:25.4791215Z   [1m[94m= [0m[1mnote[0m: when a link's destination is not specified,
+2026-06-14T11:57:25.4791623Z           the label is used to resolve intra-doc links
+2026-06-14T11:57:25.4792009Z [1m[96mhelp[0m: remove explicit link target
+2026-06-14T11:57:25.4792492Z   [1m[94m|[0m
+2026-06-14T11:57:25.4793025Z [1m[94m5[0m [91m- [0m//! existing in-memory [91m[`LinkNetwork`](crate::LinkNetwork)[0m. The optional
+2026-06-14T11:57:25.4793638Z [1m[94m5[0m [92m+ [0m//! existing in-memory [92m[`LinkNetwork`][0m. The optional
+2026-06-14T11:57:25.4794044Z   [1m[94m|[0m
+2026-06-14T11:57:25.4794163Z 
+2026-06-14T11:57:25.9529885Z [1m[33mwarning[0m: `meta-language` (lib doc) generated 3 warnings
+2026-06-14T11:57:25.9530556Z [1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 1m 24s
+2026-06-14T11:57:26.0358009Z [1m[92m   Generated[0m /home/runner/work/meta-language/meta-language/target/doc/meta_language/index.html
+2026-06-14T11:57:26.0569557Z ##[group]Run actions/configure-pages@v6
+2026-06-14T11:57:26.0569876Z with:
+2026-06-14T11:57:26.0572812Z   token: ***
+2026-06-14T11:57:26.0573045Z   enablement: false
+2026-06-14T11:57:26.0573288Z env:
+2026-06-14T11:57:26.0573502Z   CARGO_TERM_COLOR: always
+2026-06-14T11:57:26.0573768Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:57:26.0574128Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:57:26.0574429Z   CARGO_TOKEN: ***
+2026-06-14T11:57:26.0574654Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:57:26.0574903Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:57:26.0575173Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:57:26.0575417Z ##[endgroup]
+2026-06-14T11:57:26.3362847Z ##[group]Run actions/upload-pages-artifact@v5
+2026-06-14T11:57:26.3363189Z with:
+2026-06-14T11:57:26.3363406Z   path: target/doc
+2026-06-14T11:57:26.3363640Z   name: github-pages
+2026-06-14T11:57:26.3363890Z   retention-days: 1
+2026-06-14T11:57:26.3364133Z   include-hidden-files: false
+2026-06-14T11:57:26.3364393Z env:
+2026-06-14T11:57:26.3364605Z   CARGO_TERM_COLOR: always
+2026-06-14T11:57:26.3364864Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:57:26.3365263Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:57:26.3365591Z   CARGO_TOKEN: ***
+2026-06-14T11:57:26.3365815Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:57:26.3366065Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:57:26.3366346Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:57:26.3366582Z   GITHUB_PAGES: true
+2026-06-14T11:57:26.3366808Z ##[endgroup]
+2026-06-14T11:57:26.3390717Z ##[group]Run echo ::group::Archive artifact
+2026-06-14T11:57:26.3391075Z [36;1mecho ::group::Archive artifact[0m
+2026-06-14T11:57:26.3391363Z [36;1mtar \[0m
+2026-06-14T11:57:26.3391666Z [36;1m  --dereference --hard-dereference \[0m
+2026-06-14T11:57:26.3392004Z [36;1m  --directory "$INPUT_PATH" \[0m
+2026-06-14T11:57:26.3392663Z [36;1m  -cvf "$RUNNER_TEMP/artifact.tar" \[0m
+2026-06-14T11:57:26.3392985Z [36;1m  --exclude=.git \[0m
+2026-06-14T11:57:26.3393250Z [36;1m  --exclude=.github \[0m
+2026-06-14T11:57:26.3393514Z [36;1m  --exclude=.[^/]* \[0m
+2026-06-14T11:57:26.3393773Z [36;1m  .[0m
+2026-06-14T11:57:26.3393992Z [36;1mecho ::endgroup::[0m
+2026-06-14T11:57:26.3573560Z shell: /usr/bin/sh -e {0}
+2026-06-14T11:57:26.3573854Z env:
+2026-06-14T11:57:26.3574085Z   CARGO_TERM_COLOR: always
+2026-06-14T11:57:26.3574360Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:57:26.3574756Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:57:26.3575094Z   CARGO_TOKEN: ***
+2026-06-14T11:57:26.3575329Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:57:26.3575578Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:57:26.3575861Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:57:26.3576106Z   GITHUB_PAGES: true
+2026-06-14T11:57:26.3576373Z   INPUT_PATH: target/doc
+2026-06-14T11:57:26.3576625Z ##[endgroup]
+2026-06-14T11:57:26.3646852Z ##[group]Archive artifact
+2026-06-14T11:57:26.3660847Z ./
+2026-06-14T11:57:26.3661154Z ./src-files.js
+2026-06-14T11:57:26.3661769Z ./help.html
+2026-06-14T11:57:26.3662066Z ./src/
+2026-06-14T11:57:26.3662509Z ./src/meta_language/
+2026-06-14T11:57:26.3662871Z ./src/meta_language/transform.rs.html
+2026-06-14T11:57:26.3663331Z ./src/meta_language/storage.rs.html
+2026-06-14T11:57:26.3663769Z ./src/meta_language/source.rs.html
+2026-06-14T11:57:26.3664281Z ./src/meta_language/query_algebra/
+2026-06-14T11:57:26.3664797Z ./src/meta_language/query_algebra/text_pattern.rs.html
+2026-06-14T11:57:26.3665362Z ./src/meta_language/query_algebra/syntax.rs.html
+2026-06-14T11:57:26.3665880Z ./src/meta_language/query_algebra/snapshot.rs.html
+2026-06-14T11:57:26.3666375Z ./src/meta_language/query_algebra.rs.html
+2026-06-14T11:57:26.3666881Z ./src/meta_language/pdf_parser.rs.html
+2026-06-14T11:57:26.3667360Z ./src/meta_language/data_format_parser.rs.html
+2026-06-14T11:57:26.3667858Z ./src/meta_language/self_description.rs.html
+2026-06-14T11:57:26.3668338Z ./src/meta_language/mixed_regions.rs.html
+2026-06-14T11:57:26.3668799Z ./src/meta_language/snapshots.rs.html
+2026-06-14T11:57:26.3669251Z ./src/meta_language/language_parser.rs.html
+2026-06-14T11:57:26.3669737Z ./src/meta_language/tree_sitter_adapter.rs.html
+2026-06-14T11:57:26.3670200Z ./src/meta_language/storage/
+2026-06-14T11:57:26.3670608Z ./src/meta_language/storage/doublets.rs.html
+2026-06-14T11:57:26.3671138Z ./src/meta_language/reconstruction.rs.html
+2026-06-14T11:57:26.3671653Z ./src/meta_language/natural_language_grammar.rs.html
+2026-06-14T11:57:26.3672476Z ./src/meta_language/verification.rs.html
+2026-06-14T11:57:26.3672925Z ./src/meta_language/rust_codec.rs.html
+2026-06-14T11:57:26.3673844Z ./src/meta_language/substitution.rs.html
+2026-06-14T11:57:26.3674311Z ./src/meta_language/api_styles/
+2026-06-14T11:57:26.3674996Z ./src/meta_language/api_styles/fixtures.rs.html
+2026-06-14T11:57:26.3675498Z ./src/meta_language/parity_fixtures/
+2026-06-14T11:57:26.3675973Z ./src/meta_language/parity_fixtures/wave_two.rs.html
+2026-06-14T11:57:26.3676471Z ./src/meta_language/link_network.rs.html
+2026-06-14T11:57:26.3677094Z ./src/meta_language/language_fixtures.rs.html
+2026-06-14T11:57:26.3677576Z ./src/meta_language/parser_registry.rs.html
+2026-06-14T11:57:26.3678068Z ./src/meta_language/source_generation.rs.html
+2026-06-14T11:57:26.3678555Z ./src/meta_language/concept_ontology.rs.html
+2026-06-14T11:57:26.3679357Z ./src/meta_language/lib.rs.html
+2026-06-14T11:57:26.3679804Z ./src/meta_language/lino_serialization.rs.html
+2026-06-14T11:57:26.3680281Z ./src/meta_language/api_styles.rs.html
+2026-06-14T11:57:26.3681054Z ./src/meta_language/translation_rules.rs.html
+2026-06-14T11:57:26.3681927Z ./src/meta_language/parity.rs.html
+2026-06-14T11:57:26.3683152Z ./src/meta_language/query.rs.html
+2026-06-14T11:57:26.3684241Z ./src/meta_language/incremental.rs.html
+2026-06-14T11:57:26.3684716Z ./src/meta_language/configuration.rs.html
+2026-06-14T11:57:26.3685194Z ./src/meta_language/natural_language.rs.html
+2026-06-14T11:57:26.3685658Z ./src/meta_language/lino_parser.rs.html
+2026-06-14T11:57:26.3686116Z ./src/meta_language/link_flags.rs.html
+2026-06-14T11:57:26.3686583Z ./src/meta_language/parity_fixtures.rs.html
+2026-06-14T11:57:26.3687436Z ./src/meta_language/document_formatting/
+2026-06-14T11:57:26.3687957Z ./src/meta_language/document_formatting/document.rs.html
+2026-06-14T11:57:26.3688522Z ./src/meta_language/document_formatting/mod.rs.html
+2026-06-14T11:57:26.3689058Z ./src/meta_language/document_formatting/pdf.rs.html
+2026-06-14T11:57:26.3689613Z ./src/meta_language/language_profile.rs.html
+2026-06-14T11:57:26.3690144Z ./src/meta_language/access.rs.html
+2026-06-14T11:57:26.3690647Z ./src/meta_language/semantics.rs.html
+2026-06-14T11:57:26.3691128Z ./src/meta_language/embedded_region_parser.rs.html
+2026-06-14T11:57:26.3692279Z ./search.index/
+2026-06-14T11:57:26.3692611Z ./search.index/desc/
+2026-06-14T11:57:26.3692966Z ./search.index/desc/432377ef54.js
+2026-06-14T11:57:26.3693370Z ./search.index/20608c60df.js
+2026-06-14T11:57:26.3693755Z ./search.index/61dda4613b.js
+2026-06-14T11:57:26.3694132Z ./search.index/649ec11e75.js
+2026-06-14T11:57:26.3694701Z ./search.index/4bbc5b3d7c.js
+2026-06-14T11:57:26.3695067Z ./search.index/name/
+2026-06-14T11:57:26.3695421Z ./search.index/name/03f0a447b0.js
+2026-06-14T11:57:26.3695836Z ./search.index/6c41ede870.js
+2026-06-14T11:57:26.3696204Z ./search.index/alias/
+2026-06-14T11:57:26.3696559Z ./search.index/alias/62150c532c.js
+2026-06-14T11:57:26.3696963Z ./search.index/443dfd8919.js
+2026-06-14T11:57:26.3697326Z ./search.index/2ec4a112c3.js
+2026-06-14T11:57:26.3697691Z ./search.index/795d9d2ab9.js
+2026-06-14T11:57:26.3698066Z ./search.index/0dec5e5e3e.js
+2026-06-14T11:57:26.3698432Z ./search.index/0e9eff6d3f.js
+2026-06-14T11:57:26.3698918Z ./search.index/32cefd5e46.js
+2026-06-14T11:57:26.3699324Z ./search.index/6528b87f41.js
+2026-06-14T11:57:26.3699691Z ./search.index/path/
+2026-06-14T11:57:26.3700038Z ./search.index/path/9fc435b439.js
+2026-06-14T11:57:26.3700428Z ./search.index/465da68668.js
+2026-06-14T11:57:26.3700789Z ./search.index/2337c2e9d9.js
+2026-06-14T11:57:26.3701146Z ./search.index/2cf4a3f8e9.js
+2026-06-14T11:57:26.3701524Z ./search.index/564cdb17b9.js
+2026-06-14T11:57:26.3701902Z ./search.index/4b1bcd5309.js
+2026-06-14T11:57:26.3702398Z ./search.index/3e859a57cd.js
+2026-06-14T11:57:26.3702770Z ./search.index/00fda8d39b.js
+2026-06-14T11:57:26.3703131Z ./search.index/0788fa91f6.js
+2026-06-14T11:57:26.3703491Z ./search.index/011fc6b56e.js
+2026-06-14T11:57:26.3703855Z ./search.index/2a397f0d86.js
+2026-06-14T11:57:26.3704222Z ./search.index/7db40d7e84.js
+2026-06-14T11:57:26.3704589Z ./search.index/691f21d9b5.js
+2026-06-14T11:57:26.3704949Z ./search.index/2b34eee81f.js
+2026-06-14T11:57:26.3705311Z ./search.index/11bac8b6dc.js
+2026-06-14T11:57:26.3705680Z ./search.index/685f2a7754.js
+2026-06-14T11:57:26.3706035Z ./search.index/416570b853.js
+2026-06-14T11:57:26.3706565Z ./search.index/02d33d0fe4.js
+2026-06-14T11:57:26.3706940Z ./search.index/normalizedName/
+2026-06-14T11:57:26.3707364Z ./search.index/normalizedName/ed0b923624.js
+2026-06-14T11:57:26.3707817Z ./search.index/19e2a0b648.js
+2026-06-14T11:57:26.3708181Z ./search.index/15907d2d3c.js
+2026-06-14T11:57:26.3708545Z ./search.index/5cc800b91d.js
+2026-06-14T11:57:26.3708954Z ./search.index/generic_inverted_index/
+2026-06-14T11:57:26.3709430Z ./search.index/generic_inverted_index/c07811bb31.js
+2026-06-14T11:57:26.3709907Z ./search.index/23bdef1076.js
+2026-06-14T11:57:26.3710288Z ./search.index/600cda0c9f.js
+2026-06-14T11:57:26.3710648Z ./search.index/66fedf930f.js
+2026-06-14T11:57:26.3711044Z ./search.index/427ba91248.js
+2026-06-14T11:57:26.3711404Z ./search.index/5df183a6ff.js
+2026-06-14T11:57:26.3711761Z ./search.index/6556e62771.js
+2026-06-14T11:57:26.3712241Z ./search.index/3059359452.js
+2026-06-14T11:57:26.3712603Z ./search.index/06d99a8c65.js
+2026-06-14T11:57:26.3712968Z ./search.index/06d5ee769d.js
+2026-06-14T11:57:26.3713347Z ./search.index/30ea81ec4f.js
+2026-06-14T11:57:26.3713716Z ./search.index/0e0b5ce5b3.js
+2026-06-14T11:57:26.3714077Z ./search.index/18a61404c0.js
+2026-06-14T11:57:26.3714434Z ./search.index/09f104176b.js
+2026-06-14T11:57:26.3714814Z ./search.index/7e9e702ad6.js
+2026-06-14T11:57:26.3715172Z ./search.index/1d97a5b8ea.js
+2026-06-14T11:57:26.3715530Z ./search.index/19071f9824.js
+2026-06-14T11:57:26.3715890Z ./search.index/6a9d107b9a.js
+2026-06-14T11:57:26.3716257Z ./search.index/03157b901c.js
+2026-06-14T11:57:26.3716612Z ./search.index/7644ad16bd.js
+2026-06-14T11:57:26.3716973Z ./search.index/2a86dc4f1e.js
+2026-06-14T11:57:26.3717330Z ./search.index/30272f7dfd.js
+2026-06-14T11:57:26.3717682Z ./search.index/2b961373a0.js
+2026-06-14T11:57:26.3718039Z ./search.index/2aa9428d7c.js
+2026-06-14T11:57:26.3718394Z ./search.index/107181e42e.js
+2026-06-14T11:57:26.3718749Z ./search.index/32a7d8741e.js
+2026-06-14T11:57:26.3719115Z ./search.index/1dc91a2635.js
+2026-06-14T11:57:26.3719494Z ./search.index/6e88a5f270.js
+2026-06-14T11:57:26.3719858Z ./search.index/3fc9e57142.js
+2026-06-14T11:57:26.3720217Z ./search.index/0fd22b4062.js
+2026-06-14T11:57:26.3720577Z ./search.index/4ee1e4a65f.js
+2026-06-14T11:57:26.3720941Z ./search.index/0254b1c36f.js
+2026-06-14T11:57:26.3721498Z ./search.index/45e5edc5c0.js
+2026-06-14T11:57:26.3721884Z ./search.index/16b79b4352.js
+2026-06-14T11:57:26.3722399Z ./search.index/57c3af0e12.js
+2026-06-14T11:57:26.3722766Z ./search.index/entry/
+2026-06-14T11:57:26.3723109Z ./search.index/entry/05b234465b.js
+2026-06-14T11:57:26.3723507Z ./search.index/entry/69b6529fc3.js
+2026-06-14T11:57:26.3723884Z ./search.index/645682da6c.js
+2026-06-14T11:57:26.3724244Z ./search.index/26701d972c.js
+2026-06-14T11:57:26.3724597Z ./search.index/6462160d04.js
+2026-06-14T11:57:26.3724953Z ./search.index/123f24d1ba.js
+2026-06-14T11:57:26.3725322Z ./search.index/4a70428403.js
+2026-06-14T11:57:26.3725676Z ./search.index/3e48e2c30d.js
+2026-06-14T11:57:26.3726036Z ./search.index/62f3cdd873.js
+2026-06-14T11:57:26.3726399Z ./search.index/20b9e68c51.js
+2026-06-14T11:57:26.3726759Z ./search.index/2f7e5a682a.js
+2026-06-14T11:57:26.3727121Z ./search.index/5bc7e4ee34.js
+2026-06-14T11:57:26.3727481Z ./search.index/3a719149d1.js
+2026-06-14T11:57:26.3727849Z ./search.index/3850ad932e.js
+2026-06-14T11:57:26.3728208Z ./search.index/22230d880a.js
+2026-06-14T11:57:26.3728563Z ./search.index/50f5a44153.js
+2026-06-14T11:57:26.3728924Z ./search.index/5b71a63bd6.js
+2026-06-14T11:57:26.3729282Z ./search.index/7ae5ea3fd1.js
+2026-06-14T11:57:26.3729636Z ./search.index/743173e300.js
+2026-06-14T11:57:26.3729996Z ./search.index/7d503d6d2d.js
+2026-06-14T11:57:26.3730358Z ./search.index/51b4bdae2b.js
+2026-06-14T11:57:26.3730714Z ./search.index/type/
+2026-06-14T11:57:26.3731058Z ./search.index/type/3a0cebfb42.js
+2026-06-14T11:57:26.3731462Z ./search.index/function/
+2026-06-14T11:57:26.3731835Z ./search.index/function/96a50e26ce.js
+2026-06-14T11:57:26.3732458Z ./search.index/55c31f008e.js
+2026-06-14T11:57:26.3732983Z ./search.index/0222a86ef8.js
+2026-06-14T11:57:26.3733341Z ./search.index/09e3eda29a.js
+2026-06-14T11:57:26.3733707Z ./search.index/3b841b9354.js
+2026-06-14T11:57:26.3734071Z ./search.index/2b27b3dcaa.js
+2026-06-14T11:57:26.3734434Z ./search.index/29a0f7f540.js
+2026-06-14T11:57:26.3734813Z ./search.index/298c370a75.js
+2026-06-14T11:57:26.3735174Z ./search.index/2088bb2b3b.js
+2026-06-14T11:57:26.3735537Z ./search.index/54c96d8d57.js
+2026-06-14T11:57:26.3735948Z ./search.index/66210aef13.js
+2026-06-14T11:57:26.3736309Z ./search.index/4283a1a4c3.js
+2026-06-14T11:57:26.3736666Z ./search.index/5d25847ced.js
+2026-06-14T11:57:26.3737024Z ./search.index/7c2453c6d5.js
+2026-06-14T11:57:26.3737395Z ./search.index/18d43c3685.js
+2026-06-14T11:57:26.3737770Z ./search.index/478bc98907.js
+2026-06-14T11:57:26.3738137Z ./search.index/crateNames/
+2026-06-14T11:57:26.3738524Z ./search.index/crateNames/0fc39d9268.js
+2026-06-14T11:57:26.3738944Z ./search.index/6cad5033cd.js
+2026-06-14T11:57:26.3739306Z ./search.index/1d86e205d8.js
+2026-06-14T11:57:26.3739665Z ./search.index/2505b12d16.js
+2026-06-14T11:57:26.3740023Z ./search.index/43008412ed.js
+2026-06-14T11:57:26.3740380Z ./search.index/3e4348b39c.js
+2026-06-14T11:57:26.3740740Z ./search.index/63bffb5899.js
+2026-06-14T11:57:26.3741112Z ./search.index/root.js
+2026-06-14T11:57:26.3741462Z ./search.index/78dceee165.js
+2026-06-14T11:57:26.3741849Z ./search.index/4ad8b13506.js
+2026-06-14T11:57:26.3742346Z ./search.index/742fa618ba.js
+2026-06-14T11:57:26.3742704Z ./search.index/4a6ae992e3.js
+2026-06-14T11:57:26.3743074Z ./search.index/1007343655.js
+2026-06-14T11:57:26.3743436Z ./search.index/44287da6db.js
+2026-06-14T11:57:26.3743796Z ./search.index/141e1c5d3f.js
+2026-06-14T11:57:26.3744155Z ./search.index/008b10ec29.js
+2026-06-14T11:57:26.3744512Z ./search.index/5a135af918.js
+2026-06-14T11:57:26.3744872Z ./search.index/25a3f886ce.js
+2026-06-14T11:57:26.3745239Z ./search.index/56a5205d53.js
+2026-06-14T11:57:26.3745596Z ./search.index/73d8c6cd35.js
+2026-06-14T11:57:26.3745954Z ./search.index/459c471a42.js
+2026-06-14T11:57:26.3746345Z ./search.index/0425117846.js
+2026-06-14T11:57:26.3746703Z ./search.index/5ff7cb00bc.js
+2026-06-14T11:57:26.3747061Z ./search.index/2ffc8b907d.js
+2026-06-14T11:57:26.3747427Z ./search.index/3fba323fee.js
+2026-06-14T11:57:26.3747991Z ./search.index/22051f98b3.js
+2026-06-14T11:57:26.3748348Z ./search.index/2db970ca31.js
+2026-06-14T11:57:26.3748705Z ./search.index/346818bfa6.js
+2026-06-14T11:57:26.3749059Z ./search.index/67c34d87db.js
+2026-06-14T11:57:26.3749426Z ./search.index/778903564c.js
+2026-06-14T11:57:26.3749784Z ./search.index/01c0a9b860.js
+2026-06-14T11:57:26.3750131Z ./trait.impl/
+2026-06-14T11:57:26.3750438Z ./trait.impl/core/
+2026-06-14T11:57:26.3750772Z ./trait.impl/core/convert/
+2026-06-14T11:57:26.3751154Z ./trait.impl/core/convert/trait.From.js
+2026-06-14T11:57:26.3751572Z ./trait.impl/core/fmt/
+2026-06-14T11:57:26.3751933Z ./trait.impl/core/fmt/trait.Debug.js
+2026-06-14T11:57:26.3752504Z ./trait.impl/core/fmt/trait.Display.js
+2026-06-14T11:57:26.3752915Z ./trait.impl/core/cmp/
+2026-06-14T11:57:26.3753273Z ./trait.impl/core/cmp/trait.Ord.js
+2026-06-14T11:57:26.3753700Z ./trait.impl/core/cmp/trait.PartialEq.js
+2026-06-14T11:57:26.3754140Z ./trait.impl/core/cmp/trait.Eq.js
+2026-06-14T11:57:26.3754564Z ./trait.impl/core/cmp/trait.PartialOrd.js
+2026-06-14T11:57:26.3755001Z ./trait.impl/core/default/
+2026-06-14T11:57:26.3755394Z ./trait.impl/core/default/trait.Default.js
+2026-06-14T11:57:26.3755836Z ./trait.impl/core/marker/
+2026-06-14T11:57:26.3756243Z ./trait.impl/core/marker/trait.UnsafeUnpin.js
+2026-06-14T11:57:26.3756716Z ./trait.impl/core/marker/trait.Send.js
+2026-06-14T11:57:26.3757147Z ./trait.impl/core/marker/trait.Unpin.js
+2026-06-14T11:57:26.3757580Z ./trait.impl/core/marker/trait.Copy.js
+2026-06-14T11:57:26.3758004Z ./trait.impl/core/marker/trait.Sync.js
+2026-06-14T11:57:26.3758499Z ./trait.impl/core/marker/trait.StructuralPartialEq.js
+2026-06-14T11:57:26.3759017Z ./trait.impl/core/marker/trait.Freeze.js
+2026-06-14T11:57:26.3759444Z ./trait.impl/core/hash/
+2026-06-14T11:57:26.3760042Z ./trait.impl/core/hash/trait.Hash.js
+2026-06-14T11:57:26.3760443Z ./trait.impl/core/ops/
+2026-06-14T11:57:26.3760785Z ./trait.impl/core/ops/bit/
+2026-06-14T11:57:26.3761164Z ./trait.impl/core/ops/bit/trait.Not.js
+2026-06-14T11:57:26.3761584Z ./trait.impl/core/ops/deref/
+2026-06-14T11:57:26.3761983Z ./trait.impl/core/ops/deref/trait.Deref.js
+2026-06-14T11:57:26.3762548Z ./trait.impl/core/panic/
+2026-06-14T11:57:26.3762935Z ./trait.impl/core/panic/unwind_safe/
+2026-06-14T11:57:26.3763426Z ./trait.impl/core/panic/unwind_safe/trait.UnwindSafe.js
+2026-06-14T11:57:26.3764015Z ./trait.impl/core/panic/unwind_safe/trait.RefUnwindSafe.js
+2026-06-14T11:57:26.3764525Z ./trait.impl/core/clone/
+2026-06-14T11:57:26.3764890Z ./trait.impl/core/clone/trait.Clone.js
+2026-06-14T11:57:26.3765294Z ./trait.impl/core/error/
+2026-06-14T11:57:26.3765656Z ./trait.impl/core/error/trait.Error.js
+2026-06-14T11:57:26.3766067Z ./trait.impl/meta_language/
+2026-06-14T11:57:26.3766478Z ./trait.impl/meta_language/language_parser/
+2026-06-14T11:57:26.3767065Z ./trait.impl/meta_language/language_parser/trait.LanguageParser.js
+2026-06-14T11:57:26.3767644Z ./trait.impl/meta_language/storage/
+2026-06-14T11:57:26.3768119Z ./trait.impl/meta_language/storage/trait.LinkStore.js
+2026-06-14T11:57:26.3768623Z ./trait.impl/meta_language/rust_codec/
+2026-06-14T11:57:26.3769143Z ./trait.impl/meta_language/rust_codec/trait.ToLinks.js
+2026-06-14T11:57:26.3769711Z ./trait.impl/meta_language/rust_codec/trait.FromLinks.js
+2026-06-14T11:57:26.3770219Z ./trait.impl/meta_language/api_styles/
+2026-06-14T11:57:26.3770753Z ./trait.impl/meta_language/api_styles/trait.FluentNetworkApi.js
+2026-06-14T11:57:26.3771305Z ./trait.impl/meta_language/query/
+2026-06-14T11:57:26.3771816Z ./trait.impl/meta_language/query/trait.QueryPredicateHost.js
+2026-06-14T11:57:26.3772460Z ./crates.js
+2026-06-14T11:57:26.3772754Z ./meta_language/
+2026-06-14T11:57:26.3773099Z ./meta_language/sidebar-items.js
+2026-06-14T11:57:26.3773500Z ./meta_language/configuration/
+2026-06-14T11:57:26.3773937Z ./meta_language/configuration/sidebar-items.js
+2026-06-14T11:57:26.3774525Z ./meta_language/configuration/enum.TriviaAttachmentPolicy.html
+2026-06-14T11:57:26.3775192Z ./meta_language/configuration/struct.ParseConfiguration.html
+2026-06-14T11:57:26.3775956Z ./meta_language/configuration/enum.AccessMode.html
+2026-06-14T11:57:26.3776526Z ./meta_language/configuration/enum.FormalizationLevel.html
+2026-06-14T11:57:26.3777229Z ./meta_language/configuration/enum.LanguageIdentificationDetector.html
+2026-06-14T11:57:26.3777857Z ./meta_language/configuration/index.html
+2026-06-14T11:57:26.3778411Z ./meta_language/configuration/enum.NaturalizationDirection.html
+2026-06-14T11:57:26.3779077Z ./meta_language/configuration/enum.RegionDetectionPolicy.html
+2026-06-14T11:57:26.3779617Z ./meta_language/mixed_regions/
+2026-06-14T11:57:26.3780031Z ./meta_language/mixed_regions/sidebar-items.js
+2026-06-14T11:57:26.3780498Z ./meta_language/mixed_regions/index.html
+2026-06-14T11:57:26.3781011Z ./meta_language/mixed_regions/struct.EmbeddedRegion.html
+2026-06-14T11:57:26.3781538Z ./meta_language/natural_language_grammar/
+2026-06-14T11:57:26.3782370Z ./meta_language/natural_language_grammar/constant.NATURAL_LANGUAGE_GRAMMAR_FIXTURES.html
+2026-06-14T11:57:26.3783330Z ./meta_language/natural_language_grammar/struct.NaturalLanguageGrammarFixture.html
+2026-06-14T11:57:26.3784022Z ./meta_language/language_profile/
+2026-06-14T11:57:26.3784525Z ./meta_language/language_profile/sidebar-items.js
+2026-06-14T11:57:26.3785110Z ./meta_language/language_profile/struct.LanguageProfile.html
+2026-06-14T11:57:26.3785835Z ./meta_language/language_profile/struct.LanguageProfileViolation.html
+2026-06-14T11:57:26.3786464Z ./meta_language/language_profile/index.html
+2026-06-14T11:57:26.3787044Z ./meta_language/language_profile/struct.LanguageProfileLinks.html
+2026-06-14T11:57:26.3787607Z ./meta_language/parity/
+2026-06-14T11:57:26.3787985Z ./meta_language/parity/sidebar-items.js
+2026-06-14T11:57:26.3788468Z ./meta_language/parity/struct.ParityFixture.html
+2026-06-14T11:57:26.3789219Z ./meta_language/parity/struct.GrammarEmbeddingTarget.html
+2026-06-14T11:57:26.3789846Z ./meta_language/parity/constant.MARKUP_LANGUAGE_TARGETS.html
+2026-06-14T11:57:26.3790491Z ./meta_language/parity/constant.NATURAL_LANGUAGE_TARGETS.html
+2026-06-14T11:57:26.3791077Z ./meta_language/parity/enum.LanguageFamily.html
+2026-06-14T11:57:26.3791553Z ./meta_language/parity/index.html
+2026-06-14T11:57:26.3792250Z ./meta_language/parity/enum.ParityVerificationExpectation.html
+2026-06-14T11:57:26.3792930Z ./meta_language/parity/struct.ParityTransformExpectation.html
+2026-06-14T11:57:26.3793669Z ./meta_language/parity/constant.SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.html
+2026-06-14T11:57:26.3810458Z ./meta_language/parity/constant.DATA_FORMAT_TARGETS.html
+2026-06-14T11:57:26.3811092Z ./meta_language/parity/enum.ParityCapability.html
+2026-06-14T11:57:26.3811616Z ./meta_language/parity/constant.PARITY_FIXTURES.html
+2026-06-14T11:57:26.3812053Z ./meta_language/parity/constant.PROGRAMMING_LANGUAGE_TARGETS.html
+2026-06-14T11:57:26.3812750Z ./meta_language/parity/constant.PARITY_TARGETS.html
+2026-06-14T11:57:26.3813141Z ./meta_language/parity/constant.GRAMMAR_EMBEDDING_TARGETS.html
+2026-06-14T11:57:26.3813532Z ./meta_language/parity/struct.LanguageFixture.html
+2026-06-14T11:57:26.3813910Z ./meta_language/parity/constant.LANGUAGE_FIXTURES.html
+2026-06-14T11:57:26.3814283Z ./meta_language/parity/struct.ParityTarget.html
+2026-06-14T11:57:26.3814638Z ./meta_language/parity/struct.LanguageTarget.html
+2026-06-14T11:57:26.3814968Z ./meta_language/language_fixtures/
+2026-06-14T11:57:26.3815327Z ./meta_language/language_fixtures/constant.LANGUAGE_FIXTURES.html
+2026-06-14T11:57:26.3815697Z ./meta_language/query_algebra/
+2026-06-14T11:57:26.3815989Z ./meta_language/query_algebra/sidebar-items.js
+2026-06-14T11:57:26.3816382Z ./meta_language/query_algebra/struct.LinkRuleSnapshotReport.html
+2026-06-14T11:57:26.3816807Z ./meta_language/query_algebra/struct.LinkRuleCaptures.html
+2026-06-14T11:57:26.3817220Z ./meta_language/query_algebra/struct.LinkRuleSnapshotCase.html
+2026-06-14T11:57:26.3817584Z ./meta_language/query_algebra/snapshot/
+2026-06-14T11:57:26.3817976Z ./meta_language/query_algebra/snapshot/struct.LinkRuleSnapshotReport.html
+2026-06-14T11:57:26.3818679Z ./meta_language/query_algebra/snapshot/struct.LinkRuleSnapshotCase.html
+2026-06-14T11:57:26.3819161Z ./meta_language/query_algebra/snapshot/struct.LinkRuleSnapshotResult.html
+2026-06-14T11:57:26.3819641Z ./meta_language/query_algebra/snapshot/struct.LinkRuleSnapshotSuite.html
+2026-06-14T11:57:26.3820145Z ./meta_language/query_algebra/snapshot/enum.LinkRuleSnapshotExpectation.html
+2026-06-14T11:57:26.3820798Z ./meta_language/query_algebra/struct.LinkRuleSnapshotResult.html
+2026-06-14T11:57:26.3821422Z ./meta_language/query_algebra/struct.LinkRuleSnapshotSuite.html
+2026-06-14T11:57:26.3821850Z ./meta_language/query_algebra/enum.TraversalStrategy.html
+2026-06-14T11:57:26.3822314Z ./meta_language/query_algebra/index.html
+2026-06-14T11:57:26.3822677Z ./meta_language/query_algebra/struct.LinkRuleParseError.html
+2026-06-14T11:57:26.3823120Z ./meta_language/query_algebra/struct.LinkRuleRegistry.html
+2026-06-14T11:57:26.3823520Z ./meta_language/query_algebra/struct.TraversalReport.html
+2026-06-14T11:57:26.3823900Z ./meta_language/query_algebra/struct.LinkRuleCapture.html
+2026-06-14T11:57:26.3824314Z ./meta_language/query_algebra/struct.LinkRuleMatch.html
+2026-06-14T11:57:26.3824706Z ./meta_language/query_algebra/struct.LinkRule.html
+2026-06-14T11:57:26.3825122Z ./meta_language/query_algebra/enum.LinkRuleSnapshotExpectation.html
+2026-06-14T11:57:26.3825502Z ./meta_language/all.html
+2026-06-14T11:57:26.3825751Z ./meta_language/language_parser/
+2026-06-14T11:57:26.3826040Z ./meta_language/language_parser/sidebar-items.js
+2026-06-14T11:57:26.3826435Z ./meta_language/language_parser/struct.BuiltInLanguageParser.html
+2026-06-14T11:57:26.3826818Z ./meta_language/language_parser/index.html
+2026-06-14T11:57:26.3827151Z ./meta_language/language_parser/trait.LanguageParser.html
+2026-06-14T11:57:26.3827621Z ./meta_language/storage/
+2026-06-14T11:57:26.3827873Z ./meta_language/storage/sidebar-items.js
+2026-06-14T11:57:26.3828164Z ./meta_language/storage/doublets/
+2026-06-14T11:57:26.3828494Z ./meta_language/storage/doublets/struct.DoubletsLinkStore.html
+2026-06-14T11:57:26.3828904Z ./meta_language/storage/enum.EngineLinkStore.html
+2026-06-14T11:57:26.3829270Z ./meta_language/storage/struct.DoubletsLinkStore.html
+2026-06-14T11:57:26.3829590Z ./meta_language/storage/index.html
+2026-06-14T11:57:26.3829890Z ./meta_language/storage/struct.LinkStoreQuery.html
+2026-06-14T11:57:26.3830215Z ./meta_language/storage/trait.LinkStore.html
+2026-06-14T11:57:26.3830537Z ./meta_language/storage/enum.LinkStoreBackend.html
+2026-06-14T11:57:26.3830860Z ./meta_language/storage/enum.StorageError.html
+2026-06-14T11:57:26.3831153Z ./meta_language/link_flags/
+2026-06-14T11:57:26.3831417Z ./meta_language/link_flags/sidebar-items.js
+2026-06-14T11:57:26.3831717Z ./meta_language/link_flags/index.html
+2026-06-14T11:57:26.3832023Z ./meta_language/link_flags/struct.LinkFlags.html
+2026-06-14T11:57:26.3832489Z ./meta_language/source/
+2026-06-14T11:57:26.3832734Z ./meta_language/source/sidebar-items.js
+2026-06-14T11:57:26.3833033Z ./meta_language/source/struct.ByteRange.html
+2026-06-14T11:57:26.3833346Z ./meta_language/source/struct.SourceSpan.html
+2026-06-14T11:57:26.3833645Z ./meta_language/source/index.html
+2026-06-14T11:57:26.3833919Z ./meta_language/source/struct.Point.html
+2026-06-14T11:57:26.3834193Z ./meta_language/rust_codec/
+2026-06-14T11:57:26.3834448Z ./meta_language/rust_codec/sidebar-items.js
+2026-06-14T11:57:26.3834761Z ./meta_language/rust_codec/trait.LinksObject.html
+2026-06-14T11:57:26.3835094Z ./meta_language/rust_codec/enum.RustTypeKind.html
+2026-06-14T11:57:26.3835414Z ./meta_language/rust_codec/trait.FromLinks.html
+2026-06-14T11:57:26.3835746Z ./meta_language/rust_codec/struct.LinksEncoder.html
+2026-06-14T11:57:26.3836108Z ./meta_language/rust_codec/trait.ToLinks.html
+2026-06-14T11:57:26.3836439Z ./meta_language/rust_codec/struct.RustFieldShape.html
+2026-06-14T11:57:26.3836779Z ./meta_language/rust_codec/struct.LinksDecoder.html
+2026-06-14T11:57:26.3837089Z ./meta_language/rust_codec/index.html
+2026-06-14T11:57:26.3837398Z ./meta_language/rust_codec/struct.RustTypeShape.html
+2026-06-14T11:57:26.3837897Z ./meta_language/rust_codec/enum.LinksCodecError.html
+2026-06-14T11:57:26.3838194Z ./meta_language/api_styles/
+2026-06-14T11:57:26.3838449Z ./meta_language/api_styles/sidebar-items.js
+2026-06-14T11:57:26.3838811Z ./meta_language/api_styles/struct.LinkCliSubstitutionError.html
+2026-06-14T11:57:26.3839172Z ./meta_language/api_styles/fixtures/
+2026-06-14T11:57:26.3839508Z ./meta_language/api_styles/fixtures/fn.run_api_style_fixture.html
+2026-06-14T11:57:26.3839885Z ./meta_language/api_styles/enum.ApiOperation.html
+2026-06-14T11:57:26.3840228Z ./meta_language/api_styles/struct.FluentPipeline.html
+2026-06-14T11:57:26.3840593Z ./meta_language/api_styles/struct.LinkCliSubstitution.html
+2026-06-14T11:57:26.3840935Z ./meta_language/api_styles/index.html
+2026-06-14T11:57:26.3841268Z ./meta_language/api_styles/enum.LinkCliSubstitutionKind.html
+2026-06-14T11:57:26.3841656Z ./meta_language/api_styles/struct.ApiOperationEntry.html
+2026-06-14T11:57:26.3842002Z ./meta_language/api_styles/enum.ApiStyle.html
+2026-06-14T11:57:26.3842637Z ./meta_language/api_styles/enum.ApiStyleFixture.html
+2026-06-14T11:57:26.3843206Z ./meta_language/api_styles/trait.FluentNetworkApi.html
+2026-06-14T11:57:26.3843750Z ./meta_language/api_styles/struct.ApiStyleCell.html
+2026-06-14T11:57:26.3844297Z ./meta_language/api_styles/constant.API_OPERATIONS.html
+2026-06-14T11:57:26.3844857Z ./meta_language/api_styles/fn.run_api_style_fixture.html
+2026-06-14T11:57:26.3845453Z ./meta_language/constant.NATURAL_LANGUAGE_GRAMMAR_FIXTURES.html
+2026-06-14T11:57:26.3845989Z ./meta_language/parity_fixtures/
+2026-06-14T11:57:26.3846496Z ./meta_language/parity_fixtures/constant.PARITY_FIXTURES.html
+2026-06-14T11:57:26.3847292Z ./meta_language/struct.NaturalLanguageGrammarFixture.html
+2026-06-14T11:57:26.3847825Z ./meta_language/snapshots/
+2026-06-14T11:57:26.3848215Z ./meta_language/snapshots/sidebar-items.js
+2026-06-14T11:57:26.3848763Z ./meta_language/snapshots/struct.MutableNetworkSnapshot.html
+2026-06-14T11:57:26.3849311Z ./meta_language/snapshots/index.html
+2026-06-14T11:57:26.3849769Z ./meta_language/snapshots/struct.NetworkSnapshot.html
+2026-06-14T11:57:26.3850349Z ./meta_language/snapshots/struct.StructuralDiff.html
+2026-06-14T11:57:26.3850830Z ./meta_language/index.html
+2026-06-14T11:57:26.3851207Z ./meta_language/substitution/
+2026-06-14T11:57:26.3851487Z ./meta_language/substitution/sidebar-items.js
+2026-06-14T11:57:26.3851865Z ./meta_language/substitution/struct.VariableSubstitutionRule.html
+2026-06-14T11:57:26.3852509Z ./meta_language/substitution/struct.SubstitutionReport.html
+2026-06-14T11:57:26.3852914Z ./meta_language/substitution/enum.SubstitutionValue.html
+2026-06-14T11:57:26.3853298Z ./meta_language/substitution/struct.SubstitutionRule.html
+2026-06-14T11:57:26.3853711Z ./meta_language/substitution/struct.SubstitutionBindings.html
+2026-06-14T11:57:26.3854081Z ./meta_language/substitution/index.html
+2026-06-14T11:57:26.3854519Z ./meta_language/link_network/
+2026-06-14T11:57:26.3854933Z ./meta_language/link_network/sidebar-items.js
+2026-06-14T11:57:26.3855435Z ./meta_language/link_network/enum.LinkType.html
+2026-06-14T11:57:26.3856000Z ./meta_language/link_network/struct.LinkNetwork.html
+2026-06-14T11:57:26.3856524Z ./meta_language/link_network/struct.Link.html
+2026-06-14T11:57:26.3857014Z ./meta_language/link_network/index.html
+2026-06-14T11:57:26.3857451Z ./meta_language/link_network/struct.LinkId.html
+2026-06-14T11:57:26.3857826Z ./meta_language/link_network/struct.LinkMetadata.html
+2026-06-14T11:57:26.3858409Z ./meta_language/link_network/enum.NetworkProjection.html
+2026-06-14T11:57:26.3858904Z ./meta_language/transform/
+2026-06-14T11:57:26.3859167Z ./meta_language/transform/sidebar-items.js
+2026-06-14T11:57:26.3859530Z ./meta_language/transform/struct.SourceTextPredicateHost.html
+2026-06-14T11:57:26.3860059Z ./meta_language/transform/struct.QuasiquoteTemplate.html
+2026-06-14T11:57:26.3860649Z ./meta_language/transform/struct.ReplacementRule.html
+2026-06-14T11:57:26.3861220Z ./meta_language/transform/struct.ReplacementReport.html
+2026-06-14T11:57:26.3861997Z ./meta_language/transform/enum.QuasiquoteError.html
+2026-06-14T11:57:26.3862632Z ./meta_language/transform/index.html
+2026-06-14T11:57:26.3863117Z ./meta_language/transform/struct.TextReplacement.html
+2026-06-14T11:57:26.3863602Z ./meta_language/concept_ontology/
+2026-06-14T11:57:26.3864174Z ./meta_language/concept_ontology/struct.ConceptOntologySeedReport.html
+2026-06-14T11:57:26.3865011Z ./meta_language/concept_ontology/struct.ConceptOntologyImportReport.html
+2026-06-14T11:57:26.3865648Z ./meta_language/lino_serialization/
+2026-06-14T11:57:26.3866117Z ./meta_language/lino_serialization/sidebar-items.js
+2026-06-14T11:57:26.3866747Z ./meta_language/lino_serialization/enum.LinoSerializationError.html
+2026-06-14T11:57:26.3867374Z ./meta_language/lino_serialization/index.html
+2026-06-14T11:57:26.3867845Z ./meta_language/translation_rules/
+2026-06-14T11:57:26.3868308Z ./meta_language/translation_rules/sidebar-items.js
+2026-06-14T11:57:26.3869006Z ./meta_language/translation_rules/struct.TranslationRuleRegistry.html
+2026-06-14T11:57:26.3869731Z ./meta_language/translation_rules/struct.TranslationRuleSet.html
+2026-06-14T11:57:26.3870277Z ./meta_language/translation_rules/index.html
+2026-06-14T11:57:26.3870710Z ./meta_language/translation_rules/enum.TranslationRuleSetLoadError.html
+2026-06-14T11:57:26.3871467Z ./meta_language/translation_rules/struct.TranslationTemplate.html
+2026-06-14T11:57:26.3872251Z ./meta_language/translation_rules/struct.TranslationRule.html
+2026-06-14T11:57:26.3872817Z ./meta_language/parser_registry/
+2026-06-14T11:57:26.3873278Z ./meta_language/parser_registry/sidebar-items.js
+2026-06-14T11:57:26.3873863Z ./meta_language/parser_registry/struct.ParserRegistry.html
+2026-06-14T11:57:26.3874603Z ./meta_language/parser_registry/index.html
+2026-06-14T11:57:26.3874969Z ./meta_language/document_formatting/
+2026-06-14T11:57:26.3875507Z ./meta_language/document_formatting/sidebar-items.js
+2026-06-14T11:57:26.3876163Z ./meta_language/document_formatting/struct.FormattingDocument.html
+2026-06-14T11:57:26.3876844Z ./meta_language/document_formatting/enum.InlineNode.html
+2026-06-14T11:57:26.3877206Z ./meta_language/document_formatting/pdf/
+2026-06-14T11:57:26.3877577Z ./meta_language/document_formatting/pdf/fn.parse_pdf_document.html
+2026-06-14T11:57:26.3878098Z ./meta_language/document_formatting/pdf/fn.pdf_profile_is_recognized.html
+2026-06-14T11:57:26.3878898Z ./meta_language/document_formatting/pdf/fn.render_pdf_document.html
+2026-06-14T11:57:26.3879692Z ./meta_language/document_formatting/document/
+2026-06-14T11:57:26.3880206Z ./meta_language/document_formatting/document/struct.FormattingDocument.html
+2026-06-14T11:57:26.3880689Z ./meta_language/document_formatting/document/enum.InlineNode.html
+2026-06-14T11:57:26.3881145Z ./meta_language/document_formatting/document/enum.BlockNode.html
+2026-06-14T11:57:26.3881609Z ./meta_language/document_formatting/document/fn.parse_markup_document.html
+2026-06-14T11:57:26.3882067Z ./meta_language/document_formatting/fn.parse_pdf_document.html
+2026-06-14T11:57:26.3882674Z ./meta_language/document_formatting/index.html
+2026-06-14T11:57:26.3883026Z ./meta_language/document_formatting/enum.BlockNode.html
+2026-06-14T11:57:26.3883442Z ./meta_language/document_formatting/fn.pdf_profile_is_recognized.html
+2026-06-14T11:57:26.3883882Z ./meta_language/document_formatting/fn.render_pdf_document.html
+2026-06-14T11:57:26.3884309Z ./meta_language/document_formatting/fn.parse_markup_document.html
+2026-06-14T11:57:26.3884741Z ./meta_language/document_formatting/struct.DocumentFormatMatch.html
+2026-06-14T11:57:26.3885200Z ./meta_language/document_formatting/struct.DocumentFormatInstance.html
+2026-06-14T11:57:26.3885700Z ./meta_language/document_formatting/struct.DocumentFormattingSeedReport.html
+2026-06-14T11:57:26.3886107Z ./meta_language/query/
+2026-06-14T11:57:26.3886363Z ./meta_language/query/sidebar-items.js
+2026-06-14T11:57:26.3886678Z ./meta_language/query/struct.QueryPredicate.html
+2026-06-14T11:57:26.3887007Z ./meta_language/query/struct.LinkQuery.html
+2026-06-14T11:57:26.3887551Z ./meta_language/query/struct.QueryCaptures.html
+2026-06-14T11:57:26.3887908Z ./meta_language/query/trait.QueryPredicateHost.html
+2026-06-14T11:57:26.3888272Z ./meta_language/query/enum.QueryPredicateArgument.html
+2026-06-14T11:57:26.3888630Z ./meta_language/query/struct.QueryParseError.html
+2026-06-14T11:57:26.3888946Z ./meta_language/query/index.html
+2026-06-14T11:57:26.3889236Z ./meta_language/query/struct.QueryCapture.html
+2026-06-14T11:57:26.3889550Z ./meta_language/query/struct.QueryMatch.html
+2026-06-14T11:57:26.3889841Z ./meta_language/access/
+2026-06-14T11:57:26.3890095Z ./meta_language/access/sidebar-items.js
+2026-06-14T11:57:26.3890413Z ./meta_language/access/struct.ReadOnlyNetwork.html
+2026-06-14T11:57:26.3890755Z ./meta_language/access/enum.EngineNetwork.html
+2026-06-14T11:57:26.3891104Z ./meta_language/access/struct.ReadOnlyViolation.html
+2026-06-14T11:57:26.3891423Z ./meta_language/access/index.html
+2026-06-14T11:57:26.3891740Z ./meta_language/struct.ConceptOntologySeedReport.html
+2026-06-14T11:57:26.3892059Z ./meta_language/semantics/
+2026-06-14T11:57:26.3892562Z ./meta_language/semantics/sidebar-items.js
+2026-06-14T11:57:26.3892880Z ./meta_language/semantics/enum.TruthValue.html
+2026-06-14T11:57:26.3893206Z ./meta_language/semantics/struct.Probability.html
+2026-06-14T11:57:26.3893521Z ./meta_language/semantics/index.html
+2026-06-14T11:57:26.3893871Z ./meta_language/semantics/struct.ProbabilisticTruthValue.html
+2026-06-14T11:57:26.3894222Z ./meta_language/verification/
+2026-06-14T11:57:26.3894494Z ./meta_language/verification/sidebar-items.js
+2026-06-14T11:57:26.3894856Z ./meta_language/verification/struct.VerificationReport.html
+2026-06-14T11:57:26.3895403Z ./meta_language/verification/enum.VerificationIssueKind.html
+2026-06-14T11:57:26.3895769Z ./meta_language/verification/index.html
+2026-06-14T11:57:26.3896102Z ./meta_language/verification/struct.VerificationIssue.html
+2026-06-14T11:57:26.3896498Z ./meta_language/struct.ConceptOntologyImportReport.html
+2026-06-14T11:57:26.3896830Z ./static.files/
+2026-06-14T11:57:26.3897073Z ./static.files/LICENSE-APACHE-a60eea81.txt
+2026-06-14T11:57:26.3897405Z ./static.files/NanumBarunGothic-13b3dcba.ttf.woff2
+2026-06-14T11:57:26.3897748Z ./static.files/SourceSerif4-LICENSE-a2cfd9d5.md
+2026-06-14T11:57:26.3898123Z ./static.files/SourceCodePro-Semibold-aa29a496.ttf.woff2
+2026-06-14T11:57:26.3898505Z ./static.files/SourceSerif4-Semibold-457a13ac.ttf.woff2
+2026-06-14T11:57:26.3898832Z ./static.files/noscript-f7c3ffd8.css
+2026-06-14T11:57:26.3899149Z ./static.files/NanumBarunGothic-LICENSE-a37d393b.txt
+2026-06-14T11:57:26.3899492Z ./static.files/FiraMono-Medium-86f75c8c.woff2
+2026-06-14T11:57:26.3899831Z ./static.files/FiraSans-Italic-81dc35de.woff2
+2026-06-14T11:57:26.3900173Z ./static.files/SourceCodePro-LICENSE-67f54ca7.txt
+2026-06-14T11:57:26.3900497Z ./static.files/main-5013f961.js
+2026-06-14T11:57:26.3900766Z ./static.files/rustdoc-17e0aaed.css
+2026-06-14T11:57:26.3901051Z ./static.files/rust-logo-9a9549ea.svg
+2026-06-14T11:57:26.3901334Z ./static.files/normalize-9960930a.css
+2026-06-14T11:57:26.3901639Z ./static.files/SourceCodePro-It-fc8b9304.ttf.woff2
+2026-06-14T11:57:26.3901971Z ./static.files/Fira-LICENSE-05ab6dbd.txt
+2026-06-14T11:57:26.3902469Z ./static.files/COPYRIGHT-685a456c.txt
+2026-06-14T11:57:26.3902761Z ./static.files/LICENSE-MIT-23f18e03.txt
+2026-06-14T11:57:26.3903047Z ./static.files/stringdex-2da4960a.js
+2026-06-14T11:57:26.3903325Z ./static.files/settings-170eb4bf.js
+2026-06-14T11:57:26.3903613Z ./static.files/scrape-examples-2bbcccac.js
+2026-06-14T11:57:26.3903905Z ./static.files/search-b5634cc7.js
+2026-06-14T11:57:26.3904227Z ./static.files/SourceCodePro-Regular-8badfe75.ttf.woff2
+2026-06-14T11:57:26.3904594Z ./static.files/FiraMono-Regular-87c26294.woff2
+2026-06-14T11:57:26.3904918Z ./static.files/favicon-32x32-eab170b8.png
+2026-06-14T11:57:26.3905257Z ./static.files/SourceSerif4-Bold-6d4fd4c0.ttf.woff2
+2026-06-14T11:57:26.3905614Z ./static.files/SourceSerif4-It-ca3b17ed.ttf.woff2
+2026-06-14T11:57:26.3906115Z ./static.files/FiraSans-MediumItalic-ccf7e434.woff2
+2026-06-14T11:57:26.3906434Z ./static.files/src-script-813739b1.js
+2026-06-14T11:57:26.3906729Z ./static.files/FiraSans-Medium-e1aa3f0a.woff2
+2026-06-14T11:57:26.3907034Z ./static.files/storage-41dd4d93.js
+2026-06-14T11:57:26.3907308Z ./static.files/favicon-044be391.svg
+2026-06-14T11:57:26.3907631Z ./static.files/SourceSerif4-Regular-6b053e98.ttf.woff2
+2026-06-14T11:57:26.3907984Z ./static.files/FiraSans-Regular-0fe48ade.woff2
+2026-06-14T11:57:26.3908277Z ./settings.html
+2026-06-14T11:57:26.3908773Z ##[endgroup]
+2026-06-14T11:57:26.3960692Z ##[group]Run actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+2026-06-14T11:57:26.3961107Z with:
+2026-06-14T11:57:26.3961333Z   name: github-pages
+2026-06-14T11:57:26.3961599Z   path: /home/runner/work/_temp/artifact.tar
+2026-06-14T11:57:26.3961900Z   retention-days: 1
+2026-06-14T11:57:26.3962370Z   if-no-files-found: error
+2026-06-14T11:57:26.3962645Z   compression-level: 6
+2026-06-14T11:57:26.3962888Z   overwrite: false
+2026-06-14T11:57:26.3963124Z   include-hidden-files: false
+2026-06-14T11:57:26.3963386Z   archive: true
+2026-06-14T11:57:26.3963608Z env:
+2026-06-14T11:57:26.3963818Z   CARGO_TERM_COLOR: always
+2026-06-14T11:57:26.3964070Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:57:26.3964460Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:57:26.3964767Z   CARGO_TOKEN: ***
+2026-06-14T11:57:26.3964988Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:57:26.3965225Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:57:26.3965496Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:57:26.3965733Z   GITHUB_PAGES: true
+2026-06-14T11:57:26.3965964Z ##[endgroup]
+2026-06-14T11:57:26.5359762Z With the provided path, there will be 1 file uploaded
+2026-06-14T11:57:26.5364637Z Artifact name is valid!
+2026-06-14T11:57:26.5365037Z Root directory input is valid!
+2026-06-14T11:57:26.7175004Z Uploading artifact: github-pages.zip
+2026-06-14T11:57:26.7211807Z Beginning upload of artifact content to blob storage
+2026-06-14T11:57:27.0904570Z Uploaded bytes 2839688
+2026-06-14T11:57:27.0997273Z Finished uploading artifact content to blob storage!
+2026-06-14T11:57:27.0998581Z SHA256 digest of uploaded artifact is 20bf3e21b3d56ad2411425af64108fc4d00f653b7c65b7a884963762f4dff77f
+2026-06-14T11:57:27.0999740Z Finalizing artifact upload
+2026-06-14T11:57:27.2926579Z Artifact github-pages successfully finalized. Artifact ID 7620750847
+2026-06-14T11:57:27.2927609Z Artifact github-pages has been successfully uploaded! Final size is 2839688 bytes. Artifact ID is 7620750847
+2026-06-14T11:57:27.2930797Z Artifact download URL: https://github.com/link-foundation/meta-language/actions/runs/27497864247/artifacts/7620750847
+2026-06-14T11:57:27.3058599Z ##[group]Run actions/deploy-pages@v5
+2026-06-14T11:57:27.3058918Z with:
+2026-06-14T11:57:27.3061590Z   token: ***
+2026-06-14T11:57:27.3061819Z   timeout: 600000
+2026-06-14T11:57:27.3062052Z   error_count: 10
+2026-06-14T11:57:27.3062573Z   reporting_interval: 5000
+2026-06-14T11:57:27.3062849Z   artifact_name: github-pages
+2026-06-14T11:57:27.3063131Z   preview: false
+2026-06-14T11:57:27.3063356Z env:
+2026-06-14T11:57:27.3063580Z   CARGO_TERM_COLOR: always
+2026-06-14T11:57:27.3063835Z   RUSTFLAGS: -Dwarnings
+2026-06-14T11:57:27.3064178Z   CARGO_REGISTRY_TOKEN: ***
+2026-06-14T11:57:27.3064487Z   CARGO_TOKEN: ***
+2026-06-14T11:57:27.3064715Z   DOCKERHUB_IMAGE: 
+2026-06-14T11:57:27.3064986Z   CARGO_HOME: /home/runner/.cargo
+2026-06-14T11:57:27.3065268Z   CARGO_INCREMENTAL: 0
+2026-06-14T11:57:27.3065511Z   GITHUB_PAGES: true
+2026-06-14T11:57:27.3065746Z ##[endgroup]
+2026-06-14T11:57:27.4948828Z (node:7788) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-06-14T11:57:27.4949853Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-06-14T11:57:27.5606960Z Fetching artifact metadata for "github-pages" in this workflow run
+2026-06-14T11:57:27.6643932Z Found 1 artifact(s)
+2026-06-14T11:57:27.6663302Z Creating Pages deployment with payload:
+2026-06-14T11:57:27.6664132Z {
+2026-06-14T11:57:27.6664440Z 	"artifact_id": 7620750847,
+2026-06-14T11:57:27.6664997Z 	"pages_build_version": "ba2389e6ecd3ae96ff9619637953ca8f64f3f187",
+2026-06-14T11:57:27.6698371Z 	"oidc_token": "***"
+2026-06-14T11:57:27.6698656Z }
+2026-06-14T11:57:27.9116310Z Created deployment for ba2389e6ecd3ae96ff9619637953ca8f64f3f187, ID: ba2389e6ecd3ae96ff9619637953ca8f64f3f187
+2026-06-14T11:57:32.9135824Z Getting Pages deployment status...
+2026-06-14T11:57:33.0327280Z Reported success!
+2026-06-14T11:57:33.0584036Z Post job cleanup.
+2026-06-14T11:57:33.1407486Z [command]/usr/bin/git version
+2026-06-14T11:57:33.1445295Z git version 2.54.0
+2026-06-14T11:57:33.1481187Z Temporarily overriding HOME='/home/runner/work/_temp/085f51ba-d436-4f2a-a3d5-0f94f44b58d4' before making global git config changes
+2026-06-14T11:57:33.1482525Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-14T11:57:33.1486794Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/meta-language/meta-language
+2026-06-14T11:57:33.1519840Z Removing SSH command configuration
+2026-06-14T11:57:33.1526734Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-14T11:57:33.1561631Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-14T11:57:33.1795509Z Removing HTTP extra header
+2026-06-14T11:57:33.1800070Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-14T11:57:33.1833792Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-14T11:57:33.2063186Z Removing includeIf entries pointing to credentials config files
+2026-06-14T11:57:33.2069971Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-14T11:57:33.2129044Z includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path
+2026-06-14T11:57:33.2130045Z includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path
+2026-06-14T11:57:33.2130940Z includeif.gitdir:/github/workspace/.git.path
+2026-06-14T11:57:33.2131663Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-06-14T11:57:33.2138697Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path
+2026-06-14T11:57:33.2161127Z /home/runner/work/_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:57:33.2171749Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path /home/runner/work/_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:57:33.2207948Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path
+2026-06-14T11:57:33.2229781Z /home/runner/work/_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:57:33.2238946Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:57:33.2271129Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-06-14T11:57:33.2292867Z /github/runner_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:57:33.2300099Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:57:33.2331526Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-06-14T11:57:33.2353333Z /github/runner_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:57:33.2363382Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config
+2026-06-14T11:57:33.2397054Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-14T11:57:33.2638574Z Removing credentials config '/home/runner/work/_temp/git-credentials-4e726550-5150-49ef-91f1-cd28ed69c678.config'
+2026-06-14T11:57:33.2779701Z Evaluate and set environment url
+2026-06-14T11:57:33.2783570Z Evaluated environment url: https://link-foundation.github.io/meta-language/
+2026-06-14T11:57:33.2784575Z Cleaning up orphan processes

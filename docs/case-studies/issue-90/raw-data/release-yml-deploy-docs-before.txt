@@ -1,0 +1,51 @@
+  # === DEPLOY DOCUMENTATION ===
+  # Deploy Rust API documentation to GitHub Pages after a successful package build.
+  # Keep this independent from package/GitHub release publication so the website
+  # still updates when the release path fails. Use the official Pages artifact
+  # deployment path so repositories configured with "GitHub Actions" as their
+  # Pages source fail this job if Pages cannot deploy.
+  #
+  # One-time setup: in the repository's Settings -> Pages, set Source to
+  # "GitHub Actions". Without this, the first run fails on actions/deploy-pages
+  # with "Get Pages site failed" / "Failed to create deployment". This cannot be
+  # configured from a workflow. See README.md "Deploying API documentation".
+  deploy-docs:
+    name: Deploy Rust Documentation
+    needs: [build]
+    if: |
+      !cancelled() &&
+      needs.build.result == 'success' && (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'instant')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build documentation
+        run: cargo doc --no-deps --all-features
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: target/doc
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
