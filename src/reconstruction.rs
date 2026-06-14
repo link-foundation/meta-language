@@ -20,6 +20,9 @@ impl LinkNetwork {
         if target_language.eq_ignore_ascii_case("pdf") {
             return self.reconstruct_as_pdf(source);
         }
+        if target_language.eq_ignore_ascii_case("docx") {
+            return self.reconstruct_as_docx(source);
+        }
         if self.is_document_language(target_language)
             && configuration.formalization_level() == FormalizationLevel::Natural
             && configuration.naturalization_direction() == NaturalizationDirection::Naturalize
@@ -172,6 +175,37 @@ impl LinkNetwork {
             return source;
         }
         crate::document_formatting::render_pdf_document(&document)
+    }
+
+    /// Renders the network's document as a structurally equivalent DOCX
+    /// `word/document.xml` in the OOXML text profile.
+    ///
+    /// The source document is recovered through the shared formatting concept
+    /// layer: a DOCX source re-renders byte-for-byte, while a Markdown/HTML/PDF
+    /// source is translated into equivalent OOXML carrying the same
+    /// heading/paragraph/list and bold/italic structure. When no document
+    /// structure is recoverable the byte-exact `source` is returned unchanged.
+    fn reconstruct_as_docx(&self, source: String) -> String {
+        let document = match self.document_source_language().as_deref() {
+            Some(language) if language.eq_ignore_ascii_case("docx") => {
+                crate::document_formatting::parse_docx_document(&source)
+            }
+            Some(language) if language.eq_ignore_ascii_case("pdf") => {
+                crate::document_formatting::parse_pdf_document(&source)
+            }
+            Some(language) => {
+                match crate::document_formatting::parse_markup_document(language, &source) {
+                    Some(document) => document,
+                    None => return source,
+                }
+            }
+            None => return source,
+        };
+
+        if document.blocks.is_empty() {
+            return source;
+        }
+        crate::document_formatting::render_docx_document(&document)
     }
 
     /// The language recorded on the network's document root, if any.

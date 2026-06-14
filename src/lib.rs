@@ -4,6 +4,7 @@ mod concept_ontology;
 pub mod configuration;
 mod data_format_parser;
 pub mod document_formatting;
+mod docx_parser;
 mod embedded_region_parser;
 mod incremental;
 mod language_fixtures;
@@ -46,9 +47,11 @@ pub use configuration::{
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
 };
 pub use document_formatting::{
-    parse_markup_document, parse_pdf_document, pdf_profile_is_recognized, render_pdf_document,
-    BlockNode, DocumentFormatInstance, DocumentFormatMatch, DocumentFormattingSeedReport,
-    FormattingDocument, InlineNode,
+    docx_package_is_recognized, docx_profile_is_recognized, parse_docx_document,
+    parse_docx_package, parse_markup_document, parse_pdf_document, pdf_profile_is_recognized,
+    render_docx_document, render_docx_package, render_pdf_document, BlockNode,
+    DocumentFormatInstance, DocumentFormatMatch, DocumentFormattingSeedReport, FormattingDocument,
+    InlineNode,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
