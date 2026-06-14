@@ -18,6 +18,7 @@ mod natural_language_grammar;
 pub mod parity;
 mod parity_fixtures;
 pub mod parser_registry;
+mod pdf_parser;
 pub mod query;
 pub mod query_algebra;
 mod reconstruction;
