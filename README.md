@@ -74,9 +74,17 @@ clean.
 - `NATURAL_LANGUAGE_GRAMMAR_FIXTURES` with pass/fail grammaticality fixtures
   for the ten natural-language targets, including provenance for the
   repo-authored sentences and UD-derived tag vocabulary.
-- Coverage targets for full `txt`, Markdown, and HTML support, mixed grammar
-  embedding, ten programming-language parser targets, and ten natural-language
-  parser targets.
+- Coverage targets for full `txt`, Markdown, HTML, and PDF support, mixed
+  grammar embedding, ten programming-language parser targets, and ten
+  natural-language parser targets.
+- A documented text PDF profile (issue #84): `render_pdf_document()` /
+  `parse_pdf_document()` map a language-free formatting document onto a valid,
+  uncompressed single-page PDF (marked content for heading/paragraph/list, font
+  resources for bold/italic), `parse("…", "pdf", …)` builds a byte-exact lossless
+  network with additive concept-tagged structure links, and
+  `reconstruct_text_as("PDF", …)` renders a structurally equivalent PDF through
+  the shared concept layer. See `docs/pdf-fidelity.md` for the round-trip
+  fidelity matrix.
 - Self-description roots for `link`, `reference`, `relation link`, `language`,
   `grammar`, `type`, `Type`, `concept`, `point`, `field`, `trivia`, `region`,
   and `object`.
