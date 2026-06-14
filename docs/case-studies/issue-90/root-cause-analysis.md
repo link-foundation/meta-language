@@ -28,7 +28,7 @@ doc` output directory** as the site:
 ```
 
 `rustdoc` writes its HTML under a **crate-named subdirectory**, not at the root.
-From the last pre-fix run ([`raw-data/deploy-docs-job-prefix.log`](./raw-data/deploy-docs-job-prefix.log)):
+From the last pre-fix run ([`raw-data/deploy-docs-job-prefix.log.txt`](./raw-data/deploy-docs-job-prefix.log.txt)):
 
 ```
 Generated /home/runner/work/meta-language/meta-language/target/doc/meta_language/index.html

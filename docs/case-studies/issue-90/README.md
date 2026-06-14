@@ -45,7 +45,7 @@ Investigation date: 2026-06-14.
   `Generated …/target/doc/meta_language/index.html` (no root `index.html`),
   `actions/upload-pages-artifact@v5` with `path: target/doc`, and
   `Reported success!`. Captured in
-  [`raw-data/deploy-docs-job-prefix.log`](./raw-data/deploy-docs-job-prefix.log).
+  [`raw-data/deploy-docs-job-prefix.log.txt`](./raw-data/deploy-docs-job-prefix.log.txt).
 - **No description, no demo:** even when reached at `/meta_language/`, the site
   was only auto-generated API docs — it had no landing page describing the
   project and no interactive demo, which the issue explicitly requires.
