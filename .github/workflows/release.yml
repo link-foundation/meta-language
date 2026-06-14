@@ -713,7 +713,7 @@ jobs:
 
   # === DEPLOY WEBSITE ===
   # Deploy the project website to GitHub Pages after a successful package build.
-  # The website is assembled by scripts/build-site.rs into `_site/`:
+  # The website is assembled by scripts/build-site.rs into the `_site/` tree.
   #   /          -> landing page (description + interactive demo + docs links)
   #   /demo/pkg/ -> WebAssembly demo built from the web/ crate
   #   /api/      -> rustdoc, with a root redirect index.html
