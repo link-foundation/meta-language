@@ -8,6 +8,7 @@ mod docx_document;
 mod doublets_storage;
 mod grammar_ir;
 mod grammar_parsing;
+mod grammar_surface;
 mod language_profile;
 mod link_network;
 mod links_notation;

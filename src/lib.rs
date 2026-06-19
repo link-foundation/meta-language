@@ -56,8 +56,9 @@ pub use document_formatting::{
     DOCUMENT_FORMATS,
 };
 pub use grammar::{
+    grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
     CharClassItem, ExprBuilder, Grammar, GrammarBuilder, GrammarExpr, GrammarFormat, GrammarRule,
-    RuleKind,
+    GrammarSurfaceError, RuleKind,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
