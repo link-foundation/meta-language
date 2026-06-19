@@ -98,6 +98,8 @@ doublets = ["dep:doublets", "dep:platform-mem"]
 
 [dev-dependencies]
 links-notation = "0.13"
+pest = "2.8.6"
+pest_derive = "2.8.6"
 regex = "1"
 walkdir = "2"
 

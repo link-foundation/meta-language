@@ -34,7 +34,8 @@ pub use concepts::{
     GRAMMAR_CONCEPTS,
 };
 pub use emit::{
-    emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_pest, EmitReport, GrammarEmitError,
+    emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_pest, emit_rust_parser, render_rust_type,
+    EmitReport, GrammarEmitError, RustParserArtifacts,
 };
 pub use import::{
     import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
