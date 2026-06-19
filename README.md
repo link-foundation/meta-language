@@ -294,6 +294,23 @@ lines that round-trip through `parse()` and `reconstruct_text()`. `verify` parse
 the text with the lossless text boundary and exits successfully when the
 resulting region has no error or missing links.
 
+## Grammar subsystem
+
+The grammar layer stores authored, imported, inferred, translated, and generated
+grammars as first-class links instead of side data. Its IR is built from
+`Grammar`, `GrammarRule`, `GrammarExpr`, `RuleKind`, and `GrammarFormat`, lowers
+through `ToLinks` / `FromLinks` as `LinkType::Grammar`, and is documented in
+[docs/grammar](docs/grammar/README.md).
+
+Start with the [architecture overview](docs/grammar/architecture.md) for the IR,
+links encoding, and pipeline. The stage guides cover
+[authoring](docs/grammar/authoring.md),
+[import and export](docs/grammar/import-export.md),
+[code generation](docs/grammar/codegen.md),
+[inference](docs/grammar/inference.md),
+[translation](docs/grammar/translation.md), and
+[CLI/runtime integration](docs/grammar/cli-and-runtime.md).
+
 ## Parity Implementation
 
 The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,

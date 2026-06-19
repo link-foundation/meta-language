@@ -6,6 +6,7 @@ mod cross_language_reconstruction;
 mod document_formatting;
 mod docx_document;
 mod doublets_storage;
+mod grammar_docs;
 mod grammar_ir;
 mod grammar_parsing;
 mod grammar_surface;

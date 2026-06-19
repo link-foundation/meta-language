@@ -4,6 +4,24 @@
 //! ABNF, and inferred grammars without committing to one textual surface
 //! syntax. Values can be encoded as first-class grammar links in a
 //! [`LinkNetwork`](crate::LinkNetwork).
+//!
+//! # Example
+//!
+//! ```
+//! use meta_language::{
+//!     FromLinks, Grammar, LinkType, LinksDecoder, LinksEncoder, ToLinks,
+//! };
+//!
+//! let expr = Grammar::expr();
+//! let grammar = Grammar::builder().start("word").rule("word", expr.rep1(expr.char_range('a', 'z'))).build();
+//!
+//! let mut encoder = LinksEncoder::new();
+//! let root = grammar.to_links(&mut encoder);
+//! let network = encoder.into_network();
+//! assert!(network.links().any(|link| link.metadata().link_type() == Some(LinkType::Grammar)));
+//! let mut decoder = LinksDecoder::new(&network);
+//! assert_eq!(Grammar::from_links(&mut decoder, root).expect("grammar decodes"), grammar);
+//! ```
 
 pub mod concepts;
 mod links;
