@@ -168,14 +168,13 @@ fn find_special_sequence(text: &str) -> Option<String> {
 }
 
 fn is_special_sequence_start(text: &str, index: usize) -> bool {
-    match text[..index]
+    text[..index]
         .chars()
         .rev()
         .find(|character| !character.is_whitespace())
-    {
-        Some(character) => matches!(character, '=' | '|' | ',' | '(' | '[' | '{' | ';'),
-        None => true,
-    }
+        .map_or(true, |character| {
+            matches!(character, '=' | '|' | ',' | '(' | '[' | '{' | ';')
+        })
 }
 
 fn normalize_empty_alternatives(text: &str) -> String {
@@ -186,12 +185,7 @@ fn normalize_empty_alternatives(text: &str) -> String {
 
     while let Some((index, character, is_code, depth)) = scanner.next() {
         if is_code {
-            if !in_rhs {
-                if depth == 0 && character == '=' {
-                    in_rhs = true;
-                    empty_alternative_pending = true;
-                }
-            } else {
+            if in_rhs {
                 match character {
                     '|' => {
                         if empty_alternative_pending {
@@ -223,6 +217,9 @@ fn normalize_empty_alternatives(text: &str) -> String {
                         empty_alternative_pending = false;
                     }
                 }
+            } else if depth == 0 && character == '=' {
+                in_rhs = true;
+                empty_alternative_pending = true;
             }
         }
         normalized.push_str(&text[index..index + character.len_utf8()]);
