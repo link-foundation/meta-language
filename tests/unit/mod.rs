@@ -7,6 +7,7 @@ mod document_formatting;
 mod docx_document;
 mod doublets_storage;
 mod grammar_docs;
+mod grammar_emit;
 mod grammar_import_abnf;
 mod grammar_import_antlr;
 mod grammar_import_bnf;

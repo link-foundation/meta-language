@@ -1,0 +1,2 @@
+message = %s"GET" %i"header" [ tail ] 1*( ( %x30-32 / %x2D ) )
+tail = %x41-46 / %x00-10FFFF / 2*4( %s"x" ) / %s"!"
