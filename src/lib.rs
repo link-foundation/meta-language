@@ -57,9 +57,9 @@ pub use document_formatting::{
 };
 pub use grammar::{
     annotate_grammar_concepts, grammar_expr_concept_id, grammar_from_lino, grammar_to_lino,
-    parse_grammar_surface, rule_concept_id, write_grammar_surface, CharClassItem, ExprBuilder,
-    Grammar, GrammarBuilder, GrammarConcept, GrammarExpr, GrammarFormat, GrammarRule,
-    GrammarSurfaceError, RuleKind, GRAMMAR_CONCEPTS,
+    import_bnf, parse_grammar_surface, rule_concept_id, write_grammar_surface, CharClassItem,
+    ExprBuilder, Grammar, GrammarBuilder, GrammarConcept, GrammarExpr, GrammarFormat,
+    GrammarImportError, GrammarRule, GrammarSurfaceError, RuleKind, GRAMMAR_CONCEPTS,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
