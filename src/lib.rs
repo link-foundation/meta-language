@@ -57,7 +57,7 @@ pub use document_formatting::{
 };
 pub use grammar::{
     annotate_grammar_concepts, grammar_expr_concept_id, grammar_from_lino, grammar_to_lino,
-    import_abnf, import_bnf, import_ebnf, import_pest, import_tree_sitter_json,
+    import_abnf, import_antlr, import_bnf, import_ebnf, import_pest, import_tree_sitter_json,
     parse_grammar_surface, rule_concept_id, write_grammar_surface, CharClassItem, ExprBuilder,
     Grammar, GrammarBuilder, GrammarConcept, GrammarExpr, GrammarFormat, GrammarImportError,
     GrammarRule, GrammarSurfaceError, RuleKind, GRAMMAR_CONCEPTS,
