@@ -39,7 +39,7 @@ fn lower_grammar(parsed: Vec<PestRule>) -> Result<Grammar, GrammarImportError> {
     Ok(grammar)
 }
 
-fn lower_rule_type(rule_type: PestRuleType) -> RuleKind {
+const fn lower_rule_type(rule_type: PestRuleType) -> RuleKind {
     match rule_type {
         PestRuleType::Normal | PestRuleType::NonAtomic => RuleKind::Normal,
         PestRuleType::Silent => RuleKind::Silent,

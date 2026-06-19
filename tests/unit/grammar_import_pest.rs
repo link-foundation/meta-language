@@ -187,7 +187,7 @@ non_atomic = !{ "x" }
 
 #[test]
 fn allows_pest_builtins_as_nonterminals() {
-    let grammar = import_pest(r#"start = { SOI ~ ASCII_DIGIT+ ~ EOI }"#).expect("builtins import");
+    let grammar = import_pest(r"start = { SOI ~ ASCII_DIGIT+ ~ EOI }").expect("builtins import");
 
     assert_eq!(
         grammar.rule("start").expect("start rule").expr(),
@@ -216,7 +216,7 @@ fn malformed_pest_reports_parse_error() {
 
 #[test]
 fn undefined_nonterminal_reports_parse_error() {
-    let err = import_pest(r#"start = { missing }"#).expect_err("undefined rule");
+    let err = import_pest(r"start = { missing }").expect_err("undefined rule");
 
     assert!(matches!(
         err,
@@ -243,7 +243,7 @@ fn push_reports_unsupported() {
 
 #[test]
 fn peek_slice_reports_unsupported() {
-    let err = import_pest(r#"peek = { PEEK[..] }"#).expect_err("peek slice unsupported");
+    let err = import_pest(r"peek = { PEEK[..] }").expect_err("peek slice unsupported");
 
     assert!(matches!(
         err,
