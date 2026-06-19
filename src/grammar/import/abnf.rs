@@ -39,6 +39,7 @@ fn lower_grammar(parsed: &[AbnfRule]) -> Result<Grammar, GrammarImportError> {
         let expr = lower_node(rule.node())?;
         merge_rule(&mut rules, rule.name(), rule.kind(), expr)?;
     }
+    canonicalize_rule_references(&mut rules);
 
     let mut grammar = Grammar::new().with_source_format(GrammarFormat::Abnf);
     for rule in rules {
@@ -55,7 +56,7 @@ fn merge_rule(
 ) -> Result<(), GrammarImportError> {
     match kind {
         AbnfKind::Basic => {
-            if rules.iter().any(|rule| rule.name() == name) {
+            if find_rule_index(rules, name).is_some() {
                 return Err(parse_error(
                     GrammarFormat::Abnf,
                     format!("duplicate rule {name}"),
@@ -65,16 +66,22 @@ fn merge_rule(
             Ok(())
         }
         AbnfKind::Incremental => {
-            let Some(rule) = rules.iter_mut().find(|rule| rule.name() == name) else {
+            let Some(index) = find_rule_index(rules, name) else {
                 return Err(parse_error(
                     GrammarFormat::Abnf,
                     format!("incremental alternative for undefined rule {name}"),
                 ));
             };
-            append_choice_alternative(&mut rule.expr, expr);
+            append_choice_alternative(&mut rules[index].expr, expr);
             Ok(())
         }
     }
+}
+
+fn find_rule_index(rules: &[GrammarRule], name: &str) -> Option<usize> {
+    rules
+        .iter()
+        .position(|rule| rule.name().eq_ignore_ascii_case(name))
 }
 
 fn append_choice_alternative(expr: &mut GrammarExpr, alternative: GrammarExpr) {
@@ -94,6 +101,52 @@ fn append_choice_alternative(expr: &mut GrammarExpr, alternative: GrammarExpr) {
             alternatives,
         };
     }
+}
+
+fn canonicalize_rule_references(rules: &mut [GrammarRule]) {
+    let names = rules
+        .iter()
+        .map(|rule| rule.name().to_string())
+        .collect::<Vec<_>>();
+    for rule in rules {
+        canonicalize_expr_references(&mut rule.expr, &names);
+    }
+}
+
+fn canonicalize_expr_references(expr: &mut GrammarExpr, names: &[String]) {
+    match expr {
+        GrammarExpr::NonTerminal(name) => {
+            if let Some(canonical) = canonical_rule_name(names, name) {
+                *name = canonical.to_string();
+            }
+        }
+        GrammarExpr::Choice { alternatives, .. } | GrammarExpr::Sequence(alternatives) => {
+            for alternative in alternatives {
+                canonicalize_expr_references(alternative, names);
+            }
+        }
+        GrammarExpr::Optional(expr)
+        | GrammarExpr::ZeroOrMore(expr)
+        | GrammarExpr::OneOrMore(expr)
+        | GrammarExpr::And(expr)
+        | GrammarExpr::Not(expr) => canonicalize_expr_references(expr, names),
+        GrammarExpr::Repeat { expr, .. } | GrammarExpr::Capture { expr, .. } => {
+            canonicalize_expr_references(expr, names);
+        }
+        GrammarExpr::Empty
+        | GrammarExpr::Terminal(_)
+        | GrammarExpr::TerminalInsensitive(_)
+        | GrammarExpr::CharRange(_, _)
+        | GrammarExpr::CharClass { .. }
+        | GrammarExpr::AnyChar => {}
+    }
+}
+
+fn canonical_rule_name<'name>(names: &'name [String], name: &str) -> Option<&'name str> {
+    names
+        .iter()
+        .find(|candidate| candidate.eq_ignore_ascii_case(name))
+        .map(String::as_str)
 }
 
 fn lower_node(node: &AbnfNode) -> Result<GrammarExpr, GrammarImportError> {

@@ -177,6 +177,40 @@ fn case_sensitivity_and_incremental_alternatives_are_preserved() {
 }
 
 #[test]
+fn rule_names_are_resolved_case_insensitively() {
+    let grammar = import_abnf(
+        r#"
+Message = header body
+Header = "h"
+BODY = "b"
+message =/ trailer
+Trailer = "t"
+"#,
+    )
+    .expect("case-insensitive rule names import");
+
+    assert_eq!(
+        grammar.rule_names(),
+        vec!["Message", "Header", "BODY", "Trailer"]
+    );
+    assert_rule_expr(
+        &grammar,
+        "Message",
+        GrammarExpr::Choice {
+            ordered: false,
+            alternatives: vec![
+                GrammarExpr::Sequence(vec![
+                    GrammarExpr::NonTerminal("Header".into()),
+                    GrammarExpr::NonTerminal("BODY".into()),
+                ]),
+                GrammarExpr::NonTerminal("Trailer".into()),
+            ],
+        },
+    );
+    assert!(grammar.undefined_nonterminals().is_empty());
+}
+
+#[test]
 fn prose_val_reports_unsupported_without_panicking() {
     let error = import_abnf("token = <implementation-defined token>\n")
         .expect_err("prose-val is unsupported");
