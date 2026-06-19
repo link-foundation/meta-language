@@ -24,6 +24,7 @@
 //! ```
 
 pub mod concepts;
+pub mod import;
 mod links;
 pub mod surface;
 
@@ -31,6 +32,7 @@ pub use concepts::{
     annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, GrammarConcept,
     GRAMMAR_CONCEPTS,
 };
+pub use import::{import_bnf, GrammarImportError};
 pub use surface::{
     grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
     GrammarSurfaceError,
