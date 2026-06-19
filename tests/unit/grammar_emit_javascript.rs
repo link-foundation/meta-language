@@ -56,7 +56,8 @@ fn emits_peggy_golden_with_native_operators_rule_kind_notes_and_report() {
 
     let (text, report) = emit_peggy(&grammar).expect("Peggy emits");
 
-    assert_eq!(text, COVERING_PEGGY);
+    let expected = COVERING_PEGGY.replace("\r\n", "\n");
+    assert_eq!(text, expected);
     assert!(report
         .lossy
         .iter()
