@@ -6,6 +6,12 @@
 //! [`LinkNetwork`](crate::LinkNetwork).
 
 mod links;
+pub mod surface;
+
+pub use surface::{
+    grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
+    GrammarSurfaceError,
+};
 
 use std::collections::BTreeSet;
 use std::fmt;
