@@ -5,9 +5,14 @@
 //! syntax. Values can be encoded as first-class grammar links in a
 //! [`LinkNetwork`](crate::LinkNetwork).
 
+pub mod concepts;
 mod links;
 pub mod surface;
 
+pub use concepts::{
+    annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, GrammarConcept,
+    GRAMMAR_CONCEPTS,
+};
 pub use surface::{
     grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
     GrammarSurfaceError,

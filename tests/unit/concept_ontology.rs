@@ -1,4 +1,10 @@
-use meta_language::{Link, LinkId, LinkNetwork, LinkQuery, LinkType, NetworkProjection};
+use std::collections::BTreeSet;
+
+use meta_language::{
+    annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, CharClassItem, Grammar,
+    GrammarConcept, GrammarExpr, GrammarRule, Link, LinkId, LinkNetwork, LinkQuery, LinkType,
+    NetworkProjection, GRAMMAR_CONCEPTS,
+};
 
 #[test]
 fn common_concept_ontology_imports_meta_expression_lexicon() {
@@ -7,6 +13,7 @@ fn common_concept_ontology_imports_meta_expression_lexicon() {
 
     assert_eq!(report.lexicon_concepts(), 351);
     assert!(report.structural_concepts() >= 6);
+    assert_eq!(report.grammar_concepts(), GRAMMAR_CONCEPTS.len());
     assert!(report.alias_links() > 0);
     assert!(report.syntax_mappings() > report.lexicon_concepts());
 
@@ -191,6 +198,94 @@ fn semantic_projection_surfaces_seeded_concept_layer() {
         link.metadata().link_type() == Some(LinkType::Concept)
             && link.metadata().term() == Some("function")
     }));
+    assert!(semantic_links.iter().any(|link| {
+        link.metadata().link_type() == Some(LinkType::Concept)
+            && link.metadata().term() == Some("grammar.sequence")
+    }));
+}
+
+#[test]
+fn grammar_concept_table_covers_expression_algebra() {
+    let fixture_concepts = grammar_concept_fixtures()
+        .iter()
+        .map(|(_, concept)| *concept)
+        .collect::<BTreeSet<_>>();
+    assert_eq!(GRAMMAR_CONCEPTS.len(), fixture_concepts.len() + 1);
+
+    let mut ids = BTreeSet::new();
+    for concept in GRAMMAR_CONCEPTS {
+        assert!(
+            ids.insert(concept.id),
+            "duplicate grammar concept id {}",
+            concept.id
+        );
+        assert!(
+            concept.id.starts_with("grammar."),
+            "grammar concept ids should use the grammar. prefix"
+        );
+        assert!(
+            !concept.definition.is_empty(),
+            "grammar concept definitions should be non-empty"
+        );
+        assert!(
+            !concept.syntax.is_empty(),
+            "grammar concept syntax mappings should be non-empty"
+        );
+    }
+    assert!(ids.contains("grammar.rule"));
+
+    for (expr, expected) in grammar_concept_fixtures() {
+        assert_eq!(grammar_expr_concept_id(&expr), expected);
+        assert!(
+            ids.contains(expected),
+            "expression concept {expected} should exist in the grammar concept table"
+        );
+    }
+}
+
+#[test]
+fn common_concept_ontology_seeds_grammar_concepts() {
+    let mut network = LinkNetwork::self_describing();
+    let report = network.seed_common_concept_ontology();
+
+    assert_eq!(report.grammar_concepts(), GRAMMAR_CONCEPTS.len());
+    for concept in GRAMMAR_CONCEPTS {
+        assert_seeded_grammar_concept(&network, concept);
+    }
+}
+
+#[test]
+fn grammar_rule_concepts_fall_back_to_expression_concepts() {
+    let expr = Grammar::expr();
+    let explicit = GrammarRule::new("term", expr.term("fn")).with_concept("concept:keyword");
+    let implicit = GrammarRule::new("items", expr.rep0(expr.nt("item")));
+
+    assert_eq!(rule_concept_id(&explicit), Some("concept:keyword"));
+    assert_eq!(rule_concept_id(&implicit), Some("grammar.zero-or-more"));
+
+    let mut grammar = Grammar::builder()
+        .grammar_rule(explicit)
+        .grammar_rule(implicit)
+        .rule(
+            "choice",
+            expr.choice_unordered([expr.term("a"), expr.term("b")]),
+        )
+        .build();
+
+    annotate_grammar_concepts(&mut grammar);
+
+    assert_eq!(
+        grammar.rule("term").and_then(GrammarRule::concept),
+        Some("concept:keyword")
+    );
+    assert_eq!(
+        grammar.rule("items").and_then(GrammarRule::concept),
+        Some("grammar.zero-or-more")
+    );
+    assert_eq!(
+        grammar.rule("choice").and_then(GrammarRule::concept),
+        Some("grammar.unordered-choice")
+    );
 }
 
 #[test]
@@ -252,4 +347,67 @@ fn semantic_mapping_for<'a>(network: &'a LinkNetwork, concept: LinkId, language:
                 && link.references().get(1) == Some(&language)
         })
         .expect("semantic mapping link")
+}
+
+fn grammar_concept_fixtures() -> Vec<(GrammarExpr, &'static str)> {
+    let expr = Grammar::expr();
+    vec![
+        (
+            expr.seq([expr.term("a"), expr.term("b")]),
+            "grammar.sequence",
+        ),
+        (
+            expr.choice_ordered([expr.term("a"), expr.term("b")]),
+            "grammar.ordered-choice",
+        ),
+        (
+            expr.choice_unordered([expr.term("a"), expr.term("b")]),
+            "grammar.unordered-choice",
+        ),
+        (
+            expr.repeat(expr.term("a"), 1, Some(3)),
+            "grammar.repetition",
+        ),
+        (expr.rep0(expr.term("a")), "grammar.zero-or-more"),
+        (expr.rep1(expr.term("a")), "grammar.one-or-more"),
+        (expr.opt(expr.term("a")), "grammar.optional"),
+        (expr.term("a"), "grammar.terminal"),
+        (expr.terminal_insensitive("a"), "grammar.terminal"),
+        (expr.nt("name"), "grammar.non-terminal"),
+        (
+            expr.char_class(false, [CharClassItem::range('a', 'z')]),
+            "grammar.char-class",
+        ),
+        (expr.char_range('a', 'z'), "grammar.char-range"),
+        (expr.any(), "grammar.any-char"),
+        (expr.and(expr.term("a")), "grammar.positive-predicate"),
+        (expr.not(expr.term("a")), "grammar.negative-predicate"),
+        (
+            expr.capture(Some("name"), expr.term("a")),
+            "grammar.capture",
+        ),
+        (expr.empty(), "grammar.empty"),
+    ]
+}
+
+fn assert_seeded_grammar_concept(network: &LinkNetwork, concept: &GrammarConcept) {
+    let concept_link = network.find_term(concept.id).expect("grammar concept");
+    let link = network.link(concept_link).expect("grammar concept link");
+    assert_eq!(link.metadata().link_type(), Some(LinkType::Concept));
+
+    for (language, syntax) in concept.syntax {
+        let language_link = network.find_term(language).expect("language link");
+        let mapping = network
+            .projected_links(NetworkProjection::Semantic)
+            .find(|link| {
+                link.metadata().link_type() == Some(LinkType::Semantic)
+                    && link.references().first() == Some(&concept_link)
+                    && link.references().get(1) == Some(&language_link)
+                    && link.metadata().term() == Some(*syntax)
+                    && link.metadata().language() == Some(*language)
+            })
+            .expect("grammar syntax mapping");
+
+        assert_eq!(mapping.references(), &[concept_link, language_link]);
+    }
 }
