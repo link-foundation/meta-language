@@ -1,0 +1,9 @@
+start = { prefix ~ exact ~ min ~ max ~ range ~ optional ~ zero ~ one }
+prefix = { &"a" ~ !"b" ~ ANY }
+exact = { "a"{2} }
+min = { "b"{2,} }
+max = { "c"{,3} }
+range = { "d"{1,3} }
+optional = { "e"? }
+zero = { "f"* }
+one = { "g"+ }

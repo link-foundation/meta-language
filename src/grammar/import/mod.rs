@@ -8,10 +8,12 @@ use crate::grammar::GrammarFormat;
 mod abnf;
 mod bnf;
 mod ebnf;
+mod pest;
 
 pub use abnf::import_abnf;
 pub use bnf::import_bnf;
 pub use ebnf::import_ebnf;
+pub use pest::import_pest;
 
 /// Error raised while importing an external grammar notation.
 #[derive(Clone, Debug, PartialEq, Eq)]
