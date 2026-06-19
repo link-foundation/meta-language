@@ -1,0 +1,9 @@
+json = { SOI ~ value ~ EOI }
+value = _{ string | number | boolean | null | any_value }
+string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
+number = @{ digit+ ~ ("." ~ digit+)? }
+digit = _{ '0'..'9' }
+boolean = { ^"true" | ^"false" }
+null = { ^"null" }
+any_value = { ANY }
+WHITESPACE = _{ " " | "\t" | NEWLINE }

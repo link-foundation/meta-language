@@ -10,6 +10,7 @@ mod grammar_docs;
 mod grammar_import_abnf;
 mod grammar_import_bnf;
 mod grammar_import_ebnf;
+mod grammar_import_pest;
 mod grammar_ir;
 mod grammar_parsing;
 mod grammar_surface;
