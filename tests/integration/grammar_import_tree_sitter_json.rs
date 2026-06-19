@@ -4,9 +4,10 @@ use meta_language::{
 
 #[test]
 fn imported_tree_sitter_json_grammar_survives_links_round_trip() {
-    let grammar =
-        import_tree_sitter_json(include_str!("../fixtures/grammar/tree-sitter/covering.json"))
-            .expect("tree-sitter JSON imports");
+    let grammar = import_tree_sitter_json(include_str!(
+        "../fixtures/grammar/tree-sitter/covering.json"
+    ))
+    .expect("tree-sitter JSON imports");
 
     let mut encoder = LinksEncoder::new();
     let root = grammar.to_links(&mut encoder);

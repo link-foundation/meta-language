@@ -9,11 +9,13 @@ mod abnf;
 mod bnf;
 mod ebnf;
 mod pest;
+mod tree_sitter_json;
 
 pub use abnf::import_abnf;
 pub use bnf::import_bnf;
 pub use ebnf::import_ebnf;
 pub use pest::import_pest;
+pub use tree_sitter_json::import_tree_sitter_json;
 
 /// Error raised while importing an external grammar notation.
 #[derive(Clone, Debug, PartialEq, Eq)]
