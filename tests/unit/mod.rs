@@ -6,6 +6,7 @@ mod cross_language_reconstruction;
 mod document_formatting;
 mod docx_document;
 mod doublets_storage;
+mod grammar_ir;
 mod grammar_parsing;
 mod language_profile;
 mod link_network;
