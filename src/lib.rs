@@ -6,6 +6,7 @@ mod data_format_parser;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
+pub mod grammar;
 mod incremental;
 mod language_fixtures;
 pub mod language_parser;
@@ -53,6 +54,10 @@ pub use document_formatting::{
     render_pdf_document, BlockNode, DocumentFormatInstance, DocumentFormatMatch,
     DocumentFormattingSeedReport, FormattingDocument, InlineNode, CROSS_FORMAT_CONCEPTS,
     DOCUMENT_FORMATS,
+};
+pub use grammar::{
+    CharClassItem, ExprBuilder, Grammar, GrammarBuilder, GrammarExpr, GrammarFormat, GrammarRule,
+    RuleKind,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
