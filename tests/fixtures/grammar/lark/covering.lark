@@ -1,0 +1,8 @@
+// entry rule for the covering fixture
+start: item ("," item)* [trailer]
+?item: WORD | NUMBER ~ 2
+trailer: /[a-z]+/
+WORD: /[A-Z]/
+NUMBER: /[0-9]/
+WS: /[ \t]+/
+%ignore WS

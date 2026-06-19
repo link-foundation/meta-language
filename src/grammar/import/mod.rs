@@ -9,6 +9,8 @@ mod abnf;
 mod antlr;
 mod bnf;
 mod ebnf;
+mod gbnf;
+mod lark;
 mod pest;
 mod tree_sitter_json;
 
@@ -16,6 +18,8 @@ pub use abnf::import_abnf;
 pub use antlr::import_antlr;
 pub use bnf::import_bnf;
 pub use ebnf::import_ebnf;
+pub use gbnf::import_gbnf;
+pub use lark::import_lark;
 pub use pest::import_pest;
 pub use tree_sitter_json::import_tree_sitter_json;
 
