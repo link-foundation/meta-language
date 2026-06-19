@@ -5,9 +5,11 @@ use std::fmt;
 
 use crate::grammar::GrammarFormat;
 
+mod abnf;
 mod bnf;
 mod ebnf;
 
+pub use abnf::import_abnf;
 pub use bnf::import_bnf;
 pub use ebnf::import_ebnf;
 

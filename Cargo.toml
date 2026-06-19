@@ -33,6 +33,7 @@ name = "meta-language"
 path = "src/main.rs"
 
 [dependencies]
+abnf = "0.13.0"
 bnf = { version = "0.6.0", default-features = false }
 clap = { version = "4.4", features = ["derive", "env"] }
 csv = "1.4"
