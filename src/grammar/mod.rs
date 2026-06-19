@@ -33,7 +33,8 @@ pub use concepts::{
     GRAMMAR_CONCEPTS,
 };
 pub use import::{
-    import_abnf, import_bnf, import_ebnf, import_pest, import_tree_sitter_json, GrammarImportError,
+    import_abnf, import_antlr, import_bnf, import_ebnf, import_pest, import_tree_sitter_json,
+    GrammarImportError,
 };
 pub use surface::{
     grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,

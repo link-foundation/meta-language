@@ -6,12 +6,14 @@ use std::fmt;
 use crate::grammar::GrammarFormat;
 
 mod abnf;
+mod antlr;
 mod bnf;
 mod ebnf;
 mod pest;
 mod tree_sitter_json;
 
 pub use abnf::import_abnf;
+pub use antlr::import_antlr;
 pub use bnf::import_bnf;
 pub use ebnf::import_ebnf;
 pub use pest::import_pest;
