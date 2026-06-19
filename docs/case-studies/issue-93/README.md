@@ -89,6 +89,8 @@ Investigation date: 2026-06-19.
 
 - Case-study analysis: **complete** (this folder).
 - Sub-issue specs authored: **34** (in [`proposed-issues/`](./proposed-issues/)).
-- GitHub sub-issues filed under #93 with blocked-by wiring: see the index in
-  [`proposed-issues/README.md`](./proposed-issues/README.md) for the live mapping.
+- GitHub sub-issues filed under #93: **34 issues (#95–#128)**, each a native
+  sub-issue of #93, with **51 blocked-by edges** wired per the dependency DAG.
+  The spec → issue mapping is in
+  [`proposed-issues/README.md`](./proposed-issues/README.md).
 </content>
