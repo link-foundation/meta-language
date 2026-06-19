@@ -1,4 +1,5 @@
 mod cli;
+mod grammar_emit_rust;
 mod grammar_import_abnf;
 mod grammar_import_antlr;
 mod grammar_import_bnf;

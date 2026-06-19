@@ -1541,6 +1541,8 @@ dependencies = [
  "lindera",
  "lingua",
  "links-notation",
+ "pest",
+ "pest_derive",
  "pest_meta",
  "platform-mem",
  "regex",

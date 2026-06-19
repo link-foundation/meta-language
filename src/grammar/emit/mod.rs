@@ -12,12 +12,14 @@ mod bnf;
 mod ebnf;
 mod gbnf;
 mod pest;
+mod rust;
 
 pub use abnf::emit_abnf;
 pub use bnf::emit_bnf;
 pub use ebnf::emit_ebnf;
 pub use gbnf::emit_gbnf;
 pub use pest::emit_pest;
+pub use rust::{emit_rust_parser, render_rust_type, RustParserArtifacts};
 
 pub(super) const BNF_RULE_TEMPLATE: &str = "<{name}> ::= {body}";
 pub(super) const EBNF_RULE_TEMPLATE: &str = "{name} = {body} ;";

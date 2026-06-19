@@ -29,6 +29,12 @@ pub fn emit_pest(grammar: &Grammar) -> Result<(String, EmitReport), GrammarEmitE
         if let Some(doc) = rule.doc() {
             push_doc_lines(&mut lines, doc);
         }
+        if contains_unordered_choice(rule.expr()) {
+            lines.push(
+                "// NOTE: unordered choice in source is emitted as ordered pest choice."
+                    .to_string(),
+            );
+        }
         let body = emitter.emit_expr(rule.expr(), Precedence::Choice)?;
         lines.push(render_rule_line_with_modifier(
             PEST_RULE_TEMPLATE,
@@ -245,6 +251,29 @@ fn push_doc_lines(lines: &mut Vec<String>, doc: &str) {
         } else {
             lines.push(format!("// {line}"));
         }
+    }
+}
+
+fn contains_unordered_choice(expr: &GrammarExpr) -> bool {
+    match expr {
+        GrammarExpr::Choice { ordered: false, .. } => true,
+        GrammarExpr::Choice { alternatives, .. } | GrammarExpr::Sequence(alternatives) => {
+            alternatives.iter().any(contains_unordered_choice)
+        }
+        GrammarExpr::Optional(expr)
+        | GrammarExpr::ZeroOrMore(expr)
+        | GrammarExpr::OneOrMore(expr)
+        | GrammarExpr::And(expr)
+        | GrammarExpr::Not(expr)
+        | GrammarExpr::Capture { expr, .. }
+        | GrammarExpr::Repeat { expr, .. } => contains_unordered_choice(expr),
+        GrammarExpr::Empty
+        | GrammarExpr::Terminal(_)
+        | GrammarExpr::TerminalInsensitive(_)
+        | GrammarExpr::CharRange(_, _)
+        | GrammarExpr::CharClass { .. }
+        | GrammarExpr::AnyChar
+        | GrammarExpr::NonTerminal(_) => false,
     }
 }
 
