@@ -11,6 +11,7 @@ mod abnf;
 mod bnf;
 mod ebnf;
 mod gbnf;
+mod javascript;
 mod pest;
 mod rust;
 
@@ -18,6 +19,7 @@ pub use abnf::emit_abnf;
 pub use bnf::emit_bnf;
 pub use ebnf::emit_ebnf;
 pub use gbnf::emit_gbnf;
+pub use javascript::{emit_javascript_parser, emit_peggy, JsParserArtifacts};
 pub use pest::emit_pest;
 pub use rust::{emit_rust_parser, render_rust_type, RustParserArtifacts};
 

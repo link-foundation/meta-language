@@ -9,7 +9,7 @@ for runnable integration examples.
 
 Code generation consumes the [`Grammar` IR](architecture.md) and emits parser
 source code for a target runtime. The current branch provides the IR and links
-encoding; the Rust and JavaScript generators are planned follow-up APIs.
+encoding plus Rust and JavaScript parser generators.
 
 ## Minimal example
 
@@ -20,7 +20,7 @@ Grammar
 
 Grammar
   -> generate JavaScript parser
-  -> run generated fixture
+  -> run generated Peggy parser
 ```
 
 Generators should accept `Grammar` values rather than source-format text. If a
@@ -55,6 +55,11 @@ Grammar::builder()
 That snippet is shown as text here because this Markdown file is not compiled by
 rustdoc. The equivalent IR-builder round trip is doctested in the module docs for
 [`src/grammar/mod.rs`](../../src/grammar/mod.rs).
+
+Use `emit_rust_parser` for a `.pest` grammar, `pest_derive` parser stub, and AST
+type declarations. Use `emit_javascript_parser` for Peggy grammar text plus an
+ESM wrapper that imports `peggy`, calls `peggy.generate(GRAMMAR)`, and exports
+`parser`.
 
 ## See also
 

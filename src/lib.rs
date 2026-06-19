@@ -56,13 +56,13 @@ pub use document_formatting::{
     DOCUMENT_FORMATS,
 };
 pub use grammar::{
-    annotate_grammar_concepts, emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_pest,
-    emit_rust_parser, grammar_expr_concept_id, grammar_from_lino, grammar_to_lino, import_abnf,
-    import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
-    import_tree_sitter_json, parse_grammar_surface, render_rust_type, rule_concept_id,
+    annotate_grammar_concepts, emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser,
+    emit_peggy, emit_pest, emit_rust_parser, grammar_expr_concept_id, grammar_from_lino,
+    grammar_to_lino, import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark,
+    import_pest, import_tree_sitter_json, parse_grammar_surface, render_rust_type, rule_concept_id,
     write_grammar_surface, CharClassItem, EmitReport, ExprBuilder, Grammar, GrammarBuilder,
     GrammarConcept, GrammarEmitError, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule,
-    GrammarSurfaceError, RuleKind, RustParserArtifacts, GRAMMAR_CONCEPTS,
+    GrammarSurfaceError, JsParserArtifacts, RuleKind, RustParserArtifacts, GRAMMAR_CONCEPTS,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
