@@ -1,0 +1,4 @@
+root ::= "start" root-1 [A-Z] [a-c_?] [^"\n] [\x00-\U0010FFFF] [Cc][Aa][Ss][Ee] ("a" | "b") (item)? (item)* (item)+ (item){2,4} (item){3,} (item){2} [^x0-9] "cap" ""
+root-1 ::= "shadow"
+item ::= "x"
+bad-name ::= root
