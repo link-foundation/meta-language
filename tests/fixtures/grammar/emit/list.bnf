@@ -1,0 +1,6 @@
+<list> ::= <item> <mlstar0> <mlopt1>
+<item> ::= "a" | "B"
+<letter> ::= <mlrange2>
+<mlstar0> ::= "," <item> <mlstar0> |
+<mlopt1> ::= "," |
+<mlrange2> ::= "a" | "b" | "c"

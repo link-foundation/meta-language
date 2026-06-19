@@ -1,0 +1,4 @@
+list = "(" , [ items ] , ")" ;
+items = item , { "," , item } ;
+item = "word" | "id" | mlrange0 | ? any character ? ;
+mlrange0 = "0" | "1" | "2" ;

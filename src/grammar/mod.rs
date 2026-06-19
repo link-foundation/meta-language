@@ -24,6 +24,7 @@
 //! ```
 
 pub mod concepts;
+pub mod emit;
 pub mod import;
 mod links;
 pub mod surface;
@@ -32,6 +33,7 @@ pub use concepts::{
     annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, GrammarConcept,
     GRAMMAR_CONCEPTS,
 };
+pub use emit::{emit_abnf, emit_bnf, emit_ebnf, EmitReport, GrammarEmitError};
 pub use import::{
     import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
     import_tree_sitter_json, GrammarImportError,
