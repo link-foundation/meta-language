@@ -37,6 +37,7 @@ bnf = { version = "0.6.0", default-features = false }
 clap = { version = "4.4", features = ["derive", "env"] }
 csv = "1.4"
 doublets = { version = "0.4.0", optional = true }
+ebnf = "0.1.4"
 json5_nodes = "2.0.2"
 lindera = { version = "3.0.7", default-features = false, features = ["embed-jieba"] }
 lingua = { version = "1.8.0", default-features = false, features = [

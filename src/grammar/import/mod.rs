@@ -6,8 +6,10 @@ use std::fmt;
 use crate::grammar::GrammarFormat;
 
 mod bnf;
+mod ebnf;
 
 pub use bnf::import_bnf;
+pub use ebnf::import_ebnf;
 
 /// Error raised while importing an external grammar notation.
 #[derive(Clone, Debug, PartialEq, Eq)]
