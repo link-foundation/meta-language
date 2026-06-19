@@ -10,16 +10,19 @@ use crate::translation_rules::TranslationTemplate;
 mod abnf;
 mod bnf;
 mod ebnf;
+mod gbnf;
 mod pest;
 
 pub use abnf::emit_abnf;
 pub use bnf::emit_bnf;
 pub use ebnf::emit_ebnf;
+pub use gbnf::emit_gbnf;
 pub use pest::emit_pest;
 
 pub(super) const BNF_RULE_TEMPLATE: &str = "<{name}> ::= {body}";
 pub(super) const EBNF_RULE_TEMPLATE: &str = "{name} = {body} ;";
 pub(super) const ABNF_RULE_TEMPLATE: &str = "{name} = {body}";
+pub(super) const GBNF_RULE_TEMPLATE: &str = "{name} ::= {body}";
 pub(super) const PEST_RULE_TEMPLATE: &str = "{name} = {modifier}{{ {body} }}";
 
 /// Error raised while emitting an external grammar notation.
