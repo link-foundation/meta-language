@@ -1,11 +1,12 @@
 use meta_language::{
-    emit_abnf, emit_bnf, emit_ebnf, import_abnf, import_bnf, import_ebnf, CharClassItem, Grammar,
-    GrammarEmitError, GrammarFormat,
+    emit_abnf, emit_bnf, emit_ebnf, emit_pest, import_abnf, import_bnf, import_ebnf, import_pest,
+    CharClassItem, Grammar, GrammarEmitError, GrammarFormat, GrammarRule, RuleKind,
 };
 
 const LIST_BNF: &str = include_str!("../fixtures/grammar/emit/list.bnf");
 const LIST_EBNF: &str = include_str!("../fixtures/grammar/emit/list.ebnf");
 const MESSAGE_ABNF: &str = include_str!("../fixtures/grammar/emit/message.abnf");
+const COVERING_PEST: &str = include_str!("../fixtures/grammar/emit/covering.pest");
 
 #[test]
 fn emits_bnf_golden_with_helpers_and_lossy_report() {
@@ -131,6 +132,110 @@ fn emits_abnf_golden_with_rfc7405_literals_and_native_repetition() {
 }
 
 #[test]
+fn emits_pest_golden_with_native_peg_operators_and_rule_modifiers() {
+    let expr = Grammar::expr();
+    let grammar = Grammar::builder()
+        .start("start")
+        .grammar_rule(
+            GrammarRule::new(
+                "digit",
+                expr.char_class(false, [CharClassItem::range('0', '9')]),
+            )
+            .with_doc("A decimal digit."),
+        )
+        .rule(
+            "start",
+            expr.seq([
+                expr.and(expr.term("pre")),
+                expr.not(expr.term("skip")),
+                expr.choice_ordered([expr.terminal_insensitive("hello"), expr.term("hi")]),
+                expr.opt(expr.seq([expr.term("a"), expr.nt("digit")])),
+                expr.rep0(expr.nt("digit")),
+                expr.rep1(expr.nt("digit")),
+                expr.repeat(expr.term("x"), 2, Some(4)),
+                expr.repeat(expr.term("y"), 3, None),
+                expr.repeat(expr.term("z"), 2, Some(2)),
+                expr.char_class(
+                    false,
+                    [CharClassItem::char('-'), CharClassItem::range('a', 'f')],
+                ),
+                expr.char_class(
+                    true,
+                    [CharClassItem::char('q'), CharClassItem::range('0', '9')],
+                ),
+                expr.char_range('A', 'Z'),
+                expr.any(),
+                expr.nt("digit"),
+                expr.capture(Some("label"), expr.term("cap")),
+                expr.capture_unlabeled(expr.term("anon")),
+            ]),
+        )
+        .rule(
+            "unordered",
+            expr.choice_unordered([expr.term("left"), expr.term("right")]),
+        )
+        .rule_with_kind("atomic_rule", expr.term("atomic"), RuleKind::Atomic)
+        .rule_with_kind("silent_rule", expr.term(" "), RuleKind::Silent)
+        .rule_with_kind("token_rule", expr.term("token"), RuleKind::Token)
+        .rule("empty", expr.empty())
+        .build();
+
+    let (text, report) = emit_pest(&grammar).expect("pest emits");
+
+    assert_eq!(text, normalized_fixture(COVERING_PEST));
+    assert!(report
+        .lossy
+        .iter()
+        .any(|note| note.contains("unordered choice")));
+    assert!(report
+        .lossy
+        .iter()
+        .any(|note| note.contains("capture label")));
+    assert!(!report
+        .lossy
+        .iter()
+        .any(|note| note.contains("anonymous capture")));
+
+    let reparsed = import_pest(&text).expect("emitted pest imports");
+    assert_eq!(reparsed.source_format(), Some(GrammarFormat::Peg));
+    assert!(reparsed.undefined_nonterminals().is_empty());
+}
+
+#[test]
+fn pest_escapes_literals_and_char_ranges() {
+    let expr = Grammar::expr();
+    let grammar = Grammar::builder()
+        .rule(
+            "escaped",
+            expr.seq([
+                expr.term("\"\\\n\t"),
+                expr.char_range('\n', '\n'),
+                expr.char_class(
+                    false,
+                    [
+                        CharClassItem::char('"'),
+                        CharClassItem::char('\\'),
+                        CharClassItem::range('\t', '\t'),
+                    ],
+                ),
+            ]),
+        )
+        .build();
+
+    let (text, report) = emit_pest(&grammar).expect("pest emits escaped literals");
+
+    assert_eq!(
+        text,
+        "escaped = { \"\\\"\\\\\\n\\t\" ~ '\\n'..'\\n' ~ (\"\\\"\" | \"\\\\\" | '\\t'..'\\t') }\n"
+    );
+    assert!(report.lossy.is_empty());
+    assert!(import_pest(&text)
+        .expect("escaped pest imports")
+        .undefined_nonterminals()
+        .is_empty());
+}
+
+#[test]
 fn emitted_text_reimports_for_basic_smoke_cases() {
     let expr = Grammar::expr();
     let grammar = Grammar::builder()
@@ -147,6 +252,7 @@ fn emitted_text_reimports_for_basic_smoke_cases() {
     let (bnf, _) = emit_bnf(&grammar).expect("BNF emits");
     let (ebnf, _) = emit_ebnf(&grammar).expect("EBNF emits");
     let (abnf, _) = emit_abnf(&grammar).expect("ABNF emits");
+    let (pest, _) = emit_pest(&grammar).expect("pest emits");
 
     assert!(import_bnf(&bnf)
         .expect("emitted BNF imports")
@@ -158,6 +264,10 @@ fn emitted_text_reimports_for_basic_smoke_cases() {
         .is_empty());
     assert!(import_abnf(&abnf)
         .expect("emitted ABNF imports")
+        .undefined_nonterminals()
+        .is_empty());
+    assert!(import_pest(&pest)
+        .expect("emitted pest imports")
         .undefined_nonterminals()
         .is_empty());
 }
@@ -375,6 +485,30 @@ fn unsupported_constructs_report_format_and_construct() {
     )
     .expect_err("ABNF rejects invalid repeat bounds");
     assert_unsupported(abnf_error, GrammarFormat::Abnf, "greater than max");
+
+    let pest_error = emit_pest(
+        &Grammar::builder()
+            .rule("bad", expr.choice_ordered([]))
+            .build(),
+    )
+    .expect_err("pest rejects empty choices");
+    assert_unsupported(pest_error, GrammarFormat::Peg, "empty Choice");
+
+    let pest_error = emit_pest(
+        &Grammar::builder()
+            .rule("bad", expr.char_class(false, []))
+            .build(),
+    )
+    .expect_err("pest rejects empty character classes");
+    assert_unsupported(pest_error, GrammarFormat::Peg, "empty CharClass");
+
+    let pest_error = emit_pest(
+        &Grammar::builder()
+            .rule("bad", expr.repeat(expr.term("x"), 3, Some(2)))
+            .build(),
+    )
+    .expect_err("pest rejects invalid repeat bounds");
+    assert_unsupported(pest_error, GrammarFormat::Peg, "greater than max");
 }
 
 fn assert_unsupported(error: GrammarEmitError, format: GrammarFormat, construct: &str) {

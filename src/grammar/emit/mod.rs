@@ -10,14 +10,17 @@ use crate::translation_rules::TranslationTemplate;
 mod abnf;
 mod bnf;
 mod ebnf;
+mod pest;
 
 pub use abnf::emit_abnf;
 pub use bnf::emit_bnf;
 pub use ebnf::emit_ebnf;
+pub use pest::emit_pest;
 
 pub(super) const BNF_RULE_TEMPLATE: &str = "<{name}> ::= {body}";
 pub(super) const EBNF_RULE_TEMPLATE: &str = "{name} = {body} ;";
 pub(super) const ABNF_RULE_TEMPLATE: &str = "{name} = {body}";
+pub(super) const PEST_RULE_TEMPLATE: &str = "{name} = {modifier}{{ {body} }}";
 
 /// Error raised while emitting an external grammar notation.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -71,10 +74,20 @@ pub(super) fn unsupported_error(
 
 pub(super) fn render_rule_line(template: &str, name: &str, body: &str) -> String {
     let template = TranslationTemplate::new(template);
-    render_template_source(template.source(), name, body)
+    render_template_source(template.source(), name, "", body)
 }
 
-fn render_template_source(source: &str, name: &str, body: &str) -> String {
+pub(super) fn render_rule_line_with_modifier(
+    template: &str,
+    name: &str,
+    modifier: &str,
+    body: &str,
+) -> String {
+    let template = TranslationTemplate::new(template);
+    render_template_source(template.source(), name, modifier, body)
+}
+
+fn render_template_source(source: &str, name: &str, modifier: &str, body: &str) -> String {
     let mut output = String::new();
     let mut chars = source.chars().peekable();
     while let Some(character) = chars.next() {
@@ -83,7 +96,7 @@ fn render_template_source(source: &str, name: &str, body: &str) -> String {
                 chars.next();
                 output.push('{');
             }
-            '{' => render_placeholder(&mut output, &mut chars, name, body),
+            '{' => render_placeholder(&mut output, &mut chars, name, modifier, body),
             '}' if chars.peek() == Some(&'}') => {
                 chars.next();
                 output.push('}');
@@ -98,6 +111,7 @@ fn render_placeholder<I>(
     output: &mut String,
     chars: &mut std::iter::Peekable<I>,
     name: &str,
+    modifier: &str,
     body: &str,
 ) where
     I: Iterator<Item = char>,
@@ -120,6 +134,7 @@ fn render_placeholder<I>(
 
     match placeholder.trim() {
         "name" => output.push_str(name),
+        "modifier" => output.push_str(modifier),
         "body" => output.push_str(body),
         _ => {
             output.push('{');
