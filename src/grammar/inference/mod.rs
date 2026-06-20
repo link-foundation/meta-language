@@ -1,5 +1,6 @@
 //! Grammar inference support.
 
+pub mod active;
 pub mod advisor;
 pub mod cfg;
 pub mod eval;
