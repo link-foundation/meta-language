@@ -1,0 +1,10 @@
+Source: https://github.com/rifatarefin/treevada
+Commit: 44fb606bdc97e9145f7f730ca951ba24a15052f8
+License: MIT
+
+Vendored paths:
+- bc-example
+- text-paren-example
+- lark-examples
+
+The files under those paths were copied unchanged from the pinned commit.

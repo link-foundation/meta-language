@@ -1,0 +1,13 @@
+Source: https://github.com/obastani/glade
+Commit: 5052e0854738af1560d96530f05d2c6ac533a22a
+License: Apache-2.0
+
+Vendored paths:
+- data/inputs-train/flex as flex
+- data/inputs-train/grep as grep
+- data/inputs-train/python as python
+- data/inputs-train/python_wrapped as python_wrapped
+- data/inputs-train/sed as sed
+- data/inputs-train/xml as xml
+
+The files under those paths were copied unchanged from the pinned commit.
