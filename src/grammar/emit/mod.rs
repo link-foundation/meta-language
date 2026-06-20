@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt;
 
-use crate::grammar::{Grammar, GrammarFormat, GrammarRule};
+use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 use crate::translation_rules::TranslationTemplate;
 
 mod abnf;
@@ -167,6 +167,100 @@ pub(super) fn ordered_rules(grammar: &Grammar) -> Vec<&GrammarRule> {
     ordered.extend(rules[..start_index].iter());
     ordered.extend(rules[start_index + 1..].iter());
     ordered
+}
+
+pub(super) fn peg_choice_alternatives(
+    ordered: bool,
+    alternatives: &[GrammarExpr],
+) -> Vec<&GrammarExpr> {
+    let mut indexed = alternatives.iter().enumerate().collect::<Vec<_>>();
+    if !ordered && has_literal_prefix_conflict(alternatives) {
+        indexed.sort_by(|(left_index, left), (right_index, right)| {
+            expr_required_width(right)
+                .cmp(&expr_required_width(left))
+                .then_with(|| left_index.cmp(right_index))
+        });
+    }
+    indexed
+        .into_iter()
+        .map(|(_index, alternative)| alternative)
+        .collect()
+}
+
+fn expr_required_width(expr: &GrammarExpr) -> usize {
+    match expr {
+        GrammarExpr::Empty
+        | GrammarExpr::And(_)
+        | GrammarExpr::Not(_)
+        | GrammarExpr::Optional(_)
+        | GrammarExpr::ZeroOrMore(_) => 0,
+        GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => value.len(),
+        GrammarExpr::CharRange(_, _)
+        | GrammarExpr::CharClass { .. }
+        | GrammarExpr::AnyChar
+        | GrammarExpr::NonTerminal(_) => 1,
+        GrammarExpr::Choice { alternatives, .. } => alternatives
+            .iter()
+            .map(expr_required_width)
+            .max()
+            .unwrap_or(0),
+        GrammarExpr::Sequence(items) => items
+            .iter()
+            .map(expr_required_width)
+            .fold(0_usize, usize::saturating_add),
+        GrammarExpr::OneOrMore(inner) | GrammarExpr::Capture { expr: inner, .. } => {
+            expr_required_width(inner)
+        }
+        GrammarExpr::Repeat { expr, min, .. } => expr_required_width(expr).saturating_mul(*min),
+    }
+}
+
+fn has_literal_prefix_conflict(alternatives: &[GrammarExpr]) -> bool {
+    let yields = alternatives
+        .iter()
+        .filter_map(literal_yield)
+        .collect::<Vec<_>>();
+    yields.iter().enumerate().any(|(index, left)| {
+        yields
+            .iter()
+            .skip(index + 1)
+            .any(|right| literal_prefix_conflict(left, right))
+    })
+}
+
+fn literal_prefix_conflict(left: &str, right: &str) -> bool {
+    if left.is_empty() || right.is_empty() || left == right {
+        return false;
+    }
+    left.starts_with(right) || right.starts_with(left)
+}
+
+fn literal_yield(expr: &GrammarExpr) -> Option<String> {
+    match expr {
+        GrammarExpr::Empty => Some(String::new()),
+        GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => {
+            Some(value.clone())
+        }
+        GrammarExpr::Sequence(items) => {
+            let mut output = String::new();
+            for item in items {
+                output.push_str(&literal_yield(item)?);
+            }
+            Some(output)
+        }
+        GrammarExpr::Capture { expr, .. } => literal_yield(expr),
+        GrammarExpr::CharRange(_, _)
+        | GrammarExpr::CharClass { .. }
+        | GrammarExpr::AnyChar
+        | GrammarExpr::NonTerminal(_)
+        | GrammarExpr::Choice { .. }
+        | GrammarExpr::Optional(_)
+        | GrammarExpr::ZeroOrMore(_)
+        | GrammarExpr::OneOrMore(_)
+        | GrammarExpr::Repeat { .. }
+        | GrammarExpr::And(_)
+        | GrammarExpr::Not(_) => None,
+    }
 }
 
 pub(super) fn finish_lines(lines: &[String]) -> String {

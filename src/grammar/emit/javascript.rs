@@ -3,7 +3,10 @@ use std::fmt::Write as _;
 
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, RuleKind};
 
-use super::{finish_lines, ordered_rules, unsupported_error, EmitReport, GrammarEmitError};
+use super::{
+    finish_lines, ordered_rules, peg_choice_alternatives, unsupported_error, EmitReport,
+    GrammarEmitError,
+};
 
 /// Bundled JavaScript parser codegen output.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -178,8 +181,8 @@ impl PeggyEmitter {
                 .add_lossy("Peggy treats unordered choice as ordered choice");
         }
 
-        alternatives
-            .iter()
+        peg_choice_alternatives(ordered, alternatives)
+            .into_iter()
             .map(|alternative| self.emit_expr(alternative, Precedence::Choice))
             .collect::<Result<Vec<_>, _>>()
             .map(|items| items.join(" / "))

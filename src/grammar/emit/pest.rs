@@ -3,8 +3,8 @@ use std::fmt::Write as _;
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, RuleKind};
 
 use super::{
-    finish_lines, ordered_rules, render_rule_line_with_modifier, unsupported_error, EmitReport,
-    GrammarEmitError, PEST_RULE_TEMPLATE,
+    finish_lines, ordered_rules, peg_choice_alternatives, render_rule_line_with_modifier,
+    unsupported_error, EmitReport, GrammarEmitError, PEST_RULE_TEMPLATE,
 };
 
 /// Emits pest PEG grammar text from the grammar IR.
@@ -142,8 +142,8 @@ impl PestEmitter {
                 .add_lossy("PEG treats unordered choice as ordered choice");
         }
 
-        alternatives
-            .iter()
+        peg_choice_alternatives(ordered, alternatives)
+            .into_iter()
             .map(|alternative| self.emit_expr(alternative, Precedence::Choice))
             .collect::<Result<Vec<_>, _>>()
             .map(|items| items.join(" | "))
