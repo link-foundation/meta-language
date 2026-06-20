@@ -6,6 +6,10 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use super::advisor::{
+    AdviceDecision, AdviceDecisionKind, AdviceSource, ConceptNamingAdvisor, MdlMergeAdvisor,
+    MergeAdvisor, MergeCandidate, MergeRequest, NamingAdvisor, NamingRequest,
+};
 pub use super::eval::MembershipOracle;
 use super::eval::{sample, GrammarOracle, SampleConfig};
 use super::prior::{build_structural_prior, ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode};
@@ -48,6 +52,19 @@ pub struct InferenceReport {
     pub merges_accepted: usize,
     /// Number of candidate generalisations rejected by the oracle layer.
     pub merges_rejected: usize,
+    /// Provenance for naming and merge-advice decisions used by the pipeline.
+    pub advice: Vec<AdviceDecision>,
+}
+
+impl InferenceReport {
+    fn record_advice(
+        &mut self,
+        kind: AdviceDecisionKind,
+        target: impl Into<String>,
+        source: AdviceSource,
+    ) {
+        self.advice.push(AdviceDecision::new(kind, target, source));
+    }
 }
 
 /// Inferred grammar plus a compact report for evaluation and benchmarking.
@@ -96,6 +113,24 @@ pub fn infer_cfg(
     oracle: &dyn Oracle,
     opts: InferenceOptions,
 ) -> InferenceResult {
+    infer_cfg_with_advisors(
+        examples,
+        oracle,
+        opts,
+        &ConceptNamingAdvisor,
+        &MdlMergeAdvisor,
+    )
+}
+
+/// Infers a CFG while routing naming and merge decisions through advisors.
+#[must_use]
+pub fn infer_cfg_with_advisors(
+    examples: &[String],
+    oracle: &dyn Oracle,
+    opts: InferenceOptions,
+    naming_advisor: &dyn NamingAdvisor,
+    merge_advisor: &dyn MergeAdvisor,
+) -> InferenceResult {
     let positives = sorted_unique_examples(examples);
     let mut report = InferenceReport::default();
 
@@ -104,7 +139,8 @@ pub fn infer_cfg(
         return InferenceResult { grammar, report };
     }
 
-    let mut candidate = structured_grammar(&positives, opts, &mut report);
+    let mut candidate =
+        structured_grammar(&positives, opts, naming_advisor, merge_advisor, &mut report);
     if !oracle.accepts_all_positive(&candidate, examples)
         || membership_rejects_candidate(&candidate, oracle, opts)
     {
@@ -131,6 +167,8 @@ fn sorted_unique_examples(examples: &[String]) -> Vec<String> {
 fn structured_grammar(
     examples: &[String],
     opts: InferenceOptions,
+    naming_advisor: &dyn NamingAdvisor,
+    merge_advisor: &dyn MergeAdvisor,
     report: &mut InferenceReport,
 ) -> Grammar {
     let prior = build_structural_prior(examples, PriorOptions::default());
@@ -146,25 +184,63 @@ fn structured_grammar(
         .saturating_add(draft.bubbles_proposed);
 
     let before_root = root_alternatives.len();
+    let root_merge_exprs = root_alternatives.clone();
     let root_expr = choice_expr(root_alternatives);
-    report.merges_accepted = report
-        .merges_accepted
-        .saturating_add(before_root.saturating_sub(choice_len(&root_expr)));
+    let root_merges = before_root.saturating_sub(choice_len(&root_expr));
+    report.merges_accepted = report.merges_accepted.saturating_add(root_merges);
 
     let mut grammar = Grammar::new().with_source_format(GrammarFormat::Inferred);
+    record_naming_advice(
+        report,
+        naming_advisor,
+        &grammar,
+        ROOT_RULE,
+        &root_expr,
+        examples,
+    );
     grammar.add_rule(GrammarRule::new(ROOT_RULE, root_expr));
+    if root_merges > 0 {
+        record_merge_advice(
+            report,
+            merge_advisor,
+            examples,
+            ROOT_RULE,
+            &root_merge_exprs,
+        );
+    }
 
     for delimiter in [Delimiter::Paren, Delimiter::Curly, Delimiter::Square] {
         let Some(alternatives) = draft.group_alternatives.remove(&delimiter) else {
             continue;
         };
         let before = alternatives.len();
+        let merge_exprs = alternatives
+            .iter()
+            .cloned()
+            .map(seq_expr)
+            .collect::<Vec<_>>();
         let rules = rules_for_group(delimiter, alternatives);
         let after = rules.first().map_or(0, |rule| choice_len(rule.expr()));
-        report.merges_accepted = report
-            .merges_accepted
-            .saturating_add(before.saturating_sub(after));
+        let group_merges = before.saturating_sub(after);
+        report.merges_accepted = report.merges_accepted.saturating_add(group_merges);
+        if group_merges > 0 {
+            record_merge_advice(
+                report,
+                merge_advisor,
+                examples,
+                group_rule_name(delimiter),
+                &merge_exprs,
+            );
+        }
         for rule in rules {
+            record_naming_advice(
+                report,
+                naming_advisor,
+                &grammar,
+                rule.name(),
+                rule.expr(),
+                &[],
+            );
             grammar.add_rule(rule);
         }
     }
@@ -175,6 +251,82 @@ fn structured_grammar(
 
     grammar.set_start(ROOT_RULE);
     grammar
+}
+
+fn record_naming_advice(
+    report: &mut InferenceReport,
+    advisor: &dyn NamingAdvisor,
+    grammar: &Grammar,
+    target: impl Into<String>,
+    rule_expr: &GrammarExpr,
+    sample_yields: &[String],
+) {
+    let source = advisor
+        .propose_names(&NamingRequest {
+            grammar,
+            rule_expr,
+            sample_yields,
+        })
+        .first()
+        .map_or(AdviceSource::Deterministic, |candidate| candidate.source);
+
+    report.record_advice(AdviceDecisionKind::Naming, target, source);
+}
+
+fn record_merge_advice(
+    report: &mut InferenceReport,
+    advisor: &dyn MergeAdvisor,
+    examples: &[String],
+    target: impl Into<String>,
+    alternatives: &[GrammarExpr],
+) {
+    let target = target.into();
+    let source = merge_advice_request_grammar(&target, alternatives).map_or(
+        AdviceSource::Deterministic,
+        |(advice_grammar, candidates)| {
+            advisor
+                .rank_merges(&MergeRequest {
+                    grammar: &advice_grammar,
+                    candidates: &candidates,
+                    examples,
+                })
+                .first()
+                .map_or(AdviceSource::Deterministic, |score| score.source)
+        },
+    );
+
+    report.record_advice(AdviceDecisionKind::Merge, target, source);
+}
+
+fn merge_advice_request_grammar(
+    target: &str,
+    alternatives: &[GrammarExpr],
+) -> Option<(Grammar, Vec<MergeCandidate>)> {
+    if alternatives.len() < 2 {
+        return None;
+    }
+
+    let mut grammar = Grammar::new().with_source_format(GrammarFormat::Inferred);
+    let mut names = Vec::with_capacity(alternatives.len());
+    for (index, alternative) in alternatives.iter().enumerate() {
+        let name = format!("{target}_alternative_{}", index + 1);
+        grammar.add_rule(GrammarRule::new(name.clone(), alternative.clone()));
+        names.push(name);
+    }
+
+    grammar.add_rule(GrammarRule::new(
+        target,
+        GrammarExpr::choice(false, names.iter().cloned().map(GrammarExpr::non_terminal)),
+    ));
+    grammar.set_start(target);
+
+    let winner = names.first()?.clone();
+    let candidates = names
+        .iter()
+        .skip(1)
+        .map(|loser| MergeCandidate::new(&winner, loser))
+        .collect::<Vec<_>>();
+    Some((grammar, candidates))
 }
 
 #[derive(Default)]

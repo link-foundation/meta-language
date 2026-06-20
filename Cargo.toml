@@ -95,6 +95,7 @@ whatlang = "0.18.0"
 [features]
 default = []
 doublets = ["dep:doublets", "dep:platform-mem"]
+llm-assist = []
 
 [dev-dependencies]
 links-notation = "0.13"

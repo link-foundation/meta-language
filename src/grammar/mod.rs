@@ -44,8 +44,16 @@ pub use import::{
     import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
     import_tree_sitter_json, GrammarImportError,
 };
+pub use inference::advisor::{
+    AdviceDecision, AdviceDecisionKind, AdviceSource, ConceptNamingAdvisor, FallbackAdvisor,
+    MdlMergeAdvisor, MergeAdvisor, MergeCandidate, MergeRequest, MergeScore, NameCandidate,
+    NamingAdvisor, NamingRequest,
+};
+#[cfg(feature = "llm-assist")]
+pub use inference::advisor::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
 pub use inference::cfg::{
-    infer_cfg, InferenceOptions, InferenceReport, InferenceResult, Oracle, PositiveOnlyOracle,
+    infer_cfg, infer_cfg_with_advisors, InferenceOptions, InferenceReport, InferenceResult, Oracle,
+    PositiveOnlyOracle,
 };
 pub use inference::eval::{
     evaluate, mdl, run_corpus, run_named_corpus, sample, size_symbols, BenchmarkReport, EvalError,
