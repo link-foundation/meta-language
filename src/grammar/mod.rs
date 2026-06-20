@@ -28,6 +28,7 @@ pub mod emit;
 pub mod import;
 mod links;
 pub mod surface;
+pub mod translate;
 
 pub use concepts::{
     annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, GrammarConcept,
@@ -45,6 +46,9 @@ pub use import::{
 pub use surface::{
     grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
     GrammarSurfaceError,
+};
+pub use translate::{
+    grammar_concept_translation_rules, translate_grammar_surface, GrammarTranslateError,
 };
 
 use std::collections::BTreeSet;
