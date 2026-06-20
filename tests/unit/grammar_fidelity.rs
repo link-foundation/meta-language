@@ -200,6 +200,7 @@ fn bnf_unrepresentable_constructs_return_documented_errors() {
 fn fidelity_doc_matrix_matches_generated_matrix() {
     let doc = std::fs::read_to_string("docs/grammar/fidelity.md")
         .expect("grammar fidelity documentation should exist");
+    let doc = doc.replace("\r\n", "\n");
 
     assert!(
         doc.contains(&generated_matrix()),
