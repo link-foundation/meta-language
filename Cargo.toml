@@ -32,6 +32,11 @@ path = "src/lib.rs"
 name = "meta-language"
 path = "src/main.rs"
 
+[[bench]]
+name = "competitor_bench"
+path = "benches/competitor_bench.rs"
+harness = false
+
 [dependencies]
 abnf = "0.13.0"
 bnf = { version = "0.6.0", default-features = false }

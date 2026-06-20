@@ -1,4 +1,5 @@
 mod cli;
+mod competitor_bar;
 mod grammar_emit_rust;
 mod grammar_emit_tree_sitter;
 mod grammar_import_abnf;

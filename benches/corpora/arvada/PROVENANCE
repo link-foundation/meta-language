@@ -1,0 +1,10 @@
+Source: https://github.com/neil-kulkarni/arvada
+Commit: 5a6913c73734cbaabe3c50449efcae5f291e18ee
+License: MIT
+
+Vendored paths:
+- bc-example
+- text-paren-example
+- lark-examples
+
+The files under those paths were copied unchanged from the pinned commit.
