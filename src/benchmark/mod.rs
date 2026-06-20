@@ -3,6 +3,8 @@
 //! The metric math stays in the D1 evaluation module and the inferred grammar
 //! comes from the D5 `infer_cfg` entry point. This module owns manifest loading,
 //! vendored-corpus integrity checks, report formatting, and bar assertions.
+//! Manifest byte counts assume the repository-pinned LF checkout policy for
+//! `benches/corpora/**` so CI reports the same fixture totals on every OS.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
