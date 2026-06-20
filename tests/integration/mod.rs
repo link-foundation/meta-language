@@ -13,3 +13,4 @@ mod grammar_translate;
 mod inference_cfg;
 mod inference_eval;
 mod inference_minimize;
+mod inference_semantic;
