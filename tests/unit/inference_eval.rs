@@ -460,7 +460,8 @@ fn mdl_and_size_cover_all_expression_symbol_variants() {
     let bits = mdl(&grammar, &["", "not accepted"]);
 
     assert!(symbols > 20, "{symbols}");
-    assert!(bits > symbols as f64, "{bits}");
+    let symbols_as_f64 = f64::from(u32::try_from(symbols).expect("test grammar is small"));
+    assert!(bits > symbols_as_f64, "{bits}");
 }
 
 #[test]
