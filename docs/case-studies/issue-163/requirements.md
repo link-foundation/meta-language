@@ -34,9 +34,20 @@ The first synchronized JavaScript feature set is captured in
 
 ## Layout Decision
 
-The issue requested `./js` and `./rust` folders. This PR adds `./js` and keeps
-Rust in the repository root because the existing published crate, docs site,
-examples, benchmarks, and release workflow use the root manifest. The existing
-Rust helper scripts already detect either `./Cargo.toml` or `./rust/Cargo.toml`,
-so a later mechanical Rust move can be done separately without mixing it into
-the JavaScript implementation.
+The issue requested `./js` and `./rust` folders with no language at the
+repository root. This PR delivers exactly that:
+
+- The Rust crate moved from the repository root into `rust/`, taking its
+  `Cargo.toml`, `src/`, `tests/`, `scripts/`, `web/`, `benches/`, `examples/`,
+  `README.md`, and badges with it.
+- The JavaScript package lives in `js/` with its own `src/`, `tests/`,
+  `scripts/`, `README.md`, and badges.
+- Shared assets stay at the root: `parity/` (the cross-language manifest),
+  `docs/` (grammar reference, fidelity matrices, website source, case studies),
+  and `.github/` (the `rust.yml` and `js.yml` workflows).
+- The repository-root `README.md` carries no implementation — it is a
+  language-neutral overview that points into `rust/` and `js/`.
+
+CI/CD was split per language: `release.yml` was fully converted into `rust.yml`,
+and `js.yml` was added. Both workflows run the parity gate so feature drift in
+either direction fails CI.

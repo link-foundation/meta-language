@@ -10,15 +10,26 @@ repository file inventories are stored in `template-data/`.
 
 ## Result
 
-- Added `js/` as an npm package named `@link-foundation/meta-language`.
+- Moved the Rust crate out of the repository root into `rust/` so that **no
+  language implementation lives at the root**. The crate keeps its own `src/`,
+  `tests/`, `scripts/`, `web/`, `benches/`, `examples/`, `Cargo.toml`,
+  `README.md`, and badges.
+- Added `js/` as an npm package named `@link-foundation/meta-language` with its
+  own `src/`, `tests/`, `scripts/`, `README.md`, and badges.
 - Implemented the parity operation families in JavaScript: parse, query,
   transform, substitute, serialize, snapshot, translate, and verify.
-- Added `parity/language-features.json` and
-  `js/scripts/check-js-rust-parity.mjs` as the cross-language sync guard.
-- Added `.github/workflows/js.yml` and `.github/workflows/rust.yml`.
-- Kept the existing Rust crate at repository root for this PR because release,
-  documentation, examples, and website workflows already assume that layout.
-  Existing scripts already support a future `rust/` root through `RUST_ROOT`.
+- Added `parity/language-features.json` and two enforcement points around it:
+  the JavaScript checker `js/scripts/check-js-rust-parity.mjs` and the
+  Rust-native test `rust/tests/unit/parity_manifest.rs`. Each language verifies
+  its own half of every manifest row, and both CI workflows run the manifest
+  gate, so a change in one language that is not mirrored in the other fails CI.
+- Converted `.github/workflows/release.yml` fully into
+  `.github/workflows/rust.yml` and added `.github/workflows/js.yml`. The two
+  workflows have independent path filters so each language builds and releases
+  on its own.
+- Rewrote the repository-root `README.md` as a language-neutral overview that
+  links into `rust/` and `js/`, and gave each language folder its own README and
+  badges modeled on the templates referenced in the issue.
 
 ## Related Documents
 
