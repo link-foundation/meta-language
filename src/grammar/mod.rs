@@ -45,6 +45,12 @@ pub use import::{
     import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
     import_tree_sitter_json, GrammarImportError,
 };
+pub use inference::active::{
+    clean_structural_acceptance, learn_dfa, learn_grammar, ActiveLearningConfig,
+    ActiveLearningError, Dfa, GrammarAcceptorOracle, Oracle as ActiveLearningOracle,
+    ParserAcceptancePredicate, ParserMembershipOracle, SamplingEquivalenceOracle,
+    Symbol as ActiveSymbol,
+};
 pub use inference::advisor::{
     AdviceDecision, AdviceDecisionKind, AdviceSource, ConceptNamingAdvisor, FallbackAdvisor,
     MdlMergeAdvisor, MergeAdvisor, MergeCandidate, MergeRequest, MergeScore, NameCandidate,
