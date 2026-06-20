@@ -57,7 +57,8 @@ pub use document_formatting::{
 };
 pub use grammar::{
     annotate_grammar_concepts, emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser,
-    emit_peggy, emit_pest, emit_rust_parser, grammar_expr_concept_id, grammar_from_lino,
+    emit_peggy, emit_pest, emit_rust_parser, emit_tree_sitter_grammar_js,
+    emit_tree_sitter_grammar_js_with_report, grammar_expr_concept_id, grammar_from_lino,
     grammar_to_lino, import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark,
     import_pest, import_tree_sitter_json, parse_grammar_surface, render_rust_type, rule_concept_id,
     write_grammar_surface, CharClassItem, EmitReport, ExprBuilder, Grammar, GrammarBuilder,

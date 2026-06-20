@@ -35,8 +35,8 @@ pub use concepts::{
 };
 pub use emit::{
     emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser, emit_peggy, emit_pest,
-    emit_rust_parser, render_rust_type, EmitReport, GrammarEmitError, JsParserArtifacts,
-    RustParserArtifacts,
+    emit_rust_parser, emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report,
+    render_rust_type, EmitReport, GrammarEmitError, JsParserArtifacts, RustParserArtifacts,
 };
 pub use import::{
     import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
