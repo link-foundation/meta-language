@@ -21,6 +21,7 @@ mod grammar_import_pest;
 mod grammar_import_tree_sitter_json;
 mod grammar_ir;
 mod grammar_parsing;
+mod grammar_runtime;
 mod grammar_surface;
 mod grammar_translate;
 mod inference_advisor;

@@ -28,6 +28,7 @@ pub mod emit;
 pub mod import;
 pub mod inference;
 mod links;
+pub mod runtime;
 pub mod surface;
 pub mod translate;
 
@@ -77,6 +78,7 @@ pub use inference::semantic::{
 };
 pub use inference::sequitur::{run_sequitur, Symbol};
 pub use inference::state_merging::{infer_dfa, InferredAutomaton, MergeStrategy, Sample};
+pub use runtime::{register_grammar, with_grammar, GrammarParser};
 pub use surface::{
     grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
     GrammarSurfaceError,
