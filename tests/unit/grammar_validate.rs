@@ -1,6 +1,5 @@
 use meta_language::{
-    parse_grammar_surface, validate, DiagnosticKind, Grammar, GrammarDiagnostic, GrammarRule,
-    Severity,
+    parse_grammar_surface, validate, DiagnosticKind, Grammar, GrammarDiagnostic, Severity,
 };
 
 #[test]

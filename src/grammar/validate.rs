@@ -539,7 +539,7 @@ fn collect_left_references(
         | GrammarExpr::Not(expr)
         | GrammarExpr::Capture { expr, .. }
         | GrammarExpr::Repeat { expr, .. } => {
-            collect_left_references(expr, nullability, references)
+            collect_left_references(expr, nullability, references);
         }
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
@@ -579,7 +579,6 @@ fn compute_nullability(grammar: &Grammar) -> BTreeMap<String, bool> {
 
 fn expr_is_nullable(expr: &GrammarExpr, nullability: &BTreeMap<String, bool>) -> bool {
     match expr {
-        GrammarExpr::Empty => true,
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => value.is_empty(),
         GrammarExpr::CharRange(_, _) | GrammarExpr::CharClass { .. } | GrammarExpr::AnyChar => {
             false
@@ -591,7 +590,8 @@ fn expr_is_nullable(expr: &GrammarExpr, nullability: &BTreeMap<String, bool>) ->
         GrammarExpr::Sequence(items) => {
             items.iter().all(|item| expr_is_nullable(item, nullability))
         }
-        GrammarExpr::Optional(_)
+        GrammarExpr::Empty
+        | GrammarExpr::Optional(_)
         | GrammarExpr::ZeroOrMore(_)
         | GrammarExpr::And(_)
         | GrammarExpr::Not(_) => true,
@@ -638,7 +638,6 @@ fn expr_is_suspicious_nullable(
     suspicious: &BTreeMap<String, bool>,
 ) -> bool {
     match expr {
-        GrammarExpr::Empty => true,
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => value.is_empty(),
         GrammarExpr::CharRange(_, _) | GrammarExpr::CharClass { .. } | GrammarExpr::AnyChar => {
             false
@@ -654,7 +653,10 @@ fn expr_is_suspicious_nullable(
                         .iter()
                         .any(|item| expr_is_suspicious_nullable(item, nullability, suspicious)))
         }
-        GrammarExpr::Optional(_) | GrammarExpr::And(_) | GrammarExpr::Not(_) => true,
+        GrammarExpr::Empty
+        | GrammarExpr::Optional(_)
+        | GrammarExpr::And(_)
+        | GrammarExpr::Not(_) => true,
         GrammarExpr::ZeroOrMore(expr) | GrammarExpr::OneOrMore(expr) => {
             expr_is_nullable(expr, nullability)
         }
