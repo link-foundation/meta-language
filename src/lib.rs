@@ -56,17 +56,19 @@ pub use document_formatting::{
     DOCUMENT_FORMATS,
 };
 pub use grammar::{
-    annotate_grammar_concepts, emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser,
-    emit_peggy, emit_pest, emit_rust_parser, emit_tree_sitter_grammar_js,
+    annotate_grammar_concepts, categorise, emit_abnf, emit_bnf, emit_ebnf, emit_gbnf,
+    emit_javascript_parser, emit_peggy, emit_pest, emit_rust_parser, emit_tree_sitter_grammar_js,
     emit_tree_sitter_grammar_js_with_report, evaluate, grammar_concept_translation_rules,
     grammar_expr_concept_id, grammar_from_lino, grammar_to_lino, import_abnf, import_antlr,
-    import_bnf, import_ebnf, import_gbnf, import_lark, import_pest, import_tree_sitter_json, mdl,
-    parse_grammar_surface, render_rust_type, rule_concept_id, run_corpus, run_named_corpus, sample,
-    size_symbols, translate_grammar_surface, write_grammar_surface, BenchmarkReport, CharClassItem,
-    EmitReport, EvalError, ExprBuilder, GoldenCorpus, Grammar, GrammarBuilder, GrammarConcept,
-    GrammarEmitError, GrammarExpr, GrammarFormat, GrammarImportError, GrammarOracle, GrammarRule,
-    GrammarSurfaceError, GrammarTranslateError, JsParserArtifacts, MembershipOracle, MetricScores,
-    RuleKind, RustParserArtifacts, SampleConfig, ScoringMode, GOLDEN_CORPORA, GRAMMAR_CONCEPTS,
+    import_bnf, import_ebnf, import_gbnf, import_lark, import_pest, import_tree_sitter_json,
+    infer_lexical_classes, mdl, parse_grammar_surface, render_rust_type, rule_concept_id,
+    run_corpus, run_named_corpus, sample, size_symbols, translate_grammar_surface,
+    write_grammar_surface, BenchmarkReport, CharCategory, CharClassItem, EmitReport, EvalError,
+    ExprBuilder, GoldenCorpus, Grammar, GrammarBuilder, GrammarConcept, GrammarEmitError,
+    GrammarExpr, GrammarFormat, GrammarImportError, GrammarOracle, GrammarRule,
+    GrammarSurfaceError, GrammarTranslateError, JsParserArtifacts, LexicalConfig, LexicalModel,
+    MembershipOracle, MetricScores, RuleKind, RustParserArtifacts, SampleConfig, ScoringMode,
+    Token, GOLDEN_CORPORA, GRAMMAR_CONCEPTS,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};

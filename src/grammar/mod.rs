@@ -49,6 +49,9 @@ pub use inference::eval::{
     GoldenCorpus, GrammarOracle, MembershipOracle, MetricScores, SampleConfig, ScoringMode,
     GOLDEN_CORPORA,
 };
+pub use inference::lexical::{
+    categorise, infer_lexical_classes, CharCategory, LexicalConfig, LexicalModel, Token,
+};
 pub use surface::{
     grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
     GrammarSurfaceError,
