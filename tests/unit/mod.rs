@@ -27,6 +27,7 @@ mod inference_eval;
 mod inference_lexical;
 mod inference_prior;
 mod inference_sequitur;
+mod inference_state_merging;
 mod language_profile;
 mod link_network;
 mod links_notation;
