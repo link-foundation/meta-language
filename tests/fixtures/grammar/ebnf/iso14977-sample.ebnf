@@ -1,0 +1,6 @@
+list = "(", [ list_body ], ")" ;
+list_body = list_item, { ",", list_item } ;
+list_item = name | list ;
+name = letter, { letter | digit } ;
+letter = "a" | "b" | "c" ;
+digit = "0" | "1" | "2" ;

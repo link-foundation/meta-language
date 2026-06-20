@@ -287,12 +287,45 @@ assert!(!txt.contains('#'));
 ```bash
 cargo run -- describe
 cargo run -- verify --language plain-text --text "alpha beta"
+cargo run -- infer examples/json-samples/ --format bnf --metrics
+cargo run -- import-grammar --format bnf tests/fixtures/grammar/bnf/arithmetic.bnf
+cargo run -- emit-grammar --format gbnf grammar.lino --out grammar.gbnf
+cargo run -- translate-grammar grammar.lino --from-language en --to-language ru
 ```
 
 `describe` prints the built-in self-description network as LiNo-style definition
 lines that round-trip through `parse()` and `reconstruct_text()`. `verify` parses
 the text with the lossless text boundary and exits successfully when the
 resulting region has no error or missing links.
+
+The grammar subcommands expose the grammar IR pipeline from the shell. `infer`
+reads one or more example files or directories, infers a grammar, and writes
+LiNo by default; `--format bnf|ebnf|abnf|peg|gbnf|tree-sitter` renders another
+supported notation, `--metrics` writes precision/recall/F1/runtime to stderr,
+and `--out <path>` writes the grammar to a file. `import-grammar` reads
+`bnf|ebnf|abnf|peg|antlr|lark|gbnf|tree-sitter` input and renders LiNo by
+default or another `--to` notation. `emit-grammar` reads LiNo or native grammar
+surface input and emits `bnf|ebnf|abnf|peg|gbnf|tree-sitter`. Unsupported target
+formats report a clear non-zero CLI error. `translate-grammar` rewrites
+concept-aligned rule names and documentation to the requested target language
+while preserving grammar structure.
+
+## Grammar subsystem
+
+The grammar layer stores authored, imported, inferred, translated, and generated
+grammars as first-class links instead of side data. Its IR is built from
+`Grammar`, `GrammarRule`, `GrammarExpr`, `RuleKind`, and `GrammarFormat`, lowers
+through `ToLinks` / `FromLinks` as `LinkType::Grammar`, and is documented in
+[docs/grammar](docs/grammar/README.md).
+
+Start with the [architecture overview](docs/grammar/architecture.md) for the IR,
+links encoding, and pipeline. The stage guides cover
+[authoring](docs/grammar/authoring.md),
+[import and export](docs/grammar/import-export.md),
+[code generation](docs/grammar/codegen.md),
+[inference](docs/grammar/inference.md),
+[translation](docs/grammar/translation.md), and
+[CLI/runtime integration](docs/grammar/cli-and-runtime.md).
 
 ## Parity Implementation
 
@@ -303,6 +336,9 @@ The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,
 It also exposes `PARITY_FIXTURES`, with executable, provenance-tracked fixtures
 covering every advertised target capability, and `LANGUAGE_FIXTURES`, with a
 lossless fixture for every requested language target.
+Grammar notation round-trip fidelity is tracked in
+[docs/grammar/fidelity.md](docs/grammar/fidelity.md) through the
+`grammar_format_profile` API.
 The current registry tracks tree-sitter, LibCST, Recast, jscodeshift, Rowan,
 cstree, Roslyn, links-notation, link-cli, lino-objects-codec,
 relative-meta-logic, formal-ai, and meta-expression.

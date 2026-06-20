@@ -1,0 +1,34 @@
+A1	95	4700509972	[A1] Grammar IR / expression algebra
+A2	96	4700510117	[A2] Grammar surface syntax (meta-notation-derived)
+A3	97	4700510386	[A3] Grammar-construct concept ontology
+F1	98	4700510549	[F1] Grammar-subsystem user & architecture docs
+B1	99	4700510698	[B1] BNF importer
+B2	100	4700510894	[B2] EBNF importer
+B3	101	4700511175	[B3] ABNF importer
+B4	102	4700511372	[B4] PEG (.pest) importer
+B5	103	4700511608	[B5] tree-sitter grammar.json importer
+B6	104	4700511744	[B6] ANTLR v4 .g4 importer
+B7	105	4700511889	[B7] Lark + GBNF importer
+C1	106	4700512017	[C1] BNF/EBNF/ABNF emitters
+C2	107	4700512185	[C2] PEG (.pest) emitter
+C3	108	4700512330	[C3] GBNF emitter (LLM interop)
+C4	109	4700512537	[C4] Rust parser codegen
+C5	110	4700512856	[C5] JavaScript parser codegen
+C7	111	4700513008	[C7] tree-sitter grammar.js emitter
+C6	112	4700513153	[C6] Concept-aligned cross-language translation
+D1	113	4700513279	[D1] Inference evaluation harness
+D2	114	4700513428	[D2] Tokenisation / lexical-class inference
+D4	115	4700513602	[D4] Sequitur structural-compression pass
+D6	116	4700513763	[D6] Delimiter-skeleton structural prior
+D3	117	4700513919	[D3] State-merging regular inference (RPNI/EDSM)
+D5	118	4700514228	[D5] Black-box CFG inference engine (TreeVada port)
+D7	119	4700514379	[D7] Generalization & MDL/Occam minimization
+D8	120	4700514572	[D8] Semantic-constraint inference (ISLearn-style)
+D9	121	4700515175	[D9] LLM-assisted naming & merge selection (optional)
+E2	122	4700515495	[E2] Inferred-grammar runtime parser (registry)
+D10	123	4700515668	[D10] Optional active learning (L*/TTT oracle path)
+E1	124	4700515777	[E1] CLI: infer/import/emit/translate-grammar
+E3	125	4700515906	[E3] Competitor benchmark suite
+E4	126	4700516049	[E4] Grammar authoring ergonomics
+F2	127	4700516191	[F2] Grammar-format fidelity matrix
+E5	128	4700516326	[E5] End-to-end integration tests + examples/

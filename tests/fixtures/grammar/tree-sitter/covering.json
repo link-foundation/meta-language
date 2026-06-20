@@ -1,0 +1,236 @@
+{
+  "name": "covering",
+  "rules": {
+    "document": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "named"
+        },
+        {
+          "type": "STRING",
+          "value": "="
+        },
+        {
+          "type": "FIELD",
+          "name": "value",
+          "content": {
+            "type": "SYMBOL",
+            "name": "value"
+          }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "maybe"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "named": {
+      "type": "ALIAS",
+      "value": "name",
+      "named": true,
+      "content": {
+        "type": "SYMBOL",
+        "name": "identifier"
+      }
+    },
+    "value": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "number"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "string"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "list_tail"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "plain_choice"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "prec_rule"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "left_rule"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "right_rule"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "dynamic_rule"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "immediate"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "reserved_rule"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "empty"
+        }
+      ]
+    },
+    "identifier": {
+      "type": "PATTERN",
+      "value": "[a-zA-Z_]"
+    },
+    "number": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[0-9]"
+      }
+    },
+    "string": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "\""
+          },
+          {
+            "type": "REPEAT",
+            "content": {
+              "type": "PATTERN",
+              "value": "[^\"\\\\]"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "\""
+          }
+        ]
+      }
+    },
+    "list_tail": {
+      "type": "REPEAT",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": ","
+          },
+          {
+            "type": "SYMBOL",
+            "name": "value"
+          }
+        ]
+      }
+    },
+    "plain_choice": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "a"
+        },
+        {
+          "type": "STRING",
+          "value": "b"
+        },
+        {
+          "type": "BLANK"
+        }
+      ]
+    },
+    "maybe": {
+      "type": "REPEAT1",
+      "content": {
+        "type": "STRING",
+        "value": "?"
+      }
+    },
+    "prec_rule": {
+      "type": "PREC",
+      "value": -1,
+      "content": {
+        "type": "STRING",
+        "value": "p"
+      }
+    },
+    "left_rule": {
+      "type": "PREC_LEFT",
+      "value": 2,
+      "content": {
+        "type": "STRING",
+        "value": "l"
+      }
+    },
+    "right_rule": {
+      "type": "PREC_RIGHT",
+      "value": 3,
+      "content": {
+        "type": "STRING",
+        "value": "r"
+      }
+    },
+    "dynamic_rule": {
+      "type": "PREC_DYNAMIC",
+      "value": 4,
+      "content": {
+        "type": "STRING",
+        "value": "d"
+      }
+    },
+    "immediate": {
+      "type": "IMMEDIATE_TOKEN",
+      "content": {
+        "type": "STRING",
+        "value": "!"
+      }
+    },
+    "reserved_rule": {
+      "type": "RESERVED",
+      "context_name": "word",
+      "content": {
+        "type": "SYMBOL",
+        "name": "identifier"
+      }
+    },
+    "empty": {
+      "type": "BLANK"
+    },
+    "comment": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "//.*"
+      }
+    }
+  },
+  "extras": [
+    {
+      "type": "PATTERN",
+      "value": "\\s"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "comment"
+    }
+  ]
+}

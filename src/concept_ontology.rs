@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
+use crate::grammar::GRAMMAR_CONCEPTS;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::lino_serialization::LinoSerializationError;
 use serde_json::Value;
@@ -48,6 +49,7 @@ impl ConceptOntologyImportReport {
 pub struct ConceptOntologySeedReport {
     lexicon_concepts: usize,
     structural_concepts: usize,
+    grammar_concepts: usize,
     formatting_concepts: usize,
     alias_links: usize,
     syntax_mappings: usize,
@@ -57,6 +59,7 @@ impl ConceptOntologySeedReport {
     const fn new(
         lexicon_concepts: usize,
         structural_concepts: usize,
+        grammar_concepts: usize,
         formatting_concepts: usize,
         alias_links: usize,
         syntax_mappings: usize,
@@ -64,6 +67,7 @@ impl ConceptOntologySeedReport {
         Self {
             lexicon_concepts,
             structural_concepts,
+            grammar_concepts,
             formatting_concepts,
             alias_links,
             syntax_mappings,
@@ -80,6 +84,12 @@ impl ConceptOntologySeedReport {
     #[must_use]
     pub const fn structural_concepts(self) -> usize {
         self.structural_concepts
+    }
+
+    /// Number of built-in grammar-construct concepts seeded.
+    #[must_use]
+    pub const fn grammar_concepts(self) -> usize {
+        self.grammar_concepts
     }
 
     /// Number of shared document-formatting concepts seeded.
@@ -459,6 +469,12 @@ impl LinkNetwork {
             }
         }
 
+        let grammar_concepts = self.seed_grammar_concept_ontology();
+        syntax_mappings += GRAMMAR_CONCEPTS
+            .iter()
+            .map(|concept| concept.syntax.len())
+            .sum::<usize>();
+
         let formatting = self.seed_document_formatting_concepts();
         syntax_mappings += formatting.syntax_mappings();
 
@@ -479,6 +495,7 @@ impl LinkNetwork {
         ConceptOntologySeedReport::new(
             lexicon.concept_count,
             structural_concepts.len(),
+            grammar_concepts,
             formatting.concepts(),
             alias_links,
             syntax_mappings,

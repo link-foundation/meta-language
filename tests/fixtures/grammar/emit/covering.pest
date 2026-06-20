@@ -1,0 +1,9 @@
+start = { &"pre" ~ !"skip" ~ (^"hello" | "hi") ~ ("a" ~ digit)? ~ digit* ~ digit+ ~ "x"{2,4} ~ "y"{3,} ~ "z"{2} ~ ("-" | 'a'..'f') ~ (!("q" | '0'..'9') ~ ANY) ~ 'A'..'Z' ~ ANY ~ digit ~ ("cap") ~ ("anon") }
+// A decimal digit.
+digit = { ('0'..'9') }
+// NOTE: unordered choice in source is emitted as ordered pest choice.
+unordered = { "left" | "right" }
+atomic_rule = @{ "atomic" }
+silent_rule = _{ " " }
+token_rule = ${ "token" }
+empty = { "" }

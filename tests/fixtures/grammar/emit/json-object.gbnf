@@ -1,0 +1,8 @@
+root ::= "{" ws (member ("," ws member)*)? "}" ws
+member ::= string ":" ws value
+value ::= string | number | root | array | "true" | "false" | "null"
+array ::= "[" ws (value ("," ws value)*)? "]" ws
+string ::= "\"" ([^"\\] | "\\" ["\\/bfnrt])* "\"" ws
+number ::= ("-")? int ("." ([0-9])+)? ([eE] ("-" | "+")? ([0-9])+)? ws
+int ::= "0" | [1-9] ([0-9])*
+ws ::= ([ \t\n\r])*

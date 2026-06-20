@@ -1,0 +1,9 @@
+hex-a = %x41
+dec-a = %d65
+bin-a = %b01000001
+
+hex-digit = %x30-39
+dec-digit = %d48-57
+bin-digit = %b00110000-00111001
+
+abc = %x41.42.43
