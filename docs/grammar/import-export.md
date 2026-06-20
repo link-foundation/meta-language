@@ -51,9 +51,9 @@ source notation -> Grammar -> target notation -> Grammar
 ```
 
 [F2](../case-studies/issue-93/proposed-issues/F2-grammar-format-fidelity-matrix.md)
-owns the detailed matrix. This page only records the stage contract: each
-importer and emitter should make any unsupported construct visible as a
-documented fallback, diagnostic, or explicit IR approximation.
+owns the detailed [fidelity matrix](fidelity.md). This page only records the
+stage contract: each importer and emitter should make any unsupported construct
+visible as a documented fallback, diagnostic, or explicit IR approximation.
 
 ## See also
 

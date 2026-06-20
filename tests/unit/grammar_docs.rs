@@ -5,6 +5,7 @@ const GRAMMAR_DOCS: &[&str] = &[
     "docs/grammar/architecture.md",
     "docs/grammar/authoring.md",
     "docs/grammar/import-export.md",
+    "docs/grammar/fidelity.md",
     "docs/grammar/codegen.md",
     "docs/grammar/inference.md",
     "docs/grammar/translation.md",

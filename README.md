@@ -336,6 +336,9 @@ The crate exposes `PARITY_TARGETS`, `MARKUP_LANGUAGE_TARGETS`,
 It also exposes `PARITY_FIXTURES`, with executable, provenance-tracked fixtures
 covering every advertised target capability, and `LANGUAGE_FIXTURES`, with a
 lossless fixture for every requested language target.
+Grammar notation round-trip fidelity is tracked in
+[docs/grammar/fidelity.md](docs/grammar/fidelity.md) through the
+`grammar_format_profile` API.
 The current registry tracks tree-sitter, LibCST, Recast, jscodeshift, Rowan,
 cstree, Roslyn, links-notation, link-cli, lino-objects-codec,
 relative-meta-logic, formal-ai, and meta-expression.
