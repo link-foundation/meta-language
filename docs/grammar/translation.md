@@ -23,7 +23,7 @@ source grammar text
 ```
 
 The current branch exposes grammar concept helpers in
-[`src/grammar/concepts.rs`](../../src/grammar/concepts.rs): `GRAMMAR_CONCEPTS`,
+[`src/grammar/concepts.rs`](../../rust/src/grammar/concepts.rs): `GRAMMAR_CONCEPTS`,
 `annotate_grammar_concepts`, `grammar_expr_concept_id`, and
 `rule_concept_id`. The full translation API is owned by
 [C6](../case-studies/issue-93/proposed-issues/C6-concept-aligned-translation.md).
@@ -60,7 +60,7 @@ translation follows the same shape, but its concept set is grammar-specific and
 its renderers are grammar emitters instead of document renderers.
 
 The generic translation rule infrastructure in
-[`src/translation_rules.rs`](../../src/translation_rules.rs) is available when a
+[`src/translation_rules.rs`](../../rust/src/translation_rules.rs) is available when a
 grammar translation needs declarative rule mappings, but C6 owns the grammar
 specific public boundary.
 

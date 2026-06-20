@@ -114,11 +114,23 @@ fn is_excluded_from_code_changes(file_path: &str) -> bool {
         return true;
     }
 
-    // Exclude specific folders from code changes
+    // In the multi-language layout the Rust crate lives under `rust/` and the
+    // JavaScript package under `js/`, while `git diff` always reports
+    // repository-root-relative paths. Strip a leading language-folder prefix so
+    // the excluded-folder rules below match `rust/changelog.d/...`,
+    // `js/examples/...`, etc. the same way they match the bare folders.
+    let normalized = file_path
+        .strip_prefix("rust/")
+        .or_else(|| file_path.strip_prefix("js/"))
+        .unwrap_or(file_path);
+
+    // Exclude specific folders from code changes. `docs/` is shared and lives at
+    // the repository root, so it is matched against the original (root-relative)
+    // path; the rest may appear either at the root or inside a language folder.
     let excluded_folders = ["changelog.d/", "docs/", "experiments/", "examples/"];
 
     for folder in &excluded_folders {
-        if file_path.starts_with(folder) {
+        if normalized.starts_with(folder) || file_path.starts_with(folder) {
             return true;
         }
     }

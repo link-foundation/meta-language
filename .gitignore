@@ -49,11 +49,11 @@ criterion/
 # Documentation build output
 doc/
 
-# Assembled GitHub Pages website (built by scripts/build-site.rs)
+# Assembled GitHub Pages website (built by rust/scripts/build-site.rs)
 /_site/
 
-# WebAssembly demo build output (built by wasm-pack in web/)
-web/pkg/
+# WebAssembly demo build output (built by wasm-pack in rust/web/)
+rust/web/pkg/
 
 # Playwright MCP artifacts and local screenshot captures
 .playwright-mcp/

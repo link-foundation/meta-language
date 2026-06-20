@@ -1,2 +1,2 @@
 # Keep vendored benchmark fixture byte counts stable across platforms.
-benches/corpora/** text eol=lf
+rust/benches/corpora/** text eol=lf

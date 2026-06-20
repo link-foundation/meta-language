@@ -12,30 +12,49 @@ repos:
 
   - repo: local
     hooks:
+      # The Rust crate lives under ./rust in the multi-language layout, so each
+      # cargo/rust-script hook runs from that directory.
       - id: cargo-fmt
         name: cargo fmt
-        entry: cargo fmt --all --
+        entry: bash -c 'cd rust && cargo fmt --all --'
         language: system
         types: [rust]
         pass_filenames: false
 
       - id: cargo-clippy
         name: cargo clippy
-        entry: cargo clippy --all-targets --all-features -- -D warnings
+        entry: bash -c 'cd rust && cargo clippy --all-targets --all-features -- -D warnings'
         language: system
         types: [rust]
         pass_filenames: false
 
       - id: no-src-tests
         name: reject tests in src
-        entry: rust-script scripts/check-no-src-tests.rs
+        entry: bash -c 'cd rust && rust-script scripts/check-no-src-tests.rs'
         language: system
         types: [rust]
         pass_filenames: false
 
       - id: cargo-test
         name: cargo test
-        entry: cargo test
+        entry: bash -c 'cd rust && cargo test'
         language: system
         types: [rust]
+        pass_filenames: false
+
+      # The JavaScript package lives under ./js.
+      - id: js-test
+        name: javascript tests
+        entry: bash -c 'cd js && npm test'
+        language: system
+        files: ^js/
+        pass_filenames: false
+
+      # Enforce the Rust <-> JavaScript feature parity manifest on every commit
+      # that touches either language or the manifest itself.
+      - id: parity-manifest
+        name: rust/javascript parity manifest
+        entry: node js/scripts/check-js-rust-parity.mjs --manifest-only
+        language: system
+        files: ^(rust/|js/|parity/)
         pass_filenames: false

@@ -18,11 +18,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/link_network.rs", "tests/unit/link_network.rs"]
+        "evidence": [
+          "rust/src/link_network.rs",
+          "rust/tests/unit/link_network.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/network.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/network.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -30,11 +36,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/source.rs", "tests/unit/link_network.rs"]
+        "evidence": [
+          "rust/src/source.rs",
+          "rust/tests/unit/link_network.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/network.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/network.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -42,11 +54,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/link_network.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/link_network.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/network.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/network.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -54,11 +72,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/query.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/query.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/query.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/query.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -66,11 +90,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/transform.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/transform.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/transform.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/transform.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -78,11 +108,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/substitution.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/substitution.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/substitution.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/substitution.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -90,11 +126,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/api_styles.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/api_styles.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/substitution.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/substitution.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -102,11 +144,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/lino_serialization.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/lino_serialization.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/network.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/network.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -114,11 +162,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/snapshots.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/snapshots.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/network.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/network.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -126,11 +180,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/translation_rules.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/translation_rules.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/translation.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/translation.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -138,11 +198,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/verification.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/verification.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/network.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/network.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -150,11 +216,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/grammar/mod.rs", "src/grammar/emit/javascript.rs"]
+        "evidence": [
+          "rust/src/grammar/mod.rs",
+          "rust/src/grammar/emit/javascript.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/grammar.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/grammar.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -162,11 +234,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/grammar/emit/javascript.rs", "changelog.d/20260619_233000_javascript_parser_codegen.md"]
+        "evidence": [
+          "rust/src/grammar/emit/javascript.rs",
+          "rust/changelog.d/20260619_233000_javascript_parser_codegen.md"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/grammar.js", "js/tests/core.test.js"]
+        "evidence": [
+          "js/src/grammar.js",
+          "js/tests/core.test.js"
+        ]
       }
     },
     {
@@ -174,11 +252,17 @@
       "required": true,
       "rust": {
         "status": "implemented",
-        "evidence": ["src/api_styles.rs", "tests/unit/api_style_parity.rs"]
+        "evidence": [
+          "rust/src/api_styles.rs",
+          "rust/tests/unit/api_style_parity.rs"
+        ]
       },
       "javascript": {
         "status": "implemented",
-        "evidence": ["js/src/api-style-fixtures.js", "js/tests/parity.test.js"]
+        "evidence": [
+          "js/src/api-style-fixtures.js",
+          "js/tests/parity.test.js"
+        ]
       }
     }
   ]
