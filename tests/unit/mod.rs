@@ -26,6 +26,7 @@ mod grammar_translate;
 mod inference_cfg;
 mod inference_eval;
 mod inference_lexical;
+mod inference_minimize;
 mod inference_prior;
 mod inference_sequitur;
 mod inference_state_merging;

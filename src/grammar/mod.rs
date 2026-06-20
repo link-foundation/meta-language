@@ -55,6 +55,9 @@ pub use inference::eval::{
 pub use inference::lexical::{
     categorise, infer_lexical_classes, CharCategory, LexicalConfig, LexicalModel, Token,
 };
+pub use inference::minimize::{
+    mdl_cost, minimize, Mdl, MinimizeOptions, MinimizeReport, MinimizeResult,
+};
 pub use inference::prior::{
     build_structural_prior, ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, SeedTree,
     StructuralPrior, WhitespacePolicy,
