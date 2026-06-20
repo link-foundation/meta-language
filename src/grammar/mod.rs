@@ -26,6 +26,7 @@
 pub mod concepts;
 pub mod emit;
 pub mod import;
+pub mod inference;
 mod links;
 pub mod surface;
 pub mod translate;
@@ -42,6 +43,11 @@ pub use emit::{
 pub use import::{
     import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
     import_tree_sitter_json, GrammarImportError,
+};
+pub use inference::eval::{
+    evaluate, mdl, run_corpus, run_named_corpus, sample, size_symbols, BenchmarkReport, EvalError,
+    GoldenCorpus, GrammarOracle, MembershipOracle, MetricScores, SampleConfig, ScoringMode,
+    GOLDEN_CORPORA,
 };
 pub use surface::{
     grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
