@@ -23,6 +23,7 @@ mod grammar_ir;
 mod grammar_parsing;
 mod grammar_surface;
 mod grammar_translate;
+mod inference_cfg;
 mod inference_eval;
 mod inference_lexical;
 mod inference_prior;
