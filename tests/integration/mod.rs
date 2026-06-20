@@ -9,6 +9,7 @@ mod grammar_import_gbnf;
 mod grammar_import_lark;
 mod grammar_import_pest;
 mod grammar_import_tree_sitter_json;
+mod grammar_runtime;
 mod grammar_translate;
 mod inference_advisor;
 mod inference_cfg;
