@@ -52,6 +52,10 @@ pub use inference::eval::{
 pub use inference::lexical::{
     categorise, infer_lexical_classes, CharCategory, LexicalConfig, LexicalModel, Token,
 };
+pub use inference::prior::{
+    build_structural_prior, ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, SeedTree,
+    StructuralPrior, WhitespacePolicy,
+};
 pub use inference::sequitur::{run_sequitur, Symbol};
 pub use surface::{
     grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
