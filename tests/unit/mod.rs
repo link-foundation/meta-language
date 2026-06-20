@@ -25,6 +25,7 @@ mod grammar_surface;
 mod grammar_translate;
 mod inference_eval;
 mod inference_lexical;
+mod inference_prior;
 mod inference_sequitur;
 mod language_profile;
 mod link_network;
