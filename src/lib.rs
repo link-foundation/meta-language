@@ -62,13 +62,13 @@ pub use grammar::{
     grammar_expr_concept_id, grammar_from_lino, grammar_to_lino, import_abnf, import_antlr,
     import_bnf, import_ebnf, import_gbnf, import_lark, import_pest, import_tree_sitter_json,
     infer_lexical_classes, mdl, parse_grammar_surface, render_rust_type, rule_concept_id,
-    run_corpus, run_named_corpus, sample, size_symbols, translate_grammar_surface,
+    run_corpus, run_named_corpus, run_sequitur, sample, size_symbols, translate_grammar_surface,
     write_grammar_surface, BenchmarkReport, CharCategory, CharClassItem, EmitReport, EvalError,
     ExprBuilder, GoldenCorpus, Grammar, GrammarBuilder, GrammarConcept, GrammarEmitError,
     GrammarExpr, GrammarFormat, GrammarImportError, GrammarOracle, GrammarRule,
     GrammarSurfaceError, GrammarTranslateError, JsParserArtifacts, LexicalConfig, LexicalModel,
     MembershipOracle, MetricScores, RuleKind, RustParserArtifacts, SampleConfig, ScoringMode,
-    Token, GOLDEN_CORPORA, GRAMMAR_CONCEPTS,
+    Symbol, Token, GOLDEN_CORPORA, GRAMMAR_CONCEPTS,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
