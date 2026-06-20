@@ -24,6 +24,7 @@ mod grammar_parsing;
 mod grammar_runtime;
 mod grammar_surface;
 mod grammar_translate;
+mod grammar_validate;
 mod inference_active;
 mod inference_advisor;
 mod inference_cfg;

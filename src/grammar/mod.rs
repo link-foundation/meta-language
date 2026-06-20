@@ -31,6 +31,7 @@ mod links;
 pub mod runtime;
 pub mod surface;
 pub mod translate;
+pub mod validate;
 
 pub use concepts::{
     annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, GrammarConcept,
@@ -92,6 +93,7 @@ pub use surface::{
 pub use translate::{
     grammar_concept_translation_rules, translate_grammar_surface, GrammarTranslateError,
 };
+pub use validate::{validate, DiagnosticKind, GrammarDiagnostic, RuleSpan, Severity};
 
 use std::collections::BTreeSet;
 use std::fmt;
