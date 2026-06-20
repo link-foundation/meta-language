@@ -11,6 +11,7 @@ mod grammar_emit;
 mod grammar_emit_javascript;
 mod grammar_emit_rust;
 mod grammar_emit_tree_sitter;
+mod grammar_fidelity;
 mod grammar_import_abnf;
 mod grammar_import_antlr;
 mod grammar_import_bnf;
