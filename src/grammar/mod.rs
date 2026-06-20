@@ -62,6 +62,11 @@ pub use inference::prior::{
     build_structural_prior, ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, SeedTree,
     StructuralPrior, WhitespacePolicy,
 };
+pub use inference::semantic::{
+    default_pattern_catalog, evaluate_atom, evaluate_clause, evaluate_constraint,
+    evaluate_probabilistic, mine_semantic_constraints, ConstraintAtom, ConstraintClause,
+    ConstraintPattern, LengthUnit, NonTerminalRef, SemanticConstraint, SemanticInferenceConfig,
+};
 pub use inference::sequitur::{run_sequitur, Symbol};
 pub use inference::state_merging::{infer_dfa, InferredAutomaton, MergeStrategy, Sample};
 pub use surface::{
