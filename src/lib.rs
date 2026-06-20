@@ -62,20 +62,25 @@ pub use grammar::{
     evaluate, evaluate_atom, evaluate_clause, evaluate_constraint, evaluate_probabilistic,
     grammar_concept_translation_rules, grammar_expr_concept_id, grammar_from_lino, grammar_to_lino,
     import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
-    import_tree_sitter_json, infer_cfg, infer_dfa, infer_lexical_classes, mdl, mdl_cost,
-    mine_semantic_constraints, minimize, parse_grammar_surface, render_rust_type, rule_concept_id,
-    run_corpus, run_named_corpus, run_sequitur, sample, size_symbols, translate_grammar_surface,
-    write_grammar_surface, BenchmarkReport, ByteSpan, CharCategory, CharClassItem, ConstraintAtom,
-    ConstraintClause, ConstraintPattern, Delimiter, EmitReport, EvalError, ExprBuilder,
-    GoldenCorpus, Grammar, GrammarBuilder, GrammarConcept, GrammarEmitError, GrammarExpr,
-    GrammarFormat, GrammarImportError, GrammarOracle, GrammarRule, GrammarSurfaceError,
-    GrammarTranslateError, InferenceOptions, InferenceReport, InferenceResult, InferredAutomaton,
-    JsParserArtifacts, LeafKind, LengthUnit, LexicalConfig, LexicalModel, Mdl, MembershipOracle,
-    MergeStrategy, MetricScores, MinimizeOptions, MinimizeReport, MinimizeResult, NonTerminalRef,
-    Oracle, PositiveOnlyOracle, PriorOptions, RuleKind, RustParserArtifacts, Sample, SampleConfig,
-    ScoringMode, SeedNode, SeedTree, SemanticConstraint, SemanticInferenceConfig, StructuralPrior,
-    Symbol, Token, WhitespacePolicy, GOLDEN_CORPORA, GRAMMAR_CONCEPTS,
+    import_tree_sitter_json, infer_cfg, infer_cfg_with_advisors, infer_dfa, infer_lexical_classes,
+    mdl, mdl_cost, mine_semantic_constraints, minimize, parse_grammar_surface, render_rust_type,
+    rule_concept_id, run_corpus, run_named_corpus, run_sequitur, sample, size_symbols,
+    translate_grammar_surface, write_grammar_surface, AdviceDecision, AdviceDecisionKind,
+    AdviceSource, BenchmarkReport, ByteSpan, CharCategory, CharClassItem, ConceptNamingAdvisor,
+    ConstraintAtom, ConstraintClause, ConstraintPattern, Delimiter, EmitReport, EvalError,
+    ExprBuilder, FallbackAdvisor, GoldenCorpus, Grammar, GrammarBuilder, GrammarConcept,
+    GrammarEmitError, GrammarExpr, GrammarFormat, GrammarImportError, GrammarOracle, GrammarRule,
+    GrammarSurfaceError, GrammarTranslateError, InferenceOptions, InferenceReport, InferenceResult,
+    InferredAutomaton, JsParserArtifacts, LeafKind, LengthUnit, LexicalConfig, LexicalModel, Mdl,
+    MdlMergeAdvisor, MembershipOracle, MergeAdvisor, MergeCandidate, MergeRequest, MergeScore,
+    MergeStrategy, MetricScores, MinimizeOptions, MinimizeReport, MinimizeResult, NameCandidate,
+    NamingAdvisor, NamingRequest, NonTerminalRef, Oracle, PositiveOnlyOracle, PriorOptions,
+    RuleKind, RustParserArtifacts, Sample, SampleConfig, ScoringMode, SeedNode, SeedTree,
+    SemanticConstraint, SemanticInferenceConfig, StructuralPrior, Symbol, Token, WhitespacePolicy,
+    GOLDEN_CORPORA, GRAMMAR_CONCEPTS,
 };
+#[cfg(feature = "llm-assist")]
+pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
 pub use link_flags::LinkFlags;
