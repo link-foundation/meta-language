@@ -1,0 +1,43 @@
+{
+  "name": "@link-foundation/meta-language",
+  "version": "0.46.0",
+  "description": "JavaScript implementation of the meta-language links-network core",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check:parity": "node scripts/check-js-rust-parity.mjs",
+    "check:parity:manifest": "node scripts/check-js-rust-parity.mjs --manifest-only"
+  },
+  "keywords": [
+    "links",
+    "language",
+    "cst",
+    "ast",
+    "lino"
+  ],
+  "license": "Unlicense",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/link-foundation/meta-language.git",
+    "directory": "js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "links-notation": "0.13.0",
+    "peggy": "5.1.0"
+  }
+}

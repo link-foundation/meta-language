@@ -126,6 +126,25 @@ assert!(report.is_clean());
 assert_eq!(network.reconstruct_text(), "alpha beta");
 ```
 
+The repository also includes a native ESM JavaScript package in `js/`:
+
+```bash
+cd js
+npm ci
+npm test
+```
+
+```js
+import { LinkNetwork, ParseConfiguration } from '@link-foundation/meta-language';
+
+const network = LinkNetwork.parse('alpha beta', 'txt', ParseConfiguration.default());
+
+console.log(network.reconstructText());
+```
+
+The JavaScript package is checked against the Rust feature surface through
+`parity/language-features.json` and `npm run check:parity`.
+
 The default parse path is lossless. Callers that need a narrower view can use a
 projection without mutating the original network:
 

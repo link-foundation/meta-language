@@ -1,0 +1,51 @@
+name: JavaScript
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'js/**'
+      - 'parity/**'
+      - '.github/workflows/js.yml'
+  pull_request:
+    paths:
+      - 'js/**'
+      - 'parity/**'
+      - '.github/workflows/js.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    name: JavaScript Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Run tests
+        run: npm test
+        working-directory: js
+
+      - name: Check Rust/JavaScript parity manifest
+        run: npm run check:parity
+        working-directory: js
+
+      - name: Verify npm package contents
+        run: npm pack --dry-run
+        working-directory: js

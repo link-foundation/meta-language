@@ -1,0 +1,175 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+
+import {
+  GrammarBuilder,
+  LinkCliSubstitution,
+  LinkCliSubstitutionKind,
+  LinkMetadata,
+  LinkNetwork,
+  LinkQuery,
+  LinkType,
+  ParseConfiguration,
+  ReplacementRule,
+  SubstitutionRule,
+  TranslationRule,
+  TranslationRuleSet,
+  emitJavascriptParser,
+  emitPeggy,
+} from '../src/index.js';
+
+test('lossless JavaScript parse reconstructs original text and indexes identifiers', () => {
+  const network = LinkNetwork.parse(
+    'const value = call(value);\n',
+    'JavaScript',
+    ParseConfiguration.default(),
+  );
+
+  assert.equal(network.reconstructText(), 'const value = call(value);\n');
+
+  const identifiers = network.find(LinkQuery.fromSexpression('(identifier) @name'));
+  assert.ok(identifiers.length >= 3);
+});
+
+test('S-expression query transform replaces captured identifier source ranges', () => {
+  const network = LinkNetwork.parse(
+    'const oldName = call(oldName);\n',
+    'JavaScript',
+    ParseConfiguration.default(),
+  );
+  const query = LinkQuery.fromSexpression(`
+    (identifier) @target
+    (#eq? @target "oldName")
+  `);
+
+  const report = network.replace(
+    network.find(query),
+    ReplacementRule.capturedText('target', 'newName'),
+  );
+
+  assert.equal(report.isEmpty(), false);
+  assert.equal(network.reconstructText(), 'const newName = call(newName);\n');
+});
+
+test('structural substitution updates relation references', () => {
+  const network = new LinkNetwork();
+  const one = network.insertPoint('1');
+  const two = network.insertPoint('2');
+  const relation = network.insertLink(
+    [one, one],
+    LinkMetadata.new().withLinkType(LinkType.Relation),
+  );
+
+  const report = network.applySubstitution(new SubstitutionRule([one, one], [one, two]));
+
+  assert.deepEqual(report.updated().map((id) => id.asU64()), [relation.asU64()]);
+  assert.deepEqual(
+    network.link(relation).references().map((id) => id.asU64()),
+    [one.asU64(), two.asU64()],
+  );
+});
+
+test('link-cli substitution text covers create read update and delete', () => {
+  const network = new LinkNetwork();
+
+  const create = network.applyLinkCliSubstitutionText('() ((1 1))');
+  assert.deepEqual(create.created().map((id) => id.asU64()), [1]);
+  assert.deepEqual(network.link(1).references().map((id) => id.asU64()), [1, 1]);
+
+  const read = network.applyLinkCliSubstitutionText('((1: 1 1)) ((1: 1 1))');
+  assert.deepEqual(read.updated().map((id) => id.asU64()), [1]);
+  assert.deepEqual(network.link(1).references().map((id) => id.asU64()), [1, 1]);
+
+  const update = network.applyLinkCliSubstitutionText('((1: 1 1)) ((1: 1 2))');
+  assert.deepEqual(update.updated().map((id) => id.asU64()), [1]);
+  assert.deepEqual(network.link(1).references().map((id) => id.asU64()), [1, 2]);
+
+  const deletion = network.applyLinkCliSubstitutionText('((1 2)) ()');
+  assert.deepEqual(deletion.deleted().map((id) => id.asU64()), [1]);
+  assert.equal(network.link(1), undefined);
+});
+
+test('link-cli substitution classifies command kinds', () => {
+  assert.equal(
+    LinkCliSubstitution.parse('() ((1 1))').kind(),
+    LinkCliSubstitutionKind.Create,
+  );
+  assert.equal(
+    LinkCliSubstitution.parse('((1: 1 1)) ((1: 1 1))').kind(),
+    LinkCliSubstitutionKind.ReadIdentity,
+  );
+  assert.equal(
+    LinkCliSubstitution.parse('((1: 1 1)) ((1: 1 2))').kind(),
+    LinkCliSubstitutionKind.Update,
+  );
+  assert.equal(
+    LinkCliSubstitution.parse('((1 1)) ()').kind(),
+    LinkCliSubstitutionKind.Delete,
+  );
+});
+
+test('LiNo serialization round-trips JavaScript network topology', () => {
+  const network = LinkNetwork.parse('alpha', 'txt', ParseConfiguration.default());
+  const lino = network.toLino();
+  const restored = LinkNetwork.fromLino(lino);
+
+  assert.equal(restored.toLino(), lino);
+});
+
+test('snapshots preserve immutable network versions', () => {
+  const network = LinkNetwork.parse('alpha', 'txt', ParseConfiguration.default());
+  const snapshot = network.snapshot(1, 'unit test');
+
+  network.insertPoint('later');
+
+  assert.equal(snapshot.version(), 1);
+  assert.equal(snapshot.network().reconstructText(), 'alpha');
+});
+
+test('translation rule sets reconstruct through semantic query templates', () => {
+  const network = new LinkNetwork();
+  const concept = network.insertConceptExpression('greeting', 'English', 'hello');
+  network.insertLink(
+    [concept],
+    LinkMetadata.new()
+      .withLinkType(LinkType.Semantic)
+      .withNamed(true)
+      .withTerm('proposition:greeting'),
+  );
+  const rules = new TranslationRuleSet('greeting').withRule(
+    new TranslationRule(
+      'spanish greeting',
+      LinkQuery.byType(LinkType.Semantic).withTerm('proposition:greeting'),
+    ).withTemplate('Spanish', 'hola'),
+  );
+
+  assert.equal(
+    network.reconstructTextAsWithRules('Spanish', ParseConfiguration.default(), rules),
+    'hola',
+  );
+  assert.deepEqual(TranslationRuleSet.fromLino(rules.toLino()), rules);
+});
+
+test('verification reports parse recovery issues', () => {
+  assert.equal(
+    LinkNetwork.parse('alpha', 'txt', ParseConfiguration.default()).verifyFullMatch().isClean(),
+    true,
+  );
+  assert.equal(
+    LinkNetwork.parse(')', 'txt', ParseConfiguration.default()).verifyFullMatch().isClean(),
+    false,
+  );
+});
+
+test('grammar builders emit Peggy grammar and JavaScript parser module text', () => {
+  const grammar = new GrammarBuilder('Word')
+    .terminal('letter', GrammarBuilder.charRange('a', 'z'))
+    .nonterminal('Word', GrammarBuilder.repeat1(GrammarBuilder.ref('letter')))
+    .build();
+
+  const peggy = emitPeggy(grammar);
+  const parserModule = emitJavascriptParser(grammar);
+
+  assert.match(peggy, /Word/);
+  assert.match(parserModule, /peggy\.generate/);
+});
