@@ -54,7 +54,20 @@ fn grammar_documentation_relative_links_resolve() {
 }
 
 fn repository_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    // `docs/` is shared across language implementations and lives at the
+    // repository root, while the Rust crate now lives under `rust/`. Walk up
+    // from the crate manifest directory until we find the directory that owns
+    // the shared `docs/grammar` tree. This keeps the test correct for both the
+    // multi-language layout (`rust/Cargo.toml`) and a single-language layout.
+    let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    loop {
+        if dir.join("docs/grammar").is_dir() {
+            return dir;
+        }
+        if !dir.pop() {
+            return PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        }
+    }
 }
 
 fn markdown_links(markdown: &str) -> Vec<String> {

@@ -198,7 +198,7 @@ fn bnf_unrepresentable_constructs_return_documented_errors() {
 
 #[test]
 fn fidelity_doc_matrix_matches_generated_matrix() {
-    let doc = std::fs::read_to_string("docs/grammar/fidelity.md")
+    let doc = std::fs::read_to_string(fidelity_doc_path())
         .expect("grammar fidelity documentation should exist");
     let doc = doc.replace("\r\n", "\n");
 
@@ -210,6 +210,21 @@ fn fidelity_doc_matrix_matches_generated_matrix() {
         doc.contains(&generated_fallback_table()),
         "committed fidelity doc should contain the generated fallback table"
     );
+}
+
+fn fidelity_doc_path() -> std::path::PathBuf {
+    // `docs/` is shared across languages and lives at the repository root, while
+    // the Rust crate now lives under `rust/`. Resolve the doc relative to the
+    // first ancestor of the crate manifest that owns the shared `docs/grammar`.
+    let mut dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    loop {
+        if dir.join("docs/grammar").is_dir() {
+            return dir.join("docs/grammar/fidelity.md");
+        }
+        if !dir.pop() {
+            return std::path::PathBuf::from("docs/grammar/fidelity.md");
+        }
+    }
 }
 
 fn generated_matrix() -> String {

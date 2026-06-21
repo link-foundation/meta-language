@@ -95,28 +95,36 @@ fn get_cargo_toml_path(rust_root: &str) -> String {
     }
 }
 
-fn get_cargo_toml_diff(cargo_toml_path: &str) -> String {
-    let base_ref = env::var("GITHUB_BASE_REF").unwrap_or_else(|_| "main".to_string());
-
-    // Ensure we have the base branch
-    exec_ignore_error("git", &["fetch", "origin", &base_ref, "--depth=1"]);
-
-    // Get the diff for Cargo.toml
-    exec(
-        "git",
-        &["diff", &format!("origin/{}...HEAD", base_ref), "--", cargo_toml_path],
-    )
+/// Extract the `[package]` version value from raw `Cargo.toml` text.
+///
+/// Anchored at the start of a line so inline `{ version = "..." }` dependency
+/// specifications are ignored and only the package version line matches.
+fn extract_version(content: &str) -> Option<String> {
+    if content.is_empty() {
+        return None;
+    }
+    let pattern = Regex::new(r#"(?m)^version\s*=\s*"([^"]+)""#).unwrap();
+    pattern
+        .captures(content)
+        .map(|caps| caps[1].to_string())
 }
 
-fn has_version_change(diff: &str) -> bool {
-    if diff.is_empty() {
-        return false;
+/// Read the package version on the base branch.
+///
+/// The Rust crate moved from the repository root into `rust/`, so a single PR
+/// can legitimately have its manifest at a different path than the base branch.
+/// We therefore look for the manifest at the new path first and fall back to the
+/// historical root path, comparing version *values* rather than diff lines so a
+/// pure file move is not mistaken for a manual version bump.
+fn base_version(base_ref: &str, cargo_toml_path: &str) -> Option<String> {
+    let candidates = [cargo_toml_path, "rust/Cargo.toml", "Cargo.toml"];
+    for path in candidates {
+        let content = exec("git", &["show", &format!("origin/{}:{}", base_ref, path)]);
+        if let Some(version) = extract_version(&content) {
+            return Some(version);
+        }
     }
-
-    // Look for changes to the version line
-    // Match lines that start with + or - followed by version = "..."
-    let version_change_pattern = Regex::new(r#"(?m)^[+-]version\s*=\s*""#).unwrap();
-    version_change_pattern.is_match(diff)
+    None
 }
 
 fn main() {
@@ -134,30 +142,36 @@ fn main() {
         exit(0);
     }
 
-    // Get and check the diff
     let rust_root = get_rust_root();
     let cargo_toml_path = get_cargo_toml_path(&rust_root);
-    let diff = get_cargo_toml_diff(&cargo_toml_path);
+    let base_ref = env::var("GITHUB_BASE_REF").unwrap_or_else(|_| "main".to_string());
 
-    if diff.is_empty() {
-        println!("No changes to Cargo.toml detected.");
-        println!("Version check passed.");
-        exit(0);
+    // Ensure we have the base branch available for `git show`.
+    exec_ignore_error("git", &["fetch", "origin", &base_ref, "--depth=1"]);
+
+    let head_content = std::fs::read_to_string(&cargo_toml_path).unwrap_or_default();
+    let head_version = extract_version(&head_content);
+    let base = base_version(&base_ref, &cargo_toml_path);
+
+    match (base, head_version) {
+        (Some(base_version), Some(head_version)) if base_version != head_version => {
+            eprintln!("Error: Manual version change detected in Cargo.toml!\n");
+            eprintln!(
+                "  base ({}): {}\n  head:       {}\n",
+                base_ref, base_version, head_version
+            );
+            eprintln!("Versions are managed automatically by the CI/CD pipeline.");
+            eprintln!("Please do not modify the version field directly.\n");
+            eprintln!("To trigger a release, add a changelog fragment to changelog.d/");
+            eprintln!("with the appropriate bump type (major, minor, or patch).\n");
+            eprintln!("See changelog.d/README.md for more information.\n");
+            eprintln!("If you need to undo your version change, run:");
+            eprintln!("  git checkout origin/{} -- {}", base_ref, cargo_toml_path);
+            exit(1);
+        }
+        _ => {
+            println!("Package version field was not changed.");
+            println!("Version check passed.");
+        }
     }
-
-    // Check for version changes
-    if has_version_change(&diff) {
-        eprintln!("Error: Manual version change detected in Cargo.toml!\n");
-        eprintln!("Versions are managed automatically by the CI/CD pipeline.");
-        eprintln!("Please do not modify the version field directly.\n");
-        eprintln!("To trigger a release, add a changelog fragment to changelog.d/");
-        eprintln!("with the appropriate bump type (major, minor, or patch).\n");
-        eprintln!("See changelog.d/README.md for more information.\n");
-        eprintln!("If you need to undo your version change, run:");
-        eprintln!("  git checkout origin/main -- Cargo.toml");
-        exit(1);
-    }
-
-    println!("Cargo.toml was modified but version field was not changed.");
-    println!("Version check passed.");
 }

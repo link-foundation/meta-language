@@ -1,0 +1,80 @@
+{
+  "_id": "links-notation@0.13.0",
+  "_rev": "6-497f1cdd4b0dbbdaafeb30a0d968e02d",
+  "name": "links-notation",
+  "dist-tags": {
+    "latest": "0.13.0"
+  },
+  "versions": [
+    "0.8.0",
+    "0.9.0",
+    "0.11.0",
+    "0.11.2",
+    "0.12.0",
+    "0.13.0"
+  ],
+  "time": {
+    "created": "2025-10-12T08:56:14.060Z",
+    "modified": "2025-12-01T20:25:28.516Z",
+    "0.8.0": "2025-10-12T08:56:14.431Z",
+    "0.9.0": "2025-10-18T16:30:24.795Z",
+    "0.11.0": "2025-10-18T18:05:52.340Z",
+    "0.11.2": "2025-10-31T16:23:07.853Z",
+    "0.12.0": "2025-11-18T10:14:41.373Z",
+    "0.13.0": "2025-12-01T20:25:28.337Z"
+  },
+  "license": "Unlicense",
+  "keywords": [
+    "lino",
+    "parser",
+    "protocol",
+    "links"
+  ],
+  "description": "Links Notation parser for JavaScript",
+  "maintainers": [
+    "konard <drakonard@gmail.com>"
+  ],
+  "readmeFilename": "README.ru.md",
+  "_contentLength": 14252,
+  "version": "0.13.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "bun run build:grammar && bun build src/index.js --outdir=dist --target=node",
+    "build:grammar": "peggy --format es -o src/parser-generated.js src/grammar.pegjs",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix"
+  },
+  "author": "",
+  "devDependencies": {
+    "bun-types": "^1.2.19",
+    "eslint": "^8.56.0",
+    "peggy": "^5.0.6"
+  },
+  "dependencies": {},
+  "gitHead": "792ef628874f1b614c144470d6cc3e1274c593b0",
+  "_nodeVersion": "20.19.5",
+  "_npmVersion": "10.8.2",
+  "dist": {
+    "integrity": "sha512-52FoUAVOhjfC23bdvrxv6b4Eosp02WeM3qTN9Rsb3ouPof5YVQ5fOMlRPMJmKMmdseVzEnewNLFq3lADRpWTFg==",
+    "shasum": "eb42ad9483e46f8fa865f43741438558f66ec8bb",
+    "tarball": "https://registry.npmjs.org/links-notation/-/links-notation-0.13.0.tgz",
+    "fileCount": 32,
+    "unpackedSize": 227215,
+    "signatures": [
+      {
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+        "sig": "MEQCIEKrG7yXaDCTEKae7liyTm/hoAgukAL+lJqg9WEvOAivAiBuPEcKY3abVFoILL7lSzapFrBPKhxZarvWmjsJBTYtSw=="
+      }
+    ]
+  },
+  "_npmUser": "konard <drakonard@gmail.com>",
+  "directories": {},
+  "_npmOperationalInternal": {
+    "host": "s3://npm-registry-packages-npm-production",
+    "tmp": "tmp/links-notation_0.13.0_1764620728136_0.3108114712252503"
+  },
+  "_hasShrinkwrap": false
+}

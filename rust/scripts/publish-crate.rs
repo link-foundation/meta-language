@@ -264,7 +264,7 @@ fn main() {
         // A rate-limit is a deferred, automatically-recoverable outcome: exit
         // successfully so the release job does not go red over a transient
         // crates.io throttle. Downstream release-artifact steps are gated on a
-        // successful publish (see .github/workflows/release.yml), so a deferred
+        // successful publish (see .github/workflows/rust.yml), so a deferred
         // upload never produces partial Docker/GitHub release artifacts.
         if kind.is_deferred() {
             return;

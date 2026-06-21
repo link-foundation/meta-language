@@ -60,5 +60,5 @@ visible as a documented fallback, diagnostic, or explicit IR approximation.
 - [Authoring](authoring.md) for the native surface syntax.
 - [Translation](translation.md) for concept-aligned conversion between
   notations.
-- [`src/grammar/mod.rs`](../../src/grammar/mod.rs) for the `GrammarFormat`
+- [`src/grammar/mod.rs`](../../rust/src/grammar/mod.rs) for the `GrammarFormat`
   variants shared by importers and emitters.

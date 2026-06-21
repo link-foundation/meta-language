@@ -1,0 +1,182 @@
+{
+  "_id": "peggy@5.1.0",
+  "_rev": "36-24e2353841b1630eb4303451606b357d",
+  "name": "peggy",
+  "dist-tags": {
+    "pre": "4.1.0-pre.2",
+    "latest": "5.1.0"
+  },
+  "versions": [
+    "0.9.0",
+    "1.0.0-rc.0",
+    "1.0.0-rc.1",
+    "1.0.0-rc.2",
+    "1.0.0",
+    "1.1.0",
+    "1.2.0",
+    "2.0.0",
+    "2.0.1",
+    "3.0.0",
+    "3.0.1",
+    "3.0.2",
+    "4.0.0",
+    "4.0.1",
+    "4.0.2",
+    "4.0.3",
+    "4.1.0-pre.0",
+    "4.1.0-pre.1",
+    "4.1.0-pre.2",
+    "4.1.1",
+    "4.2.0",
+    "5.0.0",
+    "5.0.1",
+    "5.0.2",
+    "5.0.3",
+    "5.0.4",
+    "5.0.5",
+    "5.0.6",
+    "5.1.0"
+  ],
+  "time": {
+    "created": "2012-04-10T06:22:51.049Z",
+    "modified": "2026-03-01T19:09:51.236Z",
+    "0.9.0": "2012-04-10T06:22:51.568Z",
+    "1.0.0-rc.0": "2021-04-15T21:53:59.670Z",
+    "1.0.0-rc.1": "2021-04-16T07:08:13.968Z",
+    "1.0.0-rc.2": "2021-04-16T17:19:24.893Z",
+    "1.0.0": "2021-04-16T19:05:14.003Z",
+    "1.1.0": "2021-04-22T20:09:55.547Z",
+    "1.2.0": "2021-06-02T22:21:32.270Z",
+    "2.0.0": "2022-05-28T17:15:32.611Z",
+    "2.0.1": "2022-06-01T17:12:37.887Z",
+    "3.0.0": "2023-02-21T23:47:20.011Z",
+    "3.0.1": "2023-03-05T16:47:19.676Z",
+    "3.0.2": "2023-03-21T18:44:30.988Z",
+    "4.0.0": "2024-02-13T16:22:29.476Z",
+    "4.0.1": "2024-02-23T20:44:26.555Z",
+    "4.0.2": "2024-02-26T16:11:33.891Z",
+    "4.0.3": "2024-06-19T21:53:01.149Z",
+    "4.1.0-pre.0": "2024-10-03T05:29:36.123Z",
+    "4.1.0-pre.1": "2024-10-03T15:12:03.254Z",
+    "4.1.0-pre.2": "2024-10-03T19:50:49.355Z",
+    "4.1.1": "2024-10-03T20:08:48.504Z",
+    "4.2.0": "2024-11-19T18:29:31.240Z",
+    "5.0.0": "2025-05-03T17:16:58.245Z",
+    "5.0.1": "2025-05-07T17:33:23.886Z",
+    "5.0.2": "2025-05-07T18:18:49.273Z",
+    "5.0.3": "2025-05-30T19:04:57.796Z",
+    "5.0.4": "2025-06-20T23:05:56.799Z",
+    "5.0.5": "2025-07-10T18:08:19.739Z",
+    "5.0.6": "2025-08-05T19:23:22.742Z",
+    "5.1.0": "2026-03-01T19:09:50.922Z"
+  },
+  "bugs": {
+    "url": "https://github.com/peggyjs/peggy/issues"
+  },
+  "author": "David Majda <david@majda.cz> (https://majda.cz/)",
+  "license": "MIT",
+  "homepage": "https://peggyjs.org/",
+  "keywords": [
+    "grammar",
+    "parser generator",
+    "PEG",
+    "PEG.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peggyjs/peggy.git"
+  },
+  "description": "Parser generator for JavaScript",
+  "contributors": [
+    "David Majda <david@majda.cz> (https://github.com/dmajda/)",
+    "Joe Hildebrand <joe-github@cursive.net> (https://github.com/hildjj/)",
+    "Adrian Sampson <adrian@radbox.org> (https://github.com/sampsyo/)",
+    "Ali Tavakoli <ali.tavakoli@gmail.com> (https://github.com/atavakoli/)",
+    "Almad <bugs@almad.net> (https://github.com/almad/)",
+    "Andrei Neculau <andrei.neculau@gmail.com> (https://github.com/andreineculau/)",
+    "Arlo Breault <arlolra@gmail.com> (https://github.com/arlolra/)",
+    "Balázs Kutil <bkutil@users.noreply.github.com> (https://github.com/bkutil/)",
+    "Caleb Hearon <crh0872@gmail.com> (https://github.com/chearon/)",
+    "Cam McHenry <hello@camchenry.com> (https://github.com/camchenry)",
+    "Charles Pick <charles@codemix.com> (https://github.com/phpnode/)",
+    "Christian Flach <github@christianflach.de> (https://github.com/cmfcmf/)",
+    "Dan Selman <danscode@selman.org> (https://github.com/dselman)",
+    "David Berneda <david@steema.com>",
+    "David Sharer <git@davidsharer.com> (https://github.com/david-sharer/)",
+    "Futago-za Ryuu <futagoza.ryuu@gmail.com> (https://github.com/futagoza/)",
+    "Jakub Vrana <jakub@vrana.cz> (https://github.com/vrana/)",
+    "Jason Davies <jason@jasondavies.com> (https://github.com/jasondavies/)",
+    "Joseph Frazier <joseph@onsip.com> (https://github.com/joseph-onsip/)",
+    "Julian Aubourg <j@ubourg.net> (https://github.com/jaubourg)",
+    "Justin Blank <justin.blank@gmail.com> (https://github.com/hyperpape/)",
+    "Marcel Bolten <github@marcelbolten.de> (https://github.com/MarcelBolten/)",
+    "Marco Baumgartl <marco.baumgartl@boerse-go.de>",
+    "Mingun <alexander_sergey@mail.ru> (https://github.com/Mingun/)",
+    "Rene Saarsoo <nene@triin.net> (https://github.com/nene/)",
+    "Tony Lukasavage <anthony.lukasavage@gmail.com> (https://github.com/tonylukasavage/)",
+    "chunpu <fengtong@mail.ustc.edu.cn> (https://github.com/chunpu/)",
+    "fatfisz <fatfisz@gmail.com> (https://github.com/fatfisz/)",
+    "fpirsch <fpirsch@free.fr> (https://github.com/fpirsch/)",
+    "markw65 <mark@replayroutes.com> (https://github.com/markw65/)",
+    "Andy (https://github.com/AndrewRayCode)",
+    "Kristian Dupont <kristian@kristiandupont.com> (https://github.com/kristiandupont/)",
+    "Lumi Pakkanen <lumi.pakkanen@gmail.com> (https://github.com/frostburn/)",
+    "Steven Spungin <steven@spungin.tv> (https://github.com/flamenco/)",
+    "XenoS (https://github.com/XenoS-ITA)",
+    "Samuel Bronson (https://github.com/SamB)",
+    "knoan (https://github.com/knoan)"
+  ],
+  "maintainers": [
+    "clintjhill <clint.hill@gmail.com>",
+    "hildjj <joe-github@cursive.net>",
+    "charlespick <charles@codemix.com>"
+  ],
+  "readmeFilename": "README.md",
+  "_contentLength": 176334,
+  "version": "5.1.0",
+  "main": "lib/peg.js",
+  "browser": "browser/peggy.min.js",
+  "unpkg": "browser/peggy.min.js",
+  "jsdelivr": "browser/peggy.min.js",
+  "types": "lib/peg.d.ts",
+  "bin": {
+    "peggy": "bin/peggy.js"
+  },
+  "dependencies": {
+    "@peggyjs/from-mem": "3.1.3",
+    "commander": "^14.0.3",
+    "source-map-generator": "2.0.6"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "gitHead": "e753b7ec4f1e10e8fb9162e268226e2214a875c6",
+  "_nodeVersion": "24.13.1",
+  "_npmVersion": "11.8.0",
+  "dist": {
+    "integrity": "sha512-IEo5aYRZ2kXH4Qby06cjtL114PZnwLoTiA41vUmg2vPZgANn+c87m5BUurhuDr5/cu758ZlpgsAfBVx+hhO5+w==",
+    "shasum": "8e2a681128cf776648417f60394a40b4a712f503",
+    "tarball": "https://registry.npmjs.org/peggy/-/peggy-5.1.0.tgz",
+    "fileCount": 44,
+    "unpackedSize": 592273,
+    "attestations": {
+      "url": "https://registry.npmjs.org/-/npm/v1/attestations/peggy@5.1.0",
+      "provenance": {
+        "predicateType": "https://slsa.dev/provenance/v1"
+      }
+    },
+    "signatures": [
+      {
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+        "sig": "MEUCIFj8h/eS+KMGKPy2hIcyQpMq9gank9Kkurwl9OJXaciXAiEA8Ghmzd3vW5UEE5PCoQifvmS0hE9hEC4Funnmg0IoIq8="
+      }
+    ]
+  },
+  "_npmUser": "GitHub Actions <npm-oidc-no-reply@github.com>",
+  "directories": {},
+  "_npmOperationalInternal": {
+    "host": "s3://npm-registry-packages-npm-production",
+    "tmp": "tmp/peggy_5.1.0_1772392190691_0.33298941496296086"
+  },
+  "_hasShrinkwrap": false
+}

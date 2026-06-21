@@ -10,7 +10,7 @@ Authoring starts with the meta-language grammar surface and lowers into the
 [`Grammar` IR](architecture.md). The current public entry points are
 `parse_grammar_surface`, `write_grammar_surface`, `grammar_to_lino`, and
 `grammar_from_lino` in
-[`src/grammar/surface/mod.rs`](../../src/grammar/surface/mod.rs).
+[`src/grammar/surface/mod.rs`](../../rust/src/grammar/surface/mod.rs).
 
 ## Minimal example
 
@@ -24,7 +24,7 @@ Authoring starts with the meta-language grammar surface and lowers into the
 Parsing that surface text produces a `Grammar` with `GrammarFormat::MetaLanguage`
 and the first rule as the default start rule. Writing the grammar returns
 canonical surface text. See
-[`tests/unit/grammar_surface.rs`](../../tests/unit/grammar_surface.rs) for the
+[`tests/unit/grammar_surface.rs`](../../rust/tests/unit/grammar_surface.rs) for the
 executable coverage of each surface form.
 
 ## Surface forms
@@ -51,7 +51,7 @@ executable coverage of each surface form.
 The current parser rejects malformed skeletons, failed lowerings, and undefined
 non-terminal references through `GrammarSurfaceError`. Programmatic grammars can
 also inspect `Grammar::undefined_nonterminals()` from
-[`src/grammar/mod.rs`](../../src/grammar/mod.rs).
+[`src/grammar/mod.rs`](../../rust/src/grammar/mod.rs).
 
 The richer authoring validator planned by
 [E4](../case-studies/issue-93/proposed-issues/E4-grammar-authoring-ergonomics.md)

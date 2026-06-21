@@ -6,7 +6,7 @@ architecture anchor for [A1](../case-studies/issue-93/proposed-issues/A1-grammar
 and [C6](../case-studies/issue-93/proposed-issues/C6-concept-aligned-translation.md).
 
 The grammar layer uses one intermediate representation for every grammar-facing
-feature. The core types live in [`src/grammar/mod.rs`](../../src/grammar/mod.rs):
+feature. The core types live in [`src/grammar/mod.rs`](../../rust/src/grammar/mod.rs):
 
 | Type | Role |
 | --- | --- |
@@ -18,7 +18,7 @@ feature. The core types live in [`src/grammar/mod.rs`](../../src/grammar/mod.rs)
 
 ## Minimal example
 
-The rustdoc example on [`src/grammar/mod.rs`](../../src/grammar/mod.rs) is the
+The rustdoc example on [`src/grammar/mod.rs`](../../rust/src/grammar/mod.rs) is the
 doctested reference for building a grammar, encoding it as links, and decoding it
 back. The invariant is:
 
@@ -32,14 +32,14 @@ constructors. Then pass the value through `LinksEncoder` and `LinksDecoder`.
 ## Grammar as links
 
 A grammar is data in the network. The links codec in
-[`src/grammar/links.rs`](../../src/grammar/links.rs) implements `ToLinks` and
+[`src/grammar/links.rs`](../../rust/src/grammar/links.rs) implements `ToLinks` and
 `FromLinks` for `Grammar`. Each encoded grammar node is inserted with
-`LinkType::Grammar` from [`src/link_network.rs`](../../src/link_network.rs) and a
+`LinkType::Grammar` from [`src/link_network.rs`](../../rust/src/link_network.rs) and a
 stable term such as `grammar::grammar`, `grammar::rule`, or
 `grammar::expr::sequence`.
 
 The self-description root in
-[`src/self_description.rs`](../../src/self_description.rs) declares the
+[`src/self_description.rs`](../../rust/src/self_description.rs) declares the
 `grammar` root as `LinkType::Grammar` with references to `language` and
 `relation link`. That makes grammar structure part of the same self-describing
 network as links, references, concepts, fields, regions, and objects.
@@ -83,7 +83,7 @@ back end comparable.
 
 ## Concept alignment
 
-Grammar concepts in [`src/grammar/concepts.rs`](../../src/grammar/concepts.rs)
+Grammar concepts in [`src/grammar/concepts.rs`](../../rust/src/grammar/concepts.rs)
 name constructs such as rules, terminals, non-terminals, sequences, choices, and
 repetition. [A3](../case-studies/issue-93/proposed-issues/A3-grammar-concept-ontology.md)
 owns the full ontology. [C6](../case-studies/issue-93/proposed-issues/C6-concept-aligned-translation.md)

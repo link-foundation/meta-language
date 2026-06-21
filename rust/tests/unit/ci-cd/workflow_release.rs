@@ -1,12 +1,22 @@
 use std::fs;
 
 fn release_workflow() -> String {
-    fs::read_to_string(format!(
-        "{}/.github/workflows/release.yml",
-        env!("CARGO_MANIFEST_DIR")
-    ))
-    .unwrap()
-    .replace("\r\n", "\n")
+    // GitHub Actions workflows must live at `<repo>/.github/workflows`, which is
+    // shared across language implementations and stays at the repository root
+    // even though the Rust crate now lives under `rust/`. Walk up from the crate
+    // manifest directory to find the workflow regardless of layout. The Rust
+    // CI/CD pipeline (formerly `release.yml`) is now `rust.yml`.
+    let mut dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    loop {
+        let candidate = dir.join(".github/workflows/rust.yml");
+        if candidate.is_file() {
+            return fs::read_to_string(candidate).unwrap().replace("\r\n", "\n");
+        }
+        assert!(
+            dir.pop(),
+            "could not locate .github/workflows/rust.yml from the crate manifest"
+        );
+    }
 }
 
 fn job_block<'a>(workflow: &'a str, job_name: &str) -> &'a str {

@@ -12,7 +12,7 @@ how it fits into the rest of the self-describing network.
 
 At the center is the [grammar IR](architecture.md): `Grammar`,
 `GrammarRule`, `GrammarExpr`, `RuleKind`, and `GrammarFormat` in
-[`src/grammar/mod.rs`](../../src/grammar/mod.rs). The IR lowers to
+[`src/grammar/mod.rs`](../../rust/src/grammar/mod.rs). The IR lowers to
 `LinkType::Grammar` links through the same `ToLinks` and `FromLinks` codec used
 by other structured objects, so a grammar is not side data. It is part of the
 network.
@@ -53,16 +53,16 @@ can be promoted to rustdoc doctests.
 ## Current entry points
 
 - Build grammar data with `Grammar::builder()` and `Grammar::expr()` in
-  [`src/grammar/mod.rs`](../../src/grammar/mod.rs).
+  [`src/grammar/mod.rs`](../../rust/src/grammar/mod.rs).
 - Encode and decode the IR as links with `ToLinks`, `FromLinks`,
   `LinksEncoder`, and `LinksDecoder`.
 - Parse and write the native grammar surface with `parse_grammar_surface` and
   `write_grammar_surface` from
-  [`src/grammar/surface/mod.rs`](../../src/grammar/surface/mod.rs).
+  [`src/grammar/surface/mod.rs`](../../rust/src/grammar/surface/mod.rs).
 - Convert grammar links to and from LiNo with `grammar_to_lino` and
   `grammar_from_lino`.
 - Align grammar constructs with concepts using
-  [`src/grammar/concepts.rs`](../../src/grammar/concepts.rs).
+  [`src/grammar/concepts.rs`](../../rust/src/grammar/concepts.rs).
 
 See [architecture](architecture.md) first when extending the subsystem, then
 follow the stage page for the boundary you are implementing.

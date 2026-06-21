@@ -36,15 +36,20 @@ fn main() {
     let assemble_only = env::args().any(|arg| arg == "--assemble-only");
 
     let root = repo_root();
+    let crate_dir = crate_root(&root);
+    // The assembled site is published from the repository root so the shared
+    // `docs/site` landing page can live alongside both language implementations.
     let site = root.join("_site");
-    let target_doc = root.join("target/doc");
-    let web_pkg = root.join("web/pkg");
+    // rustdoc and the WebAssembly demo are produced by the Rust crate, which in
+    // the multi-language layout lives under `rust/`.
+    let target_doc = crate_dir.join("target/doc");
+    let web_pkg = crate_dir.join("web/pkg");
 
     if !assemble_only {
         run(
             "cargo",
             &["doc", "--no-deps", "--all-features"],
-            &root,
+            &crate_dir,
         );
         run(
             "wasm-pack",
@@ -56,7 +61,7 @@ fn main() {
                 "--out-dir",
                 "pkg",
             ],
-            &root.join("web"),
+            &crate_dir.join("web"),
         );
     }
 
@@ -98,17 +103,31 @@ fn main() {
     println!("  /api/          -> rustdoc (redirects to /api/{CRATE_DOC_DIR}/)");
 }
 
-/// Locate the repository root (the directory containing `Cargo.toml`).
+/// Locate the repository root (the directory owning the shared `docs/site`
+/// landing page). This is language-agnostic: in the multi-language layout the
+/// Rust crate lives under `rust/` but `docs/` remains at the repository root.
 fn repo_root() -> PathBuf {
     let mut dir = env::current_dir().expect("current dir");
     loop {
-        if dir.join("Cargo.toml").exists() && dir.join("docs/site").exists() {
+        if dir.join("docs/site").exists() {
             return dir;
         }
         if !dir.pop() {
             // Fall back to current dir; later checks will produce a clear error.
             return env::current_dir().expect("current dir");
         }
+    }
+}
+
+/// Locate the Rust crate directory relative to the repository root. The crate
+/// lives under `rust/` in the multi-language layout and at the root in a
+/// single-language layout.
+fn crate_root(repo: &Path) -> PathBuf {
+    let nested = repo.join("rust");
+    if nested.join("Cargo.toml").is_file() {
+        nested
+    } else {
+        repo.to_path_buf()
     }
 }
 

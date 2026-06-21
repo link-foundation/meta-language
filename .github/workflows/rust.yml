@@ -1,11 +1,21 @@
-name: CI/CD Pipeline
+name: Rust
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'rust/**'
+      - 'parity/**'
+      - 'docs/**'
+      - '.github/workflows/rust.yml'
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - 'rust/**'
+      - 'parity/**'
+      - 'docs/**'
+      - '.github/workflows/rust.yml'
   workflow_dispatch:
     inputs:
       release_mode:
@@ -66,11 +76,13 @@ jobs:
       - name: Install rust-script
         run: cargo install rust-script
 
+      # Run from the repository root so the script's `git diff` output (which is
+      # always repository-root relative) matches the multi-language path prefixes.
       - name: Detect changes
         id: changes
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-        run: rust-script scripts/detect-code-changes.rs
+        run: rust-script rust/scripts/detect-code-changes.rs
 
   # === CHANGELOG CHECK - only runs on PRs with code changes ===
   # Docs-only PRs (./docs folder, markdown files) don't require changelog fragments
@@ -91,10 +103,11 @@ jobs:
       - name: Install rust-script
         run: cargo install rust-script
 
+      # Run from the repository root so `git diff` paths match `rust/changelog.d/`.
       - name: Check for changelog fragments
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
-        run: rust-script scripts/check-changelog-fragment.rs
+        run: rust-script rust/scripts/check-changelog-fragment.rs
 
   # === VERSION CHECK - prevents manual version modification in PRs ===
   # This ensures versions are only modified by the automated release pipeline
@@ -114,12 +127,13 @@ jobs:
       - name: Install rust-script
         run: cargo install rust-script
 
+      # Run from the repository root so `git diff` paths match `rust/Cargo.toml`.
       - name: Check for manual version changes
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_HEAD_REF: ${{ github.head_ref }}
           GITHUB_BASE_REF: ${{ github.base_ref }}
-        run: rust-script scripts/check-version-modification.rs
+        run: rust-script rust/scripts/check-version-modification.rs
 
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run
@@ -129,6 +143,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [detect-changes]
+    defaults:
+      run:
+        working-directory: rust
     # Note: always() is required because detect-changes is skipped on workflow_dispatch,
     # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
     # See: https://github.com/actions/runner/issues/491
@@ -152,13 +169,18 @@ jobs:
       - name: Install rust-script
         run: cargo install rust-script
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
       - name: Cache cargo registry
         uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
+            rust/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
@@ -175,6 +197,12 @@ jobs:
       - name: Check file size limit
         run: rust-script scripts/check-file-size.rs
 
+      # Enforce the Rust <-> JavaScript feature parity manifest. The Rust pipeline
+      # fails if a feature is not mirrored in both languages (see ../parity).
+      - name: Check Rust/JavaScript parity manifest
+        working-directory: ${{ github.workspace }}
+        run: node js/scripts/check-js-rust-parity.mjs --manifest-only
+
   # === TEST ===
   # Test runs independently of changelog check
   test:
@@ -182,6 +210,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     needs: [detect-changes, changelog]
+    defaults:
+      run:
+        working-directory: rust
     # Run if: push event, OR changelog succeeded, OR changelog was skipped (docs-only PR)
     if: always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
     strategy:
@@ -251,7 +282,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
+            rust/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
@@ -269,6 +300,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [detect-changes]
+    defaults:
+      run:
+        working-directory: rust
     if: |
       always() && !cancelled() && (
         github.event_name == 'push' ||
@@ -290,7 +324,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
+            rust/target
           key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-coverage-
@@ -304,7 +338,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: lcov.info
+          files: rust/lcov.info
           fail_ci_if_error: false
 
   # === BUILD ===
@@ -314,6 +348,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [lint, test]
+    defaults:
+      run:
+        working-directory: rust
     if: always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success'
     steps:
       - uses: actions/checkout@v6
@@ -330,7 +367,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
+            rust/target
           key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-
@@ -350,6 +387,9 @@ jobs:
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
+    defaults:
+      run:
+        working-directory: rust
     # Note: always() ensures consistent behavior with other jobs that depend on jobs using always().
     if: |
       always() && !cancelled() &&
@@ -432,6 +472,7 @@ jobs:
             steps.publish-crate.outputs.publish_result == 'success'
           )
         id: dockerhub
+        working-directory: ${{ github.workspace }}
         run: |
           disable_dockerhub() {
             echo "enabled=false" >> "$GITHUB_OUTPUT"
@@ -519,6 +560,9 @@ jobs:
   manual-release:
     name: Instant Release
     needs: [lint, test, build]
+    defaults:
+      run:
+        working-directory: rust
     # Note: always() is required to evaluate the condition when dependencies use always().
     # The build job ensures lint and test passed before this job runs.
     if: |
@@ -587,6 +631,7 @@ jobs:
             steps.version.outputs.already_released == 'true') &&
           steps.publish-crate.outputs.publish_result == 'success'
         id: dockerhub
+        working-directory: ${{ github.workspace }}
         run: |
           disable_dockerhub() {
             echo "enabled=false" >> "$GITHUB_OUTPUT"
@@ -668,6 +713,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'changelog-pr'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: rust
     permissions:
       contents: write
       pull-requests: write
@@ -713,9 +761,9 @@ jobs:
 
   # === DEPLOY WEBSITE ===
   # Deploy the project website to GitHub Pages after a successful package build.
-  # The website is assembled by scripts/build-site.rs into the `_site/` tree.
+  # The website is assembled by rust/scripts/build-site.rs into the `_site/` tree.
   #   /          -> landing page (description + interactive demo + docs links)
-  #   /demo/pkg/ -> WebAssembly demo built from the web/ crate
+  #   /demo/pkg/ -> WebAssembly demo built from the rust/web/ crate
   #   /api/      -> rustdoc, with a root redirect index.html
   #
   # Deploying the assembled `_site/` (instead of raw `target/doc`) fixes issue
@@ -769,13 +817,15 @@ jobs:
           tool: wasm-pack
 
       - name: Build documentation
+        working-directory: rust
         run: cargo doc --no-deps --all-features
 
       - name: Build WebAssembly demo
-        working-directory: web
+        working-directory: rust/web
         run: wasm-pack build --release --target web --out-dir pkg
 
       - name: Assemble website
+        working-directory: rust
         run: rust-script scripts/build-site.rs --assemble-only
 
       - name: List built site

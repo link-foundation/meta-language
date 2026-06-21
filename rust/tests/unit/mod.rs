@@ -42,6 +42,7 @@ mod links_notation;
 mod lino_serialization;
 mod natural_language_grammar;
 mod parity_corpora;
+mod parity_manifest;
 mod parser_registry;
 mod pdf_document;
 mod query_algebra;

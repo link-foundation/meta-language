@@ -12,7 +12,7 @@ should let a `Grammar` become a parser registered in `ParserRegistry`.
 
 ## Current CLI
 
-The current CLI in [`src/main.rs`](../../src/main.rs) exposes:
+The current CLI in [`src/main.rs`](../../rust/src/main.rs) exposes:
 
 ```bash
 cargo run -- describe
@@ -53,7 +53,7 @@ target formats are reported on stderr with a non-zero exit status.
 
 ## Runtime parser registration
 
-[`src/parser_registry.rs`](../../src/parser_registry.rs) already provides
+[`src/parser_registry.rs`](../../rust/src/parser_registry.rs) already provides
 `ParserRegistry`, `LanguageParser`, and `LinkNetwork::parse_with_registry`.
 Today, callers can register hand-written parsers that shadow built-in dispatch.
 [E2](../case-studies/issue-93/proposed-issues/E2-inferred-grammar-runtime-parser.md)
