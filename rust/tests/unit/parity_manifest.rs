@@ -169,9 +169,9 @@ fn every_public_rust_module_is_classified_in_the_manifest() {
                 "Rust module `{module}` is a `pub mod` in lib.rs but is not classified in manifest.rustModules"
             )
         });
-        let parity = entry["parity"].as_str().unwrap_or_else(|| {
-            panic!("rustModules.{module}.parity must be a string")
-        });
+        let parity = entry["parity"]
+            .as_str()
+            .unwrap_or_else(|| panic!("rustModules.{module}.parity must be a string"));
         match parity {
             "ported" => {
                 let feature = entry["feature"].as_str().unwrap_or_else(|| {
@@ -200,7 +200,9 @@ fn every_public_rust_module_is_classified_in_the_manifest() {
                     "rustModules.{module} is \"rust-only\" but does not justify it with a reason"
                 );
             }
-            other => panic!("rustModules.{module}.parity must be \"ported\" or \"rust-only\", got {other}"),
+            other => panic!(
+                "rustModules.{module}.parity must be \"ported\" or \"rust-only\", got {other}"
+            ),
         }
     }
 
