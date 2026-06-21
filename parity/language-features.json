@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "issue": 163,
-  "updated": "2026-06-20",
+  "updated": "2026-06-21",
   "operationFamilies": [
     "parse",
     "query",
@@ -207,6 +207,24 @@
         "status": "implemented",
         "evidence": [
           "js/src/network.js",
+          "js/tests/core.test.js"
+        ]
+      }
+    },
+    {
+      "id": "truth-value-semantics",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/semantics.rs",
+          "rust/tests/unit/link_network.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/semantics.js",
           "js/tests/core.test.js"
         ]
       }

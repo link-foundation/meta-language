@@ -16,6 +16,61 @@ export const ApiStyle: Record<string, string | string[]>;
 export const ApiStyleFixtureKind: Record<string, string>;
 export const API_OPERATIONS: ApiOperationEntry[];
 
+export type TruthValueName = 'True' | 'False' | 'Unknown' | 'Both';
+
+export class TruthValue {
+  constructor(value: TruthValueName);
+  static True: TruthValue;
+  static False: TruthValue;
+  static Unknown: TruthValue;
+  static Both: TruthValue;
+  static from(value: TruthValueName | TruthValue): TruthValue;
+  and(other: TruthValueName | TruthValue): TruthValue;
+  or(other: TruthValueName | TruthValue): TruthValue;
+  negate(): TruthValue;
+  equals(other: TruthValueName | TruthValue): boolean;
+  toJSON(): TruthValueName;
+  toString(): TruthValueName;
+}
+
+export class Probability {
+  constructor(basisPoints: number);
+  static ZERO: Probability;
+  static ONE: Probability;
+  static from(value: number | Probability): Probability;
+  static fromBasisPoints(basisPoints: number): Probability | undefined;
+  static from_basis_points(basisPoints: number): Probability | undefined;
+  static fromRatio(numerator: number | bigint, denominator: number | bigint): Probability | undefined;
+  static from_ratio(numerator: number | bigint, denominator: number | bigint): Probability | undefined;
+  basisPoints(): number;
+  basis_points(): number;
+  complement(): Probability;
+  equals(other: number | Probability): boolean;
+  toJSON(): number;
+  valueOf(): number;
+}
+
+export class ProbabilisticTruthValue {
+  constructor(trueProbability: number | Probability);
+  static fromRatio(
+    numerator: number | bigint,
+    denominator: number | bigint,
+  ): ProbabilisticTruthValue | undefined;
+  static from_ratio(
+    numerator: number | bigint,
+    denominator: number | bigint,
+  ): ProbabilisticTruthValue | undefined;
+  trueProbability(): Probability;
+  true_probability(): Probability;
+  falseProbability(): Probability;
+  false_probability(): Probability;
+  negate(): ProbabilisticTruthValue;
+  and(other: number | Probability | ProbabilisticTruthValue): ProbabilisticTruthValue;
+  or(other: number | Probability | ProbabilisticTruthValue): ProbabilisticTruthValue;
+  equals(other: number | Probability | ProbabilisticTruthValue): boolean;
+  toJSON(): { trueProbability: number };
+}
+
 export class LinkId {
   constructor(value: number | string | LinkId);
   static from(value: number | string | LinkId): LinkId;

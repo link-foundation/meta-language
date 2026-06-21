@@ -10,8 +10,11 @@ import {
   LinkQuery,
   LinkType,
   ParseConfiguration,
+  ProbabilisticTruthValue,
+  Probability,
   ReplacementRule,
   SubstitutionRule,
+  TruthValue,
   TranslationRule,
   TranslationRuleSet,
   emitJavascriptParser,
@@ -172,4 +175,32 @@ test('grammar builders emit Peggy grammar and JavaScript parser module text', ()
 
   assert.match(peggy, /Word/);
   assert.match(parserModule, /peggy\.generate/);
+});
+
+test('semantic truth values cover many-valued and paradox cases', () => {
+  assert.equal(TruthValue.True.and(TruthValue.Unknown), TruthValue.Unknown);
+  assert.equal(TruthValue.True.and(TruthValue.Both), TruthValue.Both);
+  assert.equal(TruthValue.False.or(TruthValue.Unknown), TruthValue.Unknown);
+  assert.equal(TruthValue.Both.negate(), TruthValue.Both);
+});
+
+test('probabilistic truth values cover relative-meta-logic probability cases', () => {
+  const half = Probability.fromRatio(1, 2);
+  const likely = Probability.fromBasisPoints(7_500);
+
+  assert.ok(half);
+  assert.ok(likely);
+  assert.equal(Probability.from_ratio(1, 2).basis_points(), 5_000);
+
+  const liar = new ProbabilisticTruthValue(half);
+  const event = new ProbabilisticTruthValue(likely);
+  const aliasedLiar = ProbabilisticTruthValue.from_ratio(1, 2);
+
+  assert.equal(liar.trueProbability().basisPoints(), 5_000);
+  assert.equal(liar.falseProbability().basisPoints(), 5_000);
+  assert.ok(aliasedLiar.equals(liar));
+  assert.ok(liar.negate().equals(liar));
+  assert.equal(event.negate().trueProbability().basisPoints(), 2_500);
+  assert.equal(liar.and(event).trueProbability().basisPoints(), 3_750);
+  assert.equal(liar.or(event).trueProbability().basisPoints(), 8_750);
 });
