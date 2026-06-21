@@ -120,6 +120,99 @@ fn every_feature_row_declares_both_languages_with_existing_rust_evidence() {
     }
 }
 
+/// Extract every `pub mod NAME;` declared at the crate root. The multi-language
+/// layout keeps the crate under `rust/`, so the source lives next to this test's
+/// `CARGO_MANIFEST_DIR`.
+fn public_modules() -> Vec<String> {
+    let lib_rs = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/lib.rs");
+    let text = fs::read_to_string(&lib_rs).expect("rust/src/lib.rs should be readable");
+    text.lines()
+        .filter_map(|line| {
+            let trimmed = line.trim();
+            let rest = trimmed.strip_prefix("pub mod ")?;
+            let name = rest.strip_suffix(';')?;
+            Some(name.trim().to_string())
+        })
+        .collect()
+}
+
+/// The module-level parity gate, mirrored from
+/// `js/scripts/check-js-rust-parity.mjs`. Every `pub mod` exported from the crate
+/// root must be classified in `manifest.rustModules` so the public Rust surface
+/// can never silently grow past the JavaScript port -- the gap that let issue
+/// #166 slip. `ported` rows must name an implemented feature row; `rust-only`
+/// rows must justify themselves; and no classification may outlive its module.
+#[test]
+fn every_public_rust_module_is_classified_in_the_manifest() {
+    let (_root, manifest) = manifest();
+
+    let modules = public_modules();
+    assert!(
+        !modules.is_empty(),
+        "rust/src/lib.rs declared no `pub mod` entries; the module gate cannot run"
+    );
+
+    let rust_modules = manifest["rustModules"]
+        .as_object()
+        .expect("manifest.rustModules must be an object");
+
+    let feature_ids: Vec<&str> = manifest["features"]
+        .as_array()
+        .expect("features array")
+        .iter()
+        .map(|feature| feature["id"].as_str().expect("feature id"))
+        .collect();
+
+    for module in &modules {
+        let entry = rust_modules.get(module).unwrap_or_else(|| {
+            panic!(
+                "Rust module `{module}` is a `pub mod` in lib.rs but is not classified in manifest.rustModules"
+            )
+        });
+        let parity = entry["parity"].as_str().unwrap_or_else(|| {
+            panic!("rustModules.{module}.parity must be a string")
+        });
+        match parity {
+            "ported" => {
+                let feature = entry["feature"].as_str().unwrap_or_else(|| {
+                    panic!("rustModules.{module} is \"ported\" but does not name a feature row")
+                });
+                assert!(
+                    feature_ids.contains(&feature),
+                    "rustModules.{module} references unknown feature `{feature}`"
+                );
+                let feature_row = manifest["features"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .find(|row| row["id"].as_str() == Some(feature))
+                    .unwrap();
+                assert_eq!(
+                    feature_row["javascript"]["status"].as_str(),
+                    Some("implemented"),
+                    "rustModules.{module} is \"ported\" but feature `{feature}` JavaScript status is not implemented"
+                );
+            }
+            "rust-only" => {
+                let reason = entry["reason"].as_str().unwrap_or("");
+                assert!(
+                    !reason.trim().is_empty(),
+                    "rustModules.{module} is \"rust-only\" but does not justify it with a reason"
+                );
+            }
+            other => panic!("rustModules.{module}.parity must be \"ported\" or \"rust-only\", got {other}"),
+        }
+    }
+
+    // No stale classifications: every rustModules key must still be a real pub mod.
+    for key in rust_modules.keys() {
+        assert!(
+            modules.contains(key),
+            "manifest.rustModules lists `{key}`, which is no longer a `pub mod` in rust/src/lib.rs"
+        );
+    }
+}
+
 #[test]
 fn rust_evidence_paths_live_inside_the_rust_or_shared_trees() {
     // Guard against regressions where a manifest evidence path silently drops

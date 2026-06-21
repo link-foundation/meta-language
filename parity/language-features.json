@@ -12,6 +12,55 @@
     "translate",
     "verify"
   ],
+  "rustModulesDoc": "Every `pub mod` in rust/src/lib.rs MUST appear here so the public Rust surface can never silently grow past the JavaScript port (the gap that let issue #166 slip). `parity: ported` rows name the feature row that proves JavaScript carries the module; `parity: rust-only` rows must justify why the module is intentionally Rust-only. The check (js/scripts/check-js-rust-parity.mjs) and the Rust test (rust/tests/unit/parity_manifest.rs) both fail when lib.rs and this map drift apart.",
+  "rustModules": {
+    "access": { "parity": "ported", "feature": "read-only-access" },
+    "api_styles": { "parity": "ported", "feature": "api-style-registry" },
+    "benchmark": {
+      "parity": "rust-only",
+      "reason": "Criterion micro-benchmark harness for the Rust crate; measurement tooling, not a library capability to mirror."
+    },
+    "configuration": { "parity": "ported", "feature": "parse-configuration" },
+    "document_formatting": {
+      "parity": "rust-only",
+      "reason": "DOCX/PDF/markup document import and rendering built on Rust-only binary format parsers (docx_parser, pdf_parser); out of scope for the JavaScript links-network core."
+    },
+    "grammar": { "parity": "ported", "feature": "grammar-peggy-emitter" },
+    "language_parser": {
+      "parity": "rust-only",
+      "reason": "Built-in per-language tokenizers backing LinkNetwork::parse; the JavaScript port parses via the shared links-notation package instead of reimplementing these Rust tokenizers."
+    },
+    "language_profile": { "parity": "ported", "feature": "language-profile" },
+    "link_flags": { "parity": "ported", "feature": "link-flags" },
+    "link_network": { "parity": "ported", "feature": "link-network-core" },
+    "lino_serialization": { "parity": "ported", "feature": "lino-serialization" },
+    "mixed_regions": { "parity": "ported", "feature": "embedded-regions" },
+    "parity": {
+      "parity": "rust-only",
+      "reason": "Rust-side parity fixtures and language-target registry used to drive the crate's own conformance tests; this shared manifest plus the JavaScript checker is the cross-language equivalent."
+    },
+    "parser_registry": {
+      "parity": "rust-only",
+      "reason": "Registry of the Rust built-in language parsers (language_parser); paired with that Rust-only module."
+    },
+    "query": { "parity": "ported", "feature": "sexpression-query" },
+    "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
+    "rust_codec": {
+      "parity": "rust-only",
+      "reason": "Derives a links encoding from native Rust type shapes (Rust reflection/derive); inherently Rust-specific with no JavaScript analogue."
+    },
+    "semantics": { "parity": "ported", "feature": "truth-value-semantics" },
+    "snapshots": { "parity": "ported", "feature": "snapshots" },
+    "source": { "parity": "ported", "feature": "lossless-text-parse-reconstruct" },
+    "storage": {
+      "parity": "rust-only",
+      "reason": "Pluggable link-store backends including the optional doublets engine; persistence layer outside the in-memory JavaScript links-network core."
+    },
+    "substitution": { "parity": "ported", "feature": "structural-substitution" },
+    "transform": { "parity": "ported", "feature": "query-transform" },
+    "translation_rules": { "parity": "ported", "feature": "translation-rules" },
+    "verification": { "parity": "ported", "feature": "verification" }
+  },
   "features": [
     {
       "id": "link-network-core",
@@ -280,6 +329,114 @@
         "evidence": [
           "js/src/api-style-fixtures.js",
           "js/tests/parity.test.js"
+        ]
+      }
+    },
+    {
+      "id": "read-only-access",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/access.rs",
+          "rust/tests/unit/access_mode.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/access.js",
+          "js/tests/access.test.js"
+        ]
+      }
+    },
+    {
+      "id": "embedded-regions",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/mixed_regions.rs",
+          "rust/tests/unit/link_network.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/regions.js",
+          "js/tests/regions.test.js"
+        ]
+      }
+    },
+    {
+      "id": "language-profile",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/language_profile.rs",
+          "rust/tests/unit/language_profile.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/language-profile.js",
+          "js/tests/language-profile.test.js"
+        ]
+      }
+    },
+    {
+      "id": "link-rule-algebra",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/query_algebra.rs",
+          "rust/tests/unit/query_algebra.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/query-algebra.js",
+          "js/tests/query-algebra.test.js"
+        ]
+      }
+    },
+    {
+      "id": "parse-configuration",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/configuration.rs",
+          "rust/tests/unit/access_mode.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/primitives.js",
+          "js/tests/access.test.js"
+        ]
+      }
+    },
+    {
+      "id": "link-flags",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/link_flags.rs",
+          "rust/tests/unit/link_network.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/primitives.js",
+          "js/tests/core.test.js"
         ]
       }
     }
