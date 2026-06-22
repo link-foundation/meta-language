@@ -44,6 +44,10 @@ test('issue-163 parity manifest keeps Rust and JavaScript feature rows in sync',
   const required = manifest.features.filter((feature) => feature.required);
 
   assert.ok(required.length > 0);
+  assert.ok(
+    required.some((feature) => feature.id === 'truth-value-semantics'),
+    'manifest must track truth-value semantics parity',
+  );
 
   for (const feature of required) {
     assert.equal(feature.rust.status, 'implemented', `${feature.id} missing Rust implementation`);

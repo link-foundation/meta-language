@@ -147,6 +147,7 @@ export class LinkMetadata {
     term = undefined,
     language = undefined,
     named = false,
+    definition = undefined,
     span = undefined,
     flags = LinkFlags.clean(),
   } = {}) {
@@ -154,6 +155,7 @@ export class LinkMetadata {
     this.term = term;
     this.language = language;
     this.named = named;
+    this.definition = definition;
     this.span = span;
     this.flags = flags instanceof LinkFlags ? flags : new LinkFlags(flags);
   }
@@ -168,6 +170,7 @@ export class LinkMetadata {
       term: this.term,
       language: this.language,
       named: this.named,
+      definition: this.definition,
       span: this.span?.clone(),
       flags: this.flags.clone(),
       ...overrides,
@@ -188,6 +191,10 @@ export class LinkMetadata {
 
   withNamed(named = true) {
     return this.clone({ named });
+  }
+
+  withDefinition(definition) {
+    return this.clone({ definition });
   }
 
   withSpan(span) {
