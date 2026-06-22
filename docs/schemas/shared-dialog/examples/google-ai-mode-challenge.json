@@ -1,0 +1,16 @@
+{
+  "provider": "google_ai_mode",
+  "source_url": "https://www.google.com/search?udm=50&aep=11&q=how+do+links+networks+work",
+  "capture_method": "browser_automation",
+  "capture_status": "provider_challenge",
+  "captured_at": "2026-06-22T11:31:00Z",
+  "conversation_id": null,
+  "conversation_title": null,
+  "diagnostics": [
+    {
+      "diagnostic_code": "provider_challenge",
+      "message": "Google returned an anti-automation interstitial ('Our systems have detected unusual traffic') before the AI Mode response rendered.",
+      "evidence": "<div id=\"recaptcha\"><h1>Our systems have detected unusual traffic from your computer network.</h1></div>"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+(shared_dialog_source:
+  (provider: google_ai_mode)
+  (source_url: "https://www.google.com/search?udm=50&aep=11&q=how+do+links+networks+work")
+  (capture_method: browser_automation)
+  (capture_status: provider_challenge)
+  (captured_at: "2026-06-22T11:31:00Z")
+  (diagnostics:
+    (shared_dialog_capture_diagnostic:
+      (diagnostic_code: provider_challenge)
+      (message: "Google returned an anti-automation interstitial before the AI Mode response rendered.")
+      (evidence: "Our systems have detected unusual traffic from your computer network."))))

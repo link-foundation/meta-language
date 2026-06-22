@@ -1,0 +1,27 @@
+{
+  "provider": "markdown",
+  "source_url": null,
+  "capture_method": "markdown",
+  "capture_status": "captured",
+  "captured_at": "2026-06-22T09:15:00Z",
+  "conversation_id": null,
+  "conversation_title": "Pasted transcript",
+  "turns": [
+    {
+      "turn_id": "0",
+      "role": "user",
+      "content": "What is a self-describing language?",
+      "visibility": "visible",
+      "order": 0,
+      "source_fragment": "**User:** What is a self-describing language?"
+    },
+    {
+      "turn_id": "1",
+      "role": "assistant",
+      "content": "A language whose own constructs can be described using the language itself.",
+      "visibility": "visible",
+      "order": 1,
+      "source_fragment": "**Assistant:** A language whose own constructs can be described using the language itself."
+    }
+  ]
+}

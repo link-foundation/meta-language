@@ -50,6 +50,7 @@ mod query_matching;
 mod query_transform;
 mod rust_codec;
 mod self_description;
+mod shared_dialog_schema;
 mod source_generation;
 mod storage;
 mod substitution;

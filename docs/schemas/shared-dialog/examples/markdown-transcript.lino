@@ -1,0 +1,21 @@
+(shared_dialog_source:
+  (provider: markdown)
+  (capture_method: markdown)
+  (capture_status: captured)
+  (captured_at: "2026-06-22T09:15:00Z")
+  (conversation_title: "Pasted transcript")
+  (turns:
+    (shared_dialog_turn:
+      (turn_id: 0)
+      (role: user)
+      (order: 0)
+      (visibility: visible)
+      (content: "What is a self-describing language?")
+      (source_fragment: "User: What is a self-describing language?"))
+    (shared_dialog_turn:
+      (turn_id: 1)
+      (role: assistant)
+      (order: 1)
+      (visibility: visible)
+      (content: "A language whose own constructs can be described using the language itself.")
+      (source_fragment: "Assistant: A language whose own constructs can be described using the language itself."))))

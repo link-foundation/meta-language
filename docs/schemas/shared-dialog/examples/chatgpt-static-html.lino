@@ -1,0 +1,23 @@
+(shared_dialog_source:
+  (provider: chatgpt)
+  (source_url: "https://chatgpt.com/share/6650f1a2-0000-4000-8000-000000000000")
+  (capture_method: static_html)
+  (capture_status: captured)
+  (captured_at: "2026-06-22T10:00:00Z")
+  (conversation_id: "6650f1a2-0000-4000-8000-000000000000")
+  (conversation_title: "Naming a links network library")
+  (turns:
+    (shared_dialog_turn:
+      (turn_id: t0)
+      (role: user)
+      (order: 0)
+      (visibility: visible)
+      (content: "Suggest three names for a links-network library.")
+      (source_fragment: "div[data-message-author-role=user]"))
+    (shared_dialog_turn:
+      (turn_id: t1)
+      (role: assistant)
+      (order: 1)
+      (visibility: visible)
+      (content: "1. LinkMesh 2. Relink 3. GraphLoom")
+      (source_fragment: "div[data-message-author-role=assistant]"))))

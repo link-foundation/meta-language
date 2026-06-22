@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://link-foundation.github.io/meta-language/schemas/shared-dialog/shared-dialog.schema.json",
+  "title": "Shared dialog source description",
+  "description": "Replayable description of a shared AI dialog captured from a provider such as ChatGPT or Google AI Mode. The schema represents both successful captures (with turns) and unsupported-capture diagnostics, and is designed so formal-ai can map it to demo_memory events and web-capture can emit it directly. See README.md for the equivalent meta-language (LiNo) form.",
+  "type": "object",
+  "$defs": {
+    "captureStatus": {
+      "type": "string",
+      "description": "Outcome of the capture attempt.",
+      "enum": [
+        "captured",
+        "unsupported_provider_format",
+        "provider_challenge",
+        "login_required",
+        "expired_or_deleted",
+        "no_transcript_found"
+      ]
+    },
+    "captureMethod": {
+      "type": "string",
+      "description": "How the transcript was obtained.",
+      "enum": [
+        "static_html",
+        "browser_automation",
+        "markdown",
+        "api"
+      ]
+    },
+    "role": {
+      "type": "string",
+      "description": "Speaker of a turn.",
+      "enum": [
+        "user",
+        "assistant",
+        "system",
+        "tool"
+      ]
+    },
+    "visibility": {
+      "type": "string",
+      "description": "Whether the turn was shown to the end user or was internal (e.g. reasoning, tool traffic).",
+      "enum": [
+        "visible",
+        "hidden"
+      ]
+    },
+    "sharedDialogTurn": {
+      "type": "object",
+      "description": "A single message in the dialog.",
+      "required": ["turn_id", "role", "content", "order"],
+      "additionalProperties": false,
+      "properties": {
+        "turn_id": {
+          "type": "string",
+          "description": "Stable identifier of the turn within this capture."
+        },
+        "role": { "$ref": "#/$defs/role" },
+        "content": {
+          "type": "string",
+          "description": "Plain-text (or Markdown) message content."
+        },
+        "visibility": { "$ref": "#/$defs/visibility" },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based position of the turn in the transcript."
+        },
+        "source_fragment": {
+          "type": ["string", "null"],
+          "description": "Raw source slice or selector the turn was extracted from, for replay/debugging."
+        }
+      }
+    },
+    "sharedDialogCaptureDiagnostic": {
+      "type": "object",
+      "description": "Explanation for an unsuccessful or partial capture.",
+      "required": ["diagnostic_code", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "diagnostic_code": {
+          "type": "string",
+          "description": "Machine-readable reason. Mirrors a non-captured capture_status value or a finer-grained provider-specific code."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable explanation."
+        },
+        "evidence": {
+          "type": ["string", "null"],
+          "description": "Optional raw evidence (HTML snippet, screenshot reference, log excerpt) supporting the diagnostic."
+        }
+      }
+    }
+  },
+  "required": [
+    "provider",
+    "source_url",
+    "capture_method",
+    "capture_status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "provider": {
+      "type": "string",
+      "description": "Originating provider, e.g. \"chatgpt\", \"google_ai_mode\", \"markdown\"."
+    },
+    "source_url": {
+      "type": ["string", "null"],
+      "description": "Canonical URL of the shared dialog. Null when the source has no URL (e.g. a pasted Markdown transcript)."
+    },
+    "capture_method": { "$ref": "#/$defs/captureMethod" },
+    "capture_status": { "$ref": "#/$defs/captureStatus" },
+    "captured_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 timestamp of when the capture was performed."
+    },
+    "conversation_id": {
+      "type": ["string", "null"],
+      "description": "Provider-side conversation identifier, when known."
+    },
+    "conversation_title": {
+      "type": ["string", "null"],
+      "description": "Human-readable conversation title, when known."
+    },
+    "turns": {
+      "type": "array",
+      "description": "Captured turns in transcript order. Present (and non-empty) when capture_status is \"captured\".",
+      "items": { "$ref": "#/$defs/sharedDialogTurn" }
+    },
+    "diagnostics": {
+      "type": "array",
+      "description": "Diagnostics explaining a non-captured or partial result.",
+      "items": { "$ref": "#/$defs/sharedDialogCaptureDiagnostic" }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "capture_status": { "const": "captured" } }
+      },
+      "then": {
+        "required": ["turns"],
+        "properties": {
+          "turns": { "minItems": 1 }
+        }
+      },
+      "else": {
+        "required": ["diagnostics"],
+        "properties": {
+          "diagnostics": { "minItems": 1 }
+        }
+      }
+    }
+  ]
+}

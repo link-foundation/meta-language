@@ -1,0 +1,27 @@
+{
+  "provider": "google_ai_mode",
+  "source_url": "https://www.google.com/search?udm=50&aep=11&q=how+do+links+networks+work",
+  "capture_method": "browser_automation",
+  "capture_status": "captured",
+  "captured_at": "2026-06-22T11:30:00Z",
+  "conversation_id": null,
+  "conversation_title": "how do links networks work",
+  "turns": [
+    {
+      "turn_id": "q0",
+      "role": "user",
+      "content": "how do links networks work",
+      "visibility": "visible",
+      "order": 0,
+      "source_fragment": "[data-async-context] textarea[name=\"q\"]"
+    },
+    {
+      "turn_id": "a0",
+      "role": "assistant",
+      "content": "A links network represents every item, including relations and points, as a link with ordered references to other links.",
+      "visibility": "visible",
+      "order": 1,
+      "source_fragment": "div[data-rl] [data-attrid=\"ai-mode-response\"]"
+    }
+  ]
+}

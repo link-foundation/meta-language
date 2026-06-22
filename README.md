@@ -24,7 +24,7 @@ badges, and its own CI/CD workflow.
 | [`rust/`](rust/README.md) | Rust crate `meta-language` — the reference implementation. Built and tested by [`.github/workflows/rust.yml`](.github/workflows/rust.yml). |
 | [`js/`](js/README.md) | JavaScript package `@link-foundation/meta-language`. Built and tested by [`.github/workflows/js.yml`](.github/workflows/js.yml). |
 | [`parity/`](parity/language-features.json) | Cross-language feature manifest. Every feature must be present in both languages (see [Feature parity](#feature-parity)). |
-| [`docs/`](docs) | Shared documentation: the grammar subsystem, fidelity matrices, the project website source, and per-issue case studies. |
+| [`docs/`](docs) | Shared documentation: the grammar subsystem, fidelity matrices, [shared cross-repository schemas](docs/schemas/shared-dialog/README.md), the project website source, and per-issue case studies. |
 | [`.github/`](.github/workflows) | Shared CI/CD workflows (`rust.yml`, `js.yml`). |
 
 ## Quick start

@@ -1,0 +1,48 @@
+{
+  "description": "Worked example of mapping a shared_dialog_source to formal-ai demo_memory events without losing source URL, provider, turn role, or content. The `source` is a valid shared-dialog instance; `events` is the lossless projection consumers such as formal-ai produce. See README.md ('Mapping to formal-ai demo_memory') for the mapping rules.",
+  "source": {
+    "provider": "chatgpt",
+    "source_url": "https://chatgpt.com/share/6650f1a2-0000-4000-8000-000000000000",
+    "capture_method": "static_html",
+    "capture_status": "captured",
+    "captured_at": "2026-06-22T10:00:00Z",
+    "conversation_id": "6650f1a2-0000-4000-8000-000000000000",
+    "conversation_title": "Naming a links network library",
+    "turns": [
+      {
+        "turn_id": "t0",
+        "role": "user",
+        "content": "Suggest three names for a links-network library.",
+        "visibility": "visible",
+        "order": 0,
+        "source_fragment": "<div data-message-author-role=\"user\">Suggest three names for a links-network library.</div>"
+      },
+      {
+        "turn_id": "t1",
+        "role": "assistant",
+        "content": "1. LinkMesh\n2. Relink\n3. GraphLoom",
+        "visibility": "visible",
+        "order": 1,
+        "source_fragment": "<div data-message-author-role=\"assistant\"><ol><li>LinkMesh</li><li>Relink</li><li>GraphLoom</li></ol></div>"
+      }
+    ]
+  },
+  "events": [
+    {
+      "provider": "chatgpt",
+      "source_url": "https://chatgpt.com/share/6650f1a2-0000-4000-8000-000000000000",
+      "conversation_id": "6650f1a2-0000-4000-8000-000000000000",
+      "order": 0,
+      "role": "user",
+      "content": "Suggest three names for a links-network library."
+    },
+    {
+      "provider": "chatgpt",
+      "source_url": "https://chatgpt.com/share/6650f1a2-0000-4000-8000-000000000000",
+      "conversation_id": "6650f1a2-0000-4000-8000-000000000000",
+      "order": 1,
+      "role": "assistant",
+      "content": "1. LinkMesh\n2. Relink\n3. GraphLoom"
+    }
+  ]
+}
