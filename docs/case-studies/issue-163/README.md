@@ -14,7 +14,7 @@ repository file inventories are stored in `template-data/`.
   language implementation lives at the root**. The crate keeps its own `src/`,
   `tests/`, `scripts/`, `web/`, `benches/`, `examples/`, `Cargo.toml`,
   `README.md`, and badges.
-- Added `js/` as an npm package named `@link-foundation/meta-language` with its
+- Added `js/` as an npm package named `meta-language` with its
   own `src/`, `tests/`, `scripts/`, `README.md`, and badges.
 - Implemented the parity operation families in JavaScript: parse, query,
   transform, substitute, serialize, snapshot, translate, and verify.

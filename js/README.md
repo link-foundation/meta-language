@@ -1,7 +1,7 @@
-# @link-foundation/meta-language (JavaScript)
+# meta-language (JavaScript)
 
 [![JavaScript](https://github.com/link-foundation/meta-language/actions/workflows/js.yml/badge.svg)](https://github.com/link-foundation/meta-language/actions/workflows/js.yml)
-[![npm](https://img.shields.io/npm/v/@link-foundation/meta-language?label=npm&style=flat)](https://www.npmjs.com/package/@link-foundation/meta-language)
+[![npm](https://img.shields.io/npm/v/meta-language?label=npm&style=flat)](https://www.npmjs.com/package/meta-language)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-blue.svg)](https://nodejs.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://unlicense.org/)
 
@@ -26,7 +26,7 @@ import {
   LinkQuery,
   ParseConfiguration,
   ReplacementRule,
-} from '@link-foundation/meta-language';
+} from 'meta-language';
 
 const network = LinkNetwork.parse(
   'const oldName = call(oldName);\n',

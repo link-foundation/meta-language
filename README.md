@@ -6,7 +6,7 @@ in **both Rust and JavaScript** with guaranteed feature parity between the two.
 [![Rust](https://github.com/link-foundation/meta-language/actions/workflows/rust.yml/badge.svg)](https://github.com/link-foundation/meta-language/actions/workflows/rust.yml)
 [![JavaScript](https://github.com/link-foundation/meta-language/actions/workflows/js.yml/badge.svg)](https://github.com/link-foundation/meta-language/actions/workflows/js.yml)
 [![Crates.io](https://img.shields.io/crates/v/meta-language?label=crates.io&style=flat)](https://crates.io/crates/meta-language)
-[![npm](https://img.shields.io/npm/v/@link-foundation/meta-language?label=npm&style=flat)](https://www.npmjs.com/package/@link-foundation/meta-language)
+[![npm](https://img.shields.io/npm/v/meta-language?label=npm&style=flat)](https://www.npmjs.com/package/meta-language)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://unlicense.org/)
 
 **Website:** <https://link-foundation.github.io/meta-language> — project
@@ -22,7 +22,7 @@ badges, and its own CI/CD workflow.
 | Path | Contents |
 | --- | --- |
 | [`rust/`](rust/README.md) | Rust crate `meta-language` — the reference implementation. Built and tested by [`.github/workflows/rust.yml`](.github/workflows/rust.yml). |
-| [`js/`](js/README.md) | JavaScript package `@link-foundation/meta-language`. Built and tested by [`.github/workflows/js.yml`](.github/workflows/js.yml). |
+| [`js/`](js/README.md) | JavaScript package `meta-language`. Built and tested by [`.github/workflows/js.yml`](.github/workflows/js.yml). |
 | [`parity/`](parity/language-features.json) | Cross-language feature manifest. Every feature must be present in both languages (see [Feature parity](#feature-parity)). |
 | [`docs/`](docs) | Shared documentation: the grammar subsystem, fidelity matrices, the project website source, and per-issue case studies. |
 | [`.github/`](.github/workflows) | Shared CI/CD workflows (`rust.yml`, `js.yml`). |
@@ -56,7 +56,7 @@ npm test
 ```
 
 ```js
-import { LinkNetwork, ParseConfiguration } from '@link-foundation/meta-language';
+import { LinkNetwork, ParseConfiguration } from 'meta-language';
 
 const network = LinkNetwork.parse('alpha beta', 'txt', ParseConfiguration.default());
 console.log(network.reconstructText()); // alpha beta
