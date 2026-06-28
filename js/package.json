@@ -1,5 +1,5 @@
 {
-  "name": "@link-foundation/meta-language",
+  "name": "meta-language",
   "version": "0.46.0",
   "description": "JavaScript implementation of the meta-language links-network core",
   "type": "module",
@@ -28,6 +28,9 @@
     "lino"
   ],
   "license": "Unlicense",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/link-foundation/meta-language.git",

@@ -142,7 +142,7 @@ npm test
 ```
 
 ```js
-import { LinkNetwork, ParseConfiguration } from '@link-foundation/meta-language';
+import { LinkNetwork, ParseConfiguration } from 'meta-language';
 
 const network = LinkNetwork.parse('alpha beta', 'txt', ParseConfiguration.default());
 
