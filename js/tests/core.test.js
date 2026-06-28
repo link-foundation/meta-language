@@ -34,6 +34,16 @@ test('lossless JavaScript parse reconstructs original text and indexes identifie
   assert.ok(identifiers.length >= 3);
 });
 
+test('lossless source tokens expose the Rust-compatible Token link type alias', () => {
+  assert.equal(LinkType.Token, LinkType.SourceToken);
+
+  const network = LinkNetwork.parse('x', 'JavaScript', ParseConfiguration.default());
+  const tokenLinks = network.queryLinks(LinkQuery.byType(LinkType.Token));
+
+  assert.equal(tokenLinks.length, 1);
+  assert.equal(tokenLinks[0].metadata().linkType, LinkType.Token);
+});
+
 test('S-expression query transform replaces captured identifier source ranges', () => {
   const network = LinkNetwork.parse(
     'const oldName = call(oldName);\n',
