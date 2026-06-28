@@ -228,16 +228,20 @@ export class FluentPipeline {
 }
 
 export class TranslationRule {
-  constructor(name: string, query: LinkQuery);
+  constructor(name: string, query: LinkQuery, referenceCaptures?: Record<string, number>);
+  withReferenceCapture(name: string, referenceIndex: number): TranslationRule;
+  with_reference_capture(name: string, referenceIndex: number): TranslationRule;
   withTemplate(language: string, text: string): TranslationRule;
 }
 
 export class TranslationRuleSet {
-  constructor(name: string);
+  constructor(name: string, rules?: TranslationRule[]);
   withRule(rule: TranslationRule): TranslationRuleSet;
   render(targetLanguage: string, network: LinkNetwork): string;
   toLino(): string;
+  toJson(): string;
   static fromLino(source: string): TranslationRuleSet;
+  static fromJson(source: string | unknown): TranslationRuleSet;
 }
 
 export class GrammarBuilder {

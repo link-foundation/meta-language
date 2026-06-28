@@ -161,6 +161,62 @@ test('translation rule sets reconstruct through semantic query templates', () =>
     'hola',
   );
   assert.deepEqual(TranslationRuleSet.fromLino(rules.toLino()), rules);
+  assert.deepEqual(TranslationRuleSet.fromJson(rules.toJson()), rules);
+
+  const dynamicRules = new TranslationRuleSet('dynamic').withRule(
+    new TranslationRule('dynamic link', LinkQuery.byType(LinkType.Dynamic))
+      .withTemplate('English', 'dynamic'),
+  );
+  assert.match(dynamicRules.toLino(), /%22link_type%22%3A%22link%22/);
+  assert.deepEqual(TranslationRuleSet.fromLino(dynamicRules.toLino()), dynamicRules);
+});
+
+test('translation rule sets load Rust canonical LiNo metadata', () => {
+  const rustLino = [
+    '(1: (meta: (t: semantic) (n: 1) (term: translation-rule-set) (def: capital-demo)))',
+    '(2: 1 (meta: (t: semantic) (n: 1) (term: translation-rule) (def: capital%20sentence)))',
+    '(3: 2 (meta: (t: semantic) (n: 1) (term: translation-rule-match) (def: %7B%22link_type%22%3A%22semantic%22%2C%22named%22%3Atrue%2C%22term%22%3A%22proposition%3Acapital%22%7D)))',
+    '(4: 2 (meta: (t: semantic) (n: 1) (term: object) (def: 2) (lang: translation-rule-reference-capture)))',
+    '(5: 2 (meta: (t: semantic) (n: 1) (term: subject) (def: 1) (lang: translation-rule-reference-capture)))',
+    '(6: 2 (meta: (t: semantic) (n: 1) (term: %7Bobject%7D%20is%20the%20capital%20of%20%7Bsubject%7D.) (def: translation-rule-template) (lang: English)))',
+    '(7: 2 (meta: (t: semantic) (n: 1) (term: %7Bobject%7D%20es%20la%20capital%20de%20%7Bsubject%7D.) (def: translation-rule-template) (lang: Spanish)))',
+    '',
+  ].join('\n');
+  const expected = new TranslationRuleSet('capital-demo').withRule(
+    new TranslationRule(
+      'capital sentence',
+      LinkQuery.byType(LinkType.Semantic)
+        .withTerm('proposition:capital')
+        .withNamed(true),
+    )
+      .withReferenceCapture('subject', 1)
+      .withReferenceCapture('object', 2)
+      .withTemplate('English', '{object} is the capital of {subject}.')
+      .withTemplate('Spanish', '{object} es la capital de {subject}.'),
+  );
+  const restored = TranslationRuleSet.fromLino(rustLino);
+
+  assert.deepEqual(restored, expected);
+  assert.equal(expected.toLino(), rustLino);
+
+  const network = new LinkNetwork();
+  const proposition = network.insertConceptExpression('capital', 'English', 'capital');
+  const france = network.insertConceptExpression('Q142', 'English', 'France');
+  network.insertConceptExpression('Q142', 'Spanish', 'Francia');
+  const paris = network.insertConceptExpression('Q90', 'English', 'Paris');
+  network.insertConceptExpression('Q90', 'Spanish', 'Paris');
+  network.insertLink(
+    [proposition, france, paris],
+    LinkMetadata.new()
+      .withLinkType(LinkType.Semantic)
+      .withNamed(true)
+      .withTerm('proposition:capital'),
+  );
+
+  assert.equal(
+    network.reconstructTextAsWithRules('Spanish', ParseConfiguration.default(), restored),
+    'Paris es la capital de Francia.',
+  );
 });
 
 test('verification reports parse recovery issues', () => {
