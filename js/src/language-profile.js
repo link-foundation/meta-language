@@ -102,7 +102,7 @@ export class LanguageProfile {
       LinkType.Syntax,
       LinkType.Field,
       LinkType.Trivia,
-      LinkType.SourceToken,
+      LinkType.Token,
       LinkType.Semantic,
       LinkType.Object,
     ]) {

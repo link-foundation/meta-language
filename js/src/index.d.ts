@@ -10,7 +10,19 @@ export type LinkTypeValue =
   | 'Syntax'
   | 'Trivia';
 
-export const LinkType: Record<string, LinkTypeValue>;
+export const LinkType: Record<string, LinkTypeValue> & {
+  Concept: 'Concept';
+  Dynamic: 'Dynamic';
+  Field: 'Field';
+  Language: 'Language';
+  Object: 'Object';
+  Relation: 'Relation';
+  Semantic: 'Semantic';
+  SourceToken: 'SourceToken';
+  Token: 'SourceToken';
+  Syntax: 'Syntax';
+  Trivia: 'Trivia';
+};
 export const ApiOperation: Record<string, string>;
 export const ApiStyle: Record<string, string | string[]>;
 export const ApiStyleFixtureKind: Record<string, string>;

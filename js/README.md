@@ -13,6 +13,9 @@ The package mirrors the Rust operation families used by the parity registry:
 parse, query, transform, substitute, serialize, snapshot, translate, and verify.
 It is intentionally dependency-light and uses `links-notation` for LiNo and
 link-cli-style substitution text plus `peggy` for generated parser modules.
+Lossless source-token links can be addressed as `LinkType.Token`, matching the
+Rust `LinkType::Token` name; `LinkType.SourceToken` remains available for
+existing JavaScript callers.
 
 Feature parity with the Rust crate is enforced by
 [`../parity/language-features.json`](../parity/language-features.json) and the

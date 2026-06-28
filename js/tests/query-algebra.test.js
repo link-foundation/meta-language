@@ -89,6 +89,15 @@ test('comby_style text pattern matches plain text fallback tokens', () => {
   assert.equal(matches[0].captures().text('gap'), 'beta');
 });
 
+test('Rust-compatible token link type selector matches parsed lossless tokens', () => {
+  const network = LinkNetwork.parse('token', 'UnwiredPlainText', ParseConfiguration.default());
+  const rule = LinkRule.fromSexpression('(type token)');
+
+  const matches = rule.matches(network, new LinkRuleRegistry());
+
+  assert.equal(matches.length, 5);
+});
+
 test('stratego/rascal traversal orders and fixpoint are available', () => {
   const network = new LinkNetwork();
   const root = syntax(network, [], 'root');

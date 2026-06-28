@@ -7,6 +7,8 @@ export const LinkType = Object.freeze({
   Relation: 'Relation',
   Semantic: 'Semantic',
   SourceToken: 'SourceToken',
+  // Rust-compatible public alias for lossless source-token links.
+  Token: 'SourceToken',
   Syntax: 'Syntax',
   Trivia: 'Trivia',
 });

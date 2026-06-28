@@ -808,8 +808,8 @@ class TextPattern {
   }
 
   matches(network) {
-    // The JS lossless parser emits `SourceToken` links (one per character)
-    // rather than a `Document`/`Token` hierarchy. Treat the ordered source
+    // The JS lossless parser emits lossless source-token links (one per character)
+    // rather than a `Document` hierarchy. Treat the ordered source
     // tokens of the whole network as a single document.
     const tokens = sourceTokens(network);
     if (tokens.length === 0) {
@@ -924,7 +924,7 @@ const LINK_TYPE_BY_NAME = Object.freeze({
   syntax: LinkType.Syntax,
   field: LinkType.Field,
   trivia: LinkType.Trivia,
-  token: 'Token',
+  token: LinkType.Token,
   document: 'Document',
   semantic: LinkType.Semantic,
   region: 'Region',
