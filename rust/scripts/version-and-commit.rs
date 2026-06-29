@@ -33,6 +33,8 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 #[cfg(not(test))]
+use std::path::PathBuf;
+#[cfg(not(test))]
 use std::process::exit;
 use std::process::Command;
 
@@ -190,6 +192,85 @@ fn update_cargo_lock(
 
     println!("Updated {} to version {}", path_str, new_version);
     Ok(true)
+}
+
+#[cfg(not(test))]
+fn resolve_js_root() -> Result<Option<PathBuf>, String> {
+    if let Some(root) = get_arg("js-root") {
+        let path = PathBuf::from(root);
+        let package_json = path.join("package.json");
+        if package_json.exists() {
+            return Ok(Some(path));
+        }
+        return Err(format!(
+            "Configured JavaScript root does not contain package.json: {}",
+            package_json.display()
+        ));
+    }
+
+    for candidate in ["./js", "../js"] {
+        let path = PathBuf::from(candidate);
+        if path.join("package.json").exists() {
+            return Ok(Some(path));
+        }
+    }
+
+    Ok(None)
+}
+
+#[cfg(not(test))]
+fn sync_js_package_version(new_version: &str) -> Result<Vec<PathBuf>, String> {
+    let Some(js_root) = resolve_js_root()? else {
+        println!("No JavaScript package found at ./js or ../js; skipping npm version sync");
+        return Ok(Vec::new());
+    };
+
+    let package_json = js_root.join("package.json");
+    let package_lock = js_root.join("package-lock.json");
+    println!(
+        "Syncing JavaScript package metadata at {} to version {}",
+        package_json.display(),
+        new_version
+    );
+
+    let output = Command::new("npm")
+        .args([
+            "version",
+            new_version,
+            "--no-git-tag-version",
+            "--allow-same-version",
+        ])
+        .current_dir(&js_root)
+        .output()
+        .map_err(|e| {
+            format!(
+                "Failed to execute npm version in {}: {}",
+                js_root.display(),
+                e
+            )
+        })?;
+
+    if !output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "npm version failed in {}\nstdout:\n{}\nstderr:\n{}",
+            js_root.display(),
+            stdout.trim(),
+            stderr.trim()
+        ));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if !stdout.trim().is_empty() {
+        println!("{}", stdout.trim());
+    }
+
+    let mut changed_files = vec![package_json];
+    if package_lock.exists() {
+        changed_files.push(package_lock);
+    }
+    Ok(changed_files)
 }
 
 #[cfg(not(test))]
@@ -624,16 +705,32 @@ fn main() {
         }
     };
 
+    let js_release_files = match sync_js_package_version(&new_version) {
+        Ok(files) => files,
+        Err(e) => {
+            eprintln!("Error syncing JavaScript package version: {}", e);
+            exit(1);
+        }
+    };
+
     // Collect changelog fragments
     collect_changelog(&changelog_dir, &changelog_file, &new_version);
 
-    // Stage Cargo.toml, Cargo.lock if changed, and CHANGELOG.md
+    // Stage Cargo.toml, Cargo.lock if changed, JavaScript package metadata, and CHANGELOG.md
     let package_manifest_str = package_manifest.to_string_lossy().to_string();
     let cargo_lock_str = cargo_lock_path.to_string_lossy().to_string();
-    let mut add_args = vec!["add", &package_manifest_str, &changelog_file];
+    let mut add_arg_strings = vec![
+        "add".to_string(),
+        package_manifest_str,
+        changelog_file.clone(),
+    ];
     if lock_updated {
-        add_args.push(&cargo_lock_str);
+        add_arg_strings.push(cargo_lock_str);
     }
+    for path in js_release_files {
+        add_arg_strings.push(path.to_string_lossy().to_string());
+    }
+    let add_args: Vec<&str> = add_arg_strings.iter().map(String::as_str).collect();
     let _ = exec("git", &add_args);
 
     // Check if there are changes to commit

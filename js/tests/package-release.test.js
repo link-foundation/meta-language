@@ -47,3 +47,28 @@ test('JavaScript workflow publishes to npm with trusted publishing provenance', 
   assert.match(workflow, /npm publish --provenance/);
   assert.match(workflow, /npm view meta-language@\$\{\{\s*steps\.package\.outputs\.version\s*\}\} version/);
 });
+
+test('Rust release pipeline keeps the npm package in the same release stream', async () => {
+  const rustWorkflow = await readFile(
+    new URL('../../.github/workflows/rust.yml', import.meta.url),
+    'utf8',
+  );
+  const releaseScript = await readFile(
+    new URL('../../rust/scripts/version-and-commit.rs', import.meta.url),
+    'utf8',
+  );
+  const releaseCheck = await readFile(
+    new URL('../../rust/scripts/check-release-needed.rs', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(releaseScript, /npm/);
+  assert.match(releaseScript, /version/);
+  assert.match(releaseScript, /package-lock\.json/);
+  assert.match(releaseCheck, /npm_published/);
+  assert.match(rustWorkflow, /id-token:\s+write/);
+  assert.match(rustWorkflow, /Publish JavaScript package to npm/);
+  assert.match(rustWorkflow, /npm publish --provenance/);
+  assert.match(rustWorkflow, /steps\.current_version\.outputs\.version/);
+  assert.match(rustWorkflow, /steps\.check\.outputs\.npm_published/);
+});
