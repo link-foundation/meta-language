@@ -1,6 +1,6 @@
 {
   "name": "meta-language",
-  "version": "0.46.0",
+  "version": "0.52.0",
   "description": "JavaScript implementation of the meta-language links-network core",
   "type": "module",
   "main": "./src/index.js",
