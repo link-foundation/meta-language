@@ -1,0 +1,567 @@
+JavaScript Package	Set up job	﻿2026-06-29T19:54:23.7823233Z Current runner version: '2.335.1'
+JavaScript Package	Set up job	2026-06-29T19:54:23.7850617Z ##[group]Runner Image Provisioner
+JavaScript Package	Set up job	2026-06-29T19:54:23.7851586Z Hosted Compute Agent
+JavaScript Package	Set up job	2026-06-29T19:54:23.7852233Z Version: 20260611.554
+JavaScript Package	Set up job	2026-06-29T19:54:23.7852999Z Commit: 5e0782fdc9014723d3be820dd114dd31555c2bd1
+JavaScript Package	Set up job	2026-06-29T19:54:23.7854042Z Build Date: 2026-06-11T21:40:46Z
+JavaScript Package	Set up job	2026-06-29T19:54:23.7854745Z Worker ID: {d88a3c57-83bb-4338-b082-de5155f32eb7}
+JavaScript Package	Set up job	2026-06-29T19:54:23.7855512Z Azure Region: westus
+JavaScript Package	Set up job	2026-06-29T19:54:23.7856122Z ##[endgroup]
+JavaScript Package	Set up job	2026-06-29T19:54:23.7857677Z ##[group]Operating System
+JavaScript Package	Set up job	2026-06-29T19:54:23.7858445Z Ubuntu
+JavaScript Package	Set up job	2026-06-29T19:54:23.7858971Z 24.04.4
+JavaScript Package	Set up job	2026-06-29T19:54:23.7859902Z LTS
+JavaScript Package	Set up job	2026-06-29T19:54:23.7860496Z ##[endgroup]
+JavaScript Package	Set up job	2026-06-29T19:54:23.7861059Z ##[group]Runner Image
+JavaScript Package	Set up job	2026-06-29T19:54:23.7861718Z Image: ubuntu-24.04
+JavaScript Package	Set up job	2026-06-29T19:54:23.7862330Z Version: 20260622.220.1
+JavaScript Package	Set up job	2026-06-29T19:54:23.7863554Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260622.220/images/ubuntu/Ubuntu2404-Readme.md
+JavaScript Package	Set up job	2026-06-29T19:54:23.7865416Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260622.220
+JavaScript Package	Set up job	2026-06-29T19:54:23.7866444Z ##[endgroup]
+JavaScript Package	Set up job	2026-06-29T19:54:23.7869481Z ##[group]GITHUB_TOKEN Permissions
+JavaScript Package	Set up job	2026-06-29T19:54:23.7872412Z Actions: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7873075Z ArtifactMetadata: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7873958Z Attestations: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7874585Z Checks: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7875151Z CodeQuality: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7875812Z Contents: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7876376Z CopilotRequests: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7876953Z Deployments: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7877589Z Discussions: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7878147Z Issues: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7878714Z Metadata: read
+JavaScript Package	Set up job	2026-06-29T19:54:23.7879340Z Models: read
+JavaScript Package	Set up job	2026-06-29T19:54:23.7879956Z Packages: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7880589Z Pages: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7881136Z PullRequests: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7881752Z RepositoryProjects: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7882412Z SecurityEvents: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7883023Z Statuses: write
+JavaScript Package	Set up job	2026-06-29T19:54:23.7883961Z VulnerabilityAlerts: read
+JavaScript Package	Set up job	2026-06-29T19:54:23.7884590Z ##[endgroup]
+JavaScript Package	Set up job	2026-06-29T19:54:23.7886707Z Secret source: Actions
+JavaScript Package	Set up job	2026-06-29T19:54:23.7887632Z Prepare workflow directory
+JavaScript Package	Set up job	2026-06-29T19:54:23.8234084Z Prepare all required actions
+JavaScript Package	Set up job	2026-06-29T19:54:23.8273000Z Getting action download info
+JavaScript Package	Set up job	2026-06-29T19:54:24.2247469Z Download action repository 'actions/checkout@v6' (SHA:df4cb1c069e1874edd31b4311f1884172cec0e10)
+JavaScript Package	Set up job	2026-06-29T19:54:24.3065125Z Download action repository 'actions/setup-node@v6' (SHA:48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e)
+JavaScript Package	Set up job	2026-06-29T19:54:24.4925805Z Complete job name: JavaScript Package
+JavaScript Package	Run actions/checkout@v6	﻿2026-06-29T19:54:24.5664758Z ##[group]Run actions/checkout@v6
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5665652Z with:
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5666140Z   repository: link-foundation/meta-language
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5670411Z   token: ***
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5670850Z   ssh-strict: true
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5671294Z   ssh-user: git
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5671739Z   persist-credentials: true
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5672252Z   clean: true
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5672705Z   sparse-checkout-cone-mode: true
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5673237Z   fetch-depth: 1
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5674151Z   fetch-tags: false
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5674604Z   show-progress: true
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5675051Z   lfs: false
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5675471Z   submodules: false
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5675919Z   set-safe-directory: true
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.5676726Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6660329Z Syncing repository: link-foundation/meta-language
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6662233Z ##[group]Getting Git version info
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6663056Z Working directory is '/home/runner/work/meta-language/meta-language'
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6664521Z [command]/usr/bin/git version
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6747307Z git version 2.54.0
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6802435Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6817081Z Temporarily overriding HOME='/home/runner/work/_temp/2c565962-c7ad-425f-8d72-e403b4a5d5ba' before making global git config changes
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6819372Z Adding repository directory to the temporary git global config as a safe directory
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6822779Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/meta-language/meta-language
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6872686Z Deleting the contents of '/home/runner/work/meta-language/meta-language'
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6877354Z ##[group]Determining repository object format
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6879879Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6880940Z ##[group]Initializing the repository
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6885175Z [command]/usr/bin/git init /home/runner/work/meta-language/meta-language
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6997774Z hint: Using 'master' as the name for the initial branch. This default branch name
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.6999478Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7000530Z hint: to use in all of your new repositories, which will suppress this warning,
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7001336Z hint: call:
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7001797Z hint:
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7002534Z hint: 	git config --global init.defaultBranch <name>
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7003998Z hint:
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7005069Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7007083Z hint: 'development'. The just-created branch can be renamed via this command:
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7008619Z hint:
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7009483Z hint: 	git branch -m <name>
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7010446Z hint:
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7011883Z hint: Disable this message with "git config set advice.defaultBranchName false"
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7014040Z Initialized empty Git repository in /home/runner/work/meta-language/meta-language/.git/
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7017368Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/meta-language
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7063639Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7065003Z ##[group]Disabling automatic garbage collection
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7068128Z [command]/usr/bin/git config --local gc.auto 0
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7098744Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7100146Z ##[group]Setting up auth
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7101159Z Removing SSH command configuration
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7106849Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7142661Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7504338Z Removing HTTP extra header
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7506088Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7552131Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7776589Z Removing includeIf entries pointing to credentials config files
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7783172Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.7814341Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.8036773Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.8075131Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/meta-language/meta-language/.git.path /home/runner/work/_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.8105098Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.8136126Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.8165714Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.8191441Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.8192576Z ##[group]Fetching the repository
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:24.8199965Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +63ab0c52135420fa26131484e215faca0c6f7deb:refs/remotes/origin/main
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5595621Z From https://github.com/link-foundation/meta-language
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5597568Z  * [new ref]         63ab0c52135420fa26131484e215faca0c6f7deb -> origin/main
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5642090Z [command]/usr/bin/git branch --list --remote origin/main
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5672030Z   origin/main
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5690760Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5705843Z 63ab0c52135420fa26131484e215faca0c6f7deb
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5716106Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5717379Z ##[group]Determining the checkout info
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5718619Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5720815Z [command]/usr/bin/git sparse-checkout disable
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5771410Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5802443Z ##[group]Checking out the ref
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.5806492Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.6436196Z Switched to a new branch 'main'
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.6438404Z branch 'main' set up to track 'origin/main'.
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.6447729Z ##[endgroup]
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.6490107Z [command]/usr/bin/git log -1 --format=%H
+JavaScript Package	Run actions/checkout@v6	2026-06-29T19:54:25.6513842Z 63ab0c52135420fa26131484e215faca0c6f7deb
+JavaScript Package	Setup Node.js	﻿2026-06-29T19:54:25.6840307Z ##[group]Run actions/setup-node@v6
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.6841133Z with:
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.6841604Z   node-version: 20
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.6842138Z   cache: npm
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.6842774Z   cache-dependency-path: js/package-lock.json
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.6844141Z   check-latest: false
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.6854517Z   token: ***
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.6855095Z   package-manager-cache: true
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.6855771Z ##[endgroup]
+JavaScript Package	Setup Node.js	2026-06-29T19:54:25.8437816Z Attempting to download 20...
+JavaScript Package	Setup Node.js	2026-06-29T19:54:26.6073821Z Acquiring 20.20.2 - x64 from https://github.com/actions/node-versions/releases/download/20.20.2-23521894959/node-20.20.2-linux-x64.tar.gz
+JavaScript Package	Setup Node.js	2026-06-29T19:54:27.0196774Z Extracting ...
+JavaScript Package	Setup Node.js	2026-06-29T19:54:27.0319215Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/a43b1047-5208-4def-ae18-158b373d4bc8 -f /home/runner/work/_temp/94ddf110-cb9e-4e3e-afa1-4a580313cbf2
+JavaScript Package	Setup Node.js	2026-06-29T19:54:28.0617870Z Adding to the cache ...
+JavaScript Package	Setup Node.js	2026-06-29T19:54:29.9712507Z ##[group]Environment details
+JavaScript Package	Setup Node.js	2026-06-29T19:54:30.2051568Z node: v20.20.2
+JavaScript Package	Setup Node.js	2026-06-29T19:54:30.2052526Z npm: 10.8.2
+JavaScript Package	Setup Node.js	2026-06-29T19:54:30.2052996Z yarn: 1.22.22
+JavaScript Package	Setup Node.js	2026-06-29T19:54:30.2054286Z ##[endgroup]
+JavaScript Package	Setup Node.js	2026-06-29T19:54:30.2074950Z [command]/opt/hostedtoolcache/node/20.20.2/x64/bin/npm config get cache
+JavaScript Package	Setup Node.js	2026-06-29T19:54:30.3088584Z /home/runner/.npm
+JavaScript Package	Setup Node.js	2026-06-29T19:54:30.5740761Z npm cache is not found
+JavaScript Package	Install dependencies	﻿2026-06-29T19:54:30.5936318Z ##[group]Run npm ci
+JavaScript Package	Install dependencies	2026-06-29T19:54:30.5936672Z ^[[36;1mnpm ci^[[0m
+JavaScript Package	Install dependencies	2026-06-29T19:54:30.6121398Z shell: /usr/bin/bash -e {0}
+JavaScript Package	Install dependencies	2026-06-29T19:54:30.6121752Z ##[endgroup]
+JavaScript Package	Install dependencies	2026-06-29T19:54:31.1717218Z 
+JavaScript Package	Install dependencies	2026-06-29T19:54:31.1726159Z added 6 packages, and audited 7 packages in 490ms
+JavaScript Package	Install dependencies	2026-06-29T19:54:31.1727567Z 
+JavaScript Package	Install dependencies	2026-06-29T19:54:31.1728514Z found 0 vulnerabilities
+JavaScript Package	Run tests	﻿2026-06-29T19:54:31.1826685Z ##[group]Run npm test
+JavaScript Package	Run tests	2026-06-29T19:54:31.1826985Z ^[[36;1mnpm test^[[0m
+JavaScript Package	Run tests	2026-06-29T19:54:31.1860291Z shell: /usr/bin/bash -e {0}
+JavaScript Package	Run tests	2026-06-29T19:54:31.1860570Z ##[endgroup]
+JavaScript Package	Run tests	2026-06-29T19:54:31.3022017Z 
+JavaScript Package	Run tests	2026-06-29T19:54:31.3023150Z > meta-language@0.46.0 test
+JavaScript Package	Run tests	2026-06-29T19:54:31.3024155Z > node --test tests/*.test.js
+JavaScript Package	Run tests	2026-06-29T19:54:31.3024430Z 
+JavaScript Package	Run tests	2026-06-29T19:54:31.3477166Z TAP version 13
+JavaScript Package	Run tests	2026-06-29T19:54:31.4285033Z # Subtest: parse configuration defaults to mutable access
+JavaScript Package	Run tests	2026-06-29T19:54:31.4290935Z ok 1 - parse configuration defaults to mutable access
+JavaScript Package	Run tests	2026-06-29T19:54:31.4314738Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4351676Z   duration_ms: 2.12655
+JavaScript Package	Run tests	2026-06-29T19:54:31.4364652Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4365868Z # Subtest: frozen view supports non-mutating operations
+JavaScript Package	Run tests	2026-06-29T19:54:31.4367130Z ok 2 - frozen view supports non-mutating operations
+JavaScript Package	Run tests	2026-06-29T19:54:31.4368012Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4368531Z   duration_ms: 3.105292
+JavaScript Package	Run tests	2026-06-29T19:54:31.4369258Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4370112Z # Subtest: frozen view rejects every mutation with ReadOnlyViolation
+JavaScript Package	Run tests	2026-06-29T19:54:31.4372190Z ok 3 - frozen view rejects every mutation with ReadOnlyViolation
+JavaScript Package	Run tests	2026-06-29T19:54:31.4373065Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4373884Z   duration_ms: 1.873369
+JavaScript Package	Run tests	2026-06-29T19:54:31.4374444Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4375194Z # Subtest: ReadOnlyViolation carries a clear diagnostic
+JavaScript Package	Run tests	2026-06-29T19:54:31.4376163Z ok 4 - ReadOnlyViolation carries a clear diagnostic
+JavaScript Package	Run tests	2026-06-29T19:54:31.4376867Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4377389Z   duration_ms: 0.627278
+JavaScript Package	Run tests	2026-06-29T19:54:31.4377948Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4378694Z # Subtest: frozen view can fork back to a mutable network
+JavaScript Package	Run tests	2026-06-29T19:54:31.4379801Z ok 5 - frozen view can fork back to a mutable network
+JavaScript Package	Run tests	2026-06-29T19:54:31.4380644Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4381185Z   duration_ms: 0.793728
+JavaScript Package	Run tests	2026-06-29T19:54:31.4381722Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4382502Z # Subtest: asReadOnly clones, leaving the source network mutable
+JavaScript Package	Run tests	2026-06-29T19:54:31.4383808Z ok 6 - asReadOnly clones, leaving the source network mutable
+JavaScript Package	Run tests	2026-06-29T19:54:31.4384786Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4385464Z   duration_ms: 0.492357
+JavaScript Package	Run tests	2026-06-29T19:54:31.4387188Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4388062Z # Subtest: read-only views compare structurally
+JavaScript Package	Run tests	2026-06-29T19:54:31.4389147Z ok 7 - read-only views compare structurally
+JavaScript Package	Run tests	2026-06-29T19:54:31.4391782Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4392442Z   duration_ms: 0.682311
+JavaScript Package	Run tests	2026-06-29T19:54:31.4393181Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4395544Z # Subtest: parseEngine returns read-only form under read-only mode
+JavaScript Package	Run tests	2026-06-29T19:54:31.4399853Z ok 8 - parseEngine returns read-only form under read-only mode
+JavaScript Package	Run tests	2026-06-29T19:54:31.4402443Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4451222Z   duration_ms: 0.548802
+JavaScript Package	Run tests	2026-06-29T19:54:31.4451896Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4452638Z # Subtest: parseEngine returns mutable form by default
+JavaScript Package	Run tests	2026-06-29T19:54:31.4453821Z ok 9 - parseEngine returns mutable form by default
+JavaScript Package	Run tests	2026-06-29T19:54:31.4454568Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4455083Z   duration_ms: 0.491596
+JavaScript Package	Run tests	2026-06-29T19:54:31.4455634Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4456349Z # Subtest: EngineNetwork round-trips between modes
+JavaScript Package	Run tests	2026-06-29T19:54:31.4457235Z ok 10 - EngineNetwork round-trips between modes
+JavaScript Package	Run tests	2026-06-29T19:54:31.4457910Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4458425Z   duration_ms: 0.518285
+JavaScript Package	Run tests	2026-06-29T19:54:31.4458961Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4459804Z # Subtest: EngineNetwork.network exposes read operations in both modes
+JavaScript Package	Run tests	2026-06-29T19:54:31.4460969Z ok 11 - EngineNetwork.network exposes read operations in both modes
+JavaScript Package	Run tests	2026-06-29T19:54:31.4461699Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4462145Z   duration_ms: 0.517013
+JavaScript Package	Run tests	2026-06-29T19:54:31.4462635Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4589490Z # Subtest: lossless JavaScript parse reconstructs original text and indexes identifiers
+JavaScript Package	Run tests	2026-06-29T19:54:31.4631173Z ok 12 - lossless JavaScript parse reconstructs original text and indexes identifiers
+JavaScript Package	Run tests	2026-06-29T19:54:31.4664346Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4678713Z   duration_ms: 4.445589
+JavaScript Package	Run tests	2026-06-29T19:54:31.4704028Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4707452Z # Subtest: lossless source tokens expose the Rust-compatible Token link type alias
+JavaScript Package	Run tests	2026-06-29T19:54:31.4709136Z ok 13 - lossless source tokens expose the Rust-compatible Token link type alias
+JavaScript Package	Run tests	2026-06-29T19:54:31.4710045Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4710569Z   duration_ms: 0.334974
+JavaScript Package	Run tests	2026-06-29T19:54:31.4711129Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4712169Z # Subtest: S-expression query transform replaces captured identifier source ranges
+JavaScript Package	Run tests	2026-06-29T19:54:31.4729296Z ok 14 - S-expression query transform replaces captured identifier source ranges
+JavaScript Package	Run tests	2026-06-29T19:54:31.4730262Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4730786Z   duration_ms: 1.392574
+JavaScript Package	Run tests	2026-06-29T19:54:31.4731332Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4732167Z # Subtest: structural substitution updates relation references
+JavaScript Package	Run tests	2026-06-29T19:54:31.4733245Z ok 15 - structural substitution updates relation references
+JavaScript Package	Run tests	2026-06-29T19:54:31.4734283Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4734798Z   duration_ms: 1.405177
+JavaScript Package	Run tests	2026-06-29T19:54:31.4735341Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4736200Z # Subtest: link-cli substitution text covers create read update and delete
+JavaScript Package	Run tests	2026-06-29T19:54:31.4737403Z ok 16 - link-cli substitution text covers create read update and delete
+JavaScript Package	Run tests	2026-06-29T19:54:31.4738216Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4738690Z   duration_ms: 7.153242
+JavaScript Package	Run tests	2026-06-29T19:54:31.4739186Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4739882Z # Subtest: link-cli substitution classifies command kinds
+JavaScript Package	Run tests	2026-06-29T19:54:31.4740766Z ok 17 - link-cli substitution classifies command kinds
+JavaScript Package	Run tests	2026-06-29T19:54:31.4741505Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4742003Z   duration_ms: 1.09569
+JavaScript Package	Run tests	2026-06-29T19:54:31.4742546Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4743765Z # Subtest: LiNo serialization round-trips JavaScript network topology
+JavaScript Package	Run tests	2026-06-29T19:54:31.4745134Z ok 18 - LiNo serialization round-trips JavaScript network topology
+JavaScript Package	Run tests	2026-06-29T19:54:31.4745929Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4746426Z   duration_ms: 0.732674
+JavaScript Package	Run tests	2026-06-29T19:54:31.4746962Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4747684Z # Subtest: snapshots preserve immutable network versions
+JavaScript Package	Run tests	2026-06-29T19:54:31.4748615Z ok 19 - snapshots preserve immutable network versions
+JavaScript Package	Run tests	2026-06-29T19:54:31.4749331Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4749846Z   duration_ms: 0.622829
+JavaScript Package	Run tests	2026-06-29T19:54:31.4750438Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4751328Z # Subtest: translation rule sets reconstruct through semantic query templates
+JavaScript Package	Run tests	2026-06-29T19:54:31.4752574Z ok 20 - translation rule sets reconstruct through semantic query templates
+JavaScript Package	Run tests	2026-06-29T19:54:31.4753605Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4754155Z   duration_ms: 21.802252
+JavaScript Package	Run tests	2026-06-29T19:54:31.4754724Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4755518Z # Subtest: translation rule sets load Rust canonical LiNo metadata
+JavaScript Package	Run tests	2026-06-29T19:54:31.4756546Z ok 21 - translation rule sets load Rust canonical LiNo metadata
+JavaScript Package	Run tests	2026-06-29T19:54:31.4757258Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4757724Z   duration_ms: 2.31875
+JavaScript Package	Run tests	2026-06-29T19:54:31.4758292Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4759082Z # Subtest: verification reports parse recovery issues
+JavaScript Package	Run tests	2026-06-29T19:54:31.4796523Z ok 22 - verification reports parse recovery issues
+JavaScript Package	Run tests	2026-06-29T19:54:31.4797341Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4797888Z   duration_ms: 0.491085
+JavaScript Package	Run tests	2026-06-29T19:54:31.4798442Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4799394Z # Subtest: grammar builders emit Peggy grammar and JavaScript parser module text
+JavaScript Package	Run tests	2026-06-29T19:54:31.4800783Z ok 23 - grammar builders emit Peggy grammar and JavaScript parser module text
+JavaScript Package	Run tests	2026-06-29T19:54:31.4801653Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4802159Z   duration_ms: 0.630544
+JavaScript Package	Run tests	2026-06-29T19:54:31.4802704Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4803859Z # Subtest: semantic truth values cover many-valued and paradox cases
+JavaScript Package	Run tests	2026-06-29T19:54:31.4805110Z ok 24 - semantic truth values cover many-valued and paradox cases
+JavaScript Package	Run tests	2026-06-29T19:54:31.4805899Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4806401Z   duration_ms: 0.412257
+JavaScript Package	Run tests	2026-06-29T19:54:31.4806947Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4807866Z # Subtest: probabilistic truth values cover relative-meta-logic probability cases
+JavaScript Package	Run tests	2026-06-29T19:54:31.4809175Z ok 25 - probabilistic truth values cover relative-meta-logic probability cases
+JavaScript Package	Run tests	2026-06-29T19:54:31.4809934Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.4810431Z   duration_ms: 0.711906
+JavaScript Package	Run tests	2026-06-29T19:54:31.4810987Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.4994447Z # Subtest: language profiles are declared as queryable links
+JavaScript Package	Run tests	2026-06-29T19:54:31.5024072Z ok 26 - language profiles are declared as queryable links
+JavaScript Package	Run tests	2026-06-29T19:54:31.5024908Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5053976Z   duration_ms: 2.277161
+JavaScript Package	Run tests	2026-06-29T19:54:31.5064071Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5085290Z # Subtest: declareIn is idempotent and reuses existing profile/capability links
+JavaScript Package	Run tests	2026-06-29T19:54:31.5087026Z ok 27 - declareIn is idempotent and reuses existing profile/capability links
+JavaScript Package	Run tests	2026-06-29T19:54:31.5087834Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5088217Z   duration_ms: 0.272998
+JavaScript Package	Run tests	2026-06-29T19:54:31.5088606Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5089439Z # Subtest: declared profile root records language and name as definition
+JavaScript Package	Run tests	2026-06-29T19:54:31.5090604Z ok 28 - declared profile root records language and name as definition
+JavaScript Package	Run tests	2026-06-29T19:54:31.5091370Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5091739Z   duration_ms: 0.534956
+JavaScript Package	Run tests	2026-06-29T19:54:31.5092208Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5092912Z # Subtest: builtin resolves the javascript profile by name and alias
+JavaScript Package	Run tests	2026-06-29T19:54:31.5094197Z ok 29 - builtin resolves the javascript profile by name and alias
+JavaScript Package	Run tests	2026-06-29T19:54:31.5094945Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5095319Z   duration_ms: 0.218698
+JavaScript Package	Run tests	2026-06-29T19:54:31.5095708Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5096480Z # Subtest: validateNetwork accepts supported link types and concepts
+JavaScript Package	Run tests	2026-06-29T19:54:31.5097550Z ok 30 - validateNetwork accepts supported link types and concepts
+JavaScript Package	Run tests	2026-06-29T19:54:31.5098266Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5098640Z   duration_ms: 0.403702
+JavaScript Package	Run tests	2026-06-29T19:54:31.5099045Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5099893Z # Subtest: validateNetwork rejects an unsupported link type in id order
+JavaScript Package	Run tests	2026-06-29T19:54:31.5101103Z ok 31 - validateNetwork rejects an unsupported link type in id order
+JavaScript Package	Run tests	2026-06-29T19:54:31.5101828Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5102182Z   duration_ms: 0.52074
+JavaScript Package	Run tests	2026-06-29T19:54:31.5102639Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5103558Z # Subtest: profiles can be computed from translation rule set domains
+JavaScript Package	Run tests	2026-06-29T19:54:31.5104541Z ok 32 - profiles can be computed from translation rule set domains
+JavaScript Package	Run tests	2026-06-29T19:54:31.5105255Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5105829Z   duration_ms: 0.426755
+JavaScript Package	Run tests	2026-06-29T19:54:31.5106194Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5106729Z # Subtest: accessors expose deterministic sorted order
+JavaScript Package	Run tests	2026-06-29T19:54:31.5107476Z ok 33 - accessors expose deterministic sorted order
+JavaScript Package	Run tests	2026-06-29T19:54:31.5107987Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5108309Z   duration_ms: 0.764123
+JavaScript Package	Run tests	2026-06-29T19:54:31.5108664Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5109115Z # Subtest: builders return immutable copies
+JavaScript Package	Run tests	2026-06-29T19:54:31.5109729Z ok 34 - builders return immutable copies
+JavaScript Package	Run tests	2026-06-29T19:54:31.5110181Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5110497Z   duration_ms: 0.310819
+JavaScript Package	Run tests	2026-06-29T19:54:31.5110857Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5111384Z # Subtest: snake_case aliases mirror camelCase methods
+JavaScript Package	Run tests	2026-06-29T19:54:31.5112109Z ok 35 - snake_case aliases mirror camelCase methods
+JavaScript Package	Run tests	2026-06-29T19:54:31.5112614Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5112927Z   duration_ms: 0.346144
+JavaScript Package	Run tests	2026-06-29T19:54:31.5113593Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5245708Z # Subtest: npm package metadata uses the public unscoped package name
+JavaScript Package	Run tests	2026-06-29T19:54:31.5247185Z ok 36 - npm package metadata uses the public unscoped package name
+JavaScript Package	Run tests	2026-06-29T19:54:31.5248145Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5248743Z   duration_ms: 7.687747
+JavaScript Package	Run tests	2026-06-29T19:54:31.5249378Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5263164Z # Subtest: JavaScript workflow publishes to npm with trusted publishing provenance
+JavaScript Package	Run tests	2026-06-29T19:54:31.5268742Z ok 37 - JavaScript workflow publishes to npm with trusted publishing provenance
+JavaScript Package	Run tests	2026-06-29T19:54:31.5269728Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5270253Z   duration_ms: 1.926738
+JavaScript Package	Run tests	2026-06-29T19:54:31.5270819Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5298913Z # Subtest: Rust release pipeline keeps the npm package in the same release stream
+JavaScript Package	Run tests	2026-06-29T19:54:31.5304211Z ok 38 - Rust release pipeline keeps the npm package in the same release stream
+JavaScript Package	Run tests	2026-06-29T19:54:31.5305275Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5306004Z   duration_ms: 3.772936
+JavaScript Package	Run tests	2026-06-29T19:54:31.5306828Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5935465Z # Subtest: JavaScript API operation registry mirrors Rust operation families and style cells
+JavaScript Package	Run tests	2026-06-29T19:54:31.5938309Z ok 39 - JavaScript API operation registry mirrors Rust operation families and style cells
+JavaScript Package	Run tests	2026-06-29T19:54:31.5944085Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5944768Z   duration_ms: 1.616511
+JavaScript Package	Run tests	2026-06-29T19:54:31.5945400Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5946590Z # Subtest: executable JavaScript API-style fixtures cover every applicable registry cell
+JavaScript Package	Run tests	2026-06-29T19:54:31.5948564Z ok 40 - executable JavaScript API-style fixtures cover every applicable registry cell
+JavaScript Package	Run tests	2026-06-29T19:54:31.5949630Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5950173Z   duration_ms: 21.399111
+JavaScript Package	Run tests	2026-06-29T19:54:31.5950807Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.5970129Z # Subtest: issue-163 parity manifest keeps Rust and JavaScript feature rows in sync
+JavaScript Package	Run tests	2026-06-29T19:54:31.5971685Z ok 41 - issue-163 parity manifest keeps Rust and JavaScript feature rows in sync
+JavaScript Package	Run tests	2026-06-29T19:54:31.5972729Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.5973579Z   duration_ms: 7.526166
+JavaScript Package	Run tests	2026-06-29T19:54:31.5974209Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6065015Z # Subtest: ast_grep_style rule algebra supports relations, booleans, and named refs
+JavaScript Package	Run tests	2026-06-29T19:54:31.6073132Z ok 42 - ast_grep_style rule algebra supports relations, booleans, and named refs
+JavaScript Package	Run tests	2026-06-29T19:54:31.6075880Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6082839Z   duration_ms: 5.63814
+JavaScript Package	Run tests	2026-06-29T19:54:31.6083270Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6084854Z # Subtest: semgrep/coccinelle ellipsis and typed metavariables match gaps
+JavaScript Package	Run tests	2026-06-29T19:54:31.6086205Z ok 43 - semgrep/coccinelle ellipsis and typed metavariables match gaps
+JavaScript Package	Run tests	2026-06-29T19:54:31.6087024Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6087489Z   duration_ms: 1.891443
+JavaScript Package	Run tests	2026-06-29T19:54:31.6088007Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6088824Z # Subtest: comby_style text pattern matches plain text fallback tokens
+JavaScript Package	Run tests	2026-06-29T19:54:31.6089974Z ok 44 - comby_style text pattern matches plain text fallback tokens
+JavaScript Package	Run tests	2026-06-29T19:54:31.6090782Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6091264Z   duration_ms: 2.224002
+JavaScript Package	Run tests	2026-06-29T19:54:31.6091799Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6092813Z # Subtest: Rust-compatible token link type selector matches parsed lossless tokens
+JavaScript Package	Run tests	2026-06-29T19:54:31.6094651Z ok 45 - Rust-compatible token link type selector matches parsed lossless tokens
+JavaScript Package	Run tests	2026-06-29T19:54:31.6095711Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6096363Z   duration_ms: 0.534566
+JavaScript Package	Run tests	2026-06-29T19:54:31.6097002Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6097965Z # Subtest: stratego/rascal traversal orders and fixpoint are available
+JavaScript Package	Run tests	2026-06-29T19:54:31.6099308Z ok 46 - stratego/rascal traversal orders and fixpoint are available
+JavaScript Package	Run tests	2026-06-29T19:54:31.6100188Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6100556Z   duration_ms: 2.005265
+JavaScript Package	Run tests	2026-06-29T19:54:31.6100922Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6101458Z # Subtest: ast_grep rule snapshot harness verifies valid and invalid cases
+JavaScript Package	Run tests	2026-06-29T19:54:31.6102167Z ok 47 - ast_grep rule snapshot harness verifies valid and invalid cases
+JavaScript Package	Run tests	2026-06-29T19:54:31.6102664Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6102984Z   duration_ms: 1.029617
+JavaScript Package	Run tests	2026-06-29T19:54:31.6103633Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6166980Z # Subtest: RegionDetectionPolicy exposes the Rust enum variants
+JavaScript Package	Run tests	2026-06-29T19:54:31.6169431Z ok 48 - RegionDetectionPolicy exposes the Rust enum variants
+JavaScript Package	Run tests	2026-06-29T19:54:31.6169936Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6170156Z   duration_ms: 4.085729
+JavaScript Package	Run tests	2026-06-29T19:54:31.6170382Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6174796Z # Subtest: EmbeddedRegion exposes language and span accessors
+JavaScript Package	Run tests	2026-06-29T19:54:31.6176034Z ok 49 - EmbeddedRegion exposes language and span accessors
+JavaScript Package	Run tests	2026-06-29T19:54:31.6176582Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6176919Z   duration_ms: 0.636415
+JavaScript Package	Run tests	2026-06-29T19:54:31.6177283Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6180178Z # Subtest: txt parse exposes whole buffer as a single region
+JavaScript Package	Run tests	2026-06-29T19:54:31.6181745Z ok 50 - txt parse exposes whole buffer as a single region
+JavaScript Package	Run tests	2026-06-29T19:54:31.6182207Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6182422Z   duration_ms: 0.374578
+JavaScript Package	Run tests	2026-06-29T19:54:31.6182643Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6186238Z # Subtest: markdown name-driven detection captures fenced and HTML regions
+JavaScript Package	Run tests	2026-06-29T19:54:31.6188021Z ok 51 - markdown name-driven detection captures fenced and HTML regions
+JavaScript Package	Run tests	2026-06-29T19:54:31.6189546Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6190174Z   duration_ms: 1.325298
+JavaScript Package	Run tests	2026-06-29T19:54:31.6190596Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6192946Z # Subtest: content-driven markdown sniffs sql from fenced content
+JavaScript Package	Run tests	2026-06-29T19:54:31.6195463Z ok 52 - content-driven markdown sniffs sql from fenced content
+JavaScript Package	Run tests	2026-06-29T19:54:31.6195983Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6196639Z   duration_ms: 0.475986
+JavaScript Package	Run tests	2026-06-29T19:54:31.6197022Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6198691Z # Subtest: content-driven detection falls back to txt region with exact span
+JavaScript Package	Run tests	2026-06-29T19:54:31.6199649Z ok 53 - content-driven detection falls back to txt region with exact span
+JavaScript Package	Run tests	2026-06-29T19:54:31.6209678Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6209930Z   duration_ms: 0.296081
+JavaScript Package	Run tests	2026-06-29T19:54:31.6210160Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6217194Z # Subtest: content-driven markdown sniffs JavaScript from fenced content
+JavaScript Package	Run tests	2026-06-29T19:54:31.6218262Z ok 54 - content-driven markdown sniffs JavaScript from fenced content
+JavaScript Package	Run tests	2026-06-29T19:54:31.6218917Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6219310Z   duration_ms: 0.517424
+JavaScript Package	Run tests	2026-06-29T19:54:31.6219690Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6220294Z # Subtest: name-driven markdown keeps explicit language tag
+JavaScript Package	Run tests	2026-06-29T19:54:31.6221155Z ok 55 - name-driven markdown keeps explicit language tag
+JavaScript Package	Run tests	2026-06-29T19:54:31.6221781Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6244071Z   duration_ms: 0.906618
+JavaScript Package	Run tests	2026-06-29T19:54:31.6244802Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6250731Z # Subtest: name-driven policy drops fences without a language tag
+JavaScript Package	Run tests	2026-06-29T19:54:31.6251952Z ok 56 - name-driven policy drops fences without a language tag
+JavaScript Package	Run tests	2026-06-29T19:54:31.6252771Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6253511Z   duration_ms: 0.481076
+JavaScript Package	Run tests	2026-06-29T19:54:31.6254085Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6254897Z # Subtest: html detection covers script, style, and style attributes
+JavaScript Package	Run tests	2026-06-29T19:54:31.6256001Z ok 57 - html detection covers script, style, and style attributes
+JavaScript Package	Run tests	2026-06-29T19:54:31.6256741Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6257198Z   duration_ms: 1.163216
+JavaScript Package	Run tests	2026-06-29T19:54:31.6257713Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6258401Z # Subtest: html element detection is case insensitive
+JavaScript Package	Run tests	2026-06-29T19:54:31.6259329Z ok 58 - html element detection is case insensitive
+JavaScript Package	Run tests	2026-06-29T19:54:31.6259963Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6260408Z   duration_ms: 1.432831
+JavaScript Package	Run tests	2026-06-29T19:54:31.6261016Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6261931Z # Subtest: point rows and columns track newlines in fenced regions
+JavaScript Package	Run tests	2026-06-29T19:54:31.6263101Z ok 59 - point rows and columns track newlines in fenced regions
+JavaScript Package	Run tests	2026-06-29T19:54:31.6264134Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6264601Z   duration_ms: 0.279691
+JavaScript Package	Run tests	2026-06-29T19:54:31.6265100Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6266360Z # Subtest: unknown language yields no regions
+JavaScript Package	Run tests	2026-06-29T19:54:31.6274351Z ok 60 - unknown language yields no regions
+JavaScript Package	Run tests	2026-06-29T19:54:31.6275364Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6275959Z   duration_ms: 0.147565
+JavaScript Package	Run tests	2026-06-29T19:54:31.6276580Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6281589Z # Subtest: sniffLanguage recognizes supported signatures
+JavaScript Package	Run tests	2026-06-29T19:54:31.6283144Z ok 61 - sniffLanguage recognizes supported signatures
+JavaScript Package	Run tests	2026-06-29T19:54:31.6284096Z   ---
+JavaScript Package	Run tests	2026-06-29T19:54:31.6284329Z   duration_ms: 0.198039
+JavaScript Package	Run tests	2026-06-29T19:54:31.6284566Z   ...
+JavaScript Package	Run tests	2026-06-29T19:54:31.6355336Z 1..61
+JavaScript Package	Run tests	2026-06-29T19:54:31.6355905Z # tests 61
+JavaScript Package	Run tests	2026-06-29T19:54:31.6356422Z # suites 0
+JavaScript Package	Run tests	2026-06-29T19:54:31.6356859Z # pass 61
+JavaScript Package	Run tests	2026-06-29T19:54:31.6357334Z # fail 0
+JavaScript Package	Run tests	2026-06-29T19:54:31.6358008Z # cancelled 0
+JavaScript Package	Run tests	2026-06-29T19:54:31.6358496Z # skipped 0
+JavaScript Package	Run tests	2026-06-29T19:54:31.6358931Z # todo 0
+JavaScript Package	Run tests	2026-06-29T19:54:31.6374231Z # duration_ms 303.765616
+JavaScript Package	Check Rust/JavaScript parity manifest	﻿2026-06-29T19:54:31.6503926Z ##[group]Run npm run check:parity
+JavaScript Package	Check Rust/JavaScript parity manifest	2026-06-29T19:54:31.6504310Z ^[[36;1mnpm run check:parity^[[0m
+JavaScript Package	Check Rust/JavaScript parity manifest	2026-06-29T19:54:31.6538641Z shell: /usr/bin/bash -e {0}
+JavaScript Package	Check Rust/JavaScript parity manifest	2026-06-29T19:54:31.6538911Z ##[endgroup]
+JavaScript Package	Check Rust/JavaScript parity manifest	2026-06-29T19:54:31.7713130Z 
+JavaScript Package	Check Rust/JavaScript parity manifest	2026-06-29T19:54:31.7714435Z > meta-language@0.46.0 check:parity
+JavaScript Package	Check Rust/JavaScript parity manifest	2026-06-29T19:54:31.7715302Z > node scripts/check-js-rust-parity.mjs
+JavaScript Package	Check Rust/JavaScript parity manifest	2026-06-29T19:54:31.7715703Z 
+JavaScript Package	Check Rust/JavaScript parity manifest	2026-06-29T19:54:31.8488445Z parity: checked 21 feature rows and 25 Rust public modules
+JavaScript Package	Verify npm package contents	﻿2026-06-29T19:54:31.8615336Z ##[group]Run npm pack --dry-run
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:31.8615724Z ^[[36;1mnpm pack --dry-run^[[0m
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:31.8647751Z shell: /usr/bin/bash -e {0}
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:31.8648016Z ##[endgroup]
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2217827Z npm notice
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2221956Z npm notice 📦  meta-language@0.46.0
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2222597Z npm notice Tarball Contents
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2225675Z npm notice 2.5kB README.md
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2226593Z npm notice 983B package.json
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2227199Z npm notice 8.7kB src/access.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2227873Z npm notice 14.1kB src/api-style-fixtures.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2228545Z npm notice 3.4kB src/grammar.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2229122Z npm notice 19.2kB src/index.d.ts
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2229682Z npm notice 429B src/index.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2230321Z npm notice 11.6kB src/language-profile.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2230983Z npm notice 15.6kB src/network.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2231598Z npm notice 5.5kB src/primitives.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2232312Z npm notice 37.2kB src/query-algebra.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2232963Z npm notice 2.7kB src/query.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2233810Z npm notice 9.3kB src/regions.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2234391Z npm notice 6.6kB src/semantics.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2235009Z npm notice 4.7kB src/substitution.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2235629Z npm notice 851B src/transform.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2236242Z npm notice 17.7kB src/translation.js
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2236807Z npm notice Tarball Details
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2237383Z npm notice name: meta-language
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2237928Z npm notice version: 0.46.0
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2238594Z npm notice filename: meta-language-0.46.0.tgz
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2239270Z npm notice package size: 35.3 kB
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2239881Z npm notice unpacked size: 161.0 kB
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2240783Z npm notice shasum: d3811c8b2f83c2e9f7541ab627e01b0ff0ee4f7d
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2241727Z npm notice integrity: sha512-HmP3ZYNI3DZ3y[...]sjBijGhkTVPoQ==
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2242457Z npm notice total files: 17
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2242917Z npm notice
+JavaScript Package	Verify npm package contents	2026-06-29T19:54:32.2243653Z meta-language-0.46.0.tgz
+JavaScript Package	Post Setup Node.js	﻿2026-06-29T19:54:32.2394499Z Post job cleanup.
+JavaScript Package	Post Setup Node.js	2026-06-29T19:54:32.3706857Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/meta-language/meta-language --files-from manifest.txt --use-compress-program zstdmt
+JavaScript Package	Post Setup Node.js	2026-06-29T19:54:33.3137463Z Sent 340397 of 340397 (100.0%), 0.5 MBs/sec
+JavaScript Package	Post Setup Node.js	2026-06-29T19:54:33.5723639Z Cache saved with the key: node-cache-Linux-x64-npm-c34ac62a73677348b74c03832604a57584a84bcf29656d6371a5004fddd034ab
+JavaScript Package	Post Run actions/checkout@v6	﻿2026-06-29T19:54:33.5856396Z Post job cleanup.
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.6698707Z [command]/usr/bin/git version
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.6734972Z git version 2.54.0
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.6774682Z Temporarily overriding HOME='/home/runner/work/_temp/84896495-0213-4a61-a3e2-5a2e4c39cc2a' before making global git config changes
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.6776240Z Adding repository directory to the temporary git global config as a safe directory
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.6780370Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/meta-language/meta-language
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.6809374Z Removing SSH command configuration
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.6815908Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.6851922Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7072176Z Removing HTTP extra header
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7077225Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7109386Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7325147Z Removing includeIf entries pointing to credentials config files
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7331407Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7356841Z includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7358287Z includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7359506Z includeif.gitdir:/github/workspace/.git.path
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7360967Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7367326Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7389169Z /home/runner/work/_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7399230Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path /home/runner/work/_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7433666Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7455094Z /home/runner/work/_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7463934Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7494252Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7514434Z /github/runner_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7522936Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7553149Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7573729Z /github/runner_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7582569Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7613015Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+JavaScript Package	Post Run actions/checkout@v6	2026-06-29T19:54:33.7826045Z Removing credentials config '/home/runner/work/_temp/git-credentials-fc9da822-978e-4f94-9fed-f8f5a9ca733b.config'
+JavaScript Package	Complete job	﻿2026-06-29T19:54:33.7983616Z Cleaning up orphan processes

@@ -1,2 +1,5 @@
 # Keep vendored benchmark fixture byte counts stable across platforms.
 rust/benches/corpora/** text eol=lf
+
+# Preserve downloaded CI logs verbatim; they can contain trailing spaces from GitHub Actions output.
+docs/case-studies/issue-177/ci-logs/*.log -whitespace
