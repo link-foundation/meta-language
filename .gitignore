@@ -68,4 +68,6 @@ rust/web/pkg/
 # Log files
 *.log
 logs/
-ci-logs/
+/ci-logs/
+!docs/case-studies/issue-177/ci-logs/
+!docs/case-studies/issue-177/ci-logs/*.log

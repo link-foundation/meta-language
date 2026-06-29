@@ -1,0 +1,4 @@
+rust-ai-driven-development-pipeline-template 67598fb14cff5326f0a971fc5b3004fb852250ee 2026-06-28T19:19:45+00:00 chore: release v0.19.4
+js-ai-driven-development-pipeline-template 482f6528f980ace473ca44a8c998a9c66b044235 2026-06-27T00:17:42+05:30 Merge pull request #96 from link-foundation/issue-95-1521bdf3c8af
+python-ai-driven-development-pipeline-template e5c9b689510fb7de16825a22465611b18ca6cf4b 2026-06-29T00:55:08+05:30 Merge pull request #25 from link-foundation/issue-24-40abd3bd23c2
+csharp-ai-driven-development-pipeline-template b76374de356148e9903cbea1f724e0b3bbfe0c25 2026-06-28T19:26:50+00:00 chore: release v0.3.7
