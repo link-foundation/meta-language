@@ -8,13 +8,16 @@ Investigated runs:
 
 - Rust run `28398677445`: `cancelled`, branch `main`, SHA `63ab0c52135420fa26131484e215faca0c6f7deb`, created `2026-06-29T19:54:19Z`.
 - JavaScript run `28398677404`: `success`, branch `main`, SHA `63ab0c52135420fa26131484e215faca0c6f7deb`, created `2026-06-29T19:54:19Z`.
+- Rust PR verification run `28401016525`: `failure`, event `pull_request`, SHA `da68db415a152a74f2214ddd48854e33f39f6b85`, created `2026-06-29T20:36:27Z`.
 
 Preserved artifacts:
 
 - `ci-logs/rust-28398677445.log`
 - `ci-logs/javascript-28398677404.log`
+- `ci-logs/rust-28401016525.log`
 - `rust-run-28398677445.json`
 - `javascript-run-28398677404.json`
+- `rust-run-28401016525.json`
 - `template-data/*`
 
 ## Findings
@@ -83,6 +86,28 @@ Fix:
 - Pass `token: ${{ env.CODECOV_TOKEN }}` and `fail_ci_if_error: true` when the upload runs.
 - Set `disable_search: true` so the action uploads the requested `rust/lcov.info` file without searching for unrelated report formats.
 
+### Crate-size guard treated a transient registry error as final
+
+After the first fix, Rust PR verification run `28401016525` confirmed that the original failure areas passed: Code Coverage, Lint and Format Check, and all three matrix Test jobs completed successfully. The run then failed in `Build Package / Check crate package size` while running `rust-script scripts/check-crate-size.rs`:
+
+- `ci-logs/rust-28401016525.log:12248`: `Updating crates.io index`
+- `ci-logs/rust-28401016525.log:12252`: `download of se/rd/serde_yaml_ng failed`
+- `ci-logs/rust-28401016525.log:12255`: `curl failed`
+- `ci-logs/rust-28401016525.log:12258`: `[16] Error in the HTTP2 framing layer`
+- `ci-logs/rust-28401016525.log:12259`: `cargo package failed; cannot determine crate archive size`
+
+Root cause:
+
+- The crate-size guard runs `cargo package` to produce the `.crate` archive before checking the archive size.
+- `cargo package` may still contact the crates.io index while preparing package metadata.
+- The guard executed `cargo package` once, so a transient registry or network failure surfaced as a deterministic package-size failure.
+
+Fix:
+
+- Retry `cargo package` up to three times before reporting `cargo package failed`.
+- Keep the existing final failure message and all archive-size checks unchanged.
+- Add unit tests that simulate one transient failure before success and permanent failure after all retries.
+
 ### JavaScript workflow did not require changes
 
 The JavaScript run completed successfully. The only text matches for warnings/errors were normal runner grouping lines, a git checkout hint, and `# cancelled 0` from the test runner output. No JavaScript workflow false-positive failure was found in run `28398677404`.
@@ -108,6 +133,7 @@ The Python and C# templates also contain Codecov uploads with `fail_ci_if_error:
 Upstream reports filed:
 
 - Rust template: https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/87
+- Rust template crate-size retry: https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/88
 - Python template: https://github.com/link-foundation/python-ai-driven-development-pipeline-template/issues/27
 - C# template: https://github.com/link-foundation/csharp-ai-driven-development-pipeline-template/issues/34
 
@@ -135,3 +161,16 @@ cargo test --test unit ci_cd::workflow_release -- --nocapture
 ```
 
 Result after the fix: `15 passed; 0 failed`.
+
+Added crate-size guard tests in `rust/scripts/check-crate-size.rs` covering:
+
+- `cargo package` succeeds after one transient failure.
+- `cargo package` reports failure only after all retry attempts fail.
+
+Focused check:
+
+```bash
+cargo test --test unit ci_cd::check_crate_size -- --nocapture
+```
+
+Result after the fix: `8 passed; 0 failed`.
