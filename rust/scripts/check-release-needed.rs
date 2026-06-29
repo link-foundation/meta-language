@@ -4,7 +4,7 @@
 //! This script checks:
 //! 1. If there are changelog fragments to process
 //! 2. If the current version has already been published to crates.io
-//! 3. If the matching GitHub release and configured Docker Hub image tag exist
+//! 3. If the matching npm package, GitHub release, and configured Docker Hub image tag exist
 //!
 //! IMPORTANT: This script checks external release artifacts, NOT git tags.
 //! This is critical because:
@@ -27,6 +27,8 @@
 //!   - should_release: 'true' if a release should be created
 //!   - skip_bump: 'true' if version bump should be skipped while missing artifacts are recreated
 //!   - crate_published: 'true' if the current version already exists on crates.io
+//!   - npm_required: 'true' if a JavaScript package exists under js/
+//!   - npm_published: 'true' if the matching JavaScript package version exists on npm
 //!   - dockerhub_required: 'true' if Docker Hub publishing is configured and a Dockerfile exists
 //!   - dockerhub_published: 'true' if the configured Docker Hub tag exists
 //!   - github_release_published: 'true' if the matching GitHub release exists
@@ -43,7 +45,7 @@
 use serde::Deserialize;
 use std::env;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 
 #[path = "rust-paths.rs"]
@@ -164,6 +166,73 @@ fn check_docker_hub_tag(image: &str, version: &str) -> bool {
     }
 }
 
+fn npm_registry_path(value: &str) -> String {
+    value
+        .replace('@', "%40")
+        .replace('/', "%2F")
+        .replace('+', "%2B")
+}
+
+fn check_version_on_npm(package_name: &str, version: &str) -> bool {
+    let url = format!(
+        "https://registry.npmjs.org/{}/{}",
+        npm_registry_path(package_name),
+        npm_registry_path(version)
+    );
+
+    match ureq::get(&url)
+        .set("User-Agent", "rust-script-check-release")
+        .call()
+    {
+        Ok(response) => response.status() == 200,
+        Err(ureq::Error::Status(404, _)) => false,
+        Err(e) => {
+            eprintln!("Warning: Could not check npm registry: {}", e);
+            false
+        }
+    }
+}
+
+fn js_package_json_to_check() -> Result<Option<PathBuf>, String> {
+    if let Some(root) = get_arg("js-root") {
+        let package_json = PathBuf::from(root).join("package.json");
+        if package_json.exists() {
+            return Ok(Some(package_json));
+        }
+        return Err(format!(
+            "Configured JavaScript root does not contain package.json: {}",
+            package_json.display()
+        ));
+    }
+
+    for candidate in ["./js/package.json", "../js/package.json"] {
+        let path = PathBuf::from(candidate);
+        if path.exists() {
+            return Ok(Some(path));
+        }
+    }
+
+    Ok(None)
+}
+
+fn read_npm_package_name(package_json: &Path) -> Result<String, String> {
+    let content = fs::read_to_string(package_json)
+        .map_err(|e| format!("Failed to read {}: {}", package_json.display(), e))?;
+    let json: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse {}: {}", package_json.display(), e))?;
+
+    json.get("name")
+        .and_then(serde_json::Value::as_str)
+        .filter(|name| !name.trim().is_empty())
+        .map(ToString::to_string)
+        .ok_or_else(|| {
+            format!(
+                "Could not find npm package name in {}",
+                package_json.display()
+            )
+        })
+}
+
 fn check_github_release(repository: &str, tag_prefix: &str, version: &str) -> bool {
     let url = format!(
         "https://api.github.com/repos/{}/releases/tags/{}{}",
@@ -200,11 +269,16 @@ fn docker_hub_image_to_check() -> Option<String> {
 
 fn release_is_complete(
     crate_published: bool,
+    npm_required: bool,
+    npm_published: bool,
     dockerhub_required: bool,
     dockerhub_published: bool,
     github_release_published: bool,
 ) -> bool {
-    crate_published && (!dockerhub_required || dockerhub_published) && github_release_published
+    crate_published
+        && (!npm_required || npm_published)
+        && (!dockerhub_required || dockerhub_published)
+        && github_release_published
 }
 
 fn parse_semver(version: &str) -> Option<(u32, u32, u32)> {
@@ -312,6 +386,25 @@ fn main() {
 
     if !has_fragments {
         let crate_published = check_version_on_crates_io(&crate_name, &current_version);
+        let npm_package_name = match js_package_json_to_check() {
+            Ok(Some(package_json)) => match read_npm_package_name(&package_json) {
+                Ok(package_name) => Some(package_name),
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    exit(1);
+                }
+            },
+            Ok(None) => None,
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(1);
+            }
+        };
+        let npm_required = npm_package_name.is_some();
+        let npm_published = npm_package_name
+            .as_deref()
+            .map(|package_name| check_version_on_npm(package_name, &current_version))
+            .unwrap_or(false);
         let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
         let dockerhub_image = docker_hub_image_to_check();
         let dockerhub_required = dockerhub_image.is_some();
@@ -334,6 +427,11 @@ fn main() {
             "crate_published",
             if crate_published { "true" } else { "false" },
         );
+        set_output("npm_required", if npm_required { "true" } else { "false" });
+        set_output(
+            "npm_published",
+            if npm_published { "true" } else { "false" },
+        );
         set_output(
             "dockerhub_required",
             if dockerhub_required { "true" } else { "false" },
@@ -355,6 +453,14 @@ fn main() {
             "Crate: {}, Version: {}, Published on crates.io: {}",
             crate_name, current_version, crate_published
         );
+        if let Some(package_name) = npm_package_name {
+            println!(
+                "npm package: {}, version {} published on npm: {}",
+                package_name, current_version, npm_published
+            );
+        } else {
+            println!("npm artifact check skipped: js/package.json was not found");
+        }
         if let Some(image) = dockerhub_image {
             println!(
                 "Docker image: {}, version/latest tags published on Docker Hub: {}",
@@ -370,6 +476,8 @@ fn main() {
 
         if release_is_complete(
             crate_published,
+            npm_required,
+            npm_published,
             dockerhub_required,
             dockerhub_published,
             github_release_published,

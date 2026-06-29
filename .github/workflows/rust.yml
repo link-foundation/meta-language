@@ -403,6 +403,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -411,6 +412,19 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Update npm for trusted publishing
+        run: |
+          npm install -g npm@11
+          npm --version
 
       - name: Install rust-script
         run: cargo install rust-script
@@ -464,6 +478,91 @@ jobs:
             steps.publish-crate.outputs.publish_result == 'success'
           )
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.current_version.outputs.version }}"
+
+      - name: Read JavaScript package metadata
+        if: |
+          steps.check.outputs.should_release == 'true' && (
+            steps.check.outputs.crate_published == 'true' ||
+            steps.publish-crate.outputs.publish_result == 'success'
+          )
+        id: js-package
+        working-directory: ${{ github.workspace }}/js
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          expected_version="${{ steps.current_version.outputs.version }}"
+
+          if [ "$name" != "meta-language" ]; then
+            echo "::error::Expected package name meta-language, got $name"
+            exit 1
+          fi
+
+          if [ "$version" != "$expected_version" ]; then
+            echo "::error::Rust release version $expected_version does not match js/package.json version $version"
+            exit 1
+          fi
+
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Package: $name@$version"
+
+      - name: Install JavaScript dependencies
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.check.outputs.npm_published != 'true'
+        working-directory: ${{ github.workspace }}/js
+        run: npm ci
+
+      - name: Test JavaScript package
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.check.outputs.npm_published != 'true'
+        working-directory: ${{ github.workspace }}/js
+        run: npm test
+
+      - name: Check JavaScript parity manifest
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.check.outputs.npm_published != 'true'
+        working-directory: ${{ github.workspace }}/js
+        run: npm run check:parity
+
+      - name: Verify npm package contents
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.check.outputs.npm_published != 'true'
+        working-directory: ${{ github.workspace }}/js
+        run: npm pack --dry-run
+
+      - name: Check npm registry
+        id: npm
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.check.outputs.npm_published != 'true'
+        working-directory: ${{ github.workspace }}/js
+        run: |
+          if npm view meta-language@${{ steps.current_version.outputs.version }} version; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish JavaScript package to npm
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.check.outputs.npm_published != 'true' &&
+          steps.npm.outputs.already_published != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: ${{ github.workspace }}/js
+        run: npm publish --provenance
+
+      - name: Verify published JavaScript package
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.check.outputs.npm_published != 'true' &&
+          steps.npm.outputs.already_published != 'true'
+        run: npm view meta-language@${{ steps.current_version.outputs.version }} version
 
       - name: Configure Docker Hub publishing
         if: |
@@ -577,6 +676,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -585,6 +685,19 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Update npm for trusted publishing
+        run: |
+          npm install -g npm@11
+          npm --version
 
       - name: Install rust-script
         run: cargo install rust-script
@@ -624,6 +737,78 @@ jobs:
             steps.version.outputs.already_released == 'true') &&
           steps.publish-crate.outputs.publish_result == 'success'
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
+
+      - name: Read JavaScript package metadata
+        if: |
+          (steps.version.outputs.version_committed == 'true' ||
+            steps.version.outputs.already_released == 'true') &&
+          steps.publish-crate.outputs.publish_result == 'success'
+        id: js-package
+        working-directory: ${{ github.workspace }}/js
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          expected_version="${{ steps.version.outputs.new_version }}"
+
+          if [ "$name" != "meta-language" ]; then
+            echo "::error::Expected package name meta-language, got $name"
+            exit 1
+          fi
+
+          if [ "$version" != "$expected_version" ]; then
+            echo "::error::Rust release version $expected_version does not match js/package.json version $version"
+            exit 1
+          fi
+
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Package: $name@$version"
+
+      - name: Install JavaScript dependencies
+        if: steps.js-package.outputs.version != ''
+        working-directory: ${{ github.workspace }}/js
+        run: npm ci
+
+      - name: Test JavaScript package
+        if: steps.js-package.outputs.version != ''
+        working-directory: ${{ github.workspace }}/js
+        run: npm test
+
+      - name: Check JavaScript parity manifest
+        if: steps.js-package.outputs.version != ''
+        working-directory: ${{ github.workspace }}/js
+        run: npm run check:parity
+
+      - name: Verify npm package contents
+        if: steps.js-package.outputs.version != ''
+        working-directory: ${{ github.workspace }}/js
+        run: npm pack --dry-run
+
+      - name: Check npm registry
+        id: npm
+        if: steps.js-package.outputs.version != ''
+        working-directory: ${{ github.workspace }}/js
+        run: |
+          if npm view meta-language@${{ steps.version.outputs.new_version }} version; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish JavaScript package to npm
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.npm.outputs.already_published != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: ${{ github.workspace }}/js
+        run: npm publish --provenance
+
+      - name: Verify published JavaScript package
+        if: |
+          steps.js-package.outputs.version != '' &&
+          steps.npm.outputs.already_published != 'true'
+        run: npm view meta-language@${{ steps.version.outputs.new_version }} version
 
       - name: Configure Docker Hub publishing
         if: |
