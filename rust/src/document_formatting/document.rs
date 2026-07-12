@@ -416,10 +416,9 @@ fn parse_html_heading(line: &str) -> Option<BlockNode> {
 fn parse_html_list(line: &str) -> Option<BlockNode> {
     let (concept, inner) = if let Some(inner) = wrapped_inner(line, "<ul>", "</ul>") {
         ("bullet-list", inner)
-    } else if let Some(inner) = wrapped_inner(line, "<ol>", "</ol>") {
-        ("ordered-list", inner)
     } else {
-        return None;
+        let inner = wrapped_inner(line, "<ol>", "</ol>")?;
+        ("ordered-list", inner)
     };
 
     let mut items = Vec::new();
