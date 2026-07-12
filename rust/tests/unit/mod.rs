@@ -1,5 +1,6 @@
 mod access_mode;
 mod api_style_parity;
+mod binary_format;
 mod concept_ontology;
 mod cross_format_reconstruction;
 mod cross_language_reconstruction;

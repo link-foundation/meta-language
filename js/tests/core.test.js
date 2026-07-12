@@ -21,6 +21,44 @@ import {
   emitPeggy,
 } from '../src/index.js';
 
+test('arbitrary file bytes round-trip without UTF-8 loss', () => {
+  const source = Uint8Array.from([0x00, 0x25, 0x50, 0x44, 0x46, 0xff, 0x80, 0x0a]);
+
+  const network = LinkNetwork.parseBytes(source, 'application/pdf');
+
+  assert.deepEqual(network.reconstructBytes(), source);
+  const tokens = network.links().filter((link) => link.metadata().linkType === LinkType.SourceToken);
+  assert.equal(tokens.length, 1);
+  assert.ok(tokens.every((link) => link.metadata().language === 'application/pdf'));
+});
+
+test('files round-trip across binary storage chunk boundaries', () => {
+  const source = Uint8Array.from({ length: 5000 }, (_, index) => index % 251);
+
+  const network = LinkNetwork.parseBytes(source, 'application/octet-stream');
+
+  assert.deepEqual(network.reconstructBytes(), source);
+  assert.equal(
+    network.links().filter((link) => link.metadata().linkType === LinkType.SourceToken).length,
+    2,
+  );
+});
+
+test('empty files retain their format', () => {
+  const network = LinkNetwork.parseBytes([], 'application/octet-stream');
+
+  assert.deepEqual(network.reconstructBytes(), new Uint8Array());
+  assert.ok(
+    network
+      .links()
+      .some(
+        (link) =>
+          link.metadata().linkType === LinkType.Language &&
+          link.metadata().term === 'application/octet-stream',
+      ),
+  );
+});
+
 test('lossless JavaScript parse reconstructs original text and indexes identifiers', () => {
   const network = LinkNetwork.parse(
     'const value = call(value);\n',

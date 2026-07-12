@@ -109,6 +109,7 @@ export class LinkNetwork {
     language: string,
     configuration?: ParseConfiguration,
   ): LinkNetwork;
+  static parseBytes(bytes: Uint8Array | ArrayLike<number>, format: string): LinkNetwork;
   static parseFluent(
     text: string,
     language: string,
@@ -137,6 +138,7 @@ export class LinkNetwork {
   snapshot(version: number, provenance: string): NetworkSnapshot;
   verifyFullMatch(): VerificationReport;
   reconstructText(): string;
+  reconstructBytes(): Uint8Array;
   renderSource(language: string): string;
   reconstructTextAsWithRules(
     targetLanguage: string,

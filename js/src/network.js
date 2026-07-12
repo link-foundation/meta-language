@@ -37,6 +37,25 @@ export class LinkNetwork {
     return network;
   }
 
+  /** Stores arbitrary file bytes without requiring UTF-8 decoding. */
+  static parseBytes(bytes, format) {
+    const network = new LinkNetwork();
+    network.insertTypedPoint(LinkType.Language, format);
+    const source = Uint8Array.from(bytes);
+    const chunkSize = 4096;
+    for (let offset = 0; offset < source.length; offset += chunkSize) {
+      const chunk = source.slice(offset, offset + chunkSize);
+      const span = new SourceSpan(
+        new ByteRange(offset, offset + chunk.length),
+        new Point(0, offset),
+        new Point(0, offset + chunk.length),
+      );
+      const encoded = [...chunk].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+      network.insertSourceToken(format, `bytes:${encoded}`, span);
+    }
+    return network;
+  }
+
   static parseFluent(text, language, configuration = ParseConfiguration.default()) {
     return new FluentPipeline(LinkNetwork.parse(text, language, configuration));
   }
@@ -269,6 +288,21 @@ export class LinkNetwork {
       .filter((link) => !link.metadata().flags.isMissing)
       .map((link) => link.metadata().term ?? '')
       .join('');
+  }
+
+  /** Reconstructs bytes stored by `parseBytes` in source order. */
+  reconstructBytes() {
+    const result = [];
+    for (const link of this._sourceTokenLinks().sort(sourceOrder)) {
+      const term = link.metadata().term ?? '';
+      if (!/^bytes:(?:[0-9a-f]{2})+$/i.test(term)) {
+        continue;
+      }
+      for (let offset = 6; offset < term.length; offset += 2) {
+        result.push(Number.parseInt(term.slice(offset, offset + 2), 16));
+      }
+    }
+    return Uint8Array.from(result);
   }
 
   renderSource(language) {
