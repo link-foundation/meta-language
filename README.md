@@ -64,6 +64,14 @@ console.log(network.reconstructText()); // alpha beta
 
 See [`js/README.md`](js/README.md) for the full JavaScript API.
 
+### Arbitrary file formats
+
+Files that do not have a semantic parser can still be stored and transformed
+without UTF-8 loss. `LinkNetwork::parse_bytes` in Rust and
+`LinkNetwork.parseBytes` in JavaScript represent ordered byte chunks as tokens
+and retain the caller-supplied media type or format identifier. Calling
+`reconstruct_bytes` or `reconstructBytes` returns the original file exactly.
+
 ## Feature parity
 
 The core requirement of this project is that **every feature present in Rust is

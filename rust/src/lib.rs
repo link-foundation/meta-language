@@ -1,6 +1,7 @@
 pub mod access;
 pub mod api_styles;
 pub mod benchmark;
+mod binary_format;
 mod concept_ontology;
 pub mod configuration;
 mod data_format_parser;

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "issue": 163,
-  "updated": "2026-06-21",
+  "updated": "2026-07-12",
   "operationFamilies": [
     "parse",
     "query",
@@ -62,6 +62,24 @@
     "verification": { "parity": "ported", "feature": "verification" }
   },
   "features": [
+    {
+      "id": "lossless-binary-file-round-trip",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/binary_format.rs",
+          "rust/tests/unit/binary_format.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/network.js",
+          "js/tests/core.test.js"
+        ]
+      }
+    },
     {
       "id": "link-network-core",
       "required": true,
