@@ -496,11 +496,25 @@ fn natural_language_parse_adds_segmentation_language_and_unicode_annotations() {
     );
 
     assert_eq!(mandarin_network.reconstruct_text(), mandarin_source);
+    #[cfg(feature = "lindera")]
     assert_token_link(&mandarin_network, "你好", ByteRange::new(0, "你好".len()));
+    #[cfg(not(feature = "lindera"))]
+    {
+        assert_token_link(&mandarin_network, "你", ByteRange::new(0, "你".len()));
+        assert_token_link(
+            &mandarin_network,
+            "好",
+            ByteRange::new("你".len(), "你好".len()),
+        );
+    }
+    #[cfg(feature = "lindera")]
+    let expected_mandarin_segmenter = "segmentation:lindera-jieba";
+    #[cfg(not(feature = "lindera"))]
+    let expected_mandarin_segmenter = "segmentation:unicode-segmentation";
     assert_link_with_term(
         &mandarin_network,
         LinkType::Semantic,
-        "segmentation:lindera-jieba",
+        expected_mandarin_segmenter,
     );
     assert_link_with_term(&mandarin_network, LinkType::Language, "Mandarin Chinese");
 

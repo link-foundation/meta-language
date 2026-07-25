@@ -1,8 +1,12 @@
 use std::sync::OnceLock;
 
+#[cfg(feature = "lindera")]
 use lindera::dictionary::load_dictionary;
+#[cfg(feature = "lindera")]
 use lindera::mode::Mode;
+#[cfg(feature = "lindera")]
 use lindera::segmenter::Segmenter;
+#[cfg(feature = "lindera")]
 use lindera::tokenizer::Tokenizer;
 use lingua::Language::{
     Arabic, Bengali, Chinese, English, French, Hindi, Portuguese, Russian, Spanish, Urdu,
@@ -72,7 +76,7 @@ pub fn annotate_natural_language(
     );
 
     let (segmentation_engine, segments) = if declared_language == "Mandarin Chinese" {
-        ("lindera-jieba", lindera_segments(text))
+        mandarin_segments(text)
     } else {
         ("unicode-segmentation", unicode_segments(text))
     };
@@ -280,24 +284,33 @@ fn canonical_natural_language(language: &str) -> Option<&'static str> {
     }
 }
 
-fn lindera_segments(text: &str) -> Vec<WordSegment> {
+#[cfg(feature = "lindera")]
+fn mandarin_segments(text: &str) -> (&'static str, Vec<WordSegment>) {
     let Ok(dictionary) = load_dictionary("embedded://jieba") else {
-        return Vec::new();
+        return ("lindera-jieba", Vec::new());
     };
     let segmenter = Segmenter::new(Mode::Normal, dictionary, None);
     let tokenizer = Tokenizer::new(segmenter);
     let Ok(tokens) = tokenizer.tokenize(text) else {
-        return Vec::new();
+        return ("lindera-jieba", Vec::new());
     };
 
-    tokens
-        .into_iter()
-        .filter(|token| contains_word_character(token.surface.as_ref()))
-        .map(|token| WordSegment {
-            text: token.surface.into_owned(),
-            range: ByteRange::new(token.byte_start, token.byte_end),
-        })
-        .collect()
+    (
+        "lindera-jieba",
+        tokens
+            .into_iter()
+            .filter(|token| contains_word_character(token.surface.as_ref()))
+            .map(|token| WordSegment {
+                text: token.surface.into_owned(),
+                range: ByteRange::new(token.byte_start, token.byte_end),
+            })
+            .collect(),
+    )
+}
+
+#[cfg(not(feature = "lindera"))]
+fn mandarin_segments(text: &str) -> (&'static str, Vec<WordSegment>) {
+    ("unicode-segmentation", unicode_segments(text))
 }
 
 fn unicode_segments(text: &str) -> Vec<WordSegment> {
