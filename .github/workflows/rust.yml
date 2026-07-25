@@ -194,6 +194,13 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
 
+      # docs.rs honors package.metadata.docs.rs and builds this feature set.
+      # Keep it free of optional native/build-script dependencies.
+      - name: Check docs.rs feature set
+        env:
+          DOCS_RS: 1
+        run: cargo check --no-default-features
+
       - name: Check file size limit
         run: rust-script scripts/check-file-size.rs
 
