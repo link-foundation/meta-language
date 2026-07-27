@@ -209,6 +209,20 @@ fn different_rules_compose_across_sibling_rendering_roots() {
 }
 
 #[test]
+fn rendering_without_a_target_template_preserves_the_source_text() {
+    let network = LinkNetwork::parse("make all", "txt", ParseConfiguration::default());
+    let rules = TranslationRuleSet::new("shell-to-js").with_rule(
+        TranslationRule::new("source token", LinkQuery::by_type(LinkType::Token))
+            .with_template("JavaScript", "translated"),
+    );
+
+    assert_eq!(
+        network.reconstruct_text_as_with_rules("Python", ParseConfiguration::default(), &rules),
+        "make all"
+    );
+}
+
+#[test]
 fn variadic_placeholders_recursively_render_and_join_child_references() {
     let mut network = LinkNetwork::new();
     let first = insert_shell_command(&mut network, "ls");
