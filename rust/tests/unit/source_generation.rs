@@ -83,3 +83,25 @@ fn render_source_matches_reconstruct_text_for_span_backed_parse_networks() {
         Some(source.to_string())
     );
 }
+
+#[test]
+fn syntax_nodes_accept_runtime_sized_child_lists() {
+    let mut network = LinkNetwork::new();
+    let children = (0..17)
+        .map(|index| network.insert_source_token("Shell", &index.to_string()))
+        .collect::<Vec<_>>();
+
+    let script = network.insert_dynamic_syntax_node("Shell", "script", &children);
+
+    assert_eq!(
+        network
+            .link(script)
+            .expect("dynamic syntax node is inserted")
+            .references(),
+        children
+    );
+    assert_eq!(
+        network.render_source_from(script, "Shell"),
+        "012345678910111213141516"
+    );
+}

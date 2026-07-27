@@ -2,11 +2,13 @@ import { Parser } from 'links-notation';
 
 import { LinkMetadata, LinkType } from './primitives.js';
 import { LinkQuery } from './query.js';
+import { renderRuleSet } from './translation-renderer.js';
 
 const RULE_SET_TERM = 'translation-rule-set';
 const RULE_TERM = 'translation-rule';
 const MATCH_TERM = 'translation-rule-match';
 const REFERENCE_CAPTURE_LANGUAGE = 'translation-rule-reference-capture';
+const LANGUAGE_FALLBACK_LANGUAGE = 'translation-rule-language-fallback';
 const TEMPLATE_DEFINITION = 'translation-rule-template';
 
 const textEncoder = new TextEncoder();
@@ -47,9 +49,15 @@ export class TranslationRule {
 }
 
 export class TranslationRuleSet {
-  constructor(name, rules = []) {
+  constructor(name, rules = [], languageFallbacks = {}) {
     this.name = name;
     this.rules = rules;
+    this.languageFallbacks = Object.fromEntries(
+      sortedEntries(languageFallbacks).map(([language, fallbacks]) => [
+        language,
+        [...fallbacks],
+      ]),
+    );
   }
 
   withRule(rule) {
@@ -57,17 +65,21 @@ export class TranslationRuleSet {
     return this;
   }
 
-  render(targetLanguage, network) {
-    for (const rule of this.rules) {
-      const template = rule.templateFor(targetLanguage);
-      const matches = template ? network.find(rule.query) : [];
-      if (template && matches.length > 0) {
-        return matches
-          .map((match) => renderTemplate(template.text, network, rule, match, targetLanguage))
-          .join('\n');
-      }
+  withLanguageFallback(language, fallback) {
+    const fallbacks = this.languageFallbacks[language] ?? [];
+    if (!fallbacks.includes(fallback)) {
+      fallbacks.push(fallback);
     }
-    return network.reconstructText();
+    this.languageFallbacks[language] = fallbacks;
+    return this;
+  }
+
+  with_language_fallback(language, fallback) {
+    return this.withLanguageFallback(language, fallback);
+  }
+
+  render(targetLanguage, network, rootLinkId = undefined) {
+    return renderRuleSet(this, network, targetLanguage, rootLinkId);
   }
 
   toLino() {
@@ -81,6 +93,19 @@ export class TranslationRuleSet {
       term: RULE_SET_TERM,
       definition: this.name,
     }));
+
+    for (const [language, fallbacks] of sortedEntries(this.languageFallbacks)) {
+      for (const fallback of fallbacks) {
+        lines.push(canonicalLine(nextId, [root], {
+          linkType: LinkType.Semantic,
+          named: true,
+          term: language,
+          language: LANGUAGE_FALLBACK_LANGUAGE,
+          definition: fallback,
+        }));
+        nextId += 1;
+      }
+    }
 
     for (const rule of this.rules) {
       const ruleId = nextId;
@@ -130,6 +155,7 @@ export class TranslationRuleSet {
   toJson() {
     return JSON.stringify({
       name: this.name,
+      languageFallbacks: this.languageFallbacks,
       rules: this.rules.map((rule) => ({
         name: rule.name,
         query: {
@@ -165,7 +191,27 @@ export class TranslationRuleSet {
       .sort((left, right) => left.id - right.id)
       .map((ruleLink) => loadRule(links, ruleLink));
 
-    return new TranslationRuleSet(root.metadata.definition ?? RULE_SET_TERM, rules);
+    const languageFallbacks = {};
+    for (const link of [...links.values()].sort((left, right) => left.id - right.id)) {
+      if (
+        link.references[0] !== root.id
+        || link.metadata.language !== LANGUAGE_FALLBACK_LANGUAGE
+      ) {
+        continue;
+      }
+      const language = link.metadata.term;
+      const fallback = link.metadata.definition;
+      if (language === undefined || fallback === undefined) {
+        throw new Error('translation rule structure error: invalid language fallback');
+      }
+      (languageFallbacks[language] ??= []).push(fallback);
+    }
+
+    return new TranslationRuleSet(
+      root.metadata.definition ?? RULE_SET_TERM,
+      rules,
+      languageFallbacks,
+    );
   }
 
   static fromJson(source) {
@@ -180,6 +226,7 @@ export class TranslationRuleSet {
         }
         return restored;
       }),
+      parsed.languageFallbacks ?? parsed.language_fallbacks ?? {},
     );
   }
 }
@@ -418,122 +465,6 @@ function sexpressionSource(sexpression) {
     ))
     .join('');
   return `(${sexpression.nodeType}) @${sexpression.capture}${predicates}`;
-}
-
-function renderTemplate(source, network, rule, match, targetLanguage) {
-  let output = '';
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index];
-    const next = source[index + 1];
-    if (character === '{' && next === '{') {
-      output += '{';
-      index += 1;
-    } else if (character === '}' && next === '}') {
-      output += '}';
-      index += 1;
-    } else if (character === '{') {
-      const close = source.indexOf('}', index + 1);
-      if (close === -1) {
-        output += source.slice(index);
-        break;
-      }
-      const placeholder = source.slice(index + 1, close);
-      output += renderPlaceholder(network, rule, match, targetLanguage, placeholder);
-      index = close;
-    } else {
-      output += character;
-    }
-  }
-  return output;
-}
-
-function renderPlaceholder(network, rule, match, targetLanguage, placeholder) {
-  const [rawName, rawMode] = splitPlaceholder(placeholder);
-  const linkId = placeholderLink(network, rule, match, rawName.trim());
-  if (!linkId) {
-    return `{${placeholder}}`;
-  }
-  return renderLink(network, linkId, targetLanguage, rawMode.trim());
-}
-
-function placeholderLink(network, rule, match, name) {
-  if (match.captures?.has(name)) {
-    return match.captures.get(name);
-  }
-  const referenceIndex = rule.referenceCaptures[name];
-  if (referenceIndex === undefined) {
-    return undefined;
-  }
-  return network.link(match.linkId)?.references()[referenceIndex];
-}
-
-function renderLink(network, linkId, targetLanguage, mode) {
-  const link = network.link(linkId);
-  if (!link) {
-    return String(linkId);
-  }
-  if (mode === 'term') {
-    return link.metadata().term ?? String(linkId);
-  }
-  const concept = conceptIdForLink(network, link);
-  if (mode === 'concept') {
-    return concept ?? link.metadata().term ?? String(linkId);
-  }
-  return reconstructConcept(network, concept, targetLanguage)
-    ?? link.metadata().term
-    ?? network.capturedText(linkId)
-    ?? String(linkId);
-}
-
-function conceptIdForLink(network, link) {
-  if (link.metadata().linkType === LinkType.Concept) {
-    return link.metadata().term;
-  }
-  if (link.metadata().term?.startsWith('concept:')) {
-    return link.metadata().term.slice('concept:'.length);
-  }
-  const firstReference = link.references()[0];
-  const concept = firstReference ? network.link(firstReference) : undefined;
-  return concept?.metadata().linkType === LinkType.Concept ? concept.metadata().term : undefined;
-}
-
-function reconstructConcept(network, concept, language) {
-  if (!concept) {
-    return undefined;
-  }
-  for (const candidate of [language, canonicalReconstructionLanguage(language)]) {
-    if (!candidate) {
-      continue;
-    }
-    const found = network.links().find((link) => (
-      link.metadata().term === `concept:${concept}` && link.metadata().language === candidate
-    ));
-    if (found) {
-      return network.capturedText(found.id());
-    }
-  }
-  return undefined;
-}
-
-function canonicalReconstructionLanguage(language) {
-  switch (language.toLowerCase()) {
-    case 'english':
-    case 'en':
-      return 'English';
-    case 'russian':
-    case 'ru':
-      return 'Russian';
-    default:
-      return undefined;
-  }
-}
-
-function splitPlaceholder(placeholder) {
-  const separator = placeholder.indexOf(':');
-  if (separator === -1) {
-    return [placeholder, 'language'];
-  }
-  return [placeholder.slice(0, separator), placeholder.slice(separator + 1)];
 }
 
 function numericId(value, message) {

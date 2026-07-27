@@ -27,6 +27,9 @@ badges, and its own CI/CD workflow.
 | [`docs/`](docs) | Shared documentation: the grammar subsystem, fidelity matrices, the project website source, and per-issue case studies. |
 | [`.github/`](.github/workflows) | Shared CI/CD workflows (`rust.yml`, `js.yml`). |
 
+Declarative, recursive network translation and its template syntax are
+documented in [`docs/translation-rules.md`](docs/translation-rules.md).
+
 ## Quick start
 
 ### Rust

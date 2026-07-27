@@ -249,14 +249,18 @@
         "status": "implemented",
         "evidence": [
           "rust/src/translation_rules.rs",
-          "rust/tests/unit/api_style_parity.rs"
+          "rust/src/translation_rules/renderer.rs",
+          "rust/tests/unit/api_style_parity.rs",
+          "rust/tests/unit/translation_rules.rs"
         ]
       },
       "javascript": {
         "status": "implemented",
         "evidence": [
           "js/src/translation.js",
-          "js/tests/core.test.js"
+          "js/src/translation-renderer.js",
+          "js/tests/core.test.js",
+          "js/tests/translation.test.js"
         ]
       }
     },

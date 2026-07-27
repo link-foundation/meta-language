@@ -888,11 +888,11 @@ impl LinkNetwork {
         );
     }
 
-    pub(crate) fn insert_dynamic_link(
-        &mut self,
-        references: &[LinkId],
-        metadata: LinkMetadata,
-    ) -> LinkId {
+    /// Inserts a link whose reference count is known only at run time.
+    ///
+    /// This is the slice-based counterpart to [`Self::insert_link`], whose
+    /// array parameter is convenient when the arity is known at compile time.
+    pub fn insert_dynamic_link(&mut self, references: &[LinkId], metadata: LinkMetadata) -> LinkId {
         let id = self.allocate_id();
         let metadata = self.intern_metadata(metadata);
         let term = metadata.term.clone();
