@@ -42,6 +42,24 @@ impl LinkNetwork {
         )
     }
 
+    /// Inserts a syntax node whose child count is known only at run time.
+    #[must_use]
+    pub fn insert_dynamic_syntax_node(
+        &mut self,
+        language: &str,
+        kind: &str,
+        children: &[LinkId],
+    ) -> LinkId {
+        self.insert_dynamic_link(
+            children,
+            LinkMetadata::new()
+                .with_link_type(LinkType::Syntax)
+                .with_named(true)
+                .with_term(kind)
+                .with_language(language),
+        )
+    }
+
     /// Renders source text for `language` from a parsed or constructed network.
     ///
     /// Parsed networks are rendered from their document root. Hand-built
