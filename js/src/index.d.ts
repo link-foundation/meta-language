@@ -237,9 +237,15 @@ export class TranslationRule {
 }
 
 export class TranslationRuleSet {
-  constructor(name: string, rules?: TranslationRule[]);
+  constructor(
+    name: string,
+    rules?: TranslationRule[],
+    languageFallbacks?: Record<string, string[]>,
+  );
   withRule(rule: TranslationRule): TranslationRuleSet;
-  render(targetLanguage: string, network: LinkNetwork): string;
+  withLanguageFallback(language: string, fallback: string): TranslationRuleSet;
+  with_language_fallback(language: string, fallback: string): TranslationRuleSet;
+  render(targetLanguage: string, network: LinkNetwork, rootLinkId?: LinkIdValue): string;
   toLino(): string;
   toJson(): string;
   static fromLino(source: string): TranslationRuleSet;

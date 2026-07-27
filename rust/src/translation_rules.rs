@@ -5,14 +5,16 @@ use std::sync::OnceLock;
 
 use crate::{
     FormalizationLevel, Link, LinkId, LinkMetadata, LinkNetwork, LinkQuery, LinkType,
-    LinoSerializationError, NaturalizationDirection, ParseConfiguration, QueryMatch,
-    QueryParseError,
+    LinoSerializationError, NaturalizationDirection, ParseConfiguration, QueryParseError,
 };
+
+mod renderer;
 
 const RULE_SET_TERM: &str = "translation-rule-set";
 const RULE_TERM: &str = "translation-rule";
 const MATCH_TERM: &str = "translation-rule-match";
 const REFERENCE_CAPTURE_LANGUAGE: &str = "translation-rule-reference-capture";
+const LANGUAGE_FALLBACK_LANGUAGE: &str = "translation-rule-language-fallback";
 const TEMPLATE_DEFINITION: &str = "translation-rule-template";
 const FORMAL_LEXICAL_TARGET: &str = "formal:lexical";
 const FORMAL_CONCEPT_TARGET: &str = "formal:concept";
@@ -23,6 +25,7 @@ const FORMAL_LOGICAL_TARGET: &str = "formal:logical";
 pub struct TranslationRuleSet {
     name: String,
     rules: Vec<TranslationRule>,
+    language_fallbacks: BTreeMap<String, Vec<String>>,
 }
 
 impl TranslationRuleSet {
@@ -32,6 +35,7 @@ impl TranslationRuleSet {
         Self {
             name: name.into(),
             rules: Vec::new(),
+            language_fallbacks: BTreeMap::new(),
         }
     }
 
@@ -47,6 +51,12 @@ impl TranslationRuleSet {
         &self.rules
     }
 
+    /// Declared target-language fallback chains.
+    #[must_use]
+    pub const fn language_fallbacks(&self) -> &BTreeMap<String, Vec<String>> {
+        &self.language_fallbacks
+    }
+
     /// Returns a copy with one rule appended.
     #[must_use]
     pub fn with_rule(mut self, rule: TranslationRule) -> Self {
@@ -57,6 +67,24 @@ impl TranslationRuleSet {
     /// Appends a rule to the end of the ordered rule set.
     pub fn add_rule(&mut self, rule: TranslationRule) {
         self.rules.push(rule);
+    }
+
+    /// Adds a fallback used when a rule has no template for `target_language`.
+    #[must_use]
+    pub fn with_language_fallback(
+        mut self,
+        target_language: impl Into<String>,
+        fallback_language: impl Into<String>,
+    ) -> Self {
+        let fallbacks = self
+            .language_fallbacks
+            .entry(target_language.into())
+            .or_default();
+        let fallback_language = fallback_language.into();
+        if !fallbacks.contains(&fallback_language) {
+            fallbacks.push(fallback_language);
+        }
+        self
     }
 
     /// Serializes this rule set through the existing canonical `LiNo` network format.
@@ -71,6 +99,20 @@ impl TranslationRuleSet {
                 .with_term(RULE_SET_TERM)
                 .with_definition(&self.name),
         );
+
+        for (target, fallbacks) in &self.language_fallbacks {
+            for fallback in fallbacks {
+                network.insert_link(
+                    [root],
+                    LinkMetadata::new()
+                        .with_link_type(LinkType::Semantic)
+                        .with_named(true)
+                        .with_term(target)
+                        .with_language(LANGUAGE_FALLBACK_LANGUAGE)
+                        .with_definition(fallback),
+                );
+            }
+        }
 
         for rule in &self.rules {
             let rule_link = network.insert_link(
@@ -144,6 +186,27 @@ impl TranslationRuleSet {
             rules.push(load_rule(&network, rule_link)?);
         }
 
+        let mut language_fallbacks = BTreeMap::<String, Vec<String>>::new();
+        for link in network.links().filter(|link| {
+            link.references().first().copied() == Some(root.id())
+                && link.metadata().language() == Some(LANGUAGE_FALLBACK_LANGUAGE)
+        }) {
+            let target = link.metadata().term().ok_or_else(|| {
+                TranslationRuleSetLoadError::Structure(
+                    "language fallback is missing a target".to_string(),
+                )
+            })?;
+            let fallback = link.metadata().definition().ok_or_else(|| {
+                TranslationRuleSetLoadError::Structure(
+                    "language fallback is missing a fallback target".to_string(),
+                )
+            })?;
+            language_fallbacks
+                .entry(target.to_string())
+                .or_default()
+                .push(fallback.to_string());
+        }
+
         Ok(Self {
             name: root
                 .metadata()
@@ -151,6 +214,7 @@ impl TranslationRuleSet {
                 .unwrap_or(RULE_SET_TERM)
                 .to_string(),
             rules,
+            language_fallbacks,
         })
     }
 
@@ -175,22 +239,20 @@ impl TranslationRuleSet {
         configuration: ParseConfiguration,
     ) -> Option<String> {
         let source = network.reconstruct_text();
-        for rule in &self.rules {
-            let Some(template) = rule.template_for(target_language, configuration) else {
-                continue;
-            };
-            let rendered = network
-                .query_matches(&rule.query)
-                .into_iter()
-                .map(|query_match| template.render(network, rule, &query_match, target_language))
-                .collect::<Vec<_>>();
+        renderer::render_roots(self, network, target_language, configuration)
+            .map(|rendered| with_source_trailing_newline(rendered, &source))
+    }
 
-            if !rendered.is_empty() {
-                return Some(with_source_trailing_newline(rendered.join("\n"), &source));
-            }
-        }
-
-        None
+    /// Renders one network link, recursively applying this rule set to captures.
+    #[must_use]
+    pub fn render_link(
+        &self,
+        network: &LinkNetwork,
+        link_id: LinkId,
+        target_language: &str,
+        configuration: ParseConfiguration,
+    ) -> String {
+        renderer::render_link(self, network, link_id, target_language, configuration)
     }
 }
 
@@ -314,54 +376,6 @@ impl TranslationTemplate {
     #[must_use]
     pub fn source(&self) -> &str {
         &self.source
-    }
-
-    fn render(
-        &self,
-        network: &LinkNetwork,
-        rule: &TranslationRule,
-        query_match: &QueryMatch,
-        target_language: &str,
-    ) -> String {
-        let mut output = String::new();
-        let mut chars = self.source.chars().peekable();
-        while let Some(character) = chars.next() {
-            match character {
-                '{' if chars.peek() == Some(&'{') => {
-                    chars.next();
-                    output.push('{');
-                }
-                '{' => {
-                    let mut placeholder = String::new();
-                    let mut closed = false;
-                    for next in chars.by_ref() {
-                        if next == '}' {
-                            closed = true;
-                            break;
-                        }
-                        placeholder.push(next);
-                    }
-                    if closed {
-                        output.push_str(&render_placeholder(
-                            network,
-                            rule,
-                            query_match,
-                            target_language,
-                            &placeholder,
-                        ));
-                    } else {
-                        output.push('{');
-                        output.push_str(&placeholder);
-                    }
-                }
-                '}' if chars.peek() == Some(&'}') => {
-                    chars.next();
-                    output.push('}');
-                }
-                other => output.push(other),
-            }
-        }
-        output
     }
 }
 
@@ -613,89 +627,6 @@ fn parse_query_link_type(token: &str) -> Result<LinkType, QueryParseError> {
                 "unknown query link type `{other}`"
             )))
         }
-    })
-}
-
-fn render_placeholder(
-    network: &LinkNetwork,
-    rule: &TranslationRule,
-    query_match: &QueryMatch,
-    target_language: &str,
-    placeholder: &str,
-) -> String {
-    let (name, mode) = placeholder.split_once(':').map_or_else(
-        || (placeholder.trim(), "language"),
-        |(name, mode)| (name.trim(), mode.trim()),
-    );
-    let Some(link_id) = placeholder_link(network, rule, query_match, name) else {
-        return format!("{{{placeholder}}}");
-    };
-
-    render_link(network, link_id, target_language, mode)
-}
-
-fn placeholder_link(
-    network: &LinkNetwork,
-    rule: &TranslationRule,
-    query_match: &QueryMatch,
-    name: &str,
-) -> Option<LinkId> {
-    if let Some(link_id) = query_match.captures().first(name) {
-        return Some(link_id);
-    }
-
-    let reference_index = *rule.reference_captures.get(name)?;
-    network
-        .link(query_match.link_id())?
-        .references()
-        .get(reference_index)
-        .copied()
-}
-
-fn render_link(
-    network: &LinkNetwork,
-    link_id: LinkId,
-    target_language: &str,
-    mode: &str,
-) -> String {
-    let Some(link) = network.link(link_id) else {
-        return link_id.to_string();
-    };
-    let concept = concept_id_for_link(network, link);
-    match mode {
-        "concept" => concept
-            .or_else(|| link.metadata().term())
-            .map_or_else(|| link_id.to_string(), str::to_string),
-        "term" => link
-            .metadata()
-            .term()
-            .map_or_else(|| link_id.to_string(), str::to_string),
-        _ => concept
-            .and_then(|concept| reconstruct_concept_for_language(network, concept, target_language))
-            .or_else(|| link.metadata().term())
-            .map_or_else(|| link_id.to_string(), str::to_string),
-    }
-}
-
-fn concept_id_for_link<'a>(network: &'a LinkNetwork, link: &'a Link) -> Option<&'a str> {
-    if link.metadata().link_type() == Some(LinkType::Concept) {
-        return link.metadata().term();
-    }
-    let first_reference = link.references().first().copied()?;
-    let concept = network.link(first_reference)?;
-    (concept.metadata().link_type() == Some(LinkType::Concept))
-        .then(|| concept.metadata().term())
-        .flatten()
-}
-
-fn reconstruct_concept_for_language<'a>(
-    network: &'a LinkNetwork,
-    concept: &str,
-    language: &str,
-) -> Option<&'a str> {
-    network.reconstruct_concept(concept, language).or_else(|| {
-        canonical_reconstruction_language(language)
-            .and_then(|canonical| network.reconstruct_concept(concept, canonical))
     })
 }
 

@@ -21,6 +21,10 @@ Feature parity with the Rust crate is enforced by
 [`../parity/language-features.json`](../parity/language-features.json) and the
 `npm run check:parity` gate (see [Parity](#parity) below).
 
+See [`../docs/translation-rules.md`](../docs/translation-rules.md) for recursive
+rule evaluation, captures, variadic and optional templates, rendering contexts,
+and target-language fallbacks.
+
 ## Usage
 
 ```js

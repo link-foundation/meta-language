@@ -70,6 +70,10 @@ description, an interactive WebAssembly demo, and the full
 - Concept-to-language syntax mappings for cross-language reconstruction.
 - `reconstruct_text_as()` for semantic cross-language reconstruction and
   configurable formalization levels.
+- Recursive `TranslationRuleSet` evaluation with named reference captures,
+  variadic and optional template segments, target sub-language fallbacks, and
+  indentation-aware substitution. See
+  [`docs/translation-rules.md`](../docs/translation-rules.md).
 - Exact-match concept interning with language-bound expression links,
   queryable external-id aliases, LiNo concept-set import, and
   `seed_common_concept_ontology()` for the default 351-concept semantic
