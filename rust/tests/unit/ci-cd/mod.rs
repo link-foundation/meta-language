@@ -13,4 +13,5 @@ mod rust_paths;
 #[path = "../../../scripts/version-and-commit.rs"]
 mod version_and_commit;
 mod workflow_release;
+mod workflow_security;
 mod workspace_manifest_resolution;

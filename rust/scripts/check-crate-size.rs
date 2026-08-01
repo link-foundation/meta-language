@@ -165,6 +165,7 @@ fn main() {
     cmd.arg("package")
         .arg("--allow-dirty")
         .arg("--no-verify")
+        .arg("--quiet")
         .arg("-p")
         .arg(&name);
     if rust_paths::needs_cd(&rust_root) {

@@ -9,6 +9,7 @@ on:
       - 'parity/**'
       - 'docs/**'
       - '.github/workflows/rust.yml'
+      - '.secretlintrc.json'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -16,6 +17,7 @@ on:
       - 'parity/**'
       - 'docs/**'
       - '.github/workflows/rust.yml'
+      - '.secretlintrc.json'
   workflow_dispatch:
     inputs:
       release_mode:
@@ -39,13 +41,18 @@ on:
         required: false
         type: string
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+# Least-privilege default for every job; jobs that need more escalate explicitly.
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+  CARGO_NET_RETRY: '10'
+  CARGO_HTTP_MULTIPLEXING: 'false'
   # Support both CARGO_REGISTRY_TOKEN (cargo's native env var) and CARGO_TOKEN (for backwards compatibility)
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
   CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
@@ -58,6 +65,9 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
+      cancel-in-progress: true
     if: github.event_name != 'workflow_dispatch'
     outputs:
       rs-changed: ${{ steps.changes.outputs.rs-changed }}
@@ -74,7 +84,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install rust-script
-        run: cargo install rust-script
+        run: ./rust/scripts/install-rust-script.sh
 
       # Run from the repository root so the script's `git diff` output (which is
       # always repository-root relative) matches the multi-language path prefixes.
@@ -90,6 +100,9 @@ jobs:
     name: Changelog Fragment Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-changelog
+      cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -101,7 +114,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install rust-script
-        run: cargo install rust-script
+        run: ./rust/scripts/install-rust-script.sh
 
       # Run from the repository root so `git diff` paths match `rust/changelog.d/`.
       - name: Check for changelog fragments
@@ -115,6 +128,9 @@ jobs:
     name: Version Modification Check
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-version-check
+      cancel-in-progress: true
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v6
@@ -125,7 +141,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install rust-script
-        run: cargo install rust-script
+        run: ./rust/scripts/install-rust-script.sh
 
       # Run from the repository root so `git diff` paths match `rust/Cargo.toml`.
       - name: Check for manual version changes
@@ -135,6 +151,90 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: rust-script rust/scripts/check-version-modification.rs
 
+  # === SECRETS SCAN ===
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-secrets-scan
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run secretlint
+        run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
+
+  # === FRESH MERGE SIMULATION ===
+  fresh-merge:
+    name: Fresh Merge Simulation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-fresh-merge
+      cancel-in-progress: true
+    needs: [detect-changes]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-fresh-merge-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-fresh-merge-
+
+      - name: Simulate fresh merge with base branch
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: bash rust/scripts/simulate-fresh-merge.sh
+
+  # === CARGO.LOCK GUARD ===
+  cargo-lock:
+    name: Cargo.lock Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-cargo-lock
+      cancel-in-progress: true
+    needs: [detect-changes]
+    defaults:
+      run:
+        working-directory: rust
+    if: |
+      !cancelled() && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true' ||
+        needs.detect-changes.outputs.any-code-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust-script
+        run: ./scripts/install-rust-script.sh
+
+      - name: Check committed Cargo.lock for binary crates
+        working-directory: ${{ github.workspace }}
+        run: rust-script rust/scripts/check-cargo-lock.rs
+
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run
   # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
@@ -142,24 +242,30 @@ jobs:
     name: Lint and Format Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [detect-changes]
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-lint
+      cancel-in-progress: true
+    needs: [detect-changes, cargo-lock]
     defaults:
       run:
         working-directory: rust
-    # Note: always() is required because detect-changes is skipped on workflow_dispatch,
-    # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
+    # !cancelled() lets workflow_dispatch evaluate skipped detect-changes while
+    # still propagating user cancellation immediately.
     # See: https://github.com/actions/runner/issues/491
     if: |
-      always() && !cancelled() && (
+      !cancelled() && needs.cargo-lock.result == 'success' && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.rs-changed == 'true' ||
         needs.detect-changes.outputs.toml-changed == 'true' ||
         needs.detect-changes.outputs.docs-changed == 'true' ||
-        needs.detect-changes.outputs.workflow-changed == 'true'
+        needs.detect-changes.outputs.workflow-changed == 'true' ||
+        needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -167,12 +273,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install rust-script
-        run: cargo install rust-script
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
+        run: ./scripts/install-rust-script.sh
 
       - name: Cache cargo registry
         uses: actions/cache@v5
@@ -201,7 +302,29 @@ jobs:
           DOCS_RS: 1
         run: cargo check --no-default-features
 
+      - name: Collect changed files
+        id: changed-files
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          {
+            echo 'files<<CHANGED_FILES_EOF'
+            if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+              git diff --name-only "$BASE_SHA" HEAD | sed -n 's#^rust/##p'
+            else
+              git ls-files | sed -n 's#^rust/##p'
+            fi
+            echo 'CHANGED_FILES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build documentation with warnings denied
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --no-deps --all-features
+
       - name: Check file size limit
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.files }}
         run: rust-script scripts/check-file-size.rs
 
       # Enforce the Rust <-> JavaScript feature parity manifest. The Rust pipeline
@@ -216,12 +339,24 @@ jobs:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
-    needs: [detect-changes, changelog]
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
+      cancel-in-progress: true
+    needs: [detect-changes, changelog, cargo-lock]
     defaults:
       run:
         working-directory: rust
-    # Run if: push event, OR changelog succeeded, OR changelog was skipped (docs-only PR)
-    if: always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
+    if: |
+      !cancelled() &&
+      needs.cargo-lock.result == 'success' &&
+      (needs.changelog.result == 'success' || needs.changelog.result == 'skipped') && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.any-code-changed == 'true' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
     strategy:
       fail-fast: false
       matrix:
@@ -318,14 +453,17 @@ jobs:
     name: Code Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [detect-changes]
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-coverage
+      cancel-in-progress: true
+    needs: [detect-changes, cargo-lock]
     defaults:
       run:
         working-directory: rust
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     if: |
-      always() && !cancelled() && (
+      !cancelled() && needs.cargo-lock.result == 'success' && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.rs-changed == 'true' ||
@@ -358,7 +496,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ env.CODECOV_TOKEN }}
           files: rust/lcov.info
@@ -375,11 +513,14 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-build
+      cancel-in-progress: true
     needs: [lint, test]
     defaults:
       run:
         working-directory: rust
-    if: always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success'
+    if: ${{ !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -387,7 +528,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install rust-script
-        run: cargo install rust-script
+        run: ./scripts/install-rust-script.sh
 
       - name: Cache cargo registry
         uses: actions/cache@v5
@@ -415,12 +556,15 @@ jobs:
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
+    concurrency:
+      group: release-${{ github.repository }}-main-write
+      cancel-in-progress: false
     defaults:
       run:
         working-directory: rust
-    # Note: always() ensures consistent behavior with other jobs that depend on jobs using always().
+    # Never cancel or overlap writes to main and external registries.
     if: |
-      always() && !cancelled() &&
+      !cancelled() &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success'
@@ -431,7 +575,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     permissions:
       contents: write
-      id-token: write
+      actions: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -441,21 +585,8 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          registry-url: 'https://registry.npmjs.org'
-          cache: npm
-          cache-dependency-path: js/package-lock.json
-
-      - name: Update npm for trusted publishing
-        run: |
-          npm install -g npm@11
-          npm --version
-
       - name: Install rust-script
-        run: cargo install rust-script
+        run: ./scripts/install-rust-script.sh
 
       - name: Configure git
         run: rust-script scripts/git-config.rs
@@ -506,91 +637,6 @@ jobs:
             steps.publish-crate.outputs.publish_result == 'success'
           )
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.current_version.outputs.version }}"
-
-      - name: Read JavaScript package metadata
-        if: |
-          steps.check.outputs.should_release == 'true' && (
-            steps.check.outputs.crate_published == 'true' ||
-            steps.publish-crate.outputs.publish_result == 'success'
-          )
-        id: js-package
-        working-directory: ${{ github.workspace }}/js
-        run: |
-          name="$(node -p "require('./package.json').name")"
-          version="$(node -p "require('./package.json').version")"
-          expected_version="${{ steps.current_version.outputs.version }}"
-
-          if [ "$name" != "meta-language" ]; then
-            echo "::error::Expected package name meta-language, got $name"
-            exit 1
-          fi
-
-          if [ "$version" != "$expected_version" ]; then
-            echo "::error::Rust release version $expected_version does not match js/package.json version $version"
-            exit 1
-          fi
-
-          echo "name=$name" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Package: $name@$version"
-
-      - name: Install JavaScript dependencies
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.check.outputs.npm_published != 'true'
-        working-directory: ${{ github.workspace }}/js
-        run: npm ci
-
-      - name: Test JavaScript package
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.check.outputs.npm_published != 'true'
-        working-directory: ${{ github.workspace }}/js
-        run: npm test
-
-      - name: Check JavaScript parity manifest
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.check.outputs.npm_published != 'true'
-        working-directory: ${{ github.workspace }}/js
-        run: npm run check:parity
-
-      - name: Verify npm package contents
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.check.outputs.npm_published != 'true'
-        working-directory: ${{ github.workspace }}/js
-        run: npm pack --dry-run
-
-      - name: Check npm registry
-        id: npm
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.check.outputs.npm_published != 'true'
-        working-directory: ${{ github.workspace }}/js
-        run: |
-          if npm view meta-language@${{ steps.current_version.outputs.version }} version; then
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish JavaScript package to npm
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.check.outputs.npm_published != 'true' &&
-          steps.npm.outputs.already_published != 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: ${{ github.workspace }}/js
-        run: npm publish --provenance
-
-      - name: Verify published JavaScript package
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.check.outputs.npm_published != 'true' &&
-          steps.npm.outputs.already_published != 'true'
-        run: npm view meta-language@${{ steps.current_version.outputs.version }} version
 
       - name: Configure Docker Hub publishing
         if: |
@@ -682,18 +728,34 @@ jobs:
           fi
           rust-script scripts/create-github-release.rs "${release_args[@]}"
 
+      # A release created with GITHUB_TOKEN does not emit a new release workflow
+      # run. Dispatch the one canonical package publisher explicitly so its trusted-
+      # publishing identity remains .github/workflows/js.yml.
+      - name: Dispatch JavaScript publisher
+        if: |
+          steps.check.outputs.should_release == 'true' && (
+            steps.check.outputs.crate_published == 'true' ||
+            steps.publish-crate.outputs.publish_result == 'success'
+          )
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.current_version.outputs.version }}
+        run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
+
   # === MANUAL INSTANT RELEASE ===
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Instant Release
     needs: [lint, test, build]
+    concurrency:
+      group: release-${{ github.repository }}-main-write
+      cancel-in-progress: false
     defaults:
       run:
         working-directory: rust
-    # Note: always() is required to evaluate the condition when dependencies use always().
     # The build job ensures lint and test passed before this job runs.
     if: |
-      always() && !cancelled() &&
+      !cancelled() &&
       github.event_name == 'workflow_dispatch' &&
       github.event.inputs.release_mode == 'instant' &&
       needs.build.result == 'success'
@@ -704,7 +766,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     permissions:
       contents: write
-      id-token: write
+      actions: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -714,21 +776,8 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          registry-url: 'https://registry.npmjs.org'
-          cache: npm
-          cache-dependency-path: js/package-lock.json
-
-      - name: Update npm for trusted publishing
-        run: |
-          npm install -g npm@11
-          npm --version
-
       - name: Install rust-script
-        run: cargo install rust-script
+        run: ./scripts/install-rust-script.sh
 
       - name: Configure git
         run: rust-script scripts/git-config.rs
@@ -741,7 +790,7 @@ jobs:
         env:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
-        run: rust-script scripts/version-and-commit.rs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
+        run: rust-script scripts/version-and-commit.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
       - name: Build release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
@@ -765,78 +814,6 @@ jobs:
             steps.version.outputs.already_released == 'true') &&
           steps.publish-crate.outputs.publish_result == 'success'
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
-
-      - name: Read JavaScript package metadata
-        if: |
-          (steps.version.outputs.version_committed == 'true' ||
-            steps.version.outputs.already_released == 'true') &&
-          steps.publish-crate.outputs.publish_result == 'success'
-        id: js-package
-        working-directory: ${{ github.workspace }}/js
-        run: |
-          name="$(node -p "require('./package.json').name")"
-          version="$(node -p "require('./package.json').version")"
-          expected_version="${{ steps.version.outputs.new_version }}"
-
-          if [ "$name" != "meta-language" ]; then
-            echo "::error::Expected package name meta-language, got $name"
-            exit 1
-          fi
-
-          if [ "$version" != "$expected_version" ]; then
-            echo "::error::Rust release version $expected_version does not match js/package.json version $version"
-            exit 1
-          fi
-
-          echo "name=$name" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Package: $name@$version"
-
-      - name: Install JavaScript dependencies
-        if: steps.js-package.outputs.version != ''
-        working-directory: ${{ github.workspace }}/js
-        run: npm ci
-
-      - name: Test JavaScript package
-        if: steps.js-package.outputs.version != ''
-        working-directory: ${{ github.workspace }}/js
-        run: npm test
-
-      - name: Check JavaScript parity manifest
-        if: steps.js-package.outputs.version != ''
-        working-directory: ${{ github.workspace }}/js
-        run: npm run check:parity
-
-      - name: Verify npm package contents
-        if: steps.js-package.outputs.version != ''
-        working-directory: ${{ github.workspace }}/js
-        run: npm pack --dry-run
-
-      - name: Check npm registry
-        id: npm
-        if: steps.js-package.outputs.version != ''
-        working-directory: ${{ github.workspace }}/js
-        run: |
-          if npm view meta-language@${{ steps.version.outputs.new_version }} version; then
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish JavaScript package to npm
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.npm.outputs.already_published != 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: ${{ github.workspace }}/js
-        run: npm publish --provenance
-
-      - name: Verify published JavaScript package
-        if: |
-          steps.js-package.outputs.version != '' &&
-          steps.npm.outputs.already_published != 'true'
-        run: npm view meta-language@${{ steps.version.outputs.new_version }} version
 
       - name: Configure Docker Hub publishing
         if: |
@@ -920,12 +897,25 @@ jobs:
           fi
           rust-script scripts/create-github-release.rs "${release_args[@]}"
 
+      - name: Dispatch JavaScript publisher
+        if: |
+          (steps.version.outputs.version_committed == 'true' ||
+            steps.version.outputs.already_released == 'true') &&
+          steps.publish-crate.outputs.publish_result == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
+        run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
+
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
     name: Create Changelog PR
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'changelog-pr'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: release-${{ github.repository }}-main-write
+      cancel-in-progress: false
     defaults:
       run:
         working-directory: rust
@@ -941,13 +931,13 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install rust-script
-        run: cargo install rust-script
+        run: ./scripts/install-rust-script.sh
 
       - name: Create changelog fragment
         env:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
-        run: rust-script scripts/create-changelog-fragment.rs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
+        run: rust-script scripts/create-changelog-fragment.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
@@ -1004,6 +994,9 @@ jobs:
       )
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: release-${{ github.repository }}-main-write
+      cancel-in-progress: false
     permissions:
       contents: read
       pages: write
@@ -1022,7 +1015,7 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Install rust-script
-        run: cargo install rust-script
+        run: ./rust/scripts/install-rust-script.sh
 
       - name: Install wasm-pack
         uses: taiki-e/install-action@v2
@@ -1031,6 +1024,8 @@ jobs:
 
       - name: Build documentation
         working-directory: rust
+        env:
+          RUSTDOCFLAGS: -D warnings
         run: cargo doc --no-deps --all-features
 
       - name: Build WebAssembly demo

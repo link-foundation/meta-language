@@ -125,6 +125,9 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("detect-changes", 5),
         ("changelog", 10),
         ("version-check", 5),
+        ("secrets-scan", 10),
+        ("fresh-merge", 20),
+        ("cargo-lock", 5),
         ("lint", 10),
         ("test", 20),
         ("coverage", 15),
@@ -247,6 +250,117 @@ fn coverage_upload_requires_token_and_reports_missing_token_as_notice() {
     assert!(skipped.contains("if: env.CODECOV_TOKEN == ''"));
     assert!(skipped
         .contains("::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"));
+}
+
+#[test]
+fn coverage_upload_uses_current_node24_codecov_action() {
+    let workflow = release_workflow();
+    let upload = step_block(
+        job_block(&workflow, "coverage"),
+        "Upload coverage to Codecov",
+    );
+
+    assert!(upload.contains("uses: codecov/codecov-action@v7"));
+    assert!(!workflow.contains("codecov/codecov-action@v5"));
+}
+
+#[test]
+fn rust_script_installation_is_locked_and_retried() {
+    let workflow = release_workflow();
+    assert!(!workflow.contains("run: cargo install rust-script"));
+    assert!(workflow.contains("install-rust-script.sh"));
+
+    let helper = fs::read_to_string(format!(
+        "{}/scripts/install-rust-script.sh",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+    assert!(helper.contains("command -v rust-script"));
+    assert!(helper.contains("cargo install rust-script --locked"));
+    assert!(helper.contains("for attempt in 1 2 3"));
+}
+
+#[test]
+fn workflow_propagates_cancellation_without_always_override() {
+    let workflow = release_workflow();
+    assert_eq!(workflow.matches("always()").count(), 0);
+    assert!(workflow.contains("!cancelled()"));
+    assert!(!workflow.contains("if: !cancelled()"));
+}
+
+#[test]
+fn workflow_scans_secrets_and_simulates_fresh_merges() {
+    let workflow = release_workflow();
+    assert!(job_block(&workflow, "secrets-scan").contains("secretlint"));
+    assert!(job_block(&workflow, "fresh-merge").contains("simulate-fresh-merge.sh"));
+    let helper = fs::read_to_string(format!(
+        "{}/scripts/simulate-fresh-merge.sh",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+    assert!(helper.contains("cd \"${REPO_ROOT}/rust\""));
+    assert!(std::path::Path::new(&format!(
+        "{}/../.secretlintrc.json",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .exists());
+}
+
+#[test]
+fn binary_release_is_guarded_by_committed_cargo_lock() {
+    let workflow = release_workflow();
+    let guard = job_block(&workflow, "cargo-lock");
+    let guard_step = step_block(guard, "Check committed Cargo.lock for binary crates");
+    assert!(guard_step.contains("working-directory: ${{ github.workspace }}"));
+    assert!(guard_step.contains("rust-script rust/scripts/check-cargo-lock.rs"));
+    for job_name in ["lint", "test", "coverage"] {
+        let job = job_block(&workflow, job_name);
+        assert!(job.contains("cargo-lock"));
+        // Preserve full validation and the existing Pages deployment path for
+        // every main push, including docs-only changes.
+        assert!(job.contains("github.event_name == 'push'"));
+    }
+}
+
+#[test]
+fn file_size_warnings_only_annotate_changed_files() {
+    let workflow = release_workflow();
+    let lint = job_block(&workflow, "lint");
+    assert!(step_block(lint, "Collect changed files").contains("git diff --name-only"));
+    assert!(step_block(lint, "Check file size limit")
+        .contains("CHANGED_FILES: ${{ steps.changed-files.outputs.files }}"));
+    assert!(lint.contains("fetch-depth: 0"));
+}
+
+#[test]
+fn rustdoc_warnings_are_a_pre_release_lint_gate() {
+    let workflow = release_workflow();
+    let lint = job_block(&workflow, "lint");
+    let docs = step_block(lint, "Build documentation with warnings denied");
+    assert!(docs.contains("RUSTDOCFLAGS: -D warnings"));
+    assert!(docs.contains("cargo doc --no-deps --all-features"));
+    assert!(workflow.find("cargo doc").unwrap() < workflow.find("  auto-release:\n").unwrap());
+}
+
+#[test]
+fn release_versioning_rebases_cleanly_and_tags_the_pushed_commit() {
+    let script = fs::read_to_string(format!(
+        "{}/scripts/version-and-commit.rs",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+    let fetch = script
+        .find("exec(\"git\", &[\"fetch\", \"origin\", &current_branch])")
+        .unwrap();
+    let update = script.find("Update version in Cargo.toml").unwrap();
+    let push = script.find("for attempt in 1..=max_push_attempts").unwrap();
+    let tag = script
+        .find("let tag_name = format!(\"{}{}\", tag_prefix, new_version)")
+        .unwrap();
+
+    assert!(fetch < update);
+    assert!(script.contains("HEAD..origin/{}"));
+    assert!(push < tag);
 }
 
 #[test]
@@ -417,6 +531,10 @@ fn crate_size_guard_uses_documented_crates_io_limit() {
     assert!(
         script.contains("10 * 1024 * 1024"),
         "size guard should encode the crates.io 10 MiB upload limit"
+    );
+    assert!(
+        script.contains(".arg(\"--quiet\")"),
+        "intentional publish-allowlist exclusions must not create CI warnings"
     );
 }
 

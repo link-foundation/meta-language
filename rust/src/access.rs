@@ -1,7 +1,7 @@
 //! Read-only and mutable engine access controls.
 //!
 //! [`LinkNetwork`] is mutable by construction. This module adds the
-//! [`AccessMode`](crate::configuration::AccessMode)-driven counterpart: a
+//! [`AccessMode`]-driven counterpart: a
 //! frozen [`ReadOnlyNetwork`] view that exposes only `&self` operations
 //! (query, project, reconstruct, verify, serialize) and makes mutation a
 //! compile-time error, plus an [`EngineNetwork`] boundary that honours the
@@ -182,7 +182,7 @@ impl LinkNetwork {
 /// Access-mode-aware engine handle returned by configured parsing.
 ///
 /// This is the runtime boundary where the configured
-/// [`AccessMode`](crate::configuration::AccessMode) is enforced: a read-only
+/// [`AccessMode`] is enforced: a read-only
 /// engine yields a frozen view and rejects [`EngineNetwork::as_mutable`] with a
 /// [`ReadOnlyViolation`], while a mutable engine hands back the editable
 /// network.
