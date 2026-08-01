@@ -57,6 +57,12 @@ actionlint proved GitHub's concurrency schema does not accept it.
 
 ### False warnings and hidden failures
 
+- Change detection now compares the complete pull request with its base. Fresh
+  validation run `30705300995` exposed the previous false negative: because the
+  final commit was documentation-only, the workflow reported success while
+  skipping every Rust lint, test, coverage, and build job despite earlier code
+  changes in the same pull request. Empty push commits also remain empty rather
+  than falling back to treating the whole repository as changed.
 - File-size warnings are limited to changed Rust files; the hard
   repository-wide limit remains enforced.
 - Rust documentation builds with warnings denied before release.
@@ -87,6 +93,7 @@ Focused tests cover:
 - cancellable check jobs and serialized writer jobs;
 - lockfile, secret-scan, fresh-merge, rustdoc, Codecov, and file-size gates;
 - clean rebase/tag ordering and deletion of consumed fragments;
+- full-PR change detection and empty-push handling;
 - version-specific documentation badges.
 
 The workflow files are also validated with actionlint before submission.

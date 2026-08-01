@@ -1,14 +1,13 @@
 #!/usr/bin/env rust-script
 //! Detect code changes for CI/CD pipeline
 //!
-//! This script detects what types of files have changed in the latest commit
+//! This script detects what types of files have changed in the current event
 //! and outputs the results for use in GitHub Actions workflow conditions.
 //!
 //! Key behavior:
 //! - For PRs: detects GitHub Actions' synthetic merge commit and uses
-//!   HEAD^2^..HEAD^2 to get the per-commit diff of the actual PR head,
-//!   so a commit touching only non-code files correctly skips CI jobs
-//!   even when earlier commits in the same PR touched code files.
+//!   HEAD^1..HEAD^2 to get the full diff from the base to the PR head, so a
+//!   docs-only final commit cannot hide code changed earlier in the PR.
 //! - For pushes: compares HEAD against its first parent, including real merge
 //!   commits pushed to main
 //! - Excludes certain folders and file types from "code changes" detection
@@ -91,6 +90,20 @@ fn is_merge_commit_in_repo(repo_path: &Path) -> bool {
         > 1
 }
 
+fn has_first_parent_in_repo(repo_path: &Path) -> bool {
+    exec_in("git", &["cat-file", "-p", "HEAD"], Some(repo_path))
+        .lines()
+        .any(|line| line.starts_with("parent "))
+}
+
+fn changed_files_from_output(output: &str) -> Vec<String> {
+    output
+        .lines()
+        .filter(|line| !line.is_empty())
+        .map(String::from)
+        .collect()
+}
+
 fn get_changed_files() -> Vec<String> {
     let event_name = env::var("GITHUB_EVENT_NAME").unwrap_or_default();
     get_changed_files_in_repo(Path::new("."), &event_name)
@@ -98,68 +111,39 @@ fn get_changed_files() -> Vec<String> {
 
 fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> Vec<String> {
     // GitHub Actions checks out a synthetic merge commit for pull_request
-    // events: HEAD is the merge commit, HEAD^ is the base branch, HEAD^2
-    // is the actual PR head. To get the per-commit diff (what the latest
-    // push actually changed), we compare HEAD^2^ to HEAD^2.
+    // events: HEAD is the merge commit, HEAD^1 is the base branch, and HEAD^2
+    // is the actual PR head. Compare both parents to validate the complete PR,
+    // not just its latest commit.
     // For push events, including real merge commits pushed to main, compare
     // HEAD's first parent to HEAD so the full merge diff is detected.
     if event_name == "pull_request" && is_merge_commit_in_repo(repo_path) {
         println!("Merge commit detected (pull_request event)");
-        println!("Comparing HEAD^2^ to HEAD^2 (per-commit diff of PR head)");
+        println!("Comparing HEAD^1 to HEAD^2 (full pull request diff)");
         let output = exec_in(
             "git",
-            &["diff", "--name-only", "HEAD^2^", "HEAD^2"],
+            &["diff", "--name-only", "HEAD^1", "HEAD^2"],
             Some(repo_path),
         );
-        if !output.is_empty() {
-            return output
-                .lines()
-                .filter(|s| !s.is_empty())
-                .map(String::from)
-                .collect();
-        }
-        // Fallback: first commit in PR, compare base to PR head
-        println!("HEAD^2^ not available (first commit in PR), comparing HEAD^ to HEAD^2");
-        let output = exec_in(
-            "git",
-            &["diff", "--name-only", "HEAD^", "HEAD^2"],
-            Some(repo_path),
-        );
-        if !output.is_empty() {
-            return output
-                .lines()
-                .filter(|s| !s.is_empty())
-                .map(String::from)
-                .collect();
-        }
+        return changed_files_from_output(&output);
     }
 
-    println!("Comparing HEAD^1 to HEAD");
+    if has_first_parent_in_repo(repo_path) {
+        println!("Comparing HEAD^1 to HEAD");
+        let output = exec_in(
+            "git",
+            &["diff", "--name-only", "HEAD^1", "HEAD"],
+            Some(repo_path),
+        );
+        return changed_files_from_output(&output);
+    }
+
+    println!("HEAD has no parent, listing all files in the initial commit");
     let output = exec_in(
         "git",
-        &["diff", "--name-only", "HEAD^1", "HEAD"],
+        &["ls-tree", "--name-only", "-r", "HEAD"],
         Some(repo_path),
     );
-
-    if output.is_empty() {
-        println!("HEAD^1 not available, listing all files in HEAD");
-        let output = exec_in(
-            "git",
-            &["ls-tree", "--name-only", "-r", "HEAD"],
-            Some(repo_path),
-        );
-        return output
-            .lines()
-            .filter(|s| !s.is_empty())
-            .map(String::from)
-            .collect();
-    }
-
-    output
-        .lines()
-        .filter(|s| !s.is_empty())
-        .map(String::from)
-        .collect()
+    changed_files_from_output(&output)
 }
 
 fn is_excluded_from_code_changes(file_path: &str) -> bool {
@@ -447,15 +431,26 @@ mod tests {
     }
 
     #[test]
-    fn pull_request_synthetic_merge_uses_latest_pr_head_commit_diff() {
+    fn empty_push_commit_has_no_changed_files() {
+        let repo = create_merge_repo();
+        run_git(&repo, &["commit", "--allow-empty", "-m", "Empty commit"]);
+
+        assert!(
+            get_changed_files_in_repo(&repo, "push").is_empty(),
+            "an empty push must not be treated as if every repository file changed"
+        );
+    }
+
+    #[test]
+    fn pull_request_synthetic_merge_uses_full_pr_diff() {
         let repo = create_merge_repo();
 
         let changed_files = get_changed_files_in_repo(&repo, "pull_request");
 
         assert_eq!(
             changed_files,
-            vec!["docs/notes.md"],
-            "pull_request synthetic merge detection should keep the per-commit PR head diff"
+            vec!["docs/notes.md", "src/lib.rs"],
+            "a docs-only final commit must not hide code changed earlier in the pull request"
         );
     }
 }
