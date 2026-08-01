@@ -173,6 +173,14 @@ fn docker_hub_badge(url: &str, version: &str) -> String {
     )
 }
 
+fn build_crate_artifact_badges(crate_name: &str, release_version: &str) -> String {
+    let version = normalize_release_version(release_version);
+    format!(
+        "[![Crates.io](https://img.shields.io/crates/v/{crate_name}?label=crates.io)](https://crates.io/crates/{crate_name}/{version}) [![Docs.rs](https://img.shields.io/badge/docs.rs-{}-blue)](https://docs.rs/{crate_name}/{version})",
+        badge_escape(&version)
+    )
+}
+
 #[cfg(not(test))]
 fn get_changelog_for_version(changelog_path: &str, version: &str) -> String {
     if !Path::new(changelog_path).exists() {
@@ -352,10 +360,10 @@ fn main() {
     let mut release_notes = get_changelog_for_version(&changelog_path, &normalized_version);
     let mut badges = Vec::new();
     if let Some(crate_name) = get_crate_name_from_toml(&cargo_toml) {
-        let crate_badges = format!(
-            "[![Crates.io](https://img.shields.io/crates/v/{crate_name}?label=crates.io)](https://crates.io/crates/{crate_name}/{normalized_version}) [![Docs.rs](https://docs.rs/{crate_name}/badge.svg)](https://docs.rs/{crate_name}/{normalized_version})"
-        );
-        badges.push(crate_badges);
+        badges.push(build_crate_artifact_badges(
+            &crate_name,
+            &normalized_version,
+        ));
     }
     if let Some(url) = docker_hub_url {
         badges.push(docker_hub_badge(&url, &normalized_version));
@@ -497,6 +505,15 @@ mod tests {
 
         assert!(badge.contains("1.2.3%2Bbuild.4"));
         assert!(badge.contains("tags?name=1.2.3%2Bbuild.4"));
+    }
+
+    #[test]
+    fn release_note_docs_badge_is_pinned_to_the_released_version() {
+        let badges = build_crate_artifact_badges("meta-language", "v0.55.0");
+
+        assert!(badges.contains("https://img.shields.io/badge/docs.rs-0.55.0-blue"));
+        assert!(badges.contains("https://docs.rs/meta-language/0.55.0"));
+        assert!(!badges.contains("https://docs.rs/meta-language/badge.svg"));
     }
 
     #[test]

@@ -31,9 +31,7 @@ use serde::Deserialize;
 use std::env;
 use std::fs;
 use std::io::Write;
-use std::path::Path;
-#[cfg(not(test))]
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 #[cfg(not(test))]
 use std::process::exit;
 use std::process::Command;
@@ -428,8 +426,25 @@ fn strip_frontmatter(content: &str) -> String {
     }
 }
 
+fn remove_changelog_fragments(files: &[PathBuf]) {
+    for file in files {
+        fs::remove_file(file)
+            .unwrap_or_else(|e| panic!("Failed to remove {}: {}", file.display(), e));
+    }
+}
+
 #[cfg(not(test))]
 fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
+    let date_str = Utc::now().format("%Y-%m-%d").to_string();
+    collect_changelog_with_date(changelog_dir, changelog_file, version, &date_str);
+}
+
+fn collect_changelog_with_date(
+    changelog_dir: &str,
+    changelog_file: &str,
+    version: &str,
+    date_str: &str,
+) {
     let dir_path = Path::new(changelog_dir);
     if !dir_path.exists() {
         return;
@@ -464,7 +479,6 @@ fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
         return;
     }
 
-    let date_str = Utc::now().format("%Y-%m-%d").to_string();
     let new_entry = format!(
         "\n## [{}] - {}\n\n{}\n",
         version,
@@ -472,36 +486,38 @@ fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
         fragments.join("\n\n")
     );
 
-    if Path::new(changelog_file).exists() {
-        let mut content = fs::read_to_string(changelog_file).unwrap_or_default();
-        let lines: Vec<&str> = content.lines().collect();
-        let mut insert_index = None;
-
-        for (i, line) in lines.iter().enumerate() {
-            if line.starts_with("## [") {
-                insert_index = Some(i);
-                break;
-            }
-        }
-
-        if let Some(idx) = insert_index {
-            let mut new_lines: Vec<String> = lines[..idx].iter().map(|s| s.to_string()).collect();
-            new_lines.push(new_entry.clone());
-            new_lines.extend(lines[idx..].iter().map(|s| s.to_string()));
-            content = new_lines.join("\n");
-        } else {
-            content.push_str(&new_entry);
-        }
-
-        fs::write(changelog_file, content).expect("Failed to write changelog");
+    if !Path::new(changelog_file).exists() {
+        return;
     }
 
+    let mut content = fs::read_to_string(changelog_file).unwrap_or_default();
+    let lines: Vec<&str> = content.lines().collect();
+    let mut insert_index = None;
+
+    for (i, line) in lines.iter().enumerate() {
+        if line.starts_with("## [") {
+            insert_index = Some(i);
+            break;
+        }
+    }
+
+    if let Some(idx) = insert_index {
+        let mut new_lines: Vec<String> = lines[..idx].iter().map(|s| s.to_string()).collect();
+        new_lines.push(new_entry.clone());
+        new_lines.extend(lines[idx..].iter().map(|s| s.to_string()));
+        content = new_lines.join("\n");
+    } else {
+        content.push_str(&new_entry);
+    }
+
+    fs::write(changelog_file, content).expect("Failed to write changelog");
+    remove_changelog_fragments(&files);
     println!("Collected {} changelog fragment(s)", files.len());
 }
 
 #[cfg(test)]
 mod tests {
-    use super::update_cargo_lock;
+    use super::{collect_changelog_with_date, update_cargo_lock};
     use std::fs;
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -584,6 +600,35 @@ version = "1.12.3"
         assert!(!update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
         assert_eq!(fs::read_to_string(&cargo_lock).unwrap(), content);
     }
+
+    #[test]
+    fn changelog_collection_removes_consumed_fragments_and_keeps_readme() {
+        let repo = temp_dir("changelog-cleanup");
+        let changelog_dir = repo.join("changelog.d");
+        fs::create_dir_all(&changelog_dir).unwrap();
+        let fragment = changelog_dir.join("20260801_fix_release_loop.md");
+        fs::write(
+            &fragment,
+            "---\nbump: patch\n---\n\n### Fixed\n- Stop stale fragments from retriggering releases.\n",
+        )
+        .unwrap();
+        fs::write(changelog_dir.join("README.md"), "Fragment instructions\n").unwrap();
+        let changelog = repo.join("CHANGELOG.md");
+        fs::write(&changelog, "# Changelog\n\n## [0.55.0] - 2026-07-31\n").unwrap();
+
+        collect_changelog_with_date(
+            changelog_dir.to_str().unwrap(),
+            changelog.to_str().unwrap(),
+            "0.56.0",
+            "2026-08-01",
+        );
+
+        let updated = fs::read_to_string(changelog).unwrap();
+        assert!(updated.contains("## [0.56.0] - 2026-08-01"));
+        assert!(updated.contains("Stop stale fragments"));
+        assert!(!fragment.exists());
+        assert!(changelog_dir.join("README.md").exists());
+    }
 }
 
 #[cfg(not(test))]
@@ -635,6 +680,37 @@ fn main() {
             "github-actions[bot]@users.noreply.github.com",
         ],
     );
+
+    // Sync before touching files: Git refuses to rebase a dirty index, and the
+    // version must use the latest main commit after another release completes.
+    let current_branch =
+        exec("git", &["rev-parse", "--abbrev-ref", "HEAD"]).unwrap_or_else(|_| "main".to_string());
+    if let Err(e) = exec("git", &["fetch", "origin", &current_branch]) {
+        eprintln!("Warning: Could not fetch origin/{}: {}", current_branch, e);
+    } else {
+        let behind: u32 = exec(
+            "git",
+            &[
+                "rev-list",
+                "--count",
+                &format!("HEAD..origin/{}", current_branch),
+            ],
+        )
+        .ok()
+        .and_then(|out| out.trim().parse().ok())
+        .unwrap_or(0);
+        if behind > 0 {
+            println!(
+                "Local branch is behind origin/{} by {} commit(s), rebasing...",
+                current_branch, behind
+            );
+            if let Err(e) = exec("git", &["rebase", &format!("origin/{}", current_branch)]) {
+                eprintln!("Error rebasing onto origin/{}: {}", current_branch, e);
+                let _ = exec("git", &["rebase", "--abort"]);
+                exit(1);
+            }
+        }
+    }
 
     // Get current version
     let content = match fs::read_to_string(&package_manifest) {
@@ -716,7 +792,7 @@ fn main() {
     // Collect changelog fragments
     collect_changelog(&changelog_dir, &changelog_file, &new_version);
 
-    // Stage Cargo.toml, Cargo.lock if changed, JavaScript package metadata, and CHANGELOG.md
+    // Stage package metadata, changelog, and all consumed fragment deletions.
     let package_manifest_str = package_manifest.to_string_lossy().to_string();
     let cargo_lock_str = cargo_lock_path.to_string_lossy().to_string();
     let mut add_arg_strings = vec![
@@ -731,7 +807,16 @@ fn main() {
         add_arg_strings.push(path.to_string_lossy().to_string());
     }
     let add_args: Vec<&str> = add_arg_strings.iter().map(String::as_str).collect();
-    let _ = exec("git", &add_args);
+    if let Err(e) = exec("git", &add_args) {
+        eprintln!("Error staging release files: {}", e);
+        exit(1);
+    }
+    if Path::new(&changelog_dir).exists() {
+        if let Err(e) = exec("git", &["add", "-A", &changelog_dir]) {
+            eprintln!("Error staging changelog fragments: {}", e);
+            exit(1);
+        }
+    }
 
     // Check if there are changes to commit
     if exec_check("git", &["diff", "--cached", "--quiet"]) {
@@ -739,25 +824,6 @@ fn main() {
         set_output("version_committed", "false");
         set_output("new_version", &new_version);
         return;
-    }
-
-    // Fetch latest remote state before committing (supports concurrent release workflows)
-    let current_branch =
-        exec("git", &["rev-parse", "--abbrev-ref", "HEAD"]).unwrap_or_else(|_| "main".to_string());
-    if let Err(e) = exec("git", &["fetch", "origin", &current_branch]) {
-        eprintln!("Warning: Could not fetch origin/{}: {}", current_branch, e);
-    } else {
-        let local = exec("git", &["rev-parse", "HEAD"]).unwrap_or_default();
-        let remote =
-            exec("git", &["rev-parse", &format!("origin/{}", current_branch)]).unwrap_or_default();
-        if !local.is_empty() && !remote.is_empty() && local != remote {
-            println!("Local branch is behind remote, rebasing...");
-            if let Err(e) = exec("git", &["rebase", &format!("origin/{}", current_branch)]) {
-                eprintln!("Error rebasing onto origin/{}: {}", current_branch, e);
-                let _ = exec("git", &["rebase", "--abort"]);
-                exit(1);
-            }
-        }
     }
 
     // Commit changes
@@ -781,19 +847,6 @@ fn main() {
         exit(1);
     }
     println!("Committed version {}", new_version);
-
-    // Create tag
-    let tag_name = format!("{}{}", tag_prefix, new_version);
-    let tag_msg = match &description {
-        Some(desc) => format!("Release {}{}\n\n{}", tag_name, label_suffix, desc),
-        None => format!("Release {}{}", tag_name, label_suffix),
-    };
-
-    if let Err(e) = exec("git", &["tag", "-a", &tag_name, "-m", &tag_msg]) {
-        eprintln!("Error creating tag: {}", e);
-        exit(1);
-    }
-    println!("Created tag {}", tag_name);
 
     // Push changes and tag with retry (handles concurrent pushes in multi-workflow repos)
     let max_push_attempts = 3;
@@ -821,6 +874,19 @@ fn main() {
             }
         }
     }
+
+    // Tag only after the commit is remote so a rebase retry cannot orphan it.
+    let tag_name = format!("{}{}", tag_prefix, new_version);
+    let tag_msg = match &description {
+        Some(desc) => format!("Release {}{}\n\n{}", tag_name, label_suffix, desc),
+        None => format!("Release {}{}", tag_name, label_suffix),
+    };
+
+    if let Err(e) = exec("git", &["tag", "-a", &tag_name, "-m", &tag_msg]) {
+        eprintln!("Error creating tag: {}", e);
+        exit(1);
+    }
+    println!("Created tag {}", tag_name);
 
     if let Err(e) = exec("git", &["push", "--tags"]) {
         eprintln!("Error pushing tags: {}", e);

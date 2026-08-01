@@ -2,7 +2,7 @@
 //!
 //! [`LinkStore`] is the storage boundary for the links network: reads use
 //! `&self`, writes use `&mut self`, and the default implementation is the
-//! existing in-memory [`LinkNetwork`](crate::LinkNetwork). The optional
+//! existing in-memory [`LinkNetwork`]. The optional
 //! `doublets` Cargo feature adds a file-mapped binary backend over the
 //! `doublets` crate.
 

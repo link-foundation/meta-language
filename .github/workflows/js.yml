@@ -7,28 +7,50 @@ on:
     paths:
       - 'js/**'
       - 'parity/**'
+      - '.secretlintrc.json'
       - '.github/workflows/js.yml'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - 'js/**'
       - 'parity/**'
+      - '.secretlintrc.json'
       - '.github/workflows/js.yml'
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Expected package version (optional safety check)'
+        required: false
+        type: string
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+permissions:
+  contents: read
+
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
 
 jobs:
   test:
     name: JavaScript Package
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-javascript-test
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Simulate fresh merge with base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash js/scripts/simulate-fresh-merge.sh
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -53,14 +75,22 @@ jobs:
         run: npm pack --dry-run
         working-directory: js
 
+      - name: Scan repository for secrets
+        run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
+
   publish:
     name: Publish npm Package
     needs: test
     if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'release' && github.event.action == 'published')
+      !cancelled() && needs.test.result == 'success' && (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'release' && github.event.action == 'published')
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    concurrency:
+      group: release-${{ github.repository }}-main-write
+      cancel-in-progress: false
     permissions:
       contents: read
       id-token: write
@@ -94,23 +124,32 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Package: $name@$version"
 
-      - name: Verify release tag matches package version
-        if: github.event_name == 'release'
+      - name: Verify requested release version
         env:
           PACKAGE_VERSION: ${{ steps.package.outputs.version }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REQUESTED_VERSION: ${{ github.event.inputs.release_version }}
         run: |
-          normalized_tag="${RELEASE_TAG#v}"
-          if [ "$normalized_tag" != "$PACKAGE_VERSION" ]; then
-            echo "::error::Release tag $RELEASE_TAG does not match js/package.json version $PACKAGE_VERSION"
+          if [ -n "$RELEASE_TAG" ]; then
+            normalized_tag="${RELEASE_TAG#v}"
+            if [ "$normalized_tag" != "$PACKAGE_VERSION" ]; then
+              echo "::error::Release tag $RELEASE_TAG does not match js/package.json version $PACKAGE_VERSION"
+              exit 1
+            fi
+          fi
+
+          if [ -n "$REQUESTED_VERSION" ] && [ "$REQUESTED_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Requested version $REQUESTED_VERSION does not match js/package.json version $PACKAGE_VERSION"
             exit 1
           fi
 
       - name: Check npm registry
         id: npm
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
         working-directory: js
         run: |
-          if npm view meta-language@${{ steps.package.outputs.version }} version; then
+          if npm view "meta-language@$PACKAGE_VERSION" version >/dev/null 2>&1; then
             echo "already_published=true" >> "$GITHUB_OUTPUT"
           else
             echo "already_published=false" >> "$GITHUB_OUTPUT"
@@ -118,11 +157,11 @@ jobs:
 
       - name: Publish to npm
         if: steps.npm.outputs.already_published != 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance
         working-directory: js
 
       - name: Verify published package
         if: steps.npm.outputs.already_published != 'true'
-        run: npm view meta-language@${{ steps.package.outputs.version }} version
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+        run: npm view "meta-language@$PACKAGE_VERSION" version

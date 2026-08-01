@@ -1,21 +1,22 @@
 #!/usr/bin/env rust-script
 //! Detect code changes for CI/CD pipeline
 //!
-//! This script detects what types of files have changed in the latest commit
+//! This script detects what types of files have changed in the current event
 //! and outputs the results for use in GitHub Actions workflow conditions.
 //!
 //! Key behavior:
 //! - For PRs: detects GitHub Actions' synthetic merge commit and uses
-//!   HEAD^2^..HEAD^2 to get the per-commit diff of the actual PR head,
-//!   so a commit touching only non-code files correctly skips CI jobs
-//!   even when earlier commits in the same PR touched code files.
-//! - For pushes: compares HEAD against HEAD^
+//!   HEAD^1..HEAD^2 to get the full diff from the base to the PR head, so a
+//!   docs-only final commit cannot hide code changed earlier in the PR.
+//! - For pushes: compares HEAD against its first parent, including real merge
+//!   commits pushed to main
 //! - Excludes certain folders and file types from "code changes" detection
 //!
 //! Excluded from code changes (don't require changelog fragments):
 //! - Markdown files (*.md) in any folder
 //! - changelog.d/ folder (changelog fragments)
-//! - docs/ folder (documentation)
+//! - dev/log/ folder (development logs)
+//! - docs/ folder (documentation, including case studies)
 //! - experiments/ folder (experimental scripts)
 //! - examples/ folder (example scripts)
 //!
@@ -27,8 +28,7 @@
 //! Outputs (written to GITHUB_OUTPUT):
 //!   - rs-changed: 'true' if any .rs files changed
 //!   - toml-changed: 'true' if any .toml files changed
-//!   - mjs-changed: 'true' if any .mjs files changed
-//!   - docs-changed: 'true' if any .md files changed
+//!   - docs-changed: 'true' if any Markdown files changed
 //!   - workflow-changed: 'true' if any .github/workflows/ files changed
 //!   - any-code-changed: 'true' if any code files changed (excludes docs, changelog.d, experiments, examples)
 //!
@@ -37,75 +37,110 @@
 //! regex = "1"
 //! ```
 
+use regex::Regex;
 use std::env;
 use std::fs;
 use std::io::Write;
+use std::path::Path;
 use std::process::Command;
-use regex::Regex;
 
-fn exec(command: &str, args: &[&str]) -> String {
-    match Command::new(command).args(args).output() {
-        Ok(output) => {
-            if output.status.success() {
-                String::from_utf8_lossy(&output.stdout).trim().to_string()
-            } else {
-                eprintln!("Error executing {} {:?}", command, args);
-                eprintln!("{}", String::from_utf8_lossy(&output.stderr));
-                String::new()
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to execute {} {:?}: {}", command, args, e);
-            String::new()
-        }
+fn exec_in(command: &str, args: &[&str], current_dir: Option<&Path>) -> String {
+    let mut process = Command::new(command);
+    process.args(args);
+    if let Some(current_dir) = current_dir {
+        process.current_dir(current_dir);
     }
+
+    let output = process
+        .output()
+        .unwrap_or_else(|error| panic!("failed to execute {command} {args:?}: {error}"));
+    if !output.status.success() {
+        panic!(
+            "{command} {args:?} failed with {}:\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+
+    String::from_utf8_lossy(&output.stdout).trim().to_string()
 }
 
 fn set_output(name: &str, value: &str) {
     if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(&output_file) {
+        if let Ok(mut file) = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&output_file)
+        {
             let _ = writeln!(file, "{}={}", name, value);
         }
     }
     println!("{}={}", name, value);
 }
 
-fn is_merge_commit() -> bool {
-    let output = exec("git", &["cat-file", "-p", "HEAD"]);
-    output.lines().filter(|line| line.starts_with("parent ")).count() > 1
+fn is_merge_commit_in_repo(repo_path: &Path) -> bool {
+    let output = exec_in("git", &["cat-file", "-p", "HEAD"], Some(repo_path));
+    output
+        .lines()
+        .filter(|line| line.starts_with("parent "))
+        .count()
+        > 1
+}
+
+fn has_first_parent_in_repo(repo_path: &Path) -> bool {
+    exec_in("git", &["cat-file", "-p", "HEAD"], Some(repo_path))
+        .lines()
+        .any(|line| line.starts_with("parent "))
+}
+
+fn changed_files_from_output(output: &str) -> Vec<String> {
+    output
+        .lines()
+        .filter(|line| !line.is_empty())
+        .map(String::from)
+        .collect()
 }
 
 fn get_changed_files() -> Vec<String> {
+    let event_name = env::var("GITHUB_EVENT_NAME").unwrap_or_default();
+    get_changed_files_in_repo(Path::new("."), &event_name)
+}
+
+fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> Vec<String> {
     // GitHub Actions checks out a synthetic merge commit for pull_request
-    // events: HEAD is the merge commit, HEAD^ is the base branch, HEAD^2
-    // is the actual PR head. To get the per-commit diff (what the latest
-    // push actually changed), we compare HEAD^2^ to HEAD^2.
-    // For push events, HEAD is the real commit, so HEAD^ to HEAD works.
-    if is_merge_commit() {
+    // events: HEAD is the merge commit, HEAD^1 is the base branch, and HEAD^2
+    // is the actual PR head. Compare both parents to validate the complete PR,
+    // not just its latest commit.
+    // For push events, including real merge commits pushed to main, compare
+    // HEAD's first parent to HEAD so the full merge diff is detected.
+    if event_name == "pull_request" && is_merge_commit_in_repo(repo_path) {
         println!("Merge commit detected (pull_request event)");
-        println!("Comparing HEAD^2^ to HEAD^2 (per-commit diff of PR head)");
-        let output = exec("git", &["diff", "--name-only", "HEAD^2^", "HEAD^2"]);
-        if !output.is_empty() {
-            return output.lines().filter(|s| !s.is_empty()).map(String::from).collect();
-        }
-        // Fallback: first commit in PR, compare base to PR head
-        println!("HEAD^2^ not available (first commit in PR), comparing HEAD^ to HEAD^2");
-        let output = exec("git", &["diff", "--name-only", "HEAD^", "HEAD^2"]);
-        if !output.is_empty() {
-            return output.lines().filter(|s| !s.is_empty()).map(String::from).collect();
-        }
+        println!("Comparing HEAD^1 to HEAD^2 (full pull request diff)");
+        let output = exec_in(
+            "git",
+            &["diff", "--name-only", "HEAD^1", "HEAD^2"],
+            Some(repo_path),
+        );
+        return changed_files_from_output(&output);
     }
 
-    println!("Comparing HEAD^ to HEAD");
-    let output = exec("git", &["diff", "--name-only", "HEAD^", "HEAD"]);
-
-    if output.is_empty() {
-        println!("HEAD^ not available, listing all files in HEAD");
-        let output = exec("git", &["ls-tree", "--name-only", "-r", "HEAD"]);
-        return output.lines().filter(|s| !s.is_empty()).map(String::from).collect();
+    if has_first_parent_in_repo(repo_path) {
+        println!("Comparing HEAD^1 to HEAD");
+        let output = exec_in(
+            "git",
+            &["diff", "--name-only", "HEAD^1", "HEAD"],
+            Some(repo_path),
+        );
+        return changed_files_from_output(&output);
     }
 
-    output.lines().filter(|s| !s.is_empty()).map(String::from).collect()
+    println!("HEAD has no parent, listing all files in the initial commit");
+    let output = exec_in(
+        "git",
+        &["ls-tree", "--name-only", "-r", "HEAD"],
+        Some(repo_path),
+    );
+    changed_files_from_output(&output)
 }
 
 fn is_excluded_from_code_changes(file_path: &str) -> bool {
@@ -114,28 +149,47 @@ fn is_excluded_from_code_changes(file_path: &str) -> bool {
         return true;
     }
 
-    // In the multi-language layout the Rust crate lives under `rust/` and the
-    // JavaScript package under `js/`, while `git diff` always reports
-    // repository-root-relative paths. Strip a leading language-folder prefix so
-    // the excluded-folder rules below match `rust/changelog.d/...`,
-    // `js/examples/...`, etc. the same way they match the bare folders.
+    // Git reports repository-root-relative paths in this multi-language repo.
+    // Apply the same policy inside the language roots as at the repository root.
     let normalized = file_path
         .strip_prefix("rust/")
         .or_else(|| file_path.strip_prefix("js/"))
         .unwrap_or(file_path);
 
-    // Exclude specific folders from code changes. `docs/` is shared and lives at
-    // the repository root, so it is matched against the original (root-relative)
-    // path; the rest may appear either at the root or inside a language folder.
-    let excluded_folders = ["changelog.d/", "docs/", "experiments/", "examples/"];
+    // Exclude specific folders from code changes
+    let excluded_folders = [
+        "changelog.d/",
+        "dev/log/",
+        "docs/",
+        "experiments/",
+        "examples/",
+    ];
 
     for folder in &excluded_folders {
-        if normalized.starts_with(folder) || file_path.starts_with(folder) {
+        if file_path.starts_with(folder) || normalized.starts_with(folder) {
             return true;
         }
     }
 
     false
+}
+
+fn is_manifest_or_lockfile_change(file_path: &str) -> bool {
+    file_path.ends_with(".toml") || file_path.ends_with("Cargo.lock")
+}
+
+fn code_change_pattern() -> Regex {
+    Regex::new(
+        r"(\.(rs|toml|mjs|js|json|sh|html|css|yml|yaml)$|(^|/)Cargo\.lock$|^\.github/workflows/)",
+    )
+    .unwrap()
+}
+
+fn included_changed_files(changed_files: &[String]) -> Vec<&String> {
+    changed_files
+        .iter()
+        .filter(|file| !is_excluded_from_code_changes(file))
+        .collect()
 }
 
 fn main() {
@@ -153,46 +207,261 @@ fn main() {
     }
     println!();
 
+    // Apply the ignore policy once, before computing any job-gating output.
+    let included_files = included_changed_files(&changed_files);
+
     // Detect .rs file changes (Rust source)
-    let rs_changed = changed_files.iter().any(|f| f.ends_with(".rs"));
+    let rs_changed = included_files.iter().any(|f| f.ends_with(".rs"));
     set_output("rs-changed", if rs_changed { "true" } else { "false" });
 
-    // Detect .toml file changes (Cargo.toml, Cargo.lock, etc.)
-    let toml_changed = changed_files.iter().any(|f| f.ends_with(".toml"));
+    // Detect manifest/lockfile changes (Cargo.toml, Cargo.lock, etc.)
+    let toml_changed = included_files
+        .iter()
+        .any(|f| is_manifest_or_lockfile_change(f));
     set_output("toml-changed", if toml_changed { "true" } else { "false" });
 
-    // Detect .mjs file changes (scripts)
-    let mjs_changed = changed_files.iter().any(|f| f.ends_with(".mjs"));
-    set_output("mjs-changed", if mjs_changed { "true" } else { "false" });
-
-    // Detect documentation changes (any .md file)
     let docs_changed = changed_files.iter().any(|f| f.ends_with(".md"));
     set_output("docs-changed", if docs_changed { "true" } else { "false" });
 
     // Detect workflow changes
-    let workflow_changed = changed_files.iter().any(|f| f.starts_with(".github/workflows/"));
-    set_output("workflow-changed", if workflow_changed { "true" } else { "false" });
+    let workflow_changed = included_files
+        .iter()
+        .any(|f| f.starts_with(".github/workflows/"));
+    set_output(
+        "workflow-changed",
+        if workflow_changed { "true" } else { "false" },
+    );
 
     // Detect code changes (excluding docs, changelog.d, experiments, examples folders, and markdown files)
-    let code_changed_files: Vec<&String> = changed_files
-        .iter()
-        .filter(|f| !is_excluded_from_code_changes(f))
-        .collect();
-
     println!("\nFiles considered as code changes:");
-    if code_changed_files.is_empty() {
+    if included_files.is_empty() {
         println!("  (none)");
     } else {
-        for file in &code_changed_files {
+        for file in &included_files {
             println!("  {}", file);
         }
     }
     println!();
 
-    // Check if any code files changed (.rs, .toml, .mjs, .yml, .yaml, or workflow files)
-    let code_pattern = Regex::new(r"\.(rs|toml|mjs|js|yml|yaml)$|\.github/workflows/").unwrap();
-    let code_changed = code_changed_files.iter().any(|f| code_pattern.is_match(f));
-    set_output("any-code-changed", if code_changed { "true" } else { "false" });
+    // Check if any code files changed (.rs, .toml, Cargo.lock, .mjs, .yml, .yaml, or workflow files)
+    let code_pattern = code_change_pattern();
+    let code_changed = included_files.iter().any(|f| code_pattern.is_match(f));
+    set_output(
+        "any-code-changed",
+        if code_changed { "true" } else { "false" },
+    );
 
     println!("\nChange detection completed.");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_dir(name: &str) -> PathBuf {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = env::temp_dir().join(format!("detect-code-changes-{name}-{nanos}"));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    fn run_git(repo_path: &Path, args: &[&str]) {
+        let output = Command::new("git")
+            .args(args)
+            .current_dir(repo_path)
+            .output()
+            .unwrap_or_else(|error| panic!("failed to run git {args:?}: {error}"));
+        assert!(
+            output.status.success(),
+            "git {args:?} failed\nstdout:\n{}\nstderr:\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    fn create_merge_repo() -> PathBuf {
+        let parent = temp_dir("merge-repo");
+        run_git(&parent, &["init", "-b", "main", "repo"]);
+
+        let repo = parent.join("repo");
+        run_git(&repo, &["config", "user.email", "test@example.com"]);
+        run_git(&repo, &["config", "user.name", "Test User"]);
+
+        fs::create_dir_all(repo.join("src")).unwrap();
+        fs::write(repo.join("src/lib.rs"), "pub fn value() -> i32 { 1 }\n").unwrap();
+        fs::write(repo.join("Cargo.toml"), "[package]\nname = \"example\"\n").unwrap();
+        run_git(&repo, &["add", "."]);
+        run_git(&repo, &["commit", "-m", "Initial commit"]);
+
+        run_git(&repo, &["checkout", "-b", "feature"]);
+
+        fs::write(repo.join("src/lib.rs"), "pub fn value() -> i32 { 2 }\n").unwrap();
+        run_git(&repo, &["add", "src/lib.rs"]);
+        run_git(&repo, &["commit", "-m", "Change Rust source"]);
+
+        fs::create_dir_all(repo.join("docs")).unwrap();
+        fs::write(repo.join("docs/notes.md"), "# Notes\n").unwrap();
+        run_git(&repo, &["add", "docs/notes.md"]);
+        run_git(&repo, &["commit", "-m", "Add docs notes"]);
+
+        run_git(&repo, &["checkout", "main"]);
+        run_git(
+            &repo,
+            &["merge", "--no-ff", "feature", "-m", "Merge feature"],
+        );
+
+        repo
+    }
+
+    fn create_single_change_merge_repo(file_path: &str) -> PathBuf {
+        let parent = temp_dir("excluded-event-matrix");
+        run_git(&parent, &["init", "-b", "main", "repo"]);
+
+        let repo = parent.join("repo");
+        run_git(&repo, &["config", "user.email", "test@example.com"]);
+        run_git(&repo, &["config", "user.name", "Test User"]);
+        fs::write(repo.join("README.md"), "# Test\n").unwrap();
+        run_git(&repo, &["add", "."]);
+        run_git(&repo, &["commit", "-m", "Initial commit"]);
+        run_git(&repo, &["checkout", "-b", "feature"]);
+
+        let changed_path = repo.join(file_path);
+        fs::create_dir_all(changed_path.parent().unwrap()).unwrap();
+        fs::write(&changed_path, "reproduction\n").unwrap();
+        run_git(&repo, &["add", file_path]);
+        run_git(&repo, &["commit", "-m", "Add excluded reproduction"]);
+        run_git(&repo, &["checkout", "main"]);
+        run_git(
+            &repo,
+            &["merge", "--no-ff", "feature", "-m", "Merge feature"],
+        );
+
+        repo
+    }
+
+    #[test]
+    fn cargo_lock_changes_count_as_manifest_and_code_changes() {
+        let code_pattern = code_change_pattern();
+
+        for path in ["Cargo.lock", "rust/Cargo.lock"] {
+            assert!(is_manifest_or_lockfile_change(path));
+            assert!(code_pattern.is_match(path));
+            assert!(!is_excluded_from_code_changes(path));
+        }
+    }
+
+    #[test]
+    fn excluded_paths_do_not_activate_any_job_gating_output() {
+        let excluded_files = [
+            "experiments/repro.rs",
+            "experiments/repro.mjs",
+            "experiments/repro.md",
+            "dev/log/trace.rs",
+            "dev/log/trace.mjs",
+            "dev/log/trace.md",
+            "docs/case-studies/issue-109/repro.rs",
+            "docs/case-studies/issue-109/repro.mjs",
+            "docs/case-studies/issue-109/repro.md",
+            "rust/experiments/repro.rs",
+            "rust/dev/log/trace.mjs",
+            "js/examples/repro.js",
+        ];
+
+        for file in excluded_files {
+            assert!(
+                is_excluded_from_code_changes(file),
+                "{file} should be excluded before outputs are computed"
+            );
+        }
+    }
+
+    #[test]
+    fn excluded_only_event_matrix_has_no_included_changes() {
+        for event_name in ["pull_request", "push"] {
+            for file_path in [
+                "experiments/repro.mjs",
+                "dev/log/repro.rs",
+                "docs/case-studies/issue-109/repro.md",
+            ] {
+                let repo = create_single_change_merge_repo(file_path);
+                let changed_files = get_changed_files_in_repo(&repo, event_name);
+
+                assert_eq!(changed_files, [file_path]);
+                assert!(
+                    included_changed_files(&changed_files).is_empty(),
+                    "{event_name} with only {file_path} must not activate job outputs"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn push_merge_commit_detects_full_first_parent_merge_diff() {
+        let repo = create_merge_repo();
+
+        let changed_files = get_changed_files_in_repo(&repo, "push");
+
+        assert!(
+            changed_files.iter().any(|file| file == "src/lib.rs"),
+            "push merge diff should include the earlier Rust source commit: {changed_files:?}"
+        );
+        assert!(
+            changed_files.iter().any(|file| file == "docs/notes.md"),
+            "push merge diff should include the final docs commit: {changed_files:?}"
+        );
+        assert!(changed_files.iter().any(|file| file.ends_with(".rs")));
+
+        let code_pattern = code_change_pattern();
+        let code_changed = changed_files
+            .iter()
+            .filter(|file| !is_excluded_from_code_changes(file))
+            .any(|file| code_pattern.is_match(file));
+        assert!(
+            code_changed,
+            "real merge pushes that introduce Rust source changes should set any-code-changed"
+        );
+    }
+
+    #[test]
+    fn empty_push_commit_has_no_changed_files() {
+        let repo = create_merge_repo();
+        run_git(&repo, &["commit", "--allow-empty", "-m", "Empty commit"]);
+
+        assert!(
+            get_changed_files_in_repo(&repo, "push").is_empty(),
+            "an empty push must not be treated as if every repository file changed"
+        );
+    }
+
+    #[test]
+    fn invalid_git_state_fails_instead_of_reporting_no_changes() {
+        let not_a_repository = temp_dir("not-a-repository");
+
+        let result = std::panic::catch_unwind(|| {
+            get_changed_files_in_repo(&not_a_repository, "push")
+        });
+
+        assert!(
+            result.is_err(),
+            "a Git command failure must stop change detection instead of suppressing code checks"
+        );
+    }
+
+    #[test]
+    fn pull_request_synthetic_merge_uses_full_pr_diff() {
+        let repo = create_merge_repo();
+
+        let changed_files = get_changed_files_in_repo(&repo, "pull_request");
+
+        assert_eq!(
+            changed_files,
+            vec!["docs/notes.md", "src/lib.rs"],
+            "a docs-only final commit must not hide code changed earlier in the pull request"
+        );
+    }
 }

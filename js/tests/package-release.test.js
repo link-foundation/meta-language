@@ -20,6 +20,10 @@ test('npm package metadata uses the public unscoped package name', async () => {
   assert.equal(packageJson.name, 'meta-language');
   assert.equal(packageLock.name, 'meta-language');
   assert.equal(packageLock.packages[''].name, 'meta-language');
+  assert.equal(
+    packageJson.repository.url,
+    'git+https://github.com/link-foundation/meta-language.git',
+  );
 
   for (const readmeWithBadge of [rootReadme, jsReadme]) {
     assert.ok(readmeWithBadge.includes('npmjs.com/package/meta-language'));
@@ -45,10 +49,20 @@ test('JavaScript workflow publishes to npm with trusted publishing provenance', 
   assert.match(workflow, /registry-url:\s+['"]https:\/\/registry\.npmjs\.org['"]/);
   assert.match(workflow, /working-directory:\s+js/);
   assert.match(workflow, /npm publish --provenance/);
-  assert.match(workflow, /npm view meta-language@\$\{\{\s*steps\.package\.outputs\.version\s*\}\} version/);
+  assert.match(workflow, /npm view "meta-language@\$PACKAGE_VERSION" version >\/dev\/null 2>&1/);
+  assert.doesNotMatch(workflow, /NODE_AUTH_TOKEN/);
+  assert.match(workflow, /permissions:\s*\n\s+contents:\s+read/);
+  assert.doesNotMatch(workflow.split('\njobs:\n')[0], /\nconcurrency:\n/);
+
+  const publishJob = workflow.slice(workflow.indexOf('  publish:\n'));
+  assert.match(publishJob, /group:\s+release-\$\{\{ github\.repository \}\}-main-write/);
+  assert.match(publishJob, /cancel-in-progress:\s+false/);
+  assert.doesNotMatch(publishJob, /queue:\s+/);
+  assert.match(publishJob, /REQUESTED_VERSION:\s+\$\{\{ github\.event\.inputs\.release_version \}\}/);
+  assert.doesNotMatch(publishJob, /run:[^\n]*\$\{\{\s*github\.event\.inputs\.release_version\s*\}\}/);
 });
 
-test('Rust release pipeline keeps the npm package in the same release stream', async () => {
+test('Rust release pipeline delegates npm publishing to the canonical JavaScript workflow', async () => {
   const rustWorkflow = await readFile(
     new URL('../../.github/workflows/rust.yml', import.meta.url),
     'utf8',
@@ -65,10 +79,22 @@ test('Rust release pipeline keeps the npm package in the same release stream', a
   assert.match(releaseScript, /npm/);
   assert.match(releaseScript, /version/);
   assert.match(releaseScript, /package-lock\.json/);
-  assert.match(releaseCheck, /npm_published/);
-  assert.match(rustWorkflow, /id-token:\s+write/);
-  assert.match(rustWorkflow, /Publish JavaScript package to npm/);
-  assert.match(rustWorkflow, /npm publish --provenance/);
-  assert.match(rustWorkflow, /steps\.current_version\.outputs\.version/);
-  assert.match(rustWorkflow, /steps\.check\.outputs\.npm_published/);
+  assert.doesNotMatch(releaseCheck, /npm_published|npm_required|registry\.npmjs\.org/);
+  assert.doesNotMatch(rustWorkflow, /npm publish|npm view|NODE_AUTH_TOKEN/);
+  assert.doesNotMatch(rustWorkflow, /Publish JavaScript package to npm/);
+
+  for (const jobName of ['auto-release', 'manual-release']) {
+    const start = rustWorkflow.indexOf(`  ${jobName}:\n`);
+    assert.notEqual(start, -1);
+    const remainder = rustWorkflow.slice(start);
+    const nextJob = remainder.slice(1).search(/\n  [a-z][a-z0-9-]*:\n/);
+    const job = nextJob === -1 ? remainder : remainder.slice(0, nextJob + 1);
+    const createRelease = job.indexOf('- name: Create GitHub Release');
+    const dispatchPublisher = job.indexOf('- name: Dispatch JavaScript publisher');
+
+    assert.match(job, /actions:\s+write/);
+    assert.match(job, /gh workflow run js\.yml --ref main/);
+    assert.match(job, /release_version="\$RELEASE_VERSION"/);
+    assert.ok(createRelease >= 0 && dispatchPublisher > createRelease);
+  }
 });

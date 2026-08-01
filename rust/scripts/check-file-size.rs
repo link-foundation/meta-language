@@ -9,6 +9,7 @@
 //! walkdir = "2"
 //! ```
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
 #[cfg(not(test))]
@@ -153,15 +154,45 @@ fn warning_annotation(finding: &Finding) -> String {
     )
 }
 
+/// Parses the changed-file list provided by CI (newline or space separated).
+///
+/// Returns `None` when no list is configured, which means every warning is
+/// reported (the behaviour used for local runs and pushes to the default
+/// branch).
+fn changed_files(raw: Option<&str>) -> Option<BTreeSet<String>> {
+    let raw = raw?;
+    if raw.trim().is_empty() {
+        return Some(BTreeSet::new());
+    }
+
+    Some(
+        raw.split(['\n', '\r', ' ', '\t'])
+            .map(str::trim)
+            .filter(|entry| !entry.is_empty())
+            .map(|entry| entry.replace('\\', "/"))
+            .collect(),
+    )
+}
+
+/// Warning-band findings are reported only when the file changed, so unchanged
+/// files stop repeating warnings in annotations and job logs. The hard limit
+/// stays repository-wide.
+fn should_report(finding: &Finding, changed: Option<&BTreeSet<String>>) -> bool {
+    changed.map_or(true, |changed| changed.contains(&finding.file))
+}
+
 #[cfg(not(test))]
-fn print_warnings(warnings: &[Finding]) {
-    if warnings.is_empty() {
+fn print_warnings(warnings: &[Finding], changed: Option<&BTreeSet<String>>) {
+    let reportable = warnings
+        .iter()
+        .filter(|finding| should_report(finding, changed))
+        .collect::<Vec<_>>();
+    if reportable.is_empty() {
         return;
     }
 
-    for warning in warnings {
-        let annotation = warning_annotation(warning);
-        println!("{annotation}");
+    for warning in &reportable {
+        println!("{}", warning_annotation(warning));
         println!(
             "WARNING: {} has {} lines (approaching limit of {MAX_LINES}, warning threshold: {WARN_LINES})",
             warning.file, warning.lines
@@ -172,7 +203,7 @@ fn print_warnings(warnings: &[Finding]) {
     println!(
         "The following files are approaching the {MAX_LINES} line limit (>{WARN_LINES} lines):"
     );
-    for warning in warnings {
+    for warning in reportable {
         println!("  {}", warning.file);
     }
     println!("\nConsider extracting code to prevent concurrent PR merge limit violations.\n");
@@ -203,7 +234,9 @@ fn main() {
     let cwd = std::env::current_dir().expect("Failed to get current directory");
     let result = check_directory(&cwd);
 
-    print_warnings(&result.warnings);
+    let raw_changed = std::env::var("CHANGED_FILES").ok();
+    let changed = changed_files(raw_changed.as_deref());
+    print_warnings(&result.warnings, changed.as_ref());
 
     if result.violations.is_empty() {
         println!("All files are within the line limit\n");
@@ -275,6 +308,74 @@ mod tests {
                 file: "src/over_limit.rs".to_string(),
                 lines: MAX_LINES + 1,
             }]
+        );
+    }
+
+    #[test]
+    fn only_changed_files_in_the_warning_band_are_annotated() {
+        let repo = temp_dir("changed-only");
+        let src_dir = repo.join("src");
+        fs::create_dir_all(&src_dir).unwrap();
+        write_rust_file_with_lines(&src_dir.join("changed.rs"), WARN_LINES + 1);
+        write_rust_file_with_lines(&src_dir.join("unchanged.rs"), WARN_LINES + 1);
+        write_rust_file_with_lines(&src_dir.join("over_limit.rs"), MAX_LINES + 1);
+
+        let result = check_directory(&repo);
+        let changed = changed_files(Some("src/changed.rs\n")).unwrap();
+
+        let annotated: Vec<&str> = result
+            .warnings
+            .iter()
+            .filter(|finding| should_report(finding, Some(&changed)))
+            .map(|finding| finding.file.as_str())
+            .collect();
+        assert_eq!(annotated, vec!["src/changed.rs"]);
+
+        // The hard limit stays repository-wide regardless of what changed.
+        assert_eq!(
+            result.violations,
+            vec![Finding {
+                file: "src/over_limit.rs".to_string(),
+                lines: MAX_LINES + 1,
+            }]
+        );
+        // Both warning-band files remain in the baseline report.
+        assert_eq!(result.warnings.len(), 2);
+    }
+
+    #[test]
+    fn missing_changed_file_list_annotates_every_warning() {
+        let finding = Finding {
+            file: "src/near_limit.rs".to_string(),
+            lines: WARN_LINES + 1,
+        };
+
+        assert_eq!(changed_files(None), None);
+        assert!(should_report(&finding, None));
+    }
+
+    #[test]
+    fn empty_changed_file_list_annotates_nothing() {
+        let finding = Finding {
+            file: "src/near_limit.rs".to_string(),
+            lines: WARN_LINES + 1,
+        };
+        let changed = changed_files(Some("  \n")).unwrap();
+
+        assert!(changed.is_empty());
+        assert!(!should_report(&finding, Some(&changed)));
+    }
+
+    #[test]
+    fn changed_file_list_accepts_space_and_newline_separators() {
+        let changed = changed_files(Some("src/a.rs src/b.rs\nsrc\\c.rs\n")).unwrap();
+
+        assert_eq!(
+            changed,
+            ["src/a.rs", "src/b.rs", "src/c.rs"]
+                .into_iter()
+                .map(String::from)
+                .collect::<BTreeSet<String>>()
         );
     }
 
