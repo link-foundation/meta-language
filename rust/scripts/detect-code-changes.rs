@@ -51,21 +51,18 @@ fn exec_in(command: &str, args: &[&str], current_dir: Option<&Path>) -> String {
         process.current_dir(current_dir);
     }
 
-    match process.output() {
-        Ok(output) => {
-            if output.status.success() {
-                String::from_utf8_lossy(&output.stdout).trim().to_string()
-            } else {
-                eprintln!("Error executing {} {:?}", command, args);
-                eprintln!("{}", String::from_utf8_lossy(&output.stderr));
-                String::new()
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to execute {} {:?}: {}", command, args, e);
-            String::new()
-        }
+    let output = process
+        .output()
+        .unwrap_or_else(|error| panic!("failed to execute {command} {args:?}: {error}"));
+    if !output.status.success() {
+        panic!(
+            "{command} {args:?} failed with {}:\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
     }
+
+    String::from_utf8_lossy(&output.stdout).trim().to_string()
 }
 
 fn set_output(name: &str, value: &str) {
@@ -438,6 +435,20 @@ mod tests {
         assert!(
             get_changed_files_in_repo(&repo, "push").is_empty(),
             "an empty push must not be treated as if every repository file changed"
+        );
+    }
+
+    #[test]
+    fn invalid_git_state_fails_instead_of_reporting_no_changes() {
+        let not_a_repository = temp_dir("not-a-repository");
+
+        let result = std::panic::catch_unwind(|| {
+            get_changed_files_in_repo(&not_a_repository, "push")
+        });
+
+        assert!(
+            result.is_err(),
+            "a Git command failure must stop change detection instead of suppressing code checks"
         );
     }
 

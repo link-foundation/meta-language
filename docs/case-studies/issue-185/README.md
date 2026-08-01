@@ -62,7 +62,8 @@ actionlint proved GitHub's concurrency schema does not accept it.
   final commit was documentation-only, the workflow reported success while
   skipping every Rust lint, test, coverage, and build job despite earlier code
   changes in the same pull request. Empty push commits also remain empty rather
-  than falling back to treating the whole repository as changed.
+  than falling back to treating the whole repository as changed, while Git
+  command failures stop detection instead of silently suppressing code jobs.
 - Follow-up runs `30705541135` and `30705944275` exercised the full matrix and
   exposed two Windows-only assumptions in the new workflow-policy test: its
   YAML job parser and multiline policy comparisons assumed LF line endings.
