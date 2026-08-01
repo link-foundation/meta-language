@@ -1,5 +1,8 @@
 use regex::Regex;
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 fn repository_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -21,6 +24,14 @@ fn workflow_files() -> Vec<PathBuf> {
         .collect::<Vec<_>>();
     paths.sort();
     paths
+}
+
+fn normalize_workflow(workflow: &str) -> String {
+    workflow.replace("\r\n", "\n")
+}
+
+fn read_workflow(path: &Path) -> String {
+    normalize_workflow(&fs::read_to_string(path).unwrap())
 }
 
 fn run_blocks(workflow: &str) -> Vec<String> {
@@ -82,8 +93,10 @@ fn job_block<'a>(workflow: &'a str, job_name: &str) -> &'a str {
 #[test]
 fn job_parser_supports_windows_line_endings() {
     let workflow = "jobs:\r\n  lint:\r\n    runs-on: ubuntu-latest\r\n  test:\r\n    runs-on: windows-latest\r\n";
+    let workflow = normalize_workflow(workflow);
 
-    let lint = job_block(workflow, "lint");
+    let lint = job_block(&workflow, "lint");
+    assert!(lint.contains("  lint:\n    runs-on: ubuntu-latest\n"));
     assert!(lint.contains("runs-on: ubuntu-latest"));
     assert!(!lint.contains("runs-on: windows-latest"));
 }
@@ -94,7 +107,7 @@ fn run_blocks_do_not_interpolate_untrusted_workflow_inputs() {
         Regex::new(r"\$\{\{\s*(?:inputs\.|github\.event\.inputs\.|github\.head_ref)[^}]*\}\}")
             .unwrap();
     for path in workflow_files() {
-        let workflow = fs::read_to_string(&path).unwrap().replace("\r\n", "\n");
+        let workflow = read_workflow(&path);
         for run_block in run_blocks(&workflow) {
             assert!(
                 !untrusted.is_match(&run_block),
@@ -108,7 +121,7 @@ fn run_blocks_do_not_interpolate_untrusted_workflow_inputs() {
 #[test]
 fn workflows_default_to_read_only_permissions() {
     for path in workflow_files() {
-        let workflow = fs::read_to_string(&path).unwrap().replace("\r\n", "\n");
+        let workflow = read_workflow(&path);
         let header = workflow.split("\njobs:\n").next().unwrap();
         assert!(
             header.contains("permissions:\n  contents: read"),
@@ -121,7 +134,7 @@ fn workflows_default_to_read_only_permissions() {
 #[test]
 fn workflows_separate_cancellable_checks_from_serialized_writes() {
     for path in workflow_files() {
-        let workflow = fs::read_to_string(&path).unwrap().replace("\r\n", "\n");
+        let workflow = read_workflow(&path);
         assert!(!workflow
             .split("\njobs:\n")
             .next()
@@ -129,7 +142,7 @@ fn workflows_separate_cancellable_checks_from_serialized_writes() {
             .contains("\nconcurrency:\n"));
     }
 
-    let rust = fs::read_to_string(repository_root().join(".github/workflows/rust.yml")).unwrap();
+    let rust = read_workflow(&repository_root().join(".github/workflows/rust.yml"));
     for job_name in [
         "detect-changes",
         "changelog",
@@ -166,7 +179,7 @@ fn workflows_separate_cancellable_checks_from_serialized_writes() {
         );
     }
 
-    let js = fs::read_to_string(repository_root().join(".github/workflows/js.yml")).unwrap();
+    let js = read_workflow(&repository_root().join(".github/workflows/js.yml"));
     assert!(job_block(&js, "test").contains("cancel-in-progress: true"));
     assert!(job_block(&js, "publish").contains(write_queue));
 }
