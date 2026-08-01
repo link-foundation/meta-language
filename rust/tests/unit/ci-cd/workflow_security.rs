@@ -51,24 +51,41 @@ fn run_blocks(workflow: &str) -> Vec<String> {
 }
 
 fn job_block<'a>(workflow: &'a str, job_name: &str) -> &'a str {
-    let marker = format!("  {job_name}:\n");
-    let start = workflow.find(&marker).unwrap();
-    let rest = &workflow[start + marker.len()..];
-    let next = rest
-        .lines()
-        .scan(0usize, |offset, line| {
-            let current = *offset;
-            *offset += line.len() + 1;
-            Some((current, line))
-        })
-        .find_map(|(offset, line)| {
-            (line.starts_with("  ") && !line.starts_with("    ") && line.trim_end().ends_with(':'))
-                .then_some(offset)
-        });
-    next.map_or_else(
-        || &workflow[start..],
-        |end| &workflow[start..start + marker.len() + end],
-    )
+    let marker = format!("  {job_name}:");
+    let mut offset = 0;
+    let mut start = None;
+    for line in workflow.split_inclusive('\n') {
+        if line.trim_end_matches(['\r', '\n']) == marker {
+            start = Some(offset);
+            break;
+        }
+        offset += line.len();
+    }
+
+    let start = start.unwrap();
+    let job_and_rest = &workflow[start..];
+    let mut offset = 0;
+    for (index, line) in job_and_rest.split_inclusive('\n').enumerate() {
+        if index > 0
+            && line.starts_with("  ")
+            && !line.starts_with("    ")
+            && line.trim_end_matches(['\r', '\n']).ends_with(':')
+        {
+            return &job_and_rest[..offset];
+        }
+        offset += line.len();
+    }
+
+    job_and_rest
+}
+
+#[test]
+fn job_parser_supports_windows_line_endings() {
+    let workflow = "jobs:\r\n  lint:\r\n    runs-on: ubuntu-latest\r\n  test:\r\n    runs-on: windows-latest\r\n";
+
+    let lint = job_block(workflow, "lint");
+    assert!(lint.contains("runs-on: ubuntu-latest"));
+    assert!(!lint.contains("runs-on: windows-latest"));
 }
 
 #[test]

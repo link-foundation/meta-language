@@ -63,6 +63,10 @@ actionlint proved GitHub's concurrency schema does not accept it.
   skipping every Rust lint, test, coverage, and build job despite earlier code
   changes in the same pull request. Empty push commits also remain empty rather
   than falling back to treating the whole repository as changed.
+- Follow-up run `30705541135` exercised the full matrix and exposed a Windows-
+  only regression in the new workflow-policy test: its YAML job parser assumed
+  LF line endings. The parser now handles both LF and CRLF, with a platform-
+  independent regression test reproducing the Windows failure.
 - File-size warnings are limited to changed Rust files; the hard
   repository-wide limit remains enforced.
 - Rust documentation builds with warnings denied before release.
@@ -94,6 +98,7 @@ Focused tests cover:
 - lockfile, secret-scan, fresh-merge, rustdoc, Codecov, and file-size gates;
 - clean rebase/tag ordering and deletion of consumed fragments;
 - full-PR change detection and empty-push handling;
+- workflow-policy parsing under both LF and CRLF checkouts;
 - version-specific documentation badges.
 
 The workflow files are also validated with actionlint before submission.
