@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 3,
+  "collectedAt": "2026-08-02T17:58:57.570Z",
+  "issueNumber": 191,
+  "prNumber": "192",
+  "branchName": "issue-191-66112f3ba3f7",
+  "tool": "claude",
+  "sessionId": "7a6e5ba3-6d61-4c21-ba92-e99c77f78578",
+  "rawCommand": "/home/box/.nvm/versions/node/v20.20.2/bin/node /home/box/.bun/install/global/node_modules/@link-assistant/hive-mind/src/solve.mjs https://github.com/link-foundation/meta-language/issues/191 --development-log --deep-analysis --auto-merge --attach-logs --verbose --no-tool-check --disable-report-issue --language en",
+  "developmentLogDirectory": "./dev/log/issues/191/pulls/192",
+  "caseStudyDirectory": "./docs/case-studies/issue-191",
+  "artifacts": {
+    "solveLog": "./dev/log/issues/191/pulls/192/sessions/7a6e5ba3-6d61-4c21-ba92-e99c77f78578/solve.log",
+    "solveLogRange": {
+      "startByte": 0,
+      "endByte": 80317341
+    },
+    "sessionFiles": [
+      "./dev/log/issues/191/pulls/192/sessions/7a6e5ba3-6d61-4c21-ba92-e99c77f78578/claude-7a6e5ba3-6d61-4c21-ba92-e99c77f78578.jsonl"
+    ]
+  }
+}
