@@ -25,6 +25,9 @@ See [`../docs/translation-rules.md`](../docs/translation-rules.md) for recursive
 rule evaluation, captures, variadic and optional templates, rendering contexts,
 and target-language fallbacks.
 
+The shared executable query-plan IR and registry-driven GraphQL adapter are
+documented in [`../docs/query-plans.md`](../docs/query-plans.md).
+
 ## Usage
 
 ```js
