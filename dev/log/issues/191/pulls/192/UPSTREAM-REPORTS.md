@@ -17,7 +17,9 @@ What is *not* obvious from those threads, and is worth adding as a data point, i
 that the fix shipped only on the v7 line: `dist/setup/index.js` on `v7` no longer
 contains the `XXXXX-XXXXX-XXXXX-XXXXX` placeholder, while `v6` (v6.5.0, what the
 floating `@v6` tag resolves to) still does. Projects pinned to `@v6` therefore
-remain affected even though the issue is closed.
+remain affected even though the issue is closed. This was posted as a comment on
+#1440, together with a backport request:
+https://github.com/actions/setup-node/issues/1440#issuecomment-5159498332
 
 ## 2. `link-foundation/js-ai-driven-development-pipeline-template` — affected
 
