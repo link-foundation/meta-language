@@ -1,0 +1,1070 @@
+JavaScript Package	UNKNOWN STEP	﻿2026-08-02T05:02:27.1666092Z Current runner version: '2.336.0'
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1686187Z ##[group]Runner Image Provisioner
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1686938Z Hosted Compute Agent
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1687412Z Version: 20260707.563
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1687992Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1688645Z Build Date: 2026-07-07T19:33:50Z
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1689202Z Worker ID: {aa384d61-f365-491a-b68c-9a19bb92ceb7}
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1689792Z Azure Region: westus3
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1690419Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1691547Z ##[group]Operating System
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1692112Z Ubuntu
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1692527Z 24.04.4
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1692927Z LTS
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1693427Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1693899Z ##[group]Runner Image
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1694398Z Image: ubuntu-24.04
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1694866Z Version: 20260720.247.2
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1695903Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1697145Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1697929Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1698786Z ##[group]GITHUB_TOKEN Permissions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1700756Z Contents: read
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1701280Z Metadata: read
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1701772Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1703765Z Secret source: Actions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.1704764Z Prepare workflow directory
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.2039046Z Prepare all required actions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.2086235Z Getting action download info
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:27.4998219Z Download action repository 'actions/checkout@v6' (SHA:d23441a48e516b6c34aea4fa41551a30e30af803)
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:28.2367002Z Download action repository 'actions/setup-node@v6' (SHA:249970729cb0ef3589644e2896645e5dc5ba9c38)
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.3795870Z Complete job name: JavaScript Package
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4364320Z ##[group]Run actions/checkout@v6
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4364800Z with:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4365003Z   fetch-depth: 0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4365262Z   repository: link-foundation/meta-language
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4367322Z   token: ***
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4367537Z   ssh-strict: true
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4367751Z   ssh-user: git
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4367968Z   persist-credentials: true
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4368200Z   clean: true
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4368416Z   sparse-checkout-cone-mode: true
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4368664Z   fetch-tags: false
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4368877Z   show-progress: true
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4369090Z   lfs: false
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4369297Z   submodules: false
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4369513Z   set-safe-directory: true
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4369752Z   allow-unsafe-pr-checkout: false
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4370292Z env:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4370492Z   GIT_CONFIG_COUNT: 1
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4370724Z   GIT_CONFIG_KEY_0: init.defaultBranch
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4371020Z   GIT_CONFIG_VALUE_0: main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.4371250Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5170918Z Syncing repository: link-foundation/meta-language
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5172665Z ##[group]Getting Git version info
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5173244Z Working directory is '/home/runner/work/meta-language/meta-language'
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5174114Z [command]/usr/bin/git version
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5368075Z git version 2.54.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5385082Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5401222Z Temporarily overriding HOME='/home/runner/work/_temp/c2cb5a61-0d1d-456a-ae04-c4565a463283' before making global git config changes
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5402835Z Adding repository directory to the temporary git global config as a safe directory
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5403921Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/meta-language/meta-language
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5643361Z Deleting the contents of '/home/runner/work/meta-language/meta-language'
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5646493Z ##[group]Determining repository object format
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5648622Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5649571Z ##[group]Initializing the repository
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5654001Z [command]/usr/bin/git init /home/runner/work/meta-language/meta-language
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5815050Z Initialized empty Git repository in /home/runner/work/meta-language/meta-language/.git/
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5833430Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/meta-language
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5914163Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5914582Z ##[group]Disabling automatic garbage collection
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5918099Z [command]/usr/bin/git config --local gc.auto 0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5953588Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5955138Z ##[group]Setting up auth
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5955425Z Removing SSH command configuration
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5959533Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.5987907Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6220878Z Removing HTTP extra header
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6225240Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6255094Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6433591Z Removing includeIf entries pointing to credentials config files
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6438856Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6468765Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6684722Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6724156Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/meta-language/meta-language/.git.path /home/runner/work/_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6812370Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6865765Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.6947584Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.7023150Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.7023550Z ##[group]Fetching the repository
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:29.7029793Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1632968Z From https://github.com/link-foundation/meta-language
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1633647Z  * [new branch]      issue-1-c91b084a6526   -> origin/issue-1-c91b084a6526
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1634200Z  * [new branch]      issue-10-8fb744dd30bc  -> origin/issue-10-8fb744dd30bc
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1634757Z  * [new branch]      issue-100-f6c11feb1857 -> origin/issue-100-f6c11feb1857
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1635318Z  * [new branch]      issue-101-eb083df2ad1b -> origin/issue-101-eb083df2ad1b
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1635799Z  * [new branch]      issue-102-3d2aa6df964a -> origin/issue-102-3d2aa6df964a
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1636346Z  * [new branch]      issue-103-a033e75d9519 -> origin/issue-103-a033e75d9519
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1636958Z  * [new branch]      issue-104-182b8f0254fe -> origin/issue-104-182b8f0254fe
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1637497Z  * [new branch]      issue-105-f8a06ae97e07 -> origin/issue-105-f8a06ae97e07
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1638450Z  * [new branch]      issue-106-21e07d9583bc -> origin/issue-106-21e07d9583bc
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1639000Z  * [new branch]      issue-107-d474e6ac4d88 -> origin/issue-107-d474e6ac4d88
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1639544Z  * [new branch]      issue-108-ea82ed94822a -> origin/issue-108-ea82ed94822a
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1640272Z  * [new branch]      issue-109-0e27238a29d2 -> origin/issue-109-0e27238a29d2
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1640828Z  * [new branch]      issue-11-da8ab5f3ca36  -> origin/issue-11-da8ab5f3ca36
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1641438Z  * [new branch]      issue-110-d9a30ef13c98 -> origin/issue-110-d9a30ef13c98
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1642022Z  * [new branch]      issue-111-85ddd53cd90d -> origin/issue-111-85ddd53cd90d
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1642551Z  * [new branch]      issue-112-56ccf1c09794 -> origin/issue-112-56ccf1c09794
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1643096Z  * [new branch]      issue-113-d277e602c32f -> origin/issue-113-d277e602c32f
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1643630Z  * [new branch]      issue-114-3a1ef5c3b70e -> origin/issue-114-3a1ef5c3b70e
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1644170Z  * [new branch]      issue-115-c3e41e62c64e -> origin/issue-115-c3e41e62c64e
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1644712Z  * [new branch]      issue-116-06220004bc0f -> origin/issue-116-06220004bc0f
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1645251Z  * [new branch]      issue-117-c951da49ae73 -> origin/issue-117-c951da49ae73
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1645786Z  * [new branch]      issue-118-bf4af12eba3a -> origin/issue-118-bf4af12eba3a
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1646333Z  * [new branch]      issue-119-a2c6cdf1e592 -> origin/issue-119-a2c6cdf1e592
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1646880Z  * [new branch]      issue-12-95f3408282fa  -> origin/issue-12-95f3408282fa
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1647427Z  * [new branch]      issue-120-bda45a63c880 -> origin/issue-120-bda45a63c880
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1647962Z  * [new branch]      issue-121-5baa9ce4d62f -> origin/issue-121-5baa9ce4d62f
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1648716Z  * [new branch]      issue-122-d51078966a4f -> origin/issue-122-d51078966a4f
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1650494Z  * [new branch]      issue-123-424e32082a31 -> origin/issue-123-424e32082a31
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1651195Z  * [new branch]      issue-124-eb1f3d88b56e -> origin/issue-124-eb1f3d88b56e
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1651956Z  * [new branch]      issue-125-cb5e2ffe1c87 -> origin/issue-125-cb5e2ffe1c87
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1652530Z  * [new branch]      issue-126-7f8ea7c83db8 -> origin/issue-126-7f8ea7c83db8
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1653078Z  * [new branch]      issue-127-5a9c2ca460e9 -> origin/issue-127-5a9c2ca460e9
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1653672Z  * [new branch]      issue-128-42ffbef7bacd -> origin/issue-128-42ffbef7bacd
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1654230Z  * [new branch]      issue-13-6c6e54a14d90  -> origin/issue-13-6c6e54a14d90
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1654791Z  * [new branch]      issue-14-ac0bd15b1618  -> origin/issue-14-ac0bd15b1618
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1655335Z  * [new branch]      issue-15-ed005ee50e0e  -> origin/issue-15-ed005ee50e0e
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1655872Z  * [new branch]      issue-16-0591ac3e90a8  -> origin/issue-16-0591ac3e90a8
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1656413Z  * [new branch]      issue-163-d63224b80bf9 -> origin/issue-163-d63224b80bf9
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1656950Z  * [new branch]      issue-165-c563cc7b8214 -> origin/issue-165-c563cc7b8214
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1657494Z  * [new branch]      issue-166-61dfaf84a4b3 -> origin/issue-166-61dfaf84a4b3
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1658037Z  * [new branch]      issue-168-d8f468bda2d7 -> origin/issue-168-d8f468bda2d7
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1658586Z  * [new branch]      issue-17-23eafb73cf23  -> origin/issue-17-23eafb73cf23
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1659127Z  * [new branch]      issue-171-87eb0f3dcf24 -> origin/issue-171-87eb0f3dcf24
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1659671Z  * [new branch]      issue-172-2162cf0ec543 -> origin/issue-172-2162cf0ec543
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1660392Z  * [new branch]      issue-173-7d76b7129ad1 -> origin/issue-173-7d76b7129ad1
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1660944Z  * [new branch]      issue-177-0dd45bef3189 -> origin/issue-177-0dd45bef3189
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1661500Z  * [new branch]      issue-179-607aa58f5952 -> origin/issue-179-607aa58f5952
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1662012Z  * [new branch]      issue-18-5ba046ed25d5  -> origin/issue-18-5ba046ed25d5
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1662357Z  * [new branch]      issue-181-25243439f71a -> origin/issue-181-25243439f71a
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1662694Z  * [new branch]      issue-183-8440a44ee763 -> origin/issue-183-8440a44ee763
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1663032Z  * [new branch]      issue-185-90d3aa414a50 -> origin/issue-185-90d3aa414a50
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1663362Z  * [new branch]      issue-187-49f7b21e65b9 -> origin/issue-187-49f7b21e65b9
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1663721Z  * [new branch]      issue-188-a50aeb95ace7 -> origin/issue-188-a50aeb95ace7
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1664062Z  * [new branch]      issue-19-3b570e20c466  -> origin/issue-19-3b570e20c466
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1664405Z  * [new branch]      issue-20-21cf548e1c01  -> origin/issue-20-21cf548e1c01
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1664766Z  * [new branch]      issue-3-ded5f36fa206   -> origin/issue-3-ded5f36fa206
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1665292Z  * [new branch]      issue-37-2db70af45b98  -> origin/issue-37-2db70af45b98
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1665650Z  * [new branch]      issue-39-e0a14d897c0b  -> origin/issue-39-e0a14d897c0b
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1665993Z  * [new branch]      issue-41-03b40c755623  -> origin/issue-41-03b40c755623
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1666336Z  * [new branch]      issue-42-9c6a33078a4c  -> origin/issue-42-9c6a33078a4c
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1666687Z  * [new branch]      issue-43-a22b4ef86cc3  -> origin/issue-43-a22b4ef86cc3
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1667031Z  * [new branch]      issue-47-76af108c0f24  -> origin/issue-47-76af108c0f24
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1667373Z  * [new branch]      issue-49-3a3011bb1089  -> origin/issue-49-3a3011bb1089
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1667722Z  * [new branch]      issue-5-b1da96634021   -> origin/issue-5-b1da96634021
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1668102Z  * [new branch]      issue-50-2b26543616e5  -> origin/issue-50-2b26543616e5
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1668605Z  * [new branch]      issue-51-bcc590de4142  -> origin/issue-51-bcc590de4142
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1668959Z  * [new branch]      issue-52-acccb4fff63c  -> origin/issue-52-acccb4fff63c
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1669321Z  * [new branch]      issue-53-62ec49765e7c  -> origin/issue-53-62ec49765e7c
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1669672Z  * [new branch]      issue-54-28d09685fe9b  -> origin/issue-54-28d09685fe9b
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1670165Z  * [new branch]      issue-55-805ab2ecab52  -> origin/issue-55-805ab2ecab52
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1670743Z  * [new branch]      issue-56-ce6a4255f097  -> origin/issue-56-ce6a4255f097
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1671264Z  * [new branch]      issue-57-4178ce6df3e6  -> origin/issue-57-4178ce6df3e6
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1671615Z  * [new branch]      issue-58-bf207977f436  -> origin/issue-58-bf207977f436
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1671959Z  * [new branch]      issue-59-429354ff0512  -> origin/issue-59-429354ff0512
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1672315Z  * [new branch]      issue-6-ec52a5201823   -> origin/issue-6-ec52a5201823
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1672678Z  * [new branch]      issue-60-e8cd3a67f468  -> origin/issue-60-e8cd3a67f468
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1673027Z  * [new branch]      issue-61-298e8e4dbc22  -> origin/issue-61-298e8e4dbc22
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1673368Z  * [new branch]      issue-62-bb745a65b429  -> origin/issue-62-bb745a65b429
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1673713Z  * [new branch]      issue-63-51e426ee025c  -> origin/issue-63-51e426ee025c
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1674072Z  * [new branch]      issue-64-46c948d90932  -> origin/issue-64-46c948d90932
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1674427Z  * [new branch]      issue-7-5d386a11dea9   -> origin/issue-7-5d386a11dea9
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1674784Z  * [new branch]      issue-70-c200ba7ef52d  -> origin/issue-70-c200ba7ef52d
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1675133Z  * [new branch]      issue-8-3ffb483c78fd   -> origin/issue-8-3ffb483c78fd
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1675477Z  * [new branch]      issue-83-987ec0f725da  -> origin/issue-83-987ec0f725da
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1675826Z  * [new branch]      issue-84-2d2b92d91490  -> origin/issue-84-2d2b92d91490
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1676170Z  * [new branch]      issue-85-7a78b767e22d  -> origin/issue-85-7a78b767e22d
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1676629Z  * [new branch]      issue-86-f6e4ccb9967a  -> origin/issue-86-f6e4ccb9967a
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1676983Z  * [new branch]      issue-9-fea3265b37e2   -> origin/issue-9-fea3265b37e2
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1677334Z  * [new branch]      issue-90-5532f0ba547e  -> origin/issue-90-5532f0ba547e
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1677680Z  * [new branch]      issue-93-8ae76e61befe  -> origin/issue-93-8ae76e61befe
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1678027Z  * [new branch]      issue-95-a8fb36e4044c  -> origin/issue-95-a8fb36e4044c
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1678376Z  * [new branch]      issue-96-caf625794585  -> origin/issue-96-caf625794585
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1678768Z  * [new branch]      issue-97-ad07e7017863  -> origin/issue-97-ad07e7017863
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1679243Z  * [new branch]      issue-98-bdc426076345  -> origin/issue-98-bdc426076345
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1679692Z  * [new branch]      issue-99-dd2fa7cdcba4  -> origin/issue-99-dd2fa7cdcba4
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1680206Z  * [new branch]      main                   -> origin/main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1680498Z  * [new tag]         v0.18.0                -> v0.18.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1680757Z  * [new tag]         v0.19.0                -> v0.19.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1681008Z  * [new tag]         v0.20.0                -> v0.20.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1681246Z  * [new tag]         v0.21.0                -> v0.21.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1681486Z  * [new tag]         v0.22.0                -> v0.22.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1681730Z  * [new tag]         v0.23.0                -> v0.23.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1681979Z  * [new tag]         v0.24.0                -> v0.24.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1682220Z  * [new tag]         v0.25.0                -> v0.25.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1682458Z  * [new tag]         v0.26.0                -> v0.26.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1682697Z  * [new tag]         v0.27.0                -> v0.27.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1683053Z  * [new tag]         v0.28.0                -> v0.28.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1683320Z  * [new tag]         v0.29.0                -> v0.29.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1683567Z  * [new tag]         v0.30.0                -> v0.30.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1683808Z  * [new tag]         v0.31.0                -> v0.31.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1684050Z  * [new tag]         v0.32.0                -> v0.32.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1684299Z  * [new tag]         v0.33.0                -> v0.33.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1684543Z  * [new tag]         v0.34.0                -> v0.34.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1684784Z  * [new tag]         v0.35.0                -> v0.35.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1685026Z  * [new tag]         v0.36.0                -> v0.36.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1685266Z  * [new tag]         v0.37.0                -> v0.37.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1685504Z  * [new tag]         v0.38.0                -> v0.38.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1685738Z  * [new tag]         v0.39.0                -> v0.39.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1685972Z  * [new tag]         v0.40.0                -> v0.40.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1686210Z  * [new tag]         v0.41.0                -> v0.41.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1686456Z  * [new tag]         v0.42.0                -> v0.42.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1686703Z  * [new tag]         v0.43.0                -> v0.43.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1686966Z  * [new tag]         v0.44.0                -> v0.44.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1687206Z  * [new tag]         v0.45.0                -> v0.45.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1687443Z  * [new tag]         v0.46.0                -> v0.46.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1687687Z  * [new tag]         v0.47.0                -> v0.47.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1687925Z  * [new tag]         v0.48.0                -> v0.48.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1688155Z  * [new tag]         v0.49.0                -> v0.49.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1688392Z  * [new tag]         v0.50.0                -> v0.50.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1688627Z  * [new tag]         v0.51.0                -> v0.51.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1688864Z  * [new tag]         v0.52.0                -> v0.52.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1689096Z  * [new tag]         v0.53.0                -> v0.53.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1689440Z  * [new tag]         v0.54.0                -> v0.54.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1689679Z  * [new tag]         v0.55.0                -> v0.55.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1689916Z  * [new tag]         v0.56.0                -> v0.56.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1690379Z  * [new tag]         v0.57.0                -> v0.57.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1823737Z [command]/usr/bin/git branch --list --remote origin/main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1847990Z   origin/main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1857119Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1880597Z 65060253f7913bbab84e3aed613363433560b83e
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1883775Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1884276Z ##[group]Determining the checkout info
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1884918Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1888620Z [command]/usr/bin/git sparse-checkout disable
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1922988Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1947358Z ##[group]Checking out the ref
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.1951474Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.2743373Z Reset branch 'main'
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.2743999Z branch 'main' set up to track 'origin/main'.
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.2754746Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.2796957Z [command]/usr/bin/git log -1 --format=%H
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.2824384Z 65060253f7913bbab84e3aed613363433560b83e
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3104050Z ##[group]Run actions/setup-node@v6
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3104281Z with:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3104446Z   node-version: 20
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3104622Z   cache: npm
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3104813Z   cache-dependency-path: js/package-lock.json
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3105051Z   check-latest: false
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3106969Z   token: ***
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3107149Z   package-manager-cache: true
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3107349Z env:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3107498Z   GIT_CONFIG_COUNT: 1
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3107696Z   GIT_CONFIG_KEY_0: init.defaultBranch
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3107909Z   GIT_CONFIG_VALUE_0: main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.3108096Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:31.4264559Z Attempting to download 20...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:32.4041090Z Acquiring 20.20.2 - x64 from https://github.com/actions/node-versions/releases/download/20.20.2-23521894959/node-20.20.2-linux-x64.tar.gz
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:32.8649122Z Extracting ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:32.8736269Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/59d3b314-24a8-4782-aa96-ec9b50c242fa -f /home/runner/work/_temp/d7e0a3ae-badd-4b87-a0bc-eb1e6383b873
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:33.7282925Z Adding to the cache ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.4406725Z ##[group]Environment details
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.6528124Z node: v20.20.2
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.6528434Z npm: 10.8.2
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.6528658Z yarn: 1.22.22
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.6529199Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.6541827Z [command]/opt/hostedtoolcache/node/20.20.2/x64/bin/npm config get cache
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.7375486Z /home/runner/.npm
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9390533Z npm cache is not found
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9535260Z ##[group]Run npm ci
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9535496Z ^[[36;1mnpm ci^[[0m
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9578088Z shell: /usr/bin/bash -e {0}
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9578299Z env:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9578464Z   GIT_CONFIG_COUNT: 1
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9578653Z   GIT_CONFIG_KEY_0: init.defaultBranch
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9578873Z   GIT_CONFIG_VALUE_0: main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:35.9579052Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5034799Z 
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5039197Z added 6 packages, and audited 7 packages in 489ms
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5042996Z 
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5043207Z found 0 vulnerabilities
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5117604Z ##[group]Run npm test
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5117816Z ^[[36;1mnpm test^[[0m
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5156289Z shell: /usr/bin/bash -e {0}
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5156510Z env:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5156675Z   GIT_CONFIG_COUNT: 1
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5156870Z   GIT_CONFIG_KEY_0: init.defaultBranch
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5157087Z   GIT_CONFIG_VALUE_0: main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.5157273Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.6096381Z 
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.6097265Z > meta-language@0.57.0 test
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.6097579Z > node --test tests/*.test.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.6097730Z 
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.6461345Z TAP version 13
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7001431Z # Subtest: parse configuration defaults to mutable access
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7030991Z ok 1 - parse configuration defaults to mutable access
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7031796Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7041589Z   duration_ms: 1.412278
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7042084Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7042665Z # Subtest: frozen view supports non-mutating operations
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7043509Z ok 2 - frozen view supports non-mutating operations
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7044079Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7044490Z   duration_ms: 1.289584
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7045284Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7045943Z # Subtest: frozen view rejects every mutation with ReadOnlyViolation
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7046835Z ok 3 - frozen view rejects every mutation with ReadOnlyViolation
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7047483Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7047926Z   duration_ms: 0.725502
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7048414Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7049002Z # Subtest: ReadOnlyViolation carries a clear diagnostic
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7049770Z ok 4 - ReadOnlyViolation carries a clear diagnostic
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7050572Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7051008Z   duration_ms: 0.304915
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7051471Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7052062Z # Subtest: frozen view can fork back to a mutable network
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7052874Z ok 5 - frozen view can fork back to a mutable network
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7053455Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7053951Z   duration_ms: 0.327098
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7054398Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7055015Z # Subtest: asReadOnly clones, leaving the source network mutable
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7055843Z ok 6 - asReadOnly clones, leaving the source network mutable
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7056440Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7056816Z   duration_ms: 0.283393
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7057218Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7057677Z # Subtest: read-only views compare structurally
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7058363Z ok 7 - read-only views compare structurally
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7058905Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7059333Z   duration_ms: 0.370423
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7059801Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7060718Z # Subtest: parseEngine returns read-only form under read-only mode
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7061592Z ok 8 - parseEngine returns read-only form under read-only mode
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7062203Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7062630Z   duration_ms: 0.453576
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7063072Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7063672Z # Subtest: parseEngine returns mutable form by default
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7064442Z ok 9 - parseEngine returns mutable form by default
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7065056Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7065515Z   duration_ms: 0.327869
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7066019Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7066625Z # Subtest: EngineNetwork round-trips between modes
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7067444Z ok 10 - EngineNetwork round-trips between modes
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7067990Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7068399Z   duration_ms: 0.310894
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7068825Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7069396Z # Subtest: EngineNetwork.network exposes read operations in both modes
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7071491Z ok 11 - EngineNetwork.network exposes read operations in both modes
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7072082Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7072433Z   duration_ms: 0.291264
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7072815Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7391692Z # Subtest: arbitrary file bytes round-trip without UTF-8 loss
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7392882Z ok 12 - arbitrary file bytes round-trip without UTF-8 loss
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7393935Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7394354Z   duration_ms: 2.692819
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7394760Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7395307Z # Subtest: files round-trip across binary storage chunk boundaries
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7396039Z ok 13 - files round-trip across binary storage chunk boundaries
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7396551Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7396880Z   duration_ms: 3.145585
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7397246Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7397662Z # Subtest: empty files retain their format
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7398472Z ok 14 - empty files retain their format
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7398899Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7399227Z   duration_ms: 0.25497
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7399573Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7400389Z # Subtest: lossless JavaScript parse reconstructs original text and indexes identifiers
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7401392Z ok 15 - lossless JavaScript parse reconstructs original text and indexes identifiers
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7401991Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7402315Z   duration_ms: 5.249805
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7402668Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7403331Z # Subtest: lossless source tokens expose the Rust-compatible Token link type alias
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7404217Z ok 16 - lossless source tokens expose the Rust-compatible Token link type alias
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7404792Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7405115Z   duration_ms: 0.256573
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7405467Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7406129Z # Subtest: S-expression query transform replaces captured identifier source ranges
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7407012Z ok 17 - S-expression query transform replaces captured identifier source ranges
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7407590Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7407915Z   duration_ms: 1.041174
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7408267Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7408862Z # Subtest: structural substitution updates relation references
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7409554Z ok 18 - structural substitution updates relation references
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7410165Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7410492Z   duration_ms: 0.498725
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7410851Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7411433Z # Subtest: link-cli substitution text covers create read update and delete
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7412276Z ok 19 - link-cli substitution text covers create read update and delete
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7412881Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7413210Z   duration_ms: 3.754783
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7413557Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7450955Z # Subtest: link-cli substitution classifies command kinds
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7480790Z ok 20 - link-cli substitution classifies command kinds
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7481367Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7481738Z   duration_ms: 0.871461
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7482110Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7482676Z # Subtest: LiNo serialization round-trips JavaScript network topology
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7497788Z ok 21 - LiNo serialization round-trips JavaScript network topology
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7498151Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7498334Z   duration_ms: 0.664151
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7498554Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7498827Z # Subtest: snapshots preserve immutable network versions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7499235Z ok 22 - snapshots preserve immutable network versions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7499522Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7499691Z   duration_ms: 0.403923
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7499872Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7500471Z # Subtest: translation rule sets reconstruct through semantic query templates
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7501201Z ok 23 - translation rule sets reconstruct through semantic query templates
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7501646Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7501873Z   duration_ms: 14.894538
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7502155Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7502570Z # Subtest: translation rule sets load Rust canonical LiNo metadata
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7503069Z ok 24 - translation rule sets load Rust canonical LiNo metadata
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7503325Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7503479Z   duration_ms: 2.320123
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7503649Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7503884Z # Subtest: verification reports parse recovery issues
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7504247Z ok 25 - verification reports parse recovery issues
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7506927Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7507454Z   duration_ms: 0.412776
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7507749Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7508300Z # Subtest: grammar builders emit Peggy grammar and JavaScript parser module text
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7509112Z ok 26 - grammar builders emit Peggy grammar and JavaScript parser module text
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7509608Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7509866Z   duration_ms: 0.438665
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7510530Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7511016Z # Subtest: semantic truth values cover many-valued and paradox cases
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7511943Z ok 27 - semantic truth values cover many-valued and paradox cases
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7512391Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7512638Z   duration_ms: 0.336472
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7512908Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7540996Z # Subtest: probabilistic truth values cover relative-meta-logic probability cases
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7556095Z ok 28 - probabilistic truth values cover relative-meta-logic probability cases
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7556719Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7556974Z   duration_ms: 0.416943
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7557241Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7691572Z # Subtest: shared GraphQL fixtures lower to canonical query plans
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7692507Z ok 29 - shared GraphQL fixtures lower to canonical query plans
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7693207Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7693695Z   duration_ms: 24.269387
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7694180Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7694881Z # Subtest: public query plan API canonicalizes additional frontend objects
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7695835Z ok 30 - public query plan API canonicalizes additional frontend objects
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7696501Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7696938Z   duration_ms: 0.365285
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7697389Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7698059Z # Subtest: GraphQL lowering fails closed for unmapped or ambiguous input
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7698971Z ok 31 - GraphQL lowering fails closed for unmapped or ambiguous input
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7699632Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7700221Z   duration_ms: 7.911106
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7700709Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7701309Z # Subtest: GraphQL source evidence uses UTF-8 byte offsets
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7702093Z ok 32 - GraphQL source evidence uses UTF-8 byte offsets
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7702669Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7703091Z   duration_ms: 1.774138
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7703532Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7834329Z # Subtest: language profiles are declared as queryable links
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7835174Z ok 33 - language profiles are declared as queryable links
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7835800Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7836224Z   duration_ms: 1.538853
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7836654Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7853591Z # Subtest: declareIn is idempotent and reuses existing profile/capability links
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7893208Z ok 34 - declareIn is idempotent and reuses existing profile/capability links
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7898584Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7899087Z   duration_ms: 0.210213
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7899557Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7900435Z # Subtest: declared profile root records language and name as definition
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7901388Z ok 35 - declared profile root records language and name as definition
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7902080Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7902536Z   duration_ms: 0.428996
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7902998Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7903658Z # Subtest: builtin resolves the javascript profile by name and alias
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7904552Z ok 36 - builtin resolves the javascript profile by name and alias
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7905202Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7905640Z   duration_ms: 0.161546
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7906093Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7906749Z # Subtest: validateNetwork accepts supported link types and concepts
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7907630Z ok 37 - validateNetwork accepts supported link types and concepts
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7908289Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7908724Z   duration_ms: 0.925651
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7909178Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7909847Z # Subtest: validateNetwork rejects an unsupported link type in id order
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7911357Z ok 38 - validateNetwork rejects an unsupported link type in id order
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7912015Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7912419Z   duration_ms: 0.386362
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7912821Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7913407Z # Subtest: profiles can be computed from translation rule set domains
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7914314Z ok 39 - profiles can be computed from translation rule set domains
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7914927Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7915351Z   duration_ms: 0.340361
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7916022Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7916629Z # Subtest: accessors expose deterministic sorted order
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7917358Z ok 40 - accessors expose deterministic sorted order
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7917920Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7918333Z   duration_ms: 0.856729
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7918765Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7919294Z # Subtest: builders return immutable copies
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7919928Z ok 41 - builders return immutable copies
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7920600Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7921067Z   duration_ms: 0.177903
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7921616Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7922336Z # Subtest: snake_case aliases mirror camelCase methods
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7923171Z ok 42 - snake_case aliases mirror camelCase methods
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7923808Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7924246Z   duration_ms: 0.295321
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.7924717Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8028895Z # Subtest: npm package metadata uses the public unscoped package name
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8031850Z ok 43 - npm package metadata uses the public unscoped package name
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8032501Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8032960Z   duration_ms: 8.094367
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8033386Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8063539Z # Subtest: JavaScript workflow publishes to npm with trusted publishing provenance
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8064705Z ok 44 - JavaScript workflow publishes to npm with trusted publishing provenance
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8065411Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8065859Z   duration_ms: 2.23166
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8070321Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8127393Z # Subtest: Rust release pipeline delegates npm publishing to the canonical JavaScript workflow
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8172211Z ok 45 - Rust release pipeline delegates npm publishing to the canonical JavaScript workflow
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8173144Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8179783Z   duration_ms: 7.627694
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8180525Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8721023Z # Subtest: JavaScript API operation registry mirrors Rust operation families and style cells
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8751374Z ok 46 - JavaScript API operation registry mirrors Rust operation families and style cells
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8752289Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8757057Z   duration_ms: 1.575684
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8763535Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8765371Z # Subtest: executable JavaScript API-style fixtures cover every applicable registry cell
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8766434Z ok 47 - executable JavaScript API-style fixtures cover every applicable registry cell
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8767115Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8767521Z   duration_ms: 22.822472
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8767955Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8768676Z # Subtest: issue-163 parity manifest keeps Rust and JavaScript feature rows in sync
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8769688Z ok 48 - issue-163 parity manifest keeps Rust and JavaScript feature rows in sync
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8770463Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8770853Z   duration_ms: 5.05226
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8771276Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8815422Z # Subtest: ast_grep_style rule algebra supports relations, booleans, and named refs
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8816530Z ok 49 - ast_grep_style rule algebra supports relations, booleans, and named refs
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8817252Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8817754Z   duration_ms: 3.651101
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8818315Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8819013Z # Subtest: semgrep/coccinelle ellipsis and typed metavariables match gaps
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8819968Z ok 50 - semgrep/coccinelle ellipsis and typed metavariables match gaps
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8820918Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8821354Z   duration_ms: 0.749743
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8821798Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8822791Z # Subtest: comby_style text pattern matches plain text fallback tokens
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8823649Z ok 51 - comby_style text pattern matches plain text fallback tokens
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8824229Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8824615Z   duration_ms: 2.664034
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8825031Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8825715Z # Subtest: Rust-compatible token link type selector matches parsed lossless tokens
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8827085Z ok 52 - Rust-compatible token link type selector matches parsed lossless tokens
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8827909Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8828291Z   duration_ms: 0.445542
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8828694Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8829325Z # Subtest: stratego/rascal traversal orders and fixpoint are available
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8830470Z ok 53 - stratego/rascal traversal orders and fixpoint are available
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8831056Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8831442Z   duration_ms: 1.344916
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8831849Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8832479Z # Subtest: ast_grep rule snapshot harness verifies valid and invalid cases
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8833333Z ok 54 - ast_grep rule snapshot harness verifies valid and invalid cases
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8833926Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8834310Z   duration_ms: 0.695112
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8834721Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8975079Z # Subtest: RegionDetectionPolicy exposes the Rust enum variants
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8977387Z ok 55 - RegionDetectionPolicy exposes the Rust enum variants
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8978128Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8978674Z   duration_ms: 3.489645
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8979208Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8983088Z # Subtest: EmbeddedRegion exposes language and span accessors
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8984458Z ok 56 - EmbeddedRegion exposes language and span accessors
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8985049Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8985475Z   duration_ms: 0.45795
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8985903Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8986547Z # Subtest: txt parse exposes whole buffer as a single region
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8987857Z ok 57 - txt parse exposes whole buffer as a single region
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8988454Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.8988954Z   duration_ms: 0.311978
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9018749Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9019518Z # Subtest: markdown name-driven detection captures fenced and HTML regions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9020541Z ok 58 - markdown name-driven detection captures fenced and HTML regions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9021095Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9021500Z   duration_ms: 1.255618
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9021974Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9024334Z # Subtest: content-driven markdown sniffs sql from fenced content
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9025180Z ok 59 - content-driven markdown sniffs sql from fenced content
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9025785Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9026182Z   duration_ms: 0.431512
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9026619Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9027295Z # Subtest: content-driven detection falls back to txt region with exact span
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9028222Z ok 60 - content-driven detection falls back to txt region with exact span
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9028872Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9029271Z   duration_ms: 0.325758
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9029798Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9030631Z # Subtest: content-driven markdown sniffs JavaScript from fenced content
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9031526Z ok 61 - content-driven markdown sniffs JavaScript from fenced content
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9032140Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9032531Z   duration_ms: 0.336442
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9032966Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9033587Z # Subtest: name-driven markdown keeps explicit language tag
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9034335Z ok 62 - name-driven markdown keeps explicit language tag
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9034897Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9035307Z   duration_ms: 0.524516
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9035739Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9092959Z # Subtest: name-driven policy drops fences without a language tag
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9093973Z ok 63 - name-driven policy drops fences without a language tag
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9094625Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9099496Z   duration_ms: 0.37188
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9100633Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9101387Z # Subtest: html detection covers script, style, and style attributes
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9102314Z ok 64 - html detection covers script, style, and style attributes
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9102930Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9103347Z   duration_ms: 0.89336
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9104044Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9104596Z # Subtest: html element detection is case insensitive
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9105493Z ok 65 - html element detection is case insensitive
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9106640Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9107281Z   duration_ms: 1.067965
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9107738Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9108385Z # Subtest: point rows and columns track newlines in fenced regions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9109208Z ok 66 - point rows and columns track newlines in fenced regions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9109786Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9110330Z   duration_ms: 0.263741
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9110913Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9111423Z # Subtest: unknown language yields no regions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9112165Z ok 67 - unknown language yields no regions
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9112822Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9113219Z   duration_ms: 0.187594
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9113766Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9114695Z # Subtest: sniffLanguage recognizes supported signatures
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9115432Z ok 68 - sniffLanguage recognizes supported signatures
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9115975Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9116372Z   duration_ms: 0.250181
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9116813Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9445145Z # Subtest: translation rules recursively render captured child links
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9446052Z ok 69 - translation rules recursively render captured child links
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9446535Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9446721Z   duration_ms: 2.167149
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9446968Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9474450Z # Subtest: different rules compose across sibling rendering roots
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9482558Z ok 70 - different rules compose across sibling rendering roots
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9483021Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9483334Z   duration_ms: 0.422441
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9483660Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9484137Z # Subtest: rendering without a target template preserves the source text
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9484811Z ok 71 - rendering without a target template preserves the source text
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9485238Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9485472Z   duration_ms: 0.212067
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9485730Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9489655Z # Subtest: variadic placeholders recursively render and join child references
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9497366Z ok 72 - variadic placeholders recursively render and join child references
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9497889Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9498157Z   duration_ms: 0.36287
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9498433Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9498983Z # Subtest: optional template segments and unresolved captures render as empty
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9499749Z ok 73 - optional template segments and unresolved captures render as empty
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9500379Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9500624Z   duration_ms: 0.34955
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9500909Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9501394Z # Subtest: placeholder contexts use declarative target-language fallbacks
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9502119Z ok 74 - placeholder contexts use declarative target-language fallbacks
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9502575Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9502820Z   duration_ms: 11.320611
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9503092Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9503610Z # Subtest: multi-line substitutions inherit the placeholder indentation
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9504344Z ok 75 - multi-line substitutions inherit the placeholder indentation
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9504824Z   ---
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9505069Z   duration_ms: 0.254642
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9505340Z   ...
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9559768Z 1..75
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9560111Z # tests 75
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9560418Z # suites 0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9560656Z # pass 75
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9560970Z # fail 0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9561201Z # cancelled 0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9561534Z # skipped 0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9561765Z # todo 0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9571109Z # duration_ms 321.534535
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9669814Z ##[group]Run npm run check:parity
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9670568Z ^[[36;1mnpm run check:parity^[[0m
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9709292Z shell: /usr/bin/bash -e {0}
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9709494Z env:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9709655Z   GIT_CONFIG_COUNT: 1
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9709854Z   GIT_CONFIG_KEY_0: init.defaultBranch
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9710248Z   GIT_CONFIG_VALUE_0: main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:36.9710435Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.0656550Z 
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.0657097Z > meta-language@0.57.0 check:parity
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.0657505Z > node scripts/check-js-rust-parity.mjs
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.0657669Z 
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1101404Z parity: checked 23 feature rows and 27 Rust public modules
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1199447Z ##[group]Run npm pack --dry-run
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1199708Z ^[[36;1mnpm pack --dry-run^[[0m
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1238506Z shell: /usr/bin/bash -e {0}
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1238708Z env:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1238864Z   GIT_CONFIG_COUNT: 1
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1239054Z   GIT_CONFIG_KEY_0: init.defaultBranch
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1239272Z   GIT_CONFIG_VALUE_0: main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.1239454Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4036410Z npm notice
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4038632Z npm notice 📦  meta-language@0.57.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4039032Z npm notice Tarball Contents
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4041087Z npm notice 2.8kB README.md
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4041410Z npm notice 987B package.json
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4041757Z npm notice 8.7kB src/access.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4042203Z npm notice 14.1kB src/api-style-fixtures.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4042604Z npm notice 3.4kB src/grammar.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4042992Z npm notice 26.6kB src/graphql-adapter.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4043453Z npm notice 23.7kB src/index.d.ts
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4043782Z npm notice 500B src/index.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4044158Z npm notice 11.6kB src/language-profile.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4044548Z npm notice 16.9kB src/network.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4044909Z npm notice 5.5kB src/primitives.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4045292Z npm notice 37.2kB src/query-algebra.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4045676Z npm notice 4.2kB src/query-plan.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4046007Z npm notice 2.7kB src/query.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4046349Z npm notice 9.3kB src/regions.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4046702Z npm notice 6.6kB src/semantics.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4047071Z npm notice 4.7kB src/substitution.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4047440Z npm notice 851B src/transform.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4047849Z npm notice 9.0kB src/translation-renderer.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4048290Z npm notice 15.8kB src/translation.js
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4048636Z npm notice Tarball Details
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4048986Z npm notice name: meta-language
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4049373Z npm notice version: 0.57.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4049630Z npm notice filename: meta-language-0.57.0.tgz
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4049905Z npm notice package size: 45.4 kB
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4050297Z npm notice unpacked size: 204.9 kB
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4050602Z npm notice shasum: e14b56ab45ba5cdbcb707c5e1b104daaea230133
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4050970Z npm notice integrity: sha512-lP6wfGsXE+ao2[...]l3tit+Sda4Nqw==
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4051248Z npm notice total files: 20
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4051437Z npm notice
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4051662Z meta-language-0.57.0.tgz
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4127911Z ##[group]Run npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4129205Z ^[[36;1mnpx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"^[[0m
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4168533Z shell: /usr/bin/bash -e {0}
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4168743Z env:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4168905Z   GIT_CONFIG_COUNT: 1
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4169101Z   GIT_CONFIG_KEY_0: init.defaultBranch
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4169321Z   GIT_CONFIG_VALUE_0: main
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:37.4169507Z ##[endgroup]
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:47.2864298Z Post job cleanup.
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:47.3940589Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/meta-language/meta-language --files-from manifest.txt --use-compress-program zstdmt
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.5226762Z Sent 8171457 of 8171457 (100.0%), 10.4 MBs/sec
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.7666729Z Cache saved with the key: node-cache-Linux-x64-npm-1b0e93e70a6b57187000dc03ee7bd6471f387032ca9dfbb5dd2858675634d99d
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.7780380Z Post job cleanup.
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8466657Z [command]/usr/bin/git version
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8502061Z git version 2.54.0
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8531620Z Temporarily overriding HOME='/home/runner/work/_temp/21410bd7-f9da-4334-b132-8664ff28285f' before making global git config changes
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8532789Z Adding repository directory to the temporary git global config as a safe directory
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8535829Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/meta-language/meta-language
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8594338Z Removing SSH command configuration
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8599940Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8641713Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8848160Z Removing HTTP extra header
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8853899Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.8884352Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9090819Z Removing includeIf entries pointing to credentials config files
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9097677Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9122430Z includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9123412Z includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9124334Z includeif.gitdir:/github/workspace/.git.path
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9125033Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9130842Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9152606Z /home/runner/work/_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9163403Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path /home/runner/work/_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9206256Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9229166Z /home/runner/work/_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9239642Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9271909Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9294144Z /github/runner_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9301884Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9331833Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9352296Z /github/runner_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9359399Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9391446Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9587300Z Removing credentials config '/home/runner/work/_temp/git-credentials-9ec71aae-76a0-46fe-9ef0-f94baada6467.config'
+JavaScript Package	UNKNOWN STEP	2026-08-02T05:02:48.9711592Z Cleaning up orphan processes
+Publish npm Package	UNKNOWN STEP	﻿2026-08-02T05:05:27.6886661Z Current runner version: '2.336.0'
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6906540Z ##[group]Runner Image Provisioner
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6907347Z Hosted Compute Agent
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6908544Z Version: 20260707.563
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6909249Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6910043Z Build Date: 2026-07-07T19:33:50Z
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6910769Z Worker ID: {12ba237d-a33d-49bf-a106-32ba35607897}
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6911734Z Azure Region: centralus
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6912485Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6913850Z ##[group]Operating System
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6914627Z Ubuntu
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6915431Z 24.04.4
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6916129Z LTS
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6916727Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6917294Z ##[group]Runner Image
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6917938Z Image: ubuntu-24.04
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6918446Z Version: 20260720.247.2
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6919503Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6920764Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6922304Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6923366Z ##[group]GITHUB_TOKEN Permissions
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6925764Z Contents: read
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6926252Z Metadata: read
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6926701Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6928497Z Secret source: Actions
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.6929722Z Prepare workflow directory
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.7206996Z Prepare all required actions
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.7242586Z Getting action download info
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:27.9285904Z Download action repository 'actions/checkout@v6' (SHA:d23441a48e516b6c34aea4fa41551a30e30af803)
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:28.3356592Z Download action repository 'actions/setup-node@v6' (SHA:249970729cb0ef3589644e2896645e5dc5ba9c38)
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0032270Z Complete job name: Publish npm Package
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0563342Z ##[group]Run actions/checkout@v6
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0564092Z with:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0564547Z   repository: link-foundation/meta-language
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0568113Z   token: ***
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0568536Z   ssh-strict: true
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0568944Z   ssh-user: git
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0569383Z   persist-credentials: true
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0569845Z   clean: true
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0570245Z   sparse-checkout-cone-mode: true
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0570739Z   fetch-depth: 1
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0571135Z   fetch-tags: false
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0571535Z   show-progress: true
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0571970Z   lfs: false
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0572366Z   submodules: false
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0572793Z   set-safe-directory: true
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0573304Z   allow-unsafe-pr-checkout: false
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0573915Z env:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0574334Z   GIT_CONFIG_COUNT: 1
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0574776Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0575602Z   GIT_CONFIG_VALUE_0: main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.0576040Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1375491Z Syncing repository: link-foundation/meta-language
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1377788Z ##[group]Getting Git version info
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1378690Z Working directory is '/home/runner/work/meta-language/meta-language'
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1379884Z [command]/usr/bin/git version
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1501801Z git version 2.54.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1534515Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1541078Z Temporarily overriding HOME='/home/runner/work/_temp/d8a9a947-787c-4850-83a5-940a9d14a163' before making global git config changes
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1542781Z Adding repository directory to the temporary git global config as a safe directory
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1544314Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/meta-language/meta-language
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1559782Z Deleting the contents of '/home/runner/work/meta-language/meta-language'
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1563201Z ##[group]Determining repository object format
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1565500Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1567050Z ##[group]Initializing the repository
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.1568657Z [command]/usr/bin/git init /home/runner/work/meta-language/meta-language
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.3956828Z Initialized empty Git repository in /home/runner/work/meta-language/meta-language/.git/
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.3965278Z [command]/usr/bin/git remote add origin https://github.com/link-foundation/meta-language
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.3998698Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.3999537Z ##[group]Disabling automatic garbage collection
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4002479Z [command]/usr/bin/git config --local gc.auto 0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4026576Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4027855Z ##[group]Setting up auth
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4028725Z Removing SSH command configuration
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4032654Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4057504Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4817212Z Removing HTTP extra header
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4823345Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4850763Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.4996180Z Removing includeIf entries pointing to credentials config files
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5001651Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5025311Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5179171Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5208385Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/meta-language/meta-language/.git.path /home/runner/work/_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5232298Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5257364Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5290758Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5310738Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5311600Z ##[group]Fetching the repository
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:29.5319197Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +65060253f7913bbab84e3aed613363433560b83e:refs/remotes/origin/main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.3986720Z From https://github.com/link-foundation/meta-language
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.3989173Z  * [new ref]         65060253f7913bbab84e3aed613363433560b83e -> origin/main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4009765Z [command]/usr/bin/git branch --list --remote origin/main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4027849Z   origin/main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4034982Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4054097Z 65060253f7913bbab84e3aed613363433560b83e
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4058656Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4060398Z ##[group]Determining the checkout info
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4062408Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4063593Z [command]/usr/bin/git sparse-checkout disable
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4092058Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4113413Z ##[group]Checking out the ref
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4116814Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4611408Z Reset branch 'main'
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4613207Z branch 'main' set up to track 'origin/main'.
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4618549Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4644617Z [command]/usr/bin/git log -1 --format=%H
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4662941Z 65060253f7913bbab84e3aed613363433560b83e
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4928796Z ##[group]Run actions/setup-node@v6
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4929620Z with:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4930183Z   node-version: 24
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4930927Z   registry-url: https://registry.npmjs.org
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4931788Z   check-latest: false
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4938804Z   token: ***
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4939618Z   package-manager-cache: true
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4940340Z env:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4940906Z   GIT_CONFIG_COUNT: 1
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4941654Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4942482Z   GIT_CONFIG_VALUE_0: main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.4943177Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.7302362Z Found in cache @ /opt/hostedtoolcache/node/24.18.0/x64
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:30.7308117Z ##[group]Environment details
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3766338Z node: v24.18.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3767021Z npm: 11.16.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3767360Z yarn: 1.22.22
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3768555Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3863804Z ##[group]Run npm install -g npm@11
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3864227Z ^[[36;1mnpm install -g npm@11^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3864509Z ^[[36;1mnpm --version^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3900610Z shell: /usr/bin/bash -e {0}
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3901008Z env:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3901229Z   GIT_CONFIG_COUNT: 1
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3901498Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3901798Z   GIT_CONFIG_VALUE_0: main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3902094Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3902429Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:31.3902705Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.8189450Z 
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.8197339Z changed 21 packages in 4s
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.8197773Z 
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.8198108Z 15 packages are looking for funding
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.8198811Z   run `npm fund` for details
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.8948147Z 11.19.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9007246Z ##[group]Run name="$(node -p "require('./package.json').name")"
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9007695Z ^[[36;1mname="$(node -p "require('./package.json').name")"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9008061Z ^[[36;1mversion="$(node -p "require('./package.json').version")"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9008337Z ^[[36;1m^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9008569Z ^[[36;1mif [ "$name" != "meta-language" ]; then^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9008897Z ^[[36;1m  echo "::error::Expected package name meta-language, got $name"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9009231Z ^[[36;1m  exit 1^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9009450Z ^[[36;1mfi^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9009635Z ^[[36;1m^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9009993Z ^[[36;1mecho "name=$name" >> "$GITHUB_OUTPUT"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9010304Z ^[[36;1mecho "version=$version" >> "$GITHUB_OUTPUT"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9010573Z ^[[36;1mecho "Package: $name@$version"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9033975Z shell: /usr/bin/bash -e {0}
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9034228Z env:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9034488Z   GIT_CONFIG_COUNT: 1
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9034795Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9035233Z   GIT_CONFIG_VALUE_0: main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9035531Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9035822Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9036100Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9512994Z Package: meta-language@0.57.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9560083Z ##[group]Run if [ -n "$RELEASE_TAG" ]; then
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9560413Z ^[[36;1mif [ -n "$RELEASE_TAG" ]; then^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9560717Z ^[[36;1m  normalized_tag="${RELEASE_TAG#v}"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9561015Z ^[[36;1m  if [ "$normalized_tag" != "$PACKAGE_VERSION" ]; then^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9561435Z ^[[36;1m    echo "::error::Release tag $RELEASE_TAG does not match js/package.json version $PACKAGE_VERSION"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9561804Z ^[[36;1m    exit 1^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9562112Z ^[[36;1m  fi^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9562333Z ^[[36;1mfi^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9562523Z ^[[36;1m^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9562806Z ^[[36;1mif [ -n "$REQUESTED_VERSION" ] && [ "$REQUESTED_VERSION" != "$PACKAGE_VERSION" ]; then^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9563320Z ^[[36;1m  echo "::error::Requested version $REQUESTED_VERSION does not match js/package.json version $PACKAGE_VERSION"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9563712Z ^[[36;1m  exit 1^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9563911Z ^[[36;1mfi^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9586893Z shell: /usr/bin/bash -e {0}
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9587183Z env:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9587378Z   GIT_CONFIG_COUNT: 1
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9587636Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9587887Z   GIT_CONFIG_VALUE_0: main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9588149Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9588475Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9588743Z   PACKAGE_VERSION: 0.57.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9588986Z   RELEASE_TAG: 
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9589198Z   REQUESTED_VERSION: 0.57.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9589404Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9648078Z ##[group]Run if npm view "meta-language@$PACKAGE_VERSION" version >/dev/null 2>&1; then
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9648571Z ^[[36;1mif npm view "meta-language@$PACKAGE_VERSION" version >/dev/null 2>&1; then^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9648949Z ^[[36;1m  echo "already_published=true" >> "$GITHUB_OUTPUT"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9649235Z ^[[36;1melse^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9649512Z ^[[36;1m  echo "already_published=false" >> "$GITHUB_OUTPUT"^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9649799Z ^[[36;1mfi^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9667904Z shell: /usr/bin/bash -e {0}
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9668190Z env:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9668445Z   GIT_CONFIG_COUNT: 1
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9668694Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9668977Z   GIT_CONFIG_VALUE_0: main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9669254Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9669547Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9669877Z   PACKAGE_VERSION: 0.57.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:35.9670177Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3000606Z ##[group]Run npm publish --provenance
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3000922Z ^[[36;1mnpm publish --provenance^[[0m
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3023530Z shell: /usr/bin/bash -e {0}
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3023809Z env:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3024074Z   GIT_CONFIG_COUNT: 1
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3024318Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3024581Z   GIT_CONFIG_VALUE_0: main
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3024863Z   NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3025869Z   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.3026145Z ##[endgroup]
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5214577Z npm notice
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5217556Z npm notice 📦  meta-language@0.57.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5218077Z npm notice Tarball Contents
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5221673Z npm notice 2.8kB README.md
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5222282Z npm notice 987B package.json
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5222642Z npm notice 8.7kB src/access.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5223096Z npm notice 14.1kB src/api-style-fixtures.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5223676Z npm notice 3.4kB src/grammar.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5224022Z npm notice 26.6kB src/graphql-adapter.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5224448Z npm notice 23.7kB src/index.d.ts
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5224772Z npm notice 500B src/index.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5225226Z npm notice 11.6kB src/language-profile.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5225650Z npm notice 16.9kB src/network.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5225996Z npm notice 5.5kB src/primitives.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5226381Z npm notice 37.2kB src/query-algebra.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5226749Z npm notice 4.2kB src/query-plan.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5227144Z npm notice 2.7kB src/query.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5227424Z npm notice 9.3kB src/regions.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5227698Z npm notice 6.6kB src/semantics.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5227988Z npm notice 4.7kB src/substitution.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5228273Z npm notice 851B src/transform.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5228601Z npm notice 9.0kB src/translation-renderer.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5229138Z npm notice 15.8kB src/translation.js
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5229405Z npm notice Tarball Details
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5229691Z npm notice name: meta-language
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5229963Z npm notice version: 0.57.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5230276Z npm notice filename: meta-language-0.57.0.tgz
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5230599Z npm notice package size: 45.4 kB
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5230913Z npm notice unpacked size: 204.9 kB
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5231325Z npm notice shasum: e14b56ab45ba5cdbcb707c5e1b104daaea230133
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5231739Z npm notice integrity: sha512-lP6wfGsXE+ao2[...]l3tit+Sda4Nqw==
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5232074Z npm notice total files: 20
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:36.5232319Z npm notice
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:37.2912286Z npm notice npm tokens that bypass 2FA are being restricted for account changes and direct publishing. Learn how to prepare: https://gh.io/npm-gat-bypass2fa-deprecation
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:37.4290220Z npm notice Publishing to https://registry.npmjs.org/ with tag latest and public access
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.8398127Z npm notice publish Signed provenance statement with source and build information from GitHub Actions
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.8398922Z npm notice publish Provenance statement published to transparency log: https://search.sigstore.dev/?logIndex=2318887034
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9740263Z npm error code E404
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9740902Z npm error 404 Not Found - PUT https://registry.npmjs.org/meta-language - Not found
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9742088Z npm error 404
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9743613Z npm error 404  The requested resource 'meta-language@0.57.0' could not be found or you do not have permission to access it.
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9744255Z npm error 404
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9744826Z npm error 404 Note that you can also install from a
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9746267Z npm error 404 tarball, folder, http url, or git url.
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9756542Z npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2026-08-02T05_05_36_341Z-debug-0.log
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9831457Z ##[error]Process completed with exit code 1.
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:38.9945436Z Post job cleanup.
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0608556Z [command]/usr/bin/git version
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0636908Z git version 2.54.0
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0665762Z Temporarily overriding HOME='/home/runner/work/_temp/9eff3a59-f690-489f-af96-8e419475999f' before making global git config changes
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0666913Z Adding repository directory to the temporary git global config as a safe directory
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0670271Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/meta-language/meta-language
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0697009Z Removing SSH command configuration
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0702727Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0731283Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0916470Z Removing HTTP extra header
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0917093Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.0936505Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1092691Z Removing includeIf entries pointing to credentials config files
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1098874Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1116261Z includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1116939Z includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1117527Z includeif.gitdir:/github/workspace/.git.path
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1118011Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1129840Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1145638Z /home/runner/work/_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1156090Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/meta-language/meta-language/.git.path /home/runner/work/_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1183774Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1200212Z /home/runner/work/_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1208275Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/meta-language/meta-language/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1236037Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1258485Z /github/runner_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1267990Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1293094Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1309857Z /github/runner_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1320577Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1351476Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1492423Z Removing credentials config '/home/runner/work/_temp/git-credentials-09a46e35-55bd-4b2b-8c73-0f647fb05843.config'
+Publish npm Package	UNKNOWN STEP	2026-08-02T05:05:39.1600323Z Cleaning up orphan processes
