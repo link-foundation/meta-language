@@ -9,8 +9,9 @@ This guide covers common CI/CD issues and their solutions for Rust projects usin
 3. [Crates.io Publishing Fails](#cratesio-publishing-fails)
 4. [Crate Package Too Large (HTTP 413)](#crate-package-too-large-http-413)
 5. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
-6. [Secret Configuration Issues](#secret-configuration-issues)
-7. [Multi-Language Repository Issues](#multi-language-repository-issues)
+6. [npm Publishing Fails with E404 or ENEEDAUTH](#npm-publishing-fails-with-e404-or-eneedauth)
+7. [Secret Configuration Issues](#secret-configuration-issues)
+8. [Multi-Language Repository Issues](#multi-language-repository-issues)
 
 ---
 
@@ -213,6 +214,91 @@ curl -fsSL "https://hub.docker.com/v2/repositories/NAMESPACE/REPOSITORY/tags/VER
 
 ---
 
+## npm Publishing Fails with E404 or ENEEDAUTH
+
+### Symptom
+
+The `Publish npm Package` job of `.github/workflows/js.yml` fails with either:
+
+```
+npm error code E404
+npm error 404 Not Found - PUT https://registry.npmjs.org/meta-language
+```
+
+or, on older configurations:
+
+```
+npm error code ENEEDAUTH
+```
+
+The `E404` is misleading: the package exists on the registry and the version is new.
+npm returns 404 rather than 403 for writes it considers unauthenticated.
+
+### Root Cause
+
+`actions/setup-node` with `registry-url` unconditionally writes
+
+```
+//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+```
+
+into `$NPM_CONFIG_USERCONFIG` and exports the placeholder
+`NODE_AUTH_TOKEN=XXXXX-XXXXX-XXXXX-XXXXX` when the workflow supplies no token.
+npm then treats itself as already authenticated, **skips the OIDC token exchange**
+required by trusted publishing, and the registry rejects the anonymous upload.
+With an *empty* token the same line produces `ENEEDAUTH` instead.
+
+See [actions/setup-node#1440](https://github.com/actions/setup-node/issues/1440)
+and [#1551](https://github.com/actions/setup-node/issues/1551). The upstream fix
+([PR #1558](https://github.com/actions/setup-node/pull/1558)) removed the
+placeholder, but it shipped only on the **v7** line — `@v6` still exports it.
+
+### How This Repository Prevents It
+
+The publish job runs `js/scripts/prepare-npm-auth.mjs` between `setup-node` and
+`npm publish`. The script:
+
+1. resolves the auth mode — `token` (a real `NPM_TOKEN`/`NODE_AUTH_TOKEN`),
+   `oidc` (`ACTIONS_ID_TOKEN_REQUEST_URL` + `ACTIONS_ID_TOKEN_REQUEST_TOKEN`),
+   or `none`;
+2. strips the placeholder `_authToken` line unless a real token is in play, so the
+   OIDC handshake actually happens, and always strips the deprecated `always-auth`
+   key that npm 11 warns about;
+3. **exits non-zero with remediation instructions** when the mode is `none`, so a
+   missing credential fails loudly instead of surfacing as a bare `E404`.
+
+### Solution
+
+If the job reports auth mode `oidc` and the publish still fails, the trusted
+publisher is not configured. On npmjs.com open the package settings and add a
+trusted publisher for repository `link-foundation/meta-language` with workflow file
+`.github/workflows/js.yml` — the filename must match exactly. Keep
+`permissions: id-token: write` on the publish job and npm >= 11.5.1.
+
+As a bootstrap, before trusted publishing is configured, add an `NPM_TOKEN`
+repository secret; the workflow passes it as `NODE_AUTH_TOKEN` and the script keeps
+the credential line in place. The secret can be removed afterwards.
+
+### Debugging
+
+Verbose credential tracing is off by default. Enable it by setting the repository
+variable `NPM_AUTH_DEBUG` to `1` (or by running the script with `--verbose`):
+
+```bash
+NPM_AUTH_DEBUG=1 node js/scripts/prepare-npm-auth.mjs
+```
+
+It prints the resolved auth mode, the npm user config path, and the *key names* in
+that file. Values are never printed, so a real token cannot leak into the log.
+
+### Reference
+
+- [npm trusted publishers](https://docs.npmjs.com/trusted-publishers)
+- [Issue #191](https://github.com/link-foundation/meta-language/issues/191) and its
+  evidence folder `dev/log/issues/191/pulls/192/`
+
+---
+
 ## Secret Configuration Issues
 
 ### Required Secrets
@@ -222,6 +308,7 @@ curl -fsSL "https://hub.docker.com/v2/repositories/NAMESPACE/REPOSITORY/tags/VER
 | `CARGO_REGISTRY_TOKEN` or `CARGO_TOKEN` | Publish to crates.io | https://crates.io/settings/tokens |
 | `DOCKERHUB_TOKEN` | Publish to Docker Hub when `DOCKERHUB_IMAGE` is configured | https://app.docker.com/settings/personal-access-tokens |
 | `GITHUB_TOKEN` | Create GitHub releases | Automatic (provided by GitHub) |
+| `NPM_TOKEN` | Optional bootstrap for npm publishing until a trusted publisher is configured | https://www.npmjs.com/settings/~/tokens |
 
 ### Organization vs Repository Secrets
 
