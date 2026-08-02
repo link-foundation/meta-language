@@ -83,6 +83,127 @@ export class ProbabilisticTruthValue {
   toJSON(): { trueProbability: number };
 }
 
+export const QUERY_PLAN_VERSION: 1;
+export const QueryOperation: {
+  Select: 'select';
+  Insert: 'insert';
+  Update: 'update';
+  Delete: 'delete';
+};
+export type QueryOperationValue = typeof QueryOperation[keyof typeof QueryOperation];
+
+export const QueryComparisonOperator: {
+  Equal: 'eq';
+  NotEqual: 'neq';
+  LessThan: 'lt';
+  LessThanOrEqual: 'lte';
+  GreaterThan: 'gt';
+  GreaterThanOrEqual: 'gte';
+  In: 'in';
+  NotIn: 'not-in';
+  Like: 'like';
+  IsNull: 'is-null';
+};
+export type QueryComparisonOperatorValue =
+  typeof QueryComparisonOperator[keyof typeof QueryComparisonOperator];
+export const QuerySortDirection: { Ascending: 'asc'; Descending: 'desc' };
+export type QuerySortDirectionValue =
+  typeof QuerySortDirection[keyof typeof QuerySortDirection];
+export const QueryAggregateFunction: {
+  Count: 'count';
+  Sum: 'sum';
+  Average: 'avg';
+  Minimum: 'min';
+  Maximum: 'max';
+  PopulationVariance: 'variance-population';
+  PopulationStandardDeviation: 'stddev-population';
+};
+export type QueryAggregateFunctionValue =
+  typeof QueryAggregateFunction[keyof typeof QueryAggregateFunction];
+
+export type QueryValue = null | boolean | number | string | QueryValue[] | {
+  [field: string]: QueryValue;
+};
+export type QueryFilter =
+  | { compare: { field: string; operator: QueryComparisonOperatorValue; value: QueryValue } }
+  | { and: QueryFilter[] }
+  | { or: QueryFilter[] }
+  | { not: QueryFilter };
+
+export class QuerySourceEvidence {
+  constructor(role: string, span: SourceSpan);
+  role(): string;
+  span(): SourceSpan;
+}
+
+export class QueryPlan {
+  constructor(operation: QueryOperationValue, resource: string);
+  operation: QueryOperationValue;
+  resource: string;
+  projection: string[];
+  filter: QueryFilter | null;
+  order: Array<{ field: string; direction: QuerySortDirectionValue }>;
+  limit: number | null;
+  offset: number | null;
+  groupBy: string[];
+  aggregates: Array<{
+    function: QueryAggregateFunctionValue;
+    field: string | null;
+    alias: string | null;
+  }>;
+  mutation: Record<string, QueryValue>;
+  sourceEvidence(): QuerySourceEvidence[];
+  toCanonicalObject(): object;
+  canonicalJson(): string;
+}
+
+export const GraphQlOperationType: { Query: 'query'; Mutation: 'mutation' };
+export type GraphQlOperationTypeValue =
+  typeof GraphQlOperationType[keyof typeof GraphQlOperationType];
+export const GraphQlArgumentRole: {
+  Filter: 'filter';
+  Order: 'order';
+  Limit: 'limit';
+  Offset: 'offset';
+  Group: 'group';
+  MutationInput: 'mutation-input';
+};
+export type GraphQlArgumentRoleValue =
+  typeof GraphQlArgumentRole[keyof typeof GraphQlArgumentRole];
+
+export class GraphQlAdapterError extends Error {}
+
+export class GraphQlRootMapping {
+  constructor(
+    sourceOperation: GraphQlOperationTypeValue,
+    sourceField: string,
+    operation: QueryOperationValue,
+    resource: string,
+  );
+  withArgument(sourceName: string, role: GraphQlArgumentRoleValue): GraphQlRootMapping;
+  withField(sourceName: string, canonicalField: string): GraphQlRootMapping;
+  withAggregate(
+    sourceName: string,
+    aggregate: QueryAggregateFunctionValue,
+  ): GraphQlRootMapping;
+}
+
+export class GraphQlSchemaRegistry {
+  constructor();
+  registerRoot(mapping: GraphQlRootMapping): GraphQlSchemaRegistry;
+  static fromJson(value: unknown): GraphQlSchemaRegistry;
+}
+
+export class LoweredQueryPlan {
+  plan(): QueryPlan;
+  network(): LinkNetwork;
+  rootLink(): LinkId;
+}
+
+export function lowerGraphQl(source: string, registry: GraphQlSchemaRegistry): LoweredQueryPlan;
+export const lowerGraphQL: typeof lowerGraphQl;
+export const lowerGraphql: typeof lowerGraphQl;
+
 export class LinkId {
   constructor(value: number | string | LinkId);
   static from(value: number | string | LinkId): LinkId;
@@ -91,14 +212,36 @@ export class LinkId {
   equals(other: number | string | LinkId): boolean;
 }
 
+export class ByteRange {
+  constructor(start?: number, end?: number);
+  start: number;
+  end: number;
+  contains(other: ByteRange): boolean;
+}
+
+export class Point {
+  constructor(row?: number, column?: number);
+  row: number;
+  column: number;
+}
+
+export class SourceSpan {
+  constructor(byteRange?: ByteRange, start?: Point, end?: Point);
+  byteRange: ByteRange;
+  start: Point;
+  end: Point;
+}
+
 export class LinkMetadata {
   static new(): LinkMetadata;
   definition?: string;
+  span?: SourceSpan;
   withLinkType(linkType: LinkTypeValue): LinkMetadata;
   withTerm(term: string): LinkMetadata;
   withLanguage(language: string): LinkMetadata;
   withNamed(named?: boolean): LinkMetadata;
   withDefinition(definition?: string): LinkMetadata;
+  withSpan(span: SourceSpan): LinkMetadata;
 }
 
 export class LinkNetwork {

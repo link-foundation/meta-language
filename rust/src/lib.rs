@@ -9,6 +9,7 @@ pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
 pub mod grammar;
+pub mod graphql_adapter;
 mod incremental;
 mod language_fixtures;
 pub mod language_parser;
@@ -26,6 +27,7 @@ pub mod parser_registry;
 mod pdf_parser;
 pub mod query;
 pub mod query_algebra;
+pub mod query_plan;
 mod reconstruction;
 pub mod rust_codec;
 pub mod semantics;
@@ -89,6 +91,10 @@ pub use grammar::{
 };
 #[cfg(feature = "llm-assist")]
 pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
+pub use graphql_adapter::{
+    lower_graphql, GraphQlAdapterError, GraphQlArgumentRole, GraphQlOperationType,
+    GraphQlRootMapping, GraphQlSchemaRegistry, LoweredQueryPlan,
+};
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
 pub use link_flags::LinkFlags;
@@ -114,6 +120,10 @@ pub use query_algebra::{
     LinkRule, LinkRuleCapture, LinkRuleCaptures, LinkRuleMatch, LinkRuleParseError,
     LinkRuleRegistry, LinkRuleSnapshotCase, LinkRuleSnapshotExpectation, LinkRuleSnapshotReport,
     LinkRuleSnapshotResult, LinkRuleSnapshotSuite, TraversalReport, TraversalStrategy,
+};
+pub use query_plan::{
+    QueryAggregate, QueryAggregateFunction, QueryComparisonOperator, QueryFilter, QueryOperation,
+    QueryOrder, QueryPlan, QuerySortDirection, QuerySourceEvidence, QueryValue, QUERY_PLAN_VERSION,
 };
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
