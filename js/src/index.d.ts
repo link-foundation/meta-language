@@ -92,6 +92,23 @@ export const QueryOperation: {
 };
 export type QueryOperationValue = typeof QueryOperation[keyof typeof QueryOperation];
 
+export const QueryAuthorization: { readonly Required: 'Required' };
+export const SqlAdapterErrorKind: {
+  UnsupportedLanguage: 'UnsupportedLanguage';
+  InvalidConcreteSyntax: 'InvalidConcreteSyntax';
+  Syntax: 'Syntax';
+  Semantic: 'Semantic';
+  Registry: 'Registry';
+};
+export type SqlAdapterErrorKindValue =
+  typeof SqlAdapterErrorKind[keyof typeof SqlAdapterErrorKind];
+
+export class SqlAdapterError extends Error {
+  constructor(kind: SqlAdapterErrorKindValue, message: string, offset?: number);
+  kind: SqlAdapterErrorKindValue;
+  offset?: number;
+}
+
 export const QueryComparisonOperator: {
   Equal: 'eq';
   NotEqual: 'neq';
@@ -153,6 +170,7 @@ export class QueryPlan {
   }>;
   mutation: Record<string, QueryValue>;
   sourceEvidence(): QuerySourceEvidence[];
+  authorization(): 'Required';
   toCanonicalObject(): object;
   canonicalJson(): string;
 }
@@ -203,6 +221,35 @@ export class LoweredQueryPlan {
 export function lowerGraphQl(source: string, registry: GraphQlSchemaRegistry): LoweredQueryPlan;
 export const lowerGraphQL: typeof lowerGraphQl;
 export const lowerGraphql: typeof lowerGraphQl;
+
+export interface SqlDialectProfile {
+  readonly key: string;
+  readonly vendor: string;
+}
+
+export const SQL_DIALECT_PROFILES: readonly SqlDialectProfile[];
+
+export class SqlRelationMapping {
+  constructor(sourceRelation: string, resource: string);
+  sourceRelation: string;
+  resource: string;
+  fields: Map<string, string>;
+  withField(sourceName: string, canonicalField: string): SqlRelationMapping;
+}
+
+export class SqlSchemaRegistry {
+  constructor();
+  registerRelation(mapping: SqlRelationMapping): SqlSchemaRegistry;
+  static fromJson(value: unknown): SqlSchemaRegistry;
+}
+
+export function lowerSql(
+  source: string,
+  language: string,
+  registry: SqlSchemaRegistry,
+): LoweredQueryPlan;
+export const lowerSQL: typeof lowerSql;
+export const lower_sql: typeof lowerSql;
 
 export class LinkId {
   constructor(value: number | string | LinkId);

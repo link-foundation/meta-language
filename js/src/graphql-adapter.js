@@ -7,6 +7,7 @@ import {
 } from './primitives.js';
 import { LinkNetwork } from './network.js';
 import {
+  LoweredQueryPlan,
   QueryAggregateFunction,
   QueryComparisonOperator,
   QueryOperation,
@@ -154,26 +155,6 @@ export class GraphQlSchemaRegistry {
       registry.registerRoot(mapping);
     }
     return registry;
-  }
-}
-
-export class LoweredQueryPlan {
-  constructor(plan, network, rootLink) {
-    this._plan = plan;
-    this._network = network;
-    this._rootLink = rootLink;
-  }
-
-  plan() {
-    return this._plan;
-  }
-
-  network() {
-    return this._network;
-  }
-
-  rootLink() {
-    return this._rootLink;
   }
 }
 

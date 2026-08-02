@@ -6,10 +6,11 @@ mod registry;
 use std::collections::BTreeMap;
 
 use crate::configuration::ParseConfiguration;
-use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
+use crate::link_network::LinkNetwork;
 use crate::query_plan::{
-    QueryAggregate, QueryAggregateFunction, QueryComparisonOperator, QueryFilter, QueryOperation,
-    QueryOrder, QueryPlan, QuerySortDirection, QuerySourceEvidence, QueryValue,
+    attach_plan_links, LoweredQueryPlan, QueryAggregate, QueryAggregateFunction,
+    QueryComparisonOperator, QueryFilter, QueryOperation, QueryOrder, QueryPlan,
+    QuerySortDirection, QuerySourceEvidence, QueryValue,
 };
 use crate::source::{ByteRange, Point, SourceSpan};
 
@@ -18,40 +19,6 @@ pub use registry::{
     GraphQlAdapterError, GraphQlArgumentRole, GraphQlOperationType, GraphQlRootMapping,
     GraphQlSchemaRegistry,
 };
-
-/// Query plan and its provenance-connected links network.
-#[derive(Clone, Debug, PartialEq)]
-pub struct LoweredQueryPlan {
-    plan: QueryPlan,
-    network: LinkNetwork,
-    root_link: LinkId,
-}
-
-impl LoweredQueryPlan {
-    /// Canonical executable plan.
-    #[must_use]
-    pub const fn plan(&self) -> &QueryPlan {
-        &self.plan
-    }
-
-    /// Original GraphQL CST plus attached semantic plan links.
-    #[must_use]
-    pub const fn network(&self) -> &LinkNetwork {
-        &self.network
-    }
-
-    /// Root semantic link for the canonical plan.
-    #[must_use]
-    pub const fn root_link(&self) -> LinkId {
-        self.root_link
-    }
-
-    /// Splits the result into its public components.
-    #[must_use]
-    pub fn into_parts(self) -> (QueryPlan, LinkNetwork, LinkId) {
-        (self.plan, self.network, self.root_link)
-    }
-}
 
 /// Validates and lowers exactly one GraphQL operation/root field.
 pub fn lower_graphql(
@@ -82,12 +49,8 @@ pub fn lower_graphql(
     lower_arguments(source, root, mapping, &mut plan)?;
     lower_selection(source, root, mapping, &mut plan)?;
     validate_plan(&plan)?;
-    let root_link = attach_plan_links(&mut network, &plan);
-    Ok(LoweredQueryPlan {
-        plan,
-        network,
-        root_link,
-    })
+    let root_link = attach_plan_links(&mut network, &plan, "GraphQL");
+    Ok(LoweredQueryPlan::new(plan, network, root_link))
 }
 
 fn lower_arguments(
@@ -473,67 +436,6 @@ fn validate_plan(plan: &QueryPlan) -> Result<(), GraphQlAdapterError> {
         }
         _ => Ok(()),
     }
-}
-
-fn attach_plan_links(network: &mut LinkNetwork, plan: &QueryPlan) -> LinkId {
-    let cst_links = plan
-        .source_evidence
-        .iter()
-        .map(|evidence| closest_cst(network, evidence.span()))
-        .collect::<Vec<_>>();
-    let plan_concept = network.insert_point("executable-query-plan");
-    let mut references = vec![plan_concept];
-    for (evidence, cst) in plan.source_evidence.iter().zip(cst_links) {
-        let concept = network.insert_point(evidence.role());
-        let mut child_references = vec![concept];
-        if let Some(cst) = cst {
-            child_references.push(cst);
-        }
-        let child = network.insert_dynamic_link(
-            &child_references,
-            LinkMetadata::new()
-                .with_link_type(LinkType::Semantic)
-                .with_named(true)
-                .with_term(evidence.role())
-                .with_language("GraphQL")
-                .with_span(evidence.span()),
-        );
-        references.push(child);
-    }
-    if let Some(cst) = plan
-        .source_evidence
-        .first()
-        .and_then(|evidence| closest_cst(network, evidence.span()))
-    {
-        references.push(cst);
-    }
-    let root_span = plan
-        .source_evidence
-        .first()
-        .map(QuerySourceEvidence::span)
-        .expect("lowered plans always retain root evidence");
-    network.insert_dynamic_link(
-        &references,
-        LinkMetadata::new()
-            .with_link_type(LinkType::Semantic)
-            .with_named(true)
-            .with_term("executable-query-plan")
-            .with_language("GraphQL")
-            .with_span(root_span),
-    )
-}
-
-fn closest_cst(network: &LinkNetwork, span: SourceSpan) -> Option<LinkId> {
-    let target = span.byte_range();
-    network
-        .links()
-        .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
-        .filter_map(|link| Some((link, link.metadata().span()?.byte_range())))
-        .filter(|(_, candidate)| {
-            candidate.start() <= target.start() && candidate.end() >= target.end()
-        })
-        .min_by_key(|(_, candidate)| candidate.end() - candidate.start())
-        .map(|(link, _)| Link::id(link))
 }
 
 fn evidence(source: &str, role: impl Into<String>, span: ByteSpan) -> QuerySourceEvidence {

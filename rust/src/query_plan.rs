@@ -4,10 +4,20 @@ use std::collections::BTreeMap;
 
 use serde_json::{json, Map, Number, Value};
 
+use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::source::SourceSpan;
 
 /// Stable schema version emitted by [`QueryPlan::canonical_json`].
 pub const QUERY_PLAN_VERSION: u8 = 1;
+
+/// Whether a lowered plan has been authorized for execution.
+///
+/// Parsing and semantic lowering never grant permission to execute a query.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum QueryAuthorization {
+    /// A consuming engine must still apply its authorization policy.
+    Required,
+}
 
 /// Canonical executable operation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -511,6 +521,12 @@ impl QueryPlan {
         &self.source_evidence
     }
 
+    /// Lowering validates meaning but never authorizes execution.
+    #[must_use]
+    pub const fn authorization(&self) -> QueryAuthorization {
+        QueryAuthorization::Required
+    }
+
     /// Returns the provenance-free canonical JSON value used to compare plans
     /// produced by different query languages.
     #[must_use]
@@ -563,4 +579,111 @@ impl QueryPlan {
     pub fn canonical_json(&self) -> String {
         serde_json::to_string(&self.canonical_value()).expect("query plan values are serializable")
     }
+}
+
+/// A canonical plan together with its provenance-connected links network.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LoweredQueryPlan {
+    plan: QueryPlan,
+    network: LinkNetwork,
+    root_link: LinkId,
+}
+
+impl LoweredQueryPlan {
+    pub(crate) const fn new(plan: QueryPlan, network: LinkNetwork, root_link: LinkId) -> Self {
+        Self {
+            plan,
+            network,
+            root_link,
+        }
+    }
+
+    /// Canonical executable plan.
+    #[must_use]
+    pub const fn plan(&self) -> &QueryPlan {
+        &self.plan
+    }
+
+    /// Original source CST plus attached semantic plan links.
+    #[must_use]
+    pub const fn network(&self) -> &LinkNetwork {
+        &self.network
+    }
+
+    /// Root semantic link for the canonical plan.
+    #[must_use]
+    pub const fn root_link(&self) -> LinkId {
+        self.root_link
+    }
+
+    /// Splits the result into its public components.
+    #[must_use]
+    pub fn into_parts(self) -> (QueryPlan, LinkNetwork, LinkId) {
+        (self.plan, self.network, self.root_link)
+    }
+}
+
+pub(crate) fn attach_plan_links(
+    network: &mut LinkNetwork,
+    plan: &QueryPlan,
+    language: &str,
+) -> LinkId {
+    let cst_links = plan
+        .source_evidence
+        .iter()
+        .map(|evidence| closest_cst(network, evidence.span()))
+        .collect::<Vec<_>>();
+    let plan_concept = network.insert_point("executable-query-plan");
+    let mut references = vec![plan_concept];
+    for (evidence, cst) in plan.source_evidence.iter().zip(cst_links) {
+        let concept = network.insert_point(evidence.role());
+        let mut child_references = vec![concept];
+        if let Some(cst) = cst {
+            child_references.push(cst);
+        }
+        let child = network.insert_dynamic_link(
+            &child_references,
+            LinkMetadata::new()
+                .with_link_type(LinkType::Semantic)
+                .with_named(true)
+                .with_term(evidence.role())
+                .with_language(language)
+                .with_span(evidence.span()),
+        );
+        references.push(child);
+    }
+    if let Some(cst) = plan
+        .source_evidence
+        .first()
+        .and_then(|evidence| closest_cst(network, evidence.span()))
+    {
+        references.push(cst);
+    }
+    let root_span = plan
+        .source_evidence
+        .first()
+        .map(QuerySourceEvidence::span)
+        .expect("lowered plans always retain root evidence");
+    network.insert_dynamic_link(
+        &references,
+        LinkMetadata::new()
+            .with_link_type(LinkType::Semantic)
+            .with_named(true)
+            .with_term("executable-query-plan")
+            .with_language(language)
+            .with_span(root_span),
+    )
+}
+
+fn closest_cst(network: &LinkNetwork, span: SourceSpan) -> Option<LinkId> {
+    let target = span.byte_range();
+    network
+        .links()
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+        .filter_map(|link| Some((link, link.metadata().span()?.byte_range())))
+        .filter(|(_, candidate)| {
+            candidate.start() <= target.start() && candidate.end() >= target.end()
+        })
+        .min_by_key(|(_, candidate)| candidate.end() - candidate.start())
+        .map(|(link, _)| Link::id(link))
 }

@@ -1,4 +1,4 @@
-# Executable query plans and the GraphQL adapter
+# Executable query plans and query-language adapters
 
 `meta-language` exposes a language-neutral query plan in Rust and JavaScript.
 The plan is deliberately independent of GraphQL, SQL, a database engine, and a
@@ -19,7 +19,7 @@ JavaScript omit source-language provenance. Equivalent frontends can therefore
 compare the same stable version-1 object. Provenance remains available on the
 plan as source evidence and in the returned links network.
 
-## Explicit schema registry
+## GraphQL schema registry
 
 GraphQL schema names never become executable concepts implicitly. A caller must
 register every accepted root, argument, projection/input field, and aggregate.
@@ -128,6 +128,86 @@ carry exact byte/row/column spans.
 The shared fixture at
 [`parity/fixtures/graphql-query-plans.json`](../parity/fixtures/graphql-query-plans.json)
 covers every operation, filter composition, ordering, pagination, grouping, and
-common aggregate. Its `equivalentSql` entry is the conformance anchor for the
-SQL frontend tracked by issue #187; that adapter can emit and compare the same
-canonical plan without changing this IR.
+common aggregate.
+
+## SQL schema registry and vendor profiles
+
+SQL relation and column names also never become executable concepts implicitly.
+`SqlSchemaRegistry` maps each accepted source relation to a canonical resource
+and each accepted column to a canonical field. Unknown, duplicate, or
+case-ambiguous mappings fail closed.
+
+The adapter accepts these case-insensitive language keys:
+
+- `sql-ansi`
+- `sql-postgres`
+- `sql-mysql`
+- `sql-sqlite`
+- `sql-server`
+- `sql-oracle`
+- `sql-bigquery`
+- `sql-snowflake`
+
+All profiles use the `tree-sitter-sequel` grammar as their full-match CST
+baseline and normalize the supported common subset. Vendor-only constructs are
+not silently guessed: callers can handle them in a separate explicit frontend
+that constructs the same public `QueryPlan`.
+
+Rust:
+
+```rust
+use meta_language::{
+    lower_sql, QueryAuthorization, SqlRelationMapping, SqlSchemaRegistry,
+};
+
+let mut registry = SqlSchemaRegistry::new();
+registry.register_relation(
+    SqlRelationMapping::new("users", "user")
+        .with_field("id", "user.id")
+        .with_field("status", "user.status"),
+)?;
+let lowered = lower_sql(
+    "SELECT id FROM users WHERE status = 'ACTIVE'",
+    "sql-postgres",
+    &registry,
+)?;
+assert_eq!(lowered.plan().authorization(), QueryAuthorization::Required);
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+JavaScript:
+
+```js
+import {
+  QueryAuthorization,
+  SqlRelationMapping,
+  SqlSchemaRegistry,
+  lowerSql,
+} from 'meta-language';
+
+const registry = new SqlSchemaRegistry().registerRelation(
+  new SqlRelationMapping('users', 'user')
+    .withField('id', 'user.id')
+    .withField('status', 'user.status'),
+);
+const lowered = lowerSql(
+  "SELECT id FROM users WHERE status = 'ACTIVE'",
+  'sql-postgres',
+  registry,
+);
+console.assert(lowered.plan().authorization() === QueryAuthorization.Required);
+```
+
+The bounded common subset covers one-table CRUD; explicit projections;
+recursive boolean comparisons; grouping, ordering, limits, and offsets; and
+`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `VAR_POP`, and `STDDEV_POP`. Constructs the
+version-1 IR cannot express—such as joins, multi-row inserts, non-aggregate
+projection aliases, distinct queries, parameters, or vendor extensions—are
+rejected. Successful lowering is validation, never authorization: an execution
+engine must still apply identity, capability, resource, and mutation policy.
+
+[`parity/fixtures/sql-query-plans.json`](../parity/fixtures/sql-query-plans.json)
+drives Rust and JavaScript conformance for CRUD, aggregates, all vendor keys,
+invalid input, and provenance. It also lowers the `equivalentSql` entry from the
+GraphQL fixture and proves that both frontends produce the identical canonical
+version-1 plan.

@@ -10,6 +10,7 @@ export * from './query-algebra.js';
 export * from './query-plan.js';
 export * from './regions.js';
 export * from './semantics.js';
+export * from './sql-adapter.js';
 export * from './substitution.js';
 export * from './transform.js';
 export * from './translation.js';

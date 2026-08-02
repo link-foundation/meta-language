@@ -54,6 +54,7 @@
     "semantics": { "parity": "ported", "feature": "truth-value-semantics" },
     "snapshots": { "parity": "ported", "feature": "snapshots" },
     "source": { "parity": "ported", "feature": "lossless-text-parse-reconstruct" },
+    "sql_adapter": { "parity": "ported", "feature": "sql-query-plan" },
     "storage": {
       "parity": "rust-only",
       "reason": "Pluggable link-store backends including the optional doublets engine; persistence layer outside the in-memory JavaScript links-network core."
@@ -466,6 +467,31 @@
         "evidence": [
           "js/src/primitives.js",
           "js/tests/access.test.js"
+        ]
+      }
+    },
+    {
+      "id": "sql-query-plan",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/sql_adapter.rs",
+          "rust/src/query_plan/sql.rs",
+          "rust/tests/unit/query_plan.rs",
+          "parity/fixtures/sql-query-plans.json",
+          "parity/fixtures/graphql-query-plans.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/query-plan.js",
+          "js/src/sql-adapter.js",
+          "js/src/query-plan-parser.js",
+          "js/tests/query-plan.test.js",
+          "parity/fixtures/sql-query-plans.json",
+          "parity/fixtures/graphql-query-plans.json"
         ]
       }
     },

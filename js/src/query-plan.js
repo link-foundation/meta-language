@@ -7,6 +7,27 @@ export const QueryOperation = Object.freeze({
   Delete: 'delete',
 });
 
+export const QueryAuthorization = Object.freeze({
+  Required: 'Required',
+});
+
+export const SqlAdapterErrorKind = Object.freeze({
+  UnsupportedLanguage: 'UnsupportedLanguage',
+  InvalidConcreteSyntax: 'InvalidConcreteSyntax',
+  Syntax: 'Syntax',
+  Semantic: 'Semantic',
+  Registry: 'Registry',
+});
+
+export class SqlAdapterError extends Error {
+  constructor(kind, message, offset = undefined) {
+    super(offset === undefined ? message : `${message} at byte ${offset}`);
+    this.name = 'SqlAdapterError';
+    this.kind = kind;
+    this.offset = offset;
+  }
+}
+
 export const QueryComparisonOperator = Object.freeze({
   Equal: 'eq',
   NotEqual: 'neq',
@@ -75,6 +96,10 @@ export class QueryPlan {
     return [...this._sourceEvidence];
   }
 
+  authorization() {
+    return QueryAuthorization.Required;
+  }
+
   toCanonicalObject() {
     return {
       version: QUERY_PLAN_VERSION,
@@ -97,6 +122,26 @@ export class QueryPlan {
 
   canonicalJson() {
     return JSON.stringify(this.toCanonicalObject());
+  }
+}
+
+export class LoweredQueryPlan {
+  constructor(plan, network, rootLink) {
+    this._plan = plan;
+    this._network = network;
+    this._rootLink = rootLink;
+  }
+
+  plan() {
+    return this._plan;
+  }
+
+  network() {
+    return this._network;
+  }
+
+  rootLink() {
+    return this._rootLink;
   }
 }
 

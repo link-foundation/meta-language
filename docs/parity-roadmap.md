@@ -268,16 +268,20 @@ links, rather than separate disconnected parse results.
 
 ## SQL Dialect Coverage
 
-`sql-ansi` is the first registered SQL-family dialect key. It uses
-`tree-sitter-sequel` 0.3.11 as the baseline SQL grammar, published under the
-MIT license from <https://github.com/derekstride/tree-sitter-sql.git>.
+`sql-ansi` uses `tree-sitter-sequel` 0.3.11 as the baseline SQL grammar,
+published under the MIT license from
+<https://github.com/derekstride/tree-sitter-sql.git>. The executable query-plan
+frontend also registers `sql-postgres`, `sql-mysql`, `sql-sqlite`, `sql-server`,
+`sql-oracle`, `sql-bigquery`, and `sql-snowflake`. These keys normalize their
+shared CRUD/query subset while retaining the selected key in source evidence.
 
 Coverage currently includes common `SELECT`, DDL, DML, function, trigger, and
 window-function syntax from a permissive general SQL grammar. The upstream
 grammar references PostgreSQL, MariaDB, and SQLite syntax sources and carries
-some dialect-aware productions, but this crate only advertises the adopted
-`sql-ansi` baseline until separate dialect grammars such as BigQuery, SQLite,
-PostgreSQL, or T-SQL are wired and tested under their own keys.
+some dialect-aware productions. The vendor keys intentionally share that CST
+baseline: native-only constructs are not silently rewritten, and must be
+handled by a separate explicit frontend that constructs the shared public
+`QueryPlan`.
 
 ## Delphi/Object Pascal Coverage
 

@@ -49,6 +49,7 @@ mod parser_registry;
 mod pdf_document;
 mod query_algebra;
 mod query_matching;
+mod query_plan;
 mod query_transform;
 mod rust_codec;
 mod self_description;
