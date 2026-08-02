@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "issue": 163,
-  "updated": "2026-07-12",
+  "updated": "2026-08-02",
   "operationFamilies": [
     "parse",
     "query",
@@ -26,6 +26,7 @@
       "reason": "DOCX/PDF/markup document import and rendering built on Rust-only binary format parsers (docx_parser, pdf_parser); out of scope for the JavaScript links-network core."
     },
     "grammar": { "parity": "ported", "feature": "grammar-peggy-emitter" },
+    "graphql_adapter": { "parity": "ported", "feature": "graphql-query-plan" },
     "language_parser": {
       "parity": "rust-only",
       "reason": "Built-in per-language tokenizers backing LinkNetwork::parse; the JavaScript port parses via the shared links-notation package instead of reimplementing these Rust tokenizers."
@@ -45,6 +46,7 @@
     },
     "query": { "parity": "ported", "feature": "sexpression-query" },
     "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
+    "query_plan": { "parity": "ported", "feature": "graphql-query-plan" },
     "rust_codec": {
       "parity": "rust-only",
       "reason": "Derives a links encoding from native Rust type shapes (Rust reflection/derive); inherently Rust-specific with no JavaScript analogue."
@@ -62,6 +64,29 @@
     "verification": { "parity": "ported", "feature": "verification" }
   },
   "features": [
+    {
+      "id": "graphql-query-plan",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/query_plan.rs",
+          "rust/src/graphql_adapter.rs",
+          "rust/src/graphql_adapter/parser.rs",
+          "rust/src/graphql_adapter/registry.rs",
+          "rust/tests/unit/graphql_adapter.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/query-plan.js",
+          "js/src/graphql-adapter.js",
+          "js/tests/graphql-adapter.test.js",
+          "parity/fixtures/graphql-query-plans.json"
+        ]
+      }
+    },
     {
       "id": "lossless-binary-file-round-trip",
       "required": true,
@@ -325,7 +350,7 @@
         "status": "implemented",
         "evidence": [
           "rust/src/grammar/emit/javascript.rs",
-          "rust/changelog.d/20260619_233000_javascript_parser_codegen.md"
+          "rust/tests/unit/grammar_emit_javascript.rs"
         ]
       },
       "javascript": {

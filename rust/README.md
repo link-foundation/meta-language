@@ -82,6 +82,10 @@ description, an interactive WebAssembly demo, and the full
   `ProbabilisticTruthValue` confidence semantics.
 - A testable parity registry and upstream-provenanced `PARITY_FIXTURES` for
   executable competitor and ecosystem feature gates.
+- A language-neutral executable query-plan IR plus a fail-closed, registry-driven
+  GraphQL adapter for queries, mutations, filters, ordering, pagination,
+  grouping, common aggregates, and source/CST provenance. See
+  [`docs/query-plans.md`](../docs/query-plans.md).
 - Structural LiNo parsing for links-notation doublets, triplets, named links,
   simple indented definitions, and self-references.
 - `LANGUAGE_FIXTURES` with lossless parse/reconstruction samples for every
