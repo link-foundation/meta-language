@@ -71,3 +71,4 @@ logs/
 /ci-logs/
 !docs/case-studies/issue-177/ci-logs/
 !docs/case-studies/issue-177/ci-logs/*.log
+dev/log/issues/191/pulls/192/templates/
