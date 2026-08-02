@@ -1,4 +1,7 @@
-import { QueryPlanError, QueryPlanErrorKind } from './query-plan.js';
+import {
+  SqlAdapterError,
+  SqlAdapterErrorKind,
+} from './query-plan.js';
 
 export function parseSqlOperation(source) {
   const parser = new Parser(lex(source), source.length);
@@ -357,16 +360,16 @@ class Parser {
   parseInteger(clause) {
     const token = this.advance();
     if (token?.kind !== 'number' || token.value.includes('.')) {
-      throw new QueryPlanError(
-        QueryPlanErrorKind.Semantic,
+      throw new SqlAdapterError(
+        SqlAdapterErrorKind.Semantic,
         `${clause} requires a non-negative integer`,
         token?.offset ?? this.sourceLength,
       );
     }
     const value = Number(token.value);
     if (!Number.isSafeInteger(value)) {
-      throw new QueryPlanError(
-        QueryPlanErrorKind.Semantic,
+      throw new SqlAdapterError(
+        SqlAdapterErrorKind.Semantic,
         `${clause} integer is out of range`,
         token.offset,
       );
@@ -436,16 +439,16 @@ class Parser {
   }
 
   syntax(message) {
-    return new QueryPlanError(
-      QueryPlanErrorKind.Syntax,
+    return new SqlAdapterError(
+      SqlAdapterErrorKind.Syntax,
       message,
       this.current()?.offset ?? this.sourceLength,
     );
   }
 
   semantic(message) {
-    return new QueryPlanError(
-      QueryPlanErrorKind.Semantic,
+    return new SqlAdapterError(
+      SqlAdapterErrorKind.Semantic,
       message,
       this.current()?.offset ?? this.sourceLength,
     );
@@ -485,5 +488,5 @@ function infix(operator, precedence, count = 1) {
 }
 
 function syntaxError(message, offset) {
-  return new QueryPlanError(QueryPlanErrorKind.Syntax, message, offset);
+  return new SqlAdapterError(SqlAdapterErrorKind.Syntax, message, offset);
 }

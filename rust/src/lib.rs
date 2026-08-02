@@ -9,6 +9,7 @@ pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
 pub mod grammar;
+pub mod graphql_adapter;
 mod incremental;
 mod language_fixtures;
 pub mod language_parser;
@@ -33,6 +34,7 @@ pub mod semantics;
 pub mod snapshots;
 pub mod source;
 mod source_generation;
+pub mod sql_adapter;
 pub mod storage;
 pub mod substitution;
 pub mod transform;
@@ -90,6 +92,10 @@ pub use grammar::{
 };
 #[cfg(feature = "llm-assist")]
 pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
+pub use graphql_adapter::{
+    lower_graphql, GraphQlAdapterError, GraphQlArgumentRole, GraphQlOperationType,
+    GraphQlRootMapping, GraphQlSchemaRegistry,
+};
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
 pub use link_flags::LinkFlags;
@@ -117,11 +123,9 @@ pub use query_algebra::{
     LinkRuleSnapshotResult, LinkRuleSnapshotSuite, TraversalReport, TraversalStrategy,
 };
 pub use query_plan::{
-    lower_sql, lower_sql_cst, AggregateFunction, Assignment, BinaryOperator, BuiltInSqlFrontend,
-    Projection, QueryAuthorization, QueryExpression, QueryFrontend, QueryOperation, QueryPlan,
-    QueryPlanError, QueryPlanErrorKind, QueryPlanLinks, QueryPlanRegistry, QuerySource, QueryValue,
-    SortDirection, SortExpression, SourceEvidence, SqlDialectProfile, UnaryOperator,
-    SQL_DIALECT_PROFILES,
+    LoweredQueryPlan, QueryAggregate, QueryAggregateFunction, QueryAuthorization,
+    QueryComparisonOperator, QueryFilter, QueryOperation, QueryOrder, QueryPlan,
+    QuerySortDirection, QuerySourceEvidence, QueryValue, QUERY_PLAN_VERSION,
 };
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
@@ -130,6 +134,10 @@ pub use rust_codec::{
 pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot, StructuralDiff};
 pub use source::{ByteRange, Point, SourceSpan};
+pub use sql_adapter::{
+    lower_sql, lower_sql_cst, SqlAdapterError, SqlAdapterErrorKind, SqlDialectProfile,
+    SqlRelationMapping, SqlSchemaRegistry, SQL_DIALECT_PROFILES,
+};
 #[cfg(feature = "doublets")]
 pub use storage::DoubletsLinkStore;
 pub use storage::{EngineLinkStore, LinkStore, LinkStoreBackend, LinkStoreQuery, StorageError};

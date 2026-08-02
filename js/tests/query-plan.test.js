@@ -3,71 +3,88 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
-  LinkNetwork,
+  GraphQlSchemaRegistry,
   LinkType,
   QueryAuthorization,
-  QueryPlan,
-  QueryPlanRegistry,
-  SourceEvidence,
+  SqlSchemaRegistry,
+  lowerGraphQl,
   lowerSql,
 } from '../src/index.js';
 
-const fixtures = JSON.parse(
-  await readFile(new URL('../../parity/query-plan-fixtures.json', import.meta.url), 'utf8'),
+const sqlFixtures = JSON.parse(
+  await readFile(
+    new URL('../../parity/fixtures/sql-query-plans.json', import.meta.url),
+    'utf8',
+  ),
+);
+const graphqlFixtures = JSON.parse(
+  await readFile(
+    new URL('../../parity/fixtures/graphql-query-plans.json', import.meta.url),
+    'utf8',
+  ),
 );
 
+function registry() {
+  return SqlSchemaRegistry.fromJson(sqlFixtures.registry);
+}
+
 test('SQL CRUD and query concepts lower to shared canonical fixtures', () => {
-  for (const fixture of fixtures.cases) {
-    const plan = lowerSql(fixture.sql, fixture.profile);
-    assert.deepEqual(plan.canonicalJson(), fixture.plan, fixture.name);
-    assert.equal(plan.authorization(), QueryAuthorization.Required);
-    assert.equal(plan.evidence().language, fixture.profile);
-    assert.equal(plan.evidence().span.byteRange.end, Buffer.byteLength(fixture.sql));
+  for (const fixture of sqlFixtures.cases) {
+    const lowered = lowerSql(fixture.sql, fixture.profile, registry());
+    assert.deepEqual(lowered.plan().toCanonicalObject(), fixture.canonicalPlan, fixture.name);
+    assert.equal(lowered.plan().authorization(), QueryAuthorization.Required);
+    const [evidence] = lowered.plan().sourceEvidence();
+    assert.equal(evidence.role(), `statement:${fixture.profile}`);
+    assert.equal(evidence.span().byteRange.end, Buffer.byteLength(fixture.sql));
   }
 });
 
-test('vendor profiles normalize their common subset to one operation', () => {
-  const expected = lowerSql(fixtures.normalizationSql, 'sql-ansi').canonicalJson();
-  for (const profile of fixtures.profiles) {
-    const plan = lowerSql(fixtures.normalizationSql, profile);
-    assert.deepEqual(plan.canonicalJson(), expected, profile);
-    assert.equal(plan.evidence().language, profile);
+test('vendor profiles normalize their common subset to one plan', () => {
+  const expected = lowerSql(sqlFixtures.normalizationSql, 'sql-ansi', registry())
+    .plan()
+    .toCanonicalObject();
+  for (const profile of sqlFixtures.profiles) {
+    const plan = lowerSql(sqlFixtures.normalizationSql, profile, registry()).plan();
+    assert.deepEqual(plan.toCanonicalObject(), expected, profile);
+    assert.equal(plan.sourceEvidence()[0].role(), `statement:${profile}`);
   }
 });
 
-test('malformed and semantically invalid statements fail closed', () => {
-  for (const fixture of fixtures.invalid) {
-    assert.throws(() => lowerSql(fixture.sql, fixture.profile), undefined, fixture.sql);
+test('malformed, unmapped, and unrepresentable SQL fails closed', () => {
+  for (const fixture of sqlFixtures.invalid) {
+    assert.throws(
+      () => lowerSql(fixture.sql, fixture.profile, registry()),
+      undefined,
+      fixture.sql,
+    );
   }
-  assert.throws(() => lowerSql('SELECT id FROM users', 'sql-unknown'));
+  assert.throws(() => lowerSql('SELECT id FROM users', 'sql-unknown', registry()));
 });
 
-test('plans declare an engine-neutral semantic links representation', () => {
-  const plan = lowerSql('SELECT COUNT(*) AS total FROM users', 'sql-ansi');
-  const network = new LinkNetwork();
-  const declared = plan.declareIn(network);
-  const root = network.link(declared.root);
-
-  assert.equal(root.metadata().linkType, LinkType.Semantic);
-  assert.equal(root.metadata().term, 'query-plan');
-  assert.ok(
-    declared.links
-      .map((id) => network.link(id))
-      .some((link) => link.metadata().term === 'query-aggregate:count'),
+test('SQL lowering retains CST and semantic link evidence', () => {
+  const lowered = lowerSql(
+    'SELECT COUNT(*) AS total FROM users WHERE active = TRUE',
+    'sql-ansi',
+    registry(),
   );
+  const root = lowered.network().link(lowered.rootLink());
+  assert.equal(root.metadata().linkType, LinkType.Semantic);
+  assert.equal(root.metadata().term, 'executable-query-plan');
+  assert.ok(root.references().some((reference) => (
+    lowered.network().link(reference)?.metadata().linkType === LinkType.Syntax
+  )));
 });
 
-test('a second frontend can reuse the same canonical plan', () => {
-  const fixture = fixtures.nonSqlFrontend;
-  const sqlPlan = lowerSql(fixture.equivalentSql, 'sql-ansi');
-  const registry = new QueryPlanRegistry();
-  registry.register(fixture.language, {
-    lower(_source, language) {
-      return new QueryPlan(sqlPlan.operation(), SourceEvidence.synthetic(language));
-    },
-  });
+test('equivalent SQL and GraphQL fixture produce the same plan', () => {
+  assert.equal(sqlFixtures.crossFrontend.fixture, 'graphql-query-plans.json');
+  const fixture = graphqlFixtures.cases.find(
+    ({ name }) => name === sqlFixtures.crossFrontend.case,
+  );
+  assert.ok(fixture, 'cross-frontend GraphQL case exists');
 
-  const linksPlan = registry.lower(fixture.source, fixture.language);
-  assert.deepEqual(linksPlan.operation(), sqlPlan.operation());
-  assert.equal(linksPlan.evidence().language, fixture.language);
+  const sqlPlan = lowerSql(fixture.equivalentSql, 'sql-ansi', registry()).plan();
+  const graphqlRegistry = GraphQlSchemaRegistry.fromJson(graphqlFixtures.registry);
+  const graphqlPlan = lowerGraphQl(fixture.source, graphqlRegistry).plan();
+  assert.equal(sqlPlan.canonicalJson(), graphqlPlan.canonicalJson());
+  assert.deepEqual(sqlPlan.toCanonicalObject(), fixture.canonicalPlan);
 });

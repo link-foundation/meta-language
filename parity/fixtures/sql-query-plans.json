@@ -1,0 +1,139 @@
+{
+  "registry": {
+    "relations": [
+      {
+        "sourceRelation": "users",
+        "resource": "user",
+        "fields": {
+          "id": "user.id",
+          "name": "user.name",
+          "status": "user.status",
+          "age": "user.age",
+          "active": "user.active",
+          "disabled": "user.disabled"
+        }
+      },
+      {
+        "sourceRelation": "sales",
+        "resource": "sale",
+        "fields": {
+          "region": "sale.region",
+          "amount": "sale.amount",
+          "active": "sale.active"
+        }
+      }
+    ]
+  },
+  "profiles": [
+    "sql-ansi",
+    "sql-postgres",
+    "sql-mysql",
+    "sql-sqlite",
+    "sql-server",
+    "sql-oracle",
+    "sql-bigquery",
+    "sql-snowflake"
+  ],
+  "normalizationSql": "SELECT id FROM users WHERE active = TRUE",
+  "crossFrontend": {
+    "fixture": "graphql-query-plans.json",
+    "case": "complete-query"
+  },
+  "cases": [
+    {
+      "name": "select-with-aggregates-and-query-clauses",
+      "profile": "sql-ansi",
+      "sql": "SELECT region, COUNT(*) AS total, SUM(amount) AS sum_amount, AVG(amount) AS avg_amount, MIN(amount) AS min_amount, MAX(amount) AS max_amount, VAR_POP(amount) AS variance, STDDEV_POP(amount) AS deviation FROM sales WHERE active = TRUE AND amount >= 10 GROUP BY region ORDER BY region DESC LIMIT 25 OFFSET 5",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "select",
+        "resource": "sale",
+        "projection": ["sale.region"],
+        "filter": {
+          "and": [
+            {"compare": {"field": "sale.active", "operator": "eq", "value": true}},
+            {"compare": {"field": "sale.amount", "operator": "gte", "value": 10}}
+          ]
+        },
+        "order": [{"field": "sale.region", "direction": "desc"}],
+        "limit": 25,
+        "offset": 5,
+        "groupBy": ["sale.region"],
+        "aggregates": [
+          {"function": "count", "field": null, "alias": "total"},
+          {"function": "sum", "field": "sale.amount", "alias": "sum_amount"},
+          {"function": "avg", "field": "sale.amount", "alias": "avg_amount"},
+          {"function": "min", "field": "sale.amount", "alias": "min_amount"},
+          {"function": "max", "field": "sale.amount", "alias": "max_amount"},
+          {"function": "variance-population", "field": "sale.amount", "alias": "variance"},
+          {"function": "stddev-population", "field": "sale.amount", "alias": "deviation"}
+        ],
+        "mutation": {}
+      }
+    },
+    {
+      "name": "insert-mutation",
+      "profile": "sql-postgres",
+      "sql": "INSERT INTO users (name, status) VALUES ('Ada', 'ACTIVE')",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "insert",
+        "resource": "user",
+        "projection": [],
+        "filter": null,
+        "order": [],
+        "limit": null,
+        "offset": null,
+        "groupBy": [],
+        "aggregates": [],
+        "mutation": {"user.name": "Ada", "user.status": "ACTIVE"}
+      }
+    },
+    {
+      "name": "update-mutation",
+      "profile": "sql-mysql",
+      "sql": "UPDATE users SET status = 'ACTIVE' WHERE status = 'INACTIVE'",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "update",
+        "resource": "user",
+        "projection": [],
+        "filter": {"compare": {"field": "user.status", "operator": "eq", "value": "INACTIVE"}},
+        "order": [],
+        "limit": null,
+        "offset": null,
+        "groupBy": [],
+        "aggregates": [],
+        "mutation": {"user.status": "ACTIVE"}
+      }
+    },
+    {
+      "name": "delete-mutation",
+      "profile": "sql-sqlite",
+      "sql": "DELETE FROM users WHERE disabled = TRUE",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "delete",
+        "resource": "user",
+        "projection": [],
+        "filter": {"compare": {"field": "user.disabled", "operator": "eq", "value": true}},
+        "order": [],
+        "limit": null,
+        "offset": null,
+        "groupBy": [],
+        "aggregates": [],
+        "mutation": {}
+      }
+    }
+  ],
+  "invalid": [
+    {"profile": "sql-ansi", "sql": "SELECT FROM users"},
+    {"profile": "sql-postgres", "sql": "INSERT INTO users (id, name) VALUES (1)"},
+    {"profile": "sql-mysql", "sql": "UPDATE users SET WHERE id = 1"},
+    {"profile": "sql-sqlite", "sql": "DELETE users WHERE id = 1"},
+    {"profile": "sql-ansi", "sql": "SELECT id FROM users LIMIT -1"},
+    {"profile": "sql-ansi", "sql": "SELECT id FROM users; DELETE FROM users"},
+    {"profile": "sql-ansi", "sql": "SELECT unknown FROM users"},
+    {"profile": "sql-ansi", "sql": "INSERT INTO users (id) VALUES (1), (2)"}
+  ]
+}

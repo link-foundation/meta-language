@@ -1,0 +1,180 @@
+{
+  "registry": {
+    "roots": [
+      {
+        "sourceOperation": "query",
+        "sourceField": "users",
+        "operation": "select",
+        "resource": "user",
+        "arguments": {
+          "where": "filter",
+          "orderBy": "order",
+          "first": "limit",
+          "skip": "offset",
+          "groupBy": "group"
+        },
+        "fields": {
+          "id": "user.id",
+          "name": "user.name",
+          "status": "user.status",
+          "age": "user.age"
+        },
+        "aggregates": {
+          "count": "count",
+          "sum": "sum",
+          "average": "avg",
+          "minimum": "min",
+          "maximum": "max",
+          "populationVariance": "variance-population",
+          "populationStandardDeviation": "stddev-population"
+        }
+      },
+      {
+        "sourceOperation": "mutation",
+        "sourceField": "createUser",
+        "operation": "insert",
+        "resource": "user",
+        "arguments": {
+          "input": "mutation-input"
+        },
+        "fields": {
+          "id": "user.id",
+          "name": "user.name",
+          "status": "user.status"
+        }
+      },
+      {
+        "sourceOperation": "mutation",
+        "sourceField": "updateUsers",
+        "operation": "update",
+        "resource": "user",
+        "arguments": {
+          "where": "filter",
+          "input": "mutation-input"
+        },
+        "fields": {
+          "id": "user.id",
+          "name": "user.name",
+          "status": "user.status"
+        }
+      },
+      {
+        "sourceOperation": "mutation",
+        "sourceField": "deleteUsers",
+        "operation": "delete",
+        "resource": "user",
+        "arguments": {
+          "where": "filter"
+        },
+        "fields": {
+          "id": "user.id",
+          "status": "user.status"
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "complete-query",
+      "source": "query ActiveUsers {\n  users(\n    where: {and: [{status: {eq: ACTIVE}}, {or: [{age: {gte: 18}}, {age: {isNull: true}}]}]}\n    orderBy: [{field: NAME, direction: ASC}]\n    first: 10\n    skip: 5\n    groupBy: [STATUS]\n  ) {\n    id\n    name\n    total: count(field: ID)\n  }\n}\n",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "select",
+        "resource": "user",
+        "projection": ["user.id", "user.name"],
+        "filter": {
+          "and": [
+            {"compare": {"field": "user.status", "operator": "eq", "value": "ACTIVE"}},
+            {"or": [
+              {"compare": {"field": "user.age", "operator": "gte", "value": 18}},
+              {"compare": {"field": "user.age", "operator": "is-null", "value": true}}
+            ]}
+          ]
+        },
+        "order": [{"field": "user.name", "direction": "asc"}],
+        "limit": 10,
+        "offset": 5,
+        "groupBy": ["user.status"],
+        "aggregates": [{"function": "count", "field": "user.id", "alias": "total"}],
+        "mutation": {}
+      },
+      "equivalentSql": "SELECT id, name, COUNT(id) AS total FROM users WHERE status = 'ACTIVE' AND (age >= 18 OR age IS NULL) GROUP BY status ORDER BY name ASC LIMIT 10 OFFSET 5"
+    },
+    {
+      "name": "insert-mutation",
+      "source": "mutation CreateUser {\n  createUser(input: {name: \"Ada\", status: ACTIVE}) {\n    id\n    name\n  }\n}\n",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "insert",
+        "resource": "user",
+        "projection": ["user.id", "user.name"],
+        "filter": null,
+        "order": [],
+        "limit": null,
+        "offset": null,
+        "groupBy": [],
+        "aggregates": [],
+        "mutation": {"user.name": "Ada", "user.status": "ACTIVE"}
+      }
+    },
+    {
+      "name": "common-aggregates",
+      "source": "query UserStatistics {\n  users {\n    count\n    totalAge: sum(field: AGE)\n    averageAge: average(field: AGE)\n    youngest: minimum(field: AGE)\n    oldest: maximum(field: AGE)\n    ageVariance: populationVariance(field: AGE)\n    ageDeviation: populationStandardDeviation(field: AGE)\n  }\n}\n",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "select",
+        "resource": "user",
+        "projection": [],
+        "filter": null,
+        "order": [],
+        "limit": null,
+        "offset": null,
+        "groupBy": [],
+        "aggregates": [
+          {"function": "count", "field": null, "alias": null},
+          {"function": "sum", "field": "user.age", "alias": "totalAge"},
+          {"function": "avg", "field": "user.age", "alias": "averageAge"},
+          {"function": "min", "field": "user.age", "alias": "youngest"},
+          {"function": "max", "field": "user.age", "alias": "oldest"},
+          {"function": "variance-population", "field": "user.age", "alias": "ageVariance"},
+          {"function": "stddev-population", "field": "user.age", "alias": "ageDeviation"}
+        ],
+        "mutation": {}
+      }
+    },
+    {
+      "name": "update-mutation",
+      "source": "mutation UpdateUsers {\n  updateUsers(where: {status: {eq: INACTIVE}}, input: {status: ACTIVE}) {\n    id\n    status\n  }\n}\n",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "update",
+        "resource": "user",
+        "projection": ["user.id", "user.status"],
+        "filter": {"compare": {"field": "user.status", "operator": "eq", "value": "INACTIVE"}},
+        "order": [],
+        "limit": null,
+        "offset": null,
+        "groupBy": [],
+        "aggregates": [],
+        "mutation": {"user.status": "ACTIVE"}
+      }
+    },
+    {
+      "name": "delete-mutation",
+      "source": "mutation DeleteUsers {\n  deleteUsers(where: {status: {eq: INACTIVE}}) {\n    id\n  }\n}\n",
+      "canonicalPlan": {
+        "version": 1,
+        "operation": "delete",
+        "resource": "user",
+        "projection": ["user.id"],
+        "filter": {"compare": {"field": "user.status", "operator": "eq", "value": "INACTIVE"}},
+        "order": [],
+        "limit": null,
+        "offset": null,
+        "groupBy": [],
+        "aggregates": [],
+        "mutation": {}
+      }
+    }
+  ]
+}

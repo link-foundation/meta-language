@@ -1546,7 +1546,6 @@ dependencies = [
  "pest_meta",
  "platform-mem",
  "regex",
- "serde",
  "serde_json",
  "tree-sitter",
  "tree-sitter-c",

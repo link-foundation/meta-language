@@ -1,6 +1,7 @@
 export * from './access.js';
 export * from './api-style-fixtures.js';
 export * from './grammar.js';
+export * from './graphql-adapter.js';
 export * from './language-profile.js';
 export * from './network.js';
 export * from './primitives.js';
@@ -9,6 +10,7 @@ export * from './query-algebra.js';
 export * from './query-plan.js';
 export * from './regions.js';
 export * from './semantics.js';
+export * from './sql-adapter.js';
 export * from './substitution.js';
 export * from './transform.js';
 export * from './translation.js';

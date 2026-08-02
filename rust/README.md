@@ -60,9 +60,10 @@ description, an interactive WebAssembly demo, and the full
   regions that content sniffing cannot classify.
 - `LinkQuery` for structural matching by link type, term, language, named flag,
   tree-sitter-query-like S-expressions, captures, and host predicates.
-- `QueryPlan` for engine-neutral `SELECT`, `INSERT`, `UPDATE`, and `DELETE`
-  semantics, with aggregate/query clauses, SQL vendor-profile normalization,
-  CST provenance, semantic-link declaration, and pluggable non-SQL frontends.
+- `QueryPlan` for versioned engine-neutral `SELECT`, `INSERT`, `UPDATE`, and
+  `DELETE` semantics, with registry-driven GraphQL and SQL adapters, common
+  aggregates and query clauses, vendor-profile normalization, and CST-backed
+  semantic provenance.
 - `find()` / `replace()` for codemod-style query transforms over captured links
   while preserving unchanged source bytes.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style
@@ -85,6 +86,10 @@ description, an interactive WebAssembly demo, and the full
   `ProbabilisticTruthValue` confidence semantics.
 - A testable parity registry and upstream-provenanced `PARITY_FIXTURES` for
   executable competitor and ecosystem feature gates.
+- A language-neutral executable query-plan IR plus a fail-closed, registry-driven
+  GraphQL adapter for queries, mutations, filters, ordering, pagination,
+  grouping, common aggregates, and source/CST provenance. See
+  [`docs/query-plans.md`](../docs/query-plans.md).
 - Structural LiNo parsing for links-notation doublets, triplets, named links,
   simple indented definitions, and self-references.
 - `LANGUAGE_FIXTURES` with lossless parse/reconstruction samples for every

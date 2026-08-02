@@ -280,7 +280,8 @@ window-function syntax from a permissive general SQL grammar. The upstream
 grammar references PostgreSQL, MariaDB, and SQLite syntax sources and carries
 some dialect-aware productions. The vendor keys intentionally share that CST
 baseline: native-only constructs are not silently rewritten, and must be
-handled by an explicitly registered custom query frontend/extension node.
+handled by a separate explicit frontend that constructs the shared public
+`QueryPlan`.
 
 ## Delphi/Object Pascal Coverage
 

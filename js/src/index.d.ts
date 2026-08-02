@@ -83,6 +83,174 @@ export class ProbabilisticTruthValue {
   toJSON(): { trueProbability: number };
 }
 
+export const QUERY_PLAN_VERSION: 1;
+export const QueryOperation: {
+  Select: 'select';
+  Insert: 'insert';
+  Update: 'update';
+  Delete: 'delete';
+};
+export type QueryOperationValue = typeof QueryOperation[keyof typeof QueryOperation];
+
+export const QueryAuthorization: { readonly Required: 'Required' };
+export const SqlAdapterErrorKind: {
+  UnsupportedLanguage: 'UnsupportedLanguage';
+  InvalidConcreteSyntax: 'InvalidConcreteSyntax';
+  Syntax: 'Syntax';
+  Semantic: 'Semantic';
+  Registry: 'Registry';
+};
+export type SqlAdapterErrorKindValue =
+  typeof SqlAdapterErrorKind[keyof typeof SqlAdapterErrorKind];
+
+export class SqlAdapterError extends Error {
+  constructor(kind: SqlAdapterErrorKindValue, message: string, offset?: number);
+  kind: SqlAdapterErrorKindValue;
+  offset?: number;
+}
+
+export const QueryComparisonOperator: {
+  Equal: 'eq';
+  NotEqual: 'neq';
+  LessThan: 'lt';
+  LessThanOrEqual: 'lte';
+  GreaterThan: 'gt';
+  GreaterThanOrEqual: 'gte';
+  In: 'in';
+  NotIn: 'not-in';
+  Like: 'like';
+  IsNull: 'is-null';
+};
+export type QueryComparisonOperatorValue =
+  typeof QueryComparisonOperator[keyof typeof QueryComparisonOperator];
+export const QuerySortDirection: { Ascending: 'asc'; Descending: 'desc' };
+export type QuerySortDirectionValue =
+  typeof QuerySortDirection[keyof typeof QuerySortDirection];
+export const QueryAggregateFunction: {
+  Count: 'count';
+  Sum: 'sum';
+  Average: 'avg';
+  Minimum: 'min';
+  Maximum: 'max';
+  PopulationVariance: 'variance-population';
+  PopulationStandardDeviation: 'stddev-population';
+};
+export type QueryAggregateFunctionValue =
+  typeof QueryAggregateFunction[keyof typeof QueryAggregateFunction];
+
+export type QueryValue = null | boolean | number | string | QueryValue[] | {
+  [field: string]: QueryValue;
+};
+export type QueryFilter =
+  | { compare: { field: string; operator: QueryComparisonOperatorValue; value: QueryValue } }
+  | { and: QueryFilter[] }
+  | { or: QueryFilter[] }
+  | { not: QueryFilter };
+
+export class QuerySourceEvidence {
+  constructor(role: string, span: SourceSpan);
+  role(): string;
+  span(): SourceSpan;
+}
+
+export class QueryPlan {
+  constructor(operation: QueryOperationValue, resource: string);
+  operation: QueryOperationValue;
+  resource: string;
+  projection: string[];
+  filter: QueryFilter | null;
+  order: Array<{ field: string; direction: QuerySortDirectionValue }>;
+  limit: number | null;
+  offset: number | null;
+  groupBy: string[];
+  aggregates: Array<{
+    function: QueryAggregateFunctionValue;
+    field: string | null;
+    alias: string | null;
+  }>;
+  mutation: Record<string, QueryValue>;
+  sourceEvidence(): QuerySourceEvidence[];
+  authorization(): 'Required';
+  toCanonicalObject(): object;
+  canonicalJson(): string;
+}
+
+export const GraphQlOperationType: { Query: 'query'; Mutation: 'mutation' };
+export type GraphQlOperationTypeValue =
+  typeof GraphQlOperationType[keyof typeof GraphQlOperationType];
+export const GraphQlArgumentRole: {
+  Filter: 'filter';
+  Order: 'order';
+  Limit: 'limit';
+  Offset: 'offset';
+  Group: 'group';
+  MutationInput: 'mutation-input';
+};
+export type GraphQlArgumentRoleValue =
+  typeof GraphQlArgumentRole[keyof typeof GraphQlArgumentRole];
+
+export class GraphQlAdapterError extends Error {}
+
+export class GraphQlRootMapping {
+  constructor(
+    sourceOperation: GraphQlOperationTypeValue,
+    sourceField: string,
+    operation: QueryOperationValue,
+    resource: string,
+  );
+  withArgument(sourceName: string, role: GraphQlArgumentRoleValue): GraphQlRootMapping;
+  withField(sourceName: string, canonicalField: string): GraphQlRootMapping;
+  withAggregate(
+    sourceName: string,
+    aggregate: QueryAggregateFunctionValue,
+  ): GraphQlRootMapping;
+}
+
+export class GraphQlSchemaRegistry {
+  constructor();
+  registerRoot(mapping: GraphQlRootMapping): GraphQlSchemaRegistry;
+  static fromJson(value: unknown): GraphQlSchemaRegistry;
+}
+
+export class LoweredQueryPlan {
+  plan(): QueryPlan;
+  network(): LinkNetwork;
+  rootLink(): LinkId;
+}
+
+export function lowerGraphQl(source: string, registry: GraphQlSchemaRegistry): LoweredQueryPlan;
+export const lowerGraphQL: typeof lowerGraphQl;
+export const lowerGraphql: typeof lowerGraphQl;
+
+export interface SqlDialectProfile {
+  readonly key: string;
+  readonly vendor: string;
+}
+
+export const SQL_DIALECT_PROFILES: readonly SqlDialectProfile[];
+
+export class SqlRelationMapping {
+  constructor(sourceRelation: string, resource: string);
+  sourceRelation: string;
+  resource: string;
+  fields: Map<string, string>;
+  withField(sourceName: string, canonicalField: string): SqlRelationMapping;
+}
+
+export class SqlSchemaRegistry {
+  constructor();
+  registerRelation(mapping: SqlRelationMapping): SqlSchemaRegistry;
+  static fromJson(value: unknown): SqlSchemaRegistry;
+}
+
+export function lowerSql(
+  source: string,
+  language: string,
+  registry: SqlSchemaRegistry,
+): LoweredQueryPlan;
+export const lowerSQL: typeof lowerSql;
+export const lower_sql: typeof lowerSql;
+
 export class LinkId {
   constructor(value: number | string | LinkId);
   static from(value: number | string | LinkId): LinkId;
@@ -95,6 +263,7 @@ export class ByteRange {
   constructor(start?: number, end?: number);
   start: number;
   end: number;
+  contains(other: ByteRange): boolean;
 }
 
 export class Point {
@@ -113,11 +282,13 @@ export class SourceSpan {
 export class LinkMetadata {
   static new(): LinkMetadata;
   definition?: string;
+  span?: SourceSpan;
   withLinkType(linkType: LinkTypeValue): LinkMetadata;
   withTerm(term: string): LinkMetadata;
   withLanguage(language: string): LinkMetadata;
   withNamed(named?: boolean): LinkMetadata;
   withDefinition(definition?: string): LinkMetadata;
+  withSpan(span: SourceSpan): LinkMetadata;
 }
 
 export class LinkNetwork {
@@ -444,130 +615,6 @@ export class LanguageProfileViolation extends Error {
   constructor(feature: string, message: string);
   feature(): string;
 }
-
-// --- engine-neutral executable query plans ---
-
-export interface SqlDialectProfile {
-  readonly key: string;
-  readonly vendor: string;
-}
-
-export const SQL_DIALECT_PROFILES: readonly SqlDialectProfile[];
-export const QueryAuthorization: { readonly Required: 'Required' };
-export const QueryPlanErrorKind: Readonly<Record<string, string>>;
-
-export class QueryPlanError extends Error {
-  constructor(kind: string, message: string, offset?: number);
-  static frontend(message: string): QueryPlanError;
-  kind: string;
-  offset?: number;
-}
-
-export class SourceEvidence {
-  constructor(language: string, span: SourceSpan, syntaxLinkId?: LinkId | number);
-  static synthetic(language: string): SourceEvidence;
-  static forSource(language: string, source: string): SourceEvidence;
-  language: string;
-  span: SourceSpan;
-  syntaxLinkId?: LinkId | number;
-}
-
-export type QueryValue =
-  | { kind: 'null' }
-  | { kind: 'boolean'; value: boolean }
-  | { kind: 'number'; value: string }
-  | { kind: 'string'; value: string };
-
-export type QueryExpression =
-  | { kind: 'column'; path: string[] }
-  | { kind: 'literal'; value: QueryValue }
-  | { kind: 'parameter'; name: string }
-  | { kind: 'wildcard' }
-  | { kind: 'unary'; operator: string; operand: QueryExpression }
-  | { kind: 'binary'; operator: string; left: QueryExpression; right: QueryExpression }
-  | {
-      kind: 'aggregate';
-      function: string;
-      expression: QueryExpression;
-      distinct: boolean;
-    }
-  | { kind: 'function'; name: string; arguments: QueryExpression[] }
-  | {
-      kind: 'extension';
-      namespace: string;
-      name: string;
-      arguments: QueryExpression[];
-    };
-
-export interface QuerySource {
-  path: string[];
-  alias: string | null;
-}
-
-export type QueryOperation =
-  | {
-      kind: 'select';
-      distinct: boolean;
-      projection: Array<{ expression: QueryExpression; alias: string | null }>;
-      from: QuerySource | null;
-      filter: QueryExpression | null;
-      groupBy: QueryExpression[];
-      orderBy: Array<{ expression: QueryExpression; direction: 'ascending' | 'descending' }>;
-      limit: number | null;
-      offset: number | null;
-    }
-  | {
-      kind: 'insert';
-      into: QuerySource;
-      columns: string[];
-      rows: QueryExpression[][];
-    }
-  | {
-      kind: 'update';
-      table: QuerySource;
-      assignments: Array<{ column: string[]; value: QueryExpression }>;
-      filter: QueryExpression | null;
-    }
-  | {
-      kind: 'delete';
-      from: QuerySource;
-      filter: QueryExpression | null;
-    };
-
-export interface QueryPlanLinks {
-  readonly root: LinkId;
-  readonly links: readonly LinkId[];
-}
-
-export class QueryPlan {
-  constructor(operation: QueryOperation, evidence: SourceEvidence);
-  operation(): QueryOperation;
-  evidence(): SourceEvidence;
-  authorization(): 'Required';
-  canonicalJson(): QueryOperation;
-  canonical_json(): QueryOperation;
-  declareIn(network: LinkNetwork): QueryPlanLinks;
-  declare_in(network: LinkNetwork): QueryPlanLinks;
-}
-
-export interface QueryFrontend {
-  lower(source: string, language: string): QueryPlan;
-}
-
-export class BuiltInSqlFrontend implements QueryFrontend {
-  lower(source: string, language: string): QueryPlan;
-}
-
-export class QueryPlanRegistry {
-  constructor();
-  register(language: string, frontend: QueryFrontend): QueryPlanRegistry;
-  isRegistered(language: string): boolean;
-  is_registered(language: string): boolean;
-  lower(source: string, language: string): QueryPlan;
-}
-
-export function lowerSql(source: string, language: string): QueryPlan;
-export const lower_sql: typeof lowerSql;
 
 // --- query algebra (link rules) ---
 

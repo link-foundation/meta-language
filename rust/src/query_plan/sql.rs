@@ -1,7 +1,7 @@
 use super::{
     AggregateFunction, Assignment, BinaryOperator, Projection, QueryExpression, QueryOperation,
-    QueryPlanError, QueryPlanErrorKind, QuerySource, QueryValue, SortDirection, SortExpression,
-    UnaryOperator,
+    QuerySource, QueryValue, SortDirection, SortExpression, SqlAdapterError as QueryPlanError,
+    SqlAdapterErrorKind as QueryPlanErrorKind, UnaryOperator,
 };
 
 pub(super) fn parse(source: &str) -> Result<QueryOperation, QueryPlanError> {

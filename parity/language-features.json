@@ -26,6 +26,7 @@
       "reason": "DOCX/PDF/markup document import and rendering built on Rust-only binary format parsers (docx_parser, pdf_parser); out of scope for the JavaScript links-network core."
     },
     "grammar": { "parity": "ported", "feature": "grammar-peggy-emitter" },
+    "graphql_adapter": { "parity": "ported", "feature": "graphql-query-plan" },
     "language_parser": {
       "parity": "rust-only",
       "reason": "Built-in per-language tokenizers backing LinkNetwork::parse; the JavaScript port parses via the shared links-notation package instead of reimplementing these Rust tokenizers."
@@ -45,7 +46,7 @@
     },
     "query": { "parity": "ported", "feature": "sexpression-query" },
     "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
-    "query_plan": { "parity": "ported", "feature": "query-plan-ir" },
+    "query_plan": { "parity": "ported", "feature": "graphql-query-plan" },
     "rust_codec": {
       "parity": "rust-only",
       "reason": "Derives a links encoding from native Rust type shapes (Rust reflection/derive); inherently Rust-specific with no JavaScript analogue."
@@ -53,6 +54,7 @@
     "semantics": { "parity": "ported", "feature": "truth-value-semantics" },
     "snapshots": { "parity": "ported", "feature": "snapshots" },
     "source": { "parity": "ported", "feature": "lossless-text-parse-reconstruct" },
+    "sql_adapter": { "parity": "ported", "feature": "sql-query-plan" },
     "storage": {
       "parity": "rust-only",
       "reason": "Pluggable link-store backends including the optional doublets engine; persistence layer outside the in-memory JavaScript links-network core."
@@ -63,6 +65,29 @@
     "verification": { "parity": "ported", "feature": "verification" }
   },
   "features": [
+    {
+      "id": "graphql-query-plan",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/query_plan.rs",
+          "rust/src/graphql_adapter.rs",
+          "rust/src/graphql_adapter/parser.rs",
+          "rust/src/graphql_adapter/registry.rs",
+          "rust/tests/unit/graphql_adapter.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/query-plan.js",
+          "js/src/graphql-adapter.js",
+          "js/tests/graphql-adapter.test.js",
+          "parity/fixtures/graphql-query-plans.json"
+        ]
+      }
+    },
     {
       "id": "lossless-binary-file-round-trip",
       "required": true,
@@ -446,24 +471,27 @@
       }
     },
     {
-      "id": "query-plan-ir",
+      "id": "sql-query-plan",
       "required": true,
       "rust": {
         "status": "implemented",
         "evidence": [
-          "rust/src/query_plan/mod.rs",
+          "rust/src/sql_adapter.rs",
           "rust/src/query_plan/sql.rs",
           "rust/tests/unit/query_plan.rs",
-          "parity/query-plan-fixtures.json"
+          "parity/fixtures/sql-query-plans.json",
+          "parity/fixtures/graphql-query-plans.json"
         ]
       },
       "javascript": {
         "status": "implemented",
         "evidence": [
           "js/src/query-plan.js",
+          "js/src/sql-adapter.js",
           "js/src/query-plan-parser.js",
           "js/tests/query-plan.test.js",
-          "parity/query-plan-fixtures.json"
+          "parity/fixtures/sql-query-plans.json",
+          "parity/fixtures/graphql-query-plans.json"
         ]
       }
     },
