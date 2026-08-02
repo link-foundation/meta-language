@@ -60,6 +60,9 @@ description, an interactive WebAssembly demo, and the full
   regions that content sniffing cannot classify.
 - `LinkQuery` for structural matching by link type, term, language, named flag,
   tree-sitter-query-like S-expressions, captures, and host predicates.
+- `QueryPlan` for engine-neutral `SELECT`, `INSERT`, `UPDATE`, and `DELETE`
+  semantics, with aggregate/query clauses, SQL vendor-profile normalization,
+  CST provenance, semantic-link declaration, and pluggable non-SQL frontends.
 - `find()` / `replace()` for codemod-style query transforms over captured links
   while preserving unchanged source bytes.
 - `SubstitutionRule` / `apply_substitution()` for the link-cli-style

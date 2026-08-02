@@ -25,6 +25,10 @@ See [`../docs/translation-rules.md`](../docs/translation-rules.md) for recursive
 rule evaluation, captures, variadic and optional templates, rendering contexts,
 and target-language fallbacks.
 
+The engine-neutral `QueryPlan` API normalizes the common CRUD/query subset for
+ANSI, PostgreSQL, MySQL, SQLite, SQL Server, Oracle, BigQuery, and Snowflake
+profiles. See [`../docs/query-plan.md`](../docs/query-plan.md).
+
 ## Usage
 
 ```js

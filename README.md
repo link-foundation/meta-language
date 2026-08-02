@@ -29,6 +29,8 @@ badges, and its own CI/CD workflow.
 
 Declarative, recursive network translation and its template syntax are
 documented in [`docs/translation-rules.md`](docs/translation-rules.md).
+The shared executable query-plan IR and SQL vendor normalization are documented
+in [`docs/query-plan.md`](docs/query-plan.md).
 
 ## Quick start
 
