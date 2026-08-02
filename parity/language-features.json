@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "issue": 163,
-  "updated": "2026-07-12",
+  "updated": "2026-08-02",
   "operationFamilies": [
     "parse",
     "query",
@@ -45,6 +45,7 @@
     },
     "query": { "parity": "ported", "feature": "sexpression-query" },
     "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
+    "query_plan": { "parity": "ported", "feature": "query-plan-ir" },
     "rust_codec": {
       "parity": "rust-only",
       "reason": "Derives a links encoding from native Rust type shapes (Rust reflection/derive); inherently Rust-specific with no JavaScript analogue."
@@ -325,7 +326,7 @@
         "status": "implemented",
         "evidence": [
           "rust/src/grammar/emit/javascript.rs",
-          "rust/changelog.d/20260619_233000_javascript_parser_codegen.md"
+          "rust/tests/unit/grammar_emit_javascript.rs"
         ]
       },
       "javascript": {
@@ -441,6 +442,28 @@
         "evidence": [
           "js/src/primitives.js",
           "js/tests/access.test.js"
+        ]
+      }
+    },
+    {
+      "id": "query-plan-ir",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/query_plan/mod.rs",
+          "rust/src/query_plan/sql.rs",
+          "rust/tests/unit/query_plan.rs",
+          "parity/query-plan-fixtures.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/query-plan.js",
+          "js/src/query-plan-parser.js",
+          "js/tests/query-plan.test.js",
+          "parity/query-plan-fixtures.json"
         ]
       }
     },

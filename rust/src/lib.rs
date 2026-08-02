@@ -26,6 +26,7 @@ pub mod parser_registry;
 mod pdf_parser;
 pub mod query;
 pub mod query_algebra;
+pub mod query_plan;
 mod reconstruction;
 pub mod rust_codec;
 pub mod semantics;
@@ -114,6 +115,13 @@ pub use query_algebra::{
     LinkRule, LinkRuleCapture, LinkRuleCaptures, LinkRuleMatch, LinkRuleParseError,
     LinkRuleRegistry, LinkRuleSnapshotCase, LinkRuleSnapshotExpectation, LinkRuleSnapshotReport,
     LinkRuleSnapshotResult, LinkRuleSnapshotSuite, TraversalReport, TraversalStrategy,
+};
+pub use query_plan::{
+    lower_sql, lower_sql_cst, AggregateFunction, Assignment, BinaryOperator, BuiltInSqlFrontend,
+    Projection, QueryAuthorization, QueryExpression, QueryFrontend, QueryOperation, QueryPlan,
+    QueryPlanError, QueryPlanErrorKind, QueryPlanLinks, QueryPlanRegistry, QuerySource, QueryValue,
+    SortDirection, SortExpression, SourceEvidence, SqlDialectProfile, UnaryOperator,
+    SQL_DIALECT_PROFILES,
 };
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,

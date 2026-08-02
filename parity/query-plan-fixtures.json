@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "profiles": [
+    "sql-ansi",
+    "sql-postgres",
+    "sql-mysql",
+    "sql-sqlite",
+    "sql-server",
+    "sql-oracle",
+    "sql-bigquery",
+    "sql-snowflake"
+  ],
+  "normalizationSql": "SELECT id FROM users WHERE active = TRUE",
+  "nonSqlFrontend": {
+    "language": "links-query",
+    "source": "users(active: true) -> id",
+    "equivalentSql": "SELECT id FROM users WHERE active = TRUE"
+  },
+  "cases": [
+    {
+      "name": "select with aggregates and query clauses",
+      "profile": "sql-ansi",
+      "sql": "SELECT region, COUNT(*) AS total, SUM(amount) AS sum_amount, AVG(amount) AS avg_amount, MIN(amount) AS min_amount, MAX(amount) AS max_amount, VAR_POP(amount) AS variance, STDDEV_POP(amount) AS deviation FROM sales WHERE active = TRUE AND amount >= 10 GROUP BY region ORDER BY total DESC LIMIT 25 OFFSET 5",
+      "plan": {
+        "kind": "select",
+        "distinct": false,
+        "projection": [
+          { "expression": { "kind": "column", "path": ["region"] }, "alias": null },
+          { "expression": { "kind": "aggregate", "function": "count", "expression": { "kind": "wildcard" }, "distinct": false }, "alias": "total" },
+          { "expression": { "kind": "aggregate", "function": "sum", "expression": { "kind": "column", "path": ["amount"] }, "distinct": false }, "alias": "sum_amount" },
+          { "expression": { "kind": "aggregate", "function": "avg", "expression": { "kind": "column", "path": ["amount"] }, "distinct": false }, "alias": "avg_amount" },
+          { "expression": { "kind": "aggregate", "function": "min", "expression": { "kind": "column", "path": ["amount"] }, "distinct": false }, "alias": "min_amount" },
+          { "expression": { "kind": "aggregate", "function": "max", "expression": { "kind": "column", "path": ["amount"] }, "distinct": false }, "alias": "max_amount" },
+          { "expression": { "kind": "aggregate", "function": "variance_population", "expression": { "kind": "column", "path": ["amount"] }, "distinct": false }, "alias": "variance" },
+          { "expression": { "kind": "aggregate", "function": "standard_deviation_population", "expression": { "kind": "column", "path": ["amount"] }, "distinct": false }, "alias": "deviation" }
+        ],
+        "from": { "path": ["sales"], "alias": null },
+        "filter": {
+          "kind": "binary",
+          "operator": "and",
+          "left": {
+            "kind": "binary",
+            "operator": "equal",
+            "left": { "kind": "column", "path": ["active"] },
+            "right": { "kind": "literal", "value": { "kind": "boolean", "value": true } }
+          },
+          "right": {
+            "kind": "binary",
+            "operator": "greater_than_or_equal",
+            "left": { "kind": "column", "path": ["amount"] },
+            "right": { "kind": "literal", "value": { "kind": "number", "value": "10" } }
+          }
+        },
+        "groupBy": [{ "kind": "column", "path": ["region"] }],
+        "orderBy": [{ "expression": { "kind": "column", "path": ["total"] }, "direction": "descending" }],
+        "limit": 25,
+        "offset": 5
+      }
+    },
+    {
+      "name": "insert rows",
+      "profile": "sql-postgres",
+      "sql": "INSERT INTO users (id, name, active) VALUES (1, 'Ada', TRUE), (2, 'Lin', FALSE)",
+      "plan": {
+        "kind": "insert",
+        "into": { "path": ["users"], "alias": null },
+        "columns": ["id", "name", "active"],
+        "rows": [
+          [
+            { "kind": "literal", "value": { "kind": "number", "value": "1" } },
+            { "kind": "literal", "value": { "kind": "string", "value": "Ada" } },
+            { "kind": "literal", "value": { "kind": "boolean", "value": true } }
+          ],
+          [
+            { "kind": "literal", "value": { "kind": "number", "value": "2" } },
+            { "kind": "literal", "value": { "kind": "string", "value": "Lin" } },
+            { "kind": "literal", "value": { "kind": "boolean", "value": false } }
+          ]
+        ]
+      }
+    },
+    {
+      "name": "update with predicate",
+      "profile": "sql-mysql",
+      "sql": "UPDATE users SET name = 'Grace', active = FALSE WHERE id = 7",
+      "plan": {
+        "kind": "update",
+        "table": { "path": ["users"], "alias": null },
+        "assignments": [
+          { "column": ["name"], "value": { "kind": "literal", "value": { "kind": "string", "value": "Grace" } } },
+          { "column": ["active"], "value": { "kind": "literal", "value": { "kind": "boolean", "value": false } } }
+        ],
+        "filter": {
+          "kind": "binary",
+          "operator": "equal",
+          "left": { "kind": "column", "path": ["id"] },
+          "right": { "kind": "literal", "value": { "kind": "number", "value": "7" } }
+        }
+      }
+    },
+    {
+      "name": "delete with predicate",
+      "profile": "sql-sqlite",
+      "sql": "DELETE FROM users WHERE disabled = TRUE",
+      "plan": {
+        "kind": "delete",
+        "from": { "path": ["users"], "alias": null },
+        "filter": {
+          "kind": "binary",
+          "operator": "equal",
+          "left": { "kind": "column", "path": ["disabled"] },
+          "right": { "kind": "literal", "value": { "kind": "boolean", "value": true } }
+        }
+      }
+    }
+  ],
+  "invalid": [
+    { "profile": "sql-ansi", "sql": "SELECT FROM users" },
+    { "profile": "sql-postgres", "sql": "INSERT INTO users (id, name) VALUES (1)" },
+    { "profile": "sql-mysql", "sql": "UPDATE users SET WHERE id = 1" },
+    { "profile": "sql-sqlite", "sql": "DELETE users WHERE id = 1" },
+    { "profile": "sql-ansi", "sql": "SELECT id FROM users LIMIT -1" },
+    { "profile": "sql-ansi", "sql": "SELECT id FROM users; DELETE FROM users" }
+  ]
+}

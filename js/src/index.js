@@ -6,6 +6,7 @@ export * from './network.js';
 export * from './primitives.js';
 export * from './query.js';
 export * from './query-algebra.js';
+export * from './query-plan.js';
 export * from './regions.js';
 export * from './semantics.js';
 export * from './substitution.js';

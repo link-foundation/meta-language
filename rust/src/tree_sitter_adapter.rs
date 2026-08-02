@@ -169,7 +169,19 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_r::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("ruby") || language.eq_ignore_ascii_case("rb") {
         Some(tree_sitter_ruby::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("sql-ansi") {
+    } else if [
+        "sql-ansi",
+        "sql-postgres",
+        "sql-mysql",
+        "sql-sqlite",
+        "sql-server",
+        "sql-oracle",
+        "sql-bigquery",
+        "sql-snowflake",
+    ]
+    .iter()
+    .any(|profile| language.eq_ignore_ascii_case(profile))
+    {
         Some(tree_sitter_sequel::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("html") {
         Some(tree_sitter_html::LANGUAGE.into())

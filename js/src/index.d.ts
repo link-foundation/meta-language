@@ -91,6 +91,25 @@ export class LinkId {
   equals(other: number | string | LinkId): boolean;
 }
 
+export class ByteRange {
+  constructor(start?: number, end?: number);
+  start: number;
+  end: number;
+}
+
+export class Point {
+  constructor(row?: number, column?: number);
+  row: number;
+  column: number;
+}
+
+export class SourceSpan {
+  constructor(byteRange?: ByteRange, start?: Point, end?: Point);
+  byteRange: ByteRange;
+  start: Point;
+  end: Point;
+}
+
 export class LinkMetadata {
   static new(): LinkMetadata;
   definition?: string;
@@ -425,6 +444,130 @@ export class LanguageProfileViolation extends Error {
   constructor(feature: string, message: string);
   feature(): string;
 }
+
+// --- engine-neutral executable query plans ---
+
+export interface SqlDialectProfile {
+  readonly key: string;
+  readonly vendor: string;
+}
+
+export const SQL_DIALECT_PROFILES: readonly SqlDialectProfile[];
+export const QueryAuthorization: { readonly Required: 'Required' };
+export const QueryPlanErrorKind: Readonly<Record<string, string>>;
+
+export class QueryPlanError extends Error {
+  constructor(kind: string, message: string, offset?: number);
+  static frontend(message: string): QueryPlanError;
+  kind: string;
+  offset?: number;
+}
+
+export class SourceEvidence {
+  constructor(language: string, span: SourceSpan, syntaxLinkId?: LinkId | number);
+  static synthetic(language: string): SourceEvidence;
+  static forSource(language: string, source: string): SourceEvidence;
+  language: string;
+  span: SourceSpan;
+  syntaxLinkId?: LinkId | number;
+}
+
+export type QueryValue =
+  | { kind: 'null' }
+  | { kind: 'boolean'; value: boolean }
+  | { kind: 'number'; value: string }
+  | { kind: 'string'; value: string };
+
+export type QueryExpression =
+  | { kind: 'column'; path: string[] }
+  | { kind: 'literal'; value: QueryValue }
+  | { kind: 'parameter'; name: string }
+  | { kind: 'wildcard' }
+  | { kind: 'unary'; operator: string; operand: QueryExpression }
+  | { kind: 'binary'; operator: string; left: QueryExpression; right: QueryExpression }
+  | {
+      kind: 'aggregate';
+      function: string;
+      expression: QueryExpression;
+      distinct: boolean;
+    }
+  | { kind: 'function'; name: string; arguments: QueryExpression[] }
+  | {
+      kind: 'extension';
+      namespace: string;
+      name: string;
+      arguments: QueryExpression[];
+    };
+
+export interface QuerySource {
+  path: string[];
+  alias: string | null;
+}
+
+export type QueryOperation =
+  | {
+      kind: 'select';
+      distinct: boolean;
+      projection: Array<{ expression: QueryExpression; alias: string | null }>;
+      from: QuerySource | null;
+      filter: QueryExpression | null;
+      groupBy: QueryExpression[];
+      orderBy: Array<{ expression: QueryExpression; direction: 'ascending' | 'descending' }>;
+      limit: number | null;
+      offset: number | null;
+    }
+  | {
+      kind: 'insert';
+      into: QuerySource;
+      columns: string[];
+      rows: QueryExpression[][];
+    }
+  | {
+      kind: 'update';
+      table: QuerySource;
+      assignments: Array<{ column: string[]; value: QueryExpression }>;
+      filter: QueryExpression | null;
+    }
+  | {
+      kind: 'delete';
+      from: QuerySource;
+      filter: QueryExpression | null;
+    };
+
+export interface QueryPlanLinks {
+  readonly root: LinkId;
+  readonly links: readonly LinkId[];
+}
+
+export class QueryPlan {
+  constructor(operation: QueryOperation, evidence: SourceEvidence);
+  operation(): QueryOperation;
+  evidence(): SourceEvidence;
+  authorization(): 'Required';
+  canonicalJson(): QueryOperation;
+  canonical_json(): QueryOperation;
+  declareIn(network: LinkNetwork): QueryPlanLinks;
+  declare_in(network: LinkNetwork): QueryPlanLinks;
+}
+
+export interface QueryFrontend {
+  lower(source: string, language: string): QueryPlan;
+}
+
+export class BuiltInSqlFrontend implements QueryFrontend {
+  lower(source: string, language: string): QueryPlan;
+}
+
+export class QueryPlanRegistry {
+  constructor();
+  register(language: string, frontend: QueryFrontend): QueryPlanRegistry;
+  isRegistered(language: string): boolean;
+  is_registered(language: string): boolean;
+  lower(source: string, language: string): QueryPlan;
+}
+
+export function lowerSql(source: string, language: string): QueryPlan;
+export const lower_sql: typeof lowerSql;
 
 // --- query algebra (link rules) ---
 
