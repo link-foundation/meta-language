@@ -62,6 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.57.0] - 2026-08-02
+
+### Added
+- Add a shared executable query-plan IR and registry-driven GraphQL semantic adapter in Rust and JavaScript, with fail-closed mappings, source/CST provenance, and parity fixtures.
+
 ## [0.56.0] - 2026-08-01
 
 ### Added
