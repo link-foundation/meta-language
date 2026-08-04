@@ -1529,7 +1529,7 @@ dependencies = [
 
 [[package]]
 name = "meta-language"
-version = "0.58.0"
+version = "0.58.1"
 dependencies = [
  "abnf",
  "bnf",

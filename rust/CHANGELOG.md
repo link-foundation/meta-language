@@ -64,6 +64,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.58.1] - 2026-08-04
+
+### Fixed
+- Restored npm publishing: the placeholder `_authToken` that `actions/setup-node` writes made npm skip the OIDC trusted-publishing exchange, so every release since 0.55.0 failed with a misleading `E404`. The publish job now sanitizes the npm user config, supports an optional `NPM_TOKEN` bootstrap, and fails with actionable guidance when no credential is available.
+
 ## [0.58.0] - 2026-08-02
 
 ### Added
