@@ -108,6 +108,23 @@ jobs:
           npm install -g npm@11
           npm --version
 
+      # actions/setup-node writes `_authToken=${NODE_AUTH_TOKEN}` and exports the
+      # placeholder `XXXXX-XXXXX-XXXXX-XXXXX` whenever no token is supplied. npm
+      # then skips the OIDC exchange and the registry rejects the anonymous PUT
+      # with a misleading `E404`. Strip that placeholder so trusted publishing is
+      # actually attempted; keep it when a real NPM_TOKEN bootstrap secret exists.
+      # See actions/setup-node#1551 and issue #191.
+      - name: Prepare npm authentication
+        id: npm_auth
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PACKAGE_NAME: meta-language
+          PUBLISH_WORKFLOW_FILE: .github/workflows/js.yml
+          # Set to '1' (or add --verbose) to trace npm credential resolution.
+          NPM_AUTH_DEBUG: ${{ vars.NPM_AUTH_DEBUG }}
+        run: node scripts/prepare-npm-auth.mjs
+        working-directory: js
+
       - name: Read package metadata
         id: package
         working-directory: js
@@ -157,8 +174,26 @@ jobs:
 
       - name: Publish to npm
         if: steps.npm.outputs.already_published != 'true'
+        # Optional NPM_TOKEN bootstrap fallback. OIDC trusted publishing is the
+        # steady-state mechanism; the token path only matters until a trusted
+        # publisher is configured for the package on npmjs.com.
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance
         working-directory: js
+
+      - name: Explain npm publish failure
+        if: failure() && steps.npm.outputs.already_published != 'true'
+        env:
+          AUTH_MODE: ${{ steps.npm_auth.outputs.auth_mode }}
+        run: |
+          echo "::error::npm publish failed with auth mode '$AUTH_MODE'."
+          if [ "$AUTH_MODE" = "oidc" ]; then
+            echo "An E404 on PUT https://registry.npmjs.org/meta-language means the registry"
+            echo "treated the request as anonymous. Confirm that meta-language has a trusted"
+            echo "publisher on npmjs.com pointing at ${{ github.repository }} and workflow file"
+            echo ".github/workflows/js.yml, or set an NPM_TOKEN secret to bootstrap the publish."
+          fi
 
       - name: Verify published package
         if: steps.npm.outputs.already_published != 'true'

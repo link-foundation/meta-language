@@ -71,3 +71,6 @@ logs/
 /ci-logs/
 !docs/case-studies/issue-177/ci-logs/
 !docs/case-studies/issue-177/ci-logs/*.log
+# Reference template repositories cloned for comparison are not vendored
+dev/log/issues/*/pulls/*/templates/
+!dev/log/issues/**/*.log

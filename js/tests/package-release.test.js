@@ -50,7 +50,13 @@ test('JavaScript workflow publishes to npm with trusted publishing provenance', 
   assert.match(workflow, /working-directory:\s+js/);
   assert.match(workflow, /npm publish --provenance/);
   assert.match(workflow, /npm view "meta-language@\$PACKAGE_VERSION" version >\/dev\/null 2>&1/);
-  assert.doesNotMatch(workflow, /NODE_AUTH_TOKEN/);
+  // OIDC trusted publishing is the steady-state mechanism, so the only
+  // NODE_AUTH_TOKEN in the workflow is the optional NPM_TOKEN bootstrap
+  // fallback, and the placeholder credential setup-node writes must be
+  // stripped before publishing (issue #191, actions/setup-node#1551).
+  assert.match(workflow, /node scripts\/prepare-npm-auth\.mjs/);
+  assert.equal(workflow.match(/^\s*NODE_AUTH_TOKEN:/gm).length, 1);
+  assert.match(workflow, /NODE_AUTH_TOKEN:\s+\$\{\{\s*secrets\.NPM_TOKEN\s*\}\}/);
   assert.match(workflow, /permissions:\s*\n\s+contents:\s+read/);
   assert.doesNotMatch(workflow.split('\njobs:\n')[0], /\nconcurrency:\n/);
 
