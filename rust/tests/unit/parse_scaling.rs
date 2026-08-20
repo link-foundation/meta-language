@@ -3,17 +3,19 @@
 //! Every built-in parser must stay near-linear in input size. A parser that
 //! resolves byte offsets to `(row, column)` points by rescanning the source
 //! turns a parse into `O(nodes * bytes)`, which is quadratic in file size and
-//! made a 39 KB module take over ten seconds (issue #193).
+//! made a 39 KB module take over ten seconds (issue #193). Re-identifying the
+//! links of an incremental edit by searching the previous network for every
+//! reparsed link is quadratic in the same way.
 //!
-//! The guard below parses the same generated source at two sizes and compares
-//! the cost per byte. A linear parser keeps that column flat; a quadratic one
-//! multiplies it by the size ratio, so the threshold sits far below the
+//! The guards below run the same generated source at two sizes and compare the
+//! cost per byte. A linear implementation keeps that column flat; a quadratic
+//! one multiplies it by the size ratio, so the threshold sits far below the
 //! quadratic signal and far above ordinary measurement noise.
 
 use std::time::Duration;
 use std::time::Instant;
 
-use meta_language::{LinkNetwork, ParseConfiguration};
+use meta_language::{ByteRange, LinkNetwork, ParseConfiguration};
 
 /// Ratio between the large and the small input.
 const SIZE_RATIO: usize = 8;
@@ -143,6 +145,22 @@ fn source_for(case: &ScalingCase, units: usize) -> String {
     }
 }
 
+/// Languages the incremental guard covers.
+///
+/// One case per parser family is enough — every language shares the one
+/// identifier-matching path — and an edit costs a parse plus the match, so the
+/// list stays short to keep the suite fast.
+const EDIT_CASES: &[ScalingCase] = &[
+    ScalingCase {
+        language: "rust",
+        unit: rust_unit,
+    },
+    ScalingCase {
+        language: "json",
+        unit: json_unit,
+    },
+];
+
 fn parse_duration(source: &str, language: &str) -> Duration {
     let started = Instant::now();
     let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
@@ -155,14 +173,28 @@ fn parse_duration(source: &str, language: &str) -> Duration {
     elapsed
 }
 
+/// Time one edit appended to the end of the source.
+///
+/// Appending shifts no existing span, so every link of the previous network is
+/// a candidate to keep its identifier and the match does its full work.
+fn edit_duration(source: &str, language: &str) -> Duration {
+    let mut network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+    let at = source.len();
+    let started = Instant::now();
+    let applied = network.apply_edit(ByteRange::new(at, at), "\n");
+    let elapsed = started.elapsed();
+    assert!(applied, "{language} edit must apply");
+    elapsed
+}
+
 /// Fastest observed nanoseconds spent per source byte.
 ///
 /// The casts only lose precision past 2^53 nanoseconds — about 104 days — and
 /// past 2^53 source bytes, neither of which a test input reaches.
 #[allow(clippy::cast_precision_loss)]
-fn nanos_per_byte(source: &str, language: &str) -> f64 {
+fn nanos_per_byte(source: &str, language: &str, work: fn(&str, &str) -> Duration) -> f64 {
     let best = (0..SAMPLES)
-        .map(|_| parse_duration(source, language))
+        .map(|_| work(source, language))
         .min()
         .expect("at least one timing sample");
     best.as_nanos() as f64 / source.len() as f64
@@ -193,11 +225,11 @@ impl Measurement {
     }
 }
 
-fn measure(case: &ScalingCase) -> Measurement {
+fn measure(case: &ScalingCase, work: fn(&str, &str) -> Duration) -> Measurement {
     let small = source_for(case, SMALL_UNITS);
     let large = source_for(case, SMALL_UNITS * SIZE_RATIO);
-    let small_per_byte = nanos_per_byte(&small, case.language);
-    let large_per_byte = nanos_per_byte(&large, case.language);
+    let small_per_byte = nanos_per_byte(&small, case.language, work);
+    let large_per_byte = nanos_per_byte(&large, case.language, work);
     Measurement {
         small_bytes: small.len(),
         large_bytes: large.len(),
@@ -206,22 +238,35 @@ fn measure(case: &ScalingCase) -> Measurement {
     }
 }
 
-/// Parsing must stay near-linear: no parser may reintroduce a per-node rescan
-/// of the whole source (issue #193).
-#[test]
-fn parsers_scale_linearly_with_input_size() {
-    for case in CASES {
+/// Asserts that `work` costs no more per byte on the large input than on the
+/// small one, retrying to ride out a scheduling hiccup.
+fn assert_scales_linearly(cases: &[ScalingCase], work: fn(&str, &str) -> Duration, subject: &str) {
+    for case in cases {
         let mut reports = Vec::new();
         let passed = (0..ATTEMPTS).any(|_| {
-            let measurement = measure(case);
+            let measurement = measure(case, work);
             reports.push(measurement.report(case.language));
             measurement.growth() <= MAX_PER_BYTE_GROWTH
         });
         assert!(
             passed,
-            "per-byte parse cost grew more than {MAX_PER_BYTE_GROWTH:.1}x when the input grew \
-             {SIZE_RATIO}x, which is the signature of a super-linear parse:\n  {}",
+            "per-byte {subject} cost grew more than {MAX_PER_BYTE_GROWTH:.1}x when the input grew \
+             {SIZE_RATIO}x, which is the signature of super-linear {subject}:\n  {}",
             reports.join("\n  ")
         );
     }
+}
+
+/// Parsing must stay near-linear: no parser may reintroduce a per-node rescan
+/// of the whole source (issue #193).
+#[test]
+fn parsers_scale_linearly_with_input_size() {
+    assert_scales_linearly(CASES, parse_duration, "parse");
+}
+
+/// Applying an edit must stay near-linear: re-identifying the reparsed links
+/// may not reintroduce a search over the whole previous network (issue #193).
+#[test]
+fn incremental_edits_scale_linearly_with_network_size() {
+    assert_scales_linearly(EDIT_CASES, edit_duration, "edit");
 }
