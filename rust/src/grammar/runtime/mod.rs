@@ -10,9 +10,10 @@ use std::sync::Arc;
 
 use crate::grammar::inference::eval::MembershipOracle;
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr};
+use crate::line_index::LineIndex;
 use crate::{
     ByteRange, LanguageParser, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType,
-    ParseConfiguration, ParserRegistry, Point, SourceSpan,
+    ParseConfiguration, ParserRegistry, SourceSpan,
 };
 
 const EXPR_EMPTY: &str = "grammar::runtime::expr::empty";
@@ -98,8 +99,10 @@ impl GrammarParser {
     ) -> Option<LinkNetwork> {
         let tree = self.parse_full(text)?;
         let (mut network, document) = LinkNetwork::new_parse_document(text, language);
+        let lines = LineIndex::new(text);
         let context = EmitContext {
             text,
+            lines: &lines,
             language,
             configuration,
         };
@@ -497,6 +500,7 @@ impl ParseNode {
 #[derive(Clone, Copy, Debug)]
 struct EmitContext<'source> {
     text: &'source str,
+    lines: &'source LineIndex,
     language: &'source str,
     configuration: ParseConfiguration,
 }
@@ -507,7 +511,7 @@ fn emit_parse_node(
     node: &ParseNode,
     context: EmitContext<'_>,
 ) -> LinkId {
-    let span = span_for_range(context.text, node.start, node.end);
+    let span = span_for_range(context.lines, node.start, node.end);
     let node_id = network.insert_link(
         [owner],
         LinkMetadata::new()
@@ -538,7 +542,7 @@ fn emit_token(
     context: EmitContext<'_>,
 ) -> LinkId {
     let text = &context.text[start..end];
-    let span = span_for_range(context.text, start, end);
+    let span = span_for_range(context.lines, start, end);
     let flags = if text.chars().all(char::is_whitespace) {
         LinkFlags::extra()
     } else {
@@ -567,24 +571,12 @@ fn emit_token(
     token
 }
 
-fn span_for_range(text: &str, start: usize, end: usize) -> SourceSpan {
+fn span_for_range(lines: &LineIndex, start: usize, end: usize) -> SourceSpan {
     SourceSpan::new(
         ByteRange::new(start, end),
-        point_at_byte(text, start),
-        point_at_byte(text, end),
+        lines.byte_point(start),
+        lines.byte_point(end),
     )
-}
-
-fn point_at_byte(text: &str, byte: usize) -> Point {
-    let mut row = 0;
-    let mut line_start = 0;
-    for (index, value) in text.bytes().enumerate().take(byte) {
-        if value == b'\n' {
-            row += 1;
-            line_start = index + 1;
-        }
-    }
-    Point::new(row, byte - line_start)
 }
 
 fn starts_with_ascii_insensitive(text: &str, value: &str) -> bool {

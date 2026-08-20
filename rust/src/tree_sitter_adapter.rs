@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use tree_sitter::{InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Tree};
 
+use crate::line_index::LineIndex;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point,
     SourceSpan,
@@ -47,8 +48,10 @@ fn network_from_tree(
 ) -> LinkNetwork {
     let (mut network, document) = LinkNetwork::new_parse_document(text, language);
     let root = parsed.root_node();
+    let lines = LineIndex::new(text);
     let context = ConvertContext::new(
         text,
+        &lines,
         language,
         configuration,
         SpanOffset::zero(),
@@ -76,8 +79,9 @@ fn apply_text_edit(old_text: &str, range: ByteRange, replacement: &str) -> Optio
 }
 
 fn input_edit(old_text: &str, range: ByteRange, replacement: &str) -> InputEdit {
-    let start_position = point_at_byte(old_text, range.start());
-    let old_end_position = point_at_byte(old_text, range.end());
+    let lines = LineIndex::new(old_text);
+    let start_position = lines.byte_point(range.start());
+    let old_end_position = lines.byte_point(range.end());
     let new_end_position = point_after_text(start_position, replacement);
 
     InputEdit {
@@ -122,8 +126,10 @@ pub fn parse_embedded_region_into(
     parser.set_language(&grammar).ok()?;
     let parsed = parser.parse(parse_text.as_ref(), None)?;
     let root = parsed.root_node();
+    let lines = LineIndex::new(parse_text.as_ref());
     let context = ConvertContext::new(
         parse_text.as_ref(),
+        &lines,
         language,
         configuration,
         SpanOffset::new(span.byte_range().start(), span.start_point()),
@@ -238,7 +244,7 @@ fn convert_node(
             .with_language(context.language)
             .with_span(span_for_node(
                 node,
-                context.text,
+                context.lines,
                 context.source_len,
                 context.offset,
             ))
@@ -285,7 +291,7 @@ fn insert_leaf_token(
         return;
     }
 
-    let span = span_for_range(context.text, start, end, context.offset);
+    let span = span_for_range(context.lines, start, end, context.offset);
     let flags = flags_for_node(node);
     let token = network.insert_link(
         [owner],
@@ -321,7 +327,7 @@ fn insert_gap_token(
         return;
     }
 
-    let span = span_for_range(context.text, start, end, context.offset);
+    let span = span_for_range(context.lines, start, end, context.offset);
     let token = network.insert_link(
         [owner],
         LinkMetadata::new()
@@ -357,30 +363,23 @@ fn flags_for_node(node: Node<'_>) -> LinkFlags {
     flags
 }
 
-fn span_for_node(node: Node<'_>, text: &str, source_len: usize, offset: SpanOffset) -> SourceSpan {
+fn span_for_node(
+    node: Node<'_>,
+    lines: &LineIndex,
+    source_len: usize,
+    offset: SpanOffset,
+) -> SourceSpan {
     let start = node.start_byte().min(source_len);
     let end = node.end_byte().min(source_len);
-    span_for_range(text, start, end, offset)
+    span_for_range(lines, start, end, offset)
 }
 
-fn span_for_range(text: &str, start: usize, end: usize, offset: SpanOffset) -> SourceSpan {
+fn span_for_range(lines: &LineIndex, start: usize, end: usize, offset: SpanOffset) -> SourceSpan {
     SourceSpan::new(
         ByteRange::new(offset.byte + start, offset.byte + end),
-        offset.point(point_at_byte(text, start)),
-        offset.point(point_at_byte(text, end)),
+        offset.point(lines.byte_point(start)),
+        offset.point(lines.byte_point(end)),
     )
-}
-
-fn point_at_byte(text: &str, byte: usize) -> Point {
-    let mut row = 0;
-    let mut line_start = 0;
-    for (index, value) in text.bytes().enumerate().take(byte) {
-        if value == b'\n' {
-            row += 1;
-            line_start = index + 1;
-        }
-    }
-    Point::new(row, byte - line_start)
 }
 
 fn embedded_parse_text<'a>(text: &'a str, language: &str) -> Cow<'a, str> {
@@ -428,6 +427,7 @@ impl SpanOffset {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct ConvertContext<'a> {
     text: &'a str,
+    lines: &'a LineIndex,
     language: &'a str,
     configuration: ParseConfiguration,
     offset: SpanOffset,
@@ -437,6 +437,7 @@ struct ConvertContext<'a> {
 impl<'a> ConvertContext<'a> {
     const fn new(
         text: &'a str,
+        lines: &'a LineIndex,
         language: &'a str,
         configuration: ParseConfiguration,
         offset: SpanOffset,
@@ -444,6 +445,7 @@ impl<'a> ConvertContext<'a> {
     ) -> Self {
         Self {
             text,
+            lines,
             language,
             configuration,
             offset,

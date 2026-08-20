@@ -1,25 +1,34 @@
+use crate::line_index::LineIndex;
 use crate::{
-    ByteRange, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point, SourceSpan,
+    ByteRange, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, SourceSpan,
 };
 
 pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
     let mut network = LinkNetwork::parse_lossless_text(text, language, configuration);
-    Parser::new(&mut network, text, language).parse_document();
+    let lines = LineIndex::new(text);
+    Parser::new(&mut network, text, &lines, language).parse_document();
     network
 }
 
 struct Parser<'a> {
     network: &'a mut LinkNetwork,
     text: &'a str,
+    lines: &'a LineIndex,
     language: &'a str,
     cursor: usize,
 }
 
 impl<'a> Parser<'a> {
-    const fn new(network: &'a mut LinkNetwork, text: &'a str, language: &'a str) -> Self {
+    const fn new(
+        network: &'a mut LinkNetwork,
+        text: &'a str,
+        lines: &'a LineIndex,
+        language: &'a str,
+    ) -> Self {
         Self {
             network,
             text,
+            lines,
             language,
             cursor: 0,
         }
@@ -56,8 +65,14 @@ impl<'a> Parser<'a> {
             return;
         }
 
-        let references =
-            parse_line_references(self.network, self.text, self.language, line_start, line_end);
+        let references = parse_line_references(
+            self.network,
+            self.text,
+            self.lines,
+            self.language,
+            line_start,
+            line_end,
+        );
         if references.len() > 1 {
             self.insert_relation(&references, None, line_start, line_end);
         }
@@ -80,6 +95,7 @@ impl<'a> Parser<'a> {
             references.extend(parse_line_references(
                 self.network,
                 self.text,
+                self.lines,
                 self.language,
                 child_start,
                 child_end,
@@ -241,8 +257,8 @@ impl<'a> Parser<'a> {
     fn span(&self, start: usize, end: usize) -> SourceSpan {
         SourceSpan::new(
             ByteRange::new(start, end),
-            point_at_byte(self.text, start),
-            point_at_byte(self.text, end),
+            self.lines.byte_point(start),
+            self.lines.byte_point(end),
         )
     }
 }
@@ -250,11 +266,12 @@ impl<'a> Parser<'a> {
 fn parse_line_references(
     network: &mut LinkNetwork,
     text: &str,
+    lines: &LineIndex,
     language: &str,
     start: usize,
     end: usize,
 ) -> Vec<LinkId> {
-    let mut parser = Parser::new(network, text, language);
+    let mut parser = Parser::new(network, text, lines, language);
     parser.cursor = start;
     let mut references = Vec::new();
 
@@ -275,16 +292,4 @@ fn parse_line_references(
     }
 
     references
-}
-
-fn point_at_byte(text: &str, byte: usize) -> Point {
-    let mut row = 0;
-    let mut line_start = 0;
-    for (index, value) in text.bytes().enumerate().take(byte) {
-        if value == b'\n' {
-            row += 1;
-            line_start = index + 1;
-        }
-    }
-    Point::new(row, byte - line_start)
 }
