@@ -14,6 +14,7 @@ mod incremental;
 mod language_fixtures;
 pub mod language_parser;
 pub mod language_profile;
+mod line_index;
 pub mod link_flags;
 pub mod link_network;
 mod lino_parser;

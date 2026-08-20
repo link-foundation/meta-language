@@ -1,3 +1,4 @@
+use crate::line_index::LineIndex;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point,
     SourceSpan,
@@ -55,8 +56,10 @@ fn parse_into(
     offset: SpanOffset,
     configuration: ParseConfiguration,
 ) -> LinkId {
+    let lines = LineIndex::new(text);
     let context = ParseContext {
         text,
+        lines: &lines,
         language,
         offset,
         configuration,
@@ -511,7 +514,7 @@ fn insert_syntax(
             .with_named(true)
             .with_term(term)
             .with_language(context.language)
-            .with_span(span_for_range(context.text, range, context.offset))
+            .with_span(span_for_range(context.lines, range, context.offset))
             .with_flags(flags),
     )
 }
@@ -532,7 +535,7 @@ fn insert_token_if_non_empty(
         network.attach_trivia(
             owner,
             token,
-            span_for_range(context.text, range, context.offset),
+            span_for_range(context.lines, range, context.offset),
             context.configuration.trivia_attachment_policy(),
         );
     }
@@ -553,29 +556,17 @@ fn insert_token(
             .with_named(named)
             .with_term(&context.text[range.start()..range.end()])
             .with_language(context.language)
-            .with_span(span_for_range(context.text, range, context.offset))
+            .with_span(span_for_range(context.lines, range, context.offset))
             .with_flags(flags),
     )
 }
 
-fn span_for_range(text: &str, range: ByteRange, offset: SpanOffset) -> SourceSpan {
+fn span_for_range(lines: &LineIndex, range: ByteRange, offset: SpanOffset) -> SourceSpan {
     SourceSpan::new(
         ByteRange::new(offset.byte + range.start(), offset.byte + range.end()),
-        offset.point(point_at_byte(text, range.start())),
-        offset.point(point_at_byte(text, range.end())),
+        offset.point(lines.byte_point(range.start())),
+        offset.point(lines.byte_point(range.end())),
     )
-}
-
-fn point_at_byte(text: &str, byte: usize) -> Point {
-    let mut row = 0;
-    let mut line_start = 0;
-    for (index, value) in text.bytes().enumerate().take(byte) {
-        if value == b'\n' {
-            row += 1;
-            line_start = index + 1;
-        }
-    }
-    Point::new(row, byte - line_start)
 }
 
 fn next_char(text: &str, index: usize) -> char {
@@ -609,6 +600,7 @@ enum CsvElementKind {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct ParseContext<'source> {
     text: &'source str,
+    lines: &'source LineIndex,
     language: &'source str,
     offset: SpanOffset,
     configuration: ParseConfiguration,

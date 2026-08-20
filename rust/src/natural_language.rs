@@ -17,9 +17,10 @@ use unicode_normalization::UnicodeNormalization;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::configuration::{LanguageIdentificationDetector, ParseConfiguration};
+use crate::line_index::LineIndex;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::natural_language_grammar::annotate_morphosyntax;
-use crate::source::{ByteRange, Point, SourceSpan};
+use crate::source::{ByteRange, SourceSpan};
 
 const LINGUA_LANGUAGES: [Language; 10] = [
     English, Chinese, Hindi, Spanish, Arabic, French, Bengali, Portuguese, Russian, Urdu,
@@ -42,7 +43,8 @@ pub fn annotate_natural_language(
         return;
     };
 
-    let document_span = span_for_range(text, 0, text.len());
+    let lines = LineIndex::new(text);
+    let document_span = span_for_range(&lines, 0, text.len());
     let detected_language =
         identify_language(text, configuration.language_identification_detector())
             .unwrap_or(declared_language);
@@ -99,14 +101,21 @@ pub fn annotate_natural_language(
                 .with_term(segment.text)
                 .with_language(detected_language)
                 .with_span(span_for_range(
-                    text,
+                    &lines,
                     segment.range.start(),
                     segment.range.end(),
                 )),
         );
     }
 
-    annotate_morphosyntax(network, region, text, declared_language, document_span);
+    annotate_morphosyntax(
+        network,
+        region,
+        text,
+        &lines,
+        declared_language,
+        document_span,
+    );
     insert_unicode_annotations(
         network,
         region,
@@ -348,29 +357,10 @@ fn bidi_direction(text: &str) -> &'static str {
     }
 }
 
-fn span_for_range(text: &str, start: usize, end: usize) -> SourceSpan {
+fn span_for_range(lines: &LineIndex, start: usize, end: usize) -> SourceSpan {
     SourceSpan::new(
         ByteRange::new(start, end),
-        point_at_byte(text, start),
-        point_at_byte(text, end),
+        lines.char_point(start),
+        lines.char_point(end),
     )
-}
-
-fn point_at_byte(text: &str, byte: usize) -> Point {
-    let mut row = 0;
-    let mut column = 0;
-
-    for (index, character) in text.char_indices() {
-        if index >= byte {
-            break;
-        }
-        if character == '\n' {
-            row += 1;
-            column = 0;
-        } else {
-            column += 1;
-        }
-    }
-
-    Point::new(row, column)
 }

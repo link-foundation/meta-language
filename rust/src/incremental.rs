@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::sync::Arc;
 
 use crate::{
@@ -130,43 +130,195 @@ fn stable_id_map(
     reparsed: &LinkNetwork,
     edit: AppliedEdit,
 ) -> BTreeMap<LinkId, LinkId> {
-    let old_links = old.links().collect::<Vec<_>>();
+    let mut old_links = OldLinkIndex::new(old, edit);
     let mut mapped = BTreeMap::new();
-    let mut used_old = BTreeSet::new();
 
     for new_link in reparsed.links() {
-        let Some(old_link) = old_links.iter().find(|old_link| {
-            !used_old.contains(&old_link.id())
-                && stable_span_or_point_match(old_link, new_link, edit)
-        }) else {
-            continue;
+        let key = MatchKey::of(new_link.metadata());
+        let matched = match new_link.metadata().span() {
+            Some(span) => old_links.take_spanned(key, span.byte_range()),
+            None => old_links.take_unspanned(key, new_link),
         };
-        mapped.insert(new_link.id(), old_link.id());
-        used_old.insert(old_link.id());
+        if let Some(old_id) = matched {
+            mapped.insert(new_link.id(), old_id);
+        }
     }
 
-    loop {
-        let mut added = false;
-        for new_link in reparsed.links() {
-            if mapped.contains_key(&new_link.id()) || new_link.metadata().span().is_some() {
-                continue;
+    // A link without a span is recognized by the identifiers it references, so
+    // it can only be matched once everything it references has been. Repeat
+    // until a round maps nothing new.
+    let mut pending = reparsed
+        .links()
+        .filter(|link| link.metadata().span().is_none() && !mapped.contains_key(&link.id()))
+        .collect::<Vec<_>>();
+    while !pending.is_empty() {
+        let remaining = pending.len();
+        let mut unmatched = Vec::with_capacity(remaining);
+        for new_link in pending {
+            let matched = new_link
+                .references()
+                .iter()
+                .map(|reference| mapped.get(reference).copied())
+                .collect::<Option<Vec<_>>>()
+                .and_then(|references| {
+                    old_links.take_referencing(MatchKey::of(new_link.metadata()), references)
+                });
+            match matched {
+                Some(old_id) => {
+                    mapped.insert(new_link.id(), old_id);
+                }
+                None => unmatched.push(new_link),
             }
-            let Some(old_link) = old_links.iter().find(|old_link| {
-                !used_old.contains(&old_link.id())
-                    && stable_reference_match(old_link, new_link, &mapped)
-            }) else {
-                continue;
-            };
-            mapped.insert(new_link.id(), old_link.id());
-            used_old.insert(old_link.id());
-            added = true;
         }
-        if !added {
+        if unmatched.len() == remaining {
             break;
         }
+        pending = unmatched;
     }
 
     mapped
+}
+
+/// Metadata two links must share to keep one identifier, shaped as a map key so
+/// that candidates can be looked up instead of searched for.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct MatchKey<'a> {
+    link_type: Option<LinkType>,
+    named: bool,
+    term: Option<&'a str>,
+    definition: Option<&'a str>,
+    language: Option<&'a str>,
+    /// Parse flags spelled out as booleans, because `LinkFlags` carries no
+    /// ordering of its own.
+    flags: (bool, bool, bool, bool),
+}
+
+impl<'a> MatchKey<'a> {
+    fn of(metadata: &'a LinkMetadata) -> Self {
+        let flags = metadata.flags();
+        Self {
+            link_type: metadata.link_type(),
+            named: metadata.is_named(),
+            term: metadata.term(),
+            definition: metadata.definition(),
+            language: metadata.language(),
+            flags: (
+                flags.is_error(),
+                flags.has_error(),
+                flags.is_missing(),
+                flags.is_extra(),
+            ),
+        }
+    }
+}
+
+/// Identifiers of the previous network's links, grouped by everything a match
+/// requires.
+///
+/// Reparsing produces about as many links as the previous parse held, so
+/// searching every old link for every new one costs `O(old * new)` and made a
+/// 15 KB edit take twenty seconds (issue #193). Every group keeps its links in
+/// ascending identifier order and hands them out from the front, which is the
+/// link a search over `old.links()` would have stopped at first.
+struct OldLinkIndex<'a> {
+    /// Links carrying a span, keyed by the span the edit moves them to.
+    spanned: BTreeMap<(MatchKey<'a>, usize, usize), VecDeque<LinkId>>,
+    /// Links carrying no span, keyed by the identifiers they reference.
+    referencing: BTreeMap<(MatchKey<'a>, Vec<LinkId>), VecDeque<LinkId>>,
+    /// Links carrying no span that reference themselves and nothing else.
+    self_referencing: BTreeMap<MatchKey<'a>, VecDeque<LinkId>>,
+    /// Links already handed out, which every group skips.
+    used: BTreeSet<LinkId>,
+}
+
+impl<'a> OldLinkIndex<'a> {
+    fn new(old: &'a LinkNetwork, edit: AppliedEdit) -> Self {
+        let mut index = Self {
+            spanned: BTreeMap::new(),
+            referencing: BTreeMap::new(),
+            self_referencing: BTreeMap::new(),
+            used: BTreeSet::new(),
+        };
+
+        for link in old.links() {
+            let key = MatchKey::of(link.metadata());
+            if let Some(span) = link.metadata().span() {
+                // Links the edit overlaps cannot keep their identifier.
+                if let Some(range) = edit.adjusted_range(span.byte_range()) {
+                    index
+                        .spanned
+                        .entry((key, range.start(), range.end()))
+                        .or_default()
+                        .push_back(link.id());
+                }
+                continue;
+            }
+
+            index
+                .referencing
+                .entry((key, link.references().to_vec()))
+                .or_default()
+                .push_back(link.id());
+            if is_self_reference(link) {
+                index
+                    .self_referencing
+                    .entry(key)
+                    .or_default()
+                    .push_back(link.id());
+            }
+        }
+
+        index
+    }
+
+    /// Identifier of an unused old link whose shifted span is `range`.
+    fn take_spanned(&mut self, key: MatchKey<'a>, range: ByteRange) -> Option<LinkId> {
+        let matched = Self::front(
+            self.spanned.get_mut(&(key, range.start(), range.end())),
+            &self.used,
+        )?;
+        self.used.insert(matched);
+        Some(matched)
+    }
+
+    /// Identifier of an unused old link that carries no span and either
+    /// references exactly what `new_link` references or, when `new_link`
+    /// references only itself, references only itself as well.
+    fn take_unspanned(&mut self, key: MatchKey<'a>, new_link: &Link) -> Option<LinkId> {
+        let by_references = Self::front(
+            self.referencing
+                .get_mut(&(key, new_link.references().to_vec())),
+            &self.used,
+        );
+        let by_self_reference = if is_self_reference(new_link) {
+            Self::front(self.self_referencing.get_mut(&key), &self.used)
+        } else {
+            None
+        };
+
+        // A search over `old.links()` would have stopped at whichever of the
+        // two candidates was inserted first, which is the smaller identifier.
+        let matched = by_references.into_iter().chain(by_self_reference).min()?;
+        self.used.insert(matched);
+        Some(matched)
+    }
+
+    /// Identifier of an unused old link that carries no span and references
+    /// exactly `references`.
+    fn take_referencing(&mut self, key: MatchKey<'a>, references: Vec<LinkId>) -> Option<LinkId> {
+        let matched = Self::front(self.referencing.get_mut(&(key, references)), &self.used)?;
+        self.used.insert(matched);
+        Some(matched)
+    }
+
+    /// First unused identifier in `group`, dropping the used ones it skips.
+    fn front(group: Option<&mut VecDeque<LinkId>>, used: &BTreeSet<LinkId>) -> Option<LinkId> {
+        let group = group?;
+        while group.front().is_some_and(|id| used.contains(id)) {
+            group.pop_front();
+        }
+        group.front().copied()
+    }
 }
 
 fn apply_text_edit(old_text: &str, range: ByteRange, replacement: &str) -> Option<String> {
@@ -193,47 +345,6 @@ fn next_unused_id(next_id: &mut u64, used_targets: &BTreeSet<LinkId>) -> LinkId 
             return candidate;
         }
     }
-}
-
-fn stable_span_or_point_match(old: &Link, new: &Link, edit: AppliedEdit) -> bool {
-    if !metadata_without_span_eq(old.metadata(), new.metadata()) {
-        return false;
-    }
-
-    match (old.metadata().span(), new.metadata().span()) {
-        (Some(old_span), Some(new_span)) => edit
-            .adjusted_range(old_span.byte_range())
-            .is_some_and(|range| range == new_span.byte_range()),
-        (None, None) => {
-            old.references() == new.references()
-                || (is_self_reference(old) && is_self_reference(new))
-        }
-        _ => false,
-    }
-}
-
-fn stable_reference_match(old: &Link, new: &Link, stable_map: &BTreeMap<LinkId, LinkId>) -> bool {
-    if old.metadata().span().is_some()
-        || new.metadata().span().is_some()
-        || !metadata_without_span_eq(old.metadata(), new.metadata())
-        || old.references().len() != new.references().len()
-    {
-        return false;
-    }
-
-    new.references()
-        .iter()
-        .zip(old.references())
-        .all(|(new_reference, old_reference)| stable_map.get(new_reference) == Some(old_reference))
-}
-
-fn metadata_without_span_eq(old: &LinkMetadata, new: &LinkMetadata) -> bool {
-    old.link_type() == new.link_type()
-        && old.is_named() == new.is_named()
-        && old.term() == new.term()
-        && old.definition() == new.definition()
-        && old.language() == new.language()
-        && old.flags() == new.flags()
 }
 
 fn is_self_reference(link: &Link) -> bool {

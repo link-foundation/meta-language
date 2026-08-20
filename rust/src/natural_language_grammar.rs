@@ -1,6 +1,7 @@
+use crate::line_index::LineIndex;
 use crate::link_flags::LinkFlags;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
-use crate::source::{ByteRange, Point, SourceSpan};
+use crate::source::{ByteRange, SourceSpan};
 
 /// Starter pass/fail grammar fixture for one natural-language target.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -514,6 +515,7 @@ pub fn annotate_morphosyntax(
     network: &mut LinkNetwork,
     region: LinkId,
     text: &str,
+    lines: &LineIndex,
     language: &str,
     span: SourceSpan,
 ) {
@@ -545,7 +547,7 @@ pub fn annotate_morphosyntax(
     );
 
     for token in &grammar_tokens {
-        let token_span = span_for_range(text, token.range.start(), token.range.end());
+        let token_span = span_for_range(lines, token.range.start(), token.range.end());
         let form = network.insert_link(
             [sentence],
             LinkMetadata::new()
@@ -753,29 +755,10 @@ const fn is_sentence_punctuation(character: char) -> bool {
     )
 }
 
-fn span_for_range(text: &str, start: usize, end: usize) -> SourceSpan {
+fn span_for_range(lines: &LineIndex, start: usize, end: usize) -> SourceSpan {
     SourceSpan::new(
         ByteRange::new(start, end),
-        point_at_byte(text, start),
-        point_at_byte(text, end),
+        lines.char_point(start),
+        lines.char_point(end),
     )
-}
-
-fn point_at_byte(text: &str, byte: usize) -> Point {
-    let mut row = 0;
-    let mut column = 0;
-
-    for (index, character) in text.char_indices() {
-        if index >= byte {
-            break;
-        }
-        if character == '\n' {
-            row += 1;
-            column = 0;
-        } else {
-            column += 1;
-        }
-    }
-
-    Point::new(row, column)
 }

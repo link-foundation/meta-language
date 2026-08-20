@@ -6,13 +6,14 @@ mod registry;
 use std::collections::BTreeMap;
 
 use crate::configuration::ParseConfiguration;
+use crate::line_index::LineIndex;
 use crate::link_network::LinkNetwork;
 use crate::query_plan::{
     attach_plan_links, LoweredQueryPlan, QueryAggregate, QueryAggregateFunction,
     QueryComparisonOperator, QueryFilter, QueryOperation, QueryOrder, QueryPlan,
     QuerySortDirection, QuerySourceEvidence, QueryValue,
 };
-use crate::source::{ByteRange, Point, SourceSpan};
+use crate::source::{ByteRange, SourceSpan};
 
 use parser::{ByteSpan, Field, ValueKind, ValueNode};
 pub use registry::{
@@ -44,17 +45,18 @@ pub fn lower_graphql(
     }
     let mapping = registry.root(document.operation, &root.name)?;
     let mut plan = QueryPlan::new(mapping.operation, &mapping.resource);
+    let lines = LineIndex::new(source);
     plan.source_evidence
-        .push(evidence(source, "root", root.span));
-    lower_arguments(source, root, mapping, &mut plan)?;
-    lower_selection(source, root, mapping, &mut plan)?;
+        .push(evidence(&lines, "root", root.span));
+    lower_arguments(&lines, root, mapping, &mut plan)?;
+    lower_selection(&lines, root, mapping, &mut plan)?;
     validate_plan(&plan)?;
     let root_link = attach_plan_links(&mut network, &plan, "GraphQL");
     Ok(LoweredQueryPlan::new(plan, network, root_link))
 }
 
 fn lower_arguments(
-    source: &str,
+    lines: &LineIndex,
     root: &Field,
     mapping: &GraphQlRootMapping,
     plan: &mut QueryPlan,
@@ -84,7 +86,7 @@ fn lower_arguments(
             }
         }
         plan.source_evidence.push(evidence(
-            source,
+            lines,
             format!("argument:{}", role.as_str()),
             argument.value.span,
         ));
@@ -93,7 +95,7 @@ fn lower_arguments(
 }
 
 fn lower_selection(
-    source: &str,
+    lines: &LineIndex,
     root: &Field,
     mapping: &GraphQlRootMapping,
     plan: &mut QueryPlan,
@@ -124,7 +126,7 @@ fn lower_selection(
                 alias: field.alias.clone(),
             });
             plan.source_evidence.push(evidence(
-                source,
+                lines,
                 format!("aggregate:{}", function.as_str()),
                 field.span,
             ));
@@ -147,7 +149,7 @@ fn lower_selection(
             plan.projection.push(canonical.clone());
         }
         plan.source_evidence.push(evidence(
-            source,
+            lines,
             format!("projection:{canonical}"),
             field.span,
         ));
@@ -438,23 +440,14 @@ fn validate_plan(plan: &QueryPlan) -> Result<(), GraphQlAdapterError> {
     }
 }
 
-fn evidence(source: &str, role: impl Into<String>, span: ByteSpan) -> QuerySourceEvidence {
-    QuerySourceEvidence::new(role, source_span(source, span))
+fn evidence(lines: &LineIndex, role: impl Into<String>, span: ByteSpan) -> QuerySourceEvidence {
+    QuerySourceEvidence::new(role, source_span(lines, span))
 }
 
-fn source_span(source: &str, span: ByteSpan) -> SourceSpan {
+fn source_span(lines: &LineIndex, span: ByteSpan) -> SourceSpan {
     SourceSpan::new(
         ByteRange::new(span.start, span.end),
-        point_at(source, span.start),
-        point_at(source, span.end),
+        lines.byte_point(span.start),
+        lines.byte_point(span.end),
     )
-}
-
-fn point_at(source: &str, offset: usize) -> Point {
-    let prefix = &source[..offset];
-    let row = prefix.bytes().filter(|byte| *byte == b'\n').count();
-    let column = prefix
-        .rsplit_once('\n')
-        .map_or(prefix.len(), |(_, line)| line.len());
-    Point::new(row, column)
 }

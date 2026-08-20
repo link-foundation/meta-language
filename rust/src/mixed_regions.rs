@@ -1,5 +1,6 @@
 use crate::configuration::RegionDetectionPolicy;
-use crate::source::{ByteRange, Point, SourceSpan};
+use crate::line_index::LineIndex;
+use crate::source::{ByteRange, SourceSpan};
 
 const TXT_LANGUAGE: &str = "txt";
 
@@ -34,16 +35,22 @@ pub(crate) fn detect_embedded_regions(
     policy: RegionDetectionPolicy,
 ) -> Vec<EmbeddedRegion> {
     let mut regions = Vec::new();
+    let lines = LineIndex::new(text);
     match language.to_ascii_lowercase().as_str() {
-        TXT_LANGUAGE => regions.push(region_for(text, TXT_LANGUAGE.to_string(), 0, text.len())),
+        TXT_LANGUAGE => regions.push(region_for(&lines, TXT_LANGUAGE.to_string(), 0, text.len())),
         "markdown" => {
-            regions.extend(detect_markdown_fenced_regions(text, policy));
-            regions.extend(detect_markdown_html_regions(text));
+            regions.extend(detect_markdown_fenced_regions(text, &lines, policy));
+            regions.extend(detect_markdown_html_regions(text, &lines));
         }
         "html" => {
-            regions.extend(detect_html_element_regions(text, "script", "JavaScript"));
-            regions.extend(detect_html_element_regions(text, "style", "CSS"));
-            regions.extend(detect_html_style_attributes(text));
+            regions.extend(detect_html_element_regions(
+                text,
+                &lines,
+                "script",
+                "JavaScript",
+            ));
+            regions.extend(detect_html_element_regions(text, &lines, "style", "CSS"));
+            regions.extend(detect_html_style_attributes(text, &lines));
         }
         _ => {}
     }
@@ -52,6 +59,7 @@ pub(crate) fn detect_embedded_regions(
 
 fn detect_markdown_fenced_regions(
     text: &str,
+    lines: &LineIndex,
     policy: RegionDetectionPolicy,
 ) -> Vec<EmbeddedRegion> {
     let mut regions = Vec::new();
@@ -67,7 +75,7 @@ fn detect_markdown_fenced_regions(
                     &text[content_start..offset],
                     policy,
                 ) {
-                    regions.push(region_for(text, language, content_start, offset));
+                    regions.push(region_for(lines, language, content_start, offset));
                 }
             } else {
                 open_fence = Some((language_tag, content_start));
@@ -87,7 +95,7 @@ fn detect_markdown_fenced_regions(
         if let Some(language) =
             region_language_from_tag_or_content(&language_tag, &text[content_start..], policy)
         {
-            regions.push(region_for(text, language, content_start, text.len()));
+            regions.push(region_for(lines, language, content_start, text.len()));
         }
     }
 
@@ -116,7 +124,7 @@ fn region_language_from_tag_or_content(
     }
 }
 
-fn detect_markdown_html_regions(text: &str) -> Vec<EmbeddedRegion> {
+fn detect_markdown_html_regions(text: &str, lines: &LineIndex) -> Vec<EmbeddedRegion> {
     let mut regions = Vec::new();
     let mut search_start = 0;
 
@@ -152,14 +160,19 @@ fn detect_markdown_html_regions(text: &str) -> Vec<EmbeddedRegion> {
             .map_or(first_tag_end, |relative_end| {
                 first_tag_end + relative_end + closing_tag.len()
             });
-        regions.push(region_for(text, "HTML".to_string(), start, region_end));
+        regions.push(region_for(lines, "HTML".to_string(), start, region_end));
         search_start = region_end;
     }
 
     regions
 }
 
-fn detect_html_element_regions(text: &str, element: &str, language: &str) -> Vec<EmbeddedRegion> {
+fn detect_html_element_regions(
+    text: &str,
+    lines: &LineIndex,
+    element: &str,
+    language: &str,
+) -> Vec<EmbeddedRegion> {
     let mut regions = Vec::new();
     let lower = text.to_ascii_lowercase();
     let open = format!("<{element}");
@@ -177,7 +190,7 @@ fn detect_html_element_regions(text: &str, element: &str, language: &str) -> Vec
         };
         let content_end = content_start + close_relative;
         regions.push(region_for(
-            text,
+            lines,
             language.to_string(),
             content_start,
             content_end,
@@ -188,7 +201,7 @@ fn detect_html_element_regions(text: &str, element: &str, language: &str) -> Vec
     regions
 }
 
-fn detect_html_style_attributes(text: &str) -> Vec<EmbeddedRegion> {
+fn detect_html_style_attributes(text: &str, lines: &LineIndex) -> Vec<EmbeddedRegion> {
     let mut regions = Vec::new();
     let lower = text.to_ascii_lowercase();
     let mut search_start = 0;
@@ -199,7 +212,7 @@ fn detect_html_style_attributes(text: &str) -> Vec<EmbeddedRegion> {
             break;
         };
         let value_end = value_start + value_end_relative;
-        regions.push(region_for(text, "CSS".to_string(), value_start, value_end));
+        regions.push(region_for(lines, "CSS".to_string(), value_start, value_end));
         search_start = value_end + 1;
     }
 
@@ -228,32 +241,13 @@ fn sniff_language(content: &str) -> Option<&'static str> {
     }
 }
 
-fn region_for(text: &str, language: String, start: usize, end: usize) -> EmbeddedRegion {
+fn region_for(lines: &LineIndex, language: String, start: usize, end: usize) -> EmbeddedRegion {
     EmbeddedRegion::new(
         language,
         SourceSpan::new(
             ByteRange::new(start, end),
-            point_at_byte(text, start),
-            point_at_byte(text, end),
+            lines.char_point(start),
+            lines.char_point(end),
         ),
     )
-}
-
-fn point_at_byte(text: &str, byte: usize) -> Point {
-    let mut row = 0;
-    let mut column = 0;
-
-    for (index, character) in text.char_indices() {
-        if index >= byte {
-            break;
-        }
-        if character == '\n' {
-            row += 1;
-            column = 0;
-        } else {
-            column += 1;
-        }
-    }
-
-    Point::new(row, column)
 }
