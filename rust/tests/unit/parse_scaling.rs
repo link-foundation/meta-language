@@ -62,6 +62,14 @@ const CASES: &[ScalingCase] = &[
         unit: lino_unit,
     },
     ScalingCase {
+        language: "Markdown",
+        unit: markdown_unit,
+    },
+    ScalingCase {
+        language: "HTML",
+        unit: html_unit,
+    },
+    ScalingCase {
         language: "English",
         unit: english_unit,
     },
@@ -101,6 +109,25 @@ fn csv_unit(index: usize) -> String {
 
 fn lino_unit(index: usize) -> String {
     format!("(item{index}: source{index} target{index})\n")
+}
+
+/// Exercises mixed-region detection and the parse of an embedded region.
+fn markdown_unit(index: usize) -> String {
+    format!(
+        "## Section {index}\n\n\
+         Paragraph {index} of the document.\n\n\
+         ```rust\n\
+         pub fn item_{index}() -> usize {{ {index} }}\n\
+         ```\n\n"
+    )
+}
+
+/// Exercises region detection over element bodies and style attributes.
+fn html_unit(index: usize) -> String {
+    format!(
+        "<p style=\"color: rgb({index}, 0, 0)\">Paragraph {index}.</p>\n\
+         <span>Item {index}</span>\n"
+    )
 }
 
 fn english_unit(index: usize) -> String {
