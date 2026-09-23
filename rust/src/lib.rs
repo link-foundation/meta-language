@@ -125,8 +125,8 @@ pub use parity::{
 };
 pub use parser_registry::ParserRegistry;
 pub use program_representation::{
-    analyze_program, ProgramBinding, ProgramConstruct, ProgramConstructStatus, ProgramDiagnostic,
-    ProgramFact, ProgramProjectContext, ProgramRange, ProgramRepresentation,
+    analyze_program, construct_program, ProgramBinding, ProgramConstruct, ProgramConstructStatus,
+    ProgramDiagnostic, ProgramFact, ProgramProjectContext, ProgramRange, ProgramRepresentation,
     ProgramRepresentationError, ProgramScope, ProgramSourceMapping,
     PROGRAM_REPRESENTATION_SCHEMA_VERSION, SEMANTIC_CONSTRUCTS,
 };

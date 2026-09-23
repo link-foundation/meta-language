@@ -96,6 +96,7 @@
         "evidence": [
           "rust/src/program_representation.rs",
           "rust/src/program_representation/analysis.rs",
+          "rust/src/program_representation/edit.rs",
           "rust/tests/unit/four_language_conformance.rs",
           "parity/fixtures/four-language-conformance.json"
         ]

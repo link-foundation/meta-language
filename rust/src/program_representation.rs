@@ -1,6 +1,7 @@
 //! Resolved, editable program representations for JavaScript, Rust, Lean, and Rocq.
 
 mod analysis;
+mod edit;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
@@ -38,7 +39,9 @@ pub struct ProgramRange {
 }
 
 impl ProgramRange {
-    const fn new(start: usize, end: usize) -> Self {
+    /// Creates an exact UTF-8 byte range.
+    #[must_use]
+    pub const fn new(start: usize, end: usize) -> Self {
         Self { start, end }
     }
 
@@ -357,6 +360,10 @@ pub enum ProgramRepresentationError {
     },
     /// Rename would capture another binding.
     CaptureConflict { identifier: String, offset: usize },
+    /// A range is reversed, out of bounds, or splits a UTF-8 code point.
+    InvalidRange { start: usize, end: usize },
+    /// A move destination falls strictly inside the moved range.
+    DestinationInsideRange,
     /// The edited result does not parse cleanly.
     InvalidEdit,
 }
@@ -382,7 +389,13 @@ impl fmt::Display for ProgramRepresentationError {
                 formatter,
                 "rename would capture {identifier} at {offset} (binding conflict)"
             ),
-            Self::InvalidEdit => formatter.write_str("renamed program does not reparse cleanly"),
+            Self::InvalidRange { start, end } => {
+                write!(formatter, "invalid UTF-8 source range {start}..{end}")
+            }
+            Self::DestinationInsideRange => {
+                formatter.write_str("move destination is inside the moved range")
+            }
+            Self::InvalidEdit => formatter.write_str("structured edit does not reparse cleanly"),
         }
     }
 }
@@ -543,49 +556,6 @@ impl ProgramRepresentation {
     pub fn emit(&self) -> String {
         self.network.reconstruct_text()
     }
-
-    /// Renames exactly one resolved binding and reparses the edited source.
-    pub fn rename_binding(
-        &self,
-        binding_id: &str,
-        replacement: &str,
-    ) -> Result<Self, ProgramRepresentationError> {
-        let binding = self
-            .bindings
-            .iter()
-            .find(|binding| binding.id == binding_id)
-            .ok_or_else(|| ProgramRepresentationError::UnknownBinding(binding_id.to_string()))?;
-        validate_identifier(replacement, self.language)?;
-        if binding.name == replacement {
-            return Ok(self.clone());
-        }
-        let binding_scope = scope_by_id(&self.scopes, &binding.scope);
-        if let Some(conflict) = self.bindings.iter().find(|candidate| {
-            candidate.id != binding.id
-                && candidate.name == replacement
-                && ranges_overlap(
-                    binding_scope.range,
-                    scope_by_id(&self.scopes, &candidate.scope).range,
-                )
-        }) {
-            return Err(ProgramRepresentationError::CaptureConflict {
-                identifier: replacement.to_string(),
-                offset: conflict.declaration.start,
-            });
-        }
-        let mut ranges = binding.references.clone();
-        ranges.push(binding.declaration);
-        ranges.sort_by_key(|range| std::cmp::Reverse(range.start));
-        let mut edited = self.source.clone();
-        for range in ranges {
-            edited.replace_range(range.start..range.end, replacement);
-        }
-        let reparsed = Self::analyze(&edited, self.language, self.project.clone())?;
-        if !reparsed.network.verify_full_match(None).is_clean() {
-            return Err(ProgramRepresentationError::InvalidEdit);
-        }
-        Ok(reparsed)
-    }
 }
 
 /// Analyzes a four-language program with project context.
@@ -595,6 +565,19 @@ pub fn analyze_program(
     project: ProgramProjectContext,
 ) -> Result<ProgramRepresentation, ProgramRepresentationError> {
     ProgramRepresentation::analyze(source, language, project)
+}
+
+/// Constructs a program and rejects syntax that cannot be represented cleanly.
+pub fn construct_program(
+    source: &str,
+    language: &str,
+    project: ProgramProjectContext,
+) -> Result<ProgramRepresentation, ProgramRepresentationError> {
+    let program = ProgramRepresentation::analyze(source, language, project)?;
+    if !program.network.verify_full_match(None).is_clean() {
+        return Err(ProgramRepresentationError::InvalidEdit);
+    }
+    Ok(program)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

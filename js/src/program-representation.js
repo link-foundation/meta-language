@@ -19,6 +19,7 @@ export const SEMANTIC_CONSTRUCTS = Object.freeze([
 ]);
 
 export class BindingRenameError extends Error {}
+export class ProgramTransformationError extends Error {}
 
 /**
  * Parses source into a CST-backed program model with scopes, bindings, source
@@ -26,6 +27,15 @@ export class BindingRenameError extends Error {}
  */
 export function analyzeProgram(source, language, project = {}) {
   return new ProgramRepresentation(source, language, project);
+}
+
+/** Constructs a program and rejects syntax that cannot be represented cleanly. */
+export function constructProgram(source, language, project = {}) {
+  const program = new ProgramRepresentation(source, language, project);
+  if (!program.network.verifyFullMatch().isClean()) {
+    throw new ProgramTransformationError('constructed program does not parse cleanly');
+  }
+  return program;
 }
 
 export const analyze_program = analyzeProgram;
@@ -60,6 +70,55 @@ export class ProgramRepresentation {
 
   emit() {
     return this.network.reconstructText();
+  }
+
+  /** Returns exact ranges of CST nodes with the requested grammar term. */
+  querySyntax(term) {
+    return Object.freeze(this.sourceMappings
+      .filter((mapping) => mapping.term === term)
+      .map(({ start, end }) => Object.freeze({ start, end })));
+  }
+
+  query_syntax(term) {
+    return this.querySyntax(term);
+  }
+
+  /** Replaces one exact source range and reparses the result. */
+  replace(range, replacement) {
+    const { start, end } = this.#validatedRange(range);
+    return this.#reparse(`${this.source.slice(0, start)}${replacement}${this.source.slice(end)}`);
+  }
+
+  /** Inserts target-language source at an exact source boundary. */
+  insert(offset, inserted) {
+    this.#validatedRange({ start: offset, end: offset });
+    return this.#reparse(`${this.source.slice(0, offset)}${inserted}${this.source.slice(offset)}`);
+  }
+
+  /** Deletes one exact source range. */
+  delete(range) {
+    return this.replace(range, '');
+  }
+
+  /** Clones one exact source range at an exact source boundary. */
+  clone(range, destination) {
+    const { start, end } = this.#validatedRange(range);
+    this.#validatedRange({ start: destination, end: destination });
+    return this.insert(destination, this.source.slice(start, end));
+  }
+
+  /** Moves one exact source range using offsets from the original source. */
+  move(range, destination) {
+    const { start, end } = this.#validatedRange(range);
+    this.#validatedRange({ start: destination, end: destination });
+    if (destination > start && destination < end) {
+      throw new ProgramTransformationError('move destination is inside the moved range');
+    }
+    if (destination === start || destination === end) return this;
+    const fragment = this.source.slice(start, end);
+    const without = `${this.source.slice(0, start)}${this.source.slice(end)}`;
+    const adjusted = destination > end ? destination - (end - start) : destination;
+    return this.#reparse(`${without.slice(0, adjusted)}${fragment}${without.slice(adjusted)}`);
   }
 
   /** Renames exactly one resolved binding and all of its references. */
@@ -101,6 +160,26 @@ export class ProgramRepresentation {
     return this.renameBinding(bindingId, replacement);
   }
 
+  #validatedRange(range) {
+    const start = Number(range?.start);
+    const end = Number(range?.end);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end < start || end > this.source.length) {
+      throw new ProgramTransformationError(`invalid source range ${start}..${end}`);
+    }
+    if (!codePointBoundary(this.source, start) || !codePointBoundary(this.source, end)) {
+      throw new ProgramTransformationError(`source range ${start}..${end} splits a Unicode code point`);
+    }
+    return { start, end };
+  }
+
+  #reparse(source) {
+    const reparsed = new ProgramRepresentation(source, this.language, this.project);
+    if (!reparsed.network.verifyFullMatch().isClean()) {
+      throw new ProgramTransformationError('structured edit does not reparse cleanly');
+    }
+    return reparsed;
+  }
+
   normalized() {
     return {
       schemaVersion: this.schemaVersion,
@@ -117,6 +196,12 @@ export class ProgramRepresentation {
       project: this.project,
     };
   }
+}
+
+function codePointBoundary(source, offset) {
+  if (offset <= 0 || offset >= source.length) return true;
+  const unit = source.charCodeAt(offset);
+  return unit < 0xdc00 || unit > 0xdfff;
 }
 
 function syntaxFacts(network, source) {

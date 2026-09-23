@@ -277,7 +277,8 @@ const fn canonical_whatlang_language(language: whatlang::Lang) -> Option<&'stati
     }
 }
 
-pub(crate) fn canonical_natural_language(language: &str) -> Option<&'static str> {
+/// Returns the canonical name for a supported natural-language name or alias.
+pub fn canonical_natural_language(language: &str) -> Option<&'static str> {
     match language.to_ascii_lowercase().as_str() {
         "english" | "en" => Some("English"),
         "mandarin" | "mandarin chinese" | "chinese" | "zh" => Some("Mandarin Chinese"),

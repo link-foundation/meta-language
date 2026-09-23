@@ -3,10 +3,10 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    analyze_program, decode_program_translation, language_support, translate_program,
-    translation_contracts, LinkId, LinkNetwork, LinkQuery, LinkType, ParseConfiguration,
-    ProgramConstructStatus, ProgramProjectContext, ReplacementRule, RepresentationLevel,
-    TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
+    analyze_program, construct_program, decode_program_translation, language_support,
+    translate_program, translation_contracts, LinkId, LinkNetwork, LinkQuery, LinkType,
+    ParseConfiguration, ProgramConstructStatus, ProgramProjectContext, ReplacementRule,
+    RepresentationLevel, TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
 };
 use serde_json::Value;
 
@@ -449,6 +449,68 @@ fn binding_aware_rename_preserves_shadowing_unicode_templates_and_comments() {
             "{language} capture avoidance: {error}"
         );
     }
+}
+
+#[test]
+fn structured_construction_query_edits_cloning_movement_and_emission_reparse_cleanly() {
+    for fixture in corpus()["transformationPrograms"]
+        .as_array()
+        .expect("transformation programs")
+    {
+        let language = fixture["language"].as_str().unwrap();
+        let source = fixture["source"].as_str().unwrap();
+        let first_source = fixture["first"].as_str().unwrap();
+        let second_source = fixture["second"].as_str().unwrap();
+        let inserted = fixture["inserted"].as_str().unwrap();
+        let program = construct_program(source, language, ProgramProjectContext::default())
+            .expect("structured construction");
+        assert_eq!(program.emit(), source, "{language} construct and emit");
+        assert!(
+            program.query_syntax("identifier").len() >= 2,
+            "{language} query"
+        );
+        let boundary = first_source.len();
+        let first = meta_language::ProgramRange::new(0, boundary);
+        let second = meta_language::ProgramRange::new(boundary, source.len());
+        let replacement = first_source
+            .replace("first", "primary")
+            .replace("FIRST", "primary");
+        assert_eq!(
+            program.replace(first, &replacement).unwrap().emit(),
+            replacement + second_source,
+            "{language} replace"
+        );
+        assert_eq!(
+            program.insert(second.end(), inserted).unwrap().emit(),
+            source.to_string() + inserted,
+            "{language} insert"
+        );
+        assert_eq!(
+            program.delete(second).unwrap().emit(),
+            first_source,
+            "{language} delete"
+        );
+        assert_eq!(
+            program.clone_range(first, second.end()).unwrap().emit(),
+            source.to_string() + first_source,
+            "{language} clone"
+        );
+        assert_eq!(
+            program.move_range(second, 0).unwrap().emit(),
+            second_source.to_string() + first_source,
+            "{language} move"
+        );
+        assert!(program
+            .replace(meta_language::ProgramRange::new(0, source.len() + 1), "")
+            .is_err());
+        assert!(program.move_range(first, 1).is_err());
+    }
+    assert!(construct_program(
+        "const = ;\n",
+        "JavaScript",
+        ProgramProjectContext::default()
+    )
+    .is_err());
 }
 
 #[test]

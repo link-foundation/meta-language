@@ -455,6 +455,7 @@ export interface ProgramConstruct {
 }
 
 export class BindingRenameError extends Error {}
+export class ProgramTransformationError extends Error {}
 
 export class ProgramRepresentation {
   readonly schemaVersion: 1;
@@ -473,6 +474,13 @@ export class ProgramRepresentation {
   readonly diagnostics: readonly object[];
   readonly constructs: readonly ProgramConstruct[];
   emit(): string;
+  querySyntax(term: string): readonly ProgramSourceRange[];
+  query_syntax(term: string): readonly ProgramSourceRange[];
+  replace(range: ProgramSourceRange, replacement: string): ProgramRepresentation;
+  insert(offset: number, inserted: string): ProgramRepresentation;
+  delete(range: ProgramSourceRange): ProgramRepresentation;
+  clone(range: ProgramSourceRange, destination: number): ProgramRepresentation;
+  move(range: ProgramSourceRange, destination: number): ProgramRepresentation;
   renameBinding(bindingId: string, replacement: string): ProgramRepresentation;
   rename_binding(bindingId: string, replacement: string): ProgramRepresentation;
   normalized(): object;
@@ -484,6 +492,11 @@ export function analyzeProgram(
   project?: ProgramProjectContext,
 ): ProgramRepresentation;
 export const analyze_program: typeof analyzeProgram;
+export function constructProgram(
+  source: string,
+  language: string,
+  project?: ProgramProjectContext,
+): ProgramRepresentation;
 
 export class LinkNetwork {
   constructor();

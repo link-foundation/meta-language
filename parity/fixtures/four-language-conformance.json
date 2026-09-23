@@ -172,6 +172,36 @@
       "capture": "value"
     }
   ],
+  "transformationPrograms": [
+    {
+      "language": "JavaScript",
+      "source": "const first = 1;\nconst second = 2;\n",
+      "first": "const first = 1;\n",
+      "second": "const second = 2;\n",
+      "inserted": "const third = 3;\n"
+    },
+    {
+      "language": "Rust",
+      "source": "const FIRST: u32 = 1;\nconst SECOND: u32 = 2;\n",
+      "first": "const FIRST: u32 = 1;\n",
+      "second": "const SECOND: u32 = 2;\n",
+      "inserted": "const THIRD: u32 = 3;\n"
+    },
+    {
+      "language": "Lean",
+      "source": "def first : Nat := 1\ndef second : Nat := 2\n",
+      "first": "def first : Nat := 1\n",
+      "second": "def second : Nat := 2\n",
+      "inserted": "def third : Nat := 3\n"
+    },
+    {
+      "language": "Rocq",
+      "source": "Definition first : nat := 1.\nDefinition second : nat := 2.\n",
+      "first": "Definition first : nat := 1.\n",
+      "second": "Definition second : nat := 2.\n",
+      "inserted": "Definition third : nat := 3.\n"
+    }
+  ],
   "defaultCstCases": [
     {
       "language": "Python",

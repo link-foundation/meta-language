@@ -12,6 +12,7 @@ import {
   ReplacementRule,
   TranslationSupport,
   analyzeProgram,
+  constructProgram,
   decodeProgramTranslation,
   fourLanguageSupport,
   languageSupport,
@@ -245,6 +246,43 @@ test('binding-aware rename preserves shadowing, Unicode, templates, and comments
       `${fixture.language} capture avoidance`,
     );
   }
+});
+
+test('structured construction, query, edits, cloning, movement, and emission reparse cleanly', () => {
+  for (const fixture of corpus.transformationPrograms) {
+    const program = constructProgram(fixture.source, fixture.language);
+    assert.equal(program.emit(), fixture.source, `${fixture.language} construct and emit`);
+    assert.ok(program.querySyntax('identifier').length >= 2, `${fixture.language} query`);
+    const boundary = Buffer.byteLength(fixture.first);
+    const first = { start: 0, end: boundary };
+    const second = { start: boundary, end: Buffer.byteLength(fixture.source) };
+
+    const replacement = fixture.first.replace(/first|FIRST/u, 'primary');
+    assert.equal(
+      program.replace(first, replacement).emit(),
+      replacement + fixture.second,
+      `${fixture.language} replace`,
+    );
+    assert.equal(
+      program.insert(second.end, fixture.inserted).emit(),
+      fixture.source + fixture.inserted,
+      `${fixture.language} insert`,
+    );
+    assert.equal(program.delete(second).emit(), fixture.first, `${fixture.language} delete`);
+    assert.equal(
+      program.clone(first, second.end).emit(),
+      fixture.source + fixture.first,
+      `${fixture.language} clone`,
+    );
+    assert.equal(
+      program.move(second, 0).emit(),
+      fixture.second + fixture.first,
+      `${fixture.language} move`,
+    );
+    assert.throws(() => program.replace({ start: 0, end: fixture.source.length + 1 }, ''), /range/u);
+    assert.throws(() => program.move(first, 1), /inside/u);
+  }
+  assert.throws(() => constructProgram('const = ;\n', 'JavaScript'), /parse cleanly/u);
 });
 
 test('all 12 translation hooks emit reversible target-native source envelopes', () => {
