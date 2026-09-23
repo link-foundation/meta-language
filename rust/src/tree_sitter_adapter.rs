@@ -57,7 +57,22 @@ fn network_from_tree(
         SpanOffset::zero(),
         text.len(),
     );
-    convert_node(&mut network, document, root, context);
+    let tree_parent =
+        if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
+            network.insert_link(
+                [document],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Syntax)
+                    .with_named(true)
+                    .with_term("file")
+                    .with_language(language)
+                    .with_span(span_for_node(root, &lines, text.len(), SpanOffset::zero()))
+                    .with_flags(flags_for_node(root)),
+            )
+        } else {
+            document
+        };
+    convert_node(&mut network, tree_parent, root, context);
     network.attach_embedded_regions(document, text, language, configuration);
     network
 }
@@ -139,7 +154,7 @@ pub fn parse_embedded_region_into(
 }
 
 fn grammar_for_language(language: &str) -> Option<Language> {
-    if language.eq_ignore_ascii_case("python") {
+    if language.eq_ignore_ascii_case("python") || language.eq_ignore_ascii_case("py") {
         Some(tree_sitter_python::LANGUAGE.into())
     } else if language == "C" || language == "c" {
         Some(tree_sitter_c::LANGUAGE.into())
@@ -172,6 +187,8 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_pascal::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("rust") || language.eq_ignore_ascii_case("rs") {
         Some(tree_sitter_rust::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
+        Some(tree_sitter_lean4::language())
     } else if language.eq_ignore_ascii_case("go") || language.eq_ignore_ascii_case("golang") {
         Some(tree_sitter_go::LANGUAGE.into())
     } else if language == "R" || language == "r" {

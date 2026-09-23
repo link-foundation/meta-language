@@ -39,7 +39,7 @@
       "extensions": [".lean"],
       "root": "file",
       "source": "def id' (x : Nat) : Nat := x\n",
-      "identifiers": ["id'", "x", "x"],
+      "identifiers": ["id'", "x", "Nat", "Nat", "x"],
       "edit": {
         "identifier": "id'",
         "replacement": "identity",
@@ -82,6 +82,64 @@
       "language": "Coq",
       "source": "Definition open := (* unclosed",
       "diagnostic": "unclosed nested comment"
+    }
+  ],
+  "javascriptRegressions": {
+    "regularExpression": {
+      "source": "const x = 1; const re = /x/; x;\n",
+      "identifier": "x",
+      "replacement": "y",
+      "expected": "const y = 1; const re = /x/; y;\n",
+      "matches": 2
+    },
+    "templateInterpolation": {
+      "source": "const x = 1; const text = `value: ${x}`;\n",
+      "identifier": "x",
+      "replacement": "y",
+      "expected": "const y = 1; const text = `value: ${y}`;\n",
+      "matches": 2
+    },
+    "invalidProgram": {
+      "source": "const = ;\n",
+      "diagnostic": "missing JavaScript binding and initializer"
+    }
+  },
+  "defaultCstCases": [
+    {
+      "language": "Python",
+      "source": "def f(x):\n    return x + 1\n",
+      "root": "module",
+      "requiredNode": "function_definition"
+    },
+    {
+      "language": "TypeScript",
+      "source": "const x: number = 1;\n",
+      "root": "program",
+      "requiredNode": "type_annotation"
+    },
+    {
+      "language": "Java",
+      "source": "class Main {}\n",
+      "root": "program",
+      "requiredNode": "class_declaration"
+    },
+    {
+      "language": "Go",
+      "source": "package main\nfunc main() {}\n",
+      "root": "source_file",
+      "requiredNode": "function_declaration"
+    },
+    {
+      "language": "JSON",
+      "source": "{\"x\":1}\n",
+      "root": "document",
+      "requiredNode": "object"
+    },
+    {
+      "language": "HTML",
+      "source": "<p>Hello</p>\n",
+      "root": "document",
+      "requiredNode": "element"
     }
   ]
 }

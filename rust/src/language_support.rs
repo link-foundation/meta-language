@@ -180,7 +180,7 @@ fn contract(source: &LanguageSupport, target: &LanguageSupport) -> TranslationCo
         source: source.name,
         target: target.name,
         support: TranslationSupport::UnsupportedObligation,
-        observation: "source bytes and concrete lexical structure only",
+        observation: "source bytes and source-runtime concrete syntax; no resolved semantics",
         required_runtime: runtime_for(target.name),
         encoding: "none registered",
         assumptions: &[],

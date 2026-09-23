@@ -488,7 +488,24 @@ export class LinkNetwork {
           childSpans[0].start,
           childSpans.at(-1).end,
         );
-    return this.insertSyntaxNode(language, node.term, children, { span });
+    const syntax = this.insertSyntaxNode(language, node.term, children, {
+      named: node.named,
+      span: node.span ?? span,
+      flags: node.flags,
+    });
+    for (const [index, child] of node.children.entries()) {
+      if (child.field) {
+        this.insertLink(
+          [syntax, children[index]],
+          LinkMetadata.new()
+            .withLinkType(LinkType.Field)
+            .withLanguage(language)
+            .withTerm(child.field)
+            .withNamed(true),
+        );
+      }
+    }
+    return syntax;
   }
 
   _programmingTreeSpan(node, tokens) {

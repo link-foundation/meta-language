@@ -41,6 +41,14 @@ impl LanguageParser for BuiltInLanguageParser {
             return network;
         }
 
+        // Lean has a complete tree-sitter frontend. Keep Rocq on the portable
+        // recovery parser until an ABI-compatible Rust grammar is available.
+        if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
+            if let Some(network) = tree_sitter_adapter::parse(text, language, configuration) {
+                return network;
+            }
+        }
+
         if let Some(network) = formal_language_parser::parse(text, language, configuration) {
             return network;
         }

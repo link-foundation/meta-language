@@ -19,6 +19,9 @@ import {
 const corpus = JSON.parse(
   readFileSync(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)),
 );
+const grammarInventory = JSON.parse(
+  readFileSync(new URL('../../parity/language-grammar-inventory.json', import.meta.url)),
+);
 
 test('four-language corpus produces lossless structured syntax', () => {
   for (const fixture of corpus.languages) {
@@ -87,6 +90,63 @@ test('structured edits emit from retained tokens without touching comments or st
       ReplacementRule.capturedText('target', fixture.edit.replacement),
     );
     assert.equal(network.reconstructText(), fixture.edit.expected, fixture.name);
+  }
+});
+
+test('JavaScript grammar distinguishes regex text and template interpolation', () => {
+  for (const fixture of [
+    corpus.javascriptRegressions.regularExpression,
+    corpus.javascriptRegressions.templateInterpolation,
+  ]) {
+    const network = LinkNetwork.parse(fixture.source, 'JavaScript');
+    const query = LinkQuery.fromSexpression(
+      `(identifier) @target\n(#eq? @target "${fixture.identifier}")`,
+    );
+    const matches = network.find(query);
+    assert.equal(matches.length, fixture.matches);
+    network.replace(matches, ReplacementRule.capturedText('target', fixture.replacement));
+    assert.equal(network.reconstructText(), fixture.expected);
+  }
+});
+
+test('JavaScript grammar reports syntactically invalid programs', () => {
+  const fixture = corpus.javascriptRegressions.invalidProgram;
+  const network = LinkNetwork.parse(fixture.source, 'JavaScript');
+  assert.equal(network.reconstructText(), fixture.source);
+  assert.equal(network.verifyFullMatch().isClean(), false, fixture.diagnostic);
+});
+
+test('ordinary parse dispatch returns grammar CSTs for the audited language inventory', () => {
+  for (const fixture of corpus.defaultCstCases) {
+    const network = LinkNetwork.parse(fixture.source, fixture.language);
+    assert.equal(network.reconstructText(), fixture.source, fixture.language);
+    for (const term of [fixture.root, fixture.requiredNode]) {
+      assert.ok(
+        network.links().some(
+          (link) => link.metadata().linkType === LinkType.Syntax && link.metadata().term === term,
+        ),
+        `${fixture.language} ${term}`,
+      );
+    }
+  }
+});
+
+test('every JavaScript grammar inventory alias selects a nontrivial lossless CST', () => {
+  for (const fixture of grammarInventory.languages.filter(
+    ({ javascript }) => javascript.status === 'grammar-cst',
+  )) {
+    for (const alias of fixture.aliases) {
+      const network = LinkNetwork.parse(fixture.source, alias);
+      assert.equal(network.reconstructText(), fixture.source, `${alias} reconstruction`);
+      const syntax = network.links().filter(
+        (link) => link.metadata().linkType === LinkType.Syntax,
+      );
+      assert.ok(syntax.length > 1, `${alias} must expose grammar nodes below its root`);
+      assert.ok(
+        syntax.some((link) => link.metadata().span !== undefined),
+        `${alias} grammar nodes must retain spans`,
+      );
+    }
   }
 });
 

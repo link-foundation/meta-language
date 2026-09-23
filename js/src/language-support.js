@@ -106,7 +106,7 @@ function translation(source, target) {
     source: source.name,
     target: target.name,
     support: TranslationSupport.UnsupportedObligation,
-    observation: 'source bytes and concrete lexical structure only',
+    observation: 'source bytes and source-runtime concrete syntax; no resolved semantics',
     requiredRuntime: runtimeFor(target.name),
     encoding: 'none registered',
     assumptions: Object.freeze([]),

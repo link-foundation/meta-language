@@ -16,6 +16,13 @@ fn corpus() -> Value {
         .expect("shared corpus is valid JSON")
 }
 
+fn grammar_inventory() -> Value {
+    let path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
+    serde_json::from_str(&fs::read_to_string(path).expect("grammar inventory is readable"))
+        .expect("grammar inventory is valid JSON")
+}
+
 #[test]
 fn four_language_corpus_produces_lossless_structured_syntax() {
     for fixture in corpus()["languages"].as_array().expect("language fixtures") {
@@ -123,6 +130,114 @@ fn structured_edits_emit_from_retained_tokens_without_touching_comments_or_strin
             edit["expected"].as_str().expect("expected output"),
             "{language}"
         );
+    }
+}
+
+#[test]
+fn javascript_grammar_distinguishes_regex_text_and_template_interpolation() {
+    let corpus = corpus();
+    for fixture in [
+        &corpus["javascriptRegressions"]["regularExpression"],
+        &corpus["javascriptRegressions"]["templateInterpolation"],
+    ] {
+        let mut network = LinkNetwork::parse(
+            fixture["source"].as_str().expect("source"),
+            "JavaScript",
+            ParseConfiguration::default(),
+        );
+        let identifier = fixture["identifier"].as_str().expect("identifier");
+        let query = LinkQuery::from_sexpression(&format!(
+            "(identifier) @target\n(#eq? @target \"{identifier}\")"
+        ))
+        .expect("identifier query parses");
+        let matches = network.find(&query);
+        assert_eq!(
+            matches.len(),
+            usize::try_from(fixture["matches"].as_u64().expect("match count"))
+                .expect("match count fits usize")
+        );
+        network.replace(
+            &matches,
+            &ReplacementRule::captured_text(
+                "target",
+                fixture["replacement"].as_str().expect("replacement"),
+            ),
+        );
+        assert_eq!(
+            network.reconstruct_text(),
+            fixture["expected"].as_str().expect("expected output")
+        );
+    }
+}
+
+#[test]
+fn javascript_grammar_reports_syntactically_invalid_programs() {
+    let corpus = corpus();
+    let fixture = &corpus["javascriptRegressions"]["invalidProgram"];
+    let network = LinkNetwork::parse(
+        fixture["source"].as_str().expect("source"),
+        "JavaScript",
+        ParseConfiguration::default(),
+    );
+    assert_eq!(
+        network.reconstruct_text(),
+        fixture["source"].as_str().expect("source")
+    );
+    assert!(
+        !network.verify_full_match(None).is_clean(),
+        "{}",
+        fixture["diagnostic"].as_str().expect("diagnostic")
+    );
+}
+
+#[test]
+fn ordinary_parse_dispatch_returns_grammar_csts_for_the_audited_inventory() {
+    for fixture in corpus()["defaultCstCases"].as_array().expect("CST cases") {
+        let language = fixture["language"].as_str().expect("language");
+        let source = fixture["source"].as_str().expect("source");
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source, "{language}");
+        for term in [
+            fixture["root"].as_str().expect("root"),
+            fixture["requiredNode"].as_str().expect("required node"),
+        ] {
+            assert!(
+                network.links().any(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link.metadata().term() == Some(term)
+                }),
+                "{language} {term}"
+            );
+        }
+    }
+}
+
+#[test]
+fn every_rust_grammar_inventory_alias_selects_a_nontrivial_lossless_cst() {
+    for fixture in grammar_inventory()["languages"]
+        .as_array()
+        .expect("language inventory")
+        .iter()
+        .filter(|fixture| fixture["rust"]["status"] == "grammar-cst")
+    {
+        let source = fixture["source"].as_str().expect("source");
+        for alias in fixture["aliases"].as_array().expect("aliases") {
+            let alias = alias.as_str().expect("alias");
+            let network = LinkNetwork::parse(source, alias, ParseConfiguration::default());
+            assert_eq!(network.reconstruct_text(), source, "{alias} reconstruction");
+            let syntax = network
+                .links()
+                .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+                .collect::<Vec<_>>();
+            assert!(
+                syntax.len() > 1,
+                "{alias} must expose grammar nodes below its root"
+            );
+            assert!(
+                syntax.iter().any(|link| link.metadata().span().is_some()),
+                "{alias} grammar nodes must retain spans"
+            );
+        }
     }
 }
 
