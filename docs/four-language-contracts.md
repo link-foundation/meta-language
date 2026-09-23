@@ -1,10 +1,11 @@
 # Four-language representation contracts
 
 This document defines schema revision 1 of the JavaScript, Rust, Lean, and Rocq
-surface shared by the Rust crate and JavaScript package. It is deliberately a
-capability contract, not a claim that lexical structure is semantic
-understanding. Callers can inspect the contract before attempting a transform
-or translation.
+surface shared by the Rust crate and JavaScript package. It is a truthful
+snapshot of work in progress toward the full delivery target preserved in the
+[issue #195 requirement ledger](issue-195-requirement-ledger.md), not a reduced
+definition of that target. Callers can inspect the contract before attempting a
+transform or translation.
 
 ## Supported profiles
 
@@ -18,14 +19,14 @@ or translation.
 Extensions are declared metadata. Parsing is selected by canonical name or
 alias, or through `ParserRegistry`; it is not inferred from a filename.
 
-Rust uses tree-sitter grammars for JavaScript and Rust. Lean and Rocq use the
-portable recovery-aware lexical frontend because project notation, plugins,
-and elaboration cannot be recovered from a source file alone. The JavaScript
-package uses that portable frontend for all four languages. Consequently, the
-stable cross-runtime contract is the lossless token stream, lexical node kinds,
-delimiter hierarchy, spans, and diagnostics. Rust may expose additional
-JavaScript/Rust tree-sitter nodes, but portable consumers must not depend on
-those extra nodes.
+Both runtimes now use tree-sitter grammars for JavaScript, Rust, and Lean. The
+JavaScript package also uses the pinned `tree-sitter-rocq` grammar; Rust still
+uses the recovery-aware lexical Rocq frontend while an ABI-compatible complete
+Rust grammar is integrated. Grammar-backed paths retain the full returned CST,
+named fields, child order, exact spans, recovery flags, and source tokens.
+Project notation, plugins, name resolution, and elaboration are not supplied by
+these context-free grammars and remain required work rather than permanent
+exclusions.
 
 ## Stable pipeline
 
@@ -59,12 +60,12 @@ claim is made.
 | --- | --- | --- | --- | --- | --- |
 | Complete UTF-8 source and trivia | preserved | preserved | preserved | preserved | shared conformance corpus and reconstruction tests |
 | UTF-8 byte spans and line/column points | concrete | concrete | concrete | concrete | parser implementations and corpus tests |
-| Comments, strings, numbers, identifiers, keywords, delimiters | concrete | concrete | concrete | concrete | portable scanner; Rust also has tree-sitter CSTs |
-| Nested `()`, `[]`, `{}` hierarchy and recovery | concrete | concrete | concrete | concrete | positive and malformed corpus cases |
-| Full grammar-level syntax hierarchy | unavailable in common contract | unavailable in common contract | unavailable | unavailable | Rust-only tree-sitter detail is intentionally not advertised as parity |
+| Comments, strings, numbers, identifiers, keywords, delimiters | grammar CST | grammar CST | grammar CST | grammar CST in JS; lexical in Rust | real grammar nodes/tokens plus shared corpus |
+| Nested grammar hierarchy and recovery | concrete | concrete | concrete | concrete in JS; delimiter recovery in Rust | positive and malformed corpus cases |
+| Full grammar-level syntax hierarchy | available | available | available | JS only | tree-sitter CST materialization; Rust Rocq remains open |
 | Identifier scope and binding resolution | unavailable | unavailable | unavailable | unavailable | capability report returns `Unavailable` |
-| Imports and module references | lexical only | lexical only | lexical only | lexical only | retained as keywords/identifiers; not resolved |
-| Declarations and recursive bodies | lexical/delimiter structure | lexical/delimiter structure | lexical/delimiter structure | lexical/delimiter structure | retained without semantic lowering |
+| Imports and module references | parsed, unresolved | parsed, unresolved | parsed, unresolved | parsed in JS, lexical in Rust | retained without project resolution |
+| Declarations and recursive bodies | parsed, unresolved | parsed, unresolved | parsed, unresolved | parsed in JS, lexical in Rust | retained without semantic lowering |
 | Types, effects, universes, and elaboration | unavailable | unavailable | unavailable | unavailable | capability report returns `Unavailable` |
 | Attributes, macros, notation, and plugins | opaque | opaque | opaque | opaque | source retained; project expansion is not attempted |
 | Proof and tactic syntax | unavailable | unavailable | opaque | opaque | source retained without kernel or tactic interpretation |
@@ -72,7 +73,7 @@ claim is made.
 | Source generation after mutation | ordered token emission | ordered token emission | ordered token emission | ordered token emission | reconstruction and identifier-edit tests |
 
 The inventory prevents a fallback token stream from being described as
-resolved or elaborated syntax. It also means schema revision 1 is an
+grammar-complete, resolved, or elaborated syntax. Schema revision 1 remains an
 intermediate foundation for issue #195, not its full-coverage completion.
 
 ## Translation contracts
@@ -89,7 +90,8 @@ target runtime, registered encoding, assumptions, and a precise obligation.
 | Lean | Lean 4.34.0 kernel and project environment |
 | Rocq | Rocq 9.3.0 kernel and project environment |
 
-The current observation is source bytes plus concrete lexical structure. No
+The current observation is source bytes plus the concrete syntax supplied by
+the source runtime; it does not include resolved semantics. No
 semantic-preservation proof or non-native encoding is registered, and the
 assumption list is empty. This fail-closed result is the only valid outcome
 until a pair defines shared semantics, preservation tests, and validation by
@@ -101,9 +103,12 @@ effects, types, universes, or proofs.
 [`parity/fixtures/four-language-conformance.json`](../parity/fixtures/four-language-conformance.json)
 is consumed by both runtime suites. It covers versions, editions, aliases,
 extensions, Unicode identifiers, exact reconstruction, syntax roots,
-identifier classification, nested comments, and malformed input. The parity
-manifest no longer exempts `language_parser` or `parser_registry` from the
-JavaScript implementation.
+identifier classification, comments, malformed input, regular expressions,
+template interpolation, and grammar diagnostics. The versioned
+[`language-grammar-inventory.json`](../parity/language-grammar-inventory.json)
+additionally audits every known language target and tests all aliases currently
+marked as real-grammar paths. The parity manifest no longer exempts
+`language_parser` or `parser_registry` from the JavaScript implementation.
 
 RML remains responsible for RML syntax, selectable foundations, logic,
 execution semantics, and proof authority. Future meta-language work can add

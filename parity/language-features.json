@@ -71,7 +71,8 @@
           "rust/src/formal_language_parser.rs",
           "rust/src/tree_sitter_adapter.rs",
           "rust/tests/unit/four_language_conformance.rs",
-          "parity/fixtures/four-language-conformance.json"
+          "parity/fixtures/four-language-conformance.json",
+          "parity/language-grammar-inventory.json"
         ]
       },
       "javascript": {
@@ -80,7 +81,28 @@
           "js/src/programming-language-parser.js",
           "js/src/network.js",
           "js/tests/four-language-conformance.test.js",
-          "parity/fixtures/four-language-conformance.json"
+          "parity/fixtures/four-language-conformance.json",
+          "parity/language-grammar-inventory.json"
+        ]
+      }
+    },
+    {
+      "id": "issue-195-full-default-cst-inventory",
+      "required": false,
+      "rust": {
+        "status": "partial",
+        "evidence": [
+          "parity/language-grammar-inventory.json",
+          "docs/issue-195-requirement-ledger.md",
+          "rust/tests/unit/four_language_conformance.rs"
+        ]
+      },
+      "javascript": {
+        "status": "partial",
+        "evidence": [
+          "parity/language-grammar-inventory.json",
+          "docs/issue-195-requirement-ledger.md",
+          "js/tests/four-language-conformance.test.js"
         ]
       }
     },

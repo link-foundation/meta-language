@@ -136,7 +136,9 @@ description, an interactive WebAssembly demo, and the full
   reports, a shared conformance corpus with the JavaScript package, and all 12
   directed translation contracts failing closed until semantic preservation
   exists. See
-  [`docs/four-language-contracts.md`](../docs/four-language-contracts.md).
+  [`docs/four-language-contracts.md`](../docs/four-language-contracts.md) and
+  the full delivery checklist in
+  [`docs/issue-195-requirement-ledger.md`](../docs/issue-195-requirement-ledger.md).
 
 ## Usage
 
