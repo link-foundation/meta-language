@@ -243,9 +243,11 @@ export class Link {
 export class ParseConfiguration {
   constructor({
     triviaAttachmentPolicy = TriviaAttachmentPolicy.Combined,
+    regionDetectionPolicy = 'Both',
     accessMode = 'mutable',
   } = {}) {
     this.triviaAttachmentPolicy = triviaAttachmentPolicy;
+    this.regionDetectionPolicy = regionDetectionPolicy;
     this.accessMode = accessMode;
   }
 
@@ -255,6 +257,14 @@ export class ParseConfiguration {
 
   withTriviaAttachmentPolicy(triviaAttachmentPolicy) {
     return new ParseConfiguration({ ...this, triviaAttachmentPolicy });
+  }
+
+  withRegionDetectionPolicy(regionDetectionPolicy) {
+    return new ParseConfiguration({ ...this, regionDetectionPolicy });
+  }
+
+  with_region_detection_policy(regionDetectionPolicy) {
+    return this.withRegionDetectionPolicy(regionDetectionPolicy);
   }
 
   withAccessMode(accessMode) {

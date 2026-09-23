@@ -206,6 +206,56 @@ export function parseProgrammingLanguage(text, language) {
   return parsed;
 }
 
+/** Parses an embedded region and clips any synthetic CSS terminator to its host span. */
+export function parseEmbeddedProgrammingLanguage(text, language) {
+  const canonical = canonicalProgrammingLanguage(language);
+  const needsTerminator = canonical === 'CSS' && cssDeclarationNeedsTerminator(text);
+  const parsed = parseProgrammingLanguage(needsTerminator ? `${text};` : text, language);
+  if (!parsed || !needsTerminator) return parsed;
+  return clipParsedSource(parsed, text);
+}
+
+function cssDeclarationNeedsTerminator(text) {
+  const trimmed = text.trimEnd();
+  return trimmed.length > 0 &&
+    !trimmed.endsWith(';') &&
+    !trimmed.endsWith('}') &&
+    !trimmed.includes('{');
+}
+
+function clipParsedSource(parsed, text) {
+  const byteEnd = encoder.encode(text).length;
+  const endCoordinate = sourceBoundaries(text).get(text.length);
+  const tokenIndexes = new Map();
+  const tokens = [];
+  for (const [index, token] of parsed.tokens.entries()) {
+    if (token.span.byteRange.end > byteEnd) continue;
+    tokenIndexes.set(index, tokens.length);
+    tokens.push(token);
+  }
+  const tree = clipTreeNode(parsed.tree, tokenIndexes, byteEnd, endCoordinate);
+  return { ...parsed, rootTerm: tree.term, tokens, tree };
+}
+
+function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
+  if (node.span.byteRange.start >= byteEnd && node.span.byteRange.end > byteEnd) return null;
+  if (node.tokenIndex !== undefined) {
+    const tokenIndex = tokenIndexes.get(node.tokenIndex);
+    return tokenIndex === undefined ? null : { ...node, tokenIndex };
+  }
+  const children = node.children
+    .map((child) => clipTreeNode(child, tokenIndexes, byteEnd, endCoordinate))
+    .filter(Boolean);
+  const span = node.span.byteRange.end <= byteEnd
+    ? node.span
+    : new SourceSpan(
+        new ByteRange(node.span.byteRange.start, byteEnd),
+        node.span.start,
+        new Point(endCoordinate.row, endCoordinate.column),
+      );
+  return { ...node, children, span };
+}
+
 function parseGrammarCst(text, canonical) {
   const boundaries = sourceBoundaries(text);
   if (canonical === 'LiNo') {

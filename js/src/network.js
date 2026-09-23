@@ -1,6 +1,9 @@
 import { Parser } from 'links-notation';
 
-import { parseProgrammingLanguage } from './programming-language-parser.js';
+import {
+  parseEmbeddedProgrammingLanguage,
+  parseProgrammingLanguage,
+} from './programming-language-parser.js';
 import {
   ByteRange,
   Link,
@@ -16,6 +19,7 @@ import {
 import { LinkQuery, QueryCaptures, QueryMatch } from './query.js';
 import { LinkCliSubstitution, SubstitutionReport } from './substitution.js';
 import { ReplacementReport, ReplacementRule, TextReplacement } from './transform.js';
+import { EmbeddedRegion, detectEmbeddedRegions } from './regions.js';
 
 const encoder = new TextEncoder();
 
@@ -29,7 +33,8 @@ export class LinkNetwork {
     const parsed = parseProgrammingLanguage(text, language);
     if (parsed) {
       const network = new LinkNetwork();
-      network._insertProgrammingLanguage(parsed, language, configuration);
+      const document = network._insertProgrammingLanguage(parsed, language, configuration);
+      network._attachEmbeddedRegions(document, text, language, configuration);
       if (parsed.canonical === 'LiNo') {
         network._insertLinoSemantics(text);
       }
@@ -305,11 +310,28 @@ export class LinkNetwork {
   }
 
   reconstructText() {
-    return this._sourceTokenLinks()
-      .sort(sourceOrder)
-      .filter((link) => !link.metadata().flags.isMissing)
-      .map((link) => link.metadata().term ?? '')
-      .join('');
+    const reconstructed = [];
+    let coveredUntil = 0;
+    for (const link of this._sourceTokenLinks().sort(sourceOrder)) {
+      const metadata = link.metadata();
+      if (metadata.flags.isMissing) continue;
+      const range = metadata.span?.byteRange;
+      if (range && range.start < coveredUntil) continue;
+      reconstructed.push(metadata.term ?? '');
+      if (range) coveredUntil = range.end;
+    }
+    return reconstructed.join('');
+  }
+
+  /** Returns mixed-language regions discovered and parsed into this network. */
+  embeddedRegions() {
+    return this.links()
+      .filter((link) => link.metadata().linkType === LinkType.Region)
+      .map((link) => new EmbeddedRegion(link.metadata().language, link.metadata().span));
+  }
+
+  embedded_regions() {
+    return this.embeddedRegions();
   }
 
   /** Reconstructs bytes stored by `parseBytes` in source order. */
@@ -477,30 +499,30 @@ export class LinkNetwork {
 
   }
 
-  _insertProgrammingLanguage(parsed, language, _configuration) {
+  _insertProgrammingLanguage(parsed, language, _configuration, offset = undefined) {
     this.insertTypedPoint(LinkType.Language, language);
     const tokenIds = parsed.tokens.map((token) =>
-      this.insertSourceToken(language, token.text, token.span, token.flags),
+      this.insertSourceToken(language, token.text, offsetSpan(token.span, offset), token.flags),
     );
-    this._insertProgrammingTree(parsed.tree, language, parsed.tokens, tokenIds);
+    return this._insertProgrammingTree(parsed.tree, language, parsed.tokens, tokenIds, offset);
   }
 
-  _insertProgrammingTree(node, language, tokens, tokenIds) {
+  _insertProgrammingTree(node, language, tokens, tokenIds, offset = undefined) {
     if (node.tokenIndex !== undefined) {
       const token = tokens[node.tokenIndex];
       return this.insertSyntaxNode(language, node.term, [tokenIds[node.tokenIndex]], {
         named: token.named,
-        span: token.span,
+        span: offsetSpan(token.span, offset),
         flags: token.flags,
       });
     }
 
     const children = node.children.map((child) =>
-      this._insertProgrammingTree(child, language, tokens, tokenIds),
+      this._insertProgrammingTree(child, language, tokens, tokenIds, offset),
     );
     const syntax = this.insertSyntaxNode(language, node.term, children, {
       named: node.named,
-      span: node.span,
+      span: offsetSpan(node.span, offset),
       flags: node.flags,
     });
     for (const [index, child] of node.children.entries()) {
@@ -516,6 +538,37 @@ export class LinkNetwork {
       }
     }
     return syntax;
+  }
+
+  _attachEmbeddedRegions(document, text, language, configuration) {
+    const policy = configuration.regionDetectionPolicy ?? 'Both';
+    for (const region of detectEmbeddedRegions(text, language, policy)) {
+      const regionLanguage = region.language();
+      const languageLink = this.insertTypedPoint(LinkType.Language, regionLanguage);
+      const regionLink = this.insertLink(
+        [document, languageLink],
+        LinkMetadata.new()
+          .withLinkType(LinkType.Region)
+          .withNamed(true)
+          .withTerm(`${regionLanguage} region`)
+          .withLanguage(regionLanguage)
+          .withSpan(region.span()),
+      );
+      const { start, end } = region.span().byteRange;
+      const parsed = parseEmbeddedProgrammingLanguage(
+        sliceBytes(text, start, end),
+        regionLanguage,
+      );
+      if (parsed) {
+        const root = this._insertProgrammingLanguage(
+          parsed,
+          regionLanguage,
+          configuration,
+          region.span(),
+        );
+        this.link(regionLink).setReferences([document, languageLink, root]);
+      }
+    }
   }
 
   _sourceTokenLinks() {
@@ -679,4 +732,23 @@ function sourceOrder(left, right) {
     return leftSpan.byteRange.start - rightSpan.byteRange.start;
   }
   return left.id().asU64() - right.id().asU64();
+}
+
+function offsetSpan(span, offset) {
+  if (!span || !offset) return span;
+  const baseByte = offset.byteRange.start;
+  const basePoint = offset.start;
+  const point = ({ row, column }) => new Point(
+    basePoint.row + row,
+    row === 0 ? basePoint.column + column : column,
+  );
+  return new SourceSpan(
+    new ByteRange(baseByte + span.byteRange.start, baseByte + span.byteRange.end),
+    point(span.start),
+    point(span.end),
+  );
+}
+
+function sliceBytes(text, start, end) {
+  return new TextDecoder().decode(encoder.encode(text).slice(start, end));
 }

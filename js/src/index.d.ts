@@ -579,6 +579,8 @@ export class LinkNetwork {
   snapshot(version: number, provenance: string): NetworkSnapshot;
   verifyFullMatch(): VerificationReport;
   reconstructText(): string;
+  embeddedRegions(): EmbeddedRegion[];
+  embedded_regions(): EmbeddedRegion[];
   reconstructBytes(): Uint8Array;
   renderSource(language: string): string;
   reconstructTextAsWithRules(
@@ -597,7 +599,14 @@ export class Link {
 }
 
 export class ParseConfiguration {
+  readonly triviaAttachmentPolicy: string;
+  readonly regionDetectionPolicy: RegionDetectionPolicyValue;
+  readonly accessMode: string;
   static default(): ParseConfiguration;
+  withTriviaAttachmentPolicy(policy: string): ParseConfiguration;
+  withRegionDetectionPolicy(policy: RegionDetectionPolicyValue): ParseConfiguration;
+  with_region_detection_policy(policy: RegionDetectionPolicyValue): ParseConfiguration;
+  withAccessMode(mode: string): ParseConfiguration;
 }
 
 export class LinkQuery {

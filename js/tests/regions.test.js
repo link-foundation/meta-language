@@ -7,6 +7,8 @@ import {
   detectEmbeddedRegions,
   sniffLanguage,
 } from '../src/regions.js';
+import { LinkNetwork } from '../src/network.js';
+import { LinkType, ParseConfiguration } from '../src/primitives.js';
 
 const encoder = new TextEncoder();
 
@@ -199,3 +201,68 @@ test('sniffLanguage recognizes supported signatures', () => {
   assert.equal(sniffLanguage('SELECT 1;'), 'sql-ansi');
   assert.equal(sniffLanguage('plain prose'), null);
 });
+
+test('embedded regions own connected grammar CSTs with exact host-source boundaries', () => {
+  const html =
+    '<script>const value = "café";</script>' +
+    '<style>.x { color: red; }</style>' +
+    '<p style="color: blue">text</p>';
+  const htmlNetwork = LinkNetwork.parse(html, 'HTML', ParseConfiguration.default());
+  assert.equal(htmlNetwork.reconstructText(), html);
+  assert.equal(htmlNetwork.verifyFullMatch().isClean(), true);
+  assertConnectedRegion(htmlNetwork, html, 'JavaScript', 'program', 'const value = "café";');
+  assertConnectedRegion(htmlNetwork, html, 'CSS', 'stylesheet', '.x { color: red; }');
+  assertConnectedRegion(htmlNetwork, html, 'CSS', 'stylesheet', 'color: blue');
+
+  const markdown =
+    '# Embedded\n```JavaScript\nconst answer = 42;\n```\n<section><em>HTML</em></section>\n';
+  const markdownNetwork = LinkNetwork.parse(markdown, 'Markdown');
+  assert.equal(markdownNetwork.reconstructText(), markdown);
+  assertConnectedRegion(
+    markdownNetwork,
+    markdown,
+    'JavaScript',
+    'program',
+    'const answer = 42;\n',
+  );
+  assertConnectedRegion(
+    markdownNetwork,
+    markdown,
+    'HTML',
+    'document',
+    '<section><em>HTML</em></section>',
+  );
+
+  const invalid = '<script>const = ;</script>';
+  const invalidNetwork = LinkNetwork.parse(invalid, 'HTML');
+  assert.equal(invalidNetwork.reconstructText(), invalid);
+  assert.equal(invalidNetwork.verifyFullMatch().isClean(), false);
+});
+
+function assertConnectedRegion(network, source, language, rootTerm, regionSource) {
+  const start = byteFind(source, regionSource);
+  const end = start + byteLength(regionSource);
+  const region = network.links().find((link) =>
+    link.metadata().linkType === LinkType.Region &&
+    link.metadata().language === language &&
+    link.metadata().span?.byteRange.start === start &&
+    link.metadata().span?.byteRange.end === end
+  );
+  assert.ok(region, `${language} region ${start}..${end}`);
+  const root = region.references()
+    .map((reference) => network.link(reference))
+    .find((link) =>
+      link?.metadata().linkType === LinkType.Syntax &&
+      link.metadata().language === language &&
+      link.metadata().term === rootTerm
+    );
+  assert.ok(root, `${language} grammar root connected to region`);
+  assert.equal(root.metadata().span.byteRange.start, start);
+  assert.equal(root.metadata().span.byteRange.end, end);
+  assert.ok(network.links().some((link) =>
+    link.metadata().linkType === LinkType.SourceToken &&
+    link.metadata().language === language &&
+    link.metadata().span?.byteRange.start >= start &&
+    link.metadata().span?.byteRange.end <= end
+  ));
+}
