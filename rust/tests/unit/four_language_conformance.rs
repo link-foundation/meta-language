@@ -1,0 +1,214 @@
+use std::collections::BTreeSet;
+use std::fs;
+use std::path::PathBuf;
+
+use meta_language::{
+    language_support, translation_contracts, LinkId, LinkNetwork, LinkQuery, LinkType,
+    ParseConfiguration, ReplacementRule, RepresentationLevel, TranslationSupport,
+    LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
+};
+use serde_json::Value;
+
+fn corpus() -> Value {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../parity/fixtures/four-language-conformance.json");
+    serde_json::from_str(&fs::read_to_string(path).expect("shared corpus is readable"))
+        .expect("shared corpus is valid JSON")
+}
+
+#[test]
+fn four_language_corpus_produces_lossless_structured_syntax() {
+    for fixture in corpus()["languages"].as_array().expect("language fixtures") {
+        let language = fixture["name"].as_str().expect("language name");
+        let source = fixture["source"].as_str().expect("source");
+        let root = fixture["root"].as_str().expect("root term");
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} reconstruction"
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{language} diagnostics"
+        );
+        assert!(
+            network.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().term() == Some(root)
+                    && link.metadata().span().is_some()
+            }),
+            "{language} root syntax"
+        );
+
+        let query = LinkQuery::from_sexpression("(identifier) @identifier")
+            .expect("identifier query parses");
+        let identifiers = network
+            .find(&query)
+            .iter()
+            .filter_map(|query_match| query_match.captures().first("identifier"))
+            .map(|link_id| captured_text(&network, link_id))
+            .collect::<Vec<_>>();
+        let expected = fixture["identifiers"]
+            .as_array()
+            .expect("identifiers")
+            .iter()
+            .map(|value| value.as_str().expect("identifier").to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(identifiers, expected, "{language} identifiers");
+    }
+}
+
+#[test]
+fn all_four_language_aliases_select_a_structured_frontend() {
+    for fixture in corpus()["languages"].as_array().expect("language fixtures") {
+        let source = fixture["source"].as_str().expect("source");
+        let root = fixture["root"].as_str().expect("root term");
+        for alias in fixture["aliases"].as_array().expect("aliases") {
+            let alias = alias.as_str().expect("alias");
+            let network = LinkNetwork::parse(source, alias, ParseConfiguration::default());
+            assert_eq!(network.reconstruct_text(), source, "{alias} reconstruction");
+            assert!(
+                network.links().any(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link.metadata().term() == Some(root)
+                }),
+                "{alias} structured root"
+            );
+        }
+    }
+}
+
+#[test]
+fn formal_language_invalid_input_stays_lossless_and_diagnostic() {
+    for fixture in corpus()["negativeCases"]
+        .as_array()
+        .expect("negative fixtures")
+    {
+        let source = fixture["source"].as_str().expect("source");
+        let language = fixture["language"].as_str().expect("language");
+        let diagnostic = fixture["diagnostic"].as_str().expect("diagnostic");
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source, "{diagnostic}");
+        assert!(!network.verify_full_match(None).is_clean(), "{diagnostic}");
+    }
+}
+
+#[test]
+fn structured_edits_emit_from_retained_tokens_without_touching_comments_or_strings() {
+    for fixture in corpus()["languages"].as_array().expect("language fixtures") {
+        let language = fixture["name"].as_str().expect("language");
+        let edit = &fixture["edit"];
+        let identifier = edit["identifier"].as_str().expect("identifier");
+        let mut network = LinkNetwork::parse(
+            fixture["source"].as_str().expect("source"),
+            language,
+            ParseConfiguration::default(),
+        );
+        let query = LinkQuery::from_sexpression(&format!(
+            "(identifier) @target\n(#eq? @target \"{identifier}\")"
+        ))
+        .expect("identifier query parses");
+        let matches = network.find(&query);
+        network.replace(
+            &matches,
+            &ReplacementRule::captured_text(
+                "target",
+                edit["replacement"].as_str().expect("replacement"),
+            ),
+        );
+        assert_eq!(
+            network.reconstruct_text(),
+            edit["expected"].as_str().expect("expected output"),
+            "{language}"
+        );
+    }
+}
+
+#[test]
+fn capability_reports_match_the_shared_versioned_corpus() {
+    let corpus = corpus();
+    assert_eq!(
+        u64::from(LANGUAGE_REPRESENTATION_SCHEMA_VERSION),
+        corpus["schemaVersion"].as_u64().expect("schema version")
+    );
+    for fixture in corpus["languages"].as_array().expect("language fixtures") {
+        let name = fixture["name"].as_str().expect("name");
+        let support = language_support(name).expect("registered support");
+        assert_eq!(support.version, fixture["version"].as_str().unwrap());
+        assert_eq!(support.edition, fixture["edition"].as_str().unwrap());
+        assert_eq!(
+            support.extensions,
+            fixture["extensions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|value| value.as_str().unwrap())
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(support.binding_resolution, RepresentationLevel::Unavailable);
+        assert_eq!(support.type_elaboration, RepresentationLevel::Unavailable);
+    }
+}
+
+#[test]
+fn all_twelve_translation_hooks_fail_closed_with_precise_obligations() {
+    let contracts = translation_contracts();
+    assert_eq!(contracts.len(), 12);
+    let pairs = contracts
+        .iter()
+        .map(|contract| (contract.source, contract.target))
+        .collect::<BTreeSet<_>>();
+    assert_eq!(pairs.len(), 12);
+    for contract in contracts {
+        assert_eq!(contract.support, TranslationSupport::UnsupportedObligation);
+        assert!(contract.obligation.contains(contract.source));
+        assert!(contract.obligation.contains(contract.target));
+        assert!(contract
+            .obligation
+            .contains("must stop instead of relabelling source text"));
+    }
+}
+
+fn captured_text(network: &LinkNetwork, root: LinkId) -> String {
+    let mut visited = BTreeSet::new();
+    let mut tokens = Vec::new();
+    collect_tokens(network, root, &mut visited, &mut tokens);
+    tokens.sort_by_key(|(start, id, _)| (*start, *id));
+    tokens.into_iter().map(|(_, _, text)| text).collect()
+}
+
+fn collect_tokens(
+    network: &LinkNetwork,
+    root: LinkId,
+    visited: &mut BTreeSet<LinkId>,
+    tokens: &mut Vec<(usize, u64, String)>,
+) {
+    if !visited.insert(root) {
+        return;
+    }
+    let Some(link) = network.link(root) else {
+        return;
+    };
+    if link.metadata().link_type() == Some(LinkType::Token) {
+        let start = link
+            .metadata()
+            .span()
+            .map_or(usize::MAX, |span| span.byte_range().start());
+        tokens.push((
+            start,
+            link.id().as_u64(),
+            link.metadata().term().unwrap_or_default().to_string(),
+        ));
+        return;
+    }
+    let children = network
+        .links()
+        .filter(|candidate| candidate.references().first().copied() == Some(root))
+        .map(meta_language::Link::id)
+        .collect::<Vec<_>>();
+    for child in children {
+        collect_tokens(network, child, visited, tokens);
+    }
+}

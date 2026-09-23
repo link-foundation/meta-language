@@ -7,6 +7,7 @@ mod cross_language_reconstruction;
 mod document_formatting;
 mod docx_document;
 mod doublets_storage;
+mod four_language_conformance;
 mod grammar_docs;
 mod grammar_emit;
 mod grammar_emit_javascript;

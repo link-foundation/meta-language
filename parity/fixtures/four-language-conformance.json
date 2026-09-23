@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "languages": [
+    {
+      "name": "JavaScript",
+      "aliases": ["javascript", "js", "ecmascript"],
+      "version": "ECMAScript 2026",
+      "edition": "ECMA-262, 17th edition",
+      "extensions": [".js", ".mjs", ".cjs"],
+      "root": "program",
+      "source": "const x = 1; const s = \"x\"; // x\n",
+      "identifiers": ["x", "s"],
+      "edit": {
+        "identifier": "x",
+        "replacement": "renamed",
+        "expected": "const renamed = 1; const s = \"x\"; // x\n"
+      }
+    },
+    {
+      "name": "Rust",
+      "aliases": ["rust", "rs"],
+      "version": "Rust 1.98.1",
+      "edition": "2024",
+      "extensions": [".rs"],
+      "root": "source_file",
+      "source": "fn id(π: u64) -> u64 { π } // π\n",
+      "identifiers": ["id", "π", "π"],
+      "edit": {
+        "identifier": "π",
+        "replacement": "value",
+        "expected": "fn id(value: u64) -> u64 { value } // π\n"
+      }
+    },
+    {
+      "name": "Lean",
+      "aliases": ["lean", "lean4"],
+      "version": "Lean 4.34.0",
+      "edition": "Lean 4",
+      "extensions": [".lean"],
+      "root": "file",
+      "source": "def id' (x : Nat) : Nat := x\n",
+      "identifiers": ["id'", "x", "x"],
+      "edit": {
+        "identifier": "id'",
+        "replacement": "identity",
+        "expected": "def identity (x : Nat) : Nat := x\n"
+      }
+    },
+    {
+      "name": "Rocq",
+      "aliases": ["rocq", "coq"],
+      "version": "Rocq 9.3.0",
+      "edition": "Vernacular",
+      "extensions": [".v"],
+      "root": "source_file",
+      "source": "Definition id (x : nat) : nat := x.\n",
+      "identifiers": ["id", "x", "x"],
+      "edit": {
+        "identifier": "id",
+        "replacement": "identity",
+        "expected": "Definition identity (x : nat) : nat := x.\n"
+      }
+    }
+  ],
+  "negativeCases": [
+    {
+      "language": "JavaScript",
+      "source": "function open( {\n",
+      "diagnostic": "unclosed delimiter"
+    },
+    {
+      "language": "Rust",
+      "source": "fn open() { /* unclosed",
+      "diagnostic": "unclosed block comment"
+    },
+    {
+      "language": "Lean",
+      "source": "def open := /- unclosed",
+      "diagnostic": "unclosed nested comment"
+    },
+    {
+      "language": "Coq",
+      "source": "Definition open := (* unclosed",
+      "diagnostic": "unclosed nested comment"
+    }
+  ]
+}

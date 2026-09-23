@@ -1,5 +1,6 @@
 import { Parser } from 'links-notation';
 
+import { parseProgrammingLanguage } from './programming-language-parser.js';
 import {
   ByteRange,
   Link,
@@ -27,6 +28,12 @@ export class LinkNetwork {
   static parse(text, language, configuration = ParseConfiguration.default()) {
     if (language.toLowerCase() === 'lino') {
       return LinkNetwork.fromLino(text);
+    }
+    const parsed = parseProgrammingLanguage(text, language);
+    if (parsed) {
+      const network = new LinkNetwork();
+      network._insertProgrammingLanguage(parsed, language, configuration);
+      return network;
     }
     return LinkNetwork.parseLosslessText(text, language, configuration);
   }
@@ -58,6 +65,19 @@ export class LinkNetwork {
 
   static parseFluent(text, language, configuration = ParseConfiguration.default()) {
     return new FluentPipeline(LinkNetwork.parse(text, language, configuration));
+  }
+
+  static parseWithRegistry(
+    registry,
+    text,
+    language,
+    configuration = ParseConfiguration.default(),
+  ) {
+    return registry.parse(text, language, configuration);
+  }
+
+  static parse_with_registry(registry, text, language, configuration = ParseConfiguration.default()) {
+    return LinkNetwork.parseWithRegistry(registry, text, language, configuration);
   }
 
   static fromLino(source) {
@@ -129,14 +149,16 @@ export class LinkNetwork {
     );
   }
 
-  insertSyntaxNode(language, term, children = []) {
+  insertSyntaxNode(language, term, children = [], metadata = {}) {
     return this.insertLink(
       children,
       LinkMetadata.new()
         .withLinkType(LinkType.Syntax)
         .withLanguage(language)
         .withTerm(term)
-        .withNamed(true),
+        .withNamed(metadata.named ?? true)
+        .withSpan(metadata.span)
+        .withFlags(metadata.flags ?? LinkFlags.clean()),
     );
   }
 
@@ -433,42 +455,58 @@ export class LinkNetwork {
       link.setMetadata(link.metadata().withFlags(link.metadata().flags.withMissing(true)));
     }
 
-    this._indexJavaScriptIdentifiers(text, language, tokenIdsByIndex);
   }
 
-  _indexJavaScriptIdentifiers(text, language, tokenIdsByIndex) {
-    if (!['javascript', 'typescript', 'js', 'ts'].includes(language.toLowerCase())) {
-      return;
+  _insertProgrammingLanguage(parsed, language, _configuration) {
+    this.insertTypedPoint(LinkType.Language, language);
+    const tokenIds = parsed.tokens.map((token) =>
+      this.insertSourceToken(language, token.text, token.span, token.flags),
+    );
+    this._insertProgrammingTree(parsed.tree, language, parsed.tokens, tokenIds);
+  }
+
+  _insertProgrammingTree(node, language, tokens, tokenIds) {
+    if (node.tokenIndex !== undefined) {
+      const token = tokens[node.tokenIndex];
+      return this.insertSyntaxNode(language, node.term, [tokenIds[node.tokenIndex]], {
+        named: token.named,
+        span: token.span,
+        flags: token.flags,
+      });
     }
-    const keyword = new Set([
-      'break',
-      'case',
-      'catch',
-      'class',
-      'const',
-      'else',
-      'export',
-      'for',
-      'function',
-      'if',
-      'import',
-      'let',
-      'return',
-      'var',
-      'while',
-    ]);
-    const pattern = /[A-Za-z_$][A-Za-z0-9_$]*/g;
-    let match = pattern.exec(text);
-    while (match) {
-      if (!keyword.has(match[0])) {
-        const children = [];
-        for (let index = match.index; index < match.index + match[0].length; index += 1) {
-          children.push(tokenIdsByIndex[index]);
-        }
-        this.insertSyntaxNode(language, 'identifier', children);
-      }
-      match = pattern.exec(text);
+
+    const children = node.children.map((child) =>
+      this._insertProgrammingTree(child, language, tokens, tokenIds),
+    );
+    const childSpans = node.children
+      .map((child) => this._programmingTreeSpan(child, tokens))
+      .filter(Boolean);
+    const span = childSpans.length === 0
+      ? new SourceSpan(new ByteRange(0, 0), new Point(0, 0), new Point(0, 0))
+      : new SourceSpan(
+          new ByteRange(childSpans[0].byteRange.start, childSpans.at(-1).byteRange.end),
+          childSpans[0].start,
+          childSpans.at(-1).end,
+        );
+    return this.insertSyntaxNode(language, node.term, children, { span });
+  }
+
+  _programmingTreeSpan(node, tokens) {
+    if (node.tokenIndex !== undefined) {
+      return tokens[node.tokenIndex].span;
     }
+    const first = node.children[0];
+    const last = node.children.at(-1);
+    if (!first || !last) {
+      return undefined;
+    }
+    const firstSpan = this._programmingTreeSpan(first, tokens);
+    const lastSpan = this._programmingTreeSpan(last, tokens);
+    return new SourceSpan(
+      new ByteRange(firstSpan.byteRange.start, lastSpan.byteRange.end),
+      firstSpan.start,
+      lastSpan.end,
+    );
   }
 
   _sourceTokenLinks() {

@@ -279,22 +279,138 @@ export class SourceSpan {
   end: Point;
 }
 
+export class LinkFlags {
+  constructor(options?: {
+    isError?: boolean;
+    hasError?: boolean;
+    isMissing?: boolean;
+    isExtra?: boolean;
+  });
+  isError: boolean;
+  hasError: boolean;
+  isMissing: boolean;
+  isExtra: boolean;
+  static clean(): LinkFlags;
+  withError(value?: boolean): LinkFlags;
+  withMissing(value?: boolean): LinkFlags;
+  withExtra(value?: boolean): LinkFlags;
+  hasRecoveryIssue(): boolean;
+}
+
 export class LinkMetadata {
   static new(): LinkMetadata;
   definition?: string;
   span?: SourceSpan;
+  flags: LinkFlags;
   withLinkType(linkType: LinkTypeValue): LinkMetadata;
   withTerm(term: string): LinkMetadata;
   withLanguage(language: string): LinkMetadata;
   withNamed(named?: boolean): LinkMetadata;
   withDefinition(definition?: string): LinkMetadata;
-  withSpan(span: SourceSpan): LinkMetadata;
+  withSpan(span: SourceSpan | undefined): LinkMetadata;
+  withFlags(flags: LinkFlags): LinkMetadata;
 }
+
+export type LanguageParserFunction = (
+  text: string,
+  language: string,
+  configuration: ParseConfiguration,
+) => LinkNetwork;
+
+export interface LanguageParserObject {
+  parseSource(
+    text: string,
+    language: string,
+    configuration: ParseConfiguration,
+  ): LinkNetwork;
+}
+
+export type LanguageParser = LanguageParserFunction | LanguageParserObject;
+
+export class ParserRegistry {
+  constructor(fallback?: LanguageParserFunction);
+  register(language: string, parser: LanguageParser): ParserRegistry;
+  withParser(language: string, parser: LanguageParser): ParserRegistry;
+  with_parser(language: string, parser: LanguageParser): ParserRegistry;
+  parserFor(language: string): LanguageParser | undefined;
+  parser_for(language: string): LanguageParser | undefined;
+  isRegistered(language: string): boolean;
+  is_registered(language: string): boolean;
+  size(): number;
+  len(): number;
+  isEmpty(): boolean;
+  is_empty(): boolean;
+  parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
+}
+
+export const LANGUAGE_REPRESENTATION_SCHEMA_VERSION: 1;
+export const RepresentationLevel: {
+  readonly Preserved: 'preserved';
+  readonly ConcreteSyntax: 'concrete-syntax';
+  readonly Opaque: 'opaque';
+  readonly Unavailable: 'unavailable';
+};
+export type RepresentationLevelValue =
+  typeof RepresentationLevel[keyof typeof RepresentationLevel];
+
+export interface LanguageSupport {
+  readonly schemaVersion: 1;
+  readonly name: 'JavaScript' | 'Rust' | 'Lean' | 'Rocq';
+  readonly aliases: readonly string[];
+  readonly version: string;
+  readonly edition: string;
+  readonly extensions: readonly string[];
+  readonly sourceBytes: RepresentationLevelValue;
+  readonly concreteSyntax: RepresentationLevelValue;
+  readonly bindingResolution: RepresentationLevelValue;
+  readonly typeElaboration: RepresentationLevelValue;
+  readonly dynamicExtensions: RepresentationLevelValue;
+  readonly proofSyntax: RepresentationLevelValue;
+  readonly emitter: 'ordered source-token emitter';
+}
+
+export const TranslationSupport: {
+  readonly UnsupportedObligation: 'unsupported-obligation';
+};
+export type TranslationSupportValue =
+  typeof TranslationSupport[keyof typeof TranslationSupport];
+
+export interface TranslationContract {
+  readonly schemaVersion: 1;
+  readonly source: LanguageSupport['name'];
+  readonly target: LanguageSupport['name'];
+  readonly support: TranslationSupportValue;
+  readonly observation: string;
+  readonly requiredRuntime: string;
+  readonly encoding: string;
+  readonly assumptions: readonly string[];
+  readonly obligation: string;
+}
+
+export function languageSupport(languageName: string): LanguageSupport | undefined;
+export function fourLanguageSupport(): readonly LanguageSupport[];
+export function translationContracts(): readonly TranslationContract[];
+export function translationContract(
+  sourceLanguage: string,
+  targetLanguage: string,
+): TranslationContract | undefined;
 
 export class LinkNetwork {
   constructor();
   static parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
   static parseLosslessText(
+    text: string,
+    language: string,
+    configuration?: ParseConfiguration,
+  ): LinkNetwork;
+  static parseWithRegistry(
+    registry: ParserRegistry,
+    text: string,
+    language: string,
+    configuration?: ParseConfiguration,
+  ): LinkNetwork;
+  static parse_with_registry(
+    registry: ParserRegistry,
     text: string,
     language: string,
     configuration?: ParseConfiguration,
@@ -313,8 +429,18 @@ export class LinkNetwork {
     references?: Array<LinkId | number>,
     metadata?: LinkMetadata,
   ): LinkId;
-  insertSourceToken(language: string, text: string): LinkId;
-  insertSyntaxNode(language: string, term: string, children?: Array<LinkId | number>): LinkId;
+  insertSourceToken(
+    language: string,
+    text: string,
+    span?: SourceSpan,
+    flags?: LinkFlags,
+  ): LinkId;
+  insertSyntaxNode(
+    language: string,
+    term: string,
+    children?: Array<LinkId | number>,
+    metadata?: { named?: boolean; span?: SourceSpan; flags?: LinkFlags },
+  ): LinkId;
   insertConceptExpression(concept: string, language: string, text: string): LinkId;
   link(id: LinkId | number): Link | undefined;
   links(): Link[];
@@ -336,6 +462,7 @@ export class LinkNetwork {
     rules: TranslationRuleSet,
   ): string;
   intoFluent(): FluentPipeline;
+  capturedText(id: LinkId | number): string;
 }
 
 export class Link {

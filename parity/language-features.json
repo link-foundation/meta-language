@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "issue": 163,
-  "updated": "2026-08-02",
+  "relatedIssues": [195],
+  "updated": "2026-09-23",
   "operationFamilies": [
     "parse",
     "query",
@@ -27,11 +28,9 @@
     },
     "grammar": { "parity": "ported", "feature": "grammar-peggy-emitter" },
     "graphql_adapter": { "parity": "ported", "feature": "graphql-query-plan" },
-    "language_parser": {
-      "parity": "rust-only",
-      "reason": "Built-in per-language tokenizers backing LinkNetwork::parse; the JavaScript port parses via the shared links-notation package instead of reimplementing these Rust tokenizers."
-    },
+    "language_parser": { "parity": "ported", "feature": "four-language-structured-frontends" },
     "language_profile": { "parity": "ported", "feature": "language-profile" },
+    "language_support": { "parity": "ported", "feature": "language-capability-contracts" },
     "link_flags": { "parity": "ported", "feature": "link-flags" },
     "link_network": { "parity": "ported", "feature": "link-network-core" },
     "lino_serialization": { "parity": "ported", "feature": "lino-serialization" },
@@ -40,10 +39,7 @@
       "parity": "rust-only",
       "reason": "Rust-side parity fixtures and language-target registry used to drive the crate's own conformance tests; this shared manifest plus the JavaScript checker is the cross-language equivalent."
     },
-    "parser_registry": {
-      "parity": "rust-only",
-      "reason": "Registry of the Rust built-in language parsers (language_parser); paired with that Rust-only module."
-    },
+    "parser_registry": { "parity": "ported", "feature": "parser-extension-registry" },
     "query": { "parity": "ported", "feature": "sexpression-query" },
     "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
     "query_plan": { "parity": "ported", "feature": "graphql-query-plan" },
@@ -65,6 +61,67 @@
     "verification": { "parity": "ported", "feature": "verification" }
   },
   "features": [
+    {
+      "id": "four-language-structured-frontends",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/language_parser.rs",
+          "rust/src/formal_language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs",
+          "rust/tests/unit/four_language_conformance.rs",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/programming-language-parser.js",
+          "js/src/network.js",
+          "js/tests/four-language-conformance.test.js",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      }
+    },
+    {
+      "id": "language-capability-contracts",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/language_support.rs",
+          "rust/tests/unit/four_language_conformance.rs",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/language-support.js",
+          "js/tests/four-language-conformance.test.js",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      }
+    },
+    {
+      "id": "parser-extension-registry",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/parser_registry.rs",
+          "rust/tests/unit/parser_registry.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/parser-registry.js",
+          "js/tests/four-language-conformance.test.js"
+        ]
+      }
+    },
     {
       "id": "graphql-query-plan",
       "required": true,
@@ -148,13 +205,14 @@
       "rust": {
         "status": "implemented",
         "evidence": [
-          "rust/src/link_network.rs",
+          "rust/src/tree_sitter_adapter.rs",
           "rust/tests/unit/api_style_parity.rs"
         ]
       },
       "javascript": {
         "status": "implemented",
         "evidence": [
+          "js/src/programming-language-parser.js",
           "js/src/network.js",
           "js/tests/core.test.js"
         ]

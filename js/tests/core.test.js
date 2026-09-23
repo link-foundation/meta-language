@@ -102,6 +102,21 @@ test('S-expression query transform replaces captured identifier source ranges', 
   assert.equal(network.reconstructText(), 'const newName = call(newName);\n');
 });
 
+test('identifier transforms do not rewrite strings or comments', () => {
+  const source = 'const x = 1; const s = "x"; // x\n';
+  const network = LinkNetwork.parse(source, 'JavaScript', ParseConfiguration.default());
+  const query = LinkQuery.fromSexpression(`
+    (identifier) @target
+    (#eq? @target "x")
+  `);
+
+  const matches = network.find(query);
+  network.replace(matches, ReplacementRule.capturedText('target', 'y'));
+
+  assert.equal(matches.length, 1);
+  assert.equal(network.reconstructText(), 'const y = 1; const s = "x"; // x\n');
+});
+
 test('structural substitution updates relation references', () => {
   const network = new LinkNetwork();
   const one = network.insertPoint('1');

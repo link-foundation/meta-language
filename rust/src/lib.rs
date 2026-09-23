@@ -8,12 +8,14 @@ mod data_format_parser;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
+mod formal_language_parser;
 pub mod grammar;
 pub mod graphql_adapter;
 mod incremental;
 mod language_fixtures;
 pub mod language_parser;
 pub mod language_profile;
+pub mod language_support;
 mod line_index;
 pub mod link_flags;
 pub mod link_network;
@@ -99,6 +101,11 @@ pub use graphql_adapter::{
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
+pub use language_support::{
+    language_support, translation_contract, translation_contracts, LanguageSupport,
+    RepresentationLevel, TranslationContract, TranslationSupport, FOUR_LANGUAGE_SUPPORT,
+    LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
+};
 pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use lino_serialization::LinoSerializationError;

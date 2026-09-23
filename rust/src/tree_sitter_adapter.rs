@@ -149,7 +149,10 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_cpp::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("c#") || language.eq_ignore_ascii_case("csharp") {
         Some(tree_sitter_c_sharp::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("javascript") || language.eq_ignore_ascii_case("js") {
+    } else if language.eq_ignore_ascii_case("javascript")
+        || language.eq_ignore_ascii_case("js")
+        || language.eq_ignore_ascii_case("ecmascript")
+    {
         Some(tree_sitter_javascript::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("tsx") {
         Some(tree_sitter_typescript::LANGUAGE_TSX.into())
@@ -167,7 +170,7 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         || language.eq_ignore_ascii_case("pascal")
     {
         Some(tree_sitter_pascal::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("rust") {
+    } else if language.eq_ignore_ascii_case("rust") || language.eq_ignore_ascii_case("rs") {
         Some(tree_sitter_rust::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("go") || language.eq_ignore_ascii_case("golang") {
         Some(tree_sitter_go::LANGUAGE.into())

@@ -1,6 +1,6 @@
 use crate::{
-    data_format_parser, docx_parser, lino_parser, pdf_parser, tree_sitter_adapter, LinkNetwork,
-    ParseConfiguration,
+    data_format_parser, docx_parser, formal_language_parser, lino_parser, pdf_parser,
+    tree_sitter_adapter, LinkNetwork, ParseConfiguration,
 };
 
 /// Parser boundary that produces lossless links networks for source text.
@@ -38,6 +38,10 @@ impl LanguageParser for BuiltInLanguageParser {
         }
 
         if let Some(network) = data_format_parser::parse(text, language, configuration) {
+            return network;
+        }
+
+        if let Some(network) = formal_language_parser::parse(text, language, configuration) {
             return network;
         }
 
