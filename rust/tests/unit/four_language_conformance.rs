@@ -242,6 +242,36 @@ fn every_rust_grammar_inventory_alias_selects_a_nontrivial_lossless_cst() {
 }
 
 #[test]
+fn rust_markdown_and_json5_frontends_expose_grammar_nodes_and_diagnostics() {
+    for (language, source, expected_terms) in [
+        (
+            "Markdown",
+            "# Title\n\nText.\n",
+            ["document", "atx_heading", "paragraph"],
+        ),
+        ("JSON5", "{value: 1,}\n", ["file", "object", "member"]),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source, "{language}");
+        assert!(network.verify_full_match(None).is_clean(), "{language}");
+        for expected in expected_terms {
+            assert!(
+                network.links().any(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link.metadata().term() == Some(expected)
+                }),
+                "{language} must expose the {expected} grammar node"
+            );
+        }
+    }
+
+    let invalid = "{value: }\n";
+    let network = LinkNetwork::parse(invalid, "JSON5", ParseConfiguration::default());
+    assert_eq!(network.reconstruct_text(), invalid);
+    assert!(!network.verify_full_match(None).is_clean());
+}
+
+#[test]
 fn capability_reports_match_the_shared_versioned_corpus() {
     let corpus = corpus();
     assert_eq!(

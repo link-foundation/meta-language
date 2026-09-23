@@ -37,10 +37,6 @@ impl LanguageParser for BuiltInLanguageParser {
             return docx_parser::parse(text, language, configuration);
         }
 
-        if let Some(network) = data_format_parser::parse(text, language, configuration) {
-            return network;
-        }
-
         // Lean has a statically linked tree-sitter frontend. A build-time ABI
         // mismatch is an implementation error, not permission to silently
         // relabel its lexical fallback as a grammar CST.
@@ -50,6 +46,14 @@ impl LanguageParser for BuiltInLanguageParser {
         }
 
         if let Some(network) = tree_sitter_adapter::parse(text, language, configuration) {
+            return network;
+        }
+
+        // Structured parsers without a tree-sitter grammar remain explicit
+        // fallbacks. Keeping this after the grammar registry ensures JSON5 is
+        // handled by its complete grammar while CSV retains its lossless
+        // record/field parser.
+        if let Some(network) = data_format_parser::parse(text, language, configuration) {
             return network;
         }
 

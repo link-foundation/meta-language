@@ -70,7 +70,7 @@
   "languages": [
     { "name": "LiNo", "aliases": ["lino"], "family": "meta", "source": "1 1 1\n", "javascript": { "status": "specialized-structure", "backend": "links-notation" }, "rust": { "status": "specialized-structure", "backend": "links-notation" } },
     { "name": "txt", "aliases": ["text", "plain text"], "family": "document", "source": "Plain text.\n", "javascript": { "status": "lossless-text", "backend": "fallback" }, "rust": { "status": "lossless-text", "backend": "fallback" } },
-    { "name": "Markdown", "aliases": ["markdown", "md"], "family": "document", "source": "# Title\n\nText.\n", "javascript": { "status": "grammar-cst", "backend": "tree-sitter-markdown" }, "rust": { "status": "lossless-text", "backend": "fallback + embedded-region detector" } },
+    { "name": "Markdown", "aliases": ["markdown", "md"], "family": "document", "source": "# Title\n\nText.\n", "javascript": { "status": "grammar-cst", "backend": "tree-sitter-markdown" }, "rust": { "status": "grammar-cst", "backend": "tree-sitter-md-025 0.5.6" } },
     { "name": "PDF", "aliases": ["pdf"], "family": "document", "source": "%PDF-1.7\n%%EOF\n", "javascript": { "status": "lossless-text", "backend": "fallback" }, "rust": { "status": "specialized-structure", "backend": "pdf_parser" } },
     { "name": "DOCX", "aliases": ["docx"], "family": "document", "source": "<w:document><w:body/></w:document>\n", "javascript": { "status": "lossless-text", "backend": "fallback" }, "rust": { "status": "specialized-structure", "backend": "docx_parser" } },
 
@@ -117,7 +117,7 @@
     { "name": "Protocol Buffers", "aliases": ["protobuf", "proto", "protocol buffers"], "family": "schema", "source": "syntax = \"proto3\"; message Item {}\n", "javascript": { "status": "grammar-cst", "backend": "tree-sitter-proto" }, "rust": { "status": "grammar-cst", "backend": "tree-sitter-proto" } },
     { "name": "GraphQL", "aliases": ["graphql", "gql"], "family": "schema", "source": "type Item { id: ID! }\n", "javascript": { "status": "grammar-cst", "backend": "tree-sitter-graphql" }, "rust": { "status": "grammar-cst", "backend": "tree-sitter-graphql" } },
     { "name": "CSV", "aliases": ["csv"], "family": "data", "source": "name,value\na,1\n", "javascript": { "status": "grammar-cst", "backend": "tree-sitter-csv" }, "rust": { "status": "specialized-structure", "backend": "csv + data_format_parser" } },
-    { "name": "JSON5", "aliases": ["json5"], "family": "data", "source": "{value: 1,}\n", "javascript": { "status": "grammar-cst", "backend": "tree-sitter-json5" }, "rust": { "status": "lexical-cst", "backend": "json5_nodes + data_format_parser" } },
+    { "name": "JSON5", "aliases": ["json5"], "family": "data", "source": "{value: 1,}\n", "javascript": { "status": "grammar-cst", "backend": "tree-sitter-json5" }, "rust": { "status": "grammar-cst", "backend": "tree-sitter-json5-orchard 0.1.0" } },
 
     { "name": "English", "aliases": ["english", "en"], "family": "natural", "source": "Hawaii is a state.\n", "javascript": { "status": "lossless-text", "backend": "fallback" }, "rust": { "status": "specialized-structure", "backend": "natural_language" } },
     { "name": "Mandarin Chinese", "aliases": ["mandarin chinese", "chinese", "zh"], "family": "natural", "source": "你好。\n", "javascript": { "status": "lossless-text", "backend": "fallback" }, "rust": { "status": "specialized-structure", "backend": "natural_language" } },

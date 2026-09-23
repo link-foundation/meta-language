@@ -225,6 +225,8 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_css::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("json") {
         Some(tree_sitter_json::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("json5") {
+        Some(tree_sitter_json5_orchard::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("yaml") || language.eq_ignore_ascii_case("yml") {
         Some(tree_sitter_yaml::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("toml") {
@@ -254,6 +256,8 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_lua::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("perl") || language.eq_ignore_ascii_case("pl") {
         Some(ts_parser_perl::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("markdown") || language.eq_ignore_ascii_case("md") {
+        Some(tree_sitter_md_025::LANGUAGE.into())
     } else {
         None
     }
