@@ -1,6 +1,6 @@
 use crate::{
-    data_format_parser, docx_parser, formal_language_parser, lino_parser, pdf_parser,
-    tree_sitter_adapter, LinkNetwork, ParseConfiguration,
+    data_format_parser, docx_parser, formal_language_parser, lino_parser, natural_language,
+    pdf_parser, structured_text_parser, tree_sitter_adapter, LinkNetwork, ParseConfiguration,
 };
 
 /// Parser boundary that produces lossless links networks for source text.
@@ -18,6 +18,41 @@ pub trait LanguageParser {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct BuiltInLanguageParser;
 
+// Explicitly audited alongside `tree_sitter_adapter::grammar_for_language` by
+// the issue-195 manifest validator. Every alias here selects a structured
+// parser through `parse_builtin_grammar` below.
+const BUILT_IN_GRAMMAR_ALIASES: &[&str] = &[
+    "lino",
+    "txt",
+    "text",
+    "plain text",
+    "pdf",
+    "docx",
+    "csv",
+    "english",
+    "en",
+    "mandarin chinese",
+    "chinese",
+    "zh",
+    "hindi",
+    "hi",
+    "spanish",
+    "es",
+    "modern standard arabic",
+    "arabic",
+    "ar",
+    "french",
+    "fr",
+    "bengali",
+    "bn",
+    "portuguese",
+    "pt",
+    "russian",
+    "ru",
+    "urdu",
+    "ur",
+];
+
 impl LanguageParser for BuiltInLanguageParser {
     fn parse_source(
         &self,
@@ -25,16 +60,8 @@ impl LanguageParser for BuiltInLanguageParser {
         language: &str,
         configuration: ParseConfiguration,
     ) -> LinkNetwork {
-        if language.eq_ignore_ascii_case("lino") {
-            return lino_parser::parse(text, language, configuration);
-        }
-
-        if language.eq_ignore_ascii_case("pdf") {
-            return pdf_parser::parse(text, language, configuration);
-        }
-
-        if language.eq_ignore_ascii_case("docx") {
-            return docx_parser::parse(text, language, configuration);
+        if let Some(network) = parse_builtin_grammar(text, language, configuration) {
+            return network;
         }
 
         // Lean has a statically linked tree-sitter frontend. A build-time ABI
@@ -65,5 +92,32 @@ impl LanguageParser for BuiltInLanguageParser {
         }
 
         LinkNetwork::parse_lossless_text(text, language, configuration)
+    }
+}
+
+fn parse_builtin_grammar(
+    text: &str,
+    language: &str,
+    configuration: ParseConfiguration,
+) -> Option<LinkNetwork> {
+    let normalized = language.to_ascii_lowercase();
+    if !BUILT_IN_GRAMMAR_ALIASES.contains(&normalized.as_str()) {
+        return None;
+    }
+
+    match normalized.as_str() {
+        "lino" => Some(lino_parser::parse(text, language, configuration)),
+        "txt" | "text" | "plain text" => Some(structured_text_parser::parse_plain(
+            text,
+            language,
+            configuration,
+        )),
+        "pdf" => Some(pdf_parser::parse(text, language, configuration)),
+        "docx" => Some(docx_parser::parse(text, language, configuration)),
+        "csv" => data_format_parser::parse(text, language, configuration),
+        _ if natural_language::canonical_natural_language(language).is_some() => Some(
+            structured_text_parser::parse_natural(text, language, configuration),
+        ),
+        _ => None,
     }
 }

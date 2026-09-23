@@ -231,7 +231,7 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_yaml::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("toml") {
         Some(tree_sitter_toml_ng::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("xml") {
+    } else if language.eq_ignore_ascii_case("xml") || language.eq_ignore_ascii_case("docx") {
         Some(tree_sitter_xml::LANGUAGE_XML.into())
     } else if language.eq_ignore_ascii_case("dtd") {
         Some(tree_sitter_xml::LANGUAGE_DTD.into())

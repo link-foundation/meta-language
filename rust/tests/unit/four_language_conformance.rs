@@ -272,6 +272,58 @@ fn rust_markdown_and_json5_frontends_expose_grammar_nodes_and_diagnostics() {
 }
 
 #[test]
+fn rust_custom_language_frontends_expose_complete_default_csts() {
+    let fixtures: [(&str, &str, &[&str]); 6] = [
+        ("LiNo", "1 1 1\n", &["lino_document", "link"]),
+        ("txt", "Plain text.\n", &["text_document", "line"]),
+        (
+            "PDF",
+            "%PDF-1.7\n%%EOF\n",
+            &["pdf_file", "header", "end_of_file"],
+        ),
+        (
+            "DOCX",
+            "<w:document><w:body/></w:document>\n",
+            &["document", "element"],
+        ),
+        (
+            "English",
+            "Hawaii is a state.\n",
+            &["natural_language_document", "sentence", "word"],
+        ),
+        (
+            "Mandarin Chinese",
+            "你好。\n",
+            &["natural_language_document", "sentence", "word"],
+        ),
+    ];
+
+    for (language, source, expected_terms) in fixtures {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source, "{language}");
+        assert!(network.verify_full_match(None).is_clean(), "{language}");
+        for expected in expected_terms {
+            assert!(
+                network.links().any(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link.metadata().term() == Some(expected)
+                }),
+                "{language} must expose the {expected} grammar node"
+            );
+        }
+    }
+
+    for (language, source) in [("LiNo", "(broken\n"), ("PDF", "not a PDF\n")] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source, "{language} recovery");
+        assert!(
+            !network.verify_full_match(None).is_clean(),
+            "{language} diagnostics"
+        );
+    }
+}
+
+#[test]
 fn capability_reports_match_the_shared_versioned_corpus() {
     let corpus = corpus();
     assert_eq!(

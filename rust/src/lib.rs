@@ -39,6 +39,7 @@ pub mod source;
 mod source_generation;
 pub mod sql_adapter;
 pub mod storage;
+mod structured_text_parser;
 pub mod substitution;
 pub mod transform;
 pub mod translation_rules;

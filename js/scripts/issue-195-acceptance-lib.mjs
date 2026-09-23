@@ -1059,6 +1059,10 @@ export async function validateIssue195Manifest(manifest, root) {
     path.join(root, 'rust', 'src', 'tree_sitter_adapter.rs'),
     'utf8',
   );
+  const rustBuiltInParserSource = await readFile(
+    path.join(root, 'rust', 'src', 'language_parser.rs'),
+    'utf8',
+  );
   const rustAliasBlock = rustParserSource.match(
     /fn grammar_for_language[\s\S]*?\n}\n\nfn convert_node/,
   )?.[0];
@@ -1068,6 +1072,16 @@ export async function validateIssue195Manifest(manifest, root) {
     const actual = new Set(
       [...rustAliasBlock.matchAll(/"([^"]+)"/g)].map((match) => match[1].toLowerCase()),
     );
+    const builtInAliasBlock = rustBuiltInParserSource.match(
+      /const BUILT_IN_GRAMMAR_ALIASES[^=]*=\s*&\[([\s\S]*?)\];/,
+    )?.[1];
+    if (!builtInAliasBlock) {
+      errors.push('could not enumerate Rust built-in grammar alias registry');
+    } else {
+      for (const match of builtInAliasBlock.matchAll(/"([^"]+)"/g)) {
+        actual.add(match[1].toLowerCase());
+      }
+    }
     const expectedAliases = new Set(
       inventory.languages
         .filter(({ rust }) => rust.status === 'grammar-cst')

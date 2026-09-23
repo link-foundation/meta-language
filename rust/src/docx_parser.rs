@@ -1,10 +1,10 @@
 //! DOCX (OOXML) source parser: a byte-exact lossless network plus
 //! concept-tagged document-structure links.
 //!
-//! Parsing starts from [`LinkNetwork::parse_lossless_text`], so every byte of
-//! the `word/document.xml` source is preserved as a `Token` leaf and
-//! [`LinkNetwork::reconstruct_text`] returns the input verbatim. On top of those
-//! leaves this module recovers the document structure of the
+//! Parsing starts from the built-in XML grammar, so the `word/document.xml`
+//! source receives a concrete syntax tree and [`LinkNetwork::reconstruct_text`]
+//! returns the input verbatim. On top of that syntax this module recovers the
+//! document structure of the
 //! [OOXML text profile](crate::document_formatting) and interns it as additive
 //! `Concept`/`Object` links: one shared concept point per role (`heading`,
 //! `paragraph`, `bullet-list`, `list-item`, `strong`, `emphasis`, …) and one
@@ -16,12 +16,13 @@
 //! concepts required by issue #85 for bold/italic/heading/paragraph/list.
 
 use crate::document_formatting::{parse_docx_document, BlockNode, InlineNode};
-use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration};
+use crate::{tree_sitter_adapter, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration};
 
 /// Parses DOCX `word/document.xml` `text` into a lossless network enriched with
 /// concept-tagged document-structure links.
 pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
-    let mut network = LinkNetwork::parse_lossless_text(text, language, configuration);
+    let mut network = tree_sitter_adapter::parse(text, language, configuration)
+        .expect("the built-in DOCX OOXML grammar must initialize");
 
     let document = parse_docx_document(text);
     if document.blocks.is_empty() {
@@ -40,7 +41,7 @@ pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> L
     network
 }
 
-/// Finds the document root inserted by [`LinkNetwork::parse_lossless_text`].
+/// Finds the document root inserted by the XML grammar adapter.
 fn document_link(network: &LinkNetwork) -> Option<LinkId> {
     network
         .links()

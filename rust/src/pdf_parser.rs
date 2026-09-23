@@ -1,9 +1,9 @@
 //! PDF source parser: a byte-exact lossless network plus concept-tagged
 //! document-structure links.
 //!
-//! Parsing starts from [`LinkNetwork::parse_lossless_text`], so every byte of
-//! the PDF is preserved as a `Token` leaf and [`LinkNetwork::reconstruct_text`]
-//! returns the input verbatim. On top of those leaves this module recovers the
+//! Parsing starts from the built-in PDF source grammar, so every byte is
+//! preserved in a concrete syntax tree and [`LinkNetwork::reconstruct_text`]
+//! returns the input verbatim. On top of that syntax this module recovers the
 //! document structure of the [text PDF profile](crate::document_formatting) and
 //! interns it as additive `Concept`/`Object` links: one shared concept point
 //! per role (`heading`, `paragraph`, `bullet-list`, `list-item`, `strong`,
@@ -15,12 +15,14 @@
 //! concepts required by issue #84 for bold/italic/heading/paragraph/list.
 
 use crate::document_formatting::{parse_pdf_document, BlockNode, InlineNode};
-use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration};
+use crate::{
+    structured_text_parser, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration,
+};
 
 /// Parses PDF `text` into a lossless network enriched with concept-tagged
 /// document-structure links.
 pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
-    let mut network = LinkNetwork::parse_lossless_text(text, language, configuration);
+    let mut network = structured_text_parser::parse_pdf(text, language, configuration);
 
     let document = parse_pdf_document(text);
     if document.blocks.is_empty() {
@@ -39,7 +41,7 @@ pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> L
     network
 }
 
-/// Finds the document root inserted by [`LinkNetwork::parse_lossless_text`].
+/// Finds the document root inserted by the PDF grammar parser.
 fn document_link(network: &LinkNetwork) -> Option<LinkId> {
     network
         .links()

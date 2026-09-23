@@ -277,18 +277,18 @@ const fn canonical_whatlang_language(language: whatlang::Lang) -> Option<&'stati
     }
 }
 
-fn canonical_natural_language(language: &str) -> Option<&'static str> {
+pub(crate) fn canonical_natural_language(language: &str) -> Option<&'static str> {
     match language.to_ascii_lowercase().as_str() {
-        "english" => Some("English"),
-        "mandarin" | "mandarin chinese" | "chinese" => Some("Mandarin Chinese"),
-        "hindi" => Some("Hindi"),
-        "spanish" => Some("Spanish"),
-        "arabic" | "modern standard arabic" => Some("Modern Standard Arabic"),
-        "french" => Some("French"),
-        "bengali" => Some("Bengali"),
-        "portuguese" => Some("Portuguese"),
-        "russian" => Some("Russian"),
-        "urdu" => Some("Urdu"),
+        "english" | "en" => Some("English"),
+        "mandarin" | "mandarin chinese" | "chinese" | "zh" => Some("Mandarin Chinese"),
+        "hindi" | "hi" => Some("Hindi"),
+        "spanish" | "es" => Some("Spanish"),
+        "arabic" | "modern standard arabic" | "ar" => Some("Modern Standard Arabic"),
+        "french" | "fr" => Some("French"),
+        "bengali" | "bn" => Some("Bengali"),
+        "portuguese" | "pt" => Some("Portuguese"),
+        "russian" | "ru" => Some("Russian"),
+        "urdu" | "ur" => Some("Urdu"),
         _ => None,
     }
 }
