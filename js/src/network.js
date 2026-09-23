@@ -478,19 +478,9 @@ export class LinkNetwork {
     const children = node.children.map((child) =>
       this._insertProgrammingTree(child, language, tokens, tokenIds),
     );
-    const childSpans = node.children
-      .map((child) => this._programmingTreeSpan(child, tokens))
-      .filter(Boolean);
-    const span = childSpans.length === 0
-      ? new SourceSpan(new ByteRange(0, 0), new Point(0, 0), new Point(0, 0))
-      : new SourceSpan(
-          new ByteRange(childSpans[0].byteRange.start, childSpans.at(-1).byteRange.end),
-          childSpans[0].start,
-          childSpans.at(-1).end,
-        );
     const syntax = this.insertSyntaxNode(language, node.term, children, {
       named: node.named,
-      span: node.span ?? span,
+      span: node.span,
       flags: node.flags,
     });
     for (const [index, child] of node.children.entries()) {
@@ -506,24 +496,6 @@ export class LinkNetwork {
       }
     }
     return syntax;
-  }
-
-  _programmingTreeSpan(node, tokens) {
-    if (node.tokenIndex !== undefined) {
-      return tokens[node.tokenIndex].span;
-    }
-    const first = node.children[0];
-    const last = node.children.at(-1);
-    if (!first || !last) {
-      return undefined;
-    }
-    const firstSpan = this._programmingTreeSpan(first, tokens);
-    const lastSpan = this._programmingTreeSpan(last, tokens);
-    return new SourceSpan(
-      new ByteRange(firstSpan.byteRange.start, lastSpan.byteRange.end),
-      firstSpan.start,
-      lastSpan.end,
-    );
   }
 
   _sourceTokenLinks() {

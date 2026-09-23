@@ -116,6 +116,15 @@ test('JavaScript grammar reports syntactically invalid programs', () => {
   assert.equal(network.verifyFullMatch().isClean(), false, fixture.diagnostic);
 });
 
+test('JavaScript grammar retains zero-width missing nodes at source boundaries', () => {
+  const source = 'if (true)';
+  const network = LinkNetwork.parse(source, 'JavaScript');
+
+  assert.equal(network.reconstructText(), source);
+  assert.equal(network.verifyFullMatch().isClean(), false);
+  assert.ok(network.links().some((link) => link.metadata().flags.isMissing));
+});
+
 test('ordinary parse dispatch returns grammar CSTs for the audited language inventory', () => {
   for (const fixture of corpus.defaultCstCases) {
     const network = LinkNetwork.parse(fixture.source, fixture.language);
