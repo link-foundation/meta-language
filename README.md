@@ -31,6 +31,9 @@ Declarative, recursive network translation and its template syntax are
 documented in [`docs/translation-rules.md`](docs/translation-rules.md).
 The shared executable query-plan IR plus registry-driven GraphQL and SQL
 lowering APIs are documented in [`docs/query-plans.md`](docs/query-plans.md).
+The versioned JavaScript, Rust, Lean, and Rocq parser/emitter capability and
+translation boundaries are documented in
+[`docs/four-language-contracts.md`](docs/four-language-contracts.md).
 
 ## Quick start
 

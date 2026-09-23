@@ -28,6 +28,13 @@ and target-language fallbacks.
 The shared executable query-plan IR and registry-driven GraphQL and SQL
 adapters are documented in [`../docs/query-plans.md`](../docs/query-plans.md).
 
+The package registers lossless structured frontends for JavaScript, Rust,
+Lean, and Rocq/Coq, including aliases, recovery diagnostics, UTF-8 spans, and
+ordered token emission. The exact version profiles and the explicit boundary
+between concrete syntax, opaque extensions, unavailable semantic layers, and
+the 12 fail-closed translation hooks are documented in
+[`../docs/four-language-contracts.md`](../docs/four-language-contracts.md).
+
 ## Usage
 
 ```js
