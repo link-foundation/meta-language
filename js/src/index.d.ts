@@ -395,6 +395,74 @@ export function translationContract(
   targetLanguage: string,
 ): TranslationContract | undefined;
 
+export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
+export const SEMANTIC_CONSTRUCTS: readonly string[];
+
+export interface ProgramProjectContext {
+  root?: string;
+  files?: readonly string[];
+  dependencies?: readonly string[];
+  extensions?: readonly string[];
+}
+
+export interface ProgramSourceRange {
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface ProgramScope extends ProgramSourceRange {
+  readonly id: string;
+  readonly parent: string | null;
+  readonly depth: number;
+}
+
+export interface ProgramBinding {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: string;
+  readonly scope: string;
+  readonly declaration: ProgramSourceRange;
+  readonly references: readonly ProgramSourceRange[];
+}
+
+export interface ProgramConstruct {
+  readonly kind: string;
+  readonly status: 'represented' | 'not-present' | 'not-applicable';
+  readonly evidence: readonly ({ term?: string } & ProgramSourceRange)[];
+  readonly rationale?: string;
+}
+
+export class BindingRenameError extends Error {}
+
+export class ProgramRepresentation {
+  readonly schemaVersion: 1;
+  readonly language: LanguageSupport['name'];
+  readonly source: string;
+  readonly project: Required<ProgramProjectContext>;
+  readonly network: LinkNetwork;
+  readonly scopes: readonly ProgramScope[];
+  readonly bindings: readonly ProgramBinding[];
+  readonly unresolvedReferences: readonly ({ name: string } & ProgramSourceRange)[];
+  readonly sourceMappings: readonly ({ linkId: number; term: string } & ProgramSourceRange)[];
+  readonly modules: readonly object[];
+  readonly types: readonly object[];
+  readonly extensions: readonly object[];
+  readonly proofs: readonly object[];
+  readonly diagnostics: readonly object[];
+  readonly constructs: readonly ProgramConstruct[];
+  emit(): string;
+  renameBinding(bindingId: string, replacement: string): ProgramRepresentation;
+  rename_binding(bindingId: string, replacement: string): ProgramRepresentation;
+  normalized(): object;
+}
+
+export function analyzeProgram(
+  source: string,
+  language: string,
+  project?: ProgramProjectContext,
+): ProgramRepresentation;
+export const analyze_program: typeof analyzeProgram;
+
 export class LinkNetwork {
   constructor();
   static parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;

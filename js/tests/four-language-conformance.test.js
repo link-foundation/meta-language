@@ -11,6 +11,7 @@ import {
   ParserRegistry,
   ReplacementRule,
   TranslationSupport,
+  analyzeProgram,
   fourLanguageSupport,
   languageSupport,
   translationContracts,
@@ -202,6 +203,45 @@ test('capability reports match the shared versioned corpus', () => {
     assert.deepEqual(support.extensions, fixture.extensions);
     assert.equal(support.bindingResolution, 'unavailable');
     assert.equal(support.typeElaboration, 'unavailable');
+  }
+});
+
+test('four-language semantic programs expose every required representation phase', () => {
+  for (const fixture of corpus.semanticPrograms) {
+    const program = analyzeProgram(fixture.source, fixture.language, fixture.project);
+    assert.equal(program.emit(), fixture.source, `${fixture.language} source generation`);
+    assert.equal(program.network.reconstructText(), fixture.source, `${fixture.language} network`);
+    assert.equal(program.diagnostics.length, 0, `${fixture.language} diagnostics`);
+    assert.ok(program.bindings.length > 0, `${fixture.language} bindings`);
+    assert.ok(program.scopes.length > 0, `${fixture.language} scopes`);
+    assert.ok(program.sourceMappings.length > 0, `${fixture.language} source mappings`);
+
+    const byKind = new Map(program.constructs.map((construct) => [construct.kind, construct]));
+    for (const kind of fixture.represented) {
+      assert.equal(byKind.get(kind)?.status, 'represented', `${fixture.language} ${kind}`);
+      assert.ok(byKind.get(kind).evidence.length > 0, `${fixture.language} ${kind} evidence`);
+    }
+    for (const kind of fixture.notApplicable) {
+      assert.equal(byKind.get(kind)?.status, 'not-applicable', `${fixture.language} ${kind}`);
+      assert.ok(byKind.get(kind).rationale, `${fixture.language} ${kind} rationale`);
+    }
+  }
+});
+
+test('binding-aware rename preserves shadowing, Unicode, templates, and comments', () => {
+  for (const fixture of corpus.renameCases) {
+    const program = analyzeProgram(fixture.source, fixture.language);
+    const candidates = program.bindings.filter(({ name }) => name === fixture.binding);
+    const binding = candidates[fixture.declarationOccurrence];
+    assert.ok(binding, `${fixture.language} selected binding`);
+    const renamed = program.renameBinding(binding.id, fixture.replacement);
+    assert.equal(renamed.emit(), fixture.expected, `${fixture.language} binding rename`);
+    assert.equal(renamed.network.verifyFullMatch().isClean(), true, `${fixture.language} reparse`);
+    assert.throws(
+      () => program.renameBinding(binding.id, fixture.capture),
+      /capture|conflict/u,
+      `${fixture.language} capture avoidance`,
+    );
   }
 });
 

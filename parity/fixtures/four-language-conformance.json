@@ -104,6 +104,74 @@
       "diagnostic": "missing JavaScript binding and initializer"
     }
   },
+  "semanticPrograms": [
+    {
+      "language": "JavaScript",
+      "source": "import { readFile as read } from \"node:fs/promises\";\n\"use strict\";\nfunction count(n) { return n < 1 ? 0 : count(n - 1); }\nexport async function load(path) { const raw = await read(path); return String.raw`value=${raw}`; }\n",
+      "project": { "root": "/workspace", "files": ["main.mjs"], "dependencies": ["node:fs/promises"] },
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
+      "notApplicable": ["proof-terms-and-tactics"]
+    },
+    {
+      "language": "Rust",
+      "source": "#![allow(dead_code)]\nuse std::future::ready;\nmacro_rules! identity { ($value:expr) => { $value }; }\nfn factorial(n: u64) -> u64 { if n < 2 { 1 } else { n * factorial(n - 1) } }\nasync fn effect(value: u64) -> u64 { ready(()).await; identity!(value) }\n",
+      "project": { "root": "/workspace", "files": ["src/lib.rs"], "dependencies": ["std"] },
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
+      "notApplicable": ["proof-terms-and-tactics"]
+    },
+    {
+      "language": "Lean",
+      "source": "import Std\nuniverse u\nnamespace Demo\npostfix:max \"‼\" => id\n@[simp] def identity {α : Type u} (value : α) : α := value\ndef factorial : Nat → Nat | 0 => 1 | Nat.succ n => Nat.succ n * factorial n\ndef effect : IO Unit := pure ()\ntheorem identity_eq {α : Type u} (value : α) : identity value = value := by\n  rfl\nend Demo\n",
+      "project": { "root": "/workspace", "files": ["Demo.lean"], "dependencies": ["Std"] },
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
+      "notApplicable": []
+    },
+    {
+      "language": "Rocq",
+      "source": "From Stdlib Require Import Arith.\nModule Demo.\nUniverse u.\n#[local] Notation \"'identity!' value\" := value (at level 10).\nFixpoint factorial (n : nat) : nat := match n with | 0 => 1 | S rest => n * factorial rest end.\nTheorem factorial_zero : factorial 0 = 1.\nProof. reflexivity. Qed.\nEnd Demo.\n",
+      "project": { "root": "/workspace", "files": ["Demo.v"], "dependencies": ["Stdlib.Arith"] },
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
+      "notApplicable": []
+    }
+  ],
+  "renameCases": [
+    {
+      "language": "JavaScript",
+      "source": "const π = 1; function use(π) { const value = `${π}`; return π + value.length; } console.log(π); // π\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "total",
+      "expected": "const total = 1; function use(π) { const value = `${π}`; return π + value.length; } console.log(total); // π\n",
+      "capture": "use"
+    },
+    {
+      "language": "Rust",
+      "source": "fn use_value(π: u64) -> u64 { let value = π; { let π = value; let _ = π; } π } // π\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "total",
+      "expected": "fn use_value(total: u64) -> u64 { let value = total; { let π = value; let _ = π; } total } // π\n",
+      "capture": "value"
+    },
+    {
+      "language": "Lean",
+      "source": "def useValue (π : Nat) : Nat := let value := π; let π := value; π\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "total",
+      "expected": "def useValue (total : Nat) : Nat := let value := total; let π := value; π\n",
+      "capture": "value"
+    },
+    {
+      "language": "Rocq",
+      "source": "Definition use_value (π : nat) : nat := let value := π in let π := value in π.\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "total",
+      "expected": "Definition use_value (total : nat) : nat := let value := total in let π := value in π.\n",
+      "capture": "value"
+    }
+  ],
   "defaultCstCases": [
     {
       "language": "Python",
