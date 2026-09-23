@@ -41,14 +41,16 @@ impl LanguageParser for BuiltInLanguageParser {
             return network;
         }
 
-        // Lean has a complete tree-sitter frontend. Keep Rocq on the portable
-        // recovery parser until an ABI-compatible Rust grammar is available.
+        // Lean has a statically linked tree-sitter frontend. A build-time ABI
+        // mismatch is an implementation error, not permission to silently
+        // relabel its lexical fallback as a grammar CST.
         if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
-            if let Some(network) = tree_sitter_adapter::parse(text, language, configuration) {
-                return network;
-            }
+            return tree_sitter_adapter::parse(text, language, configuration)
+                .expect("the built-in Lean tree-sitter grammar must initialize");
         }
 
+        // Keep Rocq on the portable recovery parser until an ABI-compatible
+        // Rust grammar is available; the shared inventory marks it lexical.
         if let Some(network) = formal_language_parser::parse(text, language, configuration) {
             return network;
         }
