@@ -703,26 +703,118 @@ export class TranslationRuleSet {
   static fromJson(source: string | unknown): TranslationRuleSet;
 }
 
+export type GrammarRuleKind = 'normal' | 'atomic' | 'silent' | 'token' | 'terminal' | 'nonterminal';
+export type GrammarExpression =
+  | { kind: 'empty' | 'any' }
+  | { kind: 'literal' | 'literalInsensitive' | 'regex'; value: string }
+  | { kind: 'ref'; name: string }
+  | { kind: 'seq'; items: GrammarExpression[] }
+  | { kind: 'choice'; items: GrammarExpression[]; ordered: boolean }
+  | { kind: 'repeat0' | 'repeat1' | 'optional' | 'and' | 'not'; item: GrammarExpression }
+  | { kind: 'repeat'; item: GrammarExpression; min: number; max: number | null }
+  | { kind: 'capture'; label: string | null; item: GrammarExpression }
+  | { kind: 'charRange'; start: string; end: string }
+  | {
+      kind: 'charClass';
+      value?: string;
+      items?: Array<
+        { kind: 'char'; value: string } | { kind: 'range'; start: string; end: string }
+      >;
+      negated?: boolean;
+    };
+export interface GrammarRuleValue {
+  name: string;
+  kind: GrammarRuleKind;
+  expression: GrammarExpression;
+}
+export interface NormalizedGrammar {
+  schemaVersion: 1;
+  start: string | null;
+  sourceFormat: string | null;
+  rules: GrammarRuleValue[];
+}
+
+export class Grammar {
+  constructor(
+    start: string | null,
+    rules: Map<string, Omit<GrammarRuleValue, 'name'> | GrammarRuleValue>,
+    sourceFormat?: string | null,
+  );
+  start: string | null;
+  sourceFormat: string | null;
+  rules: Map<string, GrammarRuleValue>;
+  rule(name: string): GrammarRuleValue | undefined;
+  ruleNames(): string[];
+  rule_names(): string[];
+  startRule(): GrammarRuleValue | undefined;
+  start_rule(): GrammarRuleValue | undefined;
+  source_format(): string | null;
+  referencedNonterminals(): string[];
+  referenced_nonterminals(): string[];
+  undefinedNonterminals(allowed?: string[]): string[];
+  undefined_nonterminals(allowed?: string[]): string[];
+  normalized(): NormalizedGrammar;
+}
+
 export class GrammarBuilder {
   constructor(start: string);
-  terminal(name: string, expression: unknown): GrammarBuilder;
-  nonterminal(name: string, expression: unknown): GrammarBuilder;
-  build(): unknown;
-  static literal(value: string): unknown;
-  static ref(name: string): unknown;
-  static seq(...items: unknown[]): unknown;
-  static choice(...items: unknown[]): unknown;
-  static repeat0(item: unknown): unknown;
-  static repeat1(item: unknown): unknown;
-  static optional(item: unknown): unknown;
-  static charRange(start: string, end: string): unknown;
-  static charClass(value: string): unknown;
-  static any(): unknown;
+  source(format: string): GrammarBuilder;
+  rule(name: string, expression: GrammarExpression, kind?: GrammarRuleKind): GrammarBuilder;
+  terminal(name: string, expression: GrammarExpression): GrammarBuilder;
+  nonterminal(name: string, expression: GrammarExpression): GrammarBuilder;
+  build(): Grammar;
+  static empty(): GrammarExpression;
+  static literal(value: string): GrammarExpression;
+  static literalInsensitive(value: string): GrammarExpression;
+  static ref(name: string): GrammarExpression;
+  static seq(...items: GrammarExpression[]): GrammarExpression;
+  static choice(...items: GrammarExpression[]): GrammarExpression;
+  static orderedChoice(...items: GrammarExpression[]): GrammarExpression;
+  static repeat0(item: GrammarExpression): GrammarExpression;
+  static repeat1(item: GrammarExpression): GrammarExpression;
+  static repeat(item: GrammarExpression, min: number, max?: number | null): GrammarExpression;
+  static optional(item: GrammarExpression): GrammarExpression;
+  static and(item: GrammarExpression): GrammarExpression;
+  static not(item: GrammarExpression): GrammarExpression;
+  static capture(label: string | null, item: GrammarExpression): GrammarExpression;
+  static charRange(start: string, end: string): GrammarExpression;
+  static charClass(
+    value: string | Array<
+      { kind: 'char'; value: string } | { kind: 'range'; start: string; end: string }
+    >,
+    negated?: boolean,
+  ): GrammarExpression;
+  static regex(value: string): GrammarExpression;
+  static any(): GrammarExpression;
 }
 
 export const ExprBuilder: typeof GrammarBuilder;
-export function emitPeggy(grammar: unknown): string;
-export function emitJavascriptParser(grammar: unknown): string;
+export function emitPeggy(grammar: Grammar): string;
+export function compileGrammar(grammar: Grammar, options?: Record<string, unknown>): unknown;
+export function parseWithGrammar(
+  grammar: Grammar,
+  source: string,
+  options?: Record<string, unknown>,
+): unknown;
+export function emitJavascriptParser(grammar: Grammar): string;
+export function serializeGrammar(grammar: Grammar): string;
+export function deserializeGrammar(source: string | NormalizedGrammar): Grammar;
+
+export class GrammarImportError extends Error {
+  format: string;
+  kind: 'parse' | 'unsupported';
+  construct?: string;
+}
+export function importAbnf(source: string): Grammar;
+export const import_abnf: typeof importAbnf;
+export function importBnf(source: string): Grammar;
+export const import_bnf: typeof importBnf;
+export function importEbnf(source: string): Grammar;
+export const import_ebnf: typeof importEbnf;
+export function importPest(source: string): Grammar;
+export const import_pest: typeof importPest;
+export function importTreeSitterJson(source: string | unknown): Grammar;
+export const import_tree_sitter_json: typeof importTreeSitterJson;
 
 export class ApiOperationEntry {
   operation: string;

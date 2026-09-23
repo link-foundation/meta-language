@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "format": "abnf",
+      "source": "message = word SP number\nword = 1*ALPHA\nnumber = 1*DIGIT\n",
+      "start": "message",
+      "rules": ["message", "word", "number"],
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "format": "bnf",
+      "source": "<message> ::= <word> \" \" <number>\n<word> ::= <letter> <word> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit> ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+      "start": "message",
+      "rules": ["message", "word", "number", "letter", "digit"],
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "format": "ebnf",
+      "source": "message = word, \" \", number ;\nword = letter, { letter } ;\nnumber = digit, { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "start": "message",
+      "rules": ["message", "word", "number", "letter", "digit"],
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "format": "pest",
+      "source": "message = { word ~ \" \" ~ number }\nword = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit = _{ '0'..'9' }\n",
+      "start": "message",
+      "rules": ["message", "word", "number", "letter", "digit"],
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "format": "tree-sitter-json",
+      "source": "{\"name\":\"word_number\",\"rules\":{\"document\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"SYMBOL\",\"name\":\"word\"},{\"type\":\"STRING\",\"value\":\" \"},{\"type\":\"SYMBOL\",\"name\":\"number\"}]},\"word\":{\"type\":\"REPEAT1\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[A-Za-z]\"}},\"number\":{\"type\":\"TOKEN\",\"content\":{\"type\":\"REPEAT1\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[0-9]\"}}}}}",
+      "start": "document",
+      "rules": ["document", "word", "number"],
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    }
+  ]
+}

@@ -22,6 +22,7 @@ mod grammar_import_ebnf;
 mod grammar_import_gbnf;
 mod grammar_import_lark;
 mod grammar_import_pest;
+mod grammar_import_shared_corpus;
 mod grammar_import_tree_sitter_json;
 mod grammar_ir;
 mod grammar_parsing;
