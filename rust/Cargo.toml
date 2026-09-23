@@ -85,6 +85,7 @@ tree-sitter-python = "0.25.0"
 tree-sitter-r = "1.2.0"
 tree-sitter-ruby = "0.23.1"
 tree-sitter-rust = "0.24.2"
+tree-sitter-rocq = { git = "https://github.com/aruzdh/tree-sitter-rocq", rev = "300fe33fc299c30f736fd56d8ef8a28b08acd4e6" }
 tree-sitter-scala = "0.25.1"
 tree-sitter-sequel = "0.3.11"
 tree-sitter-swift = "0.7.3"

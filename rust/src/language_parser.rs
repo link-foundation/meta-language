@@ -49,13 +49,17 @@ impl LanguageParser for BuiltInLanguageParser {
                 .expect("the built-in Lean tree-sitter grammar must initialize");
         }
 
-        // Keep Rocq on the portable recovery parser until an ABI-compatible
-        // Rust grammar is available; the shared inventory marks it lexical.
+        if let Some(network) = tree_sitter_adapter::parse(text, language, configuration) {
+            return network;
+        }
+
+        // The portable recovery parser remains available for formal-language
+        // aliases that do not yet have a registered grammar. Registered
+        // grammar aliases above must never silently take this path.
         if let Some(network) = formal_language_parser::parse(text, language, configuration) {
             return network;
         }
 
-        tree_sitter_adapter::parse(text, language, configuration)
-            .unwrap_or_else(|| LinkNetwork::parse_lossless_text(text, language, configuration))
+        LinkNetwork::parse_lossless_text(text, language, configuration)
     }
 }

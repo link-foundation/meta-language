@@ -1567,6 +1567,7 @@ dependencies = [
  "tree-sitter-proto",
  "tree-sitter-python",
  "tree-sitter-r",
+ "tree-sitter-rocq",
  "tree-sitter-ruby",
  "tree-sitter-rust",
  "tree-sitter-scala",
@@ -2952,6 +2953,15 @@ name = "tree-sitter-r"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "429133cbda9f8a46e03ef3aae6abb6c3d22875f8585cad472138101bfd517255"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-rocq"
+version = "0.2.0"
+source = "git+https://github.com/aruzdh/tree-sitter-rocq?rev=300fe33fc299c30f736fd56d8ef8a28b08acd4e6#300fe33fc299c30f736fd56d8ef8a28b08acd4e6"
 dependencies = [
  "cc",
  "tree-sitter-language",

@@ -189,6 +189,8 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_rust::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
         Some(tree_sitter_lean4::language())
+    } else if language.eq_ignore_ascii_case("rocq") || language.eq_ignore_ascii_case("coq") {
+        Some(tree_sitter_rocq::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("go") || language.eq_ignore_ascii_case("golang") {
         Some(tree_sitter_go::LANGUAGE.into())
     } else if language == "R" || language == "r" {
@@ -280,7 +282,28 @@ fn convert_node(
     );
 
     if node.child_count() == 0 {
-        insert_leaf_token(network, node_id, node, context);
+        if is_rocq_identifier(node, context.language) {
+            let semantic_term =
+                rocq_identifier_term(&context.text[node.start_byte()..node.end_byte()]);
+            let semantic_id = network.insert_link(
+                [node_id],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Syntax)
+                    .with_named(node.is_named())
+                    .with_term(semantic_term)
+                    .with_language(context.language)
+                    .with_span(span_for_node(
+                        node,
+                        context.lines,
+                        context.source_len,
+                        context.offset,
+                    ))
+                    .with_flags(flags_for_node(node)),
+            );
+            insert_leaf_token(network, semantic_id, node, context);
+        } else {
+            insert_leaf_token(network, node_id, node, context);
+        }
         return node_id;
     }
 
@@ -305,6 +328,18 @@ fn convert_node(
 
     insert_gap_token(network, node_id, covered_until, node.end_byte(), context);
     node_id
+}
+
+fn is_rocq_identifier(node: Node<'_>, language: &str) -> bool {
+    (language.eq_ignore_ascii_case("rocq") || language.eq_ignore_ascii_case("coq"))
+        && node.kind() == "ident"
+}
+
+fn rocq_identifier_term(text: &str) -> &'static str {
+    match text {
+        "bool" | "nat" | "Prop" | "Set" | "SProp" | "Type" | "Z" => "primitive_type",
+        _ => "identifier",
+    }
 }
 
 fn insert_leaf_token(
