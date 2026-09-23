@@ -1,0 +1,79 @@
+name: Issue 195 Full Acceptance
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft, labeled, unlabeled]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    name: Full Requirements Aggregate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-acceptance-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Validate atomic manifest and protected scope baseline
+        env:
+          BASELINE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.event.release.target_commitish }}
+          ISSUE_195_SCOPE_CHANGE_APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'issue-195-scope-change-approved') }}
+        run: node js/scripts/check-issue-195-acceptance.mjs --scope-baseline "$BASELINE_SHA"
+
+      - name: Run complete JavaScript suite
+        run: npm test
+        working-directory: js
+
+      - name: Run complete Rust suite
+        run: cargo test --all-features
+        working-directory: rust
+
+      - name: Evaluate every required verification cell
+        if: always()
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/check-issue-195-acceptance.mjs
+          --produce-gate-results issue-195-results/gate-faults.json
+          --evaluate
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --results-dir issue-195-results
+          --json-report issue-195-artifacts/report.json
+          --markdown-report issue-195-artifacts/report.md
+
+      - name: Publish per-requirement evidence report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-requirement-report-${{ github.sha }}
+          path: issue-195-artifacts/
+          if-no-files-found: error
+          retention-days: 30

@@ -34,7 +34,10 @@ lowering APIs are documented in [`docs/query-plans.md`](docs/query-plans.md).
 The versioned JavaScript, Rust, Lean, and Rocq parser/emitter capability and
 translation boundaries are documented in
 [`docs/four-language-contracts.md`](docs/four-language-contracts.md).
-The full issue #195 delivery target and per-runtime grammar gaps are tracked in
+The full issue #195 delivery target is defined by the executable
+[`parity/issue-195-requirements.json`](parity/issue-195-requirements.json)
+manifest. Its generated evidence report and remaining per-runtime gaps are
+tracked in
 [`docs/issue-195-requirement-ledger.md`](docs/issue-195-requirement-ledger.md).
 
 ## Quick start

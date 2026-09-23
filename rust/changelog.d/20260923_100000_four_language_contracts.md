@@ -12,6 +12,9 @@ bump: minor
 - Add versioned capability reports, parser extension registration in
   JavaScript, and explicit fail-closed contracts for all 12 directed language
   pairs.
+- Add an atomic executable requirement manifest, generated evidence ledger,
+  protected-scope checks, fault-injection coverage, and a fail-closed aggregate
+  workflow for the full issue #195 acceptance target.
 
 ### Fixed
 - Prevent JavaScript identifier queries and replacements from matching text in

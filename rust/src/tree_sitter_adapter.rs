@@ -197,13 +197,21 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_ruby::LANGUAGE.into())
     } else if [
         "sql-ansi",
+        "sql ansi",
         "sql-postgres",
+        "sql postgresql",
         "sql-mysql",
+        "sql mysql",
         "sql-sqlite",
+        "sql sqlite",
         "sql-server",
+        "sql server",
         "sql-oracle",
+        "sql oracle",
         "sql-bigquery",
+        "sql bigquery",
         "sql-snowflake",
+        "sql snowflake",
     ]
     .iter()
     .any(|profile| language.eq_ignore_ascii_case(profile))

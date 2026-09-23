@@ -39,6 +39,7 @@ mod inference_prior;
 mod inference_semantic;
 mod inference_sequitur;
 mod inference_state_merging;
+mod issue_195_acceptance;
 mod language_profile;
 mod link_network;
 mod links_notation;
