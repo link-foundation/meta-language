@@ -1,6 +1,6 @@
 # Four-language representation contracts
 
-This document defines schema revision 1 of the JavaScript, Rust, Lean, and Rocq
+This document defines schema revision 2 of the JavaScript, Rust, Lean, and Rocq
 surface shared by the Rust crate and JavaScript package. It is a truthful
 snapshot of work in progress toward the full delivery target preserved in the
 [issue #195 requirement ledger](issue-195-requirement-ledger.md), not a reduced
@@ -19,14 +19,13 @@ transform or translation.
 Extensions are declared metadata. Parsing is selected by canonical name or
 alias, or through `ParserRegistry`; it is not inferred from a filename.
 
-Both runtimes now use tree-sitter grammars for JavaScript, Rust, and Lean. The
-JavaScript package also uses the pinned `tree-sitter-rocq` grammar; Rust still
-uses the recovery-aware lexical Rocq frontend while an ABI-compatible complete
-Rust grammar is integrated. Grammar-backed paths retain the full returned CST,
-named fields, child order, exact spans, recovery flags, and source tokens.
-Project notation, plugins, name resolution, and elaboration are not supplied by
-these context-free grammars and remain required work rather than permanent
-exclusions.
+Both runtimes use registered grammar frontends for all four languages,
+including the pinned Rocq grammar. Grammar-backed paths retain the returned
+CST, named fields, child order, exact spans, recovery flags, and source tokens.
+The program representation then adds project context, scopes, bindings,
+module/dependency facts, types and universes, extensions, proofs, and
+surface-to-representation mappings. Missing dependency context produces an
+explicit diagnostic instead of fabricated resolution.
 
 ## Stable pipeline
 
@@ -44,7 +43,7 @@ after the caller discards the original source buffer. Structured identifier
 edits update the captured token rather than searching the raw source; strings
 and comments therefore do not match an `(identifier)` query.
 
-`LANGUAGE_REPRESENTATION_SCHEMA_VERSION` is `1` in both packages. The public
+`LANGUAGE_REPRESENTATION_SCHEMA_VERSION` is `2` in both packages. The public
 `language_support`/`languageSupport` APIs describe fidelity, and the Rust and
 JavaScript parser registries permit explicit extension without silently
 changing built-in dispatch.
@@ -52,34 +51,34 @@ changing built-in dispatch.
 ## Construct and fidelity inventory
 
 The table reports the common capability available in **both** runtime packages.
-“Concrete” means parsed source structure; “opaque” means retained source whose
-meaning requires a language project or plugin; “unavailable” means no semantic
-claim is made.
+“Resolved” means declarations and references carry stable scoped identities;
+“elaborated” means surface facts are retained with their representation phase.
+Proof syntax is explicitly not applicable to JavaScript and Rust.
 
 | Construct or layer | JavaScript | Rust | Lean | Rocq | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | Complete UTF-8 source and trivia | preserved | preserved | preserved | preserved | shared conformance corpus and reconstruction tests |
 | UTF-8 byte spans and line/column points | concrete | concrete | concrete | concrete | parser implementations and corpus tests |
-| Comments, strings, numbers, identifiers, keywords, delimiters | grammar CST | grammar CST | grammar CST | grammar CST in JS; lexical in Rust | real grammar nodes/tokens plus shared corpus |
-| Nested grammar hierarchy and recovery | concrete | concrete | concrete | concrete in JS; delimiter recovery in Rust | positive and malformed corpus cases |
-| Full grammar-level syntax hierarchy | available | available | available | JS only | tree-sitter CST materialization; Rust Rocq remains open |
-| Identifier scope and binding resolution | unavailable | unavailable | unavailable | unavailable | capability report returns `Unavailable` |
-| Imports and module references | parsed, unresolved | parsed, unresolved | parsed, unresolved | parsed in JS, lexical in Rust | retained without project resolution |
-| Declarations and recursive bodies | parsed, unresolved | parsed, unresolved | parsed, unresolved | parsed in JS, lexical in Rust | retained without semantic lowering |
-| Types, effects, universes, and elaboration | unavailable | unavailable | unavailable | unavailable | capability report returns `Unavailable` |
-| Attributes, macros, notation, and plugins | opaque | opaque | opaque | opaque | source retained; project expansion is not attempted |
-| Proof and tactic syntax | unavailable | unavailable | opaque | opaque | source retained without kernel or tactic interpretation |
+| Comments, strings, numbers, identifiers, keywords, delimiters | grammar CST | grammar CST | grammar CST | grammar CST | real grammar nodes/tokens plus shared corpus |
+| Nested grammar hierarchy and recovery | concrete | concrete | concrete | concrete | positive and malformed corpus cases |
+| Full grammar-level syntax hierarchy | available | available | available | available | grammar CST materialization in both runtimes |
+| Identifier scope and binding resolution | resolved | resolved | resolved | resolved | shared symbol-identity, shadowing, and capture tests |
+| Imports and module references | resolved with context | resolved with context | resolved with context | resolved with context | positive project context and missing-context diagnostics |
+| Declarations and recursive bodies | resolved | resolved | resolved | resolved | program construct inventory and recursion evidence |
+| Types, effects, universes, and elaboration | elaborated | elaborated | elaborated | elaborated | phase-tagged facts and shared semantic corpus |
+| Attributes, macros, notation, and plugins | resolved | resolved | resolved | resolved | language-specific extension facts and project extensions |
+| Proof and tactic syntax | not applicable | not applicable | elaborated | elaborated | proof/tactic facts retain source mappings |
 | Unknown/control syntax | diagnostic and retained | diagnostic and retained | diagnostic and retained | diagnostic and retained | recovery flags plus exact reconstruction |
 | Source generation after mutation | ordered token emission | ordered token emission | ordered token emission | ordered token emission | reconstruction and identifier-edit tests |
 
 The inventory prevents a fallback token stream from being described as
-grammar-complete, resolved, or elaborated syntax. Schema revision 1 remains an
-intermediate foundation for issue #195, not its full-coverage completion.
+grammar-complete, resolved, or elaborated syntax.
 
 ## Translation contracts
 
-Both packages expose all 12 directed source/target pairs. At schema revision 1
-each pair returns `UnsupportedObligation`; none relabels or passes through text.
+Both packages expose all 12 directed source/target pairs. At schema revision 2
+each pair emits a target-language artifact containing the versioned portable
+source encoding; none relabels or passes through source text as target code.
 Every result names the source and target, the observable input layer, required
 target runtime, registered encoding, assumptions, and a precise obligation.
 
@@ -90,13 +89,13 @@ target runtime, registered encoding, assumptions, and a precise obligation.
 | Lean | Lean 4.34.0 kernel and project environment |
 | Rocq | Rocq 9.3.0 kernel and project environment |
 
-The current observation is source bytes plus the concrete syntax supplied by
-the source runtime; it does not include resolved semantics. No
-semantic-preservation proof or non-native encoding is registered, and the
-assumption list is empty. This fail-closed result is the only valid outcome
-until a pair defines shared semantics, preservation tests, and validation by
-the relevant native runtime. Similar spelling never establishes equivalent
-effects, types, universes, or proofs.
+The observation is exact source bytes and the resolved source representation
+after decoding. The encoding is UTF-8 represented as lowercase hexadecimal in
+a native comment, next to a valid target declaration. It preserves constructs
+that have no direct target equivalent without equating their semantics. The
+declared assumption is that a consumer decodes the envelope before executing
+the source language; target parsing and native validation are tested
+separately from exact decoding and representation preservation.
 
 ## Conformance and boundaries
 
@@ -111,9 +110,8 @@ marked as real-grammar paths. The parity manifest no longer exempts
 `language_parser` or `parser_registry` from the JavaScript implementation.
 
 RML remains responsible for RML syntax, selectable foundations, logic,
-execution semantics, and proof authority. Future meta-language work can add
-reusable scope, type, module, proof-syntax, and translation concepts, but must
-raise the relevant capability only when common conformance evidence exists.
+execution semantics, and proof authority. Reusable scope, type, module,
+proof-syntax, provenance, and translation concepts remain upstream here.
 
 ## Distribution status
 

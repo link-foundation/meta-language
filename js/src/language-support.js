@@ -1,10 +1,14 @@
 /** Schema revision for four-language parser, emitter, and translation contracts. */
-export const LANGUAGE_REPRESENTATION_SCHEMA_VERSION = 1;
+export const LANGUAGE_REPRESENTATION_SCHEMA_VERSION = 2;
 
 export const RepresentationLevel = Object.freeze({
   Preserved: 'preserved',
   ConcreteSyntax: 'concrete-syntax',
+  Parsed: 'parsed',
+  Resolved: 'resolved',
+  Elaborated: 'elaborated',
   Opaque: 'opaque',
+  NotApplicable: 'not-applicable',
   Unavailable: 'unavailable',
 });
 
@@ -19,7 +23,7 @@ const SUPPORT = Object.freeze([
     version: 'ECMAScript 2026',
     edition: 'ECMA-262, 17th edition',
     extensions: ['.js', '.mjs', '.cjs'],
-    proofSyntax: RepresentationLevel.Unavailable,
+    proofSyntax: RepresentationLevel.NotApplicable,
   }),
   language({
     name: 'Rust',
@@ -27,7 +31,7 @@ const SUPPORT = Object.freeze([
     version: 'Rust 1.98.1',
     edition: '2024',
     extensions: ['.rs'],
-    proofSyntax: RepresentationLevel.Unavailable,
+    proofSyntax: RepresentationLevel.NotApplicable,
   }),
   language({
     name: 'Lean',
@@ -35,7 +39,7 @@ const SUPPORT = Object.freeze([
     version: 'Lean 4.34.0',
     edition: 'Lean 4',
     extensions: ['.lean'],
-    proofSyntax: RepresentationLevel.Opaque,
+    proofSyntax: RepresentationLevel.Elaborated,
   }),
   language({
     name: 'Rocq',
@@ -43,7 +47,7 @@ const SUPPORT = Object.freeze([
     version: 'Rocq 9.3.0',
     edition: 'Vernacular',
     extensions: ['.v'],
-    proofSyntax: RepresentationLevel.Opaque,
+    proofSyntax: RepresentationLevel.Elaborated,
   }),
 ]);
 
@@ -92,9 +96,9 @@ function language({ name, aliases, version, edition, extensions, proofSyntax }) 
     extensions: Object.freeze([...extensions]),
     sourceBytes: RepresentationLevel.Preserved,
     concreteSyntax: RepresentationLevel.ConcreteSyntax,
-    bindingResolution: RepresentationLevel.Unavailable,
-    typeElaboration: RepresentationLevel.Unavailable,
-    dynamicExtensions: RepresentationLevel.Opaque,
+    bindingResolution: RepresentationLevel.Resolved,
+    typeElaboration: RepresentationLevel.Elaborated,
+    dynamicExtensions: RepresentationLevel.Resolved,
     proofSyntax,
     emitter: 'ordered source-token emitter',
   });

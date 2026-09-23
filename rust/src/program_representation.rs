@@ -447,7 +447,8 @@ impl ProgramRepresentation {
         let types = type_facts(&tokens, &source_mappings, support.name);
         let extensions = extension_facts(&tokens, &source_mappings, source, support.name);
         let proofs = proof_facts(&tokens, &source_mappings, support.name);
-        let diagnostics = diagnostic_facts(&network);
+        let mut diagnostics = diagnostic_facts(&network);
+        diagnostics.extend(project_diagnostics(&modules, &project));
         let mut program = Self {
             schema_version: PROGRAM_REPRESENTATION_SCHEMA_VERSION,
             language: support.name,
@@ -619,7 +620,11 @@ fn module_facts(
         facts.push(ProgramFact::new(&token.text, names, token.range));
     }
     facts.extend(project.dependencies.iter().map(|dependency| {
-        ProgramFact::new("project-dependency", dependency, ProgramRange::default())
+        ProgramFact::new(
+            "resolved-project-dependency",
+            dependency,
+            ProgramRange::default(),
+        )
     }));
     unique_facts(facts)
 }
@@ -750,6 +755,24 @@ fn diagnostic_facts(network: &LinkNetwork) -> Vec<ProgramDiagnostic> {
                     ProgramRange::new(span.byte_range().start(), span.byte_range().end())
                 }),
             })
+        })
+        .collect()
+}
+
+fn project_diagnostics(
+    modules: &[ProgramFact],
+    project: &ProgramProjectContext,
+) -> Vec<ProgramDiagnostic> {
+    if !project.dependencies.is_empty() {
+        return Vec::new();
+    }
+    modules
+        .iter()
+        .filter(|fact| fact.kind != "resolved-project-dependency")
+        .map(|fact| ProgramDiagnostic {
+            kind: "missing-project-context",
+            term: fact.name.clone(),
+            range: fact.range,
         })
         .collect()
 }

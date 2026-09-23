@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "languages": [
     {
       "name": "JavaScript",
@@ -7,6 +7,7 @@
       "version": "ECMAScript 2026",
       "edition": "ECMA-262, 17th edition",
       "extensions": [".js", ".mjs", ".cjs"],
+      "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "not-applicable" },
       "root": "program",
       "source": "const x = 1; const s = \"x\"; // x\n",
       "identifiers": ["x", "s"],
@@ -22,6 +23,7 @@
       "version": "Rust 1.98.1",
       "edition": "2024",
       "extensions": [".rs"],
+      "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "not-applicable" },
       "root": "source_file",
       "source": "fn id(π: u64) -> u64 { π } // π\n",
       "identifiers": ["id", "π", "π"],
@@ -37,6 +39,7 @@
       "version": "Lean 4.34.0",
       "edition": "Lean 4",
       "extensions": [".lean"],
+      "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "elaborated" },
       "root": "file",
       "source": "def id' (x : Nat) : Nat := x\n",
       "identifiers": ["id'", "x", "Nat", "Nat", "x"],
@@ -52,6 +55,7 @@
       "version": "Rocq 9.3.0",
       "edition": "Vernacular",
       "extensions": [".v"],
+      "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "elaborated" },
       "root": "source_file",
       "source": "Definition id (x : nat) : nat := x.\n",
       "identifiers": ["id", "x", "x"],

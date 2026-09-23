@@ -215,8 +215,31 @@ test('capability reports match the shared versioned corpus', () => {
     assert.equal(support.version, fixture.version);
     assert.equal(support.edition, fixture.edition);
     assert.deepEqual(support.extensions, fixture.extensions);
-    assert.equal(support.bindingResolution, 'unavailable');
-    assert.equal(support.typeElaboration, 'unavailable');
+    assert.equal(support.bindingResolution, fixture.capabilities.bindingResolution);
+    assert.equal(support.typeElaboration, fixture.capabilities.typeElaboration);
+    assert.equal(support.dynamicExtensions, fixture.capabilities.dynamicExtensions);
+    assert.equal(support.proofSyntax, fixture.capabilities.proofSyntax);
+  }
+});
+
+test('project-aware analysis diagnoses missing context and resolves declared dependencies', () => {
+  for (const fixture of corpus.semanticPrograms) {
+    const withoutContext = analyzeProgram(fixture.source, fixture.language);
+    assert.ok(
+      withoutContext.diagnostics.some(({ kind }) => kind === 'missing-project-context'),
+      `${fixture.language} missing project context`,
+    );
+
+    const withContext = analyzeProgram(fixture.source, fixture.language, fixture.project);
+    assert.equal(
+      withContext.diagnostics.some(({ kind }) => kind === 'missing-project-context'),
+      false,
+      `${fixture.language} supplied project context`,
+    );
+    assert.ok(
+      withContext.modules.some(({ kind }) => kind === 'resolved-project-dependency'),
+      `${fixture.language} resolved dependency`,
+    );
   }
 });
 

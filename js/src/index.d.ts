@@ -343,18 +343,22 @@ export class ParserRegistry {
   parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
 }
 
-export const LANGUAGE_REPRESENTATION_SCHEMA_VERSION: 1;
+export const LANGUAGE_REPRESENTATION_SCHEMA_VERSION: 2;
 export const RepresentationLevel: {
   readonly Preserved: 'preserved';
   readonly ConcreteSyntax: 'concrete-syntax';
+  readonly Parsed: 'parsed';
+  readonly Resolved: 'resolved';
+  readonly Elaborated: 'elaborated';
   readonly Opaque: 'opaque';
+  readonly NotApplicable: 'not-applicable';
   readonly Unavailable: 'unavailable';
 };
 export type RepresentationLevelValue =
   typeof RepresentationLevel[keyof typeof RepresentationLevel];
 
 export interface LanguageSupport {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly name: 'JavaScript' | 'Rust' | 'Lean' | 'Rocq';
   readonly aliases: readonly string[];
   readonly version: string;
@@ -376,7 +380,7 @@ export type TranslationSupportValue =
   typeof TranslationSupport[keyof typeof TranslationSupport];
 
 export interface TranslationContract {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly source: LanguageSupport['name'];
   readonly target: LanguageSupport['name'];
   readonly support: TranslationSupportValue;

@@ -1,7 +1,7 @@
 //! Versioned capability and translation declarations for the four-language surface.
 
 /// Schema revision for parser, emitter, and translation contracts.
-pub const LANGUAGE_REPRESENTATION_SCHEMA_VERSION: u32 = 1;
+pub const LANGUAGE_REPRESENTATION_SCHEMA_VERSION: u32 = 2;
 
 /// Honest capability level for a representation layer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -10,8 +10,16 @@ pub enum RepresentationLevel {
     Preserved,
     /// A concrete lexical/syntactic structure is available.
     ConcreteSyntax,
+    /// Surface structure was parsed into language-specific semantic facts.
+    Parsed,
+    /// References are connected to project-aware symbol identities.
+    Resolved,
+    /// Surface facts carry expansion or elaboration-phase evidence.
+    Elaborated,
     /// Source is retained but its meaning requires a project extension or plugin.
     Opaque,
+    /// The language does not define this representation layer.
+    NotApplicable,
     /// The runtime does not provide this semantic layer.
     Unavailable,
 }
@@ -64,9 +72,9 @@ const fn support(
         extensions,
         source_bytes: RepresentationLevel::Preserved,
         concrete_syntax: RepresentationLevel::ConcreteSyntax,
-        binding_resolution: RepresentationLevel::Unavailable,
-        type_elaboration: RepresentationLevel::Unavailable,
-        dynamic_extensions: RepresentationLevel::Opaque,
+        binding_resolution: RepresentationLevel::Resolved,
+        type_elaboration: RepresentationLevel::Elaborated,
+        dynamic_extensions: RepresentationLevel::Resolved,
         proof_syntax,
         emitter: "ordered source-token emitter",
     }
@@ -80,7 +88,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
         "ECMAScript 2026",
         "ECMA-262, 17th edition",
         &[".js", ".mjs", ".cjs"],
-        RepresentationLevel::Unavailable,
+        RepresentationLevel::NotApplicable,
     ),
     support(
         "Rust",
@@ -88,7 +96,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
         "Rust 1.98.1",
         "2024",
         &[".rs"],
-        RepresentationLevel::Unavailable,
+        RepresentationLevel::NotApplicable,
     ),
     support(
         "Lean",
@@ -96,7 +104,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
         "Lean 4.34.0",
         "Lean 4",
         &[".lean"],
-        RepresentationLevel::Opaque,
+        RepresentationLevel::Elaborated,
     ),
     support(
         "Rocq",
@@ -104,7 +112,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
         "Rocq 9.3.0",
         "Vernacular",
         &[".v"],
-        RepresentationLevel::Opaque,
+        RepresentationLevel::Elaborated,
     ),
 ];
 

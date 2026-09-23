@@ -78,7 +78,10 @@ export class ProgramRepresentation {
     this.types = Object.freeze(typeFacts(tokens, syntax, this.language).map(freezeRecord));
     this.extensions = Object.freeze(extensionFacts(tokens, syntax, this.source, this.language).map(freezeRecord));
     this.proofs = Object.freeze(proofFacts(tokens, syntax, this.language).map(freezeRecord));
-    this.diagnostics = Object.freeze(diagnosticFacts(this.network).map(freezeRecord));
+    this.diagnostics = Object.freeze([
+      ...diagnosticFacts(this.network),
+      ...projectDiagnostics(this.modules, this.project),
+    ].map(freezeRecord));
     this.constructs = Object.freeze(constructFacts(this).map(freezeConstruct));
     Object.freeze(this.project);
   }
@@ -476,7 +479,7 @@ function moduleFacts(tokens, language, project) {
     facts.push({ kind: tokens[index].text, name: names.join('.'), ...rangeRecord(tokens[index]) });
   }
   for (const dependency of project.dependencies) {
-    facts.push({ kind: 'project-dependency', name: dependency, start: 0, end: 0 });
+    facts.push({ kind: 'resolved-project-dependency', name: dependency, start: 0, end: 0 });
   }
   return facts;
 }
@@ -535,6 +538,17 @@ function diagnosticFacts(network) {
       end: metadata?.span?.byteRange.end ?? 0,
     };
   });
+}
+
+function projectDiagnostics(modules, project) {
+  const sourceModules = modules.filter(({ kind }) => kind !== 'resolved-project-dependency');
+  if (sourceModules.length === 0 || project.dependencies.length > 0) return [];
+  return sourceModules.map(({ name, start, end }) => ({
+    kind: 'missing-project-context',
+    term: name,
+    start,
+    end,
+  }));
 }
 
 function constructFacts(program) {

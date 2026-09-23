@@ -364,8 +364,77 @@ fn capability_reports_match_the_shared_versioned_corpus() {
                 .map(|value| value.as_str().unwrap())
                 .collect::<Vec<_>>()
         );
-        assert_eq!(support.binding_resolution, RepresentationLevel::Unavailable);
-        assert_eq!(support.type_elaboration, RepresentationLevel::Unavailable);
+        let capabilities = &fixture["capabilities"];
+        assert_eq!(
+            representation_level(support.binding_resolution),
+            capabilities["bindingResolution"].as_str().unwrap()
+        );
+        assert_eq!(
+            representation_level(support.type_elaboration),
+            capabilities["typeElaboration"].as_str().unwrap()
+        );
+        assert_eq!(
+            representation_level(support.dynamic_extensions),
+            capabilities["dynamicExtensions"].as_str().unwrap()
+        );
+        assert_eq!(
+            representation_level(support.proof_syntax),
+            capabilities["proofSyntax"].as_str().unwrap()
+        );
+    }
+}
+
+#[test]
+fn project_aware_analysis_diagnoses_missing_context_and_resolves_dependencies() {
+    for fixture in corpus()["semanticPrograms"]
+        .as_array()
+        .expect("semantic programs")
+    {
+        let language = fixture["language"].as_str().expect("language");
+        let source = fixture["source"].as_str().expect("source");
+        let without_context = analyze_program(source, language, ProgramProjectContext::default())
+            .expect("analysis without context");
+        assert!(
+            without_context
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.kind() == "missing-project-context"),
+            "{language} missing project context"
+        );
+
+        let project = ProgramProjectContext::new(
+            fixture["project"]["root"].as_str().expect("project root"),
+            json_strings(&fixture["project"]["files"]),
+            json_strings(&fixture["project"]["dependencies"]),
+        );
+        let with_context = analyze_program(source, language, project).expect("context analysis");
+        assert!(
+            !with_context
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.kind() == "missing-project-context"),
+            "{language} supplied project context"
+        );
+        assert!(
+            with_context
+                .modules()
+                .iter()
+                .any(|fact| fact.kind() == "resolved-project-dependency"),
+            "{language} resolved dependency"
+        );
+    }
+}
+
+const fn representation_level(level: RepresentationLevel) -> &'static str {
+    match level {
+        RepresentationLevel::Preserved => "preserved",
+        RepresentationLevel::ConcreteSyntax => "concrete-syntax",
+        RepresentationLevel::Parsed => "parsed",
+        RepresentationLevel::Resolved => "resolved",
+        RepresentationLevel::Elaborated => "elaborated",
+        RepresentationLevel::Opaque => "opaque",
+        RepresentationLevel::NotApplicable => "not-applicable",
+        RepresentationLevel::Unavailable => "unavailable",
     }
 }
 
