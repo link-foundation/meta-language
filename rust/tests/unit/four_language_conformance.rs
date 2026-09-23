@@ -3,10 +3,11 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    analyze_program, construct_program, decode_program_translation, language_support,
-    translate_program, translation_contracts, LinkId, LinkNetwork, LinkQuery, LinkType,
-    ParseConfiguration, ProgramConstructStatus, ProgramProjectContext, ReplacementRule,
-    RepresentationLevel, TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
+    analyze_program, construct_program, construct_program_from_fragments,
+    decode_program_translation, language_support, translate_program, translation_contracts, LinkId,
+    LinkNetwork, LinkQuery, LinkType, ParseConfiguration, ProgramConstructStatus,
+    ProgramProjectContext, ProgramRepresentation, ReplacementRule, RepresentationLevel,
+    TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
 };
 use serde_json::Value;
 
@@ -529,6 +530,60 @@ fn structured_construction_query_edits_cloning_movement_and_emission_reparse_cle
         ProgramProjectContext::default()
     )
     .is_err());
+}
+
+#[test]
+fn structured_programs_survive_snapshots_without_an_original_source_buffer() {
+    for fixture in corpus()["transformationPrograms"]
+        .as_array()
+        .expect("transformation programs")
+    {
+        let language = fixture["language"].as_str().unwrap();
+        let source = fixture["source"].as_str().unwrap();
+        let fragments = vec![
+            fixture["first"].as_str().unwrap().to_string(),
+            fixture["second"].as_str().unwrap().to_string(),
+        ];
+        let project = ProgramProjectContext::new(
+            format!("/workspace/{language}"),
+            vec!["main".to_string()],
+            vec!["standard-library".to_string()],
+        )
+        .with_extensions(vec!["fixture-extension".to_string()]);
+        let constructed = construct_program_from_fragments(&fragments, language, project.clone())
+            .expect("fragment construction");
+        assert_eq!(
+            constructed.emit(),
+            source,
+            "{language} fragment construction"
+        );
+
+        let serialized = constructed.serialize_snapshot();
+        let snapshot: Value = serde_json::from_str(&serialized).expect("snapshot JSON");
+        assert!(
+            snapshot.get("source").is_none(),
+            "{language} source omitted"
+        );
+        assert!(
+            !snapshot["fragments"].as_array().unwrap().is_empty(),
+            "{language} retained fragments"
+        );
+        drop(constructed);
+
+        let restored = ProgramRepresentation::from_snapshot(&serialized).expect("snapshot reload");
+        assert_eq!(restored.emit(), source, "{language} snapshot emission");
+        assert_eq!(restored.project(), &project, "{language} restored project");
+        assert!(restored.network().verify_full_match(None).is_clean());
+        assert!(restored.query_syntax("identifier").len() >= 2);
+
+        let mut corrupt = snapshot;
+        corrupt["fragments"][0]["byteEnd"] =
+            serde_json::json!(corrupt["fragments"][0]["byteEnd"].as_u64().unwrap() + 1);
+        assert!(
+            ProgramRepresentation::from_snapshot(&corrupt.to_string()).is_err(),
+            "{language} rejects corrupt fragment spans"
+        );
+    }
 }
 
 #[test]

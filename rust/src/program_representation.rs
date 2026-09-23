@@ -2,6 +2,9 @@
 
 mod analysis;
 mod edit;
+mod snapshot;
+
+pub use snapshot::{construct_program_from_fragments, PROGRAM_SNAPSHOT_SCHEMA_VERSION};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
@@ -366,6 +369,8 @@ pub enum ProgramRepresentationError {
     DestinationInsideRange,
     /// The edited result does not parse cleanly.
     InvalidEdit,
+    /// A serialized program snapshot is malformed or inconsistent.
+    InvalidSnapshot(String),
 }
 
 impl fmt::Display for ProgramRepresentationError {
@@ -396,6 +401,9 @@ impl fmt::Display for ProgramRepresentationError {
                 formatter.write_str("move destination is inside the moved range")
             }
             Self::InvalidEdit => formatter.write_str("structured edit does not reparse cleanly"),
+            Self::InvalidSnapshot(reason) => {
+                write!(formatter, "invalid program snapshot: {reason}")
+            }
         }
     }
 }

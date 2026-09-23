@@ -1,6 +1,7 @@
 import { languageSupport } from './language-support.js';
 import { LinkNetwork } from './network.js';
 import { LinkType } from './primitives.js';
+import { createProgramSnapshot, readProgramSnapshot } from './program-snapshot.js';
 
 /** Schema revision for resolved four-language program representations. */
 export const PROGRAM_REPRESENTATION_SCHEMA_VERSION = 1;
@@ -38,9 +39,23 @@ export function constructProgram(source, language, project = {}) {
   return program;
 }
 
+/** Constructs a clean program from ordered structured source fragments. */
+export function constructProgramFromFragments(fragments, language, project = {}) {
+  if (!fragments || typeof fragments[Symbol.iterator] !== 'function') {
+    throw new ProgramTransformationError('program fragments must be iterable');
+  }
+  return constructProgram([...fragments].map(String).join(''), language, project);
+}
+
 export const analyze_program = analyzeProgram;
 
 export class ProgramRepresentation {
+  /** Reloads a validated snapshot without access to its original source buffer. */
+  static fromSnapshot(snapshot) {
+    const { source, language, project } = readProgramSnapshot(snapshot);
+    return constructProgram(source, language, project);
+  }
+
   constructor(source, language, project = {}) {
     const support = languageSupport(language);
     if (!support) {
@@ -70,6 +85,16 @@ export class ProgramRepresentation {
 
   emit() {
     return this.network.reconstructText();
+  }
+
+  /** Returns a source-buffer-independent snapshot of retained token fragments. */
+  snapshot() {
+    return createProgramSnapshot(this);
+  }
+
+  /** Serializes a source-buffer-independent snapshot. */
+  serializeSnapshot() {
+    return JSON.stringify(this.snapshot());
   }
 
   /** Returns exact ranges of CST nodes with the requested grammar term. */

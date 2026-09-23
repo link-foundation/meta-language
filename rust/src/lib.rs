@@ -125,10 +125,11 @@ pub use parity::{
 };
 pub use parser_registry::ParserRegistry;
 pub use program_representation::{
-    analyze_program, construct_program, ProgramBinding, ProgramConstruct, ProgramConstructStatus,
-    ProgramDiagnostic, ProgramFact, ProgramProjectContext, ProgramRange, ProgramRepresentation,
-    ProgramRepresentationError, ProgramScope, ProgramSourceMapping,
-    PROGRAM_REPRESENTATION_SCHEMA_VERSION, SEMANTIC_CONSTRUCTS,
+    analyze_program, construct_program, construct_program_from_fragments, ProgramBinding,
+    ProgramConstruct, ProgramConstructStatus, ProgramDiagnostic, ProgramFact,
+    ProgramProjectContext, ProgramRange, ProgramRepresentation, ProgramRepresentationError,
+    ProgramScope, ProgramSourceMapping, PROGRAM_REPRESENTATION_SCHEMA_VERSION,
+    PROGRAM_SNAPSHOT_SCHEMA_VERSION, SEMANTIC_CONSTRUCTS,
 };
 pub use program_translation::{
     decode_program_translation, translate_program, DecodedProgramTranslation, ProgramTranslation,

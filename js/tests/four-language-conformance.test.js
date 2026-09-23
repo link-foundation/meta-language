@@ -9,10 +9,12 @@ import {
   LinkType,
   ParseConfiguration,
   ParserRegistry,
+  ProgramRepresentation,
   ReplacementRule,
   TranslationSupport,
   analyzeProgram,
   constructProgram,
+  constructProgramFromFragments,
   decodeProgramTranslation,
   fourLanguageSupport,
   languageSupport,
@@ -292,6 +294,46 @@ test('structured construction, query, edits, cloning, movement, and emission rep
     assert.throws(() => program.move(first, 1), /inside/u);
   }
   assert.throws(() => constructProgram('const = ;\n', 'JavaScript'), /parse cleanly/u);
+});
+
+test('structured programs survive snapshots without retaining an original source buffer', () => {
+  for (const fixture of corpus.transformationPrograms) {
+    const project = {
+      root: `/workspace/${fixture.language}`,
+      files: ['main'],
+      dependencies: ['standard-library'],
+      extensions: ['fixture-extension'],
+    };
+    const constructed = constructProgramFromFragments(
+      [fixture.first, fixture.second],
+      fixture.language,
+      project,
+    );
+    assert.equal(constructed.emit(), fixture.source, `${fixture.language} fragment construction`);
+
+    const serialized = constructed.serializeSnapshot();
+    const snapshot = JSON.parse(serialized);
+    assert.equal(Object.hasOwn(snapshot, 'source'), false, `${fixture.language} source omitted`);
+    assert.ok(snapshot.fragments.length > 0, `${fixture.language} retained fragments`);
+    assert.deepEqual(snapshot.project, project, `${fixture.language} project context`);
+
+    const restored = ProgramRepresentation.fromSnapshot(serialized);
+    assert.equal(restored.emit(), fixture.source, `${fixture.language} snapshot emission`);
+    assert.deepEqual(restored.project, project, `${fixture.language} restored project`);
+    assert.equal(restored.network.verifyFullMatch().isClean(), true, `${fixture.language} reparse`);
+    assert.ok(restored.querySyntax('identifier').length >= 2, `${fixture.language} restored CST`);
+
+    snapshot.fragments[0].byteEnd += 1;
+    assert.throws(
+      () => ProgramRepresentation.fromSnapshot(snapshot),
+      /snapshot/u,
+      `${fixture.language} rejects corrupt fragment spans`,
+    );
+  }
+
+  const unicode = constructProgramFromFragments(['const café = "', '☕";\n'], 'JavaScript');
+  const restoredUnicode = ProgramRepresentation.fromSnapshot(unicode.serializeSnapshot());
+  assert.equal(restoredUnicode.emit(), 'const café = "☕";\n');
 });
 
 test('all 12 translation hooks emit reversible target-native source envelopes', () => {

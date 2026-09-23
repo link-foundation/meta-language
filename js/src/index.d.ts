@@ -418,6 +418,7 @@ export function decodeProgramTranslation(
 ): DecodedProgramTranslation;
 
 export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
+export const PROGRAM_SNAPSHOT_SCHEMA_VERSION: 1;
 export const SEMANTIC_CONSTRUCTS: readonly string[];
 
 export interface ProgramProjectContext {
@@ -430,6 +431,19 @@ export interface ProgramProjectContext {
 export interface ProgramSourceRange {
   readonly start: number;
   readonly end: number;
+}
+
+export interface ProgramSnapshotFragment {
+  readonly byteStart: number;
+  readonly byteEnd: number;
+  readonly text: string;
+}
+
+export interface ProgramSnapshot {
+  readonly schemaVersion: 1;
+  readonly language: LanguageSupport['name'];
+  readonly project: Required<ProgramProjectContext>;
+  readonly fragments: readonly ProgramSnapshotFragment[];
 }
 
 export interface ProgramScope extends ProgramSourceRange {
@@ -458,6 +472,7 @@ export class BindingRenameError extends Error {}
 export class ProgramTransformationError extends Error {}
 
 export class ProgramRepresentation {
+  static fromSnapshot(snapshot: ProgramSnapshot | string): ProgramRepresentation;
   readonly schemaVersion: 1;
   readonly language: LanguageSupport['name'];
   readonly source: string;
@@ -474,6 +489,8 @@ export class ProgramRepresentation {
   readonly diagnostics: readonly object[];
   readonly constructs: readonly ProgramConstruct[];
   emit(): string;
+  snapshot(): ProgramSnapshot;
+  serializeSnapshot(): string;
   querySyntax(term: string): readonly ProgramSourceRange[];
   query_syntax(term: string): readonly ProgramSourceRange[];
   replace(range: ProgramSourceRange, replacement: string): ProgramRepresentation;
@@ -494,6 +511,11 @@ export function analyzeProgram(
 export const analyze_program: typeof analyzeProgram;
 export function constructProgram(
   source: string,
+  language: string,
+  project?: ProgramProjectContext,
+): ProgramRepresentation;
+export function constructProgramFromFragments(
+  fragments: Iterable<unknown>,
   language: string,
   project?: ProgramProjectContext,
 ): ProgramRepresentation;
