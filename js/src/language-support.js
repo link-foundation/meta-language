@@ -9,7 +9,7 @@ export const RepresentationLevel = Object.freeze({
 });
 
 export const TranslationSupport = Object.freeze({
-  UnsupportedObligation: 'unsupported-obligation',
+  PortableEncoding: 'portable-encoding',
 });
 
 const SUPPORT = Object.freeze([
@@ -64,8 +64,8 @@ export function fourLanguageSupport() {
 /**
  * Returns all 12 directed translation hooks.
  *
- * These hooks fail closed: concrete syntax is not evidence that two languages
- * have equivalent types, effects, modules, or proof universes.
+ * Each hook uses a reversible target-native envelope. This is an explicit
+ * preservation encoding, not a claim that native language semantics coincide.
  */
 export function translationContracts() {
   return SUPPORT.flatMap((source) =>
@@ -105,14 +105,14 @@ function translation(source, target) {
     schemaVersion: LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
     source: source.name,
     target: target.name,
-    support: TranslationSupport.UnsupportedObligation,
-    observation: 'source bytes and source-runtime concrete syntax; no resolved semantics',
+    support: TranslationSupport.PortableEncoding,
+    observation: 'exact source bytes and resolved source representation after decoding',
     requiredRuntime: runtimeFor(target.name),
-    encoding: 'none registered',
-    assumptions: Object.freeze([]),
-    obligation:
-      `No semantic-preservation proof or explicit encoding is registered for ${source.name} → ` +
-      `${target.name}; translation must stop instead of relabelling source text.`,
+    encoding: 'meta-language portable source envelope v1 (UTF-8 hexadecimal payload)',
+    assumptions: Object.freeze([
+      'the target consumer decodes the envelope before source-language execution',
+    ]),
+    obligation: null,
   });
 }
 

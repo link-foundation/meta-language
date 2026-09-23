@@ -41,6 +41,7 @@
     },
     "parser_registry": { "parity": "ported", "feature": "parser-extension-registry" },
     "program_representation": { "parity": "ported", "feature": "four-language-program-representation" },
+    "program_translation": { "parity": "ported", "feature": "four-language-portable-translation" },
     "query": { "parity": "ported", "feature": "sexpression-query" },
     "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
     "query_plan": { "parity": "ported", "feature": "graphql-query-plan" },
@@ -104,6 +105,28 @@
         "evidence": [
           "js/src/program-representation.js",
           "js/src/index.d.ts",
+          "js/tests/four-language-conformance.test.js",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      }
+    },
+    {
+      "id": "four-language-portable-translation",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/program_translation.rs",
+          "rust/src/language_support.rs",
+          "rust/tests/unit/four_language_conformance.rs",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/program-translation.js",
+          "js/src/language-support.js",
           "js/tests/four-language-conformance.test.js",
           "parity/fixtures/four-language-conformance.json"
         ]

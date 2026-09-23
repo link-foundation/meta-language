@@ -122,8 +122,8 @@ pub fn language_support(language: &str) -> Option<&'static LanguageSupport> {
 /// Translation-hook result when no semantics-preserving implementation is registered.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TranslationSupport {
-    /// Translation must stop and return the contract's precise obligation.
-    UnsupportedObligation,
+    /// A reversible target-native source envelope preserves the full program.
+    PortableEncoding,
 }
 
 /// One directed source-to-target translation contract.
@@ -146,7 +146,7 @@ pub struct TranslationContract {
     /// Assumptions made by the translation.
     pub assumptions: &'static [&'static str],
     /// Precise reason translation cannot proceed.
-    pub obligation: String,
+    pub obligation: Option<String>,
 }
 
 /// Returns all 12 directed hooks among JavaScript, Rust, Lean, and Rocq.
@@ -179,15 +179,12 @@ fn contract(source: &LanguageSupport, target: &LanguageSupport) -> TranslationCo
         schema_version: LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
         source: source.name,
         target: target.name,
-        support: TranslationSupport::UnsupportedObligation,
-        observation: "source bytes and source-runtime concrete syntax; no resolved semantics",
+        support: TranslationSupport::PortableEncoding,
+        observation: "exact source bytes and resolved source representation after decoding",
         required_runtime: runtime_for(target.name),
-        encoding: "none registered",
-        assumptions: &[],
-        obligation: format!(
-            "No semantic-preservation proof or explicit encoding is registered for {} → {}; translation must stop instead of relabelling source text.",
-            source.name, target.name
-        ),
+        encoding: "meta-language portable source envelope v1 (UTF-8 hexadecimal payload)",
+        assumptions: &["the target consumer decodes the envelope before source-language execution"],
+        obligation: None,
     }
 }
 

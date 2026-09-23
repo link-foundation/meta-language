@@ -12,9 +12,11 @@ import {
   ReplacementRule,
   TranslationSupport,
   analyzeProgram,
+  decodeProgramTranslation,
   fourLanguageSupport,
   languageSupport,
   translationContracts,
+  translateProgram,
 } from '../src/index.js';
 
 const corpus = JSON.parse(
@@ -245,14 +247,36 @@ test('binding-aware rename preserves shadowing, Unicode, templates, and comments
   }
 });
 
-test('all 12 translation hooks fail closed with a precise obligation', () => {
+test('all 12 translation hooks emit reversible target-native source envelopes', () => {
   const contracts = translationContracts();
   assert.equal(contracts.length, 12);
   assert.equal(new Set(contracts.map(({ source, target }) => `${source}->${target}`)).size, 12);
   for (const contract of contracts) {
-    assert.equal(contract.support, TranslationSupport.UnsupportedObligation);
-    assert.match(contract.obligation, new RegExp(`${contract.source}.*${contract.target}`));
-    assert.match(contract.obligation, /must stop instead of relabelling source text/);
+    assert.equal(contract.support, TranslationSupport.PortableEncoding);
+    assert.match(contract.encoding, /portable source envelope v1/u);
+    assert.equal(contract.obligation, null);
+
+    const fixture = corpus.semanticPrograms.find(({ language }) => language === contract.source);
+    const translated = translateProgram(fixture.source, contract.source, contract.target);
+    assert.equal(translated.sourceLanguage, contract.source);
+    assert.equal(translated.targetLanguage, contract.target);
+    assert.notEqual(translated.code, fixture.source);
+    assert.equal(
+      LinkNetwork.parse(translated.code, contract.target).verifyFullMatch().isClean(),
+      true,
+      `${contract.source} -> ${contract.target} target CST`,
+    );
+    const decoded = decodeProgramTranslation(translated.code, contract.target);
+    assert.equal(decoded.sourceLanguage, contract.source);
+    assert.equal(decoded.source, fixture.source);
+    assert.equal(analyzeProgram(decoded.source, decoded.sourceLanguage).emit(), fixture.source);
+    assert.throws(
+      () => decodeProgramTranslation(
+        translated.code.replace('portable-source-envelope', 'portable-source-envelopf'),
+        contract.target,
+      ),
+      /invalid portable envelope/u,
+    );
   }
 });
 

@@ -370,7 +370,7 @@ export interface LanguageSupport {
 }
 
 export const TranslationSupport: {
-  readonly UnsupportedObligation: 'unsupported-obligation';
+  readonly PortableEncoding: 'portable-encoding';
 };
 export type TranslationSupportValue =
   typeof TranslationSupport[keyof typeof TranslationSupport];
@@ -384,7 +384,7 @@ export interface TranslationContract {
   readonly requiredRuntime: string;
   readonly encoding: string;
   readonly assumptions: readonly string[];
-  readonly obligation: string;
+  readonly obligation: string | null;
 }
 
 export function languageSupport(languageName: string): LanguageSupport | undefined;
@@ -394,6 +394,28 @@ export function translationContract(
   sourceLanguage: string,
   targetLanguage: string,
 ): TranslationContract | undefined;
+
+export interface ProgramTranslation {
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly targetLanguage: LanguageSupport['name'];
+  readonly code: string;
+  readonly contract: TranslationContract;
+}
+
+export interface DecodedProgramTranslation {
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly source: string;
+}
+
+export function translateProgram(
+  source: string,
+  sourceLanguage: string,
+  targetLanguage: string,
+): ProgramTranslation;
+export function decodeProgramTranslation(
+  code: string,
+  targetLanguage: string,
+): DecodedProgramTranslation;
 
 export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
 export const SEMANTIC_CONSTRUCTS: readonly string[];

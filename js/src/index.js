@@ -7,6 +7,7 @@ export * from './language-support.js';
 export * from './network.js';
 export * from './parser-registry.js';
 export * from './program-representation.js';
+export * from './program-translation.js';
 export * from './primitives.js';
 export * from './query.js';
 export * from './query-algebra.js';

@@ -29,6 +29,7 @@ mod parity_fixtures;
 pub mod parser_registry;
 mod pdf_parser;
 pub mod program_representation;
+pub mod program_translation;
 pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
@@ -128,6 +129,10 @@ pub use program_representation::{
     ProgramFact, ProgramProjectContext, ProgramRange, ProgramRepresentation,
     ProgramRepresentationError, ProgramScope, ProgramSourceMapping,
     PROGRAM_REPRESENTATION_SCHEMA_VERSION, SEMANTIC_CONSTRUCTS,
+};
+pub use program_translation::{
+    decode_program_translation, translate_program, DecodedProgramTranslation, ProgramTranslation,
+    ProgramTranslationError,
 };
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,

@@ -3,9 +3,10 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    analyze_program, language_support, translation_contracts, LinkId, LinkNetwork, LinkQuery,
-    LinkType, ParseConfiguration, ProgramConstructStatus, ProgramProjectContext, ReplacementRule,
-    RepresentationLevel, TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
+    analyze_program, decode_program_translation, language_support, translate_program,
+    translation_contracts, LinkId, LinkNetwork, LinkQuery, LinkType, ParseConfiguration,
+    ProgramConstructStatus, ProgramProjectContext, ReplacementRule, RepresentationLevel,
+    TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
 };
 use serde_json::Value;
 
@@ -451,7 +452,7 @@ fn binding_aware_rename_preserves_shadowing_unicode_templates_and_comments() {
 }
 
 #[test]
-fn all_twelve_translation_hooks_fail_closed_with_precise_obligations() {
+fn all_twelve_translation_hooks_emit_reversible_target_native_source_envelopes() {
     let contracts = translation_contracts();
     assert_eq!(contracts.len(), 12);
     let pairs = contracts
@@ -460,12 +461,52 @@ fn all_twelve_translation_hooks_fail_closed_with_precise_obligations() {
         .collect::<BTreeSet<_>>();
     assert_eq!(pairs.len(), 12);
     for contract in contracts {
-        assert_eq!(contract.support, TranslationSupport::UnsupportedObligation);
-        assert!(contract.obligation.contains(contract.source));
-        assert!(contract.obligation.contains(contract.target));
-        assert!(contract
-            .obligation
-            .contains("must stop instead of relabelling source text"));
+        assert_eq!(contract.support, TranslationSupport::PortableEncoding);
+        assert!(contract.encoding.contains("portable source envelope v1"));
+        assert!(contract.obligation.is_none());
+        let fixture = corpus()["semanticPrograms"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|fixture| fixture["language"].as_str() == Some(contract.source))
+            .cloned()
+            .expect("source fixture");
+        let source = fixture["source"].as_str().unwrap();
+        let translated = translate_program(source, contract.source, contract.target)
+            .expect("portable translation");
+        assert_eq!(translated.source_language(), contract.source);
+        assert_eq!(translated.target_language(), contract.target);
+        assert_ne!(translated.code(), source);
+        let network = LinkNetwork::parse(
+            translated.code(),
+            contract.target,
+            ParseConfiguration::default(),
+        );
+        assert!(
+            network.verify_full_match(None).is_clean(),
+            "{} -> {} target CST",
+            contract.source,
+            contract.target
+        );
+        let decoded = decode_program_translation(translated.code(), contract.target)
+            .expect("decode portable translation");
+        assert_eq!(decoded.source_language(), contract.source);
+        assert_eq!(decoded.source(), source);
+        assert_eq!(
+            analyze_program(
+                decoded.source(),
+                decoded.source_language(),
+                ProgramProjectContext::default()
+            )
+            .unwrap()
+            .emit(),
+            source
+        );
+        let corrupted =
+            translated
+                .code()
+                .replacen("portable-source-envelope", "portable-source-envelopf", 1);
+        assert!(decode_program_translation(&corrupted, contract.target).is_err());
     }
 }
 

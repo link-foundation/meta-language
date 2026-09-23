@@ -1,4 +1,7 @@
-use super::*;
+use super::{
+    BTreeMap, BTreeSet, LinkNetwork, LinkType, ProgramBinding, ProgramFact, ProgramRange,
+    ProgramRepresentationError, ProgramScope, ProgramSourceMapping, TokenKind,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SemanticToken {
@@ -85,7 +88,7 @@ pub(super) fn semantic_tokens(
         let operator = OPERATORS
             .iter()
             .find(|operator| source[offset..].starts_with(**operator));
-        let end = offset + operator.map_or(character.len_utf8(), |operator| operator.len());
+        let end = offset + operator.map_or_else(|| character.len_utf8(), |operator| operator.len());
         result.push(SemanticToken {
             kind: TokenKind::Punctuation,
             text: operator.map_or_else(|| character.to_string(), ToString::to_string),
@@ -134,7 +137,7 @@ pub(super) fn resolve_bindings(
     let mut declared = BTreeSet::new();
     match language {
         "JavaScript" => {
-            declare_javascript(&tokens, &brace_scopes, &mut declarations, &mut declared)
+            declare_javascript(&tokens, &brace_scopes, &mut declarations, &mut declared);
         }
         "Rust" => declare_rust(&tokens, &brace_scopes, &mut declarations, &mut declared),
         _ => declare_proof_language(&tokens, language, &mut declarations, &mut declared),
@@ -237,9 +240,7 @@ fn declare_javascript(
                     && (tokens
                         .get(cursor.wrapping_sub(1))
                         .is_some_and(|token| token.text == "as")
-                        || tokens
-                            .get(cursor + 1)
-                            .is_none_or(|token| token.text != "as"))
+                        || !matches!(tokens.get(cursor + 1), Some(token) if token.text == "as"))
                 {
                     declare(tokens, cursor, "import", None, declarations, declared);
                 }
@@ -347,9 +348,7 @@ fn declare(
     declarations: &mut Vec<Declaration>,
     declared: &mut BTreeSet<usize>,
 ) {
-    if tokens
-        .get(token)
-        .is_none_or(|token| token.kind != TokenKind::Identifier)
+    if !matches!(tokens.get(token), Some(token) if token.kind == TokenKind::Identifier)
         || !declared.insert(token)
     {
         return;
@@ -476,7 +475,7 @@ fn mask_template(source: &str, mask: &mut [bool], start: usize) -> usize {
     mask[offset] = false;
     offset += 1;
     while offset < source.len() {
-        if source[offset..].starts_with("\\") {
+        if source[offset..].starts_with('\\') {
             mark(mask, offset, (offset + 2).min(source.len()), false);
             offset = (offset + 2).min(source.len());
         } else if source[offset..].starts_with('`') {
