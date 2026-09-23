@@ -3,9 +3,9 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    language_support, translation_contracts, LinkId, LinkNetwork, LinkQuery, LinkType,
-    ParseConfiguration, ReplacementRule, RepresentationLevel, TranslationSupport,
-    LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
+    analyze_program, language_support, translation_contracts, LinkId, LinkNetwork, LinkQuery,
+    LinkType, ParseConfiguration, ProgramConstructStatus, ProgramProjectContext, ReplacementRule,
+    RepresentationLevel, TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
 };
 use serde_json::Value;
 
@@ -350,6 +350,107 @@ fn capability_reports_match_the_shared_versioned_corpus() {
 }
 
 #[test]
+fn four_language_semantic_programs_expose_every_required_representation_phase() {
+    for fixture in corpus()["semanticPrograms"]
+        .as_array()
+        .expect("semantic programs")
+    {
+        let language = fixture["language"].as_str().expect("language");
+        let source = fixture["source"].as_str().expect("source");
+        let project = ProgramProjectContext::new(
+            fixture["project"]["root"].as_str().expect("project root"),
+            json_strings(&fixture["project"]["files"]),
+            json_strings(&fixture["project"]["dependencies"]),
+        );
+        let program = analyze_program(source, language, project).expect("semantic analysis");
+        assert_eq!(program.emit(), source, "{language} source generation");
+        assert_eq!(
+            program.network().reconstruct_text(),
+            source,
+            "{language} network"
+        );
+        assert!(program.diagnostics().is_empty(), "{language} diagnostics");
+        assert!(!program.bindings().is_empty(), "{language} bindings");
+        assert!(!program.scopes().is_empty(), "{language} scopes");
+        assert!(
+            !program.source_mappings().is_empty(),
+            "{language} source mappings"
+        );
+
+        for kind in json_strings(&fixture["represented"]) {
+            let construct = program
+                .constructs()
+                .iter()
+                .find(|construct| construct.kind() == kind)
+                .expect("construct record");
+            assert_eq!(
+                construct.status(),
+                ProgramConstructStatus::Represented,
+                "{language} {kind}"
+            );
+            assert!(
+                !construct.evidence().is_empty(),
+                "{language} {kind} evidence"
+            );
+        }
+        for kind in json_strings(&fixture["notApplicable"]) {
+            let construct = program
+                .constructs()
+                .iter()
+                .find(|construct| construct.kind() == kind)
+                .expect("construct record");
+            assert_eq!(
+                construct.status(),
+                ProgramConstructStatus::NotApplicable,
+                "{language} {kind}"
+            );
+            assert!(
+                construct.rationale().is_some(),
+                "{language} {kind} rationale"
+            );
+        }
+    }
+}
+
+#[test]
+fn binding_aware_rename_preserves_shadowing_unicode_templates_and_comments() {
+    for fixture in corpus()["renameCases"].as_array().expect("rename cases") {
+        let language = fixture["language"].as_str().expect("language");
+        let source = fixture["source"].as_str().expect("source");
+        let program = analyze_program(source, language, ProgramProjectContext::default())
+            .expect("semantic analysis");
+        let occurrence = usize::try_from(
+            fixture["declarationOccurrence"]
+                .as_u64()
+                .expect("declaration occurrence"),
+        )
+        .expect("occurrence fits usize");
+        let binding = program
+            .bindings()
+            .iter()
+            .filter(|binding| binding.name() == fixture["binding"].as_str().unwrap())
+            .nth(occurrence)
+            .expect("selected binding");
+        let renamed = program
+            .rename_binding(binding.id(), fixture["replacement"].as_str().unwrap())
+            .expect("capture-safe rename");
+        assert_eq!(
+            renamed.emit(),
+            fixture["expected"].as_str().expect("expected source"),
+            "{language} binding rename"
+        );
+        assert!(renamed.network().verify_full_match(None).is_clean());
+        let error = program
+            .rename_binding(binding.id(), fixture["capture"].as_str().unwrap())
+            .expect_err("capture must be rejected");
+        assert!(
+            error.to_string().contains("capture") || error.to_string().contains("conflict"),
+            "{language} capture avoidance: {error}"
+        );
+    }
+}
+
+#[test]
 fn all_twelve_translation_hooks_fail_closed_with_precise_obligations() {
     let contracts = translation_contracts();
     assert_eq!(contracts.len(), 12);
@@ -374,6 +475,15 @@ fn captured_text(network: &LinkNetwork, root: LinkId) -> String {
     collect_tokens(network, root, &mut visited, &mut tokens);
     tokens.sort_by_key(|(start, id, _)| (*start, *id));
     tokens.into_iter().map(|(_, _, text)| text).collect()
+}
+
+fn json_strings(value: &Value) -> Vec<String> {
+    value
+        .as_array()
+        .expect("string array")
+        .iter()
+        .map(|entry| entry.as_str().expect("string entry").to_string())
+        .collect()
 }
 
 fn collect_tokens(

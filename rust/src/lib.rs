@@ -28,6 +28,7 @@ pub mod parity;
 mod parity_fixtures;
 pub mod parser_registry;
 mod pdf_parser;
+pub mod program_representation;
 pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
@@ -122,6 +123,12 @@ pub use parity::{
     SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
 };
 pub use parser_registry::ParserRegistry;
+pub use program_representation::{
+    analyze_program, ProgramBinding, ProgramConstruct, ProgramConstructStatus, ProgramDiagnostic,
+    ProgramFact, ProgramProjectContext, ProgramRange, ProgramRepresentation,
+    ProgramRepresentationError, ProgramScope, ProgramSourceMapping,
+    PROGRAM_REPRESENTATION_SCHEMA_VERSION, SEMANTIC_CONSTRUCTS,
+};
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
     QueryPredicateArgument, QueryPredicateHost,

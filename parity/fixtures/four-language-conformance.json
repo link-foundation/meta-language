@@ -121,7 +121,7 @@
     },
     {
       "language": "Lean",
-      "source": "import Std\nuniverse u\nnamespace Demo\npostfix:max \"‼\" => id\n@[simp] def identity {α : Type u} (value : α) : α := value\ndef factorial : Nat → Nat | 0 => 1 | Nat.succ n => Nat.succ n * factorial n\ndef effect : IO Unit := pure ()\ntheorem identity_eq {α : Type u} (value : α) : identity value = value := by\n  rfl\nend Demo\n",
+      "source": "import Std\nuniverse u\nnamespace Demo\npostfix:10000 \"‼\" => id\n@[simp] def identity {α : Type u} (value : α) : α := value\ndef factorial : Nat → Nat | 0 => 1 | Nat.succ n => Nat.succ n * factorial n\ndef effect : IO Unit := pure ()\ntheorem identity_eq {α : Type u} (value : α) : identity value = value := by\n  rfl\nend Demo\n",
       "project": { "root": "/workspace", "files": ["Demo.lean"], "dependencies": ["Std"] },
       "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
       "notApplicable": []

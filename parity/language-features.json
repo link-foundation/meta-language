@@ -40,6 +40,7 @@
       "reason": "Rust-side parity fixtures and language-target registry used to drive the crate's own conformance tests; this shared manifest plus the JavaScript checker is the cross-language equivalent."
     },
     "parser_registry": { "parity": "ported", "feature": "parser-extension-registry" },
+    "program_representation": { "parity": "ported", "feature": "four-language-program-representation" },
     "query": { "parity": "ported", "feature": "sexpression-query" },
     "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
     "query_plan": { "parity": "ported", "feature": "graphql-query-plan" },
@@ -83,6 +84,28 @@
           "js/tests/four-language-conformance.test.js",
           "parity/fixtures/four-language-conformance.json",
           "parity/language-grammar-inventory.json"
+        ]
+      }
+    },
+    {
+      "id": "four-language-program-representation",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/analysis.rs",
+          "rust/tests/unit/four_language_conformance.rs",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/program-representation.js",
+          "js/src/index.d.ts",
+          "js/tests/four-language-conformance.test.js",
+          "parity/fixtures/four-language-conformance.json"
         ]
       }
     },
