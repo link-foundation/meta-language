@@ -243,6 +243,24 @@ fn every_rust_grammar_inventory_alias_selects_a_nontrivial_lossless_cst() {
 }
 
 #[test]
+fn every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_input() {
+    for fixture in grammar_inventory()["languages"].as_array().unwrap() {
+        let language = fixture["name"].as_str().unwrap();
+        let source = format!("{}\0", fixture["source"].as_str().unwrap());
+        let network = LinkNetwork::parse(&source, language, ParseConfiguration::default());
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} malformed reconstruction"
+        );
+        assert!(
+            !network.verify_full_match(None).is_clean(),
+            "{language} malformed diagnostic"
+        );
+    }
+}
+
+#[test]
 fn rust_markdown_and_json5_frontends_expose_grammar_nodes_and_diagnostics() {
     for (language, source, expected_terms) in [
         (

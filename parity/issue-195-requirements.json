@@ -30,572 +30,572 @@
     "inventory:LiNo": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"LiNo\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:LiNo": {
-      "path": null,
-      "selector": "malformed and recovery corpus for LiNo",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"LiNo\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:txt": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"txt\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:txt": {
-      "path": null,
-      "selector": "malformed and recovery corpus for txt",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"txt\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Markdown": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Markdown\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Markdown": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Markdown",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Markdown\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:PDF": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PDF\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:PDF": {
-      "path": null,
-      "selector": "malformed and recovery corpus for PDF",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"PDF\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:DOCX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DOCX\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:DOCX": {
-      "path": null,
-      "selector": "malformed and recovery corpus for DOCX",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"DOCX\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:JavaScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JavaScript\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:JavaScript": {
-      "path": null,
-      "selector": "malformed and recovery corpus for JavaScript",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"JavaScript\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Rust": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rust\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Rust": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Rust",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Rust\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Lean": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lean\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Lean": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Lean",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Lean\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Rocq": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rocq\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Rocq": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Rocq",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Rocq\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Python": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Python\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Python": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Python",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Python\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:C": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:C": {
-      "path": null,
-      "selector": "malformed and recovery corpus for C",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"C\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:C++": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C++\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:C++": {
-      "path": null,
-      "selector": "malformed and recovery corpus for C++",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"C++\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:C#": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C#\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:C#": {
-      "path": null,
-      "selector": "malformed and recovery corpus for C#",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"C#\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Java": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Java\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Java": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Java",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Java\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:TypeScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TypeScript\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:TypeScript": {
-      "path": null,
-      "selector": "malformed and recovery corpus for TypeScript",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"TypeScript\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:TSX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TSX\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:TSX": {
-      "path": null,
-      "selector": "malformed and recovery corpus for TSX",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"TSX\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Visual Basic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Visual Basic\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Visual Basic": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Visual Basic",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Visual Basic\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Delphi/Object Pascal": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Delphi/Object Pascal\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Delphi/Object Pascal": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Delphi/Object Pascal",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Delphi/Object Pascal\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Go": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Go\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Go": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Go",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Go\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:R": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"R\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:R": {
-      "path": null,
-      "selector": "malformed and recovery corpus for R",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"R\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Ruby": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Ruby\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Ruby": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Ruby",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Ruby\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:PHP": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PHP\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:PHP": {
-      "path": null,
-      "selector": "malformed and recovery corpus for PHP",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"PHP\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Swift": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Swift\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Swift": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Swift",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Swift\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Kotlin": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Kotlin\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Kotlin": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Kotlin",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Kotlin\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Scala": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Scala\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Scala": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Scala",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Scala\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Lua": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lua\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Lua": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Lua",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Lua\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Perl": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Perl\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Perl": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Perl",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Perl\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:sql-ansi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-ansi\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:sql-ansi": {
-      "path": null,
-      "selector": "malformed and recovery corpus for sql-ansi",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"sql-ansi\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:sql-postgres": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-postgres\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:sql-postgres": {
-      "path": null,
-      "selector": "malformed and recovery corpus for sql-postgres",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"sql-postgres\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:sql-mysql": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-mysql\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:sql-mysql": {
-      "path": null,
-      "selector": "malformed and recovery corpus for sql-mysql",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"sql-mysql\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:sql-sqlite": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-sqlite\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:sql-sqlite": {
-      "path": null,
-      "selector": "malformed and recovery corpus for sql-sqlite",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"sql-sqlite\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:sql-server": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-server\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:sql-server": {
-      "path": null,
-      "selector": "malformed and recovery corpus for sql-server",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"sql-server\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:sql-oracle": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-oracle\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:sql-oracle": {
-      "path": null,
-      "selector": "malformed and recovery corpus for sql-oracle",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"sql-oracle\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:sql-bigquery": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-bigquery\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:sql-bigquery": {
-      "path": null,
-      "selector": "malformed and recovery corpus for sql-bigquery",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"sql-bigquery\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:sql-snowflake": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-snowflake\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:sql-snowflake": {
-      "path": null,
-      "selector": "malformed and recovery corpus for sql-snowflake",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"sql-snowflake\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:HTML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"HTML\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:HTML": {
-      "path": null,
-      "selector": "malformed and recovery corpus for HTML",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"HTML\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:CSS": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSS\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:CSS": {
-      "path": null,
-      "selector": "malformed and recovery corpus for CSS",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"CSS\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:JSON": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:JSON": {
-      "path": null,
-      "selector": "malformed and recovery corpus for JSON",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"JSON\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:YAML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"YAML\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:YAML": {
-      "path": null,
-      "selector": "malformed and recovery corpus for YAML",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"YAML\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:TOML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TOML\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:TOML": {
-      "path": null,
-      "selector": "malformed and recovery corpus for TOML",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"TOML\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:XML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"XML\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:XML": {
-      "path": null,
-      "selector": "malformed and recovery corpus for XML",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"XML\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:DTD": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DTD\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:DTD": {
-      "path": null,
-      "selector": "malformed and recovery corpus for DTD",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"DTD\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:INI": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"INI\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:INI": {
-      "path": null,
-      "selector": "malformed and recovery corpus for INI",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"INI\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Protocol Buffers": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Protocol Buffers\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Protocol Buffers": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Protocol Buffers",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Protocol Buffers\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:GraphQL": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"GraphQL\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:GraphQL": {
-      "path": null,
-      "selector": "malformed and recovery corpus for GraphQL",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"GraphQL\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:CSV": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSV\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:CSV": {
-      "path": null,
-      "selector": "malformed and recovery corpus for CSV",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"CSV\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:JSON5": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON5\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:JSON5": {
-      "path": null,
-      "selector": "malformed and recovery corpus for JSON5",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"JSON5\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:English": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"English\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:English": {
-      "path": null,
-      "selector": "malformed and recovery corpus for English",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"English\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Mandarin Chinese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Mandarin Chinese\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Mandarin Chinese": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Mandarin Chinese",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Mandarin Chinese\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Hindi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Hindi\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Hindi": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Hindi",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Hindi\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Spanish": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Spanish\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Spanish": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Spanish",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Spanish\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Modern Standard Arabic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Modern Standard Arabic\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Modern Standard Arabic": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Modern Standard Arabic",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Modern Standard Arabic\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:French": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"French\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:French": {
-      "path": null,
-      "selector": "malformed and recovery corpus for French",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"French\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Bengali": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bengali\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Bengali": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Bengali",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Bengali\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Portuguese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Portuguese\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Portuguese": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Portuguese",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Portuguese\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Russian": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Russian\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Russian": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Russian",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Russian\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "inventory:Urdu": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Urdu\"]",
-      "sha256": "8e3561dd67a6c0181cf5cecb5642f07899ffc50bfcee51ebf156b1a2cfb56353"
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:cst-negative:Urdu": {
-      "path": null,
-      "selector": "malformed and recovery corpus for Urdu",
-      "sha256": null
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Urdu\"].source + negativeMutation",
+      "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:embedded:HTML:JavaScript": {
       "path": null,

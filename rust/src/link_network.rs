@@ -349,6 +349,52 @@ impl LinkNetwork {
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
         let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
+        if text.contains('\0') {
+            let retained = network.reconstruct_text();
+            if text.starts_with(&retained) && retained.len() < text.len() {
+                let span = SourceSpan::new(
+                    ByteRange::new(retained.len(), text.len()),
+                    end_point_for_text(&retained),
+                    end_point_for_text(text),
+                );
+                network.insert_link(
+                    [],
+                    LinkMetadata::new()
+                        .with_link_type(LinkType::Token)
+                        .with_named(false)
+                        .with_term(&text[retained.len()..])
+                        .with_language(language)
+                        .with_span(span)
+                        .with_flags(LinkFlags::error()),
+                );
+            }
+            let malformed_root = network
+                .links()
+                .filter(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link
+                            .metadata()
+                            .span()
+                            .is_some_and(|span| span.byte_range().start() == 0)
+                })
+                .max_by_key(|link| {
+                    link.metadata()
+                        .span()
+                        .map_or(0, |span| span.byte_range().end())
+                })
+                .map(Link::id);
+            if let Some(root) = malformed_root {
+                network.set_flags(root, LinkFlags::error());
+                network.set_span(
+                    root,
+                    SourceSpan::new(
+                        ByteRange::new(0, text.len()),
+                        Point::new(0, 0),
+                        end_point_for_text(text),
+                    ),
+                );
+            }
+        }
         if let Some(profile) = configuration.profile().and_then(LanguageProfile::builtin) {
             profile.declare_in(&mut network);
         }

@@ -188,7 +188,22 @@ export function parseProgrammingLanguage(text, language) {
     return undefined;
   }
 
-  return parseGrammarCst(text, canonical);
+  const parsed = parseGrammarCst(text, canonical);
+  if (text.includes('\0')) {
+    parsed.tree.flags = parsed.tree.flags.withError();
+    const retained = parsed.tokens.map(({ text: token }) => token).join('');
+    if (text.startsWith(retained) && retained.length < text.length) {
+      const boundaries = sourceBoundaries(text);
+      parsed.tokens.push({
+        text: text.slice(retained.length),
+        kind: 'invalid_source_character',
+        named: false,
+        span: spanFor(boundaries, retained.length, text.length),
+        flags: LinkFlags.clean().withError(),
+      });
+    }
+  }
+  return parsed;
 }
 
 function parseGrammarCst(text, canonical) {

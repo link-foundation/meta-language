@@ -280,8 +280,10 @@ function buildCstRequirements(inventory, fixtureCatalog) {
       null,
     );
     const negativeFixtureId = `planned:cst-negative:${language.name}`;
-    fixtureCatalog[negativeFixtureId] = plannedFixture(
-      `malformed and recovery corpus for ${language.name}`,
+    fixtureCatalog[negativeFixtureId] = fixtureEntry(
+      'parity/language-grammar-inventory.json',
+      `languages[name=${JSON.stringify(language.name)}].source + negativeMutation`,
+      null,
     );
 
     const verifications = [];

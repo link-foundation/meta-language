@@ -163,6 +163,15 @@ test('every JavaScript grammar inventory alias selects a nontrivial lossless CST
   }
 });
 
+test('every JavaScript grammar inventory frontend retains and diagnoses prohibited NUL input', () => {
+  for (const fixture of grammarInventory.languages) {
+    const source = `${fixture.source}\0`;
+    const network = LinkNetwork.parse(source, fixture.name);
+    assert.equal(network.reconstructText(), source, `${fixture.name} malformed reconstruction`);
+    assert.equal(network.verifyFullMatch().isClean(), false, `${fixture.name} malformed diagnostic`);
+  }
+});
+
 test('JavaScript document and natural-language grammars expose their productions', () => {
   for (const [language, source, terms] of [
     ['LiNo', '1 1 1\n', ['lino_document', 'link']],
