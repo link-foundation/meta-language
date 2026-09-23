@@ -82,6 +82,34 @@ const LANGUAGE_ALIASES = new Map([
   ['json5', 'JSON5'],
   ['markdown', 'Markdown'],
   ['md', 'Markdown'],
+  ['lino', 'LiNo'],
+  ['txt', 'txt'],
+  ['text', 'txt'],
+  ['plain text', 'txt'],
+  ['pdf', 'PDF'],
+  ['docx', 'DOCX'],
+  ['english', 'English'],
+  ['en', 'English'],
+  ['mandarin chinese', 'Mandarin Chinese'],
+  ['chinese', 'Mandarin Chinese'],
+  ['zh', 'Mandarin Chinese'],
+  ['hindi', 'Hindi'],
+  ['hi', 'Hindi'],
+  ['spanish', 'Spanish'],
+  ['es', 'Spanish'],
+  ['modern standard arabic', 'Modern Standard Arabic'],
+  ['arabic', 'Modern Standard Arabic'],
+  ['ar', 'Modern Standard Arabic'],
+  ['french', 'French'],
+  ['fr', 'French'],
+  ['bengali', 'Bengali'],
+  ['bn', 'Bengali'],
+  ['portuguese', 'Portuguese'],
+  ['pt', 'Portuguese'],
+  ['russian', 'Russian'],
+  ['ru', 'Russian'],
+  ['urdu', 'Urdu'],
+  ['ur', 'Urdu'],
 ]);
 
 const PACK_GRAMMARS = Object.freeze({
@@ -127,10 +155,23 @@ const PACK_GRAMMARS = Object.freeze({
   CSV: 'csv',
   JSON5: 'json5',
   Markdown: 'markdown',
+  DOCX: 'xml',
 });
 
 const LEAN_PUBLIC_ROOT = 'file';
 const ROCQ_BUILTIN_TYPES = new Set(['bool', 'nat', 'Prop', 'Set', 'SProp', 'Type', 'Z']);
+const NATURAL_LANGUAGES = new Set([
+  'English',
+  'Mandarin Chinese',
+  'Hindi',
+  'Spanish',
+  'Modern Standard Arabic',
+  'French',
+  'Bengali',
+  'Portuguese',
+  'Russian',
+  'Urdu',
+]);
 
 /** Returns the canonical name for a grammar-backed JavaScript frontend. */
 export function canonicalProgrammingLanguage(language) {
@@ -152,6 +193,25 @@ export function parseProgrammingLanguage(text, language) {
 
 function parseGrammarCst(text, canonical) {
   const boundaries = sourceBoundaries(text);
+  if (canonical === 'LiNo') {
+    return parseTokenGrammar(text, canonical, boundaries, 'lino_document', linoLineTerm);
+  }
+  if (canonical === 'txt') {
+    return parseTokenGrammar(
+      text,
+      canonical,
+      boundaries,
+      'text_document',
+      () => 'line',
+      validateBalancedParentheses,
+    );
+  }
+  if (canonical === 'PDF') {
+    return parseTokenGrammar(text, canonical, boundaries, 'pdf_file', pdfLineTerm, validatePdf);
+  }
+  if (NATURAL_LANGUAGES.has(canonical)) {
+    return parseNaturalLanguageGrammar(text, canonical, boundaries);
+  }
   let root;
   let adapter;
 
@@ -202,6 +262,155 @@ function parseGrammarCst(text, canonical) {
     : tree;
 
   return { canonical, rootTerm: publicTree.term, tokens, tree: publicTree };
+}
+
+function parseTokenGrammar(text, canonical, boundaries, rootTerm, lineTerm, validate = undefined) {
+  const tokens = [];
+  let hasLineError = false;
+  const children = lineRanges(text).map(([start, end]) => {
+    const term = lineTerm(text.slice(start, end));
+    const isError = term.endsWith('_error');
+    hasLineError ||= isError;
+    return {
+      term,
+      children: lexicalNodes(text, start, end, boundaries, tokens),
+      named: true,
+      span: spanFor(boundaries, start, end),
+      flags: isError ? LinkFlags.clean().withError() : LinkFlags.clean(),
+    };
+  });
+  const valid = !hasLineError && (validate?.(text) ?? true);
+  const tree = {
+    term: rootTerm,
+    children,
+    named: true,
+    span: spanFor(boundaries, 0, text.length),
+    flags: valid ? LinkFlags.clean() : LinkFlags.clean().withError(),
+  };
+  return { canonical, rootTerm, tokens, tree };
+}
+
+function parseNaturalLanguageGrammar(text, canonical, boundaries) {
+  const tokens = [];
+  const children = [];
+  let sentenceStart = 0;
+  const terminal = /[.!?\u0964\u3002\u061f\u06d4\uff01\uff1f]/u;
+  for (let offset = 0; offset < text.length;) {
+    const character = codePointAt(text, offset);
+    offset += character.length;
+    if (!terminal.test(character)) {
+      continue;
+    }
+    while (offset < text.length && /\s/u.test(codePointAt(text, offset))) {
+      offset += codePointAt(text, offset).length;
+    }
+    children.push(naturalSentence(text, sentenceStart, offset, boundaries, tokens));
+    sentenceStart = offset;
+  }
+  if (sentenceStart < text.length) {
+    children.push(naturalSentence(text, sentenceStart, text.length, boundaries, tokens));
+  }
+  const tree = {
+    term: 'natural_language_document',
+    children,
+    named: true,
+    span: spanFor(boundaries, 0, text.length),
+    flags: LinkFlags.clean(),
+  };
+  return { canonical, rootTerm: tree.term, tokens, tree };
+}
+
+function naturalSentence(text, start, end, boundaries, tokens) {
+  return {
+    term: 'sentence',
+    children: lexicalNodes(text, start, end, boundaries, tokens),
+    named: true,
+    span: spanFor(boundaries, start, end),
+    flags: LinkFlags.clean(),
+  };
+}
+
+function lexicalNodes(text, start, end, boundaries, tokens) {
+  const nodes = [];
+  const pattern = /\s+|[\p{L}\p{N}\p{M}_'-]+|[^\s\p{L}\p{N}\p{M}_'-]+/gu;
+  pattern.lastIndex = start;
+  while (pattern.lastIndex < end) {
+    const match = pattern.exec(text);
+    if (!match || match.index >= end) {
+      break;
+    }
+    const tokenEnd = Math.min(pattern.lastIndex, end);
+    const value = text.slice(match.index, tokenEnd);
+    const whitespace = /^\s+$/u.test(value);
+    const word = /^[\p{L}\p{N}\p{M}_'-]+$/u.test(value);
+    nodes.push(grammarTokenNode(
+      whitespace ? 'whitespace' : word ? 'word' : 'punctuation',
+      match.index,
+      tokenEnd,
+      !whitespace,
+      whitespace ? LinkFlags.clean().withExtra() : LinkFlags.clean(),
+      text,
+      boundaries,
+      tokens,
+    ));
+    if (pattern.lastIndex >= end) {
+      break;
+    }
+  }
+  return nodes;
+}
+
+function lineRanges(text) {
+  const ranges = [];
+  let start = 0;
+  for (let offset = 0; offset < text.length;) {
+    const character = codePointAt(text, offset);
+    offset += character.length;
+    if (character === '\n') {
+      ranges.push([start, offset]);
+      start = offset;
+    }
+  }
+  if (start < text.length || text.length === 0) {
+    ranges.push([start, text.length]);
+  }
+  return ranges;
+}
+
+function linoLineTerm(line) {
+  const trimmed = line.trim();
+  if (/^\(\d+(?::\s*[\d\s]+)?\)$/u.test(trimmed) || /^\d+(?:\s+\d+)+$/u.test(trimmed)) {
+    return 'link';
+  }
+  if (/^[^:\n]+:\s*$/u.test(trimmed)) {
+    return 'definition';
+  }
+  return 'lino_error';
+}
+
+function pdfLineTerm(line) {
+  const trimmed = line.trim();
+  if (trimmed.startsWith('%PDF-')) return 'header';
+  if (trimmed === '%%EOF') return 'end_of_file';
+  if (/^\d+\s+\d+\s+obj$/u.test(trimmed)) return 'object_header';
+  if (trimmed === 'endobj') return 'object_end';
+  if (trimmed === 'xref') return 'cross_reference_table';
+  if (trimmed === 'trailer') return 'trailer';
+  if (trimmed === 'stream' || trimmed === 'endstream') return 'stream_boundary';
+  return 'pdf_line';
+}
+
+function validatePdf(text) {
+  return /^%PDF-\d+\.\d+/u.test(text) && /%%EOF\s*$/u.test(text);
+}
+
+function validateBalancedParentheses(text) {
+  let depth = 0;
+  for (const character of text) {
+    if (character === '(') depth += 1;
+    if (character === ')' && depth-- === 0) return false;
+  }
+  return depth === 0;
 }
 
 function convertGrammarNode(node, adapter, canonical, text, boundaries, byteOffsets, tokens) {

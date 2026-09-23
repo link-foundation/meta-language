@@ -26,13 +26,13 @@ export class LinkNetwork {
   }
 
   static parse(text, language, configuration = ParseConfiguration.default()) {
-    if (language.toLowerCase() === 'lino') {
-      return LinkNetwork.fromLino(text);
-    }
     const parsed = parseProgrammingLanguage(text, language);
     if (parsed) {
       const network = new LinkNetwork();
       network._insertProgrammingLanguage(parsed, language, configuration);
+      if (parsed.canonical === 'LiNo') {
+        network._insertLinoSemantics(text);
+      }
       return network;
     }
     return LinkNetwork.parseLosslessText(text, language, configuration);
@@ -371,6 +371,26 @@ export class LinkNetwork {
     const id = parsed.id === null ? undefined : Number(parsed.id);
     const references = parsed.values.map((value) => LinkId.from(value.id));
     this.insertLinkWithOptionalId(id, references, LinkMetadata.new().withLinkType(LinkType.Relation));
+  }
+
+  _insertLinoSemantics(source) {
+    let semantic;
+    try {
+      semantic = LinkNetwork.fromLino(source);
+    } catch {
+      return;
+    }
+
+    const remapped = new Map(
+      semantic.links().map((link) => [link.id().asU64(), this._allocateId()]),
+    );
+    for (const link of semantic.links()) {
+      this.insertLinkWithOptionalId(
+        remapped.get(link.id().asU64()),
+        link.references().map((reference) => remapped.get(reference.asU64())),
+        link.metadata().clone(),
+      );
+    }
   }
 
   _insertCanonicalLino(source) {

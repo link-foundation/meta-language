@@ -159,6 +159,38 @@ test('every JavaScript grammar inventory alias selects a nontrivial lossless CST
   }
 });
 
+test('JavaScript document and natural-language grammars expose their productions', () => {
+  for (const [language, source, terms] of [
+    ['LiNo', '1 1 1\n', ['lino_document', 'link']],
+    ['txt', 'Plain text.\n', ['text_document', 'line']],
+    ['PDF', '%PDF-1.7\n%%EOF\n', ['pdf_file', 'header', 'end_of_file']],
+    ['DOCX', '<w:document><w:body/></w:document>\n', ['document', 'element']],
+    ['English', 'Hawaii is a state.\n', ['natural_language_document', 'sentence', 'word']],
+    ['Mandarin Chinese', '你好。\n', ['natural_language_document', 'sentence', 'word']],
+  ]) {
+    const network = LinkNetwork.parse(source, language);
+    assert.equal(network.reconstructText(), source, language);
+    assert.equal(network.verifyFullMatch().isClean(), true, language);
+    for (const term of terms) {
+      assert.ok(
+        network.links().some(
+          (link) => link.metadata().linkType === LinkType.Syntax && link.metadata().term === term,
+        ),
+        `${language} must expose ${term}`,
+      );
+    }
+  }
+
+  for (const [language, source] of [
+    ['LiNo', 'not a link\n'],
+    ['PDF', 'not a PDF\n'],
+  ]) {
+    const network = LinkNetwork.parse(source, language);
+    assert.equal(network.reconstructText(), source, `${language} recovery`);
+    assert.equal(network.verifyFullMatch().isClean(), false, `${language} diagnostics`);
+  }
+});
+
 test('capability reports match the shared versioned corpus', () => {
   assert.equal(LANGUAGE_REPRESENTATION_SCHEMA_VERSION, corpus.schemaVersion);
   assert.equal(fourLanguageSupport().length, 4);
