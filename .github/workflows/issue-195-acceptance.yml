@@ -63,6 +63,8 @@ jobs:
         run: |
           opam repository add rocq-released https://rocq-prover.org/opam/released
           opam install --yes 'rocq-core=9.2.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
+          opam var bin >> "$GITHUB_PATH"
+          opam exec -- rocq --version
 
       - name: Install JavaScript dependencies
         run: npm ci --ignore-scripts
