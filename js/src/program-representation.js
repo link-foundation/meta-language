@@ -169,6 +169,15 @@ export class ProgramRepresentation {
         `rename would capture ${replacement} at ${conflicting.declaration.start} (binding conflict)`,
       );
     }
+    const bindingScope = scopeFor(this.scopes, binding.scope);
+    const unresolved = this.unresolvedReferences.find(({ name, start, end }) =>
+      name === replacement && start >= bindingScope.start && end <= bindingScope.end
+    );
+    if (unresolved) {
+      throw new BindingRenameError(
+        `rename would capture ${replacement} at ${unresolved.start} (unresolved reference)`,
+      );
+    }
 
     const ranges = [binding.declaration, ...binding.references]
       .map(({ start, end }) => ({ start, end }))

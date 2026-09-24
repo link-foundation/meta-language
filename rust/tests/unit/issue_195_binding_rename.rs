@@ -70,3 +70,43 @@ fn binding_aware_rename_preserves_scopes_properties_unicode_and_observations() {
         );
     }
 }
+
+#[test]
+fn binding_rename_rejects_capture_of_an_unresolved_reference() {
+    let source = "globalThis.y = 10; const x = 1; globalThis.result = x + y;";
+    let program = analyze_program(source, "JavaScript", ProgramProjectContext::default())
+        .expect("JavaScript analysis");
+    let binding = program
+        .bindings()
+        .iter()
+        .find(|binding| binding.name() == "x")
+        .expect("x binding");
+    assert!(program
+        .unresolved_references()
+        .iter()
+        .any(|reference| reference.name() == "y"));
+    let error = program
+        .rename_binding(binding.id(), "y")
+        .expect_err("rename must reject capture of the global y reference");
+    assert!(error.to_string().contains("capture"));
+
+    let sibling_source = "function f() { const x = 1; return x; } function g() { return y; }";
+    let sibling_program = analyze_program(
+        sibling_source,
+        "JavaScript",
+        ProgramProjectContext::default(),
+    )
+    .expect("JavaScript sibling scopes");
+    let sibling_binding = sibling_program
+        .bindings()
+        .iter()
+        .find(|binding| binding.name() == "x")
+        .expect("sibling x binding");
+    assert_eq!(
+        sibling_program
+            .rename_binding(sibling_binding.id(), "y")
+            .expect("unrelated sibling reference does not conflict")
+            .emit(),
+        "function f() { const y = 1; return y; } function g() { return y; }"
+    );
+}

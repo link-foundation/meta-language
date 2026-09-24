@@ -352,6 +352,24 @@ test('binding-aware rename preserves shadowing, Unicode, templates, and comments
   }
 });
 
+test('binding rename rejects capture of an unresolved JavaScript reference', () => {
+  const source = 'globalThis.y = 10; const x = 1; globalThis.result = x + y;';
+  const program = analyzeProgram(source, 'JavaScript');
+  const binding = program.bindings.find(({ name }) => name === 'x');
+  assert.ok(binding);
+  assert.ok(program.unresolvedReferences.some(({ name }) => name === 'y'));
+  assert.throws(() => program.renameBinding(binding.id, 'y'), /capture/u);
+
+  const siblingSource = 'function f() { const x = 1; return x; } function g() { return y; }';
+  const siblingProgram = analyzeProgram(siblingSource, 'JavaScript');
+  const siblingBinding = siblingProgram.bindings.find(({ name }) => name === 'x');
+  assert.ok(siblingBinding);
+  assert.equal(
+    siblingProgram.renameBinding(siblingBinding.id, 'y').emit(),
+    'function f() { const y = 1; return y; } function g() { return y; }',
+  );
+});
+
 test('structured construction, query, edits, cloning, movement, and emission reparse cleanly', () => {
   for (const fixture of corpus.transformationPrograms) {
     const program = constructProgram(fixture.source, fixture.language);

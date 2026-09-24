@@ -105,6 +105,16 @@ impl ProgramRepresentation {
                 offset: conflict.declaration.start,
             });
         }
+        if let Some(reference) = self.unresolved_references.iter().find(|reference| {
+            reference.name == replacement
+                && reference.range.start >= binding_scope.range.start
+                && reference.range.end <= binding_scope.range.end
+        }) {
+            return Err(ProgramRepresentationError::CaptureConflict {
+                identifier: replacement.to_string(),
+                offset: reference.range.start,
+            });
+        }
         let mut ranges = binding.references.clone();
         ranges.push(binding.declaration);
         ranges.sort_by_key(|range| std::cmp::Reverse(range.start));
