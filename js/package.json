@@ -20,6 +20,7 @@
     "check:parity": "node scripts/check-js-rust-parity.mjs",
     "check:parity:manifest": "node scripts/check-js-rust-parity.mjs --manifest-only",
     "check:issue-195": "node scripts/check-issue-195-acceptance.mjs",
+    "check:issue-195:runtime-parity": "node scripts/check-issue-195-runtime-parity.mjs",
     "acceptance:issue-195": "node scripts/check-issue-195-acceptance.mjs --produce-gate-results issue-195-results/gate-faults.json --evaluate --checkpoint all",
     "acceptance:issue-195:refresh": "node scripts/check-issue-195-acceptance.mjs --refresh-manifest"
   },

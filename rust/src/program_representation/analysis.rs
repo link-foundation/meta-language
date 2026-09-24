@@ -47,11 +47,6 @@ pub(super) fn semantic_tokens(
             mark(&mut mask, fact.range.start, fact.range.end, false);
         }
     }
-    let identifiers = syntax
-        .iter()
-        .filter(|fact| fact.term == "identifier")
-        .map(|fact| fact.range)
-        .collect::<BTreeSet<_>>();
     let mut result = Vec::new();
     let mut offset = 0;
     while offset < source.len() {
@@ -71,16 +66,15 @@ pub(super) fn semantic_tokens(
                 offset += next.len_utf8();
             }
             let text = &source[start..offset];
-            let range = ProgramRange::new(start, offset);
-            let kind = if identifiers.contains(&range) || !is_keyword(language, text) {
-                TokenKind::Identifier
-            } else {
+            let kind = if is_keyword(language, text) {
                 TokenKind::Keyword
+            } else {
+                TokenKind::Identifier
             };
             result.push(SemanticToken {
                 kind,
                 text: text.to_string(),
-                range,
+                range: ProgramRange::new(start, offset),
                 scope: 0,
             });
             continue;

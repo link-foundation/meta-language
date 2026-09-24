@@ -257,11 +257,6 @@ function semanticTokens(source, language, syntax) {
       mark(mask, fact.start, fact.end, false);
     }
   }
-  const identifierRanges = new Set(
-    syntax
-      .filter(({ term }) => term === 'identifier')
-      .map(({ start, end }) => `${start}:${end}`),
-  );
   const keywords = KEYWORDS[language];
   const tokens = [];
   for (let offset = 0; offset < source.length;) {
@@ -279,9 +274,8 @@ function semanticTokens(source, language, syntax) {
         offset += next.length;
       }
       const text = source.slice(start, offset);
-      const cstIdentifier = identifierRanges.has(`${start}:${offset}`);
       tokens.push({
-        kind: cstIdentifier || !keywords.has(text) ? 'identifier' : 'keyword',
+        kind: keywords.has(text) ? 'keyword' : 'identifier',
         text,
         start,
         end: offset,
@@ -365,7 +359,7 @@ function resolveBindings(tokens, source, language) {
     if (candidates[0]) {
       candidates[0].references.push(rangeRecord(token));
     } else {
-      unresolved.push({ name: token.text, ...rangeRecord(token) });
+      unresolved.push({ kind: 'unresolved', name: token.text, ...rangeRecord(token) });
     }
   }
   return {
@@ -486,7 +480,7 @@ function moduleFacts(tokens, language, project) {
 
 function typeFacts(tokens, syntax, language) {
   const facts = syntax
-    .filter(({ term }) => /type|universe/u.test(term))
+    .filter(({ term }) => /type|universe/u.test(term.toLowerCase()))
     .map(({ term, start, end }) => ({ kind: 'syntax-type', name: term, start, end, phase: 'surface' }));
   for (let index = 0; index < tokens.length; index += 1) {
     if (tokens[index].text === ':' && tokens[index + 1]) {
@@ -509,7 +503,7 @@ function extensionFacts(tokens, syntax, source, language) {
     if (patterns.has(token.text)) facts.push({ kind: token.text, name: token.text, ...rangeRecord(token) });
   }
   for (const fact of syntax) {
-    if (/macro|attribute|decorator|quotation|template/u.test(fact.term)) {
+    if (/macro|attribute|decorator|quotation|template|notation/u.test(fact.term.toLowerCase())) {
       facts.push({ kind: fact.term, name: fact.term, start: fact.start, end: fact.end });
     }
   }
@@ -524,7 +518,7 @@ function proofFacts(tokens, syntax, language) {
   const markers = PROOF_MARKERS[language];
   return uniqueFacts([
     ...tokens.filter(({ text }) => markers.has(text)).map((token) => ({ kind: token.text, name: token.text, ...rangeRecord(token) })),
-    ...syntax.filter(({ term }) => /theorem|proof|tactic/u.test(term)).map(({ term, start, end }) => ({ kind: term, name: term, start, end })),
+    ...syntax.filter(({ term }) => /theorem|proof|tactic/u.test(term.toLowerCase())).map(({ term, start, end }) => ({ kind: term, name: term, start, end })),
   ]);
 }
 
@@ -552,21 +546,21 @@ function projectDiagnostics(modules, project) {
 }
 
 function constructFacts(program) {
-  const tokenEvidence = (terms) => terms.map((term) => ({ term, start: 0, end: 0 }));
+  const tokenEvidence = (terms) => terms.map((name) => ({ kind: 'project', name, start: 0, end: 0 }));
   const recursive = program.bindings
     .filter(({ kind, name, references }) => kind === 'function' || kind === 'Fixpoint' || kind === 'CoFixpoint' || kind === 'def')
     .filter(({ name, references }) => references.some(() => name.length > 0))
-    .map(({ name, declaration }) => ({ term: name, ...declaration }));
+    .map(({ name, declaration }) => ({ kind: 'recursive', name, ...declaration }));
   const evidence = new Map([
     ['modules-and-imports', program.modules],
-    ['scopes-and-bindings', program.bindings.map(({ name, declaration }) => ({ term: name, ...declaration }))],
+    ['scopes-and-bindings', program.bindings.map(({ kind, name, declaration }) => ({ kind, name, ...declaration }))],
     ['recursive-definitions', recursive],
-    ['types-and-universes', program.types.map(({ name, start, end }) => ({ term: name, start, end }))],
+    ['types-and-universes', program.types],
     ['effects', effectEvidence(program)],
     ['attributes', program.extensions.filter(({ kind }) => /attribute|directive|allow|local|simp|#/u.test(kind))],
     ['macros-and-notation', program.extensions.filter(({ kind }) => /macro|notation|template|tagged|prefix|postfix|infix|syntax/iu.test(kind))],
     ['proof-terms-and-tactics', program.proofs],
-    ['surface-expansion-elaboration-traces', program.sourceMappings.slice(0, 32).map(({ term, start, end }) => ({ term, start, end }))],
+    ['surface-expansion-elaboration-traces', program.sourceMappings.slice(0, 32).map(({ term, start, end }) => ({ kind: 'syntax', name: term, start, end }))],
     ['project-context-and-dependencies', tokenEvidence([...program.project.files, ...program.project.dependencies])],
   ]);
   return SEMANTIC_CONSTRUCTS.map((kind) => {
@@ -586,14 +580,12 @@ function constructFacts(program) {
 function effectEvidence(program) {
   const markers = EFFECT_MARKERS[program.language];
   const evidence = [];
-  for (const mapping of program.sourceMappings) {
-    if ([...markers].some((marker) => mapping.term.includes(marker))) {
-      evidence.push({ term: mapping.term, start: mapping.start, end: mapping.end });
-    }
-  }
   for (const marker of markers) {
-    const start = program.source.indexOf(marker);
-    if (start >= 0) evidence.push({ term: marker, start, end: start + marker.length });
+    let start = program.source.indexOf(marker);
+    while (start >= 0) {
+      evidence.push({ kind: 'effect', name: marker, start, end: start + marker.length });
+      start = program.source.indexOf(marker, start + marker.length);
+    }
   }
   return uniqueFacts(evidence);
 }
@@ -847,7 +839,7 @@ const OPERATORS = ['...', '::=', '=>', '->', ':=', '::', '==', '!=', '<=', '>=',
 const KEYWORDS = Object.freeze({
   JavaScript: new Set(['as', 'async', 'await', 'break', 'case', 'catch', 'class', 'const', 'continue', 'default', 'delete', 'do', 'else', 'export', 'extends', 'finally', 'for', 'from', 'function', 'if', 'import', 'in', 'instanceof', 'let', 'new', 'of', 'return', 'static', 'super', 'switch', 'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield']),
   Rust: new Set(['as', 'async', 'await', 'break', 'const', 'continue', 'crate', 'dyn', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in', 'let', 'loop', 'macro_rules', 'match', 'mod', 'move', 'mut', 'pub', 'ref', 'return', 'self', 'Self', 'static', 'struct', 'super', 'trait', 'true', 'type', 'union', 'unsafe', 'use', 'where', 'while']),
-  Lean: new Set(['axiom', 'by', 'class', 'constant', 'def', 'deriving', 'do', 'else', 'end', 'export', 'for', 'from', 'fun', 'if', 'import', 'in', 'inductive', 'instance', 'let', 'macro', 'match', 'mutual', 'namespace', 'notation', 'open', 'partial', 'private', 'protected', 'section', 'structure', 'syntax', 'theorem', 'universe', 'variable', 'where', 'with']),
+  Lean: new Set(['axiom', 'by', 'class', 'constant', 'def', 'deriving', 'do', 'else', 'end', 'export', 'for', 'from', 'fun', 'if', 'import', 'in', 'inductive', 'instance', 'let', 'macro', 'match', 'mutual', 'namespace', 'notation', 'open', 'partial', 'postfix', 'prefix', 'private', 'protected', 'section', 'structure', 'syntax', 'theorem', 'universe', 'variable', 'where', 'with']),
   Rocq: new Set(['Axiom', 'Class', 'CoFixpoint', 'Definition', 'End', 'Fixpoint', 'From', 'Import', 'Inductive', 'Lemma', 'Ltac', 'Module', 'Notation', 'Parameter', 'Proof', 'Qed', 'Record', 'Require', 'Section', 'Theorem', 'Universe', 'Variable', 'as', 'at', 'end', 'fix', 'forall', 'fun', 'if', 'in', 'let', 'match', 'return', 'then', 'with']),
 });
 
