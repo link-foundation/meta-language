@@ -4,6 +4,7 @@ export type LinkTypeValue =
   | 'Field'
   | 'Language'
   | 'Object'
+  | 'Region'
   | 'Relation'
   | 'Semantic'
   | 'SourceToken'
@@ -16,6 +17,7 @@ export const LinkType: Record<string, LinkTypeValue> & {
   Field: 'Field';
   Language: 'Language';
   Object: 'Object';
+  Region: 'Region';
   Relation: 'Relation';
   Semantic: 'Semantic';
   SourceToken: 'SourceToken';

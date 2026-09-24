@@ -203,6 +203,7 @@ test('sniffLanguage recognizes supported signatures', () => {
 });
 
 test('embedded regions own connected grammar CSTs with exact host-source boundaries', () => {
+  assert.equal(LinkType.Region, 'Region');
   const html =
     '<script>const value = "café";</script>' +
     '<style>.x { color: red; }</style>' +

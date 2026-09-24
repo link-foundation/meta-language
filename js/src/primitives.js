@@ -4,6 +4,7 @@ export const LinkType = Object.freeze({
   Field: 'Field',
   Language: 'Language',
   Object: 'Object',
+  Region: 'Region',
   Relation: 'Relation',
   Semantic: 'Semantic',
   SourceToken: 'SourceToken',
