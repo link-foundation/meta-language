@@ -159,17 +159,21 @@ export class ProgramRepresentation {
     if (binding.name === replacement) {
       return this;
     }
+    const bindingScope = scopeFor(this.scopes, binding.scope);
     const conflicting = this.bindings.find((candidate) =>
       candidate.id !== binding.id &&
       candidate.name === replacement &&
-      rangesOverlap(scopeFor(this.scopes, binding.scope), scopeFor(this.scopes, candidate.scope))
+      (candidate.scope === binding.scope ||
+        (rangeInsideScope(scopeFor(this.scopes, candidate.scope), bindingScope) &&
+          binding.references.some((reference) => rangeInsideScope(reference, scopeFor(this.scopes, candidate.scope)))) ||
+        (rangeInsideScope(bindingScope, scopeFor(this.scopes, candidate.scope)) &&
+          candidate.references.some((reference) => rangeInsideScope(reference, bindingScope))))
     );
     if (conflicting) {
       throw new BindingRenameError(
         `rename would capture ${replacement} at ${conflicting.declaration.start} (binding conflict)`,
       );
     }
-    const bindingScope = scopeFor(this.scopes, binding.scope);
     const unresolved = this.unresolvedReferences.find(({ name, start, end }) =>
       name === replacement && start >= bindingScope.start && end <= bindingScope.end
     );
@@ -833,8 +837,8 @@ function scopeFor(scopes, id) {
   return scopes.find((scope) => scope.id === id) ?? { start: 0, end: 0 };
 }
 
-function rangesOverlap(left, right) {
-  return left.start <= right.end && right.start <= left.end;
+function rangeInsideScope(range, scope) {
+  return range.start >= scope.start && range.end <= scope.end;
 }
 
 function nextIdentifier(tokens, start) {

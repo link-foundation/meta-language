@@ -110,3 +110,63 @@ fn binding_rename_rejects_capture_of_an_unresolved_reference() {
         "function f() { const y = 1; return y; } function g() { return y; }"
     );
 }
+
+#[test]
+fn binding_rename_distinguishes_disjoint_nested_names_from_capture() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../parity/fixtures/four-language-conformance.json");
+    let corpus: Value = serde_json::from_str(&fs::read_to_string(path).expect("shared corpus"))
+        .expect("valid shared corpus");
+
+    for fixture in corpus["nestedRenameCases"]
+        .as_array()
+        .expect("nested rename cases")
+    {
+        let source = fixture["source"].as_str().expect("source");
+        let program = analyze_program(source, "JavaScript", ProgramProjectContext::default())
+            .expect("JavaScript analysis");
+        let binding = program
+            .bindings()
+            .iter()
+            .find(|binding| binding.name() == fixture["binding"].as_str().unwrap())
+            .expect("selected binding");
+        let original = javascript_observation(source);
+        assert_eq!(original, fixture["expectedObservation"]);
+
+        let result = program.rename_binding(binding.id(), fixture["replacement"].as_str().unwrap());
+        if fixture["allowed"] == false {
+            assert!(result
+                .expect_err("capture must be rejected")
+                .to_string()
+                .contains("capture"));
+            continue;
+        }
+        let renamed = result.expect("disjoint nested name is safe");
+        assert_eq!(
+            renamed.emit(),
+            fixture["expected"].as_str().expect("expected source")
+        );
+        assert!(renamed.network().verify_full_match(None).is_clean());
+        assert_eq!(
+            javascript_observation(&renamed.emit()),
+            fixture["expectedObservation"]
+        );
+    }
+}
+
+fn javascript_observation(source: &str) -> Value {
+    let output = Command::new("node")
+        .args([
+            "-e",
+            "eval(process.argv[1]); process.stdout.write(JSON.stringify(globalThis.result));",
+            source,
+        ])
+        .output()
+        .expect("Node executes JavaScript fixture");
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    serde_json::from_slice(&output.stdout).expect("fixture emits JSON observation")
+}

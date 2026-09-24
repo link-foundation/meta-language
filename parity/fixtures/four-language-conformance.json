@@ -246,6 +246,38 @@
       "capture": "value"
     }
   ],
+  "nestedRenameCases": [
+    {
+      "source": "const x = 1; { const y = 2; globalThis.inner = y; } globalThis.result = [globalThis.inner, x];",
+      "binding": "x",
+      "replacement": "y",
+      "expected": "const y = 1; { const y = 2; globalThis.inner = y; } globalThis.result = [globalThis.inner, y];",
+      "expectedObservation": [2, 1],
+      "allowed": true
+    },
+    {
+      "source": "const y = 1; { const x = 2; globalThis.inner = x; } globalThis.result = [globalThis.inner, y];",
+      "binding": "x",
+      "replacement": "y",
+      "expected": "const y = 1; { const y = 2; globalThis.inner = y; } globalThis.result = [globalThis.inner, y];",
+      "expectedObservation": [2, 1],
+      "allowed": true
+    },
+    {
+      "source": "const x = 1; { const y = 2; globalThis.result = x + y; }",
+      "binding": "x",
+      "replacement": "y",
+      "expectedObservation": 3,
+      "allowed": false
+    },
+    {
+      "source": "const y = 1; { const x = 2; globalThis.result = x + y; }",
+      "binding": "x",
+      "replacement": "y",
+      "expectedObservation": 3,
+      "allowed": false
+    }
+  ],
   "transformationPrograms": [
     {
       "language": "JavaScript",

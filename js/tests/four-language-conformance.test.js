@@ -370,6 +370,28 @@ test('binding rename rejects capture of an unresolved JavaScript reference', () 
   );
 });
 
+test('binding rename permits disjoint nested names and rejects actual nested capture', () => {
+  for (const fixture of corpus.nestedRenameCases) {
+    const program = analyzeProgram(fixture.source, 'JavaScript');
+    const binding = program.bindings.find(({ name }) => name === fixture.binding);
+    assert.ok(binding);
+    const originalContext = {};
+    runInNewContext(fixture.source, originalContext);
+    assert.deepEqual(JSON.parse(JSON.stringify(originalContext.result)), fixture.expectedObservation);
+
+    if (!fixture.allowed) {
+      assert.throws(() => program.renameBinding(binding.id, fixture.replacement), /capture/u);
+      continue;
+    }
+    const renamed = program.renameBinding(binding.id, fixture.replacement);
+    assert.equal(renamed.emit(), fixture.expected);
+    assert.equal(renamed.network.verifyFullMatch().isClean(), true);
+    const renamedContext = {};
+    runInNewContext(renamed.emit(), renamedContext);
+    assert.deepEqual(JSON.parse(JSON.stringify(renamedContext.result)), fixture.expectedObservation);
+  }
+});
+
 test('structured construction, query, edits, cloning, movement, and emission reparse cleanly', () => {
   for (const fixture of corpus.transformationPrograms) {
     const program = constructProgram(fixture.source, fixture.language);

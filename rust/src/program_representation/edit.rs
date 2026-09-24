@@ -1,5 +1,5 @@
 use super::{
-    ranges_overlap, scope_by_id, validate_identifier, ProgramRange, ProgramRepresentation,
+    scope_by_id, validate_identifier, ProgramRange, ProgramRepresentation,
     ProgramRepresentationError,
 };
 
@@ -95,10 +95,23 @@ impl ProgramRepresentation {
         if let Some(conflict) = self.bindings.iter().find(|candidate| {
             candidate.id != binding.id
                 && candidate.name == replacement
-                && ranges_overlap(
-                    binding_scope.range,
-                    scope_by_id(&self.scopes, &candidate.scope).range,
-                )
+                && (candidate.scope == binding.scope
+                    || (range_inside_scope(
+                        scope_by_id(&self.scopes, &candidate.scope).range,
+                        binding_scope.range,
+                    ) && binding.references.iter().any(|reference| {
+                        range_inside_scope(
+                            *reference,
+                            scope_by_id(&self.scopes, &candidate.scope).range,
+                        )
+                    }))
+                    || (range_inside_scope(
+                        binding_scope.range,
+                        scope_by_id(&self.scopes, &candidate.scope).range,
+                    ) && candidate
+                        .references
+                        .iter()
+                        .any(|reference| range_inside_scope(*reference, binding_scope.range))))
         }) {
             return Err(ProgramRepresentationError::CaptureConflict {
                 identifier: replacement.to_string(),
@@ -162,4 +175,8 @@ impl ProgramRepresentation {
         }
         Ok(reparsed)
     }
+}
+
+const fn range_inside_scope(range: ProgramRange, scope: ProgramRange) -> bool {
+    range.start >= scope.start && range.end <= scope.end
 }

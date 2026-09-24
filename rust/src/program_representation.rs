@@ -13,9 +13,8 @@ use std::fmt;
 
 use crate::{language_support, LinkNetwork, LinkType, ParseConfiguration};
 use analysis::{
-    effect_markers, extension_markers, module_markers, proof_markers, ranges_overlap,
-    resolve_bindings, scope_by_id, semantic_tokens, syntax_facts, unique_facts,
-    validate_identifier, SemanticToken,
+    effect_markers, extension_markers, module_markers, proof_markers, resolve_bindings,
+    scope_by_id, semantic_tokens, syntax_facts, unique_facts, validate_identifier, SemanticToken,
 };
 use module_resolution::{module_requests, project_has_module};
 

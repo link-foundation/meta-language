@@ -657,10 +657,6 @@ pub(super) fn scope_by_id<'a>(scopes: &'a [ProgramScope], id: &str) -> &'a Progr
     &scopes[scope_index(scopes, id)]
 }
 
-pub(super) const fn ranges_overlap(left: ProgramRange, right: ProgramRange) -> bool {
-    left.start <= right.end && right.start <= left.end
-}
-
 fn next_identifier(tokens: &[SemanticToken], start: usize) -> Option<usize> {
     tokens
         .iter()
