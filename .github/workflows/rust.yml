@@ -367,6 +367,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Node.js for translated JavaScript tests
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
         shell: pwsh

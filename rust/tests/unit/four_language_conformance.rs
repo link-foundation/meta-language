@@ -85,6 +85,8 @@ fn translated_rust_function_exports_javascript_behavior() {
         .find(|case| case["sourceLanguage"] == "Rust" && case["targetLanguage"] == "JavaScript")
         .expect("Rust to JavaScript case");
     let source_text = fixture["source"].as_str().expect("source");
+    let exported_name = fixture["export"].as_str().expect("exported name");
+    let expected_result = fixture["expectedResult"].as_u64().expect("expected result");
     let translated = translate_program(source_text, "Rust", "JavaScript")
         .expect("Rust to JavaScript translation");
     assert!(translated
@@ -96,6 +98,31 @@ fn translated_rust_function_exports_javascript_behavior() {
             .source(),
         source_text
     );
+    let directory = std::env::temp_dir().join(format!(
+        "meta-language-javascript-translation-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("time")
+            .as_nanos()
+    ));
+    fs::create_dir(&directory).expect("temporary directory");
+    fs::write(directory.join("translated.mjs"), translated.code()).expect("translated module");
+    let name = serde_json::to_string(exported_name).expect("export name is JSON-safe");
+    let script =
+        format!("const module = await import('./translated.mjs'); console.log(module[{name}]());");
+    let output = Command::new("node")
+        .args(["--input-type=module", "--eval", &script])
+        .current_dir(&directory)
+        .output()
+        .expect("Node.js available for translated JavaScript");
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(output.stdout, format!("{expected_result}\n").as_bytes());
+    fs::remove_dir_all(directory).expect("temporary directory cleanup");
 }
 
 #[test]
