@@ -52,12 +52,13 @@ fn translated_javascript_print_executes_in_rust() {
     let executable = directory.join(format!("translated{}", std::env::consts::EXE_SUFFIX));
     fs::write(&source, translated.code()).expect("translated source");
     let mut rustc = Command::new("rustc");
-    rustc.args(["--edition", "2024", "--crate-type", "bin", "-o"]);
+    rustc.args(["--edition", "2024", "--crate-type", "bin"]);
     #[cfg(windows)]
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
         rustc.arg("-C").arg(format!("linker={linker}"));
     }
     let compiler = rustc
+        .arg("-o")
         .arg(&executable)
         .arg(&source)
         .output()
