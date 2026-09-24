@@ -10,7 +10,6 @@ import {
 function normalizeCaptureName(name) {
   return String(name).replace(/^@+/, '');
 }
-
 // ---------------------------------------------------------------------------
 // Text patterns
 // ---------------------------------------------------------------------------
@@ -406,5 +405,3 @@ function readString(source, start) {
   }
   throw new LinkRuleParseError('unterminated string literal');
 }
-
-
