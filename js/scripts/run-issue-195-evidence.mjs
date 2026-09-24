@@ -14,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { buildIssue195Manifest } from './issue-195-acceptance-lib.mjs';
-import { buildEvidencePlan } from './issue-195-evidence-plan.mjs';
+import { buildEvidencePlan, observedEvidenceForCell } from './issue-195-evidence-plan.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const commit = option('--commit', process.env.GITHUB_SHA ?? git(['rev-parse', 'HEAD']));
@@ -22,6 +22,7 @@ const checkpoint = option('--checkpoint', 'pre-merge');
 const resultsDirectory = safeResultsDirectory(option('--results-dir', 'issue-195-results'));
 const logsDirectory = path.join(resultsDirectory, 'logs');
 const workDirectory = path.join(resultsDirectory, 'work');
+const observationsPath = path.join(workDirectory, 'execution-records.jsonl');
 const artifactsDirectory = path.join(resultsDirectory, 'artifacts');
 const parityDirectory = path.join(resultsDirectory, 'runtime-parity');
 const manifest = await buildIssue195Manifest(root);
@@ -32,6 +33,8 @@ const corpus = JSON.parse(
 );
 
 await prepareDirectories();
+process.env.ISSUE_195_OBSERVATION_FILE = observationsPath;
+process.env.ISSUE_195_COMMIT = commit;
 const toolchainVersions = readToolchainVersions();
 const grammarVersions = readGrammarVersions();
 
@@ -41,12 +44,15 @@ console.log(
 const evidenceGroups = checkpoint === 'release-delivery'
   ? await producePublishedEvidence()
   : await producePreMergeEvidence();
+const executionRecords = await readExecutionRecords();
 
 let written = 0;
+let complete = 0;
 for (const { group, cells } of plan) {
   const record = evidenceGroups.get(group);
   if (!record) throw new Error(`evidence group completed without a record: ${group}`);
   for (const { cell } of cells) {
+    const observed = observedEvidenceForCell(cell, executionRecords);
     const output = path.join(root, cell.evidenceArtifact.split('#')[0]);
     const fixtureDigests = Object.fromEntries(
       cell.fixtureIds.map((fixtureId) => [fixtureId, manifest.fixtureCatalog[fixtureId].sha256]),
@@ -62,24 +68,57 @@ for (const { group, cells } of plan) {
         results: [
           {
             testId: cell.testId,
-            outcome: 'passed',
+            outcome: observed.complete ? 'passed' : 'missing',
             kind: cell.kind,
-            positiveEvidence: true,
+            positiveEvidence: observed.complete,
             command: record.commands.join(' && '),
             toolchainVersions,
             grammarVersions,
             evidenceArtifacts: [relative(output), ...record.artifacts],
             failureLogs: [],
-            assertionsPassed: cell.assertions,
+            assertionsPassed: observed.assertionsPassed,
+            executionRecords: observed.executionRecords,
             fixtureDigests,
           },
         ],
       }),
     );
     written += 1;
+    if (observed.complete) complete += 1;
   }
 }
-console.log(`issue-195 evidence: wrote ${written} commit-bound verification artifacts`);
+console.log(`issue-195 evidence: ${complete}/${written} cells have observed assertion callbacks`);
+
+async function readExecutionRecords() {
+  let contents;
+  try {
+    contents = await readFile(observationsPath, 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
+  const records = contents.split(/\r?\n/u).filter(Boolean).map((line, index) => {
+    try {
+      return JSON.parse(line);
+    } catch (error) {
+      throw new Error(`invalid execution record at line ${index + 1}: ${error.message}`);
+    }
+  });
+  const known = new Set(plan.flatMap(({ cells }) => cells.map(({ cell }) => cell.testId)));
+  const seen = new Set();
+  for (const record of records) {
+    if (!record || typeof record !== 'object') {
+      throw new Error('execution record is not an object');
+    }
+    if (!known.has(record.testId)) {
+      throw new Error(`execution record has unknown testId ${record.testId}`);
+    }
+    const key = `${record.testId}\u0000${record.assertionId}\u0000${record.fixtureId}`;
+    if (seen.has(key)) throw new Error(`duplicate execution record ${key}`);
+    seen.add(key);
+  }
+  return records;
+}
 
 function option(name, fallback) {
   const index = process.argv.indexOf(name);

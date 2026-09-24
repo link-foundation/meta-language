@@ -3,7 +3,7 @@ import { LinkNetwork } from './network.js';
 import { LinkType } from './primitives.js';
 import { createProgramSnapshot, readProgramSnapshot } from './program-snapshot.js';
 
-/** Schema revision for resolved four-language program representations. */
+/** Schema revision for four-language program representations. */
 export const PROGRAM_REPRESENTATION_SCHEMA_VERSION = 1;
 
 export const SEMANTIC_CONSTRUCTS = Object.freeze([
@@ -74,7 +74,7 @@ export class ProgramRepresentation {
     this.bindings = Object.freeze(resolution.bindings.map(freezeBinding));
     this.unresolvedReferences = Object.freeze(resolution.unresolved.map(freezeRecord));
     this.sourceMappings = Object.freeze(syntax.map(freezeRecord));
-    this.modules = Object.freeze(moduleFacts(tokens, this.language, this.project).map(freezeRecord));
+    this.modules = Object.freeze(moduleFacts(tokens, syntax, this.source, this.language, this.project).map(freezeRecord));
     this.types = Object.freeze(typeFacts(tokens, syntax, this.language).map(freezeRecord));
     this.extensions = Object.freeze(extensionFacts(tokens, syntax, this.source, this.language).map(freezeRecord));
     this.proofs = Object.freeze(proofFacts(tokens, syntax, this.language).map(freezeRecord));
@@ -459,7 +459,7 @@ function declareDelimitedParameters(tokens, open, close, scope, declare) {
   }
 }
 
-function moduleFacts(tokens, language, project) {
+function moduleFacts(tokens, syntax, source, language, project) {
   const markers = MODULE_MARKERS[language];
   const facts = [];
   for (let index = 0; index < tokens.length; index += 1) {
@@ -473,9 +473,55 @@ function moduleFacts(tokens, language, project) {
     facts.push({ kind: tokens[index].text, name: names.join('.'), ...rangeRecord(tokens[index]) });
   }
   for (const dependency of project.dependencies) {
-    facts.push({ kind: 'resolved-project-dependency', name: dependency, start: 0, end: 0 });
+    facts.push({ kind: 'declared-project-dependency', name: dependency, start: 0, end: 0 });
+  }
+  for (const request of moduleRequests(syntax, source, language)) {
+    facts.push({ kind: 'module-import', ...request });
+    if (projectHasModule(project, request.name, language)) {
+      facts.push({ kind: 'recognized-toolchain-module', ...request });
+    }
   }
   return facts;
+}
+
+function moduleRequests(syntax, source, language) {
+  const requests = [];
+  for (const { term, start, end } of syntax) {
+    const text = source.slice(start, end);
+    let names = [];
+    if (language === 'JavaScript' && term === 'import_statement') {
+      const quoted = [...text.matchAll(/['"]([^'"]+)['"]/gu)];
+      if (quoted.length) names = [quoted.at(-1)[1]];
+    } else if (language === 'Rust' && term === 'use_declaration') {
+      const match = /^use\s+([A-Za-z_][A-Za-z_0-9]*)/u.exec(text);
+      if (match) names = [match[1]];
+    } else if (language === 'Lean' && term === 'import') {
+      const match = /^import\s+(.+)$/u.exec(text);
+      if (match) names = match[1].trim().split(/\s+/u);
+    } else if (language === 'Rocq' && term === 'require_command') {
+      const from = /^From\s+([\w.]+)\s+Require\s+(?:Import|Export)\s+(.+)$/u.exec(text);
+      const direct = /^Require\s+(?:Import|Export)\s+(.+)$/u.exec(text);
+      if (from) names = from[2].trim().split(/\s+/u).map((name) => `${from[1]}.${name}`);
+      else if (direct) names = direct[1].trim().split(/\s+/u);
+    }
+    for (const name of names) {
+      if (name) requests.push({ name, start, end });
+    }
+  }
+  return requests.filter((request, index) =>
+    requests.findIndex((candidate) => candidate.name === request.name && candidate.start === request.start) === index
+  );
+}
+
+function projectHasModule(project, name, language) {
+  const recognizedToolchainModules = {
+    JavaScript: ['node:fs/promises'],
+    Rust: ['std', 'core', 'alloc'],
+    Lean: ['Std'],
+    Rocq: ['Stdlib.Arith'],
+  };
+  return recognizedToolchainModules[language]?.includes(name) &&
+    project.dependencies.includes(name);
 }
 
 function typeFacts(tokens, syntax, language) {
@@ -484,7 +530,7 @@ function typeFacts(tokens, syntax, language) {
     .map(({ term, start, end }) => ({ kind: 'syntax-type', name: term, start, end, phase: 'surface' }));
   for (let index = 0; index < tokens.length; index += 1) {
     if (tokens[index].text === ':' && tokens[index + 1]) {
-      facts.push({ kind: 'annotation', name: tokens[index + 1].text, ...rangeRecord(tokens[index + 1]), phase: 'resolved' });
+      facts.push({ kind: 'annotation', name: tokens[index + 1].text, ...rangeRecord(tokens[index + 1]), phase: 'surface' });
     }
     if (['universe', 'Universe', 'Type'].includes(tokens[index].text)) {
       facts.push({ kind: 'universe', name: tokens[index + 1]?.text ?? tokens[index].text, ...rangeRecord(tokens[index]), phase: 'surface' });
@@ -535,9 +581,8 @@ function diagnosticFacts(network) {
 }
 
 function projectDiagnostics(modules, project) {
-  const sourceModules = modules.filter(({ kind }) => kind !== 'resolved-project-dependency');
-  if (sourceModules.length === 0 || project.dependencies.length > 0) return [];
-  return sourceModules.map(({ name, start, end }) => ({
+  const recognized = new Set(modules.filter(({ kind }) => kind === 'recognized-toolchain-module').map(({ name }) => name));
+  return modules.filter(({ kind, name }) => kind === 'module-import' && !recognized.has(name)).map(({ name, start, end }) => ({
     kind: 'missing-project-context',
     term: name,
     start,
@@ -560,11 +605,14 @@ function constructFacts(program) {
     ['attributes', program.extensions.filter(({ kind }) => /attribute|directive|allow|local|simp|#/u.test(kind))],
     ['macros-and-notation', program.extensions.filter(({ kind }) => /macro|notation|template|tagged|prefix|postfix|infix|syntax/iu.test(kind))],
     ['proof-terms-and-tactics', program.proofs],
-    ['surface-expansion-elaboration-traces', program.sourceMappings.slice(0, 32).map(({ term, start, end }) => ({ kind: 'syntax', name: term, start, end }))],
+    ['surface-expansion-elaboration-traces', []],
     ['project-context-and-dependencies', tokenEvidence([...program.project.files, ...program.project.dependencies])],
   ]);
   return SEMANTIC_CONSTRUCTS.map((kind) => {
     const facts = evidence.get(kind) ?? [];
+    if (kind === 'surface-expansion-elaboration-traces') {
+      return { kind, status: 'unavailable', evidence: [], rationale: 'no macro expansion or elaboration trace has been produced' };
+    }
     if (kind === 'proof-terms-and-tactics' && ['JavaScript', 'Rust'].includes(program.language)) {
       return { kind, status: 'not-applicable', evidence: [], rationale: `${program.language} defines no proof/tactic sublanguage` };
     }

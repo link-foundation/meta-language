@@ -31,7 +31,7 @@ test('pinned external corpora and representative projects exercise every four-la
     assert.ok(program.sourceMappings.length > 0, `${fixture.language} project mappings`);
     assert.equal(
       program.diagnostics.some(({ kind }) => kind === 'missing-project-context'),
-      false,
+      ['JavaScript', 'Rust'].includes(fixture.language),
       `${fixture.language} project context`,
     );
   }

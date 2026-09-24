@@ -3,6 +3,13 @@ import { languageSupport, translationContract } from './language-support.js';
 const ENVELOPE_MARKER = 'meta-language:portable-source-envelope:v1';
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
+const JS_RESERVED = new Set([
+  'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default',
+  'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for',
+  'function', 'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super',
+  'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with',
+  'yield', 'await', 'let', 'static',
+]);
 
 /**
  * Emits valid target-language source carrying an exact, reversible source
@@ -18,11 +25,21 @@ export function translateProgram(source, sourceLanguage, targetLanguage) {
   const bytes = encoder.encode(String(source));
   const payload = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
   const metadata = `${ENVELOPE_MARKER}:${sourceSupport.name}:${bytes.length}:${payload}`;
+  const artifact = targetSource(targetSupport.name, metadata, sourceSupport.name, String(source));
   return Object.freeze({
     sourceLanguage: sourceSupport.name,
     targetLanguage: targetSupport.name,
-    code: targetSource(targetSupport.name, metadata),
-    contract,
+    code: artifact.code,
+    contract: artifact.observation
+      ? Object.freeze({
+          ...contract,
+          support: 'semantic-subset',
+          observation: artifact.observation,
+          encoding: 'direct executable target source with a reversible source provenance envelope',
+          assumptions: Object.freeze([]),
+          obligation: null,
+        })
+      : contract,
   });
 }
 
@@ -59,17 +76,44 @@ function requiredLanguage(language) {
   return support;
 }
 
-function targetSource(language, metadata) {
+function targetSource(language, metadata, sourceLanguage, source) {
   if (language === 'JavaScript') {
-    return `/*${metadata}*/\nexport const __meta_language_portable_v1 = Object.freeze({ schemaVersion: 1 });\n`;
+    const rustFunction = sourceLanguage === 'Rust'
+      ? /^pub fn ([A-Za-z_][A-Za-z_0-9]*)\(\) -> u32 \{ ([0-9]+) \}$/u.exec(source)
+      : null;
+    if (
+      rustFunction &&
+      !JS_RESERVED.has(rustFunction[1]) &&
+      /^(?:0|[1-9][0-9]*)$/u.test(rustFunction[2]) &&
+      BigInt(rustFunction[2]) <= 4_294_967_295n
+    ) {
+      return {
+        code: `/*${metadata}*/\nexport function ${rustFunction[1]}() { return ${rustFunction[2]}; }\n`,
+        observation: 'calling the exported zero-argument function returns the same integer',
+      };
+    }
+    return { code: `/*${metadata}*/\nexport const __meta_language_portable_v1 = Object.freeze({ schemaVersion: 1 });\n` };
   }
   if (language === 'Rust') {
-    return `/*${metadata}*/\npub const __META_LANGUAGE_PORTABLE_V1: u32 = 1;\n`;
+    const print = sourceLanguage === 'JavaScript'
+      ? /^console\.log\(([0-9]+)\);$/u.exec(source)
+      : null;
+    if (
+      print &&
+      /^(?:0|[1-9][0-9]*)$/u.test(print[1]) &&
+      BigInt(print[1]) <= BigInt(Number.MAX_SAFE_INTEGER)
+    ) {
+      return {
+        code: `/*${metadata}*/\npub fn main() { println!("${print[1]}"); }\n`,
+        observation: 'running the target main function prints the same decimal value and newline',
+      };
+    }
+    return { code: `/*${metadata}*/\npub const __META_LANGUAGE_PORTABLE_V1: u32 = 1;\n` };
   }
   if (language === 'Lean') {
-    return `/-${metadata}-/\ndef __meta_language_portable_v1 : Nat := 1\n`;
+    return { code: `/-${metadata}-/\ndef __meta_language_portable_v1 : Nat := 1\n` };
   }
-  return `(*${metadata}*)\nDefinition __meta_language_portable_v1 : nat := 1.\n`;
+  return { code: `(*${metadata}*)\nDefinition __meta_language_portable_v1 : nat := 1.\n` };
 }
 
 function envelopeMetadata(code, targetLanguage) {

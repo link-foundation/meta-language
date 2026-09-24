@@ -3,7 +3,7 @@
 use std::error::Error;
 use std::fmt;
 
-use crate::{language_support, translation_contract, TranslationContract};
+use crate::{language_support, translation_contract, TranslationContract, TranslationSupport};
 
 const ENVELOPE_MARKER: &str = "meta-language:portable-source-envelope:v1";
 
@@ -113,7 +113,7 @@ pub fn translate_program(
         .ok_or_else(|| ProgramTranslationError::UnsupportedLanguage(source_language.to_string()))?;
     let target_support = language_support(target_language)
         .ok_or_else(|| ProgramTranslationError::UnsupportedLanguage(target_language.to_string()))?;
-    let contract = translation_contract(source_support.name, target_support.name)
+    let mut contract = translation_contract(source_support.name, target_support.name)
         .ok_or_else(|| ProgramTranslationError::SameLanguage(source_support.name.to_string()))?;
     let payload = hex_encode(source.as_bytes());
     let metadata = format!(
@@ -121,7 +121,16 @@ pub fn translate_program(
         source_support.name,
         source.len()
     );
-    let code = target_source(target_support.name, &metadata);
+    let (code, observation) =
+        target_source(target_support.name, &metadata, source_support.name, source);
+    if let Some(observation) = observation {
+        contract.support = TranslationSupport::SemanticSubset;
+        contract.observation = observation;
+        contract.encoding =
+            "direct executable target source with a reversible source provenance envelope";
+        contract.assumptions = &[];
+        contract.obligation = None;
+    }
     Ok(ProgramTranslation {
         source_language: source_support.name,
         target_language: target_support.name,
@@ -166,18 +175,120 @@ pub fn decode_program_translation(
     })
 }
 
-fn target_source(language: &str, metadata: &str) -> String {
+fn target_source(
+    language: &str,
+    metadata: &str,
+    source_language: &str,
+    source: &str,
+) -> (String, Option<&'static str>) {
     match language {
-        "JavaScript" => format!(
-            "/*{metadata}*/\nexport const __meta_language_portable_v1 = Object.freeze({{ schemaVersion: 1 }});\n"
+        "JavaScript" => {
+            if source_language == "Rust" {
+                if let Some((name, value)) = rust_constant_function(source) {
+                    return (
+                        format!("/*{metadata}*/\nexport function {name}() {{ return {value}; }}\n"),
+                        Some(
+                            "calling the exported zero-argument function returns the same integer",
+                        ),
+                    );
+                }
+            }
+            (format!(
+                "/*{metadata}*/\nexport const __meta_language_portable_v1 = Object.freeze({{ schemaVersion: 1 }});\n"
+            ), None)
+        }
+        "Rust" => {
+            if source_language == "JavaScript" {
+                if let Some(value) = javascript_print_number(source) {
+                    return (
+                        format!("/*{metadata}*/\npub fn main() {{ println!(\"{value}\"); }}\n"),
+                        Some("running the target main function prints the same decimal value and newline"),
+                    );
+                }
+            }
+            (
+                format!("/*{metadata}*/\npub const __META_LANGUAGE_PORTABLE_V1: u32 = 1;\n"),
+                None,
+            )
+        }
+        "Lean" => (
+            format!("/-{metadata}-/\ndef __meta_language_portable_v1 : Nat := 1\n"),
+            None,
         ),
-        "Rust" => format!(
-            "/*{metadata}*/\npub const __META_LANGUAGE_PORTABLE_V1: u32 = 1;\n"
+        "Rocq" => (
+            format!("(*{metadata}*)\nDefinition __meta_language_portable_v1 : nat := 1.\n"),
+            None,
         ),
-        "Lean" => format!("/-{metadata}-/\ndef __meta_language_portable_v1 : Nat := 1\n"),
-        "Rocq" => format!("(*{metadata}*)\nDefinition __meta_language_portable_v1 : nat := 1.\n"),
         _ => unreachable!("target was resolved by language_support"),
     }
+}
+
+fn rust_constant_function(source: &str) -> Option<(&str, &str)> {
+    let body = source.strip_prefix("pub fn ")?;
+    let (name, rest) = body.split_once("() -> u32 { ")?;
+    let value = rest.strip_suffix(" }")?;
+    let mut characters = name.bytes();
+    if !matches!(characters.next()?, b'A'..=b'Z' | b'a'..=b'z' | b'_')
+        || !characters.all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
+        || matches!(
+            name,
+            "break"
+                | "case"
+                | "catch"
+                | "class"
+                | "const"
+                | "continue"
+                | "debugger"
+                | "default"
+                | "delete"
+                | "do"
+                | "else"
+                | "enum"
+                | "export"
+                | "extends"
+                | "false"
+                | "finally"
+                | "for"
+                | "function"
+                | "if"
+                | "import"
+                | "in"
+                | "instanceof"
+                | "new"
+                | "null"
+                | "return"
+                | "super"
+                | "switch"
+                | "this"
+                | "throw"
+                | "true"
+                | "try"
+                | "typeof"
+                | "var"
+                | "void"
+                | "while"
+                | "with"
+                | "yield"
+                | "await"
+                | "let"
+                | "static"
+        )
+        || value.is_empty()
+        || (value.len() > 1 && value.starts_with('0'))
+        || !value.bytes().all(|byte| byte.is_ascii_digit())
+        || value.parse::<u64>().ok()? > u64::from(u32::MAX)
+    {
+        return None;
+    }
+    Some((name, value))
+}
+
+fn javascript_print_number(source: &str) -> Option<&str> {
+    let value = source.strip_prefix("console.log(")?.strip_suffix(");")?;
+    (!(value.is_empty() || value.len() > 1 && value.starts_with('0'))
+        && value.bytes().all(|byte| byte.is_ascii_digit())
+        && value.parse::<u64>().ok()? <= 9_007_199_254_740_991)
+        .then_some(value)
 }
 
 fn envelope_metadata<'a>(

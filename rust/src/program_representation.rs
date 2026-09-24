@@ -1,7 +1,8 @@
-//! Resolved, editable program representations for JavaScript, Rust, Lean, and Rocq.
+//! Editable program representations for JavaScript, Rust, Lean, and Rocq.
 
 mod analysis;
 mod edit;
+mod module_resolution;
 mod snapshot;
 
 pub use snapshot::{construct_program_from_fragments, PROGRAM_SNAPSHOT_SCHEMA_VERSION};
@@ -16,8 +17,9 @@ use analysis::{
     resolve_bindings, scope_by_id, semantic_tokens, syntax_facts, unique_facts,
     validate_identifier, SemanticToken,
 };
+use module_resolution::{module_requests, project_has_module};
 
-/// Schema revision for resolved four-language program representations.
+/// Schema revision for four-language program representations.
 pub const PROGRAM_REPRESENTATION_SCHEMA_VERSION: u32 = 1;
 
 /// Semantic construct categories audited for every four-language frontend.
@@ -312,6 +314,8 @@ pub enum ProgramConstructStatus {
     NotPresent,
     /// The language does not define this construct class.
     NotApplicable,
+    /// The runtime has not produced the required semantic structure.
+    Unavailable,
 }
 
 /// One semantic construct coverage record.
@@ -443,7 +447,7 @@ impl ProgramRepresentation {
         let tokens = semantic_tokens(source, support.name, &source_mappings);
         let (scopes, bindings, unresolved_references) =
             resolve_bindings(&tokens, source.len(), support.name);
-        let modules = module_facts(&tokens, support.name, &project);
+        let modules = module_facts(&tokens, &source_mappings, source, support.name, &project);
         let types = type_facts(&tokens, &source_mappings, support.name);
         let extensions = extension_facts(&tokens, &source_mappings, source, support.name);
         let proofs = proof_facts(&tokens, &source_mappings, support.name);
@@ -500,13 +504,13 @@ impl ProgramRepresentation {
         &self.network
     }
 
-    /// Resolved scopes.
+    /// Lexical scopes inferred from parsed source.
     #[must_use]
     pub fn scopes(&self) -> &[ProgramScope] {
         &self.scopes
     }
 
-    /// Resolved bindings.
+    /// Local bindings inferred from parsed source.
     #[must_use]
     pub fn bindings(&self) -> &[ProgramBinding] {
         &self.bindings
@@ -598,6 +602,8 @@ enum TokenKind {
 
 fn module_facts(
     tokens: &[SemanticToken],
+    syntax: &[ProgramSourceMapping],
+    source: &str,
     language: &str,
     project: &ProgramProjectContext,
 ) -> Vec<ProgramFact> {
@@ -621,11 +627,21 @@ fn module_facts(
     }
     facts.extend(project.dependencies.iter().map(|dependency| {
         ProgramFact::new(
-            "resolved-project-dependency",
+            "declared-project-dependency",
             dependency,
             ProgramRange::default(),
         )
     }));
+    for request in module_requests(syntax, source, language) {
+        if project_has_module(project, &request.name, language) {
+            facts.push(ProgramFact::new(
+                "recognized-toolchain-module",
+                &request.name,
+                request.range,
+            ));
+        }
+        facts.push(request);
+    }
     unique_facts(facts)
 }
 
@@ -648,7 +664,7 @@ fn type_facts(
         if token.text == ":" {
             if let Some(value) = tokens.get(index + 1) {
                 facts.push(
-                    ProgramFact::new("annotation", &value.text, value.range).with_phase("resolved"),
+                    ProgramFact::new("annotation", &value.text, value.range).with_phase("surface"),
                 );
             }
         }
@@ -761,14 +777,16 @@ fn diagnostic_facts(network: &LinkNetwork) -> Vec<ProgramDiagnostic> {
 
 fn project_diagnostics(
     modules: &[ProgramFact],
-    project: &ProgramProjectContext,
+    _project: &ProgramProjectContext,
 ) -> Vec<ProgramDiagnostic> {
-    if !project.dependencies.is_empty() {
-        return Vec::new();
-    }
+    let recognized = modules
+        .iter()
+        .filter(|fact| fact.kind == "recognized-toolchain-module")
+        .map(|fact| fact.name.as_str())
+        .collect::<std::collections::HashSet<_>>();
     modules
         .iter()
-        .filter(|fact| fact.kind != "resolved-project-dependency")
+        .filter(|fact| fact.kind == "module-import" && !recognized.contains(fact.name.as_str()))
         .map(|fact| ProgramDiagnostic {
             kind: "missing-project-context",
             term: fact.name.clone(),
@@ -781,6 +799,16 @@ fn construct_facts(program: &ProgramRepresentation) -> Vec<ProgramConstruct> {
     SEMANTIC_CONSTRUCTS
         .iter()
         .map(|kind| {
+            if *kind == "surface-expansion-elaboration-traces" {
+                return ProgramConstruct {
+                    kind,
+                    status: ProgramConstructStatus::Unavailable,
+                    evidence: Vec::new(),
+                    rationale: Some(
+                        "no macro expansion or elaboration trace has been produced".to_string(),
+                    ),
+                };
+            }
             if *kind == "proof-terms-and-tactics"
                 && matches!(program.language, "JavaScript" | "Rust")
             {
@@ -859,12 +887,6 @@ fn construct_evidence(program: &ProgramRepresentation, kind: &str) -> Vec<Progra
             .cloned()
             .collect(),
         "proof-terms-and-tactics" => program.proofs.clone(),
-        "surface-expansion-elaboration-traces" => program
-            .source_mappings
-            .iter()
-            .take(32)
-            .map(|mapping| ProgramFact::new("syntax", &mapping.term, mapping.range))
-            .collect(),
         "project-context-and-dependencies" => program
             .project
             .files

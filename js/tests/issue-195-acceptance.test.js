@@ -11,6 +11,7 @@ import {
   runIssue195GateFaultInjections,
   validateIssue195Manifest,
 } from '../scripts/issue-195-acceptance-lib.mjs';
+import { translateProgram } from '../src/program-translation.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -61,6 +62,16 @@ function syntheticCase(assertions = ['observableBehavior']) {
         grammarVersions: { synthetic: '1.0.0' },
         evidenceArtifacts: ['independent-result.json'],
         assertionsPassed: assertions,
+        executionRecords: assertions.map((assertionId) => ({
+          testId,
+          assertionId,
+          fixtureId: 'fixture',
+          fixtureDigest: 'fixture-digest',
+          runtime: 'javascript',
+          commit: 'candidate-sha',
+          outcome: 'passed',
+          testName: 'independent observable behavior',
+        })),
         fixtureDigests: { fixture: 'fixture-digest' },
       },
     ],
@@ -102,6 +113,32 @@ test('acceptance evaluator accepts exact positive evidence', () => {
     report.requirements[0].cells[0].evidence.command,
     'node independent-test.js',
   );
+});
+
+test('a zero-exit suite cannot certify assertions without execution callbacks', () => {
+  const { manifest, document } = syntheticCase();
+  document.results[0].command = 'node -e "process.exit(0)"';
+  document.results[0].executionRecords = [];
+  const report = evaluate(manifest, [document]);
+  assert.equal(report.passed, false);
+  assert.match(JSON.stringify(report), /execution record/u);
+});
+
+test('duplicate, stale, and mismatched execution callbacks fail closed', async (context) => {
+  for (const [name, mutate, expected] of [
+    ['duplicate', (result) => result.executionRecords.push({ ...result.executionRecords[0] }), /duplicate execution record/u],
+    ['stale', (result) => { result.executionRecords[0].commit = 'old-sha'; }, /execution record commit mismatch/u],
+    ['wrong fixture', (result) => { result.executionRecords[0].fixtureId = 'other'; }, /unexpected execution fixture/u],
+    ['skipped', (result) => { result.executionRecords[0].outcome = 'skipped'; }, /execution record outcome is skipped/u],
+  ]) {
+    await context.test(name, () => {
+      const { manifest, document } = syntheticCase();
+      mutate(document.results[0]);
+      const report = evaluate(manifest, [document]);
+      assert.equal(report.passed, false);
+      assert.match(JSON.stringify(report), expected);
+    });
+  }
 });
 
 test('scope baseline detects removed rows, aliases, tests, assertions, and fixtures', async (context) => {
@@ -201,6 +238,21 @@ test('unsupported or relabelled translations cannot satisfy positive translation
     assert.equal(report.passed, false);
     assert.match(JSON.stringify(report), /noSourceRelabelling/);
   });
+});
+
+test('a valid source envelope cannot certify semantic translation', async () => {
+  const translation = translateProgram('pub fn answer(x: u32) -> u32 { x }', 'Rust', 'JavaScript');
+  const targetModule = await import(`data:text/javascript,${encodeURIComponent(translation.code)}`);
+  assert.equal(typeof targetModule.answer, 'undefined');
+  assert.equal(translation.contract.support, 'portable-encoding');
+
+  const { manifest, document } = syntheticCase(ASSERTION_PROFILES.translationPositive);
+  document.results[0].executionRecords = document.results[0].executionRecords.filter(
+    ({ assertionId }) => assertionId !== 'semanticPreservationChecked',
+  );
+  const report = evaluate(manifest, [document]);
+  assert.equal(report.passed, false);
+  assert.match(JSON.stringify(report), /semanticPreservationChecked/u);
 });
 
 test('skips and capability declarations cannot replace exact test evidence', async (context) => {

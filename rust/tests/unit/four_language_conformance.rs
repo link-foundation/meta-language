@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 
 use meta_language::{
     analyze_program, construct_program, construct_program_from_fragments,
@@ -23,6 +24,73 @@ fn grammar_inventory() -> Value {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
     serde_json::from_str(&fs::read_to_string(path).expect("grammar inventory is readable"))
         .expect("grammar inventory is valid JSON")
+}
+
+#[test]
+fn translated_javascript_print_executes_in_rust() {
+    let corpus = corpus();
+    let fixture = corpus["translationBehaviorCases"]
+        .as_array()
+        .expect("translation behavior cases")
+        .iter()
+        .find(|case| case["sourceLanguage"] == "JavaScript" && case["targetLanguage"] == "Rust")
+        .expect("JavaScript to Rust case");
+    let source_text = fixture["source"].as_str().expect("source");
+    let expected_stdout = fixture["expectedStdout"].as_str().expect("stdout");
+    let translated = translate_program(source_text, "JavaScript", "Rust")
+        .expect("JavaScript to Rust translation");
+    let directory = std::env::temp_dir().join(format!(
+        "meta-language-translation-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("time")
+            .as_nanos()
+    ));
+    fs::create_dir(&directory).expect("temporary directory");
+    let source = directory.join("translated.rs");
+    let executable = directory.join(format!("translated{}", std::env::consts::EXE_SUFFIX));
+    fs::write(&source, translated.code()).expect("translated source");
+    let compiler = Command::new("rustc")
+        .args(["--edition", "2024", "--crate-type", "bin", "-o"])
+        .arg(&executable)
+        .arg(&source)
+        .output()
+        .expect("rustc available");
+    assert!(
+        compiler.status.success(),
+        "{}",
+        String::from_utf8_lossy(&compiler.stderr)
+    );
+    let output = Command::new(&executable)
+        .output()
+        .expect("translated program runs");
+    assert!(output.status.success());
+    assert_eq!(output.stdout, expected_stdout.as_bytes());
+    fs::remove_dir_all(directory).expect("temporary directory cleanup");
+}
+
+#[test]
+fn translated_rust_function_exports_javascript_behavior() {
+    let corpus = corpus();
+    let fixture = corpus["translationBehaviorCases"]
+        .as_array()
+        .expect("translation behavior cases")
+        .iter()
+        .find(|case| case["sourceLanguage"] == "Rust" && case["targetLanguage"] == "JavaScript")
+        .expect("Rust to JavaScript case");
+    let source_text = fixture["source"].as_str().expect("source");
+    let translated = translate_program(source_text, "Rust", "JavaScript")
+        .expect("Rust to JavaScript translation");
+    assert!(translated
+        .code()
+        .contains("export function answer() { return 42; }"));
+    assert_eq!(
+        decode_program_translation(translated.code(), "JavaScript")
+            .expect("envelope still decodes")
+            .source(),
+        source_text
+    );
 }
 
 #[test]
@@ -419,8 +487,72 @@ fn project_aware_analysis_diagnoses_missing_context_and_resolves_dependencies() 
             with_context
                 .modules()
                 .iter()
-                .any(|fact| fact.kind() == "resolved-project-dependency"),
-            "{language} resolved dependency"
+                .any(|fact| fact.kind() == "recognized-toolchain-module"),
+            "{language} recognized toolchain module"
+        );
+    }
+}
+
+#[test]
+fn unrelated_dependency_does_not_resolve_project_import() {
+    for fixture in corpus()["semanticPrograms"]
+        .as_array()
+        .expect("semantic programs")
+    {
+        let language = fixture["language"].as_str().expect("language");
+        let source = fixture["source"].as_str().expect("source");
+        let project = ProgramProjectContext::new(
+            fixture["project"]["root"].as_str().expect("project root"),
+            json_strings(&fixture["project"]["files"]),
+            vec!["unrelated-package".to_string()],
+        );
+        let program = analyze_program(source, language, project).expect("analysis");
+        assert!(
+            program
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.kind() == "missing-project-context"),
+            "{language} import remains unresolved"
+        );
+    }
+}
+
+#[test]
+fn matching_but_nonexistent_dependency_or_file_cannot_resolve_import() {
+    for fixture in corpus()["phantomImportCases"]
+        .as_array()
+        .expect("phantom cases")
+    {
+        let language = fixture["language"].as_str().expect("language");
+        let source = fixture["source"].as_str().expect("source");
+        let dependency = fixture["dependency"].as_str().expect("dependency");
+        let file = fixture["file"].as_str().expect("file");
+        let project = ProgramProjectContext::new(
+            "/workspace",
+            vec![file.to_string()],
+            vec![dependency.to_string()],
+        );
+        let program = analyze_program(source, language, project).expect("analysis");
+        assert!(
+            program
+                .modules()
+                .iter()
+                .any(|fact| fact.kind() == "module-import" && fact.name() == dependency),
+            "{language} import request"
+        );
+        assert!(
+            program
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.kind() == "missing-project-context"),
+            "{language} missing module"
+        );
+        assert!(
+            !program
+                .modules()
+                .iter()
+                .any(|fact| fact.kind() == "recognized-toolchain-module"),
+            "{language} phantom resolution"
         );
     }
 }
@@ -465,6 +597,13 @@ fn four_language_semantic_programs_expose_every_required_representation_phase() 
             !program.source_mappings().is_empty(),
             "{language} source mappings"
         );
+        assert!(
+            program
+                .types()
+                .iter()
+                .all(|fact| !matches!(fact.phase(), Some("resolved" | "elaborated"))),
+            "{language} has only surface type facts"
+        );
 
         for kind in json_strings(&fixture["represented"]) {
             let construct = program
@@ -496,6 +635,22 @@ fn four_language_semantic_programs_expose_every_required_representation_phase() 
             assert!(
                 construct.rationale().is_some(),
                 "{language} {kind} rationale"
+            );
+        }
+        for kind in json_strings(&fixture["unavailable"]) {
+            let construct = program
+                .constructs()
+                .iter()
+                .find(|construct| construct.kind() == kind)
+                .expect("construct record");
+            assert_eq!(
+                construct.status(),
+                ProgramConstructStatus::Unavailable,
+                "{language} {kind}"
+            );
+            assert!(
+                construct.evidence().is_empty(),
+                "{language} {kind} no fabricated trace"
             );
         }
     }
@@ -667,7 +822,11 @@ fn all_twelve_translation_hooks_emit_reversible_target_native_source_envelopes()
     for contract in contracts {
         assert_eq!(contract.support, TranslationSupport::PortableEncoding);
         assert!(contract.encoding.contains("portable source envelope v1"));
-        assert!(contract.obligation.is_none());
+        assert!(contract
+            .obligation
+            .as_deref()
+            .unwrap()
+            .contains("semantic translation is not implemented"));
         let fixture = corpus()["semanticPrograms"]
             .as_array()
             .unwrap()

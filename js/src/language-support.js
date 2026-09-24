@@ -14,6 +14,7 @@ export const RepresentationLevel = Object.freeze({
 
 export const TranslationSupport = Object.freeze({
   PortableEncoding: 'portable-encoding',
+  SemanticSubset: 'semantic-subset',
 });
 
 const SUPPORT = Object.freeze([
@@ -39,7 +40,7 @@ const SUPPORT = Object.freeze([
     version: 'Lean 4.33.1',
     edition: 'Lean 4',
     extensions: ['.lean'],
-    proofSyntax: RepresentationLevel.Elaborated,
+    proofSyntax: RepresentationLevel.Parsed,
   }),
   language({
     name: 'Rocq',
@@ -47,7 +48,7 @@ const SUPPORT = Object.freeze([
     version: 'Rocq 9.2',
     edition: 'Vernacular',
     extensions: ['.v'],
-    proofSyntax: RepresentationLevel.Elaborated,
+    proofSyntax: RepresentationLevel.Parsed,
   }),
 ]);
 
@@ -68,8 +69,8 @@ export function fourLanguageSupport() {
 /**
  * Returns all 12 directed translation hooks.
  *
- * Each hook uses a reversible target-native envelope. This is an explicit
- * preservation encoding, not a claim that native language semantics coincide.
+ * A hook describes the default transport behavior for arbitrary source input.
+ * Individual source forms can have an executable implementation.
  */
 export function translationContracts() {
   return SUPPORT.flatMap((source) =>
@@ -96,9 +97,9 @@ function language({ name, aliases, version, edition, extensions, proofSyntax }) 
     extensions: Object.freeze([...extensions]),
     sourceBytes: RepresentationLevel.Preserved,
     concreteSyntax: RepresentationLevel.ConcreteSyntax,
-    bindingResolution: RepresentationLevel.Resolved,
-    typeElaboration: RepresentationLevel.Elaborated,
-    dynamicExtensions: RepresentationLevel.Resolved,
+    bindingResolution: RepresentationLevel.Parsed,
+    typeElaboration: RepresentationLevel.Unavailable,
+    dynamicExtensions: RepresentationLevel.Parsed,
     proofSyntax,
     emitter: 'ordered source-token emitter',
   });
@@ -110,13 +111,13 @@ function translation(source, target) {
     source: source.name,
     target: target.name,
     support: TranslationSupport.PortableEncoding,
-    observation: 'exact source bytes and resolved source representation after decoding',
+    observation: 'exact source bytes after decoding; target behavior is not preserved',
     requiredRuntime: runtimeFor(target.name),
     encoding: 'meta-language portable source envelope v1 (UTF-8 hexadecimal payload)',
     assumptions: Object.freeze([
-      'the target consumer decodes the envelope before source-language execution',
+      'the source-language runtime is required to execute decoded source',
     ]),
-    obligation: null,
+    obligation: 'semantic translation is not implemented for arbitrary source programs',
   });
 }
 

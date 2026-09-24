@@ -22,10 +22,12 @@ alias, or through `ParserRegistry`; it is not inferred from a filename.
 Both runtimes use registered grammar frontends for all four languages,
 including the pinned Rocq grammar. Grammar-backed paths retain the returned
 CST, named fields, child order, exact spans, recovery flags, and source tokens.
-The program representation then adds project context, scopes, bindings,
-module/dependency facts, types and universes, extensions, proofs, and
-surface-to-representation mappings. Missing dependency context produces an
-explicit diagnostic instead of fabricated resolution.
+The program representation retains project inputs, lexical scopes and bindings,
+surface syntax facts, and source mappings. Import requests are extracted from
+grammar nodes; a small pinned set of toolchain modules is recognized when
+declared. Listed project files and arbitrary dependency names do not establish
+module existence or export resolution. Type checking, macro expansion, and
+proof elaboration remain open.
 
 ## Stable pipeline
 
@@ -50,10 +52,9 @@ changing built-in dispatch.
 
 ## Construct and fidelity inventory
 
-The table reports the common capability available in **both** runtime packages.
-“Resolved” means declarations and references carry stable scoped identities;
-“elaborated” means surface facts are retained with their representation phase.
-Proof syntax is explicitly not applicable to JavaScript and Rust.
+The table distinguishes implemented surfaces from the full issue requirement.
+Capability labels in the API are not conformance evidence for the complete
+language versions.
 
 | Construct or layer | JavaScript | Rust | Lean | Rocq | Evidence |
 | --- | --- | --- | --- | --- | --- |
@@ -61,26 +62,28 @@ Proof syntax is explicitly not applicable to JavaScript and Rust.
 | UTF-8 byte spans and line/column points | concrete | concrete | concrete | concrete | parser implementations and corpus tests |
 | Comments, strings, numbers, identifiers, keywords, delimiters | grammar CST | grammar CST | grammar CST | grammar CST | real grammar nodes/tokens plus shared corpus |
 | Nested grammar hierarchy and recovery | concrete | concrete | concrete | concrete | positive and malformed corpus cases |
-| Full grammar-level syntax hierarchy | available | available | available | available | grammar CST materialization in both runtimes |
-| Identifier scope and binding resolution | resolved | resolved | resolved | resolved | shared symbol-identity, shadowing, and capture tests |
-| Imports and module references | resolved with context | resolved with context | resolved with context | resolved with context | positive project context and missing-context diagnostics |
-| Declarations and recursive bodies | resolved | resolved | resolved | resolved | program construct inventory and recursion evidence |
-| Types, effects, universes, and elaboration | elaborated | elaborated | elaborated | elaborated | phase-tagged facts and shared semantic corpus |
-| Attributes, macros, notation, and plugins | resolved | resolved | resolved | resolved | language-specific extension facts and project extensions |
-| Proof and tactic syntax | not applicable | not applicable | elaborated | elaborated | proof/tactic facts retain source mappings |
+| Full grammar-level syntax hierarchy | unverified | unverified | unverified | unverified | grammar materialization exists; complete construct coverage has not been shown |
+| Identifier scope and binding resolution | partial | partial | partial | partial | lexical scope and rename cases; complete binding semantics remain open |
+| Imports and module references | partial | partial | partial | partial | selected toolchain modules recognized; phantom dependency/file names remain unresolved; exports and project symbol identities remain open |
+| Declarations and recursive bodies | partial | partial | partial | partial | surface facts and selected binding cases |
+| Types, effects, universes, and elaboration | surface only | surface only | surface only | surface only | annotations and syntax markers are retained; type checking and elaboration remain open |
+| Attributes, macros, notation, and plugins | surface only | surface only | surface only | surface only | source syntax is retained; expansion and plugin resolution remain open |
+| Proof and tactic syntax | not applicable | not applicable | surface only | surface only | syntax facts are retained; kernel-checked elaborated proof terms remain open |
 | Unknown/control syntax | diagnostic and retained | diagnostic and retained | diagnostic and retained | diagnostic and retained | recovery flags plus exact reconstruction |
 | Source generation after mutation | ordered token emission | ordered token emission | ordered token emission | ordered token emission | reconstruction and identifier-edit tests |
 
-The inventory prevents a fallback token stream from being described as
-grammar-complete, resolved, or elaborated syntax.
+The inventory is a coverage target, not evidence that the incomplete rows are
+finished. Surface syntax must not be described as resolved or elaborated facts.
 
 ## Translation contracts
 
-Both packages expose all 12 directed source/target pairs. At schema revision 2
-each pair emits a target-language artifact containing the versioned portable
-source encoding; none relabels or passes through source text as target code.
-Every result names the source and target, the observable input layer, required
-target runtime, registered encoding, assumptions, and a precise obligation.
+Both packages expose all 12 directed source/target descriptors. Their default
+output is a reversible source envelope for transport only and carries an
+explicit semantic translation obligation. Two narrowly recognized forms now
+emit executable target code in addition to provenance: a constant Rust
+zero-argument function to JavaScript and a JavaScript decimal console print to
+Rust. Those artifacts report `semantic-subset` and are executed in tests. No
+other form or directed pair is claimed to preserve behavior.
 
 | Target | Required validator/runtime |
 | --- | --- |
@@ -89,13 +92,11 @@ target runtime, registered encoding, assumptions, and a precise obligation.
 | Lean | Lean 4.33.1 kernel and project environment |
 | Rocq | Rocq 9.2 kernel and project environment |
 
-The observation is exact source bytes and the resolved source representation
-after decoding. The encoding is UTF-8 represented as lowercase hexadecimal in
-a native comment, next to a valid target declaration. It preserves constructs
-that have no direct target equivalent without equating their semantics. The
-declared assumption is that a consumer decodes the envelope before executing
-the source language; target parsing and native validation are tested
-separately from exact decoding and representation preservation.
+For the default `portable-encoding` result, the observation is exact source
+bytes after decoding. It does not preserve target behavior. The encoding is
+UTF-8 represented as lowercase hexadecimal in a target-language comment. Full
+semantic translation, including proof preservation, remains required by
+issue #195.
 
 ## Conformance and boundaries
 

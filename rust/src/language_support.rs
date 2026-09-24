@@ -14,7 +14,7 @@ pub enum RepresentationLevel {
     Parsed,
     /// References are connected to project-aware symbol identities.
     Resolved,
-    /// Surface facts carry expansion or elaboration-phase evidence.
+    /// Expanded or elaborated structures and their provenance are available.
     Elaborated,
     /// Source is retained but its meaning requires a project extension or plugin.
     Opaque,
@@ -72,9 +72,9 @@ const fn support(
         extensions,
         source_bytes: RepresentationLevel::Preserved,
         concrete_syntax: RepresentationLevel::ConcreteSyntax,
-        binding_resolution: RepresentationLevel::Resolved,
-        type_elaboration: RepresentationLevel::Elaborated,
-        dynamic_extensions: RepresentationLevel::Resolved,
+        binding_resolution: RepresentationLevel::Parsed,
+        type_elaboration: RepresentationLevel::Unavailable,
+        dynamic_extensions: RepresentationLevel::Parsed,
         proof_syntax,
         emitter: "ordered source-token emitter",
     }
@@ -104,7 +104,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
         "Lean 4.33.1",
         "Lean 4",
         &[".lean"],
-        RepresentationLevel::Elaborated,
+        RepresentationLevel::Parsed,
     ),
     support(
         "Rocq",
@@ -112,7 +112,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
         "Rocq 9.2",
         "Vernacular",
         &[".v"],
-        RepresentationLevel::Elaborated,
+        RepresentationLevel::Parsed,
     ),
 ];
 
@@ -132,6 +132,8 @@ pub fn language_support(language: &str) -> Option<&'static LanguageSupport> {
 pub enum TranslationSupport {
     /// A reversible target-native source envelope preserves the full program.
     PortableEncoding,
+    /// A recognized source form has an executable target implementation.
+    SemanticSubset,
 }
 
 /// One directed source-to-target translation contract.
@@ -188,11 +190,13 @@ fn contract(source: &LanguageSupport, target: &LanguageSupport) -> TranslationCo
         source: source.name,
         target: target.name,
         support: TranslationSupport::PortableEncoding,
-        observation: "exact source bytes and resolved source representation after decoding",
+        observation: "exact source bytes after decoding; target behavior is not preserved",
         required_runtime: runtime_for(target.name),
         encoding: "meta-language portable source envelope v1 (UTF-8 hexadecimal payload)",
-        assumptions: &["the target consumer decodes the envelope before source-language execution"],
-        obligation: None,
+        assumptions: &["the source-language runtime is required to execute decoded source"],
+        obligation: Some(
+            "semantic translation is not implemented for arbitrary source programs".to_string(),
+        ),
     }
 }
 

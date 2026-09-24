@@ -222,7 +222,7 @@ test('capability reports match the shared versioned corpus', () => {
   }
 });
 
-test('project-aware analysis diagnoses missing context and resolves declared dependencies', () => {
+test('project-aware analysis distinguishes missing context from recognized toolchain modules', () => {
   for (const fixture of corpus.semanticPrograms) {
     const withoutContext = analyzeProgram(fixture.source, fixture.language);
     assert.ok(
@@ -237,9 +237,34 @@ test('project-aware analysis diagnoses missing context and resolves declared dep
       `${fixture.language} supplied project context`,
     );
     assert.ok(
-      withContext.modules.some(({ kind }) => kind === 'resolved-project-dependency'),
-      `${fixture.language} resolved dependency`,
+      withContext.modules.some(({ kind }) => kind === 'recognized-toolchain-module'),
+      `${fixture.language} recognized toolchain module`,
     );
+  }
+});
+
+test('an unrelated declared dependency does not resolve a project import', () => {
+  for (const fixture of corpus.semanticPrograms) {
+    const project = { ...fixture.project, dependencies: ['unrelated-package'] };
+    const program = analyzeProgram(fixture.source, fixture.language, project);
+    assert.ok(
+      program.diagnostics.some(({ kind }) => kind === 'missing-project-context'),
+      `${fixture.language} import remains unresolved`,
+    );
+  }
+});
+
+test('a matching but nonexistent dependency or file cannot resolve an import', () => {
+  for (const fixture of corpus.phantomImportCases) {
+    const project = {
+      root: '/workspace', files: [fixture.file], dependencies: [fixture.dependency],
+    };
+    const program = analyzeProgram(fixture.source, fixture.language, project);
+    assert.ok(program.modules.some(({ kind, name }) =>
+      kind === 'module-import' && name === fixture.dependency), fixture.language);
+    assert.ok(program.diagnostics.some(({ kind }) =>
+      kind === 'missing-project-context'), fixture.language);
+    assert.equal(program.modules.some(({ kind }) => kind === 'recognized-toolchain-module'), false);
   }
 });
 
@@ -252,6 +277,8 @@ test('four-language semantic programs expose every required representation phase
     assert.ok(program.bindings.length > 0, `${fixture.language} bindings`);
     assert.ok(program.scopes.length > 0, `${fixture.language} scopes`);
     assert.ok(program.sourceMappings.length > 0, `${fixture.language} source mappings`);
+    assert.ok(program.types.every(({ phase }) => phase !== 'resolved' && phase !== 'elaborated'),
+      `${fixture.language} has only surface type facts`);
 
     const byKind = new Map(program.constructs.map((construct) => [construct.kind, construct]));
     for (const kind of fixture.represented) {
@@ -261,6 +288,10 @@ test('four-language semantic programs expose every required representation phase
     for (const kind of fixture.notApplicable) {
       assert.equal(byKind.get(kind)?.status, 'not-applicable', `${fixture.language} ${kind}`);
       assert.ok(byKind.get(kind).rationale, `${fixture.language} ${kind} rationale`);
+    }
+    for (const kind of fixture.unavailable) {
+      assert.equal(byKind.get(kind)?.status, 'unavailable', `${fixture.language} ${kind}`);
+      assert.deepEqual(byKind.get(kind).evidence, [], `${fixture.language} ${kind} has no fabricated trace`);
     }
   }
 });
@@ -366,7 +397,7 @@ test('all 12 translation hooks emit reversible target-native source envelopes', 
   for (const contract of contracts) {
     assert.equal(contract.support, TranslationSupport.PortableEncoding);
     assert.match(contract.encoding, /portable source envelope v1/u);
-    assert.equal(contract.obligation, null);
+    assert.match(contract.obligation, /semantic translation is not implemented/u);
 
     const fixture = corpus.semanticPrograms.find(({ language }) => language === contract.source);
     const translated = translateProgram(fixture.source, contract.source, contract.target);

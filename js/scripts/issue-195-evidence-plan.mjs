@@ -42,3 +42,19 @@ export function buildEvidencePlan(manifest, checkpoint = 'pre-merge') {
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([group, cells]) => ({ group, cells }));
 }
+
+/** Counts only callbacks emitted by executed tests for the exact cell and fixtures. */
+export function observedEvidenceForCell(cell, records) {
+  const executionRecords = records.filter(({ testId }) => testId === cell.testId);
+  const passed = new Set(executionRecords
+    .filter(({ outcome }) => outcome === 'passed')
+    .map(({ assertionId, fixtureId }) => `${assertionId}\u0000${fixtureId}`));
+  const assertionsPassed = cell.assertions.filter((assertionId) =>
+    cell.fixtureIds.every((fixtureId) => passed.has(`${assertionId}\u0000${fixtureId}`))
+  );
+  return {
+    executionRecords,
+    assertionsPassed,
+    complete: assertionsPassed.length === cell.assertions.length,
+  };
+}

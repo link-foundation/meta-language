@@ -380,6 +380,7 @@ export interface LanguageSupport {
 
 export const TranslationSupport: {
   readonly PortableEncoding: 'portable-encoding';
+  readonly SemanticSubset: 'semantic-subset';
 };
 export type TranslationSupportValue =
   typeof TranslationSupport[keyof typeof TranslationSupport];
@@ -472,7 +473,7 @@ export interface ProgramBinding {
 
 export interface ProgramConstruct {
   readonly kind: string;
-  readonly status: 'represented' | 'not-present' | 'not-applicable';
+  readonly status: 'represented' | 'not-present' | 'not-applicable' | 'unavailable';
   readonly evidence: readonly ({ term?: string } & ProgramSourceRange)[];
   readonly rationale?: string;
 }

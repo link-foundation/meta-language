@@ -61,11 +61,12 @@ fn pinned_external_corpora_and_projects_exercise_every_four_language_frontend() 
             !program.source_mappings().is_empty(),
             "{language} project mappings"
         );
-        assert!(
-            !program
+        assert_eq!(
+            program
                 .diagnostics()
                 .iter()
                 .any(|diagnostic| diagnostic.kind() == "missing-project-context"),
+            matches!(language, "JavaScript" | "Rust"),
             "{language} project context"
         );
     }

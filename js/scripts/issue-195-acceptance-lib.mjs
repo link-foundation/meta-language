@@ -316,9 +316,48 @@ export function evaluateIssue195Acceptance(
         ) {
           reasons.push('fault-injection failure log is missing');
         }
-        const assertions = new Set(observed.assertionsPassed ?? []);
+        const records = observed.executionRecords;
+        const executed = new Set();
+        const seenRecords = new Set();
+        if (!Array.isArray(records) || records.length === 0) {
+          reasons.push('execution record is missing');
+        } else {
+          for (const record of records) {
+            if (!record || typeof record !== 'object') {
+              reasons.push('execution record is not an object');
+              continue;
+            }
+            const key = `${record.assertionId}\u0000${record.fixtureId}`;
+            if (seenRecords.has(key)) reasons.push(`duplicate execution record: ${key}`);
+            seenRecords.add(key);
+            if (record.testId !== cell.testId) reasons.push(`execution record testId mismatch: ${record.testId}`);
+            if (record.runtime !== cell.runtime) reasons.push(`execution record runtime mismatch: ${record.runtime}`);
+            if (record.commit !== commit) reasons.push(`execution record commit mismatch: ${record.commit}`);
+            if (record.outcome !== 'passed') reasons.push(`execution record outcome is ${record.outcome ?? '<missing>'}`);
+            if (!record.testName) reasons.push('execution record test callback name is missing');
+            if (!cell.assertions.includes(record.assertionId)) reasons.push(`unexpected execution assertion: ${record.assertionId}`);
+            if (!cell.fixtureIds.includes(record.fixtureId)) reasons.push(`unexpected execution fixture: ${record.fixtureId}`);
+            if (record.fixtureDigest !== manifest.fixtureCatalog[record.fixtureId]?.sha256) {
+              reasons.push(`execution record fixture digest mismatch for ${record.fixtureId}`);
+            }
+            if (record.outcome === 'passed') executed.add(key);
+          }
+        }
         for (const assertion of cell.assertions) {
-          if (!assertions.has(assertion)) reasons.push(`observable assertion did not pass: ${assertion}`);
+          for (const fixtureId of cell.fixtureIds) {
+            if (!executed.has(`${assertion}\u0000${fixtureId}`)) {
+              reasons.push(`observable assertion did not execute: ${assertion} on ${fixtureId}`);
+            }
+          }
+        }
+        const recordedAssertions = cell.assertions.filter((assertion) =>
+          cell.fixtureIds.every((fixtureId) => executed.has(`${assertion}\u0000${fixtureId}`))
+        );
+        if (
+          JSON.stringify([...(observed.assertionsPassed ?? [])].sort()) !==
+          JSON.stringify([...recordedAssertions].sort())
+        ) {
+          reasons.push('assertionsPassed does not match execution records');
         }
         for (const fixtureId of cell.fixtureIds) {
           const expectedDigest = manifest.fixtureCatalog[fixtureId]?.sha256;
@@ -346,6 +385,7 @@ export function evaluateIssue195Acceptance(
               evidenceArtifacts: observed.evidenceArtifacts ?? null,
               failureLogs: observed.failureLogs ?? null,
               assertionsPassed: observed.assertionsPassed ?? null,
+              executionRecords: observed.executionRecords ?? null,
               fixtureDigests: observed.fixtureDigests ?? null,
             }
           : null,
@@ -490,6 +530,11 @@ function syntheticFaultCase(assertions) {
         evidenceArtifacts: ['fault-result.json'],
         failureLogs: [],
         assertionsPassed: assertions,
+        executionRecords: assertions.map((assertionId) => ({
+          testId: 'i195-fault-probe', assertionId, fixtureId: 'fixture',
+          fixtureDigest: 'fixture-digest', runtime: 'aggregate',
+          commit: 'fault-candidate', outcome: 'passed', testName: 'fault probe',
+        })),
         fixtureDigests: { fixture: 'fixture-digest' },
       },
     ],
@@ -503,7 +548,11 @@ function faultIsRejected(fault) {
     const candidate = structuredClone(manifest);
     candidate.atomicRequirements[0].scope.aliases = [];
     const failureLogs = compareScopeBaseline(manifest, candidate);
-    return { detected: failureLogs.length > 0, failureLogs };
+    const assertionsPassed = [
+      'faultActivated',
+      ...(failureLogs.length > 0 ? ['expectedRequirementFailed', 'aggregateFailed', 'failureReasonRecorded'] : []),
+    ];
+    return { detected: assertionsPassed.length === 4, failureLogs, assertionsPassed };
   }
 
   const profile =
@@ -516,34 +565,44 @@ function faultIsRejected(fault) {
           ? ASSERTION_PROFILES.translationPositive
           : ASSERTION_PROFILES.cstPositive;
   const { manifest, document } = syntheticFaultCase(profile);
+  const baseline = evaluateIssue195Acceptance(manifest, [document], {
+    checkpoint: 'pre-merge', commit: 'fault-candidate',
+  });
+  if (!baseline.passed) throw new Error(`fault probe baseline failed before mutation: ${fault}`);
+  function omitAssertions(predicate) {
+    document.results[0].assertionsPassed = profile.filter(predicate);
+    document.results[0].executionRecords = document.results[0].executionRecords.filter(
+      ({ assertionId }) => predicate(assertionId),
+    );
+  }
   if (fault === 'plain-text-parser-fallback') {
-    document.results[0].assertionsPassed = profile.filter(
+    omitAssertions(
       (assertion) => assertion !== 'realGrammarNodes',
     );
   } else if (fault === 'lexical-parser-fallback') {
-    document.results[0].assertionsPassed = profile.filter(
+    omitAssertions(
       (assertion) => assertion !== 'hierarchy',
     );
   } else if (fault === 'dropped-fields-trivia-or-spans') {
-    document.results[0].assertionsPassed = profile.filter(
+    omitAssertions(
       (assertion) => !['namedFields', 'commentsAndTrivia', 'exactUtf8Spans'].includes(assertion),
     );
   } else if (fault === 'stubbed-binding-resolution') {
-    document.results[0].assertionsPassed = profile.filter(
+    omitAssertions(
       (assertion) => assertion !== 'symbolIdentity',
     );
   } else if (fault === 'rename-capture-bug') {
-    document.results[0].assertionsPassed = profile.filter(
+    omitAssertions(
       (assertion) => assertion !== 'captureAvoidance',
     );
   } else if (fault === 'stale-structure-after-edit') {
-    document.results[0].assertionsPassed = profile.filter(
+    omitAssertions(
       (assertion) => assertion !== 'treeIntegrity',
     );
   } else if (fault === 'unsupported-translation-descriptor') {
     document.results[0].outcome = 'unsupported';
   } else if (fault === 'relabeled-source-translation') {
-    document.results[0].assertionsPassed = profile.filter(
+    omitAssertions(
       (assertion) => assertion !== 'noSourceRelabelling',
     );
   } else if (fault === 'skipped-test-or-job') {
@@ -564,7 +623,13 @@ function faultIsRejected(fault) {
       cells.flatMap(({ testId, reasons }) => reasons.map((reason) => `${testId}: ${reason}`)),
     ),
   ];
-  return { detected: !report.passed, failureLogs };
+  const assertionsPassed = [
+    'faultActivated',
+    ...(!report.requirements[0]?.passed ? ['expectedRequirementFailed'] : []),
+    ...(!report.passed ? ['aggregateFailed'] : []),
+    ...(failureLogs.length > 0 ? ['failureReasonRecorded'] : []),
+  ];
+  return { detected: assertionsPassed.length === 4, failureLogs, assertionsPassed };
 }
 
 export function runIssue195GateFaultInjections(manifest, commit) {
@@ -573,7 +638,7 @@ export function runIssue195GateFaultInjections(manifest, commit) {
     .map((entry) => {
       const fault = entry.scope.construct;
       const cell = entry.verifications[0];
-      const { detected, failureLogs } = faultIsRejected(fault);
+      const { detected, failureLogs, assertionsPassed } = faultIsRejected(fault);
       return {
         testId: cell.testId,
         outcome: detected ? 'passed' : 'failed',
@@ -588,7 +653,14 @@ export function runIssue195GateFaultInjections(manifest, commit) {
           'js/scripts/issue-195-acceptance-lib.mjs',
         ],
         failureLogs,
-        assertionsPassed: detected ? cell.assertions : [],
+        assertionsPassed,
+        executionRecords: assertionsPassed.flatMap((assertionId) =>
+          cell.fixtureIds.map((fixtureId) => ({
+            testId: cell.testId, assertionId, fixtureId,
+            fixtureDigest: manifest.fixtureCatalog[fixtureId].sha256,
+            runtime: cell.runtime, commit, outcome: 'passed',
+            testName: `fault mutation: ${fault}`,
+          }))),
         fixtureDigests: Object.fromEntries(
           cell.fixtureIds.map((fixtureId) => [fixtureId, manifest.fixtureCatalog[fixtureId].sha256]),
         ),

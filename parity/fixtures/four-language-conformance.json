@@ -7,7 +7,7 @@
       "version": "ECMAScript 2026",
       "edition": "ECMA-262, 17th edition",
       "extensions": [".js", ".mjs", ".cjs"],
-      "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "not-applicable" },
+      "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "not-applicable" },
       "root": "program",
       "source": "const x = 1; const s = \"x\"; // x\n",
       "identifiers": ["x", "s"],
@@ -23,7 +23,7 @@
       "version": "Rust 1.98.1",
       "edition": "2024",
       "extensions": [".rs"],
-      "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "not-applicable" },
+      "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "not-applicable" },
       "root": "source_file",
       "source": "fn id(π: u64) -> u64 { π } // π\n",
       "identifiers": ["id", "π", "π"],
@@ -39,7 +39,7 @@
       "version": "Lean 4.33.1",
       "edition": "Lean 4",
       "extensions": [".lean"],
-      "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "elaborated" },
+      "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "parsed" },
       "root": "file",
       "source": "def id' (x : Nat) : Nat := x\n",
       "identifiers": ["id'", "x", "Nat", "Nat", "x"],
@@ -55,7 +55,7 @@
       "version": "Rocq 9.2",
       "edition": "Vernacular",
       "extensions": [".v"],
-      "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "elaborated" },
+      "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "parsed" },
       "root": "source_file",
       "source": "Definition id (x : nat) : nat := x.\n",
       "identifiers": ["id", "x", "x"],
@@ -113,30 +113,40 @@
       "language": "JavaScript",
       "source": "import { readFile as read } from \"node:fs/promises\";\n\"use strict\";\nfunction count(n) { return n < 1 ? 0 : count(n - 1); }\nexport async function load(path) { const raw = await read(path); return String.raw`value=${raw}`; }\n",
       "project": { "root": "/workspace", "files": ["main.mjs"], "dependencies": ["node:fs/promises"] },
-      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
-      "notApplicable": ["proof-terms-and-tactics"]
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "project-context-and-dependencies"],
+      "notApplicable": ["proof-terms-and-tactics"],
+      "unavailable": ["surface-expansion-elaboration-traces"]
     },
     {
       "language": "Rust",
       "source": "#![allow(dead_code)]\nuse std::future::ready;\nmacro_rules! identity { ($value:expr) => { $value }; }\nfn factorial(n: u64) -> u64 { if n < 2 { 1 } else { n * factorial(n - 1) } }\nasync fn effect(value: u64) -> u64 { ready(()).await; identity!(value) }\n",
       "project": { "root": "/workspace", "files": ["src/lib.rs"], "dependencies": ["std"] },
-      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
-      "notApplicable": ["proof-terms-and-tactics"]
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "project-context-and-dependencies"],
+      "notApplicable": ["proof-terms-and-tactics"],
+      "unavailable": ["surface-expansion-elaboration-traces"]
     },
     {
       "language": "Lean",
       "source": "import Std\nuniverse u\nnamespace Demo\npostfix:10000 \"‼\" => id\n@[simp] def identity {α : Type u} (value : α) : α := value\ndef factorial : Nat → Nat | 0 => 1 | Nat.succ n => Nat.succ n * factorial n\ndef effect : IO Unit := pure ()\ntheorem identity_eq {α : Type u} (value : α) : identity value = value := by\n  rfl\nend Demo\n",
       "project": { "root": "/workspace", "files": ["Demo.lean"], "dependencies": ["Std"] },
-      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
-      "notApplicable": []
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "project-context-and-dependencies"],
+      "notApplicable": [],
+      "unavailable": ["surface-expansion-elaboration-traces"]
     },
     {
       "language": "Rocq",
       "source": "From Stdlib Require Import Arith.\nModule Demo.\nUniverse u.\n#[local] Notation \"'identity!' value\" := value (at level 10).\nFixpoint factorial (n : nat) : nat := match n with | 0 => 1 | S rest => n * factorial rest end.\nTheorem factorial_zero : factorial 0 = 1.\nProof. reflexivity. Qed.\nEnd Demo.\n",
       "project": { "root": "/workspace", "files": ["Demo.v"], "dependencies": ["Stdlib.Arith"] },
-      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "surface-expansion-elaboration-traces", "project-context-and-dependencies"],
-      "notApplicable": []
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "project-context-and-dependencies"],
+      "notApplicable": [],
+      "unavailable": ["surface-expansion-elaboration-traces"]
     }
+  ],
+  "phantomImportCases": [
+    { "language": "JavaScript", "source": "import { value } from \"ghost\";\n", "dependency": "ghost", "file": "ghost.js" },
+    { "language": "Rust", "source": "use ghost::Value;\n", "dependency": "ghost", "file": "ghost.rs" },
+    { "language": "Lean", "source": "import Ghost\n", "dependency": "Ghost", "file": "Ghost.lean" },
+    { "language": "Rocq", "source": "Require Import Ghost.\n", "dependency": "Ghost", "file": "Ghost.v" }
   ],
   "renameCases": [
     {
@@ -242,6 +252,21 @@
       "source": "<p>Hello</p>\n",
       "root": "document",
       "requiredNode": "element"
+    }
+  ],
+  "translationBehaviorCases": [
+    {
+      "sourceLanguage": "Rust",
+      "targetLanguage": "JavaScript",
+      "source": "pub fn answer() -> u32 { 42 }",
+      "export": "answer",
+      "expectedResult": 42
+    },
+    {
+      "sourceLanguage": "JavaScript",
+      "targetLanguage": "Rust",
+      "source": "console.log(42);",
+      "expectedStdout": "42\n"
     }
   ]
 }
