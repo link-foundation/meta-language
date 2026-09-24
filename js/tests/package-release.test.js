@@ -38,6 +38,20 @@ test('npm package metadata uses the public unscoped package name', async () => {
   }
 });
 
+test('npm delivery is script-free and carries the portable Rocq grammar', async () => {
+  const packageJson = await readJson(new URL('../package.json', import.meta.url));
+  const rocqGrammar = await readFile(
+    new URL('../src/vendor/tree-sitter-rocq.wasm', import.meta.url),
+  );
+
+  assert.equal(packageJson.scripts.install, undefined);
+  assert.equal(packageJson.scripts.prepack, undefined);
+  assert.equal(packageJson.dependencies['tree-sitter-rocq'], undefined);
+  assert.equal(packageJson.dependencies['web-tree-sitter'], '0.25.10');
+  assert.equal(packageJson.bundleDependencies, undefined);
+  assert.ok(rocqGrammar.byteLength > 0);
+});
+
 test('JavaScript workflow publishes to npm with trusted publishing provenance', async () => {
   const workflow = await readFile(
     new URL('../../.github/workflows/js.yml', import.meta.url),

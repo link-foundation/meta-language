@@ -2,6 +2,19 @@ use std::borrow::Cow;
 
 use tree_sitter::{InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Tree};
 
+#[allow(unsafe_code)]
+mod rocq_grammar {
+    use tree_sitter_language::LanguageFn;
+
+    unsafe extern "C" {
+        fn tree_sitter_rocq() -> *const ();
+    }
+
+    // SAFETY: build.rs compiles the generated parser from the pinned revision
+    // recorded in vendor/tree-sitter-rocq/NOTICE.md with this exact symbol.
+    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_rocq) };
+}
+
 use crate::line_index::LineIndex;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point,
@@ -190,7 +203,7 @@ fn grammar_for_language(language: &str) -> Option<Language> {
     } else if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
         Some(tree_sitter_lean4::language())
     } else if language.eq_ignore_ascii_case("rocq") || language.eq_ignore_ascii_case("coq") {
-        Some(tree_sitter_rocq::LANGUAGE.into())
+        Some(rocq_grammar::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("go") || language.eq_ignore_ascii_case("golang") {
         Some(tree_sitter_go::LANGUAGE.into())
     } else if language == "R" || language == "r" {

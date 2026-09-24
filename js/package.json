@@ -48,10 +48,6 @@
     "links-notation": "0.13.0",
     "peggy": "5.1.0",
     "tree-sitter": "0.25.1",
-    "tree-sitter-rocq": "https://github.com/aruzdh/tree-sitter-rocq/archive/300fe33fc299c30f736fd56d8ef8a28b08acd4e6.tar.gz"
-  },
-  "allowScripts": {
-    "tree-sitter@0.25.1": true,
-    "tree-sitter-rocq@0.2.0": true
+    "web-tree-sitter": "0.25.10"
   }
 }

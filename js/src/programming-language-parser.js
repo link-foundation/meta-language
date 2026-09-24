@@ -1,10 +1,14 @@
 import TreeSitterLanguagePack from '@kreuzberg/tree-sitter-language-pack';
-import TreeSitter from 'tree-sitter';
-import RocqGrammar from 'tree-sitter-rocq/bindings/node/index.js';
+import { readFile } from 'node:fs/promises';
+import { Language as WebTreeSitterLanguage, Parser as WebTreeSitterParser } from 'web-tree-sitter';
 
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 
 const encoder = new TextEncoder();
+await WebTreeSitterParser.init();
+const ROCQ_GRAMMAR = await WebTreeSitterLanguage.load(
+  await readFile(new URL('./vendor/tree-sitter-rocq.wasm', import.meta.url)),
+);
 
 const LANGUAGE_ALIASES = new Map([
   ['javascript', 'JavaScript'],
@@ -281,10 +285,8 @@ function parseGrammarCst(text, canonical) {
   let adapter;
 
   if (canonical === 'Rocq') {
-    const parser = new TreeSitter();
-    // Pass the complete generated binding, not only its language pointer. The
-    // Node runtime also needs nodeTypeInfo when it unmarshals named children.
-    parser.setLanguage(RocqGrammar);
+    const parser = new WebTreeSitterParser();
+    parser.setLanguage(ROCQ_GRAMMAR);
     root = parser.parse(text).rootNode;
     adapter = NODE_TREE_SITTER_ADAPTER;
   } else {
