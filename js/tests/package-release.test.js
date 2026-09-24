@@ -52,6 +52,22 @@ test('npm delivery is script-free and carries the portable Rocq grammar', async 
   assert.ok(rocqGrammar.byteLength > 0);
 });
 
+test('npm lockfile records every optional native language-pack package', async () => {
+  const packageLock = await readJson(new URL('../package-lock.json', import.meta.url));
+  const languagePack =
+    packageLock.packages['node_modules/@kreuzberg/tree-sitter-language-pack'];
+
+  for (const packageName of Object.keys(languagePack.optionalDependencies)) {
+    const topLevelPath = `node_modules/${packageName}`;
+    const nestedPath =
+      `node_modules/@kreuzberg/tree-sitter-language-pack/node_modules/${packageName}`;
+    assert.ok(
+      packageLock.packages[topLevelPath] || packageLock.packages[nestedPath],
+      `package-lock.json is missing ${packageName}`,
+    );
+  }
+});
+
 test('Rust delivery closes the decompressed Rocq parser before compiling it', async () => {
   const buildScript = await readFile(new URL('../../rust/build.rs', import.meta.url), 'utf8');
 
