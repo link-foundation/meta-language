@@ -337,7 +337,7 @@ function resolveBindings(tokens, syntax, source, language) {
     declarations.push({ tokenIndex: index, kind, scope });
   };
   if (language === 'JavaScript') {
-    declareJavaScript(tokens, braceScopes, declare);
+    declareJavaScript(tokens, syntax, braceScopes, declare);
   } else if (language === 'Rust') {
     declareRust(tokens, braceScopes, declare);
   } else {
@@ -385,11 +385,29 @@ function resolveBindings(tokens, syntax, source, language) {
   };
 }
 
-function declareJavaScript(tokens, braceScopes, declare) {
+function declareJavaScript(tokens, syntax, braceScopes, declare) {
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (['const', 'let', 'var', 'class'].includes(token.text)) {
-      declare(nextIdentifier(tokens, index + 1), token.text);
+      const pattern = token.text === 'class' ? undefined : syntax.find(({ term, start }) =>
+        term === 'object_pattern' && start === tokens[index + 1]?.start);
+      if (pattern) {
+        for (const fact of syntax) {
+          if (fact.start < pattern.start || fact.end > pattern.end) continue;
+          if (fact.term === 'shorthand_property_identifier_pattern') {
+            declare(tokens.findIndex(({ start, end }) => start === fact.start && end === fact.end), token.text);
+          } else if (fact.term === 'pair_pattern') {
+            const colon = tokens.findIndex(({ start, text }) =>
+              text === ':' && start >= fact.start && start < fact.end);
+            if (colon >= 0) {
+              const local = nextIdentifier(tokens, colon + 1);
+              if (tokens[local]?.end <= fact.end) declare(local, token.text);
+            }
+          }
+        }
+      } else {
+        declare(nextIdentifier(tokens, index + 1), token.text);
+      }
     }
     if (token.text === 'function') {
       const name = nextIdentifier(tokens, index + 1);

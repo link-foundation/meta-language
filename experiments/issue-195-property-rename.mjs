@@ -13,6 +13,7 @@ console.log(JSON.stringify({
 for (const shorthandSource of [
   'const x = 1; const object = { x }; object.x; x;\n',
   'const object = { x: 1 }; const { x } = object; x;\n',
+  'const object = { x: 1 }; const { x: local } = object; local;\n',
 ]) {
   const shorthandProgram = analyzeProgram(shorthandSource, 'JavaScript');
   console.log(JSON.stringify({

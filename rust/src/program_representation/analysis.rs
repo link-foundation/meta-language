@@ -158,7 +158,13 @@ pub(super) fn resolve_bindings(
     let mut declared = BTreeSet::new();
     match language {
         "JavaScript" => {
-            declare_javascript(&tokens, &brace_scopes, &mut declarations, &mut declared);
+            declare_javascript(
+                &tokens,
+                syntax,
+                &brace_scopes,
+                &mut declarations,
+                &mut declared,
+            );
         }
         "Rust" => declare_rust(&tokens, &brace_scopes, &mut declarations, &mut declared),
         _ => declare_proof_language(&tokens, language, &mut declarations, &mut declared),
@@ -226,13 +232,54 @@ pub(super) fn resolve_bindings(
 
 fn declare_javascript(
     tokens: &[SemanticToken],
+    syntax: &[ProgramSourceMapping],
     brace_scopes: &BTreeMap<usize, usize>,
     declarations: &mut Vec<Declaration>,
     declared: &mut BTreeSet<usize>,
 ) {
     for (index, token) in tokens.iter().enumerate() {
         if matches!(token.text.as_str(), "const" | "let" | "var" | "class") {
-            declare_next(tokens, index + 1, &token.text, None, declarations, declared);
+            let pattern = (token.text != "class")
+                .then(|| {
+                    syntax.iter().find(|fact| {
+                        fact.term == "object_pattern"
+                            && tokens
+                                .get(index + 1)
+                                .is_some_and(|next| fact.range.start == next.range.start)
+                    })
+                })
+                .flatten();
+            if let Some(pattern) = pattern {
+                for fact in syntax {
+                    if fact.range.start < pattern.range.start || fact.range.end > pattern.range.end
+                    {
+                        continue;
+                    }
+                    if fact.term == "shorthand_property_identifier_pattern" {
+                        if let Some(local) = tokens
+                            .iter()
+                            .position(|candidate| candidate.range == fact.range)
+                        {
+                            declare(tokens, local, &token.text, None, declarations, declared);
+                        }
+                    } else if fact.term == "pair_pattern" {
+                        let colon = tokens.iter().position(|candidate| {
+                            candidate.text == ":"
+                                && candidate.range.start >= fact.range.start
+                                && candidate.range.start < fact.range.end
+                        });
+                        if let Some(local) =
+                            colon.and_then(|colon| next_identifier(tokens, colon + 1))
+                        {
+                            if tokens[local].range.end <= fact.range.end {
+                                declare(tokens, local, &token.text, None, declarations, declared);
+                            }
+                        }
+                    }
+                }
+            } else {
+                declare_next(tokens, index + 1, &token.text, None, declarations, declared);
+            }
         }
         if token.text == "function" {
             if let Some(name) = next_identifier(tokens, index + 1) {

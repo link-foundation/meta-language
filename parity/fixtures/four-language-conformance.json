@@ -190,6 +190,16 @@
     },
     {
       "language": "JavaScript",
+      "source": "const object = { x: 1 }; const { x: local } = object; globalThis.result = [local, object.x];\n",
+      "binding": "local",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const object = { x: 1 }; const { x: value } = object; globalThis.result = [value, object.x];\n",
+      "expectedObservation": [1, 1],
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
       "source": "function f() { const x = 1; const object = { x: 2 }; return [Object.keys(object), object.x, x]; } globalThis.result = f();\n",
       "binding": "x",
       "declarationOccurrence": 0,
