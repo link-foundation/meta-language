@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "externalConformance": [
+    {
+      "language": "JavaScript",
+      "provenance": {
+        "project": "tree-sitter/tree-sitter-javascript",
+        "revision": "v0.25.0",
+        "path": "test/corpus/statements.txt",
+        "license": "MIT",
+        "url": "https://github.com/tree-sitter/tree-sitter-javascript/blob/v0.25.0/test/corpus/statements.txt"
+      },
+      "source": "export class Counter { #value = 0; async *values(limit = 2) { while (this.#value < limit) yield await Promise.resolve(this.#value++); } }\n",
+      "root": "program",
+      "requiredTerms": ["export_statement", "class_declaration", "method_definition", "while_statement", "yield_expression", "await_expression"]
+    },
+    {
+      "language": "Rust",
+      "provenance": {
+        "project": "tree-sitter/tree-sitter-rust",
+        "revision": "v0.24.2",
+        "path": "test/corpus/declarations.txt",
+        "license": "MIT",
+        "url": "https://github.com/tree-sitter/tree-sitter-rust/blob/v0.24.2/test/corpus/declarations.txt"
+      },
+      "source": "#![allow(dead_code)]\nmacro_rules! twice { ($value:expr) => { $value + $value }; }\npub async fn compute<T: Into<u64>>(value: T) -> u64 { std::future::ready(twice!(value.into())).await }\n",
+      "root": "source_file",
+      "requiredTerms": ["inner_attribute_item", "macro_definition", "function_item", "type_parameters", "await_expression"]
+    },
+    {
+      "language": "Lean",
+      "provenance": {
+        "project": "Julian/tree-sitter-lean",
+        "revision": "v0.3.0",
+        "path": "test/corpus/declarations.txt",
+        "license": "MIT",
+        "url": "https://github.com/Julian/tree-sitter-lean/blob/v0.3.0/test/corpus/declarations.txt"
+      },
+      "source": "import Std\nuniverse u\nnamespace Corpus\n@[simp] theorem identity {α : Type u} (value : α) : value = value := by\n  rfl\nend Corpus\n",
+      "root": "file",
+      "requiredTerms": ["import", "universe", "namespace", "declaration", "by"]
+    },
+    {
+      "language": "Rocq",
+      "provenance": {
+        "project": "aruzdh/tree-sitter-rocq",
+        "revision": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+        "path": "test/corpus/software_foundations_imp.txt",
+        "license": "MIT",
+        "url": "https://github.com/aruzdh/tree-sitter-rocq/blob/300fe33fc299c30f736fd56d8ef8a28b08acd4e6/test/corpus/software_foundations_imp.txt"
+      },
+      "source": "From Stdlib Require Import Arith.\nModule Corpus.\nFixpoint plus_zero (n : nat) : nat := match n with | 0 => 0 | S rest => S (plus_zero rest) end.\nTheorem plus_zero_sound : plus_zero 0 = 0.\nProof. reflexivity. Qed.\nEnd Corpus.\n",
+      "root": "source_file",
+      "requiredTerms": ["require_command", "module_command", "fixpoint_command", "theorem_command", "proof_command"]
+    }
+  ],
+  "representativeProjects": [
+    {
+      "language": "JavaScript",
+      "project": "link-foundation/relative-meta-logic",
+      "revision": "0b1df91404fe34ccc6d82c74f48b242c4750e3ed",
+      "path": "js/src/rml-meta-language.mjs",
+      "source": "import { LinkNetwork } from 'meta-language';\nexport function parseRml(source) { return LinkNetwork.parse(String(source), 'RML'); }\n",
+      "files": ["js/src/rml-meta-language.mjs"],
+      "dependencies": ["meta-language"]
+    },
+    {
+      "language": "Rust",
+      "project": "link-foundation/relative-meta-logic",
+      "revision": "0b1df91404fe34ccc6d82c74f48b242c4750e3ed",
+      "path": "rust/src/meta_language_support.rs",
+      "source": "use meta_language::LinkNetwork;\npub fn parse_rml(source: &str) -> LinkNetwork { LinkNetwork::parse(source, \"RML\", Default::default()) }\n",
+      "files": ["rust/src/meta_language_support.rs"],
+      "dependencies": ["meta-language"]
+    },
+    {
+      "language": "Lean",
+      "project": "leanprover/lean4",
+      "revision": "v4.33.1",
+      "path": "src/lean/Init/Data/Nat/Basic.lean",
+      "source": "namespace Nat\ntheorem zero_add (n : Nat) : 0 + n = n := by omega\nend Nat\n",
+      "files": ["Corpus.lean"],
+      "dependencies": ["Std"]
+    },
+    {
+      "language": "Rocq",
+      "project": "Software Foundations",
+      "revision": "lf-current-at-tree-sitter-rocq-300fe33",
+      "path": "lf/Imp.v",
+      "source": "From Stdlib Require Import Arith.\nDefinition four : nat := 2 + 2.\nExample plus_example : four = 4.\nProof. reflexivity. Qed.\n",
+      "files": ["Imp.v"],
+      "dependencies": ["Stdlib.Arith"]
+    }
+  ],
+  "embedded": [
+    {
+      "host": "HTML",
+      "target": "JavaScript",
+      "parseLanguage": "HTML",
+      "source": "<script>const answer = 42;</script>",
+      "regionSource": "const answer = 42;",
+      "root": "program"
+    },
+    {
+      "host": "HTML",
+      "target": "CSS",
+      "parseLanguage": "HTML",
+      "source": "<style>.answer { color: green; }</style>",
+      "regionSource": ".answer { color: green; }",
+      "root": "stylesheet"
+    },
+    {
+      "host": "Markdown",
+      "target": "language-selected fenced code",
+      "regionLanguage": "Rust",
+      "parseLanguage": "Markdown",
+      "source": "# Demo\n```Rust\nfn answer() -> u32 { 42 }\n```\n",
+      "regionSource": "fn answer() -> u32 { 42 }\n",
+      "root": "source_file"
+    },
+    {
+      "host": "Markdown",
+      "target": "HTML",
+      "parseLanguage": "Markdown",
+      "source": "# Demo\n<section><strong>answer</strong></section>\n",
+      "regionSource": "<section><strong>answer</strong></section>",
+      "root": "document"
+    },
+    {
+      "host": "CSS style attribute",
+      "target": "CSS",
+      "parseLanguage": "HTML",
+      "source": "<p style=\"color: blue\">answer</p>",
+      "regionSource": "color: blue",
+      "root": "stylesheet"
+    }
+  ],
+  "generative": {
+    "algorithm": "lcg32",
+    "seed": 195,
+    "casesPerLanguage": 64,
+    "unicodeIdentifiers": ["π", "δ", "value", "result"]
+  },
+  "nativeValidation": {
+    "JavaScript": { "command": "node --check", "extension": ".mjs" },
+    "Rust": { "command": "rustc --crate-type lib --edition 2024", "extension": ".rs" },
+    "Lean": { "command": "lean", "extension": ".lean" },
+    "Rocq": { "command": "rocq compile", "extension": ".v" }
+  },
+  "downstreamRml": {
+    "repository": "https://github.com/link-foundation/relative-meta-logic.git",
+    "revision": "0b1df91404fe34ccc6d82c74f48b242c4750e3ed",
+    "javascriptTest": "js/tests/meta-language-support.test.mjs",
+    "rustTest": "rust/tests/meta_language_support_tests.rs"
+  }
+}
