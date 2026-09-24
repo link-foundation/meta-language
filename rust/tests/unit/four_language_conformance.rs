@@ -94,6 +94,17 @@ fn translated_rust_function_exports_javascript_behavior() {
 }
 
 #[test]
+fn rust_identifier_reserved_by_strict_javascript_stays_transport_only() {
+    let translated = translate_program("pub fn public() -> u32 { 42 }", "Rust", "JavaScript")
+        .expect("translation descriptor");
+    assert_eq!(
+        translated.contract().support,
+        TranslationSupport::PortableEncoding
+    );
+    assert!(!translated.code().contains("export function public"));
+}
+
+#[test]
 fn four_language_corpus_produces_lossless_structured_syntax() {
     for fixture in corpus()["languages"].as_array().expect("language fixtures") {
         let language = fixture["name"].as_str().expect("language name");

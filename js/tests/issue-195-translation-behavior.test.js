@@ -76,3 +76,9 @@ test('unimplemented source forms remain marked as transport only', () => {
   assert.match(translation.contract.obligation, /semantic translation is not implemented/u);
   assert.doesNotMatch(translation.code, /pub fn main\(\)/u);
 });
+
+test('Rust identifiers reserved by strict JavaScript stay transport only', () => {
+  const translation = translateProgram('pub fn public() -> u32 { 42 }', 'Rust', 'JavaScript');
+  assert.equal(translation.contract.support, 'portable-encoding');
+  assert.doesNotMatch(translation.code, /export function public/u);
+});

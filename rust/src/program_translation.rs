@@ -272,6 +272,14 @@ fn rust_constant_function(source: &str) -> Option<(&str, &str)> {
                 | "await"
                 | "let"
                 | "static"
+                | "implements"
+                | "interface"
+                | "package"
+                | "private"
+                | "protected"
+                | "public"
+                | "arguments"
+                | "eval"
         )
         || value.is_empty()
         || (value.len() > 1 && value.starts_with('0'))

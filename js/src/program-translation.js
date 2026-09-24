@@ -8,7 +8,8 @@ const JS_RESERVED = new Set([
   'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for',
   'function', 'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super',
   'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with',
-  'yield', 'await', 'let', 'static',
+  'yield', 'await', 'let', 'static', 'implements', 'interface', 'package',
+  'private', 'protected', 'public', 'arguments', 'eval',
 ]);
 
 /**
