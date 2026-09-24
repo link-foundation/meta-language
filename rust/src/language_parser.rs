@@ -1,6 +1,6 @@
 use crate::{
-    data_format_parser, docx_parser, formal_language_parser, lino_parser, natural_language,
-    pdf_parser, structured_text_parser, tree_sitter_adapter, LinkNetwork, ParseConfiguration,
+    data_format_parser, docx_parser, lino_parser, natural_language, pdf_parser,
+    structured_text_parser, tree_sitter_adapter, LinkNetwork, ParseConfiguration,
 };
 
 /// Parser boundary that produces lossless links networks for source text.
@@ -81,13 +81,6 @@ impl LanguageParser for BuiltInLanguageParser {
         // handled by its complete grammar while CSV retains its lossless
         // record/field parser.
         if let Some(network) = data_format_parser::parse(text, language, configuration) {
-            return network;
-        }
-
-        // The portable recovery parser remains available for formal-language
-        // aliases that do not yet have a registered grammar. Registered
-        // grammar aliases above must never silently take this path.
-        if let Some(network) = formal_language_parser::parse(text, language, configuration) {
             return network;
         }
 

@@ -70,7 +70,6 @@
         "status": "implemented",
         "evidence": [
           "rust/src/language_parser.rs",
-          "rust/src/formal_language_parser.rs",
           "rust/src/tree_sitter_adapter.rs",
           "rust/tests/unit/four_language_conformance.rs",
           "parity/fixtures/four-language-conformance.json",

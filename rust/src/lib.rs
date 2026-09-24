@@ -8,7 +8,6 @@ mod data_format_parser;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
-mod formal_language_parser;
 pub mod grammar;
 pub mod graphql_adapter;
 mod incremental;
