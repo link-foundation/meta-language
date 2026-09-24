@@ -9,6 +9,7 @@ use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
 use crate::mixed_regions::EmbeddedRegion;
 use crate::natural_language::annotate_natural_language;
+pub use crate::network_projection::NetworkProjection;
 use crate::query::{LinkQuery, QueryMatch, QueryPredicateHost, RejectPredicateHost};
 use crate::self_description::{definition_expression, SELF_DESCRIPTION_ROOTS};
 use crate::source::{ByteRange, Point, SourceSpan};
@@ -59,47 +60,6 @@ pub enum LinkType {
     Semantic,
     Region,
     Object,
-}
-
-/// View of a links network with lower-level data optionally stripped away.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum NetworkProjection {
-    /// Full lossless network, including all source-preservation links.
-    Lossless,
-    /// Concrete syntax view, including tokens, trivia, fields, and spans.
-    ConcreteSyntax,
-    /// Abstract syntax view, excluding lossless token and trivia links.
-    AbstractSyntax,
-    /// Meaning-focused view, keeping semantic, concept, type, and language links.
-    Semantic,
-}
-
-impl NetworkProjection {
-    /// Human-readable projection name.
-    #[must_use]
-    pub const fn label(self) -> &'static str {
-        match self {
-            Self::Lossless => "lossless",
-            Self::ConcreteSyntax => "concrete syntax",
-            Self::AbstractSyntax => "abstract syntax",
-            Self::Semantic => "semantic",
-        }
-    }
-
-    fn includes(self, link: &Link) -> bool {
-        match self {
-            Self::Lossless => true,
-            Self::ConcreteSyntax => link.metadata().link_type() != Some(LinkType::Semantic),
-            Self::AbstractSyntax => !matches!(
-                link.metadata().link_type(),
-                Some(LinkType::Token | LinkType::Trivia)
-            ),
-            Self::Semantic => matches!(
-                link.metadata().link_type(),
-                Some(LinkType::Semantic | LinkType::Concept | LinkType::Type | LinkType::Language)
-            ),
-        }
-    }
 }
 
 impl fmt::Display for LinkType {

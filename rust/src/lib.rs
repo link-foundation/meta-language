@@ -24,6 +24,7 @@ pub mod lino_serialization;
 pub mod mixed_regions;
 mod natural_language;
 mod natural_language_grammar;
+mod network_projection;
 pub mod parity;
 mod parity_fixtures;
 pub mod parser_registry;
