@@ -701,44 +701,6 @@ fn four_language_semantic_programs_expose_every_required_representation_phase() 
 }
 
 #[test]
-fn binding_aware_rename_preserves_shadowing_unicode_templates_and_comments() {
-    for fixture in corpus()["renameCases"].as_array().expect("rename cases") {
-        let language = fixture["language"].as_str().expect("language");
-        let source = fixture["source"].as_str().expect("source");
-        let program = analyze_program(source, language, ProgramProjectContext::default())
-            .expect("semantic analysis");
-        let occurrence = usize::try_from(
-            fixture["declarationOccurrence"]
-                .as_u64()
-                .expect("declaration occurrence"),
-        )
-        .expect("occurrence fits usize");
-        let binding = program
-            .bindings()
-            .iter()
-            .filter(|binding| binding.name() == fixture["binding"].as_str().unwrap())
-            .nth(occurrence)
-            .expect("selected binding");
-        let renamed = program
-            .rename_binding(binding.id(), fixture["replacement"].as_str().unwrap())
-            .expect("capture-safe rename");
-        assert_eq!(
-            renamed.emit(),
-            fixture["expected"].as_str().expect("expected source"),
-            "{language} binding rename"
-        );
-        assert!(renamed.network().verify_full_match(None).is_clean());
-        let error = program
-            .rename_binding(binding.id(), fixture["capture"].as_str().unwrap())
-            .expect_err("capture must be rejected");
-        assert!(
-            error.to_string().contains("capture") || error.to_string().contains("conflict"),
-            "{language} capture avoidance: {error}"
-        );
-    }
-}
-
-#[test]
 fn structured_construction_query_edits_cloning_movement_and_emission_reparse_cleanly() {
     for fixture in corpus()["transformationPrograms"]
         .as_array()

@@ -110,7 +110,23 @@ impl ProgramRepresentation {
         ranges.sort_by_key(|range| std::cmp::Reverse(range.start));
         let mut edited = self.source.clone();
         for range in ranges {
-            edited.replace_range(range.start..range.end, replacement);
+            let shorthand = self.language == "JavaScript"
+                && self.source_mappings.iter().any(|mapping| {
+                    mapping.range == range
+                        && matches!(
+                            mapping.term.as_str(),
+                            "shorthand_property_identifier"
+                                | "shorthand_property_identifier_pattern"
+                        )
+                });
+            if shorthand {
+                edited.replace_range(
+                    range.start..range.end,
+                    &format!("{}: {replacement}", binding.name),
+                );
+            } else {
+                edited.replace_range(range.start..range.end, replacement);
+            }
         }
         self.reparse_edit(&edited)
     }

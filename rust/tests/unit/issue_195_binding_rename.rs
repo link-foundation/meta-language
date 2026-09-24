@@ -1,0 +1,72 @@
+use std::fs;
+use std::path::PathBuf;
+use std::process::Command;
+
+use meta_language::{analyze_program, ProgramProjectContext};
+use serde_json::Value;
+
+#[test]
+fn binding_aware_rename_preserves_scopes_properties_unicode_and_observations() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../parity/fixtures/four-language-conformance.json");
+    let corpus: Value = serde_json::from_str(&fs::read_to_string(path).expect("shared corpus"))
+        .expect("valid shared corpus");
+
+    for fixture in corpus["renameCases"].as_array().expect("rename cases") {
+        let language = fixture["language"].as_str().expect("language");
+        let source = fixture["source"].as_str().expect("source");
+        let program = analyze_program(source, language, ProgramProjectContext::default())
+            .expect("semantic analysis");
+        let occurrence = usize::try_from(
+            fixture["declarationOccurrence"]
+                .as_u64()
+                .expect("declaration occurrence"),
+        )
+        .expect("occurrence fits usize");
+        let binding = program
+            .bindings()
+            .iter()
+            .filter(|binding| binding.name() == fixture["binding"].as_str().unwrap())
+            .nth(occurrence)
+            .expect("selected binding");
+        let renamed = program
+            .rename_binding(binding.id(), fixture["replacement"].as_str().unwrap())
+            .expect("capture-safe rename");
+        assert_eq!(
+            renamed.emit(),
+            fixture["expected"].as_str().expect("expected source"),
+            "{language} binding rename"
+        );
+        assert!(renamed.network().verify_full_match(None).is_clean());
+        if !fixture["expectedObservation"].is_null() {
+            let renamed_source = renamed.emit();
+            for source in [source, renamed_source.as_str()] {
+                let output = Command::new("node")
+                    .args([
+                        "-e",
+                        "eval(process.argv[1]); process.stdout.write(JSON.stringify(globalThis.result));",
+                        source,
+                    ])
+                    .output()
+                    .expect("Node executes JavaScript binding fixture");
+                assert!(
+                    output.status.success(),
+                    "JavaScript fixture executes: {language}"
+                );
+                let observed: Value = serde_json::from_slice(&output.stdout)
+                    .expect("fixture emits a JSON observation");
+                assert_eq!(
+                    observed, fixture["expectedObservation"],
+                    "{language} binding observation"
+                );
+            }
+        }
+        let error = program
+            .rename_binding(binding.id(), fixture["capture"].as_str().unwrap())
+            .expect_err("capture must be rejected");
+        assert!(
+            error.to_string().contains("capture") || error.to_string().contains("conflict"),
+            "{language} capture avoidance: {error}"
+        );
+    }
+}

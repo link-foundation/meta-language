@@ -69,7 +69,7 @@ export class ProgramRepresentation {
 
     const syntax = syntaxFacts(this.network, this.source);
     const tokens = semanticTokens(this.source, this.language, syntax);
-    const resolution = resolveBindings(tokens, this.source, this.language);
+    const resolution = resolveBindings(tokens, syntax, this.source, this.language);
     this.scopes = Object.freeze(resolution.scopes.map(freezeRecord));
     this.bindings = Object.freeze(resolution.bindings.map(freezeBinding));
     this.unresolvedReferences = Object.freeze(resolution.unresolved.map(freezeRecord));
@@ -175,7 +175,11 @@ export class ProgramRepresentation {
       .sort((left, right) => right.start - left.start);
     let edited = this.source;
     for (const range of ranges) {
-      edited = `${edited.slice(0, range.start)}${replacement}${edited.slice(range.end)}`;
+      const shorthand = this.language === 'JavaScript' && this.sourceMappings.some(({ term, start, end }) =>
+        start === range.start && end === range.end &&
+        (term === 'shorthand_property_identifier' || term === 'shorthand_property_identifier_pattern'));
+      const text = shorthand ? `${binding.name}: ${replacement}` : replacement;
+      edited = `${edited.slice(0, range.start)}${text}${edited.slice(range.end)}`;
     }
     const reparsed = new ProgramRepresentation(edited, this.language, this.project);
     if (!reparsed.network.verifyFullMatch().isClean()) {
@@ -290,24 +294,35 @@ function semanticTokens(source, language, syntax) {
   return tokens;
 }
 
-function resolveBindings(tokens, source, language) {
+function resolveBindings(tokens, syntax, source, language) {
   const scopes = [{ id: 'scope:0', parent: null, start: 0, end: source.length, depth: 0 }];
   const stack = [scopes[0]];
   const braceScopes = new Map();
+  const braceKinds = [];
+  const scopedBraces = new Set(syntax
+    .filter(({ term }) => ['statement_block', 'class_body', 'switch_body'].includes(term))
+    .map(({ start }) => start));
+  const propertyNames = new Set(syntax
+    .filter(({ term }) => term === 'property_identifier' || term === 'private_property_identifier')
+    .map(({ start, end }) => `${start}:${end}`));
   for (const [index, token] of tokens.entries()) {
     token.scope = stack.at(-1).id;
     if (token.text === '{') {
-      const scope = {
-        id: `scope:${scopes.length}`,
-        parent: stack.at(-1).id,
-        start: token.end,
-        end: source.length,
-        depth: stack.length,
-      };
-      scopes.push(scope);
-      braceScopes.set(index, scope.id);
-      stack.push(scope);
-    } else if (token.text === '}' && stack.length > 1) {
+      const createsScope = language !== 'JavaScript' || scopedBraces.has(token.start);
+      braceKinds.push(createsScope);
+      if (createsScope) {
+        const scope = {
+          id: `scope:${scopes.length}`,
+          parent: stack.at(-1).id,
+          start: token.end,
+          end: source.length,
+          depth: stack.length,
+        };
+        scopes.push(scope);
+        braceScopes.set(index, scope.id);
+        stack.push(scope);
+      }
+    } else if (token.text === '}' && braceKinds.pop() && stack.length > 1) {
       stack.pop().end = token.start;
       token.scope = stack.at(-1).id;
     }
@@ -347,7 +362,8 @@ function resolveBindings(tokens, source, language) {
   const byToken = new Map(bindings.map((binding) => [binding.tokenIndex, binding]));
   const unresolved = [];
   for (const [index, token] of tokens.entries()) {
-    if (token.kind !== 'identifier' || byToken.has(index)) continue;
+    if (token.kind !== 'identifier' || byToken.has(index) ||
+      (language === 'JavaScript' && propertyNames.has(`${token.start}:${token.end}`))) continue;
     const candidates = bindings.filter((binding) => {
       if (binding.name !== token.text || binding.declaration.start > token.start) return false;
       return scopeContains(scopeById, binding.scope, token.scope);

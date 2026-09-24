@@ -446,7 +446,7 @@ impl ProgramRepresentation {
         let source_mappings = syntax_facts(&network);
         let tokens = semantic_tokens(source, support.name, &source_mappings);
         let (scopes, bindings, unresolved_references) =
-            resolve_bindings(&tokens, source.len(), support.name);
+            resolve_bindings(&tokens, &source_mappings, source.len(), support.name);
         let modules = module_facts(&tokens, &source_mappings, source, support.name, &project);
         let types = type_facts(&tokens, &source_mappings, support.name);
         let extensions = extension_facts(&tokens, &source_mappings, source, support.name);

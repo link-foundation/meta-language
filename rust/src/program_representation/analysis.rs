@@ -96,6 +96,7 @@ pub(super) fn semantic_tokens(
 
 pub(super) fn resolve_bindings(
     input: &[SemanticToken],
+    syntax: &[ProgramSourceMapping],
     source_len: usize,
     language: &str,
 ) -> (Vec<ProgramScope>, Vec<ProgramBinding>, Vec<ProgramFact>) {
@@ -108,20 +109,46 @@ pub(super) fn resolve_bindings(
     }];
     let mut stack = vec![0_usize];
     let mut brace_scopes = BTreeMap::new();
+    let mut brace_kinds = Vec::new();
+    let scoped_braces = syntax
+        .iter()
+        .filter(|fact| {
+            matches!(
+                fact.term.as_str(),
+                "statement_block" | "class_body" | "switch_body"
+            )
+        })
+        .map(|fact| fact.range.start)
+        .collect::<BTreeSet<_>>();
+    let property_names = syntax
+        .iter()
+        .filter(|fact| {
+            matches!(
+                fact.term.as_str(),
+                "property_identifier" | "private_property_identifier"
+            )
+        })
+        .map(|fact| fact.range)
+        .collect::<BTreeSet<_>>();
     for (index, token) in tokens.iter_mut().enumerate() {
         token.scope = *stack.last().expect("root scope");
         if token.text == "{" {
-            let parent = *stack.last().expect("root scope");
-            let scope = scopes.len();
-            scopes.push(ProgramScope {
-                id: format!("scope:{scope}"),
-                parent: Some(scopes[parent].id.clone()),
-                range: ProgramRange::new(token.range.end, source_len),
-                depth: stack.len(),
-            });
-            brace_scopes.insert(index, scope);
-            stack.push(scope);
-        } else if token.text == "}" && stack.len() > 1 {
+            let creates_scope =
+                language != "JavaScript" || scoped_braces.contains(&token.range.start);
+            brace_kinds.push(creates_scope);
+            if creates_scope {
+                let parent = *stack.last().expect("root scope");
+                let scope = scopes.len();
+                scopes.push(ProgramScope {
+                    id: format!("scope:{scope}"),
+                    parent: Some(scopes[parent].id.clone()),
+                    range: ProgramRange::new(token.range.end, source_len),
+                    depth: stack.len(),
+                });
+                brace_scopes.insert(index, scope);
+                stack.push(scope);
+            }
+        } else if token.text == "}" && brace_kinds.pop().unwrap_or(false) && stack.len() > 1 {
             let closed = stack.pop().expect("non-root scope");
             scopes[closed].range.end = token.range.start;
             token.scope = *stack.last().expect("root scope");
@@ -161,7 +188,10 @@ pub(super) fn resolve_bindings(
         .collect::<BTreeMap<_, _>>();
     let mut unresolved = Vec::new();
     for (token_index, token) in tokens.iter().enumerate() {
-        if token.kind != TokenKind::Identifier || binding_tokens.contains_key(&token_index) {
+        if token.kind != TokenKind::Identifier
+            || binding_tokens.contains_key(&token_index)
+            || (language == "JavaScript" && property_names.contains(&token.range))
+        {
             continue;
         }
         let mut candidates = bindings

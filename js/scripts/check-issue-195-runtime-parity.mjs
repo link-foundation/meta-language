@@ -38,7 +38,7 @@ for (const section of ['positive', 'negative', 'semantics', 'transforms', 'trans
     throw new Error(`JavaScript/Rust runtime parity mismatch in ${section}`);
   }
 }
-console.log('issue-195 runtime parity: complete CST, diagnostics, semantics, transforms, and 12 translations match');
+console.log('issue-195 runtime parity: shared fixture observations agree; full language and translation coverage remains subject to the acceptance gate');
 
 function runtimeObservation() {
   return {

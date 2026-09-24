@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 import {
   LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
@@ -305,6 +306,17 @@ test('binding-aware rename preserves shadowing, Unicode, templates, and comments
     const renamed = program.renameBinding(binding.id, fixture.replacement);
     assert.equal(renamed.emit(), fixture.expected, `${fixture.language} binding rename`);
     assert.equal(renamed.network.verifyFullMatch().isClean(), true, `${fixture.language} reparse`);
+    if (fixture.expectedObservation !== undefined) {
+      for (const source of [fixture.source, renamed.emit()]) {
+        const context = {};
+        runInNewContext(source, context);
+        assert.deepEqual(
+          JSON.parse(JSON.stringify(context.result)),
+          fixture.expectedObservation,
+          `${fixture.language} binding rename preserves the independent observation`,
+        );
+      }
+    }
     assert.throws(
       () => program.renameBinding(binding.id, fixture.capture),
       /capture|conflict/u,

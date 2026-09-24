@@ -159,6 +159,56 @@
       "capture": "use"
     },
     {
+      "language": "JavaScript",
+      "source": "const x = 1; const object = { x: 2 }; globalThis.result = [Object.keys(object), object.x, x];\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const value = 1; const object = { x: 2 }; globalThis.result = [Object.keys(object), object.x, value];\n",
+      "expectedObservation": [["x"], 2, 1],
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "const x = 1; const object = { x }; globalThis.result = [Object.keys(object), object.x, x];\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const value = 1; const object = { x: value }; globalThis.result = [Object.keys(object), object.x, value];\n",
+      "expectedObservation": [["x"], 1, 1],
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "const object = { x: 1 }; const { x } = object; globalThis.result = x;\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const object = { x: 1 }; const { x: value } = object; globalThis.result = value;\n",
+      "expectedObservation": 1,
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "function f() { const x = 1; const object = { x: 2 }; return [Object.keys(object), object.x, x]; } globalThis.result = f();\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "function f() { const value = 1; const object = { x: 2 }; return [Object.keys(object), object.x, value]; } globalThis.result = f();\n",
+      "expectedObservation": [["x"], 2, 1],
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "const π = 1; const object = { π: 2 }; globalThis.result = [Object.keys(object), object.π, π];\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const value = 1; const object = { π: 2 }; globalThis.result = [Object.keys(object), object.π, value];\n",
+      "expectedObservation": [["π"], 2, 1],
+      "capture": "object"
+    },
+    {
       "language": "Rust",
       "source": "fn use_value(π: u64) -> u64 { let value = π; { let π = value; let _ = π; } π } // π\n",
       "binding": "π",
