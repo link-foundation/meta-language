@@ -118,3 +118,20 @@ test('Rust release pipeline delegates npm publishing to the canonical JavaScript
     assert.ok(createRelease >= 0 && dispatchPublisher > createRelease);
   }
 });
+
+test('issue 195 acceptance workflow produces exact-checkpoint evidence with pinned toolchains', async () => {
+  const workflow = await readFile(
+    new URL('../../.github/workflows/issue-195-acceptance.yml', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(workflow, /node-version:\s*24/);
+  assert.match(workflow, /dtolnay\/rust-toolchain@1\.98\.1/);
+  assert.match(workflow, /ocaml\/setup-ocaml@v3/);
+  assert.match(workflow, /opam install[^\n]*rocq-core=9\.2\.0[^\n]*rocq-stdlib=9\.2\.0/);
+  assert.match(workflow, /leanprover\/lean-action@v1/);
+  assert.match(workflow, /node js\/scripts\/run-issue-195-evidence\.mjs/);
+  assert.match(workflow, /--checkpoint "\$ACCEPTANCE_CHECKPOINT"/);
+  assert.match(workflow, /--commit "\$GITHUB_SHA"/);
+  assert.match(workflow, /npm ci --ignore-scripts/);
+});

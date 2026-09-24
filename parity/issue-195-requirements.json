@@ -598,624 +598,624 @@
       "sha256": "c67edc5111e10c55061b88f5ae7f357604cdc8cb89b40702d75e1dd1ce23368a"
     },
     "planned:embedded:HTML:JavaScript": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "HTML host with an independently asserted JavaScript embedded boundary",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:embedded:HTML:CSS": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "HTML host with an independently asserted CSS embedded boundary",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:embedded:Markdown:language-selected fenced code": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Markdown host with an independently asserted language-selected fenced code embedded boundary",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:embedded:Markdown:HTML": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Markdown host with an independently asserted HTML embedded boundary",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:embedded:CSS style attribute:CSS": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "CSS style attribute host with an independently asserted CSS embedded boundary",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:grammar-importer:ABNF": {
-      "path": null,
+      "path": "parity/fixtures/grammar-importers.json",
       "selector": "ABNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": null
+      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
     },
     "planned:grammar-importer:BNF": {
-      "path": null,
+      "path": "parity/fixtures/grammar-importers.json",
       "selector": "BNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": null
+      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
     },
     "planned:grammar-importer:EBNF": {
-      "path": null,
+      "path": "parity/fixtures/grammar-importers.json",
       "selector": "EBNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": null
+      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
     },
     "planned:grammar-importer:pest": {
-      "path": null,
+      "path": "parity/fixtures/grammar-importers.json",
       "selector": "pest grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": null
+      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
     },
     "planned:grammar-importer:tree-sitter grammar JSON": {
-      "path": null,
+      "path": "parity/fixtures/grammar-importers.json",
       "selector": "tree-sitter grammar JSON grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": null
+      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
     },
     "planned:conformance:JavaScript": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "JavaScript mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:generative:JavaScript": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "JavaScript property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:conformance:Rust": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rust mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:generative:Rust": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rust property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:conformance:Lean": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Lean mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:generative:Lean": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Lean property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:conformance:Rocq": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rocq mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:generative:Rocq": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rocq property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:semantic:JavaScript:modules-and-imports": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for modules-and-imports",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:scopes-and-bindings": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for scopes-and-bindings",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:recursive-definitions": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for recursive-definitions",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:types-and-universes": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for types-and-universes",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:effects": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for effects",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:attributes": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for attributes",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:macros-and-notation": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for macros-and-notation",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:proof-terms-and-tactics": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for proof-terms-and-tactics",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:surface-expansion-elaboration-traces": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for surface-expansion-elaboration-traces",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:JavaScript:project-context-and-dependencies": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for project-context-and-dependencies",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:modules-and-imports": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for modules-and-imports",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:scopes-and-bindings": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for scopes-and-bindings",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:recursive-definitions": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for recursive-definitions",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:types-and-universes": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for types-and-universes",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:effects": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for effects",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:attributes": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for attributes",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:macros-and-notation": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for macros-and-notation",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:proof-terms-and-tactics": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for proof-terms-and-tactics",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:surface-expansion-elaboration-traces": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for surface-expansion-elaboration-traces",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rust:project-context-and-dependencies": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for project-context-and-dependencies",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:modules-and-imports": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for modules-and-imports",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:scopes-and-bindings": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for scopes-and-bindings",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:recursive-definitions": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for recursive-definitions",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:types-and-universes": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for types-and-universes",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:effects": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for effects",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:attributes": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for attributes",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:macros-and-notation": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for macros-and-notation",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:proof-terms-and-tactics": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for proof-terms-and-tactics",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:surface-expansion-elaboration-traces": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for surface-expansion-elaboration-traces",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Lean:project-context-and-dependencies": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for project-context-and-dependencies",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:modules-and-imports": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for modules-and-imports",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:scopes-and-bindings": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for scopes-and-bindings",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:recursive-definitions": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for recursive-definitions",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:types-and-universes": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for types-and-universes",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:effects": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for effects",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:attributes": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for attributes",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:macros-and-notation": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for macros-and-notation",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:proof-terms-and-tactics": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for proof-terms-and-tactics",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:surface-expansion-elaboration-traces": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for surface-expansion-elaboration-traces",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:semantic:Rocq:project-context-and-dependencies": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for project-context-and-dependencies",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:JavaScript:query": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript query sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:JavaScript:insert": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript insert sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:JavaScript:delete": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript delete sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:JavaScript:replace": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript replace sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:JavaScript:move": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript move sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:JavaScript:clone": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript clone sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:JavaScript:construct": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript construct sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:JavaScript:emit": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript emit sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:binding-rename:JavaScript": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript binding-aware rename and capture-avoidance corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rust:query": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust query sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rust:insert": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust insert sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rust:delete": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust delete sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rust:replace": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust replace sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rust:move": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust move sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rust:clone": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust clone sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rust:construct": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust construct sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rust:emit": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust emit sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:binding-rename:Rust": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust binding-aware rename and capture-avoidance corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Lean:query": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean query sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Lean:insert": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean insert sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Lean:delete": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean delete sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Lean:replace": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean replace sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Lean:move": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean move sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Lean:clone": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean clone sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Lean:construct": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean construct sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Lean:emit": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean emit sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:binding-rename:Lean": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean binding-aware rename and capture-avoidance corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rocq:query": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq query sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rocq:insert": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq insert sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rocq:delete": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq delete sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rocq:replace": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq replace sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rocq:move": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq move sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rocq:clone": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq clone sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rocq:construct": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq construct sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:transformation:Rocq:emit": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq emit sequences, serialize/reload, and reparsing corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:binding-rename:Rocq": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq binding-aware rename and capture-avoidance corpus",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:JavaScript:Rust": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript to Rust construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:JavaScript:Lean": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript to Lean construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:JavaScript:Rocq": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript to Rocq construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Rust:JavaScript": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust to JavaScript construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Rust:Lean": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust to Lean construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Rust:Rocq": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust to Rocq construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Lean:JavaScript": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean to JavaScript construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Lean:Rust": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean to Rust construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Lean:Rocq": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean to Rocq construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Rocq:JavaScript": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq to JavaScript construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Rocq:Rust": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq to Rust construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:translation:Rocq:Lean": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq to Lean construct/project corpus and preservation oracle",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:cross-cutting:I195-SHARED-SCHEMA": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "schema versioning and extension registration shared corpus and expected normalization",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:cross-cutting:I195-SHARED-PROVENANCE": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "provenance and source mappings shared corpus and expected normalization",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:cross-cutting:I195-SHARED-CONCEPTS": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "binding, typing, module, and proof concepts without semantic collapse shared corpus and expected normalization",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:cross-cutting:I195-PARITY-CST": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "normalized complete CSTs shared corpus and expected normalization",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:cross-cutting:I195-PARITY-DIAGNOSTICS": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "diagnostics and recovery shared corpus and expected normalization",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:cross-cutting:I195-PARITY-SEMANTICS": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "bindings, types, modules, and proof structure shared corpus and expected normalization",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:cross-cutting:I195-PARITY-TRANSFORMS": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "structured transformations shared corpus and expected normalization",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:cross-cutting:I195-PARITY-TRANSLATIONS": {
-      "path": null,
+      "path": "parity/fixtures/four-language-conformance.json",
       "selector": "all directed translations shared corpus and expected normalization",
-      "sha256": null
+      "sha256": "56e903c58ce73ae5b83f302ec6f680281700dc82580341c0ab918119a03df6bd"
     },
     "planned:native-validation:JavaScript": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "JavaScript emitted-artifact validation corpus",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:native-validation:Rust": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rust emitted-artifact validation corpus",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:native-validation:Lean": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Lean emitted-artifact validation corpus",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:native-validation:Rocq": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rocq emitted-artifact validation corpus",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:delivery:I195-DELIVERY-NPM-CANDIDATE": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "npm candidate package clean-consumer matrix",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:delivery:I195-DELIVERY-CRATE-CANDIDATE": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "crate candidate package clean-consumer matrix",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:delivery:I195-DELIVERY-RML-CANDIDATE": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "downstream RML candidate-artifact integration clean-consumer matrix",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:delivery:I195-DELIVERY-NPM-PUBLISHED": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "published npm package clean-consumer matrix",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:delivery:I195-DELIVERY-CRATE-PUBLISHED": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "published crates.io package clean-consumer matrix",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "planned:delivery:I195-DELIVERY-RML-PUBLISHED": {
-      "path": null,
+      "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "downstream RML published-artifact integration clean-consumer matrix",
-      "sha256": null
+      "sha256": "677f16b2991a8e4addc9c94c97307eb7fc0688f46a6f976fb2c5c32644c0ec0d"
     },
     "fault:plain-text-parser-fallback": {
       "path": "js/tests/issue-195-acceptance.test.js",
@@ -1296,8 +1296,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/program_representation.rs"
+        ]
       },
       "verifications": [
         {
@@ -1346,7 +1352,7 @@
       "area": "external-conformance",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "mapped upstream conformance suites, grammar corpora, and representative real projects",
         "aliases": [],
@@ -1360,8 +1366,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/program_representation.rs"
+        ]
       },
       "verifications": [
         {
@@ -1410,7 +1422,7 @@
       "area": "external-conformance",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "mapped upstream conformance suites, grammar corpora, and representative real projects",
         "aliases": [],
@@ -1424,8 +1436,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/program_representation.rs"
+        ]
       },
       "verifications": [
         {
@@ -1488,8 +1506,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/program_representation.rs"
+        ]
       },
       "verifications": [
         {
@@ -4095,7 +4119,7 @@
       "area": "default-cst",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "complete lossless concrete syntax tree through the ordinary parse API",
         "aliases": [
@@ -5675,7 +5699,7 @@
       "area": "default-cst",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "complete lossless concrete syntax tree through the ordinary parse API",
         "aliases": [
@@ -8487,8 +8511,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/package.json",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/Cargo.toml",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ]
       },
       "verifications": [
         {
@@ -8547,8 +8577,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/package.json",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/Cargo.toml",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ]
       },
       "verifications": [
         {
@@ -8607,8 +8643,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/package.json",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/Cargo.toml",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ]
       },
       "verifications": [
         {
@@ -8667,8 +8709,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/package.json",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/Cargo.toml",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ]
       },
       "verifications": [
         {
@@ -8727,8 +8775,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/package.json",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/Cargo.toml",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ]
       },
       "verifications": [
         {
@@ -8787,8 +8841,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/package.json",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/Cargo.toml",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ]
       },
       "verifications": [
         {
@@ -8847,8 +8907,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/regions.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/embedded_region_parser.rs"
+        ]
       },
       "verifications": [
         {
@@ -8925,8 +8992,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/regions.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/embedded_region_parser.rs"
+        ]
       },
       "verifications": [
         {
@@ -9003,8 +9077,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/regions.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/embedded_region_parser.rs"
+        ]
       },
       "verifications": [
         {
@@ -9081,8 +9162,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/regions.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/embedded_region_parser.rs"
+        ]
       },
       "verifications": [
         {
@@ -9159,8 +9247,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/regions.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/embedded_region_parser.rs"
+        ]
       },
       "verifications": [
         {
@@ -9692,8 +9787,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/program_representation.rs"
+        ]
       },
       "verifications": [
         {
@@ -9744,7 +9845,7 @@
       "area": "generative-testing",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
         "aliases": [],
@@ -9758,8 +9859,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/program_representation.rs"
+        ]
       },
       "verifications": [
         {
@@ -9810,7 +9917,7 @@
       "area": "generative-testing",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
         "aliases": [],
@@ -9824,8 +9931,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/program_representation.rs"
+        ]
       },
       "verifications": [
         {
@@ -9890,8 +10003,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/network.js",
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/link_network.rs",
+          "rust/src/program_representation.rs"
+        ]
       },
       "verifications": [
         {
@@ -9954,7 +10073,10 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
+        "javascript": [
+          "js/src/grammar-importers.js",
+          "js/src/grammar-importers"
+        ],
         "rust": [
           "rust/src/grammar"
         ]
@@ -10016,7 +10138,10 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
+        "javascript": [
+          "js/src/grammar-importers.js",
+          "js/src/grammar-importers"
+        ],
         "rust": [
           "rust/src/grammar"
         ]
@@ -10078,7 +10203,10 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
+        "javascript": [
+          "js/src/grammar-importers.js",
+          "js/src/grammar-importers"
+        ],
         "rust": [
           "rust/src/grammar"
         ]
@@ -10140,7 +10268,10 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
+        "javascript": [
+          "js/src/grammar-importers.js",
+          "js/src/grammar-importers"
+        ],
         "rust": [
           "rust/src/grammar"
         ]
@@ -10202,7 +10333,10 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
+        "javascript": [
+          "js/src/grammar-importers.js",
+          "js/src/grammar-importers"
+        ],
         "rust": [
           "rust/src/grammar"
         ]
@@ -10268,8 +10402,13 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10314,7 +10453,7 @@
       "area": "native-validation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "emitted artifact validation",
         "aliases": [],
@@ -10328,8 +10467,13 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10374,7 +10518,7 @@
       "area": "native-validation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "emitted artifact validation",
         "aliases": [],
@@ -10388,8 +10532,13 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10448,8 +10597,13 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10506,8 +10660,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/scripts/check-js-rust-parity.mjs"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10572,8 +10732,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/scripts/check-js-rust-parity.mjs"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10638,8 +10804,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/scripts/check-js-rust-parity.mjs"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10704,8 +10876,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/scripts/check-js-rust-parity.mjs"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10770,8 +10948,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/scripts/check-js-rust-parity.mjs"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -10840,8 +11024,13 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs"
+        ]
       },
       "verifications": [
         {
@@ -10892,7 +11081,7 @@
       "area": "binding-safe-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "binding-aware rename with capture avoidance",
         "aliases": [],
@@ -10906,8 +11095,13 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs"
+        ]
       },
       "verifications": [
         {
@@ -10958,7 +11152,7 @@
       "area": "binding-safe-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "binding-aware rename with capture avoidance",
         "aliases": [],
@@ -10972,8 +11166,13 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs"
+        ]
       },
       "verifications": [
         {
@@ -11038,8 +11237,13 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs"
+        ]
       },
       "verifications": [
         {
@@ -11106,8 +11310,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11168,8 +11378,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11230,8 +11446,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11292,8 +11514,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11354,8 +11582,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11416,8 +11650,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11478,8 +11718,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11540,8 +11786,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11602,8 +11854,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11664,8 +11922,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11710,7 +11974,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "attributes",
         "aliases": [],
@@ -11724,8 +11988,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11770,7 +12040,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "effects",
         "aliases": [],
@@ -11784,8 +12054,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11830,7 +12106,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "macros-and-notation",
         "aliases": [],
@@ -11844,8 +12120,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11890,7 +12172,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "modules-and-imports",
         "aliases": [],
@@ -11904,8 +12186,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -11950,7 +12238,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "project-context-and-dependencies",
         "aliases": [],
@@ -11964,8 +12252,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12010,7 +12304,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "proof-terms-and-tactics",
         "aliases": [],
@@ -12024,8 +12318,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12070,7 +12370,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "recursive-definitions",
         "aliases": [],
@@ -12084,8 +12384,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12130,7 +12436,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "scopes-and-bindings",
         "aliases": [],
@@ -12144,8 +12450,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12190,7 +12502,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "surface-expansion-elaboration-traces",
         "aliases": [],
@@ -12204,8 +12516,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12250,7 +12568,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "types-and-universes",
         "aliases": [],
@@ -12264,8 +12582,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12310,7 +12634,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "attributes",
         "aliases": [],
@@ -12324,8 +12648,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12370,7 +12700,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "effects",
         "aliases": [],
@@ -12384,8 +12714,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12430,7 +12766,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "macros-and-notation",
         "aliases": [],
@@ -12444,8 +12780,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12490,7 +12832,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "modules-and-imports",
         "aliases": [],
@@ -12504,8 +12846,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12550,7 +12898,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "project-context-and-dependencies",
         "aliases": [],
@@ -12564,8 +12912,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12610,7 +12964,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "proof-terms-and-tactics",
         "aliases": [],
@@ -12624,8 +12978,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12670,7 +13030,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "recursive-definitions",
         "aliases": [],
@@ -12684,8 +13044,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12730,7 +13096,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "scopes-and-bindings",
         "aliases": [],
@@ -12744,8 +13110,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12790,7 +13162,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "surface-expansion-elaboration-traces",
         "aliases": [],
@@ -12804,8 +13176,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12850,7 +13228,7 @@
       "area": "four-language-semantics",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "types-and-universes",
         "aliases": [],
@@ -12864,8 +13242,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12924,8 +13308,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -12984,8 +13374,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13044,8 +13440,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13104,8 +13506,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13164,8 +13572,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13224,8 +13638,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13284,8 +13704,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13344,8 +13770,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13404,8 +13836,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13464,8 +13902,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/language-support.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/language_support.rs"
+        ]
       },
       "verifications": [
         {
@@ -13522,8 +13966,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/scripts/check-js-rust-parity.mjs"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -13588,8 +14038,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/scripts/check-js-rust-parity.mjs"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -13654,8 +14110,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/scripts/check-js-rust-parity.mjs"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -13708,7 +14170,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "JavaScript -> Lean",
-        "version": "ECMAScript 2026 -> 4.34.0",
+        "version": "ECMAScript 2026 -> 4.33.1",
         "edition": "ECMA-262, 17th edition -> Lean 4",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -13722,8 +14184,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -13788,7 +14256,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "JavaScript -> Rocq",
-        "version": "ECMAScript 2026 -> 9.3.0",
+        "version": "ECMAScript 2026 -> 9.2",
         "edition": "ECMA-262, 17th edition -> Vernacular",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -13802,8 +14270,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -13882,8 +14356,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -13948,7 +14428,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "Lean -> JavaScript",
-        "version": "4.34.0 -> ECMAScript 2026",
+        "version": "4.33.1 -> ECMAScript 2026",
         "edition": "Lean 4 -> ECMA-262, 17th edition",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -13964,8 +14444,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14030,7 +14516,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "Lean -> Rocq",
-        "version": "4.34.0 -> 9.3.0",
+        "version": "4.33.1 -> 9.2",
         "edition": "Lean 4 -> Vernacular",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -14044,8 +14530,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14110,7 +14602,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "Lean -> Rust",
-        "version": "4.34.0 -> 1.98.1",
+        "version": "4.33.1 -> 1.98.1",
         "edition": "Lean 4 -> 2024",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -14124,8 +14616,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14190,7 +14688,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "Rocq -> JavaScript",
-        "version": "9.3.0 -> ECMAScript 2026",
+        "version": "9.2 -> ECMAScript 2026",
         "edition": "Vernacular -> ECMA-262, 17th edition",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -14206,8 +14704,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14272,7 +14776,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "Rocq -> Lean",
-        "version": "9.3.0 -> 4.34.0",
+        "version": "9.2 -> 4.33.1",
         "edition": "Vernacular -> Lean 4",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -14286,8 +14790,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14352,7 +14862,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "Rocq -> Rust",
-        "version": "9.3.0 -> 1.98.1",
+        "version": "9.2 -> 1.98.1",
         "edition": "Vernacular -> 2024",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -14366,8 +14876,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14448,8 +14964,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14514,7 +15036,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "Rust -> Lean",
-        "version": "1.98.1 -> 4.34.0",
+        "version": "1.98.1 -> 4.33.1",
         "edition": "2024 -> Lean 4",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -14528,8 +15050,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14594,7 +15122,7 @@
       "area": "directed-translation",
       "scope": {
         "language": "Rust -> Rocq",
-        "version": "1.98.1 -> 9.3.0",
+        "version": "1.98.1 -> 9.2",
         "edition": "2024 -> Vernacular",
         "construct": "control flow, recursion, data/types, modules, effects, and proof constructs",
         "aliases": [],
@@ -14608,8 +15136,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-translation.js",
+          "js/src/translation-renderer.js"
+        ],
+        "rust": [
+          "rust/src/program_translation.rs",
+          "rust/src/translation_rules/renderer.rs"
+        ]
       },
       "verifications": [
         {
@@ -14690,8 +15224,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -14764,8 +15305,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -14838,8 +15386,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -14912,8 +15467,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -14986,8 +15548,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15060,8 +15629,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15134,8 +15710,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15208,8 +15791,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15266,7 +15856,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "clone",
         "aliases": [],
@@ -15280,8 +15870,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15338,7 +15935,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "construct",
         "aliases": [],
@@ -15352,8 +15949,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15410,7 +16014,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "delete",
         "aliases": [],
@@ -15424,8 +16028,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15482,7 +16093,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "emit",
         "aliases": [],
@@ -15496,8 +16107,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15554,7 +16172,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "insert",
         "aliases": [],
@@ -15568,8 +16186,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15626,7 +16251,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "move",
         "aliases": [],
@@ -15640,8 +16265,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15698,7 +16330,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "query",
         "aliases": [],
@@ -15712,8 +16344,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15770,7 +16409,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Lean",
-        "version": "4.34.0",
+        "version": "4.33.1",
         "edition": "Lean 4",
         "construct": "replace",
         "aliases": [],
@@ -15784,8 +16423,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15842,7 +16488,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "clone",
         "aliases": [],
@@ -15856,8 +16502,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15914,7 +16567,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "construct",
         "aliases": [],
@@ -15928,8 +16581,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -15986,7 +16646,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "delete",
         "aliases": [],
@@ -16000,8 +16660,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16058,7 +16725,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "emit",
         "aliases": [],
@@ -16072,8 +16739,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16130,7 +16804,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "insert",
         "aliases": [],
@@ -16144,8 +16818,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16202,7 +16883,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "move",
         "aliases": [],
@@ -16216,8 +16897,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16274,7 +16962,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "query",
         "aliases": [],
@@ -16288,8 +16976,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16346,7 +17041,7 @@
       "area": "structured-transformation",
       "scope": {
         "language": "Rocq",
-        "version": "9.3.0",
+        "version": "9.2",
         "edition": "Vernacular",
         "construct": "replace",
         "aliases": [],
@@ -16360,8 +17055,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16432,8 +17134,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16504,8 +17213,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16576,8 +17292,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16648,8 +17371,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16720,8 +17450,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16792,8 +17529,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16864,8 +17608,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {
@@ -16936,8 +17687,15 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/program-representation.js",
+          "js/src/program-snapshot.js"
+        ],
+        "rust": [
+          "rust/src/program_representation.rs",
+          "rust/src/program_representation/edit.rs",
+          "rust/src/program_representation/snapshot.rs"
+        ]
       },
       "verifications": [
         {

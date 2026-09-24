@@ -101,7 +101,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
     support(
         "Lean",
         &["lean", "lean4"],
-        "Lean 4.34.0",
+        "Lean 4.33.1",
         "Lean 4",
         &[".lean"],
         RepresentationLevel::Elaborated,
@@ -109,7 +109,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
     support(
         "Rocq",
         &["rocq", "coq"],
-        "Rocq 9.3.0",
+        "Rocq 9.2",
         "Vernacular",
         &[".v"],
         RepresentationLevel::Elaborated,
@@ -198,8 +198,8 @@ fn contract(source: &LanguageSupport, target: &LanguageSupport) -> TranslationCo
 
 fn runtime_for(language: &str) -> &'static str {
     match language {
-        "Lean" => "Lean 4.34.0 kernel and project environment",
-        "Rocq" => "Rocq 9.3.0 kernel and project environment",
+        "Lean" => "Lean 4.33.1 kernel and project environment",
+        "Rocq" => "Rocq 9.2 kernel and project environment",
         "Rust" => "Rust 1.98.1, edition 2024",
         _ => "ECMAScript 2026 host",
     }

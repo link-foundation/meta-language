@@ -36,7 +36,7 @@
     {
       "name": "Lean",
       "aliases": ["lean", "lean4"],
-      "version": "Lean 4.34.0",
+      "version": "Lean 4.33.1",
       "edition": "Lean 4",
       "extensions": [".lean"],
       "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "elaborated" },
@@ -52,7 +52,7 @@
     {
       "name": "Rocq",
       "aliases": ["rocq", "coq"],
-      "version": "Rocq 9.3.0",
+      "version": "Rocq 9.2",
       "edition": "Vernacular",
       "extensions": [".v"],
       "capabilities": { "bindingResolution": "resolved", "typeElaboration": "elaborated", "dynamicExtensions": "resolved", "proofSyntax": "elaborated" },

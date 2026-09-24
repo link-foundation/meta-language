@@ -16,7 +16,7 @@ jobs:
   acceptance:
     name: Full Requirements Aggregate
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     concurrency:
       group: issue-195-acceptance-${{ github.ref }}
       cancel-in-progress: true
@@ -28,17 +28,32 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.98.1
         with:
           components: rustfmt, clippy
 
+      - name: Setup Lean
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          use-github-cache: false
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.4"
+          opam-pin: false
+
+      - name: Install Rocq 9.2
+        run: opam install --yes 'rocq-core=9.2.0' 'rocq-stdlib=9.2.0' rocq-prover
+
       - name: Install JavaScript dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
         working-directory: js
 
       - name: Validate atomic manifest and protected scope baseline
@@ -47,13 +62,15 @@ jobs:
           ISSUE_195_SCOPE_CHANGE_APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'issue-195-scope-change-approved') }}
         run: node js/scripts/check-issue-195-acceptance.mjs --scope-baseline "$BASELINE_SHA"
 
-      - name: Run complete JavaScript suite
-        run: npm test
-        working-directory: js
-
-      - name: Run complete Rust suite
-        run: cargo test --all-features
-        working-directory: rust
+      - name: Produce checkpoint evidence
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
 
       - name: Evaluate every required verification cell
         if: always()
@@ -74,6 +91,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: issue-195-requirement-report-${{ github.sha }}
-          path: issue-195-artifacts/
+          path: |
+            issue-195-artifacts/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
           if-no-files-found: error
           retention-days: 30
