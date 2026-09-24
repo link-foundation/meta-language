@@ -3,14 +3,18 @@ use std::fs::File;
 use std::io;
 use std::path::{Path, PathBuf};
 
+fn decompress_rocq_parser(compressed: &Path, parser: &Path) {
+    let mut input = GzDecoder::new(File::open(compressed).expect("open vendored Rocq parser"));
+    let mut output = File::create(parser).expect("create decompressed Rocq parser");
+    io::copy(&mut input, &mut output).expect("decompress vendored Rocq parser");
+}
+
 fn main() {
     let vendor = Path::new("vendor/tree-sitter-rocq/src");
     let compressed = vendor.join("parser.c.gz");
     let parser = PathBuf::from(std::env::var_os("OUT_DIR").expect("Cargo supplies OUT_DIR"))
         .join("tree-sitter-rocq-parser.c");
-    let mut input = GzDecoder::new(File::open(&compressed).expect("open vendored Rocq parser"));
-    let mut output = File::create(&parser).expect("create decompressed Rocq parser");
-    io::copy(&mut input, &mut output).expect("decompress vendored Rocq parser");
+    decompress_rocq_parser(&compressed, &parser);
 
     let mut compiler = cc::Build::new();
     compiler.std("c11").include(vendor).file(&parser);

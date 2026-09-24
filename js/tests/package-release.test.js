@@ -52,6 +52,16 @@ test('npm delivery is script-free and carries the portable Rocq grammar', async 
   assert.ok(rocqGrammar.byteLength > 0);
 });
 
+test('Rust delivery closes the decompressed Rocq parser before compiling it', async () => {
+  const buildScript = await readFile(new URL('../../rust/build.rs', import.meta.url), 'utf8');
+
+  assert.match(buildScript, /fn decompress_rocq_parser\([^]*?\n}/);
+  assert.match(
+    buildScript,
+    /decompress_rocq_parser\(&compressed, &parser\);\s+let mut compiler = cc::Build::new\(\)/,
+  );
+});
+
 test('JavaScript workflow publishes to npm with trusted publishing provenance', async () => {
   const workflow = await readFile(
     new URL('../../.github/workflows/js.yml', import.meta.url),
