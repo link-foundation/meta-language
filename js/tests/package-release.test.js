@@ -139,7 +139,10 @@ test('issue 195 acceptance workflow produces exact-checkpoint evidence with pinn
   assert.match(workflow, /dtolnay\/rust-toolchain@1\.98\.1/);
   assert.match(workflow, /ocaml\/setup-ocaml@v3/);
   assert.match(workflow, /opam install[^\n]*rocq-core=9\.2\.0[^\n]*rocq-stdlib=9\.2\.0/);
-  assert.match(workflow, /leanprover\/lean-action@v1/);
+  assert.doesNotMatch(workflow, /leanprover\/lean-action/);
+  assert.match(workflow, /elan-x86_64-unknown-linux-gnu\.tar\.gz/);
+  assert.match(workflow, /42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63/);
+  assert.match(workflow, /leanprover\/lean4:v4\.33\.1/);
   assert.match(workflow, /node js\/scripts\/run-issue-195-evidence\.mjs/);
   assert.match(workflow, /--checkpoint "\$ACCEPTANCE_CHECKPOINT"/);
   assert.match(workflow, /--commit "\$GITHUB_SHA"/);

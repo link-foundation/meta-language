@@ -38,10 +38,20 @@ jobs:
           components: rustfmt, clippy
 
       - name: Setup Lean
-        uses: leanprover/lean-action@v1
-        with:
-          auto-config: false
-          use-github-cache: false
+        env:
+          ELAN_HOME: ${{ runner.temp }}/elan-home
+          ELAN_VERSION: v4.2.4
+          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+        run: |
+          archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-x86_64-unknown-linux-gnu.tar.gz" \
+            --output "$archive"
+          echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.33.1
+          echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          "${ELAN_HOME}/bin/lean" --version
 
       - name: Setup OCaml
         uses: ocaml/setup-ocaml@v3
