@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { appendFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 
@@ -26,9 +28,28 @@ import {
 const corpus = JSON.parse(
   readFileSync(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)),
 );
-const grammarInventory = JSON.parse(
-  readFileSync(new URL('../../parity/language-grammar-inventory.json', import.meta.url)),
+const grammarInventoryBytes = readFileSync(
+  new URL('../../parity/language-grammar-inventory.json', import.meta.url),
 );
+const grammarInventory = JSON.parse(grammarInventoryBytes);
+const grammarInventoryDigest = createHash('sha256').update(grammarInventoryBytes).digest('hex');
+
+async function recordNegativeCstObservation(language, assertionId) {
+  if (!process.env.ISSUE_195_OBSERVATION_FILE) return;
+  const slug = language.normalize('NFKD').toLowerCase()
+    .replaceAll('+', '-plus').replaceAll('#', '-sharp')
+    .replace(/[^a-z0-9]+/gu, '-').replace(/^-|-$/gu, '');
+  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, `${JSON.stringify({
+    testId: `i195-cst-${slug}-javascript-negative`,
+    assertionId,
+    fixtureId: `planned:cst-negative:${language}`,
+    fixtureDigest: grammarInventoryDigest,
+    runtime: 'javascript',
+    commit: process.env.ISSUE_195_COMMIT,
+    outcome: 'passed',
+    testName: 'every JavaScript grammar inventory frontend retains and diagnoses prohibited NUL input',
+  })}\n`);
+}
 
 test('four-language corpus produces lossless structured syntax', () => {
   for (const fixture of corpus.languages) {
@@ -166,12 +187,18 @@ test('every JavaScript grammar inventory alias selects a nontrivial lossless CST
   }
 });
 
-test('every JavaScript grammar inventory frontend retains and diagnoses prohibited NUL input', () => {
+test('every JavaScript grammar inventory frontend retains and diagnoses prohibited NUL input', async () => {
   for (const fixture of grammarInventory.languages) {
     const source = `${fixture.source}\0`;
     const network = LinkNetwork.parse(source, fixture.name);
     assert.equal(network.reconstructText(), source, `${fixture.name} malformed reconstruction`);
-    assert.equal(network.verifyFullMatch().isClean(), false, `${fixture.name} malformed diagnostic`);
+    await recordNegativeCstObservation(fixture.name, 'malformedInputRetained');
+    await recordNegativeCstObservation(fixture.name, 'exactReconstruction');
+    const verification = network.verifyFullMatch();
+    assert.ok(verification.issues.length > 0, `${fixture.name} malformed diagnostic`);
+    await recordNegativeCstObservation(fixture.name, 'diagnosticReported');
+    assert.equal(verification.isClean(), false, `${fixture.name} malformed not clean`);
+    await recordNegativeCstObservation(fixture.name, 'notReportedAsClean');
   }
 });
 

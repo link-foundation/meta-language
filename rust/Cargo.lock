@@ -1549,6 +1549,7 @@ dependencies = [
  "platform-mem",
  "regex",
  "serde_json",
+ "sha2",
  "tree-sitter",
  "tree-sitter-c",
  "tree-sitter-c-sharp",

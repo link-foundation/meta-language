@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -11,6 +12,7 @@ use meta_language::{
     TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
 };
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 fn corpus() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -24,6 +26,35 @@ fn grammar_inventory() -> Value {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
     serde_json::from_str(&fs::read_to_string(path).expect("grammar inventory is readable"))
         .expect("grammar inventory is valid JSON")
+}
+
+fn record_negative_cst_observation(language: &str, assertion_id: &str, fixture_digest: &str) {
+    let Some(path) = std::env::var_os("ISSUE_195_OBSERVATION_FILE") else {
+        return;
+    };
+    let normalized = language
+        .to_ascii_lowercase()
+        .replace('+', "-plus")
+        .replace('#', "-sharp");
+    let slug = regex::Regex::new("[^a-z0-9]+")
+        .expect("valid slug expression")
+        .replace_all(&normalized, "-");
+    let record = serde_json::json!({
+        "testId": format!("i195-cst-{}-rust-negative", slug.trim_matches('-')),
+        "assertionId": assertion_id,
+        "fixtureId": format!("planned:cst-negative:{language}"),
+        "fixtureDigest": fixture_digest,
+        "runtime": "rust",
+        "commit": std::env::var("ISSUE_195_COMMIT").expect("observation commit"),
+        "outcome": "passed",
+        "testName": "every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_input",
+    });
+    let mut file = fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(path)
+        .expect("observation file opens");
+    writeln!(file, "{record}").expect("observation record writes");
 }
 
 #[test]
@@ -357,7 +388,13 @@ fn every_rust_grammar_inventory_alias_selects_a_nontrivial_lossless_cst() {
 
 #[test]
 fn every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_input() {
-    for fixture in grammar_inventory()["languages"].as_array().unwrap() {
+    let inventory_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
+    let inventory_bytes = fs::read(&inventory_path).expect("grammar inventory is readable");
+    let fixture_digest = format!("{:x}", Sha256::digest(&inventory_bytes));
+    let inventory: Value =
+        serde_json::from_slice(&inventory_bytes).expect("grammar inventory is valid JSON");
+    for fixture in inventory["languages"].as_array().unwrap() {
         let language = fixture["name"].as_str().unwrap();
         let source = format!("{}\0", fixture["source"].as_str().unwrap());
         let network = LinkNetwork::parse(&source, language, ParseConfiguration::default());
@@ -366,10 +403,16 @@ fn every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_in
             source,
             "{language} malformed reconstruction"
         );
+        record_negative_cst_observation(language, "malformedInputRetained", &fixture_digest);
+        record_negative_cst_observation(language, "exactReconstruction", &fixture_digest);
+        let verification = network.verify_full_match(None);
         assert!(
-            !network.verify_full_match(None).is_clean(),
+            !verification.issues().is_empty(),
             "{language} malformed diagnostic"
         );
+        record_negative_cst_observation(language, "diagnosticReported", &fixture_digest);
+        assert!(!verification.is_clean(), "{language} malformed not clean");
+        record_negative_cst_observation(language, "notReportedAsClean", &fixture_digest);
     }
 }
 

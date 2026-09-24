@@ -163,3 +163,67 @@ test('executed translation callbacks reach the evaluator; green no-op and missin
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test('inventory malformed-input checks emit observed evidence for each JavaScript CST cell', async () => {
+  const manifest = await buildIssue195Manifest(root);
+  const directory = await mkdtemp(path.join(tmpdir(), 'issue-195-cst-negative-'));
+  const observations = path.join(directory, 'records.jsonl');
+  const commit = 'observed-cst-commit';
+  try {
+    const childEnvironment = {
+      ...process.env, ISSUE_195_OBSERVATION_FILE: observations, ISSUE_195_COMMIT: commit,
+    };
+    delete childEnvironment.NODE_TEST_CONTEXT;
+    execFileSync(process.execPath, [
+      '--test', '--test-name-pattern=every JavaScript grammar inventory frontend retains',
+      'tests/four-language-conformance.test.js',
+    ], { cwd: path.join(root, 'js'), env: childEnvironment, stdio: 'pipe' });
+    const records = (await readFile(observations, 'utf8')).trim().split('\n').map(JSON.parse);
+    const cells = manifest.atomicRequirements
+      .filter(({ area }) => area === 'default-cst')
+      .flatMap(({ verifications }) => verifications)
+      .filter(({ runtime, kind }) => runtime === 'javascript' && kind === 'negative');
+    assert.equal(records.length, cells.length * 4);
+    for (const cell of cells) {
+      const observed = observedEvidenceForCell(cell, records);
+      assert.equal(observed.complete, true, cell.testId);
+      for (const record of observed.executionRecords) {
+        assert.equal(record.commit, commit);
+        assert.equal(record.runtime, 'javascript');
+        assert.equal(record.fixtureDigest, manifest.fixtureCatalog[record.fixtureId].sha256);
+      }
+    }
+    const requirement = manifest.atomicRequirements.find(({ id }) => id === 'I195-CST-javascript');
+    const cell = requirement.verifications.find(({ runtime, kind }) =>
+      runtime === 'javascript' && kind === 'negative');
+    const candidate = { ...manifest, atomicRequirements: [{ ...requirement, verifications: [cell] }] };
+    const evaluate = (observedRecords) => {
+      const observed = observedEvidenceForCell(cell, observedRecords);
+      const document = {
+        schemaVersion: 1, issue: 195, commit,
+        producer: 'js/scripts/run-issue-195-evidence.mjs',
+        generatedAt: new Date().toISOString(),
+        results: [{
+          testId: cell.testId, kind: cell.kind,
+          outcome: observed.complete ? 'passed' : 'missing',
+          positiveEvidence: observed.complete,
+          command: 'node --test tests/four-language-conformance.test.js',
+          toolchainVersions: { node: process.version },
+          grammarVersions: { inventory: 'schema-1' },
+          evidenceArtifacts: ['execution-records.jsonl'],
+          failureLogs: [],
+          assertionsPassed: observed.assertionsPassed,
+          executionRecords: observed.executionRecords,
+          fixtureDigests: Object.fromEntries(cell.fixtureIds.map((id) =>
+            [id, manifest.fixtureCatalog[id].sha256])),
+        }],
+      };
+      return evaluateIssue195Acceptance(candidate, [document], { checkpoint: 'pre-merge', commit });
+    };
+    const observedRecords = records.filter(({ testId }) => testId === cell.testId);
+    assert.equal(evaluate(observedRecords).passed, true);
+    assert.equal(evaluate(observedRecords.slice(1)).passed, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
