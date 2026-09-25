@@ -213,7 +213,9 @@ export function parseProgrammingLanguage(text, language) {
 
   const parsed = parseGrammarCst(text, canonical);
   if (text.includes('\0')) {
-    parsed.tree.flags = parsed.tree.flags.withError();
+    // NUL is prohibited input: the root reports that it contains an error
+    // without relabeling the grammar's own nodes as ERROR.
+    parsed.tree.flags = new LinkFlags({ ...parsed.tree.flags, hasError: true });
     const retained = parsed.tokens.map(({ text: token }) => token).join('');
     if (text.startsWith(retained) && retained.length < text.length) {
       const boundaries = sourceBoundaries(text);

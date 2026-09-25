@@ -344,7 +344,12 @@ impl LinkNetwork {
                 })
                 .map(Link::id);
             if let Some(root) = malformed_root {
-                network.set_flags(root, LinkFlags::error());
+                // NUL is prohibited input: the root reports that it contains an
+                // error without relabeling the grammar's own nodes as ERROR.
+                let flags = network
+                    .link(root)
+                    .map_or_else(LinkFlags::clean, |link| link.metadata().flags());
+                network.set_flags(root, flags.with_containing_error());
                 network.set_span(
                     root,
                     SourceSpan::new(
