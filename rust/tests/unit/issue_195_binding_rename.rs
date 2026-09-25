@@ -154,6 +154,64 @@ fn binding_rename_distinguishes_disjoint_nested_names_from_capture() {
     }
 }
 
+#[test]
+fn javascript_var_bindings_use_function_scope_and_include_early_references() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../parity/fixtures/four-language-conformance.json");
+    let corpus: Value = serde_json::from_str(&fs::read_to_string(path).expect("shared corpus"))
+        .expect("valid shared corpus");
+
+    for fixture in corpus["varScopeCases"].as_array().expect("var scope cases") {
+        let source = fixture["source"].as_str().expect("source");
+        let program = analyze_program(source, "JavaScript", ProgramProjectContext::default())
+            .expect("JavaScript analysis");
+        let occurrence = usize::try_from(fixture["declarationOccurrence"].as_u64().unwrap())
+            .expect("occurrence fits usize");
+        let binding = program
+            .bindings()
+            .iter()
+            .filter(|binding| binding.name() == fixture["binding"].as_str().unwrap())
+            .nth(occurrence)
+            .expect("selected var binding");
+        assert_eq!(
+            binding.references().len(),
+            usize::try_from(fixture["expectedReferences"].as_u64().unwrap())
+                .expect("reference count fits usize")
+        );
+        let renamed = program
+            .rename_binding(binding.id(), fixture["replacement"].as_str().unwrap())
+            .expect("rename scoped var");
+        assert_eq!(renamed.emit(), fixture["expected"].as_str().unwrap());
+        let renamed_source = renamed.emit();
+        for source in [source, renamed_source.as_str()] {
+            assert_eq!(
+                javascript_observation(source),
+                fixture["expectedObservation"]
+            );
+        }
+    }
+    let lexical = analyze_program(
+        "{ let x = 1; } x;",
+        "JavaScript",
+        ProgramProjectContext::default(),
+    )
+    .expect("JavaScript lexical analysis");
+    assert_eq!(
+        lexical
+            .bindings()
+            .iter()
+            .find(|binding| binding.name() == "x")
+            .expect("x binding")
+            .references()
+            .len(),
+        0
+    );
+    assert!(lexical
+        .unresolved_references()
+        .iter()
+        .any(|reference| reference.name() == "x"));
+}
+
 fn javascript_observation(source: &str) -> Value {
     let output = Command::new("node")
         .args([

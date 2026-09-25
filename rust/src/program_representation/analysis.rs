@@ -3,6 +3,8 @@ use super::{
     ProgramRepresentationError, ProgramScope, ProgramSourceMapping, TokenKind,
 };
 
+mod javascript_hoist;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SemanticToken {
     pub(super) kind: TokenKind,
@@ -169,6 +171,9 @@ pub(super) fn resolve_bindings(
         "Rust" => declare_rust(&tokens, &brace_scopes, &mut declarations, &mut declared),
         _ => declare_proof_language(&tokens, language, &mut declarations, &mut declared),
     }
+    if language == "JavaScript" {
+        javascript_hoist::hoist_var_declarations(&mut declarations, &tokens, syntax, &scopes);
+    }
     declarations.sort_by_key(|declaration| tokens[declaration.token].range.start);
     let mut bindings = declarations
         .into_iter()
@@ -205,7 +210,7 @@ pub(super) fn resolve_bindings(
             .enumerate()
             .filter(|(_, (_, binding))| {
                 binding.name == token.text
-                    && binding.declaration.start <= token.range.start
+                    && (binding.kind == "var" || binding.declaration.start <= token.range.start)
                     && scope_contains(&scopes, &binding.scope, token.scope)
             })
             .map(|(index, _)| index)

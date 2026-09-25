@@ -351,6 +351,7 @@ function resolveBindings(tokens, syntax, source, language) {
   };
   if (language === 'JavaScript') {
     declareJavaScript(tokens, syntax, braceScopes, declare);
+    hoistJavaScriptVars(declarations, tokens, syntax, scopes);
   } else if (language === 'Rust') {
     declareRust(tokens, braceScopes, declare);
   } else {
@@ -378,7 +379,8 @@ function resolveBindings(tokens, syntax, source, language) {
     if (token.kind !== 'identifier' || byToken.has(index) ||
       (language === 'JavaScript' && propertyNames.has(`${token.start}:${token.end}`))) continue;
     const candidates = bindings.filter((binding) => {
-      if (binding.name !== token.text || binding.declaration.start > token.start) return false;
+      if (binding.name !== token.text ||
+        (binding.kind !== 'var' && binding.declaration.start > token.start)) return false;
       return scopeContains(scopeById, binding.scope, token.scope);
     });
     candidates.sort((left, right) => {
@@ -396,6 +398,25 @@ function resolveBindings(tokens, syntax, source, language) {
     bindings: bindings.map(({ tokenIndex: _tokenIndex, ...binding }) => binding),
     unresolved,
   };
+}
+
+function hoistJavaScriptVars(declarations, tokens, syntax, scopes) {
+  const functionTerms = new Set([
+    'function_declaration', 'function_expression', 'generator_function_declaration',
+    'generator_function', 'arrow_function', 'method_definition',
+  ]);
+  const functionBodies = new Set(syntax
+    .filter(({ term }) => functionTerms.has(term))
+    .flatMap(({ start, end }) => syntax
+      .filter((fact) => fact.term === 'statement_block' && fact.start >= start && fact.end === end)
+      .map((fact) => fact.start + 1)));
+  const byId = new Map(scopes.map((scope) => [scope.id, scope]));
+  for (const declaration of declarations) {
+    if (declaration.kind !== 'var') continue;
+    let scope = byId.get(tokens[declaration.tokenIndex].scope);
+    while (scope?.parent && !functionBodies.has(scope.start)) scope = byId.get(scope.parent);
+    declaration.scope = scope?.id ?? 'scope:0';
+  }
 }
 
 function declareJavaScript(tokens, syntax, braceScopes, declare) {

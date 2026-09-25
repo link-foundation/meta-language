@@ -392,6 +392,26 @@ test('binding rename permits disjoint nested names and rejects actual nested cap
   }
 });
 
+test('JavaScript var bindings use function scope and include references before declaration', () => {
+  for (const fixture of corpus.varScopeCases) {
+    const program = analyzeProgram(fixture.source, 'JavaScript');
+    const binding = program.bindings
+      .filter(({ name }) => name === fixture.binding)[fixture.declarationOccurrence];
+    assert.ok(binding, `binding in ${fixture.source}`);
+    assert.equal(binding.references.length, fixture.expectedReferences);
+    const renamed = program.renameBinding(binding.id, fixture.replacement);
+    assert.equal(renamed.emit(), fixture.expected);
+    for (const source of [fixture.source, renamed.emit()]) {
+      const context = {};
+      runInNewContext(source, context);
+      assert.deepEqual(JSON.parse(JSON.stringify(context.result)), fixture.expectedObservation);
+    }
+  }
+  const lexical = analyzeProgram('{ let x = 1; } x;', 'JavaScript');
+  assert.equal(lexical.bindings.find(({ name }) => name === 'x').references.length, 0);
+  assert.ok(lexical.unresolvedReferences.some(({ name }) => name === 'x'));
+});
+
 test('structured construction, query, edits, cloning, movement, and emission reparse cleanly', () => {
   for (const fixture of corpus.transformationPrograms) {
     const program = constructProgram(fixture.source, fixture.language);

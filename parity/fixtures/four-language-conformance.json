@@ -278,6 +278,53 @@
       "allowed": false
     }
   ],
+  "varScopeCases": [
+    {
+      "source": "function f() { if (true) { var x = 1; } return x; } globalThis.result = f();",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "function f() { if (true) { var y = 1; } return y; } globalThis.result = f();",
+      "expectedReferences": 1,
+      "expectedObservation": 1
+    },
+    {
+      "source": "{ var x = 1; } globalThis.result = x;",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "{ var y = 1; } globalThis.result = y;",
+      "expectedReferences": 1,
+      "expectedObservation": 1
+    },
+    {
+      "source": "function f() { const before = x; var x = 1; return before; } globalThis.result = f() === undefined;",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "function f() { const before = y; var y = 1; return before; } globalThis.result = f() === undefined;",
+      "expectedReferences": 1,
+      "expectedObservation": true
+    },
+    {
+      "source": "function outer() { if (true) { var x = 1; } function inner() { var x = 2; return x; } return [x, inner()]; } globalThis.result = outer();",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "function outer() { if (true) { var y = 1; } function inner() { var x = 2; return x; } return [y, inner()]; } globalThis.result = outer();",
+      "expectedReferences": 1,
+      "expectedObservation": [1, 2]
+    },
+    {
+      "source": "const f = () => { if (true) { var x = 1; } return x; }; globalThis.result = f();",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "const f = () => { if (true) { var y = 1; } return y; }; globalThis.result = f();",
+      "expectedReferences": 1,
+      "expectedObservation": 1
+    }
+  ],
   "transformationPrograms": [
     {
       "language": "JavaScript",
