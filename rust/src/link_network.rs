@@ -384,7 +384,8 @@ impl LinkNetwork {
                 row += 1;
                 column = 0;
             } else {
-                column += 1;
+                // Columns count UTF-8 bytes, as tree-sitter points do.
+                column += character.len_utf8();
             }
             let end_point = Point::new(row, column);
             let span = SourceSpan::new(ByteRange::new(start, end), start_point, end_point);
@@ -980,7 +981,7 @@ fn end_point_for_text(text: &str) -> Point {
             row += 1;
             column = 0;
         } else {
-            column += 1;
+            column += character.len_utf8();
         }
     }
     Point::new(row, column)

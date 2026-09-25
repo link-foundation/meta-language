@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
 import { test } from 'node:test';
 
 async function readJson(url) {
@@ -38,43 +40,47 @@ test('npm package metadata uses the public unscoped package name', async () => {
   }
 });
 
-test('npm delivery is script-free and carries the portable Rocq grammar', async () => {
+test('npm delivery is script-free and carries every locked portable grammar', async () => {
   const packageJson = await readJson(new URL('../package.json', import.meta.url));
-  const rocqGrammar = await readFile(
-    new URL('../src/vendor/tree-sitter-rocq.wasm', import.meta.url),
-  );
+  const lock = await readJson(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url));
 
   assert.equal(packageJson.scripts.install, undefined);
   assert.equal(packageJson.scripts.prepack, undefined);
   assert.equal(packageJson.dependencies['tree-sitter-rocq'], undefined);
-  assert.equal(packageJson.dependencies['web-tree-sitter'], '0.25.10');
+  assert.equal(packageJson.dependencies['@kreuzberg/tree-sitter-language-pack'], undefined);
+  assert.equal(packageJson.dependencies['tree-sitter'], undefined);
+  assert.equal(packageJson.dependencies['web-tree-sitter'], lock.treeSitterRuntime.javascript);
   assert.equal(packageJson.bundleDependencies, undefined);
-  assert.ok(rocqGrammar.byteLength > 0);
-});
-
-test('npm lockfile records every optional native language-pack package', async () => {
-  const packageLock = await readJson(new URL('../package-lock.json', import.meta.url));
-  const languagePack =
-    packageLock.packages['node_modules/@kreuzberg/tree-sitter-language-pack'];
-
-  for (const packageName of Object.keys(languagePack.optionalDependencies)) {
-    const topLevelPath = `node_modules/${packageName}`;
-    const nestedPath =
-      `node_modules/@kreuzberg/tree-sitter-language-pack/node_modules/${packageName}`;
-    assert.ok(
-      packageLock.packages[topLevelPath] || packageLock.packages[nestedPath],
-      `package-lock.json is missing ${packageName}`,
+  assert.ok(packageJson.files.includes('src'));
+  for (const [id, grammar] of Object.entries(lock.grammars)) {
+    const wasm = gunzipSync(
+      await readFile(new URL(`../src/vendor/grammars/${id}.wasm.gz`, import.meta.url)),
     );
+    assert.equal(createHash('sha256').update(wasm).digest('hex'), grammar.wasmSha256, id);
+    const license = await readFile(
+      new URL(`../src/vendor/grammars/${id}.LICENSE`, import.meta.url),
+      'utf8',
+    );
+    assert.ok(license.trim().length > 0, `${id} ships its license`);
   }
 });
 
-test('Rust delivery closes the decompressed Rocq parser before compiling it', async () => {
+test('npm lockfile carries no native or network-downloaded grammar packages', async () => {
+  const packageLock = await readJson(new URL('../package-lock.json', import.meta.url));
+
+  for (const packagePath of Object.keys(packageLock.packages)) {
+    assert.equal(packagePath.includes('tree-sitter-language-pack'), false, packagePath);
+    assert.notEqual(packagePath, 'node_modules/tree-sitter', packagePath);
+  }
+});
+
+test('Rust delivery closes each decompressed vendored parser before compiling it', async () => {
   const buildScript = await readFile(new URL('../../rust/build.rs', import.meta.url), 'utf8');
 
-  assert.match(buildScript, /fn decompress_rocq_parser\([^]*?\n}/);
+  assert.match(buildScript, /fn decompress_parser\([^]*?\n}/);
   assert.match(
     buildScript,
-    /decompress_rocq_parser\(&compressed, &parser\);\s+let mut compiler = cc::Build::new\(\)/,
+    /decompress_parser\(&compressed, &parser\);\s+let mut compiler = cc::Build::new\(\)/,
   );
 });
 

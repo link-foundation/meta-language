@@ -28,6 +28,9 @@ const parityDirectory = path.join(resultsDirectory, 'runtime-parity');
 const manifest = await buildIssue195Manifest(root);
 const plan = buildEvidencePlan(manifest, checkpoint);
 const packageMetadata = JSON.parse(await readFile(path.join(root, 'js/package.json'), 'utf8'));
+const grammarLock = JSON.parse(
+  await readFile(path.join(root, 'js/src/vendor/grammars/grammar-lock.json'), 'utf8'),
+);
 const corpus = JSON.parse(
   await readFile(path.join(root, 'parity/fixtures/issue-195-evidence.json'), 'utf8'),
 );
@@ -175,10 +178,10 @@ function readToolchainVersions() {
 function readGrammarVersions() {
   return {
     metaLanguage: packageMetadata.version,
-    treeSitter: packageMetadata.dependencies['tree-sitter'],
-    treeSitterLanguagePack: packageMetadata.dependencies['@kreuzberg/tree-sitter-language-pack'],
     webTreeSitter: packageMetadata.dependencies['web-tree-sitter'],
-    treeSitterRocq: '300fe33fc299c30f736fd56d8ef8a28b08acd4e6',
+    grammars: Object.fromEntries(
+      Object.entries(grammarLock.grammars).map(([id, grammar]) => [id, grammar.version]),
+    ),
     acceptanceManifest: `schema-${manifest.schemaVersion}`,
   };
 }

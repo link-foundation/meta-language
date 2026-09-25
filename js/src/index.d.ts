@@ -2,23 +2,30 @@ export * from './query-algebra.js';
 
 export type LinkTypeValue =
   | 'Concept'
+  | 'Document'
   | 'Dynamic'
   | 'Field'
+  | 'Grammar'
   | 'Language'
   | 'Object'
+  | 'Reference'
   | 'Region'
   | 'Relation'
   | 'Semantic'
   | 'SourceToken'
   | 'Syntax'
-  | 'Trivia';
+  | 'Trivia'
+  | 'Type';
 
 export const LinkType: Record<string, LinkTypeValue> & {
   Concept: 'Concept';
+  Document: 'Document';
   Dynamic: 'Dynamic';
   Field: 'Field';
+  Grammar: 'Grammar';
   Language: 'Language';
   Object: 'Object';
+  Reference: 'Reference';
   Region: 'Region';
   Relation: 'Relation';
   Semantic: 'Semantic';
@@ -26,6 +33,7 @@ export const LinkType: Record<string, LinkTypeValue> & {
   Token: 'SourceToken';
   Syntax: 'Syntax';
   Trivia: 'Trivia';
+  Type: 'Type';
 };
 export const ApiOperation: Record<string, string>;
 export const ApiStyle: Record<string, string | string[]>;

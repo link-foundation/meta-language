@@ -224,8 +224,9 @@ test('JavaScript document and natural-language grammars expose their productions
     }
   }
 
+  // `not a link` is a valid three-reference LiNo link; an unclosed paren is not.
   for (const [language, source] of [
-    ['LiNo', 'not a link\n'],
+    ['LiNo', '(unclosed\n'],
     ['PDF', 'not a PDF\n'],
   ]) {
     const network = LinkNetwork.parse(source, language);

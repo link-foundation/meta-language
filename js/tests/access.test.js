@@ -37,7 +37,7 @@ test('frozen view supports non-mutating operations', () => {
   assert.equal(view.len(), expectedLen);
   assert.equal(view.links().length, expectedLen);
   assert.ok(view.verifyFullMatch().isClean());
-  assert.ok(view.findTerm('a') !== undefined);
+  assert.ok(view.findTerm('plain-text') !== undefined);
 });
 
 test('frozen view rejects every mutation with ReadOnlyViolation', () => {

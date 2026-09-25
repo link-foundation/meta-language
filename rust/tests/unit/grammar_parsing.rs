@@ -441,11 +441,10 @@ fn parse_marks_recovery_errors_without_losing_original_text() {
 fn data_format_fixtures_emit_structured_syntax_and_round_trip() {
     // Root node kind emitted by each wired data-exchange parser.
     let expected_root = |language: &str| match language {
-        "JSON" | "TOML" | "XML" | "INI" => "document",
+        "JSON" | "TOML" | "XML" | "INI" | "CSV" => "document",
         "JSON5" => "file",
         "YAML" => "stream",
         "protobuf" | "GraphQL" => "source_file",
-        "CSV" => "csv_file",
         other => panic!("unexpected data-format target {other}"),
     };
 

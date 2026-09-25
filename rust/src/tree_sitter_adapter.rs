@@ -15,6 +15,19 @@ mod rocq_grammar {
     pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_rocq) };
 }
 
+#[allow(unsafe_code)]
+mod csv_grammar {
+    use tree_sitter_language::LanguageFn;
+
+    unsafe extern "C" {
+        fn tree_sitter_csv() -> *const ();
+    }
+
+    // SAFETY: build.rs compiles the generated parser from the pinned tag
+    // recorded in vendor/tree-sitter-csv/NOTICE.md with this exact symbol.
+    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_csv) };
+}
+
 use crate::line_index::LineIndex;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point,
@@ -238,6 +251,8 @@ fn grammar_for_language(language: &str) -> Option<Language> {
         Some(tree_sitter_css::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("json") {
         Some(tree_sitter_json::LANGUAGE.into())
+    } else if language.eq_ignore_ascii_case("csv") {
+        Some(csv_grammar::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("json5") {
         Some(tree_sitter_json5_orchard::LANGUAGE.into())
     } else if language.eq_ignore_ascii_case("yaml") || language.eq_ignore_ascii_case("yml") {
@@ -431,7 +446,9 @@ fn flags_for_node(node: Node<'_>) -> LinkFlags {
     if node.is_error() {
         flags = flags.with_error();
     }
-    if node.has_error() && !node.is_error() && !node.is_missing() {
+    // Mirrors tree-sitter's `ts_node_has_error`, which is true for error and
+    // missing nodes themselves as well as for their ancestors.
+    if node.has_error() || node.is_error() || node.is_missing() {
         flags = flags.with_containing_error();
     }
     if node.is_missing() {
@@ -478,22 +495,28 @@ fn css_declaration_list_needs_semicolon(text: &str) -> bool {
         && !trimmed.contains('{')
 }
 
+/// Position of a parsed text inside its host document, used to translate
+/// region-relative spans into document spans.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct SpanOffset {
+pub struct SpanOffset {
     byte: usize,
     point: Point,
 }
 
 impl SpanOffset {
-    const fn new(byte: usize, point: Point) -> Self {
+    pub const fn new(byte: usize, point: Point) -> Self {
         Self { byte, point }
     }
 
-    const fn zero() -> Self {
+    pub const fn zero() -> Self {
         Self::new(0, Point::new(0, 0))
     }
 
-    const fn point(self, point: Point) -> Point {
+    pub const fn byte(self, byte: usize) -> usize {
+        self.byte + byte
+    }
+
+    pub const fn point(self, point: Point) -> Point {
         let row = self.point.row() + point.row();
         let column = if point.row() == 0 {
             self.point.column() + point.column()

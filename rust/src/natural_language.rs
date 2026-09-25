@@ -17,6 +17,7 @@ use unicode_normalization::UnicodeNormalization;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::configuration::{LanguageIdentificationDetector, ParseConfiguration};
+use crate::language_identification::{self, LANGUAGE_IDENTIFIER_TERM};
 use crate::line_index::LineIndex;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::natural_language_grammar::annotate_morphosyntax;
@@ -92,6 +93,8 @@ pub fn annotate_natural_language(
         document_span,
     );
 
+    // Segments belong to the declared region; the identifier's verdict lives
+    // on the Language link and its annotations.
     for segment in segments {
         network.insert_link(
             [region],
@@ -99,7 +102,7 @@ pub fn annotate_natural_language(
                 .with_link_type(LinkType::Token)
                 .with_named(true)
                 .with_term(segment.text)
-                .with_language(detected_language)
+                .with_language(declared_language)
                 .with_span(span_for_range(
                     &lines,
                     segment.range.start(),
@@ -221,6 +224,7 @@ fn is_statehood_worked_example(text: &str, language: &str) -> bool {
 
 const fn detector_term(detector: LanguageIdentificationDetector) -> &'static str {
     match detector {
+        LanguageIdentificationDetector::Trigram => LANGUAGE_IDENTIFIER_TERM,
         LanguageIdentificationDetector::Lingua => "identifier:lingua",
         LanguageIdentificationDetector::Whatlang => "identifier:whatlang",
     }
@@ -228,6 +232,7 @@ const fn detector_term(detector: LanguageIdentificationDetector) -> &'static str
 
 fn identify_language(text: &str, detector: LanguageIdentificationDetector) -> Option<&'static str> {
     match detector {
+        LanguageIdentificationDetector::Trigram => language_identification::identify_language(text),
         LanguageIdentificationDetector::Lingua => identify_with_lingua(text),
         LanguageIdentificationDetector::Whatlang => identify_with_whatlang(text),
     }
@@ -361,7 +366,7 @@ fn bidi_direction(text: &str) -> &'static str {
 fn span_for_range(lines: &LineIndex, start: usize, end: usize) -> SourceSpan {
     SourceSpan::new(
         ByteRange::new(start, end),
-        lines.char_point(start),
-        lines.char_point(end),
+        lines.byte_point(start),
+        lines.byte_point(end),
     )
 }

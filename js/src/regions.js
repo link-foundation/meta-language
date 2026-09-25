@@ -256,7 +256,8 @@ function pointAtByte(text, byte) {
       row += 1;
       column = 0;
     } else {
-      column += 1;
+      // Columns count UTF-8 bytes, as tree-sitter points do.
+      column += byteLength(character);
     }
     index += byteLength(character);
   }

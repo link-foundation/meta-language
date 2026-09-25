@@ -1,8 +1,7 @@
 use crate::configuration::ParseConfiguration;
-use crate::data_format_parser;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::mixed_regions::detect_embedded_regions;
-use crate::tree_sitter_adapter;
+use crate::{structured_text_parser, tree_sitter_adapter};
 
 pub fn attach_embedded_regions(
     network: &mut LinkNetwork,
@@ -25,6 +24,15 @@ pub fn attach_embedded_regions(
                 .with_span(region.span()),
         );
         let range = region.span().byte_range();
+        // A region spanning the whole document in the document's own language
+        // already has its grammar CST below the document; reparsing it would
+        // duplicate every node.
+        if region.language().eq_ignore_ascii_case(language)
+            && range.start() == 0
+            && range.end() == text.len()
+        {
+            continue;
+        }
         let region_text = &text[range.start()..range.end()];
         if tree_sitter_adapter::parse_embedded_region_into(
             network,
@@ -36,7 +44,7 @@ pub fn attach_embedded_regions(
         )
         .is_none()
         {
-            let _ = data_format_parser::parse_embedded_region_into(
+            let _ = structured_text_parser::parse_embedded_region_into(
                 network,
                 region_link,
                 region_text,

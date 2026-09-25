@@ -1,96 +1,204 @@
-use unicode_segmentation::UnicodeSegmentation;
+use std::sync::OnceLock;
+
+use regex::Regex;
 
 use crate::line_index::LineIndex;
-use crate::natural_language::annotate_natural_language;
+use crate::natural_language::{annotate_natural_language, canonical_natural_language};
+use crate::tree_sitter_adapter::SpanOffset;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration,
     SourceSpan,
 };
 
+/// Built-in structured-text grammar selected for a language label.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TextGrammar {
+    Plain,
+    Lino,
+    Pdf,
+    Natural,
+}
+
+impl TextGrammar {
+    fn for_language(language: &str) -> Option<Self> {
+        match language.to_ascii_lowercase().as_str() {
+            "txt" | "text" | "plain text" => Some(Self::Plain),
+            "lino" => Some(Self::Lino),
+            "pdf" => Some(Self::Pdf),
+            _ if canonical_natural_language(language).is_some() => Some(Self::Natural),
+            _ => None,
+        }
+    }
+}
+
 pub fn parse_plain(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
-    parse_lines(
-        text,
-        language,
-        configuration,
-        "text_document",
-        |_| ("line", false),
-        balanced_parentheses(text),
-    )
+    parse_document(text, language, configuration, TextGrammar::Plain)
 }
 
 pub fn parse_lino(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
-    parse_lines(
-        text,
-        language,
-        configuration,
-        "lino_document",
-        lino_line,
-        balanced_parentheses(text),
-    )
+    parse_document(text, language, configuration, TextGrammar::Lino)
 }
 
 pub fn parse_pdf(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
-    parse_lines(
-        text,
-        language,
-        configuration,
-        "pdf_file",
-        pdf_line,
-        valid_pdf_container(text),
-    )
+    parse_document(text, language, configuration, TextGrammar::Pdf)
 }
 
 pub fn parse_natural(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
     let (mut network, document) = LinkNetwork::new_parse_document(text, language);
-    let lines = LineIndex::new(text);
-    let root_span = span_for_range(&lines, 0, text.len());
-    let root = insert_syntax(
+    insert_grammar(
         &mut network,
         document,
-        "natural_language_document",
+        text,
         language,
-        root_span,
-        LinkFlags::clean(),
+        configuration,
+        TextGrammar::Natural,
+        SpanOffset::zero(),
     );
-
-    for (start, sentence) in text.split_sentence_bound_indices() {
-        let end = start + sentence.len();
-        let sentence_node = insert_syntax(
-            &mut network,
-            root,
-            "sentence",
-            language,
-            span_for_range(&lines, start, end),
-            LinkFlags::clean(),
-        );
-        insert_lexical_nodes(
-            &mut network,
-            sentence_node,
-            text,
-            start,
-            end,
-            language,
-            &lines,
-            configuration,
-        );
-    }
-
     network.attach_embedded_regions(document, text, language, configuration);
     annotate_natural_language(&mut network, document, text, language, configuration);
     network
 }
 
-fn parse_lines(
+/// Parses an embedded region written in a built-in structured-text language
+/// into `network` below `region`, returning the grammar root, or `None` when
+/// `language` has no built-in structured-text grammar.
+pub fn parse_embedded_region_into(
+    network: &mut LinkNetwork,
+    region: LinkId,
+    text: &str,
+    language: &str,
+    span: SourceSpan,
+    configuration: ParseConfiguration,
+) -> Option<LinkId> {
+    let grammar = TextGrammar::for_language(language)?;
+    let offset = SpanOffset::new(span.byte_range().start(), span.start_point());
+    Some(insert_grammar(
+        network,
+        region,
+        text,
+        language,
+        configuration,
+        grammar,
+        offset,
+    ))
+}
+
+fn parse_document(
     text: &str,
     language: &str,
     configuration: ParseConfiguration,
+    grammar: TextGrammar,
+) -> LinkNetwork {
+    let (mut network, document) = LinkNetwork::new_parse_document(text, language);
+    insert_grammar(
+        &mut network,
+        document,
+        text,
+        language,
+        configuration,
+        grammar,
+        SpanOffset::zero(),
+    );
+    network.attach_embedded_regions(document, text, language, configuration);
+    network
+}
+
+fn insert_grammar(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    text: &str,
+    language: &str,
+    configuration: ParseConfiguration,
+    grammar: TextGrammar,
+    offset: SpanOffset,
+) -> LinkId {
+    let source = Source {
+        text,
+        language,
+        lines: LineIndex::new(text),
+        offset,
+        configuration,
+    };
+    match grammar {
+        TextGrammar::Plain => insert_lines(
+            network,
+            parent,
+            &source,
+            "text_document",
+            |_| ("line", false),
+            balanced_parentheses(text),
+        ),
+        TextGrammar::Lino => insert_lines(
+            network,
+            parent,
+            &source,
+            "lino_document",
+            lino_line,
+            balanced_parentheses(text),
+        ),
+        TextGrammar::Pdf => insert_lines(
+            network,
+            parent,
+            &source,
+            "pdf_file",
+            pdf_line,
+            valid_pdf_container(text),
+        ),
+        TextGrammar::Natural => insert_sentences(network, parent, &source),
+    }
+}
+
+/// Text being parsed together with its position in the host document.
+struct Source<'a> {
+    text: &'a str,
+    language: &'a str,
+    lines: LineIndex,
+    offset: SpanOffset,
+    configuration: ParseConfiguration,
+}
+
+impl Source<'_> {
+    fn span(&self, start: usize, end: usize) -> SourceSpan {
+        SourceSpan::new(
+            ByteRange::new(self.offset.byte(start), self.offset.byte(end)),
+            self.offset.point(self.lines.byte_point(start)),
+            self.offset.point(self.lines.byte_point(end)),
+        )
+    }
+}
+
+fn insert_sentences(network: &mut LinkNetwork, parent: LinkId, source: &Source<'_>) -> LinkId {
+    let root = insert_syntax(
+        network,
+        parent,
+        "natural_language_document",
+        source.language,
+        source.span(0, source.text.len()),
+        LinkFlags::clean(),
+    );
+    for (start, end) in sentence_ranges(source.text) {
+        let sentence = insert_syntax(
+            network,
+            root,
+            "sentence",
+            source.language,
+            source.span(start, end),
+            LinkFlags::clean(),
+        );
+        insert_lexical_nodes(network, sentence, source, start, end);
+    }
+    root
+}
+
+fn insert_lines(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    source: &Source<'_>,
     root_term: &str,
     classify_line: fn(&str) -> (&'static str, bool),
     document_is_valid: bool,
-) -> LinkNetwork {
-    let (mut network, document) = LinkNetwork::new_parse_document(text, language);
-    let lines = LineIndex::new(text);
-    let root_span = span_for_range(&lines, 0, text.len());
+) -> LinkId {
+    let text = source.text;
     let mut classified = Vec::new();
     let mut start = 0;
     for line in text.split_inclusive('\n') {
@@ -102,17 +210,21 @@ fn parse_lines(
         classified.push((start, text.len(), classify_line(&text[start..])));
     }
     let has_line_error = classified.iter().any(|(_, _, (_, error))| *error);
-    let root_flags = if document_is_valid && !has_line_error {
+    // A line error is located below the root; a document-level validation
+    // failure without a located line error makes the root itself the error.
+    let root_flags = if has_line_error {
+        LinkFlags::containing_error()
+    } else if document_is_valid {
         LinkFlags::clean()
     } else {
-        LinkFlags::containing_error()
+        LinkFlags::error()
     };
     let root = insert_syntax(
-        &mut network,
-        document,
+        network,
+        parent,
         root_term,
-        language,
-        root_span,
+        source.language,
+        source.span(0, text.len()),
         root_flags,
     );
 
@@ -123,64 +235,51 @@ fn parse_lines(
             LinkFlags::clean()
         };
         let line = insert_syntax(
-            &mut network,
+            network,
             root,
             term,
-            language,
-            span_for_range(&lines, start, end),
+            source.language,
+            source.span(start, end),
             flags,
         );
-        insert_lexical_nodes(
-            &mut network,
-            line,
-            text,
-            start,
-            end,
-            language,
-            &lines,
-            configuration,
-        );
+        insert_lexical_nodes(network, line, source, start, end);
     }
-    network.attach_embedded_regions(document, text, language, configuration);
-    network
+    root
 }
 
-#[allow(clippy::too_many_arguments)]
 fn insert_lexical_nodes(
     network: &mut LinkNetwork,
     parent: LinkId,
-    text: &str,
+    source: &Source<'_>,
     start: usize,
     end: usize,
-    language: &str,
-    lines: &LineIndex,
-    configuration: ParseConfiguration,
 ) {
-    for (relative_start, segment) in text[start..end].split_word_bound_indices() {
-        let segment_start = start + relative_start;
-        let segment_end = segment_start + segment.len();
+    for segment_match in lexical_pattern().find_iter(&source.text[start..end]) {
+        let segment = segment_match.as_str();
+        let segment_start = start + segment_match.start();
+        let segment_end = start + segment_match.end();
         let whitespace = segment.chars().all(char::is_whitespace);
         let term = if whitespace {
             "whitespace"
-        } else if segment.chars().any(char::is_alphanumeric) {
+        } else if word_pattern().is_match(segment) {
             "word"
         } else {
             "punctuation"
         };
-        let span = span_for_range(lines, segment_start, segment_end);
+        let span = source.span(segment_start, segment_end);
         let flags = if whitespace {
             LinkFlags::extra()
         } else {
             LinkFlags::clean()
         };
-        let syntax = insert_syntax(network, parent, term, language, span, flags);
+        let syntax = insert_syntax(network, parent, term, source.language, span, flags);
         let token = network.insert_link(
             [syntax],
             LinkMetadata::new()
                 .with_link_type(LinkType::Token)
                 .with_named(!whitespace)
                 .with_term(segment)
-                .with_language(language)
+                .with_language(source.language)
                 .with_span(span)
                 .with_flags(flags),
         );
@@ -189,10 +288,57 @@ fn insert_lexical_nodes(
                 parent,
                 token,
                 span,
-                configuration.trivia_attachment_policy(),
+                source.configuration.trivia_attachment_policy(),
             );
         }
     }
+}
+
+// The built-in lexical grammar shared with the JavaScript runtime: maximal runs
+// of Unicode whitespace, of word characters, and of any other characters.
+const WORD_CHARACTERS: &str = r"\p{L}\p{N}\p{M}_'\-";
+
+fn lexical_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        Regex::new(&format!(
+            r"\p{{White_Space}}+|[{WORD_CHARACTERS}]+|[^\p{{White_Space}}{WORD_CHARACTERS}]+"
+        ))
+        .expect("the built-in lexical grammar is a valid pattern")
+    })
+}
+
+fn word_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        Regex::new(&format!(r"^[{WORD_CHARACTERS}]+$")).expect("the built-in word pattern is valid")
+    })
+}
+
+// The built-in sentence grammar shared with the JavaScript runtime: a sentence
+// ends after a run of terminal punctuation, any closing punctuation or quotes,
+// and the whitespace that follows them.
+fn sentence_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        Regex::new(
+            r"(?s).*?[.!?\x{0964}\x{3002}\x{061F}\x{06D4}\x{FF01}\x{FF1F}]+[\p{Pe}\p{Pf}\x{0022}\x{0027}]*\p{White_Space}*",
+        )
+        .expect("the built-in sentence grammar is a valid pattern")
+    })
+}
+
+fn sentence_ranges(text: &str) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut start = 0;
+    for sentence in sentence_pattern().find_iter(text) {
+        ranges.push((sentence.start(), sentence.end()));
+        start = sentence.end();
+    }
+    if start < text.len() {
+        ranges.push((start, text.len()));
+    }
+    ranges
 }
 
 fn insert_syntax(
@@ -256,19 +402,26 @@ fn pdf_line(line: &str) -> (&'static str, bool) {
 }
 
 fn is_pdf_object_header(text: &str) -> bool {
-    let mut parts = text.split_whitespace();
-    parts.next().is_some_and(|part| part.parse::<u64>().is_ok())
-        && parts.next().is_some_and(|part| part.parse::<u64>().is_ok())
-        && parts.next() == Some("obj")
-        && parts.next().is_none()
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN
+        .get_or_init(|| {
+            Regex::new(r"^[0-9]+\p{White_Space}+[0-9]+\p{White_Space}+obj$")
+                .expect("the PDF object header pattern is valid")
+        })
+        .is_match(text)
 }
 
 fn valid_pdf_container(text: &str) -> bool {
-    let header = text
-        .lines()
-        .next()
-        .is_some_and(|line| line.starts_with("%PDF-"));
-    header && text.trim_end().ends_with("%%EOF")
+    static HEADER: OnceLock<Regex> = OnceLock::new();
+    static TRAILER: OnceLock<Regex> = OnceLock::new();
+    HEADER
+        .get_or_init(|| Regex::new(r"^%PDF-[0-9]+\.[0-9]+").expect("valid PDF header pattern"))
+        .is_match(text)
+        && TRAILER
+            .get_or_init(|| {
+                Regex::new(r"%%EOF\p{White_Space}*$").expect("valid PDF trailer pattern")
+            })
+            .is_match(text)
 }
 
 fn balanced_parentheses(text: &str) -> bool {
@@ -282,12 +435,4 @@ fn balanced_parentheses(text: &str) -> bool {
         }
     }
     depth == 0
-}
-
-fn span_for_range(lines: &LineIndex, start: usize, end: usize) -> SourceSpan {
-    SourceSpan::new(
-        ByteRange::new(start, end),
-        lines.char_point(start),
-        lines.char_point(end),
-    )
 }

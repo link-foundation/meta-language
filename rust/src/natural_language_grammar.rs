@@ -758,7 +758,7 @@ const fn is_sentence_punctuation(character: char) -> bool {
 fn span_for_range(lines: &LineIndex, start: usize, end: usize) -> SourceSpan {
     SourceSpan::new(
         ByteRange::new(start, end),
-        lines.char_point(start),
-        lines.char_point(end),
+        lines.byte_point(start),
+        lines.byte_point(end),
     )
 }

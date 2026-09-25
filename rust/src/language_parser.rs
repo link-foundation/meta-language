@@ -1,6 +1,6 @@
 use crate::{
-    data_format_parser, docx_parser, lino_parser, natural_language, pdf_parser,
-    structured_text_parser, tree_sitter_adapter, LinkNetwork, ParseConfiguration,
+    docx_parser, lino_parser, natural_language, pdf_parser, structured_text_parser,
+    tree_sitter_adapter, LinkNetwork, ParseConfiguration,
 };
 
 /// Parser boundary that produces lossless links networks for source text.
@@ -28,7 +28,6 @@ const BUILT_IN_GRAMMAR_ALIASES: &[&str] = &[
     "plain text",
     "pdf",
     "docx",
-    "csv",
     "english",
     "en",
     "mandarin chinese",
@@ -76,14 +75,6 @@ impl LanguageParser for BuiltInLanguageParser {
             return network;
         }
 
-        // Structured parsers without a tree-sitter grammar remain explicit
-        // fallbacks. Keeping this after the grammar registry ensures JSON5 is
-        // handled by its complete grammar while CSV retains its lossless
-        // record/field parser.
-        if let Some(network) = data_format_parser::parse(text, language, configuration) {
-            return network;
-        }
-
         LinkNetwork::parse_lossless_text(text, language, configuration)
     }
 }
@@ -107,7 +98,6 @@ fn parse_builtin_grammar(
         )),
         "pdf" => Some(pdf_parser::parse(text, language, configuration)),
         "docx" => Some(docx_parser::parse(text, language, configuration)),
-        "csv" => data_format_parser::parse(text, language, configuration),
         _ if natural_language::canonical_natural_language(language).is_some() => Some(
             structured_text_parser::parse_natural(text, language, configuration),
         ),

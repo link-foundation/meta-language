@@ -274,6 +274,10 @@ function reconstructConcept(network, concept, language) {
     if (!candidate) {
       continue;
     }
+    const mapped = network.reconstructConcept?.(concept, candidate);
+    if (mapped !== undefined) {
+      return mapped;
+    }
     const found = network.links().find((link) => (
       link.metadata().term === `concept:${concept}` && link.metadata().language === candidate
     ));

@@ -535,7 +535,7 @@ fn natural_language_parse_adds_segmentation_language_and_unicode_annotations() {
 fn natural_language_identifier_backend_is_switchable() {
     assert_eq!(
         ParseConfiguration::default().language_identification_detector(),
-        LanguageIdentificationDetector::Lingua
+        LanguageIdentificationDetector::Trigram
     );
 
     let source = "This sentence gives the detector enough English context.\n";

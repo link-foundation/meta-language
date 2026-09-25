@@ -246,8 +246,8 @@ fn region_for(lines: &LineIndex, language: String, start: usize, end: usize) -> 
         language,
         SourceSpan::new(
             ByteRange::new(start, end),
-            lines.char_point(start),
-            lines.char_point(end),
+            lines.byte_point(start),
+            lines.byte_point(end),
         ),
     )
 }

@@ -35,6 +35,17 @@ fn main() {
             )
         })
         .collect::<Vec<_>>();
+    let inventory = inventory()["languages"]
+        .as_array()
+        .expect("inventory languages")
+        .iter()
+        .map(|language| {
+            network_observation(
+                language["name"].as_str().expect("language name"),
+                language["source"].as_str().expect("language source"),
+            )
+        })
+        .collect::<Vec<_>>();
     let semantics = corpus["semanticPrograms"]
         .as_array()
         .expect("semantic fixtures")
@@ -55,6 +66,7 @@ fn main() {
             "schemaVersion": 1,
             "positive": positive,
             "negative": negative,
+            "inventory": inventory,
             "semantics": semantics,
             "transforms": transforms,
             "translations": translations,
@@ -68,6 +80,13 @@ fn corpus() -> Value {
         .join("../parity/fixtures/four-language-conformance.json");
     serde_json::from_str(&fs::read_to_string(path).expect("shared corpus is readable"))
         .expect("shared corpus is valid JSON")
+}
+
+fn inventory() -> Value {
+    let path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
+    serde_json::from_str(&fs::read_to_string(path).expect("grammar inventory is readable"))
+        .expect("grammar inventory is valid JSON")
 }
 
 fn network_observation(language: &str, source: &str) -> Value {
@@ -108,11 +127,7 @@ fn network_observation(language: &str, source: &str) -> Value {
             };
             let parent = network.link(*parent)?;
             let child = network.link(*child)?;
-            let label = normalized_field(
-                network.link(*label)?.metadata().term().unwrap_or_default(),
-                parent,
-                child,
-            )?;
+            let label = network.link(*label)?.metadata().term().unwrap_or_default();
             Some(format!(
                 "{}: {} -> {}",
                 label,
@@ -123,6 +138,12 @@ fn network_observation(language: &str, source: &str) -> Value {
         .collect::<Vec<_>>();
     fields.sort();
 
+    let mut annotations = network
+        .links()
+        .filter_map(annotation_signature)
+        .collect::<Vec<_>>();
+    annotations.sort();
+
     json!({
         "language": canonical_language(language),
         "source": source,
@@ -131,7 +152,35 @@ fn network_observation(language: &str, source: &str) -> Value {
         "nodes": nodes,
         "edges": edges,
         "fields": fields,
+        "annotations": annotations,
     })
+}
+
+/// Region-scoped language identification and Unicode annotations. Both
+/// runtimes share the trigram identifier, so its term is compared exactly; the
+/// word segmenter engines differ by runtime, so only their presence is
+/// compared and their verdicts show up in the tokens.
+fn annotation_signature(link: &Link) -> Option<String> {
+    let metadata = link.metadata();
+    metadata.span()?;
+    let term = metadata.term()?;
+    let kind = match metadata.link_type()? {
+        LinkType::Language => "language",
+        LinkType::Semantic => "semantic",
+        _ => return None,
+    };
+    let term = if term.starts_with("segmentation:") {
+        "segmentation"
+    } else {
+        term
+    };
+    Some(format!(
+        "{kind} {term} @ {}",
+        metadata
+            .language()
+            .map(canonical_language)
+            .unwrap_or_default()
+    ))
 }
 
 fn node_signature(link: &Link) -> String {
@@ -156,15 +205,13 @@ fn node_signature(link: &Link) -> String {
             Some(LinkType::Token) => "token",
             _ => "other",
         },
-        "term": normalized_term(link),
+        "term": metadata.term(),
         "language": metadata.language().map(canonical_language),
         "named": metadata.link_type() != Some(LinkType::Token) && metadata.is_named(),
         "span": span,
         "flags": {
             "isError": flags.is_error(),
-            // Node and Rust Tree-sitter disagree on whether an ERROR node also
-            // "has" an error. The acceptance view is deliberately inclusive.
-            "hasError": flags.has_error() || flags.is_error() || flags.is_missing(),
+            "hasError": flags.has_error(),
             "isMissing": flags.is_missing(),
             "isExtra": flags.is_extra(),
         },
@@ -174,41 +221,7 @@ fn node_signature(link: &Link) -> String {
 
 fn ignored_wrapper(link: &Link) -> bool {
     let metadata = link.metadata();
-    metadata.link_type() == Some(LinkType::Syntax)
-        && (metadata.term() == Some("whitespace")
-            || (metadata.language() == Some("Lean") && metadata.term() == Some("declaration")))
-}
-
-fn normalized_term(link: &Link) -> Option<&str> {
-    let metadata = link.metadata();
-    if metadata.language() == Some("Lean")
-        && metadata.term() == Some("def")
-        && metadata.is_named()
-        && metadata
-            .span()
-            .is_some_and(|span| span.byte_range().end() - span.byte_range().start() > 3)
-    {
-        Some("definition")
-    } else if metadata.language() == Some("Lean") && metadata.term() == Some("unary_op") {
-        Some("unary_expression")
-    } else {
-        metadata.term()
-    }
-}
-
-fn normalized_field<'a>(label: &'a str, parent: &Link, child: &Link) -> Option<&'a str> {
-    // The Lean builds expose punctuation and wrapper-only fields differently.
-    // Keep every named semantic field and normalize the sole renamed operand.
-    if !child.metadata().is_named() || normalized_term(child) == Some("binders") {
-        return None;
-    }
-    if parent.metadata().language() == Some("Lean")
-        && normalized_term(parent) == Some("unary_expression")
-        && label == "rhs"
-    {
-        return Some("operand");
-    }
-    Some(label)
+    metadata.link_type() == Some(LinkType::Syntax) && metadata.term() == Some("whitespace")
 }
 
 fn canonical_parent<'a>(network: &'a LinkNetwork, child: &Link) -> Option<&'a Link> {

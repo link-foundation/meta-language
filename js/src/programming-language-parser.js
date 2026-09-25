@@ -1,13 +1,31 @@
-import TreeSitterLanguagePack from '@kreuzberg/tree-sitter-language-pack';
 import { readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
 import { Language as WebTreeSitterLanguage, Parser as WebTreeSitterParser } from 'web-tree-sitter';
 
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 
 const encoder = new TextEncoder();
+const GRAMMAR_DIRECTORY = new URL('./vendor/grammars/', import.meta.url);
+
+/**
+ * The grammar lock records, for every vendored grammar, the exact Rust crate
+ * (or pinned upstream revision) its WebAssembly build was compiled from, so the
+ * JavaScript and Rust runtimes parse with byte-identical generated parsers.
+ */
+export const GRAMMAR_LOCK = Object.freeze(
+  JSON.parse(await readFile(new URL('grammar-lock.json', GRAMMAR_DIRECTORY), 'utf8')),
+);
+
 await WebTreeSitterParser.init();
-const ROCQ_GRAMMAR = await WebTreeSitterLanguage.load(
-  await readFile(new URL('./vendor/tree-sitter-rocq.wasm', import.meta.url)),
+const GRAMMARS = new Map(
+  await Promise.all(
+    Object.keys(GRAMMAR_LOCK.grammars).map(async (id) => [
+      id,
+      await WebTreeSitterLanguage.load(
+        gunzipSync(await readFile(new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY))),
+      ),
+    ]),
+  ),
 );
 
 const LANGUAGE_ALIASES = new Map([
@@ -116,7 +134,8 @@ const LANGUAGE_ALIASES = new Map([
   ['ur', 'Urdu'],
 ]);
 
-const PACK_GRAMMARS = Object.freeze({
+const GRAMMAR_IDS = Object.freeze({
+  Rocq: 'rocq',
   JavaScript: 'javascript',
   Rust: 'rust',
   Lean: 'lean',
@@ -144,7 +163,7 @@ const PACK_GRAMMARS = Object.freeze({
   'SQL SQLite': 'sql',
   'SQL Server': 'sql',
   'SQL Oracle': 'sql',
-  'SQL BigQuery': 'sql_bigquery',
+  'SQL BigQuery': 'sql',
   'SQL Snowflake': 'sql',
   HTML: 'html',
   CSS: 'css',
@@ -281,40 +300,23 @@ function parseGrammarCst(text, canonical) {
   if (NATURAL_LANGUAGES.has(canonical)) {
     return parseNaturalLanguageGrammar(text, canonical, boundaries);
   }
-  let root;
-  let adapter;
-
-  if (canonical === 'Rocq') {
-    const parser = new WebTreeSitterParser();
-    parser.setLanguage(ROCQ_GRAMMAR);
-    root = parser.parse(text).rootNode;
-    adapter = NODE_TREE_SITTER_ADAPTER;
-  } else {
-    const grammar = PACK_GRAMMARS[canonical];
-    if (!grammar) {
-      throw new Error(`no tree-sitter grammar is registered for ${canonical}`);
-    }
-    const parsed = TreeSitterLanguagePack.getParser(grammar).parse(text);
-    if (!parsed) {
-      throw new Error(`tree-sitter parser returned no ${canonical} syntax tree`);
-    }
-    root = parsed.rootNode();
-    adapter = LANGUAGE_PACK_ADAPTER;
+  const grammar = GRAMMARS.get(GRAMMAR_IDS[canonical]);
+  if (!grammar) {
+    throw new Error(`no tree-sitter grammar is registered for ${canonical}`);
   }
+  const parser = new WebTreeSitterParser();
+  parser.setLanguage(grammar);
+  const parsed = parser.parse(text);
+  parser.delete();
+  if (!parsed) {
+    throw new Error(`tree-sitter parser returned no ${canonical} syntax tree`);
+  }
+  const root = parsed.rootNode;
+  const adapter = TREE_SITTER_ADAPTER;
 
-  const byteOffsets = new Map(
-    [...boundaries.entries()].map(([offset, coordinate]) => [coordinate.byte, offset]),
-  );
   const tokens = [];
-  const tree = convertGrammarNode(
-    root,
-    adapter,
-    canonical,
-    text,
-    boundaries,
-    byteOffsets,
-    tokens,
-  );
+  const tree = convertGrammarNode(root, adapter, canonical, text, boundaries, tokens);
+  parsed.delete();
 
   // Preserve the original public Lean root while retaining the grammar's
   // `module` root immediately below it. Consumers can query either layer.
@@ -346,13 +348,20 @@ function parseTokenGrammar(text, canonical, boundaries, rootTerm, lineTerm, vali
       flags: isError ? LinkFlags.clean().withError() : LinkFlags.clean(),
     };
   });
-  const valid = !hasLineError && (validate?.(text) ?? true);
+  // A line error is located below the root; a document-level validation
+  // failure without a located line error makes the root itself the error.
+  let flags = LinkFlags.clean();
+  if (hasLineError) {
+    flags = new LinkFlags({ hasError: true });
+  } else if (!(validate?.(text) ?? true)) {
+    flags = LinkFlags.clean().withError();
+  }
   const tree = {
     term: rootTerm,
     children,
     named: true,
     span: spanFor(boundaries, 0, text.length),
-    flags: valid ? LinkFlags.clean() : LinkFlags.clean().withError(),
+    flags,
   };
   return { canonical, rootTerm, tokens, tree };
 }
@@ -360,19 +369,14 @@ function parseTokenGrammar(text, canonical, boundaries, rootTerm, lineTerm, vali
 function parseNaturalLanguageGrammar(text, canonical, boundaries) {
   const tokens = [];
   const children = [];
+  // The built-in sentence grammar shared with the Rust runtime: a sentence ends
+  // after a run of terminal punctuation, any closing punctuation or quotes, and
+  // the whitespace that follows them.
+  const sentence = /[^]*?[.!?\u0964\u3002\u061f\u06d4\uff01\uff1f]+[\p{Pe}\p{Pf}"']*\p{White_Space}*/uy;
   let sentenceStart = 0;
-  const terminal = /[.!?\u0964\u3002\u061f\u06d4\uff01\uff1f]/u;
-  for (let offset = 0; offset < text.length;) {
-    const character = codePointAt(text, offset);
-    offset += character.length;
-    if (!terminal.test(character)) {
-      continue;
-    }
-    while (offset < text.length && /\s/u.test(codePointAt(text, offset))) {
-      offset += codePointAt(text, offset).length;
-    }
-    children.push(naturalSentence(text, sentenceStart, offset, boundaries, tokens));
-    sentenceStart = offset;
+  for (let match = sentence.exec(text); match; match = sentence.exec(text)) {
+    children.push(naturalSentence(text, sentenceStart, sentence.lastIndex, boundaries, tokens));
+    sentenceStart = sentence.lastIndex;
   }
   if (sentenceStart < text.length) {
     children.push(naturalSentence(text, sentenceStart, text.length, boundaries, tokens));
@@ -399,7 +403,9 @@ function naturalSentence(text, start, end, boundaries, tokens) {
 
 function lexicalNodes(text, start, end, boundaries, tokens) {
   const nodes = [];
-  const pattern = /\s+|[\p{L}\p{N}\p{M}_'-]+|[^\s\p{L}\p{N}\p{M}_'-]+/gu;
+  // The built-in lexical grammar shared with the Rust runtime: maximal runs of
+  // Unicode whitespace, of word characters, and of any other characters.
+  const pattern = /\p{White_Space}+|[\p{L}\p{N}\p{M}_'-]+|[^\p{White_Space}\p{L}\p{N}\p{M}_'-]+/gu;
   pattern.lastIndex = start;
   while (pattern.lastIndex < end) {
     const match = pattern.exec(text);
@@ -408,7 +414,7 @@ function lexicalNodes(text, start, end, boundaries, tokens) {
     }
     const tokenEnd = Math.min(pattern.lastIndex, end);
     const value = text.slice(match.index, tokenEnd);
-    const whitespace = /^\s+$/u.test(value);
+    const whitespace = /^\p{White_Space}+$/u.test(value);
     const word = /^[\p{L}\p{N}\p{M}_'-]+$/u.test(value);
     nodes.push(grammarTokenNode(
       whitespace ? 'whitespace' : word ? 'word' : 'punctuation',
@@ -445,21 +451,25 @@ function lineRanges(text) {
 }
 
 function linoLineTerm(line) {
-  const trimmed = line.trim();
-  if (/^\(\d+(?::\s*[\d\s]+)?\)$/u.test(trimmed) || /^\d+(?:\s+\d+)+$/u.test(trimmed)) {
-    return 'link';
-  }
-  if (/^[^:\n]+:\s*$/u.test(trimmed)) {
-    return 'definition';
-  }
-  return 'lino_error';
+  const trimmed = trimWhiteSpace(line);
+  if (trimmed.startsWith('(') && trimmed.endsWith(')')) return 'link';
+  if (trimmed.startsWith('(') || trimmed.endsWith(')')) return 'lino_error';
+  if (trimmed.endsWith(':') && !trimmed.startsWith(':')) return 'definition';
+  if (/^\p{White_Space}/u.test(line)) return 'definition_body';
+  if (trimmed.split(/\p{White_Space}+/u).length > 1) return 'link';
+  if (trimmed.length === 0) return 'blank_line';
+  return 'atom';
+}
+
+function trimWhiteSpace(text) {
+  return text.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '');
 }
 
 function pdfLineTerm(line) {
-  const trimmed = line.trim();
+  const trimmed = trimWhiteSpace(line);
   if (trimmed.startsWith('%PDF-')) return 'header';
   if (trimmed === '%%EOF') return 'end_of_file';
-  if (/^\d+\s+\d+\s+obj$/u.test(trimmed)) return 'object_header';
+  if (/^[0-9]+\p{White_Space}+[0-9]+\p{White_Space}+obj$/u.test(trimmed)) return 'object_header';
   if (trimmed === 'endobj') return 'object_end';
   if (trimmed === 'xref') return 'cross_reference_table';
   if (trimmed === 'trailer') return 'trailer';
@@ -468,7 +478,7 @@ function pdfLineTerm(line) {
 }
 
 function validatePdf(text) {
-  return /^%PDF-\d+\.\d+/u.test(text) && /%%EOF\s*$/u.test(text);
+  return /^%PDF-[0-9]+\.[0-9]+/u.test(text) && /%%EOF\p{White_Space}*$/u.test(text);
 }
 
 function validateBalancedParentheses(text) {
@@ -480,14 +490,14 @@ function validateBalancedParentheses(text) {
   return depth === 0;
 }
 
-function convertGrammarNode(node, adapter, canonical, text, boundaries, byteOffsets, tokens) {
-  const start = adapter.startOffset(node, byteOffsets);
-  const end = adapter.endOffset(node, byteOffsets);
+function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens) {
+  const start = adapter.startOffset(node);
+  const end = adapter.endOffset(node);
   const children = [];
   let coveredUntil = start;
 
   for (const { node: child, field } of adapter.children(node)) {
-    const childStart = adapter.startOffset(child, byteOffsets);
+    const childStart = adapter.startOffset(child);
     if (coveredUntil < childStart) {
       children.push(grammarTokenNode(
         'whitespace',
@@ -506,12 +516,11 @@ function convertGrammarNode(node, adapter, canonical, text, boundaries, byteOffs
       canonical,
       text,
       boundaries,
-      byteOffsets,
-      tokens,
+        tokens,
     );
     converted.field = field;
     children.push(converted);
-    coveredUntil = Math.max(coveredUntil, adapter.endOffset(child, byteOffsets));
+    coveredUntil = Math.max(coveredUntil, adapter.endOffset(child));
   }
 
   if (children.length === 0 && start < end) {
@@ -595,7 +604,7 @@ function propertyOrCall(node, name) {
   return typeof value === 'function' ? value.call(node) : value;
 }
 
-const NODE_TREE_SITTER_ADAPTER = Object.freeze({
+const TREE_SITTER_ADAPTER = Object.freeze({
   term: (node) => node.type,
   startOffset: (node) => node.startIndex,
   endOffset: (node) => node.endIndex,
@@ -608,28 +617,6 @@ const NODE_TREE_SITTER_ADAPTER = Object.freeze({
     node: child,
     field: node.fieldNameForChild(index),
   })),
-});
-
-const LANGUAGE_PACK_ADAPTER = Object.freeze({
-  term: (node) => node.kind(),
-  startOffset: (node, byteOffsets) => byteOffsets.get(node.startByte()),
-  endOffset: (node, byteOffsets) => byteOffsets.get(node.endByte()),
-  isNamed: (node) => node.isNamed(),
-  isError: (node) => node.isError(),
-  isMissing: (node) => node.isMissing(),
-  isExtra: (node) => node.isExtra(),
-  hasError: (node) => node.hasError(),
-  children: (node) => {
-    const cursor = node.walk();
-    if (!cursor.gotoFirstChild()) {
-      return [];
-    }
-    const children = [];
-    do {
-      children.push({ node: cursor.node(), field: cursor.fieldName() });
-    } while (cursor.gotoNextSibling());
-    return children;
-  },
 });
 
 function sourceBoundaries(text) {

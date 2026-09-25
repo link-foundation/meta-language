@@ -17,6 +17,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const corpus = JSON.parse(
   await readFile(path.join(root, 'parity/fixtures/four-language-conformance.json'), 'utf8'),
 );
+const grammarInventory = JSON.parse(
+  await readFile(path.join(root, 'parity/language-grammar-inventory.json'), 'utf8'),
+);
 const rust = JSON.parse(execFileSync('cargo', [
   'run', '--quiet', '--manifest-path', path.join(root, 'rust/Cargo.toml'),
   '--example', 'issue_195_runtime_probe',
@@ -33,7 +36,7 @@ if (artifactsOption !== -1) {
   ]);
 }
 
-for (const section of ['positive', 'negative', 'semantics', 'transforms', 'translations']) {
+for (const section of ['positive', 'negative', 'inventory', 'semantics', 'transforms', 'translations']) {
   if (stableJson(javascript[section]) !== stableJson(rust[section])) {
     throw new Error(`JavaScript/Rust runtime parity mismatch in ${section}`);
   }
@@ -46,6 +49,8 @@ function runtimeObservation() {
     positive: corpus.languages.map(({ name, source }) => networkObservation(name, source)),
     negative: corpus.negativeCases.map(({ language, source }) =>
       networkObservation(language, source)),
+    inventory: grammarInventory.languages.map(({ name, source }) =>
+      networkObservation(name, source)),
     semantics: corpus.semanticPrograms.map(programObservation),
     transforms: corpus.transformationPrograms.map(transformObservation),
     translations: translationObservations(),
@@ -58,7 +63,7 @@ function networkObservation(language, source) {
   const nodes = links
     .filter((link) => isStructuralNode(link) && !ignoredWrapper(link))
     .map(nodeSignature)
-    .sort();
+    .sort(compareUtf8);
   const directParents = new Map();
   for (const parent of links.filter((link) => link.metadata().linkType === LinkType.Syntax)) {
     for (const child of parent.references().map((reference) => network.link(reference))) {
@@ -72,15 +77,15 @@ function networkObservation(language, source) {
       while (parent && ignoredWrapper(parent)) parent = directParents.get(parent.id().asU64());
       return parent ? [`${nodeSignature(parent)} -> ${nodeSignature(child)}`] : [];
     })
-    .sort();
+    .sort(compareUtf8);
   const fields = links
     .filter((link) => link.metadata().linkType === LinkType.Field)
     .flatMap((field) => {
       const [parent, child] = field.references().map((reference) => network.link(reference));
-      const label = normalizedField(field.metadata().term, parent, child);
-      return label ? [`${label}: ${nodeSignature(parent)} -> ${nodeSignature(child)}`] : [];
+      return [`${field.metadata().term}: ${nodeSignature(parent)} -> ${nodeSignature(child)}`];
     })
-    .sort();
+    .sort(compareUtf8);
+  const annotations = links.flatMap(annotationSignature).sort(compareUtf8);
   return {
     language: canonicalLanguage(language),
     source,
@@ -89,7 +94,28 @@ function networkObservation(language, source) {
     nodes,
     edges,
     fields,
+    annotations,
   };
+}
+
+// Region-scoped language identification and Unicode annotations. Both
+// runtimes share the trigram identifier, so its term is compared exactly; the
+// word segmenter engines differ by runtime, so only their presence is
+// compared and their verdicts show up in the tokens.
+function annotationSignature(link) {
+  const metadata = link.metadata();
+  if (!metadata.span || metadata.term === undefined) return [];
+  const kind = { [LinkType.Language]: 'language', [LinkType.Semantic]: 'semantic' }[metadata.linkType];
+  if (!kind) return [];
+  const term = metadata.term.replace(/^segmentation:.*$/su, 'segmentation');
+  const language = metadata.language ? canonicalLanguage(metadata.language) : '';
+  return [`${kind} ${term} @ ${language}`];
+}
+
+// Rust sorts strings by UTF-8 bytes; JavaScript's default sort compares UTF-16
+// code units, which orders supplementary-plane characters differently.
+function compareUtf8(left, right) {
+  return Buffer.compare(Buffer.from(left), Buffer.from(right));
 }
 
 function isStructuralNode(link) {
@@ -108,15 +134,13 @@ function nodeSignature(link) {
   };
   return canonicalJson({
     type: metadata.linkType === LinkType.Syntax ? 'syntax' : 'token',
-    term: normalizedTerm(link),
+    term: metadata.term ?? null,
     language: metadata.language ? canonicalLanguage(metadata.language) : null,
     named: metadata.linkType === LinkType.SourceToken ? false : metadata.named,
     span: span ?? null,
     flags: {
       isError: metadata.flags.isError,
-      // Node and Rust Tree-sitter disagree on whether an ERROR node also
-      // "has" an error. The acceptance view is deliberately inclusive.
-      hasError: metadata.flags.hasError || metadata.flags.isError || metadata.flags.isMissing,
+      hasError: metadata.flags.hasError,
       isMissing: metadata.flags.isMissing,
       isExtra: metadata.flags.isExtra,
     },
@@ -125,29 +149,7 @@ function nodeSignature(link) {
 
 function ignoredWrapper(link) {
   const metadata = link.metadata();
-  return metadata.linkType === LinkType.Syntax &&
-    (metadata.term === 'whitespace' ||
-      (metadata.language === 'Lean' && metadata.term === 'declaration'));
-}
-
-function normalizedTerm(link) {
-  const metadata = link.metadata();
-  const length = metadata.span && metadata.span.byteRange.end - metadata.span.byteRange.start;
-  if (metadata.language === 'Lean' && metadata.term === 'def' && metadata.named && length > 3) {
-    return 'definition';
-  }
-  if (metadata.language === 'Lean' && metadata.term === 'unary_op') return 'unary_expression';
-  return metadata.term ?? null;
-}
-
-function normalizedField(label, parent, child) {
-  // The Lean builds expose punctuation and wrapper-only fields differently.
-  // Keep every named semantic field and normalize the sole renamed operand.
-  if (!child?.metadata().named || normalizedTerm(child) === 'binders') return null;
-  if (parent?.metadata().language === 'Lean' && normalizedTerm(parent) === 'unary_expression') {
-    return label === 'rhs' ? 'operand' : label;
-  }
-  return label;
+  return metadata.linkType === LinkType.Syntax && metadata.term === 'whitespace';
 }
 
 function programObservation(fixture) {

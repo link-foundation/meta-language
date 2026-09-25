@@ -821,15 +821,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 
 [[package]]
-name = "hashlink"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7382cf6263419f2d8df38c55d7da83da5c18aef87fc7a7fc1fb1e344edfe14c1"
-dependencies = [
- "hashbrown 0.15.5",
-]
-
-[[package]]
 name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1202,17 +1193,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "json5_nodes"
-version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f40f9c35bff86d8321148897f878ad862c22b09549eff24c805bf00eebcb4a2e"
-dependencies = [
- "hashlink",
- "pest",
- "pest_derive",
-]
-
-[[package]]
 name = "kanaria"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1535,11 +1515,9 @@ dependencies = [
  "bnf",
  "cc",
  "clap",
- "csv",
  "doublets",
  "ebnf",
  "flate2",
- "json5_nodes",
  "lindera",
  "lingua",
  "links-notation",
