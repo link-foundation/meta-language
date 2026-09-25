@@ -386,6 +386,51 @@ fn every_rust_grammar_inventory_alias_selects_a_nontrivial_lossless_cst() {
     }
 }
 
+// Tree-sitter starts a root node after its leading padding, so the adapter
+// must retain the text before the grammar root itself.
+#[test]
+fn every_rust_inventory_frontend_retains_whitespace_around_the_grammar_root() {
+    for fixture in grammar_inventory()["languages"].as_array().unwrap() {
+        let language = fixture["name"].as_str().unwrap();
+        let source = format!(" \n\t{}\n \n", fixture["source"].as_str().unwrap());
+        let network = LinkNetwork::parse(&source, language, ParseConfiguration::default());
+        assert_eq!(
+            network.reconstruct_text(),
+            source,
+            "{language} padded reconstruction"
+        );
+    }
+    let network = LinkNetwork::parse(
+        "<script>\n  const value = 1;\n</script>\n",
+        "HTML",
+        ParseConfiguration::default(),
+    );
+    let mut embedded = network
+        .links()
+        .filter(|link| {
+            link.metadata().link_type() == Some(LinkType::Token)
+                && link.metadata().language() == Some("JavaScript")
+        })
+        .filter_map(|link| {
+            link.metadata().span().map(|span| {
+                (
+                    span.byte_range().start(),
+                    link.metadata().term().unwrap_or_default(),
+                )
+            })
+        })
+        .collect::<Vec<_>>();
+    embedded.sort_unstable();
+    assert_eq!(
+        embedded
+            .into_iter()
+            .map(|(_, term)| term)
+            .collect::<String>(),
+        "\n  const value = 1;\n",
+        "embedded JavaScript region tokens"
+    );
+}
+
 #[test]
 fn every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_input() {
     let inventory_path =

@@ -94,13 +94,13 @@ fn network_from_tree(
                     .with_named(true)
                     .with_term("file")
                     .with_language(language)
-                    .with_span(span_for_node(root, &lines, text.len(), SpanOffset::zero()))
+                    .with_span(span_for_range(&lines, 0, text.len(), SpanOffset::zero()))
                     .with_flags(flags_for_node(root)),
             )
         } else {
             document
         };
-    convert_node(&mut network, tree_parent, root, context);
+    convert_root(&mut network, tree_parent, root, context);
     network.attach_embedded_regions(document, text, language, configuration);
     network
 }
@@ -178,7 +178,29 @@ pub fn parse_embedded_region_into(
         SpanOffset::new(span.byte_range().start(), span.start_point()),
         text.len(),
     );
-    Some(convert_node(network, region, root, context))
+    Some(convert_root(network, region, root, context))
+}
+
+/// Converts a grammar root below `parent`. Tree-sitter starts the root after
+/// its leading padding, so the text outside the root is retained as gap
+/// tokens beside it, mirroring `parseGrammarCst` in
+/// `js/src/programming-language-parser.js`.
+fn convert_root(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    root: Node<'_>,
+    context: ConvertContext<'_>,
+) -> LinkId {
+    insert_gap_token(network, parent, 0, root.start_byte(), context);
+    let root_id = convert_node(network, parent, root, context);
+    insert_gap_token(
+        network,
+        parent,
+        root.end_byte(),
+        context.source_len,
+        context,
+    );
+    root_id
 }
 
 fn grammar_for_language(language: &str) -> Option<Language> {

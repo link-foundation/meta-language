@@ -256,8 +256,11 @@ function clipParsedSource(parsed, text) {
     tokenIndexes.set(index, tokens.length);
     tokens.push(token);
   }
-  const tree = clipTreeNode(parsed.tree, tokenIndexes, byteEnd, endCoordinate);
-  return { ...parsed, rootTerm: tree.term, tokens, tree };
+  const clip = (node) => clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate);
+  const tree = clip(parsed.tree);
+  const leading = (parsed.leading ?? []).map(clip).filter(Boolean);
+  const trailing = (parsed.trailing ?? []).map(clip).filter(Boolean);
+  return { ...parsed, rootTerm: tree.term, tokens, tree, leading, trailing };
 }
 
 function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
@@ -314,23 +317,29 @@ function parseGrammarCst(text, canonical) {
   const root = parsed.rootNode;
   const adapter = TREE_SITTER_ADAPTER;
 
+  // Tree-sitter starts the root after its leading padding, so the text
+  // outside the root is retained as gap nodes beside it.
   const tokens = [];
+  const leading = [];
+  pushGapNodes(leading, 0, adapter.startOffset(root), text, boundaries, tokens);
   const tree = convertGrammarNode(root, adapter, canonical, text, boundaries, tokens);
+  const trailing = [];
+  pushGapNodes(trailing, adapter.endOffset(root), text.length, text, boundaries, tokens);
   parsed.delete();
 
   // Preserve the original public Lean root while retaining the grammar's
   // `module` root immediately below it. Consumers can query either layer.
-  const publicTree = canonical === 'Lean'
-    ? {
-        term: LEAN_PUBLIC_ROOT,
-        children: [tree],
-        named: true,
-        span: spanFor(boundaries, 0, text.length),
-        flags: tree.flags,
-      }
-    : tree;
-
-  return { canonical, rootTerm: publicTree.term, tokens, tree: publicTree };
+  if (canonical === 'Lean') {
+    const file = {
+      term: LEAN_PUBLIC_ROOT,
+      children: [...leading, tree, ...trailing],
+      named: true,
+      span: spanFor(boundaries, 0, text.length),
+      flags: tree.flags,
+    };
+    return { canonical, rootTerm: file.term, tokens, tree: file, leading: [], trailing: [] };
+  }
+  return { canonical, rootTerm: tree.term, tokens, tree, leading, trailing };
 }
 
 function parseTokenGrammar(text, canonical, boundaries, rootTerm, lineTerm, validate = undefined) {

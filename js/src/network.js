@@ -39,7 +39,7 @@ export class LinkNetwork {
     const parsed = parseProgrammingLanguage(text, language);
     if (parsed) {
       const network = new LinkNetwork();
-      const document = network._insertProgrammingLanguage(parsed, language, configuration);
+      const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);
       network._attachEmbeddedRegions(document, text, language, configuration);
       annotateNaturalLanguage(network, document, text, language);
       if (parsed.canonical === 'LiNo') {
@@ -635,7 +635,12 @@ export class LinkNetwork {
     const tokenIds = parsed.tokens.map((token) =>
       this.insertSourceToken(language, token.text, offsetSpan(token.span, offset), token.flags),
     );
-    return this._insertProgrammingTree(parsed.tree, language, parsed.tokens, tokenIds, offset);
+    const insert = (node) =>
+      this._insertProgrammingTree(node, language, parsed.tokens, tokenIds, offset);
+    const leading = (parsed.leading ?? []).map(insert);
+    const root = insert(parsed.tree);
+    const trailing = (parsed.trailing ?? []).map(insert);
+    return { root, outer: [...leading, root, ...trailing] };
   }
 
   _insertProgrammingTree(node, language, tokens, tokenIds, offset = undefined) {
@@ -701,13 +706,13 @@ export class LinkNetwork {
         regionLanguage,
       );
       if (parsed) {
-        const root = this._insertProgrammingLanguage(
+        const { outer } = this._insertProgrammingLanguage(
           parsed,
           regionLanguage,
           configuration,
           region.span(),
         );
-        this.link(regionLink).setReferences([document, languageLink, root]);
+        this.link(regionLink).setReferences([document, languageLink, ...outer]);
       }
     }
   }

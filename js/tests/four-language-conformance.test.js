@@ -187,6 +187,24 @@ test('every JavaScript grammar inventory alias selects a nontrivial lossless CST
   }
 });
 
+// Tree-sitter starts a root node after its leading padding, so the adapter
+// must retain the text before the grammar root itself.
+test('every JavaScript inventory frontend retains whitespace around the grammar root', () => {
+  for (const fixture of grammarInventory.languages) {
+    const source = ` \n\t${fixture.source}\n \n`;
+    const network = LinkNetwork.parse(source, fixture.name);
+    assert.equal(network.reconstructText(), source, `${fixture.name} padded reconstruction`);
+  }
+  const region = LinkNetwork.parse('<script>\n  const value = 1;\n</script>\n', 'HTML');
+  const embedded = region.links().filter((link) =>
+    link.metadata().linkType === LinkType.SourceToken && link.metadata().language === 'JavaScript');
+  assert.equal(
+    embedded.map((link) => link.metadata().term).join(''),
+    '\n  const value = 1;\n',
+    'embedded JavaScript region tokens',
+  );
+});
+
 test('every JavaScript grammar inventory frontend retains and diagnoses prohibited NUL input', async () => {
   for (const fixture of grammarInventory.languages) {
     const source = `${fixture.source}\0`;
