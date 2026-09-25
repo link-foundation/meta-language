@@ -407,5 +407,27 @@
       "source": "console.log(42);",
       "expectedStdout": "42\n"
     }
+  ],
+  "builtinNetworkCases": [
+    {
+      "language": "LiNo",
+      "source": "(papa (lovesMama: loves mama))\n(son lovesMama)\n(obj_0: list obj_0)\ngreeting:\n  hello world\n  (x y)\na b c\n"
+    },
+    {
+      "language": "LiNo",
+      "source": "(broken\nnext: line\n"
+    },
+    {
+      "language": "txt",
+      "source": "Hello (world\n  second line)\n"
+    },
+    {
+      "language": "PDF",
+      "source": "%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n"
+    },
+    {
+      "language": "English",
+      "source": "Hello, world! How are you?\nFine.\n"
+    }
   ]
 }

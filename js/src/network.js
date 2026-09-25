@@ -22,6 +22,7 @@ import { LinkCliSubstitution, SubstitutionReport } from './substitution.js';
 import { ReplacementReport, ReplacementRule, TextReplacement } from './transform.js';
 import { EmbeddedRegion, detectEmbeddedRegions, detectEmbeddedRegionsInTree } from './regions.js';
 import { annotateNaturalLanguage } from './natural-language.js';
+import { insertLinoSemantics } from './lino-semantics.js';
 import { grammarProvenance } from './language-catalog.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 
@@ -45,7 +46,7 @@ export class LinkNetwork {
       network._attachEmbeddedRegions(document, text, language, configuration, parsed);
       annotateNaturalLanguage(network, document, text, language);
       if (parsed.canonical === 'LiNo') {
-        network._insertLinoSemantics(text);
+        insertLinoSemantics(network, text, language);
       }
       return network;
     }
@@ -524,26 +525,6 @@ export class LinkNetwork {
     const id = parsed.id === null ? undefined : Number(parsed.id);
     const references = parsed.values.map((value) => LinkId.from(value.id));
     this.insertLinkWithOptionalId(id, references, LinkMetadata.new().withLinkType(LinkType.Relation));
-  }
-
-  _insertLinoSemantics(source) {
-    let semantic;
-    try {
-      semantic = LinkNetwork.fromLino(source);
-    } catch {
-      return;
-    }
-
-    const remapped = new Map(
-      semantic.links().map((link) => [link.id().asU64(), this._allocateId()]),
-    );
-    for (const link of semantic.links()) {
-      this.insertLinkWithOptionalId(
-        remapped.get(link.id().asU64()),
-        link.references().map((reference) => remapped.get(reference.asU64())),
-        link.metadata().clone(),
-      );
-    }
   }
 
   _insertCanonicalLino(source) {

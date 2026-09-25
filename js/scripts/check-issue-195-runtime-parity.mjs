@@ -36,7 +36,7 @@ if (artifactsOption !== -1) {
   ]);
 }
 
-for (const section of ['positive', 'negative', 'inventory', 'semantics', 'transforms', 'translations']) {
+for (const section of ['positive', 'negative', 'inventory', 'builtins', 'semantics', 'transforms', 'translations']) {
   if (stableJson(javascript[section]) !== stableJson(rust[section])) {
     throw new Error(`JavaScript/Rust runtime parity mismatch in ${section}`);
   }
@@ -51,6 +51,8 @@ function runtimeObservation() {
       networkObservation(language, source)),
     inventory: grammarInventory.languages.map(({ name, source }) =>
       networkObservation(name, source)),
+    builtins: corpus.builtinNetworkCases.map(({ language, source }) =>
+      networkObservation(language, source)),
     semantics: corpus.semanticPrograms.map(programObservation),
     transforms: corpus.transformationPrograms.map(transformObservation),
     translations: translationObservations(),
@@ -90,6 +92,13 @@ function networkObservation(language, source) {
     .map((link) => `${link.metadata().term}: ${link.references()
       .map((reference) => nodeSignature(network.link(reference))).join(' -> ')}`)
     .sort(compareUtf8);
+  // Semantic relations a parse derives from the source, such as LiNo links,
+  // with the Concept and Relation links they reference.
+  const relations = links
+    .filter((link) => link.metadata().linkType === LinkType.Relation && link.metadata().span)
+    .map((link) => `${semanticSignature(link)} = [${link.references()
+      .map((reference) => semanticSignature(network.link(reference))).join(', ')}]`)
+    .sort(compareUtf8);
   const annotations = links.flatMap(annotationSignature).sort(compareUtf8);
   return {
     language: canonicalLanguage(language),
@@ -100,6 +109,7 @@ function networkObservation(language, source) {
     edges,
     fields,
     trivia,
+    relations,
     annotations,
   };
 }
@@ -116,6 +126,14 @@ function annotationSignature(link) {
   const term = metadata.term.replace(/^segmentation:.*$/su, 'segmentation');
   const language = metadata.language ? canonicalLanguage(metadata.language) : '';
   return [`${kind} ${term} @ ${language}`];
+}
+
+function semanticSignature(link) {
+  const { linkType, term, span } = link.metadata();
+  const range = span
+    ? ` @ ${span.byteRange.start}-${span.byteRange.end} ${span.start.row}:${span.start.column}-${span.end.row}:${span.end.column}`
+    : '';
+  return `${linkType}:${term ?? ''}${range}`;
 }
 
 // Rust sorts strings by UTF-8 bytes; JavaScript's default sort compares UTF-16

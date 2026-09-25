@@ -690,482 +690,482 @@
     "planned:semantic:JavaScript:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for modules-and-imports",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:scopes-and-bindings": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for scopes-and-bindings",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:recursive-definitions": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for recursive-definitions",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:types-and-universes": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for types-and-universes",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:effects": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for effects",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:attributes": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for attributes",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:macros-and-notation": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for macros-and-notation",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:proof-terms-and-tactics": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for proof-terms-and-tactics",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:surface-expansion-elaboration-traces": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for surface-expansion-elaboration-traces",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:JavaScript:project-context-and-dependencies": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript real-project positive and missing-context cases for project-context-and-dependencies",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for modules-and-imports",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:scopes-and-bindings": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for scopes-and-bindings",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:recursive-definitions": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for recursive-definitions",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:types-and-universes": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for types-and-universes",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:effects": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for effects",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:attributes": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for attributes",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:macros-and-notation": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for macros-and-notation",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:proof-terms-and-tactics": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for proof-terms-and-tactics",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:surface-expansion-elaboration-traces": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for surface-expansion-elaboration-traces",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rust:project-context-and-dependencies": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust real-project positive and missing-context cases for project-context-and-dependencies",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for modules-and-imports",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:scopes-and-bindings": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for scopes-and-bindings",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:recursive-definitions": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for recursive-definitions",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:types-and-universes": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for types-and-universes",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:effects": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for effects",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:attributes": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for attributes",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:macros-and-notation": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for macros-and-notation",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:proof-terms-and-tactics": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for proof-terms-and-tactics",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:surface-expansion-elaboration-traces": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for surface-expansion-elaboration-traces",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Lean:project-context-and-dependencies": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean real-project positive and missing-context cases for project-context-and-dependencies",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for modules-and-imports",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:scopes-and-bindings": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for scopes-and-bindings",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:recursive-definitions": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for recursive-definitions",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:types-and-universes": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for types-and-universes",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:effects": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for effects",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:attributes": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for attributes",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:macros-and-notation": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for macros-and-notation",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:proof-terms-and-tactics": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for proof-terms-and-tactics",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:surface-expansion-elaboration-traces": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for surface-expansion-elaboration-traces",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:semantic:Rocq:project-context-and-dependencies": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq real-project positive and missing-context cases for project-context-and-dependencies",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:JavaScript:query": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript query sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:JavaScript:insert": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript insert sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:JavaScript:delete": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript delete sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:JavaScript:replace": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript replace sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:JavaScript:move": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript move sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:JavaScript:clone": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript clone sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:JavaScript:construct": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript construct sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:JavaScript:emit": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript emit sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:binding-rename:JavaScript": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript binding-aware rename and capture-avoidance corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rust:query": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust query sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rust:insert": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust insert sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rust:delete": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust delete sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rust:replace": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust replace sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rust:move": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust move sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rust:clone": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust clone sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rust:construct": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust construct sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rust:emit": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust emit sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:binding-rename:Rust": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust binding-aware rename and capture-avoidance corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Lean:query": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean query sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Lean:insert": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean insert sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Lean:delete": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean delete sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Lean:replace": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean replace sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Lean:move": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean move sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Lean:clone": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean clone sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Lean:construct": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean construct sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Lean:emit": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean emit sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:binding-rename:Lean": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean binding-aware rename and capture-avoidance corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rocq:query": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq query sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rocq:insert": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq insert sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rocq:delete": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq delete sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rocq:replace": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq replace sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rocq:move": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq move sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rocq:clone": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq clone sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rocq:construct": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq construct sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:transformation:Rocq:emit": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq emit sequences, serialize/reload, and reparsing corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:binding-rename:Rocq": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq binding-aware rename and capture-avoidance corpus",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:JavaScript:Rust": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript to Rust construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:JavaScript:Lean": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript to Lean construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:JavaScript:Rocq": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "JavaScript to Rocq construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Rust:JavaScript": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust to JavaScript construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Rust:Lean": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust to Lean construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Rust:Rocq": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rust to Rocq construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Lean:JavaScript": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean to JavaScript construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Lean:Rust": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean to Rust construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Lean:Rocq": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Lean to Rocq construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Rocq:JavaScript": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq to JavaScript construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Rocq:Rust": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq to Rust construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:translation:Rocq:Lean": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "Rocq to Lean construct/project corpus and preservation oracle",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:cross-cutting:I195-SHARED-SCHEMA": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "schema versioning and extension registration shared corpus and expected normalization",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:cross-cutting:I195-SHARED-PROVENANCE": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "provenance and source mappings shared corpus and expected normalization",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:cross-cutting:I195-SHARED-CONCEPTS": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "binding, typing, module, and proof concepts without semantic collapse shared corpus and expected normalization",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:cross-cutting:I195-PARITY-CST": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "normalized complete CSTs shared corpus and expected normalization",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:cross-cutting:I195-PARITY-DIAGNOSTICS": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "diagnostics and recovery shared corpus and expected normalization",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:cross-cutting:I195-PARITY-SEMANTICS": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "bindings, types, modules, and proof structure shared corpus and expected normalization",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:cross-cutting:I195-PARITY-TRANSFORMS": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "structured transformations shared corpus and expected normalization",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:cross-cutting:I195-PARITY-TRANSLATIONS": {
       "path": "parity/fixtures/four-language-conformance.json",
       "selector": "all directed translations shared corpus and expected normalization",
-      "sha256": "a1e70a87ab70ccf44de5b60cf15c93a8de5b98bd10a5cbfbeecb263eabfd58b7"
+      "sha256": "1fbd3547072819c985d397bd542ec72942f2adcc34f5c04436c9b94b7cfdc704"
     },
     "planned:native-validation:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",

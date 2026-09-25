@@ -46,6 +46,17 @@ fn main() {
             )
         })
         .collect::<Vec<_>>();
+    let builtins = corpus["builtinNetworkCases"]
+        .as_array()
+        .expect("built-in network fixtures")
+        .iter()
+        .map(|fixture| {
+            network_observation(
+                fixture["language"].as_str().expect("language"),
+                fixture["source"].as_str().expect("source"),
+            )
+        })
+        .collect::<Vec<_>>();
     let semantics = corpus["semanticPrograms"]
         .as_array()
         .expect("semantic fixtures")
@@ -67,6 +78,7 @@ fn main() {
             "positive": positive,
             "negative": negative,
             "inventory": inventory,
+            "builtins": builtins,
             "semantics": semantics,
             "transforms": transforms,
             "translations": translations,
@@ -162,6 +174,26 @@ fn network_observation(language: &str, source: &str) -> Value {
         .collect::<Vec<_>>();
     trivia.sort();
 
+    // Semantic relations a parse derives from the source, such as LiNo links,
+    // with the Concept and Relation links they reference.
+    let mut relations = network
+        .links()
+        .filter(|link| {
+            link.metadata().link_type() == Some(LinkType::Relation)
+                && link.metadata().span().is_some()
+        })
+        .map(|link| {
+            let references = link
+                .references()
+                .iter()
+                .filter_map(|id| network.link(*id))
+                .map(semantic_signature)
+                .collect::<Vec<_>>();
+            format!("{} = [{}]", semantic_signature(link), references.join(", "))
+        })
+        .collect::<Vec<_>>();
+    relations.sort();
+
     let mut annotations = network
         .links()
         .filter_map(annotation_signature)
@@ -177,6 +209,7 @@ fn network_observation(language: &str, source: &str) -> Value {
         "edges": edges,
         "fields": fields,
         "trivia": trivia,
+        "relations": relations,
         "annotations": annotations,
     })
 }
@@ -206,6 +239,30 @@ fn annotation_signature(link: &Link) -> Option<String> {
             .map(canonical_language)
             .unwrap_or_default()
     ))
+}
+
+fn semantic_signature(link: &Link) -> String {
+    let metadata = link.metadata();
+    let range = metadata
+        .span()
+        .map(|span| {
+            let (start, end) = (span.start_point(), span.end_point());
+            format!(
+                " @ {}-{} {}:{}-{}:{}",
+                span.byte_range().start(),
+                span.byte_range().end(),
+                start.row(),
+                start.column(),
+                end.row(),
+                end.column()
+            )
+        })
+        .unwrap_or_default();
+    format!(
+        "{:?}:{}{range}",
+        metadata.link_type().expect("typed link"),
+        metadata.term().unwrap_or_default()
+    )
 }
 
 fn node_signature(link: &Link) -> String {
