@@ -34,6 +34,7 @@ pub fn attach_embedded_regions(
             continue;
         }
         let region_text = &text[range.start()..range.end()];
+        network.record_grammars(language_link, region.language());
         if tree_sitter_adapter::parse_embedded_region_into(
             network,
             region_link,

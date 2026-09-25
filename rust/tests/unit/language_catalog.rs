@@ -154,3 +154,42 @@ fn extension_dispatch_parses_through_the_ordinary_api_with_the_dispatched_gramma
             && link.metadata().term() == Some("function_item")
     }));
 }
+
+#[test]
+fn parsed_networks_record_the_grammar_provenance_of_every_language_they_parse() {
+    let inventory = inventory();
+    let languages = inventory["languages"].as_array().expect("languages");
+    for language in languages {
+        let name = language["name"].as_str().expect("name");
+        if grammar_provenance(name).is_empty() {
+            continue;
+        }
+        let source = language["source"].as_str().expect("source");
+        let network = LinkNetwork::parse(source, name, ParseConfiguration::default());
+        let recorded: Vec<_> = network
+            .parse_grammars()
+            .into_iter()
+            .filter(|(language, _)| language == name)
+            .map(|(_, grammar)| grammar)
+            .collect();
+        assert_eq!(recorded, grammar_provenance(name), "{name}");
+        assert_eq!(network.reconstruct_text(), source, "{name}");
+    }
+    let markdown = languages
+        .iter()
+        .find(|language| language["name"] == "Markdown")
+        .and_then(|language| language["source"].as_str())
+        .expect("Markdown source");
+    let network = LinkNetwork::parse(markdown, "Markdown", ParseConfiguration::default());
+    let expected: Vec<_> = ["Markdown", "JavaScript", "HTML"]
+        .into_iter()
+        .flat_map(|language| {
+            grammar_provenance(language)
+                .iter()
+                .map(move |grammar| (language.to_string(), grammar.clone()))
+        })
+        .collect();
+    assert_eq!(network.parse_grammars(), expected);
+    let text = LinkNetwork::parse("plain text\n", "txt", ParseConfiguration::default());
+    assert!(text.parse_grammars().is_empty());
+}

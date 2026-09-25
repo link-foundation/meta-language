@@ -21,6 +21,7 @@ import { LinkCliSubstitution, SubstitutionReport } from './substitution.js';
 import { ReplacementReport, ReplacementRule, TextReplacement } from './transform.js';
 import { EmbeddedRegion, detectEmbeddedRegions, detectEmbeddedRegionsInTree } from './regions.js';
 import { annotateNaturalLanguage } from './natural-language.js';
+import { grammarProvenance } from './language-catalog.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 
 const encoder = new TextEncoder();
@@ -631,7 +632,8 @@ export class LinkNetwork {
 
 
   _insertProgrammingLanguage(parsed, language, _configuration, offset = undefined) {
-    this.insertTypedPoint(LinkType.Language, language);
+    const languageLink = this.insertTypedPoint(LinkType.Language, language);
+    this._recordGrammars(languageLink, language);
     const tokenIds = parsed.tokens.map((token) =>
       this.insertSourceToken(language, token.text, offsetSpan(token.span, offset), token.flags),
     );
@@ -641,6 +643,52 @@ export class LinkNetwork {
     const root = insert(parsed.tree);
     const trailing = (parsed.trailing ?? []).map(insert);
     return { root, outer: [...leading, root, ...trailing] };
+  }
+
+  /**
+   * Records the grammars that parse `language` by default as Grammar links
+   * below its Language link: term `<id>@<version>`, definition
+   * `sha256:<parser digest>`. Recording the same grammar twice is a no-op.
+   */
+  _recordGrammars(languageLink, language) {
+    for (const grammar of grammarProvenance(language)) {
+      const term = `${grammar.id}@${grammar.version}`;
+      const recorded = this.links().some((link) =>
+        link.metadata().linkType === LinkType.Grammar &&
+        link.references().length === 1 &&
+        link.references()[0].asU64() === languageLink.asU64() &&
+        link.metadata().term === term);
+      if (!recorded) {
+        this.insertLink(
+          [languageLink],
+          LinkMetadata.new()
+            .withLinkType(LinkType.Grammar)
+            .withNamed(true)
+            .withTerm(term)
+            .withDefinition(`sha256:${grammar.parserSha256}`)
+            .withLanguage(language),
+        );
+      }
+    }
+  }
+
+  /** Grammars recorded for the languages this network parsed, in insertion order. */
+  parseGrammars() {
+    return this.links().flatMap((link) => {
+      const metadata = link.metadata();
+      if (metadata.linkType !== LinkType.Grammar || link.references().length !== 1) return [];
+      const language = this.link(link.references()[0]);
+      if (language?.metadata().linkType !== LinkType.Language) return [];
+      const match = /^([^@]+)@(.+)$/u.exec(metadata.term ?? '');
+      const digest = /^sha256:(.+)$/u.exec(metadata.definition ?? '');
+      if (!match || !digest) return [];
+      return [{
+        language: language.metadata().term,
+        id: match[1],
+        version: match[2],
+        parserSha256: digest[1],
+      }];
+    });
   }
 
   _insertProgrammingTree(node, language, tokens, tokenIds, offset = undefined) {
@@ -706,6 +754,7 @@ export class LinkNetwork {
       ) {
         continue;
       }
+      this._recordGrammars(languageLink, regionLanguage);
       const parsed = parseEmbeddedProgrammingLanguage(
         sliceBytes(text, start, end),
         regionLanguage,

@@ -263,6 +263,31 @@ export function lowerSql(
 export const lowerSQL: typeof lowerSql;
 export const lower_sql: typeof lowerSql;
 
+export interface GrammarProvenance {
+  id: string;
+  version: string;
+  parserSha256: string;
+}
+
+export interface LanguageCatalogEntry {
+  name: string;
+  family: string;
+  aliases: string[];
+  extensions: string[];
+  grammars: GrammarProvenance[];
+}
+
+export interface ParseGrammar extends GrammarProvenance {
+  language: string;
+}
+
+export const LANGUAGE_CATALOG: { readonly languages: readonly LanguageCatalogEntry[] };
+export function languageEntry(language: string): LanguageCatalogEntry | undefined;
+export function canonicalLanguageName(language: string): string | undefined;
+export function languageCandidatesForPath(path: string): string[];
+export function languageForPath(path: string): string | undefined;
+export function grammarProvenance(language: string): readonly GrammarProvenance[];
+
 export class LinkId {
   constructor(value: number | string | LinkId);
   static from(value: number | string | LinkId): LinkId;
@@ -598,6 +623,7 @@ export class LinkNetwork {
   verifyFullMatch(): VerificationReport;
   reconstructText(): string;
   embeddedRegions(): EmbeddedRegion[];
+  parseGrammars(): ParseGrammar[];
   embedded_regions(): EmbeddedRegion[];
   reconstructBytes(): Uint8Array;
   renderSource(language: string): string;

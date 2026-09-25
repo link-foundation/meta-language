@@ -95,3 +95,22 @@ test('extension dispatch parses through the ordinary API with the dispatched gra
   assert.equal(network.reconstructText(), source);
   assert.ok(network.links().some((link) => link.metadata().term === 'function_item'));
 });
+
+test('parsed networks record the grammar provenance of every language they parse', () => {
+  for (const language of inventory.languages.filter(({ grammars }) => grammars?.length)) {
+    const network = LinkNetwork.parse(language.source, language.name);
+    const recorded = network
+      .parseGrammars()
+      .filter((grammar) => grammar.language === language.name)
+      .map(({ id, version, parserSha256 }) => ({ id, version, parserSha256 }));
+    assert.deepEqual(recorded, grammarProvenance(language.name), language.name);
+    assert.equal(network.reconstructText(), language.source, language.name);
+  }
+  const markdown = inventory.languages.find(({ name }) => name === 'Markdown');
+  const network = LinkNetwork.parse(markdown.source, 'Markdown');
+  const expected = ['Markdown', 'JavaScript', 'HTML'].flatMap((language) =>
+    grammarProvenance(language).map((grammar) => ({ language, ...grammar })),
+  );
+  assert.deepEqual(network.parseGrammars(), expected);
+  assert.deepEqual(LinkNetwork.parse('plain text\n', 'txt').parseGrammars(), []);
+});
