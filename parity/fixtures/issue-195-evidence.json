@@ -123,7 +123,7 @@
       "target": "HTML",
       "parseLanguage": "Markdown",
       "source": "# Demo\n<section><strong>answer</strong></section>\n",
-      "regionSource": "<section><strong>answer</strong></section>",
+      "regionSource": "<section><strong>answer</strong></section>\n",
       "root": "document"
     },
     {

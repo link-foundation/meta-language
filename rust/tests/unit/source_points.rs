@@ -143,7 +143,7 @@ fn embedded_region_points_keep_the_boundary_and_inner_conventions() {
     let network = LinkNetwork::parse(source, "Markdown", ParseConfiguration::default());
 
     assert_eq!(
-        region_points(&network, "rust"),
+        region_points(&network, "Rust"),
         (Point::new(5, 0), Point::new(6, 0))
     );
     // `ítem` starts one column into the embedded line and spans five bytes.

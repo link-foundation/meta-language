@@ -117,7 +117,7 @@ pub use language_support::{
 pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use lino_serialization::LinoSerializationError;
-pub use mixed_regions::EmbeddedRegion;
+pub use mixed_regions::{script_language, EmbeddedRegion};
 pub use natural_language_grammar::{
     NaturalLanguageGrammarFixture, NATURAL_LANGUAGE_GRAMMAR_FIXTURES,
 };

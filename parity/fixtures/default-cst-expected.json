@@ -24,11 +24,11 @@
           "parserSha256": "0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c"
         }
       },
-      "sourceSha256": "b3c21b938a4c3fbc3247994d7469e0c81155f723c9394d138cb33fa1ad156bea",
+      "sourceSha256": "b98c24560064099134a729569dd9edde7860c119a703308b2f7a05dff49dd19f",
       "recoverySourceSha256": "8c3fd68add6f47dfa67e4fe136d4df5f83a22c2908132f26ad9ad39b2ca44e28",
       "positive": [
-        [0,null,"document",1,0,171,""],
-        [1,null,"section",1,0,171,""],
+        [0,null,"document",1,0,187,""],
+        [1,null,"section",1,0,187,""],
         [2,null,"atx_heading",1,0,12,""],
         [3,null,"atx_h1_marker",1,0,1,""],
         [3,"heading_content","inline",1,2,11,""],
@@ -103,11 +103,18 @@
         [3,null,"/",0,154,155,""],
         [3,null,">",0,158,159,""],
         [3,null,"block_continuation",1,160,160,""],
-        [2,null,"list",1,161,171,""],
-        [3,null,"list_item",1,161,171,""],
+        [2,null,"list",1,161,187,""],
+        [3,null,"list_item",1,161,187,""],
         [4,null,"list_marker_minus",1,161,163,""],
-        [4,null,"paragraph",1,163,171,""],
-        [5,null,"inline",1,163,170,""]
+        [4,null,"paragraph",1,163,187,""],
+        [5,null,"inline",1,163,186,""],
+        [6,null,"html_tag",1,171,176,""],
+        [7,null,"<",0,171,172,""],
+        [7,null,">",0,175,176,""],
+        [6,null,"html_tag",1,180,186,""],
+        [7,null,"<",0,180,181,""],
+        [7,null,"/",0,181,182,""],
+        [7,null,">",0,185,186,""]
       ],
       "recovery": [
         [0,null,"document",1,0,22,""],
@@ -155,6 +162,25 @@
             [3,null,"</",0,10,12,""],
             [3,null,"tag_name",1,12,15,""],
             [3,null,">",0,15,16,""]
+          ]
+        },
+        {
+          "path": "Markdown inline HTML",
+          "language": "HTML",
+          "startByte": 171,
+          "endByte": 186,
+          "rows": [
+            [0,null,"document",1,0,15,""],
+            [1,null,"element",1,0,15,""],
+            [2,null,"start_tag",1,0,5,""],
+            [3,null,"<",0,0,1,""],
+            [3,null,"tag_name",1,1,4,""],
+            [3,null,">",0,4,5,""],
+            [2,null,"text",1,5,9,""],
+            [2,null,"end_tag",1,9,15,""],
+            [3,null,"</",0,9,11,""],
+            [3,null,"tag_name",1,11,14,""],
+            [3,null,">",0,14,15,""]
           ]
         }
       ]

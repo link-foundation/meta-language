@@ -11,7 +11,7 @@ pub fn attach_embedded_regions(
     configuration: ParseConfiguration,
 ) {
     let policy = configuration.region_detection_policy();
-    for region in detect_embedded_regions(text, language, policy) {
+    for region in detect_embedded_regions(network, document, text, language, policy) {
         let region_language = region.language().to_string();
         let language_link = network.insert_typed_point(&region_language, LinkType::Language, None);
         let region_link = network.insert_link(

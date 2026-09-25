@@ -19,7 +19,7 @@ import {
 import { LinkQuery, QueryCaptures, QueryMatch } from './query.js';
 import { LinkCliSubstitution, SubstitutionReport } from './substitution.js';
 import { ReplacementReport, ReplacementRule, TextReplacement } from './transform.js';
-import { EmbeddedRegion, detectEmbeddedRegions } from './regions.js';
+import { EmbeddedRegion, detectEmbeddedRegions, detectEmbeddedRegionsInTree } from './regions.js';
 import { annotateNaturalLanguage } from './natural-language.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 
@@ -40,7 +40,7 @@ export class LinkNetwork {
     if (parsed) {
       const network = new LinkNetwork();
       const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);
-      network._attachEmbeddedRegions(document, text, language, configuration);
+      network._attachEmbeddedRegions(document, text, language, configuration, parsed);
       annotateNaturalLanguage(network, document, text, language);
       if (parsed.canonical === 'LiNo') {
         network._insertLinoSemantics(text);
@@ -676,9 +676,14 @@ export class LinkNetwork {
     return syntax;
   }
 
-  _attachEmbeddedRegions(document, text, language, configuration) {
+  _attachEmbeddedRegions(document, text, language, configuration, parsed) {
     const policy = configuration.regionDetectionPolicy ?? 'Both';
-    for (const region of detectEmbeddedRegions(text, language, policy)) {
+    // HTML and Markdown regions come from the host CST already parsed.
+    const host = parsed.canonical;
+    const regions = host === 'HTML' || host === 'Markdown'
+      ? detectEmbeddedRegionsInTree(parsed.tree, text, host, policy)
+      : detectEmbeddedRegions(text, language, policy);
+    for (const region of regions) {
       const regionLanguage = region.language();
       const languageLink = this.insertTypedPoint(LinkType.Language, regionLanguage);
       const regionLink = this.insertLink(

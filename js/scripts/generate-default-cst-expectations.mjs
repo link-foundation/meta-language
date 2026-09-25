@@ -194,47 +194,134 @@ function canonicalLanguage(inventory, name) {
   )?.name;
 }
 
+// The language of a script element's content per the HTML standard: a
+// JavaScript MIME type (or none, or `module`) is JavaScript, import maps,
+// speculation rules and JSON MIME types are JSON, and any other MIME subtype
+// naming a registered language is that language; other types are data blocks.
+const JAVASCRIPT_MIME_TYPES = new Set([
+  'application/ecmascript', 'application/javascript', 'application/x-ecmascript',
+  'application/x-javascript', 'text/ecmascript', 'text/javascript', 'text/javascript1.0',
+  'text/javascript1.1', 'text/javascript1.2', 'text/javascript1.3', 'text/javascript1.4',
+  'text/javascript1.5', 'text/jscript', 'text/livescript', 'text/x-ecmascript', 'text/x-javascript',
+]);
+
+function mimeEssence(type) {
+  return (type ?? '').split(';')[0].trim().toLowerCase();
+}
+
+function scriptElementLanguage(inventory, type) {
+  const essence = mimeEssence(type);
+  if (essence === '' || essence === 'module' || JAVASCRIPT_MIME_TYPES.has(essence)) return 'JavaScript';
+  if (['importmap', 'speculationrules'].includes(essence) || /[/+]json$/u.test(essence)) return 'JSON';
+  const [, subtype] = essence.split('/');
+  return subtype ? canonicalLanguage(inventory, subtype.replace(/^x-/u, '')) : undefined;
+}
+
+function startTagAttribute(element, name) {
+  const attribute = element.children
+    .find((child) => child.type === 'start_tag')
+    ?.children.find((child) =>
+      child.type === 'attribute' &&
+      child.children.find((part) => part.type === 'attribute_name')?.text.toLowerCase() === name);
+  return attribute && (attribute.descendantsOfType('attribute_value')[0]?.text ?? '');
+}
+
+// Inline HTML in Markdown: sibling `html_tag` rows of the merged block and
+// inline tree form elements, from an opening tag to its matching closing tag
+// (nesting counted); void, self-closing, comment and unmatched tags stand
+// alone.
+const HTML_VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
+
+function inlineHtmlSpans(rows, bytes) {
+  const siblings = new Map();
+  const parents = [];
+  rows.forEach((row, index) => {
+    parents[row[0]] = index;
+    if (row[2] !== 'html_tag') return;
+    const parent = parents[row[0] - 1];
+    siblings.set(parent, [...(siblings.get(parent) ?? []), row]);
+  });
+  const spans = [];
+  for (const tags of siblings.values()) {
+    const parsed = tags.map((row) => {
+      const tag = /^<(\/?)([A-Za-z][A-Za-z0-9-]*)/u.exec(bytes.subarray(row[4], row[5]).toString('utf8'));
+      const selfClosing = bytes.subarray(row[4], row[5]).toString('utf8').endsWith('/>');
+      if (!tag) return { row };
+      const name = tag[2].toLowerCase();
+      return { row, name, closing: tag[1] === '/', opening: tag[1] !== '/' && !selfClosing && !HTML_VOID_ELEMENTS.has(name) };
+    });
+    for (let index = 0; index < parsed.length; index += 1) {
+      let last = index;
+      let depth = 0;
+      for (let next = index; parsed[index].opening && next < parsed.length; next += 1) {
+        if (parsed[next].name !== parsed[index].name) continue;
+        depth += parsed[next].opening ? 1 : parsed[next].closing ? -1 : 0;
+        if (depth === 0) {
+          last = next;
+          break;
+        }
+      }
+      spans.push({ startByte: parsed[index].row[4], endByte: parsed[last].row[5] });
+      index = last;
+    }
+  }
+  return spans;
+}
+
 async function embeddedRegions(inventory, host, text) {
   const hostLanguage = inventory.languages.find((language) => language.name === host);
   if (!['HTML', 'Markdown'].includes(host)) return [];
   const bytes = byteOffsets(text);
-  const regions = [];
   const found = [];
   const tree = await parse(hostLanguage.grammars[0], text);
+  const add = (path, language, node, clip) =>
+    found.push({ path, language, startByte: bytes[node.startIndex], endByte: bytes[node.endIndex], clip });
   const visit = (node) => {
     if (host === 'HTML') {
-      if ((node.type === 'script_element' || node.type === 'style_element')) {
-        const raw = node.children.find((child) => child.type === 'raw_text');
-        if (raw) found.push({ path: node.type === 'script_element' ? 'HTML script element' : 'HTML style element', language: node.type === 'script_element' ? 'JavaScript' : 'CSS', node: raw });
+      const raw = node.children.find((child) => child.type === 'raw_text');
+      if (node.type === 'script_element' && raw) {
+        const language = scriptElementLanguage(inventory, startTagAttribute(node, 'type'));
+        if (language) add('HTML script element', language, raw);
+      }
+      if (node.type === 'style_element' && raw && ['', 'text/css'].includes(mimeEssence(startTagAttribute(node, 'type')))) {
+        add('HTML style element', 'CSS', raw);
       }
       if (node.type === 'attribute') {
         const name = node.children.find((child) => child.type === 'attribute_name');
         const value = node.descendantsOfType('attribute_value')[0];
-        if (name?.text.toLowerCase() === 'style' && value) found.push({ path: 'CSS style attribute', language: 'CSS', node: value, clip: true });
+        if (name?.text.toLowerCase() === 'style' && value) add('CSS style attribute', 'CSS', value, true);
       }
     } else if (node.type === 'fenced_code_block') {
       const info = node.descendantsOfType('language')[0];
       const content = node.children.find((child) => child.type === 'code_fence_content');
       const language = info && canonicalLanguage(inventory, info.text);
-      if (content && language) found.push({ path: 'Markdown fenced code', language, node: content });
+      if (content && language) add('Markdown fenced code', language, content);
     } else if (node.type === 'html_block') {
-      found.push({ path: 'Markdown HTML block', language: 'HTML', node });
+      add('Markdown HTML block', 'HTML', node);
     }
     for (const child of node.children) visit(child);
   };
   visit(tree.rootNode);
-  for (const { path, language, node, clip } of found) {
+  tree.delete();
+  if (host === 'Markdown') {
+    const source = Buffer.from(text, 'utf8');
+    for (const span of inlineHtmlSpans(await markdownRows(text), source)) {
+      found.push({ path: 'Markdown inline HTML', language: 'HTML', ...span });
+    }
+  }
+  const regions = [];
+  const source = Buffer.from(text, 'utf8');
+  for (const { path, language, startByte, endByte, clip } of found.sort((left, right) => left.startByte - right.startByte)) {
     const target = inventory.languages.find((candidate) => candidate.name === language);
-    const regionText = text.slice(node.startIndex, node.endIndex);
+    const regionText = source.subarray(startByte, endByte).toString('utf8');
     regions.push({
       path,
       language,
-      startByte: bytes[node.startIndex],
-      endByte: bytes[node.endIndex],
+      startByte,
+      endByte,
       rows: await embeddedRows(language, target.grammars, regionText, clip === true),
     });
   }
-  tree.delete();
   return regions;
 }
 

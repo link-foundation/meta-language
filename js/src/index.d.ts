@@ -930,11 +930,21 @@ export class EmbeddedRegion {
   span(): unknown;
 }
 
+/** Embedded regions an HTML or Markdown host grammar CST delimits, in source order. */
 export function detectEmbeddedRegions(
   text: string,
   language: string,
-  policy: RegionDetectionPolicyValue,
+  policy?: RegionDetectionPolicyValue,
 ): EmbeddedRegion[];
+/** Embedded regions of an already parsed host tree (nodes with term, span and children). */
+export function detectEmbeddedRegionsInTree(
+  tree: unknown,
+  text: string,
+  host: 'HTML' | 'Markdown',
+  policy?: RegionDetectionPolicyValue,
+): EmbeddedRegion[];
+/** The language of an HTML script element's content from its `type` attribute. */
+export function scriptLanguage(type: string | undefined): string | null;
 export function sniffLanguage(content: string): string | null;
 
 // --- language profiles ---

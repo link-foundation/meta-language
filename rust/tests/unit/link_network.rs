@@ -367,7 +367,7 @@ fn mixed_language_regions_are_embedded_in_one_network() {
         .collect::<Vec<_>>();
 
     assert_eq!(network.reconstruct_text(), source);
-    assert!(languages.contains(&"rust"));
+    assert!(languages.contains(&"Rust"));
     assert!(languages.contains(&"HTML"));
     assert!(regions
         .iter()

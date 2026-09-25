@@ -697,7 +697,7 @@ fn json_in_markdown_fence_parses_as_connected_region() {
     let region_ids = network
         .links()
         .filter(|link| link.metadata().link_type() == Some(LinkType::Region))
-        .filter(|link| link.metadata().language() == Some("json"))
+        .filter(|link| link.metadata().language() == Some("JSON"))
         .map(Link::id)
         .collect::<Vec<_>>();
     assert!(
@@ -707,7 +707,7 @@ fn json_in_markdown_fence_parses_as_connected_region() {
     assert!(
         network.links().any(|link| {
             link.metadata().link_type() == Some(LinkType::Syntax)
-                && link.metadata().language() == Some("json")
+                && link.metadata().language() == Some("JSON")
                 && link
                     .references()
                     .iter()
