@@ -97,7 +97,7 @@ fn network_observation(language: &str, source: &str) -> Value {
             matches!(
                 link.metadata().link_type(),
                 Some(LinkType::Syntax | LinkType::Token)
-            ) && !ignored_wrapper(link)
+            )
         })
         .map(node_signature)
         .collect::<Vec<_>>();
@@ -109,7 +109,7 @@ fn network_observation(language: &str, source: &str) -> Value {
             matches!(
                 link.metadata().link_type(),
                 Some(LinkType::Syntax | LinkType::Token)
-            ) && !ignored_wrapper(link)
+            )
         })
         .filter_map(|child| {
             canonical_parent(&network, child)
@@ -138,6 +138,30 @@ fn network_observation(language: &str, source: &str) -> Value {
         .collect::<Vec<_>>();
     fields.sort();
 
+    // Trivia links attach extra tokens to the Syntax link directly above them;
+    // the self-description `trivia` point has no span.
+    let mut trivia = network
+        .links()
+        .filter(|link| {
+            link.metadata().link_type() == Some(LinkType::Trivia)
+                && link.metadata().span().is_some()
+        })
+        .map(|link| {
+            let references = link
+                .references()
+                .iter()
+                .filter_map(|id| network.link(*id))
+                .map(node_signature)
+                .collect::<Vec<_>>();
+            format!(
+                "{}: {}",
+                link.metadata().term().unwrap_or_default(),
+                references.join(" -> ")
+            )
+        })
+        .collect::<Vec<_>>();
+    trivia.sort();
+
     let mut annotations = network
         .links()
         .filter_map(annotation_signature)
@@ -152,6 +176,7 @@ fn network_observation(language: &str, source: &str) -> Value {
         "nodes": nodes,
         "edges": edges,
         "fields": fields,
+        "trivia": trivia,
         "annotations": annotations,
     })
 }
@@ -219,18 +244,8 @@ fn node_signature(link: &Link) -> String {
     .expect("node signature serializes")
 }
 
-fn ignored_wrapper(link: &Link) -> bool {
-    let metadata = link.metadata();
-    metadata.link_type() == Some(LinkType::Syntax) && metadata.term() == Some("whitespace")
-}
-
 fn canonical_parent<'a>(network: &'a LinkNetwork, child: &Link) -> Option<&'a Link> {
-    let mut parent = child.references().first().and_then(|id| network.link(*id));
-    while parent.is_some_and(ignored_wrapper) {
-        parent = parent
-            .and_then(|link| link.references().first())
-            .and_then(|id| network.link(*id));
-    }
+    let parent = child.references().first().and_then(|id| network.link(*id));
     parent.filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
 }
 

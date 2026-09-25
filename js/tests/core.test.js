@@ -17,6 +17,7 @@ import {
   TruthValue,
   TranslationRule,
   TranslationRuleSet,
+  TriviaAttachmentPolicy,
   emitJavascriptParser,
   emitPeggy,
 } from '../src/index.js';
@@ -404,4 +405,34 @@ test('probabilistic truth values cover relative-meta-logic probability cases', (
   assert.equal(event.negate().trueProbability().basisPoints(), 2_500);
   assert.equal(liar.and(event).trueProbability().basisPoints(), 3_750);
   assert.equal(liar.or(event).trueProbability().basisPoints(), 8_750);
+});
+
+test('extra tokens get Trivia links owned by the Syntax link above them per policy', () => {
+  const triviaOf = (source, language, policy) => {
+    const network = LinkNetwork.parse(
+      source,
+      language,
+      ParseConfiguration.default().withTriviaAttachmentPolicy(policy),
+    );
+    const describe = (id) => {
+      const { linkType, term } = network.link(id).metadata();
+      return `${linkType}:${term}`;
+    };
+    return network
+      .links()
+      .filter((link) => link.metadata().linkType === LinkType.Trivia)
+      .map((link) => [link.metadata().term, ...link.references().map(describe)]);
+  };
+  const containment = ['containment trivia', 'Syntax:whitespace', 'SourceToken: '];
+  const token = ['token trivia', 'SourceToken: '];
+  assert.deepEqual(triviaOf('a b', 'txt', TriviaAttachmentPolicy.Combined), [containment, token]);
+  assert.deepEqual(triviaOf('a b', 'txt', TriviaAttachmentPolicy.ContainmentLink), [containment]);
+  assert.deepEqual(triviaOf('a b', 'txt', TriviaAttachmentPolicy.TokenLink), [token]);
+  // A grammar extra such as a comment is owned by its own leaf Syntax link,
+  // and whitespace between grammar nodes by the node enclosing it.
+  assert.deepEqual(triviaOf('x; // note\n', 'JavaScript', TriviaAttachmentPolicy.ContainmentLink), [
+    ['containment trivia', 'Syntax:comment', 'SourceToken:// note'],
+    ['containment trivia', 'Syntax:program', 'SourceToken: '],
+    ['containment trivia', 'Syntax:program', 'SourceToken:\n'],
+  ]);
 });

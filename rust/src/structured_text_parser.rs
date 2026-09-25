@@ -272,7 +272,17 @@ fn insert_lexical_nodes(
         } else {
             LinkFlags::clean()
         };
-        let syntax = insert_syntax(network, parent, term, source.language, span, flags);
+        // Whitespace is an anonymous extra, as tree-sitter reports extras.
+        let syntax = network.insert_link(
+            [parent],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Syntax)
+                .with_named(!whitespace)
+                .with_term(term)
+                .with_language(source.language)
+                .with_span(span)
+                .with_flags(flags),
+        );
         let token = network.insert_link(
             [syntax],
             LinkMetadata::new()
@@ -285,7 +295,7 @@ fn insert_lexical_nodes(
         );
         if whitespace {
             network.attach_trivia(
-                parent,
+                syntax,
                 token,
                 span,
                 source.configuration.trivia_attachment_policy(),

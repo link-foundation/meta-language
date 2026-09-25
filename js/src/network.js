@@ -14,6 +14,7 @@ import {
   ParseConfiguration,
   Point,
   SourceSpan,
+  TriviaAttachmentPolicy,
   idKey,
 } from './primitives.js';
 import { LinkQuery, QueryCaptures, QueryMatch } from './query.js';
@@ -631,14 +632,20 @@ export class LinkNetwork {
   }
 
 
-  _insertProgrammingLanguage(parsed, language, _configuration, offset = undefined) {
+  _insertProgrammingLanguage(parsed, language, configuration, offset = undefined) {
     const languageLink = this.insertTypedPoint(LinkType.Language, language);
     this._recordGrammars(languageLink, language);
     const tokenIds = parsed.tokens.map((token) =>
       this.insertSourceToken(language, token.text, offsetSpan(token.span, offset), token.flags),
     );
-    const insert = (node) =>
-      this._insertProgrammingTree(node, language, parsed.tokens, tokenIds, offset);
+    const context = {
+      language,
+      tokens: parsed.tokens,
+      tokenIds,
+      offset,
+      triviaPolicy: configuration?.triviaAttachmentPolicy ?? TriviaAttachmentPolicy.Combined,
+    };
+    const insert = (node) => this._insertProgrammingTree(node, context);
     const leading = (parsed.leading ?? []).map(insert);
     const root = insert(parsed.tree);
     const trailing = (parsed.trailing ?? []).map(insert);
@@ -691,28 +698,32 @@ export class LinkNetwork {
     });
   }
 
-  _insertProgrammingTree(node, language, tokens, tokenIds, offset = undefined) {
+  _insertProgrammingTree(node, context) {
+    const { language, tokens, tokenIds, offset } = context;
     if (node.gap) {
       return tokenIds[node.tokenIndex];
     }
     if (node.tokenIndex !== undefined) {
       const token = tokens[node.tokenIndex];
-      return this.insertSyntaxNode(language, node.term, [tokenIds[node.tokenIndex]], {
+      const syntax = this.insertSyntaxNode(language, node.term, [tokenIds[node.tokenIndex]], {
         named: token.named,
         span: offsetSpan(token.span, offset),
         flags: token.flags,
       });
+      this._attachExtraTrivia(syntax, node, context);
+      return syntax;
     }
 
-    const children = node.children.map((child) =>
-      this._insertProgrammingTree(child, language, tokens, tokenIds, offset),
-    );
+    const children = node.children.map((child) => this._insertProgrammingTree(child, context));
     const syntax = this.insertSyntaxNode(language, node.term, children, {
       named: node.named,
       span: offsetSpan(node.span, offset),
       flags: node.flags,
     });
     for (const [index, child] of node.children.entries()) {
+      if (child.gap) {
+        this._attachExtraTrivia(syntax, child, context);
+      }
       if (child.field) {
         this.insertLink(
           [syntax, children[index]],
@@ -725,6 +736,33 @@ export class LinkNetwork {
       }
     }
     return syntax;
+  }
+
+  /**
+   * Attaches Trivia links to the source token of `node` when the grammar marks
+   * it extra, with `owner` the Syntax link directly above the token, as
+   * `attach_trivia` in rust/src/link_network.rs: a containment link
+   * `[owner, token]`, a token link `[token]`, or both.
+   */
+  _attachExtraTrivia(owner, node, { tokens, tokenIds, offset, triviaPolicy }) {
+    const token = tokens[node.tokenIndex];
+    if (!token.flags?.isExtra) return;
+    const trivia = (references, term) =>
+      this.insertLink(
+        references,
+        LinkMetadata.new()
+          .withLinkType(LinkType.Trivia)
+          .withTerm(term)
+          .withSpan(offsetSpan(token.span, offset))
+          .withFlags(LinkFlags.clean().withExtra()),
+      );
+    const tokenId = tokenIds[node.tokenIndex];
+    if (triviaPolicy !== TriviaAttachmentPolicy.TokenLink) {
+      trivia([owner, tokenId], 'containment trivia');
+    }
+    if (triviaPolicy !== TriviaAttachmentPolicy.ContainmentLink) {
+      trivia([tokenId], 'token trivia');
+    }
   }
 
   _attachEmbeddedRegions(document, text, language, configuration, parsed) {

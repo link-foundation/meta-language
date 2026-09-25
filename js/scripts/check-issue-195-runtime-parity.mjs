@@ -61,7 +61,7 @@ function networkObservation(language, source) {
   const network = LinkNetwork.parse(source, language);
   const links = network.links();
   const nodes = links
-    .filter((link) => isStructuralNode(link) && !ignoredWrapper(link))
+    .filter((link) => isStructuralNode(link))
     .map(nodeSignature)
     .sort(compareUtf8);
   const directParents = new Map();
@@ -71,10 +71,9 @@ function networkObservation(language, source) {
     }
   }
   const edges = links
-    .filter((link) => isStructuralNode(link) && !ignoredWrapper(link))
+    .filter((link) => isStructuralNode(link))
     .flatMap((child) => {
-      let parent = directParents.get(child.id().asU64());
-      while (parent && ignoredWrapper(parent)) parent = directParents.get(parent.id().asU64());
+      const parent = directParents.get(child.id().asU64());
       return parent ? [`${nodeSignature(parent)} -> ${nodeSignature(child)}`] : [];
     })
     .sort(compareUtf8);
@@ -85,6 +84,12 @@ function networkObservation(language, source) {
       return [`${field.metadata().term}: ${nodeSignature(parent)} -> ${nodeSignature(child)}`];
     })
     .sort(compareUtf8);
+  // Trivia links attach extra tokens to the Syntax link directly above them.
+  const trivia = links
+    .filter((link) => link.metadata().linkType === LinkType.Trivia && link.metadata().span)
+    .map((link) => `${link.metadata().term}: ${link.references()
+      .map((reference) => nodeSignature(network.link(reference))).join(' -> ')}`)
+    .sort(compareUtf8);
   const annotations = links.flatMap(annotationSignature).sort(compareUtf8);
   return {
     language: canonicalLanguage(language),
@@ -94,6 +99,7 @@ function networkObservation(language, source) {
     nodes,
     edges,
     fields,
+    trivia,
     annotations,
   };
 }
@@ -145,11 +151,6 @@ function nodeSignature(link) {
       isExtra: metadata.flags.isExtra,
     },
   });
-}
-
-function ignoredWrapper(link) {
-  const metadata = link.metadata();
-  return metadata.linkType === LinkType.Syntax && metadata.term === 'whitespace';
 }
 
 function programObservation(fixture) {
