@@ -20,6 +20,7 @@ include = [
     "src/**/*.rs",
     "src/data/semantic-lexicon.json",
     "src/data/grammar-lock.json",
+    "src/data/language-catalog.json",
     "src/data/language-trigrams.json",
     "vendor/tree-sitter-rocq/**",
     "vendor/tree-sitter-csv/**",

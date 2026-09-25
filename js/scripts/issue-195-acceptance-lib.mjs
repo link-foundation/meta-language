@@ -7,6 +7,7 @@ import {
   ISSUE_195_SOURCES,
   buildIssue195Manifest,
 } from './issue-195-requirements.mjs';
+import { buildLanguageCatalog, formatLanguageCatalog } from './build-language-catalog.mjs';
 
 export {
   ASSERTION_PROFILES,
@@ -163,76 +164,34 @@ export async function validateIssue195Manifest(manifest, root) {
     }
   }
 
-  const jsParserSource = await readFile(
-    path.join(root, 'js', 'src', 'programming-language-parser.js'),
-    'utf8',
+  // Both runtimes dispatch names, aliases, extensions, and default grammars
+  // from the same generated catalog, so it must equal the inventory exactly.
+  const lock = JSON.parse(
+    await readFile(path.join(root, 'js', 'src', 'vendor', 'grammars', 'grammar-lock.json'), 'utf8'),
   );
-  const aliasBlock = jsParserSource.match(
-    /const LANGUAGE_ALIASES = new Map\(\[([\s\S]*?)\]\);/,
-  )?.[1];
-  if (!aliasBlock) {
-    errors.push('could not enumerate JavaScript grammar alias registry');
-  } else {
-    const actual = new Set(
-      [...aliasBlock.matchAll(/\['([^']+)',\s*'[^']+'\]/g)].map((match) =>
-        match[1].toLowerCase(),
-      ),
-    );
-    const expectedAliases = new Set(
-      inventory.languages
-        .filter(({ javascript }) => javascript.status === 'grammar-cst')
-        .flatMap(({ aliases }) => aliases.map((alias) => alias.toLowerCase())),
-    );
-    for (const alias of expectedAliases) {
-      if (!actual.has(alias)) errors.push(`JavaScript grammar registry is missing alias ${alias}`);
-    }
-    for (const alias of actual) {
-      if (!expectedAliases.has(alias)) {
-        errors.push(`JavaScript grammar registry alias is absent from inventory: ${alias}`);
+  let expectedCatalog;
+  try {
+    expectedCatalog = formatLanguageCatalog(buildLanguageCatalog(inventory, lock));
+  } catch (error) {
+    errors.push(`language catalog cannot be generated: ${error.message}`);
+  }
+  if (expectedCatalog) {
+    for (const runtime of ['js', 'rust']) {
+      const catalogPath = path.join(root, runtime, 'src', 'data', 'language-catalog.json');
+      const shipped = await readFile(catalogPath, 'utf8').catch(() => undefined);
+      if (shipped !== expectedCatalog) {
+        errors.push(`${runtime} language catalog does not match the inventory`);
       }
     }
   }
-
-  const rustParserSource = await readFile(
-    path.join(root, 'rust', 'src', 'tree_sitter_adapter.rs'),
-    'utf8',
-  );
-  const rustBuiltInParserSource = await readFile(
-    path.join(root, 'rust', 'src', 'language_parser.rs'),
-    'utf8',
-  );
-  const rustAliasBlock = rustParserSource.match(
-    /fn grammar_for_language[\s\S]*?\n}\n\nfn convert_node/,
-  )?.[0];
-  if (!rustAliasBlock) {
-    errors.push('could not enumerate Rust grammar alias registry');
-  } else {
-    const actual = new Set(
-      [...rustAliasBlock.matchAll(/"([^"]+)"/g)].map((match) => match[1].toLowerCase()),
-    );
-    const builtInAliasBlock = rustBuiltInParserSource.match(
-      /const BUILT_IN_GRAMMAR_ALIASES[^=]*=\s*&\[([\s\S]*?)\];/,
-    )?.[1];
-    if (!builtInAliasBlock) {
-      errors.push('could not enumerate Rust built-in grammar alias registry');
-    } else {
-      for (const match of builtInAliasBlock.matchAll(/"([^"]+)"/g)) {
-        actual.add(match[1].toLowerCase());
-      }
-    }
-    const expectedAliases = new Set(
-      inventory.languages
-        .filter(({ rust }) => rust.status === 'grammar-cst')
-        .flatMap(({ aliases }) => aliases.map((alias) => alias.toLowerCase())),
-    );
-    for (const alias of expectedAliases) {
-      if (!actual.has(alias)) errors.push(`Rust grammar registry is missing alias ${alias}`);
-    }
-    for (const alias of actual) {
-      if (!expectedAliases.has(alias)) {
-        errors.push(`Rust grammar registry alias is absent from inventory: ${alias}`);
-      }
-    }
+  const catalogConsumers = [
+    ['js/src/programming-language-parser.js', /from '\.\/language-catalog\.js'/],
+    ['rust/src/tree_sitter_adapter.rs', /language_catalog::language_entry/],
+    ['rust/src/language_parser.rs', /language_catalog::language_entry/],
+  ];
+  for (const [file, pattern] of catalogConsumers) {
+    const source = await readFile(path.join(root, file), 'utf8');
+    if (!pattern.test(source)) errors.push(`${file} does not dispatch through the language catalog`);
   }
   return errors;
 }

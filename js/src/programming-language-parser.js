@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { Language as WebTreeSitterLanguage, Parser as WebTreeSitterParser } from 'web-tree-sitter';
 
+import { canonicalLanguageName, languageEntry } from './language-catalog.js';
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 
 const encoder = new TextEncoder();
@@ -28,177 +29,12 @@ const GRAMMARS = new Map(
   ),
 );
 
-const LANGUAGE_ALIASES = new Map([
-  ['javascript', 'JavaScript'],
-  ['js', 'JavaScript'],
-  ['ecmascript', 'JavaScript'],
-  ['rust', 'Rust'],
-  ['rs', 'Rust'],
-  ['lean', 'Lean'],
-  ['lean4', 'Lean'],
-  ['rocq', 'Rocq'],
-  ['coq', 'Rocq'],
-  ['python', 'Python'],
-  ['py', 'Python'],
-  ['c', 'C'],
-  ['c++', 'C++'],
-  ['cpp', 'C++'],
-  ['c#', 'C#'],
-  ['csharp', 'C#'],
-  ['java', 'Java'],
-  ['typescript', 'TypeScript'],
-  ['ts', 'TypeScript'],
-  ['tsx', 'TSX'],
-  ['visual basic', 'Visual Basic'],
-  ['vb', 'Visual Basic'],
-  ['vb.net', 'Visual Basic'],
-  ['vbnet', 'Visual Basic'],
-  ['delphi/object pascal', 'Delphi/Object Pascal'],
-  ['delphi', 'Delphi/Object Pascal'],
-  ['object pascal', 'Delphi/Object Pascal'],
-  ['pascal', 'Delphi/Object Pascal'],
-  ['go', 'Go'],
-  ['golang', 'Go'],
-  ['r', 'R'],
-  ['ruby', 'Ruby'],
-  ['rb', 'Ruby'],
-  ['php', 'PHP'],
-  ['swift', 'Swift'],
-  ['kotlin', 'Kotlin'],
-  ['kt', 'Kotlin'],
-  ['scala', 'Scala'],
-  ['lua', 'Lua'],
-  ['perl', 'Perl'],
-  ['pl', 'Perl'],
-  ['sql-ansi', 'SQL ANSI'],
-  ['sql ansi', 'SQL ANSI'],
-  ['sql-postgres', 'SQL PostgreSQL'],
-  ['sql postgresql', 'SQL PostgreSQL'],
-  ['sql-mysql', 'SQL MySQL'],
-  ['sql mysql', 'SQL MySQL'],
-  ['sql-sqlite', 'SQL SQLite'],
-  ['sql sqlite', 'SQL SQLite'],
-  ['sql-server', 'SQL Server'],
-  ['sql server', 'SQL Server'],
-  ['sql-oracle', 'SQL Oracle'],
-  ['sql oracle', 'SQL Oracle'],
-  ['sql-bigquery', 'SQL BigQuery'],
-  ['sql bigquery', 'SQL BigQuery'],
-  ['sql-snowflake', 'SQL Snowflake'],
-  ['sql snowflake', 'SQL Snowflake'],
-  ['html', 'HTML'],
-  ['css', 'CSS'],
-  ['json', 'JSON'],
-  ['yaml', 'YAML'],
-  ['yml', 'YAML'],
-  ['toml', 'TOML'],
-  ['xml', 'XML'],
-  ['dtd', 'DTD'],
-  ['ini', 'INI'],
-  ['protobuf', 'Protocol Buffers'],
-  ['proto', 'Protocol Buffers'],
-  ['protocol buffers', 'Protocol Buffers'],
-  ['graphql', 'GraphQL'],
-  ['gql', 'GraphQL'],
-  ['csv', 'CSV'],
-  ['json5', 'JSON5'],
-  ['markdown', 'Markdown'],
-  ['md', 'Markdown'],
-  ['lino', 'LiNo'],
-  ['txt', 'txt'],
-  ['text', 'txt'],
-  ['plain text', 'txt'],
-  ['pdf', 'PDF'],
-  ['docx', 'DOCX'],
-  ['english', 'English'],
-  ['en', 'English'],
-  ['mandarin chinese', 'Mandarin Chinese'],
-  ['chinese', 'Mandarin Chinese'],
-  ['zh', 'Mandarin Chinese'],
-  ['hindi', 'Hindi'],
-  ['hi', 'Hindi'],
-  ['spanish', 'Spanish'],
-  ['es', 'Spanish'],
-  ['modern standard arabic', 'Modern Standard Arabic'],
-  ['arabic', 'Modern Standard Arabic'],
-  ['ar', 'Modern Standard Arabic'],
-  ['french', 'French'],
-  ['fr', 'French'],
-  ['bengali', 'Bengali'],
-  ['bn', 'Bengali'],
-  ['portuguese', 'Portuguese'],
-  ['pt', 'Portuguese'],
-  ['russian', 'Russian'],
-  ['ru', 'Russian'],
-  ['urdu', 'Urdu'],
-  ['ur', 'Urdu'],
-]);
-
-const GRAMMAR_IDS = Object.freeze({
-  Rocq: 'rocq',
-  JavaScript: 'javascript',
-  Rust: 'rust',
-  Lean: 'lean',
-  Python: 'python',
-  C: 'c',
-  'C++': 'cpp',
-  'C#': 'csharp',
-  Java: 'java',
-  TypeScript: 'typescript',
-  TSX: 'tsx',
-  'Visual Basic': 'vb',
-  'Delphi/Object Pascal': 'pascal',
-  Go: 'go',
-  R: 'r',
-  Ruby: 'ruby',
-  PHP: 'php',
-  Swift: 'swift',
-  Kotlin: 'kotlin',
-  Scala: 'scala',
-  Lua: 'lua',
-  Perl: 'perl',
-  'SQL ANSI': 'sql',
-  'SQL PostgreSQL': 'sql',
-  'SQL MySQL': 'sql',
-  'SQL SQLite': 'sql',
-  'SQL Server': 'sql',
-  'SQL Oracle': 'sql',
-  'SQL BigQuery': 'sql',
-  'SQL Snowflake': 'sql',
-  HTML: 'html',
-  CSS: 'css',
-  JSON: 'json',
-  YAML: 'yaml',
-  TOML: 'toml',
-  XML: 'xml',
-  DTD: 'dtd',
-  INI: 'ini',
-  'Protocol Buffers': 'proto',
-  GraphQL: 'graphql',
-  CSV: 'csv',
-  JSON5: 'json5',
-  Markdown: 'markdown',
-  DOCX: 'xml',
-});
-
 const LEAN_PUBLIC_ROOT = 'file';
 const ROCQ_BUILTIN_TYPES = new Set(['bool', 'nat', 'Prop', 'Set', 'SProp', 'Type', 'Z']);
-const NATURAL_LANGUAGES = new Set([
-  'English',
-  'Mandarin Chinese',
-  'Hindi',
-  'Spanish',
-  'Modern Standard Arabic',
-  'French',
-  'Bengali',
-  'Portuguese',
-  'Russian',
-  'Urdu',
-]);
 
 /** Returns the canonical name for a grammar-backed JavaScript frontend. */
 export function canonicalProgrammingLanguage(language) {
-  return LANGUAGE_ALIASES.get(String(language).toLowerCase());
+  return canonicalLanguageName(language);
 }
 
 /**
@@ -302,10 +138,10 @@ function parseGrammarCst(text, canonical) {
   if (canonical === 'PDF') {
     return parseTokenGrammar(text, canonical, boundaries, 'pdf_file', pdfLineTerm, validatePdf);
   }
-  if (NATURAL_LANGUAGES.has(canonical)) {
+  if (languageEntry(canonical).family === 'natural') {
     return parseNaturalLanguageGrammar(text, canonical, boundaries);
   }
-  const grammar = GRAMMARS.get(GRAMMAR_IDS[canonical]);
+  const grammar = GRAMMARS.get(languageEntry(canonical).grammars[0]?.id);
   if (!grammar) {
     throw new Error(`no tree-sitter grammar is registered for ${canonical}`);
   }

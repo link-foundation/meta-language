@@ -1,5 +1,5 @@
 use crate::{
-    docx_parser, lino_parser, natural_language, pdf_parser, structured_text_parser,
+    docx_parser, language_catalog, lino_parser, pdf_parser, structured_text_parser,
     tree_sitter_adapter, LinkNetwork, ParseConfiguration,
 };
 
@@ -17,40 +17,6 @@ pub trait LanguageParser {
 /// Built-in parser registry used by [`LinkNetwork::parse`].
 #[derive(Clone, Copy, Debug, Default)]
 pub struct BuiltInLanguageParser;
-
-// Explicitly audited alongside `tree_sitter_adapter::grammar_for_language` by
-// the issue-195 manifest validator. Every alias here selects a structured
-// parser through `parse_builtin_grammar` below.
-const BUILT_IN_GRAMMAR_ALIASES: &[&str] = &[
-    "lino",
-    "txt",
-    "text",
-    "plain text",
-    "pdf",
-    "docx",
-    "english",
-    "en",
-    "mandarin chinese",
-    "chinese",
-    "zh",
-    "hindi",
-    "hi",
-    "spanish",
-    "es",
-    "modern standard arabic",
-    "arabic",
-    "ar",
-    "french",
-    "fr",
-    "bengali",
-    "bn",
-    "portuguese",
-    "pt",
-    "russian",
-    "ru",
-    "urdu",
-    "ur",
-];
 
 impl LanguageParser for BuiltInLanguageParser {
     fn parse_source(
@@ -84,23 +50,21 @@ fn parse_builtin_grammar(
     language: &str,
     configuration: ParseConfiguration,
 ) -> Option<LinkNetwork> {
-    let normalized = language.to_ascii_lowercase();
-    if !BUILT_IN_GRAMMAR_ALIASES.contains(&normalized.as_str()) {
-        return None;
-    }
-
-    match normalized.as_str() {
-        "lino" => Some(lino_parser::parse(text, language, configuration)),
-        "txt" | "text" | "plain text" => Some(structured_text_parser::parse_plain(
+    let entry = language_catalog::language_entry(language)?;
+    match entry.name.as_str() {
+        "LiNo" => Some(lino_parser::parse(text, language, configuration)),
+        "txt" => Some(structured_text_parser::parse_plain(
             text,
             language,
             configuration,
         )),
-        "pdf" => Some(pdf_parser::parse(text, language, configuration)),
-        "docx" => Some(docx_parser::parse(text, language, configuration)),
-        _ if natural_language::canonical_natural_language(language).is_some() => Some(
-            structured_text_parser::parse_natural(text, language, configuration),
-        ),
+        "PDF" => Some(pdf_parser::parse(text, language, configuration)),
+        "DOCX" => Some(docx_parser::parse(text, language, configuration)),
+        _ if entry.family == "natural" => Some(structured_text_parser::parse_natural(
+            text,
+            language,
+            configuration,
+        )),
         _ => None,
     }
 }

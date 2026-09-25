@@ -38,13 +38,13 @@
     "Lua": [".lua"],
     "Perl": [".pl", ".pm"],
     "sql-ansi": [".sql"],
-    "sql-postgres": [".sql"],
-    "sql-mysql": [".sql"],
-    "sql-sqlite": [".sql"],
-    "sql-server": [".sql"],
-    "sql-oracle": [".sql"],
-    "sql-bigquery": [".sql"],
-    "sql-snowflake": [".sql"],
+    "sql-postgres": [".sql", ".pgsql", ".postgres.sql"],
+    "sql-mysql": [".sql", ".mysql.sql"],
+    "sql-sqlite": [".sql", ".sqlite.sql"],
+    "sql-server": [".sql", ".tsql", ".mssql.sql"],
+    "sql-oracle": [".sql", ".plsql", ".pls", ".oracle.sql"],
+    "sql-bigquery": [".sql", ".bigquery.sql"],
+    "sql-snowflake": [".sql", ".snowflake.sql"],
     "HTML": [".html", ".htm"],
     "CSS": [".css"],
     "JSON": [".json"],
@@ -136,6 +136,7 @@
   "inventoryNotes": [
     "Every lossless-text or lexical-cst row is an observable requirement gap, not a supported exemption.",
     "A grammar-cst row records parser dispatch and CST materialization only; it does not claim scope resolution, elaboration, complete upstream conformance-corpus coverage, or semantic transformation.",
-    "Language aliases and dialect profiles remain in scope even when several profiles currently share one grammar backend."
+    "Language aliases and dialect profiles remain in scope even when several profiles currently share one grammar backend.",
+    "Extension dispatch selects the longest case-insensitive matching suffix: a plain .sql path selects sql-ansi and the sql grammar every SQL dialect shares, while dialect suffixes such as .postgres.sql or .tsql select the dialect profile itself."
   ]
 }

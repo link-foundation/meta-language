@@ -28,6 +28,7 @@
     },
     "grammar": { "parity": "ported", "feature": "grammar-peggy-emitter" },
     "graphql_adapter": { "parity": "ported", "feature": "graphql-query-plan" },
+    "language_catalog": { "parity": "ported", "feature": "language-catalog-dispatch" },
     "language_parser": { "parity": "ported", "feature": "four-language-structured-frontends" },
     "language_profile": { "parity": "ported", "feature": "language-profile" },
     "language_support": { "parity": "ported", "feature": "language-capability-contracts" },
@@ -169,6 +170,26 @@
           "js/src/language-support.js",
           "js/tests/four-language-conformance.test.js",
           "parity/fixtures/four-language-conformance.json"
+        ]
+      }
+    },
+    {
+      "id": "language-catalog-dispatch",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/language_catalog.rs",
+          "rust/src/data/language-catalog.json",
+          "rust/tests/unit/language_catalog.rs"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/language-catalog.js",
+          "js/src/data/language-catalog.json",
+          "js/tests/language-catalog.test.js"
         ]
       }
     },

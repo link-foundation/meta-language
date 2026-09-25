@@ -43,14 +43,14 @@ fn syntax_rows(network: &LinkNetwork, root: LinkId) -> Vec<Value> {
     while let Some((id, depth, field)) = stack.pop() {
         let metadata = network.link(id).expect("syntax link").metadata();
         let flags = metadata.flags();
-        let range = metadata.span().map(|span| span.byte_range());
+        let range = metadata.span().map(meta_language::SourceSpan::byte_range);
         rows.push(json!([
             depth,
             field,
             metadata.term(),
             i32::from(metadata.is_named()),
-            range.map(|range| range.start()),
-            range.map(|range| range.end()),
+            range.map(meta_language::ByteRange::start),
+            range.map(meta_language::ByteRange::end),
             format!(
                 "{}{}{}",
                 if flags.is_error() { "E" } else { "" },
@@ -86,7 +86,7 @@ fn document_root(network: &LinkNetwork) -> LinkId {
 fn public_rows(language: &str, source: &str, rows: &[Value]) -> Vec<Value> {
     match language {
         "Lean" => {
-            let flags = rows.first().map_or(json!(""), |row| row[6].clone());
+            let flags = rows.first().map_or_else(|| json!(""), |row| row[6].clone());
             std::iter::once(json!([0, null, "file", 1, 0, source.len(), flags]))
                 .chain(rows.iter().map(|row| {
                     let mut row = row.clone();
@@ -138,7 +138,7 @@ fn rust_public_networks_match_grammar_derived_rows() {
                     .iter()
                     .zip(&want)
                     .position(|(left, right)| left != right)
-                    .unwrap_or(rows.len().min(want.len()));
+                    .unwrap_or_else(|| rows.len().min(want.len()));
                 differences.push(format!(
                     "{name} {kind} row {index} ({} vs {}): actual {:?} expected {:?}",
                     rows.len(),

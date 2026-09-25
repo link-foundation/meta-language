@@ -6,7 +6,7 @@ const inventory = JSON.parse(readFileSync(new URL('../../parity/language-grammar
 for (const language of inventory.languages) {
   for (const alias of language.aliases) {
     const network = LinkNetwork.parse(language.source, alias);
-    const point = network.links().find((link) => link.metadata.linkType === 'Language' || link.metadata?.link_type === 'Language');
-    console.log(`${language.name}\t${alias}\t${point?.metadata?.term}\t${network.language ?? ''}`);
+    const point = network.links().find((link) => link.metadata().linkType === 'Language');
+    console.log(`${language.name}\t${alias}\t${point?.metadata().term}\t${network.language ?? ''}`);
   }
 }

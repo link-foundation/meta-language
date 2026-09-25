@@ -203,116 +203,57 @@ fn convert_root(
     root_id
 }
 
+/// Selects the primary default grammar the language catalog records for a
+/// language name or alias.
 fn grammar_for_language(language: &str) -> Option<Language> {
-    if language.eq_ignore_ascii_case("python") || language.eq_ignore_ascii_case("py") {
-        Some(tree_sitter_python::LANGUAGE.into())
-    } else if language == "C" || language == "c" {
-        Some(tree_sitter_c::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("java") {
-        Some(tree_sitter_java::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("c++") || language.eq_ignore_ascii_case("cpp") {
-        Some(tree_sitter_cpp::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("c#") || language.eq_ignore_ascii_case("csharp") {
-        Some(tree_sitter_c_sharp::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("javascript")
-        || language.eq_ignore_ascii_case("js")
-        || language.eq_ignore_ascii_case("ecmascript")
-    {
-        Some(tree_sitter_javascript::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("tsx") {
-        Some(tree_sitter_typescript::LANGUAGE_TSX.into())
-    } else if language.eq_ignore_ascii_case("typescript") || language.eq_ignore_ascii_case("ts") {
-        Some(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
-    } else if language.eq_ignore_ascii_case("visual basic")
-        || language.eq_ignore_ascii_case("vb")
-        || language.eq_ignore_ascii_case("vb.net")
-        || language.eq_ignore_ascii_case("vbnet")
-    {
-        Some(tree_sitter_vb_dotnet::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("delphi/object pascal")
-        || language.eq_ignore_ascii_case("delphi")
-        || language.eq_ignore_ascii_case("object pascal")
-        || language.eq_ignore_ascii_case("pascal")
-    {
-        Some(tree_sitter_pascal::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("rust") || language.eq_ignore_ascii_case("rs") {
-        Some(tree_sitter_rust::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
-        Some(tree_sitter_lean4::language())
-    } else if language.eq_ignore_ascii_case("rocq") || language.eq_ignore_ascii_case("coq") {
-        Some(rocq_grammar::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("go") || language.eq_ignore_ascii_case("golang") {
-        Some(tree_sitter_go::LANGUAGE.into())
-    } else if language == "R" || language == "r" {
-        Some(tree_sitter_r::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("ruby") || language.eq_ignore_ascii_case("rb") {
-        Some(tree_sitter_ruby::LANGUAGE.into())
-    } else if [
-        "sql-ansi",
-        "sql ansi",
-        "sql-postgres",
-        "sql postgresql",
-        "sql-mysql",
-        "sql mysql",
-        "sql-sqlite",
-        "sql sqlite",
-        "sql-server",
-        "sql server",
-        "sql-oracle",
-        "sql oracle",
-        "sql-bigquery",
-        "sql bigquery",
-        "sql-snowflake",
-        "sql snowflake",
-    ]
-    .iter()
-    .any(|profile| language.eq_ignore_ascii_case(profile))
-    {
-        Some(tree_sitter_sequel::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("html") {
-        Some(tree_sitter_html::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("css") {
-        Some(tree_sitter_css::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("json") {
-        Some(tree_sitter_json::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("csv") {
-        Some(csv_grammar::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("json5") {
-        Some(tree_sitter_json5_orchard::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("yaml") || language.eq_ignore_ascii_case("yml") {
-        Some(tree_sitter_yaml::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("toml") {
-        Some(tree_sitter_toml_ng::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("xml") || language.eq_ignore_ascii_case("docx") {
-        Some(tree_sitter_xml::LANGUAGE_XML.into())
-    } else if language.eq_ignore_ascii_case("dtd") {
-        Some(tree_sitter_xml::LANGUAGE_DTD.into())
-    } else if language.eq_ignore_ascii_case("ini") {
-        Some(tree_sitter_ini::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("protobuf")
-        || language.eq_ignore_ascii_case("proto")
-        || language.eq_ignore_ascii_case("protocol buffers")
-    {
-        Some(tree_sitter_proto::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("graphql") || language.eq_ignore_ascii_case("gql") {
-        Some(tree_sitter_graphql::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("php") {
-        Some(tree_sitter_php::LANGUAGE_PHP.into())
-    } else if language.eq_ignore_ascii_case("swift") {
-        Some(tree_sitter_swift::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("kotlin") || language.eq_ignore_ascii_case("kt") {
-        Some(tree_sitter_kotlin_ng::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("scala") {
-        Some(tree_sitter_scala::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("lua") {
-        Some(tree_sitter_lua::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("perl") || language.eq_ignore_ascii_case("pl") {
-        Some(ts_parser_perl::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("markdown") || language.eq_ignore_ascii_case("md") {
-        Some(tree_sitter_md_025::LANGUAGE.into())
-    } else {
-        None
-    }
+    let grammar = crate::language_catalog::language_entry(language)?
+        .grammars
+        .first()?;
+    grammar_by_id(&grammar.id)
+}
+
+/// Returns the compiled grammar for a grammar-lock id.
+pub fn grammar_by_id(id: &str) -> Option<Language> {
+    Some(match id {
+        "c" => tree_sitter_c::LANGUAGE.into(),
+        "cpp" => tree_sitter_cpp::LANGUAGE.into(),
+        "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),
+        "css" => tree_sitter_css::LANGUAGE.into(),
+        "csv" => csv_grammar::LANGUAGE.into(),
+        "dtd" => tree_sitter_xml::LANGUAGE_DTD.into(),
+        "go" => tree_sitter_go::LANGUAGE.into(),
+        "graphql" => tree_sitter_graphql::LANGUAGE.into(),
+        "html" => tree_sitter_html::LANGUAGE.into(),
+        "ini" => tree_sitter_ini::LANGUAGE.into(),
+        "java" => tree_sitter_java::LANGUAGE.into(),
+        "javascript" => tree_sitter_javascript::LANGUAGE.into(),
+        "json" => tree_sitter_json::LANGUAGE.into(),
+        "json5" => tree_sitter_json5_orchard::LANGUAGE.into(),
+        "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
+        "lean" => tree_sitter_lean4::language(),
+        "lua" => tree_sitter_lua::LANGUAGE.into(),
+        "markdown" => tree_sitter_md_025::LANGUAGE.into(),
+        "markdown_inline" => tree_sitter_md_025::INLINE_LANGUAGE.into(),
+        "pascal" => tree_sitter_pascal::LANGUAGE.into(),
+        "perl" => ts_parser_perl::LANGUAGE.into(),
+        "php" => tree_sitter_php::LANGUAGE_PHP.into(),
+        "proto" => tree_sitter_proto::LANGUAGE.into(),
+        "python" => tree_sitter_python::LANGUAGE.into(),
+        "r" => tree_sitter_r::LANGUAGE.into(),
+        "rocq" => rocq_grammar::LANGUAGE.into(),
+        "ruby" => tree_sitter_ruby::LANGUAGE.into(),
+        "rust" => tree_sitter_rust::LANGUAGE.into(),
+        "scala" => tree_sitter_scala::LANGUAGE.into(),
+        "sql" => tree_sitter_sequel::LANGUAGE.into(),
+        "swift" => tree_sitter_swift::LANGUAGE.into(),
+        "toml" => tree_sitter_toml_ng::LANGUAGE.into(),
+        "tsx" => tree_sitter_typescript::LANGUAGE_TSX.into(),
+        "typescript" => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+        "vb" => tree_sitter_vb_dotnet::LANGUAGE.into(),
+        "xml" => tree_sitter_xml::LANGUAGE_XML.into(),
+        "yaml" => tree_sitter_yaml::LANGUAGE.into(),
+        _ => return None,
+    })
 }
 
 fn convert_node(

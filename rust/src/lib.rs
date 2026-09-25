@@ -10,6 +10,7 @@ mod embedded_region_parser;
 pub mod grammar;
 pub mod graphql_adapter;
 mod incremental;
+pub mod language_catalog;
 mod language_fixtures;
 mod language_identification;
 pub mod language_parser;
@@ -101,6 +102,10 @@ pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
 pub use graphql_adapter::{
     lower_graphql, GraphQlAdapterError, GraphQlArgumentRole, GraphQlOperationType,
     GraphQlRootMapping, GraphQlSchemaRegistry,
+};
+pub use language_catalog::{
+    canonical_language_name, grammar_provenance, language_candidates_for_path, language_catalog,
+    language_entry, language_for_path, GrammarProvenance, LanguageEntry,
 };
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
