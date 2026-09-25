@@ -169,6 +169,15 @@
       "wasmSha256": "6d129b4d3d4f4fd7fa88f2243db845d53d65dcd2521614ce94209e6c45a05b6a",
       "license": "markdown.LICENSE"
     },
+    "markdown_inline": {
+      "id": "markdown_inline",
+      "crate": "tree-sitter-md-025",
+      "directory": "tree-sitter-markdown-inline",
+      "version": "0.5.6",
+      "parserSha256": "0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c",
+      "wasmSha256": "38e644a81ca11a6b98d56aaa30b056148357dcaf22f62ef3e5f47c9a968e75e8",
+      "license": "markdown_inline.LICENSE"
+    },
     "pascal": {
       "id": "pascal",
       "crate": "tree-sitter-pascal",

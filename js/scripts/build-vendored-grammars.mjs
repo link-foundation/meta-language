@@ -55,6 +55,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   lean: { crate: 'tree-sitter-lean4', dir: '.' },
   lua: { crate: 'tree-sitter-lua', dir: '.' },
   markdown: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown' },
+  markdown_inline: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown-inline' },
   pascal: { crate: 'tree-sitter-pascal', dir: '.' },
   perl: { crate: 'ts-parser-perl', dir: '.' },
   php: { crate: 'tree-sitter-php', dir: 'php' },

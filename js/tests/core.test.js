@@ -324,6 +324,38 @@ test('hidden grammar text is not labeled whitespace trivia', () => {
   assert.deepEqual(wrappers, ['Module', 'End Module']);
 });
 
+test('Markdown inline content is parsed with the inline grammar', () => {
+  // Block continuations inside inline content stay under the deepest inline
+  // node that spans them, here the emphasis split across two quote lines.
+  const source = '# Title *x*\n\n> Quote with `code`\n> and [link](https://example.com) *em\n> ph* é.\n\n| a | b |\n|---|---|\n| *c* | d |\n';
+  const network = LinkNetwork.parse(source, 'Markdown');
+  const bytes = Buffer.from(source);
+  const nodes = [];
+  for (const parent of network.links()) {
+    if (parent.metadata().linkType !== LinkType.Syntax) continue;
+    for (const child of parent.references().map((reference) => network.link(reference))) {
+      const metadata = child?.metadata();
+      if (metadata?.linkType !== LinkType.Syntax || !metadata.named) continue;
+      const { start, end } = metadata.span.byteRange;
+      nodes.push(JSON.stringify([metadata.term, parent.metadata().term, bytes.subarray(start, end).toString()]));
+    }
+  }
+
+  assert.equal(network.reconstructText(), source);
+  assert.ok(network.verifyFullMatch().isClean());
+  for (const expected of [
+    ['emphasis', 'inline', '*x*'],
+    ['code_span', 'inline', '`code`'],
+    ['inline_link', 'inline', '[link](https://example.com)'],
+    ['link_destination', 'inline_link', 'https://example.com'],
+    ['block_continuation', 'inline', '> '],
+    ['block_continuation', 'emphasis', '> '],
+    ['emphasis', 'pipe_table_cell', '*c*'],
+  ]) {
+    assert.ok(nodes.includes(JSON.stringify(expected)), `${expected} in ${nodes}`);
+  }
+});
+
 test('grammar builders emit Peggy grammar and JavaScript parser module text', () => {
   const grammar = new GrammarBuilder('Word')
     .terminal('letter', GrammarBuilder.charRange('a', 'z'))

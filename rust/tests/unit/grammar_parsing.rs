@@ -580,6 +580,48 @@ fn hidden_grammar_text_is_not_labeled_whitespace_trivia() {
 }
 
 #[test]
+fn markdown_inline_content_is_parsed_with_the_inline_grammar() {
+    // Block continuations inside inline content stay under the deepest inline
+    // node that spans them, here the emphasis split across two quote lines.
+    let source = "# Title *x*\n\n> Quote with `code`\n> and [link](https://example.com) *em\n> ph* é.\n\n| a | b |\n|---|---|\n| *c* | d |\n";
+    let network = LinkNetwork::parse(source, "Markdown", ParseConfiguration::default());
+    let nodes = network
+        .links()
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+        .filter(|link| link.metadata().is_named())
+        .map(|link| {
+            let parent = network
+                .link(link.references()[0])
+                .and_then(|parent| parent.metadata().term())
+                .unwrap_or_default();
+            let range = link.metadata().span().expect("syntax span").byte_range();
+            (
+                link.metadata().term().unwrap_or_default().to_string(),
+                parent.to_string(),
+                source[range.start()..range.end()].to_string(),
+            )
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(network.verify_full_match(None).is_clean());
+    for (term, parent, text) in [
+        ("emphasis", "inline", "*x*"),
+        ("code_span", "inline", "`code`"),
+        ("inline_link", "inline", "[link](https://example.com)"),
+        ("link_destination", "inline_link", "https://example.com"),
+        ("block_continuation", "inline", "> "),
+        ("block_continuation", "emphasis", "> "),
+        ("emphasis", "pipe_table_cell", "*c*"),
+    ] {
+        assert!(
+            nodes.contains(&(term.to_string(), parent.to_string(), text.to_string())),
+            "{term} under {parent} for {text:?} in {nodes:?}"
+        );
+    }
+}
+
+#[test]
 fn json5_recovery_errors_round_trip_with_flags() {
     let source = "{\n  key: 'unterminated,\n}\n";
     let network = LinkNetwork::parse(source, "JSON5", ParseConfiguration::default());

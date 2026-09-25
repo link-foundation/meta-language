@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 
-use tree_sitter::{InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Tree};
+use tree_sitter::{
+    InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Range as TreeSitterRange, Tree,
+};
 
 #[allow(unsafe_code)]
 mod rocq_grammar {
@@ -297,6 +299,20 @@ fn convert_node(
     node: Node<'_>,
     context: ConvertContext<'_>,
 ) -> LinkId {
+    convert_node_with(network, parent, node, &[], context)
+}
+
+/// Converts `node`, placing `injected` nodes from another tree (Markdown block
+/// continuations inside inline content) among its children. Mirrors
+/// `convertGrammarNode` in `js/src/programming-language-parser.js`.
+fn convert_node_with<'tree>(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    node: Node<'tree>,
+    injected: &[Node<'tree>],
+    context: ConvertContext<'_>,
+) -> LinkId {
+    let flags = flags_for_node(node);
     let node_id = network.insert_link(
         [parent],
         LinkMetadata::new()
@@ -310,10 +326,21 @@ fn convert_node(
                 context.source_len,
                 context.offset,
             ))
-            .with_flags(flags_for_node(node)),
+            .with_flags(flags),
     );
 
-    if node.child_count() == 0 {
+    let inline_tree = is_markdown_inline_container(node, context.language)
+        .then(|| parse_markdown_inline(node, context.text));
+    let mut extra_children = injected.to_vec();
+    let own_children = inline_tree.as_ref().map_or_else(
+        || children_with_fields(node),
+        |tree| {
+            extra_children.extend(markdown_inline_excluded_children(node));
+            children_with_fields(tree.root_node())
+        },
+    );
+
+    if own_children.is_empty() && extra_children.is_empty() {
         if is_rocq_identifier(node, context.language) {
             let semantic_term =
                 rocq_identifier_term(&context.text[node.start_byte()..node.end_byte()]);
@@ -330,7 +357,7 @@ fn convert_node(
                         context.source_len,
                         context.offset,
                     ))
-                    .with_flags(flags_for_node(node)),
+                    .with_flags(flags),
             );
             insert_leaf_token(network, semantic_id, node, context);
         } else {
@@ -340,26 +367,141 @@ fn convert_node(
     }
 
     let mut covered_until = node.start_byte();
-    for child_index in 0..node.child_count() {
-        let child_index_u32 =
-            u32::try_from(child_index).expect("tree-sitter child index fits in u32");
-        let child = node
-            .child(child_index)
-            .expect("tree-sitter child index should be valid");
-        if context.has_synthetic_suffix() && child.start_byte() >= context.source_len {
+    let mut child_has_error = false;
+    for child in distribute_injected_children(own_children, &extra_children) {
+        if context.has_synthetic_suffix() && child.node.start_byte() >= context.source_len {
             break;
         }
-        insert_gap_token(network, node_id, covered_until, child.start_byte(), context);
+        insert_gap_token(
+            network,
+            node_id,
+            covered_until,
+            child.node.start_byte(),
+            context,
+        );
 
-        let child_id = convert_node(network, node_id, child, context);
-        if let Some(label) = node.field_name_for_child(child_index_u32) {
+        let child_id = convert_node_with(network, node_id, child.node, &child.injected, context);
+        if let Some(label) = child.field {
             network.insert_field(node_id, label, child_id);
         }
-        covered_until = child.end_byte().min(context.source_len);
+        child_has_error |= network
+            .link(child_id)
+            .is_some_and(|link| link.metadata().flags().has_error());
+        covered_until = covered_until.max(child.node.end_byte().min(context.source_len));
     }
 
     insert_gap_token(network, node_id, covered_until, node.end_byte(), context);
+    // A Markdown inline tree is parsed separately from its block container, so
+    // its errors reach the containing block nodes through their children.
+    if child_has_error && !flags.has_error() {
+        network.set_flags(node_id, flags.with_containing_error());
+    }
     node_id
+}
+
+struct ChildNode<'tree> {
+    node: Node<'tree>,
+    field: Option<&'static str>,
+    injected: Vec<Node<'tree>>,
+}
+
+fn children_with_fields(node: Node<'_>) -> Vec<ChildNode<'_>> {
+    (0..node.child_count())
+        .map(|index| {
+            let index_u32 = u32::try_from(index).expect("tree-sitter child index fits in u32");
+            ChildNode {
+                node: node
+                    .child(index)
+                    .expect("tree-sitter child index should be valid"),
+                field: node.field_name_for_child(index_u32),
+                injected: Vec::new(),
+            }
+        })
+        .collect()
+}
+
+fn is_markdown_inline_container(node: Node<'_>, language: &str) -> bool {
+    (language.eq_ignore_ascii_case("markdown") || language.eq_ignore_ascii_case("md"))
+        && matches!(node.kind(), "inline" | "pipe_table_cell")
+}
+
+/// Named children of a Markdown inline container after the first, which the
+/// inline grammar skips, exactly as upstream's `MarkdownParser` does.
+fn markdown_inline_excluded_children(node: Node<'_>) -> Vec<Node<'_>> {
+    (1..node.child_count())
+        .filter_map(|index| node.child(index))
+        .filter(Node::is_named)
+        .collect()
+}
+
+/// tree-sitter-markdown parses block structure and inline content with two
+/// grammars. Like upstream's `MarkdownParser` (`bindings/rust/parser.rs` in
+/// tree-sitter-md), every `inline` and `pipe_table_cell` block node is parsed
+/// again with the inline grammar over the node's range minus its named
+/// children after the first (block continuations such as a quote's `> `).
+/// Mirrors `parseMarkdownInline` in `js/src/programming-language-parser.js`.
+fn parse_markdown_inline(node: Node<'_>, text: &str) -> Tree {
+    let mut range = node.range();
+    let mut ranges = Vec::new();
+    for child in markdown_inline_excluded_children(node) {
+        ranges.push(TreeSitterRange {
+            start_byte: range.start_byte,
+            start_point: range.start_point,
+            end_byte: child.start_byte(),
+            end_point: child.start_position(),
+        });
+        range.start_byte = child.end_byte();
+        range.start_point = child.end_position();
+    }
+    ranges.push(range);
+    let mut parser = Parser::new();
+    parser
+        .set_language(&tree_sitter_md_025::INLINE_LANGUAGE.into())
+        .expect("the Markdown inline grammar matches the tree-sitter ABI");
+    parser
+        .set_included_ranges(&ranges)
+        .expect("Markdown inline ranges follow the ordered block children");
+    parser
+        .parse(text, None)
+        .expect("tree-sitter parses without a timeout or cancellation")
+}
+
+/// Places nodes from another tree under the deepest child whose range contains
+/// them, and orders the rest among the children by start offset, block nodes
+/// first on ties.
+fn distribute_injected_children<'tree>(
+    mut children: Vec<ChildNode<'tree>>,
+    injected: &[Node<'tree>],
+) -> Vec<ChildNode<'tree>> {
+    let mut top = Vec::new();
+    for &node in injected {
+        if let Some(owner) = children
+            .iter_mut()
+            .find(|child| contains_node(child.node, node))
+        {
+            owner.injected.push(node);
+        } else {
+            top.push(ChildNode {
+                node,
+                field: None,
+                injected: Vec::new(),
+            });
+        }
+    }
+    if top.is_empty() {
+        return children;
+    }
+    top.extend(children);
+    top.sort_by_key(|child| child.node.start_byte());
+    top
+}
+
+fn contains_node(outer: Node<'_>, inner: Node<'_>) -> bool {
+    let (outer_start, outer_end) = (outer.start_byte(), outer.end_byte());
+    let (inner_start, inner_end) = (inner.start_byte(), inner.end_byte());
+    outer_start <= inner_start
+        && inner_end <= outer_end
+        && (inner_start < inner_end || (outer_start < inner_start && inner_start < outer_end))
 }
 
 fn is_rocq_identifier(node: Node<'_>, language: &str) -> bool {

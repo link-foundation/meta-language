@@ -490,13 +490,26 @@ function validateBalancedParentheses(text) {
   return depth === 0;
 }
 
-function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens) {
+function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens, injected = []) {
   const start = adapter.startOffset(node);
   const end = adapter.endOffset(node);
   const children = [];
   let coveredUntil = start;
+  const inlineTree = canonical === 'Markdown' && MARKDOWN_INLINE_CONTAINERS.has(adapter.term(node))
+    ? parseMarkdownInline(node, text)
+    : undefined;
+  const ownChildren = inlineTree
+    ? adapter.children(inlineTree.rootNode)
+    : adapter.children(node);
+  const extraChildren = inlineTree
+    ? [...injected, ...markdownInlineExcludedChildren(node)]
+    : injected;
 
-  for (const { node: child, field } of adapter.children(node)) {
+  for (const { node: child, field, injected: nested } of distributeInjectedChildren(
+    ownChildren,
+    extraChildren,
+    adapter,
+  )) {
     const childStart = adapter.startOffset(child);
     pushGapNodes(children, coveredUntil, childStart, text, boundaries, tokens);
     const converted = convertGrammarNode(
@@ -505,12 +518,14 @@ function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens) 
       canonical,
       text,
       boundaries,
-        tokens,
+      tokens,
+      nested,
     );
     converted.field = field;
     children.push(converted);
     coveredUntil = Math.max(coveredUntil, adapter.endOffset(child));
   }
+  inlineTree?.delete();
 
   if (children.length === 0 && start < end) {
     const grammarTerm = adapter.term(node);
@@ -544,13 +559,82 @@ function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens) 
 
   pushGapNodes(children, coveredUntil, end, text, boundaries, tokens);
 
+  // A Markdown inline tree is parsed separately from its block container, so
+  // its errors reach the containing block nodes through their children.
+  const flags = grammarFlags(node, adapter);
   return {
     term: adapter.term(node),
     children,
     named: adapter.isNamed(node),
     span: spanFor(boundaries, start, end),
-    flags: grammarFlags(node, adapter),
+    flags: !flags.hasError && children.some((child) => child.flags.hasError)
+      ? new LinkFlags({ ...flags, hasError: true })
+      : flags,
   };
+}
+
+// tree-sitter-markdown parses block structure and inline content with two
+// grammars. Like upstream's `MarkdownParser` (bindings/rust/parser.rs in
+// tree-sitter-md), every `inline` and `pipe_table_cell` block node is parsed
+// again with the inline grammar over the node's range minus its named
+// children after the first (block continuations such as a quote's `> `).
+// Mirrors `parse_markdown_inline` in rust/src/tree_sitter_adapter.rs.
+const MARKDOWN_INLINE_CONTAINERS = new Set(['inline', 'pipe_table_cell']);
+
+function markdownInlineExcludedChildren(node) {
+  return node.children.slice(1).filter((child) => child.isNamed);
+}
+
+function parseMarkdownInline(node, text) {
+  const includedRanges = [];
+  let start = { index: node.startIndex, position: node.startPosition };
+  for (const child of markdownInlineExcludedChildren(node)) {
+    includedRanges.push({
+      startIndex: start.index,
+      startPosition: start.position,
+      endIndex: child.startIndex,
+      endPosition: child.startPosition,
+    });
+    start = { index: child.endIndex, position: child.endPosition };
+  }
+  includedRanges.push({
+    startIndex: start.index,
+    startPosition: start.position,
+    endIndex: node.endIndex,
+    endPosition: node.endPosition,
+  });
+  const parser = new WebTreeSitterParser();
+  parser.setLanguage(GRAMMARS.get('markdown_inline'));
+  const tree = parser.parse(text, null, { includedRanges });
+  parser.delete();
+  if (!tree) throw new Error('tree-sitter parser returned no Markdown inline syntax tree');
+  return tree;
+}
+
+// Places nodes from another tree (Markdown block continuations inside inline
+// content) under the deepest child whose range contains them, and orders the
+// rest among the children by start offset, block nodes first on ties.
+function distributeInjectedChildren(children, injected, adapter) {
+  const entries = children.map(({ node, field }) => ({ node, field, injected: [] }));
+  const top = [];
+  for (const node of injected) {
+    const owner = entries.find((entry) => containsNode(entry.node, node, adapter));
+    if (owner) owner.injected.push(node);
+    else top.push({ node, field: null, injected: [] });
+  }
+  if (top.length === 0) return entries;
+  return [...top, ...entries].sort(
+    (left, right) => adapter.startOffset(left.node) - adapter.startOffset(right.node),
+  );
+}
+
+function containsNode(outer, inner, adapter) {
+  const outerStart = adapter.startOffset(outer);
+  const outerEnd = adapter.endOffset(outer);
+  const innerStart = adapter.startOffset(inner);
+  const innerEnd = adapter.endOffset(inner);
+  return outerStart <= innerStart && innerEnd <= outerEnd
+    && (innerStart < innerEnd || (outerStart < innerStart && innerStart < outerEnd));
 }
 
 /** Term of source text consumed by hidden grammar rules, such as VB's `Module`. */
