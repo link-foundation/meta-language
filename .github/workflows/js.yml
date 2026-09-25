@@ -75,6 +75,10 @@ jobs:
         run: npm run check:default-cst
         working-directory: js
 
+      - name: Check the official links-notation LiNo grammar cases
+        run: npm run check:lino-grammar
+        working-directory: js
+
       - name: Check the shared language catalog
         run: npm run check:language-catalog
         working-directory: js

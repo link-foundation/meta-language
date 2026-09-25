@@ -19,6 +19,7 @@ pub mod language_support;
 mod line_index;
 pub mod link_flags;
 pub mod link_network;
+mod lino_grammar;
 mod lino_parser;
 pub mod lino_serialization;
 pub mod mixed_regions;

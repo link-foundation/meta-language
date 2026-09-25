@@ -3,6 +3,7 @@ use std::sync::OnceLock;
 use regex::Regex;
 
 use crate::line_index::LineIndex;
+use crate::lino_grammar::{parse_lino_cst, LinoNode};
 use crate::natural_language::{annotate_natural_language, canonical_natural_language};
 use crate::tree_sitter_adapter::SpanOffset;
 use crate::{
@@ -128,14 +129,7 @@ fn insert_grammar(
             |_| ("line", false),
             balanced_parentheses(text),
         ),
-        TextGrammar::Lino => insert_lines(
-            network,
-            parent,
-            &source,
-            "lino_document",
-            lino_line,
-            balanced_parentheses(text),
-        ),
+        TextGrammar::Lino => insert_grammar_node(network, parent, &source, &parse_lino_cst(text)),
         TextGrammar::Pdf => insert_lines(
             network,
             parent,
@@ -165,6 +159,63 @@ impl Source<'_> {
             self.offset.point(self.lines.byte_point(end)),
         )
     }
+}
+
+/// Inserts a built-in grammar tree of byte offsets below `parent`, recording
+/// its fields and the trivia of its whitespace extras.
+fn insert_grammar_node(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    source: &Source<'_>,
+    node: &LinoNode,
+) -> LinkId {
+    let flags = if node.is_error {
+        LinkFlags::error()
+    } else if node.has_error {
+        LinkFlags::containing_error()
+    } else if node.extra {
+        LinkFlags::extra()
+    } else {
+        LinkFlags::clean()
+    };
+    let span = source.span(node.start, node.end);
+    let syntax = network.insert_link(
+        [parent],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Syntax)
+            .with_named(node.named)
+            .with_term(node.term)
+            .with_language(source.language)
+            .with_span(span)
+            .with_flags(flags),
+    );
+    if node.is_leaf() {
+        let token = network.insert_link(
+            [syntax],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Token)
+                .with_named(node.named)
+                .with_term(&source.text[node.start..node.end])
+                .with_language(source.language)
+                .with_span(span)
+                .with_flags(flags),
+        );
+        if node.extra {
+            network.attach_trivia(
+                syntax,
+                token,
+                span,
+                source.configuration.trivia_attachment_policy(),
+            );
+        }
+    }
+    for child in &node.children {
+        let child_id = insert_grammar_node(network, syntax, source, child);
+        if let Some(field) = child.field {
+            network.insert_field(syntax, field, child_id);
+        }
+    }
+    syntax
 }
 
 fn insert_sentences(network: &mut LinkNetwork, parent: LinkId, source: &Source<'_>) -> LinkId {
@@ -369,25 +420,6 @@ fn insert_syntax(
             .with_span(span)
             .with_flags(flags),
     )
-}
-
-fn lino_line(line: &str) -> (&'static str, bool) {
-    let trimmed = line.trim();
-    if trimmed.starts_with('(') && trimmed.ends_with(')') {
-        ("link", false)
-    } else if trimmed.starts_with('(') || trimmed.ends_with(')') {
-        ("lino_error", true)
-    } else if trimmed.ends_with(':') && !trimmed.starts_with(':') {
-        ("definition", false)
-    } else if line.starts_with(char::is_whitespace) {
-        ("definition_body", false)
-    } else if trimmed.split_whitespace().count() > 1 {
-        ("link", false)
-    } else if trimmed.is_empty() {
-        ("blank_line", false)
-    } else {
-        ("atom", false)
-    }
 }
 
 fn pdf_line(line: &str) -> (&'static str, bool) {

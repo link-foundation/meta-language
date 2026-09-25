@@ -49,6 +49,7 @@ mod language_catalog;
 mod language_profile;
 mod link_network;
 mod links_notation;
+mod lino_grammar;
 mod lino_serialization;
 mod natural_language_grammar;
 mod parity_corpora;

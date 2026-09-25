@@ -3,6 +3,7 @@ import { gunzipSync } from 'node:zlib';
 import { Language as WebTreeSitterLanguage, Parser as WebTreeSitterParser } from 'web-tree-sitter';
 
 import { canonicalLanguageName, languageEntry } from './language-catalog.js';
+import { parseLinoCst } from './lino-grammar.js';
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 
 const encoder = new TextEncoder();
@@ -123,7 +124,9 @@ function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
 function parseGrammarCst(text, canonical) {
   const boundaries = sourceBoundaries(text);
   if (canonical === 'LiNo') {
-    return parseTokenGrammar(text, canonical, boundaries, 'lino_document', linoLineTerm);
+    const tokens = [];
+    const tree = builtinGrammarNode(parseLinoCst(text), text, boundaries, tokens);
+    return { canonical, rootTerm: tree.term, tokens, tree };
   }
   if (canonical === 'txt') {
     return parseTokenGrammar(
@@ -213,6 +216,26 @@ function parseTokenGrammar(text, canonical, boundaries, rootTerm, lineTerm, vali
   return { canonical, rootTerm, tokens, tree };
 }
 
+// Converts a built-in grammar tree of string offsets into CST nodes, adding
+// each leaf to `tokens` in source order.
+function builtinGrammarNode(node, text, boundaries, tokens) {
+  let flags = LinkFlags.clean();
+  if (node.isError) flags = flags.withError();
+  else if (node.hasError) flags = new LinkFlags({ hasError: true });
+  else if (node.extra) flags = flags.withExtra();
+  const converted = node.children.length === 0 && node.term !== 'lino_document'
+    ? grammarTokenNode(node.term, node.start, node.end, node.named, flags, text, boundaries, tokens)
+    : {
+        term: node.term,
+        children: node.children.map((child) => builtinGrammarNode(child, text, boundaries, tokens)),
+        named: node.named,
+        span: spanFor(boundaries, node.start, node.end),
+        flags,
+      };
+  if (node.field) converted.field = node.field;
+  return converted;
+}
+
 function parseNaturalLanguageGrammar(text, canonical, boundaries) {
   const tokens = [];
   const children = [];
@@ -295,17 +318,6 @@ function lineRanges(text) {
     ranges.push([start, text.length]);
   }
   return ranges;
-}
-
-function linoLineTerm(line) {
-  const trimmed = trimWhiteSpace(line);
-  if (trimmed.startsWith('(') && trimmed.endsWith(')')) return 'link';
-  if (trimmed.startsWith('(') || trimmed.endsWith(')')) return 'lino_error';
-  if (trimmed.endsWith(':') && !trimmed.startsWith(':')) return 'definition';
-  if (/^\p{White_Space}/u.test(line)) return 'definition_body';
-  if (trimmed.split(/\p{White_Space}+/u).length > 1) return 'link';
-  if (trimmed.length === 0) return 'blank_line';
-  return 'atom';
 }
 
 function trimWhiteSpace(text) {
