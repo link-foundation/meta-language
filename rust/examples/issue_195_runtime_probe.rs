@@ -57,12 +57,8 @@ fn main() {
             )
         })
         .collect::<Vec<_>>();
-    let lino_grammar = lino_grammar_cases()["cases"]
-        .as_array()
-        .expect("LiNo grammar cases")
-        .iter()
-        .map(|case| network_observation("LiNo", case["source"].as_str().expect("source")))
-        .collect::<Vec<_>>();
+    let lino_grammar = grammar_case_observations("LiNo", "lino-grammar-cases.json");
+    let pdf_grammar = grammar_case_observations("PDF", "pdf-grammar-cases.json");
     let semantics = corpus["semanticPrograms"]
         .as_array()
         .expect("semantic fixtures")
@@ -86,6 +82,7 @@ fn main() {
             "inventory": inventory,
             "builtins": builtins,
             "linoGrammar": lino_grammar,
+            "pdfGrammar": pdf_grammar,
             "semantics": semantics,
             "transforms": transforms,
             "translations": translations,
@@ -101,11 +98,20 @@ fn corpus() -> Value {
         .expect("shared corpus is valid JSON")
 }
 
-fn lino_grammar_cases() -> Value {
+/// Observations of the `language` grammar cases in `parity/fixtures/{fixture}`.
+fn grammar_case_observations(language: &str, fixture: &str) -> Vec<Value> {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../parity/fixtures/lino-grammar-cases.json");
-    serde_json::from_str(&fs::read_to_string(path).expect("LiNo grammar cases are readable"))
-        .expect("LiNo grammar cases are valid JSON")
+        .join("../parity/fixtures")
+        .join(fixture);
+    let cases: Value =
+        serde_json::from_str(&fs::read_to_string(path).expect("grammar cases are readable"))
+            .expect("grammar cases are valid JSON");
+    cases["cases"]
+        .as_array()
+        .expect("grammar cases")
+        .iter()
+        .map(|case| network_observation(language, case["source"].as_str().expect("source")))
+        .collect()
 }
 
 fn inventory() -> Value {

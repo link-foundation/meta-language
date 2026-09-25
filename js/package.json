@@ -22,6 +22,7 @@
     "check:issue-195": "node scripts/check-issue-195-acceptance.mjs",
     "check:default-cst": "node scripts/generate-default-cst-expectations.mjs --check",
     "check:lino-grammar": "node scripts/generate-lino-grammar-cases.mjs --check",
+    "check:pdf-grammar": "node scripts/generate-pdf-grammar-cases.mjs --check",
     "check:language-catalog": "node scripts/build-language-catalog.mjs --check",
     "check:issue-195:runtime-parity": "node scripts/check-issue-195-runtime-parity.mjs",
     "acceptance:issue-195": "node scripts/check-issue-195-acceptance.mjs --produce-gate-results issue-195-results/gate-faults.json --evaluate --checkpoint all",
@@ -52,6 +53,7 @@
     "web-tree-sitter": "0.25.10"
   },
   "devDependencies": {
-    "franc-min": "6.2.0"
+    "franc-min": "6.2.0",
+    "pdf-lib": "1.17.1"
   }
 }

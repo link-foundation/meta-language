@@ -1,3 +1,5 @@
+import { anonymous, errorNode, extra, fillExtras, node, propagateErrors, spanning, withField } from './builtin-grammar.js';
+
 /**
  * The built-in LiNo grammar CST, shared with `rust/src/lino_grammar.rs`.
  *
@@ -29,13 +31,17 @@ export function parseLinoCst(text) {
     children.push(...document.links);
     if (document.complete) break;
     const errorEnd = lineEnd(text, document.errorStart);
-    children.push(errorNode(text, document.errorStart, errorEnd));
+    children.push(lineErrorNode(text, document.errorStart, errorEnd));
     position = errorEnd;
   }
   const root = node('lino_document', 0, text.length, children);
-  root.hasError = children.some((child) => child.isError || child.hasError);
-  fillWhitespace(root, text);
-  return root;
+  propagateErrors(root);
+  return fillExtras(root, (start, end) => {
+    if (![...text.slice(start, end)].every(isLinoWhitespace)) {
+      throw new Error(`LiNo grammar left ${JSON.stringify(text.slice(start, end))} outside its CST`);
+    }
+    return [extra('whitespace', false, start, end)];
+  });
 }
 
 class LinoGrammarParser {
@@ -146,7 +152,7 @@ class LinoGrammarParser {
     this.whitespace();
     const close = this.literal(')');
     if (!close) return this.fail(start);
-    return linkNode([open, ...values, close]);
+    return spanning('link', [open, ...values, close]);
   }
 
   // multiLineLink = "(" _ reference _ ":" multiLineValues _ ")"
@@ -164,7 +170,7 @@ class LinoGrammarParser {
     this.whitespace();
     const close = this.literal(')');
     if (!close) return this.fail(start);
-    return linkNode([open, withField(id, 'id'), colon, ...values, close]);
+    return spanning('link', [open, withField(id, 'id'), colon, ...values, close]);
   }
 
   // multiLineValues = _ (referenceOrLink _)*
@@ -206,7 +212,7 @@ class LinoGrammarParser {
     if (named && this.eol()) return named;
     this.position = start;
     const values = this.singleLineValues();
-    if (values && this.eol()) return linkNode(values);
+    if (values && this.eol()) return spanning('link', values);
     return this.fail(start);
   }
 
@@ -221,7 +227,7 @@ class LinoGrammarParser {
     if (!colon) return this.fail(start);
     const values = this.singleLineValues();
     if (!values) return this.fail(start);
-    return linkNode([withField(id, 'id'), colon, ...values]);
+    return spanning('link', [withField(id, 'id'), colon, ...values]);
   }
 
   // indentedIdLink = reference __ ":" eol
@@ -232,7 +238,7 @@ class LinoGrammarParser {
     this.inlineWhitespace();
     const colon = this.literal(':');
     if (!colon || !this.eol()) return this.fail(start);
-    return linkNode([withField(id, 'id'), colon]);
+    return spanning('link', [withField(id, 'id'), colon]);
   }
 
   // reference = quotedReference / simpleReference
@@ -334,24 +340,7 @@ class LinoGrammarParser {
   }
 }
 
-function node(term, start, end, children = []) {
-  return { term, named: true, start, end, children };
-}
-
-function anonymous(term, start, end) {
-  return { term, named: false, start, end, children: [] };
-}
-
-function linkNode(children) {
-  return node('link', children[0].start, children.at(-1).end, children);
-}
-
-function withField(child, field) {
-  child.field = field;
-  return child;
-}
-
-function errorNode(text, start, end) {
+function lineErrorNode(text, start, end) {
   const children = [];
   let position = start;
   while (position < end) {
@@ -367,9 +356,7 @@ function errorNode(text, start, end) {
       children.push(node('reference', referenceStart, position));
     }
   }
-  const error = node('ERROR', start, end, children);
-  error.isError = true;
-  return error;
+  return errorNode(start, end, children);
 }
 
 // The rest of the line after `start`, without its line terminator.
@@ -377,30 +364,6 @@ function lineEnd(text, start) {
   let end = start;
   while (end < text.length && text[end] !== '\n' && text[end] !== '\r') end += 1;
   return end;
-}
-
-// Gives every node the whitespace between (and, for the root, around) its
-// children as anonymous `whitespace` extras.
-function fillWhitespace(parent, text) {
-  if (parent.children.length === 0 && parent.term !== 'lino_document') return;
-  const children = [];
-  let covered = parent.start;
-  const gap = (end) => {
-    if (end <= covered) return;
-    const value = text.slice(covered, end);
-    if (![...value].every(isLinoWhitespace)) {
-      throw new Error(`LiNo grammar left ${JSON.stringify(value)} outside its CST`);
-    }
-    children.push({ term: 'whitespace', named: false, extra: true, start: covered, end, children: [] });
-  };
-  for (const child of parent.children) {
-    gap(child.start);
-    fillWhitespace(child, text);
-    children.push(child);
-    covered = child.end;
-  }
-  gap(parent.end);
-  parent.children = children;
 }
 
 function isLinoWhitespace(character) {

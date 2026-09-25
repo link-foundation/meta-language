@@ -23,10 +23,13 @@ const grammarInventory = JSON.parse(
 const linoGrammarCases = JSON.parse(
   await readFile(path.join(root, 'parity/fixtures/lino-grammar-cases.json'), 'utf8'),
 );
+const pdfGrammarCases = JSON.parse(
+  await readFile(path.join(root, 'parity/fixtures/pdf-grammar-cases.json'), 'utf8'),
+);
 const rust = JSON.parse(execFileSync('cargo', [
   'run', '--quiet', '--manifest-path', path.join(root, 'rust/Cargo.toml'),
   '--example', 'issue_195_runtime_probe',
-], { cwd: root, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
+], { cwd: root, encoding: 'utf8', maxBuffer: 512 * 1024 * 1024 }));
 const javascript = runtimeObservation();
 
 const artifactsOption = process.argv.indexOf('--artifacts-dir');
@@ -39,7 +42,7 @@ if (artifactsOption !== -1) {
   ]);
 }
 
-for (const section of ['positive', 'negative', 'inventory', 'builtins', 'linoGrammar', 'semantics', 'transforms', 'translations']) {
+for (const section of ['positive', 'negative', 'inventory', 'builtins', 'linoGrammar', 'pdfGrammar', 'semantics', 'transforms', 'translations']) {
   if (stableJson(javascript[section]) !== stableJson(rust[section])) {
     throw new Error(`JavaScript/Rust runtime parity mismatch in ${section}`);
   }
@@ -57,6 +60,7 @@ function runtimeObservation() {
     builtins: corpus.builtinNetworkCases.map(({ language, source }) =>
       networkObservation(language, source)),
     linoGrammar: linoGrammarCases.cases.map(({ source }) => networkObservation('LiNo', source)),
+    pdfGrammar: pdfGrammarCases.cases.map(({ source }) => networkObservation('PDF', source)),
     semantics: corpus.semanticPrograms.map(programObservation),
     transforms: corpus.transformationPrograms.map(transformObservation),
     translations: translationObservations(),

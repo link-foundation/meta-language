@@ -19,62 +19,10 @@
 //! Offsets are UTF-8 byte offsets; every delimiter is ASCII, so the
 //! JavaScript runtime computes the same tree over string indices.
 
-/// A node of the built-in `LiNo` grammar CST over byte offsets.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[allow(clippy::struct_excessive_bools)]
-pub struct LinoNode {
-    pub term: &'static str,
-    pub named: bool,
-    pub field: Option<&'static str>,
-    pub start: usize,
-    pub end: usize,
-    pub is_error: bool,
-    pub has_error: bool,
-    pub extra: bool,
-    pub children: Vec<Self>,
-}
-
-impl LinoNode {
-    const fn named(term: &'static str, start: usize, end: usize, children: Vec<Self>) -> Self {
-        Self {
-            term,
-            named: true,
-            field: None,
-            start,
-            end,
-            is_error: false,
-            has_error: false,
-            extra: false,
-            children,
-        }
-    }
-
-    fn anonymous(term: &'static str, start: usize, end: usize) -> Self {
-        Self {
-            named: false,
-            ..Self::named(term, start, end, Vec::new())
-        }
-    }
-
-    fn link(children: Vec<Self>) -> Self {
-        let start = children.first().map_or(0, |child| child.start);
-        let end = children.last().map_or(0, |child| child.end);
-        Self::named("link", start, end, children)
-    }
-
-    const fn with_field(mut self, field: &'static str) -> Self {
-        self.field = Some(field);
-        self
-    }
-
-    /// Whether this node is a leaf token of the grammar.
-    pub fn is_leaf(&self) -> bool {
-        self.children.is_empty() && self.term != "lino_document"
-    }
-}
+use crate::builtin_grammar::{fill_extras, propagate_errors, GrammarNode};
 
 /// Parses `text` into the built-in `LiNo` grammar CST.
-pub fn parse_lino_cst(text: &str) -> LinoNode {
+pub fn parse_lino_cst(text: &str) -> GrammarNode {
     let bytes = text.as_bytes();
     let mut children = Vec::new();
     let mut position = 0;
@@ -89,17 +37,22 @@ pub fn parse_lino_cst(text: &str) -> LinoNode {
         children.push(error_node(bytes, error_start, error_end));
         position = error_end;
     }
-    let mut root = LinoNode::named("lino_document", 0, bytes.len(), children);
-    root.has_error = root
-        .children
-        .iter()
-        .any(|child| child.is_error || child.has_error);
-    fill_whitespace(&mut root, bytes);
-    root
+    let mut root = GrammarNode::node("lino_document", 0, bytes.len(), children);
+    propagate_errors(&mut root);
+    fill_extras(root, &mut |start, end| {
+        assert!(
+            bytes[start..end]
+                .iter()
+                .all(|byte| is_lino_whitespace(*byte)),
+            "LiNo grammar left {:?} outside its CST",
+            String::from_utf8_lossy(&bytes[start..end])
+        );
+        vec![GrammarNode::extra("whitespace", false, start, end)]
+    })
 }
 
 struct ParsedDocument {
-    links: Vec<LinoNode>,
+    links: Vec<GrammarNode>,
     error_start: Option<usize>,
 }
 
@@ -146,7 +99,7 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // links = firstLine line*   (pops the indentation pushed for it)
-    fn links(&mut self) -> Option<Vec<LinoNode>> {
+    fn links(&mut self) -> Option<Vec<GrammarNode>> {
         let first = self.first_line()?;
         let mut links = vec![first];
         while let Some(line) = self.line() {
@@ -159,7 +112,7 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // firstLine = SET_BASE_INDENTATION element
-    fn first_line(&mut self) -> Option<LinoNode> {
+    fn first_line(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         let spaces = self.spaces();
         if self.base_indentation.is_none() {
@@ -173,7 +126,7 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // line = CHECK_INDENTATION element
-    fn line(&mut self) -> Option<LinoNode> {
+    fn line(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         let spaces = self.spaces();
         if self.normalize_indentation(spaces) < self.current_indentation() {
@@ -188,7 +141,7 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // element = anyLink PUSH_INDENTATION links / anyLink
-    fn element(&mut self) -> Option<LinoNode> {
+    fn element(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         if let Some(mut link) = self.any_link() {
             let spaces = self.spaces();
@@ -208,7 +161,7 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // anyLink = multiLineAnyLink eol / indentedIdLink / singleLineAnyLink
-    fn any_link(&mut self) -> Option<LinoNode> {
+    fn any_link(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         if let Some(link) = self.multi_line_any_link() {
             if self.eol() {
@@ -221,13 +174,13 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // multiLineAnyLink = multiLineValueLink / multiLineLink
-    fn multi_line_any_link(&mut self) -> Option<LinoNode> {
+    fn multi_line_any_link(&mut self) -> Option<GrammarNode> {
         self.multi_line_value_link()
             .or_else(|| self.multi_line_link())
     }
 
     // multiLineValueLink = "(" multiLineValues _ ")"
-    fn multi_line_value_link(&mut self) -> Option<LinoNode> {
+    fn multi_line_value_link(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         let open = self.literal(b'(', "(")?;
         let values = self.multi_line_values();
@@ -238,11 +191,11 @@ impl<'a> LinoGrammarParser<'a> {
         let mut children = vec![open];
         children.extend(values);
         children.push(close);
-        Some(LinoNode::link(children))
+        Some(GrammarNode::spanning("link", children))
     }
 
     // multiLineLink = "(" _ reference _ ":" multiLineValues _ ")"
-    fn multi_line_link(&mut self) -> Option<LinoNode> {
+    fn multi_line_link(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         let open = self.literal(b'(', "(")?;
         self.whitespace();
@@ -261,11 +214,11 @@ impl<'a> LinoGrammarParser<'a> {
         let mut children = vec![open, id.with_field("id"), colon];
         children.extend(values);
         children.push(close);
-        Some(LinoNode::link(children))
+        Some(GrammarNode::spanning("link", children))
     }
 
     // multiLineValues = _ (referenceOrLink _)*
-    fn multi_line_values(&mut self) -> Vec<LinoNode> {
+    fn multi_line_values(&mut self) -> Vec<GrammarNode> {
         self.whitespace();
         let mut values = Vec::new();
         while let Some(value) = self.reference_or_link() {
@@ -276,7 +229,7 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // singleLineValues = (__ referenceOrLink)+
-    fn single_line_values(&mut self) -> Option<Vec<LinoNode>> {
+    fn single_line_values(&mut self) -> Option<Vec<GrammarNode>> {
         let mut values = Vec::new();
         loop {
             let start = self.position;
@@ -291,12 +244,12 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // referenceOrLink = multiLineAnyLink / reference
-    fn reference_or_link(&mut self) -> Option<LinoNode> {
+    fn reference_or_link(&mut self) -> Option<GrammarNode> {
         self.multi_line_any_link().or_else(|| self.reference())
     }
 
     // singleLineAnyLink = singleLineLink eol / singleLineValueLink eol
-    fn single_line_any_link(&mut self) -> Option<LinoNode> {
+    fn single_line_any_link(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         if let Some(link) = self.single_line_link() {
             if self.eol() {
@@ -306,14 +259,14 @@ impl<'a> LinoGrammarParser<'a> {
         self.position = start;
         if let Some(values) = self.single_line_values() {
             if self.eol() {
-                return Some(LinoNode::link(values));
+                return Some(GrammarNode::spanning("link", values));
             }
         }
         self.fail(start)
     }
 
     // singleLineLink = __ reference __ ":" singleLineValues
-    fn single_line_link(&mut self) -> Option<LinoNode> {
+    fn single_line_link(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         self.inline_whitespace();
         let Some(id) = self.reference() else {
@@ -328,11 +281,11 @@ impl<'a> LinoGrammarParser<'a> {
         };
         let mut children = vec![id.with_field("id"), colon];
         children.extend(values);
-        Some(LinoNode::link(children))
+        Some(GrammarNode::spanning("link", children))
     }
 
     // indentedIdLink = reference __ ":" eol
-    fn indented_id_link(&mut self) -> Option<LinoNode> {
+    fn indented_id_link(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         let id = self.reference()?;
         self.inline_whitespace();
@@ -342,17 +295,20 @@ impl<'a> LinoGrammarParser<'a> {
         if !self.eol() {
             return self.fail(start);
         }
-        Some(LinoNode::link(vec![id.with_field("id"), colon]))
+        Some(GrammarNode::spanning(
+            "link",
+            vec![id.with_field("id"), colon],
+        ))
     }
 
     // reference = quotedReference / simpleReference
-    fn reference(&mut self) -> Option<LinoNode> {
+    fn reference(&mut self) -> Option<GrammarNode> {
         self.quoted_reference().or_else(|| self.simple_reference())
     }
 
     // N opening quotes (", ' or `), content in which 2N quotes escape N, and
     // exactly N closing quotes not followed by another quote.
-    fn quoted_reference(&mut self) -> Option<LinoNode> {
+    fn quoted_reference(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         let quote = *self.text.get(start)?;
         if !matches!(quote, b'"' | b'\'' | b'`') {
@@ -373,7 +329,7 @@ impl<'a> LinoGrammarParser<'a> {
                 position += count * 2;
             } else if run(position, count) && self.text.get(position + count) != Some(&quote) {
                 self.position = position + count;
-                return Some(LinoNode::named(
+                return Some(GrammarNode::node(
                     "quoted_reference",
                     start,
                     self.position,
@@ -387,7 +343,7 @@ impl<'a> LinoGrammarParser<'a> {
     }
 
     // simpleReference = [^ \t\n\r(:)]+
-    fn simple_reference(&mut self) -> Option<LinoNode> {
+    fn simple_reference(&mut self) -> Option<GrammarNode> {
         let start = self.position;
         while self
             .text
@@ -397,7 +353,7 @@ impl<'a> LinoGrammarParser<'a> {
             self.position += 1;
         }
         (self.position > start)
-            .then(|| LinoNode::named("reference", start, self.position, Vec::new()))
+            .then(|| GrammarNode::node("reference", start, self.position, Vec::new()))
     }
 
     // eol = __ ([\r\n]+ / eof)
@@ -415,12 +371,16 @@ impl<'a> LinoGrammarParser<'a> {
         true
     }
 
-    fn literal(&mut self, byte: u8, term: &'static str) -> Option<LinoNode> {
+    fn literal(&mut self, byte: u8, term: &'static str) -> Option<GrammarNode> {
         if self.text.get(self.position) != Some(&byte) {
             return None;
         }
         self.position += 1;
-        Some(LinoNode::anonymous(term, self.position - 1, self.position))
+        Some(GrammarNode::anonymous(
+            term,
+            self.position - 1,
+            self.position,
+        ))
     }
 
     fn newline_character(&mut self) -> bool {
@@ -463,7 +423,7 @@ impl<'a> LinoGrammarParser<'a> {
         self.position >= self.text.len()
     }
 
-    fn fail(&mut self, start: usize) -> Option<LinoNode> {
+    fn fail(&mut self, start: usize) -> Option<GrammarNode> {
         self.position = start;
         None
     }
@@ -478,22 +438,22 @@ impl<'a> LinoGrammarParser<'a> {
     }
 }
 
-fn error_node(text: &[u8], start: usize, end: usize) -> LinoNode {
+fn error_node(text: &[u8], start: usize, end: usize) -> GrammarNode {
     let mut children = Vec::new();
     let mut position = start;
     while position < end {
         match text[position] {
             byte if is_lino_whitespace(byte) => position += 1,
             b'(' => {
-                children.push(LinoNode::anonymous("(", position, position + 1));
+                children.push(GrammarNode::anonymous("(", position, position + 1));
                 position += 1;
             }
             b')' => {
-                children.push(LinoNode::anonymous(")", position, position + 1));
+                children.push(GrammarNode::anonymous(")", position, position + 1));
                 position += 1;
             }
             b':' => {
-                children.push(LinoNode::anonymous(":", position, position + 1));
+                children.push(GrammarNode::anonymous(":", position, position + 1));
                 position += 1;
             }
             _ => {
@@ -501,7 +461,7 @@ fn error_node(text: &[u8], start: usize, end: usize) -> LinoNode {
                 while position < end && is_reference_byte(text[position]) {
                     position += 1;
                 }
-                children.push(LinoNode::named(
+                children.push(GrammarNode::node(
                     "reference",
                     reference_start,
                     position,
@@ -510,9 +470,7 @@ fn error_node(text: &[u8], start: usize, end: usize) -> LinoNode {
             }
         }
     }
-    let mut error = LinoNode::named("ERROR", start, end, children);
-    error.is_error = true;
-    error
+    GrammarNode::error(start, end, children)
 }
 
 // The rest of the line after `start`, without its line terminator.
@@ -522,39 +480,6 @@ const fn line_end(text: &[u8], start: usize) -> usize {
         end += 1;
     }
     end
-}
-
-// Gives every node the whitespace between (and, for the root, around) its
-// children as anonymous `whitespace` extras.
-fn fill_whitespace(parent: &mut LinoNode, text: &[u8]) {
-    if parent.is_leaf() {
-        return;
-    }
-    let mut children = Vec::new();
-    let mut covered = parent.start;
-    let gap = |children: &mut Vec<LinoNode>, covered: usize, end: usize| {
-        if end <= covered {
-            return;
-        }
-        assert!(
-            text[covered..end]
-                .iter()
-                .all(|byte| is_lino_whitespace(*byte)),
-            "LiNo grammar left {:?} outside its CST",
-            String::from_utf8_lossy(&text[covered..end])
-        );
-        let mut whitespace = LinoNode::anonymous("whitespace", covered, end);
-        whitespace.extra = true;
-        children.push(whitespace);
-    };
-    for mut child in std::mem::take(&mut parent.children) {
-        gap(&mut children, covered, child.start);
-        fill_whitespace(&mut child, text);
-        covered = child.end;
-        children.push(child);
-    }
-    gap(&mut children, covered, parent.end);
-    parent.children = children;
 }
 
 const fn is_lino_whitespace(byte: u8) -> bool {

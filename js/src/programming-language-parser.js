@@ -2,8 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { Language as WebTreeSitterLanguage, Parser as WebTreeSitterParser } from 'web-tree-sitter';
 
+import { isToken } from './builtin-grammar.js';
 import { canonicalLanguageName, languageEntry } from './language-catalog.js';
 import { parseLinoCst } from './lino-grammar.js';
+import { parsePdfCst } from './pdf-grammar.js';
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 
 const encoder = new TextEncoder();
@@ -123,9 +125,10 @@ function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
 
 function parseGrammarCst(text, canonical) {
   const boundaries = sourceBoundaries(text);
-  if (canonical === 'LiNo') {
+  const builtin = { LiNo: parseLinoCst, PDF: parsePdfCst }[canonical];
+  if (builtin) {
     const tokens = [];
-    const tree = builtinGrammarNode(parseLinoCst(text), text, boundaries, tokens);
+    const tree = builtinGrammarNode(builtin(text), text, boundaries, tokens);
     return { canonical, rootTerm: tree.term, tokens, tree };
   }
   if (canonical === 'txt') {
@@ -137,9 +140,6 @@ function parseGrammarCst(text, canonical) {
       () => 'line',
       validateBalancedParentheses,
     );
-  }
-  if (canonical === 'PDF') {
-    return parseTokenGrammar(text, canonical, boundaries, 'pdf_file', pdfLineTerm, validatePdf);
   }
   if (languageEntry(canonical).family === 'natural') {
     return parseNaturalLanguageGrammar(text, canonical, boundaries);
@@ -221,9 +221,10 @@ function parseTokenGrammar(text, canonical, boundaries, rootTerm, lineTerm, vali
 function builtinGrammarNode(node, text, boundaries, tokens) {
   let flags = LinkFlags.clean();
   if (node.isError) flags = flags.withError();
-  else if (node.hasError) flags = new LinkFlags({ hasError: true });
+  else if (node.isMissing) flags = LinkFlags.missing();
+  else if (node.hasError) flags = LinkFlags.containingError();
   else if (node.extra) flags = flags.withExtra();
-  const converted = node.children.length === 0 && node.term !== 'lino_document'
+  const converted = isToken(node)
     ? grammarTokenNode(node.term, node.start, node.end, node.named, flags, text, boundaries, tokens)
     : {
         term: node.term,
@@ -318,26 +319,6 @@ function lineRanges(text) {
     ranges.push([start, text.length]);
   }
   return ranges;
-}
-
-function trimWhiteSpace(text) {
-  return text.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '');
-}
-
-function pdfLineTerm(line) {
-  const trimmed = trimWhiteSpace(line);
-  if (trimmed.startsWith('%PDF-')) return 'header';
-  if (trimmed === '%%EOF') return 'end_of_file';
-  if (/^[0-9]+\p{White_Space}+[0-9]+\p{White_Space}+obj$/u.test(trimmed)) return 'object_header';
-  if (trimmed === 'endobj') return 'object_end';
-  if (trimmed === 'xref') return 'cross_reference_table';
-  if (trimmed === 'trailer') return 'trailer';
-  if (trimmed === 'stream' || trimmed === 'endstream') return 'stream_boundary';
-  return 'pdf_line';
-}
-
-function validatePdf(text) {
-  return /^%PDF-[0-9]+\.[0-9]+/u.test(text) && /%%EOF\p{White_Space}*$/u.test(text);
 }
 
 function validateBalancedParentheses(text) {

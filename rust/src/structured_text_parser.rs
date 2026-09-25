@@ -2,9 +2,11 @@ use std::sync::OnceLock;
 
 use regex::Regex;
 
+use crate::builtin_grammar::GrammarNode;
 use crate::line_index::LineIndex;
-use crate::lino_grammar::{parse_lino_cst, LinoNode};
+use crate::lino_grammar::parse_lino_cst;
 use crate::natural_language::{annotate_natural_language, canonical_natural_language};
+use crate::pdf_grammar::parse_pdf_cst;
 use crate::tree_sitter_adapter::SpanOffset;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration,
@@ -130,14 +132,7 @@ fn insert_grammar(
             balanced_parentheses(text),
         ),
         TextGrammar::Lino => insert_grammar_node(network, parent, &source, &parse_lino_cst(text)),
-        TextGrammar::Pdf => insert_lines(
-            network,
-            parent,
-            &source,
-            "pdf_file",
-            pdf_line,
-            valid_pdf_container(text),
-        ),
+        TextGrammar::Pdf => insert_grammar_node(network, parent, &source, &parse_pdf_cst(text)),
         TextGrammar::Natural => insert_sentences(network, parent, &source),
     }
 }
@@ -162,15 +157,18 @@ impl Source<'_> {
 }
 
 /// Inserts a built-in grammar tree of byte offsets below `parent`, recording
-/// its fields and the trivia of its whitespace extras.
+/// its fields and the trivia of its extras; a missing node is a zero-width
+/// Syntax link without a token.
 fn insert_grammar_node(
     network: &mut LinkNetwork,
     parent: LinkId,
     source: &Source<'_>,
-    node: &LinoNode,
+    node: &GrammarNode,
 ) -> LinkId {
     let flags = if node.is_error {
         LinkFlags::error()
+    } else if node.is_missing {
+        LinkFlags::missing()
     } else if node.has_error {
         LinkFlags::containing_error()
     } else if node.extra {
@@ -189,7 +187,7 @@ fn insert_grammar_node(
             .with_span(span)
             .with_flags(flags),
     );
-    if node.is_leaf() {
+    if node.is_token() {
         let token = network.insert_link(
             [syntax],
             LinkMetadata::new()
@@ -420,50 +418,6 @@ fn insert_syntax(
             .with_span(span)
             .with_flags(flags),
     )
-}
-
-fn pdf_line(line: &str) -> (&'static str, bool) {
-    let trimmed = line.trim();
-    if trimmed.starts_with("%PDF-") {
-        ("header", false)
-    } else if trimmed == "%%EOF" {
-        ("end_of_file", false)
-    } else if is_pdf_object_header(trimmed) {
-        ("object_header", false)
-    } else if trimmed == "endobj" {
-        ("object_end", false)
-    } else if trimmed == "xref" {
-        ("cross_reference_table", false)
-    } else if trimmed == "trailer" {
-        ("trailer", false)
-    } else if matches!(trimmed, "stream" | "endstream") {
-        ("stream_boundary", false)
-    } else {
-        ("pdf_line", false)
-    }
-}
-
-fn is_pdf_object_header(text: &str) -> bool {
-    static PATTERN: OnceLock<Regex> = OnceLock::new();
-    PATTERN
-        .get_or_init(|| {
-            Regex::new(r"^[0-9]+\p{White_Space}+[0-9]+\p{White_Space}+obj$")
-                .expect("the PDF object header pattern is valid")
-        })
-        .is_match(text)
-}
-
-fn valid_pdf_container(text: &str) -> bool {
-    static HEADER: OnceLock<Regex> = OnceLock::new();
-    static TRAILER: OnceLock<Regex> = OnceLock::new();
-    HEADER
-        .get_or_init(|| Regex::new(r"^%PDF-[0-9]+\.[0-9]+").expect("valid PDF header pattern"))
-        .is_match(text)
-        && TRAILER
-            .get_or_init(|| {
-                Regex::new(r"%%EOF\p{White_Space}*$").expect("valid PDF trailer pattern")
-            })
-            .is_match(text)
 }
 
 fn balanced_parentheses(text: &str) -> bool {

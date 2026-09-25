@@ -57,6 +57,7 @@ mod parity_manifest;
 mod parse_scaling;
 mod parser_registry;
 mod pdf_document;
+mod pdf_grammar;
 mod query_algebra;
 mod query_matching;
 mod query_plan;
