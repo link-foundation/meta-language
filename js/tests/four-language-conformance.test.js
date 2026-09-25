@@ -253,6 +253,28 @@ test('JavaScript document and natural-language grammars expose their productions
   }
 });
 
+test('plain and natural-language grammars keep control characters as ERROR nodes', () => {
+  for (const [language, source, error] of [
+    ['txt', 'a\u0001b\n', '\u0001'],
+    ['English', 'Hi\u0000\u007f there.\n', '\u0000\u007f'],
+    ['Hindi', 'नमस्ते\u001b।\n', '\u001b'],
+  ]) {
+    const network = LinkNetwork.parse(source, language);
+    assert.equal(network.reconstructText(), source, language);
+    assert.equal(network.verifyFullMatch().isClean(), false, `${language} diagnostics`);
+    const errors = network.links().filter((link) =>
+      link.metadata().linkType === LinkType.Syntax && link.metadata().term === 'ERROR');
+    assert.equal(errors.length, 1, `${language} ERROR node`);
+    assert.ok(errors[0].metadata().flags.isError, `${language} ERROR flag`);
+    const { start, end } = errors[0].metadata().span.byteRange;
+    assert.equal(
+      Buffer.from(source).subarray(start, end).toString(),
+      error,
+      `${language} ERROR span`,
+    );
+  }
+});
+
 test('capability reports match the shared versioned corpus', () => {
   assert.equal(LANGUAGE_REPRESENTATION_SCHEMA_VERSION, corpus.schemaVersion);
   assert.equal(fourLanguageSupport().length, 4);

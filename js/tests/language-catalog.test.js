@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
@@ -77,11 +78,23 @@ test('every registered extension dispatches to its language', () => {
   assert.equal(languageForPath('archive.tar.gz'), undefined);
 });
 
-test('grammar provenance names the locked grammar versions and parser digests', () => {
+test('grammar provenance names the locked grammar versions and parser digests', async () => {
   for (const language of inventory.languages) {
     const provenance = grammarProvenance(language.name);
-    assert.deepEqual(provenance.map(({ id }) => id), language.grammars ?? [], language.name);
+    assert.deepEqual(
+      provenance.map(({ id }) => id),
+      [...(language.grammars ?? []), ...(language.builtinGrammar ? [language.builtinGrammar] : [])],
+      language.name,
+    );
     for (const grammar of provenance) {
+      if (grammar.id === language.builtinGrammar) {
+        // A built-in grammar is recorded with the digest of its specification.
+        const declared = inventory.builtinGrammars[grammar.id];
+        const specification = await readFile(new URL(`../../${declared.specification}`, import.meta.url));
+        assert.equal(grammar.version, declared.version);
+        assert.equal(grammar.parserSha256, createHash('sha256').update(specification).digest('hex'));
+        continue;
+      }
       const locked = GRAMMAR_LOCK.grammars[grammar.id];
       assert.equal(grammar.version, locked.version);
       assert.equal(grammar.parserSha256, locked.parserSha256);
@@ -97,7 +110,7 @@ test('extension dispatch parses through the ordinary API with the dispatched gra
 });
 
 test('parsed networks record the grammar provenance of every language they parse', () => {
-  for (const language of inventory.languages.filter(({ grammars }) => grammars?.length)) {
+  for (const language of inventory.languages.filter(({ name }) => grammarProvenance(name).length)) {
     const network = LinkNetwork.parse(language.source, language.name);
     const recorded = network
       .parseGrammars()
@@ -112,5 +125,8 @@ test('parsed networks record the grammar provenance of every language they parse
     grammarProvenance(language).map((grammar) => ({ language, ...grammar })),
   );
   assert.deepEqual(network.parseGrammars(), expected);
-  assert.deepEqual(LinkNetwork.parse('plain text\n', 'txt').parseGrammars(), []);
+  assert.deepEqual(
+    LinkNetwork.parse('plain text\n', 'txt').parseGrammars(),
+    grammarProvenance('txt').map((grammar) => ({ language: 'txt', ...grammar })),
+  );
 });

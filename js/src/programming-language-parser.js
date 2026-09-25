@@ -6,6 +6,7 @@ import { isToken } from './builtin-grammar.js';
 import { canonicalLanguageName, languageEntry } from './language-catalog.js';
 import { parseLinoCst } from './lino-grammar.js';
 import { parsePdfCst } from './pdf-grammar.js';
+import { parseNaturalLanguageCst, parsePlainTextCst } from './text-grammar.js';
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 
 const encoder = new TextEncoder();
@@ -125,24 +126,12 @@ function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
 
 function parseGrammarCst(text, canonical) {
   const boundaries = sourceBoundaries(text);
-  const builtin = { LiNo: parseLinoCst, PDF: parsePdfCst }[canonical];
+  const builtin = { LiNo: parseLinoCst, PDF: parsePdfCst, txt: parsePlainTextCst }[canonical]
+    ?? (languageEntry(canonical).family === 'natural' ? parseNaturalLanguageCst : undefined);
   if (builtin) {
     const tokens = [];
     const tree = builtinGrammarNode(builtin(text), text, boundaries, tokens);
     return { canonical, rootTerm: tree.term, tokens, tree };
-  }
-  if (canonical === 'txt') {
-    return parseTokenGrammar(
-      text,
-      canonical,
-      boundaries,
-      'text_document',
-      () => 'line',
-      validateBalancedParentheses,
-    );
-  }
-  if (languageEntry(canonical).family === 'natural') {
-    return parseNaturalLanguageGrammar(text, canonical, boundaries);
   }
   const grammar = GRAMMARS.get(languageEntry(canonical).grammars[0]?.id);
   if (!grammar) {
@@ -183,39 +172,6 @@ function parseGrammarCst(text, canonical) {
   return { canonical, rootTerm: tree.term, tokens, tree, leading, trailing };
 }
 
-function parseTokenGrammar(text, canonical, boundaries, rootTerm, lineTerm, validate = undefined) {
-  const tokens = [];
-  let hasLineError = false;
-  const children = lineRanges(text).map(([start, end]) => {
-    const term = lineTerm(text.slice(start, end));
-    const isError = term.endsWith('_error');
-    hasLineError ||= isError;
-    return {
-      term,
-      children: lexicalNodes(text, start, end, boundaries, tokens),
-      named: true,
-      span: spanFor(boundaries, start, end),
-      flags: isError ? LinkFlags.clean().withError() : LinkFlags.clean(),
-    };
-  });
-  // A line error is located below the root; a document-level validation
-  // failure without a located line error makes the root itself the error.
-  let flags = LinkFlags.clean();
-  if (hasLineError) {
-    flags = new LinkFlags({ hasError: true });
-  } else if (!(validate?.(text) ?? true)) {
-    flags = LinkFlags.clean().withError();
-  }
-  const tree = {
-    term: rootTerm,
-    children,
-    named: true,
-    span: spanFor(boundaries, 0, text.length),
-    flags,
-  };
-  return { canonical, rootTerm, tokens, tree };
-}
-
 // Converts a built-in grammar tree of string offsets into CST nodes, adding
 // each leaf to `tokens` in source order.
 function builtinGrammarNode(node, text, boundaries, tokens) {
@@ -235,99 +191,6 @@ function builtinGrammarNode(node, text, boundaries, tokens) {
       };
   if (node.field) converted.field = node.field;
   return converted;
-}
-
-function parseNaturalLanguageGrammar(text, canonical, boundaries) {
-  const tokens = [];
-  const children = [];
-  // The built-in sentence grammar shared with the Rust runtime: a sentence ends
-  // after a run of terminal punctuation, any closing punctuation or quotes, and
-  // the whitespace that follows them.
-  const sentence = /[^]*?[.!?\u0964\u3002\u061f\u06d4\uff01\uff1f]+[\p{Pe}\p{Pf}"']*\p{White_Space}*/uy;
-  let sentenceStart = 0;
-  for (let match = sentence.exec(text); match; match = sentence.exec(text)) {
-    children.push(naturalSentence(text, sentenceStart, sentence.lastIndex, boundaries, tokens));
-    sentenceStart = sentence.lastIndex;
-  }
-  if (sentenceStart < text.length) {
-    children.push(naturalSentence(text, sentenceStart, text.length, boundaries, tokens));
-  }
-  const tree = {
-    term: 'natural_language_document',
-    children,
-    named: true,
-    span: spanFor(boundaries, 0, text.length),
-    flags: LinkFlags.clean(),
-  };
-  return { canonical, rootTerm: tree.term, tokens, tree };
-}
-
-function naturalSentence(text, start, end, boundaries, tokens) {
-  return {
-    term: 'sentence',
-    children: lexicalNodes(text, start, end, boundaries, tokens),
-    named: true,
-    span: spanFor(boundaries, start, end),
-    flags: LinkFlags.clean(),
-  };
-}
-
-function lexicalNodes(text, start, end, boundaries, tokens) {
-  const nodes = [];
-  // The built-in lexical grammar shared with the Rust runtime: maximal runs of
-  // Unicode whitespace, of word characters, and of any other characters.
-  const pattern = /\p{White_Space}+|[\p{L}\p{N}\p{M}_'-]+|[^\p{White_Space}\p{L}\p{N}\p{M}_'-]+/gu;
-  pattern.lastIndex = start;
-  while (pattern.lastIndex < end) {
-    const match = pattern.exec(text);
-    if (!match || match.index >= end) {
-      break;
-    }
-    const tokenEnd = Math.min(pattern.lastIndex, end);
-    const value = text.slice(match.index, tokenEnd);
-    const whitespace = /^\p{White_Space}+$/u.test(value);
-    const word = /^[\p{L}\p{N}\p{M}_'-]+$/u.test(value);
-    nodes.push(grammarTokenNode(
-      whitespace ? 'whitespace' : word ? 'word' : 'punctuation',
-      match.index,
-      tokenEnd,
-      !whitespace,
-      whitespace ? LinkFlags.clean().withExtra() : LinkFlags.clean(),
-      text,
-      boundaries,
-      tokens,
-    ));
-    if (pattern.lastIndex >= end) {
-      break;
-    }
-  }
-  return nodes;
-}
-
-function lineRanges(text) {
-  const ranges = [];
-  let start = 0;
-  for (let offset = 0; offset < text.length;) {
-    const character = codePointAt(text, offset);
-    offset += character.length;
-    if (character === '\n') {
-      ranges.push([start, offset]);
-      start = offset;
-    }
-  }
-  if (start < text.length || text.length === 0) {
-    ranges.push([start, text.length]);
-  }
-  return ranges;
-}
-
-function validateBalancedParentheses(text) {
-  let depth = 0;
-  for (const character of text) {
-    if (character === '(') depth += 1;
-    if (character === ')' && depth-- === 0) return false;
-  }
-  return depth === 0;
 }
 
 function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens, injected = []) {

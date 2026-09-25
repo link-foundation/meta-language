@@ -122,3 +122,18 @@ test('the LiNo grammar CST records id, value and child fields and recovers per l
   assert.ok(recovered.flags.hasError && !recovered.flags.isError);
   assert.ok(recovered.children.find((child) => child.term === 'ERROR').flags.isError);
 });
+
+test('the recorded LiNo grammar specification is the grammar of the links-notation dependency', async () => {
+  const inventory = JSON.parse(
+    await readFile(new URL('../../parity/language-grammar-inventory.json', import.meta.url), 'utf8'),
+  );
+  const declared = inventory.builtinGrammars['links-notation'];
+  const dependency = JSON.parse(
+    await readFile(new URL('../node_modules/links-notation/package.json', import.meta.url), 'utf8'),
+  );
+  assert.equal(declared.version, dependency.version);
+  assert.equal(
+    await readFile(new URL(`../../${declared.specification}`, import.meta.url), 'utf8'),
+    await readFile(new URL('../node_modules/links-notation/src/grammar.pegjs', import.meta.url), 'utf8'),
+  );
+});

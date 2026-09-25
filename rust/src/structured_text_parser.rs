@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use regex::Regex;
 
-use crate::builtin_grammar::GrammarNode;
+use crate::builtin_grammar::{propagate_errors, GrammarNode};
 use crate::line_index::LineIndex;
 use crate::lino_grammar::parse_lino_cst;
 use crate::natural_language::{annotate_natural_language, canonical_natural_language};
@@ -122,19 +122,13 @@ fn insert_grammar(
         offset,
         configuration,
     };
-    match grammar {
-        TextGrammar::Plain => insert_lines(
-            network,
-            parent,
-            &source,
-            "text_document",
-            |_| ("line", false),
-            balanced_parentheses(text),
-        ),
-        TextGrammar::Lino => insert_grammar_node(network, parent, &source, &parse_lino_cst(text)),
-        TextGrammar::Pdf => insert_grammar_node(network, parent, &source, &parse_pdf_cst(text)),
-        TextGrammar::Natural => insert_sentences(network, parent, &source),
-    }
+    let tree = match grammar {
+        TextGrammar::Plain => parse_plain_text_cst(text),
+        TextGrammar::Lino => parse_lino_cst(text),
+        TextGrammar::Pdf => parse_pdf_cst(text),
+        TextGrammar::Natural => parse_natural_language_cst(text),
+    };
+    insert_grammar_node(network, parent, &source, &tree)
 }
 
 /// Text being parsed together with its position in the host document.
@@ -216,152 +210,90 @@ fn insert_grammar_node(
     syntax
 }
 
-fn insert_sentences(network: &mut LinkNetwork, parent: LinkId, source: &Source<'_>) -> LinkId {
-    let root = insert_syntax(
-        network,
-        parent,
-        "natural_language_document",
-        source.language,
-        source.span(0, source.text.len()),
-        LinkFlags::clean(),
-    );
-    for (start, end) in sentence_ranges(source.text) {
-        let sentence = insert_syntax(
-            network,
-            root,
-            "sentence",
-            source.language,
-            source.span(start, end),
-            LinkFlags::clean(),
-        );
-        insert_lexical_nodes(network, sentence, source, start, end);
-    }
-    root
-}
-
-fn insert_lines(
-    network: &mut LinkNetwork,
-    parent: LinkId,
-    source: &Source<'_>,
-    root_term: &str,
-    classify_line: fn(&str) -> (&'static str, bool),
-    document_is_valid: bool,
-) -> LinkId {
-    let text = source.text;
-    let mut classified = Vec::new();
+/// Parses plain text with the built-in line grammar: a `text_document` of
+/// lines holding the shared lexical nodes. Unbalanced parentheses make the
+/// document an `ERROR`-flagged root.
+pub fn parse_plain_text_cst(text: &str) -> GrammarNode {
+    let mut lines = Vec::new();
     let mut start = 0;
     for line in text.split_inclusive('\n') {
         let end = start + line.len();
-        classified.push((start, end, classify_line(line)));
+        lines.push(GrammarNode::node(
+            "line",
+            start,
+            end,
+            lexical_nodes(text, start, end),
+        ));
         start = end;
     }
     if start < text.len() || text.is_empty() {
-        classified.push((start, text.len(), classify_line(&text[start..])));
+        lines.push(GrammarNode::node(
+            "line",
+            start,
+            text.len(),
+            lexical_nodes(text, start, text.len()),
+        ));
     }
-    let has_line_error = classified.iter().any(|(_, _, (_, error))| *error);
-    // A line error is located below the root; a document-level validation
-    // failure without a located line error makes the root itself the error.
-    let root_flags = if has_line_error {
-        LinkFlags::containing_error()
-    } else if document_is_valid {
-        LinkFlags::clean()
-    } else {
-        LinkFlags::error()
-    };
-    let root = insert_syntax(
-        network,
-        parent,
-        root_term,
-        source.language,
-        source.span(0, text.len()),
-        root_flags,
-    );
-
-    for (start, end, (term, error)) in classified {
-        let flags = if error {
-            LinkFlags::error()
-        } else {
-            LinkFlags::clean()
-        };
-        let line = insert_syntax(
-            network,
-            root,
-            term,
-            source.language,
-            source.span(start, end),
-            flags,
-        );
-        insert_lexical_nodes(network, line, source, start, end);
-    }
+    let mut root = GrammarNode::node("text_document", 0, text.len(), lines);
+    root.is_error = !balanced_parentheses(text);
+    propagate_errors(&mut root);
     root
 }
 
-fn insert_lexical_nodes(
-    network: &mut LinkNetwork,
-    parent: LinkId,
-    source: &Source<'_>,
-    start: usize,
-    end: usize,
-) {
-    for segment_match in lexical_pattern().find_iter(&source.text[start..end]) {
-        let segment = segment_match.as_str();
-        let segment_start = start + segment_match.start();
-        let segment_end = start + segment_match.end();
-        let whitespace = segment.chars().all(char::is_whitespace);
-        let term = if whitespace {
-            "whitespace"
-        } else if word_pattern().is_match(segment) {
-            "word"
-        } else {
-            "punctuation"
-        };
-        let span = source.span(segment_start, segment_end);
-        let flags = if whitespace {
-            LinkFlags::extra()
-        } else {
-            LinkFlags::clean()
-        };
-        // Whitespace is an anonymous extra, as tree-sitter reports extras.
-        let syntax = network.insert_link(
-            [parent],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Syntax)
-                .with_named(!whitespace)
-                .with_term(term)
-                .with_language(source.language)
-                .with_span(span)
-                .with_flags(flags),
-        );
-        let token = network.insert_link(
-            [syntax],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Token)
-                .with_named(!whitespace)
-                .with_term(segment)
-                .with_language(source.language)
-                .with_span(span)
-                .with_flags(flags),
-        );
-        if whitespace {
-            network.attach_trivia(
-                syntax,
-                token,
-                span,
-                source.configuration.trivia_attachment_policy(),
-            );
-        }
-    }
+/// Parses natural-language text with the built-in sentence grammar: a
+/// `natural_language_document` of sentences holding the shared lexical nodes.
+pub fn parse_natural_language_cst(text: &str) -> GrammarNode {
+    let sentences = sentence_ranges(text)
+        .into_iter()
+        .map(|(start, end)| {
+            GrammarNode::node("sentence", start, end, lexical_nodes(text, start, end))
+        })
+        .collect();
+    let mut root = GrammarNode::node("natural_language_document", 0, text.len(), sentences);
+    propagate_errors(&mut root);
+    root
+}
+
+/// The shared lexical nodes of `text[start..end]`: whitespace extras, words,
+/// punctuation and `ERROR` nodes for runs of control characters.
+fn lexical_nodes(text: &str, start: usize, end: usize) -> Vec<GrammarNode> {
+    lexical_pattern()
+        .find_iter(&text[start..end])
+        .map(|segment_match| {
+            let segment = segment_match.as_str();
+            let segment_start = start + segment_match.start();
+            let segment_end = start + segment_match.end();
+            if segment.chars().all(char::is_whitespace) {
+                GrammarNode::extra("whitespace", false, segment_start, segment_end)
+            } else if segment.chars().all(is_control_character) {
+                GrammarNode::error(segment_start, segment_end, Vec::new())
+            } else if word_pattern().is_match(segment) {
+                GrammarNode::node("word", segment_start, segment_end, Vec::new())
+            } else {
+                GrammarNode::node("punctuation", segment_start, segment_end, Vec::new())
+            }
+        })
+        .collect()
 }
 
 // The built-in lexical grammar shared with the JavaScript runtime: maximal runs
-// of Unicode whitespace, of word characters, and of any other characters.
+// of Unicode whitespace, of word characters, of control characters that are
+// not whitespace (which the grammar rejects), and of any other characters.
 const WORD_CHARACTERS: &str = r"\p{L}\p{N}\p{M}_'\-";
+const CONTROL_CHARACTERS: &str = r"\x00-\x08\x0E-\x1F\x7F-\x{84}\x{86}-\x{9F}";
+
+const fn is_control_character(character: char) -> bool {
+    matches!(
+        character,
+        '\u{0}'..='\u{8}' | '\u{E}'..='\u{1F}' | '\u{7F}'..='\u{84}' | '\u{86}'..='\u{9F}'
+    )
+}
 
 fn lexical_pattern() -> &'static Regex {
     static PATTERN: OnceLock<Regex> = OnceLock::new();
     PATTERN.get_or_init(|| {
         Regex::new(&format!(
-            r"\p{{White_Space}}+|[{WORD_CHARACTERS}]+|[^\p{{White_Space}}{WORD_CHARACTERS}]+"
+            r"\p{{White_Space}}+|[{WORD_CHARACTERS}]+|[{CONTROL_CHARACTERS}]+|[^\p{{White_Space}}{WORD_CHARACTERS}{CONTROL_CHARACTERS}]+"
         ))
         .expect("the built-in lexical grammar is a valid pattern")
     })
@@ -398,26 +330,6 @@ fn sentence_ranges(text: &str) -> Vec<(usize, usize)> {
         ranges.push((start, text.len()));
     }
     ranges
-}
-
-fn insert_syntax(
-    network: &mut LinkNetwork,
-    parent: LinkId,
-    term: &str,
-    language: &str,
-    span: SourceSpan,
-    flags: LinkFlags,
-) -> LinkId {
-    network.insert_link(
-        [parent],
-        LinkMetadata::new()
-            .with_link_type(LinkType::Syntax)
-            .with_named(true)
-            .with_term(term)
-            .with_language(language)
-            .with_span(span)
-            .with_flags(flags),
-    )
 }
 
 fn balanced_parentheses(text: &str) -> bool {

@@ -35,8 +35,9 @@ function rows(network) {
   return out;
 }
 
-for (const language of inventory.languages) {
-  if (expected.languages[language.name]) continue;
+const extra = process.argv[3];
+for (const language of extra ? [{ name: only, source: JSON.parse(extra) }] : inventory.languages) {
+  if (!extra && expected.languages[language.name]) continue;
   if (only && language.name !== only) continue;
   console.log(`## ${language.name} ${JSON.stringify(language.source)}`);
   for (const row of rows(LinkNetwork.parse(language.source, language.name))) console.log(JSON.stringify(row));

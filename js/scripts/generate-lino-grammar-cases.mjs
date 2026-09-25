@@ -60,7 +60,10 @@ function official(source) {
   }
 }
 
-const sources = [...new Set([...HAND_WRITTEN, ...generated(600)])];
+// The conformance sources of the language inventory are always cases.
+const inventory = JSON.parse(await readFile(join(root, 'parity/language-grammar-inventory.json'), 'utf8'));
+const { source: inventorySource, recoverySource } = inventory.languages.find(({ name }) => name === 'LiNo');
+const sources = [...new Set([inventorySource, recoverySource, ...HAND_WRITTEN, ...generated(600)])];
 const expected = `${JSON.stringify({
   schemaVersion: 1,
   oracle: `links-notation@${version} src/parser-generated.js parse()`,

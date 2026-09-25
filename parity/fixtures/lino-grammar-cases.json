@@ -3,6 +3,70 @@
  "oracle": "links-notation@0.13.0 src/parser-generated.js parse()",
  "cases": [
   {
+   "source": "papa (lovesMama: loves mama)\n  child: \"quoted value\"\n(1 2)\n",
+   "links": [
+    {
+     "id": null,
+     "values": [
+      {
+       "id": "papa",
+       "values": [],
+       "children": []
+      },
+      {
+       "id": "lovesMama",
+       "values": [
+        {
+         "id": "loves",
+         "values": [],
+         "children": []
+        },
+        {
+         "id": "mama",
+         "values": [],
+         "children": []
+        }
+       ],
+       "children": []
+      }
+     ],
+     "children": [
+      {
+       "id": "child",
+       "values": [
+        {
+         "id": "quoted value",
+         "values": [],
+         "children": []
+        }
+       ],
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": null,
+     "values": [
+      {
+       "id": "1",
+       "values": [],
+       "children": []
+      },
+      {
+       "id": "2",
+       "values": [],
+       "children": []
+      }
+     ],
+     "children": []
+    }
+   ]
+  },
+  {
+   "source": "(unclosed\n",
+   "links": null
+  },
+  {
    "source": "",
    "links": []
   },

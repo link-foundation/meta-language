@@ -3,9 +3,13 @@
 // parity/language-grammar-inventory.json and the grammar lock: every
 // registered language with its aliases, file extensions, and the grammars
 // (with exact version and generated-parser digest) that parse it by default.
+// A built-in grammar is recorded with the digest of its specification in
+// parity/grammars, since the runtimes implement it instead of loading it.
 //
 //   node js/scripts/build-language-catalog.mjs          # write both copies
 //   node js/scripts/build-language-catalog.mjs --check  # fail on drift
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +29,17 @@ export function buildLanguageCatalog(inventory, lock) {
       if (!locked) throw new Error(`${language.name} uses unlocked grammar ${id}`);
       return { id, version: locked.version, parserSha256: locked.parserSha256 };
     });
+    if (language.builtinGrammar) {
+      const id = language.builtinGrammar;
+      const builtin = inventory.builtinGrammars?.[id];
+      if (!builtin) throw new Error(`${language.name} uses undeclared built-in grammar ${id}`);
+      const specification = readFileSync(join(root, builtin.specification));
+      grammars.push({
+        id,
+        version: builtin.version,
+        parserSha256: createHash('sha256').update(specification).digest('hex'),
+      });
+    }
     return {
       name: language.name,
       family: language.family,

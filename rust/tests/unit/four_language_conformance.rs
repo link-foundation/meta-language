@@ -544,6 +544,44 @@ fn rust_custom_language_frontends_expose_complete_default_csts() {
 }
 
 #[test]
+fn plain_and_natural_language_grammars_keep_control_characters_as_error_nodes() {
+    for (language, source, error) in [
+        ("txt", "a\u{1}b\n", "\u{1}"),
+        ("English", "Hi\u{0}\u{7f} there.\n", "\u{0}\u{7f}"),
+        ("Hindi", "नमस्ते\u{1b}।\n", "\u{1b}"),
+    ] {
+        let network = LinkNetwork::parse(source, language, ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source, "{language}");
+        assert!(
+            !network.verify_full_match(None).is_clean(),
+            "{language} diagnostics"
+        );
+        let errors: Vec<_> = network
+            .links()
+            .filter(|link| {
+                link.metadata().link_type() == Some(LinkType::Syntax)
+                    && link.metadata().term() == Some("ERROR")
+            })
+            .collect();
+        assert_eq!(errors.len(), 1, "{language} ERROR node");
+        assert!(
+            errors[0].metadata().flags().is_error(),
+            "{language} ERROR flag"
+        );
+        let range = errors[0]
+            .metadata()
+            .span()
+            .expect("ERROR span")
+            .byte_range();
+        assert_eq!(
+            &source[range.start()..range.end()],
+            error,
+            "{language} ERROR span"
+        );
+    }
+}
+
+#[test]
 fn capability_reports_match_the_shared_versioned_corpus() {
     let corpus = corpus();
     assert_eq!(

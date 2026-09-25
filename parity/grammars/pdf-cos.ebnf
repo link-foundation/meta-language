@@ -1,0 +1,48 @@
+(* The built-in PDF grammar of meta-language, implemented by
+   js/src/pdf-grammar.js and rust/src/pdf_grammar.rs.
+
+   It follows the COS syntax of ISO 32000-2:2020 section 7 (lexical
+   conventions, objects, file structure and content streams). Node names are
+   the CST terms; `field:` prefixes name the field of a child; quoted strings
+   are anonymous tokens. *)
+
+pdf_file                   = header, { item }, [ end_of_file ] ;
+header                     = "%PDF-", digit, { digit }, ".", digit, { digit } ;
+end_of_file                = "%%EOF" ;
+item                       = indirect_object | cross_reference_table | trailer
+                           | start_cross_reference | end_of_file ;
+
+indirect_object            = object_number: integer, generation: integer, "obj",
+                             ( stream | value: object ), "endobj" ;
+stream                     = dictionary: dictionary, "stream", eol,
+                             data: ( content_stream | stream_data ), "endstream" ;
+(* The data extent is a direct /Length landing on "endstream", or else the
+   next "endstream" keyword. An unfiltered page, form or pattern stream whose
+   data parses cleanly is a content_stream; any other data is one token. *)
+content_stream             = { operation | inline_image } ;
+operation                  = { operand: object }, operator: operator ;
+inline_image               = "BI", { dictionary_entry }, "ID", [ data: image_data ], "EI" ;
+
+cross_reference_table      = "xref", { cross_reference_subsection } ;
+cross_reference_subsection = first_object: integer, count: integer, { cross_reference_entry } ;
+cross_reference_entry      = offset: integer, generation: integer, type: ( "n" | "f" ) ;
+trailer                    = "trailer", dictionary: dictionary ;
+start_cross_reference      = "startxref", offset: integer ;
+
+object                     = dictionary | array | indirect_reference | integer | real
+                           | boolean | null | name | literal_string | hex_string | keyword ;
+dictionary                 = "<<", { dictionary_entry }, ">>" ;
+dictionary_entry           = key: name, value: object ;
+array                      = "[", { object }, "]" ;
+indirect_reference         = object_number: integer, generation: integer, "R" ;
+
+(* Tokens follow ISO 32000-2 7.2 and 7.3: delimiters ( ) < > [ ] { } / %,
+   whitespace NUL TAB LF FF CR SP, balanced literal strings with escapes,
+   hexadecimal strings, #-escaped names and signed integers and reals. *)
+
+(* Extras, owned by the smallest node that spans them: *)
+comment                    = "%", { any character - eol } ;   (* named extra *)
+whitespace                 = pdf_whitespace, { pdf_whitespace } ; (* anonymous extra *)
+
+(* Recovery: malformed input is kept in ERROR nodes; absent delimiters,
+   keywords, the header and the %%EOF marker are zero-width missing nodes. *)

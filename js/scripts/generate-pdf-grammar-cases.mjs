@@ -226,7 +226,10 @@ async function oracle(source) {
   }
 }
 
-const sources = [...new Set([...HAND_WRITTEN, ...generated(400)])];
+// The conformance sources of the language inventory are always cases.
+const inventory = JSON.parse(await readFile(join(root, 'parity/language-grammar-inventory.json'), 'utf8'));
+const { source: inventorySource, recoverySource } = inventory.languages.find(({ name }) => name === 'PDF');
+const sources = [...new Set([inventorySource, recoverySource, ...HAND_WRITTEN, ...generated(400)])];
 const cases = [];
 for (const source of sources) cases.push({ source, objects: await oracle(source) });
 const expected = `${JSON.stringify({

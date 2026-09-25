@@ -6,6 +6,7 @@ use meta_language::{
     language_entry, language_for_path, LinkNetwork, LinkType, ParseConfiguration,
 };
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 fn repository_file(path: &str) -> String {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -120,16 +121,39 @@ fn every_registered_extension_dispatches_to_its_language() {
 fn grammar_provenance_names_the_locked_grammar_versions_and_digests() {
     let lock: Value = serde_json::from_str(&repository_file("rust/src/data/grammar-lock.json"))
         .expect("grammar lock is valid JSON");
-    for language in inventory()["languages"].as_array().expect("languages") {
+    let inventory = inventory();
+    for language in inventory["languages"].as_array().expect("languages") {
         let name = language["name"].as_str().expect("name");
         let provenance = grammar_provenance(name);
         let ids: Vec<&str> = provenance
             .iter()
             .map(|grammar| grammar.id.as_str())
             .collect();
-        let expected = language.get("grammars").map(strings).unwrap_or_default();
+        let mut expected = language.get("grammars").map(strings).unwrap_or_default();
+        let builtin = language["builtinGrammar"].as_str();
+        expected.extend(builtin.map(str::to_string));
         assert_eq!(ids, expected, "{name}");
         for grammar in provenance {
+            if Some(grammar.id.as_str()) == builtin {
+                // A built-in grammar is recorded with the digest of its
+                // specification.
+                let declared = &inventory["builtinGrammars"][&grammar.id];
+                let specification = fs::read(
+                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                        .join("..")
+                        .join(declared["specification"].as_str().expect("specification")),
+                )
+                .expect("built-in grammar specification is readable");
+                assert_eq!(
+                    grammar.version,
+                    declared["version"].as_str().expect("version")
+                );
+                assert_eq!(
+                    grammar.parser_sha256,
+                    format!("{:x}", Sha256::digest(&specification))
+                );
+                continue;
+            }
             let locked = &lock["grammars"][&grammar.id];
             assert_eq!(
                 grammar.version,
@@ -191,5 +215,8 @@ fn parsed_networks_record_the_grammar_provenance_of_every_language_they_parse() 
         .collect();
     assert_eq!(network.parse_grammars(), expected);
     let text = LinkNetwork::parse("plain text\n", "txt", ParseConfiguration::default());
-    assert!(text.parse_grammars().is_empty());
+    assert_eq!(
+        text.parse_grammars(),
+        [("txt".to_string(), grammar_provenance("txt")[0].clone())]
+    );
 }

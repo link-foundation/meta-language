@@ -3,6 +3,40 @@
  "oracle": "pdf-lib@1.17.1 PDFParser.forBytesWithOptions(bytes, Infinity, true).parseDocument()",
  "cases": [
   {
+   "source": "%PDF-1.7\n% note\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n",
+   "objects": [
+    {
+     "ref": [
+      1,
+      0
+     ],
+     "value": {
+      "dictionary": [
+       [
+        "Type",
+        {
+         "name": "Catalog"
+        }
+       ],
+       [
+        "Pages",
+        {
+         "ref": [
+          2,
+          0
+         ]
+        }
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "source": "%PDF-1.7\n1 0 obj\n<< /Type /Catalog\nendobj\n",
+   "objects": null
+  },
+  {
    "source": "%PDF-1.7\n%%EOF\n",
    "objects": []
   },
