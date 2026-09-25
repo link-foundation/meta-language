@@ -71,6 +71,10 @@ jobs:
         run: npm run check:parity
         working-directory: js
 
+      - name: Check grammar-derived default CST expectations
+        run: npm run check:default-cst
+        working-directory: js
+
       - name: Check issue 195 atomic requirement manifest
         run: npm run check:issue-195
         working-directory: js

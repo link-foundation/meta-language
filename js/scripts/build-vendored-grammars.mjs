@@ -86,7 +86,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
 const compressWasm = (wasm) => gzipSync(wasm, { level: 9 });
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
-async function cargoLockVersions() {
+export async function cargoLockVersions() {
   const lock = await readFile(join(root, 'rust/Cargo.lock'), 'utf8');
   const versions = new Map();
   for (const block of lock.split('[[package]]')) {
@@ -154,7 +154,7 @@ ${MIT_TERMS}`;
 
 // Some published crates omit tree-sitter.json, which the CLI needs to name the
 // wasm module. The exported `tree_sitter_<name>` symbol is authoritative.
-async function ensureGrammarConfig(grammarDir) {
+export async function ensureGrammarConfig(grammarDir) {
   if (existsSync(join(grammarDir, 'tree-sitter.json'))) return;
   const parser = await readFile(join(grammarDir, 'src/parser.c'), 'utf8');
   const name = /(?:TS_PUBLIC|extern)[^\n]*\btree_sitter_(\w+)\s*\(\s*void\s*\)/.exec(parser)?.[1];
@@ -182,7 +182,7 @@ async function localizeSharedIncludes(grammarDir) {
   if (localized !== scanner) await writeFile(scannerPath, localized);
 }
 
-async function grammarSource(id, versions) {
+export async function grammarSource(id, versions) {
   const source = GRAMMAR_SOURCES[id];
   if (source.vendored) {
     return {
