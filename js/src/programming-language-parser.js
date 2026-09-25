@@ -503,7 +503,10 @@ function pushGapNodes(children, start, end, text, boundaries, tokens) {
   ];
   for (const [pieceStart, pieceEnd, term, flags] of pieces) {
     if (pieceStart < pieceEnd) {
-      children.push(grammarTokenNode(term, pieceStart, pieceEnd, false, flags, text, boundaries, tokens));
+      // A gap is source text, not a grammar node: its token sits directly
+      // below the enclosing node, as Rust's Token links do.
+      const node = grammarTokenNode(term, pieceStart, pieceEnd, false, flags, text, boundaries, tokens);
+      children.push({ ...node, gap: true });
     }
   }
 }

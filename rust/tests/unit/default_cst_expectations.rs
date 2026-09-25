@@ -14,8 +14,9 @@ fn parity_json(name: &str) -> Value {
 }
 
 /// Projects the Syntax links of a public network to the grammar rows of
-/// `parity/fixtures/default-cst-expected.json`, walking down from `root`.
-fn syntax_rows(network: &LinkNetwork, root: LinkId) -> Vec<Value> {
+/// `parity/fixtures/default-cst-expected.json`, walking down from `root`, with
+/// byte offsets relative to `base`.
+fn syntax_rows(network: &LinkNetwork, root: LinkId, base: usize) -> Vec<Value> {
     let mut children: HashMap<LinkId, Vec<LinkId>> = HashMap::new();
     let mut fields: HashMap<(LinkId, LinkId), String> = HashMap::new();
     for link in network.links() {
@@ -49,8 +50,8 @@ fn syntax_rows(network: &LinkNetwork, root: LinkId) -> Vec<Value> {
             field,
             metadata.term(),
             i32::from(metadata.is_named()),
-            range.map(meta_language::ByteRange::start),
-            range.map(meta_language::ByteRange::end),
+            range.map(|range| range.start() - base),
+            range.map(|range| range.end() - base),
             format!(
                 "{}{}{}",
                 if flags.is_error() { "E" } else { "" },
@@ -78,6 +79,40 @@ fn document_root(network: &LinkNetwork) -> LinkId {
         })
         .expect("grammar root below the document")
         .id()
+}
+
+/// Every embedded region as `(language, start, end, grammar root)`, in source
+/// order.
+fn embedded_roots(network: &LinkNetwork) -> Vec<(String, usize, usize, LinkId)> {
+    network
+        .links()
+        // Embedded regions reference the document and their Language link;
+        // the self-description `region` type point has no span.
+        .filter(|link| {
+            link.metadata().link_type() == Some(LinkType::Region) && link.references().len() == 2
+        })
+        .map(|region| {
+            let range = region.metadata().span().expect("region span").byte_range();
+            let root = network
+                .links()
+                .find(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link.references() == [region.id()]
+                })
+                .expect("grammar root below the region")
+                .id();
+            (
+                region
+                    .metadata()
+                    .language()
+                    .expect("region language")
+                    .to_string(),
+                range.start(),
+                range.end(),
+                root,
+            )
+        })
+        .collect()
 }
 
 /// Applies the documented public projections of the grammar rows: Lean's
@@ -131,7 +166,7 @@ fn rust_public_networks_match_grammar_derived_rows() {
         for (kind, key) in [("positive", "source"), ("recovery", "recoverySource")] {
             let source = language[key].as_str().expect("source");
             let network = LinkNetwork::parse(source, name, ParseConfiguration::default());
-            let rows = syntax_rows(&network, document_root(&network));
+            let rows = syntax_rows(&network, document_root(&network), 0);
             let want = public_rows(name, source, want[kind].as_array().expect("rows"));
             if rows != want {
                 let index = rows
@@ -146,6 +181,40 @@ fn rust_public_networks_match_grammar_derived_rows() {
                     rows.get(index..(index + 2).min(rows.len())),
                     want.get(index..(index + 2).min(want.len())),
                 ));
+            }
+        }
+    }
+    assert!(differences.is_empty(), "{}", differences.join("\n"));
+}
+
+#[test]
+fn rust_embedded_regions_match_grammar_derived_rows() {
+    let inventory = parity_json("language-grammar-inventory.json");
+    let expected = parity_json("fixtures/default-cst-expected.json");
+    let mut differences = Vec::new();
+    for language in inventory["languages"].as_array().expect("languages") {
+        let name = language["name"].as_str().expect("name");
+        let Some(want) = expected["languages"].get(name) else {
+            continue;
+        };
+        let source = language["source"].as_str().expect("source");
+        let network = LinkNetwork::parse(source, name, ParseConfiguration::default());
+        let regions = embedded_roots(&network);
+        let want = want["embedded"].as_array().expect("embedded");
+        assert_eq!(
+            regions
+                .iter()
+                .map(|(language, start, end, _)| json!([language, start, end]))
+                .collect::<Vec<_>>(),
+            want.iter()
+                .map(|region| json!([region["language"], region["startByte"], region["endByte"]]))
+                .collect::<Vec<_>>(),
+            "{name}"
+        );
+        for ((_, start, _, root), region) in regions.iter().zip(want) {
+            let rows = syntax_rows(&network, *root, *start);
+            if rows.as_slice() != region["rows"].as_array().expect("rows").as_slice() {
+                differences.push(format!("{}: actual {rows:?}", region["path"]));
             }
         }
     }

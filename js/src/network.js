@@ -692,6 +692,9 @@ export class LinkNetwork {
   }
 
   _insertProgrammingTree(node, language, tokens, tokenIds, offset = undefined) {
+    if (node.gap) {
+      return tokenIds[node.tokenIndex];
+    }
     if (node.tokenIndex !== undefined) {
       const token = tokens[node.tokenIndex];
       return this.insertSyntaxNode(language, node.term, [tokenIds[node.tokenIndex]], {

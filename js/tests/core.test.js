@@ -318,10 +318,19 @@ test('hidden grammar text is not labeled whitespace trivia', () => {
   for (const [text, extra] of tokens) {
     assert.equal(extra, /^\p{White_Space}+$/u.test(text), `${JSON.stringify(text)} extra flag`);
   }
-  const wrappers = network.links()
-    .filter((link) => link.metadata().linkType === LinkType.Syntax && link.metadata().term === 'hidden_text')
-    .map((link) => network.link(link.references()[0]).metadata().term);
-  assert.deepEqual(wrappers, ['Module', 'End Module']);
+  // The text is a token directly below its grammar node, not a synthetic
+  // Syntax node, as in Rust.
+  const owners = network.links()
+    .filter((link) => link.metadata().linkType === LinkType.Syntax)
+    .flatMap((link) => link.references()
+      .map((reference) => network.link(reference).metadata())
+      .filter(({ linkType, term }) => linkType === LinkType.SourceToken && term.includes('Module'))
+      .map(({ term }) => [link.metadata().term, term]));
+  assert.deepEqual(owners, [['module_block', 'Module'], ['module_block', 'End Module']]);
+  assert.equal(
+    network.links().some((link) => ['hidden_text', 'whitespace'].includes(link.metadata().term)),
+    false,
+  );
 });
 
 test('Markdown inline content is parsed with the inline grammar', () => {
