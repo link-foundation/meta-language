@@ -498,18 +498,7 @@ function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens) 
 
   for (const { node: child, field } of adapter.children(node)) {
     const childStart = adapter.startOffset(child);
-    if (coveredUntil < childStart) {
-      children.push(grammarTokenNode(
-        'whitespace',
-        coveredUntil,
-        childStart,
-        false,
-        LinkFlags.clean().withExtra(),
-        text,
-        boundaries,
-        tokens,
-      ));
-    }
+    pushGapNodes(children, coveredUntil, childStart, text, boundaries, tokens);
     const converted = convertGrammarNode(
       child,
       adapter,
@@ -553,18 +542,7 @@ function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens) 
         };
   }
 
-  if (coveredUntil < end) {
-    children.push(grammarTokenNode(
-      'whitespace',
-      coveredUntil,
-      end,
-      false,
-      LinkFlags.clean().withExtra(),
-      text,
-      boundaries,
-      tokens,
-    ));
-  }
+  pushGapNodes(children, coveredUntil, end, text, boundaries, tokens);
 
   return {
     term: adapter.term(node),
@@ -573,6 +551,30 @@ function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens) 
     span: spanFor(boundaries, start, end),
     flags: grammarFlags(node, adapter),
   };
+}
+
+/** Term of source text consumed by hidden grammar rules, such as VB's `Module`. */
+export const HIDDEN_TEXT_TERM = 'hidden_text';
+
+// Text between visible tree-sitter children is either lexer extras or text
+// matched by hidden grammar rules. Mirrors `insert_gap_token` in
+// rust/src/tree_sitter_adapter.rs: leading and trailing whitespace is extra
+// trivia, and the text between them is a non-extra hidden-text token.
+function pushGapNodes(children, start, end, text, boundaries, tokens) {
+  if (start >= end) return;
+  const gap = text.slice(start, end);
+  const leading = /^\p{White_Space}*/u.exec(gap)[0].length;
+  const trailing = leading === gap.length ? 0 : /\p{White_Space}*$/u.exec(gap)[0].length;
+  const pieces = [
+    [start, start + leading, 'whitespace', LinkFlags.clean().withExtra()],
+    [start + leading, end - trailing, HIDDEN_TEXT_TERM, LinkFlags.clean()],
+    [end - trailing, end, 'whitespace', LinkFlags.clean().withExtra()],
+  ];
+  for (const [pieceStart, pieceEnd, term, flags] of pieces) {
+    if (pieceStart < pieceEnd) {
+      children.push(grammarTokenNode(term, pieceStart, pieceEnd, false, flags, text, boundaries, tokens));
+    }
+  }
 }
 
 function grammarTokenNode(term, start, end, named, flags, text, boundaries, tokens) {

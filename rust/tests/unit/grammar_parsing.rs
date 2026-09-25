@@ -515,6 +515,71 @@ fn csv_recovery_errors_round_trip_with_flags() {
 }
 
 #[test]
+fn csv_accepts_rfc4180_fields_including_single_characters() {
+    // tree-sitter-csv 1.2.0 required unquoted text to be two characters long,
+    // so `a` failed; the vendored revision parses every field shape cleanly.
+    let source = "name,value\na,1\n\"q \"\"x\"\"\",,2.5\r\nb,true\n";
+    let network = LinkNetwork::parse(source, "CSV", ParseConfiguration::default());
+
+    assert_eq!(network.reconstruct_text(), source);
+    assert!(network.verify_full_match(None).is_clean());
+    let field_kinds = network
+        .links()
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Syntax))
+        .filter(|link| {
+            link.references()
+                .first()
+                .and_then(|parent| network.link(*parent))
+                .and_then(|parent| parent.metadata().term())
+                == Some("field")
+        })
+        .map(|link| link.metadata().term().unwrap_or_default().to_string())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        field_kinds,
+        ["text", "text", "text", "number", "text", "text", "float", "text", "boolean"]
+    );
+}
+
+#[test]
+fn csv_rejects_quotes_outside_rfc4180_quoted_fields() {
+    for source in ["\"a\"b,1\n", "a,\"b\n", "a,\"x\"y\n", "a\"b\n"] {
+        let network = LinkNetwork::parse(source, "CSV", ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source);
+        assert!(!network.verify_full_match(None).is_clean(), "{source:?}");
+    }
+}
+
+#[test]
+fn hidden_grammar_text_is_not_labeled_whitespace_trivia() {
+    // VB's `Module` and `End Module` keywords are hidden grammar rules, so
+    // tree-sitter exposes no node for them; they must not become extras.
+    let source = "Module Program\nEnd Module\n";
+    let network = LinkNetwork::parse(source, "Visual Basic", ParseConfiguration::default());
+    let tokens = network
+        .links()
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Token))
+        .map(|link| {
+            (
+                link.metadata().term().unwrap_or_default().to_string(),
+                link.metadata().flags().is_extra(),
+            )
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(network.reconstruct_text(), source);
+    for (text, extra) in &tokens {
+        assert_eq!(
+            *extra,
+            text.chars().all(char::is_whitespace),
+            "{text:?} extra flag"
+        );
+    }
+    assert!(tokens.iter().any(|(text, _)| text == "Module"));
+    assert!(tokens.iter().any(|(text, _)| text == "End Module"));
+}
+
+#[test]
 fn json5_recovery_errors_round_trip_with_flags() {
     let source = "{\n  key: 'unterminated,\n}\n";
     let network = LinkNetwork::parse(source, "JSON5", ParseConfiguration::default());

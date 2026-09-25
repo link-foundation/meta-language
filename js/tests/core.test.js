@@ -283,6 +283,47 @@ test('verification reports parse recovery issues', () => {
   );
 });
 
+test('CSV accepts RFC 4180 fields including single characters', () => {
+  // Mirrors rust/tests/unit/grammar_parsing.rs.
+  const source = 'name,value\na,1\n"q ""x""",,2.5\r\nb,true\n';
+  const network = LinkNetwork.parse(source, 'CSV');
+  assert.equal(network.reconstructText(), source);
+  assert.equal(network.verifyFullMatch().isClean(), true);
+  const fieldKinds = network.links()
+    .filter((link) => link.metadata().linkType === LinkType.Syntax && link.metadata().term === 'field')
+    .map((link) => network.link(link.references()[0]).metadata().term);
+  assert.deepEqual(
+    fieldKinds,
+    ['text', 'text', 'text', 'number', 'text', 'text', 'float', 'text', 'boolean'],
+  );
+});
+
+test('CSV rejects quotes outside RFC 4180 quoted fields', () => {
+  for (const source of ['"a"b,1\n', 'a,"b\n', 'a,"x"y\n', 'a"b\n']) {
+    const network = LinkNetwork.parse(source, 'CSV');
+    assert.equal(network.reconstructText(), source);
+    assert.equal(network.verifyFullMatch().isClean(), false, JSON.stringify(source));
+  }
+});
+
+test('hidden grammar text is not labeled whitespace trivia', () => {
+  // VB's `Module` and `End Module` keywords are hidden grammar rules, so
+  // tree-sitter exposes no node for them; they must not become extras.
+  const source = 'Module Program\nEnd Module\n';
+  const network = LinkNetwork.parse(source, 'Visual Basic');
+  assert.equal(network.reconstructText(), source);
+  const tokens = network.links()
+    .filter((link) => link.metadata().linkType === LinkType.SourceToken)
+    .map((link) => [link.metadata().term, link.metadata().flags.isExtra]);
+  for (const [text, extra] of tokens) {
+    assert.equal(extra, /^\p{White_Space}+$/u.test(text), `${JSON.stringify(text)} extra flag`);
+  }
+  const wrappers = network.links()
+    .filter((link) => link.metadata().linkType === LinkType.Syntax && link.metadata().term === 'hidden_text')
+    .map((link) => network.link(link.references()[0]).metadata().term);
+  assert.deepEqual(wrappers, ['Module', 'End Module']);
+});
+
 test('grammar builders emit Peggy grammar and JavaScript parser module text', () => {
   const grammar = new GrammarBuilder('Word')
     .terminal('letter', GrammarBuilder.charRange('a', 'z'))

@@ -409,6 +409,11 @@ fn insert_leaf_token(
     }
 }
 
+/// Inserts the source text between visible tree-sitter children. That text is
+/// either lexer extras or text matched by hidden grammar rules (such as VB's
+/// `Module` keyword). Leading and trailing whitespace becomes extra trivia, and
+/// the text between them a non-extra token, mirroring `pushGapNodes` in
+/// `js/src/programming-language-parser.js`.
 fn insert_gap_token(
     network: &mut LinkNetwork,
     owner: LinkId,
@@ -418,27 +423,40 @@ fn insert_gap_token(
 ) {
     let start = start.min(context.source_len);
     let end = end.min(context.source_len);
-    if start == end {
+    if start >= end {
         return;
     }
-
-    let span = span_for_range(context.lines, start, end, context.offset);
-    let token = network.insert_link(
-        [owner],
-        LinkMetadata::new()
-            .with_link_type(LinkType::Token)
-            .with_named(false)
-            .with_term(&context.text[start..end])
-            .with_language(context.language)
-            .with_span(span)
-            .with_flags(LinkFlags::extra()),
-    );
-    network.attach_trivia(
-        owner,
-        token,
-        span,
-        context.configuration.trivia_attachment_policy(),
-    );
+    let gap = &context.text[start..end];
+    let content_start = start + (gap.len() - gap.trim_start().len());
+    let content_end = content_start + gap.trim().len();
+    for (piece_start, piece_end, flags) in [
+        (start, content_start, LinkFlags::extra()),
+        (content_start, content_end, LinkFlags::clean()),
+        (content_end, end, LinkFlags::extra()),
+    ] {
+        if piece_start >= piece_end {
+            continue;
+        }
+        let span = span_for_range(context.lines, piece_start, piece_end, context.offset);
+        let token = network.insert_link(
+            [owner],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Token)
+                .with_named(false)
+                .with_term(&context.text[piece_start..piece_end])
+                .with_language(context.language)
+                .with_span(span)
+                .with_flags(flags),
+        );
+        if flags.is_extra() {
+            network.attach_trivia(
+                owner,
+                token,
+                span,
+                context.configuration.trivia_attachment_policy(),
+            );
+        }
+    }
 }
 
 fn flags_for_node(node: Node<'_>) -> LinkFlags {

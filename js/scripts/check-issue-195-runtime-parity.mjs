@@ -12,6 +12,7 @@ import {
   decodeProgramTranslation,
   translateProgram,
 } from '../src/index.js';
+import { HIDDEN_TEXT_TERM } from '../src/programming-language-parser.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const corpus = JSON.parse(
@@ -149,7 +150,7 @@ function nodeSignature(link) {
 
 function ignoredWrapper(link) {
   const metadata = link.metadata();
-  return metadata.linkType === LinkType.Syntax && metadata.term === 'whitespace';
+  return metadata.linkType === LinkType.Syntax && ['whitespace', HIDDEN_TEXT_TERM].includes(metadata.term);
 }
 
 function programObservation(fixture) {
