@@ -83,6 +83,10 @@ jobs:
         run: npm run check:pdf-grammar
         working-directory: js
 
+      - name: Check the independent built-in grammar CST expectations
+        run: npm run check:builtin-cst
+        working-directory: js
+
       - name: Check the shared language catalog
         run: npm run check:language-catalog
         working-directory: js
