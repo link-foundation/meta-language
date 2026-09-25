@@ -4,6 +4,7 @@ mod binary_format;
 mod concept_ontology;
 mod cross_format_reconstruction;
 mod cross_language_reconstruction;
+mod default_cst_expectations;
 mod document_formatting;
 mod docx_document;
 mod doublets_storage;
