@@ -19,48 +19,6 @@ const FOUR_LANGUAGE_DETAILS = Object.freeze({
   Rocq: { version: '9.2', edition: 'Vernacular' },
 });
 
-const EXTENSIONS = Object.freeze({
-  LiNo: ['.lino'],
-  txt: ['.txt', '.text'],
-  Markdown: ['.md', '.markdown'],
-  PDF: ['.pdf'],
-  DOCX: ['.docx'],
-  JavaScript: ['.js', '.mjs', '.cjs'],
-  Rust: ['.rs'],
-  Lean: ['.lean'],
-  Rocq: ['.v'],
-  Python: ['.py'],
-  C: ['.c', '.h'],
-  'C++': ['.cc', '.cpp', '.cxx', '.hpp'],
-  'C#': ['.cs'],
-  Java: ['.java'],
-  TypeScript: ['.ts'],
-  TSX: ['.tsx'],
-  'Visual Basic': ['.vb'],
-  'Delphi/Object Pascal': ['.pas', '.dpr'],
-  Go: ['.go'],
-  R: ['.r'],
-  Ruby: ['.rb'],
-  PHP: ['.php'],
-  Swift: ['.swift'],
-  Kotlin: ['.kt', '.kts'],
-  Scala: ['.scala'],
-  Lua: ['.lua'],
-  Perl: ['.pl', '.pm'],
-  HTML: ['.html', '.htm'],
-  CSS: ['.css'],
-  JSON: ['.json'],
-  YAML: ['.yaml', '.yml'],
-  TOML: ['.toml'],
-  XML: ['.xml'],
-  DTD: ['.dtd'],
-  INI: ['.ini'],
-  'Protocol Buffers': ['.proto'],
-  GraphQL: ['.graphql', '.gql'],
-  CSV: ['.csv'],
-  JSON5: ['.json5'],
-});
-
 export const ASSERTION_PROFILES = Object.freeze({
   cstPositive: [
     'ordinaryPublicParseApi',
@@ -418,7 +376,7 @@ function buildImporterRequirements(inventory, fixtureCatalog) {
   });
 }
 
-function buildFourLanguageCorpusRequirements(fixtureCatalog) {
+function buildFourLanguageCorpusRequirements(fixtureCatalog, extensions) {
   const requirements = [];
   for (const [language, details] of Object.entries(FOUR_LANGUAGE_DETAILS)) {
     for (const [suffix, construct, profile] of [
@@ -450,7 +408,7 @@ function buildFourLanguageCorpusRequirements(fixtureCatalog) {
             edition: details.edition,
             construct,
             aliases: [],
-            extensions: EXTENSIONS[language],
+            extensions: extensions[language],
           },
           expectedBehavior:
             suffix === 'CONFORMANCE'
@@ -477,7 +435,7 @@ function buildFourLanguageCorpusRequirements(fixtureCatalog) {
   return requirements;
 }
 
-function buildSemanticRequirements(fixtureCatalog) {
+function buildSemanticRequirements(fixtureCatalog, extensions) {
   const constructs = [
     'modules-and-imports',
     'scopes-and-bindings',
@@ -510,7 +468,7 @@ function buildSemanticRequirements(fixtureCatalog) {
             edition: details.edition,
             construct,
             aliases: [],
-            extensions: EXTENSIONS[language],
+            extensions: extensions[language],
           },
           expectedBehavior:
             'Both runtimes represent this construct with project-aware symbol identity and language-specific distinctions; missing context is diagnosed and valid context enables the behavior.',
@@ -535,7 +493,7 @@ function buildSemanticRequirements(fixtureCatalog) {
   return requirements;
 }
 
-function buildTransformationRequirements(fixtureCatalog) {
+function buildTransformationRequirements(fixtureCatalog, extensions) {
   const operations = ['query', 'insert', 'delete', 'replace', 'move', 'clone', 'construct', 'emit'];
   const requirements = [];
   for (const [language, details] of Object.entries(FOUR_LANGUAGE_DETAILS)) {
@@ -557,7 +515,7 @@ function buildTransformationRequirements(fixtureCatalog) {
             edition: details.edition,
             construct: operation,
             aliases: [],
-            extensions: EXTENSIONS[language],
+            extensions: extensions[language],
           },
           expectedBehavior:
             'The public structured transformation operates after the original source buffer is discarded, updates derived metadata, emits valid source, and reparses to the intended structure.',
@@ -600,7 +558,7 @@ function buildTransformationRequirements(fixtureCatalog) {
           edition: details.edition,
           construct: 'binding-aware rename with capture avoidance',
           aliases: [],
-          extensions: EXTENSIONS[language],
+          extensions: extensions[language],
         },
         expectedBehavior:
           'Rename follows symbol identity across scopes and modules, avoids capture, handles Unicode and generated binders, and leaves comments, strings, regexes, and unrelated names unchanged.',
@@ -624,7 +582,7 @@ function buildTransformationRequirements(fixtureCatalog) {
   return requirements;
 }
 
-function buildTranslationRequirements(fixtureCatalog) {
+function buildTranslationRequirements(fixtureCatalog, extensions) {
   const languages = Object.keys(FOUR_LANGUAGE_DETAILS);
   const requirements = [];
   for (const sourceLanguage of languages) {
@@ -647,7 +605,7 @@ function buildTranslationRequirements(fixtureCatalog) {
             edition: `${FOUR_LANGUAGE_DETAILS[sourceLanguage].edition} -> ${FOUR_LANGUAGE_DETAILS[targetLanguage].edition}`,
             construct: 'control flow, recursion, data/types, modules, effects, and proof constructs',
             aliases: [],
-            extensions: EXTENSIONS[targetLanguage],
+            extensions: extensions[targetLanguage],
           },
           expectedBehavior:
             'The public translator emits a real validated target artifact and satisfies the declared observation and preservation contract without unsupported descriptors, relabelled input, erased effects, added axioms, or weakened theorems.',
@@ -672,7 +630,7 @@ function buildTranslationRequirements(fixtureCatalog) {
   return requirements;
 }
 
-function buildCrossCuttingRequirements(fixtureCatalog) {
+function buildCrossCuttingRequirements(fixtureCatalog, extensions) {
   const rows = [
     ['I195-SHARED-SCHEMA', 'shared-concepts', 'schema versioning and extension registration'],
     ['I195-SHARED-PROVENANCE', 'shared-concepts', 'provenance and source mappings'],
@@ -721,7 +679,7 @@ function buildCrossCuttingRequirements(fixtureCatalog) {
   });
 }
 
-function buildValidationAndDeliveryRequirements(fixtureCatalog) {
+function buildValidationAndDeliveryRequirements(fixtureCatalog, extensions) {
   const requirements = [];
   for (const language of Object.keys(FOUR_LANGUAGE_DETAILS)) {
     const id = `I195-NATIVE-${slug(language)}`;
@@ -741,7 +699,7 @@ function buildValidationAndDeliveryRequirements(fixtureCatalog) {
           edition: FOUR_LANGUAGE_DETAILS[language].edition,
           construct: 'emitted artifact validation',
           aliases: [],
-          extensions: EXTENSIONS[language],
+          extensions: extensions[language],
         },
         expectedBehavior:
           'The declared native compiler, host, or prover validates emitted artifacts and records reproducible versions and logs without being treated as RML proof authority.',
@@ -884,12 +842,12 @@ export async function buildIssue195Manifest(root) {
     ...buildCstRequirements(inventory, fixtureCatalog),
     ...buildEmbeddedRequirements(inventory, fixtureCatalog),
     ...buildImporterRequirements(inventory, fixtureCatalog),
-    ...buildFourLanguageCorpusRequirements(fixtureCatalog),
-    ...buildSemanticRequirements(fixtureCatalog),
-    ...buildTransformationRequirements(fixtureCatalog),
-    ...buildTranslationRequirements(fixtureCatalog),
-    ...buildCrossCuttingRequirements(fixtureCatalog),
-    ...buildValidationAndDeliveryRequirements(fixtureCatalog),
+    ...buildFourLanguageCorpusRequirements(fixtureCatalog, inventory.extensionDispatch),
+    ...buildSemanticRequirements(fixtureCatalog, inventory.extensionDispatch),
+    ...buildTransformationRequirements(fixtureCatalog, inventory.extensionDispatch),
+    ...buildTranslationRequirements(fixtureCatalog, inventory.extensionDispatch),
+    ...buildCrossCuttingRequirements(fixtureCatalog, inventory.extensionDispatch),
+    ...buildValidationAndDeliveryRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildGateRequirements(fixtureCatalog),
   ];
 
