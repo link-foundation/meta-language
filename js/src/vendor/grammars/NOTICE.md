@@ -6,7 +6,8 @@ runtimes parse with the same grammar revision. They are rebuilt by
 `node js/scripts/build-vendored-grammars.mjs` with tree-sitter CLI
 0.25.10 and verified against `grammar-lock.json` by
 `--check`. Each file is a zero-mtime gzip of the `.wasm` whose SHA-256 is
-listed; the parser digest is of the upstream `src/parser.c`.
+listed; the parser digest is of the generated `src/parser.c` (after the
+listed patch, if any).
 
 | File | Source | parser.c SHA-256 | wasm SHA-256 | License |
 | --- | --- | --- | --- | --- |
@@ -14,7 +15,7 @@ listed; the parser digest is of the upstream `src/parser.c`.
 | `cpp.wasm.gz` | crate `tree-sitter-cpp` 0.23.4 | `2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814` | `84cd0ee5427a58e49791e157c50a9e7020766faad9922dfbc98c1efc8e1040d6` | [`cpp.LICENSE`](cpp.LICENSE) |
 | `csharp.wasm.gz` | crate `tree-sitter-c-sharp` 0.23.5 | `0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427` | `f265130d20fe62d3dc0cec756ee5a4159bd9825894a48fc0f7e72c8bd30ef099` | [`csharp.LICENSE`](csharp.LICENSE) |
 | `css.wasm.gz` | crate `tree-sitter-css` 0.25.0 | `2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e` | `c2b8c4f2f69454a60a7562d6b21150b4879fc26e9a69d4674b9d7c11df838b62` | [`css.LICENSE`](css.LICENSE) |
-| `csv.wasm.gz` | `tree-sitter-grammars/tree-sitter-csv` v1.2.0 (vendored in `rust/vendor/tree-sitter-csv`) | `2676f33c1a418ae94ee59bb3acbe6734f387bfaafcb484dee6ce5791c43231f8` | `906c851f7032f3372513fb896d67d1ba6226e3cb5b35ff62b86f2ed43e3f2eea` | [`csv.LICENSE`](csv.LICENSE) |
+| `csv.wasm.gz` | `tree-sitter-grammars/tree-sitter-csv` f6bf6e35eb0b95fbadea4bb39cb9709507fcb181 with [`rfc4180-quotes.patch`](../../../../rust/vendor/tree-sitter-csv/rfc4180-quotes.patch) (vendored in `rust/vendor/tree-sitter-csv`) | `eacf58622b8d50ab75acf91172d35e314874327d98d1bd03acfd1ab789ddb1d1` | `19e23890eef87611c6a8c71575ec7d1b4150ba90c946f17ea818ecf329a5322b` | [`csv.LICENSE`](csv.LICENSE) |
 | `dtd.wasm.gz` | crate `tree-sitter-xml` 0.7.0 (`dtd`) | `79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932` | `e74dac556b2ef4ad7b10a721d7c171731f176b649c26123b01d5099658fa0cb4` | [`dtd.LICENSE`](dtd.LICENSE) |
 | `go.wasm.gz` | crate `tree-sitter-go` 0.25.0 | `3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85` | `62de6d1fe0c811f194a97672fde719c1a9ca84a7f69685e88ee0883b7fcad238` | [`go.LICENSE`](go.LICENSE) |
 | `graphql.wasm.gz` | crate `tree-sitter-graphql` 0.1.0 | `d27f89090319f885811fefb5c5453f9cc95543c04df02b7c43aa1fa6f7d353d9` | `fd4081c84308f5db14a4a6e1bea91c08f9c38e5ab47e5a0730c4a39448844d00` | [`graphql.LICENSE`](graphql.LICENSE) |

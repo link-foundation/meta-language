@@ -33,8 +33,11 @@ export const GRAMMAR_SOURCES = Object.freeze({
   csv: {
     vendored: 'rust/vendor/tree-sitter-csv',
     upstream: 'tree-sitter-grammars/tree-sitter-csv',
-    version: 'v1.2.0',
-    revision: 'cda48a5e890b30619da5bc3ff55be1b1d3d08c8d',
+    version: 'f6bf6e35eb0b95fbadea4bb39cb9709507fcb181',
+    revision: 'f6bf6e35eb0b95fbadea4bb39cb9709507fcb181',
+    // RFC 4180: unquoted fields contain no quotes, so a stray or unterminated
+    // quote is a parse error instead of text.
+    patch: 'rust/vendor/tree-sitter-csv/rfc4180-quotes.patch',
     dir: 'csv',
   },
   csharp: { crate: 'tree-sitter-c-sharp', dir: '.' },
@@ -198,12 +201,21 @@ async function grammarSource(id, versions) {
   };
 }
 
-async function checkoutUpstream(source, checkout) {
+// Clones the pinned upstream revision. With `treeSitter`, it also applies the
+// grammar's local patch, regenerates the parser and requires it to equal the
+// one Rust compiles.
+async function checkoutUpstream(source, checkout, treeSitter) {
   await run('git', ['clone', '--quiet', `https://github.com/${source.upstream}`, checkout]);
   await run('git', ['-C', checkout, 'checkout', '--quiet', source.revision]);
+  if (!treeSitter) return;
+  if (source.patch) {
+    await run('git', ['-C', checkout, 'apply', join(root, source.patch)]);
+    await run(treeSitter, ['generate'], { cwd: join(checkout, source.dir) });
+  }
   const upstream = await readFile(join(checkout, source.dir, 'src/parser.c'));
   if (sha256(upstream) !== sha256(source.parser)) {
-    throw new Error(`${source.upstream}@${source.revision} parser.c differs from ${source.vendored}`);
+    const patched = source.patch ? ` with ${source.patch}` : '';
+    throw new Error(`${source.upstream}@${source.revision}${patched} parser.c differs from ${source.vendored}`);
   }
 }
 
@@ -235,7 +247,7 @@ async function buildOne(id, versions, treeSitter) {
     if (source.vendored) {
       // The CLI needs the full grammar tree, so build from the pinned upstream
       // checkout and require its parser to equal the one Rust compiles.
-      await checkoutUpstream(source, join(work, 'crate'));
+      await checkoutUpstream(source, join(work, 'crate'), treeSitter);
     } else {
       await cp(source.crateDir, join(work, 'crate'), { recursive: true });
     }
@@ -254,7 +266,11 @@ async function buildOne(id, versions, treeSitter) {
     return {
       id,
       ...(source.vendored
-        ? { upstream: source.upstream, vendored: source.vendored }
+        ? {
+            upstream: source.upstream,
+            vendored: source.vendored,
+            ...(source.patch ? { patch: source.patch } : {}),
+          }
         : { crate: source.crate, directory: source.dir }),
       version: source.version,
       parserSha256: sha256(source.parser),
@@ -282,6 +298,9 @@ async function checkLock(lock, versions) {
       problems.push(`${id}: lock has ${entry.version}, the Rust build pins ${pinned}`);
       continue;
     }
+    if ((entry.patch ?? null) !== (source.patch ?? null)) {
+      problems.push(`${id}: lock records patch ${entry.patch ?? 'none'}, the source has ${source.patch ?? 'none'}`);
+    }
     const { parser } = await grammarSource(id, versions);
     if (sha256(parser) !== entry.parserSha256) {
       problems.push(`${id}: parser.c digest differs from the Rust build input`);
@@ -296,7 +315,7 @@ async function writeNotice(lock) {
   const rows = Object.values(lock.grammars).map((entry) => {
     const source = entry.crate
       ? `crate \`${entry.crate}\` ${entry.version}${entry.directory === '.' ? '' : ` (\`${entry.directory}\`)`}`
-      : `\`${entry.upstream}\` ${entry.version} (vendored in \`${entry.vendored}\`)`;
+      : `\`${entry.upstream}\` ${entry.version}${entry.patch ? ` with [\`${entry.patch.split('/').pop()}\`](../../../../${entry.patch})` : ''} (vendored in \`${entry.vendored}\`)`;
     const license = entry.license ? `[\`${entry.license}\`](${entry.license})` : 'see upstream';
     return `| \`${entry.id}.wasm.gz\` | ${source} | \`${entry.parserSha256}\` | \`${entry.wasmSha256}\` | ${license} |`;
   });
@@ -308,7 +327,8 @@ runtimes parse with the same grammar revision. They are rebuilt by
 \`node js/scripts/build-vendored-grammars.mjs\` with tree-sitter CLI
 ${lock.treeSitterCli.split(' ')[1]} and verified against \`grammar-lock.json\` by
 \`--check\`. Each file is a zero-mtime gzip of the \`.wasm\` whose SHA-256 is
-listed; the parser digest is of the upstream \`src/parser.c\`.
+listed; the parser digest is of the generated \`src/parser.c\` (after the
+listed patch, if any).
 
 | File | Source | parser.c SHA-256 | wasm SHA-256 | License |
 | --- | --- | --- | --- | --- |

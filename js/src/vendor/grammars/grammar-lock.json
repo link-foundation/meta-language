@@ -46,9 +46,10 @@
       "id": "csv",
       "upstream": "tree-sitter-grammars/tree-sitter-csv",
       "vendored": "rust/vendor/tree-sitter-csv",
-      "version": "v1.2.0",
-      "parserSha256": "2676f33c1a418ae94ee59bb3acbe6734f387bfaafcb484dee6ce5791c43231f8",
-      "wasmSha256": "906c851f7032f3372513fb896d67d1ba6226e3cb5b35ff62b86f2ed43e3f2eea",
+      "patch": "rust/vendor/tree-sitter-csv/rfc4180-quotes.patch",
+      "version": "f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
+      "parserSha256": "eacf58622b8d50ab75acf91172d35e314874327d98d1bd03acfd1ab789ddb1d1",
+      "wasmSha256": "19e23890eef87611c6a8c71575ec7d1b4150ba90c946f17ea818ecf329a5322b",
       "license": "csv.LICENSE"
     },
     "dtd": {
