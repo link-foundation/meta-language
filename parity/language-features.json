@@ -43,6 +43,7 @@
     "parser_registry": { "parity": "ported", "feature": "parser-extension-registry" },
     "program_representation": { "parity": "ported", "feature": "four-language-program-representation" },
     "program_translation": { "parity": "ported", "feature": "four-language-portable-translation" },
+    "translation": { "parity": "ported", "feature": "four-language-portable-translation" },
     "query": { "parity": "ported", "feature": "sexpression-query" },
     "query_algebra": { "parity": "ported", "feature": "link-rule-algebra" },
     "query_plan": { "parity": "ported", "feature": "graphql-query-plan" },

@@ -11,10 +11,12 @@
 
 use serde::{Deserialize, Serialize};
 
+pub mod check;
 pub mod decimal;
 pub mod diagnostics;
 pub mod ir;
 pub mod lexer;
+pub mod proof;
 pub mod surface;
 pub mod types;
 

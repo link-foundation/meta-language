@@ -601,13 +601,17 @@ class Checker {
       // Literal patterns on integers, booleans and strings become equality tests.
       const matching = normalised.filter((row) => ['wild', 'bind'].includes(row.patterns[refutable].k)
         || (row.patterns[refutable].k === 'lit' && row.patterns[refutable].key === pivot.key));
-      const others = normalised.filter((row) => row.patterns[refutable].k !== 'lit' || row.patterns[refutable].key !== pivot.key);
+      // Where a boolean column is not the pivot it is the other value, so its
+      // remaining literal patterns always match there.
+      const bool = column.type.kind === 'bool';
+      const others = normalised
+        .filter((row) => row.patterns[refutable].k !== 'lit' || row.patterns[refutable].key !== pivot.key)
+        .map((row) => (bool && row.patterns[refutable].k === 'lit'
+          ? { ...row, patterns: row.patterns.map((pattern, index) => (index === refutable ? { k: 'wild' } : pattern)) }
+          : row));
       const remaining = columns.filter((_, index) => index !== refutable);
       const then = this.compileRows(remaining, matching.map((row) => ({ ...row, patterns: rest(row.patterns), binds: bindColumn(row) })), span);
-      if (column.type.kind === 'bool' && others.every((row) => row.patterns[refutable].k === 'lit')) {
-        const exhaustive = new Set(normalised.map((row) => row.patterns[refutable].key)).size === 2;
-        if (!exhaustive) throw typeError('non-exhaustive match on bool', span);
-      }
+      if (bool && others.length === 0) throw typeError('non-exhaustive match on bool', span);
       const otherwise = this.compileRows(columns, others, span);
       return {
         k: 'if',
