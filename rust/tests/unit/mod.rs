@@ -69,6 +69,7 @@ mod source_generation;
 mod source_points;
 mod storage;
 mod substitution;
+mod translation_emit_lean;
 mod translation_foundation;
 mod translation_rules;
 mod translation_stages;
