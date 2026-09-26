@@ -760,11 +760,6 @@ fn plain_application(head: SExpr, args: Vec<SExpr>, range: Span) -> Result<SExpr
     ))
 }
 
-/// `Number(digits)` for an `n + k` pattern's `k`; amounts beyond `u64` saturate.
-fn js_number_u64(digits: &str) -> u64 {
-    digits.parse().unwrap_or(u64::MAX)
-}
-
 const fn connective(node: SPropNode) -> SProp {
     SProp { node, span: None }
 }

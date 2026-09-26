@@ -16,6 +16,8 @@ const ARITHMETIC = new Set(['add', 'sub', 'mul', 'div', 'rem']);
 // Environment entry recording, for a local, the constructor it is known to
 // have matched and the locals naming its fields.
 const KNOWN = Symbol('known constructors');
+/** Natural numeral patterns above this unfold to equality tests rather than successor chains. */
+const NAT_PATTERN_UNFOLD = 16n;
 
 /** Binds a local, forgetting constructor facts the new binding shadows. */
 function bindLocal(env, name, type) {
@@ -597,7 +599,10 @@ class Checker {
       const pattern = row.patterns[refutable];
       return pattern.k === 'bind' ? [...row.binds, [pattern.name, column.name]] : row.binds;
     };
-    if (pivot.k === 'lit') {
+    // A natural column that also holds successor patterns splits on zero and
+    // successor, which decrements its literal patterns.
+    const natural = column.type.kind === 'nat' && normalised.some((row) => row.patterns[refutable].k === 'nat');
+    if (pivot.k === 'lit' && !natural) {
       // Literal patterns on integers, booleans and strings become equality tests.
       const matching = normalised.filter((row) => ['wild', 'bind'].includes(row.patterns[refutable].k)
         || (row.patterns[refutable].k === 'lit' && row.patterns[refutable].key === pivot.key));
@@ -621,7 +626,7 @@ class Checker {
         span,
       };
     }
-    const ctors = pivot.k === 'nat'
+    const ctors = natural
       ? [{ name: 'zero', fields: [] }, { name: 'succ', fields: [{ type: column.type }] }]
       : this.items.get(column.type.name).ctors;
     const cases = ctors.map((ctor) => {
@@ -644,10 +649,17 @@ class Checker {
           });
         } else if (pattern.ctor === ctor.name) {
           specialised.push({ ...row, patterns: [...pattern.args, ...rest(row.patterns)] });
+        } else if (pattern.k === 'lit') {
+          const value = BigInt(pattern.value.value);
+          if (ctor.name === 'zero' && value === 0n) specialised.push({ ...row, patterns: rest(row.patterns) });
+          if (ctor.name === 'succ' && value > 0n) {
+            const predecessor = this.literalPattern({ k: 'num', value: String(value - 1n), negative: false }, column.type, span);
+            specialised.push({ ...row, patterns: [predecessor, ...rest(row.patterns)] });
+          }
         }
       }
       const body = this.compileRows([...fieldColumns, ...columns.filter((_, index) => index !== refutable)], specialised, span);
-      const casePattern = pivot.k === 'nat'
+      const casePattern = natural
         ? (ctor.name === 'zero' ? { k: 'natZero' } : { k: 'natSucc', name: fieldNames[0] })
         : { k: 'ctor', path: [ctor.name], binds: fieldNames };
       return { pattern: casePattern, body };
@@ -681,7 +693,9 @@ class Checker {
       }
       case 'numLit': {
         // A JavaScript `case 0n:` is an `===` test, which the recursion analysis reads as a zero test.
-        if (natural && this.language !== 'JavaScript') {
+        // Numerals up to NAT_PATTERN_UNFOLD unfold to successor chains; larger
+        // ones are equality tests, so a pattern never costs a node per unit.
+        if (natural && this.language !== 'JavaScript' && BigInt(pattern.value) <= NAT_PATTERN_UNFOLD) {
           let result = { k: 'nat', ctor: 'zero', args: [] };
           for (let count = 0n; count < BigInt(pattern.value); count += 1n) result = { k: 'nat', ctor: 'succ', args: [result] };
           return result;
@@ -694,8 +708,11 @@ class Checker {
         return this.literalPattern({ k: 'str', value: pattern.value }, type, span);
       case 'natAdd': {
         if (!natural) throw unsupported('n + k pattern', `only natural-number scrutinees support n + k patterns, not ${typeKey(type)}`, pattern.span ?? span);
+        if (BigInt(pattern.add) > NAT_PATTERN_UNFOLD) {
+          throw unsupported('n + k pattern', `n + k patterns take offsets of at most ${NAT_PATTERN_UNFOLD}`, pattern.span ?? span);
+        }
         let result = this.normalisePattern(pattern.inner, type, span);
-        for (let count = 0; count < pattern.add; count += 1) result = { k: 'nat', ctor: 'succ', args: [result] };
+        for (let count = 0; count < Number(pattern.add); count += 1) result = { k: 'nat', ctor: 'succ', args: [result] };
         return result;
       }
       case 'ctor': {

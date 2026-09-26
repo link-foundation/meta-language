@@ -1,8 +1,8 @@
 //! Expressions, `match` alternatives, and patterns of the Lean frontend.
 
 use super::{
-    annotate_layout, bind_or_ctor, column, expr, is_item_keyword, js_number_u64, operator_name,
-    pattern, plain_application, span, syntax_at, LeanParser, PatternHead, BINARY,
+    annotate_layout, bind_or_ctor, column, expr, is_item_keyword, operator_name, pattern,
+    plain_application, span, syntax_at, LeanParser, PatternHead, BINARY,
 };
 use crate::translation::diagnostics::{type_error, unsupported, Result};
 use crate::translation::lexer::{describe, tokenize_source, Source, Token, TokenKind};
@@ -136,7 +136,7 @@ impl LeanParser<'_> {
             result = pattern(
                 SPatternNode::NatAdd {
                     inner: Box::new(result),
-                    add: js_number_u64(&amount.value),
+                    add: amount.value.clone(),
                 },
                 Some(self.span_to_next(&token)),
             );
@@ -196,7 +196,7 @@ impl LeanParser<'_> {
             return pattern(
                 SPatternNode::NatAdd {
                     inner: Box::new(args.remove(0)),
-                    add: 1,
+                    add: "1".to_owned(),
                 },
                 Some(self.span_to_next(token)),
             );

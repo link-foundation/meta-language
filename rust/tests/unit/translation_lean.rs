@@ -83,7 +83,7 @@ fn numeral_patterns_are_decimal_text_and_successors_add() {
     assert_eq!(rows[0]["patterns"][0]["k"], "numLit");
     assert_eq!(rows[0]["patterns"][0]["value"], "0");
     assert_eq!(rows[1]["patterns"][0]["k"], "natAdd");
-    assert_eq!(rows[1]["patterns"][0]["add"], 2);
+    assert_eq!(rows[1]["patterns"][0]["add"], "2");
     assert_eq!(rows[1]["patterns"][0]["inner"]["name"], "k");
     assert_eq!(rows[2]["patterns"][0]["value"], "12345678901234567890123");
 }

@@ -16,6 +16,41 @@ const jsTree = "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value
 const jsFn = (name, params, ret, body) => `/**\n${params.map(([p, t]) => ` * @param {${t}} ${p}\n`).join('')} * @returns {${ret}}\n */\nfunction ${name}(${params.map(([p]) => p).join(', ')}) {\n${body}\n}\n`;
 
 export default {
+  'lean-large-numeral-before-succ': ['lean', `def f : Nat → Nat
+  | 1000 => 7
+  | 0 => 1
+  | n + 2 => n
+  | _ => 3${leanMain}`],
+  'lean-large-numeral-after-succ': ['lean', `def f : Nat → Nat → Nat
+  | 0, _ => 1
+  | n + 3, 0 => n
+  | 1000000000000000000000000, m => m
+  | _, m => m + 1${leanMain}`],
+  'lean-large-numeral-unreachable-zero': ['lean', `def f : Nat → Nat
+  | 17 => 2
+  | 0 => 1
+  | n + 1 => n${leanMain}`],
+  'lean-large-numeral-redundant': ['lean', `def f : Nat → Nat
+  | 0 => 1
+  | n + 1 => n
+  | 99 => 3${leanMain}`],
+  'lean-large-offset-rejected': ['lean', `def f : Nat → Nat
+  | n + 17 => n
+  | _ => 0${leanMain}`],
+  'lean-huge-offset-rejected': ['lean', `def f : Nat → Nat
+  | n + 9007199254740993 => n
+  | _ => 0${leanMain}`],
+  'lean-offset-at-limit': ['lean', `def f : Nat → Nat
+  | n + 16 => n
+  | _ => 0${leanMain}`],
+  'rocq-large-numeral-mixed': ['v', `${rocqHead}Definition f (n : nat) : nat :=
+  match n with
+  | S (S k) => k
+  | 1000 => 5
+  | 0 => 1
+  | _ => 2
+  end.
+`],
   // Lean: accepted programs.
   'lean-multi-scrutinee': ['lean', `def f : Nat → Nat → Nat
   | 0, _ => 0

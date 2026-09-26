@@ -398,10 +398,10 @@ pub enum SPatternNode {
     StrLit {
         value: String,
     },
-    /// Lean's `n + 2`.
+    /// Lean's `n + 2`; `add` holds the numeral's decimal digits.
     NatAdd {
         inner: Box<SPattern>,
-        add: u64,
+        add: String,
     },
 }
 

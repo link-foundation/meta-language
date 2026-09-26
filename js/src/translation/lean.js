@@ -596,7 +596,7 @@ class LeanParser {
       c.next();
       const amount = c.next();
       if (amount.kind !== 'number' || amount.suffix) throw this.fail('expected a numeral in an n + k pattern', amount);
-      pattern = { k: 'natAdd', inner: pattern, add: Number(amount.value), span: span(token, c.peek()) };
+      pattern = { k: 'natAdd', inner: pattern, add: amount.value, span: span(token, c.peek()) };
     }
     return pattern;
   }
@@ -631,7 +631,7 @@ class LeanParser {
   ctorPattern(path, args, token) {
     const name = path.at(-1);
     if ((path.join('.') === 'Nat.succ' || (path.dot && name === 'succ')) && args.length === 1) {
-      return { k: 'natAdd', inner: args[0], add: 1, span: span(token, this.cursor.peek()) };
+      return { k: 'natAdd', inner: args[0], add: '1', span: span(token, this.cursor.peek()) };
     }
     if ((path.join('.') === 'Nat.zero' || (path.dot && name === 'zero')) && args.length === 0) {
       return { k: 'numLit', value: '0', span: span(token, token) };

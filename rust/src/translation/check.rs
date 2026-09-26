@@ -178,6 +178,9 @@ struct Column {
     ty: Type,
 }
 
+/// Natural numeral patterns above this unfold to equality tests rather than successor chains.
+const NAT_PATTERN_UNFOLD: i128 = 16;
+
 /// A match-compilation pattern: surface patterns are normalised against their column type.
 #[derive(Clone, Debug)]
 enum NPat {
@@ -206,6 +209,21 @@ impl NPat {
         match self {
             Self::Nat { args, .. } | Self::Data { args, .. } => args,
             _ => &[],
+        }
+    }
+
+    /// A natural literal pattern's value.
+    fn nat_value(&self) -> Option<Decimal> {
+        match self {
+            Self::Lit {
+                value:
+                    SExpr {
+                        node: SNode::Num { value, .. },
+                        ..
+                    },
+                ..
+            } => Decimal::parse(value),
+            _ => None,
         }
     }
 
@@ -1751,10 +1769,19 @@ impl Checker {
             .filter(|(index, _)| *index != refutable)
             .map(|(_, column)| column.clone())
             .collect();
-        if let NPat::Lit {
-            value: pivot_value,
-            key: pivot_key,
-        } = &pivot
+        // A natural column that also holds successor patterns splits on zero and
+        // successor, which decrements its literal patterns.
+        let nat = column.ty == Type::Nat
+            && normalised
+                .iter()
+                .any(|row| matches!(row.patterns[refutable], NPat::Nat { .. }));
+        if let (
+            NPat::Lit {
+                value: pivot_value,
+                key: pivot_key,
+            },
+            false,
+        ) = (&pivot, nat)
         {
             // Literal patterns on integers, booleans and strings become equality tests.
             let same = |row: &Row| row.patterns[refutable].lit_key() == Some(pivot_key.as_str());
@@ -1803,7 +1830,6 @@ impl Checker {
                 span,
             ));
         }
-        let nat = matches!(pivot, NPat::Nat { .. });
         let ctors = if nat {
             vec![
                 Ctor {
@@ -1866,6 +1892,31 @@ impl Checker {
                         patterns,
                         ..row.clone()
                     });
+                } else if let Some(value) = pattern.nat_value() {
+                    let zero = value == Decimal::from_i128(0);
+                    if ctor.name == "zero" && zero {
+                        specialised.push(Row {
+                            patterns: rest(&row.patterns),
+                            ..row.clone()
+                        });
+                    }
+                    if ctor.name == "succ" && !zero {
+                        let predecessor = SExpr::new(
+                            SNode::Num {
+                                value: decrement(&value),
+                                ty: None,
+                                negative: false,
+                            },
+                            None,
+                        );
+                        let mut patterns =
+                            vec![self.literal_pattern(predecessor, &column.ty, span)?];
+                        patterns.extend(rest(&row.patterns));
+                        specialised.push(Row {
+                            patterns,
+                            ..row.clone()
+                        });
+                    }
                 }
             }
             let mut body_columns = field_columns;
@@ -1953,10 +2004,14 @@ impl Checker {
             }
             SPatternNode::NumLit { value, negative } => {
                 // A JavaScript `case 0n:` is an `===` test, which the recursion analysis reads as a zero test.
-                if natural && self.language != Language::JavaScript {
-                    let count = Decimal::parse(&value)
-                        .and_then(|value| value.to_i128())
-                        .unwrap_or(0);
+                // Numerals up to NAT_PATTERN_UNFOLD unfold to successor chains; larger
+                // ones are equality tests, so a pattern never costs a node per unit.
+                let count = Decimal::parse(&value)
+                    .and_then(|value| value.to_i128())
+                    .filter(|count| *count <= NAT_PATTERN_UNFOLD);
+                if let (true, false, Some(count)) =
+                    (natural, self.language == Language::JavaScript, count)
+                {
                     let mut result = zero();
                     for _ in 0..count {
                         result = succ(result);
@@ -1990,6 +2045,17 @@ impl Checker {
                         at,
                     ));
                 }
+                let Some(add) = add
+                    .parse::<i128>()
+                    .ok()
+                    .filter(|add| *add <= NAT_PATTERN_UNFOLD)
+                else {
+                    return Err(unsupported(
+                        "n + k pattern",
+                        &format!("n + k patterns take offsets of at most {NAT_PATTERN_UNFOLD}"),
+                        at,
+                    ));
+                };
                 let mut result = self.normalise_pattern(NPat::Surface(*inner), ty, span)?;
                 for _ in 0..add {
                     result = succ(result);
