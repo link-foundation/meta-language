@@ -79,6 +79,7 @@ mod translation_emit_rust;
 mod translation_foundation;
 mod translation_lean;
 mod translation_rules;
+mod translation_rust_frontend;
 mod translation_stages;
 
 #[path = "ci-cd/mod.rs"]
