@@ -69,6 +69,7 @@ mod source_points;
 mod storage;
 mod substitution;
 mod translation_rules;
+mod translation_rust_frontend;
 
 #[path = "ci-cd/mod.rs"]
 mod ci_cd;
