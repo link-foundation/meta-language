@@ -48,6 +48,7 @@ pub mod storage;
 mod structured_text_parser;
 pub mod substitution;
 pub mod transform;
+pub mod translation;
 pub mod translation_rules;
 pub mod verification;
 
