@@ -1,6 +1,10 @@
 import { Parser } from 'links-notation';
 
 import {
+  parseEmbeddedProgrammingLanguage,
+  parseProgrammingLanguage,
+} from './programming-language-parser.js';
+import {
   ByteRange,
   Link,
   LinkFlags,
@@ -10,11 +14,17 @@ import {
   ParseConfiguration,
   Point,
   SourceSpan,
+  TriviaAttachmentPolicy,
   idKey,
 } from './primitives.js';
 import { LinkQuery, QueryCaptures, QueryMatch } from './query.js';
 import { LinkCliSubstitution, SubstitutionReport } from './substitution.js';
 import { ReplacementReport, ReplacementRule, TextReplacement } from './transform.js';
+import { EmbeddedRegion, detectEmbeddedRegions, detectEmbeddedRegionsInTree } from './regions.js';
+import { annotateNaturalLanguage } from './natural-language.js';
+import { insertLinoSemantics } from './lino-semantics.js';
+import { grammarProvenance } from './language-catalog.js';
+import { seedStatehoodWorkedExample } from './concept-ontology.js';
 
 const encoder = new TextEncoder();
 
@@ -22,11 +32,23 @@ export class LinkNetwork {
   constructor() {
     this._links = new Map();
     this._nextId = 1;
+    // Named points interned by exact term, as Rust's `terms` table.
+    this._terms = new Map();
+    // Cached concept syntax keyed by `concept\u0000language`.
+    this._conceptSyntax = new Map();
   }
 
   static parse(text, language, configuration = ParseConfiguration.default()) {
-    if (language.toLowerCase() === 'lino') {
-      return LinkNetwork.fromLino(text);
+    const parsed = parseProgrammingLanguage(text, language);
+    if (parsed) {
+      const network = new LinkNetwork();
+      const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);
+      network._attachEmbeddedRegions(document, text, language, configuration, parsed);
+      annotateNaturalLanguage(network, document, text, language);
+      if (parsed.canonical === 'LiNo') {
+        insertLinoSemantics(network, text, language);
+      }
+      return network;
     }
     return LinkNetwork.parseLosslessText(text, language, configuration);
   }
@@ -60,6 +82,19 @@ export class LinkNetwork {
     return new FluentPipeline(LinkNetwork.parse(text, language, configuration));
   }
 
+  static parseWithRegistry(
+    registry,
+    text,
+    language,
+    configuration = ParseConfiguration.default(),
+  ) {
+    return registry.parse(text, language, configuration);
+  }
+
+  static parse_with_registry(registry, text, language, configuration = ParseConfiguration.default()) {
+    return LinkNetwork.parseWithRegistry(registry, text, language, configuration);
+  }
+
   static fromLino(source) {
     const network = new LinkNetwork();
     if (network._insertCanonicalLino(source)) {
@@ -83,18 +118,43 @@ export class LinkNetwork {
   }
 
   insertDynamicLink(references = [], term = undefined) {
-    return this.insertLink(
+    const id = this.insertLink(
       references,
       LinkMetadata.new().withLinkType(LinkType.Dynamic).withTerm(term),
     );
+    if (term !== undefined) {
+      this._terms.set(term, id);
+    }
+    return id;
   }
 
-  insertTypedPoint(linkType, term) {
+  /**
+   * Inserts a self-referencing named point, reusing the point already
+   * interned for `term`. A supplied definition replaces the stored one.
+   */
+  insertTypedPoint(linkType, term, definition = undefined) {
+    const existing = this._terms.get(term);
+    if (existing !== undefined && this.link(existing)) {
+      if (definition !== undefined) {
+        const link = this.link(existing);
+        link.setMetadata(link.metadata().withDefinition(definition));
+      }
+      return existing;
+    }
     const id = this._allocateId();
     this._links.set(
       id.asU64(),
-      new Link(id, [id], LinkMetadata.new().withLinkType(linkType).withTerm(term).withNamed(true)),
+      new Link(
+        id,
+        [id],
+        LinkMetadata.new()
+          .withLinkType(linkType)
+          .withTerm(term)
+          .withNamed(true)
+          .withDefinition(definition),
+      ),
     );
+    this._terms.set(term, id);
     return id;
   }
 
@@ -129,27 +189,113 @@ export class LinkNetwork {
     );
   }
 
-  insertSyntaxNode(language, term, children = []) {
+  insertSyntaxNode(language, term, children = [], metadata = {}) {
     return this.insertLink(
       children,
       LinkMetadata.new()
         .withLinkType(LinkType.Syntax)
         .withLanguage(language)
         .withTerm(term)
-        .withNamed(true),
+        .withNamed(metadata.named ?? true)
+        .withSpan(metadata.span)
+        .withFlags(metadata.flags ?? LinkFlags.clean()),
     );
   }
 
-  insertConceptExpression(concept, language, text) {
-    const token = this.insertSourceToken(language, text);
+  /**
+   * Interns a language-free concept by exact identifier. Case, diacritic or
+   * sense-suffix changes are distinct identifiers and mint distinct concepts.
+   */
+  internConcept(exactId, definition = undefined) {
+    return this.insertTypedPoint(LinkType.Concept, exactId, definition);
+  }
+
+  /**
+   * Inserts a language-bound expression linked to a language-free concept and
+   * returns the semantic mapping link `[concept, language]`.
+   */
+  insertConceptExpression(concept, language, expression) {
+    const conceptLink =
+      this.findTerm(concept) ??
+      this.internConcept(concept, 'A language-free concept shared by exact interlingual id.');
+    return this._insertConceptSyntaxMapping(conceptLink, concept, language, expression, true);
+  }
+
+  insertConceptMapping(concept, language, syntax) {
+    return this.insertConceptExpression(concept, language, syntax);
+  }
+
+  /** Attaches an external vocabulary id to a concept without changing its id. */
+  insertConceptAlias(conceptLink, vocabulary, externalId) {
+    return this._insertConceptAliasLink(conceptLink, vocabulary, externalId)[0];
+  }
+
+  /** Reconstructs a concept using a target language syntax mapping. */
+  reconstructConcept(concept, language) {
+    return this._conceptSyntax.get(conceptSyntaxKey(concept, language));
+  }
+
+  /** Seeds the Hawaii statehood worked example shared with the Rust runtime. */
+  seedStatehoodWorkedExample() {
+    return seedStatehoodWorkedExample(this);
+  }
+
+  _insertConceptAliasLink(conceptLink, vocabulary, externalId) {
+    const vocabularyLink = this.insertTypedPoint(
+      LinkType.Type,
+      `external-id:${vocabulary}`,
+      'External concept identifier vocabulary.',
+    );
+    const existing = this._findSemanticPair(conceptLink, vocabularyLink, externalId, vocabulary);
+    if (existing !== undefined) {
+      return [existing, false];
+    }
+    return [
+      this.insertLink(
+        [conceptLink, vocabularyLink],
+        LinkMetadata.new()
+          .withLinkType(LinkType.Semantic)
+          .withNamed(true)
+          .withTerm(externalId)
+          .withLanguage(vocabulary),
+      ),
+      true,
+    ];
+  }
+
+  _insertConceptSyntaxMapping(conceptLink, concept, language, syntax, updateReconstruction) {
+    const languageLink = this.insertTypedPoint(LinkType.Language, language);
+    const key = conceptSyntaxKey(concept, language);
+    if (updateReconstruction || !this._conceptSyntax.has(key)) {
+      this._conceptSyntax.set(key, syntax);
+    }
+    const existing = this._findSemanticPair(conceptLink, languageLink, syntax, language);
+    if (existing !== undefined) {
+      return existing;
+    }
     return this.insertLink(
-      [token],
+      [conceptLink, languageLink],
       LinkMetadata.new()
         .withLinkType(LinkType.Semantic)
-        .withLanguage(language)
-        .withTerm(`concept:${concept}`)
-        .withNamed(true),
+        .withNamed(true)
+        .withTerm(syntax)
+        .withLanguage(language),
     );
+  }
+
+  _findSemanticPair(first, second, term, language) {
+    return this.links().find((link) => {
+      const references = link.references();
+      const metadata = link.metadata();
+      return (
+        metadata.linkType === LinkType.Semantic &&
+        references.length === 2 &&
+        references[0].equals(first) &&
+        references[1].equals(second) &&
+        metadata.term === term &&
+        metadata.language === language
+      );
+    })?.id();
   }
 
   link(id) {
@@ -166,6 +312,11 @@ export class LinkNetwork {
 
   deleteLink(id) {
     this._links.delete(idKey(id));
+    for (const [term, termId] of this._terms) {
+      if (idKey(termId) === idKey(id)) {
+        this._terms.delete(term);
+      }
+    }
   }
 
   setSpan(id, span) {
@@ -190,7 +341,13 @@ export class LinkNetwork {
   }
 
   findTerm(term) {
-    return this.links().find((link) => link.metadata().term === term)?.id();
+    const interned = this._terms.get(term);
+    return interned !== undefined && this.link(interned) ? interned : undefined;
+  }
+
+  /** Finds the definition attached to a term link. */
+  definitionFor(id) {
+    return this.link(id)?.metadata().definition;
   }
 
   queryLinks(query) {
@@ -283,11 +440,28 @@ export class LinkNetwork {
   }
 
   reconstructText() {
-    return this._sourceTokenLinks()
-      .sort(sourceOrder)
-      .filter((link) => !link.metadata().flags.isMissing)
-      .map((link) => link.metadata().term ?? '')
-      .join('');
+    const reconstructed = [];
+    let coveredUntil = 0;
+    for (const link of this._sourceTokenLinks().sort(sourceOrder)) {
+      const metadata = link.metadata();
+      if (metadata.flags.isMissing) continue;
+      const range = metadata.span?.byteRange;
+      if (range && range.start < coveredUntil) continue;
+      reconstructed.push(metadata.term ?? '');
+      if (range) coveredUntil = range.end;
+    }
+    return reconstructed.join('');
+  }
+
+  /** Returns mixed-language regions discovered and parsed into this network. */
+  embeddedRegions() {
+    return this.links()
+      .filter((link) => link.metadata().linkType === LinkType.Region)
+      .map((link) => new EmbeddedRegion(link.metadata().language, link.metadata().span));
+  }
+
+  embedded_regions() {
+    return this.embeddedRegions();
   }
 
   /** Reconstructs bytes stored by `parseBytes` in source order. */
@@ -324,6 +498,8 @@ export class LinkNetwork {
   clone() {
     const clone = new LinkNetwork();
     clone._nextId = this._nextId;
+    clone._terms = new Map(this._terms);
+    clone._conceptSyntax = new Map(this._conceptSyntax);
     for (const [key, link] of this._links) {
       clone._links.set(key, link.clone());
     }
@@ -389,85 +565,231 @@ export class LinkNetwork {
   }
 
   _parseLosslessText(text, language, configuration) {
-    const tokenIdsByIndex = [];
+    this.insertTypedPoint(LinkType.Language, language);
     const openParens = [];
     let byte = 0;
     let row = 0;
     let column = 0;
 
-    for (let index = 0; index < text.length; index += 1) {
-      const character = text[index];
+    for (const character of text) {
       const start = new Point(row, column);
       const bytes = encoder.encode(character).length;
       if (character === '\n') {
         row += 1;
         column = 0;
       } else {
-        column += 1;
+        // Columns count UTF-8 bytes, as tree-sitter points do.
+        column += bytes;
       }
       const span = new SourceSpan(new ByteRange(byte, byte + bytes), start, new Point(row, column));
       byte += bytes;
 
+      const whitespace = /^\p{White_Space}$/u.test(character);
       let flags = LinkFlags.clean();
-      if (/\s/.test(character)) {
-        flags = flags.withExtra(
-          configuration.triviaAttachmentPolicy !== undefined,
-        );
-      }
+      if (whitespace) flags = flags.withExtra(true);
+      let unmatchedClose = false;
       if (character === '(') {
-        openParens.push(index);
+        openParens.push(null);
       } else if (character === ')') {
-        if (openParens.length === 0) {
-          flags = flags.withError(true);
-        } else {
-          openParens.pop();
-        }
+        if (openParens.length === 0) unmatchedClose = true;
+        else openParens.pop();
       }
+      if (unmatchedClose) flags = flags.withError(true);
 
       const token = this.insertSourceToken(language, character, span, flags);
-      tokenIdsByIndex[index] = token;
+      if (character === '(') openParens[openParens.length - 1] = token;
     }
 
-    for (const index of openParens) {
-      const link = this.link(tokenIdsByIndex[index]);
-      link.setMetadata(link.metadata().withFlags(link.metadata().flags.withMissing(true)));
+    const end = new Point(row, column);
+    const missingSpan = new SourceSpan(new ByteRange(byte, byte), end, end);
+    for (const token of openParens) {
+      const link = this.link(token);
+      link.setMetadata(link.metadata().withFlags(new LinkFlags({
+        ...link.metadata().flags,
+        hasError: true,
+      })));
+      this.insertSourceToken(language, ')', missingSpan, LinkFlags.clean().withMissing(true));
     }
-
-    this._indexJavaScriptIdentifiers(text, language, tokenIdsByIndex);
   }
 
-  _indexJavaScriptIdentifiers(text, language, tokenIdsByIndex) {
-    if (!['javascript', 'typescript', 'js', 'ts'].includes(language.toLowerCase())) {
-      return;
-    }
-    const keyword = new Set([
-      'break',
-      'case',
-      'catch',
-      'class',
-      'const',
-      'else',
-      'export',
-      'for',
-      'function',
-      'if',
-      'import',
-      'let',
-      'return',
-      'var',
-      'while',
-    ]);
-    const pattern = /[A-Za-z_$][A-Za-z0-9_$]*/g;
-    let match = pattern.exec(text);
-    while (match) {
-      if (!keyword.has(match[0])) {
-        const children = [];
-        for (let index = match.index; index < match.index + match[0].length; index += 1) {
-          children.push(tokenIdsByIndex[index]);
-        }
-        this.insertSyntaxNode(language, 'identifier', children);
+
+  _insertProgrammingLanguage(parsed, language, configuration, offset = undefined) {
+    const languageLink = this.insertTypedPoint(LinkType.Language, language);
+    this._recordGrammars(languageLink, language);
+    const tokenIds = parsed.tokens.map((token) =>
+      this.insertSourceToken(language, token.text, offsetSpan(token.span, offset), token.flags),
+    );
+    const context = {
+      language,
+      tokens: parsed.tokens,
+      tokenIds,
+      offset,
+      triviaPolicy: configuration?.triviaAttachmentPolicy ?? TriviaAttachmentPolicy.Combined,
+    };
+    const insert = (node) => this._insertProgrammingTree(node, context);
+    const leading = (parsed.leading ?? []).map(insert);
+    const root = insert(parsed.tree);
+    const trailing = (parsed.trailing ?? []).map(insert);
+    return { root, outer: [...leading, root, ...trailing] };
+  }
+
+  /**
+   * Records the grammars that parse `language` by default as Grammar links
+   * below its Language link: term `<id>@<version>`, definition
+   * `sha256:<parser digest>`. Recording the same grammar twice is a no-op.
+   */
+  _recordGrammars(languageLink, language) {
+    for (const grammar of grammarProvenance(language)) {
+      const term = `${grammar.id}@${grammar.version}`;
+      const recorded = this.links().some((link) =>
+        link.metadata().linkType === LinkType.Grammar &&
+        link.references().length === 1 &&
+        link.references()[0].asU64() === languageLink.asU64() &&
+        link.metadata().term === term);
+      if (!recorded) {
+        this.insertLink(
+          [languageLink],
+          LinkMetadata.new()
+            .withLinkType(LinkType.Grammar)
+            .withNamed(true)
+            .withTerm(term)
+            .withDefinition(`sha256:${grammar.parserSha256}`)
+            .withLanguage(language),
+        );
       }
-      match = pattern.exec(text);
+    }
+  }
+
+  /** Grammars recorded for the languages this network parsed, in insertion order. */
+  parseGrammars() {
+    return this.links().flatMap((link) => {
+      const metadata = link.metadata();
+      if (metadata.linkType !== LinkType.Grammar || link.references().length !== 1) return [];
+      const language = this.link(link.references()[0]);
+      if (language?.metadata().linkType !== LinkType.Language) return [];
+      const match = /^([^@]+)@(.+)$/u.exec(metadata.term ?? '');
+      const digest = /^sha256:(.+)$/u.exec(metadata.definition ?? '');
+      if (!match || !digest) return [];
+      return [{
+        language: language.metadata().term,
+        id: match[1],
+        version: match[2],
+        parserSha256: digest[1],
+      }];
+    });
+  }
+
+  _insertProgrammingTree(node, context) {
+    const { language, tokens, tokenIds, offset } = context;
+    if (node.gap) {
+      return tokenIds[node.tokenIndex];
+    }
+    if (node.tokenIndex !== undefined) {
+      const token = tokens[node.tokenIndex];
+      const syntax = this.insertSyntaxNode(language, node.term, [tokenIds[node.tokenIndex]], {
+        named: token.named,
+        span: offsetSpan(token.span, offset),
+        flags: token.flags,
+      });
+      this._attachExtraTrivia(syntax, node, context);
+      return syntax;
+    }
+
+    const children = node.children.map((child) => this._insertProgrammingTree(child, context));
+    const syntax = this.insertSyntaxNode(language, node.term, children, {
+      named: node.named,
+      span: offsetSpan(node.span, offset),
+      flags: node.flags,
+    });
+    for (const [index, child] of node.children.entries()) {
+      if (child.gap) {
+        this._attachExtraTrivia(syntax, child, context);
+      }
+      if (child.field) {
+        this.insertLink(
+          [syntax, children[index]],
+          LinkMetadata.new()
+            .withLinkType(LinkType.Field)
+            .withLanguage(language)
+            .withTerm(child.field)
+            .withNamed(true),
+        );
+      }
+    }
+    return syntax;
+  }
+
+  /**
+   * Attaches Trivia links to the source token of `node` when the grammar marks
+   * it extra, with `owner` the Syntax link directly above the token, as
+   * `attach_trivia` in rust/src/link_network.rs: a containment link
+   * `[owner, token]`, a token link `[token]`, or both.
+   */
+  _attachExtraTrivia(owner, node, { tokens, tokenIds, offset, triviaPolicy }) {
+    const token = tokens[node.tokenIndex];
+    if (!token.flags?.isExtra) return;
+    const trivia = (references, term) =>
+      this.insertLink(
+        references,
+        LinkMetadata.new()
+          .withLinkType(LinkType.Trivia)
+          .withTerm(term)
+          .withSpan(offsetSpan(token.span, offset))
+          .withFlags(LinkFlags.clean().withExtra()),
+      );
+    const tokenId = tokenIds[node.tokenIndex];
+    if (triviaPolicy !== TriviaAttachmentPolicy.TokenLink) {
+      trivia([owner, tokenId], 'containment trivia');
+    }
+    if (triviaPolicy !== TriviaAttachmentPolicy.ContainmentLink) {
+      trivia([tokenId], 'token trivia');
+    }
+  }
+
+  _attachEmbeddedRegions(document, text, language, configuration, parsed) {
+    const policy = configuration.regionDetectionPolicy ?? 'Both';
+    // HTML and Markdown regions come from the host CST already parsed.
+    const host = parsed.canonical;
+    const regions = host === 'HTML' || host === 'Markdown'
+      ? detectEmbeddedRegionsInTree(parsed.tree, text, host, policy)
+      : detectEmbeddedRegions(text, language, policy);
+    for (const region of regions) {
+      const regionLanguage = region.language();
+      const languageLink = this.insertTypedPoint(LinkType.Language, regionLanguage);
+      const regionLink = this.insertLink(
+        [document, languageLink],
+        LinkMetadata.new()
+          .withLinkType(LinkType.Region)
+          .withNamed(true)
+          .withTerm(`${regionLanguage} region`)
+          .withLanguage(regionLanguage)
+          .withSpan(region.span()),
+      );
+      const { start, end } = region.span().byteRange;
+      // A region spanning the whole document in the document's own language
+      // already has its grammar CST below the document; reparsing it would
+      // duplicate every node.
+      if (
+        regionLanguage.toLowerCase() === String(language).toLowerCase() &&
+        start === 0 &&
+        end === encoder.encode(text).length
+      ) {
+        continue;
+      }
+      this._recordGrammars(languageLink, regionLanguage);
+      const parsed = parseEmbeddedProgrammingLanguage(
+        sliceBytes(text, start, end),
+        regionLanguage,
+      );
+      if (parsed) {
+        const { outer } = this._insertProgrammingLanguage(
+          parsed,
+          regionLanguage,
+          configuration,
+          region.span(),
+        );
+        this.link(regionLink).setReferences([document, languageLink, ...outer]);
+      }
     }
   }
 
@@ -618,6 +940,10 @@ export class FluentPipeline {
   }
 }
 
+function conceptSyntaxKey(concept, language) {
+  return `${concept}\u0000${language}`;
+}
+
 function sameReferences(left, right) {
   if (left.length !== right.length) {
     return false;
@@ -632,4 +958,23 @@ function sourceOrder(left, right) {
     return leftSpan.byteRange.start - rightSpan.byteRange.start;
   }
   return left.id().asU64() - right.id().asU64();
+}
+
+function offsetSpan(span, offset) {
+  if (!span || !offset) return span;
+  const baseByte = offset.byteRange.start;
+  const basePoint = offset.start;
+  const point = ({ row, column }) => new Point(
+    basePoint.row + row,
+    row === 0 ? basePoint.column + column : column,
+  );
+  return new SourceSpan(
+    new ByteRange(baseByte + span.byteRange.start, baseByte + span.byteRange.end),
+    point(span.start),
+    point(span.end),
+  );
+}
+
+function sliceBytes(text, start, end) {
+  return new TextDecoder().decode(encoder.encode(text).slice(start, end));
 }

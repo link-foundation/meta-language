@@ -17,6 +17,7 @@ import {
   TruthValue,
   TranslationRule,
   TranslationRuleSet,
+  TriviaAttachmentPolicy,
   emitJavascriptParser,
   emitPeggy,
 } from '../src/index.js';
@@ -100,6 +101,21 @@ test('S-expression query transform replaces captured identifier source ranges', 
 
   assert.equal(report.isEmpty(), false);
   assert.equal(network.reconstructText(), 'const newName = call(newName);\n');
+});
+
+test('identifier transforms do not rewrite strings or comments', () => {
+  const source = 'const x = 1; const s = "x"; // x\n';
+  const network = LinkNetwork.parse(source, 'JavaScript', ParseConfiguration.default());
+  const query = LinkQuery.fromSexpression(`
+    (identifier) @target
+    (#eq? @target "x")
+  `);
+
+  const matches = network.find(query);
+  network.replace(matches, ReplacementRule.capturedText('target', 'y'));
+
+  assert.equal(matches.length, 1);
+  assert.equal(network.reconstructText(), 'const y = 1; const s = "x"; // x\n');
 });
 
 test('structural substitution updates relation references', () => {
@@ -268,6 +284,88 @@ test('verification reports parse recovery issues', () => {
   );
 });
 
+test('CSV accepts RFC 4180 fields including single characters', () => {
+  // Mirrors rust/tests/unit/grammar_parsing.rs.
+  const source = 'name,value\na,1\n"q ""x""",,2.5\r\nb,true\n';
+  const network = LinkNetwork.parse(source, 'CSV');
+  assert.equal(network.reconstructText(), source);
+  assert.equal(network.verifyFullMatch().isClean(), true);
+  const fieldKinds = network.links()
+    .filter((link) => link.metadata().linkType === LinkType.Syntax && link.metadata().term === 'field')
+    .map((link) => network.link(link.references()[0]).metadata().term);
+  assert.deepEqual(
+    fieldKinds,
+    ['text', 'text', 'text', 'number', 'text', 'text', 'float', 'text', 'boolean'],
+  );
+});
+
+test('CSV rejects quotes outside RFC 4180 quoted fields', () => {
+  for (const source of ['"a"b,1\n', 'a,"b\n', 'a,"x"y\n', 'a"b\n']) {
+    const network = LinkNetwork.parse(source, 'CSV');
+    assert.equal(network.reconstructText(), source);
+    assert.equal(network.verifyFullMatch().isClean(), false, JSON.stringify(source));
+  }
+});
+
+test('hidden grammar text is not labeled whitespace trivia', () => {
+  // VB's `Module` and `End Module` keywords are hidden grammar rules, so
+  // tree-sitter exposes no node for them; they must not become extras.
+  const source = 'Module Program\nEnd Module\n';
+  const network = LinkNetwork.parse(source, 'Visual Basic');
+  assert.equal(network.reconstructText(), source);
+  const tokens = network.links()
+    .filter((link) => link.metadata().linkType === LinkType.SourceToken)
+    .map((link) => [link.metadata().term, link.metadata().flags.isExtra]);
+  for (const [text, extra] of tokens) {
+    assert.equal(extra, /^\p{White_Space}+$/u.test(text), `${JSON.stringify(text)} extra flag`);
+  }
+  // The text is a token directly below its grammar node, not a synthetic
+  // Syntax node, as in Rust.
+  const owners = network.links()
+    .filter((link) => link.metadata().linkType === LinkType.Syntax)
+    .flatMap((link) => link.references()
+      .map((reference) => network.link(reference).metadata())
+      .filter(({ linkType, term }) => linkType === LinkType.SourceToken && term.includes('Module'))
+      .map(({ term }) => [link.metadata().term, term]));
+  assert.deepEqual(owners, [['module_block', 'Module'], ['module_block', 'End Module']]);
+  assert.equal(
+    network.links().some((link) => ['hidden_text', 'whitespace'].includes(link.metadata().term)),
+    false,
+  );
+});
+
+test('Markdown inline content is parsed with the inline grammar', () => {
+  // Block continuations inside inline content stay under the deepest inline
+  // node that spans them, here the emphasis split across two quote lines.
+  const source = '# Title *x*\n\n> Quote with `code`\n> and [link](https://example.com) *em\n> ph* é.\n\n| a | b |\n|---|---|\n| *c* | d |\n';
+  const network = LinkNetwork.parse(source, 'Markdown');
+  const bytes = Buffer.from(source);
+  const nodes = [];
+  for (const parent of network.links()) {
+    if (parent.metadata().linkType !== LinkType.Syntax) continue;
+    for (const child of parent.references().map((reference) => network.link(reference))) {
+      const metadata = child?.metadata();
+      if (metadata?.linkType !== LinkType.Syntax || !metadata.named) continue;
+      const { start, end } = metadata.span.byteRange;
+      nodes.push(JSON.stringify([metadata.term, parent.metadata().term, bytes.subarray(start, end).toString()]));
+    }
+  }
+
+  assert.equal(network.reconstructText(), source);
+  assert.ok(network.verifyFullMatch().isClean());
+  for (const expected of [
+    ['emphasis', 'inline', '*x*'],
+    ['code_span', 'inline', '`code`'],
+    ['inline_link', 'inline', '[link](https://example.com)'],
+    ['link_destination', 'inline_link', 'https://example.com'],
+    ['block_continuation', 'inline', '> '],
+    ['block_continuation', 'emphasis', '> '],
+    ['emphasis', 'pipe_table_cell', '*c*'],
+  ]) {
+    assert.ok(nodes.includes(JSON.stringify(expected)), `${expected} in ${nodes}`);
+  }
+});
+
 test('grammar builders emit Peggy grammar and JavaScript parser module text', () => {
   const grammar = new GrammarBuilder('Word')
     .terminal('letter', GrammarBuilder.charRange('a', 'z'))
@@ -307,4 +405,34 @@ test('probabilistic truth values cover relative-meta-logic probability cases', (
   assert.equal(event.negate().trueProbability().basisPoints(), 2_500);
   assert.equal(liar.and(event).trueProbability().basisPoints(), 3_750);
   assert.equal(liar.or(event).trueProbability().basisPoints(), 8_750);
+});
+
+test('extra tokens get Trivia links owned by the Syntax link above them per policy', () => {
+  const triviaOf = (source, language, policy) => {
+    const network = LinkNetwork.parse(
+      source,
+      language,
+      ParseConfiguration.default().withTriviaAttachmentPolicy(policy),
+    );
+    const describe = (id) => {
+      const { linkType, term } = network.link(id).metadata();
+      return `${linkType}:${term}`;
+    };
+    return network
+      .links()
+      .filter((link) => link.metadata().linkType === LinkType.Trivia)
+      .map((link) => [link.metadata().term, ...link.references().map(describe)]);
+  };
+  const containment = ['containment trivia', 'Syntax:whitespace', 'SourceToken: '];
+  const token = ['token trivia', 'SourceToken: '];
+  assert.deepEqual(triviaOf('a b', 'txt', TriviaAttachmentPolicy.Combined), [containment, token]);
+  assert.deepEqual(triviaOf('a b', 'txt', TriviaAttachmentPolicy.ContainmentLink), [containment]);
+  assert.deepEqual(triviaOf('a b', 'txt', TriviaAttachmentPolicy.TokenLink), [token]);
+  // A grammar extra such as a comment is owned by its own leaf Syntax link,
+  // and whitespace between grammar nodes by the node enclosing it.
+  assert.deepEqual(triviaOf('x; // note\n', 'JavaScript', TriviaAttachmentPolicy.ContainmentLink), [
+    ['containment trivia', 'Syntax:comment', 'SourceToken:// note'],
+    ['containment trivia', 'Syntax:program', 'SourceToken: '],
+    ['containment trivia', 'Syntax:program', 'SourceToken:\n'],
+  ]);
 });

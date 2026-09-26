@@ -1,6 +1,34 @@
 use std::borrow::Cow;
 
-use tree_sitter::{InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Tree};
+use tree_sitter::{
+    InputEdit, Language, Node, Parser, Point as TreeSitterPoint, Range as TreeSitterRange, Tree,
+};
+
+#[allow(unsafe_code)]
+mod rocq_grammar {
+    use tree_sitter_language::LanguageFn;
+
+    unsafe extern "C" {
+        fn tree_sitter_rocq() -> *const ();
+    }
+
+    // SAFETY: build.rs compiles the generated parser from the pinned revision
+    // recorded in vendor/tree-sitter-rocq/NOTICE.md with this exact symbol.
+    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_rocq) };
+}
+
+#[allow(unsafe_code)]
+mod csv_grammar {
+    use tree_sitter_language::LanguageFn;
+
+    unsafe extern "C" {
+        fn tree_sitter_csv() -> *const ();
+    }
+
+    // SAFETY: build.rs compiles the generated parser from the pinned tag
+    // recorded in vendor/tree-sitter-csv/NOTICE.md with this exact symbol.
+    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_csv) };
+}
 
 use crate::line_index::LineIndex;
 use crate::{
@@ -57,7 +85,22 @@ fn network_from_tree(
         SpanOffset::zero(),
         text.len(),
     );
-    convert_node(&mut network, document, root, context);
+    let tree_parent =
+        if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
+            network.insert_link(
+                [document],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Syntax)
+                    .with_named(true)
+                    .with_term("file")
+                    .with_language(language)
+                    .with_span(span_for_range(&lines, 0, text.len(), SpanOffset::zero()))
+                    .with_flags(flags_for_node(root)),
+            )
+        } else {
+            document
+        };
+    convert_root(&mut network, tree_parent, root, context);
     network.attach_embedded_regions(document, text, language, configuration);
     network
 }
@@ -135,98 +178,82 @@ pub fn parse_embedded_region_into(
         SpanOffset::new(span.byte_range().start(), span.start_point()),
         text.len(),
     );
-    Some(convert_node(network, region, root, context))
+    Some(convert_root(network, region, root, context))
 }
 
+/// Converts a grammar root below `parent`. Tree-sitter starts the root after
+/// its leading padding, so the text outside the root is retained as gap
+/// tokens beside it, mirroring `parseGrammarCst` in
+/// `js/src/programming-language-parser.js`.
+fn convert_root(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    root: Node<'_>,
+    context: ConvertContext<'_>,
+) -> LinkId {
+    insert_gap_token(network, parent, 0, root.start_byte(), context);
+    let root_id = convert_node(network, parent, root, context);
+    insert_gap_token(
+        network,
+        parent,
+        root.end_byte(),
+        context.source_len,
+        context,
+    );
+    root_id
+}
+
+/// Selects the primary default grammar the language catalog records for a
+/// language name or alias.
 fn grammar_for_language(language: &str) -> Option<Language> {
-    if language.eq_ignore_ascii_case("python") {
-        Some(tree_sitter_python::LANGUAGE.into())
-    } else if language == "C" || language == "c" {
-        Some(tree_sitter_c::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("java") {
-        Some(tree_sitter_java::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("c++") || language.eq_ignore_ascii_case("cpp") {
-        Some(tree_sitter_cpp::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("c#") || language.eq_ignore_ascii_case("csharp") {
-        Some(tree_sitter_c_sharp::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("javascript") || language.eq_ignore_ascii_case("js") {
-        Some(tree_sitter_javascript::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("tsx") {
-        Some(tree_sitter_typescript::LANGUAGE_TSX.into())
-    } else if language.eq_ignore_ascii_case("typescript") || language.eq_ignore_ascii_case("ts") {
-        Some(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
-    } else if language.eq_ignore_ascii_case("visual basic")
-        || language.eq_ignore_ascii_case("vb")
-        || language.eq_ignore_ascii_case("vb.net")
-        || language.eq_ignore_ascii_case("vbnet")
-    {
-        Some(tree_sitter_vb_dotnet::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("delphi/object pascal")
-        || language.eq_ignore_ascii_case("delphi")
-        || language.eq_ignore_ascii_case("object pascal")
-        || language.eq_ignore_ascii_case("pascal")
-    {
-        Some(tree_sitter_pascal::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("rust") {
-        Some(tree_sitter_rust::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("go") || language.eq_ignore_ascii_case("golang") {
-        Some(tree_sitter_go::LANGUAGE.into())
-    } else if language == "R" || language == "r" {
-        Some(tree_sitter_r::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("ruby") || language.eq_ignore_ascii_case("rb") {
-        Some(tree_sitter_ruby::LANGUAGE.into())
-    } else if [
-        "sql-ansi",
-        "sql-postgres",
-        "sql-mysql",
-        "sql-sqlite",
-        "sql-server",
-        "sql-oracle",
-        "sql-bigquery",
-        "sql-snowflake",
-    ]
-    .iter()
-    .any(|profile| language.eq_ignore_ascii_case(profile))
-    {
-        Some(tree_sitter_sequel::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("html") {
-        Some(tree_sitter_html::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("css") {
-        Some(tree_sitter_css::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("json") {
-        Some(tree_sitter_json::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("yaml") || language.eq_ignore_ascii_case("yml") {
-        Some(tree_sitter_yaml::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("toml") {
-        Some(tree_sitter_toml_ng::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("xml") {
-        Some(tree_sitter_xml::LANGUAGE_XML.into())
-    } else if language.eq_ignore_ascii_case("dtd") {
-        Some(tree_sitter_xml::LANGUAGE_DTD.into())
-    } else if language.eq_ignore_ascii_case("ini") {
-        Some(tree_sitter_ini::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("protobuf")
-        || language.eq_ignore_ascii_case("proto")
-        || language.eq_ignore_ascii_case("protocol buffers")
-    {
-        Some(tree_sitter_proto::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("graphql") || language.eq_ignore_ascii_case("gql") {
-        Some(tree_sitter_graphql::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("php") {
-        Some(tree_sitter_php::LANGUAGE_PHP.into())
-    } else if language.eq_ignore_ascii_case("swift") {
-        Some(tree_sitter_swift::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("kotlin") || language.eq_ignore_ascii_case("kt") {
-        Some(tree_sitter_kotlin_ng::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("scala") {
-        Some(tree_sitter_scala::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("lua") {
-        Some(tree_sitter_lua::LANGUAGE.into())
-    } else if language.eq_ignore_ascii_case("perl") || language.eq_ignore_ascii_case("pl") {
-        Some(ts_parser_perl::LANGUAGE.into())
-    } else {
-        None
-    }
+    let grammar = crate::language_catalog::language_entry(language)?
+        .grammars
+        .first()?;
+    grammar_by_id(&grammar.id)
+}
+
+/// Returns the compiled grammar for a grammar-lock id.
+pub fn grammar_by_id(id: &str) -> Option<Language> {
+    Some(match id {
+        "c" => tree_sitter_c::LANGUAGE.into(),
+        "cpp" => tree_sitter_cpp::LANGUAGE.into(),
+        "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),
+        "css" => tree_sitter_css::LANGUAGE.into(),
+        "csv" => csv_grammar::LANGUAGE.into(),
+        "dtd" => tree_sitter_xml::LANGUAGE_DTD.into(),
+        "go" => tree_sitter_go::LANGUAGE.into(),
+        "graphql" => tree_sitter_graphql::LANGUAGE.into(),
+        "html" => tree_sitter_html::LANGUAGE.into(),
+        "ini" => tree_sitter_ini::LANGUAGE.into(),
+        "java" => tree_sitter_java::LANGUAGE.into(),
+        "javascript" => tree_sitter_javascript::LANGUAGE.into(),
+        "json" => tree_sitter_json::LANGUAGE.into(),
+        "json5" => tree_sitter_json5_orchard::LANGUAGE.into(),
+        "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
+        "lean" => tree_sitter_lean4::language(),
+        "lua" => tree_sitter_lua::LANGUAGE.into(),
+        "markdown" => tree_sitter_md_025::LANGUAGE.into(),
+        "markdown_inline" => tree_sitter_md_025::INLINE_LANGUAGE.into(),
+        "pascal" => tree_sitter_pascal::LANGUAGE.into(),
+        "perl" => ts_parser_perl::LANGUAGE.into(),
+        "php" => tree_sitter_php::LANGUAGE_PHP.into(),
+        "proto" => tree_sitter_proto::LANGUAGE.into(),
+        "python" => tree_sitter_python::LANGUAGE.into(),
+        "r" => tree_sitter_r::LANGUAGE.into(),
+        "rocq" => rocq_grammar::LANGUAGE.into(),
+        "ruby" => tree_sitter_ruby::LANGUAGE.into(),
+        "rust" => tree_sitter_rust::LANGUAGE.into(),
+        "scala" => tree_sitter_scala::LANGUAGE.into(),
+        "sql" => tree_sitter_sequel::LANGUAGE.into(),
+        "swift" => tree_sitter_swift::LANGUAGE.into(),
+        "toml" => tree_sitter_toml_ng::LANGUAGE.into(),
+        "tsx" => tree_sitter_typescript::LANGUAGE_TSX.into(),
+        "typescript" => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+        "vb" => tree_sitter_vb_dotnet::LANGUAGE.into(),
+        "xml" => tree_sitter_xml::LANGUAGE_XML.into(),
+        "yaml" => tree_sitter_yaml::LANGUAGE.into(),
+        _ => return None,
+    })
 }
 
 fn convert_node(
@@ -235,6 +262,20 @@ fn convert_node(
     node: Node<'_>,
     context: ConvertContext<'_>,
 ) -> LinkId {
+    convert_node_with(network, parent, node, &[], context)
+}
+
+/// Converts `node`, placing `injected` nodes from another tree (Markdown block
+/// continuations inside inline content) among its children. Mirrors
+/// `convertGrammarNode` in `js/src/programming-language-parser.js`.
+fn convert_node_with<'tree>(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    node: Node<'tree>,
+    injected: &[Node<'tree>],
+    context: ConvertContext<'_>,
+) -> LinkId {
+    let flags = flags_for_node(node);
     let node_id = network.insert_link(
         [parent],
         LinkMetadata::new()
@@ -248,35 +289,194 @@ fn convert_node(
                 context.source_len,
                 context.offset,
             ))
-            .with_flags(flags_for_node(node)),
+            .with_flags(flags),
     );
 
-    if node.child_count() == 0 {
-        insert_leaf_token(network, node_id, node, context);
+    let inline_tree = is_markdown_inline_container(node, context.language)
+        .then(|| parse_markdown_inline(node, context.text));
+    let mut extra_children = injected.to_vec();
+    let own_children = inline_tree.as_ref().map_or_else(
+        || children_with_fields(node),
+        |tree| {
+            extra_children.extend(markdown_inline_excluded_children(node));
+            children_with_fields(tree.root_node())
+        },
+    );
+
+    if own_children.is_empty() && extra_children.is_empty() {
+        if is_rocq_identifier(node, context.language) {
+            let semantic_term =
+                rocq_identifier_term(&context.text[node.start_byte()..node.end_byte()]);
+            let semantic_id = network.insert_link(
+                [node_id],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Syntax)
+                    .with_named(node.is_named())
+                    .with_term(semantic_term)
+                    .with_language(context.language)
+                    .with_span(span_for_node(
+                        node,
+                        context.lines,
+                        context.source_len,
+                        context.offset,
+                    ))
+                    .with_flags(flags),
+            );
+            insert_leaf_token(network, semantic_id, node, context);
+        } else {
+            insert_leaf_token(network, node_id, node, context);
+        }
         return node_id;
     }
 
     let mut covered_until = node.start_byte();
-    for child_index in 0..node.child_count() {
-        let child_index_u32 =
-            u32::try_from(child_index).expect("tree-sitter child index fits in u32");
-        let child = node
-            .child(child_index)
-            .expect("tree-sitter child index should be valid");
-        if context.has_synthetic_suffix() && child.start_byte() >= context.source_len {
+    let mut child_has_error = false;
+    for child in distribute_injected_children(own_children, &extra_children) {
+        if context.has_synthetic_suffix() && child.node.start_byte() >= context.source_len {
             break;
         }
-        insert_gap_token(network, node_id, covered_until, child.start_byte(), context);
+        insert_gap_token(
+            network,
+            node_id,
+            covered_until,
+            child.node.start_byte(),
+            context,
+        );
 
-        let child_id = convert_node(network, node_id, child, context);
-        if let Some(label) = node.field_name_for_child(child_index_u32) {
+        let child_id = convert_node_with(network, node_id, child.node, &child.injected, context);
+        if let Some(label) = child.field {
             network.insert_field(node_id, label, child_id);
         }
-        covered_until = child.end_byte().min(context.source_len);
+        child_has_error |= network
+            .link(child_id)
+            .is_some_and(|link| link.metadata().flags().has_error());
+        covered_until = covered_until.max(child.node.end_byte().min(context.source_len));
     }
 
     insert_gap_token(network, node_id, covered_until, node.end_byte(), context);
+    // A Markdown inline tree is parsed separately from its block container, so
+    // its errors reach the containing block nodes through their children.
+    if child_has_error && !flags.has_error() {
+        network.set_flags(node_id, flags.with_containing_error());
+    }
     node_id
+}
+
+struct ChildNode<'tree> {
+    node: Node<'tree>,
+    field: Option<&'static str>,
+    injected: Vec<Node<'tree>>,
+}
+
+fn children_with_fields(node: Node<'_>) -> Vec<ChildNode<'_>> {
+    (0..node.child_count())
+        .map(|index| {
+            let index_u32 = u32::try_from(index).expect("tree-sitter child index fits in u32");
+            ChildNode {
+                node: node
+                    .child(index)
+                    .expect("tree-sitter child index should be valid"),
+                field: node.field_name_for_child(index_u32),
+                injected: Vec::new(),
+            }
+        })
+        .collect()
+}
+
+fn is_markdown_inline_container(node: Node<'_>, language: &str) -> bool {
+    (language.eq_ignore_ascii_case("markdown") || language.eq_ignore_ascii_case("md"))
+        && matches!(node.kind(), "inline" | "pipe_table_cell")
+}
+
+/// Named children of a Markdown inline container after the first, which the
+/// inline grammar skips, exactly as upstream's `MarkdownParser` does.
+fn markdown_inline_excluded_children(node: Node<'_>) -> Vec<Node<'_>> {
+    (1..node.child_count())
+        .filter_map(|index| node.child(index))
+        .filter(Node::is_named)
+        .collect()
+}
+
+/// tree-sitter-markdown parses block structure and inline content with two
+/// grammars. Like upstream's `MarkdownParser` (`bindings/rust/parser.rs` in
+/// tree-sitter-md), every `inline` and `pipe_table_cell` block node is parsed
+/// again with the inline grammar over the node's range minus its named
+/// children after the first (block continuations such as a quote's `> `).
+/// Mirrors `parseMarkdownInline` in `js/src/programming-language-parser.js`.
+fn parse_markdown_inline(node: Node<'_>, text: &str) -> Tree {
+    let mut range = node.range();
+    let mut ranges = Vec::new();
+    for child in markdown_inline_excluded_children(node) {
+        ranges.push(TreeSitterRange {
+            start_byte: range.start_byte,
+            start_point: range.start_point,
+            end_byte: child.start_byte(),
+            end_point: child.start_position(),
+        });
+        range.start_byte = child.end_byte();
+        range.start_point = child.end_position();
+    }
+    ranges.push(range);
+    let mut parser = Parser::new();
+    parser
+        .set_language(&tree_sitter_md_025::INLINE_LANGUAGE.into())
+        .expect("the Markdown inline grammar matches the tree-sitter ABI");
+    parser
+        .set_included_ranges(&ranges)
+        .expect("Markdown inline ranges follow the ordered block children");
+    parser
+        .parse(text, None)
+        .expect("tree-sitter parses without a timeout or cancellation")
+}
+
+/// Places nodes from another tree under the deepest child whose range contains
+/// them, and orders the rest among the children by start offset, block nodes
+/// first on ties.
+fn distribute_injected_children<'tree>(
+    mut children: Vec<ChildNode<'tree>>,
+    injected: &[Node<'tree>],
+) -> Vec<ChildNode<'tree>> {
+    let mut top = Vec::new();
+    for &node in injected {
+        if let Some(owner) = children
+            .iter_mut()
+            .find(|child| contains_node(child.node, node))
+        {
+            owner.injected.push(node);
+        } else {
+            top.push(ChildNode {
+                node,
+                field: None,
+                injected: Vec::new(),
+            });
+        }
+    }
+    if top.is_empty() {
+        return children;
+    }
+    top.extend(children);
+    top.sort_by_key(|child| child.node.start_byte());
+    top
+}
+
+fn contains_node(outer: Node<'_>, inner: Node<'_>) -> bool {
+    let (outer_start, outer_end) = (outer.start_byte(), outer.end_byte());
+    let (inner_start, inner_end) = (inner.start_byte(), inner.end_byte());
+    outer_start <= inner_start
+        && inner_end <= outer_end
+        && (inner_start < inner_end || (outer_start < inner_start && inner_start < outer_end))
+}
+
+fn is_rocq_identifier(node: Node<'_>, language: &str) -> bool {
+    (language.eq_ignore_ascii_case("rocq") || language.eq_ignore_ascii_case("coq"))
+        && node.kind() == "ident"
+}
+
+fn rocq_identifier_term(text: &str) -> &'static str {
+    match text {
+        "bool" | "nat" | "Prop" | "Set" | "SProp" | "Type" | "Z" => "primitive_type",
+        _ => "identifier",
+    }
 }
 
 fn insert_leaf_token(
@@ -314,6 +514,11 @@ fn insert_leaf_token(
     }
 }
 
+/// Inserts the source text between visible tree-sitter children. That text is
+/// either lexer extras or text matched by hidden grammar rules (such as VB's
+/// `Module` keyword). Leading and trailing whitespace becomes extra trivia, and
+/// the text between them a non-extra token, mirroring `pushGapNodes` in
+/// `js/src/programming-language-parser.js`.
 fn insert_gap_token(
     network: &mut LinkNetwork,
     owner: LinkId,
@@ -323,27 +528,40 @@ fn insert_gap_token(
 ) {
     let start = start.min(context.source_len);
     let end = end.min(context.source_len);
-    if start == end {
+    if start >= end {
         return;
     }
-
-    let span = span_for_range(context.lines, start, end, context.offset);
-    let token = network.insert_link(
-        [owner],
-        LinkMetadata::new()
-            .with_link_type(LinkType::Token)
-            .with_named(false)
-            .with_term(&context.text[start..end])
-            .with_language(context.language)
-            .with_span(span)
-            .with_flags(LinkFlags::extra()),
-    );
-    network.attach_trivia(
-        owner,
-        token,
-        span,
-        context.configuration.trivia_attachment_policy(),
-    );
+    let gap = &context.text[start..end];
+    let content_start = start + (gap.len() - gap.trim_start().len());
+    let content_end = content_start + gap.trim().len();
+    for (piece_start, piece_end, flags) in [
+        (start, content_start, LinkFlags::extra()),
+        (content_start, content_end, LinkFlags::clean()),
+        (content_end, end, LinkFlags::extra()),
+    ] {
+        if piece_start >= piece_end {
+            continue;
+        }
+        let span = span_for_range(context.lines, piece_start, piece_end, context.offset);
+        let token = network.insert_link(
+            [owner],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Token)
+                .with_named(false)
+                .with_term(&context.text[piece_start..piece_end])
+                .with_language(context.language)
+                .with_span(span)
+                .with_flags(flags),
+        );
+        if flags.is_extra() {
+            network.attach_trivia(
+                owner,
+                token,
+                span,
+                context.configuration.trivia_attachment_policy(),
+            );
+        }
+    }
 }
 
 fn flags_for_node(node: Node<'_>) -> LinkFlags {
@@ -351,7 +569,9 @@ fn flags_for_node(node: Node<'_>) -> LinkFlags {
     if node.is_error() {
         flags = flags.with_error();
     }
-    if node.has_error() && !node.is_error() && !node.is_missing() {
+    // Mirrors tree-sitter's `ts_node_has_error`, which is true for error and
+    // missing nodes themselves as well as for their ancestors.
+    if node.has_error() || node.is_error() || node.is_missing() {
         flags = flags.with_containing_error();
     }
     if node.is_missing() {
@@ -398,22 +618,28 @@ fn css_declaration_list_needs_semicolon(text: &str) -> bool {
         && !trimmed.contains('{')
 }
 
+/// Position of a parsed text inside its host document, used to translate
+/// region-relative spans into document spans.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct SpanOffset {
+pub struct SpanOffset {
     byte: usize,
     point: Point,
 }
 
 impl SpanOffset {
-    const fn new(byte: usize, point: Point) -> Self {
+    pub const fn new(byte: usize, point: Point) -> Self {
         Self { byte, point }
     }
 
-    const fn zero() -> Self {
+    pub const fn zero() -> Self {
         Self::new(0, Point::new(0, 0))
     }
 
-    const fn point(self, point: Point) -> Point {
+    pub const fn byte(self, byte: usize) -> usize {
+        self.byte + byte
+    }
+
+    pub const fn point(self, point: Point) -> Point {
         let row = self.point.row() + point.row();
         let column = if point.row() == 0 {
             self.point.column() + point.column()

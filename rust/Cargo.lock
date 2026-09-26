@@ -821,15 +821,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 
 [[package]]
-name = "hashlink"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7382cf6263419f2d8df38c55d7da83da5c18aef87fc7a7fc1fb1e344edfe14c1"
-dependencies = [
- "hashbrown 0.15.5",
-]
-
-[[package]]
 name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1202,17 +1193,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "json5_nodes"
-version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f40f9c35bff86d8321148897f878ad862c22b09549eff24c805bf00eebcb4a2e"
-dependencies = [
- "hashlink",
- "pest",
- "pest_derive",
-]
-
-[[package]]
 name = "kanaria"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1533,11 +1513,11 @@ version = "0.58.2"
 dependencies = [
  "abnf",
  "bnf",
+ "cc",
  "clap",
- "csv",
  "doublets",
  "ebnf",
- "json5_nodes",
+ "flate2",
  "lindera",
  "lingua",
  "links-notation",
@@ -1546,7 +1526,9 @@ dependencies = [
  "pest_meta",
  "platform-mem",
  "regex",
+ "serde",
  "serde_json",
+ "sha2",
  "tree-sitter",
  "tree-sitter-c",
  "tree-sitter-c-sharp",
@@ -1559,8 +1541,12 @@ dependencies = [
  "tree-sitter-java",
  "tree-sitter-javascript",
  "tree-sitter-json",
+ "tree-sitter-json5-orchard",
  "tree-sitter-kotlin-ng",
+ "tree-sitter-language",
+ "tree-sitter-lean4",
  "tree-sitter-lua",
+ "tree-sitter-md-025",
  "tree-sitter-pascal",
  "tree-sitter-php",
  "tree-sitter-proto",
@@ -2871,6 +2857,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tree-sitter-json5-orchard"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc44d97c3a10b359271b0b9704ce6a5d3514644d0bb4e52dc96c7f93d8ba8337"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
 name = "tree-sitter-kotlin-ng"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2887,10 +2883,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "009994f150cc0cd50ff54917d5bc8bffe8cad10ca10d81c34da2ec421ae61782"
 
 [[package]]
+name = "tree-sitter-lean4"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e4754e1403ae141b9e66c49c0374f09f87122f6b03c41c624c84ab890966d8a"
+dependencies = [
+ "cc",
+ "tree-sitter",
+]
+
+[[package]]
 name = "tree-sitter-lua"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5cdb9adf0965fec58e7660cbb3a059dbb12ebeec9459e6dcbae3db004739641e"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-md-025"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2d54d63bc7fdf0c1c38237611d966548fbccf8f0923a7de5d525b87c9957a96"
 dependencies = [
  "cc",
  "tree-sitter-language",

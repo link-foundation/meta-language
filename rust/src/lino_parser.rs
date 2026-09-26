@@ -1,10 +1,11 @@
 use crate::line_index::LineIndex;
 use crate::{
-    ByteRange, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, SourceSpan,
+    structured_text_parser, ByteRange, LinkId, LinkMetadata, LinkNetwork, LinkType,
+    ParseConfiguration, SourceSpan,
 };
 
 pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {
-    let mut network = LinkNetwork::parse_lossless_text(text, language, configuration);
+    let mut network = structured_text_parser::parse_lino(text, language, configuration);
     let lines = LineIndex::new(text);
     Parser::new(&mut network, text, &lines, language).parse_document();
     network

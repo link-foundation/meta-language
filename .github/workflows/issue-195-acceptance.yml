@@ -1,0 +1,250 @@
+name: Issue 195 Full Acceptance
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft, labeled, unlabeled]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  candidates:
+    name: Delivery Candidates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-candidates-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.98.1
+
+      - name: Pack candidates or download the published release
+        env:
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --prepare-candidates issue-195-candidates
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: issue-195-candidates/
+          if-no-files-found: error
+          retention-days: 30
+
+  consumers:
+    name: Clean Consumer (${{ matrix.os }})
+    needs: candidates
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    concurrency:
+      group: issue-195-consumer-${{ github.ref }}-${{ matrix.os }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.98.1
+
+      - name: Setup MSVC environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installationPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installationPath) {
+            throw "Visual Studio with C++ tools not found"
+          }
+          $vcvars = Join-Path $installationPath "VC\Auxiliary\Build\vcvars64.bat"
+          $vcvarsEnvironment = @{}
+          cmd /s /c "`"$vcvars`" && set" | ForEach-Object {
+            if ($_ -match "^(.*?)=(.*)$") {
+              $name = $matches[1]
+              $value = $matches[2]
+              $vcvarsEnvironment[$name] = $value
+              if ($name -eq "Path") {
+                # GITHUB_PATH prepends to the existing PATH; a Path entry in GITHUB_ENV would add a
+                # second, differently cased variable that child processes may resolve instead.
+                $value -split ";" | Where-Object { $_ } | ForEach-Object {
+                  $_ | Out-File -FilePath $env:GITHUB_PATH -Append
+                }
+              } elseif ($name -match "^(INCLUDE|LIB|LIBPATH|VCINSTALLDIR|VCToolsInstallDir|VCToolsVersion|VSINSTALLDIR|WindowsSdkDir|WindowsSDKVersion|UniversalCRTSdkDir|UCRTVersion)$") {
+                "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Append
+              }
+            }
+          }
+          $msvcLinker = Join-Path $vcvarsEnvironment["VCToolsInstallDir"] "bin\Hostx64\x64\link.exe"
+          if (-not (Test-Path $msvcLinker)) {
+            throw "MSVC link.exe not found at $msvcLinker"
+          }
+          "CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: issue-195-candidates
+
+      - name: Install and parse the exact artifacts in clean consumers
+        shell: bash
+        run: >-
+          node js/scripts/run-issue-195-consumer.mjs
+          --npm-tarball "$(ls issue-195-candidates/*.tgz)"
+          --crate "$(ls issue-195-candidates/*.crate)"
+          --work-dir "$RUNNER_TEMP/issue-195-consumer"
+          --out issue-195-platform/report.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-platform-${{ matrix.os }}-${{ github.sha }}
+          path: issue-195-platform/report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload consumer logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-consumer-logs-${{ matrix.os }}-${{ github.sha }}
+          path: ${{ runner.temp }}/issue-195-consumer/*.log
+          if-no-files-found: ignore
+          retention-days: 30
+
+  acceptance:
+    name: Full Requirements Aggregate
+    needs: [candidates, consumers]
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: issue-195-acceptance-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.98.1
+        with:
+          components: rustfmt, clippy
+
+      - name: Setup Lean
+        env:
+          ELAN_HOME: ${{ runner.temp }}/elan-home
+          ELAN_VERSION: v4.2.4
+          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+        run: |
+          archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-x86_64-unknown-linux-gnu.tar.gz" \
+            --output "$archive"
+          echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.33.1
+          echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          "${ELAN_HOME}/bin/lean" --version
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.4"
+          opam-pin: false
+
+      - name: Install Rocq 9.2
+        run: |
+          opam repository add rocq-released https://rocq-prover.org/opam/released
+          opam install --yes 'rocq-core=9.2.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
+          opam var bin >> "$GITHUB_PATH"
+          opam exec -- rocq --version
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Validate atomic manifest and protected scope baseline
+        env:
+          BASELINE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.event.release.target_commitish }}
+          ISSUE_195_SCOPE_CHANGE_APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'issue-195-scope-change-approved') }}
+        run: node js/scripts/check-issue-195-acceptance.mjs --scope-baseline "$BASELINE_SHA"
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: issue-195-candidates
+
+      - name: Download platform consumer reports
+        uses: actions/download-artifact@v7
+        with:
+          pattern: issue-195-platform-*-${{ github.sha }}
+          path: issue-195-platform-reports
+
+      - name: Produce checkpoint evidence
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --candidates issue-195-candidates
+          --platform-reports issue-195-platform-reports
+
+      - name: Evaluate every required verification cell
+        if: always()
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/check-issue-195-acceptance.mjs
+          --produce-gate-results issue-195-results/gate-faults.json
+          --evaluate
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --results-dir issue-195-results
+          --json-report issue-195-artifacts/report.json
+          --markdown-report issue-195-artifacts/report.md
+
+      - name: Publish per-requirement evidence report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-requirement-report-${{ github.sha }}
+          path: |
+            issue-195-artifacts/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+            issue-195-results/work/native/
+          if-no-files-found: error
+          retention-days: 30

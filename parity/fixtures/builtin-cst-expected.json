@@ -1,0 +1,539 @@
+{
+  "description": "Built-in grammar concrete syntax trees for the inventory sources, derived without the meta-language parsers: plain text and natural languages from ICU word and sentence segmentation (Intl.Segmenter) grouped by the lexical classes of the grammar, LiNo and PDF from hand-written trees that tile the source and project to what links-notation and pdf-lib read (both reject the recovery sources). Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.",
+  "generator": {
+    "script": "js/scripts/generate-builtin-cst-expectations.mjs",
+    "linksNotation": "0.13.0",
+    "pdfLib": "1.17.1"
+  },
+  "languages": {
+    "LiNo": {
+      "grammars": {
+        "links-notation": {
+          "version": "0.13.0",
+          "parserSha256": "f67e147d49d59c4d7fc0b7d66effb0a6aa9ccdf4058c8f01b5097e5207228346"
+        }
+      },
+      "sourceSha256": "8e15a38f897e112dc39c74a9ad3b80068d38517702806d4f956e9b2b1acfa0ae",
+      "recoverySourceSha256": "bcc0d919c038e8c93ca3257591f17ef1615dda826e36ba9d36f0b7d212015616",
+      "positive": [
+        [0,null,"lino_document",1,0,59,""],
+        [1,null,"link",1,0,52,""],
+        [2,"value","reference",1,0,4,""],
+        [2,null,"whitespace",0,4,5,"X"],
+        [2,"value","link",1,5,28,""],
+        [3,null,"(",0,5,6,""],
+        [3,"id","reference",1,6,15,""],
+        [3,null,":",0,15,16,""],
+        [3,null,"whitespace",0,16,17,"X"],
+        [3,"value","reference",1,17,22,""],
+        [3,null,"whitespace",0,22,23,"X"],
+        [3,"value","reference",1,23,27,""],
+        [3,null,")",0,27,28,""],
+        [2,null,"whitespace",0,28,31,"X"],
+        [2,"child","link",1,31,52,""],
+        [3,"id","reference",1,31,36,""],
+        [3,null,":",0,36,37,""],
+        [3,null,"whitespace",0,37,38,"X"],
+        [3,"value","quoted_reference",1,38,52,""],
+        [1,null,"whitespace",0,52,53,"X"],
+        [1,null,"link",1,53,58,""],
+        [2,null,"(",0,53,54,""],
+        [2,"value","reference",1,54,55,""],
+        [2,null,"whitespace",0,55,56,"X"],
+        [2,"value","reference",1,56,57,""],
+        [2,null,")",0,57,58,""],
+        [1,null,"whitespace",0,58,59,"X"]
+      ],
+      "recovery": [
+        [0,null,"lino_document",1,0,10,""],
+        [1,null,"ERROR",1,0,9,"E"],
+        [2,null,"(",0,0,1,""],
+        [2,null,"reference",1,1,9,""],
+        [1,null,"whitespace",0,9,10,"X"]
+      ],
+      "embedded": []
+    },
+    "txt": {
+      "grammars": {
+        "plain-text": {
+          "version": "1.0.0",
+          "parserSha256": "0c63bf89373001d981e0254be32b5179bbcd17e6630dd232644335bacaa911d2"
+        }
+      },
+      "sourceSha256": "a6b84d30b7ec6aafba0566b9ff76a66e05650c4799ddee7ee8cd476d7510fe16",
+      "recoverySourceSha256": "2fd7d9b27a3477564100a0063376107d3562bd9ec12312fe6b849baec7df6b53",
+      "positive": [
+        [0,null,"text_document",1,0,45,""],
+        [1,null,"line",1,0,25,""],
+        [2,null,"word",1,0,5,""],
+        [2,null,"whitespace",0,5,6,"X"],
+        [2,null,"word",1,6,10,""],
+        [2,null,"whitespace",0,10,11,"X"],
+        [2,null,"punctuation",1,11,12,""],
+        [2,null,"word",1,12,16,""],
+        [2,null,"whitespace",0,16,17,"X"],
+        [2,null,"word",1,17,22,""],
+        [2,null,"punctuation",1,22,24,""],
+        [2,null,"whitespace",0,24,25,"X"],
+        [1,null,"line",1,25,45,""],
+        [2,null,"word",1,25,31,""],
+        [2,null,"whitespace",0,31,32,"X"],
+        [2,null,"word",1,32,36,""],
+        [2,null,"punctuation",1,36,37,""],
+        [2,null,"whitespace",0,37,38,"X"],
+        [2,null,"word",1,38,43,""],
+        [2,null,"punctuation",1,43,44,""],
+        [2,null,"whitespace",0,44,45,"X"]
+      ],
+      "recovery": [
+        [0,null,"text_document",1,0,19,"E"],
+        [1,null,"line",1,0,19,""],
+        [2,null,"word",1,0,5,""],
+        [2,null,"whitespace",0,5,6,"X"],
+        [2,null,"ERROR",1,6,7,"E"],
+        [2,null,"whitespace",0,7,8,"X"],
+        [2,null,"word",1,8,12,""],
+        [2,null,"whitespace",0,12,13,"X"],
+        [2,null,"punctuation",1,13,14,""],
+        [2,null,"word",1,14,18,""],
+        [2,null,"whitespace",0,18,19,"X"]
+      ],
+      "embedded": []
+    },
+    "PDF": {
+      "grammars": {
+        "pdf-cos": {
+          "version": "1.0.0",
+          "parserSha256": "204927a48c4bf3c14d36ead2757b8a8d71e519008140a01e2237fb708698e39e"
+        }
+      },
+      "sourceSha256": "e5e2ac8f573429c00a9f69dbc2d37f96b079b54b982669a384a056171c95585c",
+      "recoverySourceSha256": "8995ed8e51e11576eff2f856d548b08df0ec0baa406ba6ca0fbbb23c075d139f",
+      "positive": [
+        [0,null,"pdf_file",1,0,97,""],
+        [1,null,"header",1,0,8,""],
+        [1,null,"whitespace",0,8,9,"X"],
+        [1,null,"comment",1,9,15,"X"],
+        [1,null,"whitespace",0,15,16,"X"],
+        [1,null,"indirect_object",1,16,64,""],
+        [2,"object_number","integer",1,16,17,""],
+        [2,null,"whitespace",0,17,18,"X"],
+        [2,"generation","integer",1,18,19,""],
+        [2,null,"whitespace",0,19,20,"X"],
+        [2,null,"obj",0,20,23,""],
+        [2,null,"whitespace",0,23,24,"X"],
+        [2,"value","dictionary",1,24,57,""],
+        [3,null,"<<",0,24,26,""],
+        [3,null,"whitespace",0,26,27,"X"],
+        [3,null,"dictionary_entry",1,27,41,""],
+        [4,"key","name",1,27,32,""],
+        [4,null,"whitespace",0,32,33,"X"],
+        [4,"value","name",1,33,41,""],
+        [3,null,"whitespace",0,41,42,"X"],
+        [3,null,"dictionary_entry",1,42,54,""],
+        [4,"key","name",1,42,48,""],
+        [4,null,"whitespace",0,48,49,"X"],
+        [4,"value","indirect_reference",1,49,54,""],
+        [5,"object_number","integer",1,49,50,""],
+        [5,null,"whitespace",0,50,51,"X"],
+        [5,"generation","integer",1,51,52,""],
+        [5,null,"whitespace",0,52,53,"X"],
+        [5,null,"R",0,53,54,""],
+        [3,null,"whitespace",0,54,55,"X"],
+        [3,null,">>",0,55,57,""],
+        [2,null,"whitespace",0,57,58,"X"],
+        [2,null,"endobj",0,58,64,""],
+        [1,null,"whitespace",0,64,65,"X"],
+        [1,null,"trailer",1,65,90,""],
+        [2,null,"trailer",0,65,72,""],
+        [2,null,"whitespace",0,72,73,"X"],
+        [2,"dictionary","dictionary",1,73,90,""],
+        [3,null,"<<",0,73,75,""],
+        [3,null,"whitespace",0,75,76,"X"],
+        [3,null,"dictionary_entry",1,76,87,""],
+        [4,"key","name",1,76,81,""],
+        [4,null,"whitespace",0,81,82,"X"],
+        [4,"value","indirect_reference",1,82,87,""],
+        [5,"object_number","integer",1,82,83,""],
+        [5,null,"whitespace",0,83,84,"X"],
+        [5,"generation","integer",1,84,85,""],
+        [5,null,"whitespace",0,85,86,"X"],
+        [5,null,"R",0,86,87,""],
+        [3,null,"whitespace",0,87,88,"X"],
+        [3,null,">>",0,88,90,""],
+        [1,null,"whitespace",0,90,91,"X"],
+        [1,null,"end_of_file",1,91,96,""],
+        [1,null,"whitespace",0,96,97,"X"]
+      ],
+      "recovery": [
+        [0,null,"pdf_file",1,0,42,""],
+        [1,null,"header",1,0,8,""],
+        [1,null,"whitespace",0,8,9,"X"],
+        [1,null,"indirect_object",1,9,41,""],
+        [2,"object_number","integer",1,9,10,""],
+        [2,null,"whitespace",0,10,11,"X"],
+        [2,"generation","integer",1,11,12,""],
+        [2,null,"whitespace",0,12,13,"X"],
+        [2,null,"obj",0,13,16,""],
+        [2,null,"whitespace",0,16,17,"X"],
+        [2,"value","dictionary",1,17,34,""],
+        [3,null,"<<",0,17,19,""],
+        [3,null,"whitespace",0,19,20,"X"],
+        [3,null,"dictionary_entry",1,20,34,""],
+        [4,"key","name",1,20,25,""],
+        [4,null,"whitespace",0,25,26,"X"],
+        [4,"value","name",1,26,34,""],
+        [3,null,">>",0,34,34,"M"],
+        [2,null,"whitespace",0,34,35,"X"],
+        [2,null,"endobj",0,35,41,""],
+        [1,null,"end_of_file",1,41,41,"M"],
+        [1,null,"whitespace",0,41,42,"X"]
+      ],
+      "embedded": []
+    },
+    "English": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "1edb4aa7d05976bb943de8ccc815123875af80e0aaf23b4ca603e750d5c2227a",
+      "recoverySourceSha256": "6032c7e910ea438718d7f006fdbdf921c5a850cb80fb42683c35cbcf676f2f85",
+      "positive": [
+        [0,null,"natural_language_document",1,0,37,""],
+        [1,null,"sentence",1,0,19,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"whitespace",0,6,7,"X"],
+        [2,null,"word",1,7,9,""],
+        [2,null,"whitespace",0,9,10,"X"],
+        [2,null,"word",1,10,11,""],
+        [2,null,"whitespace",0,11,12,"X"],
+        [2,null,"word",1,12,17,""],
+        [2,null,"punctuation",1,17,18,""],
+        [2,null,"whitespace",0,18,19,"X"],
+        [1,null,"sentence",1,19,32,""],
+        [2,null,"word",1,19,21,""],
+        [2,null,"whitespace",0,21,22,"X"],
+        [2,null,"word",1,22,24,""],
+        [2,null,"whitespace",0,24,25,"X"],
+        [2,null,"word",1,25,30,""],
+        [2,null,"punctuation",1,30,31,""],
+        [2,null,"whitespace",0,31,32,"X"],
+        [1,null,"sentence",1,32,37,""],
+        [2,null,"word",1,32,35,""],
+        [2,null,"punctuation",1,35,36,""],
+        [2,null,"whitespace",0,36,37,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,38,""],
+        [1,null,"sentence",1,0,20,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"ERROR",1,6,7,"E"],
+        [2,null,"whitespace",0,7,8,"X"],
+        [2,null,"word",1,8,10,""],
+        [2,null,"whitespace",0,10,11,"X"],
+        [2,null,"word",1,11,12,""],
+        [2,null,"whitespace",0,12,13,"X"],
+        [2,null,"word",1,13,18,""],
+        [2,null,"punctuation",1,18,19,""],
+        [2,null,"whitespace",0,19,20,"X"],
+        [1,null,"sentence",1,20,33,""],
+        [2,null,"word",1,20,22,""],
+        [2,null,"whitespace",0,22,23,"X"],
+        [2,null,"word",1,23,25,""],
+        [2,null,"whitespace",0,25,26,"X"],
+        [2,null,"word",1,26,31,""],
+        [2,null,"punctuation",1,31,32,""],
+        [2,null,"whitespace",0,32,33,"X"],
+        [1,null,"sentence",1,33,38,""],
+        [2,null,"word",1,33,36,""],
+        [2,null,"punctuation",1,36,37,""],
+        [2,null,"whitespace",0,37,38,"X"]
+      ],
+      "embedded": []
+    },
+    "Mandarin Chinese": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "7d906fa843b21e1eff02c7002af9946a47674cc5979cd7534445d3db263b2a89",
+      "recoverySourceSha256": "1a8e30bfbc8861b8ac190fa5bece60aaffbde0f97aa0d15210528e0640ec8298",
+      "positive": [
+        [0,null,"natural_language_document",1,0,10,""],
+        [1,null,"sentence",1,0,10,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"punctuation",1,6,9,""],
+        [2,null,"whitespace",0,9,10,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,11,""],
+        [1,null,"sentence",1,0,11,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"ERROR",1,6,7,"E"],
+        [2,null,"punctuation",1,7,10,""],
+        [2,null,"whitespace",0,10,11,"X"]
+      ],
+      "embedded": []
+    },
+    "Hindi": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "42765b1ead97c8385e57a92dc648a150db4a40505f5039f9746a1b5f07422645",
+      "recoverySourceSha256": "602a6088a5bc5428c127efd56f2548c10a3add03c0a21d3b094d75c8c6d5ec46",
+      "positive": [
+        [0,null,"natural_language_document",1,0,22,""],
+        [1,null,"sentence",1,0,22,""],
+        [2,null,"word",1,0,18,""],
+        [2,null,"punctuation",1,18,21,""],
+        [2,null,"whitespace",0,21,22,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,23,""],
+        [1,null,"sentence",1,0,23,""],
+        [2,null,"word",1,0,12,""],
+        [2,null,"ERROR",1,12,13,"E"],
+        [2,null,"word",1,13,19,""],
+        [2,null,"punctuation",1,19,22,""],
+        [2,null,"whitespace",0,22,23,"X"]
+      ],
+      "embedded": []
+    },
+    "Spanish": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "76c2a038866d64f5e4cd2057fce8ae21f66a6558e2261acfbf7ae81af14fe406",
+      "recoverySourceSha256": "71085d21427b1fc8d7391328f2d424d57f73ca2772f48d9a98d73c293a667c98",
+      "positive": [
+        [0,null,"natural_language_document",1,0,21,""],
+        [1,null,"sentence",1,0,21,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"whitespace",0,6,7,"X"],
+        [2,null,"word",1,7,9,""],
+        [2,null,"whitespace",0,9,10,"X"],
+        [2,null,"word",1,10,12,""],
+        [2,null,"whitespace",0,12,13,"X"],
+        [2,null,"word",1,13,19,""],
+        [2,null,"punctuation",1,19,20,""],
+        [2,null,"whitespace",0,20,21,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,22,""],
+        [1,null,"sentence",1,0,22,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"ERROR",1,6,7,"E"],
+        [2,null,"whitespace",0,7,8,"X"],
+        [2,null,"word",1,8,10,""],
+        [2,null,"whitespace",0,10,11,"X"],
+        [2,null,"word",1,11,13,""],
+        [2,null,"whitespace",0,13,14,"X"],
+        [2,null,"word",1,14,20,""],
+        [2,null,"punctuation",1,20,21,""],
+        [2,null,"whitespace",0,21,22,"X"]
+      ],
+      "embedded": []
+    },
+    "Modern Standard Arabic": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "04949745d6ca8e754d640a0cc7534668836d4e89cee2a1a68fe57e3f5abfc473",
+      "recoverySourceSha256": "cea385834f6bc6acf62f218e6bfb58b871722a5d3342bc6b066dc6ebdf3fb290",
+      "positive": [
+        [0,null,"natural_language_document",1,0,12,""],
+        [1,null,"sentence",1,0,12,""],
+        [2,null,"word",1,0,10,""],
+        [2,null,"punctuation",1,10,11,""],
+        [2,null,"whitespace",0,11,12,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,13,""],
+        [1,null,"sentence",1,0,13,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"ERROR",1,6,7,"E"],
+        [2,null,"word",1,7,11,""],
+        [2,null,"punctuation",1,11,12,""],
+        [2,null,"whitespace",0,12,13,"X"]
+      ],
+      "embedded": []
+    },
+    "French": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "9f0b1ef81835789353f095299a36bc04782b5f73bab88b3d387b58797a3c5bd5",
+      "recoverySourceSha256": "408eba391051dafc10b943bab4c109ea4d51f7ee0add4b29d3e3e1ab4ff779aa",
+      "positive": [
+        [0,null,"natural_language_document",1,0,20,""],
+        [1,null,"sentence",1,0,20,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"whitespace",0,6,7,"X"],
+        [2,null,"word",1,7,10,""],
+        [2,null,"whitespace",0,10,11,"X"],
+        [2,null,"word",1,11,13,""],
+        [2,null,"whitespace",0,13,14,"X"],
+        [2,null,"word",1,14,18,""],
+        [2,null,"punctuation",1,18,19,""],
+        [2,null,"whitespace",0,19,20,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,21,""],
+        [1,null,"sentence",1,0,21,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"ERROR",1,6,7,"E"],
+        [2,null,"whitespace",0,7,8,"X"],
+        [2,null,"word",1,8,11,""],
+        [2,null,"whitespace",0,11,12,"X"],
+        [2,null,"word",1,12,14,""],
+        [2,null,"whitespace",0,14,15,"X"],
+        [2,null,"word",1,15,19,""],
+        [2,null,"punctuation",1,19,20,""],
+        [2,null,"whitespace",0,20,21,"X"]
+      ],
+      "embedded": []
+    },
+    "Bengali": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "f89f009533a4cb6485f53f9a7274afcccc5848975553cf507ef3799a7699fd17",
+      "recoverySourceSha256": "a4d888554335a67601c55338e90e3ce7f7eaab3bfc019227bc004e73a7f9de2e",
+      "positive": [
+        [0,null,"natural_language_document",1,0,25,""],
+        [1,null,"sentence",1,0,25,""],
+        [2,null,"word",1,0,21,""],
+        [2,null,"punctuation",1,21,24,""],
+        [2,null,"whitespace",0,24,25,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,26,""],
+        [1,null,"sentence",1,0,26,""],
+        [2,null,"word",1,0,12,""],
+        [2,null,"ERROR",1,12,13,"E"],
+        [2,null,"word",1,13,22,""],
+        [2,null,"punctuation",1,22,25,""],
+        [2,null,"whitespace",0,25,26,"X"]
+      ],
+      "embedded": []
+    },
+    "Portuguese": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "ae710d889717e1d74e287644eaf5409cd3f23be78650c0fe72d35ae2a157d1c7",
+      "recoverySourceSha256": "022ef882a5327dbb518ea654d07458f331da65dfcb36f1f420eacc5abb94b86a",
+      "positive": [
+        [0,null,"natural_language_document",1,0,20,""],
+        [1,null,"sentence",1,0,20,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"whitespace",0,6,7,"X"],
+        [2,null,"word",1,7,8,""],
+        [2,null,"whitespace",0,8,9,"X"],
+        [2,null,"word",1,9,11,""],
+        [2,null,"whitespace",0,11,12,"X"],
+        [2,null,"word",1,12,18,""],
+        [2,null,"punctuation",1,18,19,""],
+        [2,null,"whitespace",0,19,20,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,21,""],
+        [1,null,"sentence",1,0,21,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"ERROR",1,6,7,"E"],
+        [2,null,"whitespace",0,7,8,"X"],
+        [2,null,"word",1,8,9,""],
+        [2,null,"whitespace",0,9,10,"X"],
+        [2,null,"word",1,10,12,""],
+        [2,null,"whitespace",0,12,13,"X"],
+        [2,null,"word",1,13,19,""],
+        [2,null,"punctuation",1,19,20,""],
+        [2,null,"whitespace",0,20,21,"X"]
+      ],
+      "embedded": []
+    },
+    "Russian": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "709b864297bac3597fe1d358acc89901c1d12ff22544408c8226ad2b3780c721",
+      "recoverySourceSha256": "96385e11521a437a4b6bc4581847d18ba3f0bbadb1a233a1c59d2e6e3e30b643",
+      "positive": [
+        [0,null,"natural_language_document",1,0,30,""],
+        [1,null,"sentence",1,0,30,""],
+        [2,null,"word",1,0,12,""],
+        [2,null,"whitespace",0,12,13,"X"],
+        [2,null,"word",1,13,19,""],
+        [2,null,"whitespace",0,19,20,"X"],
+        [2,null,"word",1,20,28,""],
+        [2,null,"punctuation",1,28,29,""],
+        [2,null,"whitespace",0,29,30,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,31,""],
+        [1,null,"sentence",1,0,31,""],
+        [2,null,"word",1,0,12,""],
+        [2,null,"ERROR",1,12,13,"E"],
+        [2,null,"whitespace",0,13,14,"X"],
+        [2,null,"word",1,14,20,""],
+        [2,null,"whitespace",0,20,21,"X"],
+        [2,null,"word",1,21,29,""],
+        [2,null,"punctuation",1,29,30,""],
+        [2,null,"whitespace",0,30,31,"X"]
+      ],
+      "embedded": []
+    },
+    "Urdu": {
+      "grammars": {
+        "natural-language": {
+          "version": "1.0.0",
+          "parserSha256": "9cd6dc7ec2f9c86b9e33163a8496c2458d36b2f0eedfb2d110a999f8f1b943ba"
+        }
+      },
+      "sourceSha256": "647fb4dcbc1000f28a2280583f99d46f420d2e27747a2ff2603ec61b1cf1c8b4",
+      "recoverySourceSha256": "afdc0db7dae5dfbae8629061bb6c2fff6f96166b03e8e14552351604b6cbb0b4",
+      "positive": [
+        [0,null,"natural_language_document",1,0,11,""],
+        [1,null,"sentence",1,0,11,""],
+        [2,null,"word",1,0,8,""],
+        [2,null,"punctuation",1,8,10,""],
+        [2,null,"whitespace",0,10,11,"X"]
+      ],
+      "recovery": [
+        [0,null,"natural_language_document",1,0,12,""],
+        [1,null,"sentence",1,0,12,""],
+        [2,null,"word",1,0,6,""],
+        [2,null,"ERROR",1,6,7,"E"],
+        [2,null,"word",1,7,9,""],
+        [2,null,"punctuation",1,9,11,""],
+        [2,null,"whitespace",0,11,12,"X"]
+      ],
+      "embedded": []
+    }
+  }
+}

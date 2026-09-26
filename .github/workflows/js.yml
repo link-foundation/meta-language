@@ -71,6 +71,30 @@ jobs:
         run: npm run check:parity
         working-directory: js
 
+      - name: Check grammar-derived default CST expectations
+        run: npm run check:default-cst
+        working-directory: js
+
+      - name: Check the official links-notation LiNo grammar cases
+        run: npm run check:lino-grammar
+        working-directory: js
+
+      - name: Check the pdf-lib PDF grammar cases
+        run: npm run check:pdf-grammar
+        working-directory: js
+
+      - name: Check the independent built-in grammar CST expectations
+        run: npm run check:builtin-cst
+        working-directory: js
+
+      - name: Check the shared language catalog
+        run: npm run check:language-catalog
+        working-directory: js
+
+      - name: Check issue 195 atomic requirement manifest
+        run: npm run check:issue-195
+        working-directory: js
+
       - name: Verify npm package contents
         run: npm pack --dry-run
         working-directory: js

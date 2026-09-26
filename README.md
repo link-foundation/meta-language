@@ -31,6 +31,14 @@ Declarative, recursive network translation and its template syntax are
 documented in [`docs/translation-rules.md`](docs/translation-rules.md).
 The shared executable query-plan IR plus registry-driven GraphQL and SQL
 lowering APIs are documented in [`docs/query-plans.md`](docs/query-plans.md).
+The versioned JavaScript, Rust, Lean, and Rocq parser/emitter capability and
+translation boundaries are documented in
+[`docs/four-language-contracts.md`](docs/four-language-contracts.md).
+The full issue #195 delivery target is defined by the executable
+[`parity/issue-195-requirements.json`](parity/issue-195-requirements.json)
+manifest. Its generated evidence report and remaining per-runtime gaps are
+tracked in
+[`docs/issue-195-requirement-ledger.md`](docs/issue-195-requirement-ledger.md).
 
 ## Quick start
 

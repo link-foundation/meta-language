@@ -28,6 +28,16 @@ and target-language fallbacks.
 The shared executable query-plan IR and registry-driven GraphQL and SQL
 adapters are documented in [`../docs/query-plans.md`](../docs/query-plans.md).
 
+The package registers lossless tree-sitter CST frontends for JavaScript, Rust,
+Lean, Rocq/Coq, and the broader programming/data-language inventory, including
+aliases, grammar diagnostics, UTF-8 spans, named fields, and ordered token
+emission. The exact version profiles and the explicit boundary between
+concrete syntax, opaque extensions, unavailable semantic layers, and the 12
+unfinished fail-closed translation hooks are documented in
+[`../docs/four-language-contracts.md`](../docs/four-language-contracts.md). The
+full delivery checklist and remaining fallback paths are tracked in
+[`../docs/issue-195-requirement-ledger.md`](../docs/issue-195-requirement-ledger.md).
+
 ## Usage
 
 ```js

@@ -3,3 +3,8 @@ rust/benches/corpora/** text eol=lf
 
 # Preserve downloaded CI logs verbatim; they can contain trailing spaces from GitHub Actions output.
 docs/case-studies/issue-177/ci-logs/*.log -whitespace
+
+# Built-in grammar specifications are hashed into grammar provenance, and the translation
+# corpus into the translation stage fixtures; keep their bytes identical on every platform.
+parity/grammars/** text eol=lf
+parity/fixtures/translation-corpus/** text eol=lf

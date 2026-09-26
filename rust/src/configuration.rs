@@ -23,6 +23,8 @@ pub enum RegionDetectionPolicy {
 /// Natural-language identification backend.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LanguageIdentificationDetector {
+    /// Use the trigram identifier shared with the JavaScript runtime.
+    Trigram,
     /// Use `lingua` for language identification.
     Lingua,
     /// Use `whatlang` for language identification.
@@ -106,7 +108,7 @@ impl ParseConfiguration {
         Self {
             trivia_attachment_policy,
             region_detection_policy: RegionDetectionPolicy::Both,
-            language_identification_detector: LanguageIdentificationDetector::Lingua,
+            language_identification_detector: LanguageIdentificationDetector::Trigram,
             formalization_level: FormalizationLevel::Natural,
             naturalization_direction: NaturalizationDirection::Naturalize,
             access_mode: AccessMode::Mutable,

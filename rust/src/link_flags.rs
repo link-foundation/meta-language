@@ -16,11 +16,12 @@ impl LinkFlags {
         Self { bits: 0 }
     }
 
-    /// Flags for an error link.
+    /// Flags for an error link. Like tree-sitter's `has_error`, an error
+    /// link also reports that it has an error.
     #[must_use]
     pub const fn error() -> Self {
         Self {
-            bits: Self::IS_ERROR,
+            bits: Self::IS_ERROR | Self::HAS_ERROR,
         }
     }
 
@@ -32,11 +33,11 @@ impl LinkFlags {
         }
     }
 
-    /// Flags for a missing link.
+    /// Flags for a missing link, which also reports that it has an error.
     #[must_use]
     pub const fn missing() -> Self {
         Self {
-            bits: Self::IS_MISSING,
+            bits: Self::IS_MISSING | Self::HAS_ERROR,
         }
     }
 
@@ -48,10 +49,10 @@ impl LinkFlags {
         }
     }
 
-    /// Returns flags with the error bit enabled.
+    /// Returns flags with the error and has-error bits enabled.
     #[must_use]
     pub const fn with_error(mut self) -> Self {
-        self.bits |= Self::IS_ERROR;
+        self.bits |= Self::IS_ERROR | Self::HAS_ERROR;
         self
     }
 
@@ -62,10 +63,10 @@ impl LinkFlags {
         self
     }
 
-    /// Returns flags with the missing bit enabled.
+    /// Returns flags with the missing and has-error bits enabled.
     #[must_use]
     pub const fn with_missing(mut self) -> Self {
-        self.bits |= Self::IS_MISSING;
+        self.bits |= Self::IS_MISSING | Self::HAS_ERROR;
         self
     }
 
@@ -82,7 +83,8 @@ impl LinkFlags {
         self.bits & Self::IS_ERROR != 0
     }
 
-    /// Whether this link contains an error below it.
+    /// Whether this link is, or contains, an error or missing link
+    /// (tree-sitter `has_error` semantics).
     #[must_use]
     pub const fn has_error(self) -> bool {
         self.bits & Self::HAS_ERROR != 0

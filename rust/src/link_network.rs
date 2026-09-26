@@ -2,21 +2,24 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::sync::Arc;
 
-use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
+use crate::configuration::ParseConfiguration;
 use crate::embedded_region_parser;
+use crate::language_catalog::{grammar_provenance, GrammarProvenance};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
 use crate::mixed_regions::EmbeddedRegion;
 use crate::natural_language::annotate_natural_language;
+pub use crate::network_projection::NetworkProjection;
 use crate::query::{LinkQuery, QueryMatch, QueryPredicateHost, RejectPredicateHost};
 use crate::self_description::{definition_expression, SELF_DESCRIPTION_ROOTS};
 use crate::source::{ByteRange, Point, SourceSpan};
 use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
 };
-use crate::verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
+mod trivia;
+mod verification;
 /// Stable identifier for a link inside a [`LinkNetwork`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LinkId(pub(crate) u64);
@@ -59,47 +62,6 @@ pub enum LinkType {
     Semantic,
     Region,
     Object,
-}
-
-/// View of a links network with lower-level data optionally stripped away.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum NetworkProjection {
-    /// Full lossless network, including all source-preservation links.
-    Lossless,
-    /// Concrete syntax view, including tokens, trivia, fields, and spans.
-    ConcreteSyntax,
-    /// Abstract syntax view, excluding lossless token and trivia links.
-    AbstractSyntax,
-    /// Meaning-focused view, keeping semantic, concept, type, and language links.
-    Semantic,
-}
-
-impl NetworkProjection {
-    /// Human-readable projection name.
-    #[must_use]
-    pub const fn label(self) -> &'static str {
-        match self {
-            Self::Lossless => "lossless",
-            Self::ConcreteSyntax => "concrete syntax",
-            Self::AbstractSyntax => "abstract syntax",
-            Self::Semantic => "semantic",
-        }
-    }
-
-    fn includes(self, link: &Link) -> bool {
-        match self {
-            Self::Lossless => true,
-            Self::ConcreteSyntax => link.metadata().link_type() != Some(LinkType::Semantic),
-            Self::AbstractSyntax => !matches!(
-                link.metadata().link_type(),
-                Some(LinkType::Token | LinkType::Trivia)
-            ),
-            Self::Semantic => matches!(
-                link.metadata().link_type(),
-                Some(LinkType::Semantic | LinkType::Concept | LinkType::Type | LinkType::Language)
-            ),
-        }
-    }
 }
 
 impl fmt::Display for LinkType {
@@ -349,6 +311,57 @@ impl LinkNetwork {
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
         let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
+        if text.contains('\0') {
+            let retained = network.reconstruct_text();
+            if text.starts_with(&retained) && retained.len() < text.len() {
+                let span = SourceSpan::new(
+                    ByteRange::new(retained.len(), text.len()),
+                    end_point_for_text(&retained),
+                    end_point_for_text(text),
+                );
+                network.insert_link(
+                    [],
+                    LinkMetadata::new()
+                        .with_link_type(LinkType::Token)
+                        .with_named(false)
+                        .with_term(&text[retained.len()..])
+                        .with_language(language)
+                        .with_span(span)
+                        .with_flags(LinkFlags::error()),
+                );
+            }
+            let malformed_root = network
+                .links()
+                .filter(|link| {
+                    link.metadata().link_type() == Some(LinkType::Syntax)
+                        && link
+                            .metadata()
+                            .span()
+                            .is_some_and(|span| span.byte_range().start() == 0)
+                })
+                .max_by_key(|link| {
+                    link.metadata()
+                        .span()
+                        .map_or(0, |span| span.byte_range().end())
+                })
+                .map(Link::id);
+            if let Some(root) = malformed_root {
+                // NUL is prohibited input: the root reports that it contains an
+                // error without relabeling the grammar's own nodes as ERROR.
+                let flags = network
+                    .link(root)
+                    .map_or_else(LinkFlags::clean, |link| link.metadata().flags());
+                network.set_flags(root, flags.with_containing_error());
+                network.set_span(
+                    root,
+                    SourceSpan::new(
+                        ByteRange::new(0, text.len()),
+                        Point::new(0, 0),
+                        end_point_for_text(text),
+                    ),
+                );
+            }
+        }
         if let Some(profile) = configuration.profile().and_then(LanguageProfile::builtin) {
             profile.declare_in(&mut network);
         }
@@ -378,7 +391,8 @@ impl LinkNetwork {
                 row += 1;
                 column = 0;
             } else {
-                column += 1;
+                // Columns count UTF-8 bytes, as tree-sitter points do.
+                column += character.len_utf8();
             }
             let end_point = Point::new(row, column);
             let span = SourceSpan::new(ByteRange::new(start, end), start_point, end_point);
@@ -439,6 +453,7 @@ impl LinkNetwork {
     pub(crate) fn new_parse_document(text: &str, language: &str) -> (Self, LinkId) {
         let mut network = Self::self_describing();
         let language_link = network.insert_typed_point(language, LinkType::Language, None);
+        network.record_grammars(language_link, language);
         let document_span = SourceSpan::new(
             ByteRange::new(0, text.len()),
             Point::new(0, 0),
@@ -721,6 +736,59 @@ impl LinkNetwork {
         self.links.get(&id).map(Arc::as_ref)
     }
 
+    /// Records the grammars that parse `language` by default as Grammar links
+    /// below its Language link: term `<id>@<version>`, definition
+    /// `sha256:<parser digest>`. Recording the same grammar twice is a no-op.
+    pub(crate) fn record_grammars(&mut self, language_link: LinkId, language: &str) {
+        for grammar in grammar_provenance(language) {
+            let term = format!("{}@{}", grammar.id, grammar.version);
+            let recorded = self.links().any(|link| {
+                link.metadata().link_type() == Some(LinkType::Grammar)
+                    && link.references() == [language_link]
+                    && link.metadata().term() == Some(term.as_str())
+            });
+            if !recorded {
+                self.insert_link(
+                    [language_link],
+                    LinkMetadata::new()
+                        .with_link_type(LinkType::Grammar)
+                        .with_named(true)
+                        .with_term(term)
+                        .with_definition(format!("sha256:{}", grammar.parser_sha256))
+                        .with_language(language),
+                );
+            }
+        }
+    }
+
+    /// Grammars recorded for the languages this network parsed, in insertion
+    /// order, as `(language, grammar)` pairs.
+    #[must_use]
+    pub fn parse_grammars(&self) -> Vec<(String, GrammarProvenance)> {
+        self.links()
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Grammar))
+            .filter_map(|link| {
+                let [language_link] = link.references() else {
+                    return None;
+                };
+                let language = self.link(*language_link)?;
+                if language.metadata().link_type() != Some(LinkType::Language) {
+                    return None;
+                }
+                let (id, version) = link.metadata().term()?.split_once('@')?;
+                let parser_sha256 = link.metadata().definition()?.strip_prefix("sha256:")?;
+                Some((
+                    language.metadata().term()?.to_string(),
+                    GrammarProvenance {
+                        id: id.to_string(),
+                        version: version.to_string(),
+                        parser_sha256: parser_sha256.to_string(),
+                    },
+                ))
+            })
+            .collect()
+    }
+
     /// Finds a self-description or named term link.
     #[must_use]
     pub fn find_term(&self, term: &str) -> Option<LinkId> {
@@ -758,34 +826,6 @@ impl LinkNetwork {
         };
         Arc::make_mut(link).metadata_mut().term = Some(term);
         true
-    }
-
-    /// Verifies that the selected region has no error or missing links.
-    #[must_use]
-    pub fn verify_full_match(&self, region: Option<ByteRange>) -> VerificationReport {
-        let issues = self
-            .links()
-            .filter(|link| link_is_in_region(link, region))
-            .filter_map(|link| {
-                let flags = link.metadata().flags();
-                let kind = if flags.is_error() {
-                    VerificationIssueKind::ErrorLink
-                } else if flags.is_missing() {
-                    VerificationIssueKind::MissingLink
-                } else if flags.has_error() {
-                    VerificationIssueKind::HasErrorLink
-                } else {
-                    return None;
-                };
-
-                Some(VerificationIssue::new(
-                    link.id(),
-                    kind,
-                    link.metadata().span(),
-                ))
-            })
-            .collect();
-        VerificationReport::new(issues)
     }
 
     pub(crate) fn insert_typed_point(
@@ -843,49 +883,6 @@ impl LinkNetwork {
         {
             self.concept_syntax.insert((concept, language), syntax);
         }
-    }
-
-    pub(crate) fn attach_trivia(
-        &mut self,
-        document: LinkId,
-        token: LinkId,
-        span: SourceSpan,
-        policy: TriviaAttachmentPolicy,
-    ) {
-        match policy {
-            TriviaAttachmentPolicy::ContainmentLink => {
-                self.insert_containment_trivia(document, token, span);
-            }
-            TriviaAttachmentPolicy::TokenLink => {
-                self.insert_token_trivia(token, span);
-            }
-            TriviaAttachmentPolicy::Both => {
-                self.insert_containment_trivia(document, token, span);
-                self.insert_token_trivia(token, span);
-            }
-        }
-    }
-
-    fn insert_containment_trivia(&mut self, document: LinkId, token: LinkId, span: SourceSpan) {
-        self.insert_link(
-            [document, token],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Trivia)
-                .with_term("containment trivia")
-                .with_span(span)
-                .with_flags(LinkFlags::extra()),
-        );
-    }
-
-    fn insert_token_trivia(&mut self, token: LinkId, span: SourceSpan) {
-        self.insert_link(
-            [token],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Trivia)
-                .with_term("token trivia")
-                .with_span(span)
-                .with_flags(LinkFlags::extra()),
-        );
     }
 
     /// Inserts a link whose reference count is known only at run time.
@@ -957,15 +954,6 @@ impl LinkNetwork {
     }
 }
 
-fn link_is_in_region(link: &Link, region: Option<ByteRange>) -> bool {
-    let Some(region) = region else {
-        return true;
-    };
-    link.metadata()
-        .span()
-        .is_some_and(|span| span.byte_range().intersects(region))
-}
-
 fn end_point_for_text(text: &str) -> Point {
     let mut row = 0;
     let mut column = 0;
@@ -974,7 +962,7 @@ fn end_point_for_text(text: &str) -> Point {
             row += 1;
             column = 0;
         } else {
-            column += 1;
+            column += character.len_utf8();
         }
     }
     Point::new(row, column)

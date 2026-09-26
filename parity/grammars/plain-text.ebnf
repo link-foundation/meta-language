@@ -1,0 +1,16 @@
+(* The built-in plain-text grammar of meta-language, implemented by
+   js/src/text-grammar.js and rust/src/structured_text_parser.rs. Node names
+   are the CST terms. *)
+
+text_document = { line } ;             (* one empty line for empty text *)
+line          = { lexical }, [ LF ] ;  (* each line ends after its LF *)
+
+(* The shared lexical grammar: maximal runs, matched in this order. *)
+lexical       = whitespace | word | ERROR | punctuation ;
+whitespace    = { ? White_Space ? }- ;                       (* anonymous extra *)
+word          = { ? L | N | M ? | "_" | "'" | "-" }- ;
+ERROR         = { ? U+0000-U+0008 U+000E-U+001F U+007F-U+0084 U+0086-U+009F ? }- ;
+punctuation   = { ? any other character ? }- ;
+
+(* Validation: unbalanced parentheses make text_document an ERROR-flagged
+   root; control characters are ERROR nodes. *)

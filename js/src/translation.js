@@ -419,11 +419,15 @@ function parseLinkType(token) {
   const normalized = String(token).toLowerCase();
   const aliases = {
     concept: LinkType.Concept,
+    document: LinkType.Document,
     dynamic: LinkType.Dynamic,
     field: LinkType.Field,
+    grammar: LinkType.Grammar,
     language: LinkType.Language,
     link: LinkType.Dynamic,
     object: LinkType.Object,
+    reference: LinkType.Reference,
+    region: LinkType.Region,
     relation: LinkType.Relation,
     semantic: LinkType.Semantic,
     sourcetoken: LinkType.SourceToken,
@@ -431,6 +435,7 @@ function parseLinkType(token) {
     syntax: LinkType.Syntax,
     token: LinkType.Token,
     trivia: LinkType.Trivia,
+    type: LinkType.Type,
   };
   return aliases[normalized] ?? token;
 }

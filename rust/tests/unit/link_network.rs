@@ -367,7 +367,7 @@ fn mixed_language_regions_are_embedded_in_one_network() {
         .collect::<Vec<_>>();
 
     assert_eq!(network.reconstruct_text(), source);
-    assert!(languages.contains(&"rust"));
+    assert!(languages.contains(&"Rust"));
     assert!(languages.contains(&"HTML"));
     assert!(regions
         .iter()
@@ -535,7 +535,7 @@ fn natural_language_parse_adds_segmentation_language_and_unicode_annotations() {
 fn natural_language_identifier_backend_is_switchable() {
     assert_eq!(
         ParseConfiguration::default().language_identification_detector(),
-        LanguageIdentificationDetector::Lingua
+        LanguageIdentificationDetector::Trigram
     );
 
     let source = "This sentence gives the detector enough English context.\n";

@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 2,
+  "languages": [
+    {
+      "name": "JavaScript",
+      "aliases": ["javascript", "js", "ecmascript"],
+      "version": "ECMAScript 2026",
+      "edition": "ECMA-262, 17th edition",
+      "extensions": [".js", ".mjs", ".cjs"],
+      "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "not-applicable" },
+      "root": "program",
+      "source": "const x = 1; const s = \"x\"; // x\n",
+      "identifiers": ["x", "s"],
+      "edit": {
+        "identifier": "x",
+        "replacement": "renamed",
+        "expected": "const renamed = 1; const s = \"x\"; // x\n"
+      }
+    },
+    {
+      "name": "Rust",
+      "aliases": ["rust", "rs"],
+      "version": "Rust 1.98.1",
+      "edition": "2024",
+      "extensions": [".rs"],
+      "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "not-applicable" },
+      "root": "source_file",
+      "source": "fn id(π: u64) -> u64 { π } // π\n",
+      "identifiers": ["id", "π", "π"],
+      "edit": {
+        "identifier": "π",
+        "replacement": "value",
+        "expected": "fn id(value: u64) -> u64 { value } // π\n"
+      }
+    },
+    {
+      "name": "Lean",
+      "aliases": ["lean", "lean4"],
+      "version": "Lean 4.33.1",
+      "edition": "Lean 4",
+      "extensions": [".lean"],
+      "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "parsed" },
+      "root": "file",
+      "source": "def id' (x : Nat) : Nat := x\n",
+      "identifiers": ["id'", "x", "Nat", "Nat", "x"],
+      "edit": {
+        "identifier": "id'",
+        "replacement": "identity",
+        "expected": "def identity (x : Nat) : Nat := x\n"
+      }
+    },
+    {
+      "name": "Rocq",
+      "aliases": ["rocq", "coq"],
+      "version": "Rocq 9.2",
+      "edition": "Vernacular",
+      "extensions": [".v"],
+      "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "parsed" },
+      "root": "source_file",
+      "source": "Definition id (x : nat) : nat := x.\n",
+      "identifiers": ["id", "x", "x"],
+      "edit": {
+        "identifier": "id",
+        "replacement": "identity",
+        "expected": "Definition identity (x : nat) : nat := x.\n"
+      }
+    }
+  ],
+  "negativeCases": [
+    {
+      "language": "JavaScript",
+      "source": "function open( {\n",
+      "diagnostic": "unclosed delimiter"
+    },
+    {
+      "language": "Rust",
+      "source": "fn open() { /* unclosed",
+      "diagnostic": "unclosed block comment"
+    },
+    {
+      "language": "Lean",
+      "source": "def open := /- unclosed",
+      "diagnostic": "unclosed nested comment"
+    },
+    {
+      "language": "Coq",
+      "source": "Definition open := (* unclosed",
+      "diagnostic": "unclosed nested comment"
+    }
+  ],
+  "javascriptRegressions": {
+    "regularExpression": {
+      "source": "const x = 1; const re = /x/; x;\n",
+      "identifier": "x",
+      "replacement": "y",
+      "expected": "const y = 1; const re = /x/; y;\n",
+      "matches": 2
+    },
+    "templateInterpolation": {
+      "source": "const x = 1; const text = `value: ${x}`;\n",
+      "identifier": "x",
+      "replacement": "y",
+      "expected": "const y = 1; const text = `value: ${y}`;\n",
+      "matches": 2
+    },
+    "invalidProgram": {
+      "source": "const = ;\n",
+      "diagnostic": "missing JavaScript binding and initializer"
+    }
+  },
+  "semanticPrograms": [
+    {
+      "language": "JavaScript",
+      "source": "import { readFile as read } from \"node:fs/promises\";\n\"use strict\";\nfunction count(n) { return n < 1 ? 0 : count(n - 1); }\nexport async function load(path) { const raw = await read(path); return String.raw`value=${raw}`; }\n",
+      "project": { "root": "/workspace", "files": ["main.mjs"], "dependencies": ["node:fs/promises"] },
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "project-context-and-dependencies"],
+      "notApplicable": ["proof-terms-and-tactics"],
+      "unavailable": ["surface-expansion-elaboration-traces"]
+    },
+    {
+      "language": "Rust",
+      "source": "#![allow(dead_code)]\nuse std::future::ready;\nmacro_rules! identity { ($value:expr) => { $value }; }\nfn factorial(n: u64) -> u64 { if n < 2 { 1 } else { n * factorial(n - 1) } }\nasync fn effect(value: u64) -> u64 { ready(()).await; identity!(value) }\n",
+      "project": { "root": "/workspace", "files": ["src/lib.rs"], "dependencies": ["std"] },
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "project-context-and-dependencies"],
+      "notApplicable": ["proof-terms-and-tactics"],
+      "unavailable": ["surface-expansion-elaboration-traces"]
+    },
+    {
+      "language": "Lean",
+      "source": "import Std\nuniverse u\nnamespace Demo\npostfix:10000 \"‼\" => id\n@[simp] def identity {α : Type u} (value : α) : α := value\ndef factorial : Nat → Nat | 0 => 1 | Nat.succ n => Nat.succ n * factorial n\ndef effect : IO Unit := pure ()\ntheorem identity_eq {α : Type u} (value : α) : identity value = value := by\n  rfl\nend Demo\n",
+      "project": { "root": "/workspace", "files": ["Demo.lean"], "dependencies": ["Std"] },
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "project-context-and-dependencies"],
+      "notApplicable": [],
+      "unavailable": ["surface-expansion-elaboration-traces"]
+    },
+    {
+      "language": "Rocq",
+      "source": "From Stdlib Require Import Arith.\nModule Demo.\nUniverse u.\n#[local] Notation \"'identity!' value\" := value (at level 10).\nFixpoint factorial (n : nat) : nat := match n with | 0 => 1 | S rest => n * factorial rest end.\nTheorem factorial_zero : factorial 0 = 1.\nProof. reflexivity. Qed.\nEnd Demo.\n",
+      "project": { "root": "/workspace", "files": ["Demo.v"], "dependencies": ["Stdlib.Arith"] },
+      "represented": ["modules-and-imports", "scopes-and-bindings", "recursive-definitions", "types-and-universes", "effects", "attributes", "macros-and-notation", "proof-terms-and-tactics", "project-context-and-dependencies"],
+      "notApplicable": [],
+      "unavailable": ["surface-expansion-elaboration-traces"]
+    }
+  ],
+  "phantomImportCases": [
+    { "language": "JavaScript", "source": "import { value } from \"ghost\";\n", "dependency": "ghost", "file": "ghost.js" },
+    { "language": "Rust", "source": "use ghost::Value;\n", "dependency": "ghost", "file": "ghost.rs" },
+    { "language": "Lean", "source": "import Ghost\n", "dependency": "Ghost", "file": "Ghost.lean" },
+    { "language": "Rocq", "source": "Require Import Ghost.\n", "dependency": "Ghost", "file": "Ghost.v" }
+  ],
+  "renameCases": [
+    {
+      "language": "JavaScript",
+      "source": "const π = 1; function use(π) { const value = `${π}`; return π + value.length; } console.log(π); // π\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "total",
+      "expected": "const total = 1; function use(π) { const value = `${π}`; return π + value.length; } console.log(total); // π\n",
+      "capture": "use"
+    },
+    {
+      "language": "JavaScript",
+      "source": "const x = 1; const object = { x: 2 }; globalThis.result = [Object.keys(object), object.x, x];\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const value = 1; const object = { x: 2 }; globalThis.result = [Object.keys(object), object.x, value];\n",
+      "expectedObservation": [["x"], 2, 1],
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "const x = 1; const object = { x }; globalThis.result = [Object.keys(object), object.x, x];\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const value = 1; const object = { x: value }; globalThis.result = [Object.keys(object), object.x, value];\n",
+      "expectedObservation": [["x"], 1, 1],
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "const object = { x: 1 }; const { x } = object; globalThis.result = x;\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const object = { x: 1 }; const { x: value } = object; globalThis.result = value;\n",
+      "expectedObservation": 1,
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "const object = { x: 1 }; const { x: local } = object; globalThis.result = [local, object.x];\n",
+      "binding": "local",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const object = { x: 1 }; const { x: value } = object; globalThis.result = [value, object.x];\n",
+      "expectedObservation": [1, 1],
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "function f() { const x = 1; const object = { x: 2 }; return [Object.keys(object), object.x, x]; } globalThis.result = f();\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "function f() { const value = 1; const object = { x: 2 }; return [Object.keys(object), object.x, value]; } globalThis.result = f();\n",
+      "expectedObservation": [["x"], 2, 1],
+      "capture": "object"
+    },
+    {
+      "language": "JavaScript",
+      "source": "const π = 1; const object = { π: 2 }; globalThis.result = [Object.keys(object), object.π, π];\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "expected": "const value = 1; const object = { π: 2 }; globalThis.result = [Object.keys(object), object.π, value];\n",
+      "expectedObservation": [["π"], 2, 1],
+      "capture": "object"
+    },
+    {
+      "language": "Rust",
+      "source": "fn use_value(π: u64) -> u64 { let value = π; { let π = value; let _ = π; } π } // π\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "total",
+      "expected": "fn use_value(total: u64) -> u64 { let value = total; { let π = value; let _ = π; } total } // π\n",
+      "capture": "value"
+    },
+    {
+      "language": "Lean",
+      "source": "def useValue (π : Nat) : Nat := let value := π; let π := value; π\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "total",
+      "expected": "def useValue (total : Nat) : Nat := let value := total; let π := value; π\n",
+      "capture": "value"
+    },
+    {
+      "language": "Rocq",
+      "source": "Definition use_value (π : nat) : nat := let value := π in let π := value in π.\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "total",
+      "expected": "Definition use_value (total : nat) : nat := let value := total in let π := value in π.\n",
+      "capture": "value"
+    }
+  ],
+  "nestedRenameCases": [
+    {
+      "source": "const x = 1; { const y = 2; globalThis.inner = y; } globalThis.result = [globalThis.inner, x];",
+      "binding": "x",
+      "replacement": "y",
+      "expected": "const y = 1; { const y = 2; globalThis.inner = y; } globalThis.result = [globalThis.inner, y];",
+      "expectedObservation": [2, 1],
+      "allowed": true
+    },
+    {
+      "source": "const y = 1; { const x = 2; globalThis.inner = x; } globalThis.result = [globalThis.inner, y];",
+      "binding": "x",
+      "replacement": "y",
+      "expected": "const y = 1; { const y = 2; globalThis.inner = y; } globalThis.result = [globalThis.inner, y];",
+      "expectedObservation": [2, 1],
+      "allowed": true
+    },
+    {
+      "source": "const x = 1; { const y = 2; globalThis.result = x + y; }",
+      "binding": "x",
+      "replacement": "y",
+      "expectedObservation": 3,
+      "allowed": false
+    },
+    {
+      "source": "const y = 1; { const x = 2; globalThis.result = x + y; }",
+      "binding": "x",
+      "replacement": "y",
+      "expectedObservation": 3,
+      "allowed": false
+    }
+  ],
+  "varScopeCases": [
+    {
+      "source": "function f() { if (true) { var x = 1; } return x; } globalThis.result = f();",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "function f() { if (true) { var y = 1; } return y; } globalThis.result = f();",
+      "expectedReferences": 1,
+      "expectedObservation": 1
+    },
+    {
+      "source": "{ var x = 1; } globalThis.result = x;",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "{ var y = 1; } globalThis.result = y;",
+      "expectedReferences": 1,
+      "expectedObservation": 1
+    },
+    {
+      "source": "function f() { const before = x; var x = 1; return before; } globalThis.result = f() === undefined;",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "function f() { const before = y; var y = 1; return before; } globalThis.result = f() === undefined;",
+      "expectedReferences": 1,
+      "expectedObservation": true
+    },
+    {
+      "source": "function outer() { if (true) { var x = 1; } function inner() { var x = 2; return x; } return [x, inner()]; } globalThis.result = outer();",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "function outer() { if (true) { var y = 1; } function inner() { var x = 2; return x; } return [y, inner()]; } globalThis.result = outer();",
+      "expectedReferences": 1,
+      "expectedObservation": [1, 2]
+    },
+    {
+      "source": "const f = () => { if (true) { var x = 1; } return x; }; globalThis.result = f();",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "expected": "const f = () => { if (true) { var y = 1; } return y; }; globalThis.result = f();",
+      "expectedReferences": 1,
+      "expectedObservation": 1
+    }
+  ],
+  "transformationPrograms": [
+    {
+      "language": "JavaScript",
+      "source": "const first = 1;\nconst second = 2;\n",
+      "first": "const first = 1;\n",
+      "second": "const second = 2;\n",
+      "inserted": "const third = 3;\n"
+    },
+    {
+      "language": "Rust",
+      "source": "const FIRST: u32 = 1;\nconst SECOND: u32 = 2;\n",
+      "first": "const FIRST: u32 = 1;\n",
+      "second": "const SECOND: u32 = 2;\n",
+      "inserted": "const THIRD: u32 = 3;\n"
+    },
+    {
+      "language": "Lean",
+      "source": "def first : Nat := 1\ndef second : Nat := 2\n",
+      "first": "def first : Nat := 1\n",
+      "second": "def second : Nat := 2\n",
+      "inserted": "def third : Nat := 3\n"
+    },
+    {
+      "language": "Rocq",
+      "source": "Definition first : nat := 1.\nDefinition second : nat := 2.\n",
+      "first": "Definition first : nat := 1.\n",
+      "second": "Definition second : nat := 2.\n",
+      "inserted": "Definition third : nat := 3.\n"
+    }
+  ],
+  "defaultCstCases": [
+    {
+      "language": "Python",
+      "source": "def f(x):\n    return x + 1\n",
+      "root": "module",
+      "requiredNode": "function_definition"
+    },
+    {
+      "language": "TypeScript",
+      "source": "const x: number = 1;\n",
+      "root": "program",
+      "requiredNode": "type_annotation"
+    },
+    {
+      "language": "Java",
+      "source": "class Main {}\n",
+      "root": "program",
+      "requiredNode": "class_declaration"
+    },
+    {
+      "language": "Go",
+      "source": "package main\nfunc main() {}\n",
+      "root": "source_file",
+      "requiredNode": "function_declaration"
+    },
+    {
+      "language": "JSON",
+      "source": "{\"x\":1}\n",
+      "root": "document",
+      "requiredNode": "object"
+    },
+    {
+      "language": "HTML",
+      "source": "<p>Hello</p>\n",
+      "root": "document",
+      "requiredNode": "element"
+    }
+  ],
+  "translationBehaviorCases": [
+    {
+      "sourceLanguage": "Rust",
+      "targetLanguage": "JavaScript",
+      "source": "pub fn answer() -> u32 { 42 }",
+      "export": "answer",
+      "expectedResult": 42
+    },
+    {
+      "sourceLanguage": "JavaScript",
+      "targetLanguage": "Rust",
+      "source": "console.log(42);",
+      "expectedStdout": "42\n"
+    }
+  ],
+  "builtinNetworkCases": [
+    {
+      "language": "LiNo",
+      "source": "(papa (lovesMama: loves mama))\n(son lovesMama)\n(obj_0: list obj_0)\ngreeting:\n  hello world\n  (x y)\na b c\n"
+    },
+    {
+      "language": "LiNo",
+      "source": "(broken\nnext: line\n"
+    },
+    {
+      "language": "txt",
+      "source": "Hello (world\n  second line)\n"
+    },
+    {
+      "language": "PDF",
+      "source": "%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n"
+    },
+    {
+      "language": "English",
+      "source": "Hello, world! How are you?\nFine.\n"
+    }
+  ]
+}

@@ -2,30 +2,38 @@ pub mod access;
 pub mod api_styles;
 pub mod benchmark;
 mod binary_format;
+mod builtin_grammar;
 mod concept_ontology;
 pub mod configuration;
-mod data_format_parser;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
 pub mod grammar;
 pub mod graphql_adapter;
 mod incremental;
+pub mod language_catalog;
 mod language_fixtures;
+mod language_identification;
 pub mod language_parser;
 pub mod language_profile;
+pub mod language_support;
 mod line_index;
 pub mod link_flags;
 pub mod link_network;
+mod lino_grammar;
 mod lino_parser;
 pub mod lino_serialization;
 pub mod mixed_regions;
 mod natural_language;
 mod natural_language_grammar;
+mod network_projection;
 pub mod parity;
 mod parity_fixtures;
 pub mod parser_registry;
+mod pdf_grammar;
 mod pdf_parser;
+pub mod program_representation;
+pub mod program_translation;
 pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
@@ -37,8 +45,10 @@ pub mod source;
 mod source_generation;
 pub mod sql_adapter;
 pub mod storage;
+mod structured_text_parser;
 pub mod substitution;
 pub mod transform;
+pub mod translation;
 pub mod translation_rules;
 pub mod verification;
 
@@ -97,12 +107,22 @@ pub use graphql_adapter::{
     lower_graphql, GraphQlAdapterError, GraphQlArgumentRole, GraphQlOperationType,
     GraphQlRootMapping, GraphQlSchemaRegistry,
 };
+pub use language_catalog::{
+    canonical_language_name, grammar_provenance, language_candidates_for_path, language_catalog,
+    language_entry, language_for_path, GrammarProvenance, LanguageEntry,
+};
+pub use language_identification::identify_language;
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
+pub use language_support::{
+    language_support, translation_contract, translation_contracts, LanguageSupport,
+    RepresentationLevel, TranslationContract, TranslationSupport, FOUR_LANGUAGE_SUPPORT,
+    LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
+};
 pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use lino_serialization::LinoSerializationError;
-pub use mixed_regions::EmbeddedRegion;
+pub use mixed_regions::{script_language, EmbeddedRegion};
 pub use natural_language_grammar::{
     NaturalLanguageGrammarFixture, NATURAL_LANGUAGE_GRAMMAR_FIXTURES,
 };
@@ -114,6 +134,17 @@ pub use parity::{
     SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
 };
 pub use parser_registry::ParserRegistry;
+pub use program_representation::{
+    analyze_program, construct_program, construct_program_from_fragments, ProgramBinding,
+    ProgramConstruct, ProgramConstructStatus, ProgramDiagnostic, ProgramFact,
+    ProgramProjectContext, ProgramRange, ProgramRepresentation, ProgramRepresentationError,
+    ProgramScope, ProgramSourceMapping, PROGRAM_REPRESENTATION_SCHEMA_VERSION,
+    PROGRAM_SNAPSHOT_SCHEMA_VERSION, SEMANTIC_CONSTRUCTS,
+};
+pub use program_translation::{
+    decode_program_translation, translate_program, DecodedProgramTranslation, ProgramTranslation,
+    ProgramTranslationError,
+};
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
     QueryPredicateArgument, QueryPredicateHost,

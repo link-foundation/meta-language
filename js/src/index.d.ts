@@ -1,27 +1,39 @@
+export * from './query-algebra.js';
+
 export type LinkTypeValue =
   | 'Concept'
+  | 'Document'
   | 'Dynamic'
   | 'Field'
+  | 'Grammar'
   | 'Language'
   | 'Object'
+  | 'Reference'
+  | 'Region'
   | 'Relation'
   | 'Semantic'
   | 'SourceToken'
   | 'Syntax'
-  | 'Trivia';
+  | 'Trivia'
+  | 'Type';
 
 export const LinkType: Record<string, LinkTypeValue> & {
   Concept: 'Concept';
+  Document: 'Document';
   Dynamic: 'Dynamic';
   Field: 'Field';
+  Grammar: 'Grammar';
   Language: 'Language';
   Object: 'Object';
+  Reference: 'Reference';
+  Region: 'Region';
   Relation: 'Relation';
   Semantic: 'Semantic';
   SourceToken: 'SourceToken';
   Token: 'SourceToken';
   Syntax: 'Syntax';
   Trivia: 'Trivia';
+  Type: 'Type';
 };
 export const ApiOperation: Record<string, string>;
 export const ApiStyle: Record<string, string | string[]>;
@@ -251,6 +263,31 @@ export function lowerSql(
 export const lowerSQL: typeof lowerSql;
 export const lower_sql: typeof lowerSql;
 
+export interface GrammarProvenance {
+  id: string;
+  version: string;
+  parserSha256: string;
+}
+
+export interface LanguageCatalogEntry {
+  name: string;
+  family: string;
+  aliases: string[];
+  extensions: string[];
+  grammars: GrammarProvenance[];
+}
+
+export interface ParseGrammar extends GrammarProvenance {
+  language: string;
+}
+
+export const LANGUAGE_CATALOG: { readonly languages: readonly LanguageCatalogEntry[] };
+export function languageEntry(language: string): LanguageCatalogEntry | undefined;
+export function canonicalLanguageName(language: string): string | undefined;
+export function languageCandidatesForPath(path: string): string[];
+export function languageForPath(path: string): string | undefined;
+export function grammarProvenance(language: string): readonly GrammarProvenance[];
+
 export class LinkId {
   constructor(value: number | string | LinkId);
   static from(value: number | string | LinkId): LinkId;
@@ -258,6 +295,7 @@ export class LinkId {
   asU64(): number;
   equals(other: number | string | LinkId): boolean;
 }
+export type LinkIdValue = LinkId | number | string;
 
 export class ByteRange {
   constructor(start?: number, end?: number);
@@ -279,22 +317,268 @@ export class SourceSpan {
   end: Point;
 }
 
+export class LinkFlags {
+  constructor(options?: {
+    isError?: boolean;
+    hasError?: boolean;
+    isMissing?: boolean;
+    isExtra?: boolean;
+  });
+  isError: boolean;
+  hasError: boolean;
+  isMissing: boolean;
+  isExtra: boolean;
+  static clean(): LinkFlags;
+  withError(value?: boolean): LinkFlags;
+  withMissing(value?: boolean): LinkFlags;
+  withExtra(value?: boolean): LinkFlags;
+  hasRecoveryIssue(): boolean;
+}
+
 export class LinkMetadata {
   static new(): LinkMetadata;
   definition?: string;
   span?: SourceSpan;
+  flags: LinkFlags;
   withLinkType(linkType: LinkTypeValue): LinkMetadata;
   withTerm(term: string): LinkMetadata;
   withLanguage(language: string): LinkMetadata;
   withNamed(named?: boolean): LinkMetadata;
   withDefinition(definition?: string): LinkMetadata;
-  withSpan(span: SourceSpan): LinkMetadata;
+  withSpan(span: SourceSpan | undefined): LinkMetadata;
+  withFlags(flags: LinkFlags): LinkMetadata;
 }
+
+export type LanguageParserFunction = (
+  text: string,
+  language: string,
+  configuration: ParseConfiguration,
+) => LinkNetwork;
+
+export interface LanguageParserObject {
+  parseSource(
+    text: string,
+    language: string,
+    configuration: ParseConfiguration,
+  ): LinkNetwork;
+}
+
+export type LanguageParser = LanguageParserFunction | LanguageParserObject;
+
+export class ParserRegistry {
+  constructor(fallback?: LanguageParserFunction);
+  register(language: string, parser: LanguageParser): ParserRegistry;
+  withParser(language: string, parser: LanguageParser): ParserRegistry;
+  with_parser(language: string, parser: LanguageParser): ParserRegistry;
+  parserFor(language: string): LanguageParser | undefined;
+  parser_for(language: string): LanguageParser | undefined;
+  isRegistered(language: string): boolean;
+  is_registered(language: string): boolean;
+  size(): number;
+  len(): number;
+  isEmpty(): boolean;
+  is_empty(): boolean;
+  parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
+}
+
+export const LANGUAGE_REPRESENTATION_SCHEMA_VERSION: 2;
+export const RepresentationLevel: {
+  readonly Preserved: 'preserved';
+  readonly ConcreteSyntax: 'concrete-syntax';
+  readonly Parsed: 'parsed';
+  readonly Resolved: 'resolved';
+  readonly Elaborated: 'elaborated';
+  readonly Opaque: 'opaque';
+  readonly NotApplicable: 'not-applicable';
+  readonly Unavailable: 'unavailable';
+};
+export type RepresentationLevelValue =
+  typeof RepresentationLevel[keyof typeof RepresentationLevel];
+
+export interface LanguageSupport {
+  readonly schemaVersion: 2;
+  readonly name: 'JavaScript' | 'Rust' | 'Lean' | 'Rocq';
+  readonly aliases: readonly string[];
+  readonly version: string;
+  readonly edition: string;
+  readonly extensions: readonly string[];
+  readonly sourceBytes: RepresentationLevelValue;
+  readonly concreteSyntax: RepresentationLevelValue;
+  readonly bindingResolution: RepresentationLevelValue;
+  readonly typeElaboration: RepresentationLevelValue;
+  readonly dynamicExtensions: RepresentationLevelValue;
+  readonly proofSyntax: RepresentationLevelValue;
+  readonly emitter: 'ordered source-token emitter';
+}
+
+export const TranslationSupport: {
+  readonly PortableEncoding: 'portable-encoding';
+  readonly SemanticSubset: 'semantic-subset';
+};
+export type TranslationSupportValue =
+  typeof TranslationSupport[keyof typeof TranslationSupport];
+
+export interface TranslationContract {
+  readonly schemaVersion: 2;
+  readonly source: LanguageSupport['name'];
+  readonly target: LanguageSupport['name'];
+  readonly support: TranslationSupportValue;
+  readonly observation: string;
+  readonly requiredRuntime: string;
+  readonly encoding: string;
+  readonly assumptions: readonly string[];
+  readonly obligation: string | null;
+}
+
+export function languageSupport(languageName: string): LanguageSupport | undefined;
+export function fourLanguageSupport(): readonly LanguageSupport[];
+export function translationContracts(): readonly TranslationContract[];
+export function translationContract(
+  sourceLanguage: string,
+  targetLanguage: string,
+): TranslationContract | undefined;
+
+export interface ProgramTranslation {
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly targetLanguage: LanguageSupport['name'];
+  readonly code: string;
+  readonly contract: TranslationContract;
+}
+
+export interface DecodedProgramTranslation {
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly source: string;
+}
+
+export function translateProgram(
+  source: string,
+  sourceLanguage: string,
+  targetLanguage: string,
+): ProgramTranslation;
+export function decodeProgramTranslation(
+  code: string,
+  targetLanguage: string,
+): DecodedProgramTranslation;
+
+export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
+export const PROGRAM_SNAPSHOT_SCHEMA_VERSION: 1;
+export const SEMANTIC_CONSTRUCTS: readonly string[];
+
+export interface ProgramProjectContext {
+  root?: string;
+  files?: readonly string[];
+  dependencies?: readonly string[];
+  extensions?: readonly string[];
+}
+
+export interface ProgramSourceRange {
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface ProgramSnapshotFragment {
+  readonly byteStart: number;
+  readonly byteEnd: number;
+  readonly text: string;
+}
+
+export interface ProgramSnapshot {
+  readonly schemaVersion: 1;
+  readonly language: LanguageSupport['name'];
+  readonly project: Required<ProgramProjectContext>;
+  readonly fragments: readonly ProgramSnapshotFragment[];
+}
+
+export interface ProgramScope extends ProgramSourceRange {
+  readonly id: string;
+  readonly parent: string | null;
+  readonly depth: number;
+}
+
+export interface ProgramBinding {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: string;
+  readonly scope: string;
+  readonly declaration: ProgramSourceRange;
+  readonly references: readonly ProgramSourceRange[];
+}
+
+export interface ProgramConstruct {
+  readonly kind: string;
+  readonly status: 'represented' | 'not-present' | 'not-applicable' | 'unavailable';
+  readonly evidence: readonly ({ term?: string } & ProgramSourceRange)[];
+  readonly rationale?: string;
+}
+
+export class BindingRenameError extends Error {}
+export class ProgramTransformationError extends Error {}
+
+export class ProgramRepresentation {
+  static fromSnapshot(snapshot: ProgramSnapshot | string): ProgramRepresentation;
+  readonly schemaVersion: 1;
+  readonly language: LanguageSupport['name'];
+  readonly source: string;
+  readonly project: Required<ProgramProjectContext>;
+  readonly network: LinkNetwork;
+  readonly scopes: readonly ProgramScope[];
+  readonly bindings: readonly ProgramBinding[];
+  readonly unresolvedReferences: readonly ({ name: string } & ProgramSourceRange)[];
+  readonly sourceMappings: readonly ({ linkId: number; term: string } & ProgramSourceRange)[];
+  readonly modules: readonly object[];
+  readonly types: readonly object[];
+  readonly extensions: readonly object[];
+  readonly proofs: readonly object[];
+  readonly diagnostics: readonly object[];
+  readonly constructs: readonly ProgramConstruct[];
+  emit(): string;
+  snapshot(): ProgramSnapshot;
+  serializeSnapshot(): string;
+  querySyntax(term: string): readonly ProgramSourceRange[];
+  query_syntax(term: string): readonly ProgramSourceRange[];
+  replace(range: ProgramSourceRange, replacement: string): ProgramRepresentation;
+  insert(offset: number, inserted: string): ProgramRepresentation;
+  delete(range: ProgramSourceRange): ProgramRepresentation;
+  clone(range: ProgramSourceRange, destination: number): ProgramRepresentation;
+  move(range: ProgramSourceRange, destination: number): ProgramRepresentation;
+  renameBinding(bindingId: string, replacement: string): ProgramRepresentation;
+  rename_binding(bindingId: string, replacement: string): ProgramRepresentation;
+  normalized(): object;
+}
+
+export function analyzeProgram(
+  source: string,
+  language: string,
+  project?: ProgramProjectContext,
+): ProgramRepresentation;
+export const analyze_program: typeof analyzeProgram;
+export function constructProgram(
+  source: string,
+  language: string,
+  project?: ProgramProjectContext,
+): ProgramRepresentation;
+export function constructProgramFromFragments(
+  fragments: Iterable<unknown>,
+  language: string,
+  project?: ProgramProjectContext,
+): ProgramRepresentation;
 
 export class LinkNetwork {
   constructor();
   static parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
   static parseLosslessText(
+    text: string,
+    language: string,
+    configuration?: ParseConfiguration,
+  ): LinkNetwork;
+  static parseWithRegistry(
+    registry: ParserRegistry,
+    text: string,
+    language: string,
+    configuration?: ParseConfiguration,
+  ): LinkNetwork;
+  static parse_with_registry(
+    registry: ParserRegistry,
     text: string,
     language: string,
     configuration?: ParseConfiguration,
@@ -313,8 +597,18 @@ export class LinkNetwork {
     references?: Array<LinkId | number>,
     metadata?: LinkMetadata,
   ): LinkId;
-  insertSourceToken(language: string, text: string): LinkId;
-  insertSyntaxNode(language: string, term: string, children?: Array<LinkId | number>): LinkId;
+  insertSourceToken(
+    language: string,
+    text: string,
+    span?: SourceSpan,
+    flags?: LinkFlags,
+  ): LinkId;
+  insertSyntaxNode(
+    language: string,
+    term: string,
+    children?: Array<LinkId | number>,
+    metadata?: { named?: boolean; span?: SourceSpan; flags?: LinkFlags },
+  ): LinkId;
   insertConceptExpression(concept: string, language: string, text: string): LinkId;
   link(id: LinkId | number): Link | undefined;
   links(): Link[];
@@ -328,6 +622,9 @@ export class LinkNetwork {
   snapshot(version: number, provenance: string): NetworkSnapshot;
   verifyFullMatch(): VerificationReport;
   reconstructText(): string;
+  embeddedRegions(): EmbeddedRegion[];
+  parseGrammars(): ParseGrammar[];
+  embedded_regions(): EmbeddedRegion[];
   reconstructBytes(): Uint8Array;
   renderSource(language: string): string;
   reconstructTextAsWithRules(
@@ -336,6 +633,7 @@ export class LinkNetwork {
     rules: TranslationRuleSet,
   ): string;
   intoFluent(): FluentPipeline;
+  capturedText(id: LinkId | number): string;
 }
 
 export class Link {
@@ -345,7 +643,14 @@ export class Link {
 }
 
 export class ParseConfiguration {
+  readonly triviaAttachmentPolicy: string;
+  readonly regionDetectionPolicy: RegionDetectionPolicyValue;
+  readonly accessMode: string;
   static default(): ParseConfiguration;
+  withTriviaAttachmentPolicy(policy: string): ParseConfiguration;
+  withRegionDetectionPolicy(policy: RegionDetectionPolicyValue): ParseConfiguration;
+  with_region_detection_policy(policy: RegionDetectionPolicyValue): ParseConfiguration;
+  withAccessMode(mode: string): ParseConfiguration;
 }
 
 export class LinkQuery {
@@ -442,26 +747,118 @@ export class TranslationRuleSet {
   static fromJson(source: string | unknown): TranslationRuleSet;
 }
 
+export type GrammarRuleKind = 'normal' | 'atomic' | 'silent' | 'token' | 'terminal' | 'nonterminal';
+export type GrammarExpression =
+  | { kind: 'empty' | 'any' }
+  | { kind: 'literal' | 'literalInsensitive' | 'regex'; value: string }
+  | { kind: 'ref'; name: string }
+  | { kind: 'seq'; items: GrammarExpression[] }
+  | { kind: 'choice'; items: GrammarExpression[]; ordered: boolean }
+  | { kind: 'repeat0' | 'repeat1' | 'optional' | 'and' | 'not'; item: GrammarExpression }
+  | { kind: 'repeat'; item: GrammarExpression; min: number; max: number | null }
+  | { kind: 'capture'; label: string | null; item: GrammarExpression }
+  | { kind: 'charRange'; start: string; end: string }
+  | {
+      kind: 'charClass';
+      value?: string;
+      items?: Array<
+        { kind: 'char'; value: string } | { kind: 'range'; start: string; end: string }
+      >;
+      negated?: boolean;
+    };
+export interface GrammarRuleValue {
+  name: string;
+  kind: GrammarRuleKind;
+  expression: GrammarExpression;
+}
+export interface NormalizedGrammar {
+  schemaVersion: 1;
+  start: string | null;
+  sourceFormat: string | null;
+  rules: GrammarRuleValue[];
+}
+
+export class Grammar {
+  constructor(
+    start: string | null,
+    rules: Map<string, Omit<GrammarRuleValue, 'name'> | GrammarRuleValue>,
+    sourceFormat?: string | null,
+  );
+  start: string | null;
+  sourceFormat: string | null;
+  rules: Map<string, GrammarRuleValue>;
+  rule(name: string): GrammarRuleValue | undefined;
+  ruleNames(): string[];
+  rule_names(): string[];
+  startRule(): GrammarRuleValue | undefined;
+  start_rule(): GrammarRuleValue | undefined;
+  source_format(): string | null;
+  referencedNonterminals(): string[];
+  referenced_nonterminals(): string[];
+  undefinedNonterminals(allowed?: string[]): string[];
+  undefined_nonterminals(allowed?: string[]): string[];
+  normalized(): NormalizedGrammar;
+}
+
 export class GrammarBuilder {
   constructor(start: string);
-  terminal(name: string, expression: unknown): GrammarBuilder;
-  nonterminal(name: string, expression: unknown): GrammarBuilder;
-  build(): unknown;
-  static literal(value: string): unknown;
-  static ref(name: string): unknown;
-  static seq(...items: unknown[]): unknown;
-  static choice(...items: unknown[]): unknown;
-  static repeat0(item: unknown): unknown;
-  static repeat1(item: unknown): unknown;
-  static optional(item: unknown): unknown;
-  static charRange(start: string, end: string): unknown;
-  static charClass(value: string): unknown;
-  static any(): unknown;
+  source(format: string): GrammarBuilder;
+  rule(name: string, expression: GrammarExpression, kind?: GrammarRuleKind): GrammarBuilder;
+  terminal(name: string, expression: GrammarExpression): GrammarBuilder;
+  nonterminal(name: string, expression: GrammarExpression): GrammarBuilder;
+  build(): Grammar;
+  static empty(): GrammarExpression;
+  static literal(value: string): GrammarExpression;
+  static literalInsensitive(value: string): GrammarExpression;
+  static ref(name: string): GrammarExpression;
+  static seq(...items: GrammarExpression[]): GrammarExpression;
+  static choice(...items: GrammarExpression[]): GrammarExpression;
+  static orderedChoice(...items: GrammarExpression[]): GrammarExpression;
+  static repeat0(item: GrammarExpression): GrammarExpression;
+  static repeat1(item: GrammarExpression): GrammarExpression;
+  static repeat(item: GrammarExpression, min: number, max?: number | null): GrammarExpression;
+  static optional(item: GrammarExpression): GrammarExpression;
+  static and(item: GrammarExpression): GrammarExpression;
+  static not(item: GrammarExpression): GrammarExpression;
+  static capture(label: string | null, item: GrammarExpression): GrammarExpression;
+  static charRange(start: string, end: string): GrammarExpression;
+  static charClass(
+    value: string | Array<
+      { kind: 'char'; value: string } | { kind: 'range'; start: string; end: string }
+    >,
+    negated?: boolean,
+  ): GrammarExpression;
+  static regex(value: string): GrammarExpression;
+  static any(): GrammarExpression;
 }
 
 export const ExprBuilder: typeof GrammarBuilder;
-export function emitPeggy(grammar: unknown): string;
-export function emitJavascriptParser(grammar: unknown): string;
+export function emitPeggy(grammar: Grammar): string;
+export function compileGrammar(grammar: Grammar, options?: Record<string, unknown>): unknown;
+export function parseWithGrammar(
+  grammar: Grammar,
+  source: string,
+  options?: Record<string, unknown>,
+): unknown;
+export function emitJavascriptParser(grammar: Grammar): string;
+export function serializeGrammar(grammar: Grammar): string;
+export function deserializeGrammar(source: string | NormalizedGrammar): Grammar;
+
+export class GrammarImportError extends Error {
+  format: string;
+  kind: 'parse' | 'unsupported';
+  construct?: string;
+}
+export function importAbnf(source: string): Grammar;
+export const import_abnf: typeof importAbnf;
+export function importBnf(source: string): Grammar;
+export const import_bnf: typeof importBnf;
+export function importEbnf(source: string): Grammar;
+export const import_ebnf: typeof importEbnf;
+export function importPest(source: string): Grammar;
+export const import_pest: typeof importPest;
+export function importTreeSitterJson(source: string | unknown): Grammar;
+export const import_tree_sitter_json: typeof importTreeSitterJson;
 
 export class ApiOperationEntry {
   operation: string;
@@ -559,11 +956,21 @@ export class EmbeddedRegion {
   span(): unknown;
 }
 
+/** Embedded regions an HTML or Markdown host grammar CST delimits, in source order. */
 export function detectEmbeddedRegions(
   text: string,
   language: string,
-  policy: RegionDetectionPolicyValue,
+  policy?: RegionDetectionPolicyValue,
 ): EmbeddedRegion[];
+/** Embedded regions of an already parsed host tree (nodes with term, span and children). */
+export function detectEmbeddedRegionsInTree(
+  tree: unknown,
+  text: string,
+  host: 'HTML' | 'Markdown',
+  policy?: RegionDetectionPolicyValue,
+): EmbeddedRegion[];
+/** The language of an HTML script element's content from its `type` attribute. */
+export function scriptLanguage(type: string | undefined): string | null;
 export function sniffLanguage(content: string): string | null;
 
 // --- language profiles ---
@@ -617,157 +1024,3 @@ export class LanguageProfileViolation extends Error {
 }
 
 // --- query algebra (link rules) ---
-
-export class LinkRuleParseError extends Error {
-  constructor(message: string);
-}
-
-export class LinkRuleCapture {
-  constructor(name: string, linkIds?: Array<LinkId | number>, text?: string);
-  name(): string;
-  linkIds(): LinkId[];
-  text(): string | undefined;
-}
-
-export class LinkRuleCaptures {
-  constructor(values?: LinkRuleCapture[]);
-  values: LinkRuleCapture[];
-  withLink(name: string, linkId: LinkId | number): LinkRuleCaptures;
-  withText(name: string, text: string, linkIds: Array<LinkId | number>): LinkRuleCaptures;
-  merged(other: LinkRuleCaptures): LinkRuleCaptures;
-  first(name: string): LinkId | undefined;
-  text(name: string): string | undefined;
-  iter(): LinkRuleCapture[];
-  [Symbol.iterator](): Iterator<LinkRuleCapture>;
-}
-
-export class LinkRuleMatch {
-  constructor(linkId: LinkId | number, captures?: LinkRuleCaptures);
-  static fromQueryMatch(queryMatch: QueryMatch): LinkRuleMatch;
-  withLinkCapture(name: string, linkId: LinkId | number): LinkRuleMatch;
-  merge(other: LinkRuleMatch): LinkRuleMatch | undefined;
-  mergeAs(linkId: LinkId | number, other: LinkRuleMatch): LinkRuleMatch;
-  linkId(): LinkId;
-  captures(): LinkRuleCaptures;
-}
-
-export class LinkRule {
-  static query(query: LinkQuery): LinkRule;
-  static kind(kind: string): LinkRule;
-  static linkType(linkType: LinkTypeValue): LinkRule;
-  static link_type(linkType: LinkTypeValue): LinkRule;
-  static language(language: string): LinkRule;
-  static namedFlag(named: boolean): LinkRule;
-  static named_flag(named: boolean): LinkRule;
-  static capture(name: string, rule: LinkRule): LinkRule;
-  static typedMetavariable(name: string, kind: string): LinkRule;
-  static typed_metavariable(name: string, kind: string): LinkRule;
-  static inside(rule: LinkRule, ancestor: LinkRule): LinkRule;
-  static has(rule: LinkRule, descendant: LinkRule): LinkRule;
-  static precedes(rule: LinkRule, following: LinkRule): LinkRule;
-  static follows(rule: LinkRule, preceding: LinkRule): LinkRule;
-  static all(rules: LinkRule[]): LinkRule;
-  static any(rules: LinkRule[]): LinkRule;
-  static negate(rule: LinkRule): LinkRule;
-  static named(name: string): LinkRule;
-  static ellipsisGap(before: LinkRule, after: LinkRule): LinkRule;
-  static ellipsis_gap(before: LinkRule, after: LinkRule): LinkRule;
-  static text(pattern: string): LinkRule;
-  static fromSexpression(source: string): LinkRule;
-  static from_sexpression(source: string): LinkRule;
-  matches(network: LinkNetwork, registry: LinkRuleRegistry): LinkRuleMatch[];
-}
-
-export class LinkRuleRegistry {
-  constructor();
-  static new(): LinkRuleRegistry;
-  rules: Map<string, LinkRule>;
-  withRule(name: string, rule: LinkRule): LinkRuleRegistry;
-  with_rule(name: string, rule: LinkRule): LinkRuleRegistry;
-  insert(name: string, rule: LinkRule): void;
-  get(name: string): LinkRule | undefined;
-}
-
-export class TraversalReport {
-  constructor(iterations?: number, visited?: number, changed?: number);
-  iterations(): number;
-  visited(): number;
-  changed(): number;
-}
-
-export class TraversalStrategy {
-  static TopDown: TraversalStrategy;
-  static BottomUp: TraversalStrategy;
-  static Innermost: TraversalStrategy;
-  static Fixpoint: (options: number | { maxIterations: number }) => TraversalStrategy;
-  matches(network: LinkNetwork, rule: LinkRule, registry: LinkRuleRegistry): LinkRuleMatch[];
-  applyMut(
-    network: LinkNetwork,
-    rule: LinkRule,
-    registry: LinkRuleRegistry,
-    visitor: (network: LinkNetwork, match: LinkRuleMatch) => boolean,
-  ): TraversalReport;
-  apply_mut(
-    network: LinkNetwork,
-    rule: LinkRule,
-    registry: LinkRuleRegistry,
-    visitor: (network: LinkNetwork, match: LinkRuleMatch) => boolean,
-  ): TraversalReport;
-}
-
-export type LinkRuleSnapshotExpectationValue = 'Valid' | 'Invalid';
-export const LinkRuleSnapshotExpectation: { Valid: 'Valid'; Invalid: 'Invalid' };
-
-export class LinkRuleSnapshotCase {
-  constructor(
-    name: string,
-    source: string,
-    language: string,
-    expectation: LinkRuleSnapshotExpectationValue,
-  );
-  static new(
-    name: string,
-    source: string,
-    language: string,
-    expectation: LinkRuleSnapshotExpectationValue,
-  ): LinkRuleSnapshotCase;
-  name(): string;
-  source(): string;
-  language(): string;
-  expectation(): LinkRuleSnapshotExpectationValue;
-}
-
-export class LinkRuleSnapshotSuite {
-  constructor(rule: LinkRule);
-  static new(rule: LinkRule): LinkRuleSnapshotSuite;
-  withCase(snapshotCase: LinkRuleSnapshotCase): LinkRuleSnapshotSuite;
-  with_case(snapshotCase: LinkRuleSnapshotCase): LinkRuleSnapshotSuite;
-  run(
-    registry: LinkRuleRegistry,
-    configuration?: ParseConfiguration,
-    networkFactory?: (source: string, language: string, configuration?: ParseConfiguration) => LinkNetwork,
-  ): LinkRuleSnapshotReport;
-}
-
-export class LinkRuleSnapshotReport {
-  constructor(cases?: LinkRuleSnapshotResult[]);
-  isSuccess(): boolean;
-  is_success(): boolean;
-  cases(): LinkRuleSnapshotResult[];
-}
-
-export class LinkRuleSnapshotResult {
-  constructor(
-    name: string,
-    expectation: LinkRuleSnapshotExpectationValue,
-    matched: boolean,
-    matchCount: number,
-    passed: boolean,
-  );
-  name(): string;
-  expectation(): LinkRuleSnapshotExpectationValue;
-  matched(): boolean;
-  matchCount(): number;
-  match_count(): number;
-  passed(): boolean;
-}

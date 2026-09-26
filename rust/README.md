@@ -132,6 +132,13 @@ description, an interactive WebAssembly demo, and the full
   and `object`.
 - A lossless text parser boundary that preserves tokens, trivia, recovery
   markers, and mixed-region metadata behind the same representation.
+- Versioned JavaScript, Rust, Lean, and Rocq/Coq parser/emitter capability
+  reports, a shared conformance corpus with the JavaScript package, and all 12
+  directed translation contracts failing closed until semantic preservation
+  exists. See
+  [`docs/four-language-contracts.md`](../docs/four-language-contracts.md) and
+  the full delivery checklist in
+  [`docs/issue-195-requirement-ledger.md`](../docs/issue-195-requirement-ledger.md).
 
 ## Usage
 

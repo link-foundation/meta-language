@@ -1,0 +1,344 @@
+{
+  "description": "Grammar crates pinned by rust/Cargo.lock and their WebAssembly builds used by the JavaScript runtime.",
+  "treeSitterCli": "tree-sitter 0.25.10 (da6fe9beb4f7f67beb75914ca8e0d48ae48d6406)",
+  "treeSitterRuntime": {
+    "rust": "0.25.10",
+    "javascript": "0.25.10"
+  },
+  "grammars": {
+    "c": {
+      "id": "c",
+      "crate": "tree-sitter-c",
+      "directory": ".",
+      "version": "0.24.2",
+      "parserSha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2",
+      "wasmSha256": "fa5c7f64735914f32849b44ef5ff0e459a43f5e5d28ccdc3f11785a2043948b4",
+      "license": "c.LICENSE"
+    },
+    "cpp": {
+      "id": "cpp",
+      "crate": "tree-sitter-cpp",
+      "directory": ".",
+      "version": "0.23.4",
+      "parserSha256": "2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814",
+      "wasmSha256": "84cd0ee5427a58e49791e157c50a9e7020766faad9922dfbc98c1efc8e1040d6",
+      "license": "cpp.LICENSE"
+    },
+    "csharp": {
+      "id": "csharp",
+      "crate": "tree-sitter-c-sharp",
+      "directory": ".",
+      "version": "0.23.5",
+      "parserSha256": "0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427",
+      "wasmSha256": "f265130d20fe62d3dc0cec756ee5a4159bd9825894a48fc0f7e72c8bd30ef099",
+      "license": "csharp.LICENSE"
+    },
+    "css": {
+      "id": "css",
+      "crate": "tree-sitter-css",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e",
+      "wasmSha256": "c2b8c4f2f69454a60a7562d6b21150b4879fc26e9a69d4674b9d7c11df838b62",
+      "license": "css.LICENSE"
+    },
+    "csv": {
+      "id": "csv",
+      "upstream": "tree-sitter-grammars/tree-sitter-csv",
+      "vendored": "rust/vendor/tree-sitter-csv",
+      "patch": "rust/vendor/tree-sitter-csv/rfc4180-quotes.patch",
+      "version": "f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
+      "parserSha256": "eacf58622b8d50ab75acf91172d35e314874327d98d1bd03acfd1ab789ddb1d1",
+      "wasmSha256": "19e23890eef87611c6a8c71575ec7d1b4150ba90c946f17ea818ecf329a5322b",
+      "license": "csv.LICENSE"
+    },
+    "dtd": {
+      "id": "dtd",
+      "crate": "tree-sitter-xml",
+      "directory": "dtd",
+      "version": "0.7.0",
+      "parserSha256": "79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932",
+      "wasmSha256": "e74dac556b2ef4ad7b10a721d7c171731f176b649c26123b01d5099658fa0cb4",
+      "license": "dtd.LICENSE"
+    },
+    "go": {
+      "id": "go",
+      "crate": "tree-sitter-go",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85",
+      "wasmSha256": "62de6d1fe0c811f194a97672fde719c1a9ca84a7f69685e88ee0883b7fcad238",
+      "license": "go.LICENSE"
+    },
+    "graphql": {
+      "id": "graphql",
+      "crate": "tree-sitter-graphql",
+      "directory": ".",
+      "version": "0.1.0",
+      "parserSha256": "d27f89090319f885811fefb5c5453f9cc95543c04df02b7c43aa1fa6f7d353d9",
+      "wasmSha256": "fd4081c84308f5db14a4a6e1bea91c08f9c38e5ab47e5a0730c4a39448844d00",
+      "license": "graphql.LICENSE"
+    },
+    "html": {
+      "id": "html",
+      "crate": "tree-sitter-html",
+      "directory": ".",
+      "version": "0.23.2",
+      "parserSha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1",
+      "wasmSha256": "6b997d3b7754edd84eea05dc6e53f06a94112a5d97b90d90af820afb065ac05d",
+      "license": "html.LICENSE"
+    },
+    "ini": {
+      "id": "ini",
+      "crate": "tree-sitter-ini",
+      "directory": ".",
+      "version": "1.4.0",
+      "parserSha256": "3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123",
+      "wasmSha256": "4884a74e0e60d02fc897b1f780c044e578ff839c9eeb6f4742d2feaef9839ece",
+      "license": "ini.LICENSE"
+    },
+    "java": {
+      "id": "java",
+      "crate": "tree-sitter-java",
+      "directory": ".",
+      "version": "0.23.5",
+      "parserSha256": "4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4",
+      "wasmSha256": "a2f2689856a2aceeb50c23bb4bda86daf872abdcb75ecbf33e71e6f3fb2c014f",
+      "license": "java.LICENSE"
+    },
+    "javascript": {
+      "id": "javascript",
+      "crate": "tree-sitter-javascript",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
+      "wasmSha256": "35070cda936e479202e22c72cf129d6894eee7f4de8b41912a516cfdbe109204",
+      "license": "javascript.LICENSE"
+    },
+    "json": {
+      "id": "json",
+      "crate": "tree-sitter-json",
+      "directory": ".",
+      "version": "0.24.8",
+      "parserSha256": "e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab",
+      "wasmSha256": "6862a0aac3af8bed434d4031afbe330895a277cc80e80733ea67b6dee01d4500",
+      "license": "json.LICENSE"
+    },
+    "json5": {
+      "id": "json5",
+      "crate": "tree-sitter-json5-orchard",
+      "directory": ".",
+      "version": "0.1.0",
+      "parserSha256": "0024a5353393c7186a9a4f531f451279d301c7c3925ba292348176a83d3765b4",
+      "wasmSha256": "f1ccbd6f0eb0b07b233094e3779daa8fe7c111658f23a491b6cb957b997c6e11",
+      "license": "json5.LICENSE"
+    },
+    "kotlin": {
+      "id": "kotlin",
+      "crate": "tree-sitter-kotlin-ng",
+      "directory": ".",
+      "version": "1.1.0",
+      "parserSha256": "9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3",
+      "wasmSha256": "35470989975963d68d2f60e6ae7180a12807bf9136a12e1cdcf23da9d0882f38",
+      "license": "kotlin.LICENSE"
+    },
+    "lean": {
+      "id": "lean",
+      "crate": "tree-sitter-lean4",
+      "directory": ".",
+      "version": "0.3.0",
+      "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b",
+      "wasmSha256": "899cf73abfb11fcc72cf82f6b39c6edbd30e26a8b80185401f88ce36da0b8ff2",
+      "license": "lean.LICENSE"
+    },
+    "lua": {
+      "id": "lua",
+      "crate": "tree-sitter-lua",
+      "directory": ".",
+      "version": "0.2.0",
+      "parserSha256": "fa3a2efe5803017c536d4727fe408b9eaf3e33b86662a5b1a1d12227d0022231",
+      "wasmSha256": "79f8f2dc2e924aafb21183c04a3edd9bf529bd4ee8da207d50960a0562be1f47",
+      "license": "lua.LICENSE"
+    },
+    "markdown": {
+      "id": "markdown",
+      "crate": "tree-sitter-md-025",
+      "directory": "tree-sitter-markdown",
+      "version": "0.5.6",
+      "parserSha256": "0f51c93b5d79d08bc74088d91a9aafb7e40ad7e2f169164865c01d392277bb07",
+      "wasmSha256": "6d129b4d3d4f4fd7fa88f2243db845d53d65dcd2521614ce94209e6c45a05b6a",
+      "license": "markdown.LICENSE"
+    },
+    "markdown_inline": {
+      "id": "markdown_inline",
+      "crate": "tree-sitter-md-025",
+      "directory": "tree-sitter-markdown-inline",
+      "version": "0.5.6",
+      "parserSha256": "0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c",
+      "wasmSha256": "38e644a81ca11a6b98d56aaa30b056148357dcaf22f62ef3e5f47c9a968e75e8",
+      "license": "markdown_inline.LICENSE"
+    },
+    "pascal": {
+      "id": "pascal",
+      "crate": "tree-sitter-pascal",
+      "directory": ".",
+      "version": "0.10.2",
+      "parserSha256": "d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329",
+      "wasmSha256": "9f04719399fff078431f3fd6fa77fbb8a5b3c9681edfd2d97c4dfe5ad86a5d35",
+      "license": "pascal.LICENSE"
+    },
+    "perl": {
+      "id": "perl",
+      "crate": "ts-parser-perl",
+      "directory": ".",
+      "version": "1.1.2",
+      "parserSha256": "38ebca6dd96edeb01da421780001ea26b572133e83525c993bbeb78e8e9a24bc",
+      "wasmSha256": "ae40bd28ba389d92fde2f8b4eb024581e038395f639df1e7ec6be4ddbe379e46",
+      "license": "perl.LICENSE"
+    },
+    "php": {
+      "id": "php",
+      "crate": "tree-sitter-php",
+      "directory": "php",
+      "version": "0.24.2",
+      "parserSha256": "59ad8e5e4fde3fe60687a488ab8420612840cc966b83739af1b3a4317ed27ec6",
+      "wasmSha256": "507649c167779621b46bfcfab2bd88744883a92ed52991bd1bdc35e2af1f935e",
+      "license": "php.LICENSE"
+    },
+    "proto": {
+      "id": "proto",
+      "crate": "tree-sitter-proto",
+      "directory": ".",
+      "version": "0.4.0",
+      "parserSha256": "ecdea8962be9f1879e067ee23127abd79ec8d3fad83799eb9052ffa48ec78448",
+      "wasmSha256": "0b226f4132ac4493642b8df1fbeb7541c92e36e3fb152064ef662d072135b795",
+      "license": "proto.LICENSE"
+    },
+    "python": {
+      "id": "python",
+      "crate": "tree-sitter-python",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0",
+      "wasmSha256": "a43153418b186cd2c170ba6e848d37e7f8abfcaab275f632a64504020f491cbc",
+      "license": "python.LICENSE"
+    },
+    "r": {
+      "id": "r",
+      "crate": "tree-sitter-r",
+      "directory": ".",
+      "version": "1.2.0",
+      "parserSha256": "622165734714c6e81f70d99d522d78cf98915fdf2b1032f8bb33e775a0b971c0",
+      "wasmSha256": "b492695b6767dfd1216ceed4efa3e62977b1ac3261899eb405a88aa4a1352e8e",
+      "license": "r.LICENSE"
+    },
+    "rocq": {
+      "id": "rocq",
+      "upstream": "aruzdh/tree-sitter-rocq",
+      "vendored": "rust/vendor/tree-sitter-rocq",
+      "version": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "parserSha256": "fc714e6d0dbecff5264dbea99768d1b44474d1de69726f6ce4cc2121125d8c9c",
+      "wasmSha256": "37566727cced22a9cab2f65bf09e174de262822639519f7177afe8bc627034b8",
+      "license": "rocq.LICENSE"
+    },
+    "ruby": {
+      "id": "ruby",
+      "crate": "tree-sitter-ruby",
+      "directory": ".",
+      "version": "0.23.1",
+      "parserSha256": "4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15",
+      "wasmSha256": "e77f88559b47c0fe2771821c6c160cdf6bbfe17afcd642ab3fdda9aebb70b2f3",
+      "license": "ruby.LICENSE"
+    },
+    "rust": {
+      "id": "rust",
+      "crate": "tree-sitter-rust",
+      "directory": ".",
+      "version": "0.24.2",
+      "parserSha256": "9602518f9e57919910bf0e777e52f6bfc9325d4c182e998bdb4efd5682b76e4a",
+      "wasmSha256": "bad860425fafa0321d6898b6cbaeee1f571f75fa7584bf726c3ec04f3b19c474",
+      "license": "rust.LICENSE"
+    },
+    "scala": {
+      "id": "scala",
+      "crate": "tree-sitter-scala",
+      "directory": ".",
+      "version": "0.25.1",
+      "parserSha256": "049ef02b206b3ff06b5066040d01ad04161bc1afc2bd26073c9a865082af9d1e",
+      "wasmSha256": "4f099f94793e54287875a3e8bc041a548733bb592f426ce3837c3d2a76afb1ca",
+      "license": "scala.LICENSE"
+    },
+    "sql": {
+      "id": "sql",
+      "crate": "tree-sitter-sequel",
+      "directory": ".",
+      "version": "0.3.11",
+      "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+      "wasmSha256": "f9d5638965f6f7ecc6b6979b8717f44e756687a1cbe4fef411b84506bdb81451",
+      "license": "sql.LICENSE"
+    },
+    "swift": {
+      "id": "swift",
+      "crate": "tree-sitter-swift",
+      "directory": ".",
+      "version": "0.7.3",
+      "parserSha256": "d3edff6effe31b9a507f496577407987343b101b23eb7bee7a9b050e8ab5d27a",
+      "wasmSha256": "92a6aa39712255e7332d1b06db52bc6d49e9f563215846978c0ca63b6cc38359",
+      "license": "swift.LICENSE"
+    },
+    "toml": {
+      "id": "toml",
+      "crate": "tree-sitter-toml-ng",
+      "directory": ".",
+      "version": "0.7.0",
+      "parserSha256": "1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3",
+      "wasmSha256": "1e1a98653af3577c723f93bb4063dcee96ef11f7be861094b60d8bec50dd5b78",
+      "license": "toml.LICENSE"
+    },
+    "tsx": {
+      "id": "tsx",
+      "crate": "tree-sitter-typescript",
+      "directory": "tsx",
+      "version": "0.23.2",
+      "parserSha256": "1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885",
+      "wasmSha256": "772bd591654c4d7c7c4427652138af9f118212738cadbbfef96adf2275736d35",
+      "license": "tsx.LICENSE"
+    },
+    "typescript": {
+      "id": "typescript",
+      "crate": "tree-sitter-typescript",
+      "directory": "typescript",
+      "version": "0.23.2",
+      "parserSha256": "74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa",
+      "wasmSha256": "427ea5f2c24c98989a53ee3520df03afa1f9ade5bc21362de17b9982ac374a88",
+      "license": "typescript.LICENSE"
+    },
+    "vb": {
+      "id": "vb",
+      "crate": "tree-sitter-vb-dotnet",
+      "directory": ".",
+      "version": "0.1.0",
+      "parserSha256": "7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8",
+      "wasmSha256": "f8bcf03f07a8d957f26ae728d8a0cb5e90240f095c44e5174ecea15c38059e85",
+      "license": "vb.LICENSE"
+    },
+    "xml": {
+      "id": "xml",
+      "crate": "tree-sitter-xml",
+      "directory": "xml",
+      "version": "0.7.0",
+      "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844",
+      "wasmSha256": "fafa7327c7a09ba74612e23543ff4e93ee08b785f0a8c2f8292c03f0b65c4917",
+      "license": "xml.LICENSE"
+    },
+    "yaml": {
+      "id": "yaml",
+      "crate": "tree-sitter-yaml",
+      "directory": ".",
+      "version": "0.7.2",
+      "parserSha256": "8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9",
+      "wasmSha256": "e93163e5d306e4b328ab0b4c29ce82b086057e1d2dad47bcdcac358abfdec518",
+      "license": "yaml.LICENSE"
+    }
+  }
+}

@@ -367,6 +367,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Node.js for translated JavaScript tests
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
         shell: pwsh
@@ -389,7 +394,8 @@ jobs:
               $value = $matches[2]
               $vcvarsEnvironment[$name] = $value
               if ($name -eq "Path") {
-                "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Append
+                # GITHUB_PATH prepends to the existing PATH; a Path entry in GITHUB_ENV would add a
+                # second, differently cased variable that child processes may resolve instead.
                 $value -split ";" | Where-Object { $_ } | ForEach-Object {
                   $_ | Out-File -FilePath $env:GITHUB_PATH -Append
                 }

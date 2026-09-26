@@ -1,0 +1,12 @@
+fact 20 = 2432902008176640000
+sumTo 100 = 5050
+fib 25 = 75025
+monus 3 5 = 0
+halve -7 = -4
+remainder -7 3 = 2
+remainder 7 0 = 7
+size = 4, total = 18
+mirrored total = 18
+3 doubled is 6 (negative)
+7 doubled is 14 (positive)
+negative

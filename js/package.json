@@ -18,7 +18,16 @@
   "scripts": {
     "test": "node --test tests/*.test.js",
     "check:parity": "node scripts/check-js-rust-parity.mjs",
-    "check:parity:manifest": "node scripts/check-js-rust-parity.mjs --manifest-only"
+    "check:parity:manifest": "node scripts/check-js-rust-parity.mjs --manifest-only",
+    "check:issue-195": "node scripts/check-issue-195-acceptance.mjs",
+    "check:default-cst": "node scripts/generate-default-cst-expectations.mjs --check",
+    "check:lino-grammar": "node scripts/generate-lino-grammar-cases.mjs --check",
+    "check:pdf-grammar": "node scripts/generate-pdf-grammar-cases.mjs --check",
+    "check:builtin-cst": "node scripts/generate-builtin-cst-expectations.mjs --check",
+    "check:language-catalog": "node scripts/build-language-catalog.mjs --check",
+    "check:issue-195:runtime-parity": "node scripts/check-issue-195-runtime-parity.mjs",
+    "acceptance:issue-195": "node scripts/check-issue-195-acceptance.mjs --produce-gate-results issue-195-results/gate-faults.json --evaluate --checkpoint all",
+    "acceptance:issue-195:refresh": "node scripts/check-issue-195-acceptance.mjs --refresh-manifest"
   },
   "keywords": [
     "links",
@@ -41,6 +50,11 @@
   },
   "dependencies": {
     "links-notation": "0.13.0",
-    "peggy": "5.1.0"
+    "peggy": "5.1.0",
+    "web-tree-sitter": "0.25.10"
+  },
+  "devDependencies": {
+    "franc-min": "6.2.0",
+    "pdf-lib": "1.17.1"
   }
 }

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
 import { test } from 'node:test';
 
 async function readJson(url) {
@@ -36,6 +38,50 @@ test('npm package metadata uses the public unscoped package name', async () => {
   for (const publicDoc of [rootReadme, jsReadme, rustReadme, issue163CaseStudy]) {
     assert.equal(publicDoc.includes('@link-foundation/meta-language'), false);
   }
+});
+
+test('npm delivery is script-free and carries every locked portable grammar', async () => {
+  const packageJson = await readJson(new URL('../package.json', import.meta.url));
+  const lock = await readJson(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url));
+
+  assert.equal(packageJson.scripts.install, undefined);
+  assert.equal(packageJson.scripts.prepack, undefined);
+  assert.equal(packageJson.dependencies['tree-sitter-rocq'], undefined);
+  assert.equal(packageJson.dependencies['@kreuzberg/tree-sitter-language-pack'], undefined);
+  assert.equal(packageJson.dependencies['tree-sitter'], undefined);
+  assert.equal(packageJson.dependencies['web-tree-sitter'], lock.treeSitterRuntime.javascript);
+  assert.equal(packageJson.bundleDependencies, undefined);
+  assert.ok(packageJson.files.includes('src'));
+  for (const [id, grammar] of Object.entries(lock.grammars)) {
+    const wasm = gunzipSync(
+      await readFile(new URL(`../src/vendor/grammars/${id}.wasm.gz`, import.meta.url)),
+    );
+    assert.equal(createHash('sha256').update(wasm).digest('hex'), grammar.wasmSha256, id);
+    const license = await readFile(
+      new URL(`../src/vendor/grammars/${id}.LICENSE`, import.meta.url),
+      'utf8',
+    );
+    assert.ok(license.trim().length > 0, `${id} ships its license`);
+  }
+});
+
+test('npm lockfile carries no native or network-downloaded grammar packages', async () => {
+  const packageLock = await readJson(new URL('../package-lock.json', import.meta.url));
+
+  for (const packagePath of Object.keys(packageLock.packages)) {
+    assert.equal(packagePath.includes('tree-sitter-language-pack'), false, packagePath);
+    assert.notEqual(packagePath, 'node_modules/tree-sitter', packagePath);
+  }
+});
+
+test('Rust delivery closes each decompressed vendored parser before compiling it', async () => {
+  const buildScript = await readFile(new URL('../../rust/build.rs', import.meta.url), 'utf8');
+
+  assert.match(buildScript, /fn decompress_parser\([^]*?\n}/);
+  assert.match(
+    buildScript,
+    /decompress_parser\(&compressed, &parser\);\s+let mut compiler = cc::Build::new\(\)/,
+  );
 });
 
 test('JavaScript workflow publishes to npm with trusted publishing provenance', async () => {
@@ -103,4 +149,29 @@ test('Rust release pipeline delegates npm publishing to the canonical JavaScript
     assert.match(job, /release_version="\$RELEASE_VERSION"/);
     assert.ok(createRelease >= 0 && dispatchPublisher > createRelease);
   }
+});
+
+test('issue 195 acceptance workflow produces exact-checkpoint evidence with pinned toolchains', async () => {
+  const workflow = await readFile(
+    new URL('../../.github/workflows/issue-195-acceptance.yml', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(workflow, /node-version:\s*24/);
+  assert.match(workflow, /dtolnay\/rust-toolchain@1\.98\.1/);
+  assert.match(workflow, /ocaml\/setup-ocaml@v3/);
+  assert.match(
+    workflow,
+    /opam repository add rocq-released https:\/\/rocq-prover\.org\/opam\/released/,
+  );
+  assert.match(workflow, /opam install[^\n]*rocq-core=9\.2\.0[^\n]*rocq-stdlib=9\.2\.0/);
+  assert.match(workflow, /opam var bin >> "\$GITHUB_PATH"/);
+  assert.doesNotMatch(workflow, /leanprover\/lean-action/);
+  assert.match(workflow, /elan-x86_64-unknown-linux-gnu\.tar\.gz/);
+  assert.match(workflow, /42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63/);
+  assert.match(workflow, /leanprover\/lean4:v4\.33\.1/);
+  assert.match(workflow, /node js\/scripts\/run-issue-195-evidence\.mjs/);
+  assert.match(workflow, /--checkpoint "\$ACCEPTANCE_CHECKPOINT"/);
+  assert.match(workflow, /--commit "\$GITHUB_SHA"/);
+  assert.match(workflow, /npm ci --ignore-scripts/);
 });
