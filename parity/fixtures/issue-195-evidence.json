@@ -99,7 +99,30 @@
       "parseLanguage": "HTML",
       "source": "<script>const answer = 42;</script>",
       "regionSource": "const answer = 42;",
-      "root": "program"
+      "root": "program",
+      "recoverySource": "<script>const answer = ;</script>",
+      "spellings": [
+        "<script type=\"module\">const answer = 42;</script>",
+        "<script type=\"text/javascript\">const answer = 42;</script>",
+        "<script type=\"text/javascript; charset=utf-8\">const answer = 42;</script>",
+        "<script type=\"application/javascript\">const answer = 42;</script>",
+        "<script type=\"application/ecmascript\">const answer = 42;</script>",
+        "<script type=\"application/x-ecmascript\">const answer = 42;</script>",
+        "<script type=\"application/x-javascript\">const answer = 42;</script>",
+        "<script type=\"text/ecmascript\">const answer = 42;</script>",
+        "<script type=\"text/javascript1.0\">const answer = 42;</script>",
+        "<script type=\"text/javascript1.1\">const answer = 42;</script>",
+        "<script type=\"text/javascript1.2\">const answer = 42;</script>",
+        "<script type=\"text/javascript1.3\">const answer = 42;</script>",
+        "<script type=\"text/javascript1.4\">const answer = 42;</script>",
+        "<script type=\"text/javascript1.5\">const answer = 42;</script>",
+        "<script type=\"text/jscript\">const answer = 42;</script>",
+        "<script type=\"text/livescript\">const answer = 42;</script>",
+        "<script type=\"text/x-ecmascript\">const answer = 42;</script>",
+        "<script type=\"text/x-javascript\">const answer = 42;</script>",
+        "<script type=\"TEXT/JAVASCRIPT\">const answer = 42;</script>",
+        "<SCRIPT>const answer = 42;</SCRIPT>"
+      ]
     },
     {
       "host": "HTML",
@@ -107,7 +130,13 @@
       "parseLanguage": "HTML",
       "source": "<style>.answer { color: green; }</style>",
       "regionSource": ".answer { color: green; }",
-      "root": "stylesheet"
+      "root": "stylesheet",
+      "recoverySource": "<style>.answer { color: green; </style>",
+      "spellings": [
+        "<style type=\"text/css\">.answer { color: green; }</style>",
+        "<style type=\"TEXT/CSS; charset=utf-8\">.answer { color: green; }</style>",
+        "<STYLE>.answer { color: green; }</STYLE>"
+      ]
     },
     {
       "host": "Markdown",
@@ -116,7 +145,14 @@
       "parseLanguage": "Markdown",
       "source": "# Demo\n```Rust\nfn answer() -> u32 { 42 }\n```\n",
       "regionSource": "fn answer() -> u32 { 42 }\n",
-      "root": "source_file"
+      "root": "source_file",
+      "recoverySource": "# Demo\n```Rust\nfn answer() -> u32 { 42\n```\n",
+      "spellings": [
+        "# Demo\n```rust\nfn answer() -> u32 { 42 }\n```\n",
+        "# Demo\n```rs\nfn answer() -> u32 { 42 }\n```\n",
+        "# Demo\n```RUST\nfn answer() -> u32 { 42 }\n```\n",
+        "# Demo\n~~~rust\nfn answer() -> u32 { 42 }\n~~~\n"
+      ]
     },
     {
       "host": "Markdown",
@@ -124,7 +160,13 @@
       "parseLanguage": "Markdown",
       "source": "# Demo\n<section><strong>answer</strong></section>\n",
       "regionSource": "<section><strong>answer</strong></section>\n",
-      "root": "document"
+      "root": "document",
+      "recoverySource": "# Demo\n<section><strong>answer</strong></section></div>\n",
+      "spellings": [
+        "# Demo\n<div>\n<strong>answer</strong>\n</div>\n",
+        "# Demo\n<!-- answer -->\n",
+        "Text <strong>answer</strong> inline.\n"
+      ]
     },
     {
       "host": "CSS style attribute",
@@ -132,7 +174,14 @@
       "parseLanguage": "HTML",
       "source": "<p style=\"color: blue\">answer</p>",
       "regionSource": "color: blue",
-      "root": "stylesheet"
+      "root": "stylesheet",
+      "recoverySource": "<p style=\"color: blue {\">answer</p>",
+      "spellings": [
+        "<p style='color: blue'>answer</p>",
+        "<p STYLE=\"color: blue\">answer</p>",
+        "<p style=color:blue>answer</p>",
+        "<p style=\"color: blue;\">answer</p>"
+      ]
     }
   ],
   "generative": {

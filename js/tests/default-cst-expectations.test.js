@@ -214,95 +214,204 @@ function syntaxTree(network, root) {
   return nodes;
 }
 
+/**
+ * The failed checks of a complete lossless default CST: `subject` names the
+ * parse language, its positive and recovery sources, aliases, extensions and
+ * independent expectation `want` ({ grammars, positive, recovery, embedded }).
+ */
+function positiveCstProblems({ name, source, recoverySource, aliases, extensions, want }) {
+  const problems = [];
+  const check = (condition, message) => {
+    if (!condition) problems.push(message);
+  };
+  const bytes = Buffer.from(source, 'utf8');
+  // ordinaryPublicParseApi, exactReconstruction
+  const network = LinkNetwork.parse(source, name);
+  const recovery = LinkNetwork.parse(recoverySource, name);
+  check(network.reconstructText() === source, 'positive reconstruction');
+  check(recovery.reconstructText() === recoverySource, 'recovery reconstruction');
+  // independentExpectedStructure, realGrammarNodes, hierarchy, namedFields
+  check(want !== undefined, 'independent expectation');
+  if (!want) return problems;
+  const root = documentRoot(network);
+  const rows = syntaxRows(network, root);
+  const wantRows = publicRows(name, source, want.positive);
+  const difference = firstDifference(rows, wantRows);
+  check(!difference, `positive rows ${difference}`);
+  check(rows.length > 1 && rows.every(([depth], index) => index === 0 || depth <= rows[index - 1][0] + 1), 'hierarchy');
+  check(rows.filter((row) => row[1]).length === wantRows.filter((row) => row[1]).length, 'fields');
+  // grammarVersionRecorded
+  const recorded = network.parseGrammars()
+    .filter((grammar) => grammar.language === name)
+    .map(({ id, version, parserSha256 }) => ({ id, version, parserSha256 }));
+  check(recorded.length > 0 && JSON.stringify(recorded) === JSON.stringify(grammarProvenance(name)), 'grammar provenance');
+  check(Object.keys(want.grammars).every((id) => recorded.some((grammar) =>
+    grammar.id === id && grammar.version === want.grammars[id].version && grammar.parserSha256 === want.grammars[id].parserSha256)),
+  'expected grammar versions');
+  // childOrder, tokens, commentsAndTrivia, exactUtf8Spans
+  const trivia = network.links().filter((link) => link.metadata().linkType === LinkType.Trivia)
+    .map((link) => `${link.metadata().span.byteRange.start}:${link.metadata().span.byteRange.end}`);
+  const isBoundary = (offset) => offset === bytes.length || (offset < bytes.length && (bytes[offset] & 0xc0) !== 0x80);
+  for (const node of syntaxTree(network, root)) {
+    const { span, flags, term } = node.link.metadata();
+    const { start, end } = span.byteRange;
+    check(start <= end && end <= bytes.length && isBoundary(start) && isBoundary(end), `UTF-8 span ${term} ${start}:${end}`);
+    node.children.forEach((child, index) => {
+      const previous = node.children[index - 1]?.metadata().span.byteRange;
+      const { start: childStart, end: childEnd } = child.metadata().span.byteRange;
+      check(childStart >= start && childEnd <= end && (!previous || previous.end <= childStart), `child order ${term} ${childStart}`);
+    });
+    if (node.children.length === 0 && start < end) {
+      const text = bytes.subarray(start, end).toString('utf8');
+      check(node.tokens.some((token) => token.metadata().term === text), `token ${term} ${start}:${end}`);
+      if (flags.isExtra) check(trivia.includes(`${start}:${end}`), `trivia ${term} ${start}:${end}`);
+    }
+  }
+  check(rows.filter((row) => row[6].includes('X')).length === wantRows.filter((row) => row[6].includes('X')).length, 'extras');
+  // errorAndMissingNodes
+  check(network.verifyFullMatch().isClean(), 'positive source is clean');
+  check(!recovery.verifyFullMatch().isClean(), 'recovery source is diagnosed');
+  const recoveryRows = syntaxRows(recovery, documentRoot(recovery));
+  const recoveryDifference = firstDifference(recoveryRows, publicRows(name, recoverySource, want.recovery));
+  check(!recoveryDifference, `recovery rows ${recoveryDifference}`);
+  // embeddedLanguageBoundaries
+  problems.push(...embeddedProblems(network, name, source, want.embedded, 'embedded'));
+  // allAliases
+  for (const alias of aliases) {
+    const aliased = LinkNetwork.parse(source, alias);
+    check(!firstDifference(syntaxRows(aliased, documentRoot(aliased)), rows), `alias ${alias}`);
+    check(aliased.reconstructText() === source, `alias ${alias} reconstruction`);
+  }
+  // extensionDispatch: every extension offers the language, and a path that
+  // selects it parses to the same tree.
+  for (const extension of extensions) {
+    const path = `fixture${extension}`;
+    check(languageCandidatesForPath(path).includes(name), `extension ${extension}`);
+    const dispatched = languageForPath(path);
+    const viaPath = LinkNetwork.parse(source, dispatched);
+    if (dispatched === name) {
+      check(!firstDifference(syntaxRows(viaPath, documentRoot(viaPath)), rows), `extension ${extension} rows`);
+    }
+  }
+  check(extensions.length === 0 || extensions.some((extension) => languageForPath(`fixture${extension}`) === name),
+    'an extension selects the language');
+  return problems;
+}
+
+/** Differences between the embedded regions of `network` and `want`. */
+function embeddedProblems(network, language, source, want, label) {
+  const regions = embeddedRoots(network, language, source);
+  const boundaries = JSON.stringify(regions.map(({ language: name, span }) => [name, span.start, span.end]));
+  if (boundaries !== JSON.stringify(want.map(({ language: name, startByte, endByte }) => [name, startByte, endByte]))) {
+    return [`${label} boundaries ${boundaries}`];
+  }
+  return regions.flatMap((region, index) => {
+    const difference = firstDifference(syntaxRows(network, region.root, region.span.start), want[index].rows);
+    return difference ? [`${label} ${want[index].path} ${difference}`] : [];
+  });
+}
+
 const TEST_NAME = 'every JavaScript inventory language parses to its complete lossless default CST';
 
 test(TEST_NAME, async () => {
   const failures = [];
   for (const language of inventory.languages) {
     const want = expected.languages[language.name];
-    const problems = [];
-    const check = (condition, message) => {
-      if (!condition) problems.push(message);
-    };
-    const bytes = Buffer.from(language.source, 'utf8');
-    // ordinaryPublicParseApi, exactReconstruction
-    const network = LinkNetwork.parse(language.source, language.name);
-    const recovery = LinkNetwork.parse(language.recoverySource, language.name);
-    check(network.reconstructText() === language.source, 'positive reconstruction');
-    check(recovery.reconstructText() === language.recoverySource, 'recovery reconstruction');
-    // independentExpectedStructure, realGrammarNodes, hierarchy, namedFields
-    check(want !== undefined, 'independent expectation');
-    const root = documentRoot(network);
-    const rows = syntaxRows(network, root);
-    const difference = want && firstDifference(rows, publicRows(language.name, language.source, want.positive));
-    check(!difference, `positive rows ${difference}`);
-    check(rows.length > 1 && rows.every(([depth], index) => index === 0 || depth <= rows[index - 1][0] + 1), 'hierarchy');
-    check(!want || rows.filter((row) => row[1]).length === publicRows(language.name, language.source, want.positive).filter((row) => row[1]).length, 'fields');
-    // grammarVersionRecorded
-    const recorded = network.parseGrammars()
-      .filter((grammar) => grammar.language === language.name)
-      .map(({ id, version, parserSha256 }) => ({ id, version, parserSha256 }));
-    check(recorded.length > 0 && JSON.stringify(recorded) === JSON.stringify(grammarProvenance(language.name)), 'grammar provenance');
-    check(!want || Object.keys(want.grammars).every((id) => recorded.some((grammar) =>
-      grammar.id === id && grammar.version === want.grammars[id].version && grammar.parserSha256 === want.grammars[id].parserSha256)),
-    'expected grammar versions');
-    // childOrder, tokens, commentsAndTrivia, exactUtf8Spans
-    const trivia = network.links().filter((link) => link.metadata().linkType === LinkType.Trivia)
-      .map((link) => `${link.metadata().span.byteRange.start}:${link.metadata().span.byteRange.end}`);
-    const isBoundary = (offset) => offset === bytes.length || (offset < bytes.length && (bytes[offset] & 0xc0) !== 0x80);
-    for (const node of syntaxTree(network, root)) {
-      const { span, flags, term } = node.link.metadata();
-      const { start, end } = span.byteRange;
-      check(start <= end && end <= bytes.length && isBoundary(start) && isBoundary(end), `UTF-8 span ${term} ${start}:${end}`);
-      node.children.forEach((child, index) => {
-        const previous = node.children[index - 1]?.metadata().span.byteRange;
-        const { start: childStart, end: childEnd } = child.metadata().span.byteRange;
-        check(childStart >= start && childEnd <= end && (!previous || previous.end <= childStart), `child order ${term} ${childStart}`);
-      });
-      if (node.children.length === 0 && start < end) {
-        const text = bytes.subarray(start, end).toString('utf8');
-        check(node.tokens.some((token) => token.metadata().term === text), `token ${term} ${start}:${end}`);
-        if (flags.isExtra) check(trivia.includes(`${start}:${end}`), `trivia ${term} ${start}:${end}`);
-      }
-    }
-    check(!want || rows.filter((row) => row[6].includes('X')).length === want.positive.filter((row) => row[6].includes('X')).length, 'extras');
-    // errorAndMissingNodes
-    check(network.verifyFullMatch().isClean(), 'positive source is clean');
-    check(!recovery.verifyFullMatch().isClean(), 'recovery source is diagnosed');
-    const recoveryRows = syntaxRows(recovery, documentRoot(recovery));
-    const recoveryDifference = want && firstDifference(recoveryRows, publicRows(language.name, language.recoverySource, want.recovery));
-    check(!recoveryDifference, `recovery rows ${recoveryDifference}`);
-    check(recoveryRows.some((row) => /[EM]/u.test(row[6])), 'recovery has error or missing nodes');
-    // embeddedLanguageBoundaries
-    const regions = embeddedRoots(network, language.name, language.source);
-    check(want && JSON.stringify(regions.map(({ language: name, span }) => [name, span.start, span.end]))
-      === JSON.stringify(want.embedded.map(({ language: name, startByte, endByte }) => [name, startByte, endByte])), 'embedded boundaries');
-    regions.forEach((region, index) => {
-      const regionDifference = firstDifference(syntaxRows(network, region.root, region.span.start), want.embedded[index].rows);
-      check(!regionDifference, `embedded ${want.embedded[index].path} ${regionDifference}`);
+    const problems = positiveCstProblems({
+      name: language.name,
+      source: language.source,
+      recoverySource: language.recoverySource,
+      aliases: language.aliases,
+      extensions: inventory.extensionDispatch[language.name],
+      want,
     });
-    // allAliases
-    for (const alias of language.aliases) {
-      const aliased = LinkNetwork.parse(language.source, alias);
-      check(!firstDifference(syntaxRows(aliased, documentRoot(aliased)), rows), `alias ${alias}`);
-      check(aliased.reconstructText() === language.source, `alias ${alias} reconstruction`);
-    }
-    // extensionDispatch: every extension offers the language, and a path
-    // that selects it parses to the same tree.
-    const extensions = inventory.extensionDispatch[language.name];
-    for (const extension of extensions) {
-      const path = `fixture${extension}`;
-      check(languageCandidatesForPath(path).includes(language.name), `extension ${extension}`);
-      const dispatched = languageForPath(path);
-      const viaPath = LinkNetwork.parse(language.source, dispatched);
-      if (dispatched === language.name) {
-        check(!firstDifference(syntaxRows(viaPath, documentRoot(viaPath)), rows), `extension ${extension} rows`);
+    if (want) {
+      const recovery = LinkNetwork.parse(language.recoverySource, language.name);
+      if (!syntaxRows(recovery, documentRoot(recovery)).some((row) => /[EM]/u.test(row[6]))) {
+        problems.push('recovery has error or missing nodes');
       }
     }
-    check(extensions.length === 0 || extensions.some((extension) => languageForPath(`fixture${extension}`) === language.name),
-      'an extension selects the language');
     if (problems.length) failures.push(`${language.name}: ${problems.join('; ')}`);
     else await recordPositiveCstObservations(language.name, TEST_NAME);
   }
   assert.deepEqual(failures, []);
 });
+
+const evidenceBytes = await readFile(new URL('../../parity/fixtures/issue-195-evidence.json', import.meta.url));
+const evidenceDigest = createHash('sha256').update(evidenceBytes).digest('hex');
+const embeddedExpectations = (await parityJson('fixtures/default-cst-expected.json')).embeddedFixtures;
+const EMBEDDED_TEST_NAME = 'every JavaScript embedded-language path parses to its complete lossless default CST';
+
+test(EMBEDDED_TEST_NAME, async () => {
+  const failures = [];
+  for (const fixture of JSON.parse(evidenceBytes).embedded) {
+    const label = `${fixture.host} -> ${fixture.target}`;
+    const want = embeddedExpectations[label];
+    const host = inventory.languages.find(({ name }) => name === fixture.parseLanguage);
+    const target = fixture.regionLanguage ?? fixture.target;
+    const problems = positiveCstProblems({
+      name: host.name,
+      source: fixture.source,
+      recoverySource: fixture.recoverySource,
+      aliases: host.aliases,
+      extensions: inventory.extensionDispatch[host.name],
+      want: want && {
+        grammars: expected.languages[host.name].grammars,
+        positive: want.positive.rows,
+        recovery: want.recovery.rows,
+        embedded: want.positive.embedded,
+      },
+    });
+    if (want) {
+      // The fixture's region is an independently expected boundary parsed by
+      // the target grammar, whose version the network records.
+      const network = LinkNetwork.parse(fixture.source, host.name);
+      const start = encoder.encode(fixture.source.slice(0, fixture.source.indexOf(fixture.regionSource))).length;
+      const end = start + encoder.encode(fixture.regionSource).length;
+      const region = embeddedRoots(network, host.name, fixture.source)
+        .find(({ span }) => span.start === start && span.end === end);
+      if (region?.language !== target || region.root?.metadata().term !== fixture.root) problems.push('fixture region');
+      const recorded = JSON.stringify(network.parseGrammars()
+        .filter((grammar) => grammar.language === target)
+        .map(({ id, version, parserSha256 }) => ({ id, version, parserSha256 })));
+      if (recorded !== JSON.stringify(grammarProvenance(target))) problems.push('target grammar provenance');
+      // errorAndMissingNodes: the recovery source's error is inside its
+      // embedded region.
+      const recovery = LinkNetwork.parse(fixture.recoverySource, host.name);
+      problems.push(...embeddedProblems(recovery, host.name, fixture.recoverySource, want.recovery.embedded, 'recovery embedded'));
+      const recoveryRegions = embeddedRoots(recovery, host.name, fixture.recoverySource);
+      if (!recoveryRegions.some((candidate) => candidate.language === target &&
+        syntaxRows(recovery, candidate.root, candidate.span.start).some((row) => /[EM]/u.test(row[6])))) {
+        problems.push('recovery region has error or missing nodes');
+      }
+      // allAliases: every spelling that selects the target language.
+      fixture.spellings.forEach((spelling, index) => {
+        const spelled = LinkNetwork.parse(spelling, host.name);
+        const difference = firstDifference(syntaxRows(spelled, documentRoot(spelled)), want.spellings[index].rows);
+        if (difference || spelled.reconstructText() !== spelling) problems.push(`spelling ${index} ${difference}`);
+        problems.push(...embeddedProblems(spelled, host.name, spelling, want.spellings[index].embedded, `spelling ${index}`));
+        if (!embeddedRoots(spelled, host.name, spelling).some(({ language }) => language === target)) {
+          problems.push(`spelling ${index} selects ${target}`);
+        }
+      });
+    }
+    if (problems.length) failures.push(`${label}: ${problems.join('; ')}`);
+    else await recordEmbeddedCstObservations(fixture);
+  }
+  assert.deepEqual(failures, []);
+});
+
+async function recordEmbeddedCstObservations({ host, target }) {
+  if (!process.env.ISSUE_195_OBSERVATION_FILE) return;
+  const records = CST_POSITIVE_ASSERTIONS.map((assertionId) => JSON.stringify({
+    testId: `i195-embed-${languageSlug(host)}-${languageSlug(target)}-javascript-positive`,
+    assertionId,
+    fixtureId: `planned:embedded:${host}:${target}`,
+    fixtureDigest: evidenceDigest,
+    runtime: 'javascript',
+    commit: process.env.ISSUE_195_COMMIT,
+    outcome: 'passed',
+    testName: EMBEDDED_TEST_NAME,
+  }));
+  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, `${records.join('\n')}\n`);
+}

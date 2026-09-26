@@ -275,26 +275,29 @@ const CST_POSITIVE_ASSERTIONS: [&str; 15] = [
 const POSITIVE_TEST_NAME: &str =
     "every_rust_inventory_language_parses_to_its_complete_lossless_default_cst";
 
+/// The acceptance slug of a language or embedding name.
+fn language_slug(name: &str) -> String {
+    let normalized = name
+        .to_ascii_lowercase()
+        .replace('+', "-plus")
+        .replace('#', "-sharp");
+    regex::Regex::new("[^a-z0-9]+")
+        .expect("valid slug expression")
+        .replace_all(&normalized, "-")
+        .trim_matches('-')
+        .to_string()
+}
+
 fn record_positive_cst_observations(language: &str, fixture_digest: &str) {
     let Some(path) = std::env::var_os("ISSUE_195_OBSERVATION_FILE") else {
         return;
     };
-    let normalized = language
-        .to_ascii_lowercase()
-        .replace('+', "-plus")
-        .replace('#', "-sharp");
-    let slug = regex::Regex::new("[^a-z0-9]+")
-        .expect("valid slug expression")
-        .replace_all(&normalized, "-");
+    let slug = language_slug(language);
     let commit = std::env::var("ISSUE_195_COMMIT").expect("observation commit");
-    let mut file = fs::OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(path)
-        .expect("observation file opens");
+    let mut records = String::new();
     for assertion_id in CST_POSITIVE_ASSERTIONS {
         let record = json!({
-            "testId": format!("i195-cst-{}-rust-positive", slug.trim_matches('-')),
+            "testId": format!("i195-cst-{slug}-rust-positive"),
             "assertionId": assertion_id,
             "fixtureId": format!("inventory:{language}"),
             "fixtureDigest": fixture_digest,
@@ -303,8 +306,24 @@ fn record_positive_cst_observations(language: &str, fixture_digest: &str) {
             "outcome": "passed",
             "testName": POSITIVE_TEST_NAME,
         });
-        writeln!(file, "{record}").expect("observation record writes");
+        records.push_str(&record.to_string());
+        records.push('\n');
     }
+    append_observations(&path, &records);
+}
+
+/// Appends observation lines with one `write` call, so records of the
+/// concurrently running JavaScript and Rust suites never interleave.
+fn append_observations(path: &std::ffi::OsStr, records: &str) {
+    let mut file = fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(path)
+        .expect("observation file opens");
+    let written = file
+        .write(records.as_bytes())
+        .expect("observation records write");
+    assert_eq!(written, records.len(), "observation records write at once");
 }
 
 /// The first differing row of `rows` against `want`, if any.
@@ -336,21 +355,36 @@ fn has_flag(row: &Value, flags: &str) -> bool {
         .is_some_and(|row_flags| row_flags.chars().any(|flag| flags.contains(flag)))
 }
 
-/// Checks the complete CST of one inventory language, returning the failed
-/// checks.
+/// A parse language with its positive and recovery sources, aliases,
+/// extensions and independent expectation
+/// (`{ grammars, positive, recovery, embedded }`).
+struct CstSubject<'a> {
+    name: &'a str,
+    source: &'a str,
+    recovery_source: &'a str,
+    aliases: &'a [Value],
+    extensions: &'a [Value],
+    want: Option<&'a Value>,
+}
+
+/// Checks the complete lossless default CST of `subject`, returning the
+/// failed checks.
 #[allow(clippy::too_many_lines)]
-fn positive_cst_problems(inventory: &Value, language: &Value, want: Option<&Value>) -> Vec<String> {
+fn positive_cst_problems(subject: &CstSubject<'_>) -> Vec<String> {
     let mut problems = Vec::new();
     let mut check = |condition: bool, message: String| {
         if !condition {
             problems.push(message);
         }
     };
-    let name = language["name"].as_str().expect("name");
-    let source = language["source"].as_str().expect("source");
-    let recovery_source = language["recoverySource"]
-        .as_str()
-        .expect("recovery source");
+    let CstSubject {
+        name,
+        source,
+        recovery_source,
+        aliases,
+        extensions,
+        want,
+    } = *subject;
     // ordinaryPublicParseApi, exactReconstruction
     let network = LinkNetwork::parse(source, name, ParseConfiguration::default());
     let recovery = LinkNetwork::parse(recovery_source, name, ParseConfiguration::default());
@@ -491,32 +525,12 @@ fn positive_cst_problems(inventory: &Value, language: &Value, want: Option<&Valu
     if let Some(difference) = first_difference(&recovery_rows, &want_recovery) {
         check(false, format!("recovery rows {difference}"));
     }
-    check(
-        recovery_rows.iter().any(|row| has_flag(row, "EM")),
-        "recovery has error or missing nodes".into(),
-    );
     // embeddedLanguageBoundaries
-    let regions = embedded_roots(&network, name, source);
-    let want_regions = want["embedded"].as_array().expect("embedded");
-    check(
-        regions
-            .iter()
-            .map(|(language, start, end, _)| json!([language, start, end]))
-            .collect::<Vec<_>>()
-            == want_regions
-                .iter()
-                .map(|region| json!([region["language"], region["startByte"], region["endByte"]]))
-                .collect::<Vec<_>>(),
-        "embedded boundaries".into(),
-    );
-    for ((_, start, _, region_root), region) in regions.iter().zip(want_regions) {
-        let region_rows = syntax_rows(&network, *region_root, *start);
-        if let Some(difference) = first_difference(&region_rows, rows_of(&region["rows"])) {
-            check(false, format!("embedded {} {difference}", region["path"]));
-        }
+    for problem in embedded_problems(&network, name, source, &want["embedded"], "embedded") {
+        check(false, problem);
     }
     // allAliases
-    for alias in language["aliases"].as_array().expect("aliases") {
+    for alias in aliases {
         let alias = alias.as_str().expect("alias");
         let aliased = LinkNetwork::parse(source, alias, ParseConfiguration::default());
         check(
@@ -527,9 +541,6 @@ fn positive_cst_problems(inventory: &Value, language: &Value, want: Option<&Valu
     }
     // extensionDispatch: every extension offers the language, and a path that
     // selects it parses to the same tree.
-    let extensions = inventory["extensionDispatch"][name]
-        .as_array()
-        .expect("extensions");
     let mut selected = extensions.is_empty();
     for extension in extensions {
         let path = format!("fixture{}", extension.as_str().expect("extension"));
@@ -551,6 +562,41 @@ fn positive_cst_problems(inventory: &Value, language: &Value, want: Option<&Valu
     problems
 }
 
+/// Differences between the embedded regions of `network` and `want`.
+fn embedded_problems(
+    network: &LinkNetwork,
+    language: &str,
+    source: &str,
+    want: &Value,
+    label: &str,
+) -> Vec<String> {
+    let regions = embedded_roots(network, language, source);
+    let want = want.as_array().expect("embedded regions");
+    let boundaries = regions
+        .iter()
+        .map(|(language, start, end, _)| json!([language, start, end]))
+        .collect::<Vec<_>>();
+    if boundaries
+        != want
+            .iter()
+            .map(|region| json!([region["language"], region["startByte"], region["endByte"]]))
+            .collect::<Vec<_>>()
+    {
+        return vec![format!("{label} boundaries {boundaries:?}")];
+    }
+    regions
+        .iter()
+        .zip(want)
+        .filter_map(|((_, start, _, root), region)| {
+            first_difference(
+                &syntax_rows(network, *root, *start),
+                rows_of(&region["rows"]),
+            )
+            .map(|difference| format!("{label} {} {difference}", region["path"]))
+        })
+        .collect()
+}
+
 #[test]
 fn every_rust_inventory_language_parses_to_its_complete_lossless_default_cst() {
     let inventory_bytes = fs::read(
@@ -563,7 +609,28 @@ fn every_rust_inventory_language_parses_to_its_complete_lossless_default_cst() {
     let mut failures = Vec::new();
     for language in inventory["languages"].as_array().expect("languages") {
         let name = language["name"].as_str().expect("name");
-        let problems = positive_cst_problems(&inventory, language, expected.get(name));
+        let recovery_source = language["recoverySource"]
+            .as_str()
+            .expect("recovery source");
+        let mut problems = positive_cst_problems(&CstSubject {
+            name,
+            source: language["source"].as_str().expect("source"),
+            recovery_source,
+            aliases: language["aliases"].as_array().expect("aliases"),
+            extensions: inventory["extensionDispatch"][name]
+                .as_array()
+                .expect("extensions"),
+            want: expected.get(name),
+        });
+        if expected.contains_key(name) {
+            let recovery = LinkNetwork::parse(recovery_source, name, ParseConfiguration::default());
+            if !syntax_rows(&recovery, document_root(&recovery), 0)
+                .iter()
+                .any(|row| has_flag(row, "EM"))
+            {
+                problems.push("recovery has error or missing nodes".into());
+            }
+        }
         if problems.is_empty() {
             record_positive_cst_observations(name, &digest);
         } else {
@@ -571,4 +638,170 @@ fn every_rust_inventory_language_parses_to_its_complete_lossless_default_cst() {
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+const EMBEDDED_TEST_NAME: &str =
+    "every_rust_embedded_language_path_parses_to_its_complete_lossless_default_cst";
+
+#[test]
+#[allow(clippy::too_many_lines)]
+fn every_rust_embedded_language_path_parses_to_its_complete_lossless_default_cst() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..");
+    let inventory: Value = parity_json("language-grammar-inventory.json");
+    let evidence_bytes = fs::read(root.join("parity/fixtures/issue-195-evidence.json"))
+        .expect("evidence fixtures are readable");
+    let evidence: Value = serde_json::from_slice(&evidence_bytes).expect("evidence is JSON");
+    let digest = format!("{:x}", Sha256::digest(&evidence_bytes));
+    let expectations =
+        parity_json("fixtures/default-cst-expected.json")["embeddedFixtures"].clone();
+    let expected = expected_languages();
+    let mut failures = Vec::new();
+    for fixture in evidence["embedded"].as_array().expect("embedded fixtures") {
+        let host_name = fixture["host"].as_str().expect("host");
+        let target_name = fixture["target"].as_str().expect("target");
+        let label = format!("{host_name} -> {target_name}");
+        let parse_language = fixture["parseLanguage"].as_str().expect("parse language");
+        let target = fixture["regionLanguage"].as_str().unwrap_or(target_name);
+        let host = inventory["languages"]
+            .as_array()
+            .expect("languages")
+            .iter()
+            .find(|language| language["name"] == parse_language)
+            .expect("host inventory language");
+        let source = fixture["source"].as_str().expect("source");
+        let recovery_source = fixture["recoverySource"].as_str().expect("recovery source");
+        let want = expectations.get(&label);
+        let subject_want = want.map(|want| {
+            json!({
+                "grammars": expected[parse_language]["grammars"],
+                "positive": want["positive"]["rows"],
+                "recovery": want["recovery"]["rows"],
+                "embedded": want["positive"]["embedded"],
+            })
+        });
+        let mut problems = positive_cst_problems(&CstSubject {
+            name: parse_language,
+            source,
+            recovery_source,
+            aliases: host["aliases"].as_array().expect("aliases"),
+            extensions: inventory["extensionDispatch"][parse_language]
+                .as_array()
+                .expect("extensions"),
+            want: subject_want.as_ref(),
+        });
+        if let Some(want) = want {
+            // The fixture's region is an independently expected boundary
+            // parsed by the target grammar, whose version the network records.
+            let network = LinkNetwork::parse(source, parse_language, ParseConfiguration::default());
+            let region_source = fixture["regionSource"].as_str().expect("region source");
+            let start = source.find(region_source).expect("region source in source");
+            let region = embedded_roots(&network, parse_language, source)
+                .into_iter()
+                .find(|(_, region_start, region_end, _)| {
+                    *region_start == start && *region_end == start + region_source.len()
+                });
+            if !region.is_some_and(|(language, _, _, root)| {
+                language == target
+                    && network.link(root).and_then(|root| root.metadata().term())
+                        == fixture["root"].as_str()
+            }) {
+                problems.push("fixture region".into());
+            }
+            let recorded: Vec<_> = network
+                .parse_grammars()
+                .into_iter()
+                .filter(|(language, _)| language == target)
+                .map(|(_, grammar)| grammar)
+                .collect();
+            if recorded.as_slice() != grammar_provenance(target) {
+                problems.push("target grammar provenance".into());
+            }
+            // errorAndMissingNodes: the recovery source's error is inside its
+            // embedded region.
+            let recovery = LinkNetwork::parse(
+                recovery_source,
+                parse_language,
+                ParseConfiguration::default(),
+            );
+            problems.extend(embedded_problems(
+                &recovery,
+                parse_language,
+                recovery_source,
+                &want["recovery"]["embedded"],
+                "recovery embedded",
+            ));
+            if !embedded_roots(&recovery, parse_language, recovery_source)
+                .iter()
+                .any(|(language, start, _, root)| {
+                    language == target
+                        && syntax_rows(&recovery, *root, *start)
+                            .iter()
+                            .any(|row| has_flag(row, "EM"))
+                })
+            {
+                problems.push("recovery region has error or missing nodes".into());
+            }
+            // allAliases: every spelling that selects the target language.
+            let spellings = fixture["spellings"].as_array().expect("spellings");
+            for (index, spelling) in spellings.iter().enumerate() {
+                let spelling = spelling.as_str().expect("spelling");
+                let want_spelling = &want["spellings"][index];
+                let spelled =
+                    LinkNetwork::parse(spelling, parse_language, ParseConfiguration::default());
+                let difference = first_difference(
+                    &syntax_rows(&spelled, document_root(&spelled), 0),
+                    rows_of(&want_spelling["rows"]),
+                );
+                if difference.is_some() || spelled.reconstruct_text() != spelling {
+                    problems.push(format!("spelling {index} {difference:?}"));
+                }
+                problems.extend(embedded_problems(
+                    &spelled,
+                    parse_language,
+                    spelling,
+                    &want_spelling["embedded"],
+                    &format!("spelling {index}"),
+                ));
+                if !embedded_roots(&spelled, parse_language, spelling)
+                    .iter()
+                    .any(|(language, ..)| language == target)
+                {
+                    problems.push(format!("spelling {index} selects {target}"));
+                }
+            }
+        }
+        if problems.is_empty() {
+            record_embedded_cst_observations(host_name, target_name, &digest);
+        } else {
+            failures.push(format!("{label}: {}", problems.join("; ")));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+fn record_embedded_cst_observations(host: &str, target: &str, fixture_digest: &str) {
+    let Some(path) = std::env::var_os("ISSUE_195_OBSERVATION_FILE") else {
+        return;
+    };
+    let commit = std::env::var("ISSUE_195_COMMIT").expect("observation commit");
+    let mut records = String::new();
+    for assertion_id in CST_POSITIVE_ASSERTIONS {
+        let record = json!({
+            "testId": format!(
+                "i195-embed-{}-{}-rust-positive",
+                language_slug(host),
+                language_slug(target)
+            ),
+            "assertionId": assertion_id,
+            "fixtureId": format!("planned:embedded:{host}:{target}"),
+            "fixtureDigest": fixture_digest,
+            "runtime": "rust",
+            "commit": commit,
+            "outcome": "passed",
+            "testName": EMBEDDED_TEST_NAME,
+        });
+        records.push_str(&record.to_string());
+        records.push('\n');
+    }
+    append_observations(&path, &records);
 }

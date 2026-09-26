@@ -3,7 +3,9 @@
 // language in parity/language-grammar-inventory.json, the concrete syntax tree
 // its vendored tree-sitter grammar produces for the inventory's positive and
 // recovery sources, plus the embedded-language regions the host grammar
-// delimits. The trees come straight from the grammar (no meta-language adapter)
+// delimits, and the same for every shared embedded-language fixture of
+// parity/fixtures/issue-195-evidence.json (its source, recovery source and
+// each spelling that selects the embedded language). The trees come straight from the grammar (no meta-language adapter)
 // and, with --cli, are cross-checked against the native tree-sitter CLI built
 // from the same pinned grammar sources that rust/Cargo.lock compiles.
 //
@@ -35,6 +37,7 @@ const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const inventoryPath = join(root, 'parity/language-grammar-inventory.json');
 const expectedPath = join(root, 'parity/fixtures/default-cst-expected.json');
+const evidencePath = join(root, 'parity/fixtures/issue-195-evidence.json');
 const grammarDir = join(root, 'js/src/vendor/grammars');
 const encoder = new TextEncoder();
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -476,9 +479,27 @@ async function generate() {
       embedded: await embeddedRegions(inventory, language.name, language.source),
     };
   }
+  // The shared embedded-language fixtures: each advertised host -> target
+  // path with a recovery source and every spelling that selects the target.
+  const embeddedFixtures = {};
+  for (const fixture of JSON.parse(await readFile(evidencePath, 'utf8')).embedded) {
+    const host = inventory.languages.find(({ name }) => name === fixture.parseLanguage);
+    const trees = async (text) => ({
+      sourceSha256: sha256(text),
+      rows: await languageRows(host.grammars, text),
+      embedded: await embeddedRegions(inventory, host.name, text),
+    });
+    const spellings = [];
+    for (const spelling of fixture.spellings) spellings.push(await trees(spelling));
+    embeddedFixtures[`${fixture.host} -> ${fixture.target}`] = {
+      positive: await trees(fixture.source),
+      recovery: await trees(fixture.recoverySource),
+      spellings,
+    };
+  }
   return {
     description:
-      'Grammar concrete syntax trees for the inventory sources, produced directly by the pinned tree-sitter grammars (no meta-language adapter) and cross-checked with the native tree-sitter CLI. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
+      'Grammar concrete syntax trees for the inventory sources and the shared embedded-language fixtures of parity/fixtures/issue-195-evidence.json, produced directly by the pinned tree-sitter grammars (no meta-language adapter) and cross-checked with the native tree-sitter CLI. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
     generator: {
       script: 'js/scripts/generate-default-cst-expectations.mjs',
       webTreeSitter,
@@ -486,6 +507,7 @@ async function generate() {
     },
     publicProjections: PUBLIC_PROJECTIONS,
     languages: result,
+    embeddedFixtures,
   };
 }
 

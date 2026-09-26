@@ -49,12 +49,18 @@ fn record_negative_cst_observation(language: &str, assertion_id: &str, fixture_d
         "outcome": "passed",
         "testName": "every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_input",
     });
+    // One `write` call, so records of the concurrently running JavaScript and
+    // Rust suites never interleave.
+    let line = format!("{record}\n");
     let mut file = fs::OpenOptions::new()
         .append(true)
         .create(true)
         .open(path)
         .expect("observation file opens");
-    writeln!(file, "{record}").expect("observation record writes");
+    let written = file
+        .write(line.as_bytes())
+        .expect("observation record writes");
+    assert_eq!(written, line.len(), "observation record writes at once");
 }
 
 #[test]
