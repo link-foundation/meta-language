@@ -12,7 +12,14 @@
       },
       "source": "export class Counter { #value = 0; async *values(limit = 2) { while (this.#value < limit) yield await Promise.resolve(this.#value++); } }\n",
       "root": "program",
-      "requiredTerms": ["export_statement", "class_declaration", "method_definition", "while_statement", "yield_expression", "await_expression"]
+      "requiredTerms": [
+        "export_statement",
+        "class_declaration",
+        "method_definition",
+        "while_statement",
+        "yield_expression",
+        "await_expression"
+      ]
     },
     {
       "language": "Rust",
@@ -25,7 +32,13 @@
       },
       "source": "#![allow(dead_code)]\nmacro_rules! twice { ($value:expr) => { $value + $value }; }\npub async fn compute<T: Into<u64>>(value: T) -> u64 { std::future::ready(twice!(value.into())).await }\n",
       "root": "source_file",
-      "requiredTerms": ["inner_attribute_item", "macro_definition", "function_item", "type_parameters", "await_expression"]
+      "requiredTerms": [
+        "inner_attribute_item",
+        "macro_definition",
+        "function_item",
+        "type_parameters",
+        "await_expression"
+      ]
     },
     {
       "language": "Lean",
@@ -38,7 +51,13 @@
       },
       "source": "import Std\nuniverse u\nnamespace Corpus\n@[simp] theorem identity {α : Type u} (value : α) : value = value := by\n  rfl\nend Corpus\n",
       "root": "file",
-      "requiredTerms": ["import", "universe", "namespace", "declaration", "by"]
+      "requiredTerms": [
+        "import",
+        "universe",
+        "namespace",
+        "declaration",
+        "by"
+      ]
     },
     {
       "language": "Rocq",
@@ -51,7 +70,13 @@
       },
       "source": "From Stdlib Require Import Arith.\nModule Corpus.\nFixpoint plus_zero (n : nat) : nat := match n with | 0 => 0 | S rest => S (plus_zero rest) end.\nTheorem plus_zero_sound : plus_zero 0 = 0.\nProof. reflexivity. Qed.\nEnd Corpus.\n",
       "root": "source_file",
-      "requiredTerms": ["require_command", "module_command", "fixpoint_command", "theorem_command", "proof_command"]
+      "requiredTerms": [
+        "require_command",
+        "module_command",
+        "fixpoint_command",
+        "theorem_command",
+        "proof_command"
+      ]
     }
   ],
   "representativeProjects": [
@@ -61,8 +86,12 @@
       "revision": "0b1df91404fe34ccc6d82c74f48b242c4750e3ed",
       "path": "js/src/rml-meta-language.mjs",
       "source": "import { LinkNetwork } from 'meta-language';\nexport function parseRml(source) { return LinkNetwork.parse(String(source), 'RML'); }\n",
-      "files": ["js/src/rml-meta-language.mjs"],
-      "dependencies": ["meta-language"]
+      "files": [
+        "js/src/rml-meta-language.mjs"
+      ],
+      "dependencies": [
+        "meta-language"
+      ]
     },
     {
       "language": "Rust",
@@ -70,8 +99,12 @@
       "revision": "0b1df91404fe34ccc6d82c74f48b242c4750e3ed",
       "path": "rust/src/meta_language_support.rs",
       "source": "use meta_language::LinkNetwork;\npub fn parse_rml(source: &str) -> LinkNetwork { LinkNetwork::parse(source, \"RML\", Default::default()) }\n",
-      "files": ["rust/src/meta_language_support.rs"],
-      "dependencies": ["meta-language"]
+      "files": [
+        "rust/src/meta_language_support.rs"
+      ],
+      "dependencies": [
+        "meta-language"
+      ]
     },
     {
       "language": "Lean",
@@ -79,8 +112,12 @@
       "revision": "v4.33.1",
       "path": "src/lean/Init/Data/Nat/Basic.lean",
       "source": "namespace Nat\ntheorem zero_add (n : Nat) : 0 + n = n := by omega\nend Nat\n",
-      "files": ["Corpus.lean"],
-      "dependencies": ["Std"]
+      "files": [
+        "Corpus.lean"
+      ],
+      "dependencies": [
+        "Std"
+      ]
     },
     {
       "language": "Rocq",
@@ -88,8 +125,12 @@
       "revision": "lf-current-at-tree-sitter-rocq-300fe33",
       "path": "lf/Imp.v",
       "source": "From Stdlib Require Import Arith.\nDefinition four : nat := 2 + 2.\nExample plus_example : four = 4.\nProof. reflexivity. Qed.\n",
-      "files": ["Imp.v"],
-      "dependencies": ["Stdlib.Arith"]
+      "files": [
+        "Imp.v"
+      ],
+      "dependencies": [
+        "Stdlib.Arith"
+      ]
     }
   ],
   "embedded": [
@@ -188,13 +229,140 @@
     "algorithm": "lcg32",
     "seed": 195,
     "casesPerLanguage": 64,
-    "unicodeIdentifiers": ["π", "δ", "value", "result"]
+    "unicodeIdentifiers": [
+      "π",
+      "δ",
+      "value",
+      "result"
+    ]
   },
   "nativeValidation": {
-    "JavaScript": { "command": "node --check", "extension": ".mjs" },
-    "Rust": { "command": "rustc --crate-type lib --edition 2024", "extension": ".rs" },
-    "Lean": { "command": "lean", "extension": ".lean" },
-    "Rocq": { "command": "rocq compile", "extension": ".v" }
+    "JavaScript": {
+      "command": "node --check",
+      "extension": ".mjs",
+      "tool": "node",
+      "declaredVersion": "v24.",
+      "rejectedSuffix": "\nexport const = ;\n"
+    },
+    "Rust": {
+      "command": "rustc --crate-type lib --edition 2024",
+      "extension": ".rs",
+      "tool": "rustc",
+      "declaredVersion": "1.98.1",
+      "rejectedSuffix": "\npub fn rejected() -> u32 { \"text\" }\n"
+    },
+    "Lean": {
+      "command": "lean",
+      "extension": ".lean",
+      "tool": "lean",
+      "declaredVersion": "4.33.1",
+      "rejectedSuffix": "\ntheorem rejected : 1 = 2 := rfl\n"
+    },
+    "Rocq": {
+      "command": "rocq compile",
+      "extension": ".v",
+      "tool": "rocq",
+      "declaredVersion": "9.2",
+      "rejectedSuffix": "\nLemma rejected : 1 = 2. Proof. reflexivity. Qed.\n"
+    }
+  },
+  "delivery": {
+    "supportedPlatforms": [
+      "linux-x64",
+      "darwin-arm64",
+      "win32-x64"
+    ],
+    "publicEntryPoints": {
+      "javascript": [
+        "LinkNetwork",
+        "LinkType",
+        "analyzeProgram",
+        "constructProgram",
+        "translateProgram",
+        "decodeProgramTranslation"
+      ],
+      "rust": [
+        "LinkNetwork::parse",
+        "analyze_program",
+        "construct_program",
+        "translate_program",
+        "decode_program_translation"
+      ]
+    },
+    "privateJavaScriptPath": "meta-language/src/network.js",
+    "consumerCorpus": [
+      {
+        "language": "JavaScript",
+        "source": "const α = 1;\n",
+        "requiredTerm": "lexical_declaration"
+      },
+      {
+        "language": "Rust",
+        "source": "fn id(x: u64) -> u64 { x }\n",
+        "requiredTerm": "function_item"
+      },
+      {
+        "language": "Lean",
+        "source": "def id (x : Nat) : Nat := x\n",
+        "requiredTerm": "definition"
+      },
+      {
+        "language": "Rocq",
+        "source": "Definition id (x : nat) : nat := x.\n",
+        "requiredTerm": "definition_command"
+      },
+      {
+        "language": "Coq",
+        "source": "Definition id (x : nat) : nat := x.\n",
+        "requiredTerm": "definition_command"
+      },
+      {
+        "language": "Markdown",
+        "source": "# Title\n\n```js\nlet a = 1;\n```\n",
+        "requiredTerm": "lexical_declaration"
+      },
+      {
+        "language": "LiNo",
+        "source": "(papa (lovesMama: loves mama))\n",
+        "requiredTerm": "link"
+      },
+      {
+        "language": "Python",
+        "source": "def f(x):\n    return x\n",
+        "requiredTerm": "function_definition"
+      }
+    ],
+    "programs": [
+      {
+        "language": "JavaScript",
+        "source": "function id(x) { return x; }\nid(1);\n"
+      },
+      {
+        "language": "Rust",
+        "source": "fn id(x: u64) -> u64 { x }\n"
+      },
+      {
+        "language": "Lean",
+        "source": "def id (x : Nat) : Nat := x\n"
+      },
+      {
+        "language": "Rocq",
+        "source": "Definition id (x : nat) : nat := x.\n"
+      }
+    ],
+    "translations": [
+      {
+        "source": "console.log(42);",
+        "sourceLanguage": "JavaScript",
+        "targetLanguage": "Rust"
+      },
+      {
+        "source": "pub fn answer() -> u32 { 42 }",
+        "sourceLanguage": "Rust",
+        "targetLanguage": "JavaScript"
+      }
+    ],
+    "privateRustPath": "meta_language::lino_parser"
   },
   "downstreamRml": {
     "repository": "https://github.com/link-foundation/relative-meta-logic.git",

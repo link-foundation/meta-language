@@ -600,27 +600,27 @@
     "planned:embedded:HTML:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "HTML host with an independently asserted JavaScript embedded boundary",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:embedded:HTML:CSS": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "HTML host with an independently asserted CSS embedded boundary",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:embedded:Markdown:language-selected fenced code": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Markdown host with an independently asserted language-selected fenced code embedded boundary",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:embedded:Markdown:HTML": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Markdown host with an independently asserted HTML embedded boundary",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:embedded:CSS style attribute:CSS": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "CSS style attribute host with an independently asserted CSS embedded boundary",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:grammar-importer:ABNF": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -650,42 +650,42 @@
     "planned:conformance:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "JavaScript mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:generative:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "JavaScript property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:conformance:Rust": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rust mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:generative:Rust": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rust property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:conformance:Lean": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Lean mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:generative:Lean": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Lean property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:conformance:Rocq": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rocq mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:generative:Rocq": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rocq property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:semantic:JavaScript:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",
@@ -1170,52 +1170,52 @@
     "planned:native-validation:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "JavaScript emitted-artifact validation corpus",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:native-validation:Rust": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rust emitted-artifact validation corpus",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:native-validation:Lean": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Lean emitted-artifact validation corpus",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:native-validation:Rocq": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "Rocq emitted-artifact validation corpus",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:delivery:I195-DELIVERY-NPM-CANDIDATE": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "npm candidate package clean-consumer matrix",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:delivery:I195-DELIVERY-CRATE-CANDIDATE": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "crate candidate package clean-consumer matrix",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:delivery:I195-DELIVERY-RML-CANDIDATE": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "downstream RML candidate-artifact integration clean-consumer matrix",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:delivery:I195-DELIVERY-NPM-PUBLISHED": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "published npm package clean-consumer matrix",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:delivery:I195-DELIVERY-CRATE-PUBLISHED": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "published crates.io package clean-consumer matrix",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:delivery:I195-DELIVERY-RML-PUBLISHED": {
       "path": "parity/fixtures/issue-195-evidence.json",
       "selector": "downstream RML published-artifact integration clean-consumer matrix",
-      "sha256": "4a463ef98cc014dc3b1c0bb71cffdc79eba9abedbc5267429df626defaa19d13"
+      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "fault:plain-text-parser-fallback": {
       "path": "js/tests/issue-195-acceptance.test.js",
