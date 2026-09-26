@@ -5,7 +5,7 @@
 // contract is written to `emit-<target>.json`, or its failure to
 // `emit-<target>.error.json`.
 // Usage: node experiments/translation-stage-dump.mjs <source> <outdir>
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseLean } from '../src/translation/lean.js';
 import { parseRocq } from '../src/translation/rocq.js';
@@ -21,6 +21,8 @@ const emitters = { javascript: emitJavaScript, rust: emitRust, lean: emitLean, r
 const frontends = { lean: parseLean, v: parseRocq, rs: parseRust, mjs: parseJavaScript, js: parseJavaScript };
 const [source, outdir] = process.argv.slice(2);
 mkdirSync(outdir, { recursive: true });
+// Outputs of an earlier run would pass for this run's stages.
+for (const name of readdirSync(outdir)) if (name.endsWith('.json')) rmSync(join(outdir, name));
 
 const json = (value) => JSON.stringify(value, (key, item) => (typeof item === 'bigint' ? item.toString() : item), 1);
 const portableProgram = (program) => {
