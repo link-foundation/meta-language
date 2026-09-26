@@ -975,7 +975,7 @@ class RocqParser {
     if (token.kind === 'number') {
       c.next();
       if (c.is('%')) throw unsupported('scoped numeral pattern', 'numeral patterns on N or Z match binary constructors, which have no portable counterpart', span(token, c.peek()));
-      return { k: 'numLit', value: Number(token.value), span: span(token, token) };
+      return { k: 'numLit', value: token.value, span: span(token, token) };
     }
     if (c.eat('(')) {
       const inner = this.pattern(aliases);
@@ -1096,7 +1096,7 @@ function patternValue(pattern, range) {
     case 'bindOrCtor':
       return { k: 'name', path: [pattern.name], span: range };
     case 'numLit':
-      return { k: 'num', value: String(pattern.value), span: range };
+      return { k: 'num', value: pattern.value, span: range };
     case 'ctor': {
       const name = pattern.path.join('.');
       if ((name === 'S' || name === 'Nat.succ') && pattern.args.length === 1) {

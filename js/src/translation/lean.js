@@ -634,7 +634,7 @@ class LeanParser {
       return { k: 'natAdd', inner: args[0], add: 1, span: span(token, this.cursor.peek()) };
     }
     if ((path.join('.') === 'Nat.zero' || (path.dot && name === 'zero')) && args.length === 0) {
-      return { k: 'numLit', value: 0, span: span(token, token) };
+      return { k: 'numLit', value: '0', span: span(token, token) };
     }
     return { k: 'ctor', path: [...path], args, span: span(token, this.cursor.peek()) };
   }
@@ -645,7 +645,7 @@ class LeanParser {
     if (c.eat('_')) return { k: 'wild' };
     if (token.kind === 'number') {
       c.next();
-      return { k: 'numLit', value: Number(token.value), span: span(token, token) };
+      return { k: 'numLit', value: token.value, span: span(token, token) };
     }
     if (c.eat('(')) {
       const inner = this.pattern();

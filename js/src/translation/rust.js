@@ -766,12 +766,12 @@ class RustParser {
     if (c.is('-') && c.isKind('number', 1)) {
       c.next();
       const number = c.next();
-      return { k: 'numLit', value: Number(number.value), negative: true, span: span(token, number) };
+      return { k: 'numLit', value: number.value, negative: true, span: span(token, number) };
     }
     if (token.kind === 'number') {
       c.next();
       if (c.is('..') || c.is('..=')) throw unsupported('range pattern', 'ranges are outside the portable pattern language', span(token, c.peek()));
-      return { k: 'numLit', value: Number(token.value), span: span(token, token) };
+      return { k: 'numLit', value: token.value, span: span(token, token) };
     }
     if (token.kind === 'string') throw unsupported('string pattern', 'match on &str is outside the Rust frontend', span(token, token));
     if (c.is('true') || c.is('false')) {
@@ -829,7 +829,7 @@ function patternValue(pattern, range) {
     case 'bindOrCtor':
       return { k: 'name', path: [pattern.name], span: range };
     case 'numLit':
-      return { k: 'num', value: String(pattern.value), negative: pattern.negative, span: range };
+      return { k: 'num', value: pattern.value, negative: pattern.negative, span: range };
     case 'boolLit':
       return { k: 'bool', value: pattern.value, span: range };
     case 'ctor':

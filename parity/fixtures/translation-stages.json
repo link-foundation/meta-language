@@ -1,0 +1,1482 @@
+{
+  "generator": "js/scripts/build-translation-stage-fixtures.mjs",
+  "programs": [
+    {
+      "name": "corpus/edge-semantics.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/edge-semantics.mjs",
+      "parse": {
+        "sha256": "693e4db10ddeb5a8435a687a8a41ca73fc4a4334eab1937ebadad674949140fe"
+      },
+      "check": {
+        "sha256": "6a7db2bc65553c352e010b46e085406b14a715595814149f3d9b05afba9b0cb9"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "a2ccad18e33475b786a38fa2f3b764a93ea6653f63979ac70b0a2002328f6c9f"
+        },
+        "rust": {
+          "sha256": "641d6a6279829653c448c281157c3208d434d0f6444314818227ba1c9999f8ef"
+        },
+        "lean": {
+          "sha256": "3a37aa7f0a914c3a5e9154fcd14342e00e59050d78f2429b19718c3aafc77e72"
+        },
+        "rocq": {
+          "sha256": "5df1b8fa456e65b7aa61bddc7b08c4aea8dc0611ba3b2aa6c42d2c82247beceb"
+        }
+      }
+    },
+    {
+      "name": "corpus/project.lean",
+      "extension": "lean",
+      "path": "parity/fixtures/translation-corpus/project.lean",
+      "parse": {
+        "sha256": "691dab093dcf94b531f931cc250cb236e9de8e6c05329ab44dba7176b788d94a"
+      },
+      "check": {
+        "sha256": "7ee2803da0cc319d8c3fcc0582b2a7f49379dbe4278006028c90600f2a738395"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "9ac31d7deb91d9f7a27892efbcfe7b6eee56bd2faa01912d626c254ff1984c0e"
+        },
+        "rust": {
+          "sha256": "ac1038cd9c69509c7240ce93b478eecf5032037a063855b3a093f4573f85b196"
+        },
+        "lean": {
+          "sha256": "75fe98641eba618e95d2ad1d6f9b5e8ebb8c151e6324e99c9a87d3cf174d2558"
+        },
+        "rocq": {
+          "sha256": "a78d10d0e01673e80ca5a5682486525c70988a48aebc889ad262c2cea77adb70"
+        }
+      }
+    },
+    {
+      "name": "corpus/project.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/project.mjs",
+      "parse": {
+        "sha256": "2380c26bff065cf6a7e7e0f5af22d49504b240992d4fccdba8ca4b4ad2a6fd38"
+      },
+      "check": {
+        "sha256": "fcdc513cbf0bf448ad50d28af0051a896889cf3722ec356cd48f5f4c137f1fb1"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "aad128bf9ea3d405640d562d84cb71f80831db092ef22dc16bd8e0c056572541"
+        },
+        "rust": {
+          "sha256": "ea68c4d50302688dbd338148b3b086c4eb247475abe7c00437de354377ce5199"
+        },
+        "lean": {
+          "sha256": "afa8a1f78c3b704ed9e0090ee117fb8ecc93243fbf4d4fe84c1f1da4c6e2786c"
+        },
+        "rocq": {
+          "sha256": "92ec7f6410e11ec7632a258aa30868a94efad59a60a1445e2fba72201b56330b"
+        }
+      }
+    },
+    {
+      "name": "corpus/project.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/project.rs",
+      "parse": {
+        "sha256": "3e6d264a24b78eb1f88adbfd97a717728bb48418dd11104eca09b3cb2f4d65c1"
+      },
+      "check": {
+        "sha256": "40c6500c3b419b6ba4e0b0a2d9f237d851c65b101d58c53aefb31d955e953211"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "ff589ee3423bc412d095146d910b14b59e4c9313f83aa05b5f2fc058d806e332"
+        },
+        "rust": {
+          "sha256": "aeffb93f7cfa5f3d0d87f0270a5c1ffa368526196a99097f2c266df5b0cdf760"
+        },
+        "lean": {
+          "sha256": "69bef5e621be20cdd7e22900166667bb397cc8f612e5c4573eded6f6415e2d6c"
+        },
+        "rocq": {
+          "sha256": "248fe7ef3230b7b7c61e93400ff38eb0d5d875c4bf8dd1f693333d62e845c6f2"
+        }
+      }
+    },
+    {
+      "name": "corpus/project.v",
+      "extension": "v",
+      "path": "parity/fixtures/translation-corpus/project.v",
+      "parse": {
+        "sha256": "11b0204018df1b49c0eb7d42b42d00a3e795106344d84e61a9aa71b40b90d7ce"
+      },
+      "check": {
+        "sha256": "8a1c0df786923d21958d6442db09017eb03945164dd5a3ad1b047e5c40fcab46"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "e1661a975935b7eb700ed80665644a163efad4fff1fc8a6021f62976acbb8434"
+        },
+        "rust": {
+          "sha256": "9a6e6865109831db1f041127aad3eb03adc0bdad69e9ddd09236f3ebec5fe38e"
+        },
+        "lean": {
+          "sha256": "66dd55a51bcf0fb110dd5a66bf66193124d7b8ba0bf41c548708d4e5d6cd54da"
+        },
+        "rocq": {
+          "sha256": "594809ebe2fec8ef619f4c6d6b47325f8d8287981cbd47836ebba3f038317c09"
+        }
+      }
+    },
+    {
+      "name": "check/lean-multi-scrutinee",
+      "extension": "lean",
+      "source": "def f : Nat → Nat → Nat\n  | 0, _ => 0\n  | _, 0 => 1\n  | n + 1, m + 1 => f n m\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "c285af36a0b0dd4d0103543158edb07df1b0ac337fc218207ec4238be22027b9"
+      },
+      "check": {
+        "sha256": "ec99e0492f3c2cca7e20ab63c06d00aa1e26938518e5e7c6b0ed033284700fd5"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "d3394c9b6e6244008270d34ad0ad9aab1acd7a712fa536ff1f9b50736f7b18a2"
+        },
+        "rust": {
+          "sha256": "860e46adf4e66b6907a23ba3683d1dd8b8284451b77792f8b89b1e0e951417ef"
+        },
+        "lean": {
+          "sha256": "8c4a8f09de6a1a4a9cc63bbfa3e6ca7d3b2f81465d882f12bacdb45234e76157"
+        },
+        "rocq": {
+          "sha256": "15f8cf171594a75632087986dc5802a51a6187135803287fb8125db3f4f87b14"
+        }
+      }
+    },
+    {
+      "name": "check/lean-string-match",
+      "extension": "lean",
+      "source": "def f (s : String) : Nat :=\n  match s with\n  | \"a\" => 1\n  | \"b\" => 2\n  | _ => 3\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "pattern: \"\\\"a\\\"\" is outside the portable pattern language at 47..50"
+        }
+      }
+    },
+    {
+      "name": "check/lean-bool-match",
+      "extension": "lean",
+      "source": "def f (b : Bool) : Nat :=\n  match b with\n  | true => 1\n  | false => 0\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "b43116d46607b28a89a91407365e8fe64b7d1257d32ec5cbe9c2dde1a288007f"
+      },
+      "check": {
+        "sha256": "7378136d290862b413aa936143c60e6ebfcfdc6b08b02d162ca85d70ef8c2ac3"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "5fa5f26c968bdb9abc0de9f0a5a351dfafec2d4fb676648be577d76733943057"
+        },
+        "rust": {
+          "sha256": "5160a2b8c26ff40835ff57b310d8db38a13269f4316e2b11a74534889cd6d24e"
+        },
+        "lean": {
+          "sha256": "271fef2246c26586a40d6f529c587ff5baa0dcb40180f4371560fa07fff92bbb"
+        },
+        "rocq": {
+          "sha256": "1b6f0c8314f27760b2bfd767f0b44c93e694c3e0ceea7643834bb00a817b98e8"
+        }
+      }
+    },
+    {
+      "name": "check/lean-int-literal-match",
+      "extension": "lean",
+      "source": "def f (i : Int) : Nat :=\n  match i with\n  | 0 => 1\n  | -1 => 2\n  | _ => 3\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "pattern: \"-\" is outside the portable pattern language at 55..56"
+        }
+      }
+    },
+    {
+      "name": "check/lean-nested-tree",
+      "extension": "lean",
+      "source": "inductive Tree where\n  | leaf : Tree\n  | node : Tree → Nat → Tree → Tree\n\ndef f : Tree → Nat\n  | .node (.node _ a _) b _ => a + b\n  | .node .leaf b _ => b\n  | .leaf => 0\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "ce022f8bade3e612f30bb8a506a36925a62c0e3d6d9d2117b3a73a62c85b319f"
+      },
+      "check": {
+        "sha256": "b089f56766ef50f279238c4f29551ef10d9e303df8b66ee6a24bb2475b23d3ed"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "c20238291ae1a2edfe7ed6500b5704834ac6e9f78b02cca285e671cbef814558"
+        },
+        "rust": {
+          "sha256": "961b14dc2d49250fe666fa69f6f33db37aab690dcbd0eda3f9cc9169a1c24f0e"
+        },
+        "lean": {
+          "sha256": "5a354c56919e942044b3e134133ff82e49c041133848b5dfa7d006323608807a"
+        },
+        "rocq": {
+          "sha256": "23f7c90f0ca4a893e11dc6f2d26909c94f40ad86a3b1873f3baf8c4b1478dd46"
+        }
+      }
+    },
+    {
+      "name": "check/lean-literal-default",
+      "extension": "lean",
+      "source": "def f (n : Nat) : Nat := if n == 0 then 1 else 2\ndef g : Nat := 3 - 5\ndef h : Int := (0 - 7) / 2\ndef k : Int := -7 % 3\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "68a8be25e1f5fc454a5d6fb650b4989049ab1c6dbfd3ac98ff85fbb3927204df"
+      },
+      "check": {
+        "sha256": "732975f30ab984f4bd70b5471b6261559fd442a7884a1436ef1ea147cc9be939"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "e73b2e9ac80a127706eddbfbe44940b0c0925eb598d9f054760c0b09a83c8655"
+        },
+        "rust": {
+          "sha256": "abffd75336d79f6aeb03da5e33949f21aedec97a083b7edd9eae8a9362d564cd"
+        },
+        "lean": {
+          "sha256": "e1c94a1ace6d78c68798b75b0cad66d653451d784dced44b90f07dd44a2d7de8"
+        },
+        "rocq": {
+          "sha256": "eb91b0fb77cb6d5b75336ec8d866a8d1140c379d234cf2026a33993143aba3d6"
+        }
+      }
+    },
+    {
+      "name": "check/lean-let-alias",
+      "extension": "lean",
+      "source": "def f (n : Nat) : Nat :=\n  if n == 0 then 0 else\n  let m := n\n  m - 1 + f (m - 1)\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "59cc45e4251dad468ddabc5196ea593045abeb073a304b476da3771e7bb80ff6"
+      },
+      "check": {
+        "sha256": "427e2bbedd41385afd1beda37a1efff275126e338511e0a46d98157ae6dc58ae"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "b0dab30de9a9c5f032f90d4fc50ac2e1524c55b8da968a9287f70d9188182577"
+        },
+        "rust": {
+          "sha256": "98528c6ba6368ff192d45cc788d950218b9c69947bcf573f5a1f408bc642863c"
+        },
+        "lean": {
+          "sha256": "3959e9a4655ccb0d26fea54ea05c649dca4bf92771b65917189d87dee1b0d145"
+        },
+        "rocq": {
+          "sha256": "f19e4af5d42db500d5d56be162133599cf4764c36dedbc33692fc2e4abcf8ccb"
+        }
+      }
+    },
+    {
+      "name": "check/lean-cast",
+      "extension": "lean",
+      "source": "def f (n : Nat) : Int := Int.ofNat n - 10\ndef g (i : Int) : Nat := Int.toNat i\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "b12dd8278a066abcc4293f7eff67bc7b40d7f1bab16386dee52396cd64c62330"
+      },
+      "check": {
+        "sha256": "762a6656f2f472ebc0e835f7bbecb52372aadfd33dfe647cd34b1db0ec1f630d"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "201f2b91fc3b0e6bf065e6f3a1d16695340306bc6c1c853c88fbad7846bf1172"
+        },
+        "rust": {
+          "sha256": "317afb5a99dc37981e7d3f9b885006a307ff26fe1b3c533d30f95667fe800930"
+        },
+        "lean": {
+          "sha256": "e62bb124c73c9eb79c0eea205bf42dbb9a4c0960c4ddde6a39a9f62063f5d205"
+        },
+        "rocq": {
+          "sha256": "5754eac8ec2cb2114f06d947e5644bf8dd7089ac56785a60195e062b06190e51"
+        }
+      }
+    },
+    {
+      "name": "check/lean-theorem-cases",
+      "extension": "lean",
+      "source": "inductive Tree where\n  | leaf : Tree\n  | node : Tree → Nat → Tree → Tree\n\ndef size : Tree → Nat\n  | .leaf => 0\n  | .node l _ r => size l + 1 + size r\n\ntheorem size_nonneg (t : Tree) : 0 ≤ size t := by\n  cases t with\n  | leaf => simp [size]\n  | node l v r => simp [size]\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "a747a96c04a15f0e7f6d32499c1939b231d7d948a7e075c03e7d104c8b8ac7f8"
+      },
+      "check": {
+        "sha256": "2ffa58bfaaa4fd1dec7ad7d753dfd99a5f78669304573939288c73cd5b3f23d0"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "74c66324933b6956329a9119fa1471574a7c60375939c6e776fbbcd24a1a98c8"
+        },
+        "rust": {
+          "sha256": "2e69618fd25fd13b64fc1bd98ca52580bec199c39293570e37fab019938a206d"
+        },
+        "lean": {
+          "sha256": "5b5d4d40c63ef39f91783ecb6cc618edb6583e3929d9d814cdbbb13db350f19a"
+        },
+        "rocq": {
+          "sha256": "a4a4c7723b12bca5f37ca1e9c82addc3fe56569adf340ce866ea73798696a274"
+        }
+      }
+    },
+    {
+      "name": "check/lean-print-values",
+      "extension": "lean",
+      "source": "def main : IO Unit := do\n  IO.println s!\"{1 + 2} {true} {(-3 : Int)}\"\n  IO.println (toString 5)\n",
+      "parse": {
+        "sha256": "fe042bfd08b10f887e4c50fc1bedfd5521ecf90a29faa120db2b0170bd110ca9"
+      },
+      "check": {
+        "sha256": "7da0a1aca4caa4e77a6139b82ba43c49176bf0088c27f5138426ab6a96128e23"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "4171ccd09c736c3796802f8392a1de74e265651391c97917e0d0f8f23e43692b"
+        },
+        "rust": {
+          "sha256": "5619e93b8c65b85d3585140de2eb68ab228c195bab88b76d3de3190281b362b0"
+        },
+        "lean": {
+          "sha256": "284dea694d3abd1a153c668420cf5a244adf5db2bcf35cf613cb70562aee4224"
+        },
+        "rocq": {
+          "sha256": "20e199a686d863efc8ad2736f65dfa73c3520eb2149265b9366fa02169f47c46"
+        }
+      }
+    },
+    {
+      "name": "check/lean-duplicate",
+      "extension": "lean",
+      "source": "def f : Nat := 1\ndef f : Nat := 2\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "aa68192fc7674d2ca24e72112df54be5506efc1aa787c26eb12ee533ea9b2984"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "duplicate declaration f at 17..34"
+        }
+      }
+    },
+    {
+      "name": "check/lean-reserved",
+      "extension": "lean",
+      "source": "def ml_x : Nat := 1\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "c6a16b22c92aafbbcb82ec4df8e31d0f61893700652f850699b90c578a183b67"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "reserved identifier: ml_x uses the translator's reserved ml_ prefix at 0..20"
+        }
+      }
+    },
+    {
+      "name": "check/lean-unknown-type",
+      "extension": "lean",
+      "source": "def f (x : Foo) : Nat := 1\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "d9416e38945cfac5a48dff2ee4831a9304ac4255f89e8c61d3c334d236b94207"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "unknown type Foo at 11..14"
+        }
+      }
+    },
+    {
+      "name": "check/lean-unknown-name",
+      "extension": "lean",
+      "source": "def f : Nat := g 1\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "efb85fc494a407479043713b31a615ce25289cbaabd66fcb66a4da918f95618f"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "unknown name g at 15..19"
+        }
+      }
+    },
+    {
+      "name": "check/lean-too-many-args",
+      "extension": "lean",
+      "source": "def g (x : Nat) : Nat := x\ndef f : Nat := g 1 2\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "401537d27aba7cfabeb05bdf4908586f14d6ade7b7c427f4cd31d51cdd372a44"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "g expects 1 arguments but got 2 at 42..48"
+        }
+      }
+    },
+    {
+      "name": "check/lean-partial",
+      "extension": "lean",
+      "source": "def g (x y : Nat) : Nat := x\ndef f : Nat := g 1\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "861773fb151db3d86a7698db12960b2ab1f73f5d1e331d4780266b94fa839de8"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "partial application: g expects 2 arguments at 44..48"
+        }
+      }
+    },
+    {
+      "name": "check/lean-negative-nat",
+      "extension": "lean",
+      "source": "def f : Nat := -1\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "2351dedc27a26dec63344908cc65bb2e6d14eb9006d621dcf215123a0dfa4835"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "negative literal for a natural type at 15..18"
+        }
+      }
+    },
+    {
+      "name": "check/lean-negate-nat",
+      "extension": "lean",
+      "source": "def f (n : Nat) : Nat := -n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "1393135824b17988f3b1c464acb61ad70bf1a18bb787f660731b9dbfc1c1d605"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "negation of nat at 25..28"
+        }
+      }
+    },
+    {
+      "name": "check/lean-operand-types",
+      "extension": "lean",
+      "source": "def f (n : Nat) (i : Int) : Int := n + i\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "287cb62682f6eb5f90a42f842b0c52d5ea591f0699d11687a0c3db26b6b55c72"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "operand types differ: nat and int at 35..40"
+        }
+      }
+    },
+    {
+      "name": "check/lean-string-order",
+      "extension": "lean",
+      "source": "def f (a b : String) : Bool := a < b\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "462ab67556a1d588b7565a7b3254b2aba201465ed9a852f09a185a40b6e67f28"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "ordering on string at 31..36"
+        }
+      }
+    },
+    {
+      "name": "check/lean-missing-ctor",
+      "extension": "lean",
+      "source": "inductive Tree where\n  | leaf : Tree\n  | node : Tree → Nat → Tree → Tree\n\ndef f (t : Tree) : Nat :=\n  match t with\n  | .leaf => 0\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "2f25ede72263adbb73563fff3faa2c05e831d9626b8e84d2780c9b272bf91519"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "non-exhaustive match at 102..131"
+        }
+      }
+    },
+    {
+      "name": "check/lean-bool-nonexhaustive",
+      "extension": "lean",
+      "source": "def f (b : Bool) : Nat :=\n  match b with\n  | true => 1\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "7629c7864960c4296e00d0d4054afa647b07e8b8383453f63402abf4fe649804"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "non-exhaustive match on bool at 28..56"
+        }
+      }
+    },
+    {
+      "name": "check/lean-int-add-pattern",
+      "extension": "lean",
+      "source": "def f (i : Int) : Int :=\n  match i with\n  | n + 1 => n\n  | _ => 0\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "9517600e87f655a58828fb9af82f8871e9d6b89480edf95f14e3f17204178024"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "n + k pattern: only natural-number scrutinees support n + k patterns, not int at 44..50"
+        }
+      }
+    },
+    {
+      "name": "check/lean-print-tree",
+      "extension": "lean",
+      "source": "inductive Tree where\n  | leaf : Tree\n  | node : Tree → Nat → Tree → Tree\n\ndef main : IO Unit := do\n  IO.println s!\"{Tree.leaf}\"\n",
+      "parse": {
+        "sha256": "7c6d683961c41d7e1696aa32d1d97689bd89d0f74bd7785d10c0b2cffcdf4a5d"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "output of structured values: printing a data:Tree value has no portable textual form at 116..125"
+        }
+      }
+    },
+    {
+      "name": "check/lean-arith-string",
+      "extension": "lean",
+      "source": "def f (a b : String) : String := a - b\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "b0d0343d7cc3910c804a15180b065890a7b7366c76763bfcdb180e68722d2415"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "arithmetic on string at 33..38"
+        }
+      }
+    },
+    {
+      "name": "check/lean-data-equality",
+      "extension": "lean",
+      "source": "inductive Tree where\n  | leaf : Tree\n  | node : Tree → Nat → Tree → Tree\n\ndef f (t : Tree) : Bool := t == Tree.leaf\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "b63e05ede29a5b1b79a7b18cdcb0292686e4b403481fe1e0cb274c167c98941b"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "structural equality of data values: comparisons of data values are not in the portable core at 101..115"
+        }
+      }
+    },
+    {
+      "name": "check/lean-local-call",
+      "extension": "lean",
+      "source": "def f (g : Nat) : Nat := g 1\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "de7d25736865317c1ef21944688729863be6be2e97f57981238f0fbf769c4a9a"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "higher-order application: local g is not a function in the portable core at 25..29"
+        }
+      }
+    },
+    {
+      "name": "check/lean-wrong-arity-pattern",
+      "extension": "lean",
+      "source": "inductive Tree where\n  | leaf : Tree\n  | node : Tree → Nat → Tree → Tree\n\ndef f : Tree → Nat\n  | .node l _ => 0\n  | .leaf => 1\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "4a51d4481292dc252ca63c1f2a2d5a78850b0a63d13b004dad9220a765901deb"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "node pattern has 2 of 3 fields at 97..107"
+        }
+      }
+    },
+    {
+      "name": "check/lean-bad-ctor-pattern",
+      "extension": "lean",
+      "source": "inductive Tree where\n  | leaf : Tree\n  | node : Tree → Nat → Tree → Tree\n\ndef f : Tree → Nat\n  | .branch => 0\n  | _ => 1\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "ac03f5a286b1de34cbeaee61b51e26c41e2e331cdd97350edf2d9501a2cb18ed"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "Tree has no constructor branch at 97..105"
+        }
+      }
+    },
+    {
+      "name": "check/lean-string-literal-on-nat",
+      "extension": "lean",
+      "source": "def f (n : Nat) : Nat :=\n  match n with\n  | \"a\" => 0\n  | _ => 1\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "pattern: \"\\\"a\\\"\" is outside the portable pattern language at 44..47"
+        }
+      }
+    },
+    {
+      "name": "check/lean-if-mismatch",
+      "extension": "lean",
+      "source": "def f (b : Bool) : Nat := if b then 1 else \"x\"\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "78874426bd99c2087922368255e6e5c6a054578f2c2a0a76e7118659af179e4a"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "expected nat but found string at 26..47"
+        }
+      }
+    },
+    {
+      "name": "check/lean-induction-bad",
+      "extension": "lean",
+      "source": "theorem t (s : String) : s = s := by\n  induction s with\n  | nil => rfl\n\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "32264bc6ba1643ff464d9c2409aa0bbc2175ec84052ee378c7bd9a6b3c75bc4d"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "induction on string: only natural numbers and data types can be split"
+        }
+      }
+    },
+    {
+      "name": "check/lean-self-proof",
+      "extension": "lean",
+      "source": "theorem t (n : Nat) : n = n := by simp [t]\ndef main : IO Unit := do\n  IO.println \"x\"\n",
+      "parse": {
+        "sha256": "516101b9ab02a93c89f92c3891faf99390917ce304a83c39400756b5661cdd7a"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "t uses itself"
+        }
+      }
+    },
+    {
+      "name": "check/rust-widening",
+      "extension": "rs",
+      "source": "fn f(n: u32) -> i64 { i64::from(n) + (n as i64) }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "80b1282042936984dd30bad06d0b87958e2114fa09524801be2e910c24057b08"
+      },
+      "check": {
+        "sha256": "ce6f8f0ff4d609259b44f5e9edc4f69a0d7b8449dba9bf2d82950a1381cbc0fa"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "a033eb8af62b005604e2ca646d14a0876dc1a15d63beac9a99b267f76c8dff49"
+        },
+        "rust": {
+          "sha256": "5aecbcbc4bae31450e155419883c3fd04c6b0617bb821dd5c913ec0080b8ab3f"
+        },
+        "lean": {
+          "sha256": "16719cae39a0eb8b6fcf394a6ec6efc9f7a03c4e8e2885057979b99c63bfc16f"
+        },
+        "rocq": {
+          "sha256": "f2a0f9e497f97b4a7056abae63452b9991e1681ac3ac96938f0d69fccf084f77"
+        }
+      }
+    },
+    {
+      "name": "check/rust-euclid",
+      "extension": "rs",
+      "source": "fn f(x: i32, y: i32) -> i32 { x.div_euclid(y) + x.rem_euclid(y) + x / y + x % y }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "910107a0e0d3d2f97fdb6432f6797c4354b6ed833aab6753b4f83454a90344f0"
+      },
+      "check": {
+        "sha256": "5eb1d28faa65b7e2198b27e9cac3d9a88768f9134df32270177a809c9b6e64fd"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "277b4d98e7f51894ff6784e88902baa6075ef4c7ef4c32d042f2dcbbbf73d8b9"
+        },
+        "rust": {
+          "sha256": "955ac5d6d8e8d9e8a456e06311012ba93c9fa4551342bbf9ce6502705c19387a"
+        },
+        "lean": {
+          "sha256": "52e4ff6f143abe75d4b320a70bad5d468c7077aa57f0d60b7d6a0e67702b6c0d"
+        },
+        "rocq": {
+          "sha256": "3aa8812b4ea59c7737debb5b429134ece99b75ba0ac13baacae4f70e2152faca"
+        }
+      }
+    },
+    {
+      "name": "check/rust-negate",
+      "extension": "rs",
+      "source": "fn f(x: i8) -> i8 { -x }\nfn g() -> i8 { -128 }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "049a17d422e7f1c8d1d6acd605e6d36e551f26a9a68a700697cc0b10a693373e"
+      },
+      "check": {
+        "sha256": "132133f3421b66e1dbde5594df6f7cc945a19a1cea21b8a8edcb2f800240aad7"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "73fd000717347c1b01c2fec1ad2749f8e184cdbceb9db841e94ffcc37144c0bf"
+        },
+        "rust": {
+          "sha256": "6c4a8979760b2dcc757ae840187c14c55bb47253ac7538a541162c3f248ac088"
+        },
+        "lean": {
+          "sha256": "6e1f435b2232f1081a21c9908f3e191e31be86a452f6772a14e579b8de827616"
+        },
+        "rocq": {
+          "sha256": "0670b9cff23a86afcdcc2954b2af28856668259ee62b14ad9b070f3f54cad290"
+        }
+      }
+    },
+    {
+      "name": "check/rust-match-bool",
+      "extension": "rs",
+      "source": "fn f(b: bool) -> u8 { match b { true => 1, false => 0 } }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "fdb9a4203dcb5b54f421cc1e9c4f91655ad80dd44e0808c4f673ff0f6aa745e0"
+      },
+      "check": {
+        "sha256": "804937f666573e76afd1a0de4f15de5393c31c431f566952137fd66e9208f663"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "eefc3f10eb748e59e69312c2ee5322163e987f739959c1d352652eac7d99b216"
+        },
+        "rust": {
+          "sha256": "d0d65e6984067e2c887815829da916b6f0322029a48d20053df43741dbe190ed"
+        },
+        "lean": {
+          "sha256": "351587877790834e6be530cf98f3cc9db1a2467e2f4831b75e29fb1ea3528174"
+        },
+        "rocq": {
+          "sha256": "ea0a853fe88b76361181f1e83004771e1f7d9b640c5da201a4994d550a1c3266"
+        }
+      }
+    },
+    {
+      "name": "check/rust-match-tuple",
+      "extension": "rs",
+      "source": "fn f(a: u64, b: u64) -> u64 { match (a, b) { (0, _) => 0, (_, 0) => 1, (x, y) => f(x - 1, y - 1) } }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "tuple: tuples are outside the portable core at 36..38"
+        }
+      }
+    },
+    {
+      "name": "check/rust-nested",
+      "extension": "rs",
+      "source": "#[derive(Clone, Debug, PartialEq, Eq)]\npub enum Tree { Leaf, Node(Box<Tree>, u64, Box<Tree>) }\n\nfn f(t: &Tree) -> u64 { match t { Tree::Node(l, v, _) => match l.as_ref() { Tree::Node(_, w, _) => *v + *w, Tree::Leaf => *v }, Tree::Leaf => 0 } }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "method as_ref: outside the portable core at 160..170"
+        }
+      }
+    },
+    {
+      "name": "check/rust-print",
+      "extension": "rs",
+      "source": "fn main() { let x: u8 = 7; println!(\"{} {}\", x, true); println!(\"{}\", -3i64); }\n",
+      "parse": {
+        "sha256": "87098d8f1adfaac5861ce88dc99fe8779972fb5eb229b975fb9f52d973bdba00"
+      },
+      "check": {
+        "sha256": "061c2ed5a10e0a65680d956494489da7c7d536da82cad9e384aecbe0d9821eec"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "ce8a65497d1d44df9e4c568e046adadb59b64c3f630ba46dc27726565aa33a8d"
+        },
+        "rust": {
+          "sha256": "4bdeaf1ce7803e1ea678eff319201061fe199884aaa03dbd75fe698f073b2ac6"
+        },
+        "lean": {
+          "sha256": "3c342cfc6ced02ce2027ba42956223df42a8751d5a363a6a1960faf709188900"
+        },
+        "rocq": {
+          "sha256": "4254b2012d9f12c46e090c76edace43afdf6fa79e9a4efc02456b07eb6bfa916"
+        }
+      }
+    },
+    {
+      "name": "check/rust-unsigned-recursion",
+      "extension": "rs",
+      "source": "fn f(n: u32) -> u32 { if n == 0 { 0 } else if n == 1 { 1 } else { f(n - 1) + f(n - 2) } }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "cb86db09b336f6336582c05664727372236696f6598284efad0a6952821e2483"
+      },
+      "check": {
+        "sha256": "1eacf83d793bc497d0e508b44ef2220a36ccb10c1f98c731ceed64bcd76bd867"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "7b1fa610d4f324daf42ad38c80d15925c4f8e38925c20989c18a2381656e55a2"
+        },
+        "rust": {
+          "sha256": "8e41b47b04ac04810fa5b4ec285e85a3f28bc1b3b360e9f3140ac9f4f72652e6"
+        },
+        "lean": {
+          "sha256": "db69c929a8d8811f254f6696a06920052f1235fe8e6283e9a40bb126f4fba485"
+        },
+        "rocq": {
+          "sha256": "8936d0ea527e55f42944cc801e11604efb3c1e7bcc3a03b306ff1530b0b4cb4f"
+        }
+      }
+    },
+    {
+      "name": "check/rust-match-bool-repeat",
+      "extension": "rs",
+      "source": "fn f(b: bool, c: bool) -> u8 { match (b) { true => 1, true => 2, false => if c { 3 } else { 4 } } }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "8cf540062ef1e2f40744951f6fe6dd4341f117b65eddf960b797663a2479796d"
+      },
+      "check": {
+        "sha256": "c4fec372dc41c261536cc33667c6d7d2de700de549ec5d03804238beb623937a"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "77d0ee9b4d3eae386a23fd503ee57635210da4ae4ef88bc441477321c6cbecc1"
+        },
+        "rust": {
+          "sha256": "dee169c584fa5f43fe52feebe94bd440d32e30770ba7393a5f445b2ea0bc7917"
+        },
+        "lean": {
+          "sha256": "f8a474c656d7cba63fef463a2a9d9d8171820fc7756528c799a46c29335d87f3"
+        },
+        "rocq": {
+          "sha256": "4656c12176890e6377d4aa8a20d4b87e355d437aa0abf16b7b0d583515ba325a"
+        }
+      }
+    },
+    {
+      "name": "check/rust-match-bool-partial",
+      "extension": "rs",
+      "source": "fn f(b: bool) -> u8 { match b { true => 1 } }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "ff57d74275830b064ac9ce7cdb1cb45ef1a233f792df3a976b135c3213eb077e"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "non-exhaustive match on bool at 22..44"
+        }
+      }
+    },
+    {
+      "name": "check/rust-narrowing",
+      "extension": "rs",
+      "source": "fn f(n: u64) -> u32 { n as u32 }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "916cb509407cb19347e8f6c7e203853bebde07e5b25876b9a28e246c7e1ec8a4"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "narrowing integer cast: u64 as u32 wraps in Rust and has no portable encoding yet at 22..31"
+        }
+      }
+    },
+    {
+      "name": "check/rust-out-of-range",
+      "extension": "rs",
+      "source": "fn f() -> u8 { 300 }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "41921b452159aacd1a8cddd39f81018b1825e812f7d78666e6c6af887b917686"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "literal out of range for u8 at 15..18"
+        }
+      }
+    },
+    {
+      "name": "check/rust-negate-unsigned",
+      "extension": "rs",
+      "source": "fn f(n: u64) -> u64 { -n }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "0e945010278db407f2c662b6fcd973c28b3982b6e53800d55f869e6606282b68"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "negation of u64 at 22..25"
+        }
+      }
+    },
+    {
+      "name": "check/rust-negative-unsigned",
+      "extension": "rs",
+      "source": "fn f() -> u64 { -1 }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "43990ec5e85e76da8f267c326af3c3376262595f26d87342a087e6b6228a3b32"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "negative literal for a natural type at 16..19"
+        }
+      }
+    },
+    {
+      "name": "check/rust-mixed",
+      "extension": "rs",
+      "source": "fn f(a: u32, b: u64) -> u64 { a + b }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "a06261c404370f86c50d84979f08fe9714459c13f83f46e6611cfe7b5dbdc57a"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "operand types differ: u32 and u64 at 30..35"
+        }
+      }
+    },
+    {
+      "name": "check/rust-data-eq",
+      "extension": "rs",
+      "source": "#[derive(Clone, Debug, PartialEq, Eq)]\npub enum Tree { Leaf, Node(Box<Tree>, u64, Box<Tree>) }\n\nfn f(t: &Tree) -> bool { *t == Tree::Leaf }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "e13489ea0b06ba50136a4ff1771e307250d424cad55d6058dfbdb23b8ea4d5b8"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "structural equality of data values: comparisons of data values are not in the portable core at 122..131"
+        }
+      }
+    },
+    {
+      "name": "check/rust-reserved",
+      "extension": "rs",
+      "source": "fn ml_f() -> u64 { 1 }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "4d77d47118dce8ea54e786a99407c637fad59601df06a4750f3742027ec2fcbc"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "reserved identifier: ml_f uses the translator's reserved ml_ prefix at 0..23"
+        }
+      }
+    },
+    {
+      "name": "check/rust-super-beyond",
+      "extension": "rs",
+      "source": "fn f() -> u64 { super::g() }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "0eccbfd9317ad8f329609d154d0a2f3a71df0ee46a841623638b318b163021e1"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "super beyond crate root at 16..27"
+        }
+      }
+    },
+    {
+      "name": "check/rust-not-function",
+      "extension": "rs",
+      "source": "#[derive(Clone, Debug, PartialEq, Eq)]\npub enum Tree { Leaf, Node(Box<Tree>, u64, Box<Tree>) }\n\nfn f() -> u64 { Tree(1) }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "4f6be7f6f1cc7dfc2979fa37ae0a941e352c3361a6bbe866e6648e67f990333a"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "Tree is not a function at 112..120"
+        }
+      }
+    },
+    {
+      "name": "check/rust-missing-arm",
+      "extension": "rs",
+      "source": "#[derive(Clone, Debug, PartialEq, Eq)]\npub enum Tree { Leaf, Node(Box<Tree>, u64, Box<Tree>) }\n\nfn f(t: &Tree) -> u64 { match t { Tree::Leaf => 0 } }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "1167d8e0903406e8df256edcfea926fb0357a1af1ec0da756c5c93b8f6c8f7b9"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "non-exhaustive match at 120..148"
+        }
+      }
+    },
+    {
+      "name": "check/rust-string-order",
+      "extension": "rs",
+      "source": "fn f(a: String, b: String) -> bool { a < b }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "0f8329d5679298c700020bc506108d692969d920342dd25de50fb725177c0769"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "ordering on string at 37..42"
+        }
+      }
+    },
+    {
+      "name": "check/rust-ctor-fields",
+      "extension": "rs",
+      "source": "#[derive(Clone, Debug, PartialEq, Eq)]\npub enum Tree { Leaf, Node(Box<Tree>, u64, Box<Tree>) }\n\nfn f() -> Tree { Tree::Node(Box::new(Tree::Leaf), 1) }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "788b59c0651541b9f4cb5ded4922bcbc3d044560599dc2f826c23bf5f1a153fd"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "Tree.Node expects 3 fields but got 2 at 113..149"
+        }
+      }
+    },
+    {
+      "name": "check/rust-duplicate-ctor",
+      "extension": "rs",
+      "source": "pub enum E { A, A }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "09fd603ae0f6a4030c813755b69baa9ce29de3edb1fc5a219a774c2754722e4a"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "duplicate constructor A at 4..20"
+        }
+      }
+    },
+    {
+      "name": "check/rust-modules",
+      "extension": "rs",
+      "source": "mod a { pub mod b { pub fn g() -> u64 { super::h() } } pub fn h() -> u64 { crate::k() } }\nfn k() -> u64 { self::a::b::g() }\nfn main() { println!(\"x\"); }\n",
+      "parse": {
+        "sha256": "7c12286ef13b4276f99f478d0e0a9a5e07129ba2f846c4aed86a720e146a3de0"
+      },
+      "check": {
+        "sha256": "64ac0a80cdc07786ad20d20c6854387fe0d52a8e3357e5fd110b8f2f6f48f0bb"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "c1681a0f0918b82ec467733e605b8a136ba838672c2fbebe811738b46d3edf08"
+        },
+        "rust": {
+          "sha256": "5b2e92a1142f30229a846d0e220dcb7ab1d66c25bc49ac81e6d19ebe57914c9c"
+        },
+        "lean": {
+          "error": {
+            "kind": "unsupported",
+            "message": "cyclic declarations: a.b.g depends on declarations that depend on it, which needs mutual definitions at 24..53"
+          }
+        },
+        "rocq": {
+          "error": {
+            "kind": "unsupported",
+            "message": "cyclic declarations: a.b.g depends on declarations that depend on it, which needs mutual definitions at 24..53"
+          }
+        }
+      }
+    },
+    {
+      "name": "check/rocq-nat-patterns",
+      "extension": "v",
+      "source": "From Stdlib Require Import NArith ZArith String Lia.\nOpen Scope string_scope.\nFixpoint f (n : nat) : nat :=\n  match n with\n  | O => 0\n  | S O => 1\n  | S (S m) => f m\n  end.\n",
+      "parse": {
+        "sha256": "011bf19a748f9ca2cc4609425249513893cccd7326865ffb0da9b77f927abadc"
+      },
+      "check": {
+        "sha256": "e8e22dd69c4178731749d3bc22060ac7b87492e92f36f49368fabce1c573aba5"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "0f27f65236f457974864bf3d091f9899da3f5f8f3f1126c41805ef7575a6df41"
+        },
+        "rust": {
+          "sha256": "338f0ab3e5f85bc9d4b71a0ad18369cb931cebe1915008ee089b9c0f4790191c"
+        },
+        "lean": {
+          "sha256": "2d9967c6b46471bb75b42e063e5a21f4f7019ef2314a615483131c913bdc278a"
+        },
+        "rocq": {
+          "sha256": "abf9406983cd7ad9adc26ef5491885561b16ff64120a65598c4ea2042a9b5114"
+        }
+      }
+    },
+    {
+      "name": "check/rocq-bare-ctors",
+      "extension": "v",
+      "source": "From Stdlib Require Import NArith ZArith String Lia.\nOpen Scope string_scope.\nInductive Tree : Type :=\n| leaf : Tree\n| node : Tree -> nat -> Tree -> Tree.\nFixpoint size (t : Tree) : nat :=\n  match t with\n  | leaf => 0\n  | node l _ r => size l + 1 + size r\n  end.\nDefinition sample : Tree := node leaf 1 leaf.\n",
+      "parse": {
+        "sha256": "6f4f877841e76600b54a27ae39e31ef476b13ff4ab0bb13a5405111e37e6c5fb"
+      },
+      "check": {
+        "sha256": "ac598b357b8c3679e54c5c3dc315c70b2181151dc1a54b4446a93d43b819ee48"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "44434e48aeca29f392fed5294e8fe25a6184787d6e1ef1c59979f58186d76d33"
+        },
+        "rust": {
+          "sha256": "1d8a3e9c64312724cc9ce512b8999f9b73b9b9b2ae998153d61618b71c7e7514"
+        },
+        "lean": {
+          "sha256": "5013aecdd3566b855b66bdf45e6fdca35357033069e5ff7c6833f3b476eb584a"
+        },
+        "rocq": {
+          "sha256": "4772b3ee5d0ee4975dd90dbd371fbf035d5657df88cda3e90f95612276dc38c4"
+        }
+      }
+    },
+    {
+      "name": "check/rocq-z",
+      "extension": "v",
+      "source": "From Stdlib Require Import NArith ZArith String Lia.\nOpen Scope string_scope.\nDefinition f (x y : Z) : Z := (x / y + x mod y - 3)%Z.\n",
+      "parse": {
+        "sha256": "06b3d9e85fedf103148a7eade378e6ba25389561b29ed985fb4704497f675355"
+      },
+      "check": {
+        "sha256": "7371acb0394b75f56892bf03c69a56d6fed64cb206bbf4c471d386e97015d62d"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "10b33ca3e0d4cede75123a67bd8e52159426de57bb4778fe38d890a21686c1eb"
+        },
+        "rust": {
+          "sha256": "8781cc27a2e65fa2fc3482470b251dbcab4cf3a42119df5774cc11208370f5c8"
+        },
+        "lean": {
+          "sha256": "203a93d069453af7d6c5780d3c26793d09fed81342e476b2b78b402b892bcc1a"
+        },
+        "rocq": {
+          "sha256": "f34c9c92d9f47d8618b96fc41d984bafed71ea02c7339c06ce1be8c60dfba090"
+        }
+      }
+    },
+    {
+      "name": "check/rocq-induction",
+      "extension": "v",
+      "source": "From Stdlib Require Import NArith ZArith String Lia.\nOpen Scope string_scope.\nFixpoint add (n m : nat) : nat := match n with | O => m | S k => S (add k m) end.\nTheorem add_zero (n : nat) : add n 0 = n.\nProof.\n  induction n as [| k ih].\n  - reflexivity.\n  - simpl. rewrite ih. reflexivity.\nQed.\n",
+      "parse": {
+        "sha256": "25a662e8940763e2305a8edf0bf9c16ad90d6094b934d2b49abab9bf91f4408e"
+      },
+      "check": {
+        "sha256": "8bfba52d00f83a242496cb9c0af41c1b63dd63dcf7df796e559d953d6df3afab"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "5c15b9ebf85ed156abe6de2d70c66458bc55bd766b5d8b27df13b2391bdafbee"
+        },
+        "rust": {
+          "sha256": "730e247540c1ee0b341a4a91876c4a4c0ef3da82b824a2fe5124356a0ba0df19"
+        },
+        "lean": {
+          "sha256": "8851df30b46b34cf7a5f64a02c5876366f8519dfd2ca946e40c263cae1644546"
+        },
+        "rocq": {
+          "sha256": "df4194ac8dcea30d7d21c74e76511e8fc8b4c01e7bfdaf73e150305fbc992751"
+        }
+      }
+    },
+    {
+      "name": "check/rocq-duplicate-ctor-name",
+      "extension": "v",
+      "source": "From Stdlib Require Import NArith ZArith String Lia.\nOpen Scope string_scope.\nInductive A : Type := | x : A.\nInductive B : Type := | x : B.\n",
+      "parse": {
+        "sha256": "a5d3a65bcdcc736e38807927c0e69c39e6ac5ecadd4230f30576d0abc90041ad"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "duplicate declaration x at 109..118"
+        }
+      }
+    },
+    {
+      "name": "check/rocq-unknown",
+      "extension": "v",
+      "source": "From Stdlib Require Import NArith ZArith String Lia.\nOpen Scope string_scope.\nDefinition f (n : nat) : nat := g n.\n",
+      "parse": {
+        "sha256": "a3e1dad7a84fbffa21b455779e14af0fd4c67f2948625c461eca7cd6e87046e8"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "unknown name g at 110..113"
+        }
+      }
+    },
+    {
+      "name": "check/rocq-too-many-cases",
+      "extension": "v",
+      "source": "From Stdlib Require Import NArith ZArith String Lia.\nOpen Scope string_scope.\nTheorem t (n : nat) : n = n.\nProof.\n  induction n as [| k ih | j].\n  - reflexivity.\n  - reflexivity.\nQed.\n",
+      "parse": {
+        "sha256": "7ee39a4955826c98aedae958f23f5bcc8319647737dc609947eb6b610b2f22d8"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "induction on n has 3 cases but nat has 2 constructors"
+        }
+      }
+    },
+    {
+      "name": "check/js-guard-negate",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  if (n < 0n) throw new RangeError('f expects a natural number');\n  return -n + (n - 1n);\n}\n",
+      "parse": {
+        "sha256": "3582ab0035643396a2ec025c27078f15cf537960650825e5e906a313ec0f9043"
+      },
+      "check": {
+        "sha256": "dc16538103ec771cd698bac4fd8d7ac796c9417177718bc3e53b18b2bd72b9a0"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "f946dac5f5568693a75a52a10e1ac4076041d7860545daa7716f585bbad36233"
+        },
+        "rust": {
+          "sha256": "737376721a718cb40ae2bbae15172eab6dad5612c77df700c9748fe679d3a7e6"
+        },
+        "lean": {
+          "sha256": "49eb7af995868e94985fe427d7883626c35124b15a6d38fc5c86e8c17af6d412"
+        },
+        "rocq": {
+          "sha256": "76e375aa1cf29bbb8e7abac1a15bd39476c5ec97b68e9fffe97c7cc3b38dae12"
+        }
+      }
+    },
+    {
+      "name": "check/js-concat",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {string}\n */\nfunction f(n) {\n  return 'n=' + n + true;\n}\nconsole.log(f(3n));\n",
+      "parse": {
+        "sha256": "10b447c791ea688bf593d2b296818d33d746e9ad81d4bd0c9edd26d0f76089be"
+      },
+      "check": {
+        "sha256": "dd60d08c5869cac7dc04ed8898600c063430fc8a6d98675dd669572d4ba93e06"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "b739bef36a73e3079fd5482ba97e524d518658b160da4b7d36d0f7e3a74db5be"
+        },
+        "rust": {
+          "sha256": "da38e773ffbfcb2a4876cd94666b04d22289d953360a2c42ef82ad078de4782e"
+        },
+        "lean": {
+          "sha256": "b233d38408346eac78517f8e9993f0559b9d06a9a2ee4e2cb711b35fdc5290b2"
+        },
+        "rocq": {
+          "sha256": "7b26e5130d18b90c0409e3ba5f34a3385f9762b20dec34882bfc770932ba517f"
+        }
+      }
+    },
+    {
+      "name": "check/js-ctor",
+      "extension": "mjs",
+      "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction leaf() {\n  return { $: 'leaf' };\n}\n/**\n * @param {bigint} v\n * @returns {Tree}\n */\nfunction node(v) {\n  return { $: 'node', value: v, left: leaf(), right: leaf() };\n}\n",
+      "parse": {
+        "sha256": "177d7cc70abf5ab5596568fd999599b9b0598097957777ac6aa039109be1aee8"
+      },
+      "check": {
+        "sha256": "b6684d6a6cc54c325f057ae498b18cdee974e704f432ed262c43fb61e25fd18a"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "7bee36c1bf67b04d7ee24d764178f0eba3020f81b11d3e126c4915275000db00"
+        },
+        "rust": {
+          "sha256": "5d4ad9ba9913c2e7a61e0928b93c67d3f6d4072e24358033ab1e54128075f9a1"
+        },
+        "lean": {
+          "sha256": "95521d3816e79a1a9dc2182b739c9020b5e20f1184e5b91ebb9645c55a44ab07"
+        },
+        "rocq": {
+          "sha256": "07ebd2f18ad6269f2ad224535d942faf0dcd81fa4820f6c8f8946f0ce70820bc"
+        }
+      }
+    },
+    {
+      "name": "check/js-print",
+      "extension": "mjs",
+      "source": "console.log(1n + 2n);\nconsole.log(`${3n}`);\nconsole.log(String(4n));\n",
+      "parse": {
+        "sha256": "c6d2f407dd9a944211638e5c4972d0473bd962173dfd23fc48dce015552845aa"
+      },
+      "check": {
+        "sha256": "eb9f2cb447f1c6ddb8ff0850d69c56bb0afa5bbd20e4610bb9361710905fee61"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "9ed26f0ebf97900f8651a9689ba2d2df2b10d2457a1c8a605a872b3dc26343ae"
+        },
+        "rust": {
+          "sha256": "ee3a259a24f6cc24d54422efbf4a1806f7e0e246e883426a4af2d5eea0aa8e11"
+        },
+        "lean": {
+          "sha256": "dae2b990d5ce458e29340a4d35aa7f4b6c1928deb81298949d88646d4e50c895"
+        },
+        "rocq": {
+          "sha256": "3e37561124fc480312bcd509368e7f71a583c1167f11eaec73fb80d06c638d34"
+        }
+      }
+    },
+    {
+      "name": "check/js-switch-literal",
+      "extension": "mjs",
+      "source": "/**\n * @param {string} s\n * @returns {bigint}\n */\nfunction f(s) {\n  switch (s) {\n    case 'a':\n      return 1n;\n    default:\n      return 2n;\n  }\n}\n",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "case test: the cases of a value switch are BigInt or boolean literals at 90..93"
+        }
+      }
+    },
+    {
+      "name": "check/js-deep-equal",
+      "extension": "mjs",
+      "source": "import assert from 'node:assert/strict';\n/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction leaf() {\n  return { $: 'leaf' };\n}\nassert.deepStrictEqual(leaf(), leaf());\n",
+      "parse": {
+        "sha256": "608b4657de241424c53e7c78ad462547989babc00fc42617a13bbda405058e82"
+      },
+      "check": {
+        "sha256": "8b77f871e8ca25ac3abe8860d615928f64720a9c9a413edd7b8f5d89d3587364"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "e753772ff8b3f0ffd6d0bfb64d31e0b0f86c5ad9a2ddc4fe5eb309885334aefc"
+        },
+        "rust": {
+          "sha256": "a6dc3fd9baf2bfe4dc514f99b4e76bec780c71bcd8deb93061a7b3d16e9ebae8"
+        },
+        "lean": {
+          "sha256": "de696bfffe4405b0966cacb1bb2abdbe734cfd8a2f6578a3b9b29042c5f9ffbc"
+        },
+        "rocq": {
+          "sha256": "6f18e0a2bc90a5789d49b03c648470ab0ec00f473a77204eb7ef003e2f9175e3"
+        }
+      }
+    },
+    {
+      "name": "check/js-identity",
+      "extension": "mjs",
+      "source": "import assert from 'node:assert/strict';\n/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction leaf() {\n  return { $: 'leaf' };\n}\nassert.equal(leaf(), leaf());\n",
+      "parse": {
+        "sha256": "029a576a9b20f818e09a560dc92660eaed59a0e7b7e7732ac4a4bf8f8d18a2ed"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "identity comparison of objects: JavaScript compares objects by identity; use assert.deepStrictEqual at 209..215"
+        }
+      }
+    },
+    {
+      "name": "check/js-string-data",
+      "extension": "mjs",
+      "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction leaf() {\n  return { $: 'leaf' };\n}\nconsole.log('t=' + leaf());\n",
+      "parse": {
+        "sha256": "3fa0af3dbeca16a4ea7db02e856878a06353880ccae39d53ce9613bd9bc49698"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "string conversion of structured values: String(data:Tree) has no portable textual form at 187..193"
+        }
+      }
+    },
+    {
+      "name": "check/js-print-data",
+      "extension": "mjs",
+      "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction leaf() {\n  return { $: 'leaf' };\n}\nconsole.log(leaf());\n",
+      "parse": {
+        "sha256": "1e140773c8085f572d1ccfb77ba8c9b6d125a15d935f34bbe8882e615e8d6e20"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "output of structured values: printing a data:Tree value has no portable textual form at 180..186"
+        }
+      }
+    },
+    {
+      "name": "check/js-unknown-tag",
+      "extension": "mjs",
+      "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction f() {\n  return { $: 'branch' };\n}\n",
+      "parse": {
+        "sha256": "1f0b9d4490354b77ce05ac530dc16e4c1a0065225121bca62e6e4f3d3e7f4cde"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "no data type has tag branch at 148..163"
+        }
+      }
+    },
+    {
+      "name": "check/js-tag-fields",
+      "extension": "mjs",
+      "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @returns {Tree}\n */\nfunction f() {\n  return { $: 'node', value: 1n };\n}\n",
+      "parse": {
+        "sha256": "4abc22ff3807184d904614c885862c27f41a50b0ca740e1becf6c9603e139e0c"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "node expects fields left, value, right at 148..172"
+        }
+      }
+    },
+    {
+      "name": "check/js-ambiguous-tag",
+      "extension": "mjs",
+      "source": "/**\n * @typedef {{ $: 'a' }} A\n */\n/**\n * @typedef {{ $: 'a' }} B\n */\nconsole.log(String(1n));\n/**\n * @returns {bigint}\n */\nfunction f() {\n  const x = { $: 'a' };\n  return 1n;\n}\n",
+      "parse": {
+        "sha256": "cd2313fd735e61261b9d13436e359de97b4b61439bf2dcedcbd94828a131e0a9"
+      },
+      "check": {
+        "error": {
+          "kind": "type",
+          "message": "tag a is ambiguous at 151..161"
+        }
+      }
+    },
+    {
+      "name": "check/js-field",
+      "extension": "mjs",
+      "source": "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n/**\n * @param {Tree} t\n * @returns {bigint}\n */\nfunction f(t) {\n  return t.value;\n}\n",
+      "parse": {
+        "sha256": "af3ccb59d657a1a20d6e4c96b76155143a0eb63af102ad18e20f0f4e0d3a4853"
+      },
+      "check": {
+        "error": {
+          "kind": "unsupported",
+          "message": "field access: field value is only portable inside a constructor match at 170..177"
+        }
+      }
+    },
+    {
+      "name": "check/js-higher-order",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} g\n * @returns {bigint}\n */\nfunction f(g) {\n  return g(1n);\n}\n",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "call of a computed function: only named functions can be called at 76..77"
+        }
+      }
+    }
+  ]
+}

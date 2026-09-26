@@ -520,7 +520,7 @@ class JavaScriptParser {
     const value = c.peek();
     if (value.kind === 'number') {
       c.next();
-      return { k: 'numLit', value: this.bigint(value), negative, span: span(token, value) };
+      return { k: 'numLit', value: this.bigint(value), ...(negative && { negative }), span: span(token, value) };
     }
     if (!negative && (c.is('true') || c.is('false'))) {
       c.next();
@@ -708,7 +708,7 @@ class JavaScriptParser {
         } else if (test.k === 'tag') {
           rows.push(this.tagRow(node, test, body, clause.span));
         } else {
-          rows.push({ patterns: [{ k: test.k, value: test.value, negative: test.negative, span: test.span }], body, span: clause.span });
+          rows.push({ patterns: [{ k: test.k, value: test.value, ...(test.negative && { negative: true }), span: test.span }], body, span: clause.span });
         }
       }
     }

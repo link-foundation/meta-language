@@ -683,10 +683,10 @@ class Checker {
         // A JavaScript `case 0n:` is an `===` test, which the recursion analysis reads as a zero test.
         if (natural && this.language !== 'JavaScript') {
           let result = { k: 'nat', ctor: 'zero', args: [] };
-          for (let count = 0; count < pattern.value; count += 1) result = { k: 'nat', ctor: 'succ', args: [result] };
+          for (let count = 0n; count < BigInt(pattern.value); count += 1n) result = { k: 'nat', ctor: 'succ', args: [result] };
           return result;
         }
-        return this.literalPattern({ k: 'num', value: String(pattern.value), negative: pattern.negative }, type, span);
+        return this.literalPattern({ k: 'num', value: pattern.value, negative: pattern.negative }, type, span);
       }
       case 'boolLit':
         return this.literalPattern({ k: 'bool', value: pattern.value }, type, span);
