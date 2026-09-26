@@ -1032,6 +1032,7 @@ impl Checker {
                         },
                         span,
                         block: arg.block,
+                        tag_test: None,
                     };
                     return self.expr(&flipped, env, path, expected, allow_literal);
                 }

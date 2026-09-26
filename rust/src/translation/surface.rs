@@ -38,6 +38,20 @@ pub struct SExpr {
     /// Set on a Rust block expression (`{ … }`) used as a value.
     #[serde(default, skip_serializing_if = "is_false")]
     pub block: bool,
+    /// Set on the match a JavaScript `x.$ === 'tag'` test reads as, so an
+    /// `if` on it can narrow `x`.
+    #[serde(rename = "tagTest", default, skip_serializing_if = "Option::is_none")]
+    pub tag_test: Option<Box<STagTest>>,
+}
+
+/// A JavaScript `x.$ === 'tag'` (or `!==`) test: the tested value, the tag
+/// and the data type that has it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct STagTest {
+    pub object: SExpr,
+    pub tag: String,
+    pub data: SData,
+    pub negated: bool,
 }
 
 impl SExpr {
@@ -47,6 +61,7 @@ impl SExpr {
             node,
             span,
             block: false,
+            tag_test: None,
         }
     }
 
