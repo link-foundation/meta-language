@@ -287,7 +287,11 @@ async function run(label, command, args, { cwd = workDirectory, env = process.en
     if (code === 0) throw new Error(`${label} unexpectedly succeeded; see ${logPath}`);
     return `${stdout}\n${stderr}`;
   }
-  if (code !== 0) throw new Error(`${label} failed with exit ${code}; see ${logPath}`);
+  if (code !== 0) {
+    // The work directory is discarded with the runner, so the failure must carry its own output.
+    const tail = `${stdout}\n${stderr}`.trim().split('\n').slice(-40).join('\n');
+    throw new Error(`${label} failed with exit ${code}; see ${logPath}\n${tail}`);
+  }
   return stdout;
 }
 
