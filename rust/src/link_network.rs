@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::sync::Arc;
 
-use crate::configuration::{ParseConfiguration, TriviaAttachmentPolicy};
+use crate::configuration::ParseConfiguration;
 use crate::embedded_region_parser;
 use crate::language_catalog::{grammar_provenance, GrammarProvenance};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
@@ -17,8 +17,9 @@ use crate::source::{ByteRange, Point, SourceSpan};
 use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
 };
-use crate::verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
+mod trivia;
+mod verification;
 /// Stable identifier for a link inside a [`LinkNetwork`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LinkId(pub(crate) u64);
@@ -827,34 +828,6 @@ impl LinkNetwork {
         true
     }
 
-    /// Verifies that the selected region has no error or missing links.
-    #[must_use]
-    pub fn verify_full_match(&self, region: Option<ByteRange>) -> VerificationReport {
-        let issues = self
-            .links()
-            .filter(|link| link_is_in_region(link, region))
-            .filter_map(|link| {
-                let flags = link.metadata().flags();
-                let kind = if flags.is_error() {
-                    VerificationIssueKind::ErrorLink
-                } else if flags.is_missing() {
-                    VerificationIssueKind::MissingLink
-                } else if flags.has_error() {
-                    VerificationIssueKind::HasErrorLink
-                } else {
-                    return None;
-                };
-
-                Some(VerificationIssue::new(
-                    link.id(),
-                    kind,
-                    link.metadata().span(),
-                ))
-            })
-            .collect();
-        VerificationReport::new(issues)
-    }
-
     pub(crate) fn insert_typed_point(
         &mut self,
         term: &str,
@@ -910,49 +883,6 @@ impl LinkNetwork {
         {
             self.concept_syntax.insert((concept, language), syntax);
         }
-    }
-
-    pub(crate) fn attach_trivia(
-        &mut self,
-        document: LinkId,
-        token: LinkId,
-        span: SourceSpan,
-        policy: TriviaAttachmentPolicy,
-    ) {
-        match policy {
-            TriviaAttachmentPolicy::ContainmentLink => {
-                self.insert_containment_trivia(document, token, span);
-            }
-            TriviaAttachmentPolicy::TokenLink => {
-                self.insert_token_trivia(token, span);
-            }
-            TriviaAttachmentPolicy::Both => {
-                self.insert_containment_trivia(document, token, span);
-                self.insert_token_trivia(token, span);
-            }
-        }
-    }
-
-    fn insert_containment_trivia(&mut self, document: LinkId, token: LinkId, span: SourceSpan) {
-        self.insert_link(
-            [document, token],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Trivia)
-                .with_term("containment trivia")
-                .with_span(span)
-                .with_flags(LinkFlags::extra()),
-        );
-    }
-
-    fn insert_token_trivia(&mut self, token: LinkId, span: SourceSpan) {
-        self.insert_link(
-            [token],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Trivia)
-                .with_term("token trivia")
-                .with_span(span)
-                .with_flags(LinkFlags::extra()),
-        );
     }
 
     /// Inserts a link whose reference count is known only at run time.
@@ -1022,15 +952,6 @@ impl LinkNetwork {
         self.next_id += 1;
         id
     }
-}
-
-fn link_is_in_region(link: &Link, region: Option<ByteRange>) -> bool {
-    let Some(region) = region else {
-        return true;
-    };
-    link.metadata()
-        .span()
-        .is_some_and(|span| span.byte_range().intersects(region))
 }
 
 fn end_point_for_text(text: &str) -> Point {
