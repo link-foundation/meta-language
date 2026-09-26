@@ -448,6 +448,8 @@ impl<'a> LeanParser<'a> {
                 fields.extend(self.binder_group()?.into_iter().map(|(name, ty)| SField {
                     name: Some(name),
                     ty,
+                    rocq_type: None,
+                    span: None,
                 }));
             }
             if self.cursor.eat(":").is_some() {
@@ -464,7 +466,12 @@ impl<'a> LeanParser<'a> {
                         Some(self.span_to_next(&bar)),
                     ));
                 }
-                fields.extend(types.into_iter().map(|ty| SField { name: None, ty }));
+                fields.extend(types.into_iter().map(|ty| SField {
+                    name: None,
+                    ty,
+                    rocq_type: None,
+                    span: None,
+                }));
             }
             ctors.push(SCtor {
                 name: ctor_name,

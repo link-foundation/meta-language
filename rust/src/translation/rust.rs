@@ -405,6 +405,8 @@ impl RustParser {
                     fields.push(SField {
                         name: None,
                         ty: self.parse_type()?,
+                        rocq_type: None,
+                        span: None,
                     });
                     if self.cursor.eat(",").is_none() {
                         break;

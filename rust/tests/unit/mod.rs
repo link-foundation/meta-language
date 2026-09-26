@@ -78,6 +78,7 @@ mod translation_emit_rocq;
 mod translation_emit_rust;
 mod translation_foundation;
 mod translation_lean;
+mod translation_rocq;
 mod translation_rules;
 mod translation_rust_frontend;
 mod translation_stages;
