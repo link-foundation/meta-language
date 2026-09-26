@@ -1,25 +1,15 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 
 import { translateProgram } from '../src/program-translation.js';
+import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
 
 const corpusBytes = await readFile(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url));
 const cases = JSON.parse(corpusBytes).translationBehaviorCases;
-const fixtureDigest = createHash('sha256').update(corpusBytes).digest('hex');
-
-async function recordObservation(testId, assertionId, fixtureId, testName) {
-  if (!process.env.ISSUE_195_OBSERVATION_FILE) return;
-  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, `${JSON.stringify({
-    testId, assertionId, fixtureId, fixtureDigest,
-    runtime: 'javascript', commit: process.env.ISSUE_195_COMMIT,
-    outcome: 'passed', testName,
-  })}\n`);
-}
 
 test('Rust function translation exports an executable JavaScript function', async () => {
   const fixture = cases.find(({ sourceLanguage, targetLanguage }) =>
@@ -31,14 +21,14 @@ test('Rust function translation exports an executable JavaScript function', asyn
   const constantMutation = translation.code.replace('return 42;', 'return 1;');
   const mutatedModule = await import(`data:text/javascript,${encodeURIComponent(constantMutation)}`);
   assert.notEqual(mutatedModule[fixture.export](), fixture.expectedResult);
-  for (const assertionId of ['realTargetArtifact', 'nativeTargetValidation', 'semanticPreservationChecked']) {
-    await recordObservation(
-      'i195-translate-rust-to-javascript-javascript-positive',
-      assertionId,
-      'planned:translation:Rust:JavaScript',
-      'Rust function translation exports an executable JavaScript function',
-    );
-  }
+  recordIssue195Observations({
+    requirementId: 'I195-TRANSLATE-rust-to-javascript',
+    suffix: 'positive',
+    fixtureId: 'planned:translation:Rust:JavaScript',
+    fixtureFile: ISSUE_195_FIXTURE_FILES.fourLanguage,
+    assertions: ['realTargetArtifact', 'nativeTargetValidation', 'semanticPreservationChecked'],
+    testName: 'Rust function translation exports an executable JavaScript function',
+  });
 });
 
 test('JavaScript console output translation executes in Rust and detects effect erasure', async () => {
@@ -57,14 +47,14 @@ test('JavaScript console output translation executes in Rust and detects effect 
     await writeFile(source, translation.code.replace('println!("42")', 'println!("0")'));
     execFileSync('rustc', ['--edition', '2024', '--crate-type', 'bin', '-o', executable, source]);
     assert.notEqual(execFileSync(executable).toString(), fixture.expectedStdout);
-    for (const assertionId of ['realTargetArtifact', 'nativeTargetValidation', 'semanticPreservationChecked']) {
-      await recordObservation(
-        'i195-translate-javascript-to-rust-javascript-positive',
-        assertionId,
-        'planned:translation:JavaScript:Rust',
-        'JavaScript console output translation executes in Rust and detects effect erasure',
-      );
-    }
+    recordIssue195Observations({
+      requirementId: 'I195-TRANSLATE-javascript-to-rust',
+      suffix: 'positive',
+      fixtureId: 'planned:translation:JavaScript:Rust',
+      fixtureFile: ISSUE_195_FIXTURE_FILES.fourLanguage,
+      assertions: ['realTargetArtifact', 'nativeTargetValidation', 'semanticPreservationChecked'],
+      testName: 'JavaScript console output translation executes in Rust and detects effect erasure',
+    });
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

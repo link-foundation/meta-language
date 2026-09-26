@@ -14,6 +14,8 @@ use meta_language::{
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
+use super::issue_195_observations as observations;
+
 fn corpus() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/four-language-conformance.json");
@@ -111,6 +113,18 @@ fn translated_javascript_print_executes_in_rust() {
     assert!(output.status.success());
     assert_eq!(output.stdout, expected_stdout.as_bytes());
     fs::remove_dir_all(directory).expect("temporary directory cleanup");
+    observations::record(&observations::Observation {
+        requirement_id: "I195-TRANSLATE-javascript-to-rust",
+        suffix: "positive",
+        fixture_id: "planned:translation:JavaScript:Rust",
+        fixture_file: observations::FOUR_LANGUAGE_FIXTURE,
+        assertions: &[
+            "realTargetArtifact",
+            "nativeTargetValidation",
+            "semanticPreservationChecked",
+        ],
+        test_name: "translated_javascript_print_executes_in_rust",
+    });
 }
 
 #[test]
