@@ -20,7 +20,7 @@ export class EmitState {
    * @param {string} language target language
    * @param {(name: string) => string} ident legal target identifier for a source name
    * @param {Set<string>} reserved names no declaration may take
-   * @param {object} options `{ ctorStyle: 'module' | 'data', typeName, valueName, moduleSegment, generated }`
+   * @param {object} options `{ ctorStyle: 'module' | 'data', typeName, valueName, ctorName, moduleSegment, generated, typeSpace, modulesShareTermSpace, modulesShareTypeSpace }`
    */
   constructor(program, language, ident, reserved, options = {}) {
     this.program = program;
@@ -54,12 +54,16 @@ export class EmitState {
       return candidate;
     };
     const moduleName = this.options.moduleSegment ?? this.ident;
+    // JavaScript modules are values; Rust modules share the type namespace.
+    let moduleSpace = 'module';
+    if (this.options.modulesShareTermSpace) moduleSpace = 'term';
+    else if (this.options.modulesShareTypeSpace) moduleSpace = 'type';
     for (const entry of this.program.declarations.values()) {
       const segments = entry.modulePath.map((segment, index) => {
         const key = entry.modulePath.slice(0, index + 1).join('.');
         if (!this.moduleNames.has(key)) {
           const parent = entry.modulePath.slice(0, index).join('.');
-          this.moduleNames.set(key, claim(`${this.options.modulesShareTermSpace ? 'term' : 'module'}:${parent}`, moduleName(segment)));
+          this.moduleNames.set(key, claim(`${moduleSpace}:${parent}`, moduleName(segment)));
         }
         return this.moduleNames.get(key);
       });
