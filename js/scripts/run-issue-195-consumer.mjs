@@ -68,7 +68,7 @@ async function npmConsumer() {
     private: true,
     type: 'module',
   }, null, 2)}\n`);
-  const environment = { ...process.env, npm_config_cache: cache, npm_config_update_notifier: 'false' };
+  const environment = { ...childEnvironment(), npm_config_cache: cache, npm_config_update_notifier: 'false' };
   await run('npm-install', 'npm', [
     'install', '--ignore-scripts', '--no-audit', '--no-fund', tarball,
   ], { cwd: directory, env: environment });
@@ -131,7 +131,7 @@ async function crateConsumer() {
     '',
   ].join('\n'));
   await writeFile(path.join(directory, 'src/main.rs'), CRATE_CONSUMER);
-  const environment = { ...process.env, CARGO_TARGET_DIR: target };
+  const environment = { ...childEnvironment(), CARGO_TARGET_DIR: target };
   await run('crate-fetch', 'cargo', ['fetch'], { cwd: directory, env: environment });
   const offlineEnvironment = {
     ...environment,
@@ -261,7 +261,22 @@ async function expectedChecksum(artifact) {
   return digest;
 }
 
-async function run(label, command, args, { cwd = workDirectory, env = process.env, expectFailure = false } = {}) {
+/**
+ * The parent environment as a plain object. Windows names are case-insensitive, so a copy can
+ * hold both `PATH` and `Path`, and a child such as `cmd.exe` then sees only one of them; the
+ * search path is merged into a single `PATH` so every command stays resolvable.
+ */
+function childEnvironment() {
+  const environment = { ...process.env };
+  if (process.platform !== 'win32') return environment;
+  const names = Object.keys(environment).filter((name) => name.toUpperCase() === 'PATH');
+  const entries = names.flatMap((name) => environment[name].split(path.delimiter)).filter(Boolean);
+  for (const name of names) delete environment[name];
+  environment.PATH = [...new Set(entries)].join(path.delimiter);
+  return environment;
+}
+
+async function run(label, command, args, { cwd = workDirectory, env = childEnvironment(), expectFailure = false } = {}) {
   const logPath = path.join(workDirectory, `${label}.log`);
   const rendered = [command, ...args].join(' ');
   const { code, stdout, stderr } = await new Promise((resolve, reject) => {
