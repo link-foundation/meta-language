@@ -1998,6 +1998,7 @@ impl RocqParser {
                         },
                         span: ascribed_span,
                         block: inner.block,
+                        tag_test: None,
                     });
                 }
                 return self.scoped(SExpr::new(
