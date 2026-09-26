@@ -17,6 +17,10 @@ const KEYWORDS = new Set([
   // Standard-library names the emitted code uses unqualified.
   'N', 'Z', 'String', 'EmptyString', 'negb', 'andb', 'orb', 'true', 'false', 'bool', 'string', 'list', 'nil', 'cons',
   'unit', 'tt', 'nat', 'O', 'S', 'Bool', 'Ascii', 'main', 'lia', 'nia',
+  // Imported constructors: a pattern variable with one of these names would match the constructor instead.
+  'left', 'right', 'inleft', 'inright', 'Some', 'None', 'pair', 'inl', 'inr', 'exist', 'existT', 'I', 'conj', 'or_introl',
+  'or_intror', 'ex_intro', 'eq_refl', 'Eq', 'Lt', 'Gt', 'CompEq', 'CompLt', 'CompGt', 'xI', 'xO', 'xH', 'N0', 'Npos', 'Z0',
+  'Zpos', 'Zneg', 'ReflectT', 'ReflectF', 'identity_refl',
 ]);
 
 export const ROCQ_PRELUDE = [
@@ -44,6 +48,20 @@ Definition ml_Z_emod (a b : Z) : Z := Z.modulo a (Z.abs b).`,
   | rewrite N.eqb_refl ].
 Ltac ml_obligation := intros; repeat match goal with H : N.eqb _ _ = false |- _ => apply N.eqb_neq in H end; lia.
 Ltac ml_close := first [reflexivity | lia | nia | congruence].`,
+  // A closed assertion computes to connectives over literal (in)equalities:
+  // prove the goal, or refute a hypothesis, one connective at a time.
+  decide: `Ltac ml_prove := first
+  [ reflexivity | discriminate | exact I | lia
+  | split; ml_prove
+  | left; ml_prove
+  | right; ml_prove
+  | let H := fresh "H" in intro H; first [ml_prove | ml_refute H] ]
+with ml_refute H := first
+  [ discriminate H | exact H | lia
+  | let A := fresh "H" in let B := fresh "H" in destruct H as [A B]; first [ml_refute A | ml_refute B]
+  | let A := fresh "H" in let B := fresh "H" in destruct H as [A | B]; [ml_refute A | ml_refute B]
+  | apply H; ml_prove ].
+Ltac ml_decide := vm_compute; ml_prove.`,
 };
 
 function ident(name) {
@@ -94,7 +112,7 @@ class RocqEmitter {
     }
     moveTo([]);
     const mainText = this.program.main ? this.main(this.program.main) : null;
-    const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'tactics']
+    const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'tactics', 'decide']
       .filter((name) => this.helpers.has(name) || (name === 'digits' && this.helpers.has('zToString')))
       .map((name) => HELPERS[name]);
     const text = [
@@ -506,7 +524,8 @@ class RocqEmitter {
       const lets = effects.slice(0, index).filter((item) => item.k === 'let')
         .map((item) => `let ${item.name} := ${this.expr(item.value)} in `).join('');
       const name = `ml_assertion_${assertion}`;
-      theorems.push(`Theorem ${name} : ${lets}${this.prop(effect.prop)}.\nProof. vm_compute; first [reflexivity | lia | discriminate | (intro; discriminate)]. Qed.`);
+      theorems.push(`Theorem ${name} : ${lets}${this.prop(effect.prop)}.\nProof. ml_decide. Qed.`);
+      this.helpers.add('decide');
       this.state.assertionTheorem(name, effect);
       return build(index + 1);
     };

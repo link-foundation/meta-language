@@ -13,6 +13,18 @@ import {
 
 const COMPARISONS = new Set(['eq', 'ne', 'lt', 'le', 'gt', 'ge']);
 const ARITHMETIC = new Set(['add', 'sub', 'mul', 'div', 'rem']);
+// Environment entry recording, for a local, the constructor it is known to
+// have matched and the locals naming its fields.
+const KNOWN = Symbol('known constructors');
+
+/** Binds a local, forgetting constructor facts the new binding shadows. */
+function bindLocal(env, name, type) {
+  env.set(name, type);
+  const known = env.get(KNOWN);
+  if (known && [...known].some(([variable, fact]) => variable === name || fact.binds.includes(name))) {
+    env.set(KNOWN, new Map([...known].filter(([variable, fact]) => variable !== name && !fact.binds.includes(name))));
+  }
+}
 
 export function checkProgram(surface) {
   const checker = new Checker(surface.language);
@@ -203,7 +215,7 @@ class Checker {
         const expected = effect.type ? this.resolveType(effect.type, [], effect.span) : undefined;
         let value = this.expr(effect.value, env, [], expected);
         if (expected) value = coerce(value, expected, this.language, effect.span);
-        env.set(effect.name, value.type);
+        bindLocal(env, effect.name, value.type);
         effects.push({ k: 'let', name: effect.name, value, span: effect.span });
         continue;
       }
@@ -235,7 +247,7 @@ class Checker {
       case 'forall': {
         const binders = prop.binders.map((binder) => ({ name: binder.name, type: this.resolveType(binder.type, path, prop.span) }));
         const inner = new Map(env);
-        for (const binder of binders) inner.set(binder.name, binder.type);
+        for (const binder of binders) bindLocal(inner, binder.name, binder.type);
         return { p: 'forall', binders, body: this.prop(prop.body, inner, path) };
       }
       case 'and':
@@ -252,6 +264,9 @@ class Checker {
         if (prop.p !== 'eq' && prop.p !== 'ne' && !isNumeric(left.type)) {
           throw typeError(`ordering on ${typeKey(left.type)}`, prop.span);
         }
+        if (prop.reference && (left.type.kind === 'data' || left.type.kind === 'unit')) {
+          throw unsupported('identity comparison of objects', 'JavaScript compares objects by identity; use assert.deepStrictEqual', prop.span);
+        }
         // Equality propositions over data are structural; executable targets get a generated equality.
         return { p: prop.p, left, right, domain: left.type };
       }
@@ -261,7 +276,7 @@ class Checker {
   operands(leftSurface, rightSurface, env, path, span) {
     let left = this.expr(leftSurface, env, path, undefined, true);
     let right = this.expr(rightSurface, env, path, left.type.kind === 'literal' ? undefined : left.type, true);
-    if (left.type.kind === 'literal') left = this.expr(leftSurface, env, path, right.type);
+    if (left.type.kind === 'literal' && right.type.kind !== 'literal') left = this.expr(leftSurface, env, path, right.type);
     if (left.type.kind === 'literal') {
       left = this.expr(leftSurface, env, path, this.defaultNumber());
       right = this.expr(rightSurface, env, path, left.type);
@@ -321,6 +336,10 @@ class Checker {
         if (node.op === 'neg') {
           if (node.arg.k === 'num') return this.expr({ ...node.arg, negative: !node.arg.negative, span: node.span }, env, path, expected, allowLiteral);
           const arg = this.expr(node.arg, env, path, expected && isNumeric(expected) ? expected : undefined);
+          if (arg.type.kind === 'nat' && this.language === 'JavaScript') {
+            // A guarded natural is still a BigInt, and its negation an integer.
+            return { k: 'unary', op: 'neg', arg: coerce(arg, INT, this.language, node.span), type: INT, semantics: 'exact' };
+          }
           if (arg.type.kind === 'nat' || (arg.type.kind === 'fixed' && !arg.type.signed)) {
             throw typeError(`negation of ${typeKey(arg.type)}`, node.span);
           }
@@ -348,14 +367,14 @@ class Checker {
         let value = this.expr(node.value, env, path, declared);
         if (declared) value = coerce(value, declared, this.language, node.span);
         const inner = new Map(env);
-        inner.set(node.name, value.type);
+        bindLocal(inner, node.name, value.type);
         const body = this.expr(node.body, inner, path, expected, allowLiteral);
         return { k: 'let', name: node.name, value, body, type: body.type };
       }
       case 'match':
         return this.expr(this.compileMatch(node, env, path), env, path, expected, allowLiteral);
       case 'match1':
-        return this.match(node, env, path, expected);
+        return this.match(node, env, path, expected, allowLiteral);
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
         if (arg.type.kind === 'string') return arg;
@@ -400,10 +419,40 @@ class Checker {
       if (op !== 'eq' && op !== 'ne' && !isNumeric(left.type)) throw typeError(`ordering on ${typeKey(left.type)}`, node.span);
       return { k: 'binary', op, left, right, type: BOOL, domain: left.type };
     }
+    if (op === 'plus') return this.plus(node, env, path, expected, allowLiteral);
+    return this.arithmetic(node, env, path, expected, allowLiteral);
+  }
+
+  /**
+   * JavaScript's `+` concatenates when either operand is a string, reading
+   * the other as `String(value)`, and adds numbers otherwise.
+   */
+  plus(node, env, path, expected, allowLiteral) {
+    const left = this.expr(node.left, env, path, undefined, true);
+    const right = this.expr(node.right, env, path, undefined, true);
+    if (left.type.kind !== 'string' && right.type.kind !== 'string') {
+      return this.arithmetic({ ...node, op: 'add' }, env, path, expected, allowLiteral, [left, right]);
+    }
+    const text = (value, surface) => {
+      if (value.type.kind === 'string') return value;
+      const checked = value.type.kind === 'literal' ? this.expr(surface, env, path, this.defaultNumber()) : value;
+      if (checked.type.kind === 'data' || checked.type.kind === 'unit') {
+        throw unsupported('string conversion of structured values', `String(${typeKey(checked.type)}) has no portable textual form`, surface.span);
+      }
+      return { k: 'toString', arg: checked, type: STRING };
+    };
+    return { k: 'binary', op: 'concat', left: text(left, node.left), right: text(right, node.right), type: STRING };
+  }
+
+  /** `checked` holds operands already checked without an expected type, as `plus` does. */
+  arithmetic(node, env, path, expected, allowLiteral, checked = undefined) {
+    const { op } = node;
     if (!ARITHMETIC.has(op)) throw typeError(`unknown operator ${op}`, node.span);
     const numericExpected = expected && isNumeric(expected) ? expected : undefined;
-    let left = this.expr(node.left, env, path, numericExpected, true);
-    let right = this.expr(node.right, env, path, left.type.kind === 'literal' ? numericExpected : left.type, true);
+    let left = checked && checked[0].type.kind !== 'literal' ? checked[0] : this.expr(node.left, env, path, numericExpected, true);
+    let right = checked && checked[1].type.kind !== 'literal'
+      ? checked[1]
+      : this.expr(node.right, env, path, left.type.kind === 'literal' ? numericExpected : left.type, true);
     if (left.type.kind === 'literal') left = this.expr(node.left, env, path, right.type.kind === 'literal' ? numericExpected : right.type, true);
     if (left.type.kind === 'literal' && right.type.kind === 'literal') {
       if (allowLiteral) return { k: 'lit', type: { kind: 'literal' }, value: '0', pending: node };
@@ -412,6 +461,12 @@ class Checker {
     }
     if (right.type.kind === 'literal') right = this.expr(node.right, env, path, left.type);
     if (left.type.kind === 'literal') left = this.expr(node.left, env, path, right.type);
+    if (this.language === 'JavaScript' && (left.type.kind === 'nat' || right.type.kind === 'nat')) {
+      // BigInt arithmetic is integer arithmetic even on guarded naturals: `n - 1n` is -1n for n = 0n.
+      const widen = (value) => (value.k === 'lit' ? literal(INT, value.value) : coerce(value, INT, this.language, node.span));
+      left = widen(left);
+      right = widen(right);
+    }
     [left, right] = unify(left, right, this.language, node.span);
     if (!isNumeric(left.type)) throw typeError(`arithmetic on ${typeKey(left.type)}`, node.span);
     const semantics = arithmeticSemantics(this.language, op, left.type, node);
@@ -621,7 +676,8 @@ class Checker {
         return { k: 'bind', name: pattern.name };
       }
       case 'numLit': {
-        if (natural) {
+        // A JavaScript `case 0n:` is an `===` test, which the recursion analysis reads as a zero test.
+        if (natural && this.language !== 'JavaScript') {
           let result = { k: 'nat', ctor: 'zero', args: [] };
           for (let count = 0; count < pattern.value; count += 1) result = { k: 'nat', ctor: 'succ', args: [result] };
           return result;
@@ -672,7 +728,12 @@ class Checker {
     return { k: 'lit', value, key: `${typeKey(type)}:${checked.value}` };
   }
 
-  match(node, env, path, expected) {
+  match(node, env, path, expected, allowLiteral = false) {
+    const variable = node.scrutinee.k === 'name' && node.scrutinee.path.length === 1 && env.has(node.scrutinee.path[0])
+      ? node.scrutinee.path[0]
+      : null;
+    const fact = variable && env.get(KNOWN)?.get(variable);
+    if (fact) return this.knownMatch(node, fact, variable, env, path, expected, allowLiteral);
     const scrutinee = this.expr(node.scrutinee, env, path, undefined);
     const type = scrutinee.type;
     const cases = [];
@@ -681,6 +742,9 @@ class Checker {
     for (const kase of node.cases) {
       const inner = new Map(env);
       const pattern = this.pattern(kase.pattern, type, inner, path, kase.span ?? node.span);
+      if (variable && pattern.k === 'ctor' && pattern.binds.every(Boolean) && !pattern.binds.includes(variable)) {
+        inner.set(KNOWN, new Map([...(inner.get(KNOWN) ?? []), [variable, { ctor: pattern.ctor, binds: pattern.binds }]]));
+      }
       pending.push({ pattern, body: kase.body, env: inner, span: kase.span });
     }
     for (const kase of pending) {
@@ -698,16 +762,49 @@ class Checker {
     return { k: 'match', scrutinee, cases: finalCases, type: resultType };
   }
 
+  /**
+   * Inside a case that matched `variable` against a constructor, a nested
+   * match on the same variable can only take that constructor's case: it is
+   * the case's body with the fields bound to the outer case's locals. The
+   * value is unchanged, and structural recursion stays visible to Lean and
+   * Rocq, which do not relate the inner match to the outer one.
+   */
+  knownMatch(node, fact, variable, env, path, expected, allowLiteral) {
+    const kase = node.cases.find((candidate) => (candidate.pattern.k === 'ctor' && candidate.pattern.path.at(-1) === fact.ctor)
+      || candidate.pattern.k === 'wild' || candidate.pattern.k === 'bind');
+    if (!kase) throw typeError(`non-exhaustive match: no case for ${fact.ctor}`, node.span);
+    const alias = (name, value, body) => (name === null || name === '_' || name === value
+      ? body
+      : { k: 'let', name, value: { k: 'name', path: [value] }, body, span: kase.span ?? node.span });
+    let body = kase.body;
+    if (kase.pattern.k === 'bind') body = alias(kase.pattern.name, variable, body);
+    if (kase.pattern.k === 'ctor') {
+      if (kase.pattern.binds.length !== fact.binds.length) {
+        throw typeError(`${fact.ctor} pattern binds ${kase.pattern.binds.length} of ${fact.binds.length} fields`, kase.span ?? node.span);
+      }
+      // Simultaneous binding: every alias reads an outer local before any is shadowed.
+      const inner = kase.pattern.binds.map((name, index) => [name, fact.binds[index]]).filter(([name, value]) => name && name !== '_' && name !== value);
+      if (inner.some(([, value]) => inner.some(([name]) => name === value))) {
+        const temporaries = inner.map(([, value]) => [this.freshName('ml_k'), value]);
+        body = inner.reduceRight((rest, [name], index) => alias(name, temporaries[index][0], rest), body);
+        body = temporaries.reduceRight((rest, [name, value]) => alias(name, value, rest), body);
+      } else {
+        body = inner.reduceRight((rest, [name, value]) => alias(name, value, rest), body);
+      }
+    }
+    return this.expr(body, env, path, expected, allowLiteral);
+  }
+
   pattern(pattern, type, env, path, span) {
     if (pattern.k === 'wild') return { k: 'wild' };
     if (pattern.k === 'bind') {
-      env.set(pattern.name, type);
+      bindLocal(env, pattern.name, type);
       return { k: 'bind', name: pattern.name };
     }
     if (pattern.k === 'natZero' || pattern.k === 'natSucc') {
       if (!isNatural(type) || type.kind === 'fixed') throw typeError(`natural-number pattern on ${typeKey(type)}`, span);
       if (pattern.k === 'natSucc') {
-        env.set(pattern.name, type);
+        bindLocal(env, pattern.name, type);
         return { k: 'natSucc', name: pattern.name };
       }
       return { k: 'natZero' };
@@ -723,7 +820,7 @@ class Checker {
       }
       const binds = pattern.binds.map((bind, index) => {
         if (bind === '_' || bind === null) return null;
-        env.set(bind, ctor.fields[index].type);
+        bindLocal(env, bind, ctor.fields[index].type);
         return bind;
       });
       return { k: 'ctor', data: type.name, ctor: ctorName, binds };

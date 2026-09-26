@@ -20,7 +20,7 @@ export class EmitState {
    * @param {string} language target language
    * @param {(name: string) => string} ident legal target identifier for a source name
    * @param {Set<string>} reserved names no declaration may take
-   * @param {object} options `{ ctorStyle: 'module' | 'data', typeName, valueName, ctorName, moduleSegment, generated, typeSpace, modulesShareTermSpace, modulesShareTypeSpace }`
+   * @param {object} options `{ ctorStyle: 'module' | 'data', typeName, valueName, ctorName, moduleSegment, generated, typeSpace, modulesShareTermSpace, modulesShareTypeSpace, rootReserved }`
    */
   constructor(program, language, ident, reserved, options = {}) {
     this.program = program;
@@ -32,6 +32,7 @@ export class EmitState {
     this.ctorNames = new Map();
     this.moduleNames = new Map();
     this.taken = new Map();
+    this.claimed = new Set();
     this.mappings = [];
     this.assumptions = new Map();
     this.encodings = new Map();
@@ -42,15 +43,21 @@ export class EmitState {
   /** Target names are fixed up front, so references never depend on emission order. */
   assign() {
     const namespace = (key) => {
-      if (!this.taken.has(key)) this.taken.set(key, new Set(this.reserved));
+      // Root declarations may not redeclare the target's prelude (`rootReserved`).
+      if (!this.taken.has(key)) {
+        const root = key.endsWith(':') ? this.options.rootReserved ?? [] : [];
+        this.taken.set(key, new Set([...this.reserved, ...root]));
+      }
       return this.taken.get(key);
     };
     const claim = (space, name) => {
       const used = namespace(space);
       let candidate = name;
       for (let index = 2; used.has(candidate) || this.isGenerated(candidate, used); index += 1) candidate = `${name}_${index}`;
-      used.add(candidate);
-      for (const extra of this.generatedFor(candidate)) used.add(extra);
+      for (const name of [candidate, ...this.generatedFor(candidate)]) {
+        used.add(name);
+        this.claimed.add(name);
+      }
       return candidate;
     };
     const moduleName = this.options.moduleSegment ?? this.ident;
@@ -88,9 +95,7 @@ export class EmitState {
    * top-level function or a constructor would shadow it in the target.
    */
   localReserved() {
-    const names = new Set(this.reserved);
-    for (const used of this.taken.values()) for (const name of used) names.add(name);
-    return names;
+    return new Set([...this.reserved, ...this.claimed]);
   }
 
   isGenerated(candidate, used) {

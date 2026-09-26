@@ -9,6 +9,7 @@ import { propFunctions } from './proof.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { EmitState, orderDeclarations } from './emit-common.js';
+import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 
 const KEYWORDS = new Set([
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
@@ -50,6 +51,7 @@ export function emitLean(program) {
   const state = new EmitState(program, 'Lean', ident, KEYWORDS, {
     ctorStyle: 'data',
     generated: (name) => [`${name}.eq_1`],
+    rootReserved: LEAN_ROOT_NAMES,
   });
   return new LeanEmitter(program, state).file();
 }
