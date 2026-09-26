@@ -103,7 +103,7 @@ class RocqEmitter {
       '',
       ...helperText.flatMap((helper) => [helper, '']),
       ...blocks.flatMap((block) => [block, '']),
-      ...(mainText ? [mainText, ''] : []),
+      ...(mainText ? [mainText, '', 'Eval vm_compute in main.', ''] : []),
     ].join('\n');
     return {
       language: 'Rocq',
@@ -149,7 +149,7 @@ class RocqEmitter {
   }
 
   fn(entry) {
-    const { params, body } = renameFunction(entry, ident, KEYWORDS);
+    const { params, body } = renameFunction(entry, ident, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     this.current = { entry, name };
@@ -172,7 +172,7 @@ class RocqEmitter {
   }
 
   theorem(entry) {
-    const { binders, prop, plan } = renameTheorem(entry, ident, KEYWORDS);
+    const { binders, prop, plan } = renameTheorem(entry, ident, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const statement = `Theorem ${name}${binders.map((binder) => ` (${binder.name} : ${this.type(binder.type)})`).join('')} : ${this.prop(prop)}.`;
@@ -494,7 +494,7 @@ class RocqEmitter {
   }
 
   main(main) {
-    const { effects } = renameMain(main, ident, KEYWORDS);
+    const { effects } = renameMain(main, ident, this.state.localReserved());
     let assertion = 0;
     const theorems = [];
     const build = (index) => {

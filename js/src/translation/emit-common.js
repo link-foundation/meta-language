@@ -58,7 +58,8 @@ export class EmitState {
       const segments = entry.modulePath.map((segment, index) => {
         const key = entry.modulePath.slice(0, index + 1).join('.');
         if (!this.moduleNames.has(key)) {
-          this.moduleNames.set(key, claim(`module:${entry.modulePath.slice(0, index).join('.')}`, moduleName(segment)));
+          const parent = entry.modulePath.slice(0, index).join('.');
+          this.moduleNames.set(key, claim(`${this.options.modulesShareTermSpace ? 'term' : 'module'}:${parent}`, moduleName(segment)));
         }
         return this.moduleNames.get(key);
       });
@@ -76,6 +77,16 @@ export class EmitState {
         }
       }
     }
+  }
+
+  /**
+   * Names a local binder may not take: a local named like a module, a
+   * top-level function or a constructor would shadow it in the target.
+   */
+  localReserved() {
+    const names = new Set(this.reserved);
+    for (const used of this.taken.values()) for (const name of used) names.add(name);
+    return names;
   }
 
   isGenerated(candidate, used) {
