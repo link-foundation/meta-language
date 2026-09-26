@@ -879,6 +879,7 @@ function analyseRecursion(program) {
     const selfCalls = calls.filter((call) => call.fn === entry.fullName);
     entry.recursive = selfCalls.length > 0;
     entry.decreasing = entry.recursive ? structuralParameter(entry) : null;
+    if (entry.recursive && entry.decreasing === null) exposeNaturalCases(entry);
   }
   const graph = new Map();
   for (const entry of program.declarations.values()) {
@@ -895,6 +896,137 @@ function analyseRecursion(program) {
       }
     }
   }
+}
+
+/**
+ * `if n == 0 then a else b` on a natural parameter is the case split
+ * `match n with 0 => a | succ p => b'`, where `b'` reads `n - k` as
+ * `p - (k - 1)` and `n == k` as `p == k - 1`: in `b`, `n` is at least 1, so
+ * both agree with truncated subtraction and with a checked conversion of
+ * `n - k` back to a natural. Writing the split explicitly makes recursion
+ * such as `n * fact (n - 1)` structural, which Lean and Rocq require.
+ */
+function exposeNaturalCases(entry) {
+  for (let index = 0; index < entry.params.length; index += 1) {
+    const param = entry.params[index];
+    if (param.type.kind !== 'nat') continue;
+    let fresh = 0;
+    const freshName = () => {
+      fresh += 1;
+      return `ml_p${fresh}`;
+    };
+    const body = splitNatural(entry.body, param.name, freshName);
+    if (body !== entry.body && decreasesOn(body, entry.fullName, index, param.name, new Set())) {
+      entry.body = body;
+      entry.decreasing = index;
+      return;
+    }
+  }
+}
+
+function isVar(node, name) {
+  return node?.k === 'var' && node.name === name;
+}
+
+function natLiteral(node) {
+  if (node?.k !== 'lit' || !/^\d+$/u.test(String(node.value))) return null;
+  return BigInt(node.value);
+}
+
+/** `n == 0`, `0 == n`: the zero test that selects the `then` branch. */
+function zeroTest(cond, name) {
+  if (cond.k !== 'binary' || (cond.op !== 'eq' && cond.op !== 'ne') || cond.domain?.kind !== 'nat') return null;
+  const zeroOn = (a, b) => isVar(a, name) && natLiteral(b) === 0n;
+  if (zeroOn(cond.left, cond.right) || zeroOn(cond.right, cond.left)) return cond.op === 'eq' ? 'then' : 'else';
+  return null;
+}
+
+function splitNatural(expr, name, freshName) {
+  if (!expr || typeof expr !== 'object') return expr;
+  if (expr.k === 'if') {
+    const zeroBranch = zeroTest(expr.cond, name);
+    if (zeroBranch) {
+      const zero = zeroBranch === 'then' ? expr.then : expr.else;
+      const positive = zeroBranch === 'then' ? expr.else : expr.then;
+      const pred = freshName();
+      const type = expr.cond.domain;
+      let succBody = predecessorOf(positive, name, pred, type);
+      succBody = splitNatural(splitNatural(succBody, pred, freshName), name, freshName);
+      return {
+        k: 'match',
+        scrutinee: { k: 'var', name, type, span: expr.cond.span },
+        cases: [
+          { pattern: { k: 'natZero' }, body: splitNatural(zero, name, freshName) },
+          { pattern: { k: 'natSucc', name: pred }, body: succBody },
+        ],
+        type: expr.type,
+        span: expr.span,
+      };
+    }
+  }
+  if ((expr.k === 'let' && expr.name === name) || (expr.k === 'match' && binds(expr, name))) return expr;
+  let changed = false;
+  const copy = { ...expr };
+  for (const [key, value] of Object.entries(expr)) {
+    if (key === 'type' || key === 'domain' || key === 'from' || key === 'to' || key === 'span') continue;
+    if (Array.isArray(value)) {
+      const next = value.map((item) => (item && typeof item === 'object' && !item.k && item.body
+        ? { ...item, body: splitNatural(item.body, name, freshName) }
+        : splitNatural(item, name, freshName)));
+      if (next.some((item, position) => item !== value[position] && (item.body ?? item) !== (value[position].body ?? value[position]))) {
+        copy[key] = next;
+        changed = true;
+      }
+    } else if (value && typeof value === 'object' && value.k) {
+      const next = splitNatural(value, name, freshName);
+      if (next !== value) {
+        copy[key] = next;
+        changed = true;
+      }
+    }
+  }
+  return changed ? copy : expr;
+}
+
+function binds(match, name) {
+  return match.cases.some((kase) => kase.pattern.name === name || (kase.pattern.binds ?? []).includes(name));
+}
+
+/** Rewrites uses of `name - k` and `name == k` (k ≥ 1) in terms of `pred = name - 1`. */
+function predecessorOf(expr, name, pred, type) {
+  const predVar = () => ({ k: 'var', name: pred, type });
+  const minus = (k, like) => (k === 1n
+    ? predVar()
+    : { ...like, left: predVar(), right: { k: 'lit', type, value: String(k - 1n) }, type, domain: type });
+  const visit = (node) => {
+    if (!node || typeof node !== 'object') return node;
+    if (Array.isArray(node)) return node.map(visit);
+    if (node.k === 'binary' && node.domain?.kind === 'nat' && isVar(node.left, name)) {
+      const k = natLiteral(node.right);
+      if (k !== null && k >= 1n && node.op === 'sub') return minus(k, node);
+      if (k !== null && k >= 1n && (node.op === 'eq' || node.op === 'ne')) {
+        return { ...node, left: predVar(), right: { k: 'lit', type, value: String(k - 1n) } };
+      }
+    }
+    // JavaScript's `n - 1n` on a natural `n` is the checked conversion of
+    // an integer difference; with n ≥ 1 it is the natural predecessor.
+    if (node.k === 'cast' && node.to.kind === 'nat' && node.arg.k === 'binary' && node.arg.op === 'sub'
+      && node.arg.left.k === 'cast' && node.arg.left.from?.kind === 'nat' && isVar(node.arg.left.arg, name)) {
+      const k = natLiteral(node.arg.right);
+      if (k !== null && k >= 1n) {
+        return minus(k, { k: 'binary', op: 'sub', semantics: 'truncated', span: node.span });
+      }
+    }
+    if (node.k === 'let' && (node.name === name || node.name === pred)) return { ...node, value: visit(node.value) };
+    if (node.k === 'match' && (binds(node, name) || binds(node, pred))) return { ...node, scrutinee: visit(node.scrutinee) };
+    const copy = { ...node };
+    for (const [key, value] of Object.entries(node)) {
+      if (key === 'type' || key === 'domain' || key === 'from' || key === 'to' || key === 'span' || key === 'pattern') continue;
+      if (value && typeof value === 'object') copy[key] = visit(value);
+    }
+    return copy;
+  };
+  return visit(expr);
 }
 
 function reaches(graph, from, to, seen) {

@@ -107,8 +107,15 @@ function split(step, trailing, hints, locals, theorem, context, language) {
   const ctors = constructorsOf(type, context);
   if (!ctors) throw unsupported(`${step.t} on ${typeKey(type)}`, 'only natural numbers and data types can be split', undefined);
   const induction = step.t === 'induction';
-  const cases = ctors.map((ctor) => {
-    const written = step.cases.find((kase) => canonicalCtor(kase.ctor, type) === ctor.name);
+  // Rocq names cases by position (`as [| k ih]` and one bullet per
+  // subgoal, in constructor order); Lean names them by constructor.
+  if (step.positional && step.cases.length > ctors.length) {
+    throw typeError(`${step.t} on ${step.variable} has ${step.cases.length} cases but ${typeKey(type)} has ${ctors.length} constructors`, undefined);
+  }
+  const cases = ctors.map((ctor, ctorIndex) => {
+    const written = step.positional
+      ? step.cases[ctorIndex]
+      : step.cases.find((kase) => canonicalCtor(kase.ctor, type) === ctor.name);
     const recursive = ctor.fields.map((field) => typeKey(field.type) === typeKey(type));
     const { fields, ihs } = assignBinds(written?.binds ?? [], ctor, recursive, induction, language);
     const inner = new Map(locals);
@@ -119,7 +126,7 @@ function split(step, trailing, hints, locals, theorem, context, language) {
     const plan = sequence(steps, caseHints, inner, theorem, context, language);
     return { ctor: ctor.name, fields, ihs, recursive, plan };
   });
-  for (const kase of step.cases) {
+  for (const kase of step.positional ? [] : step.cases) {
     if (!ctors.some((ctor) => ctor.name === canonicalCtor(kase.ctor, type))) {
       throw typeError(`${typeKey(type)} has no constructor ${kase.ctor}`, undefined);
     }
