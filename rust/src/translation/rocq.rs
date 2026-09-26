@@ -257,7 +257,7 @@ pub fn parse_rocq(source: &str) -> Result<SProgram> {
 
 /// A `Definition`, `Fixpoint` or `Function`: a function, or the program output.
 enum Definition {
-    Fn(SFn),
+    Fn(Box<SFn>),
     Main(SMain, Span),
 }
 
@@ -406,7 +406,7 @@ impl RocqParser {
                         }
                         *main = Some(program);
                     }
-                    Definition::Fn(item) => items.push(SItem::Fn(item)),
+                    Definition::Fn(item) => items.push(SItem::Fn(*item)),
                 }
                 continue;
             }
@@ -736,7 +736,7 @@ impl RocqParser {
         if keyword == "Function" {
             self.skip_obligations(&start, annotation)?;
         }
-        Ok(Definition::Fn(SFn {
+        Ok(Definition::Fn(Box::new(SFn {
             name,
             params: params
                 .into_iter()
@@ -751,7 +751,7 @@ impl RocqParser {
             ret: Some(ret),
             body,
             span: Some(span(&start, self.peek())),
-        }))
+        })))
     }
 
     /// `{struct x}` names the structural argument and `{measure N.to_nat x}`

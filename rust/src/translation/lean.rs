@@ -237,7 +237,7 @@ struct PatternHead {
 }
 
 enum Definition {
-    Fn(SFn),
+    Fn(Box<SFn>),
     Main(SMain, Span),
 }
 
@@ -387,7 +387,7 @@ impl<'a> LeanParser<'a> {
                         }
                         *main = Some(program_main);
                     }
-                    Definition::Fn(item) => items.push(SItem::Fn(item)),
+                    Definition::Fn(item) => items.push(SItem::Fn(*item)),
                 }
                 continue;
             }
@@ -617,13 +617,13 @@ impl<'a> LeanParser<'a> {
             }
             let body = self.with_bound(0, Self::expr)?;
             self.end_decl(&start, "termination_by")?;
-            return Ok(Definition::Fn(SFn {
+            return Ok(Definition::Fn(Box::new(SFn {
                 name,
                 params,
                 ret,
                 body,
                 span: Some(self.span_to_next(&start)),
-            }));
+            })));
         }
         if !self.cursor.is("|") {
             return Err(self.fail("expected := or equations"));
@@ -644,13 +644,13 @@ impl<'a> LeanParser<'a> {
             self.span_to_next(&start),
         );
         self.end_decl(&start, "termination_by")?;
-        Ok(Definition::Fn(SFn {
+        Ok(Definition::Fn(Box::new(SFn {
             name,
             params: params.into_iter().chain(extra).collect(),
             ret,
             body,
             span: Some(self.span_to_next(&start)),
-        }))
+        })))
     }
 
     fn end_decl(&self, start: &Token, keyword: &str) -> Result<()> {
