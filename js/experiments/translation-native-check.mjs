@@ -6,6 +6,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseLean } from '../src/translation/lean.js';
 import { parseRocq } from '../src/translation/rocq.js';
+import { parseRust } from '../src/translation/rust.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRocq } from '../src/translation/emit-rocq.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
@@ -13,7 +14,7 @@ import { emitLean } from '../src/translation/emit-lean.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 
 const [source, expectedFile, workdir = '/tmp/native-check'] = process.argv.slice(2);
-const frontends = { lean: parseLean, v: parseRocq };
+const frontends = { lean: parseLean, v: parseRocq, rs: parseRust };
 const program = checkProgram(frontends[source.split('.').pop()](readFileSync(source, 'utf8')));
 const expected = readFileSync(expectedFile, 'utf8');
 mkdirSync(workdir, { recursive: true });

@@ -790,8 +790,9 @@ function without(map, names) {
 function arithmeticSemantics(language, op, type, node) {
   const division = op === 'div' || op === 'rem';
   if (type.kind === 'fixed') {
-    // Rust integer arithmetic with overflow checks: division truncates and panics on zero.
-    return division ? { semantics: 'checked', rounding: 'trunc', byZero: 'abort' } : { semantics: 'checked' };
+    // Rust integer arithmetic with overflow checks: `/` and `%` truncate,
+    // `div_euclid` and `rem_euclid` round Euclidean; all panic on zero.
+    return division ? { semantics: 'checked', rounding: node.rounding ?? 'trunc', byZero: 'abort' } : { semantics: 'checked' };
   }
   if (op === 'sub') return { semantics: type.kind === 'nat' ? 'truncated' : 'exact' };
   if (!division) return { semantics: 'exact' };
@@ -899,17 +900,19 @@ function analyseRecursion(program) {
 }
 
 /**
- * `if n == 0 then a else b` on a natural parameter is the case split
- * `match n with 0 => a | succ p => b'`, where `b'` reads `n - k` as
- * `p - (k - 1)` and `n == k` as `p == k - 1`: in `b`, `n` is at least 1, so
- * both agree with truncated subtraction and with a checked conversion of
- * `n - k` back to a natural. Writing the split explicitly makes recursion
- * such as `n * fact (n - 1)` structural, which Lean and Rocq require.
+ * `if n == 0 then a else b` on a natural or unsigned machine-integer
+ * parameter is the case split `match n with 0 => a | succ p => b'`, where
+ * `b'` reads `n - k` as `p - (k - 1)` and `n == k` as `p == k - 1`: in `b`,
+ * `n` is at least 1, so both agree with truncated subtraction, with checked
+ * machine subtraction, and with a checked conversion of `n - k` back to a
+ * natural. A `let m := n` in `b` is an alias read the same way. Writing the
+ * split explicitly makes recursion such as `n * fact (n - 1)` structural,
+ * which Lean and Rocq require.
  */
 function exposeNaturalCases(entry) {
   for (let index = 0; index < entry.params.length; index += 1) {
     const param = entry.params[index];
-    if (param.type.kind !== 'nat') continue;
+    if (!isNatural(param.type)) continue;
     let fresh = 0;
     const freshName = () => {
       fresh += 1;
@@ -935,7 +938,7 @@ function natLiteral(node) {
 
 /** `n == 0`, `0 == n`: the zero test that selects the `then` branch. */
 function zeroTest(cond, name) {
-  if (cond.k !== 'binary' || (cond.op !== 'eq' && cond.op !== 'ne') || cond.domain?.kind !== 'nat') return null;
+  if (cond.k !== 'binary' || (cond.op !== 'eq' && cond.op !== 'ne') || !cond.domain || !isNatural(cond.domain)) return null;
   const zeroOn = (a, b) => isVar(a, name) && natLiteral(b) === 0n;
   if (zeroOn(cond.left, cond.right) || zeroOn(cond.right, cond.left)) return cond.op === 'eq' ? 'then' : 'else';
   return null;
@@ -992,16 +995,20 @@ function binds(match, name) {
   return match.cases.some((kase) => kase.pattern.name === name || (kase.pattern.binds ?? []).includes(name));
 }
 
-/** Rewrites uses of `name - k` and `name == k` (k ≥ 1) in terms of `pred = name - 1`. */
+/**
+ * Rewrites uses of `name - k` and `name == k` (k ≥ 1) in terms of
+ * `pred = name - 1`, including through `let` aliases of `name`.
+ */
 function predecessorOf(expr, name, pred, type) {
   const predVar = () => ({ k: 'var', name: pred, type });
   const minus = (k, like) => (k === 1n
     ? predVar()
     : { ...like, left: predVar(), right: { k: 'lit', type, value: String(k - 1n) }, type, domain: type });
-  const visit = (node) => {
+  const visit = (node, names) => {
     if (!node || typeof node !== 'object') return node;
-    if (Array.isArray(node)) return node.map(visit);
-    if (node.k === 'binary' && node.domain?.kind === 'nat' && isVar(node.left, name)) {
+    if (Array.isArray(node)) return node.map((item) => visit(item, names));
+    const named = (candidate) => candidate?.k === 'var' && names.has(candidate.name);
+    if (node.k === 'binary' && node.domain && isNatural(node.domain) && named(node.left)) {
       const k = natLiteral(node.right);
       if (k !== null && k >= 1n && node.op === 'sub') return minus(k, node);
       if (k !== null && k >= 1n && (node.op === 'eq' || node.op === 'ne')) {
@@ -1011,22 +1018,36 @@ function predecessorOf(expr, name, pred, type) {
     // JavaScript's `n - 1n` on a natural `n` is the checked conversion of
     // an integer difference; with n ≥ 1 it is the natural predecessor.
     if (node.k === 'cast' && node.to.kind === 'nat' && node.arg.k === 'binary' && node.arg.op === 'sub'
-      && node.arg.left.k === 'cast' && node.arg.left.from?.kind === 'nat' && isVar(node.arg.left.arg, name)) {
+      && node.arg.left.k === 'cast' && node.arg.left.from?.kind === 'nat' && named(node.arg.left.arg)) {
       const k = natLiteral(node.arg.right);
       if (k !== null && k >= 1n) {
         return minus(k, { k: 'binary', op: 'sub', semantics: 'truncated', span: node.span });
       }
     }
-    if (node.k === 'let' && (node.name === name || node.name === pred)) return { ...node, value: visit(node.value) };
-    if (node.k === 'match' && (binds(node, name) || binds(node, pred))) return { ...node, scrutinee: visit(node.scrutinee) };
+    if (node.k === 'let') {
+      const inner = new Set(names);
+      inner.delete(node.name);
+      if (node.name === pred) return { ...node, value: visit(node.value, names) };
+      if (named(node.value)) inner.add(node.name);
+      return { ...node, value: visit(node.value, names), body: visit(node.body, inner) };
+    }
+    if (node.k === 'match') {
+      const scrutinee = visit(node.scrutinee, names);
+      if (binds(node, pred)) return { ...node, scrutinee };
+      const cases = node.cases.map((kase) => {
+        const inner = new Set([...names].filter((candidate) => !binds({ cases: [kase] }, candidate)));
+        return { ...kase, body: visit(kase.body, inner) };
+      });
+      return { ...node, scrutinee, cases };
+    }
     const copy = { ...node };
     for (const [key, value] of Object.entries(node)) {
       if (key === 'type' || key === 'domain' || key === 'from' || key === 'to' || key === 'span' || key === 'pattern') continue;
-      if (value && typeof value === 'object') copy[key] = visit(value);
+      if (value && typeof value === 'object') copy[key] = visit(value, names);
     }
     return copy;
   };
-  return visit(expr);
+  return visit(expr, new Set([name]));
 }
 
 function reaches(graph, from, to, seen) {

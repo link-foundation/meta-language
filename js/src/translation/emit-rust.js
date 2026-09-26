@@ -662,7 +662,11 @@ class RustEmitter {
     const left = this.receiver(e.left);
     const right = this.expr(e.right);
     const names = { add: ['checked_add', 'addition'], sub: ['checked_sub', 'subtraction'], mul: ['checked_mul', 'multiplication'], div: ['checked_div', 'division'], rem: ['checked_rem', 'remainder'] };
-    const [method, what] = names[e.op];
+    let [method, what] = names[e.op];
+    if ((e.op === 'div' || e.op === 'rem') && e.rounding === 'euclid') method = `${method}_euclid`;
+    else if ((e.op === 'div' || e.op === 'rem') && e.rounding !== 'trunc' && e.type.signed) {
+      throw unsupported(`${e.rounding} division on ${typeKey(e.type)}`, 'Rust machine integers divide with truncating or Euclidean rounding only', e.span);
+    }
     if (e.op === 'div' || e.op === 'rem') this.state.abortToTotal('division by zero');
     return this.checked(`${left}.${method}(${right})`, e.type, what);
   }
@@ -707,7 +711,8 @@ class RustEmitter {
       });
       return `match ${this.expr(e.scrutinee)} {\n${indent(arms.join('\n'), 1)}\n}`;
     }
-    if (e.scrutinee.type.kind !== 'nat') {
+    const natural = e.cases.some((kase) => kase.pattern.k === 'natZero' || kase.pattern.k === 'natSucc');
+    if (e.scrutinee.type.kind !== 'nat' && !natural) {
       const kase = fallback;
       const pattern = kase.pattern.k === 'bind' ? kase.pattern.name : '_';
       return `match ${this.expr(e.scrutinee)} {\n${indent(`${pattern} => ${block(this.expr(kase.body))}`, 1)}\n}`;
@@ -727,10 +732,13 @@ class RustEmitter {
     const zero = e.cases.find((kase) => kase.pattern.k === 'natZero');
     const succ = e.cases.find((kase) => kase.pattern.k === 'natSucc');
     const zeroText = zero ? this.expr(zero.body) : fallbackBody(fallback);
+    const machine = e.scrutinee.type.kind === 'fixed';
+    // On an unsigned machine integer the successor case holds a value of at least 1, so `- 1` cannot wrap.
+    const predecessor = machine ? `${subject} - 1` : `crate::ml::pred(&${subject})`;
     const succText = succ
-      ? `let ${succ.pattern.name} = crate::ml::pred(&${subject});\n${this.expr(succ.body)}`
+      ? `let ${succ.pattern.name} = ${predecessor};\n${this.expr(succ.body)}`
       : fallbackBody(fallback);
-    lines.push(`if ${subject}.is_zero() {\n${indent(zeroText, 1)}\n} else {\n${indent(succText, 1)}\n}`);
+    lines.push(`if ${machine ? `${subject} == 0` : `${subject}.is_zero()`} {\n${indent(zeroText, 1)}\n} else {\n${indent(succText, 1)}\n}`);
     return lines.length === 1 ? lines[0] : `{\n${indent(lines.join('\n'), 1)}\n}`;
   }
 
