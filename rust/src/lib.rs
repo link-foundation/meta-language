@@ -111,6 +111,7 @@ pub use language_catalog::{
     canonical_language_name, grammar_provenance, language_candidates_for_path, language_catalog,
     language_entry, language_for_path, GrammarProvenance, LanguageEntry,
 };
+pub use language_identification::identify_language;
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
 pub use language_profile::{LanguageProfile, LanguageProfileLinks, LanguageProfileViolation};
 pub use language_support::{

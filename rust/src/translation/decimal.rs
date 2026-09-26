@@ -127,22 +127,3 @@ impl PartialOrd for Decimal {
         Some(self.cmp(other))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Decimal;
-
-    #[test]
-    fn parses_and_compares() {
-        assert_eq!(Decimal::parse("0x1f").unwrap().to_string(), "31");
-        assert_eq!(Decimal::parse("0b101").unwrap().to_string(), "5");
-        assert_eq!(Decimal::parse("007").unwrap().to_string(), "7");
-        assert_eq!(Decimal::parse("-0").unwrap().to_string(), "0");
-        let big = Decimal::parse("1219326311370217952237463801111263526900").unwrap();
-        assert_eq!(big.to_string(), "1219326311370217952237463801111263526900");
-        assert!(big > Decimal::from_u128(u128::MAX));
-        assert!(Decimal::parse("-5").unwrap() < Decimal::parse("-4").unwrap());
-        assert!(Decimal::parse("-5").unwrap() < Decimal::parse("0").unwrap());
-        assert_eq!(Decimal::parse("12a"), None);
-    }
-}

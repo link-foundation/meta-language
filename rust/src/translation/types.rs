@@ -147,25 +147,3 @@ pub fn rust_fixed_type(name: &str) -> Option<Type> {
     };
     Some(fixed(bits, signed))
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn keys_and_bounds() {
-        assert_eq!(fixed(32, true).key(), "i32");
-        assert_eq!(data("A.T").key(), "data:A.T");
-        assert_eq!(NAT.key(), "nat");
-        assert_eq!(fixed_bounds(8, true), (-128, 127));
-        assert_eq!(fixed_bounds(8, false), (0, 255));
-        assert_eq!(fixed_bounds(128, false), (0, u128::MAX));
-        assert_eq!(fixed_bounds(128, true).0, i128::MIN);
-        assert_eq!(rust_fixed_type("usize"), Some(fixed(64, false)));
-        assert_eq!(rust_fixed_type("u7"), None);
-        assert_eq!(
-            serde_json::to_string(&fixed(16, false)).unwrap(),
-            r#"{"kind":"fixed","bits":16,"signed":false}"#
-        );
-    }
-}

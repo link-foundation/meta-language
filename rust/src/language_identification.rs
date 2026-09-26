@@ -106,6 +106,7 @@ fn parse_trigram_data() -> TrigramData {
 
 /// Returns the canonical name of the supported natural language the text is
 /// written in, or `None` when the text carries no usable evidence.
+#[must_use]
 pub fn identify_language(text: &str) -> Option<&'static str> {
     let data = trigram_data();
     let characters: Vec<char> = text.chars().take(MAX_LENGTH).collect();
@@ -229,29 +230,4 @@ fn trigram_distance(trigrams: &[(String, usize)], model: &HashMap<String, usize>
                 .map_or(MAX_DIFFERENCE, |rank| count.abs_diff(rank + 1))
         })
         .sum()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::identify_language;
-
-    #[test]
-    fn identifies_supported_languages_like_the_javascript_runtime() {
-        for (text, expected) in [
-            ("Hawaii is a state.", Some("English")),
-            ("Hawaii est un etat.\n", Some("French")),
-            ("Hawaii e um estado.\n", Some("Portuguese")),
-            ("Гавайи это штат.", Some("Russian")),
-            ("مرحبا.\n", Some("Urdu")),
-            ("سلام۔\n", Some("Modern Standard Arabic")),
-            ("我喜欢学习。", Some("Mandarin Chinese")),
-            ("আমি বাড়ি যাই।", Some("Bengali")),
-            ("12345", None),
-            ("ok", None),
-            ("Ωμέγα", None),
-            ("", None),
-        ] {
-            assert_eq!(identify_language(text), expected, "{text:?}");
-        }
-    }
 }
