@@ -529,11 +529,17 @@ pub struct SProof {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SField {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(rename = "type")]
     pub ty: Type,
+    /// The type as written, on a Rocq constructor field declared as a binder `(x : N)`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rocq_type: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub span: Option<Span>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

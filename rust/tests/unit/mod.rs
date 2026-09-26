@@ -68,6 +68,7 @@ mod source_generation;
 mod source_points;
 mod storage;
 mod substitution;
+mod translation_rocq;
 mod translation_rules;
 
 #[path = "ci-cd/mod.rs"]
