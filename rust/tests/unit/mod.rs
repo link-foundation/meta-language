@@ -73,6 +73,7 @@ mod source_points;
 mod storage;
 mod substitution;
 mod translation_emit_javascript;
+mod translation_emit_rust;
 mod translation_foundation;
 mod translation_lean;
 mod translation_rules;
