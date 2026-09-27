@@ -40,14 +40,16 @@ export function issue195FixtureDigest(fixtureFile) {
 }
 
 // Records that `assertions` passed for `fixtureId` under the verification
-// `${requirementId}-javascript-${suffix}`. Repeated records of the same cell
-// are written once: the runner rejects duplicates.
+// `${requirementId}-${runtime}-${suffix}`. Repeated records of the same cell
+// are written once: the runner rejects duplicates. Only the runtime parity
+// check records `rust` cells from JavaScript, for the Rust probe output it
+// compared.
 export function recordIssue195Observations({
-  requirementId, suffix, fixtureId, fixtureFile, assertions, testName,
+  requirementId, suffix, fixtureId, fixtureFile, assertions, testName, runtime = 'javascript',
 }) {
   const path = process.env.ISSUE_195_OBSERVATION_FILE;
   if (!path) return;
-  const testId = `${requirementId}-javascript-${suffix}`.toLowerCase();
+  const testId = `${requirementId}-${runtime}-${suffix}`.toLowerCase();
   const fixtureDigest = issue195FixtureDigest(fixtureFile);
   const lines = [];
   for (const assertionId of assertions) {
@@ -56,7 +58,7 @@ export function recordIssue195Observations({
     recorded.add(key);
     lines.push(JSON.stringify({
       testId, assertionId, fixtureId, fixtureDigest,
-      runtime: 'javascript', commit: process.env.ISSUE_195_COMMIT,
+      runtime, commit: process.env.ISSUE_195_COMMIT,
       outcome: 'passed', testName,
     }));
   }

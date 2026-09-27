@@ -4,9 +4,10 @@ use std::path::PathBuf;
 use meta_language::{
     analyze_program, construct_program, decode_program_translation, translate_program, Link,
     LinkNetwork, LinkType, ParseConfiguration, ProgramConstructStatus, ProgramFact,
-    ProgramProjectContext, ProgramRange,
+    ProgramProjectContext, ProgramRange, ProgramRepresentation,
 };
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 
 fn main() {
     let corpus = corpus();
@@ -78,11 +79,13 @@ fn main() {
         .map(transform_observation)
         .collect::<Vec<_>>();
     let translations = translation_observations(&corpus);
+    let diagnostics = diagnostic_observations(&corpus);
 
     println!(
         "{}",
         serde_json::to_string(&json!({
             "schemaVersion": 1,
+            "fixtureDigest": format!("{:x}", Sha256::digest(fs::read(corpus_path()).expect("shared corpus is readable"))),
             "positive": positive,
             "negative": negative,
             "inventory": inventory,
@@ -90,6 +93,7 @@ fn main() {
             "linoGrammar": lino_grammar,
             "pdfGrammar": pdf_grammar,
             "semantics": semantics,
+            "diagnostics": diagnostics,
             "bindingRenames": binding_renames,
             "transforms": transforms,
             "translations": translations,
@@ -98,10 +102,13 @@ fn main() {
     );
 }
 
+fn corpus_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../parity/fixtures/four-language-conformance.json")
+}
+
 fn corpus() -> Value {
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../parity/fixtures/four-language-conformance.json");
-    serde_json::from_str(&fs::read_to_string(path).expect("shared corpus is readable"))
+    serde_json::from_str(&fs::read_to_string(corpus_path()).expect("shared corpus is readable"))
         .expect("shared corpus is valid JSON")
 }
 
@@ -371,11 +378,7 @@ fn program_observation(fixture: &Value) -> Value {
                 .iter()
                 .map(meta_language::ProgramSourceMapping::range),
         ),
-        "diagnostics": sorted(program.diagnostics().iter().map(|diagnostic| json!({
-            "kind": diagnostic.kind(),
-            "term": diagnostic.term(),
-            "range": range(diagnostic.range()),
-        })).collect()),
+        "diagnostics": diagnostics(&program),
         "constructs": sorted(program.constructs().iter().map(|construct| json!({
             "kind": construct.kind(),
             "status": match construct.status() {
@@ -431,6 +434,47 @@ fn semantic_proof(language: &str, source: &str, fact: &ProgramFact) -> bool {
     };
     markers.contains(&fact.kind())
         && source.get(fact.range().start()..fact.range().end()) == Some(fact.kind())
+}
+
+fn diagnostics(program: &ProgramRepresentation) -> Vec<Value> {
+    sorted(
+        program
+            .diagnostics()
+            .iter()
+            .map(|diagnostic| {
+                json!({
+                    "kind": diagnostic.kind(),
+                    "term": diagnostic.term(),
+                    "range": range(diagnostic.range()),
+                })
+            })
+            .collect(),
+    )
+}
+
+/// Diagnostics of the shared negative programs (parse errors) and of the
+/// semantic programs analyzed without their project context.
+fn diagnostic_observations(corpus: &Value) -> Vec<Value> {
+    let negative = corpus["negativeCases"]
+        .as_array()
+        .expect("negative fixtures");
+    let semantic = corpus["semanticPrograms"]
+        .as_array()
+        .expect("semantic fixtures");
+    negative
+        .iter()
+        .chain(semantic)
+        .map(|fixture| {
+            let language = fixture["language"].as_str().expect("language");
+            let source = fixture["source"].as_str().expect("source");
+            let program = analyze_program(source, language, ProgramProjectContext::default())
+                .expect("analysis without project context");
+            json!({
+                "language": canonical_language(language),
+                "diagnostics": diagnostics(&program),
+            })
+        })
+        .collect()
 }
 
 fn sorted(mut values: Vec<Value>) -> Vec<Value> {
