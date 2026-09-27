@@ -49,6 +49,7 @@ mod issue_195_binding_rename;
 mod issue_195_evidence;
 mod issue_195_grammar_importers;
 mod issue_195_observations;
+mod issue_195_structured_transformations;
 mod issue_195_translation_behavior;
 mod language_catalog;
 mod language_identification;
