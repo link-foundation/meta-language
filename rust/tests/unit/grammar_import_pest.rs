@@ -177,7 +177,7 @@ non_atomic = !{ "x" }
     );
     assert_eq!(
         grammar.rule("compound").expect("compound").kind(),
-        RuleKind::Atomic
+        RuleKind::Token
     );
     assert_eq!(
         grammar.rule("non_atomic").expect("non_atomic").kind(),

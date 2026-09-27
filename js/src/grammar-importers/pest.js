@@ -58,7 +58,7 @@ class PestParser extends Cursor {
       let kind = 'normal';
       if (['_', '@', '$', '!'].includes(this.peek())) {
         const modifier = this.take();
-        kind = modifier === '_' ? 'silent' : ['@', '$'].includes(modifier) ? 'atomic' : 'normal';
+        kind = { _: 'silent', '@': 'atomic', $: 'token' }[modifier] ?? 'normal';
       }
       this.consume('{');
       const expression = this.alternation();

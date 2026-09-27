@@ -43,7 +43,10 @@ const fn lower_rule_type(rule_type: PestRuleType) -> RuleKind {
     match rule_type {
         PestRuleType::Normal | PestRuleType::NonAtomic => RuleKind::Normal,
         PestRuleType::Silent => RuleKind::Silent,
-        PestRuleType::Atomic | PestRuleType::CompoundAtomic => RuleKind::Atomic,
+        PestRuleType::Atomic => RuleKind::Atomic,
+        // The pest emitter renders `RuleKind::Token` as `$`, so compound-atomic
+        // rules keep their modifier through an import/emit round trip.
+        PestRuleType::CompoundAtomic => RuleKind::Token,
     }
 }
 
