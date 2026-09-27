@@ -83,7 +83,7 @@ fn emits_enum_shapes_for_top_level_choices_and_records_unordered_loss() {
             "Value",
             [
                 RustFieldShape::new("Number", "Number"),
-                RustFieldShape::new("String", "String"),
+                RustFieldShape::new("String", "StringNode"),
                 RustFieldShape::new("True", "String"),
                 RustFieldShape::new("False", "String"),
             ],
@@ -111,4 +111,40 @@ fn sum_grammar() -> Grammar {
             RuleKind::Atomic,
         )
         .build()
+}
+
+#[test]
+fn renames_rule_types_that_would_shadow_types_the_generated_module_uses() {
+    let expr = Grammar::expr();
+    let grammar = Grammar::builder()
+        .start("value")
+        .rule(
+            "value",
+            expr.choice(true, [expr.nt("string"), expr.nt("rule")]),
+        )
+        .rule(
+            "string",
+            expr.seq([expr.term("\""), expr.nt("vec"), expr.term("\"")]),
+        )
+        .rule("vec", expr.rep0(expr.char_range('a', 'z')))
+        .rule("rule", expr.term("rule"))
+        .build();
+
+    let (artifacts, _) = emit_rust_parser(&grammar).expect("Rust parser codegen emits");
+
+    assert_eq!(
+        artifacts.ast_shapes,
+        vec![
+            RustTypeShape::enumeration(
+                "Value",
+                [
+                    RustFieldShape::new("String", "StringNode"),
+                    RustFieldShape::new("Rule", "RuleNode"),
+                ],
+            ),
+            RustTypeShape::structure("StringNode", [RustFieldShape::new("vec", "VecNode")]),
+            RustTypeShape::structure("VecNode", [RustFieldShape::new("0", "String")]),
+            RustTypeShape::structure("RuleNode", [RustFieldShape::new("0", "String")]),
+        ]
+    );
 }
