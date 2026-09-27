@@ -14,26 +14,46 @@ pub(super) fn module_requests(
         };
         let names: Vec<String> = match (language, mapping.term.as_str()) {
             ("JavaScript", "import_statement") => {
-                let mut quoted = Vec::new();
-                let mut opening = None;
-                for (index, character) in text.char_indices() {
-                    match opening {
-                        Some((quote, start)) if character == quote => {
-                            quoted.push(text[start..index].to_string());
-                            opening = None;
-                        }
-                        None if character == '\'' || character == '"' => {
-                            opening = Some((character, index + character.len_utf8()));
-                        }
-                        _ => {}
-                    }
-                }
-                quoted.into_iter().last().into_iter().collect()
+                // The module specifier is the statement's last string outside its import attributes.
+                let within = |inner: &ProgramSourceMapping, outer: &ProgramSourceMapping| {
+                    inner.range.start >= outer.range.start && inner.range.end <= outer.range.end
+                };
+                let attributes = syntax
+                    .iter()
+                    .filter(|inner| inner.term == "import_attribute" && within(inner, mapping))
+                    .collect::<Vec<_>>();
+                syntax
+                    .iter()
+                    .rfind(|inner| {
+                        inner.term == "string"
+                            && within(inner, mapping)
+                            && !attributes.iter().any(|attribute| within(inner, attribute))
+                    })
+                    .filter(|specifier| specifier.range.end - specifier.range.start > 2)
+                    .and_then(|specifier| {
+                        source.get(specifier.range.start + 1..specifier.range.end - 1)
+                    })
+                    .map(str::to_string)
+                    .into_iter()
+                    .collect()
             }
             ("Rust", "use_declaration") => text
-                .strip_prefix("use ")
-                .and_then(|value| value.split("::").next())
-                .map(str::to_string)
+                .strip_prefix("use")
+                .filter(|rest| rest.starts_with(char::is_whitespace))
+                .map(str::trim_start)
+                .filter(|rest| {
+                    rest.starts_with(|character: char| {
+                        character.is_ascii_alphabetic() || character == '_'
+                    })
+                })
+                .map(|rest| {
+                    rest.split(|character: char| {
+                        !(character.is_ascii_alphanumeric() || character == '_')
+                    })
+                    .next()
+                    .unwrap_or_default()
+                    .to_string()
+                })
                 .into_iter()
                 .collect(),
             ("Lean", "import") => text.strip_prefix("import ").map_or_else(Vec::new, |value| {
@@ -79,7 +99,10 @@ pub(super) fn project_has_module(
     language: &str,
 ) -> bool {
     let recognized_toolchain_module = match language {
-        "JavaScript" => name == "node:fs/promises",
+        "JavaScript" => matches!(
+            name,
+            "node:fs/promises" | "node:assert" | "node:assert/strict"
+        ),
         "Rust" => matches!(name, "std" | "core" | "alloc"),
         "Lean" => name == "Std",
         "Rocq" => name == "Stdlib.Arith",
@@ -87,7 +110,7 @@ pub(super) fn project_has_module(
     };
     recognized_toolchain_module
         && project
-            .dependencies
+            .dependencies()
             .iter()
             .any(|dependency| dependency == name)
 }

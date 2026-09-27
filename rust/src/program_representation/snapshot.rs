@@ -1,8 +1,8 @@
 use serde_json::{json, Value};
 
 use super::{
-    construct_program, LinkType, ProgramProjectContext, ProgramRepresentation,
-    ProgramRepresentationError,
+    construct_program, LinkType, ProgramProjectContext, ProgramProjectSource,
+    ProgramRepresentation, ProgramRepresentationError,
 };
 
 /// Schema revision for source-buffer-independent program snapshots.
@@ -13,15 +13,26 @@ impl ProgramRepresentation {
     #[must_use]
     pub fn serialize_snapshot(&self) -> String {
         let fragments = retained_fragments(self);
+        let mut project = json!({
+            "root": self.project.root(),
+            "files": self.project.files(),
+            "dependencies": self.project.dependencies(),
+            "extensions": self.project.extensions(),
+        });
+        // A project analyzed from an entry file also carries its sources.
+        if let Some(entry) = self.project.entry() {
+            project["entry"] = json!(entry);
+            project["sources"] = self
+                .project
+                .sources()
+                .iter()
+                .map(|file| json!({ "path": file.path(), "source": file.source() }))
+                .collect();
+        }
         json!({
             "schemaVersion": PROGRAM_SNAPSHOT_SCHEMA_VERSION,
             "language": self.language,
-            "project": {
-                "root": self.project.root(),
-                "files": self.project.files(),
-                "dependencies": self.project.dependencies(),
-                "extensions": self.project.extensions(),
-            },
+            "project": project,
             "fragments": fragments,
         })
         .to_string()
@@ -150,7 +161,7 @@ fn read_project(
     let project = value.and_then(Value::as_object).ok_or_else(|| {
         ProgramRepresentationError::InvalidSnapshot("project must be an object".to_string())
     })?;
-    Ok(ProgramProjectContext::new(
+    let context = ProgramProjectContext::new(
         required_string(project.get("root"), "project.root")?,
         string_array(project.get("files"), "project.files")?,
         string_array(project.get("dependencies"), "project.dependencies")?,
@@ -158,7 +169,33 @@ fn read_project(
     .with_extensions(string_array(
         project.get("extensions"),
         "project.extensions",
-    )?))
+    )?);
+    if project.get("entry").is_none() && project.get("sources").is_none() {
+        return Ok(context);
+    }
+    let entry = required_string(project.get("entry"), "project.entry")?;
+    let sources = project
+        .get("sources")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            ProgramRepresentationError::InvalidSnapshot(
+                "project.sources must be an array".to_string(),
+            )
+        })?
+        .iter()
+        .map(|file| {
+            match (
+                file.get("path").and_then(Value::as_str),
+                file.get("source").and_then(Value::as_str),
+            ) {
+                (Some(path), Some(source)) => Ok(ProgramProjectSource::new(path, source)),
+                _ => Err(ProgramRepresentationError::InvalidSnapshot(
+                    "project.sources entries must have a path and a source".to_string(),
+                )),
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(context.with_entry(entry, sources))
 }
 
 fn required_string<'a>(

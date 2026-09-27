@@ -3,8 +3,13 @@
 mod analysis;
 mod edit;
 mod module_resolution;
+mod project;
 mod snapshot;
 
+pub use project::{
+    ProgramExpansion, ProgramProjectContext, ProgramProjectModule, ProgramProjectReference,
+    ProgramProjectSource,
+};
 pub use snapshot::{construct_program_from_fragments, PROGRAM_SNAPSHOT_SCHEMA_VERSION};
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -59,59 +64,6 @@ impl ProgramRange {
     #[must_use]
     pub const fn end(self) -> usize {
         self.end
-    }
-}
-
-/// Project files and dependency names available during analysis.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct ProgramProjectContext {
-    root: String,
-    files: Vec<String>,
-    dependencies: Vec<String>,
-    extensions: Vec<String>,
-}
-
-impl ProgramProjectContext {
-    /// Creates a project context.
-    #[must_use]
-    pub fn new(root: impl Into<String>, files: Vec<String>, dependencies: Vec<String>) -> Self {
-        Self {
-            root: root.into(),
-            files,
-            dependencies,
-            extensions: Vec::new(),
-        }
-    }
-
-    /// Adds project-defined syntax extensions.
-    #[must_use]
-    pub fn with_extensions(mut self, extensions: Vec<String>) -> Self {
-        self.extensions = extensions;
-        self
-    }
-
-    /// Project root.
-    #[must_use]
-    pub fn root(&self) -> &str {
-        &self.root
-    }
-
-    /// Project files.
-    #[must_use]
-    pub fn files(&self) -> &[String] {
-        &self.files
-    }
-
-    /// Declared dependencies.
-    #[must_use]
-    pub fn dependencies(&self) -> &[String] {
-        &self.dependencies
-    }
-
-    /// Project-defined syntax extensions.
-    #[must_use]
-    pub fn extensions(&self) -> &[String] {
-        &self.extensions
     }
 }
 
@@ -206,6 +158,7 @@ pub struct ProgramFact {
     name: String,
     range: ProgramRange,
     phase: Option<String>,
+    file: Option<String>,
 }
 
 impl ProgramFact {
@@ -215,6 +168,7 @@ impl ProgramFact {
             name: name.into(),
             range,
             phase: None,
+            file: None,
         }
     }
 
@@ -245,6 +199,13 @@ impl ProgramFact {
     #[must_use]
     pub fn phase(&self) -> Option<&str> {
         self.phase.as_deref()
+    }
+
+    /// The project file the range belongs to, when it is not the analyzed
+    /// program itself.
+    #[must_use]
+    pub fn file(&self) -> Option<&str> {
+        self.file.as_deref()
     }
 }
 
@@ -430,6 +391,10 @@ pub struct ProgramRepresentation {
     extensions: Vec<ProgramFact>,
     proofs: Vec<ProgramFact>,
     diagnostics: Vec<ProgramDiagnostic>,
+    project_modules: Vec<ProgramProjectModule>,
+    project_facts: Vec<ProgramFact>,
+    project_references: Vec<ProgramProjectReference>,
+    expansions: Vec<ProgramExpansion>,
     constructs: Vec<ProgramConstruct>,
 }
 
@@ -446,12 +411,28 @@ impl ProgramRepresentation {
         let tokens = semantic_tokens(source, support.name, &source_mappings);
         let (scopes, bindings, unresolved_references) =
             resolve_bindings(&tokens, &source_mappings, source.len(), support.name);
-        let modules = module_facts(&tokens, &source_mappings, source, support.name, &project);
+        let context = project::project_semantics(
+            support.name,
+            source,
+            &source_mappings,
+            &bindings,
+            &unresolved_references,
+            &project,
+        );
+        let modules = module_facts(
+            &tokens,
+            &source_mappings,
+            source,
+            support.name,
+            &project,
+            &context.requests,
+        );
         let types = type_facts(&tokens, &source_mappings, support.name);
         let extensions = extension_facts(&tokens, &source_mappings, source, support.name);
         let proofs = proof_facts(&tokens, &source_mappings, support.name);
         let mut diagnostics = diagnostic_facts(&network);
-        diagnostics.extend(project_diagnostics(&modules, &project));
+        diagnostics.extend(project_diagnostics(&modules, &context.resolved_requests));
+        diagnostics.extend(context.diagnostics.iter().cloned());
         let mut program = Self {
             schema_version: PROGRAM_REPRESENTATION_SCHEMA_VERSION,
             language: support.name,
@@ -467,9 +448,13 @@ impl ProgramRepresentation {
             extensions,
             proofs,
             diagnostics,
+            project_modules: context.modules.clone(),
+            project_facts: context.facts.clone(),
+            project_references: context.references.clone(),
+            expansions: context.expansions.clone(),
             constructs: Vec::new(),
         };
-        program.constructs = construct_facts(&program);
+        program.constructs = construct_facts(&program, &context);
         Ok(program)
     }
 
@@ -557,6 +542,30 @@ impl ProgramRepresentation {
         &self.diagnostics
     }
 
+    /// Project modules the entry program's requests resolve to.
+    #[must_use]
+    pub fn project_modules(&self) -> &[ProgramProjectModule] {
+        &self.project_modules
+    }
+
+    /// Project files and manifests read during analysis.
+    #[must_use]
+    pub fn project_facts(&self) -> &[ProgramFact] {
+        &self.project_facts
+    }
+
+    /// Links from the entry program to declarations in other project files.
+    #[must_use]
+    pub fn project_references(&self) -> &[ProgramProjectReference] {
+        &self.project_references
+    }
+
+    /// Macro, template and notation expansions enabled by the project.
+    #[must_use]
+    pub fn expansions(&self) -> &[ProgramExpansion] {
+        &self.expansions
+    }
+
     /// Semantic construct coverage.
     #[must_use]
     pub fn constructs(&self) -> &[ProgramConstruct] {
@@ -605,6 +614,7 @@ fn module_facts(
     source: &str,
     language: &str,
     project: &ProgramProjectContext,
+    project_requests: &[ProgramFact],
 ) -> Vec<ProgramFact> {
     let markers = module_markers(language);
     let mut facts = Vec::new();
@@ -624,14 +634,15 @@ fn module_facts(
             .join(".");
         facts.push(ProgramFact::new(&token.text, names, token.range));
     }
-    facts.extend(project.dependencies.iter().map(|dependency| {
+    facts.extend(project.dependencies().iter().map(|dependency| {
         ProgramFact::new(
             "declared-project-dependency",
             dependency,
             ProgramRange::default(),
         )
     }));
-    for request in module_requests(syntax, source, language) {
+    let requests = module_requests(syntax, source, language);
+    for request in requests.into_iter().chain(project_requests.iter().cloned()) {
         if project_has_module(project, &request.name, language) {
             facts.push(ProgramFact::new(
                 "recognized-toolchain-module",
@@ -776,7 +787,7 @@ fn diagnostic_facts(network: &LinkNetwork) -> Vec<ProgramDiagnostic> {
 
 fn project_diagnostics(
     modules: &[ProgramFact],
-    _project: &ProgramProjectContext,
+    resolved: &[(String, usize)],
 ) -> Vec<ProgramDiagnostic> {
     let recognized = modules
         .iter()
@@ -785,7 +796,13 @@ fn project_diagnostics(
         .collect::<std::collections::HashSet<_>>();
     modules
         .iter()
-        .filter(|fact| fact.kind == "module-import" && !recognized.contains(fact.name.as_str()))
+        .filter(|fact| {
+            fact.kind == "module-import"
+                && !recognized.contains(fact.name.as_str())
+                && !resolved
+                    .iter()
+                    .any(|(name, start)| *name == fact.name && *start == fact.range.start)
+        })
         .map(|fact| ProgramDiagnostic {
             kind: "missing-project-context",
             term: fact.name.clone(),
@@ -794,34 +811,39 @@ fn project_diagnostics(
         .collect()
 }
 
-fn construct_facts(program: &ProgramRepresentation) -> Vec<ProgramConstruct> {
+fn construct_facts(
+    program: &ProgramRepresentation,
+    context: &project::ProjectResult,
+) -> Vec<ProgramConstruct> {
     SEMANTIC_CONSTRUCTS
         .iter()
         .map(|kind| {
-            if *kind == "surface-expansion-elaboration-traces" {
+            let mut evidence = construct_evidence(program, kind);
+            evidence.extend(project::project_evidence(&program.project, context, kind));
+            if evidence.is_empty() && *kind == "surface-expansion-elaboration-traces" {
                 return ProgramConstruct {
                     kind,
                     status: ProgramConstructStatus::Unavailable,
-                    evidence: Vec::new(),
+                    evidence,
                     rationale: Some(
                         "no macro expansion or elaboration trace has been produced".to_string(),
                     ),
                 };
             }
-            if *kind == "proof-terms-and-tactics"
+            if evidence.is_empty()
+                && *kind == "proof-terms-and-tactics"
                 && matches!(program.language, "JavaScript" | "Rust")
             {
                 return ProgramConstruct {
                     kind,
                     status: ProgramConstructStatus::NotApplicable,
-                    evidence: Vec::new(),
+                    evidence,
                     rationale: Some(format!(
                         "{} defines no proof/tactic sublanguage",
                         program.language
                     )),
                 };
             }
-            let evidence = construct_evidence(program, kind);
             let represented = !evidence.is_empty();
             ProgramConstruct {
                 kind,
@@ -888,9 +910,9 @@ fn construct_evidence(program: &ProgramRepresentation, kind: &str) -> Vec<Progra
         "proof-terms-and-tactics" => program.proofs.clone(),
         "project-context-and-dependencies" => program
             .project
-            .files
+            .files()
             .iter()
-            .chain(&program.project.dependencies)
+            .chain(program.project.dependencies())
             .map(|name| ProgramFact::new("project", name, ProgramRange::default()))
             .collect(),
         _ => Vec::new(),
