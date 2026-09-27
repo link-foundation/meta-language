@@ -84,6 +84,19 @@ function operations(fixture) {
   const secondRange = { start: first.length, end: source.length };
   const replacement = first.replace(/first|FIRST/u, 'primary');
   return {
+    // Emit after an edit sequence, then rebuild from the emitted text alone:
+    // nothing of the edited program survives but its output.
+    emit: {
+      apply: (program) => {
+        const moved = program.insert(source.length, inserted).move(secondRange, 0);
+        return constructProgram(moved.emit(), moved.language, moved.project);
+      },
+      expected: second + first + inserted,
+      names: ['second', 'first', 'third'],
+      restore: (edited) => edited
+        .delete({ start: source.length, end: source.length + inserted.length })
+        .move({ start: second.length, end: source.length }, 0),
+    },
     construct: {
       apply: (program) => ProgramRepresentation.fromSnapshot(
         constructProgramFromFragments([second, first], program.language, program.project).serializeSnapshot(),

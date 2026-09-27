@@ -196,6 +196,14 @@ fn apply(
         "delete" => program.delete(second_range),
         "clone" => program.clone_range(first_range, source.len()),
         "move" => program.move_range(second_range, 0),
+        // Emit after an edit sequence, then rebuild from the emitted text
+        // alone: nothing of the edited program survives but its output.
+        "emit" => program
+            .insert(source.len(), inserted)
+            .and_then(|inserted| inserted.move_range(second_range, 0))
+            .and_then(|moved| {
+                construct_program(&moved.emit(), moved.language(), moved.project().clone())
+            }),
         _ => unreachable!("unknown operation {operation}"),
     }
     .unwrap_or_else(|error| panic!("{} {operation}: {error}", fixture.language));
@@ -208,6 +216,11 @@ fn apply(
             vec!["first", "second", "third"],
         ),
         "delete" => (edited, first.to_owned(), vec!["first"]),
+        "emit" => (
+            edited,
+            format!("{second}{first}{inserted}"),
+            vec!["second", "first", "third"],
+        ),
         _ => (
             edited,
             format!("{source}{first}"),
@@ -245,6 +258,14 @@ fn restore(
         "delete" => edited.insert(first.len(), second),
         "clone" => edited.delete(ProgramRange::new(source.len(), source.len() + first.len())),
         "move" => edited.move_range(ProgramRange::new(second.len(), source.len()), 0),
+        "emit" => edited
+            .delete(ProgramRange::new(
+                source.len(),
+                source.len() + inserted.len(),
+            ))
+            .and_then(|deleted| {
+                deleted.move_range(ProgramRange::new(second.len(), source.len()), 0)
+            }),
         _ => unreachable!("unknown operation {operation}"),
     }
     .unwrap_or_else(|error| panic!("{language} {operation} restore: {error}"))
@@ -403,4 +424,9 @@ fn issue_195_structured_clone_runs_on_reloaded_programs_and_reparses() {
 #[test]
 fn issue_195_structured_move_runs_on_reloaded_programs_and_reparses() {
     check_operation("move");
+}
+
+#[test]
+fn issue_195_structured_emit_runs_on_reloaded_programs_and_reparses() {
+    check_operation("emit");
 }
