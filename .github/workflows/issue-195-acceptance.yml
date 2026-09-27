@@ -81,6 +81,7 @@ jobs:
           }
           $vcvars = Join-Path $installationPath "VC\Auxiliary\Build\vcvars64.bat"
           $vcvarsEnvironment = @{}
+          $existingPath = $env:Path -split ";" | Where-Object { $_ }
           cmd /s /c "`"$vcvars`" && set" | ForEach-Object {
             if ($_ -match "^(.*?)=(.*)$") {
               $name = $matches[1]
@@ -89,7 +90,9 @@ jobs:
               if ($name -eq "Path") {
                 # GITHUB_PATH prepends to the existing PATH; a Path entry in GITHUB_ENV would add a
                 # second, differently cased variable that child processes may resolve instead.
-                $value -split ";" | Where-Object { $_ } | ForEach-Object {
+                # Only the directories vcvars added are prepended: re-prepending the runner's own
+                # entries would put WindowsApps (whose bash.exe is the WSL launcher) ahead of Git Bash.
+                $value -split ";" | Where-Object { $_ -and ($existingPath -notcontains $_) } | ForEach-Object {
                   $_ | Out-File -FilePath $env:GITHUB_PATH -Append
                 }
               } elseif ($name -match "^(INCLUDE|LIB|LIBPATH|VCINSTALLDIR|VCToolsInstallDir|VCToolsVersion|VSINSTALLDIR|WindowsSdkDir|WindowsSDKVersion|UniversalCRTSdkDir|UCRTVersion)$") {
