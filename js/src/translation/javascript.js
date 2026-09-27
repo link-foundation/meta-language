@@ -1036,7 +1036,15 @@ class JavaScriptParser {
   /** `5n`, `0x1fn`: BigInt literals. Plain numbers are doubles and are rejected. */
   bigint(token) {
     const radix = /^([xob])([0-9a-f]*)n$/u.exec(token.suffix);
-    if (token.value === '0' && radix) return BigInt(`0${radix[1]}${radix[2]}`).toString();
+    if (token.value === '0' && radix) {
+      const literal = `0${radix[1]}${radix[2]}`;
+      try {
+        return BigInt(literal).toString();
+      } catch {
+        // `BigInt('0x')` throws a raw SyntaxError; report it as a syntax diagnostic at the literal.
+        throw new TranslationError('syntax', `Cannot convert ${literal} to a BigInt`, span(token, token));
+      }
+    }
     if (token.suffix === 'n') return token.value;
     throw unsupported('JavaScript number', 'numbers are IEEE-754 doubles, which are outside the portable core; use BigInt literals such as 5n', span(token, token));
   }

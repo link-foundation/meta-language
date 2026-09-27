@@ -108,7 +108,7 @@ const errors = {
   'lexer-unterminated-comment': "/* comment\nconsole.log('x');",
   'string-unicode-escape': jsFn('f', [], 'string', "  return '\\u00e9';"),
   'lexer-stray-character': "console.log('x') #;",
-  // BigInt literals with a radix and no or invalid digits: BigInt() throws a raw SyntaxError.
+  // BigInt literals with a radix and no or invalid digits are syntax errors at the literal.
   'radix-empty-hex': 'console.log(String(0xn));',
   'radix-bad-binary': 'console.log(String(0b2n));',
   'radix-bad-octal': 'console.log(String(0o9n));',

@@ -379,11 +379,15 @@ fn bigint(token: &Token) -> Result<String> {
     if token.value == "0" {
         if let Some(radix) = radix_suffix(&token.suffix) {
             let literal = format!("0{radix}");
-            // `BigInt('0x')` throws a SyntaxError with this message.
+            // `BigInt('0x')` throws a SyntaxError with this message; report it
+            // as a syntax diagnostic at the literal.
             return Decimal::parse(&literal)
                 .map(|value| value.to_string())
                 .ok_or_else(|| {
-                    TranslationError::syntax(format!("Cannot convert {literal} to a BigInt"), None)
+                    TranslationError::syntax(
+                        format!("Cannot convert {literal} to a BigInt"),
+                        Some(span(token, token)),
+                    )
                 });
         }
     }

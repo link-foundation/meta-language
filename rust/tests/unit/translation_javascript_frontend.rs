@@ -160,7 +160,7 @@ fn rejections_name_the_construct_and_its_span() {
         (
             "console.log(String(0xn));".to_owned(),
             ErrorKind::Syntax,
-            "Cannot convert 0x to a BigInt",
+            "Cannot convert 0x to a BigInt at 19..22",
         ),
     ];
     for (source, kind, message) in cases {

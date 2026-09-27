@@ -136,7 +136,6 @@ fn parse(extension: &str, source: &str) -> Result<SProgram, TranslationError> {
 }
 
 #[test]
-#[ignore = "enabled once every frontend and emitter is ported"]
 fn every_translation_stage_matches_the_javascript_pipeline() {
     let fixtures: Value = serde_json::from_str(
         &fs::read_to_string(repository_path("parity/fixtures/translation-stages.json"))

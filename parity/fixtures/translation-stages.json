@@ -14110,8 +14110,8 @@
       "source": "console.log(String(0xn));",
       "parse": {
         "error": {
-          "kind": "crash",
-          "message": "Cannot convert 0x to a BigInt"
+          "kind": "syntax",
+          "message": "Cannot convert 0x to a BigInt at 19..22"
         }
       }
     },
@@ -14121,8 +14121,8 @@
       "source": "console.log(String(0b2n));",
       "parse": {
         "error": {
-          "kind": "crash",
-          "message": "Cannot convert 0b2 to a BigInt"
+          "kind": "syntax",
+          "message": "Cannot convert 0b2 to a BigInt at 19..23"
         }
       }
     },
@@ -14132,8 +14132,8 @@
       "source": "console.log(String(0o9n));",
       "parse": {
         "error": {
-          "kind": "crash",
-          "message": "Cannot convert 0o9 to a BigInt"
+          "kind": "syntax",
+          "message": "Cannot convert 0o9 to a BigInt at 19..23"
         }
       }
     },
