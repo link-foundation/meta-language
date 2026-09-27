@@ -2,44 +2,203 @@
   "schemaVersion": 1,
   "cases": [
     {
+      "id": "abnf:message",
       "format": "abnf",
       "source": "message = word SP number\nword = 1*ALPHA\nnumber = 1*DIGIT\n",
       "start": "message",
       "rules": ["message", "word", "number"],
+      "expressions": {
+        "message": "normal seq(ref(word), ref(SP), ref(number))",
+        "word": "normal repeat1(ref(ALPHA))",
+        "number": "normal repeat1(ref(DIGIT))"
+      },
+      "emitted": {
+        "source": "message = word SP number\nword = 1*( ALPHA )\nnumber = 1*( DIGIT )\nSP = %s\" \"\nALPHA = ( %x41-5A / %x61-7A )\nDIGIT = %x30-39\n",
+        "lossy": []
+      },
       "accepts": ["Meta 42", "A 0"],
       "rejects": ["Meta x", " 42", "Meta 42!"]
     },
     {
+      "id": "bnf:message",
       "format": "bnf",
       "source": "<message> ::= <word> \" \" <number>\n<word> ::= <letter> <word> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit> ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
       "start": "message",
       "rules": ["message", "word", "number", "letter", "digit"],
+      "expressions": {
+        "message": "normal seq(ref(word), literal(\" \"), ref(number))",
+        "word": "normal choice(seq(ref(letter), ref(word)), ref(letter))",
+        "number": "normal choice(seq(ref(digit), ref(number)), ref(digit))",
+        "letter": "normal choice(literal(\"M\"), literal(\"e\"), literal(\"t\"), literal(\"a\"), literal(\"A\"))",
+        "digit": "normal choice(literal(\"0\"), literal(\"1\"), literal(\"2\"), literal(\"3\"), literal(\"4\"), literal(\"5\"), literal(\"6\"), literal(\"7\"), literal(\"8\"), literal(\"9\"))"
+      },
+      "emitted": {
+        "source": "<message> ::= <word> \" \" <number>\n<word> ::= <letter> <word> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit> ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+        "lossy": []
+      },
       "accepts": ["Meta 42", "A 0"],
       "rejects": ["Meta x", " 42", "Meta 42!"]
     },
     {
+      "id": "ebnf:message",
       "format": "ebnf",
       "source": "message = word, \" \", number ;\nword = letter, { letter } ;\nnumber = digit, { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
       "start": "message",
       "rules": ["message", "word", "number", "letter", "digit"],
+      "expressions": {
+        "message": "normal seq(ref(word), literal(\" \"), ref(number))",
+        "word": "normal seq(ref(letter), repeat0(ref(letter)))",
+        "number": "normal seq(ref(digit), repeat0(ref(digit)))",
+        "letter": "normal choice(literal(\"M\"), literal(\"e\"), literal(\"t\"), literal(\"a\"), literal(\"A\"))",
+        "digit": "normal choice(literal(\"0\"), literal(\"1\"), literal(\"2\"), literal(\"3\"), literal(\"4\"), literal(\"5\"), literal(\"6\"), literal(\"7\"), literal(\"8\"), literal(\"9\"))"
+      },
+      "emitted": {
+        "source": "message = word , \" \" , number ;\nword = letter , { letter } ;\nnumber = digit , { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+        "lossy": []
+      },
       "accepts": ["Meta 42", "A 0"],
       "rejects": ["Meta x", " 42", "Meta 42!"]
     },
     {
+      "id": "pest:message",
       "format": "pest",
       "source": "message = { word ~ \" \" ~ number }\nword = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit = _{ '0'..'9' }\n",
       "start": "message",
       "rules": ["message", "word", "number", "letter", "digit"],
+      "expressions": {
+        "message": "normal seq(ref(word), literal(\" \"), ref(number))",
+        "word": "atomic repeat1(ref(letter))",
+        "number": "atomic repeat1(ref(digit))",
+        "letter": "silent orderedChoice(range(\"A\", \"Z\"), range(\"a\", \"z\"))",
+        "digit": "silent range(\"0\", \"9\")"
+      },
+      "emitted": {
+        "source": "message = { word ~ \" \" ~ number }\nword = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit = _{ '0'..'9' }\n",
+        "lossy": []
+      },
       "accepts": ["Meta 42", "A 0"],
       "rejects": ["Meta x", " 42", "Meta 42!"]
     },
     {
+      "id": "tree-sitter-json:message",
       "format": "tree-sitter-json",
       "source": "{\"name\":\"word_number\",\"rules\":{\"document\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"SYMBOL\",\"name\":\"word\"},{\"type\":\"STRING\",\"value\":\" \"},{\"type\":\"SYMBOL\",\"name\":\"number\"}]},\"word\":{\"type\":\"REPEAT1\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[A-Za-z]\"}},\"number\":{\"type\":\"TOKEN\",\"content\":{\"type\":\"REPEAT1\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[0-9]\"}}}}}",
       "start": "document",
       "rules": ["document", "word", "number"],
+      "expressions": {
+        "document": "normal seq(ref(word), literal(\" \"), ref(number))",
+        "word": "normal repeat1(class(range(\"A\", \"Z\"), range(\"a\", \"z\")))",
+        "number": "token repeat1(class(range(\"0\", \"9\")))"
+      },
+      "emitted": {
+        "source": "{\n  \"name\": \"document\",\n  \"rules\": {\n    \"document\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"word\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \" \"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"number\"\n        }\n      ]\n    },\n    \"word\": {\n      \"type\": \"REPEAT1\",\n      \"content\": {\n        \"type\": \"PATTERN\",\n        \"value\": \"[A-Za-z]\"\n      }\n    },\n    \"number\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"REPEAT1\",\n        \"content\": {\n          \"type\": \"PATTERN\",\n          \"value\": \"[0-9]\"\n        }\n      }\n    }\n  }\n}\n",
+        "lossy": []
+      },
       "accepts": ["Meta 42", "A 0"],
       "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "id": "abnf:constructs",
+      "format": "abnf",
+      "source": "assignment = %i\"let\" 1*SP name *SP %s\"=\" *SP value [ %x3B ]\nname = ALPHA *7( ALPHA / DIGIT / %s\"_\" )\nvalue = 1*3DIGIT / DQUOTE *( %x20-21 / %x23-7E ) DQUOTE\n",
+      "start": "assignment",
+      "rules": ["assignment", "name", "value"],
+      "expressions": {
+        "assignment": "normal seq(literalInsensitive(\"let\"), repeat1(ref(SP)), ref(name), repeat0(ref(SP)), literal(\"=\"), repeat0(ref(SP)), ref(value), optional(literal(\";\")))",
+        "name": "normal seq(ref(ALPHA), repeat(choice(ref(ALPHA), ref(DIGIT), literal(\"_\")), 0, 7))",
+        "value": "normal choice(repeat(ref(DIGIT), 1, 3), seq(ref(DQUOTE), repeat0(choice(range(\" \", \"!\"), range(\"#\", \"~\"))), ref(DQUOTE)))"
+      },
+      "emitted": {
+        "source": "assignment = %i\"let\" 1*( SP ) name *( SP ) %s\"=\" *( SP ) value [ %s\";\" ]\nname = ALPHA *7( ALPHA / DIGIT / %s\"_\" )\nvalue = 1*3( DIGIT ) / DQUOTE *( %x20-21 / %x23-7E ) DQUOTE\nSP = %s\" \"\nALPHA = ( %x41-5A / %x61-7A )\nDIGIT = %x30-39\nDQUOTE = %x22\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "LET ab_1=\"hi\"", "Let  q=7"],
+      "rejects": ["let 1x = 2;", "let x = 1234;", "letx = 1", "let abcdefghi = 1"]
+    },
+    {
+      "id": "bnf:constructs",
+      "format": "bnf",
+      "source": "<assignment> ::= \"let \" <name> <spaces> \"=\" <spaces> <value> <end>\n<name> ::= <letter> <name> | <letter>\n<spaces> ::= \" \" <spaces> | \"\"\n<value> ::= <digit> <value> | <digit> | '\"' <letters> '\"'\n<letters> ::= <letter> <letters> | \"\"\n<end> ::= \";\" | \"\"\n<letter> ::= \"a\" | \"b\" | \"x\" | \"q\"\n<digit> ::= \"1\" | \"2\" | \"7\"\n",
+      "start": "assignment",
+      "rules": ["assignment", "name", "spaces", "value", "letters", "end", "letter", "digit"],
+      "expressions": {
+        "assignment": "normal seq(literal(\"let \"), ref(name), ref(spaces), literal(\"=\"), ref(spaces), ref(value), ref(end))",
+        "name": "normal choice(seq(ref(letter), ref(name)), ref(letter))",
+        "spaces": "normal choice(seq(literal(\" \"), ref(spaces)), empty)",
+        "value": "normal choice(seq(ref(digit), ref(value)), ref(digit), seq(literal(\"\\\"\"), ref(letters), literal(\"\\\"\")))",
+        "letters": "normal choice(seq(ref(letter), ref(letters)), empty)",
+        "end": "normal choice(literal(\";\"), empty)",
+        "letter": "normal choice(literal(\"a\"), literal(\"b\"), literal(\"x\"), literal(\"q\"))",
+        "digit": "normal choice(literal(\"1\"), literal(\"2\"), literal(\"7\"))"
+      },
+      "emitted": {
+        "source": "<assignment> ::= \"let \" <name> <spaces> \"=\" <spaces> <value> <end>\n<name> ::= <letter> <name> | <letter>\n<spaces> ::= \" \" <spaces> | \n<value> ::= <digit> <value> | <digit> | '\"' <letters> '\"'\n<letters> ::= <letter> <letters> | \n<end> ::= \";\" | \n<letter> ::= \"a\" | \"b\" | \"x\" | \"q\"\n<digit> ::= \"1\" | \"2\" | \"7\"\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "let ab=\"ab\"", "let q=7"],
+      "rejects": ["let 1x = 2;", "letx = 1", "let x = \"a"]
+    },
+    {
+      "id": "ebnf:constructs",
+      "format": "ebnf",
+      "source": "assignment = \"let\", \" \", name, { \" \" }, \"=\", { \" \" }, value, [ \";\" ] ;\nname = letter, ( letter | digit | \"_\" )* ;\nvalue = digit, [ digit, [ digit ] ] | '\"', { letter }, '\"' ;\nletter = \"a\" | \"b\" | \"x\" | \"q\" ;\ndigit = \"1\" | \"2\" | \"7\" ;\n",
+      "start": "assignment",
+      "rules": ["assignment", "name", "value", "letter", "digit"],
+      "expressions": {
+        "assignment": "normal seq(literal(\"let\"), literal(\" \"), ref(name), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), ref(value), optional(literal(\";\")))",
+        "name": "normal seq(ref(letter), repeat0(choice(ref(letter), ref(digit), literal(\"_\"))))",
+        "value": "normal choice(seq(ref(digit), optional(seq(ref(digit), optional(ref(digit))))), seq(literal(\"\\\"\"), repeat0(ref(letter)), literal(\"\\\"\")))",
+        "letter": "normal choice(literal(\"a\"), literal(\"b\"), literal(\"x\"), literal(\"q\"))",
+        "digit": "normal choice(literal(\"1\"), literal(\"2\"), literal(\"7\"))"
+      },
+      "emitted": {
+        "source": "assignment = \"let\" , \" \" , name , { \" \" } , \"=\" , { \" \" } , value , [ \";\" ] ;\nname = letter , { letter | digit | \"_\" } ;\nvalue = digit , [ digit , [ digit ] ] | '\"' , { letter } , '\"' ;\nletter = \"a\" | \"b\" | \"x\" | \"q\" ;\ndigit = \"1\" | \"2\" | \"7\" ;\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "let ab_1=\"ab\"", "let q=777"],
+      "rejects": ["let 1x = 2;", "letx = 1", "let x = 1212"]
+    },
+    {
+      "id": "pest:constructs",
+      "format": "pest",
+      "source": "assignment = { ^\"let\" ~ \" \"+ ~ !keyword ~ name ~ \" \"* ~ \"=\" ~ \" \"* ~ value ~ \";\"? }\nkeyword = { \"let\" ~ !alnum }\nname = @{ alpha ~ (alnum | \"_\"){0,7} }\nvalue = ${ digit{1,3} ~ !digit | \"\\\"\" ~ (!\"\\\"\" ~ ANY)* ~ \"\\\"\" }\nalnum = _{ alpha | digit }\nalpha = _{ 'a'..'z' | 'A'..'Z' }\ndigit = _{ '0'..'9' }\n",
+      "start": "assignment",
+      "rules": ["assignment", "keyword", "name", "value", "alnum", "alpha", "digit"],
+      "expressions": {
+        "assignment": "normal seq(literalInsensitive(\"let\"), repeat1(literal(\" \")), not(ref(keyword)), ref(name), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), ref(value), optional(literal(\";\")))",
+        "keyword": "normal seq(literal(\"let\"), not(ref(alnum)))",
+        "name": "atomic seq(ref(alpha), repeat(orderedChoice(ref(alnum), literal(\"_\")), 0, 7))",
+        "value": "token orderedChoice(seq(repeat(ref(digit), 1, 3), not(ref(digit))), seq(literal(\"\\\"\"), repeat0(seq(not(literal(\"\\\"\")), any)), literal(\"\\\"\")))",
+        "alnum": "silent orderedChoice(ref(alpha), ref(digit))",
+        "alpha": "silent orderedChoice(range(\"a\", \"z\"), range(\"A\", \"Z\"))",
+        "digit": "silent range(\"0\", \"9\")"
+      },
+      "emitted": {
+        "source": "assignment = { ^\"let\" ~ \" \"+ ~ !keyword ~ name ~ \" \"* ~ \"=\" ~ \" \"* ~ value ~ \";\"? }\nkeyword = { \"let\" ~ !alnum }\nname = @{ alpha ~ (alnum | \"_\"){0,7} }\nvalue = ${ digit{1,3} ~ !digit | \"\\\"\" ~ (!\"\\\"\" ~ ANY)* ~ \"\\\"\" }\nalnum = _{ alpha | digit }\nalpha = _{ 'a'..'z' | 'A'..'Z' }\ndigit = _{ '0'..'9' }\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "LET ab_1=\"hi\"", "Let  q=7"],
+      "rejects": ["let let = 1", "let x = 1234;", "letx = 1", "let x = \"a"]
+    },
+    {
+      "id": "tree-sitter-json:constructs",
+      "format": "tree-sitter-json",
+      "source": "{\"name\":\"assignment\",\"rules\":{\"assignment\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"STRING\",\"value\":\"let\"},{\"type\":\"REPEAT1\",\"content\":{\"type\":\"STRING\",\"value\":\" \"}},{\"type\":\"FIELD\",\"name\":\"name\",\"content\":{\"type\":\"SYMBOL\",\"name\":\"identifier\"}},{\"type\":\"REPEAT\",\"content\":{\"type\":\"STRING\",\"value\":\" \"}},{\"type\":\"STRING\",\"value\":\"=\"},{\"type\":\"REPEAT\",\"content\":{\"type\":\"STRING\",\"value\":\" \"}},{\"type\":\"FIELD\",\"name\":\"value\",\"content\":{\"type\":\"SYMBOL\",\"name\":\"value\"}},{\"type\":\"CHOICE\",\"members\":[{\"type\":\"STRING\",\"value\":\";\"},{\"type\":\"BLANK\"}]}]},\"identifier\":{\"type\":\"TOKEN\",\"content\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"PATTERN\",\"value\":\"[a-z_]\"},{\"type\":\"REPEAT\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[a-z0-9_]\"}}]}},\"value\":{\"type\":\"CHOICE\",\"members\":[{\"type\":\"PREC\",\"value\":1,\"content\":{\"type\":\"ALIAS\",\"content\":{\"type\":\"SYMBOL\",\"name\":\"number\"},\"named\":true,\"value\":\"integer\"}},{\"type\":\"SYMBOL\",\"name\":\"string\"}]},\"number\":{\"type\":\"TOKEN\",\"content\":{\"type\":\"REPEAT1\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[0-9]\"}}},\"string\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"STRING\",\"value\":\"\\\"\"},{\"type\":\"REPEAT\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[^\\\"\\\\\\\\]\"}},{\"type\":\"IMMEDIATE_TOKEN\",\"content\":{\"type\":\"STRING\",\"value\":\"\\\"\"}}]}}}",
+      "start": "assignment",
+      "rules": ["assignment", "identifier", "value", "number", "string"],
+      "expressions": {
+        "assignment": "normal seq(literal(\"let\"), repeat1(literal(\" \")), capture(\"name\", ref(identifier)), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), capture(\"value\", ref(value)), optional(literal(\";\")))",
+        "identifier": "token seq(class(range(\"a\", \"z\"), char(\"_\")), repeat0(class(range(\"a\", \"z\"), range(\"0\", \"9\"), char(\"_\"))))",
+        "value": "normal choice(capture(\"prec=1\", capture(\"alias:integer\", ref(number))), ref(string))",
+        "number": "token repeat1(class(range(\"0\", \"9\")))",
+        "string": "normal seq(literal(\"\\\"\"), repeat0(notClass(char(\"\\\"\"), char(\"\\\\\"))), capture(\"immediate_token\", literal(\"\\\"\")))"
+      },
+      "emitted": {
+        "source": "{\n  \"name\": \"assignment\",\n  \"rules\": {\n    \"assignment\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"let\"\n        },\n        {\n          \"type\": \"REPEAT1\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \" \"\n          }\n        },\n        {\n          \"type\": \"FIELD\",\n          \"name\": \"name\",\n          \"content\": {\n            \"type\": \"SYMBOL\",\n            \"name\": \"identifier\"\n          }\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \" \"\n          }\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"=\"\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \" \"\n          }\n        },\n        {\n          \"type\": \"FIELD\",\n          \"name\": \"value\",\n          \"content\": {\n            \"type\": \"SYMBOL\",\n            \"name\": \"value\"\n          }\n        },\n        {\n          \"type\": \"CHOICE\",\n          \"members\": [\n            {\n              \"type\": \"STRING\",\n              \"value\": \";\"\n            },\n            {\n              \"type\": \"BLANK\"\n            }\n          ]\n        }\n      ]\n    },\n    \"identifier\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"SEQ\",\n        \"members\": [\n          {\n            \"type\": \"PATTERN\",\n            \"value\": \"[a-z_]\"\n          },\n          {\n            \"type\": \"REPEAT\",\n            \"content\": {\n              \"type\": \"PATTERN\",\n              \"value\": \"[a-z0-9_]\"\n            }\n          }\n        ]\n      }\n    },\n    \"value\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"PREC\",\n          \"value\": 1,\n          \"content\": {\n            \"type\": \"ALIAS\",\n            \"content\": {\n              \"type\": \"SYMBOL\",\n              \"name\": \"number\"\n            },\n            \"named\": true,\n            \"value\": \"integer\"\n          }\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"string\"\n        }\n      ]\n    },\n    \"number\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"REPEAT1\",\n        \"content\": {\n          \"type\": \"PATTERN\",\n          \"value\": \"[0-9]\"\n        }\n      }\n    },\n    \"string\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"\\\"\"\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"PATTERN\",\n            \"value\": \"[^\\\"\\\\\\\\]\"\n          }\n        },\n        {\n          \"type\": \"IMMEDIATE_TOKEN\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \"\\\"\"\n          }\n        }\n      ]\n    }\n  }\n}\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "let ab_1=\"hi\"", "let  q=7"],
+      "rejects": ["let 1x = 2;", "letx = 1", "let x = \"a"]
     }
   ]
 }

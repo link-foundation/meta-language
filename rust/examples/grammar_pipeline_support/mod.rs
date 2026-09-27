@@ -97,16 +97,49 @@ pub fn compile_and_run_rust_parser(
     negative: Option<&str>,
 ) -> Result<(), String> {
     let parser_name = parser_struct_name(&artifacts.parser_struct)?;
+    compile_and_run_rust_driver(&rust_driver_source(
+        artifacts,
+        &parser_name,
+        start_rule,
+        examples,
+        negative,
+    ))
+}
+
+/// Compiles the generated parser and requires every `accepts` sample to be
+/// consumed completely by `start_rule` and every `rejects` sample not to be,
+/// matching the whole-input semantics of the generated JavaScript parser.
+pub fn compile_and_run_rust_parser_on_corpus(
+    artifacts: &RustParserArtifacts,
+    start_rule: &str,
+    accepts: &[String],
+    rejects: &[String],
+) -> Result<(), String> {
+    let parser_name = parser_struct_name(&artifacts.parser_struct)?;
+    let list = |samples: &[String]| {
+        samples
+            .iter()
+            .map(|sample| format!("{sample:?}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    compile_and_run_rust_driver(&format!(
+        "use pest::Parser as _;\n\n{}\n{}\nfn whole(sample: &str) -> bool {{\n    {parser_name}::parse(Rule::{start_rule}, sample).is_ok_and(|pairs| {{\n        pairs.map(|pair| pair.as_span().end()).max().unwrap_or(0) == sample.len()\n    }})\n}}\n\nfn main() {{\n    let accepts: &[&str] = &[{}];\n    let rejects: &[&str] = &[{}];\n    for sample in accepts {{\n        assert!(whole(sample), \"failed to parse {{sample:?}}\");\n    }}\n    for sample in rejects {{\n        assert!(!whole(sample), \"unexpectedly parsed {{sample:?}}\");\n    }}\n}}\n",
+        artifacts.parser_struct,
+        artifacts.ast_types,
+        list(accepts),
+        list(rejects),
+    ))
+}
+
+fn compile_and_run_rust_driver(driver: &str) -> Result<(), String> {
     let temp_dir = unique_temp_path("generated-rust-parser");
     fs::create_dir_all(&temp_dir)
         .map_err(|error| format!("failed to create {}: {error}", temp_dir.display()))?;
     let source_path = temp_dir.join("main.rs");
     let binary_path = temp_dir.join(format!("generated-parser{}", std::env::consts::EXE_SUFFIX));
-    fs::write(
-        &source_path,
-        rust_driver_source(artifacts, &parser_name, start_rule, examples, negative),
-    )
-    .map_err(|error| format!("failed to write {}: {error}", source_path.display()))?;
+    fs::write(&source_path, driver)
+        .map_err(|error| format!("failed to write {}: {error}", source_path.display()))?;
 
     let deps_dir = target_deps_dir()?;
     let pest = find_dependency_artifact(&deps_dir, &["libpest-", "pest-"], &["rlib"])?;

@@ -47,6 +47,7 @@ mod inference_state_merging;
 mod issue_195_acceptance;
 mod issue_195_binding_rename;
 mod issue_195_evidence;
+mod issue_195_grammar_importers;
 mod issue_195_observations;
 mod issue_195_translation_behavior;
 mod language_catalog;
@@ -88,3 +89,6 @@ mod translation_stages;
 
 #[path = "ci-cd/mod.rs"]
 mod ci_cd;
+
+#[path = "../../examples/grammar_pipeline_support/mod.rs"]
+mod grammar_pipeline_support;

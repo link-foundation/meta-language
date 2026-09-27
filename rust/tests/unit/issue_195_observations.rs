@@ -23,7 +23,6 @@ pub const FOUR_LANGUAGE_FIXTURE: &str = "parity/fixtures/four-language-conforman
 /// External conformance, generative, and native-validation evidence.
 pub const EVIDENCE_FIXTURE: &str = "parity/fixtures/issue-195-evidence.json";
 /// The grammar importer corpus.
-#[allow(dead_code)]
 pub const GRAMMAR_IMPORTER_FIXTURE: &str = "parity/fixtures/grammar-importers.json";
 
 struct Journal {
@@ -43,7 +42,6 @@ fn journal() -> &'static Mutex<Journal> {
 
 /// Mirrors `slug` in `js/scripts/issue-195-requirements.mjs` for the ASCII
 /// names the requirement catalog uses.
-#[allow(dead_code)]
 #[must_use]
 pub fn slug(value: &str) -> String {
     let normalized = value

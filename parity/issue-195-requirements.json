@@ -625,27 +625,27 @@
     "planned:grammar-importer:ABNF": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "ABNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
+      "sha256": "f4178b54d9848d54d677cdd01b3c50972c583e9cf5f94916c747ca08876cdeae"
     },
     "planned:grammar-importer:BNF": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "BNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
+      "sha256": "f4178b54d9848d54d677cdd01b3c50972c583e9cf5f94916c747ca08876cdeae"
     },
     "planned:grammar-importer:EBNF": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "EBNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
+      "sha256": "f4178b54d9848d54d677cdd01b3c50972c583e9cf5f94916c747ca08876cdeae"
     },
     "planned:grammar-importer:pest": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "pest grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
+      "sha256": "f4178b54d9848d54d677cdd01b3c50972c583e9cf5f94916c747ca08876cdeae"
     },
     "planned:grammar-importer:tree-sitter grammar JSON": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "tree-sitter grammar JSON grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "c508875ca1d4c5e6c4d3e909dad39873d2eb7eae0736471beba41718c1b703b0"
+      "sha256": "f4178b54d9848d54d677cdd01b3c50972c583e9cf5f94916c747ca08876cdeae"
     },
     "planned:conformance:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",
