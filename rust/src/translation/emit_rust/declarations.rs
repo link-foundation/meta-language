@@ -1,0 +1,403 @@
+//! Modules, data, functions, theorem runners and propositions.
+
+use super::{
+    block, comparison_operator, format_escape, indent, own, rename_function, rename_theorem, snake,
+    Binder, Decl, Emitted, Expr, ModuleTree, Prop, Result, RustEmitter, TheoremCheck, Type,
+    PRELUDE,
+};
+
+impl<'p> RustEmitter<'p> {
+    pub(super) fn file(mut self) -> Result<Emitted> {
+        let mut tree = ModuleTree::default();
+        let program = self.program;
+        for entry in &program.declarations {
+            let mut node = &mut tree;
+            for segment in entry.module_path() {
+                let position = if let Some(position) =
+                    node.modules.iter().position(|(name, _)| name == segment)
+                {
+                    position
+                } else {
+                    node.modules.push((segment.clone(), ModuleTree::default()));
+                    node.modules.len() - 1
+                };
+                node = &mut node.modules[position].1;
+            }
+            node.items.push(entry);
+        }
+        let body = self.module_body(&tree, &[])?;
+        let main = match &program.main {
+            Some(main) => Some(self.main(main)?),
+            None => None,
+        };
+        let runner = self.theorem_runner();
+        let entry = self.entry(main.is_some());
+        let mut lines = vec![
+            format!(
+                "// Translated from {} by meta-language: portable core, Rust target.",
+                program.source_language.as_str()
+            ),
+            "#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types)]"
+                .to_owned(),
+            String::new(),
+        ];
+        if self.uses_big {
+            lines.push(PRELUDE.to_owned());
+            lines.push(String::new());
+        }
+        let has_main = main.is_some();
+        for block in body.into_iter().chain(main).chain(runner).chain([entry]) {
+            lines.push(block);
+            lines.push(String::new());
+        }
+        Ok(self
+            .state
+            .finish(lines.join("\n"), has_main.then(|| "main".to_owned())))
+    }
+
+    pub(super) fn module_body(
+        &mut self,
+        node: &ModuleTree<'p>,
+        path: &[String],
+    ) -> Result<Vec<String>> {
+        let mut blocks = Vec::new();
+        for entry in &node.items {
+            blocks.push(self.declaration(entry)?);
+        }
+        for (segment, child) in &node.modules {
+            let mut inner_path = path.to_vec();
+            inner_path.push(segment.clone());
+            let inner = self.module_body(child, &inner_path)?;
+            let name = self.state.module_name(&inner_path).unwrap_or_default();
+            blocks.push(format!(
+                "pub mod {name} {{\n{}\n}}",
+                indent(&inner.join("\n\n"), 1)
+            ));
+        }
+        Ok(blocks)
+    }
+
+    pub(super) fn declaration(&mut self, entry: &'p Decl) -> Result<String> {
+        match entry {
+            Decl::Data(_) => Ok(self.data(entry)),
+            Decl::Fn(_) => self.function(entry),
+            Decl::Theorem(_) => self.theorem(entry),
+        }
+    }
+
+    pub(super) fn ty(&mut self, ty: &Type) -> String {
+        match ty {
+            Type::Nat | Type::Int => {
+                self.uses_big = true;
+                self.state.encode(
+                    "unbounded-integers",
+                    "naturals and integers are ml::Big, an arbitrary-precision integer defined in the translated program; naturals stay non-negative because natural subtraction truncates and conversions to naturals are checked",
+                );
+                "crate::ml::Big".to_owned()
+            }
+            Type::Fixed { .. } => ty.key(),
+            Type::Bool => "bool".to_owned(),
+            Type::String => "String".to_owned(),
+            Type::Unit => "()".to_owned(),
+            Type::Data { name } => format!("crate::{}", self.state.reference(name, "::")),
+            other => unreachable!("no Rust type for {}", other.kind()),
+        }
+    }
+
+    pub(super) fn field_type(&mut self, ty: &Type) -> String {
+        if matches!(ty, Type::Data { .. }) {
+            format!("Box<{}>", self.ty(ty))
+        } else {
+            self.ty(ty)
+        }
+    }
+
+    pub(super) fn data(&mut self, entry: &'p Decl) -> String {
+        let Decl::Data(data) = entry else {
+            unreachable!("a data declaration")
+        };
+        let name = self.state.local_name(&data.full_name).to_owned();
+        self.state.map(entry, &name);
+        self.state.encode(
+            "data",
+            "a data type is an enum with one tuple variant per constructor; data-typed fields are boxed, and values are compared structurally",
+        );
+        let mut lines = vec![
+            "#[derive(Clone, Debug, PartialEq, Eq)]".to_owned(),
+            format!("pub enum {name} {{"),
+        ];
+        for ctor in &data.ctors {
+            let local = self
+                .state
+                .ctor_local(&data.full_name, &ctor.name)
+                .to_owned();
+            if ctor.fields.is_empty() {
+                lines.push(format!("    {local},"));
+                continue;
+            }
+            let fields: Vec<String> = ctor
+                .fields
+                .iter()
+                .map(|field| self.field_type(&field.ty))
+                .collect();
+            lines.push(format!("    {local}({}),", fields.join(", ")));
+        }
+        lines.push("}".to_owned());
+        lines.join("\n")
+    }
+
+    pub(super) fn function(&mut self, entry: &'p Decl) -> Result<String> {
+        let Decl::Fn(function) = entry else {
+            unreachable!("a function declaration")
+        };
+        let (params, body) = rename_function(function, &snake, &self.state.local_reserved());
+        let name = self.state.local_name(&function.full_name).to_owned();
+        self.state.map(entry, &name);
+        let binders: Vec<String> = params
+            .iter()
+            .map(|param| format!("{}: {}", param.name, self.ty(&param.ty)))
+            .collect();
+        let ret = self.ty(&function.ret);
+        let body = self.expr(&body)?;
+        Ok(format!(
+            "pub fn {name}({}) -> {ret} {{\n{}\n}}",
+            binders.join(", "),
+            indent(&body, 1)
+        ))
+    }
+
+    pub(super) fn theorem(&mut self, entry: &'p Decl) -> Result<String> {
+        let Decl::Theorem(theorem) = entry else {
+            unreachable!("a theorem declaration")
+        };
+        let (binders, prop, _) = rename_theorem(theorem, &snake, &self.state.local_reserved());
+        let name = self.state.local_name(&theorem.full_name).to_owned();
+        self.state.map(entry, &name);
+        self.state
+            .theorem(&theorem.full_name, &name, binders.is_empty(), true);
+        self.theorem_checks.push(TheoremCheck {
+            reference: format!("crate::{}", self.state.reference(&theorem.full_name, "::")),
+            binders: binders.clone(),
+            source: theorem.full_name.clone(),
+        });
+        let params: Vec<String> = binders
+            .iter()
+            .map(|binder| format!("{}: {}", binder.name, self.ty(&binder.ty)))
+            .collect();
+        let prop = self.prop(&prop)?;
+        Ok(format!(
+            "/// Executable form of theorem {}.\npub fn {name}({}) -> bool {{\n{}\n}}",
+            theorem.full_name,
+            params.join(", "),
+            indent(&prop, 1)
+        ))
+    }
+
+    /// The property checked on every input of the binders' bounded domains.
+    pub(super) fn all_of(&mut self, binders: &[Binder], body: String) -> String {
+        binders.iter().rev().fold(body, |inner, binder| {
+            format!(
+                "{}.into_iter().all(|{}| {inner})",
+                self.domain(&binder.ty, 3),
+                binder.name
+            )
+        })
+    }
+
+    pub(super) fn theorem_runner(&mut self) -> Option<String> {
+        if self.theorem_checks.is_empty() {
+            return None;
+        }
+        self.state.encode(
+            "theorem-properties",
+            "each theorem is an executable property; --ml-check-theorems evaluates it on every input of a bounded domain, and its proof remains checked by the source kernel",
+        );
+        let checks: Vec<String> = self
+            .theorem_checks
+            .clone()
+            .iter()
+            .map(|check| {
+                let args: Vec<String> = check
+                    .binders
+                    .iter()
+                    .map(|binder| own(&binder.name, &binder.ty))
+                    .collect();
+                let call = format!("{}({})", check.reference, args.join(", "));
+                let holds = self.all_of(&check.binders, call);
+                let source = format_escape(&check.source);
+                [
+                    format!("    if !({holds}) {{"),
+                    format!("        panic!(\"theorem {source} fails on a bounded input\");"),
+                    "    }".to_owned(),
+                    format!("    println!(\"theorem {source}: holds on the bounded domain\");"),
+                ]
+                .join("\n")
+            })
+            .collect();
+        Some(format!(
+            "fn ml_check_theorems() {{\n{}\n}}",
+            checks.join("\n")
+        ))
+    }
+
+    pub(super) fn entry(&self, has_main: bool) -> String {
+        let run = match (self.theorem_checks.is_empty(), has_main) {
+            (false, true) => "if check { ml_check_theorems() } else { ml_main() }",
+            (false, false) => "if check { ml_check_theorems() }",
+            (true, true) => "ml_main()",
+            (true, false) => "",
+        };
+        [
+            "// Deep recursion in the source is not bounded by a small native stack.",
+            "fn main() {",
+            "    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");",
+            "    let worker = std::thread::Builder::new()",
+            "        .stack_size(1 << 28)",
+            &format!("        .spawn(move || {{ {run} }})"),
+            "        .expect(\"spawn the program thread\");",
+            "    if worker.join().is_err() {",
+            "        std::process::exit(101);",
+            "    }",
+            "}",
+        ]
+        .join("\n")
+    }
+
+    /// Values of a type up to a constructor depth, as a Rust `Vec`.
+    pub(super) fn domain(&mut self, ty: &Type, depth: i32) -> String {
+        match ty {
+            Type::Nat => {
+                self.uses_big = true;
+                if depth >= 3 {
+                    "crate::ml::range(0, 6)"
+                } else {
+                    "crate::ml::range(0, 2)"
+                }
+                .to_owned()
+            }
+            Type::Int => {
+                self.uses_big = true;
+                if depth >= 3 {
+                    "crate::ml::range(-4, 4)"
+                } else {
+                    "crate::ml::range(-1, 1)"
+                }
+                .to_owned()
+            }
+            Type::Fixed { signed, .. } => {
+                let key = ty.key();
+                let values = if *signed { [-1, 0, 1] } else { [0, 1, 2] };
+                let values: Vec<String> =
+                    values.iter().map(|value| format!("{value}{key}")).collect();
+                format!("vec![{}]", values.join(", "))
+            }
+            Type::Bool => "vec![false, true]".to_owned(),
+            Type::String => {
+                "vec![String::new(), String::from(\"a\"), String::from(\"ab\")]".to_owned()
+            }
+            Type::Unit => "vec![()]".to_owned(),
+            Type::Data { name } => {
+                let program = self.program;
+                let entry = program.data(name);
+                let mut lines = vec![format!(
+                    "let mut values: Vec<{}> = Vec::new();",
+                    self.ty(ty)
+                )];
+                for ctor in &entry.ctors {
+                    let recursive = ctor
+                        .fields
+                        .iter()
+                        .any(|field| matches!(field.ty, Type::Data { .. }));
+                    if recursive && depth <= 1 {
+                        continue;
+                    }
+                    let names: Vec<String> = (0..ctor.fields.len())
+                        .map(|index| format!("f{index}"))
+                        .collect();
+                    let args: Vec<String> = ctor
+                        .fields
+                        .iter()
+                        .zip(&names)
+                        .map(|(field, name)| {
+                            if matches!(field.ty, Type::Data { .. }) {
+                                format!("Box::new({name}.clone())")
+                            } else {
+                                format!("{name}.clone()")
+                            }
+                        })
+                        .collect();
+                    let head = format!(
+                        "crate::{}",
+                        self.state.ctor_ref(&entry.full_name, &ctor.name, "::")
+                    );
+                    let mut statement = if args.is_empty() {
+                        format!("values.push({head});")
+                    } else {
+                        format!("values.push({head}({}));", args.join(", "))
+                    };
+                    for (field, name) in ctor.fields.iter().zip(&names).rev() {
+                        let inner_depth = if matches!(field.ty, Type::Data { .. }) {
+                            depth - 1
+                        } else {
+                            1
+                        };
+                        statement = format!(
+                            "for {name} in {} {{\n{}\n}}",
+                            self.domain(&field.ty, inner_depth),
+                            indent(&statement, 1)
+                        );
+                    }
+                    lines.push(statement);
+                }
+                lines.push("values".to_owned());
+                block(&lines.join("\n"))
+            }
+            other => unreachable!("no Rust domain for {}", other.kind()),
+        }
+    }
+
+    pub(super) fn prop(&mut self, prop: &Prop) -> Result<String> {
+        Ok(match prop {
+            Prop::Forall { binders, body } => {
+                let body = self.prop(body)?;
+                self.all_of(binders, body)
+            }
+            Prop::And { left, right } => {
+                format!("({} && {})", self.prop(left)?, self.prop(right)?)
+            }
+            Prop::Or { left, right } => {
+                format!("({} || {})", self.prop(left)?, self.prop(right)?)
+            }
+            Prop::Implies { left, right } => {
+                format!("(!{} || {})", self.prop(left)?, self.prop(right)?)
+            }
+            Prop::Not { arg } => format!("!{}", self.prop(arg)?),
+            Prop::Bool { expr } => self.expr(expr)?,
+            other => {
+                let (op, comparison) = other.comparison().expect("a comparison");
+                format!(
+                    "({} {} {})",
+                    self.borrow(&comparison.left)?,
+                    comparison_operator(op),
+                    self.borrow(&comparison.right)?
+                )
+            }
+        })
+    }
+
+    /// An expression whose value is only read: variables are borrowed, not cloned.
+    pub(super) fn borrow(&mut self, expr: &Expr) -> Result<String> {
+        match expr.var_name() {
+            Some(name) => Ok(format!("&{name}")),
+            None => Ok(format!("&{}", self.expr(expr)?)),
+        }
+    }
+
+    /// A method receiver: `&self` methods borrow a variable in place.
+    pub(super) fn receiver(&mut self, expr: &Expr) -> Result<String> {
+        match expr.var_name() {
+            Some(name) => Ok(name.to_owned()),
+            None => Ok(format!("({})", self.expr(expr)?)),
+        }
+    }
+}
