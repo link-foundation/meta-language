@@ -1,0 +1,320 @@
+diff --git a/grammar.js b/grammar.js
+index 47fd26c..5bcae77 100644
+--- a/grammar.js
++++ b/grammar.js
+@@ -52,7 +52,8 @@ export default grammar({
+       'tactic_match',
+       'tactic_application',
+       'tactic_or',
+-      'tactic_sequence'
++      'tactic_sequence',
++      'tactic_let'
+     ],
+   ],
+ 
+@@ -160,6 +161,7 @@ export default grammar({
+         $.theorem_command,
+         $.definition_command,
+         $.fixpoint_command,
++        $.function_command,
+         $.inductive_command,
+         $.assumption_command,
+         $.arguments_command,
+@@ -399,6 +401,14 @@ export default grammar({
+       repeat(seq("with", $._fix_definition)),
+     ),
+ 
++    // Recdef's `Function`: a fixpoint whose annotation may be a measure or a
++    // well-founded relation, with mutual definitions joined by `with`.
++    function_command: $ => seq(
++      "Function",
++      $._fix_definition,
++      repeat(seq("with", $._fix_definition)),
++    ),
++
+     _fix_definition: $ => seq(
+       $.ident_decl,
+       repeat($.binder),
+@@ -1130,11 +1140,18 @@ export default grammar({
+ 
+     // ~~~~~~~~~~~~~~~ Tactics ~~~~~~~~~~~~~~~~~~~
+ 
++    // `Ltac` defines (`:=`) or redefines (`::=`) one tactic, or several
++    // mutually recursive ones joined by `with`.
+     ltac_definition: $ => seq(
+       "Ltac",
++      $._ltac_definition_body,
++      repeat(seq("with", $._ltac_definition_body))
++    ),
++
++    _ltac_definition_body: $ => seq(
+       field("name", $.ident),
+       repeat($.ident),
+-      ":=",
++      choice(":=", "::="),
+       field("body", $._ltac_expr)
+     ),
+ 
+@@ -1147,8 +1164,21 @@ export default grammar({
+ 
+       $.tactic_or,
+       $.match_goal,
++      $.ltac_let,
+     ),
+ 
++    // `let x := value in body`: the body extends as far to the right as possible.
++    ltac_let: $ => prec.right('tactic_let', seq(
++      "let",
++      optional("rec"),
++      field("name", $.ident),
++      repeat($.ident),
++      ":=",
++      field("value", $._ltac_expr),
++      "in",
++      field("body", $._ltac_expr)
++    )),
++
+     parenthesized_tactic: $ => seq(
+       "(",
+       $._ltac_expr,
+@@ -1185,6 +1215,7 @@ export default grammar({
+     ),
+ 
+     tactic_invocation: $ => choice(
++      $.first_tactic,
+       $.intros_tactic,
+       $.assert_tactic,
+       $.rewrite_tactic,
+@@ -1244,6 +1275,14 @@ export default grammar({
+       $._one_term, optional(seq("with", $.bindings))
+     )),
+ 
++    // `first [ t1 | t2 ]` and `solve [ t1 | t2 ]` try each alternative in order.
++    first_tactic: $ => seq(
++      choice("first", "solve"),
++      "[",
++      optional($._goal_tactics),
++      "]"
++    ),
++
+     tactical: $ => prec('tactic_application', seq(
+       choice("repeat", "try"),
+       $._ltac_expr
+diff --git a/test/corpus/meta_language.txt b/test/corpus/meta_language.txt
+new file mode 100644
+index 0000000..0fc249f
+--- /dev/null
++++ b/test/corpus/meta_language.txt
+@@ -0,0 +1,212 @@
++==================
++Function with a Measure
++==================
++Function fact (n : N) {measure N.to_nat n} : N :=
++  (if N.eqb n 0%N then 1%N else N.mul n (fact (N.pred n))).
++Proof. all: lia. Defined.
++---
++
++(source_file
++  (sentence
++    (function_command
++      (ident_decl
++        (ident))
++      (binder
++        (ident)
++        (type
++          (ident)))
++      (fixannot
++        (dotted_qualid)
++        (ident))
++      (type
++        (ident))
++      (parenthesized_term
++        (if_expression
++          (application
++            (application
++              (dotted_qualid)
++              (ident))
++            (scoped_term
++              (number)
++              (ident)))
++          (scoped_term
++            (number)
++            (ident))
++          (application
++            (application
++              (dotted_qualid)
++              (ident))
++            (parenthesized_term
++              (application
++                (ident)
++                (parenthesized_term
++                  (application
++                    (dotted_qualid)
++                    (ident))))))))))
++  (sentence
++    (proof_command))
++  (sentence
++    (selector)
++    (tactic_invocation
++      (generic_tactic
++        (ident))))
++  (sentence
++    (defined_command)))
++
++==================
++Mutually Recursive Ltac Definitions
++==================
++Ltac ml_prove := first [ reflexivity | split; ml_prove ]
++with ml_refute H := first [ discriminate H | exact H ].
++---
++
++(source_file
++  (sentence
++    (ltac_definition
++      (ident)
++      (tactic_invocation
++        (first_tactic
++          (goal_branch
++            (tactic_invocation
++              (generic_tactic
++                (ident))))
++          (goal_branch
++            (tactic_sequence
++              (tactic_invocation
++                (generic_tactic
++                  (ident)))
++              (tactic_invocation
++                (generic_tactic
++                  (ident)))))))
++      (ident)
++      (ident)
++      (tactic_invocation
++        (first_tactic
++          (goal_branch
++            (tactic_invocation
++              (generic_tactic
++                (ident)
++                (generic_tactic_body
++                  (atomic_term_with_bindings
++                    (ident))))))
++          (goal_branch
++            (tactic_invocation
++              (generic_tactic
++                (ident)
++                (generic_tactic_body
++                  (atomic_term_with_bindings
++                    (ident)))))))))))
++
++==================
++Ltac Redefinition
++==================
++Ltac ml_close ::= solve [ reflexivity | lia ].
++---
++
++(source_file
++  (sentence
++    (ltac_definition
++      (ident)
++      (tactic_invocation
++        (first_tactic
++          (goal_branch
++            (tactic_invocation
++              (generic_tactic
++                (ident))))
++          (goal_branch
++            (tactic_invocation
++              (generic_tactic
++                (ident)))))))))
++
++==================
++First with Rewrite Alternatives
++==================
++Lemma closes : True.
++Proof.
++  first [ml_close | (rewrite ?ih; ml_close) | (rewrite <- ?ihl, ?ihr; ml_close)].
++Qed.
++---
++
++(source_file
++  (sentence
++    (theorem_command
++      (ident_decl
++        (ident))
++      (type
++        (ident))))
++  (sentence
++    (proof_command))
++  (sentence
++    (tactic_invocation
++      (first_tactic
++        (goal_branch
++          (tactic_invocation
++            (generic_tactic
++              (ident))))
++        (goal_branch
++          (parenthesized_tactic
++            (tactic_sequence
++              (tactic_invocation
++                (rewrite_tactic
++                  (oriented_rewriter
++                    (atomic_term_with_bindings
++                      (metavariable)))))
++              (tactic_invocation
++                (generic_tactic
++                  (ident))))))
++        (goal_branch
++          (parenthesized_tactic
++            (tactic_sequence
++              (tactic_invocation
++                (rewrite_tactic
++                  (oriented_rewriter
++                    (atomic_term_with_bindings
++                      (metavariable)))
++                  (oriented_rewriter
++                    (atomic_term_with_bindings
++                      (metavariable)))))
++              (tactic_invocation
++                (generic_tactic
++                  (ident)))))))))
++  (sentence
++    (qed_command)))
++
++==================
++Ltac Let In
++==================
++Ltac fresh_intro := let H := fresh "H" in intro H; first [ exact H | discriminate H ].
++---
++
++(source_file
++  (sentence
++    (ltac_definition
++      (ident)
++      (ltac_let
++        (ident)
++        (tactic_invocation
++          (generic_tactic
++            (ident)
++            (generic_tactic_body
++              (atomic_term_with_bindings
++                (string)))))
++        (tactic_sequence
++          (tactic_invocation
++            (intros_tactic
++              (intro_pattern
++                (ident))))
++          (tactic_invocation
++            (first_tactic
++              (goal_branch
++                (tactic_invocation
++                  (generic_tactic
++                    (ident)
++                    (generic_tactic_body
++                      (atomic_term_with_bindings
++                        (ident))))))
++              (goal_branch
++                (tactic_invocation
++                  (generic_tactic
++                    (ident)
++                    (generic_tactic_body
++                      (atomic_term_with_bindings
++                        (ident)))))))))))))

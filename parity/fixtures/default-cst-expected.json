@@ -574,7 +574,7 @@
       "grammars": {
         "rocq": {
           "version": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-          "parserSha256": "fc714e6d0dbecff5264dbea99768d1b44474d1de69726f6ce4cc2121125d8c9c"
+          "parserSha256": "f2296d1c1938530a2abf8fd650a72bea31ee68af31dc11035379cfa96eae5f45"
         }
       },
       "sourceSha256": "df989a05c1013e458a48b1f27b812fae6eee0ad139c3592862ff2a9bf10857bb",
