@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "imports": [
+    {
+      "id": "bnf:backslash-is-literal",
+      "format": "bnf",
+      "source": "<a> ::= \"x\\\\y\"\n",
+      "rule": "normal literal(\"x\\\\\\\\y\")"
+    },
+    {
+      "id": "bnf:backslash-quote-unterminated",
+      "format": "bnf",
+      "source": "<a> ::= \"\\\"\"\n",
+      "error": "GrammarImportError"
+    },
+    {
+      "id": "bnf:single-quoted-double-quote",
+      "format": "bnf",
+      "source": "<a> ::= '\"'\n",
+      "rule": "normal literal(\"\\\"\")"
+    },
+    {
+      "id": "bnf:double-quoted-single-quote",
+      "format": "bnf",
+      "source": "<a> ::= \"'\"\n",
+      "rule": "normal literal(\"'\")"
+    },
+    {
+      "id": "bnf:comment-marker-inside-literal",
+      "format": "bnf",
+      "source": "<a> ::= \"x;y\" ; comment\n",
+      "rule": "normal literal(\"x;y\")"
+    },
+    {
+      "id": "bnf:empty-terminal-alternative",
+      "format": "bnf",
+      "source": "<a> ::= \"x\" | \"\"\n",
+      "rule": "normal choice(literal(\"x\"), empty)"
+    },
+    {
+      "id": "bnf:only-empty-terminals",
+      "format": "bnf",
+      "source": "<a> ::= \"\" | ''\n",
+      "rule": "normal empty"
+    },
+    {
+      "id": "bnf:empty-terminal-in-sequence",
+      "format": "bnf",
+      "source": "<a> ::= \"x\" \"\" \"y\"\n",
+      "rule": "normal seq(literal(\"x\"), literal(\"y\"))"
+    },
+    {
+      "id": "ebnf:escaped-backslash",
+      "format": "ebnf",
+      "source": "a = \"x\\\\y\" ;\n",
+      "rule": "normal literal(\"x\\\\y\")"
+    },
+    {
+      "id": "ebnf:escaped-quote",
+      "format": "ebnf",
+      "source": "a = \"\\\"\" ;\n",
+      "rule": "normal literal(\"\\\"\")"
+    },
+    {
+      "id": "ebnf:control-and-solidus-escapes",
+      "format": "ebnf",
+      "source": "a = \"\\t\\/\\b\\f\\n\\r\" ;\n",
+      "rule": "normal literal(\"\\t/\\b\\f\\n\\r\")"
+    },
+    {
+      "id": "ebnf:unknown-escape",
+      "format": "ebnf",
+      "source": "a = \"\\q\" ;\n",
+      "error": "GrammarImportError"
+    },
+    {
+      "id": "ebnf:concatenation-binds-tighter",
+      "format": "ebnf",
+      "source": "a = \"x\" , [ \"y\" ] | \"z\" , \"w\" ;\n",
+      "rule": "normal choice(seq(literal(\"x\"), optional(literal(\"y\"))), seq(literal(\"z\"), literal(\"w\")))"
+    },
+    {
+      "id": "ebnf:juxtaposition-concatenates",
+      "format": "ebnf",
+      "source": "a = \"x\" \"y\" | \"z\" ;\n",
+      "rule": "normal choice(seq(literal(\"x\"), literal(\"y\")), literal(\"z\"))"
+    },
+    {
+      "id": "ebnf:empty-terminal-alternative",
+      "format": "ebnf",
+      "source": "a = \"x\" | \"\" ;\n",
+      "rule": "normal choice(literal(\"x\"), empty)"
+    },
+    {
+      "id": "ebnf:only-empty-terminals",
+      "format": "ebnf",
+      "source": "a = \"\" | '' ;\n",
+      "rule": "normal empty"
+    }
+  ],
+  "emits": [
+    {
+      "id": "bnf:plain",
+      "format": "bnf",
+      "value": "x y",
+      "source": "<a> ::= \"x y\"\n",
+      "lossy": [],
+      "reimported": "normal literal(\"x y\")"
+    },
+    {
+      "id": "bnf:double-quote",
+      "format": "bnf",
+      "value": "say \"hi\"",
+      "source": "<a> ::= 'say \"hi\"'\n",
+      "lossy": [],
+      "reimported": "normal literal(\"say \\\"hi\\\"\")"
+    },
+    {
+      "id": "bnf:backslash",
+      "format": "bnf",
+      "value": "x\\y",
+      "source": "<a> ::= \"x\\y\"\n",
+      "lossy": [],
+      "reimported": "normal literal(\"x\\\\y\")"
+    },
+    {
+      "id": "bnf:both-quotes",
+      "format": "bnf",
+      "value": "it's \"x\"",
+      "source": "<a> ::= \"it's \" '\"x\"'\n",
+      "lossy": [
+        "BNF splits terminal \"it's \\\"x\\\"\" containing both quote characters"
+      ],
+      "reimported": "normal seq(literal(\"it's \"), literal(\"\\\"x\\\"\"))"
+    },
+    {
+      "id": "ebnf:double-quote",
+      "format": "ebnf",
+      "value": "say \"hi\"",
+      "source": "a = 'say \"hi\"' ;\n",
+      "lossy": [],
+      "reimported": "normal literal(\"say \\\"hi\\\"\")"
+    },
+    {
+      "id": "ebnf:both-quotes",
+      "format": "ebnf",
+      "value": "it's \"x\"",
+      "source": "a = \"it's \\\"x\\\"\" ;\n",
+      "lossy": [],
+      "reimported": "normal literal(\"it's \\\"x\\\"\")"
+    },
+    {
+      "id": "ebnf:backslash-and-controls",
+      "format": "ebnf",
+      "value": "x\\y\n\t",
+      "source": "a = \"x\\\\y\\n\\t\" ;\n",
+      "lossy": [],
+      "reimported": "normal literal(\"x\\\\y\\n\\t\")"
+    }
+  ]
+}

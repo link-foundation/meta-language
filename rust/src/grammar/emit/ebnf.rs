@@ -267,6 +267,21 @@ fn quote_terminal(value: &str) -> String {
     } else {
         '"'
     };
-    let escaped = value.replace(quote, &quote.to_string().repeat(2));
-    format!("{quote}{escaped}{quote}")
+    let mut output = String::with_capacity(value.len() + 2);
+    output.push(quote);
+    for character in value.chars() {
+        match character {
+            '\\' => output.push_str("\\\\"),
+            '\n' => output.push_str("\\n"),
+            '\r' => output.push_str("\\r"),
+            '\t' => output.push_str("\\t"),
+            other if other == quote => {
+                output.push('\\');
+                output.push(other);
+            }
+            other => output.push(other),
+        }
+    }
+    output.push(quote);
+    output
 }

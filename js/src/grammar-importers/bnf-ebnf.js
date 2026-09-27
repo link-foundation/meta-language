@@ -12,7 +12,7 @@ import {
 export function importBnf(source) {
   const rules = [];
   for (const rawLine of String(source).split(/\r?\n/)) {
-    const line = stripLineComment(rawLine).trim();
+    const line = stripLineComment(rawLine, ';', { escapes: false }).trim();
     if (!line) continue;
     const match = /^<([^<>]+)>\s*::=\s*(.*)$/.exec(line);
     if (!match) throw parseError('bnf', `invalid production ${JSON.stringify(line)}`);
@@ -43,12 +43,13 @@ class BnfExpressionParser extends Cursor {
     } while (this.tryConsume('|'));
     this.skipSpace();
     if (!this.eof()) this.error('unexpected BNF input');
-    return choice(alternatives, false);
+    return alternativesChoice(alternatives);
   }
 
   atom() {
     this.skipSpace();
-    if (this.peek() === '"' || this.peek() === "'") return GrammarBuilder.literal(this.quoted());
+    // Classic BNF terminals have no escape sequences, matching the Rust `bnf` crate.
+    if (this.peek() === '"' || this.peek() === "'") return terminal(this.quoted(null));
     if (this.tryConsume('<')) {
       const end = this.source.indexOf('>', this.offset);
       if (end < 0) this.error('unterminated non-terminal');
@@ -92,7 +93,7 @@ class EbnfGrammarParser extends Cursor {
   alternation(close) {
     const alternatives = [this.concatenation(close)];
     while (this.tryConsume('|')) alternatives.push(this.concatenation(close));
-    return choice(alternatives, false);
+    return alternativesChoice(alternatives);
   }
 
   concatenation(close) {
@@ -120,7 +121,9 @@ class EbnfGrammarParser extends Cursor {
 
   atom() {
     this.skipSpace();
-    if (this.peek() === '"' || this.peek() === "'") return GrammarBuilder.literal(this.quoted());
+    if (this.peek() === '"' || this.peek() === "'") {
+      return terminal(this.quoted(decodeEbnfEscape));
+    }
     if (this.tryConsume('(')) {
       const expression = this.alternation(')');
       this.consume(')');
@@ -139,6 +142,15 @@ class EbnfGrammarParser extends Cursor {
     if (this.peek() === '?') throw unsupportedError('ebnf', 'special sequence');
     return GrammarBuilder.ref(this.identifier());
   }
+}
+
+const EBNF_ESCAPES = { t: '\t', b: '\b', n: '\n', r: '\r', f: '\f', '/': '/', '\\': '\\' };
+
+/** Decodes the escape set the Rust `ebnf` crate accepts inside a quoted terminal. */
+function decodeEbnfEscape(escaped, quote) {
+  if (escaped === quote) return quote;
+  if (Object.hasOwn(EBNF_ESCAPES, escaped)) return EBNF_ESCAPES[escaped];
+  throw parseError('ebnf', `unsupported string escape \\${escaped}`);
 }
 
 function removeEbnfComments(source) {
@@ -175,4 +187,16 @@ function removeEbnfComments(source) {
   }
   if (quote) throw parseError('ebnf', 'unterminated string literal');
   return result;
+}
+
+// A choice of only empty alternatives is itself empty, as in the Rust importers.
+function alternativesChoice(alternatives) {
+  return alternatives.every(({ kind }) => kind === 'empty')
+    ? GrammarBuilder.empty()
+    : choice(alternatives, false);
+}
+
+// An empty terminal matches the empty string, as in the Rust importers.
+function terminal(value) {
+  return value === '' ? GrammarBuilder.empty() : GrammarBuilder.literal(value);
 }

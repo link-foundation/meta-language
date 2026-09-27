@@ -38,7 +38,7 @@ export function rule(name, expression, kind = 'normal') {
   return { name, kind, expression };
 }
 
-export function stripLineComment(line, marker = ';') {
+export function stripLineComment(line, marker = ';', { escapes = true } = {}) {
   let quote = null;
   let escaped = false;
   for (let index = 0; index < line.length; index += 1) {
@@ -47,7 +47,7 @@ export function stripLineComment(line, marker = ';') {
       escaped = false;
       continue;
     }
-    if (quote && character === '\\') {
+    if (quote && escapes && character === '\\') {
       escaped = true;
       continue;
     }
@@ -58,20 +58,24 @@ export function stripLineComment(line, marker = ';') {
   return line;
 }
 
-export function decodeQuoted(text, quote, format) {
+export function decodeQuoted(text, quote, format, escapes = DEFAULT_ESCAPES) {
   let result = '';
   while (!text.eof()) {
     const character = text.take();
     if (character === quote) return result;
-    if (character !== '\\') {
+    if (character !== '\\' || escapes === null) {
       result += character;
       continue;
     }
     if (text.eof()) throw parseError(format, 'unterminated string escape');
     const escaped = text.take();
-    result += ({ n: '\n', r: '\r', t: '\t' })[escaped] ?? escaped;
+    result += escapes(escaped, quote, format);
   }
   throw parseError(format, 'unterminated string literal');
+}
+
+function DEFAULT_ESCAPES(escaped) {
+  return ({ n: '\n', r: '\r', t: '\t' })[escaped] ?? escaped;
 }
 
 export class Cursor {
@@ -123,13 +127,17 @@ export class Cursor {
     return match[0];
   }
 
-  quoted() {
+  /**
+   * Reads a single- or double-quoted literal. `escapes` maps the character
+   * after a backslash to its decoded text; `null` keeps backslashes verbatim.
+   */
+  quoted(escapes = DEFAULT_ESCAPES) {
     this.skipSpace();
     const quote = this.take();
     if (quote !== '"' && quote !== "'") {
       throw parseError(this.format, `expected quoted literal at offset ${this.offset - 1}`);
     }
-    return decodeQuoted(this, quote, this.format);
+    return decodeQuoted(this, quote, this.format, escapes);
   }
 
   error(message) {

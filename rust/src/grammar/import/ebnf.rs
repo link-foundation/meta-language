@@ -42,29 +42,84 @@ fn lower_grammar(parsed: &EbnfGrammar) -> Result<Grammar, GrammarImportError> {
     Ok(grammar)
 }
 
+/// The `ebnf` crate validates `\t \b \n \r \f \/ \\` and quote escapes
+/// but returns the raw slice, so the terminal text is decoded here.
+fn decode_escapes(value: &str) -> String {
+    let mut output = String::with_capacity(value.len());
+    let mut characters = value.chars();
+    while let Some(character) = characters.next() {
+        if character != '\\' {
+            output.push(character);
+            continue;
+        }
+        match characters.next() {
+            Some('t') => output.push('\t'),
+            Some('b') => output.push('\u{8}'),
+            Some('n') => output.push('\n'),
+            Some('r') => output.push('\r'),
+            Some('f') => output.push('\u{c}'),
+            Some(other) => output.push(other),
+            None => output.push('\\'),
+        }
+    }
+    output
+}
+
 fn lower_node(node: &EbnfNode) -> Result<GrammarExpr, GrammarImportError> {
     match node {
         EbnfNode::String(value) if value.is_empty() || value == EMPTY_SENTINEL => {
             Ok(GrammarExpr::Empty)
         }
-        EbnfNode::String(value) => Ok(GrammarExpr::Terminal(value.clone())),
+        EbnfNode::String(value) => Ok(GrammarExpr::Terminal(decode_escapes(value))),
         EbnfNode::RegexString(value) => Err(unsupported_error(
             GrammarFormat::Ebnf,
             format!("inline regex {value:?}"),
         )),
         EbnfNode::Terminal(name) => Ok(GrammarExpr::NonTerminal(name.clone())),
-        EbnfNode::Multiple(nodes) => lower_sequence(nodes.iter().map(lower_node)),
+        EbnfNode::Multiple(_) | EbnfNode::Symbol(..) => lower_operator_chain(node),
         EbnfNode::RegexExt(inner, kind) => lower_regex_extension(inner, kind),
-        EbnfNode::Symbol(left, EbnfSymbolKind::Concatenation, right) => {
-            lower_sequence([lower_node(left), lower_node(right)])
-        }
-        EbnfNode::Symbol(left, EbnfSymbolKind::Alternation, right) => {
-            lower_choice([lower_node(left), lower_node(right)])
-        }
         EbnfNode::Group(inner) => lower_node(inner),
         EbnfNode::Optional(inner) => lower_node(inner).map(GrammarExpr::optional),
         EbnfNode::Repeat(inner) => lower_node(inner).map(GrammarExpr::zero_or_more),
         EbnfNode::Unknown => Err(unsupported_error(GrammarFormat::Ebnf, "unknown node")),
+    }
+}
+
+/// The `ebnf` crate nests `,` and `|` right-associatively without precedence,
+/// so `a , b | c` arrives as `a , (b | c)`. Flattening the chain restores ISO
+/// 14977 precedence, where concatenation binds tighter than alternation;
+/// juxtaposed operands (`Multiple`) concatenate.
+fn lower_operator_chain(node: &EbnfNode) -> Result<GrammarExpr, GrammarImportError> {
+    let mut alternatives = vec![Vec::new()];
+    collect_operator_chain(node, &mut alternatives);
+    lower_choice(
+        alternatives
+            .into_iter()
+            .map(|operands| lower_sequence(operands.into_iter().map(lower_node))),
+    )
+}
+
+fn collect_operator_chain<'node>(
+    node: &'node EbnfNode,
+    alternatives: &mut Vec<Vec<&'node EbnfNode>>,
+) {
+    match node {
+        EbnfNode::Multiple(nodes) => {
+            for node in nodes {
+                collect_operator_chain(node, alternatives);
+            }
+        }
+        EbnfNode::Symbol(left, kind, right) => {
+            collect_operator_chain(left, alternatives);
+            if matches!(kind, EbnfSymbolKind::Alternation) {
+                alternatives.push(Vec::new());
+            }
+            collect_operator_chain(right, alternatives);
+        }
+        operand => alternatives
+            .last_mut()
+            .expect("an alternative is always open")
+            .push(operand),
     }
 }
 
@@ -182,8 +237,25 @@ fn normalize_empty_alternatives(text: &str) -> String {
     let mut scanner = Scanner::new(text);
     let mut in_rhs = false;
     let mut empty_alternative_pending = false;
+    let mut skip_closing_quote = false;
 
     while let Some((index, character, is_code, depth)) = scanner.next() {
+        if skip_closing_quote {
+            skip_closing_quote = false;
+            continue;
+        }
+        // The `ebnf` crate cannot parse an empty literal, so `""` and `''`
+        // become the empty sentinel.
+        if is_code
+            && in_rhs
+            && matches!(character, '"' | '\'')
+            && text[index + 1..].starts_with(character)
+        {
+            push_empty_sentinel(&mut normalized);
+            empty_alternative_pending = false;
+            skip_closing_quote = true;
+            continue;
+        }
         if is_code {
             if in_rhs {
                 match character {
