@@ -134,6 +134,8 @@ pub enum TranslationSupport {
     PortableEncoding,
     /// A recognized source form has an executable target implementation.
     SemanticSubset,
+    /// A portable-core program is translated to a native target program with a recorded contract.
+    SemanticTranslation,
 }
 
 /// One directed source-to-target translation contract.

@@ -15,6 +15,7 @@ export const RepresentationLevel = Object.freeze({
 export const TranslationSupport = Object.freeze({
   PortableEncoding: 'portable-encoding',
   SemanticSubset: 'semantic-subset',
+  SemanticTranslation: 'semantic-translation',
 });
 
 const SUPPORT = Object.freeze([

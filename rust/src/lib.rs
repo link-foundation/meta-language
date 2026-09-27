@@ -39,6 +39,7 @@ pub mod query_algebra;
 pub mod query_plan;
 mod reconstruction;
 pub mod rust_codec;
+mod semantic_translation;
 pub mod semantics;
 pub mod snapshots;
 pub mod source;
@@ -143,8 +144,8 @@ pub use program_representation::{
     SEMANTIC_CONSTRUCTS,
 };
 pub use program_translation::{
-    decode_program_translation, translate_program, DecodedProgramTranslation, ProgramTranslation,
-    ProgramTranslationError,
+    decode_program_translation, read_translation_provenance, translate_program,
+    DecodedProgramTranslation, ProgramTranslation, ProgramTranslationError,
 };
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
@@ -163,6 +164,10 @@ pub use query_plan::{
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
     RustTypeKind, RustTypeShape, ToLinks,
+};
+pub use semantic_translation::{
+    ReadTranslationProvenance, SemanticTranslation, TranslationDiagnostic, TranslationObligation,
+    TranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION,
 };
 pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot, StructuralDiff};

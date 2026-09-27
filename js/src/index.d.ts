@@ -414,6 +414,7 @@ export interface LanguageSupport {
 export const TranslationSupport: {
   readonly PortableEncoding: 'portable-encoding';
   readonly SemanticSubset: 'semantic-subset';
+  readonly SemanticTranslation: 'semantic-translation';
 };
 export type TranslationSupportValue =
   typeof TranslationSupport[keyof typeof TranslationSupport];
@@ -438,11 +439,81 @@ export function translationContract(
   targetLanguage: string,
 ): TranslationContract | undefined;
 
+export const SEMANTIC_OBSERVATION: string;
+export const SEMANTIC_ENCODING: string;
+
+export interface TranslationSpan {
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface TranslationMapping {
+  readonly kind: string;
+  readonly source: string;
+  readonly target: string;
+  readonly sourceSpan: TranslationSpan | null;
+}
+
+export interface TranslationEncoding {
+  readonly id: string;
+  readonly statement: string;
+}
+
+export interface TranslationAssumption {
+  readonly id: string;
+  readonly statement: string;
+  readonly details: readonly string[];
+}
+
+export interface TranslationObligation {
+  readonly source: string;
+  readonly target: string;
+  readonly kind: 'theorem' | 'assertion';
+  readonly closedGoal: boolean;
+  readonly discharge: 'target-kernel' | 'source-kernel' | 'runtime-assertion';
+  readonly check: 'bounded' | null;
+}
+
+export interface TranslationProvenance {
+  readonly translator: string;
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly sourceSha256: string;
+  readonly sourceBytes: number;
+  readonly header: string;
+}
+
+export interface SemanticTranslation {
+  readonly entry: string | null;
+  readonly observationProcedure: string;
+  readonly encodings: readonly TranslationEncoding[];
+  readonly assumptions: readonly TranslationAssumption[];
+  readonly obligations: readonly TranslationObligation[];
+  readonly mappings: readonly TranslationMapping[];
+  readonly runtimeDependencies: readonly string[];
+  readonly provenance: TranslationProvenance;
+}
+
+export interface TranslationDiagnostic {
+  readonly kind: 'syntax' | 'type' | 'unsupported';
+  readonly message: string;
+  readonly span: TranslationSpan | null;
+}
+
 export interface ProgramTranslation {
   readonly sourceLanguage: LanguageSupport['name'];
   readonly targetLanguage: LanguageSupport['name'];
   readonly code: string;
   readonly contract: TranslationContract;
+  /** Present when the program is in the portable core and was translated. */
+  readonly semantics: SemanticTranslation | null;
+  /** Why the program stayed outside the portable core, when it did. */
+  readonly diagnostic: TranslationDiagnostic | null;
+}
+
+export interface ReadTranslationProvenance {
+  readonly sourceLanguage: LanguageSupport['name'];
+  readonly sourceSha256: string;
+  readonly sourceBytes: number;
 }
 
 export interface DecodedProgramTranslation {
@@ -459,6 +530,10 @@ export function decodeProgramTranslation(
   code: string,
   targetLanguage: string,
 ): DecodedProgramTranslation;
+export function readTranslationProvenance(
+  code: string,
+  targetLanguage: string,
+): ReadTranslationProvenance;
 
 export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
 export const PROGRAM_SNAPSHOT_SCHEMA_VERSION: 1;

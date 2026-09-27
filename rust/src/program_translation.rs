@@ -1,19 +1,26 @@
-//! Reversible target-native source envelopes for the four-language translation matrix.
+//! The public four-language translator: semantic translations of portable-core programs, and
+//! reversible target-native source envelopes for every other program.
 
 use std::error::Error;
 use std::fmt;
 
+use crate::semantic_translation::{
+    self, ReadTranslationProvenance, SemanticTranslation, TranslationDiagnostic, SEMANTIC_ENCODING,
+    SEMANTIC_OBSERVATION,
+};
 use crate::{language_support, translation_contract, TranslationContract, TranslationSupport};
 
 const ENVELOPE_MARKER: &str = "meta-language:portable-source-envelope:v1";
 
-/// A target-language artifact carrying an exact, reversible source program.
+/// A target-language artifact: a semantic translation or a reversible source envelope.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProgramTranslation {
     source_language: &'static str,
     target_language: &'static str,
     code: String,
     contract: TranslationContract,
+    semantics: Option<SemanticTranslation>,
+    diagnostic: Option<TranslationDiagnostic>,
 }
 
 impl ProgramTranslation {
@@ -29,7 +36,7 @@ impl ProgramTranslation {
         self.target_language
     }
 
-    /// Valid target-language source containing the portable envelope.
+    /// Valid target-language source: the translated program or the portable envelope.
     #[must_use]
     pub fn code(&self) -> &str {
         &self.code
@@ -39,6 +46,18 @@ impl ProgramTranslation {
     #[must_use]
     pub const fn contract(&self) -> &TranslationContract {
         &self.contract
+    }
+
+    /// Encodings, assumptions, obligations, mappings and provenance of a semantic translation.
+    #[must_use]
+    pub const fn semantics(&self) -> Option<&SemanticTranslation> {
+        self.semantics.as_ref()
+    }
+
+    /// Why the program stayed outside the portable core, for an envelope.
+    #[must_use]
+    pub const fn diagnostic(&self) -> Option<&TranslationDiagnostic> {
+        self.diagnostic.as_ref()
     }
 }
 
@@ -72,6 +91,8 @@ pub enum ProgramTranslationError {
     SameLanguage(String),
     /// The artifact does not contain a valid envelope for the declared target.
     InvalidEnvelope(String),
+    /// The artifact does not start with a valid provenance comment for the declared target.
+    InvalidProvenance(String),
 }
 
 impl fmt::Display for ProgramTranslationError {
@@ -92,18 +113,23 @@ impl fmt::Display for ProgramTranslationError {
             Self::InvalidEnvelope(reason) => {
                 write!(formatter, "invalid portable envelope: {reason}")
             }
+            Self::InvalidProvenance(reason) => {
+                write!(formatter, "invalid translation provenance: {reason}")
+            }
         }
     }
 }
 
 impl Error for ProgramTranslationError {}
 
-/// Translates one of the four languages to another through an explicit,
-/// target-native envelope.
+/// Translates a program between JavaScript, Rust, Lean and Rocq.
 ///
-/// The envelope preserves every source byte and can be decoded before
-/// source-language analysis or execution; it never relabels the original text
-/// as target-language syntax.
+/// Programs in the portable core are parsed, type-checked and emitted as native target programs
+/// that print the same lines and restate the same theorems; [`ProgramTranslation::semantics`]
+/// records the encodings, assumptions, proof obligations, source mappings and provenance of that
+/// translation. Other programs are carried in a reversible source envelope, whose
+/// [`ProgramTranslation::diagnostic`] names the construct that kept them out of the portable core;
+/// the envelope never relabels the original text as target-language syntax.
 pub fn translate_program(
     source: &str,
     source_language: &str,
@@ -115,6 +141,32 @@ pub fn translate_program(
         .ok_or_else(|| ProgramTranslationError::UnsupportedLanguage(target_language.to_string()))?;
     let mut contract = translation_contract(source_support.name, target_support.name)
         .ok_or_else(|| ProgramTranslationError::SameLanguage(source_support.name.to_string()))?;
+    let diagnostic =
+        match semantic_translation::emit(source, source_support.name, target_support.name) {
+            Ok(emitted) => {
+                let (code, semantics) = semantic_translation::record(
+                    source,
+                    source_support.name,
+                    target_support.name,
+                    emitted,
+                );
+                contract.support = TranslationSupport::SemanticTranslation;
+                contract.observation = SEMANTIC_OBSERVATION;
+                contract.encoding = SEMANTIC_ENCODING;
+                contract.assumptions =
+                    semantic_translation::assumption_statements(&semantics.assumptions);
+                contract.obligation = None;
+                return Ok(ProgramTranslation {
+                    source_language: source_support.name,
+                    target_language: target_support.name,
+                    code,
+                    contract,
+                    semantics: Some(semantics),
+                    diagnostic: None,
+                });
+            }
+            Err(diagnostic) => diagnostic,
+        };
     let payload = hex_encode(source.as_bytes());
     let metadata = format!(
         "{ENVELOPE_MARKER}:{}:{}:{payload}",
@@ -136,7 +188,20 @@ pub fn translate_program(
         target_language: target_support.name,
         code,
         contract,
+        semantics: None,
+        diagnostic: Some(diagnostic),
     })
+}
+
+/// Reads the provenance comment a semantic translation starts with.
+pub fn read_translation_provenance(
+    code: &str,
+    target_language: &str,
+) -> Result<ReadTranslationProvenance, ProgramTranslationError> {
+    let target = language_support(target_language)
+        .ok_or_else(|| ProgramTranslationError::UnsupportedLanguage(target_language.to_string()))?;
+    semantic_translation::read_provenance(code, target.name)
+        .map_err(ProgramTranslationError::InvalidProvenance)
 }
 
 /// Decodes and integrity-checks a portable source envelope from target source.

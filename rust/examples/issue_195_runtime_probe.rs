@@ -597,6 +597,9 @@ fn translation_observations(corpus: &Value) -> Vec<Value> {
                     "support": match translated.contract().support {
                         meta_language::TranslationSupport::PortableEncoding => "portable-encoding",
                         meta_language::TranslationSupport::SemanticSubset => "semantic-subset",
+                        meta_language::TranslationSupport::SemanticTranslation => {
+                            "semantic-translation"
+                        }
                     },
                     "observation": translated.contract().observation,
                     "requiredRuntime": translated.contract().required_runtime,
