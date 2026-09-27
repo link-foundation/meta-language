@@ -15,6 +15,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { buildIssue195Manifest } from './issue-195-acceptance-lib.mjs';
+import {
+  DELIVERY_CONSUMER_ASSERTIONS,
+  deliveryAssertions,
+  supportedPlatformCoverage,
+} from './issue-195-delivery.mjs';
 import { buildEvidencePlan, observedEvidenceForCell } from './issue-195-evidence-plan.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -43,13 +48,7 @@ const cellsByTestId = new Map(
   plan.flatMap(({ cells }) => cells.map(({ cell }) => [cell.testId, cell])),
 );
 const runnerObservations = [];
-const DELIVERY_CONSUMER_ASSERTIONS = [
-  'cleanEnvironment',
-  'exactArtifactChecksum',
-  'publicEntryPoints',
-  'offlineFirstParse',
-];
-
+const deliveryContext = { corpus, corpusSha256, version: packageMetadata.version };
 
 const prepareCandidatesDirectory = option('--prepare-candidates', null);
 if (prepareCandidatesDirectory) {
@@ -476,31 +475,28 @@ async function produceDeliveryEvidence(kind) {
         : deliveryPackage;
       const crossRuntime = deliveryPackage !== 'rml' && (primary === 'npm') !== (runtime === 'javascript');
       const sides = crossRuntime ? ['npm', 'crate'] : [primary];
-      const passing = (report) => {
-        const checks = sides.map((side) => deliveryChecks(report, side, expected[side]));
-        const agrees = !crossRuntime || report?.agreement?.mismatches?.length === 0;
-        return Object.fromEntries(DELIVERY_CONSUMER_ASSERTIONS.map((assertion) => [
-          assertion,
-          agrees && checks.every((check) => check[assertion] === true),
-        ]));
-      };
-      const localChecks = passing(local);
+      const localChecks = deliveryAssertions(local, sides, expected, deliveryContext);
       for (const assertion of DELIVERY_CONSUMER_ASSERTIONS) {
         if (localChecks[assertion]) {
           observe(testId, assertion, `${kind} ${primary} consumer on ${local.platform}: ${assertion}`);
         }
       }
-      const platformsPass = corpus.delivery.supportedPlatforms.every((platform) => {
-        const platformReports = reports.filter(({ report }) => report.platform === platform);
-        return platformReports.length > 0 && platformReports.every(({ report }) =>
-          Object.values(passing(report)).every(Boolean));
-      });
-      if (platformsPass) {
+      const coverage = supportedPlatformCoverage(
+        reports.map(({ report }) => report),
+        sides,
+        expected,
+        deliveryContext,
+      );
+      if (coverage.observed) {
         observe(
           testId,
           'supportedPlatforms',
           `${kind} ${primary} consumer on ${corpus.delivery.supportedPlatforms.join(', ')}`,
         );
+      } else {
+        for (const { platform, reason } of coverage.failures) {
+          console.log(`issue-195 evidence: ${testId} supportedPlatforms rejects ${platform}: ${reason}`);
+        }
       }
       const rmlRuntimes = crossRuntime ? ['javascript', 'rust'] : [primary === 'npm' ? 'javascript' : 'rust'];
       if (rmlRuntimes.every((rmlRuntime) => rml[rmlRuntime].ok)) {
@@ -514,39 +510,6 @@ async function produceDeliveryEvidence(kind) {
     ['delivery:rml', bundle(candidates, consumer, reportArtifacts, rml.javascript, rml.rust)],
   );
   return groups;
-}
-
-/** Evaluates one package side of a platform report against the declared corpus. */
-function deliveryChecks(report, side, expectedSha256) {
-  const observed = report?.[side];
-  if (!observed || report.corpusSha256 !== corpusSha256) return {};
-  const { parses = [], programs = [], translations = [] } = observed.observations ?? {};
-  const { delivery } = corpus;
-  const corpusParsed = parses.length === delivery.consumerCorpus.length &&
-    parses.every(({ clean, reconstructs, requiredTermPresent }) =>
-      clean && reconstructs && requiredTermPresent) &&
-    programs.length === delivery.programs.length &&
-    programs.every(({ emitted, bindings }) => emitted && bindings.length > 0) &&
-    translations.length === delivery.translations.length &&
-    translations.every(({ decodes }) => decodes);
-  const offline = side === 'npm'
-    ? observed.offline?.networkAttempts?.length === 0 && observed.offline.guardRejectsNetwork === true
-    : observed.offline?.builtOffline === true &&
-      observed.offline.ranWithNetworkDisabledEnvironment === true &&
-      observed.offline.networkDependencies?.length === 0 &&
-      observed.offline.networkApiFiles?.length === 0;
-  const clean = Object.values(observed.clean ?? {});
-  const declared = delivery.publicEntryPoints[side === 'npm' ? 'javascript' : 'rust'];
-  return {
-    cleanEnvironment: clean.length > 0 && clean.every((value) => value === true),
-    exactArtifactChecksum: observed.version === packageMetadata.version &&
-      observed.checksum?.sha256 === expectedSha256 &&
-      observed.checksum.expectedSha256 === expectedSha256 &&
-      (side !== 'npm' || observed.checksum.installedIntegrity === observed.checksum.expectedIntegrity),
-    publicEntryPoints: declared.every((name) => observed.publicEntryPoints?.used?.includes(name)) &&
-      observed.publicEntryPoints.privatePathRejected === true,
-    offlineFirstParse: offline && corpusParsed,
-  };
 }
 
 async function candidateArtifacts() {
