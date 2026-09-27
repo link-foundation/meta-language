@@ -2108,5 +2108,213 @@
         }
       ]
     }
-  ]
+  ],
+  "translationCorpus": {
+    "description": "Project programs in the portable core that every directed pair translates; the oracle is the source toolchain run on the source, the expected printed lines, the source theorems and assertions, and a fault-injected source whose translation the target toolchain must reject or observe differently.",
+    "directory": "parity/fixtures/translation-corpus",
+    "expectedOutput": {
+      "file": "expected-output.txt",
+      "sha256": "b1aae919623a8192626e4266f7929ea98bdf299792263286f9f4561918da3ff0"
+    },
+    "sources": {
+      "JavaScript": {
+        "file": "project.mjs",
+        "sha256": "88b84dce9763e4170a24a14887ed8f4377d81f0ff8ba532ff4675754188968c5",
+        "grammar": "javascript",
+        "extension": ".mjs",
+        "theorems": [],
+        "assertions": 1,
+        "mappings": [
+          "Arith.fact",
+          "Arith.sumTo",
+          "Arith.fib",
+          "Arith.monus",
+          "Arith.halve",
+          "Arith.remainder",
+          "Tree",
+          "Tree.leaf",
+          "Tree.node",
+          "Tree.size",
+          "Tree.total",
+          "Tree.mirror",
+          "Tree.insert",
+          "classify",
+          "describe",
+          "sample"
+        ],
+        "mutation": {
+          "find": "if (n === 0n) return 1n;",
+          "replace": "if (n === 0n) return 2n;"
+        }
+      },
+      "Rust": {
+        "file": "project.rs",
+        "sha256": "913bf06db509ec7b03a61d6e463d00b3248326116334e8553c76f0448461e05d",
+        "grammar": "rust",
+        "extension": ".rs",
+        "theorems": [],
+        "assertions": 1,
+        "mappings": [
+          "arith.fact",
+          "arith.sum_to",
+          "arith.fib",
+          "arith.monus",
+          "arith.halve",
+          "arith.remainder",
+          "Tree",
+          "Tree.Leaf",
+          "Tree.Node",
+          "tree.size",
+          "tree.total",
+          "tree.mirror",
+          "tree.insert",
+          "classify",
+          "describe",
+          "sample"
+        ],
+        "mutation": {
+          "find": "if n == 0 {\n            1\n",
+          "replace": "if n == 0 {\n            2\n"
+        }
+      },
+      "Lean": {
+        "file": "project.lean",
+        "sha256": "b66be185835337d96a2b0874d5719d2a6a16690dad51eea8f78f69f99299f5c1",
+        "grammar": "lean",
+        "extension": ".lean",
+        "theorems": [
+          "fact_five",
+          "sumTo_formula",
+          "mirror_mirror",
+          "size_mirror"
+        ],
+        "assertions": 0,
+        "mappings": [
+          "Arith.fact",
+          "Arith.sumTo",
+          "Arith.fib",
+          "Arith.monus",
+          "Arith.halve",
+          "Arith.remainder",
+          "Tree",
+          "Tree.leaf",
+          "Tree.node",
+          "Tree.size",
+          "Tree.total",
+          "Tree.mirror",
+          "Tree.insert",
+          "classify",
+          "describe",
+          "sample",
+          "fact_five",
+          "sumTo_formula",
+          "mirror_mirror",
+          "size_mirror"
+        ],
+        "mutation": {
+          "find": "  | 0 => 1\n  | n + 1 => (n + 1) * fact n",
+          "replace": "  | 0 => 2\n  | n + 1 => (n + 1) * fact n"
+        }
+      },
+      "Rocq": {
+        "file": "project.v",
+        "sha256": "7c2dae2ab0a588ac6672900f4048f85f4f50a7d3ab38fae645d247dc3c2a87d7",
+        "grammar": "rocq",
+        "extension": ".v",
+        "theorems": [
+          "fact_five",
+          "sumTo_formula",
+          "mirror_mirror",
+          "size_mirror"
+        ],
+        "assertions": 0,
+        "mappings": [
+          "Arith.fact",
+          "Arith.sumTo",
+          "Arith.fib",
+          "Arith.monus",
+          "Arith.halve",
+          "Arith.remainder",
+          "Tree",
+          "Tree.leaf",
+          "Tree.node",
+          "Tree.size",
+          "Tree.total",
+          "Tree.mirror",
+          "Tree.insert",
+          "classify",
+          "describe",
+          "sample",
+          "fact_five",
+          "sumTo_formula",
+          "mirror_mirror",
+          "size_mirror"
+        ],
+        "mutation": {
+          "find": "then 1%N else (n * fact",
+          "replace": "then 2%N else (n * fact"
+        }
+      }
+    },
+    "targets": {
+      "JavaScript": {
+        "runtime": "ECMAScript 2026 host with BigInt",
+        "proof": false
+      },
+      "Rust": {
+        "runtime": "Rust 1.98.1 standard library",
+        "proof": false
+      },
+      "Lean": {
+        "runtime": "Lean 4.33.1 core library",
+        "proof": true,
+        "forbidden": [
+          "sorry",
+          "admit",
+          "axiom",
+          "unsafe",
+          "implemented_by",
+          "extern"
+        ]
+      },
+      "Rocq": {
+        "runtime": "Rocq 9.2",
+        "proof": true,
+        "forbidden": [
+          "Admitted",
+          "admit",
+          "Axiom",
+          "Parameter",
+          "Conjecture",
+          "Hypothesis",
+          "Variable",
+          "Abort"
+        ]
+      }
+    },
+    "assumptions": {
+      "JavaScript -> Rust": [
+        "non-aborting-executions"
+      ],
+      "JavaScript -> Lean": [
+        "non-aborting-executions"
+      ],
+      "JavaScript -> Rocq": [
+        "non-aborting-executions"
+      ],
+      "Rust -> JavaScript": [],
+      "Rust -> Lean": [
+        "non-aborting-executions"
+      ],
+      "Rust -> Rocq": [
+        "non-aborting-executions"
+      ],
+      "Lean -> JavaScript": [],
+      "Lean -> Rust": [],
+      "Lean -> Rocq": [],
+      "Rocq -> JavaScript": [],
+      "Rocq -> Rust": [],
+      "Rocq -> Lean": []
+    }
+  }
 }
