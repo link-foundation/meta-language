@@ -46,6 +46,7 @@ mod inference_sequitur;
 mod inference_state_merging;
 mod issue_195_acceptance;
 mod issue_195_binding_rename;
+mod issue_195_binding_rename_corpus;
 mod issue_195_evidence;
 mod issue_195_grammar_importers;
 mod issue_195_observations;

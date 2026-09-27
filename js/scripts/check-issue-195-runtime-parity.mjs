@@ -42,7 +42,7 @@ if (artifactsOption !== -1) {
   ]);
 }
 
-for (const section of ['positive', 'negative', 'inventory', 'builtins', 'linoGrammar', 'pdfGrammar', 'semantics', 'transforms', 'translations']) {
+for (const section of ['positive', 'negative', 'inventory', 'builtins', 'linoGrammar', 'pdfGrammar', 'semantics', 'bindingRenames', 'transforms', 'translations']) {
   if (stableJson(javascript[section]) !== stableJson(rust[section])) {
     throw new Error(`JavaScript/Rust runtime parity mismatch in ${section}`);
   }
@@ -62,6 +62,7 @@ function runtimeObservation() {
     linoGrammar: linoGrammarCases.cases.map(({ source }) => networkObservation('LiNo', source)),
     pdfGrammar: pdfGrammarCases.cases.map(({ source }) => networkObservation('PDF', source)),
     semantics: corpus.semanticPrograms.map(programObservation),
+    bindingRenames: corpus.bindingRenameCorpus.map(renameObservation),
     transforms: corpus.transformationPrograms.map(transformObservation),
     translations: translationObservations(),
   };
@@ -299,6 +300,34 @@ function translationObservations() {
         };
       });
   });
+}
+
+// Name resolution of a rename fixture and the rename's outcome: the emitted
+// source, or null when the rename is rejected.
+function renameObservation(fixture) {
+  const program = analyzeProgram(fixture.source, fixture.language);
+  const binding = program.bindings.filter(({ name }) => name === fixture.binding)[fixture.declarationOccurrence];
+  let renamed = null;
+  try {
+    renamed = program.renameBinding(binding.id, fixture.replacement).emit();
+  } catch {
+    renamed = null;
+  }
+  return {
+    bindings: program.bindings.map(({ name, kind, declaration, references }) => ({
+      name,
+      kind,
+      declaration: byteRange(fixture.source, declaration.start, declaration.end),
+      references: references.map(({ start, end }) => byteRange(fixture.source, start, end)),
+    })),
+    unresolvedReferences: sorted(program.unresolvedReferences.map(({ kind, name, start, end, phase = null }) => ({
+      kind,
+      name,
+      range: byteRange(fixture.source, start, end),
+      phase,
+    }))),
+    renamed,
+  };
 }
 
 function byteRange(source, start, end) {

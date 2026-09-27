@@ -65,6 +65,12 @@ fn main() {
         .iter()
         .map(program_observation)
         .collect::<Vec<_>>();
+    let binding_renames = corpus["bindingRenameCorpus"]
+        .as_array()
+        .expect("binding rename fixtures")
+        .iter()
+        .map(rename_observation)
+        .collect::<Vec<_>>();
     let transforms = corpus["transformationPrograms"]
         .as_array()
         .expect("transformation fixtures")
@@ -84,6 +90,7 @@ fn main() {
             "linoGrammar": lino_grammar,
             "pdfGrammar": pdf_grammar,
             "semantics": semantics,
+            "bindingRenames": binding_renames,
             "transforms": transforms,
             "translations": translations,
         }))
@@ -447,6 +454,47 @@ fn facts(values: &[ProgramFact]) -> Vec<Value> {
 
 fn range(value: ProgramRange) -> Value {
     json!({ "start": value.start(), "end": value.end() })
+}
+
+/// Name resolution of a rename fixture and the rename's outcome: the emitted
+/// source, or `null` when the rename is rejected.
+fn rename_observation(fixture: &Value) -> Value {
+    let language = fixture["language"].as_str().expect("language");
+    let program = analyze_program(
+        fixture["source"].as_str().expect("source"),
+        language,
+        ProgramProjectContext::default(),
+    )
+    .expect("semantic analysis");
+    let occurrence = usize::try_from(
+        fixture["declarationOccurrence"]
+            .as_u64()
+            .expect("occurrence"),
+    )
+    .expect("occurrence fits usize");
+    let binding = program
+        .bindings()
+        .iter()
+        .filter(|binding| binding.name() == fixture["binding"].as_str().expect("binding"))
+        .nth(occurrence)
+        .expect("selected binding");
+    let renamed = program
+        .rename_binding(
+            binding.id(),
+            fixture["replacement"].as_str().expect("replacement"),
+        )
+        .ok()
+        .map(|renamed| renamed.emit());
+    json!({
+        "bindings": program.bindings().iter().map(|binding| json!({
+            "name": binding.name(),
+            "kind": binding.kind(),
+            "declaration": range(binding.declaration()),
+            "references": binding.references().iter().copied().map(range).collect::<Vec<_>>(),
+        })).collect::<Vec<_>>(),
+        "unresolvedReferences": sorted(facts(program.unresolved_references())),
+        "renamed": renamed,
+    })
 }
 
 fn transform_observation(fixture: &Value) -> Value {

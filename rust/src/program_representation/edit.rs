@@ -128,30 +128,37 @@ impl ProgramRepresentation {
                 offset: reference.range.start,
             });
         }
-        let mut ranges = binding.references.clone();
-        ranges.push(binding.declaration);
-        ranges.sort_by_key(|range| std::cmp::Reverse(range.start));
-        let mut edited = self.source.clone();
-        for range in ranges {
-            let shorthand = self.language == "JavaScript"
-                && self.source_mappings.iter().any(|mapping| {
+        let mut edits = std::iter::once(binding.declaration)
+            .chain(binding.references.iter().copied())
+            .map(|range| {
+                let shorthand = self.source_mappings.iter().any(|mapping| {
                     mapping.range == range
-                        && matches!(
-                            mapping.term.as_str(),
-                            "shorthand_property_identifier"
-                                | "shorthand_property_identifier_pattern"
-                        )
+                        && shorthand_terms(self.language).contains(&mapping.term.as_str())
                 });
-            if shorthand {
-                edited.replace_range(
-                    range.start..range.end,
-                    &format!("{}: {replacement}", binding.name),
-                );
-            } else {
-                edited.replace_range(range.start..range.end, replacement);
-            }
+                let text = if shorthand {
+                    format!("{}: {replacement}", binding.name)
+                } else {
+                    replacement.to_string()
+                };
+                (range, text)
+            })
+            .collect::<Vec<_>>();
+        edits.sort_by_key(|(range, _)| std::cmp::Reverse(range.start));
+        let mut edited = self.source.clone();
+        for (range, text) in &edits {
+            edited.replace_range(range.start..range.end, text);
         }
-        self.reparse_edit(&edited)
+        let renamed = self.reparse_edit(&edited)?;
+        // Every other name must keep resolving exactly as before the rename.
+        if let Some(offset) =
+            first_resolution_change(self, &renamed, &binding.id, replacement, &edits)
+        {
+            return Err(ProgramRepresentationError::CaptureConflict {
+                identifier: replacement.to_string(),
+                offset,
+            });
+        }
+        Ok(renamed)
     }
 
     fn validate_range(&self, range: ProgramRange) -> Result<(), ProgramRepresentationError> {
@@ -175,6 +182,112 @@ impl ProgramRepresentation {
         }
         Ok(reparsed)
     }
+}
+
+fn shorthand_terms(language: &str) -> &'static [&'static str] {
+    match language {
+        "JavaScript" => &[
+            "shorthand_property_identifier",
+            "shorthand_property_identifier_pattern",
+        ],
+        "Rust" => &["shorthand_field_initializer"],
+        _ => &[],
+    }
+}
+
+#[derive(PartialEq, Eq)]
+enum Resolved<'a> {
+    Binding {
+        name: &'a str,
+        kind: &'a str,
+        declaration: ProgramRange,
+        references: Vec<ProgramRange>,
+    },
+    Unresolved {
+        name: &'a str,
+        range: ProgramRange,
+    },
+}
+
+impl Resolved<'_> {
+    const fn offset(&self) -> usize {
+        match self {
+            Self::Binding { declaration, .. } => declaration.start,
+            Self::Unresolved { range, .. } => range.start,
+        }
+    }
+}
+
+// Compares the resolution of the renamed program with the original one moved
+// through the rename edits; returns the first renamed-program offset whose
+// binding structure differs, or `None` when the rename preserved it.
+fn first_resolution_change(
+    original: &ProgramRepresentation,
+    renamed: &ProgramRepresentation,
+    binding_id: &str,
+    replacement: &str,
+    edits: &[(ProgramRange, String)],
+) -> Option<usize> {
+    let shift = |offset: usize| {
+        edits
+            .iter()
+            .filter(|(range, _)| range.end <= offset)
+            .fold(offset, |total, (range, text)| {
+                total + text.len() - (range.end - range.start)
+            })
+    };
+    let moved = |range: ProgramRange| {
+        let edit = edits.iter().find(|(candidate, _)| *candidate == range);
+        let from = shift(range.start) + edit.map_or(0, |(_, text)| text.len() - replacement.len());
+        let length = edit.map_or(range.end - range.start, |_| replacement.len());
+        ProgramRange::new(from, from + length)
+    };
+    let expected = original
+        .bindings
+        .iter()
+        .map(|candidate| Resolved::Binding {
+            name: if candidate.id == binding_id {
+                replacement
+            } else {
+                &candidate.name
+            },
+            kind: &candidate.kind,
+            declaration: moved(candidate.declaration),
+            references: candidate.references.iter().copied().map(moved).collect(),
+        })
+        .chain(
+            original
+                .unresolved_references
+                .iter()
+                .map(|reference| Resolved::Unresolved {
+                    name: &reference.name,
+                    range: moved(reference.range),
+                }),
+        )
+        .collect::<Vec<_>>();
+    let actual = renamed
+        .bindings
+        .iter()
+        .map(|candidate| Resolved::Binding {
+            name: &candidate.name,
+            kind: &candidate.kind,
+            declaration: candidate.declaration,
+            references: candidate.references.clone(),
+        })
+        .chain(
+            renamed
+                .unresolved_references
+                .iter()
+                .map(|reference| Resolved::Unresolved {
+                    name: &reference.name,
+                    range: reference.range,
+                }),
+        )
+        .collect::<Vec<_>>();
+    (0..expected.len().max(actual.len())).find_map(|index| {
+        let (left, right) = (expected.get(index), actual.get(index));
+        (left != right).then(|| right.or(left).map_or(0, Resolved::offset))
+    })
 }
 
 const fn range_inside_scope(range: ProgramRange, scope: ProgramRange) -> bool {
