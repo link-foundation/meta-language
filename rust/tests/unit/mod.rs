@@ -53,6 +53,7 @@ mod issue_195_observations;
 mod issue_195_project_semantics;
 mod issue_195_structured_transformations;
 mod issue_195_translation_behavior;
+mod issue_195_translation_pairs;
 mod language_catalog;
 mod language_identification;
 mod language_profile;
