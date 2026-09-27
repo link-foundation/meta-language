@@ -1,4 +1,15 @@
 import { languageSupport } from './language-support.js';
+import {
+  applyBindingExtents,
+  declareSyntaxBinders,
+  identifierContinue,
+  identifierStart,
+  isRustItem,
+  preferBinding,
+  resolveRustPath,
+  rustUseAliases,
+  unmaskInterpolations,
+} from './program-binding-extents.js';
 import { LinkNetwork } from './network.js';
 import { LinkType } from './primitives.js';
 import { createProgramSnapshot, readProgramSnapshot } from './program-snapshot.js';
@@ -183,20 +194,25 @@ export class ProgramRepresentation {
       );
     }
 
-    const ranges = [binding.declaration, ...binding.references]
-      .map(({ start, end }) => ({ start, end }))
+    const edits = [binding.declaration, ...binding.references]
+      .map(({ start, end }) => {
+        const shorthand = this.sourceMappings.some(({ term, start: termStart, end: termEnd }) =>
+          termStart === start && termEnd === end && SHORTHAND_TERMS[this.language]?.has(term));
+        return { start, end, text: shorthand ? `${binding.name}: ${replacement}` : replacement };
+      })
       .sort((left, right) => right.start - left.start);
     let edited = this.source;
-    for (const range of ranges) {
-      const shorthand = this.language === 'JavaScript' && this.sourceMappings.some(({ term, start, end }) =>
-        start === range.start && end === range.end &&
-        (term === 'shorthand_property_identifier' || term === 'shorthand_property_identifier_pattern'));
-      const text = shorthand ? `${binding.name}: ${replacement}` : replacement;
-      edited = `${edited.slice(0, range.start)}${text}${edited.slice(range.end)}`;
+    for (const { start, end, text } of edits) {
+      edited = `${edited.slice(0, start)}${text}${edited.slice(end)}`;
     }
     const reparsed = new ProgramRepresentation(edited, this.language, this.project);
     if (!reparsed.network.verifyFullMatch().isClean()) {
       throw new BindingRenameError('renamed program does not reparse cleanly');
+    }
+    // Every other name must keep resolving exactly as before the rename.
+    const changed = firstResolutionChange(this, reparsed, binding, replacement, edits);
+    if (changed !== undefined) {
+      throw new BindingRenameError(`rename would capture ${replacement} at ${changed} (resolution changed)`);
     }
     return reparsed;
   }
@@ -243,6 +259,49 @@ export class ProgramRepresentation {
   }
 }
 
+const SHORTHAND_TERMS = Object.freeze({
+  JavaScript: new Set(['shorthand_property_identifier', 'shorthand_property_identifier_pattern']),
+  Rust: new Set(['shorthand_field_initializer']),
+});
+
+// Compares the resolution of the renamed program with the original one moved
+// through the rename edits; returns the first renamed-program offset whose
+// binding structure differs, or undefined when the rename preserved it.
+function firstResolutionChange(original, renamed, binding, replacement, edits) {
+  const shift = (offset) => edits.reduce((total, edit) =>
+    edit.end <= offset ? total + edit.text.length - (edit.end - edit.start) : total, offset);
+  const moved = ({ start, end }) => {
+    const edit = edits.find((candidate) => candidate.start === start && candidate.end === end);
+    const from = shift(start) + (edit ? edit.text.length - replacement.length : 0);
+    return { start: from, end: from + (edit ? replacement.length : end - start) };
+  };
+  const expected = [
+    ...original.bindings.map((candidate) => ({
+      name: candidate.id === binding.id ? replacement : candidate.name,
+      kind: candidate.kind,
+      declaration: moved(candidate.declaration),
+      references: candidate.references.map(moved),
+    })),
+    ...original.unresolvedReferences.map((reference) => ({ name: reference.name, ...moved(reference) })),
+  ];
+  const actual = [
+    ...renamed.bindings.map(({ name, kind, declaration, references }) => ({
+      name,
+      kind,
+      declaration: { start: declaration.start, end: declaration.end },
+      references: references.map(({ start, end }) => ({ start, end })),
+    })),
+    ...renamed.unresolvedReferences.map(({ name, start, end }) => ({ name, start, end })),
+  ];
+  for (let index = 0; index < Math.max(expected.length, actual.length); index += 1) {
+    if (JSON.stringify(expected[index]) !== JSON.stringify(actual[index])) {
+      const differing = actual[index] ?? expected[index];
+      return differing.declaration?.start ?? differing.start;
+    }
+  }
+  return undefined;
+}
+
 function codePointBoundary(source, offset) {
   if (offset <= 0 || offset >= source.length) return true;
   const unit = source.charCodeAt(offset);
@@ -274,6 +333,7 @@ function semanticTokens(source, language, syntax) {
       mark(mask, fact.start, fact.end, false);
     }
   }
+  unmaskInterpolations(mask, source, language, syntax);
   const keywords = KEYWORDS[language];
   const tokens = [];
   for (let offset = 0; offset < source.length;) {
@@ -351,14 +411,19 @@ function resolveBindings(tokens, syntax, source, language) {
   };
   if (language === 'JavaScript') {
     declareJavaScript(tokens, syntax, braceScopes, declare);
+    declareSyntaxBinders(tokens, syntax, language, declare);
     hoistJavaScriptVars(declarations, tokens, syntax, scopes);
   } else if (language === 'Rust') {
-    declareRust(tokens, braceScopes, declare);
+    declareSyntaxBinders(tokens, syntax, language, declare);
+    declareRust(tokens, syntax, braceScopes, declare);
   } else {
+    declareSyntaxBinders(tokens, syntax, language, declare);
     declareProofLanguage(tokens, language, declare);
   }
+  applyBindingExtents(declarations, tokens, syntax, language, braceScopes);
 
   const scopeById = new Map(scopes.map((scope) => [scope.id, scope]));
+  const depthOf = (id) => scopeById.get(id).depth;
   const bindings = declarations
     .sort((left, right) => tokens[left.tokenIndex].start - tokens[right.tokenIndex].start)
     .map((declaration) => {
@@ -371,31 +436,75 @@ function resolveBindings(tokens, syntax, source, language) {
         declaration: rangeRecord(token),
         references: [],
         tokenIndex: declaration.tokenIndex,
+        visibility: { from: declaration.from, until: declaration.until, body: declaration.body, sigil: declaration.sigil },
       };
     });
   const byToken = new Map(bindings.map((binding) => [binding.tokenIndex, binding]));
+  const ignored = language === 'JavaScript' ? propertyNames : new Set(syntax
+    .filter(({ term }) => language === 'Rust' && (term === 'field_identifier' || term === 'fragment_specifier'))
+    .map(({ start, end }) => `${start}:${end}`));
+
+  // Lexical lookup: the deepest visible declaration, where `use` aliases
+  // stand for the item they import and `$name` only sees macro metavariables.
+  let aliases = [];
+  const lexical = (index) => {
+    const token = tokens[index];
+    const sigil = language === 'Rust' && tokens[index - 1]?.text === '$' && tokens[index - 1].end === token.start;
+    const candidates = [...bindings, ...aliases].filter(({ name, scope, visibility }) =>
+      name === token.text &&
+      visibility.sigil === sigil &&
+      visibility.from <= token.start && token.start < visibility.until &&
+      scopeContains(scopeById, scope, token.scope));
+    candidates.sort((left, right) => preferBinding(right, left, token, depthOf));
+    return candidates[0]?.alias ?? candidates[0];
+  };
+  const moduleBodies = new Set(bindings.map(({ visibility }) => visibility.body).filter(Boolean));
+  const nearestModule = (id) => {
+    let scope = scopeById.get(id);
+    while (scope?.parent && !moduleBodies.has(scope.id)) scope = scopeById.get(scope.parent);
+    return scope?.id;
+  };
+  const paths = {
+    lexical: (index) => lexical(index)?.visibility,
+    member: (module, name) => bindings.find((binding) =>
+      binding.scope === module && binding.name === name && isRustItem(binding.kind))?.visibility,
+    nearestModule,
+    parentModule: (module) => {
+      const parent = scopeById.get(module)?.parent;
+      return parent ? nearestModule(parent) : undefined;
+    },
+  };
+  const bindingByVisibility = new Map(bindings.map((binding) => [binding.visibility, binding]));
+  const pathTarget = (index) => bindingByVisibility.get(resolveRustPath(tokens, index, paths));
+  if (language === 'Rust') {
+    aliases = rustUseAliases(tokens, syntax).flatMap((index) => {
+      const target = pathTarget(index);
+      const token = tokens[index];
+      return target
+        ? [{ name: token.text, scope: token.scope, declaration: rangeRecord(token), alias: target, visibility: { from: 0, until: Infinity, sigil: false } }]
+        : [];
+    });
+  }
+
   const unresolved = [];
   for (const [index, token] of tokens.entries()) {
-    if (token.kind !== 'identifier' || byToken.has(index) ||
-      (language === 'JavaScript' && propertyNames.has(`${token.start}:${token.end}`))) continue;
-    const candidates = bindings.filter((binding) => {
-      if (binding.name !== token.text ||
-        (binding.kind !== 'var' && binding.declaration.start > token.start)) return false;
-      return scopeContains(scopeById, binding.scope, token.scope);
-    });
-    candidates.sort((left, right) => {
-      const depth = scopeById.get(right.scope).depth - scopeById.get(left.scope).depth;
-      return depth || right.declaration.start - left.declaration.start;
-    });
-    if (candidates[0]) {
-      candidates[0].references.push(rangeRecord(token));
+    if (token.kind !== 'identifier' || byToken.has(index) || ignored.has(`${token.start}:${token.end}`)) continue;
+    if (language === 'Rust' && tokens[index - 1]?.text === '::') {
+      // Qualified paths resolve through module bodies; paths into external
+      // crates or types are outside the analyzed program.
+      pathTarget(index)?.references.push(rangeRecord(token));
+      continue;
+    }
+    const binding = lexical(index);
+    if (binding) {
+      binding.references.push(rangeRecord(token));
     } else {
       unresolved.push({ kind: 'unresolved', name: token.text, ...rangeRecord(token) });
     }
   }
   return {
     scopes,
-    bindings: bindings.map(({ tokenIndex: _tokenIndex, ...binding }) => binding),
+    bindings: bindings.map(({ tokenIndex: _tokenIndex, visibility: _visibility, ...binding }) => binding),
     unresolved,
   };
 }
@@ -471,11 +580,11 @@ function declareJavaScript(tokens, syntax, braceScopes, declare) {
   }
 }
 
-function declareRust(tokens, braceScopes, declare) {
+function declareRust(tokens, syntax, braceScopes, declare) {
   const items = new Set(['struct', 'enum', 'trait', 'type', 'const', 'static', 'mod', 'union']);
+  const uses = syntax.filter(({ term }) => term === 'use_declaration');
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
-    if (token.text === 'let') declare(nextIdentifier(tokens, index + 1), 'let');
     if (items.has(token.text)) declare(nextIdentifier(tokens, index + 1), token.text);
     if (token.text === 'fn') {
       const name = nextIdentifier(tokens, index + 1);
@@ -493,7 +602,9 @@ function declareRust(tokens, braceScopes, declare) {
     if (token.text === 'macro_rules' && tokens[index + 1]?.text === '!') {
       declare(nextIdentifier(tokens, index + 2), 'macro');
     }
-    if (token.text === 'as') declare(nextIdentifier(tokens, index + 1), 'import');
+    if (token.text === 'as' && uses.some(({ start, end }) => token.start >= start && token.end <= end)) {
+      declare(nextIdentifier(tokens, index + 1), 'import');
+    }
   }
 }
 
@@ -833,16 +944,6 @@ function validateIdentifier(identifier, language) {
   ) {
     throw new BindingRenameError(`${JSON.stringify(value)} is not a valid ${language} identifier`);
   }
-}
-
-function identifierStart(character, language) {
-  return /[_$\p{L}]/u.test(character) && !(language !== 'JavaScript' && character === '$');
-}
-
-function identifierContinue(character, language) {
-  return /[_$'\p{L}\p{N}\p{M}\u200C\u200D]/u.test(character) &&
-    !(language === 'Rust' && character === "'") &&
-    !(language !== 'JavaScript' && character === '$');
 }
 
 function scopeContains(scopeById, declarationScope, referenceScope) {

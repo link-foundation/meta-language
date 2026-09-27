@@ -429,5 +429,479 @@
       "language": "English",
       "source": "Hello, world! How are you?\nFine.\n"
     }
+  ],
+  "bindingRenameCorpus": [
+    {
+      "language": "JavaScript",
+      "assertions": [
+        "symbolIdentity",
+        "commentsStringsAndLiteralsUnaffected"
+      ],
+      "source": "const x = 1; const s = \"x\"; const r = /x/u; // x\nconst t = `x ${x}`; globalThis.result = [s, r.test(\"x\"), t, x];\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "allowed": true,
+      "expected": "const value = 1; const s = \"x\"; const r = /x/u; // x\nconst t = `x ${value}`; globalThis.result = [s, r.test(\"x\"), t, value];\n",
+      "expectedObservation": [
+        "x",
+        true,
+        "x 1",
+        1
+      ]
+    },
+    {
+      "language": "JavaScript",
+      "assertions": [
+        "shadowing",
+        "nestedScopes"
+      ],
+      "source": "const x = 1; function f() { const x = 2; { const y = x * 3; return y; } } globalThis.result = [f(), x];\n",
+      "binding": "x",
+      "declarationOccurrence": 1,
+      "replacement": "inner",
+      "allowed": true,
+      "expected": "const x = 1; function f() { const inner = 2; { const y = inner * 3; return y; } } globalThis.result = [f(), x];\n",
+      "expectedObservation": [
+        6,
+        1
+      ]
+    },
+    {
+      "language": "JavaScript",
+      "assertions": [
+        "qualifiedNames"
+      ],
+      "source": "const x = 1; const object = { x, y: x }; globalThis.result = [object.x, object.y, x];\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "allowed": true,
+      "expected": "const value = 1; const object = { x: value, y: value }; globalThis.result = [object.x, object.y, value];\n",
+      "expectedObservation": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "language": "JavaScript",
+      "assertions": [
+        "unicodeIdentifiers"
+      ],
+      "source": "const π = 3; const café = π * 2; globalThis.result = [café, π, \"π\"];\n",
+      "binding": "π",
+      "declarationOccurrence": 0,
+      "replacement": "τ",
+      "allowed": true,
+      "expected": "const τ = 3; const café = τ * 2; globalThis.result = [café, τ, \"π\"];\n",
+      "expectedObservation": [
+        6,
+        3,
+        "π"
+      ]
+    },
+    {
+      "language": "JavaScript",
+      "assertions": [
+        "macroOrProofBinders",
+        "shadowing"
+      ],
+      "source": "const x = 10; const add = (x, y = x) => x + y; const one = y => y; globalThis.result = [add(1), one(x), x];\n",
+      "binding": "x",
+      "declarationOccurrence": 1,
+      "replacement": "left",
+      "allowed": true,
+      "expected": "const x = 10; const add = (left, y = left) => left + y; const one = y => y; globalThis.result = [add(1), one(x), x];\n",
+      "expectedObservation": [
+        2,
+        10,
+        10
+      ]
+    },
+    {
+      "language": "JavaScript",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "const x = 1; function f(y) { return x + y; } globalThis.result = f(2);\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "allowed": false,
+      "expectedObservation": 3
+    },
+    {
+      "language": "JavaScript",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "const y = 1; const f = (x) => x + y; globalThis.result = f(2);\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "allowed": false,
+      "expectedObservation": 3
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "symbolIdentity",
+        "commentsStringsAndLiteralsUnaffected"
+      ],
+      "source": "pub fn g(x: u32) -> String {\n    let s = \"x\"; // x\n    let c = 'x';\n    format!(\"{x} {} {c} {{x}}\", s) + &x.to_string()\n}\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "allowed": true,
+      "expected": "pub fn g(value: u32) -> String {\n    let s = \"x\"; // x\n    let c = 'x';\n    format!(\"{value} {} {c} {{x}}\", s) + &value.to_string()\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "shadowing",
+        "nestedScopes"
+      ],
+      "source": "pub fn g(x: u32) -> u32 {\n    let x = x + 1;\n    let y = {\n        let x = x * 2;\n        x\n    };\n    x + y\n}\n",
+      "binding": "x",
+      "declarationOccurrence": 1,
+      "replacement": "step",
+      "allowed": true,
+      "expected": "pub fn g(x: u32) -> u32 {\n    let step = x + 1;\n    let y = {\n        let x = step * 2;\n        x\n    };\n    step + y\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "shadowing"
+      ],
+      "source": "pub fn g(x: u32) -> u32 {\n    let x = x + 1;\n    let y = {\n        let x = x * 2;\n        x\n    };\n    x + y\n}\n",
+      "binding": "x",
+      "declarationOccurrence": 2,
+      "replacement": "y",
+      "allowed": true,
+      "expected": "pub fn g(x: u32) -> u32 {\n    let x = x + 1;\n    let y = {\n        let y = x * 2;\n        y\n    };\n    x + y\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "nestedScopes",
+        "symbolIdentity"
+      ],
+      "source": "pub fn g(values: &[u32]) -> u32 {\n    let mut total = 0;\n    for v in values {\n        total += v;\n    }\n    if let Some(v) = values.first() {\n        total += v;\n    }\n    let add = |v: u32| v + total;\n    add(1)\n}\n",
+      "binding": "total",
+      "declarationOccurrence": 0,
+      "replacement": "sum",
+      "allowed": true,
+      "expected": "pub fn g(values: &[u32]) -> u32 {\n    let mut sum = 0;\n    for v in values {\n        sum += v;\n    }\n    if let Some(v) = values.first() {\n        sum += v;\n    }\n    let add = |v: u32| v + sum;\n    add(1)\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "qualifiedNames"
+      ],
+      "source": "mod shapes {\n    pub fn area(w: u32) -> u32 {\n        w * w\n    }\n    pub mod nested {\n        pub fn twice() -> u32 {\n            super::area(2) * 2\n        }\n    }\n}\nuse shapes::area;\npub fn total() -> u32 {\n    area(3) + shapes::area(1) + crate::shapes::nested::twice() + self::shapes::area(4)\n}\n",
+      "binding": "area",
+      "declarationOccurrence": 0,
+      "replacement": "surface",
+      "allowed": true,
+      "expected": "mod shapes {\n    pub fn surface(w: u32) -> u32 {\n        w * w\n    }\n    pub mod nested {\n        pub fn twice() -> u32 {\n            super::surface(2) * 2\n        }\n    }\n}\nuse shapes::surface;\npub fn total() -> u32 {\n    surface(3) + shapes::surface(1) + crate::shapes::nested::twice() + self::shapes::surface(4)\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "qualifiedNames"
+      ],
+      "source": "pub struct P {\n    pub x: u32,\n}\npub fn make(x: u32) -> P {\n    let p = P { x };\n    P { x: p.x + x }\n}\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "allowed": true,
+      "expected": "pub struct P {\n    pub x: u32,\n}\npub fn make(value: u32) -> P {\n    let p = P { x: value };\n    P { x: p.x + value }\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "unicodeIdentifiers"
+      ],
+      "source": "pub fn área(λ: u32) -> u32 {\n    λ * 2 // λ\n}\n",
+      "binding": "λ",
+      "declarationOccurrence": 0,
+      "replacement": "μ",
+      "allowed": true,
+      "expected": "pub fn área(μ: u32) -> u32 {\n    μ * 2 // λ\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "macroOrProofBinders"
+      ],
+      "source": "macro_rules! twice {\n    ($e:expr) => {\n        $e + $e\n    };\n}\npub fn g(e: u32) -> u32 {\n    twice!(e)\n}\n",
+      "binding": "e",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "allowed": true,
+      "expected": "macro_rules! twice {\n    ($value:expr) => {\n        $value + $value\n    };\n}\npub fn g(e: u32) -> u32 {\n    twice!(e)\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "macroOrProofBinders"
+      ],
+      "source": "macro_rules! twice {\n    ($e:expr) => {\n        $e + $e\n    };\n}\npub fn g(e: u32) -> u32 {\n    twice!(e)\n}\n",
+      "binding": "e",
+      "declarationOccurrence": 1,
+      "replacement": "input",
+      "allowed": true,
+      "expected": "macro_rules! twice {\n    ($e:expr) => {\n        $e + $e\n    };\n}\npub fn g(input: u32) -> u32 {\n    twice!(input)\n}\n"
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "pub fn g(x: u32) -> u32 {\n    let y = 2;\n    x + y\n}\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "allowed": false
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "pub fn g(x: u32) -> u32 {\n    let y = x;\n    y + x\n}\n",
+      "binding": "y",
+      "declarationOccurrence": 0,
+      "replacement": "x",
+      "allowed": false
+    },
+    {
+      "language": "Rust",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "mod m {\n    pub fn f() {}\n    pub fn h() {}\n}\npub fn g() {\n    m::f();\n    m::h();\n}\n",
+      "binding": "f",
+      "declarationOccurrence": 0,
+      "replacement": "h",
+      "allowed": false
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "symbolIdentity",
+        "commentsStringsAndLiteralsUnaffected"
+      ],
+      "source": "def f (x : Nat) : String := s!\"x = {x}\" ++ \"x\" -- x\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "allowed": true,
+      "expected": "def f (value : Nat) : String := s!\"x = {value}\" ++ \"x\" -- x\n"
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "shadowing",
+        "nestedScopes"
+      ],
+      "source": "def g (x : Nat) : Nat :=\n  let x := x + 1\n  x * 2\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "n",
+      "allowed": true,
+      "expected": "def g (n : Nat) : Nat :=\n  let x := n + 1\n  x * 2\n"
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "nestedScopes"
+      ],
+      "source": "def h (n : Nat) : Nat → Nat := fun m => n + m\n",
+      "binding": "n",
+      "declarationOccurrence": 0,
+      "replacement": "k",
+      "allowed": true,
+      "expected": "def h (k : Nat) : Nat → Nat := fun m => k + m\n"
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "qualifiedNames"
+      ],
+      "source": "namespace Geo\ndef area (w : Nat) : Nat := w * w\nend Geo\ndef total : Nat := Geo.area 2\n",
+      "binding": "area",
+      "declarationOccurrence": 0,
+      "replacement": "surface",
+      "allowed": true,
+      "expected": "namespace Geo\ndef surface (w : Nat) : Nat := w * w\nend Geo\ndef total : Nat := Geo.surface 2\n"
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "unicodeIdentifiers"
+      ],
+      "source": "def double (α : Nat) : Nat := α + α\n",
+      "binding": "α",
+      "declarationOccurrence": 0,
+      "replacement": "β",
+      "allowed": true,
+      "expected": "def double (β : Nat) : Nat := β + β\n"
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "macroOrProofBinders"
+      ],
+      "source": "theorem t : ∀ n : Nat, n = n := fun n => Eq.refl n\n",
+      "binding": "n",
+      "declarationOccurrence": 0,
+      "replacement": "k",
+      "allowed": true,
+      "expected": "theorem t : ∀ k : Nat, k = k := fun n => Eq.refl n\n"
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "macroOrProofBinders"
+      ],
+      "source": "theorem t : ∀ n : Nat, n = n := fun n => Eq.refl n\n",
+      "binding": "n",
+      "declarationOccurrence": 1,
+      "replacement": "m",
+      "allowed": true,
+      "expected": "theorem t : ∀ n : Nat, n = n := fun m => Eq.refl m\n"
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "def g (x : Nat) (y : Nat) : Nat := x + y\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "allowed": false
+    },
+    {
+      "language": "Lean",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "theorem t (y : Nat) : ∀ x : Nat, x + y = x + y := fun _ => rfl\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "allowed": false
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "symbolIdentity",
+        "commentsStringsAndLiteralsUnaffected"
+      ],
+      "source": "Definition f (x : nat) : nat := (* x *) x + 1.\nDefinition s : string := \"x\".\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "value",
+      "allowed": true,
+      "expected": "Definition f (value : nat) : nat := (* x *) value + 1.\nDefinition s : string := \"x\".\n"
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "shadowing",
+        "nestedScopes"
+      ],
+      "source": "Definition g (x : nat) : nat := let x := x + 1 in x * 2.\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "n",
+      "allowed": true,
+      "expected": "Definition g (n : nat) : nat := let x := n + 1 in x * 2.\n"
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "nestedScopes"
+      ],
+      "source": "Definition h (n : nat) : nat -> nat := fun m => n + m.\n",
+      "binding": "n",
+      "declarationOccurrence": 0,
+      "replacement": "k",
+      "allowed": true,
+      "expected": "Definition h (k : nat) : nat -> nat := fun m => k + m.\n"
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "qualifiedNames"
+      ],
+      "source": "Module Geo.\nDefinition area (w : nat) : nat := w * w.\nEnd Geo.\nDefinition total : nat := Geo.area 2.\n",
+      "binding": "area",
+      "declarationOccurrence": 0,
+      "replacement": "surface",
+      "allowed": true,
+      "expected": "Module Geo.\nDefinition surface (w : nat) : nat := w * w.\nEnd Geo.\nDefinition total : nat := Geo.surface 2.\n"
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "unicodeIdentifiers"
+      ],
+      "source": "Definition double (α : nat) : nat := α + α.\n",
+      "binding": "α",
+      "declarationOccurrence": 0,
+      "replacement": "β",
+      "allowed": true,
+      "expected": "Definition double (β : nat) : nat := β + β.\n"
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "macroOrProofBinders"
+      ],
+      "source": "Lemma l : forall n : nat, n = n.\nProof. intros n. reflexivity. Qed.\n",
+      "binding": "n",
+      "declarationOccurrence": 0,
+      "replacement": "k",
+      "allowed": true,
+      "expected": "Lemma l : forall k : nat, k = k.\nProof. intros n. reflexivity. Qed.\n"
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "macroOrProofBinders"
+      ],
+      "source": "Definition twice : nat -> nat := fun n => n + n.\n",
+      "binding": "n",
+      "declarationOccurrence": 0,
+      "replacement": "m",
+      "allowed": true,
+      "expected": "Definition twice : nat -> nat := fun m => m + m.\n"
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "Definition g (x y : nat) : nat := x + y.\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "allowed": false
+    },
+    {
+      "language": "Rocq",
+      "assertions": [
+        "captureAvoidance"
+      ],
+      "source": "Lemma l (y : nat) : forall x : nat, x + y = x + y.\n",
+      "binding": "x",
+      "declarationOccurrence": 0,
+      "replacement": "y",
+      "allowed": false
+    }
   ]
 }
