@@ -373,10 +373,10 @@ impl LeanEmitter<'_> {
                 );
                 Ok(format!("partial {text}"))
             }
-            Some(index) => Ok(format!(
-                "{text}\ntermination_by structural {}",
-                params[index].name
-            )),
+            // Lean tries structural recursion on each argument before
+            // well-founded recursion, so the structurally decreasing argument
+            // needs no annotation.
+            Some(_) => Ok(text),
         }
     }
 
@@ -410,7 +410,8 @@ impl LeanEmitter<'_> {
             Plan::Induction(split) => ("induction", split),
             Plan::Cases(split) => ("cases", split),
         };
-        let mut lines = vec![format!("{pad}{tactic} {} with", split.variable)];
+        // `case tag names =>` names each constructor's fields, then its induction hypotheses.
+        let mut lines = vec![format!("{pad}{tactic} {}", split.variable)];
         for kase in &split.cases {
             let ctor = match &split.ty {
                 Type::Nat => kase.ctor.as_str(),
@@ -431,8 +432,8 @@ impl LeanEmitter<'_> {
                         let _ = write!(names, " {item}");
                         names
                     });
-            lines.push(format!("{pad}| {ctor}{names} =>"));
-            lines.push(self.plan(&kase.plan, functions, depth + 2));
+            lines.push(format!("{pad}case {ctor}{names} =>"));
+            lines.push(self.plan(&kase.plan, functions, depth + 1));
         }
         lines.join("\n")
     }
@@ -460,23 +461,25 @@ impl LeanEmitter<'_> {
         let mut alternatives = vec!["rfl".to_owned(), "decide".to_owned()];
         if rules.is_empty() {
             alternatives.push("omega".to_owned());
-            alternatives.push(format!("(simp [{}] at * <;> omega)", ring.join(", ")));
+            alternatives.push(format!("simp_all [{}] <;> omega", ring.join(", ")));
         } else {
             let with_ring: Vec<&str> = rules.iter().map(String::as_str).chain(ring).collect();
             alternatives.extend([
-                format!("(simp only [{list}]; done)"),
-                format!("(simp only [{list}] at * <;> omega)"),
-                format!("(simp [{list}]; done)"),
-                format!("(simp [{list}] at * <;> omega)"),
-                format!("(simp [{}] at * <;> omega)", with_ring.join(", ")),
+                format!("simp only [{list}] <;> done"),
+                format!("simp_all only [{list}] <;> omega"),
+                format!("simp [{list}] <;> done"),
+                format!("simp_all [{list}] <;> omega"),
+                format!("simp_all [{}] <;> omega", with_ring.join(", ")),
             ]);
         }
-        let indent = " ".repeat(depth * 2 + 2);
+        // Each `try` closes the goal or leaves it untouched, and once one
+        // closes it the rest find no goal, so the lines act as ordered
+        // alternatives.
         let alternatives: Vec<String> = alternatives
             .iter()
-            .map(|alternative| format!("{indent}| {alternative}"))
+            .map(|alternative| format!("try {alternative}"))
             .collect();
-        format!("first\n{}", alternatives.join("\n"))
+        alternatives.join(&format!("\n{}", pad(depth)))
     }
 
     fn prop(&mut self, prop: &Prop) -> Result<String> {
@@ -796,7 +799,7 @@ impl LeanEmitter<'_> {
                     }
                     let name = format!("ml_assertion_{assertion}");
                     theorems.push(format!(
-                        "theorem {name} : {lets}{} := by\n  first\n    | rfl\n    | decide",
+                        "theorem {name} : {lets}{} := by\n  try rfl\n  try decide",
                         self.prop(prop)?
                     ));
                     self.state.assertion_theorem(&name, effect);

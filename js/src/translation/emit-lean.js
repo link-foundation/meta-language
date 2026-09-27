@@ -154,7 +154,9 @@ class LeanEmitter {
       this.state.encode('general-recursion', 'recursion without a structurally decreasing argument is a Lean partial def: it runs as the source does but its equations are opaque to proofs');
       return `partial ${text}`;
     }
-    return `${text}\ntermination_by structural ${params[entry.decreasing].name}`;
+    // Lean tries structural recursion on each argument before well-founded
+    // recursion, so the structurally decreasing argument needs no annotation.
+    return text;
   }
 
   theorem(entry) {
@@ -170,12 +172,13 @@ class LeanEmitter {
   plan(plan, functions, depth) {
     const pad = '  '.repeat(depth);
     if (plan.k === 'close') return `${pad}${this.closer(plan.hints, functions, depth)}`;
-    const lines = [`${pad}${plan.k === 'induction' ? 'induction' : 'cases'} ${plan.variable} with`];
+    // `case tag names =>` names each constructor's fields, then its induction hypotheses.
+    const lines = [`${pad}${plan.k === 'induction' ? 'induction' : 'cases'} ${plan.variable}`];
     for (const kase of plan.cases) {
       const ctor = plan.type.kind === 'nat' ? kase.ctor : this.state.ctorLocal(plan.type.name, kase.ctor);
       const names = [...kase.fields, ...(plan.k === 'induction' ? kase.ihs : [])];
-      lines.push(`${pad}| ${ctor}${names.map((item) => ` ${item}`).join('')} =>`);
-      lines.push(this.plan(kase.plan, functions, depth + 2));
+      lines.push(`${pad}case ${ctor}${names.map((item) => ` ${item}`).join('')} =>`);
+      lines.push(this.plan(kase.plan, functions, depth + 1));
     }
     return lines.join('\n');
   }
@@ -192,14 +195,16 @@ class LeanEmitter {
       'rfl',
       'decide',
       ...(rules.length ? [
-        `(simp only [${list}]; done)`,
-        `(simp only [${list}] at * <;> omega)`,
-        `(simp [${list}]; done)`,
-        `(simp [${list}] at * <;> omega)`,
-        `(simp [${[...rules, ...ring].join(', ')}] at * <;> omega)`,
-      ] : ['omega', `(simp [${ring.join(', ')}] at * <;> omega)`]),
+        `simp only [${list}] <;> done`,
+        `simp_all only [${list}] <;> omega`,
+        `simp [${list}] <;> done`,
+        `simp_all [${list}] <;> omega`,
+        `simp_all [${[...rules, ...ring].join(', ')}] <;> omega`,
+      ] : ['omega', `simp_all [${ring.join(', ')}] <;> omega`]),
     ];
-    return `first\n${alternatives.map((alternative) => `${' '.repeat(depth * 2 + 2)}| ${alternative}`).join('\n')}`;
+    // Each `try` closes the goal or leaves it untouched, and once one closes it
+    // the rest find no goal, so the lines act as ordered alternatives.
+    return alternatives.map((alternative) => `try ${alternative}`).join(`\n${'  '.repeat(depth)}`);
   }
 
   prop(prop) {
@@ -406,7 +411,7 @@ class LeanEmitter {
         const lets = effects.slice(0, index).filter((item) => item.k === 'let')
           .map((item) => `let ${item.name} := ${this.expr(item.value, 1)}; `).join('');
         const name = `ml_assertion_${assertion}`;
-        theorems.push(`theorem ${name} : ${lets}${this.prop(effect.prop)} := by\n  first\n    | rfl\n    | decide`);
+        theorems.push(`theorem ${name} : ${lets}${this.prop(effect.prop)} := by\n  try rfl\n  try decide`);
         this.state.assertionTheorem(name, effect);
       }
     });
