@@ -15,6 +15,7 @@ mod javascript;
 mod pest;
 mod rust;
 mod tree_sitter;
+mod tree_sitter_json;
 
 pub use abnf::emit_abnf;
 pub use bnf::emit_bnf;
@@ -24,6 +25,7 @@ pub use javascript::{emit_javascript_parser, emit_peggy, JsParserArtifacts};
 pub use pest::emit_pest;
 pub use rust::{emit_rust_parser, render_rust_type, RustParserArtifacts};
 pub use tree_sitter::{emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report};
+pub use tree_sitter_json::emit_tree_sitter_json;
 
 pub(super) const BNF_RULE_TEMPLATE: &str = "<{name}> ::= {body}";
 pub(super) const EBNF_RULE_TEMPLATE: &str = "{name} = {body} ;";

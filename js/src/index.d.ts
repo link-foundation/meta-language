@@ -860,6 +860,29 @@ export const import_pest: typeof importPest;
 export function importTreeSitterJson(source: string | unknown): Grammar;
 export const import_tree_sitter_json: typeof importTreeSitterJson;
 
+export class GrammarEmitError extends Error {
+  format: string;
+  kind: 'unsupported';
+  construct: string;
+}
+export interface GrammarEmitReport {
+  lossy: string[];
+}
+export interface GrammarEmitResult {
+  source: string;
+  report: GrammarEmitReport;
+}
+export function emitAbnf(grammar: Grammar): GrammarEmitResult;
+export const emit_abnf: typeof emitAbnf;
+export function emitBnf(grammar: Grammar): GrammarEmitResult;
+export const emit_bnf: typeof emitBnf;
+export function emitEbnf(grammar: Grammar): GrammarEmitResult;
+export const emit_ebnf: typeof emitEbnf;
+export function emitPest(grammar: Grammar): GrammarEmitResult;
+export const emit_pest: typeof emitPest;
+export function emitTreeSitterJson(grammar: Grammar): GrammarEmitResult;
+export const emit_tree_sitter_json: typeof emitTreeSitterJson;
+
 export class ApiOperationEntry {
   operation: string;
   name(): string;

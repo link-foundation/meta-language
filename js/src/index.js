@@ -2,6 +2,7 @@ export * from './access.js';
 export * from './api-style-fixtures.js';
 export * from './grammar.js';
 export * from './grammar-importers.js';
+export * from './grammar-emitters.js';
 export * from './graphql-adapter.js';
 export * from './language-catalog.js';
 export * from './language-profile.js';

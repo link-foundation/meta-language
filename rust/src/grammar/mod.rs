@@ -41,7 +41,8 @@ pub use concepts::{
 pub use emit::{
     emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser, emit_peggy, emit_pest,
     emit_rust_parser, emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report,
-    render_rust_type, EmitReport, GrammarEmitError, JsParserArtifacts, RustParserArtifacts,
+    emit_tree_sitter_json, render_rust_type, EmitReport, GrammarEmitError, JsParserArtifacts,
+    RustParserArtifacts,
 };
 pub use fidelity::{
     canonical_grammar_format, grammar_format_profile, GrammarFidelityLevel, GrammarFormatProfile,
