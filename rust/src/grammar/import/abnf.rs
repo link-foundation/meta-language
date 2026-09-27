@@ -293,9 +293,18 @@ fn push_choice_alternative(alternatives: &mut Vec<GrammarExpr>, alternative: Gra
     }
 }
 
+/// Appends the RFC 5234 core rules the grammar references, in order of first
+/// reference, matching the JavaScript importer's rule order.
 fn inject_core_rules(grammar: &mut Grammar) {
     loop {
-        let unresolved = grammar.undefined_nonterminals();
+        let mut referenced = Vec::new();
+        for rule in grammar.rules() {
+            collect_references(&rule.expr, &mut referenced);
+        }
+        let unresolved = referenced
+            .into_iter()
+            .filter(|name| grammar.rule(name).is_none())
+            .collect::<Vec<_>>();
         let mut added = false;
         for name in unresolved {
             if let Some(rule) = core_rule(&name) {
@@ -306,6 +315,39 @@ fn inject_core_rules(grammar: &mut Grammar) {
         if !added {
             break;
         }
+    }
+}
+
+fn collect_references(expr: &GrammarExpr, names: &mut Vec<String>) {
+    match expr {
+        GrammarExpr::NonTerminal(name) => {
+            if !names.contains(name) {
+                names.push(name.clone());
+            }
+        }
+        GrammarExpr::Choice { alternatives, .. } => {
+            for alternative in alternatives {
+                collect_references(alternative, names);
+            }
+        }
+        GrammarExpr::Sequence(items) => {
+            for item in items {
+                collect_references(item, names);
+            }
+        }
+        GrammarExpr::Optional(expr)
+        | GrammarExpr::ZeroOrMore(expr)
+        | GrammarExpr::OneOrMore(expr)
+        | GrammarExpr::And(expr)
+        | GrammarExpr::Not(expr)
+        | GrammarExpr::Capture { expr, .. }
+        | GrammarExpr::Repeat { expr, .. } => collect_references(expr, names),
+        GrammarExpr::Empty
+        | GrammarExpr::Terminal(_)
+        | GrammarExpr::TerminalInsensitive(_)
+        | GrammarExpr::CharRange(_, _)
+        | GrammarExpr::CharClass { .. }
+        | GrammarExpr::AnyChar => {}
     }
 }
 
