@@ -98,12 +98,25 @@ function readProject(project) {
   if (typeof project.root !== 'string') {
     throw new TypeError('invalid program snapshot project root');
   }
-  return {
+  const result = {
     root: project.root,
     files: readStringArray(project.files, 'files'),
     dependencies: readStringArray(project.dependencies, 'dependencies'),
     extensions: readStringArray(project.extensions, 'extensions'),
   };
+  // A project analyzed from an entry file also carries its sources.
+  if (project.entry !== undefined || project.sources !== undefined) {
+    if (typeof project.entry !== 'string') {
+      throw new TypeError('invalid program snapshot project entry');
+    }
+    if (!Array.isArray(project.sources) || project.sources.some((file) =>
+      !file || typeof file.path !== 'string' || typeof file.source !== 'string')) {
+      throw new TypeError('invalid program snapshot project sources');
+    }
+    result.entry = project.entry;
+    result.sources = project.sources.map(({ path, source }) => ({ path, source }));
+  }
+  return result;
 }
 
 function readStringArray(value, name) {
@@ -114,12 +127,17 @@ function readStringArray(value, name) {
 }
 
 function freezeProject(project) {
-  return Object.freeze({
+  const frozen = {
     root: project.root,
     files: Object.freeze([...project.files]),
     dependencies: Object.freeze([...project.dependencies]),
     extensions: Object.freeze([...project.extensions]),
-  });
+  };
+  if (project.entry !== undefined) {
+    frozen.entry = project.entry;
+    frozen.sources = Object.freeze(project.sources.map(({ path, source }) => Object.freeze({ path, source })));
+  }
+  return Object.freeze(frozen);
 }
 
 function utf8Length(value) {

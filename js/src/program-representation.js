@@ -12,6 +12,7 @@ import {
 } from './program-binding-extents.js';
 import { LinkNetwork } from './network.js';
 import { LinkType } from './primitives.js';
+import { projectEvidence, projectSemantics } from './program-project.js';
 import { createProgramSnapshot, readProgramSnapshot } from './program-snapshot.js';
 
 /** Schema revision for four-language program representations. */
@@ -85,15 +86,29 @@ export class ProgramRepresentation {
     this.bindings = Object.freeze(resolution.bindings.map(freezeBinding));
     this.unresolvedReferences = Object.freeze(resolution.unresolved.map(freezeRecord));
     this.sourceMappings = Object.freeze(syntax.map(freezeRecord));
-    this.modules = Object.freeze(moduleFacts(tokens, syntax, this.source, this.language, this.project).map(freezeRecord));
+    const context = projectSemantics({
+      language: this.language,
+      source: this.source,
+      mappings: syntax,
+      bindings: resolution.bindings,
+      project: this.project,
+      parse: parseProjectFile,
+    });
+    this.modules = Object.freeze(moduleFacts(tokens, syntax, this.source, this.language, this.project, context)
+      .map(freezeRecord));
     this.types = Object.freeze(typeFacts(tokens, syntax, this.language).map(freezeRecord));
     this.extensions = Object.freeze(extensionFacts(tokens, syntax, this.source, this.language).map(freezeRecord));
     this.proofs = Object.freeze(proofFacts(tokens, syntax, this.language).map(freezeRecord));
     this.diagnostics = Object.freeze([
       ...diagnosticFacts(this.network),
-      ...projectDiagnostics(this.modules, this.project),
+      ...projectDiagnostics(this.modules, context),
+      ...context.diagnostics,
     ].map(freezeRecord));
-    this.constructs = Object.freeze(constructFacts(this).map(freezeConstruct));
+    this.projectModules = Object.freeze(context.modules.map(freezeRecord));
+    this.projectFacts = Object.freeze(context.facts.map(freezeRecord));
+    this.projectReferences = Object.freeze(context.references.map(freezeReference));
+    this.expansions = Object.freeze(context.expansions.map(freezeRecord));
+    this.constructs = Object.freeze(constructFacts(this, context).map(freezeConstruct));
     Object.freeze(this.project);
   }
 
@@ -254,6 +269,10 @@ export class ProgramRepresentation {
       proofs: this.proofs,
       diagnostics: this.diagnostics,
       constructs: this.constructs,
+      projectModules: this.projectModules,
+      projectFacts: this.projectFacts,
+      projectReferences: this.projectReferences,
+      expansions: this.expansions,
       project: this.project,
     };
   }
@@ -638,7 +657,7 @@ function declareDelimitedParameters(tokens, open, close, scope, declare) {
   }
 }
 
-function moduleFacts(tokens, syntax, source, language, project) {
+function moduleFacts(tokens, syntax, source, language, project, projectResult) {
   const markers = MODULE_MARKERS[language];
   const facts = [];
   for (let index = 0; index < tokens.length; index += 1) {
@@ -654,7 +673,7 @@ function moduleFacts(tokens, syntax, source, language, project) {
   for (const dependency of project.dependencies) {
     facts.push({ kind: 'declared-project-dependency', name: dependency, start: 0, end: 0 });
   }
-  for (const request of moduleRequests(syntax, source, language)) {
+  for (const request of [...moduleRequests(syntax, source, language), ...projectResult.requests]) {
     facts.push({ kind: 'module-import', ...request });
     if (projectHasModule(project, request.name, language)) {
       facts.push({ kind: 'recognized-toolchain-module', ...request });
@@ -669,8 +688,11 @@ function moduleRequests(syntax, source, language) {
     const text = source.slice(start, end);
     let names = [];
     if (language === 'JavaScript' && term === 'import_statement') {
-      const quoted = [...text.matchAll(/['"]([^'"]+)['"]/gu)];
-      if (quoted.length) names = [quoted.at(-1)[1]];
+      // The module specifier is the statement's last string outside its import attributes.
+      const attributes = syntax.filter((inner) => inner.term === 'import_attribute' && inner.start >= start && inner.end <= end);
+      const specifier = syntax.filter((inner) => inner.term === 'string' && inner.start >= start && inner.end <= end &&
+        !attributes.some((attribute) => inner.start >= attribute.start && inner.end <= attribute.end)).at(-1);
+      if (specifier && specifier.end - specifier.start > 2) names = [source.slice(specifier.start + 1, specifier.end - 1)];
     } else if (language === 'Rust' && term === 'use_declaration') {
       const match = /^use\s+([A-Za-z_][A-Za-z_0-9]*)/u.exec(text);
       if (match) names = [match[1]];
@@ -759,9 +781,11 @@ function diagnosticFacts(network) {
   });
 }
 
-function projectDiagnostics(modules, project) {
+function projectDiagnostics(modules, projectResult) {
   const recognized = new Set(modules.filter(({ kind }) => kind === 'recognized-toolchain-module').map(({ name }) => name));
-  return modules.filter(({ kind, name }) => kind === 'module-import' && !recognized.has(name)).map(({ name, start, end }) => ({
+  const resolved = new Set(projectResult.resolvedRequests.map(({ name, start }) => `${start}:${name}`));
+  return modules.filter(({ kind, name, start }) =>
+    kind === 'module-import' && !recognized.has(name) && !resolved.has(`${start}:${name}`)).map(({ name, start, end }) => ({
     kind: 'missing-project-context',
     term: name,
     start,
@@ -769,7 +793,7 @@ function projectDiagnostics(modules, project) {
   }));
 }
 
-function constructFacts(program) {
+function constructFacts(program, projectResult) {
   const tokenEvidence = (terms) => terms.map((name) => ({ kind: 'project', name, start: 0, end: 0 }));
   const recursive = program.bindings
     .filter(({ kind, name, references }) => kind === 'function' || kind === 'Fixpoint' || kind === 'CoFixpoint' || kind === 'def')
@@ -787,9 +811,12 @@ function constructFacts(program) {
     ['surface-expansion-elaboration-traces', []],
     ['project-context-and-dependencies', tokenEvidence([...program.project.files, ...program.project.dependencies])],
   ]);
+  for (const kind of SEMANTIC_CONSTRUCTS) {
+    evidence.set(kind, [...(evidence.get(kind) ?? []), ...projectEvidence(program.project, projectResult, kind)]);
+  }
   return SEMANTIC_CONSTRUCTS.map((kind) => {
     const facts = evidence.get(kind) ?? [];
-    if (kind === 'surface-expansion-elaboration-traces') {
+    if (kind === 'surface-expansion-elaboration-traces' && facts.length === 0) {
       return { kind, status: 'unavailable', evidence: [], rationale: 'no macro expansion or elaboration trace has been produced' };
     }
     if (kind === 'proof-terms-and-tactics' && ['JavaScript', 'Rust'].includes(program.language)) {
@@ -925,12 +952,25 @@ function maskTemplateExpression(source, mask, start) {
 }
 
 function normalizeProject(project) {
-  return {
+  const normalized = {
     root: String(project.root ?? ''),
     files: Object.freeze([...(project.files ?? [])].map(String)),
     dependencies: Object.freeze([...(project.dependencies ?? [])].map(String)),
     extensions: Object.freeze([...(project.extensions ?? [])].map(String)),
   };
+  // An entry file and the project's sources enable the project-aware analysis.
+  if (project.entry || project.sources?.length) {
+    normalized.entry = String(project.entry ?? '');
+    normalized.sources = Object.freeze([...(project.sources ?? [])].map(({ path, source }) =>
+      Object.freeze({ path: String(path), source: String(source) })));
+  }
+  return normalized;
+}
+
+// Parses another project file for the project-aware analysis.
+function parseProjectFile(source, language) {
+  const network = LinkNetwork.parse(source, language);
+  return { mappings: syntaxFacts(network, source), clean: network.verifyFullMatch().isClean() };
 }
 
 function validateIdentifier(identifier, language) {
@@ -1041,6 +1081,14 @@ function freezeBinding(binding) {
     ...binding,
     declaration: freezeRecord(binding.declaration),
     references: Object.freeze(binding.references.map(freezeRecord)),
+  });
+}
+
+function freezeReference(reference) {
+  return Object.freeze({
+    ...reference,
+    traits: Object.freeze([...reference.traits]),
+    declaration: freezeRecord(reference.declaration),
   });
 }
 
