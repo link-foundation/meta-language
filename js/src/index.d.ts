@@ -464,11 +464,63 @@ export const PROGRAM_REPRESENTATION_SCHEMA_VERSION: 1;
 export const PROGRAM_SNAPSHOT_SCHEMA_VERSION: 1;
 export const SEMANTIC_CONSTRUCTS: readonly string[];
 
+export interface ProgramProjectSource {
+  path: string;
+  source: string;
+}
+
 export interface ProgramProjectContext {
   root?: string;
   files?: readonly string[];
   dependencies?: readonly string[];
   extensions?: readonly string[];
+  /** The analyzed program's path within the project; enables project-aware semantics. */
+  entry?: string;
+  /** The project's files (manifests and modules) by project-relative path. */
+  sources?: readonly ProgramProjectSource[];
+}
+
+export interface NormalizedProgramProjectContext {
+  readonly root: string;
+  readonly files: readonly string[];
+  readonly dependencies: readonly string[];
+  readonly extensions: readonly string[];
+  readonly entry?: string;
+  readonly sources?: readonly ProgramProjectSource[];
+}
+
+/** An entry module request resolved to a project file. */
+export interface ProgramProjectModule extends ProgramSourceRange {
+  readonly request: string;
+  readonly module: string;
+  readonly file: string;
+}
+
+/** A fact read from a project file: manifests, packages, dependencies, load paths. */
+export interface ProgramProjectFact extends ProgramSourceRange {
+  readonly kind: string;
+  readonly name: string;
+  readonly file: string;
+}
+
+/** An entry range linked to the declaration it names, identified as `<file>#<qualified name>`. */
+export interface ProgramProjectReference extends ProgramSourceRange {
+  readonly role: 'import' | 'reference' | 'attribute' | 'macro' | 'notation' | 'template-tag' | 'tactic' |
+    'assertion' | 'const-assertion';
+  readonly name: string;
+  readonly symbol: string;
+  readonly targetKind: string;
+  readonly traits: readonly string[];
+  readonly file: string;
+  readonly declaration: ProgramSourceRange;
+}
+
+/** A macro, notation or tagged template use with the source it expands to. */
+export interface ProgramExpansion extends ProgramSourceRange {
+  readonly name: string;
+  readonly kind: 'macro-rules' | 'notation' | 'tagged-template';
+  readonly expansion: string;
+  readonly target: string;
 }
 
 export interface ProgramSourceRange {
@@ -485,7 +537,7 @@ export interface ProgramSnapshotFragment {
 export interface ProgramSnapshot {
   readonly schemaVersion: 1;
   readonly language: LanguageSupport['name'];
-  readonly project: Required<ProgramProjectContext>;
+  readonly project: NormalizedProgramProjectContext;
   readonly fragments: readonly ProgramSnapshotFragment[];
 }
 
@@ -507,7 +559,7 @@ export interface ProgramBinding {
 export interface ProgramConstruct {
   readonly kind: string;
   readonly status: 'represented' | 'not-present' | 'not-applicable' | 'unavailable';
-  readonly evidence: readonly ({ term?: string } & ProgramSourceRange)[];
+  readonly evidence: readonly ({ term?: string; kind?: string; name?: string; file?: string } & ProgramSourceRange)[];
   readonly rationale?: string;
 }
 
@@ -519,7 +571,7 @@ export class ProgramRepresentation {
   readonly schemaVersion: 1;
   readonly language: LanguageSupport['name'];
   readonly source: string;
-  readonly project: Required<ProgramProjectContext>;
+  readonly project: NormalizedProgramProjectContext;
   readonly network: LinkNetwork;
   readonly scopes: readonly ProgramScope[];
   readonly bindings: readonly ProgramBinding[];
@@ -531,6 +583,10 @@ export class ProgramRepresentation {
   readonly proofs: readonly object[];
   readonly diagnostics: readonly object[];
   readonly constructs: readonly ProgramConstruct[];
+  readonly projectModules: readonly ProgramProjectModule[];
+  readonly projectFacts: readonly ProgramProjectFact[];
+  readonly projectReferences: readonly ProgramProjectReference[];
+  readonly expansions: readonly ProgramExpansion[];
   emit(): string;
   snapshot(): ProgramSnapshot;
   serializeSnapshot(): string;

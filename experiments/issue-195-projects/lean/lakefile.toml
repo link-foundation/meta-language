@@ -1,0 +1,8 @@
+name = "demo"
+defaultTargets = ["Main"]
+
+[[lean_lib]]
+name = "Util"
+
+[[lean_lib]]
+name = "Main"

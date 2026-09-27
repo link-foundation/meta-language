@@ -1,7 +1,10 @@
 // Project-aware Rust semantics: the Cargo manifest, the crate's module tree
 // loaded from `mod name;` declarations (`name.rs` or `name/mod.rs`), use
 // trees and paths resolved with item visibility, `#[macro_use]` modules, and
-// `macro_rules!` invocations expanded by their matching rule.
+// `macro_rules!` invocations expanded by their matching rule, and project
+// references checked by `assert!` macros: compile-time evaluated inside a
+// `const` or `static` item, runtime-checked elsewhere (Rust has no proof
+// terms).
 import {
   ancestor,
   childrenOf,
@@ -31,6 +34,7 @@ const ITEM_KINDS = Object.freeze({
 const PATH_SEGMENTS = new Set(['identifier', 'type_identifier', 'crate', 'self', 'super']);
 const NON_REFERENCE_CONTEXTS = ['use_declaration', 'mod_item', 'attribute_item', 'inner_attribute_item', 'macro_definition'];
 const WHITESPACE = new Set([' ', '\t', '\n', '\r']);
+const ASSERT_MACROS = new Set(['assert', 'assert_eq', 'assert_ne', 'debug_assert', 'debug_assert_eq', 'debug_assert_ne']);
 
 export function analyzeRustProject(context) {
   readCargoManifest(context);
@@ -46,6 +50,12 @@ export function analyzeRustProject(context) {
     if (module) context.module(nodeText(tree, name), module.file, module.file, node.start, node.end);
   }
   const locals = new Map();
+  const role = (node) => {
+    const invocation = ancestor(node, 'macro_invocation');
+    const name = invocation?.children[0];
+    if (name?.term !== 'identifier' || !ASSERT_MACROS.has(nodeText(tree, name))) return 'reference';
+    return ancestor(invocation, 'const_item', 'static_item') ? 'const-assertion' : 'assertion';
+  };
   for (const node of tree.nodes.filter(({ term }) => term === 'use_declaration')) {
     crate.useDeclaration(node, locals);
   }
@@ -56,7 +66,7 @@ export function analyzeRustProject(context) {
     if (node.parent && ['scoped_identifier', 'scoped_type_identifier'].includes(node.parent.term)) continue;
     if (ancestor(node, ...NON_REFERENCE_CONTEXTS)) continue;
     const resolved = crate.resolve(pathSegments(tree, node), crate.moduleOf(node), locals);
-    if (resolved?.target) context.reference('reference', nodeText(tree, node), node.start, node.end, resolved.target);
+    if (resolved?.target) context.reference(role(node), nodeText(tree, node), node.start, node.end, resolved.target);
   }
   for (const { name, start, end } of context.unresolved) {
     const leaf = leafAt(tree, start, end);
@@ -64,7 +74,7 @@ export function analyzeRustProject(context) {
     if (['scoped_identifier', 'scoped_type_identifier'].includes(leaf.parent?.term)) continue;
     if (leaf.parent?.term === 'macro_invocation' && leaf.parent.children[0] === leaf) continue;
     const local = locals.get(name);
-    if (local) context.reference('reference', name, start, end, local.target);
+    if (local) context.reference(role(leaf), name, start, end, local.target);
   }
   for (const node of tree.nodes.filter(({ term }) => term === 'macro_invocation')) {
     crate.macroInvocation(node);
@@ -170,7 +180,9 @@ class Crate {
       return undefined;
     }
     const traits = [];
-    if (firstChild(firstChild(node, 'function_modifiers') ?? node, 'async')) traits.push('async');
+    const modifiers = firstChild(node, 'function_modifiers');
+    if (modifiers && firstChild(modifiers, 'async')) traits.push('async');
+    if (modifiers && firstChild(modifiers, 'const')) traits.push('const');
     const body = firstChild(node, 'block');
     if (body && descendants(body, 'identifier').some((leaf) => nodeText(tree, leaf) === name)) traits.push('recursive');
     item.target = declaration(file, `${qualified}::${name}`, kind, traits, nameNode);

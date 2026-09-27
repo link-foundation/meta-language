@@ -717,7 +717,7 @@ function moduleRequests(syntax, source, language) {
 
 function projectHasModule(project, name, language) {
   const recognizedToolchainModules = {
-    JavaScript: ['node:fs/promises'],
+    JavaScript: ['node:fs/promises', 'node:assert', 'node:assert/strict'],
     Rust: ['std', 'core', 'alloc'],
     Lean: ['Std'],
     Rocq: ['Stdlib.Arith'],
@@ -820,7 +820,7 @@ function constructFacts(program, projectResult) {
     if (kind === 'surface-expansion-elaboration-traces' && facts.length === 0) {
       return { kind, status: 'unavailable', evidence: [], rationale: 'no macro expansion or elaboration trace has been produced' };
     }
-    if (kind === 'proof-terms-and-tactics' && ['JavaScript', 'Rust'].includes(program.language)) {
+    if (kind === 'proof-terms-and-tactics' && facts.length === 0 && ['JavaScript', 'Rust'].includes(program.language)) {
       return { kind, status: 'not-applicable', evidence: [], rationale: `${program.language} defines no proof/tactic sublanguage` };
     }
     return {

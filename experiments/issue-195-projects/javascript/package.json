@@ -1,0 +1,7 @@
+{
+  "name": "demo",
+  "type": "module",
+  "imports": {
+    "#template": "./template.js"
+  }
+}

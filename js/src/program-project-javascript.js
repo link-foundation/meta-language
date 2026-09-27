@@ -1,7 +1,9 @@
 // Project-aware JavaScript semantics: package.json dialect, name and import
 // map; ECMAScript module requests resolved to project files; named,
 // namespace and default imports, JSON modules with their import attributes,
-// and tagged templates expanded into the call they denote.
+// tagged templates expanded into the call they denote, and project
+// references checked by `node:assert` assertions (runtime-checked
+// propositions: JavaScript has no proof terms).
 import {
   childrenOf,
   declaration,
@@ -14,15 +16,22 @@ import {
   nodeText,
 } from './program-project-tree.js';
 
+const ASSERT_MODULES = new Set(['node:assert', 'node:assert/strict', 'assert', 'assert/strict']);
+
 export function analyzeJavaScriptProject(context) {
   const manifest = readPackageManifest(context);
   const { tree } = context.entry;
   const locals = new Map();
+  const assertions = new Set();
   for (const statement of tree.roots.flatMap((root) => childrenOf(root, 'import_statement'))) {
     const specifier = firstChild(statement, 'string');
     const fragment = specifier && firstChild(specifier, 'string_fragment');
     if (!fragment) continue;
     const request = nodeText(tree, fragment);
+    if (ASSERT_MODULES.has(request)) {
+      for (const name of importedLocals(firstChild(statement, 'import_clause'))) assertions.add(nodeText(tree, name));
+      continue;
+    }
     const path = resolveRequest(request, context.entry.path, manifest);
     if (!path || !context.has(path)) continue;
     context.module(request, path, path, statement.start, statement.end);
@@ -59,7 +68,7 @@ export function analyzeJavaScriptProject(context) {
     if (!local) continue;
     for (const { start, end } of binding.references) {
       const leaf = leafAt(tree, start, end);
-      if (leaf) referenceUse(context, local, leaf);
+      if (leaf) referenceUse(context, local, leaf, insideAssertion(tree, leaf, assertions) ? 'assertion' : 'reference');
     }
   }
 }
@@ -76,7 +85,7 @@ function importName(context, exports, name, node, local, locals, path) {
 
 // One use of an imported local: a namespace or JSON member access, a tagged
 // template, or a plain reference.
-function referenceUse(context, local, leaf) {
+function referenceUse(context, local, leaf, role) {
   const { tree } = context.entry;
   const parent = leaf.parent;
   const member = parent?.term === 'member_expression' && parent.children[0] === leaf
@@ -85,7 +94,7 @@ function referenceUse(context, local, leaf) {
   if (member && (local.name === '*' || local.name === 'default')) {
     const name = local.name === '*' ? nodeText(tree, member) : `default.${nodeText(tree, member)}`;
     const target = local.exports.get(name);
-    if (target) context.reference('reference', name, parent.start, parent.end, target);
+    if (target) context.reference(role, name, parent.start, parent.end, target);
     else context.diagnose('missing-project-symbol', `${local.path}#${name}`, parent.start, parent.end);
     return;
   }
@@ -99,7 +108,31 @@ function referenceUse(context, local, leaf) {
     if (expansion) context.expansion(local.name, 'tagged-template', parent.start, parent.end, expansion, target.symbol);
     return;
   }
-  context.reference('reference', local.name, leaf.start, leaf.end, target);
+  context.reference(role, local.name, leaf.start, leaf.end, target);
+}
+
+// The local identifiers an import clause binds.
+function importedLocals(clause) {
+  return (clause?.children ?? []).flatMap((child) => {
+    if (child.term === 'identifier') return [child];
+    if (child.term === 'namespace_import') return childrenOf(child, 'identifier');
+    if (child.term === 'named_imports') return childrenOf(child, 'import_specifier').map((item) => childrenOf(item, 'identifier').at(-1)).filter(Boolean);
+    return [];
+  });
+}
+
+// Whether a node is an argument of `assert(...)`, `assert.method(...)` for an
+// imported assertion module, or `console.assert(...)`.
+function insideAssertion(tree, node, assertions) {
+  for (let current = node; current.parent; current = current.parent) {
+    const call = current.parent;
+    if (call.term !== 'call_expression' || current.term !== 'arguments') continue;
+    const callee = call.children[0];
+    const object = callee?.term === 'member_expression' ? callee.children[0] : callee;
+    if (object?.term === 'identifier' && assertions.has(nodeText(tree, object))) return true;
+    if (callee?.term === 'member_expression' && nodeText(tree, callee) === 'console.assert') return true;
+  }
+  return false;
 }
 
 // `tag\`a${x}b\`` calls tag with the frozen strings array (carrying its raw

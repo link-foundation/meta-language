@@ -20,6 +20,8 @@ const ANALYZERS = Object.freeze({
 const TYPE_KINDS = new Set(['class', 'struct', 'enum', 'trait', 'type', 'structure', 'inductive', 'constructor', 'universe']);
 const EFFECT_TRAITS = new Set(['async', 'generator', 'io', 'proof-state']);
 const PROOF_KINDS = new Set(['theorem', 'lemma', 'tactic']);
+// Tactic steps, and the checked assertions of languages without proof terms.
+const PROOF_ROLES = new Set(['tactic', 'assertion', 'const-assertion']);
 
 /**
  * Analyzes an entry program within its project. `parse(source, language)`
@@ -150,7 +152,7 @@ export function projectEvidence(project, result, construct) {
     case 'macros-and-notation':
       return references(({ role }) => ['macro', 'notation', 'template-tag'].includes(role));
     case 'proof-terms-and-tactics':
-      return references(({ role, targetKind }) => role === 'tactic' || PROOF_KINDS.has(targetKind));
+      return references(({ role, targetKind }) => PROOF_ROLES.has(role) || PROOF_KINDS.has(targetKind));
     case 'surface-expansion-elaboration-traces':
       return result.expansions.map(({ kind, target, start, end }) => ({ kind: `expansion:${kind}`, name: target, start, end, file: entry }));
     case 'project-context-and-dependencies':

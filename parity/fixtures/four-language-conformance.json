@@ -903,5 +903,1210 @@
       "replacement": "y",
       "allowed": false
     }
+  ],
+  "projectPrograms": [
+    {
+      "language": "JavaScript",
+      "root": "/workspace",
+      "entry": "main.js",
+      "dependencies": [
+        "node:assert/strict"
+      ],
+      "sources": [
+        {
+          "path": "config.json",
+          "source": "{ \"depth\": 3 }\n"
+        },
+        {
+          "path": "main.js",
+          "source": "import assert from 'node:assert/strict';\nimport { double, sumTo, fetchValue } from './util.js';\nimport * as shapes from './shapes/index.js';\nimport config from './config.json' with { type: 'json' };\nimport { html } from '#template';\n\nexport function quadruple(n) {\n  return double(double(n));\n}\n\nexport function isSquare(value) {\n  return value instanceof shapes.Square;\n}\n\nexport async function load() {\n  return (await fetchValue()) + sumTo(config.depth);\n}\n\nexport const page = html`<p>${quadruple(2)}</p>`;\n\nassert.equal(quadruple(3), double(6));\nconsole.assert(sumTo(3) === 6);\n"
+        },
+        {
+          "path": "package.json",
+          "source": "{\n  \"name\": \"demo\",\n  \"type\": \"module\",\n  \"imports\": {\n    \"#template\": \"./template.js\"\n  }\n}\n"
+        },
+        {
+          "path": "shapes/index.js",
+          "source": "export class Square {\n  constructor(side) {\n    this.side = side;\n  }\n}\n"
+        },
+        {
+          "path": "template.js",
+          "source": "export function html(strings, ...values) {\n  return strings.raw.map((text, index) => `${text}${values[index] ?? ''}`).join('');\n}\n"
+        },
+        {
+          "path": "util.js",
+          "source": "export function double(n) {\n  return n + n;\n}\n\nexport function sumTo(n) {\n  return n === 0 ? 0 : n + sumTo(n - 1);\n}\n\nexport async function fetchValue() {\n  return 1;\n}\n"
+        }
+      ],
+      "modules": [
+        {
+          "request": "./util.js",
+          "module": "util.js",
+          "text": "import { double, sumTo, fetchValue } from './util.js';"
+        },
+        {
+          "request": "./shapes/index.js",
+          "module": "shapes/index.js",
+          "text": "import * as shapes from './shapes/index.js';"
+        },
+        {
+          "request": "./config.json",
+          "module": "config.json",
+          "text": "import config from './config.json' with { type: 'json' };"
+        },
+        {
+          "request": "#template",
+          "module": "template.js",
+          "text": "import { html } from '#template';"
+        }
+      ],
+      "missingContext": [
+        {
+          "kind": "missing-project-context",
+          "term": "./util.js",
+          "text": "import { double, sumTo, fetchValue } from './util.js';"
+        },
+        {
+          "kind": "missing-project-context",
+          "term": "./shapes/index.js",
+          "text": "import * as shapes from './shapes/index.js';"
+        },
+        {
+          "kind": "missing-project-context",
+          "term": "./config.json",
+          "text": "import config from './config.json' with { type: 'json' };"
+        },
+        {
+          "kind": "missing-project-context",
+          "term": "#template",
+          "text": "import { html } from '#template';"
+        }
+      ],
+      "brokenContexts": [
+        {
+          "description": "util.js no longer exports sumTo",
+          "sources": [
+            {
+              "path": "util.js",
+              "source": "export function double(n) {\n  return n + n;\n}\n\nfunction sumTo(n) {\n  return n === 0 ? 0 : n + sumTo(n - 1);\n}\n\nexport async function fetchValue() {\n  return 1;\n}\n"
+            }
+          ],
+          "diagnostics": [
+            {
+              "kind": "missing-project-symbol",
+              "term": "util.js#sumTo",
+              "text": "sumTo"
+            }
+          ]
+        }
+      ],
+      "constructs": {
+        "modules-and-imports": [
+          {
+            "kind": "project-module",
+            "name": "util.js",
+            "file": "main.js",
+            "text": "import { double, sumTo, fetchValue } from './util.js';"
+          },
+          {
+            "kind": "project-module",
+            "name": "shapes/index.js",
+            "file": "main.js",
+            "text": "import * as shapes from './shapes/index.js';"
+          },
+          {
+            "kind": "project-module",
+            "name": "config.json",
+            "file": "main.js",
+            "text": "import config from './config.json' with { type: 'json' };"
+          },
+          {
+            "kind": "project-module",
+            "name": "template.js",
+            "file": "main.js",
+            "text": "import { html } from '#template';"
+          },
+          {
+            "kind": "project-reference:import:function",
+            "name": "util.js#double",
+            "file": "main.js",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:import:function",
+            "name": "util.js#sumTo",
+            "file": "main.js",
+            "text": "sumTo"
+          },
+          {
+            "kind": "project-reference:import:function",
+            "name": "util.js#fetchValue",
+            "file": "main.js",
+            "text": "fetchValue"
+          },
+          {
+            "kind": "project-reference:import:namespace",
+            "name": "shapes/index.js#*",
+            "file": "main.js",
+            "text": "* as shapes"
+          },
+          {
+            "kind": "project-reference:import:json-value",
+            "name": "config.json#default",
+            "file": "main.js",
+            "text": "config"
+          },
+          {
+            "kind": "project-reference:import:function",
+            "name": "template.js#html",
+            "file": "main.js",
+            "text": "html"
+          }
+        ],
+        "scopes-and-bindings": [
+          {
+            "kind": "project-reference:reference:function",
+            "name": "util.js#double",
+            "file": "main.js",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "util.js#double",
+            "file": "main.js",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "util.js#sumTo",
+            "file": "main.js",
+            "text": "sumTo"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "util.js#fetchValue",
+            "file": "main.js",
+            "text": "fetchValue"
+          },
+          {
+            "kind": "project-reference:reference:class",
+            "name": "shapes/index.js#Square",
+            "file": "main.js",
+            "text": "shapes.Square"
+          },
+          {
+            "kind": "project-reference:reference:json-member",
+            "name": "config.json#default.depth",
+            "file": "main.js",
+            "text": "config.depth"
+          }
+        ],
+        "recursive-definitions": [
+          {
+            "kind": "project-reference:import:function",
+            "name": "util.js#sumTo",
+            "file": "main.js",
+            "text": "sumTo"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "util.js#sumTo",
+            "file": "main.js",
+            "text": "sumTo"
+          },
+          {
+            "kind": "project-reference:assertion:function",
+            "name": "util.js#sumTo",
+            "file": "main.js",
+            "text": "sumTo"
+          }
+        ],
+        "types-and-universes": [
+          {
+            "kind": "project-reference:reference:class",
+            "name": "shapes/index.js#Square",
+            "file": "main.js",
+            "text": "shapes.Square"
+          }
+        ],
+        "effects": [
+          {
+            "kind": "project-reference:import:function",
+            "name": "util.js#fetchValue",
+            "file": "main.js",
+            "text": "fetchValue"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "util.js#fetchValue",
+            "file": "main.js",
+            "text": "fetchValue"
+          }
+        ],
+        "attributes": [
+          {
+            "kind": "project-reference:attribute:json-value",
+            "name": "config.json#default",
+            "file": "main.js",
+            "text": "with { type: 'json' }"
+          }
+        ],
+        "macros-and-notation": [
+          {
+            "kind": "project-reference:template-tag:function",
+            "name": "template.js#html",
+            "file": "main.js",
+            "text": "html`<p>${quadruple(2)}</p>`"
+          }
+        ],
+        "proof-terms-and-tactics": [
+          {
+            "kind": "project-reference:assertion:function",
+            "name": "util.js#double",
+            "file": "main.js",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:assertion:function",
+            "name": "util.js#sumTo",
+            "file": "main.js",
+            "text": "sumTo"
+          }
+        ],
+        "surface-expansion-elaboration-traces": [
+          {
+            "kind": "expansion:tagged-template",
+            "name": "template.js#html",
+            "file": "main.js",
+            "text": "html`<p>${quadruple(2)}</p>`"
+          }
+        ],
+        "project-context-and-dependencies": [
+          {
+            "kind": "project-file",
+            "name": "config.json",
+            "file": "config.json",
+            "text": "{ \"depth\": 3 }\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "main.js",
+            "file": "main.js",
+            "text": "import assert from 'node:assert/strict';\nimport { double, sumTo, fetchValue } from './util.js';\nimport * as shapes from './shapes/index.js';\nimport config from './config.json' with { type: 'json' };\nimport { html } from '#template';\n\nexport function quadruple(n) {\n  return double(double(n));\n}\n\nexport function isSquare(value) {\n  return value instanceof shapes.Square;\n}\n\nexport async function load() {\n  return (await fetchValue()) + sumTo(config.depth);\n}\n\nexport const page = html`<p>${quadruple(2)}</p>`;\n\nassert.equal(quadruple(3), double(6));\nconsole.assert(sumTo(3) === 6);\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "package.json",
+            "file": "package.json",
+            "text": "{\n  \"name\": \"demo\",\n  \"type\": \"module\",\n  \"imports\": {\n    \"#template\": \"./template.js\"\n  }\n}\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "shapes/index.js",
+            "file": "shapes/index.js",
+            "text": "export class Square {\n  constructor(side) {\n    this.side = side;\n  }\n}\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "template.js",
+            "file": "template.js",
+            "text": "export function html(strings, ...values) {\n  return strings.raw.map((text, index) => `${text}${values[index] ?? ''}`).join('');\n}\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "util.js",
+            "file": "util.js",
+            "text": "export function double(n) {\n  return n + n;\n}\n\nexport function sumTo(n) {\n  return n === 0 ? 0 : n + sumTo(n - 1);\n}\n\nexport async function fetchValue() {\n  return 1;\n}\n"
+          },
+          {
+            "kind": "project-manifest",
+            "name": "package.json",
+            "file": "package.json",
+            "text": "{\n  \"name\": \"demo\",\n  \"type\": \"module\",\n  \"imports\": {\n    \"#template\": \"./template.js\"\n  }\n}\n"
+          },
+          {
+            "kind": "project-package",
+            "name": "demo",
+            "file": "package.json",
+            "text": "demo"
+          },
+          {
+            "kind": "project-dialect",
+            "name": "module",
+            "file": "package.json",
+            "text": "module"
+          },
+          {
+            "kind": "project-import-map",
+            "name": "#template",
+            "file": "package.json",
+            "text": "./template.js"
+          }
+        ]
+      },
+      "expansions": [
+        {
+          "name": "html",
+          "kind": "tagged-template",
+          "text": "html`<p>${quadruple(2)}</p>`",
+          "expansion": "html(Object.freeze(Object.assign([\"<p>\", \"</p>\"], { raw: Object.freeze([\"<p>\", \"</p>\"]) })), quadruple(2))",
+          "target": "template.js#html"
+        }
+      ]
+    },
+    {
+      "language": "Rust",
+      "root": "/workspace",
+      "entry": "src/main.rs",
+      "dependencies": [],
+      "sources": [
+        {
+          "path": "Cargo.toml",
+          "source": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"
+        },
+        {
+          "path": "src/macros.rs",
+          "source": "macro_rules! twice {\n    ($value:expr) => {\n        crate::util::double($value)\n    };\n}\n"
+        },
+        {
+          "path": "src/main.rs",
+          "source": "#[macro_use]\nmod macros;\nmod util;\n\nuse util::shapes::Square;\nuse util::{double, fetch, sum_to};\n\nfn quadruple(n: u64) -> u64 {\n    double(double(n))\n}\n\nfn area(square: &Square) -> u64 {\n    square.side * square.side\n}\n\nasync fn load() -> u64 {\n    fetch().await + sum_to(3)\n}\n\nconst _: () = assert!(double(2) == 4);\n\nfn main() {\n    let six = twice!(3);\n    let square = Square { side: 2 };\n    drop(load());\n    assert_eq!(quadruple(1), double(2));\n    println!(\"{} {} {}\", quadruple(six), area(&square), sum_to(4));\n}\n"
+        },
+        {
+          "path": "src/util/shapes.rs",
+          "source": "pub struct Square {\n    pub side: u64,\n}\n"
+        },
+        {
+          "path": "src/util.rs",
+          "source": "pub mod shapes;\n\npub const fn double(n: u64) -> u64 {\n    n + n\n}\n\npub fn sum_to(n: u64) -> u64 {\n    if n == 0 {\n        0\n    } else {\n        n + sum_to(n - 1)\n    }\n}\n\npub async fn fetch() -> u64 {\n    1\n}\n"
+        }
+      ],
+      "modules": [
+        {
+          "request": "macros",
+          "module": "src/macros.rs",
+          "text": "mod macros;"
+        },
+        {
+          "request": "util",
+          "module": "src/util.rs",
+          "text": "mod util;"
+        },
+        {
+          "request": "util",
+          "module": "src/util.rs",
+          "text": "use util::shapes::Square;"
+        },
+        {
+          "request": "util",
+          "module": "src/util.rs",
+          "text": "use util::{double, fetch, sum_to};"
+        }
+      ],
+      "missingContext": [
+        {
+          "kind": "missing-project-context",
+          "term": "util",
+          "text": "use util::shapes::Square;"
+        },
+        {
+          "kind": "missing-project-context",
+          "term": "util",
+          "text": "use util::{double, fetch, sum_to};"
+        },
+        {
+          "kind": "missing-project-context",
+          "term": "macros",
+          "text": "mod macros;"
+        },
+        {
+          "kind": "missing-project-context",
+          "term": "util",
+          "text": "mod util;"
+        }
+      ],
+      "brokenContexts": [
+        {
+          "description": "util::double is private",
+          "sources": [
+            {
+              "path": "src/util.rs",
+              "source": "pub mod shapes;\n\nconst fn double(n: u64) -> u64 {\n    n + n\n}\n\npub fn sum_to(n: u64) -> u64 {\n    if n == 0 {\n        0\n    } else {\n        n + sum_to(n - 1)\n    }\n}\n\npub async fn fetch() -> u64 {\n    1\n}\n"
+            }
+          ],
+          "diagnostics": [
+            {
+              "kind": "inaccessible-project-symbol",
+              "term": "src/util.rs#crate::util::double",
+              "text": "double"
+            }
+          ]
+        }
+      ],
+      "constructs": {
+        "modules-and-imports": [
+          {
+            "kind": "project-module",
+            "name": "src/macros.rs",
+            "file": "src/main.rs",
+            "text": "mod macros;"
+          },
+          {
+            "kind": "project-module",
+            "name": "src/util.rs",
+            "file": "src/main.rs",
+            "text": "mod util;"
+          },
+          {
+            "kind": "project-module",
+            "name": "src/util.rs",
+            "file": "src/main.rs",
+            "text": "use util::shapes::Square;"
+          },
+          {
+            "kind": "project-module",
+            "name": "src/util.rs",
+            "file": "src/main.rs",
+            "text": "use util::{double, fetch, sum_to};"
+          },
+          {
+            "kind": "project-reference:import:struct",
+            "name": "src/util/shapes.rs#crate::util::shapes::Square",
+            "file": "src/main.rs",
+            "text": "util::shapes::Square"
+          },
+          {
+            "kind": "project-reference:import:function",
+            "name": "src/util.rs#crate::util::double",
+            "file": "src/main.rs",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:import:function",
+            "name": "src/util.rs#crate::util::fetch",
+            "file": "src/main.rs",
+            "text": "fetch"
+          },
+          {
+            "kind": "project-reference:import:function",
+            "name": "src/util.rs#crate::util::sum_to",
+            "file": "src/main.rs",
+            "text": "sum_to"
+          }
+        ],
+        "scopes-and-bindings": [
+          {
+            "kind": "project-reference:reference:function",
+            "name": "src/util.rs#crate::util::double",
+            "file": "src/main.rs",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "src/util.rs#crate::util::double",
+            "file": "src/main.rs",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:struct",
+            "name": "src/util/shapes.rs#crate::util::shapes::Square",
+            "file": "src/main.rs",
+            "text": "Square"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "src/util.rs#crate::util::fetch",
+            "file": "src/main.rs",
+            "text": "fetch"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "src/util.rs#crate::util::sum_to",
+            "file": "src/main.rs",
+            "text": "sum_to"
+          },
+          {
+            "kind": "project-reference:reference:struct",
+            "name": "src/util/shapes.rs#crate::util::shapes::Square",
+            "file": "src/main.rs",
+            "text": "Square"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "src/util.rs#crate::util::sum_to",
+            "file": "src/main.rs",
+            "text": "sum_to"
+          }
+        ],
+        "recursive-definitions": [
+          {
+            "kind": "project-reference:import:function",
+            "name": "src/util.rs#crate::util::sum_to",
+            "file": "src/main.rs",
+            "text": "sum_to"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "src/util.rs#crate::util::sum_to",
+            "file": "src/main.rs",
+            "text": "sum_to"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "src/util.rs#crate::util::sum_to",
+            "file": "src/main.rs",
+            "text": "sum_to"
+          }
+        ],
+        "types-and-universes": [
+          {
+            "kind": "project-reference:import:struct",
+            "name": "src/util/shapes.rs#crate::util::shapes::Square",
+            "file": "src/main.rs",
+            "text": "util::shapes::Square"
+          },
+          {
+            "kind": "project-reference:reference:struct",
+            "name": "src/util/shapes.rs#crate::util::shapes::Square",
+            "file": "src/main.rs",
+            "text": "Square"
+          },
+          {
+            "kind": "project-reference:reference:struct",
+            "name": "src/util/shapes.rs#crate::util::shapes::Square",
+            "file": "src/main.rs",
+            "text": "Square"
+          }
+        ],
+        "effects": [
+          {
+            "kind": "project-reference:import:function",
+            "name": "src/util.rs#crate::util::fetch",
+            "file": "src/main.rs",
+            "text": "fetch"
+          },
+          {
+            "kind": "project-reference:reference:function",
+            "name": "src/util.rs#crate::util::fetch",
+            "file": "src/main.rs",
+            "text": "fetch"
+          }
+        ],
+        "attributes": [
+          {
+            "kind": "project-reference:attribute:module",
+            "name": "src/macros.rs#crate::macros",
+            "file": "src/main.rs",
+            "text": "#[macro_use]"
+          }
+        ],
+        "macros-and-notation": [
+          {
+            "kind": "project-reference:macro:macro",
+            "name": "src/macros.rs#crate::macros::twice!",
+            "file": "src/main.rs",
+            "text": "twice!(3)"
+          }
+        ],
+        "proof-terms-and-tactics": [
+          {
+            "kind": "project-reference:const-assertion:function",
+            "name": "src/util.rs#crate::util::double",
+            "file": "src/main.rs",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:assertion:function",
+            "name": "src/util.rs#crate::util::double",
+            "file": "src/main.rs",
+            "text": "double"
+          }
+        ],
+        "surface-expansion-elaboration-traces": [
+          {
+            "kind": "expansion:macro-rules",
+            "name": "src/macros.rs#crate::macros::twice!",
+            "file": "src/main.rs",
+            "text": "twice!(3)"
+          }
+        ],
+        "project-context-and-dependencies": [
+          {
+            "kind": "project-file",
+            "name": "Cargo.toml",
+            "file": "Cargo.toml",
+            "text": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "src/macros.rs",
+            "file": "src/macros.rs",
+            "text": "macro_rules! twice {\n    ($value:expr) => {\n        crate::util::double($value)\n    };\n}\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "src/main.rs",
+            "file": "src/main.rs",
+            "text": "#[macro_use]\nmod macros;\nmod util;\n\nuse util::shapes::Square;\nuse util::{double, fetch, sum_to};\n\nfn quadruple(n: u64) -> u64 {\n    double(double(n))\n}\n\nfn area(square: &Square) -> u64 {\n    square.side * square.side\n}\n\nasync fn load() -> u64 {\n    fetch().await + sum_to(3)\n}\n\nconst _: () = assert!(double(2) == 4);\n\nfn main() {\n    let six = twice!(3);\n    let square = Square { side: 2 };\n    drop(load());\n    assert_eq!(quadruple(1), double(2));\n    println!(\"{} {} {}\", quadruple(six), area(&square), sum_to(4));\n}\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "src/util/shapes.rs",
+            "file": "src/util/shapes.rs",
+            "text": "pub struct Square {\n    pub side: u64,\n}\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "src/util.rs",
+            "file": "src/util.rs",
+            "text": "pub mod shapes;\n\npub const fn double(n: u64) -> u64 {\n    n + n\n}\n\npub fn sum_to(n: u64) -> u64 {\n    if n == 0 {\n        0\n    } else {\n        n + sum_to(n - 1)\n    }\n}\n\npub async fn fetch() -> u64 {\n    1\n}\n"
+          },
+          {
+            "kind": "project-manifest",
+            "name": "Cargo.toml",
+            "file": "Cargo.toml",
+            "text": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"
+          },
+          {
+            "kind": "project-package",
+            "name": "demo",
+            "file": "Cargo.toml",
+            "text": "demo"
+          },
+          {
+            "kind": "project-edition",
+            "name": "2021",
+            "file": "Cargo.toml",
+            "text": "2021"
+          }
+        ]
+      },
+      "expansions": [
+        {
+          "name": "twice",
+          "kind": "macro-rules",
+          "text": "twice!(3)",
+          "expansion": "crate::util::double(3)",
+          "target": "src/macros.rs#crate::macros::twice!"
+        }
+      ]
+    },
+    {
+      "language": "Lean",
+      "root": "/workspace",
+      "entry": "Main.lean",
+      "dependencies": [],
+      "sources": [
+        {
+          "path": "Main.lean",
+          "source": "import Util.Basic\n\nopen Util\n\ndef quadruple (n : Nat) : Nat := double (double n)\n\ndef boxed : Util.Box Nat := { value := 3 }\n\ndef total : Nat := sumTo 4\n\ndef main : IO Unit := greet \"lean\"\n\nattribute [simp] double_eq\n\ndef six : Nat := twice 3\n\ntheorem quadruple_eq (n : Nat) : quadruple n = double n + double n :=\n  double_eq (double n)\n\ntheorem double_zero : double 0 = 0 := by\n  rw [double_eq]\n"
+        },
+        {
+          "path": "Util/Basic.lean",
+          "source": "namespace Util\n\nuniverse u\n\nstructure Box (α : Type u) where\n  value : α\n\ndef double (n : Nat) : Nat := n + n\n\ndef sumTo : Nat → Nat\n  | 0 => 0\n  | n + 1 => (n + 1) + sumTo n\n\ndef greet (name : String) : IO Unit := IO.println name\n\ntheorem double_eq (n : Nat) : double n = n + n := rfl\n\nnotation \"twice \" x => double x\n\nend Util\n"
+        },
+        {
+          "path": "lakefile.toml",
+          "source": "name = \"demo\"\ndefaultTargets = [\"Main\"]\n\n[[lean_lib]]\nname = \"Util\"\n\n[[lean_lib]]\nname = \"Main\"\n"
+        },
+        {
+          "path": "lean-toolchain",
+          "source": "leanprover/lean4:v4.33.1\n"
+        }
+      ],
+      "modules": [
+        {
+          "request": "Util.Basic",
+          "module": "Util/Basic.lean",
+          "text": "import Util.Basic"
+        }
+      ],
+      "missingContext": [
+        {
+          "kind": "missing-project-context",
+          "term": "Util.Basic",
+          "text": "import Util.Basic"
+        }
+      ],
+      "brokenContexts": [
+        {
+          "description": "lakefile.toml declares no Util library",
+          "sources": [
+            {
+              "path": "lakefile.toml",
+              "source": "name = \"demo\"\ndefaultTargets = [\"Main\"]\n\n[[lean_lib]]\nname = \"Main\"\n"
+            }
+          ],
+          "diagnostics": [
+            {
+              "kind": "missing-project-context",
+              "term": "Util.Basic",
+              "text": "import Util.Basic"
+            },
+            {
+              "kind": "missing-project-library",
+              "term": "Util",
+              "text": "import Util.Basic"
+            }
+          ]
+        }
+      ],
+      "constructs": {
+        "modules-and-imports": [
+          {
+            "kind": "project-module",
+            "name": "Util/Basic.lean",
+            "file": "Main.lean",
+            "text": "import Util.Basic"
+          },
+          {
+            "kind": "project-reference:import:namespace",
+            "name": "Util/Basic.lean#Util",
+            "file": "Main.lean",
+            "text": "Util"
+          }
+        ],
+        "scopes-and-bindings": [
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.double",
+            "file": "Main.lean",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.double",
+            "file": "Main.lean",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.sumTo",
+            "file": "Main.lean",
+            "text": "sumTo"
+          },
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.greet",
+            "file": "Main.lean",
+            "text": "greet"
+          },
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.double",
+            "file": "Main.lean",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.double",
+            "file": "Main.lean",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:theorem",
+            "name": "Util/Basic.lean#Util.double_eq",
+            "file": "Main.lean",
+            "text": "double_eq"
+          },
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.double",
+            "file": "Main.lean",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.double",
+            "file": "Main.lean",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:structure",
+            "name": "Util/Basic.lean#Util.Box",
+            "file": "Main.lean",
+            "text": "Util.Box"
+          }
+        ],
+        "recursive-definitions": [
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.sumTo",
+            "file": "Main.lean",
+            "text": "sumTo"
+          }
+        ],
+        "types-and-universes": [
+          {
+            "kind": "project-reference:reference:structure",
+            "name": "Util/Basic.lean#Util.Box",
+            "file": "Main.lean",
+            "text": "Util.Box"
+          }
+        ],
+        "effects": [
+          {
+            "kind": "project-reference:reference:def",
+            "name": "Util/Basic.lean#Util.greet",
+            "file": "Main.lean",
+            "text": "greet"
+          }
+        ],
+        "attributes": [
+          {
+            "kind": "project-reference:attribute:theorem",
+            "name": "Util/Basic.lean#Util.double_eq",
+            "file": "Main.lean",
+            "text": "attribute [simp] double_eq"
+          }
+        ],
+        "macros-and-notation": [
+          {
+            "kind": "project-reference:notation:notation",
+            "name": "Util/Basic.lean#notation:Util.«twice»",
+            "file": "Main.lean",
+            "text": "twice 3"
+          }
+        ],
+        "proof-terms-and-tactics": [
+          {
+            "kind": "project-reference:reference:theorem",
+            "name": "Util/Basic.lean#Util.double_eq",
+            "file": "Main.lean",
+            "text": "double_eq"
+          },
+          {
+            "kind": "project-reference:tactic:theorem",
+            "name": "Util/Basic.lean#Util.double_eq",
+            "file": "Main.lean",
+            "text": "double_eq"
+          },
+          {
+            "kind": "project-reference:attribute:theorem",
+            "name": "Util/Basic.lean#Util.double_eq",
+            "file": "Main.lean",
+            "text": "attribute [simp] double_eq"
+          }
+        ],
+        "surface-expansion-elaboration-traces": [
+          {
+            "kind": "expansion:notation",
+            "name": "Util/Basic.lean#notation:Util.«twice»",
+            "file": "Main.lean",
+            "text": "twice 3"
+          }
+        ],
+        "project-context-and-dependencies": [
+          {
+            "kind": "project-file",
+            "name": "Main.lean",
+            "file": "Main.lean",
+            "text": "import Util.Basic\n\nopen Util\n\ndef quadruple (n : Nat) : Nat := double (double n)\n\ndef boxed : Util.Box Nat := { value := 3 }\n\ndef total : Nat := sumTo 4\n\ndef main : IO Unit := greet \"lean\"\n\nattribute [simp] double_eq\n\ndef six : Nat := twice 3\n\ntheorem quadruple_eq (n : Nat) : quadruple n = double n + double n :=\n  double_eq (double n)\n\ntheorem double_zero : double 0 = 0 := by\n  rw [double_eq]\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "Util/Basic.lean",
+            "file": "Util/Basic.lean",
+            "text": "namespace Util\n\nuniverse u\n\nstructure Box (α : Type u) where\n  value : α\n\ndef double (n : Nat) : Nat := n + n\n\ndef sumTo : Nat → Nat\n  | 0 => 0\n  | n + 1 => (n + 1) + sumTo n\n\ndef greet (name : String) : IO Unit := IO.println name\n\ntheorem double_eq (n : Nat) : double n = n + n := rfl\n\nnotation \"twice \" x => double x\n\nend Util\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "lakefile.toml",
+            "file": "lakefile.toml",
+            "text": "name = \"demo\"\ndefaultTargets = [\"Main\"]\n\n[[lean_lib]]\nname = \"Util\"\n\n[[lean_lib]]\nname = \"Main\"\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "lean-toolchain",
+            "file": "lean-toolchain",
+            "text": "leanprover/lean4:v4.33.1\n"
+          },
+          {
+            "kind": "project-toolchain",
+            "name": "leanprover/lean4:v4.33.1",
+            "file": "lean-toolchain",
+            "text": "leanprover/lean4:v4.33.1"
+          },
+          {
+            "kind": "project-manifest",
+            "name": "lakefile.toml",
+            "file": "lakefile.toml",
+            "text": "name = \"demo\"\ndefaultTargets = [\"Main\"]\n\n[[lean_lib]]\nname = \"Util\"\n\n[[lean_lib]]\nname = \"Main\"\n"
+          },
+          {
+            "kind": "project-package",
+            "name": "demo",
+            "file": "lakefile.toml",
+            "text": "demo"
+          },
+          {
+            "kind": "project-library",
+            "name": "Util",
+            "file": "lakefile.toml",
+            "text": "Util"
+          },
+          {
+            "kind": "project-library",
+            "name": "Main",
+            "file": "lakefile.toml",
+            "text": "Main"
+          }
+        ]
+      },
+      "expansions": [
+        {
+          "name": "twice",
+          "kind": "notation",
+          "text": "twice 3",
+          "expansion": "double 3",
+          "target": "Util/Basic.lean#notation:Util.«twice»"
+        }
+      ]
+    },
+    {
+      "language": "Rocq",
+      "root": "/workspace",
+      "entry": "Main.v",
+      "dependencies": [],
+      "sources": [
+        {
+          "path": "Main.v",
+          "source": "From Util Require Import Basic.\n\nDefinition quadruple (n : nat) : nat := double (double n).\n\nDefinition boxed : box nat := Box nat 3.\n\nDefinition total : nat := sum_to 4.\n\n#[export] Hint Resolve double_eq : util.\n\nDefinition eight : nat := 4 ++2.\n\nLemma double_two : double 2 = 4.\nProof. solve_double. Qed.\n\nLemma quadruple_eq : forall n : nat, quadruple n = double n + double n.\nProof. intros n. unfold quadruple. apply double_eq. Qed.\n"
+        },
+        {
+          "path": "_CoqProject",
+          "source": "-Q theories Util\ntheories/Basic.v\nMain.v\n"
+        },
+        {
+          "path": "theories/Basic.v",
+          "source": "Universe u.\n\nInductive box (A : Type) : Type := Box : A -> box A.\n\nDefinition double (n : nat) : nat := n + n.\n\nFixpoint sum_to (n : nat) : nat :=\n  match n with\n  | 0 => 0\n  | S m => n + sum_to m\n  end.\n\nLemma double_eq : forall n : nat, double n = n + n.\nProof. reflexivity. Qed.\n\nCreate HintDb util.\n\nLtac solve_double := intros; unfold double; reflexivity.\n\nNotation \"x ++2\" := (double x) (at level 1).\n"
+        }
+      ],
+      "modules": [
+        {
+          "request": "Util.Basic",
+          "module": "theories/Basic.v",
+          "text": "From Util Require Import Basic"
+        }
+      ],
+      "missingContext": [
+        {
+          "kind": "missing-project-context",
+          "term": "Util.Basic",
+          "text": "From Util Require Import Basic"
+        }
+      ],
+      "brokenContexts": [
+        {
+          "description": "_CoqProject maps no load path to Util",
+          "sources": [
+            {
+              "path": "_CoqProject",
+              "source": "theories/Basic.v\nMain.v\n"
+            }
+          ],
+          "diagnostics": [
+            {
+              "kind": "missing-project-context",
+              "term": "Util.Basic",
+              "text": "From Util Require Import Basic"
+            }
+          ]
+        }
+      ],
+      "constructs": {
+        "modules-and-imports": [
+          {
+            "kind": "project-module",
+            "name": "theories/Basic.v",
+            "file": "Main.v",
+            "text": "From Util Require Import Basic"
+          }
+        ],
+        "scopes-and-bindings": [
+          {
+            "kind": "project-reference:reference:definition",
+            "name": "theories/Basic.v#Util.Basic.double",
+            "file": "Main.v",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:definition",
+            "name": "theories/Basic.v#Util.Basic.double",
+            "file": "Main.v",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:inductive",
+            "name": "theories/Basic.v#Util.Basic.box",
+            "file": "Main.v",
+            "text": "box"
+          },
+          {
+            "kind": "project-reference:reference:constructor",
+            "name": "theories/Basic.v#Util.Basic.Box",
+            "file": "Main.v",
+            "text": "Box"
+          },
+          {
+            "kind": "project-reference:reference:fixpoint",
+            "name": "theories/Basic.v#Util.Basic.sum_to",
+            "file": "Main.v",
+            "text": "sum_to"
+          },
+          {
+            "kind": "project-reference:reference:lemma",
+            "name": "theories/Basic.v#Util.Basic.double_eq",
+            "file": "Main.v",
+            "text": "double_eq"
+          },
+          {
+            "kind": "project-reference:reference:definition",
+            "name": "theories/Basic.v#Util.Basic.double",
+            "file": "Main.v",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:definition",
+            "name": "theories/Basic.v#Util.Basic.double",
+            "file": "Main.v",
+            "text": "double"
+          },
+          {
+            "kind": "project-reference:reference:definition",
+            "name": "theories/Basic.v#Util.Basic.double",
+            "file": "Main.v",
+            "text": "double"
+          }
+        ],
+        "recursive-definitions": [
+          {
+            "kind": "project-reference:reference:fixpoint",
+            "name": "theories/Basic.v#Util.Basic.sum_to",
+            "file": "Main.v",
+            "text": "sum_to"
+          }
+        ],
+        "types-and-universes": [
+          {
+            "kind": "project-reference:reference:inductive",
+            "name": "theories/Basic.v#Util.Basic.box",
+            "file": "Main.v",
+            "text": "box"
+          },
+          {
+            "kind": "project-reference:reference:constructor",
+            "name": "theories/Basic.v#Util.Basic.Box",
+            "file": "Main.v",
+            "text": "Box"
+          }
+        ],
+        "effects": [
+          {
+            "kind": "project-reference:tactic:tactic",
+            "name": "theories/Basic.v#Util.Basic.solve_double",
+            "file": "Main.v",
+            "text": "solve_double"
+          }
+        ],
+        "attributes": [
+          {
+            "kind": "project-reference:attribute:hint-database",
+            "name": "theories/Basic.v#hintdb:util",
+            "file": "Main.v",
+            "text": "#[export]"
+          }
+        ],
+        "macros-and-notation": [
+          {
+            "kind": "project-reference:notation:notation",
+            "name": "theories/Basic.v#notation:\"x ++2\"",
+            "file": "Main.v",
+            "text": "4 ++2"
+          }
+        ],
+        "proof-terms-and-tactics": [
+          {
+            "kind": "project-reference:reference:lemma",
+            "name": "theories/Basic.v#Util.Basic.double_eq",
+            "file": "Main.v",
+            "text": "double_eq"
+          },
+          {
+            "kind": "project-reference:tactic:tactic",
+            "name": "theories/Basic.v#Util.Basic.solve_double",
+            "file": "Main.v",
+            "text": "solve_double"
+          },
+          {
+            "kind": "project-reference:tactic:lemma",
+            "name": "theories/Basic.v#Util.Basic.double_eq",
+            "file": "Main.v",
+            "text": "double_eq"
+          }
+        ],
+        "surface-expansion-elaboration-traces": [
+          {
+            "kind": "expansion:notation",
+            "name": "theories/Basic.v#notation:\"x ++2\"",
+            "file": "Main.v",
+            "text": "4 ++2"
+          }
+        ],
+        "project-context-and-dependencies": [
+          {
+            "kind": "project-file",
+            "name": "Main.v",
+            "file": "Main.v",
+            "text": "From Util Require Import Basic.\n\nDefinition quadruple (n : nat) : nat := double (double n).\n\nDefinition boxed : box nat := Box nat 3.\n\nDefinition total : nat := sum_to 4.\n\n#[export] Hint Resolve double_eq : util.\n\nDefinition eight : nat := 4 ++2.\n\nLemma double_two : double 2 = 4.\nProof. solve_double. Qed.\n\nLemma quadruple_eq : forall n : nat, quadruple n = double n + double n.\nProof. intros n. unfold quadruple. apply double_eq. Qed.\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "_CoqProject",
+            "file": "_CoqProject",
+            "text": "-Q theories Util\ntheories/Basic.v\nMain.v\n"
+          },
+          {
+            "kind": "project-file",
+            "name": "theories/Basic.v",
+            "file": "theories/Basic.v",
+            "text": "Universe u.\n\nInductive box (A : Type) : Type := Box : A -> box A.\n\nDefinition double (n : nat) : nat := n + n.\n\nFixpoint sum_to (n : nat) : nat :=\n  match n with\n  | 0 => 0\n  | S m => n + sum_to m\n  end.\n\nLemma double_eq : forall n : nat, double n = n + n.\nProof. reflexivity. Qed.\n\nCreate HintDb util.\n\nLtac solve_double := intros; unfold double; reflexivity.\n\nNotation \"x ++2\" := (double x) (at level 1).\n"
+          },
+          {
+            "kind": "project-manifest",
+            "name": "_CoqProject",
+            "file": "_CoqProject",
+            "text": "-Q theories Util\ntheories/Basic.v\nMain.v\n"
+          },
+          {
+            "kind": "project-load-path",
+            "name": "Util",
+            "file": "_CoqProject",
+            "text": "theories"
+          },
+          {
+            "kind": "project-source",
+            "name": "theories/Basic.v",
+            "file": "_CoqProject",
+            "text": "theories/Basic.v"
+          },
+          {
+            "kind": "project-source",
+            "name": "Main.v",
+            "file": "_CoqProject",
+            "text": "Main.v"
+          }
+        ]
+      },
+      "expansions": [
+        {
+          "name": "++2",
+          "kind": "notation",
+          "text": "4 ++2",
+          "expansion": "(double 4)",
+          "target": "theories/Basic.v#notation:\"x ++2\""
+        }
+      ]
+    }
   ]
 }
