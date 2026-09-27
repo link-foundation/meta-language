@@ -135,3 +135,51 @@ export function joinPath(directory, relative) {
 export function jsonString(value) {
   return JSON.stringify(value);
 }
+
+const TOML_SPACE = new Set([' ', '\t', '\r']);
+
+/**
+ * Reads the key/value lines of a TOML manifest: `[table]` and `[[array]]`
+ * headers, `key = "string"` and other single-line values. Returns entries
+ * {table, index, key, value, start, end}; `index` counts `[[array]]` tables
+ * of the same name, and a string value's range covers its content only.
+ */
+export function tomlEntries(source) {
+  const entries = [];
+  const counts = new Map();
+  let table = '';
+  let index = 0;
+  let offset = 0;
+  for (const line of source.split('\n')) {
+    const lineStart = offset;
+    offset += line.length + 1;
+    let from = 0;
+    while (from < line.length && TOML_SPACE.has(line[from])) from += 1;
+    let to = line.length;
+    while (to > from && TOML_SPACE.has(line[to - 1])) to -= 1;
+    const text = line.slice(from, to);
+    if (text === '' || text.startsWith('#')) continue;
+    if (text.startsWith('[[') && text.endsWith(']]')) {
+      table = text.slice(2, -2).trim();
+      index = counts.get(table) ?? 0;
+      counts.set(table, index + 1);
+      continue;
+    }
+    if (text.startsWith('[') && text.endsWith(']')) {
+      table = text.slice(1, -1).trim();
+      index = 0;
+      continue;
+    }
+    const equals = text.indexOf('=');
+    if (equals < 0) continue;
+    let key = text.slice(0, equals).trim();
+    if (key.length >= 2 && (key.startsWith('"') || key.startsWith("'")) && key.endsWith(key[0])) key = key.slice(1, -1);
+    let valueFrom = from + equals + 1;
+    while (valueFrom < to && TOML_SPACE.has(line[valueFrom])) valueFrom += 1;
+    const quote = line[valueFrom];
+    const close = quote === '"' || quote === "'" ? line.indexOf(quote, valueFrom + 1) : -1;
+    const [start, end] = close > valueFrom ? [valueFrom + 1, close] : [valueFrom, to];
+    entries.push({ table, index, key, value: line.slice(start, end), start: lineStart + start, end: lineStart + end });
+  }
+  return entries;
+}

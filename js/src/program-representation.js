@@ -91,6 +91,7 @@ export class ProgramRepresentation {
       source: this.source,
       mappings: syntax,
       bindings: resolution.bindings,
+      unresolved: resolution.unresolved,
       project: this.project,
       parse: parseProjectFile,
     });

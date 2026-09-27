@@ -26,7 +26,7 @@ const PROOF_KINDS = new Set(['theorem', 'lemma', 'tactic']);
  * returns the source mappings of another project file and whether it parsed
  * cleanly. Returns empty results unless the project names an entry file.
  */
-export function projectSemantics({ language, source, mappings, bindings, project, parse }) {
+export function projectSemantics({ language, source, mappings, bindings, unresolved, project, parse }) {
   const result = {
     modules: [],
     facts: [],
@@ -37,7 +37,7 @@ export function projectSemantics({ language, source, mappings, bindings, project
     resolvedRequests: [],
   };
   if (!project.entry) return result;
-  const context = new ProjectContext({ language, source, mappings, bindings, project, parse, result });
+  const context = new ProjectContext({ language, source, mappings, bindings, unresolved, project, parse, result });
   ANALYZERS[language](context);
   for (const { path } of context.project.sources) {
     const file = context.parsed.get(path);
@@ -47,10 +47,11 @@ export function projectSemantics({ language, source, mappings, bindings, project
 }
 
 export class ProjectContext {
-  constructor({ language, source, mappings, bindings, project, parse, result }) {
+  constructor({ language, source, mappings, bindings, unresolved, project, parse, result }) {
     this.language = language;
     this.project = { ...project, sources: project.sources ?? [] };
     this.bindings = bindings;
+    this.unresolved = unresolved;
     this.parse = parse;
     this.result = result;
     this.sources = new Map(this.project.sources.map(({ path, source: text }) => [path, text]));
