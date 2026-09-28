@@ -9,6 +9,13 @@ use super::{
     INT, NAT, ROOT, STRING,
 };
 
+/// How a function's body is written: a block, or an arrow's block or expression.
+#[derive(Clone, Copy)]
+enum Body {
+    Block,
+    Arrow,
+}
+
 impl JavaScriptParser {
     pub(super) fn file(mut self) -> Result<SProgram> {
         let mut items = self.typedefs()?;
@@ -46,6 +53,25 @@ impl JavaScriptParser {
             }
             if self.cursor.is("function") {
                 items.push(SItem::Fn(self.function_declaration(&start)?));
+                continue;
+            }
+            if self.cursor.is("const")
+                && self.cursor.is_kind_at(TokenKind::Identifier, 1)
+                && self.cursor.is_at("=", 2)
+                && self.starts_function(self.cursor.index + 3)
+            {
+                if !effects.is_empty() {
+                    let name = self.peek_at(1);
+                    return Err(unsupported(
+                        "function after a top-level statement",
+                        &format!(
+                            "the statements before const {} could call it before it is initialised; declare every function first",
+                            name.value
+                        ),
+                        Some(span(&start, &name)),
+                    ));
+                }
+                items.push(SItem::Fn(self.const_function(&start)?));
                 continue;
             }
             if self.cursor.is("const")
@@ -344,8 +370,74 @@ impl JavaScriptParser {
     /// Parameters and body of a function or method; `doc_token` is where its `JSDoc` ends.
     pub(super) fn function_rest(&mut self, doc_token: &Token, name_token: &Token) -> Result<SFn> {
         let doc = self.jsdoc_for(doc_token)?;
-        let name = name_token.value.clone();
-        self.cursor.expect("(", Some(&name))?;
+        self.cursor.expect("(", Some(&name_token.value))?;
+        let tokens = self.parameters(&name_token.value)?;
+        self.function_body(doc_token, name_token, doc, &tokens, Body::Block)
+    }
+
+    /// `const name = (…) => …` or `const name = function (…) { … }` before any
+    /// top-level statement: a function, as nothing can call it before it is
+    /// initialised. An arrow's expression body is the value it returns.
+    pub(super) fn const_function(&mut self, start: &Token) -> Result<SFn> {
+        let doc = self.jsdoc_for(start)?;
+        self.cursor.expect("const", Some("function"))?;
+        let name_token = self.cursor.identifier(Some("function"))?;
+        self.cursor.expect("=", Some("function"))?;
+        self.scope.tdz.remove(&name_token.value);
+        let function = if self.cursor.eat("function").is_some() {
+            if self.cursor.is("*") {
+                return Err(unsupported(
+                    "generator function",
+                    "generators are outside the portable core",
+                    Some(self.to_here(start)),
+                ));
+            }
+            if self.cursor.is_kind(TokenKind::Identifier) {
+                let inner = self.peek();
+                if inner.value != name_token.value {
+                    return Err(unsupported(
+                        &format!("function expression {}", inner.value),
+                        &format!(
+                            "its own name is visible only inside it; call it {}",
+                            name_token.value
+                        ),
+                        Some(span(&inner, &inner)),
+                    ));
+                }
+                self.cursor.advance();
+            }
+            self.cursor.expect("(", Some(&name_token.value))?;
+            let tokens = self.parameters(&name_token.value)?;
+            self.function_body(start, &name_token, doc, &tokens, Body::Block)?
+        } else {
+            let tokens = if self.cursor.eat("(").is_some() {
+                self.parameters(&name_token.value)?
+            } else {
+                vec![self.cursor.identifier(Some("parameter"))?]
+            };
+            self.cursor.expect("=>", Some(&name_token.value))?;
+            self.function_body(start, &name_token, doc, &tokens, Body::Arrow)?
+        };
+        self.cursor.eat(";");
+        Ok(function)
+    }
+
+    /// Whether the tokens from `index` are a function expression or an arrow function.
+    pub(super) fn starts_function(&self, index: usize) -> bool {
+        let tokens = &self.cursor.tokens;
+        let Some(token) = tokens.get(index) else {
+            return false;
+        };
+        let arrow = |at: usize| tokens.get(at).is_some_and(|token| token.value == "=>");
+        match token.kind {
+            TokenKind::Identifier => token.value == "function" || arrow(index + 1),
+            TokenKind::Punct => token.value == "(" && arrow(self.matching(index) + 1),
+            _ => false,
+        }
+    }
+
+    /// A parameter list after its `(`, through its `)`.
+    fn parameters(&mut self, name: &str) -> Result<Vec<Token>> {
         let mut tokens = Vec::new();
         while !self.cursor.is(")") {
             let token = self.peek();
@@ -376,10 +468,23 @@ impl JavaScriptParser {
                 break;
             }
         }
-        self.cursor.expect(")", Some(&name))?;
+        self.cursor.expect(")", Some(name))?;
+        Ok(tokens)
+    }
+
+    /// A function from its parameters; `body` says how its body is written.
+    fn function_body(
+        &mut self,
+        doc_token: &Token,
+        name_token: &Token,
+        doc: Option<JsDoc>,
+        tokens: &[Token],
+        body: Body,
+    ) -> Result<SFn> {
+        let name = name_token.value.clone();
         // A type JSDoc does not declare is inferred once the whole program is read.
         let mut params = Vec::new();
-        for token in &tokens {
+        for token in tokens {
             let text = doc.as_ref().and_then(|doc| {
                 doc.params
                     .iter()
@@ -418,7 +523,18 @@ impl JavaScriptParser {
                 tdz: HashSet::new(),
             },
         );
-        let statements = self.block_statements();
+        let statements = match body {
+            Body::Arrow if !self.cursor.is("{") => {
+                let token = self.peek();
+                self.expr().map(|expr| {
+                    vec![Stmt::Return {
+                        expr,
+                        span: self.to_here(&token),
+                    }]
+                })
+            }
+            _ => self.block_statements(),
+        };
         self.scope = outer;
         let statements = statements?;
         // `if (n < 0n) throw …` as a leading statement makes `n` a natural number.

@@ -2,6 +2,31 @@
   "generator": "js/scripts/build-translation-stage-fixtures.mjs",
   "programs": [
     {
+      "name": "corpus/const-functions.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/const-functions.mjs",
+      "parse": {
+        "sha256": "55a1b43d4778ee634a5869f1b94a809505a9ff7ce4b155843a1870d02103b3d7"
+      },
+      "check": {
+        "sha256": "242121656a73576bc0db9aec76c749ff87140ce3d213488a3035a736b05c5c17"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "b70774597985ef396cf93f0d1722f9458880a289a013a57e0eda94eb909dcd0c"
+        },
+        "rust": {
+          "sha256": "7f132e3e2698e89db48aa39a93ece6a2ab8b64b82686dc8a2b26936fcce9b2a1"
+        },
+        "lean": {
+          "sha256": "d38bf922a195ffb4265f6193826f1e08f623c0249660c111862608d1b30ee0ef"
+        },
+        "rocq": {
+          "sha256": "1a2b3a98a4aea018c4a1076c3abd2332b98d0caa5886948efdf5c9abd9f93dd3"
+        }
+      }
+    },
+    {
       "name": "corpus/edge-semantics.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/edge-semantics.mjs",
@@ -13438,9 +13463,23 @@
       "extension": "mjs",
       "source": "const g = (x) => x;",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "arrow function: functions as values are outside the portable core at 10..11"
+        "sha256": "b9e8bb3ac493286b06503b6a02570469010e3712b256824f0996af8f71527c3b"
+      },
+      "check": {
+        "sha256": "00786fbb88fac59144905781ec0a43d4d94f01b1aee19b1c2c53f37f5354a918"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "5d6c4ab9691a1464f6fb56a1bda8f6394eb694b2015c2c0c54da3d03577204d7"
+        },
+        "rust": {
+          "sha256": "d5ba2208703200a2cb42b77de08614b78d1b30790bb4f626cc8db390a075dfd8"
+        },
+        "lean": {
+          "sha256": "d7900b87f7c89bf25abcb2f79fe36b0b928e57f9820dfbcefb8a4e1e826c0b62"
+        },
+        "rocq": {
+          "sha256": "626466a17afdb10d8ec2f4db887f2efa36ca2ac4c56ebb30fb69620a1e700e5a"
         }
       }
     },

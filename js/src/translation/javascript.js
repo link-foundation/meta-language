@@ -74,6 +74,17 @@ class JavaScriptParser {
         items.push(this.functionDeclaration(start));
         continue;
       }
+      if (c.is('const') && c.peek(1).kind === 'identifier' && c.is('=', 2) && this.startsFunction(c.index + 3)) {
+        if (effects.length) {
+          throw unsupported(
+            'function after a top-level statement',
+            `the statements before const ${c.peek(1).value} could call it before it is initialised; declare every function first`,
+            span(start, c.peek(1)),
+          );
+        }
+        items.push(this.constFunction(start));
+        continue;
+      }
       if (c.is('const') && c.peek(1).kind === 'identifier' && c.is('=', 2) && c.is('{', 3) && !(c.is('$', 4) && c.is(':', 5))) {
         if (effects.length) {
           throw unsupported(
@@ -88,6 +99,16 @@ class JavaScriptParser {
       effects.push(this.mainStatement());
     }
     return inferJavaScriptTypes({ language: 'JavaScript', items, main: { effects, span: { start: 0, end: this.source.length } } });
+  }
+
+  /** Whether the tokens from `index` are a function expression or an arrow function. */
+  startsFunction(index) {
+    const tokens = this.cursor.tokens;
+    const token = tokens[index];
+    if (!token) return false;
+    if (token.kind === 'identifier' && token.value === 'function') return true;
+    if (token.kind === 'identifier' && tokens[index + 1]?.value === '=>') return true;
+    return token.kind === 'punct' && token.value === '(' && tokens[this.matching(index) + 1]?.value === '=>';
   }
 
   /** `import assert from 'node:assert/strict'` is the only portable import. */
@@ -216,8 +237,53 @@ class JavaScriptParser {
   functionRest(docToken, nameToken) {
     const c = this.cursor;
     const doc = this.jsdocFor(docToken);
-    const name = nameToken.value;
-    c.expect('(', name);
+    c.expect('(', nameToken.value);
+    const tokens = this.parameters(nameToken.value);
+    return this.functionBody(docToken, nameToken, doc, tokens, () => this.blockStatements());
+  }
+
+  /**
+   * `const name = (…) => …` or `const name = function (…) { … }` before any
+   * top-level statement: a function, as nothing can call it before it is
+   * initialised. An arrow's expression body is the value it returns.
+   */
+  constFunction(start) {
+    const c = this.cursor;
+    const doc = this.jsdocFor(start);
+    c.expect('const', 'function');
+    const nameToken = c.identifier('function');
+    c.expect('=', 'function');
+    this.scope.tdz.delete(nameToken.value);
+    let fn;
+    if (c.eat('function')) {
+      if (c.is('*')) throw unsupported('generator function', 'generators are outside the portable core', span(start, c.peek()));
+      if (c.isKind('identifier') && c.peek().value !== nameToken.value) {
+        const inner = c.peek();
+        throw unsupported(`function expression ${inner.value}`, `its own name is visible only inside it; call it ${nameToken.value}`, span(inner, inner));
+      }
+      if (c.isKind('identifier')) c.next();
+      c.expect('(', nameToken.value);
+      const tokens = this.parameters(nameToken.value);
+      fn = this.functionBody(start, nameToken, doc, tokens, () => this.blockStatements());
+    } else {
+      let tokens;
+      if (c.eat('(')) tokens = this.parameters(nameToken.value);
+      else tokens = [c.identifier('parameter')];
+      c.expect('=>', nameToken.value);
+      fn = this.functionBody(start, nameToken, doc, tokens, () => {
+        if (c.is('{')) return this.blockStatements();
+        const token = c.peek();
+        const expr = this.expr();
+        return [{ s: 'return', expr, span: span(token, c.peek()) }];
+      });
+    }
+    c.eat(';');
+    return fn;
+  }
+
+  /** A parameter list after its `(`, through its `)`. */
+  parameters(name) {
+    const c = this.cursor;
     const tokens = [];
     while (!c.is(')')) {
       const token = c.peek();
@@ -229,6 +295,13 @@ class JavaScriptParser {
       if (!c.eat(',')) break;
     }
     c.expect(')', name);
+    return tokens;
+  }
+
+  /** A function from its parameters; `statements` reads its body in the parameters' scope. */
+  functionBody(docToken, nameToken, doc, tokens, statementsOf) {
+    const c = this.cursor;
+    const name = nameToken.value;
     // A type JSDoc does not declare is inferred once the whole program is read.
     const params = tokens.map((token) => {
       const text = doc?.params.get(token.value);
@@ -240,7 +313,7 @@ class JavaScriptParser {
     const ret = doc?.returns ? this.type(doc.returns, doc.range) : null;
     const outer = this.scope;
     this.scope = { locals: new Set(params.map((param) => param.name)), tdz: new Set() };
-    const statements = this.blockStatements();
+    const statements = statementsOf();
     this.scope = outer;
     // `if (n < 0n) throw …` as a leading statement makes `n` a natural number.
     let index = 0;

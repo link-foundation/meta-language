@@ -260,3 +260,53 @@ fn rejections_name_the_construct_and_its_span() {
         assert_eq!(rejection(&source), (kind, message.to_owned()), "{source}");
     }
 }
+
+#[test]
+fn arrow_functions_and_function_expressions_bound_to_constants_are_functions() {
+    let program = parse(
+        "const inc = x => x + 1;\n/** @param {number} a @param {number} b @returns {number} */\nconst avg = (a, b) => (a + b) / 2;\nconst fact = function (n) { if (n < 0n) throw new RangeError('negative'); return n === 0n ? 1n : n * fact(n - 1n); };\nconst pow = function pow(b, n) { return n === 0n ? 1n : b * pow(b, n - 1n); };\nexport const greet = (name) => { return 'hello ' + name; };\nconsole.log(inc(avg(1, 2)));\nconsole.log(pow(2n, fact(3n)));\nconsole.log(greet('world'));\n",
+    );
+    assert_eq!(signature(&program, "inc"), (vec![Some(FLOAT)], Some(FLOAT)));
+    assert_eq!(
+        signature(&program, "avg"),
+        (vec![Some(FLOAT), Some(FLOAT)], Some(FLOAT))
+    );
+    assert_eq!(signature(&program, "fact"), (vec![Some(NAT)], Some(INT)));
+    assert_eq!(
+        signature(&program, "pow"),
+        (vec![Some(INT), Some(INT)], Some(INT))
+    );
+    assert_eq!(
+        signature(&program, "greet"),
+        (vec![Some(STRING)], Some(STRING))
+    );
+}
+
+#[test]
+fn const_functions_javascript_could_not_call_as_translated_are_rejected() {
+    let cases = [
+        (
+            "console.log(1);\nconst f = x => x;",
+            "function after a top-level statement: the statements before const f could call it before it is initialised; declare every function first at 16..22",
+        ),
+        (
+            "const f = function g(x) { return x; };",
+            "function expression g: its own name is visible only inside it; call it f at 19..20",
+        ),
+        (
+            "const f = function* () {};",
+            "generator function: generators are outside the portable core at 0..18",
+        ),
+        (
+            "const f = (...xs) => xs;",
+            "rest parameter: functions take a fixed number of arguments at 11..14",
+        ),
+    ];
+    for (source, message) in cases {
+        assert_eq!(
+            rejection(source),
+            (ErrorKind::Unsupported, message.to_owned()),
+            "{source}"
+        );
+    }
+}
