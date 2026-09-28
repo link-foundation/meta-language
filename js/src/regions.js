@@ -38,7 +38,8 @@ export class EmbeddedRegion {
 export function detectEmbeddedRegions(text, language, policy = RegionDetectionPolicy.Both) {
   const host = canonicalLanguageName(language);
   if (host === TXT_LANGUAGE) {
-    return [regionFor(text, TXT_LANGUAGE, 0, byteLength(text))];
+    const source = textEncoder.encode(text);
+    return [regionFor(new ByteLineIndex(source), TXT_LANGUAGE, 0, source.length)];
   }
   if (host !== 'HTML' && host !== 'Markdown') {
     return [];
@@ -63,6 +64,7 @@ export function detectEmbeddedRegions(text, language, policy = RegionDetectionPo
  */
 export function detectEmbeddedRegionsInTree(tree, text, host, policy = RegionDetectionPolicy.Both) {
   const source = textEncoder.encode(text);
+  const lines = new ByteLineIndex(source);
   const nodeText = (node) =>
     textDecoder.decode(source.subarray(node.span.byteRange.start, node.span.byteRange.end));
   const found = [];
@@ -79,7 +81,7 @@ export function detectEmbeddedRegionsInTree(tree, text, host, policy = RegionDet
   return found
     .map((region, index) => ({ ...region, index }))
     .sort((left, right) => left.start - right.start || left.index - right.index)
-    .map(({ language, start, end }) => regionFor(text, language, start, end));
+    .map(({ language, start, end }) => regionFor(lines, language, start, end));
 }
 
 function visitHtml(node, nodeText, add) {
@@ -254,40 +256,36 @@ export function sniffLanguage(content) {
   return null;
 }
 
-function regionFor(text, language, start, end) {
+function regionFor(lines, language, start, end) {
   return new EmbeddedRegion(
     language,
-    new SourceSpan(
-      new ByteRange(start, end),
-      pointAtByte(text, start),
-      pointAtByte(text, end),
-    ),
+    new SourceSpan(new ByteRange(start, end), lines.point(start), lines.point(end)),
   );
 }
 
-function pointAtByte(text, byte) {
-  let row = 0;
-  let column = 0;
-  let index = 0;
-
-  for (const character of text) {
-    if (index >= byte) {
-      break;
-    }
-    const length = byteLength(character);
-    if (character === '\n') {
-      row += 1;
-      column = 0;
-    } else {
-      // Columns count UTF-8 bytes, as tree-sitter points do.
-      column += length;
-    }
-    index += length;
+/**
+ * The UTF-8 byte offset of every line start, so a region boundary resolves to
+ * its point by binary search rather than by rescanning the text: a document
+ * with a region in every section would otherwise take quadratic time.
+ * Columns count UTF-8 bytes, as tree-sitter points do.
+ */
+class ByteLineIndex {
+  constructor(source) {
+    this.starts = [0];
+    source.forEach((byte, index) => {
+      if (byte === 0x0a) this.starts.push(index + 1);
+    });
   }
 
-  return new Point(row, column);
+  point(byte) {
+    let low = 0;
+    let high = this.starts.length - 1;
+    while (low < high) {
+      const middle = (low + high + 1) >> 1;
+      if (this.starts[middle] <= byte) low = middle;
+      else high = middle - 1;
+    }
+    return new Point(low, byte - this.starts[low]);
+  }
 }
 
-function byteLength(value) {
-  return textEncoder.encode(value).length;
-}

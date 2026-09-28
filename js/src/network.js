@@ -27,6 +27,7 @@ import { grammarProvenance } from './language-catalog.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 
 const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 export class LinkNetwork {
   constructor() {
@@ -615,7 +616,9 @@ export class LinkNetwork {
 
   _insertProgrammingLanguage(parsed, language, configuration, offset = undefined) {
     const languageLink = this.insertTypedPoint(LinkType.Language, language);
-    this._recordGrammars(languageLink, language);
+    // An embedded region (one with an offset) has its grammars recorded once
+    // per language by _attachEmbeddedRegions.
+    if (offset === undefined) this._recordGrammars(languageLink, language);
     const tokenIds = parsed.tokens.map((token) =>
       this.insertSourceToken(language, token.text, offsetSpan(token.span, offset), token.flags),
     );
@@ -758,6 +761,9 @@ export class LinkNetwork {
     const regions = host === 'HTML' || host === 'Markdown'
       ? detectEmbeddedRegionsInTree(parsed.tree, text, host, policy)
       : detectEmbeddedRegions(text, language, policy);
+    // Encoded once: every region slices the same bytes.
+    const source = encoder.encode(text);
+    const recordedLanguages = new Set();
     for (const region of regions) {
       const regionLanguage = region.language();
       const languageLink = this.insertTypedPoint(LinkType.Language, regionLanguage);
@@ -777,13 +783,20 @@ export class LinkNetwork {
       if (
         regionLanguage.toLowerCase() === String(language).toLowerCase() &&
         start === 0 &&
-        end === encoder.encode(text).length
+        end === source.length
       ) {
         continue;
       }
-      this._recordGrammars(languageLink, regionLanguage);
+      // _recordGrammars scans the network, so it runs once per region language
+      // rather than once per region: a document with a fenced block in every
+      // section would otherwise parse in quadratic time.
+      const languageKey = languageLink.asU64();
+      if (!recordedLanguages.has(languageKey)) {
+        recordedLanguages.add(languageKey);
+        this._recordGrammars(languageLink, regionLanguage);
+      }
       const parsed = parseEmbeddedProgrammingLanguage(
-        sliceBytes(text, start, end),
+        decoder.decode(source.subarray(start, end)),
         regionLanguage,
       );
       if (parsed) {
@@ -980,6 +993,3 @@ function offsetSpan(span, offset) {
   );
 }
 
-function sliceBytes(text, start, end) {
-  return new TextDecoder().decode(encoder.encode(text).slice(start, end));
-}

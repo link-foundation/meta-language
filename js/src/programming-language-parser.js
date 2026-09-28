@@ -141,11 +141,18 @@ function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
 function utf8Input(text, boundaries) {
   const bytes = encoder.encode(text);
   const offsets = new Map([...boundaries].map(([offset, { byte }]) => [byte, offset]));
+  // The bytes as char codes, built once: each Markdown inline parse reads a
+  // chunk again, and slicing a string is cheaper than spreading its bytes.
+  const pieces = [];
+  for (let start = 0; start < bytes.length; start += INPUT_CHUNK_BYTES) {
+    pieces.push(String.fromCharCode(...bytes.subarray(start, start + INPUT_CHUNK_BYTES)));
+  }
+  const byteString = pieces.join('');
   return {
     read: (index) => {
       let end = Math.min(bytes.length, index + INPUT_CHUNK_BYTES);
       while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end -= 1;
-      return String.fromCharCode(...bytes.subarray(index, end));
+      return byteString.slice(index, end);
     },
     offsetOf: (byte) => offsets.get(byte),
   };

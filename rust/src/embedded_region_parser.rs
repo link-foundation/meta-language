@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::configuration::ParseConfiguration;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::mixed_regions::detect_embedded_regions;
@@ -11,6 +13,10 @@ pub fn attach_embedded_regions(
     configuration: ParseConfiguration,
 ) {
     let policy = configuration.region_detection_policy();
+    // `record_grammars` scans the network, so it runs once per region
+    // language rather than once per region: a document with a fenced block
+    // in every section would otherwise parse in quadratic time.
+    let mut recorded = HashSet::new();
     for region in detect_embedded_regions(network, document, text, language, policy) {
         let region_language = region.language().to_string();
         let language_link = network.insert_typed_point(&region_language, LinkType::Language, None);
@@ -34,7 +40,9 @@ pub fn attach_embedded_regions(
             continue;
         }
         let region_text = &text[range.start()..range.end()];
-        network.record_grammars(language_link, region.language());
+        if recorded.insert(language_link) {
+            network.record_grammars(language_link, region.language());
+        }
         if tree_sitter_adapter::parse_embedded_region_into(
             network,
             region_link,

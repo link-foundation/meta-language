@@ -23,6 +23,13 @@ const SIZE_RATIO: usize = 8;
 /// Units in the small input; the large input holds `SIZE_RATIO` times as many.
 const SMALL_UNITS: usize = 16;
 
+/// Units in the small input of the embedded-region guard.
+///
+/// A per-region scan of the whole network costs `O(regions * links)`, which in
+/// a debug build only outgrows the grammar parses once a document holds a few
+/// hundred regions, so this guard starts larger than the others.
+const REGION_SMALL_UNITS: usize = 48;
+
 /// Highest tolerated growth of the per-byte cost between the two sizes.
 ///
 /// Linear parsing lands near `1.0`, quadratic parsing near `SIZE_RATIO`
@@ -132,9 +139,40 @@ fn html_unit(index: usize) -> String {
     )
 }
 
+/// A Markdown section with an inline HTML region and a fenced code region.
+fn markdown_regions_unit(index: usize) -> String {
+    format!(
+        "## Section {index}\n\n\
+         Paragraph {index} with <b>inline {index}</b> HTML.\n\n\
+         ```rust\n\
+         pub fn item_{index}() -> usize {{ {index} }}\n\
+         ```\n\n"
+    )
+}
+
+/// An HTML paragraph with a style attribute region and a script region.
+fn html_regions_unit(index: usize) -> String {
+    format!(
+        "<p style=\"color: rgb({index}, 0, 0)\">Paragraph {index}.</p>\n\
+         <script>let item{index} = {index};</script>\n"
+    )
+}
+
 fn english_unit(index: usize) -> String {
     format!("The parser reads sentence number {index} and records its tokens. ")
 }
+
+/// Documents with a region in every unit, parsed by the embedded-region guard.
+const REGION_CASES: &[ScalingCase] = &[
+    ScalingCase {
+        language: "Markdown",
+        unit: markdown_regions_unit,
+    },
+    ScalingCase {
+        language: "HTML",
+        unit: html_regions_unit,
+    },
+];
 
 fn source_for(case: &ScalingCase, units: usize) -> String {
     let body: String = (0..units).map(case.unit).collect();
@@ -225,9 +263,13 @@ impl Measurement {
     }
 }
 
-fn measure(case: &ScalingCase, work: fn(&str, &str) -> Duration) -> Measurement {
-    let small = source_for(case, SMALL_UNITS);
-    let large = source_for(case, SMALL_UNITS * SIZE_RATIO);
+fn measure(
+    case: &ScalingCase,
+    small_units: usize,
+    work: fn(&str, &str) -> Duration,
+) -> Measurement {
+    let small = source_for(case, small_units);
+    let large = source_for(case, small_units * SIZE_RATIO);
     let small_per_byte = nanos_per_byte(&small, case.language, work);
     let large_per_byte = nanos_per_byte(&large, case.language, work);
     Measurement {
@@ -240,11 +282,16 @@ fn measure(case: &ScalingCase, work: fn(&str, &str) -> Duration) -> Measurement 
 
 /// Asserts that `work` costs no more per byte on the large input than on the
 /// small one, retrying to ride out a scheduling hiccup.
-fn assert_scales_linearly(cases: &[ScalingCase], work: fn(&str, &str) -> Duration, subject: &str) {
+fn assert_scales_linearly(
+    cases: &[ScalingCase],
+    small_units: usize,
+    work: fn(&str, &str) -> Duration,
+    subject: &str,
+) {
     for case in cases {
         let mut reports = Vec::new();
         let passed = (0..ATTEMPTS).any(|_| {
-            let measurement = measure(case, work);
+            let measurement = measure(case, small_units, work);
             reports.push(measurement.report(case.language));
             measurement.growth() <= MAX_PER_BYTE_GROWTH
         });
@@ -261,12 +308,21 @@ fn assert_scales_linearly(cases: &[ScalingCase], work: fn(&str, &str) -> Duratio
 /// of the whole source (issue #193).
 #[test]
 fn parsers_scale_linearly_with_input_size() {
-    assert_scales_linearly(CASES, parse_duration, "parse");
+    assert_scales_linearly(CASES, SMALL_UNITS, parse_duration, "parse");
 }
 
 /// Applying an edit must stay near-linear: re-identifying the reparsed links
 /// may not reintroduce a search over the whole previous network (issue #193).
 #[test]
 fn incremental_edits_scale_linearly_with_network_size() {
-    assert_scales_linearly(EDIT_CASES, edit_duration, "edit");
+    assert_scales_linearly(EDIT_CASES, SMALL_UNITS, edit_duration, "edit");
+}
+
+/// Documents with a region in every unit must parse in near-linear time:
+/// region detection may not resolve points by rescanning the text, and grammar
+/// provenance may not be recorded by scanning the whole network for every
+/// region, which once made a 48 KB Markdown file take a minute (issue #195).
+#[test]
+fn documents_with_many_regions_parse_linearly() {
+    assert_scales_linearly(REGION_CASES, REGION_SMALL_UNITS, parse_duration, "parse");
 }
