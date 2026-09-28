@@ -136,3 +136,17 @@ fn a_program_of_awaited_async_functions_is_a_semantic_translation_in_every_targe
         );
     }
 }
+
+#[test]
+fn recursion_rocq_cannot_check_terminates_is_a_definition_over_ml_fix() {
+    let source = "/** @param {bigint} a @param {bigint} b @returns {bigint} */\nfunction gcd(a, b) { if (b === 0n) return a; return gcd(b, a % b); }\nconsole.log(gcd(1071n, 462n));\n";
+    let translated =
+        translate_program(source, "JavaScript", "Rocq").expect("translation descriptor");
+    assert_eq!(
+        translated.contract().support,
+        TranslationSupport::SemanticTranslation
+    );
+    assert!(translated.code().contains(
+        "Definition gcd (a : Z) (b : Z) : Z :=\n  ml_fix 64 (fun (ml_rec : Z * Z -> Z) (ml_args : Z * Z) =>\n    let '(a, b) := ml_args in "
+    ));
+}

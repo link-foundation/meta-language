@@ -80,8 +80,8 @@ pub(super) fn without(map: &HashMap<String, String>, names: &[&str]) -> HashMap<
 }
 
 /// Marks each function recursive or not and, for recursive functions, finds a
-/// structurally decreasing parameter. Lean and Rocq targets require one; the
-/// other targets accept general recursion.
+/// structurally decreasing parameter. Without one, Lean writes a partial def and
+/// Rocq a Definition over `ml_fix`; the other targets accept general recursion.
 pub(super) fn analyse_recursion(declarations: &mut [Decl]) {
     for decl in declarations.iter_mut() {
         let Decl::Fn(entry) = decl else { continue };

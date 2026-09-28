@@ -17,7 +17,8 @@ use super::diagnostics::{unsupported, ErrorKind, Result, TranslationError};
 use super::emit_common::{order_declarations, CtorStyle, EmitOptions, EmitState, Emitted};
 use super::ir::{
     rename_function, rename_main, rename_theorem, ByZero, Case, DataDecl, Decl, Effect, Expr,
-    FnDecl, Hints, LitValue, Main, Node, Pattern, Plan, Program, Prop, Semantics, TheoremDecl,
+    FnDecl, Hints, LitValue, Main, Node, Param, Pattern, Plan, Program, Prop, Semantics,
+    TheoremDecl,
 };
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
@@ -190,6 +191,14 @@ with ml_refute H := first
   | apply H; ml_prove ].
 Ltac ml_decide := vm_compute; ml_prove."#;
 
+const FIX: &str = "(* The least fixed point of a one-step unfolding F, unfolded lazily: level k
+   nests 2^k calls of F before it would reach the fallback. *)
+Fixpoint ml_fix {A B : Type} (k : nat) (F : (A -> B) -> A -> B) (fallback : A -> B) : A -> B :=
+  match k with
+  | O => F fallback
+  | S k => fun a => ml_fix k F (ml_fix k F fallback) a
+  end.";
+
 /// A helper definition the emitted program may need, in the order they are written out.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Helper {
@@ -201,12 +210,13 @@ enum Helper {
     JsConsole,
     FloatSame,
     FloatRem,
+    Fix,
     Tactics,
     Decide,
 }
 
 impl Helper {
-    const ALL: [Self; 10] = [
+    const ALL: [Self; 11] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -215,6 +225,7 @@ impl Helper {
         Self::JsConsole,
         Self::FloatSame,
         Self::FloatRem,
+        Self::Fix,
         Self::Tactics,
         Self::Decide,
     ];
@@ -229,6 +240,7 @@ impl Helper {
             Self::JsConsole => JS_CONSOLE,
             Self::FloatSame => FLOAT_SAME,
             Self::FloatRem => FLOAT_REM,
+            Self::Fix => FIX,
             Self::Tactics => TACTICS,
             Self::Decide => DECIDE,
         }
@@ -315,6 +327,8 @@ struct Current {
     full_name: String,
     name: String,
     recursive: bool,
+    /// Recursive with no termination argument: self-calls go through `ml_fix`.
+    general: bool,
 }
 
 struct RocqEmitter<'p> {
@@ -438,6 +452,50 @@ impl RocqEmitter<'_> {
         Ok(lines.join("\n") + ".")
     }
 
+    /// Recursion with no termination argument Rocq could check is `ml_fix`
+    /// applied to the function's one-step unfolding: the parameters travel as
+    /// one tuple, a self-call is a call of `ml_rec`, and a run nested deeper
+    /// than 2^64 calls, which no machine reaches, would fall back to an inhabitant.
+    fn general_recursion(
+        &mut self,
+        name: &str,
+        params: &[Param],
+        binders: &str,
+        result: &str,
+        text: &str,
+        ret: &Type,
+    ) -> Result<String> {
+        self.helpers.insert(Helper::Fix);
+        self.state.encode(
+            "general-recursion",
+            "recursion without a termination argument Rocq could check is ml_fix over the function's one-step unfolding, which unfolds lazily to 2^64 nested calls: every run that terminates computes the same value, and Rocq accepts it as a plain Definition",
+        );
+        let mut domain = Vec::new();
+        for param in params {
+            domain.push(self.ty(&param.ty)?);
+        }
+        let domain = if domain.is_empty() {
+            "unit".to_owned()
+        } else {
+            domain.join(" * ")
+        };
+        let names: Vec<&str> = params.iter().map(|param| param.name.as_str()).collect();
+        let tuple = format!("({})", names.join(", "));
+        let (input, unpack, args) = match names.as_slice() {
+            [] => ("_", String::new(), "tt"),
+            [only] => (*only, String::new(), *only),
+            _ => (
+                "ml_args",
+                format!("let '{tuple} := ml_args in "),
+                tuple.as_str(),
+            ),
+        };
+        Ok(format!(
+            "Definition {name}{binders} : {result} :=\n  ml_fix 64 (fun (ml_rec : {domain} -> {result}) ({input} : {domain}) =>\n    {unpack}{text})\n    (fun _ => {}) {args}.",
+            self.inhabitant(ret)?
+        ))
+    }
+
     fn function(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
         let (params, body) = rename_function(function, &ident, &self.state.local_reserved());
         let name = self.state.local_name(&function.full_name).to_owned();
@@ -446,6 +504,7 @@ impl RocqEmitter<'_> {
             full_name: function.full_name.clone(),
             name: name.clone(),
             recursive: function.recursive,
+            general: function.recursive && function.decreasing.is_none() && !function.mutual,
         });
         let mut binders = String::new();
         for param in &params {
@@ -471,14 +530,7 @@ impl RocqEmitter<'_> {
             ));
         }
         let Some(index) = function.decreasing else {
-            return Err(unsupported(
-                "general recursion",
-                &format!(
-                    "{} is not structurally recursive and Rocq requires a termination argument",
-                    function.full_name
-                ),
-                function.span,
-            ));
+            return self.general_recursion(&name, &params, &binders, &result, &text, &function.ret);
         };
         let decreasing = &params[index];
         if matches!(decreasing.ty, Type::Data { .. }) {

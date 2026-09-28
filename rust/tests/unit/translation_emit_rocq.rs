@@ -102,7 +102,7 @@ fn natural_recursion_is_a_function_with_a_measure() {
 }
 
 #[test]
-fn general_recursion_is_unsupported() {
+fn general_recursion_is_ml_fix_over_the_one_step_unfolding() {
     let ir = r#"{"schemaVersion":1,"sourceLanguage":"Lean","items":[{"k":"decl","fullName":"up"}],"main":null,
       "declarations":[{"k":"fn","name":"up","params":[{"name":"n","type":NAT,"guard":null}],"ret":NAT,
         "body":{"k":"if","cond":{"k":"binary","op":"gt","left":{"k":"var","name":"n","type":NAT},
@@ -113,9 +113,13 @@ fn general_recursion_is_unsupported() {
           "type":NAT},
         "fullName":"up","modulePath":[],"recursive":true,"decreasing":null}]}"#
         .replace("NAT", NAT);
-    let error = emit_rocq(&program(&ir)).unwrap_err();
-    assert_eq!(
-        error.message(),
-        "general recursion: up is not structurally recursive and Rocq requires a termination argument"
-    );
+    let emitted = emit_rocq(&program(&ir)).unwrap();
+    assert!(emitted.text.contains("Fixpoint ml_fix {A B : Type}"));
+    assert!(emitted.text.contains(
+        "Definition up (n : N) : N :=\n  ml_fix 64 (fun (ml_rec : N -> N) (n : N) =>\n    (if (N.ltb 10%N n) then n else (ml_rec (N.add n 1%N))))\n    (fun _ => 0%N) n."
+    ));
+    assert!(emitted
+        .encodings
+        .iter()
+        .any(|encoding| encoding.id == "general-recursion"));
 }

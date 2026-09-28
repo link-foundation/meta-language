@@ -10,6 +10,17 @@ impl RocqEmitter<'_> {
             Node::Var { name } => Ok(name.clone()),
             Node::Call { func, args } => {
                 let head = match &self.current {
+                    Some(current) if current.full_name == *func && current.general => {
+                        let mut parts = Vec::new();
+                        for arg in args {
+                            parts.push(self.expr(arg)?);
+                        }
+                        return Ok(match parts.as_slice() {
+                            [] => "(ml_rec tt)".to_owned(),
+                            [only] => format!("(ml_rec {only})"),
+                            _ => format!("(ml_rec ({}))", parts.join(", ")),
+                        });
+                    }
                     Some(current) if current.full_name == *func && current.recursive => {
                         current.name.clone()
                     }

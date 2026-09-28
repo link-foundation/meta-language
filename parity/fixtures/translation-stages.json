@@ -77,6 +77,31 @@
       }
     },
     {
+      "name": "corpus/general-recursion.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/general-recursion.mjs",
+      "parse": {
+        "sha256": "2ed384ecfd261f1d0a36a58cd0d3c34911a2d7d6c9eee0f7be3904ca0ab62aa1"
+      },
+      "check": {
+        "sha256": "906c7cb3cdb9ee93a572735bc7ebefa5c55b13ea6c554b5ae9cee50c7657a1ba"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "a6f3160564c62fdc13e91488f1b349e92cbbaff0aeffa4c0ff65d49a7f9ce391"
+        },
+        "rust": {
+          "sha256": "4129d8ce10d5e502c66d6a03b2c898a8f6c629ecb1a5b7f69a1afed689f81030"
+        },
+        "lean": {
+          "sha256": "bc708bfb78127690e3cbf8d1b690fd04903068273d5d68c808ee06d3b1e1203e"
+        },
+        "rocq": {
+          "sha256": "4f4278c8e4101a18ede214bea2fa6d680220970ed009b5954ee30416fb1bfd0c"
+        }
+      }
+    },
+    {
       "name": "corpus/inferred.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/inferred.mjs",
@@ -4758,10 +4783,7 @@
           "sha256": "65189aacabda72f44eafe7ff2a9513eaa22e040af8f482490dd39010a696ce53"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "general recursion: collatz is not structurally recursive and Rocq requires a termination argument at 0..145"
-          }
+          "sha256": "153dc3db30ed2f703a017736cba8051f6416739a1e435872fe7d6352a73bbf6f"
         }
       }
     },
@@ -5970,10 +5992,7 @@
           "sha256": "8d0cf77574a2cde463bb19b39d63bf37d6f158c86e531082a3dcf4dd60d1a54d"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "general recursion: up is not structurally recursive and Rocq requires a termination argument at 0..83"
-          }
+          "sha256": "46fd2c4a95d1f920ed619bea74296e3110ea63cee7736d03629f9dc27d691a61"
         }
       }
     },
@@ -8679,10 +8698,7 @@
           "sha256": "002a5d555284325aaee5d9f2288435b52031652ce3c0ae9c5151b25307b266b7"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "general recursion: up is not structurally recursive and Rocq requires a termination argument at 0..60"
-          }
+          "sha256": "4ee960e665551e966daac6d9f01047b46f405d68bb07fa96f8e250c3563d7773"
         }
       }
     },
@@ -8707,10 +8723,7 @@
           "sha256": "71376cbd0f49cd1e382b04e21ff2b9901bc5b3dc7099a64e74777ac35f78ae0e"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "general recursion: collatz is not structurally recursive and Rocq requires a termination argument at 0..120"
-          }
+          "sha256": "5eded7667d9fcb42acfc12111e0da3de44f4403e7f076dd39952f4db42a5e4e7"
         }
       }
     },
@@ -22599,10 +22612,7 @@
           "sha256": "21b8f7fc93b557f7cda1ccd890a1e7d46163f4f5b3647c5b716bcd52e532133c"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "general recursion: f is not structurally recursive and Rocq requires a termination argument at 0..3"
-          }
+          "sha256": "0904528590d8e9e5c47d6d98aa3523c0f7b421ac6e389a093969dc01c5abdbda"
         }
       }
     },
@@ -25291,10 +25301,7 @@
           "sha256": "108363fca3f36bdb9b01d68b3fe01fddf8fd46845bad50dc06213f9345f35f45"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "general recursion: f is not structurally recursive and Rocq requires a termination argument at 78..86"
-          }
+          "sha256": "77ffbd95d000395185a162b2531d114aca4f7dfc0bebaf1fffa86b36dd0e4fd3"
         }
       }
     },

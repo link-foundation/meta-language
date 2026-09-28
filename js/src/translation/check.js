@@ -1019,8 +1019,8 @@ function checkExhaustive(type, patterns, items, span) {
 
 /**
  * Marks each function recursive or not and, for recursive functions, finds a
- * structurally decreasing parameter. Lean and Rocq targets require one; the
- * other targets accept general recursion.
+ * structurally decreasing parameter. Without one, Lean writes a partial def and
+ * Rocq a Definition over `ml_fix`; the other targets accept general recursion.
  */
 function analyseRecursion(program) {
   for (const entry of program.declarations.values()) {

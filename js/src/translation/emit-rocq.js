@@ -163,6 +163,13 @@ Definition ml_float_rem (x y : float) : float :=
       if sx then PrimFloat.opp magnitude else magnitude
   | _, _ => x
   end.`,
+  fix: `(* The least fixed point of a one-step unfolding F, unfolded lazily: level k
+   nests 2^k calls of F before it would reach the fallback. *)
+Fixpoint ml_fix {A B : Type} (k : nat) (F : (A -> B) -> A -> B) (fallback : A -> B) : A -> B :=
+  match k with
+  | O => F fallback
+  | S k => fun a => ml_fix k F (ml_fix k F fallback) a
+  end.`,
   decide: `Ltac ml_prove := first
   [ reflexivity | discriminate | exact I | lia
   | split; ml_prove
@@ -226,7 +233,7 @@ class RocqEmitter {
     }
     moveTo([]);
     const mainText = this.program.main ? this.main(this.program.main) : null;
-    const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'jsNumber', 'jsConsole', 'floatSame', 'floatRem', 'tactics', 'decide']
+    const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'jsNumber', 'jsConsole', 'floatSame', 'floatRem', 'fix', 'tactics', 'decide']
       .filter((name) => this.helpers.has(name) || (name === 'digits' && (this.helpers.has('zToString') || this.helpers.has('jsNumber'))))
       .map((name) => HELPERS[name]);
     const text = [
@@ -284,19 +291,18 @@ class RocqEmitter {
   }
 
   fn(entry) {
+    const general = entry.recursive && entry.decreasing === null && !entry.mutual;
     const { params, body } = renameFunction(entry, ident, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
-    this.current = { entry, name };
+    this.current = { entry, name, general };
     const binders = params.map((param) => ` (${param.name} : ${this.type(param.type)})`).join('');
     const result = this.type(entry.ret);
     const text = this.expr(body);
     this.current = null;
     if (entry.mutual) throw unsupported('mutual recursion', `${entry.fullName} is mutually recursive; the Rocq target emits only single recursive definitions`, entry.span);
     if (!entry.recursive) return `Definition ${name}${binders} : ${result} :=\n  ${text}.`;
-    if (entry.decreasing === null) {
-      throw unsupported('general recursion', `${entry.fullName} is not structurally recursive and Rocq requires a termination argument`, entry.span);
-    }
+    if (general) return this.generalRecursion(name, params, binders, result, text, entry.ret);
     const decreasing = params[entry.decreasing];
     if (decreasing.type.kind === 'data') {
       return `Fixpoint ${name}${binders} {struct ${decreasing.name}} : ${result} :=\n  ${text}.`;
@@ -304,6 +310,23 @@ class RocqEmitter {
     this.natFunctions.set(entry.fullName, { index: entry.decreasing, arity: params.length });
     this.state.encode('nat-recursion', 'recursion that decreases a natural is a Rocq Function with measure N.to_nat; lia discharges the decrease obligations');
     return `Function ${name}${binders} {measure N.to_nat ${decreasing.name}} : ${result} :=\n  ${text}.\nProof. all: ml_obligation. Defined.`;
+  }
+
+  /**
+   * Recursion with no termination argument Rocq could check is `ml_fix`
+   * applied to the function's one-step unfolding: the parameters travel as
+   * one tuple, a self-call is a call of `ml_rec`, and a run nested deeper than
+   * 2^64 calls, which no machine reaches, would fall back to an inhabitant.
+   */
+  generalRecursion(name, params, binders, result, text, ret) {
+    this.helpers.add('fix');
+    this.state.encode('general-recursion', 'recursion without a termination argument Rocq could check is ml_fix over the function\'s one-step unfolding, which unfolds lazily to 2^64 nested calls: every run that terminates computes the same value, and Rocq accepts it as a plain Definition');
+    const domain = params.length ? params.map((param) => this.type(param.type)).join(' * ') : 'unit';
+    const tuple = params.length === 1 ? params[0].name : `(${params.map((param) => param.name).join(', ')})`;
+    const unpack = params.length > 1 ? `let '${tuple} := ml_args in ` : '';
+    const args = params.length ? tuple : 'tt';
+    const input = params.length === 1 ? params[0].name : params.length ? 'ml_args' : '_';
+    return `Definition ${name}${binders} : ${result} :=\n  ml_fix 64 (fun (ml_rec : ${domain} -> ${result}) (${input} : ${domain}) =>\n    ${unpack}${text})\n    (fun _ => ${this.inhabitant(ret)}) ${args}.`;
   }
 
   theorem(entry) {
@@ -439,9 +462,12 @@ class RocqEmitter {
       case 'var':
         return e.name;
       case 'call': {
-        const head = this.current && e.fn === this.current.entry.fullName && this.current.entry.recursive
-          ? this.current.name
-          : this.state.ref(e.fn);
+        const self = this.current && e.fn === this.current.entry.fullName && this.current.entry.recursive;
+        if (self && this.current.general) {
+          const args = e.args.map((arg) => this.expr(arg));
+          return `(ml_rec ${args.length === 1 ? args[0] : args.length ? `(${args.join(', ')})` : 'tt'})`;
+        }
+        const head = self ? this.current.name : this.state.ref(e.fn);
         return e.args.length ? `(${head} ${e.args.map((arg) => this.expr(arg)).join(' ')})` : head;
       }
       case 'ctor': {
