@@ -47,6 +47,11 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   consumers:
     name: Clean Consumer (${{ matrix.os }})
     needs: candidates
@@ -135,6 +140,12 @@ jobs:
           path: ${{ runner.temp }}/issue-195-consumer/*.log
           if-no-files-found: ignore
           retention-days: 30
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-consumer/crate-target"
 
   acceptance:
     name: Full Requirements Aggregate
@@ -251,3 +262,8 @@ jobs:
             issue-195-results/work/native/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown

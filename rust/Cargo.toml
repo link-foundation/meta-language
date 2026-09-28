@@ -151,6 +151,14 @@ path = "tests/unit/mod.rs"
 name = "integration"
 path = "tests/integration/mod.rs"
 
+# Lean debug and test builds (docs/cache-cleanup.md): line tables keep
+# backtraces readable at a fraction of the size, and incremental state is not
+# kept, since it is the largest part of a debug target. `[profile.test]`
+# inherits both settings.
+[profile.dev]
+debug = "line-tables-only"
+incremental = false
+
 [profile.release]
 lto = true
 codegen-units = 1

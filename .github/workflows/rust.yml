@@ -9,6 +9,7 @@ on:
       - 'parity/**'
       - 'docs/**'
       - '.github/workflows/rust.yml'
+      - 'scripts/**'
       - '.secretlintrc.json'
   pull_request:
     types: [opened, synchronize, reopened]
@@ -17,6 +18,7 @@ on:
       - 'parity/**'
       - 'docs/**'
       - '.github/workflows/rust.yml'
+      - 'scripts/**'
       - '.secretlintrc.json'
   workflow_dispatch:
     inputs:
@@ -164,6 +166,11 @@ jobs:
 
       - name: Run secretlint
         run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === FRESH MERGE SIMULATION ===
   fresh-merge:
@@ -333,6 +340,11 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node js/scripts/check-js-rust-parity.mjs --manifest-only
 
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   # === TEST ===
   # Test runs independently of changelog check
   test:
@@ -450,11 +462,26 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-test-
 
+      # Tests and doc tests run through the cleanup wrapper; examples are
+      # only checked, not linked, so the target stays small.
       - name: Run tests
-        run: cargo test --all-features --verbose
+        shell: bash
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --tests --verbose
 
       - name: Run doc tests
-        run: cargo test --doc --verbose
+        shell: bash
+        run: |
+          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --doc --verbose
+          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --doc --verbose
+
+      - name: Check examples
+        shell: bash
+        run: cargo check --examples --all-features
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === CODE COVERAGE ===
   # Generate and upload code coverage using cargo-llvm-cov
@@ -501,7 +528,7 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Generate code coverage
-        run: cargo llvm-cov --all-features --lcov --output-path lcov.info --fail-under-lines 84.30
+        run: node ../scripts/with-cache-cleanup.mjs --event coverage --protect lcov.info -- cargo llvm-cov --all-features --lcov --output-path lcov.info --fail-under-lines 84.30
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
@@ -515,6 +542,11 @@ jobs:
       - name: Report skipped Codecov upload
         if: env.CODECOV_TOKEN == ''
         run: echo "::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === BUILD ===
   # Build package - only runs if lint and test pass
@@ -551,13 +583,18 @@ jobs:
             ${{ runner.os }}-cargo-build-
 
       - name: Build release
-        run: cargo build --release --verbose
+        run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo build --release --verbose
 
       - name: Check package
-        run: cargo package --list --allow-dirty
+        run: node ../scripts/with-cache-cleanup.mjs --event package -- cargo package --list --allow-dirty
 
       - name: Check crate package size
         run: rust-script scripts/check-crate-size.rs
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === AUTO RELEASE ===
   # Automatic release on push to main using changelog fragments
@@ -625,7 +662,7 @@ jobs:
 
       - name: Build release
         if: steps.check.outputs.should_release == 'true'
-        run: cargo build --release
+        run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo build --release
 
       - name: Check crate package size
         if: steps.check.outputs.should_release == 'true' && steps.check.outputs.crate_published != 'true'
@@ -751,6 +788,11 @@ jobs:
           RELEASE_VERSION: ${{ steps.current_version.outputs.version }}
         run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
 
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   # === MANUAL INSTANT RELEASE ===
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
@@ -803,7 +845,7 @@ jobs:
 
       - name: Build release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        run: cargo build --release
+        run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo build --release
 
       - name: Check crate package size
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
@@ -915,6 +957,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
         run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
@@ -1039,7 +1086,7 @@ jobs:
 
       - name: Build WebAssembly demo
         working-directory: rust/web
-        run: wasm-pack build --release --target web --out-dir pkg
+        run: node ../../scripts/with-cache-cleanup.mjs --event build --protect pkg -- wasm-pack build --release --target web --out-dir pkg
 
       - name: Assemble website
         working-directory: rust
@@ -1059,3 +1106,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown

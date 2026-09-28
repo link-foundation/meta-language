@@ -7,15 +7,29 @@ on:
     paths:
       - 'js/**'
       - 'parity/**'
+      - 'scripts/**'
+      - '.githooks/**'
+      - '.github/workflows/**'
+      - '.pre-commit-config.yaml'
+      - '.gitignore'
+      - 'CONTRIBUTING.md'
+      - 'docs/cache-cleanup.md'
+      - 'rust/Cargo.toml'
       - '.secretlintrc.json'
-      - '.github/workflows/js.yml'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - 'js/**'
       - 'parity/**'
+      - 'scripts/**'
+      - '.githooks/**'
+      - '.github/workflows/**'
+      - '.pre-commit-config.yaml'
+      - '.gitignore'
+      - 'CONTRIBUTING.md'
+      - 'docs/cache-cleanup.md'
+      - 'rust/Cargo.toml'
       - '.secretlintrc.json'
-      - '.github/workflows/js.yml'
   release:
     types: [published]
   workflow_dispatch:
@@ -64,8 +78,16 @@ jobs:
         working-directory: js
 
       - name: Run tests
-        run: npm test
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- npm test
         working-directory: js
+
+      - name: Check the cache cleanup policy
+        run: node scripts/check-cache-policy.mjs
+
+      - name: Install and verify the development hook in this clone
+        run: |
+          node scripts/install-dev-hooks.mjs
+          node scripts/install-dev-hooks.mjs --check
 
       - name: Check Rust/JavaScript parity manifest
         run: npm run check:parity
@@ -96,11 +118,16 @@ jobs:
         working-directory: js
 
       - name: Verify npm package contents
-        run: npm pack --dry-run
+        run: node ../scripts/with-cache-cleanup.mjs --event package -- npm pack --dry-run
         working-directory: js
 
       - name: Scan repository for secrets
         run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   publish:
     name: Publish npm Package
@@ -224,3 +251,8 @@ jobs:
         env:
           PACKAGE_VERSION: ${{ steps.package.outputs.version }}
         run: npm view "meta-language@$PACKAGE_VERSION" version
+
+      - name: Clean regenerable caches
+        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
