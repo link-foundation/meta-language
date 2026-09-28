@@ -17,14 +17,15 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import {
   appendFileSync,
   existsSync,
+  linkSync,
   lstatSync,
   mkdirSync,
   readdirSync,
   readFileSync,
   realpathSync,
   rmSync,
+  statSync,
   statfsSync,
-  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import os from 'node:os';
@@ -143,21 +144,87 @@ export function liveLeases(stateDir) {
   return leases;
 }
 
-// The cleanup lock serializes concurrent cleanups of one worktree.
+// The cleanup lock serializes concurrent cleanups of one worktree. The lock
+// file appears with its holder's pid already in it (a hard link of a written
+// temporary file), so a contender never reads a half-written lock, and only
+// the contender holding the `.break` guard may remove a stale lock.
+
+const STALE_GUARD_MS = 60_000;
+
+/** Creates `file` holding this pid, or returns false when it already exists. */
+function createLockFile(file) {
+  const temporary = `${file}.${process.pid}.tmp`;
+  writeFileSync(temporary, `${process.pid}\n`);
+  try {
+    linkSync(temporary, file);
+    return true;
+  } catch (error) {
+    if (error.code === 'EEXIST') return false;
+    if (!['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'ENOSYS'].includes(error.code)) throw error;
+    // File systems without hard links fall back to an exclusive create.
+    try {
+      writeFileSync(file, `${process.pid}\n`, { flag: 'wx' });
+      return true;
+    } catch (fallbackError) {
+      if (fallbackError.code === 'EEXIST') return false;
+      throw fallbackError;
+    }
+  } finally {
+    rmSync(temporary, { force: true });
+  }
+}
+
+/** The pid in the lock file, null while it is unreadable, undefined when it is gone. */
+function lockHolder(file) {
+  let text;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return undefined;
+    throw error;
+  }
+  const pid = Number.parseInt(text, 10);
+  return Number.isInteger(pid) ? pid : null;
+}
+
+const olderThan = (file, milliseconds) => {
+  try {
+    return Date.now() - statSync(file).mtimeMs > milliseconds;
+  } catch {
+    return false;
+  }
+};
+
+/** Removes the lock when it still names the exited `holder`; false when another contender is at it. */
+function breakStaleLock(file, holder) {
+  const guard = `${file}.break`;
+  try {
+    mkdirSync(guard);
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    // A contender that died while holding the guard leaves it behind.
+    if (olderThan(guard, STALE_GUARD_MS)) rmSync(guard, { recursive: true, force: true });
+    return false;
+  }
+  try {
+    if (lockHolder(file) === holder) rmSync(file, { force: true });
+    return true;
+  } finally {
+    rmSync(guard, { recursive: true, force: true });
+  }
+}
 
 function acquireCleanupLock(stateDir) {
   mkdirSync(stateDir, { recursive: true });
   const file = path.join(stateDir, 'cleanup.lock');
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      writeFileSync(file, `${process.pid}\n`, { flag: 'wx' });
-      return { file, release: () => rmSync(file, { force: true }) };
-    } catch (error) {
-      if (error.code !== 'EEXIST') throw error;
-      const holder = Number.parseInt(readFileSync(file, 'utf8'), 10);
-      if (processAlive(holder) && holder !== process.pid) return { busy: holder };
-      unlinkSync(file);
-    }
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (createLockFile(file)) return { file, release: () => rmSync(file, { force: true }) };
+    const holder = lockHolder(file);
+    if (holder === undefined) continue;
+    // Only the exclusive-create fallback can leave a lock without a pid; it is stale once old.
+    if (holder === null && !olderThan(file, STALE_GUARD_MS)) return { busy: -1 };
+    if (holder !== null && holder !== process.pid && processAlive(holder)) return { busy: holder };
+    if (!breakStaleLock(file, holder)) return { busy: holder ?? -1 };
   }
   return { busy: -1 };
 }

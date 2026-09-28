@@ -3,7 +3,7 @@
 // (requirements I195-CACHE-CLEANUP-ENTRY-POINT, -SAFETY and -BUDGET).
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 
@@ -324,22 +324,39 @@ test('concurrent cleanups of one worktree are serialized', async (t) => {
   assert.ok(existsSync(fixture.caches.rustTarget), 'a busy run removes nothing');
   writeFileSync(lockFile, `${exitedPid()}\n`);
 
-  const env = { ...process.env, TMPDIR: fixture.tmpRoot };
-  const runs = await Promise.all([1, 2, 3].map((index) => new Promise((resolve) => {
-    const child = spawn(process.execPath, [CLEAN_CACHES, '--full', '--no-docker', '--json', path.join(fixture.base, `run-${index}.json`)], {
-      cwd: fixture.root,
-      env,
-      stdio: 'ignore',
-    });
-    child.on('exit', (code) => resolve(code));
-  })));
-  assert.deepEqual(runs, [0, 0, 0]);
-  const statuses = [1, 2, 3].map((index) => readJson(path.join(fixture.base, `run-${index}.json`)).status);
-  assert.ok(statuses.includes('ok'));
-  assert.ok(statuses.every((status) => status === 'ok' || status === 'busy'), statuses.join(','));
-  assert.ok(!existsSync(lockFile), 'the lock is released');
-  for (const file of Object.values(fixture.caches)) assert.ok(!existsSync(file), file);
-  assertKept(fixture);
+  // A lock created but not yet written, or a lost race to break a stale
+  // lock, must not let a second cleanup in.
+  writeFileSync(lockFile, '');
+  assert.equal(clean(fixture, { mode: 'full' }).status, 'busy', 'a lock without a pid yet is busy');
+  writeFileSync(lockFile, `${exitedPid()}\n`);
+  mkdirSync(`${lockFile}.break`);
+  assert.equal(clean(fixture, { mode: 'full' }).status, 'busy', 'another contender is breaking the stale lock');
+  rmSync(`${lockFile}.break`, { recursive: true });
+  assert.ok(existsSync(fixture.caches.rustTarget));
+
+  // Several rounds of eight contenders: before the lock was created with its
+  // pid in place, a contender could read it while its holder released it,
+  // fail with ENOENT and exit 1 (experiments/cache-cleanup-lock-race.mjs).
+  for (let round = 0; round < 3; round += 1) {
+    const contenders = fixtureWithCaches(t);
+    const env = { ...process.env, TMPDIR: contenders.tmpRoot };
+    const reports = [1, 2, 3, 4, 5, 6, 7, 8].map((index) => path.join(fixture.base, `round-${round}-run-${index}.json`));
+    const runs = await Promise.all(reports.map((report) => new Promise((resolve) => {
+      const child = spawn(process.execPath, [CLEAN_CACHES, '--full', '--no-docker', '--json', report], {
+        cwd: contenders.root,
+        env,
+        stdio: 'ignore',
+      });
+      child.on('exit', (code) => resolve(code));
+    })));
+    assert.deepEqual(runs, reports.map(() => 0));
+    const statuses = reports.map((report) => readJson(report).status);
+    assert.ok(statuses.includes('ok'));
+    assert.ok(statuses.every((status) => status === 'ok' || status === 'busy'), statuses.join(','));
+    assert.ok(!existsSync(path.join(contenders.root, '.git/meta-language-cache/cleanup.lock')), 'the lock is released');
+    for (const file of Object.values(contenders.caches)) assert.ok(!existsSync(file), file);
+    assertKept(contenders);
+  }
   observeCacheCleanup('I195-CACHE-CLEANUP-SAFETY', ['concurrentCleanupsSerialized'], 'concurrent cleanups of one worktree are serialized');
 });
 
