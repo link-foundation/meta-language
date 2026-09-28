@@ -18,8 +18,7 @@
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -28,6 +27,8 @@ import { GRAMMAR_SOURCES, cargoLockVersions, checkoutUpstream, grammarSource } f
 import { cliGrammarDirectory, cliOutput } from './generate-default-cst-expectations.mjs';
 import { cliCstToLines, cstLinesToSexp, parseCstLines, rowOffsets } from '../tests/support/cst-lines.js';
 import { normalize, parseCorpus, stripFields } from '../tests/support/cst-sexpression.js';
+
+import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -273,7 +274,7 @@ async function generate(work, treeSitter) {
   const version = (await run(treeSitter, ['--version'])).stdout.trim();
   if (version !== lock.treeSitterCli) throw new Error(`${treeSitter} is ${version}; the grammar lock pins ${lock.treeSitterCli}`);
   const versions = await cargoLockVersions();
-  const scratch = await mkdtemp(join(tmpdir(), 'issue-195-conformance-'));
+  const scratch = makeScratchDirectory('issue-195-conformance-');
   process.env.TREE_SITTER_LIBDIR = join(scratch, 'lib');
   const cases = JSON.parse(await readFile(join(fixtureDir, 'cases.json'), 'utf8'));
   const errorRecovery = JSON.parse(await readFile(join(fixtureDir, 'error-recovery.json'), 'utf8'));
@@ -379,7 +380,7 @@ async function main() {
   const args = process.argv.slice(2);
   const treeSitter = process.env.TREE_SITTER_CLI ?? 'tree-sitter';
   const workIndex = args.indexOf('--work');
-  const work = workIndex >= 0 ? resolve(args[workIndex + 1]) : await mkdtemp(join(tmpdir(), 'issue-195-upstream-'));
+  const work = workIndex >= 0 ? resolve(args[workIndex + 1]) : makeScratchDirectory('issue-195-upstream-');
   await mkdir(work, { recursive: true });
   try {
     const outputs = await generate(work, treeSitter);

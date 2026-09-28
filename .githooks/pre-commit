@@ -1,0 +1,28 @@
+#!/bin/sh
+# meta-language pre-commit hook, installed by `node scripts/install-dev-hooks.mjs`
+# (which sets `core.hooksPath` to `.githooks` in this clone only).
+#
+# 1. Runs the hook that `core.hooksPath` would otherwise hide, such as the one
+#    `pre-commit install` wrote to `<git-common-dir>/hooks/pre-commit`, and
+#    keeps its exit status.
+# 2. Cleans the regenerable caches of this worktree on every commit, including
+#    documentation-only commits (docs/cache-cleanup.md). The cleanup never
+#    blocks a commit.
+status=0
+top=$(git rev-parse --show-toplevel) || exit 1
+common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || common=$(git rev-parse --git-common-dir)
+chained="$common/hooks/pre-commit"
+self_dir=$(cd "$(dirname "$0")" && pwd -P)
+if [ -z "$META_LANGUAGE_HOOK_CHAINED" ] && [ -x "$chained" ]; then
+  chained_dir=$(cd "$(dirname "$chained")" && pwd -P)
+  if [ "$chained_dir" != "$self_dir" ]; then
+    META_LANGUAGE_HOOK_CHAINED=1 "$chained" "$@" || status=$?
+  fi
+fi
+if command -v node >/dev/null 2>&1; then
+  node "$top/scripts/clean-caches.mjs" --event pre-commit --quiet ||
+    echo "pre-commit: cache cleanup failed; the commit continues" >&2
+else
+  echo "pre-commit: node is not installed, so caches were not cleaned (see docs/cache-cleanup.md)" >&2
+fi
+exit "$status"

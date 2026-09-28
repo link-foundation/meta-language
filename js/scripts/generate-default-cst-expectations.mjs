@@ -18,8 +18,7 @@
 // E (error node), M (missing node) and X (extra node, such as a comment).
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { cp, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -32,6 +31,8 @@ import {
   ensureGrammarConfig,
   grammarSource,
 } from './build-vendored-grammars.mjs';
+
+import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -515,7 +516,7 @@ async function generate() {
 async function crossCheck(expected, treeSitter) {
   const inventory = JSON.parse(await readFile(inventoryPath, 'utf8'));
   const versions = await cargoLockVersions();
-  const scratch = await mkdtemp(join(tmpdir(), 'default-cst-cli-'));
+  const scratch = makeScratchDirectory('default-cst-cli-');
   const directories = new Map();
   const problems = [];
   const checked = [];

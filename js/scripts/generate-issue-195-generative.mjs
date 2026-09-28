@@ -14,8 +14,7 @@
 // recorded seed and fails when a fixture differs.
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -25,6 +24,8 @@ import { cliGrammarDirectory, cliOutput } from './generate-default-cst-expectati
 import { LANGUAGES } from './generate-issue-195-conformance.mjs';
 import { cliCstToLines, parseCstLines } from '../tests/support/cst-lines.js';
 import { COUNTS, DEFAULT_SEED, createRandom, generateInputs, relationHolds, seedNumber, seedSources } from '../tests/support/generative.js';
+
+import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -62,7 +63,7 @@ async function generate(treeSitter, seed) {
   const versions = await cargoLockVersions();
   const reproducerBytes = await readFile(join(fixtureDir, 'reproducers.json'));
   const reproducers = JSON.parse(reproducerBytes.toString('utf8'));
-  const scratch = await mkdtemp(join(tmpdir(), 'issue-195-generative-'));
+  const scratch = makeScratchDirectory('issue-195-generative-');
   process.env.TREE_SITTER_LIBDIR = join(scratch, 'lib');
   const outputs = new Map();
   const manifest = {

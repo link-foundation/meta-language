@@ -55,6 +55,27 @@ doc/
 # WebAssembly demo build output (built by wasm-pack in rust/web/)
 rust/web/pkg/
 
+# npm pack output for temporary package consumers
+/js/*.tgz
+/*.tgz
+
+# Lean (lake) and Rocq build output (cleaned by scripts/clean-caches.mjs)
+.lake/
+*.vo
+*.vok
+*.vos
+*.glob
+*.aux
+.lia.cache
+.nia.cache
+Makefile.coq
+Makefile.coq.conf
+.Makefile.coq.d
+
+# Compiled parser intermediates of vendored grammars
+*.o
+*.obj
+
 # Playwright MCP artifacts and local screenshot captures
 .playwright-mcp/
 /landing-hero.png

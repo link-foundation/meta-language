@@ -14,12 +14,14 @@
 //   node js/scripts/build-web-tree-sitter-runtime.mjs --check  # verify lock only
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { gunzipSync, gzipSync } from 'node:zlib';
+
+import { CONTAINER_LABEL } from '../../scripts/lib/cache-classes.mjs';
+import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -51,7 +53,8 @@ async function compile(checkout, output) {
     .replace(/,$/u, '');
   await mkdir(output, { recursive: true });
   await run('docker', [
-    'run', '--rm', '--volume', `${checkout}:/src`, '--volume', `${output}:/out`,
+    // The label lets scripts/clean-caches.mjs find the container if it outlives an interrupted run.
+    'run', '--rm', '--label', CONTAINER_LABEL, '--volume', `${checkout}:/src`, '--volume', `${output}:/out`,
     '--user', String(process.getuid()), '--workdir', '/src', `emscripten/emsdk:${SOURCE.emscripten}`,
     'emcc', '-O3', '--minify', '0', '-gsource-map', '--source-map-base', '.', '-fno-exceptions', '-std=c11',
     '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'INITIAL_MEMORY=33554432', '-s', 'ALLOW_MEMORY_GROWTH=1',
@@ -101,7 +104,7 @@ async function main() {
     console.log(`web-tree-sitter runtime lock matches ${SOURCE.version} with ${SOURCE.patch}`);
     return;
   }
-  const work = await mkdtemp(join(tmpdir(), 'web-tree-sitter-'));
+  const work = makeScratchDirectory('web-tree-sitter-');
   try {
     const checkout = join(work, 'tree-sitter');
     await run('git', ['clone', '--quiet', '--depth', '1', '--branch', `v${SOURCE.version}`,

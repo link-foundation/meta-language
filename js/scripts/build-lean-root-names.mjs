@@ -4,10 +4,11 @@
 // Requires `lean` on PATH.
 // Usage: node scripts/build-lean-root-names.mjs [--check]
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 
 const PROGRAM = `import Lean
 open Lean in
@@ -27,7 +28,7 @@ const targets = {
   js: join(root, 'js', 'src', 'translation', 'lean-root-names.js'),
   rust: join(root, 'rust', 'src', 'translation', 'lean_root_names.rs'),
 };
-const work = mkdtempSync(join(tmpdir(), 'lean-roots-'));
+const work = makeScratchDirectory('lean-roots-');
 writeFileSync(join(work, 'Roots.lean'), PROGRAM);
 const version = execFileSync('lean', ['--version'], { encoding: 'utf8' }).trim();
 const names = execFileSync('lean', ['--run', 'Roots.lean'], { cwd: work, encoding: 'utf8', maxBuffer: 1 << 26 })

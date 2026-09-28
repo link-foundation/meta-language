@@ -10,12 +10,14 @@
 import { createHash } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { execFile } from 'node:child_process';
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile, readdir } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { homedir, tmpdir } from 'node:os';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+
+import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -241,7 +243,7 @@ export async function checkoutUpstream(source, checkout, treeSitter) {
 async function refreshLicenses(lock, versions) {
   for (const id of Object.keys(lock.grammars)) {
     const source = await grammarSource(id, versions);
-    const work = await mkdtemp(join(tmpdir(), `grammar-${id}-`));
+    const work = makeScratchDirectory(`grammar-${id}-`);
     try {
       let dir = source.crateDir;
       if (source.vendored) {
@@ -260,7 +262,7 @@ async function refreshLicenses(lock, versions) {
 async function buildOne(id, versions, treeSitter) {
   const source = await grammarSource(id, versions);
   // Docker can only mount writable, non-hidden paths, so build from a copy.
-  const work = await mkdtemp(join(tmpdir(), `grammar-${id}-`));
+  const work = makeScratchDirectory(`grammar-${id}-`);
   try {
     if (source.vendored) {
       // The CLI needs the full grammar tree, so build from the pinned upstream

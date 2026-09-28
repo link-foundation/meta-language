@@ -14,12 +14,29 @@ aligned with the issue requirements.
    cargo install rust-script
    ```
 
-3. Build and test:
+3. Install the repository's git hooks. The pre-commit hook cleans the
+   regenerable caches of this worktree on every commit, including
+   documentation-only commits, and still runs a hook that `pre-commit install`
+   wrote (see [docs/cache-cleanup.md](docs/cache-cleanup.md)):
 
    ```bash
+   node scripts/install-dev-hooks.mjs
+   node scripts/install-dev-hooks.mjs --check
+   ```
+
+4. Build and test. Long builds and test runs can go through the cleanup
+   wrapper, which bounds their parallelism and cleans up afterwards even when
+   they fail or are interrupted:
+
+   ```bash
+   cd rust
    cargo build
    cargo test
+   node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features
    ```
+
+   `node scripts/clean-caches.mjs` prunes the caches to the disk budget at any
+   time, and `node scripts/clean-caches.mjs --full` removes all of them.
 
 ## Code Standards
 
