@@ -3,7 +3,8 @@ use meta_language::{LinkNetwork, LinkType, ParseConfiguration};
 type SourceBuilder = fn(usize) -> String;
 
 // Mirrors js/tests/unicode-input-chunks.test.js: the JavaScript runtime reads input in
-// 5119-code-unit chunks, so both runtimes must keep astral characters on every alignment.
+// 4096-byte chunks through a 5119-unit buffer, so both runtimes must keep astral characters
+// on every alignment around both boundaries.
 const ASTRAL_CASES: [(&str, SourceBuilder, &str); 4] = [
     (
         "JavaScript",
@@ -30,7 +31,7 @@ const ASTRAL_CASES: [(&str, SourceBuilder, &str); 4] = [
 #[test]
 fn astral_characters_straddling_a_parser_input_chunk_boundary_stay_whole() {
     for (language, build, expected) in ASTRAL_CASES {
-        for padding in 5095..=5125 {
+        for padding in (4070..=4100).chain(5095..=5125) {
             let source = build(padding);
             let network = LinkNetwork::parse(&source, language, ParseConfiguration::default());
             let label = format!("{language} with {padding} padding code units");

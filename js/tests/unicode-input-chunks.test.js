@@ -3,8 +3,10 @@ import { test } from 'node:test';
 
 import { LinkNetwork, LinkType } from '../src/index.js';
 
-// web-tree-sitter reads string input 5119 UTF-16 code units at a time; these sources place
-// an astral character (a surrogate pair in UTF-16) on every alignment around that boundary.
+// The JavaScript runtime hands the parser UTF-8 input in chunks of at most 4096 bytes, and
+// web-tree-sitter copies each chunk into a 5119-unit buffer; these sources place a four-byte
+// astral character (a surrogate pair in UTF-16) on every alignment around both boundaries.
+const PADDINGS = [...Array(31).keys()].flatMap((offset) => [4070 + offset, 5095 + offset]);
 const ASTRAL_CASES = [
   ['JavaScript', (padding) => `const ${'a'.repeat(padding)}𝓝 = 1;\n`, '𝓝'],
   ['Rust', (padding) => `//${' '.repeat(padding)}\nconst C: char = '𐲝';\n`, "'𐲝'"],
@@ -14,7 +16,7 @@ const ASTRAL_CASES = [
 
 test('astral characters straddling a parser input chunk boundary stay whole', () => {
   for (const [language, build, expected] of ASTRAL_CASES) {
-    for (let padding = 5095; padding <= 5125; padding += 1) {
+    for (const padding of PADDINGS) {
       const source = build(padding);
       const network = LinkNetwork.parse(source, language);
       const label = `${language} with ${padding} padding code units`;

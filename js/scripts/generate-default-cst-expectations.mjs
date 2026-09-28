@@ -56,7 +56,11 @@ export const PUBLIC_PROJECTIONS = Object.freeze({
 
 const MARKDOWN_INLINE_CONTAINERS = new Set(['inline', 'pipe_table_cell']);
 
-await Parser.init();
+// The same UTF-8 runtime the package parses with (see
+// js/scripts/build-web-tree-sitter-runtime.mjs), so node offsets are UTF-8 bytes.
+await Parser.init({
+  wasmBinary: gunzipSync(await readFile(join(root, 'js/src/vendor/web-tree-sitter/tree-sitter.wasm.gz'))),
+});
 const languages = new Map();
 async function loadGrammar(id) {
   if (!languages.has(id)) {
@@ -65,23 +69,20 @@ async function loadGrammar(id) {
   return languages.get(id);
 }
 
-/** UTF-16 index -> UTF-8 byte offset for every index of `text`. */
+/** Runtime node offset -> UTF-8 byte offset (the identity) for every byte of `text`. */
 function byteOffsets(text) {
-  const offsets = new Uint32Array(text.length + 1);
-  let byte = 0;
-  for (let index = 0; index < text.length; index += 1) {
-    offsets[index] = byte;
-    const unit = text.charCodeAt(index);
-    if (unit >= 0xd800 && unit <= 0xdbff && index + 1 < text.length) {
-      offsets[index + 1] = byte;
-      byte += 4;
-      index += 1;
-    } else {
-      byte += unit < 0x80 ? 1 : unit < 0x800 ? 2 : 3;
-    }
-  }
-  offsets[text.length] = byte;
-  return offsets;
+  const length = encoder.encode(text).length;
+  return Uint32Array.from({ length: length + 1 }, (_, byte) => byte);
+}
+
+/** Input callback for the UTF-8 runtime: bytes as char codes, split on character boundaries. */
+function utf8Input(text) {
+  const bytes = encoder.encode(text);
+  return (index) => {
+    let end = Math.min(bytes.length, index + 4096);
+    while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end -= 1;
+    return String.fromCharCode(...bytes.subarray(index, end));
+  };
 }
 
 function flagsOf(node) {
@@ -91,7 +92,7 @@ function flagsOf(node) {
 async function parse(grammar, text, options) {
   const parser = new Parser();
   parser.setLanguage(await loadGrammar(grammar));
-  const tree = parser.parse(text, null, options);
+  const tree = parser.parse(utf8Input(text), null, options);
   parser.delete();
   if (!tree) throw new Error(`${grammar} returned no tree`);
   return tree;

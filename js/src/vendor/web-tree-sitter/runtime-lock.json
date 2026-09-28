@@ -1,0 +1,12 @@
+{
+  "description": "web-tree-sitter runtime patched to parse UTF-8 input, as the native runtime does.",
+  "upstream": "tree-sitter/tree-sitter",
+  "version": "0.25.10",
+  "revision": "da6fe9beb4f7f67beb75914ca8e0d48ae48d6406",
+  "emscripten": "4.0.4",
+  "patch": "js/src/vendor/web-tree-sitter/utf8-input.patch",
+  "patchSha256": "1224891ceda9e742a2c6aea6c9af3973328b0f77ecfb4fc893243de5fa085938",
+  "upstreamWasmSha256": "f38dcc4b43b818f9a0785bc1c6d5611a75ac4cdd428ff3f02757c34ca4e46d7f",
+  "wasmSha256": "5e7da9c8a88ff45d47c1b6d17752df28452a2431eb07a1d2096abb5356f62c2a",
+  "license": "LICENSE"
+}

@@ -21,7 +21,13 @@ export const GRAMMAR_LOCK = Object.freeze(
   JSON.parse(await readFile(new URL('grammar-lock.json', GRAMMAR_DIRECTORY), 'utf8')),
 );
 
-await WebTreeSitterParser.init();
+// The runtime is web-tree-sitter's own build patched to read UTF-8 input (see
+// vendor/web-tree-sitter/runtime-lock.json). The published build reads UTF-16,
+// which doubles tree-sitter's per-byte error-recovery costs, so malformed input
+// recovered differently than in the native runtime, which parses UTF-8.
+await WebTreeSitterParser.init({
+  wasmBinary: gunzipSync(await readFile(new URL('./vendor/web-tree-sitter/tree-sitter.wasm.gz', import.meta.url))),
+});
 const GRAMMARS = new Map(
   await Promise.all(
     Object.keys(GRAMMAR_LOCK.grammars).map(async (id) => [
@@ -34,12 +40,10 @@ const GRAMMARS = new Map(
 );
 
 const LEAN_PUBLIC_ROOT = 'file';
-// web-tree-sitter copies string input into a buffer of 5119 UTF-16 code units per read, and
-// its lexer does not re-read a chunk that ends between the two halves of a surrogate pair, so
-// an astral character straddling that boundary is lexed as two lone surrogates. Reading the
-// text through a callback whose chunks never end on a high surrogate keeps every code point
-// whole, matching the native runtime, which reads the complete UTF-8 text at once.
-const INPUT_CHUNK_CODE_UNITS = 4096;
+// The patched runtime copies each chunk the input callback returns into a buffer of 5119
+// 16-bit units and keeps their low bytes, so the callback returns UTF-8 bytes as a string of
+// char codes 0-255, in chunks that end on a UTF-8 character boundary.
+const INPUT_CHUNK_BYTES = 4096;
 const ROCQ_BUILTIN_TYPES = new Set(['bool', 'nat', 'Prop', 'Set', 'SProp', 'Type', 'Z']);
 
 /** Returns the canonical name for a grammar-backed JavaScript frontend. */
@@ -130,12 +134,20 @@ function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
   return { ...node, children, span };
 }
 
-function chunkedInput(text) {
-  return (index) => {
-    let end = Math.min(text.length, index + INPUT_CHUNK_CODE_UNITS);
-    const last = text.charCodeAt(end - 1);
-    if (end < text.length && last >= 0xd800 && last <= 0xdbff) end -= 1;
-    return text.slice(index, end);
+/**
+ * Reads `text` as UTF-8 for the patched runtime, whose node offsets are UTF-8
+ * byte offsets; `offsetOf` maps them back to string offsets.
+ */
+function utf8Input(text, boundaries) {
+  const bytes = encoder.encode(text);
+  const offsets = new Map([...boundaries].map(([offset, { byte }]) => [byte, offset]));
+  return {
+    read: (index) => {
+      let end = Math.min(bytes.length, index + INPUT_CHUNK_BYTES);
+      while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end -= 1;
+      return String.fromCharCode(...bytes.subarray(index, end));
+    },
+    offsetOf: (byte) => offsets.get(byte),
   };
 }
 
@@ -154,13 +166,14 @@ function parseGrammarCst(text, canonical) {
   }
   const parser = new WebTreeSitterParser();
   parser.setLanguage(grammar);
-  const parsed = parser.parse(chunkedInput(text));
+  const input = utf8Input(text, boundaries);
+  const parsed = parser.parse(input.read);
   parser.delete();
   if (!parsed) {
     throw new Error(`tree-sitter parser returned no ${canonical} syntax tree`);
   }
   const root = parsed.rootNode;
-  const adapter = TREE_SITTER_ADAPTER;
+  const adapter = treeSitterAdapter(input);
 
   // Tree-sitter starts the root after its leading padding, so the text
   // outside the root is retained as gap nodes beside it.
@@ -214,7 +227,7 @@ function convertGrammarNode(node, adapter, canonical, text, boundaries, tokens, 
   const children = [];
   let coveredUntil = start;
   const inlineTree = canonical === 'Markdown' && MARKDOWN_INLINE_CONTAINERS.has(adapter.term(node))
-    ? parseMarkdownInline(node, text)
+    ? parseMarkdownInline(node, adapter.input)
     : undefined;
   const ownChildren = inlineTree
     ? adapter.children(inlineTree.rootNode)
@@ -303,7 +316,7 @@ function markdownInlineExcludedChildren(node) {
   return node.children.slice(1).filter((child) => child.isNamed);
 }
 
-function parseMarkdownInline(node, text) {
+function parseMarkdownInline(node, input) {
   const includedRanges = [];
   let start = { index: node.startIndex, position: node.startPosition };
   for (const child of markdownInlineExcludedChildren(node)) {
@@ -323,7 +336,7 @@ function parseMarkdownInline(node, text) {
   });
   const parser = new WebTreeSitterParser();
   parser.setLanguage(GRAMMARS.get('markdown_inline'));
-  const tree = parser.parse(chunkedInput(text), null, { includedRanges });
+  const tree = parser.parse(input.read, null, { includedRanges });
   parser.delete();
   if (!tree) throw new Error('tree-sitter parser returned no Markdown inline syntax tree');
   return tree;
@@ -411,10 +424,11 @@ function propertyOrCall(node, name) {
   return typeof value === 'function' ? value.call(node) : value;
 }
 
-const TREE_SITTER_ADAPTER = Object.freeze({
+const treeSitterAdapter = (input) => Object.freeze({
+  input,
   term: (node) => node.type,
-  startOffset: (node) => node.startIndex,
-  endOffset: (node) => node.endIndex,
+  startOffset: (node) => input.offsetOf(node.startIndex),
+  endOffset: (node) => input.offsetOf(node.endIndex),
   isNamed: (node) => propertyOrCall(node, 'isNamed'),
   isError: (node) => propertyOrCall(node, 'isError'),
   isMissing: (node) => propertyOrCall(node, 'isMissing'),
