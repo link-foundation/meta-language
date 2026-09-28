@@ -35,11 +35,12 @@
     },
     "cmake": {
       "id": "cmake",
-      "crate": "tree-sitter-cmake",
-      "directory": ".",
-      "version": "0.7.5",
+      "upstream": "uyha/tree-sitter-cmake",
+      "vendored": "rust/vendor/tree-sitter-cmake",
+      "patch": "rust/vendor/tree-sitter-cmake/scanner-state.patch",
+      "version": "v0.7.5",
       "parserSha256": "ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2",
-      "wasmSha256": "38a05d65733bf24f4469b01d644d6b8e26e779fcc40ae562037dd699aee6e103",
+      "wasmSha256": "127f28dc05f11ba2c6bdda2de9542b576dcd06610ec30c35da96ffad505b1dc9",
       "license": "cmake.LICENSE"
     },
     "cpp": {

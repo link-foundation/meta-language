@@ -1,0 +1,34 @@
+diff --git a/src/scanner.c b/src/scanner.c
+index 08db2e1..b235a1b 100644
+--- a/src/scanner.c
++++ b/src/scanner.c
+@@ -105,8 +105,18 @@ static bool is_close_brackets(struct TreeSitterCMakeState *state,
+   return true;
+ }
+ 
++static void reset(struct TreeSitterCMakeState *state) {
++  state->level = 0;
++  /* No bracket is open. LINE_COMMENT is never stored by the scan, so neither
++     content token applies until an opening bracket is scanned. */
++  state->token = LINE_COMMENT;
++}
++
+ void *tree_sitter_cmake_external_scanner_create() {
+-  return ts_malloc(sizeof(struct TreeSitterCMakeState));
++  struct TreeSitterCMakeState *state =
++      ts_malloc(sizeof(struct TreeSitterCMakeState));
++  reset(state);
++  return state;
+ }
+ 
+ void tree_sitter_cmake_external_scanner_destroy(void *payload) {
+@@ -125,8 +135,7 @@ void tree_sitter_cmake_external_scanner_deserialize(void *payload,
+   if (length == STATE_SIZE) {
+     memcpy(payload, buffer, length);
+   } else {
+-    struct TreeSitterCMakeState *state = payload;
+-    state->level = 0;
++    reset(payload);
+   }
+ }
+ 

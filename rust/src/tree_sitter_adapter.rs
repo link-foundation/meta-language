@@ -58,6 +58,20 @@ mod lean_grammar {
     pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_lean) };
 }
 
+#[allow(unsafe_code)]
+mod cmake_grammar {
+    use tree_sitter_language::LanguageFn;
+
+    unsafe extern "C" {
+        fn tree_sitter_cmake() -> *const ();
+    }
+
+    // SAFETY: build.rs compiles the generated parser and the patched scanner
+    // from the pinned revision recorded in vendor/tree-sitter-cmake/NOTICE.md
+    // with this exact symbol.
+    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_cmake) };
+}
+
 use crate::line_index::LineIndex;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point,
@@ -305,7 +319,7 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "agda" => tree_sitter_agda::LANGUAGE.into(),
         "bash" => tree_sitter_bash::LANGUAGE.into(),
         "c" => tree_sitter_c::LANGUAGE.into(),
-        "cmake" => tree_sitter_cmake::LANGUAGE.into(),
+        "cmake" => cmake_grammar::LANGUAGE.into(),
         "cpp" => tree_sitter_cpp::LANGUAGE.into(),
         "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),
         "css" => tree_sitter_css::LANGUAGE.into(),

@@ -2794,7 +2794,7 @@
     "CMake": {
       "grammars": {
         "cmake": {
-          "version": "0.7.5",
+          "version": "v0.7.5",
           "parserSha256": "ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2",
           "symbolNamesSha256": "6ec09454d426da1ba523d1746fdeb8ffcf9a8bde44250da1c4bd730a1633f7fc"
         }

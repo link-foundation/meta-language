@@ -33,7 +33,16 @@ export const GRAMMAR_SOURCES = Object.freeze({
   agda: { crate: 'tree-sitter-agda', dir: '.' },
   bash: { crate: 'tree-sitter-bash', dir: '.' },
   c: { crate: 'tree-sitter-c', dir: '.' },
-  cmake: { crate: 'tree-sitter-cmake', dir: '.' },
+  cmake: {
+    vendored: 'rust/vendor/tree-sitter-cmake',
+    upstream: 'uyha/tree-sitter-cmake',
+    version: 'v0.7.5',
+    revision: 'e997bd0b275ca525ce9befecedf5299031183661',
+    // The external scanner starts with no bracket open instead of reading
+    // uninitialised memory, so error recovery is the same on every platform.
+    patch: 'rust/vendor/tree-sitter-cmake/scanner-state.patch',
+    dir: '.',
+  },
   cpp: { crate: 'tree-sitter-cpp', dir: '.' },
   csv: {
     vendored: 'rust/vendor/tree-sitter-csv',
@@ -262,7 +271,12 @@ export async function checkoutUpstream(source, checkout, treeSitter) {
   if (!treeSitter) return;
   if (source.patch) {
     await run('git', ['-C', checkout, 'apply', join(root, source.patch)]);
-    await run(treeSitter, ['generate'], { cwd: join(checkout, source.dir) });
+    // A patch that only fixes the hand-written scanner keeps the committed
+    // generated parser; one that changes the grammar regenerates it.
+    const { stdout: changed } = await run('git', ['-C', checkout, 'diff', '--name-only']);
+    if (!changed.trim().split('\n').every((path) => path.endsWith('src/scanner.c'))) {
+      await run(treeSitter, ['generate'], { cwd: join(checkout, source.dir) });
+    }
   }
   const upstream = await readFile(join(checkout, source.dir, 'src/parser.c'));
   if (sha256(upstream) !== sha256(source.parser)) {
