@@ -11,3 +11,7 @@ parity/fixtures/translation-corpus/** text eol=lf
 # The issue #195 evidence corpus is hashed into every platform consumer report and must
 # hash identically on Windows checkouts, or the supported-platform join rejects them.
 parity/fixtures/issue-195-evidence.json text eol=lf
+# The issue #195 conformance and generative fixtures pin the SHA-256 of their corpus files,
+# sources and seeds, and slice byte offsets out of them; Windows checkouts must not add CRs.
+parity/fixtures/issue-195-conformance/** text eol=lf
+parity/fixtures/issue-195-generative/** text eol=lf

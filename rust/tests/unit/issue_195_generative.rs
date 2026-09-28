@@ -266,6 +266,32 @@ fn runtime_cases() -> usize {
         .unwrap_or(48)
 }
 
+/// Appends a run-time case (its base source and edits) as a JSON line to the
+/// file named by `ISSUE_195_GENERATIVE_TRACE`, before the case is parsed, so a
+/// case that crashes a grammar can be replayed outside the suite. Off by default.
+fn trace_runtime_case(language: &str, base: &str, edits: &[Edit]) {
+    let Some(path) = std::env::var_os("ISSUE_195_GENERATIVE_TRACE") else {
+        return;
+    };
+    let edits: Vec<Value> = edits
+        .iter()
+        .map(|edit| {
+            serde_json::json!({
+                "start": edit.start,
+                "end": edit.end,
+                "replacement": edit.replacement,
+            })
+        })
+        .collect();
+    let line = serde_json::json!({ "language": language, "base": base, "edits": edits });
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .expect("trace file");
+    std::io::Write::write_all(&mut file, format!("{line}\n").as_bytes()).expect("trace line");
+}
+
 /// The run-time fuzz pass: new inputs from the run seed, checked for the
 /// properties, the blank-line relation and incremental edits.
 fn runtime_problems(language: &str, seed: &str, cases: usize) -> (Vec<String>, usize) {
@@ -283,6 +309,7 @@ fn runtime_problems(language: &str, seed: &str, cases: usize) -> (Vec<String>, u
             let edit = random_edit(&mut random, &source, language);
             source = apply_text_edit(&source, &edit);
             edits.push(edit.clone());
+            trace_runtime_case(language, &base, &edits);
             if !network.apply_edit(ByteRange::new(edit.start, edit.end), &edit.replacement) {
                 problems.push(format!("apply_edit refused {edit:?}"));
             }
