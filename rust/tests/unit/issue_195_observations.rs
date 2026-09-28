@@ -22,6 +22,9 @@ pub const FOUR_LANGUAGE_FIXTURE: &str = "parity/fixtures/four-language-conforman
 #[allow(dead_code)]
 /// External conformance, generative, and native-validation evidence.
 pub const EVIDENCE_FIXTURE: &str = "parity/fixtures/issue-195-evidence.json";
+/// The pinned upstream corpora, real projects and native CLI trees of the
+/// four-language conformance suite.
+pub const CONFORMANCE_FIXTURE: &str = "parity/fixtures/issue-195-conformance/manifest.json";
 /// The grammar importer corpus.
 pub const GRAMMAR_IMPORTER_FIXTURE: &str = "parity/fixtures/grammar-importers.json";
 
