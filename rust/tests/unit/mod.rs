@@ -90,6 +90,7 @@ mod translation_rocq;
 mod translation_rules;
 mod translation_rust_frontend;
 mod translation_stages;
+mod unicode_input_chunks;
 
 #[path = "ci-cd/mod.rs"]
 mod ci_cd;

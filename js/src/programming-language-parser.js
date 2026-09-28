@@ -34,6 +34,12 @@ const GRAMMARS = new Map(
 );
 
 const LEAN_PUBLIC_ROOT = 'file';
+// web-tree-sitter copies string input into a buffer of 5119 UTF-16 code units per read, and
+// its lexer does not re-read a chunk that ends between the two halves of a surrogate pair, so
+// an astral character straddling that boundary is lexed as two lone surrogates. Reading the
+// text through a callback whose chunks never end on a high surrogate keeps every code point
+// whole, matching the native runtime, which reads the complete UTF-8 text at once.
+const INPUT_CHUNK_CODE_UNITS = 4096;
 const ROCQ_BUILTIN_TYPES = new Set(['bool', 'nat', 'Prop', 'Set', 'SProp', 'Type', 'Z']);
 
 /** Returns the canonical name for a grammar-backed JavaScript frontend. */
@@ -124,6 +130,15 @@ function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
   return { ...node, children, span };
 }
 
+function chunkedInput(text) {
+  return (index) => {
+    let end = Math.min(text.length, index + INPUT_CHUNK_CODE_UNITS);
+    const last = text.charCodeAt(end - 1);
+    if (end < text.length && last >= 0xd800 && last <= 0xdbff) end -= 1;
+    return text.slice(index, end);
+  };
+}
+
 function parseGrammarCst(text, canonical) {
   const boundaries = sourceBoundaries(text);
   const builtin = { LiNo: parseLinoCst, PDF: parsePdfCst, txt: parsePlainTextCst }[canonical]
@@ -139,7 +154,7 @@ function parseGrammarCst(text, canonical) {
   }
   const parser = new WebTreeSitterParser();
   parser.setLanguage(grammar);
-  const parsed = parser.parse(text);
+  const parsed = parser.parse(chunkedInput(text));
   parser.delete();
   if (!parsed) {
     throw new Error(`tree-sitter parser returned no ${canonical} syntax tree`);
@@ -308,7 +323,7 @@ function parseMarkdownInline(node, text) {
   });
   const parser = new WebTreeSitterParser();
   parser.setLanguage(GRAMMARS.get('markdown_inline'));
-  const tree = parser.parse(text, null, { includedRanges });
+  const tree = parser.parse(chunkedInput(text), null, { includedRanges });
   parser.delete();
   if (!tree) throw new Error('tree-sitter parser returned no Markdown inline syntax tree');
   return tree;
