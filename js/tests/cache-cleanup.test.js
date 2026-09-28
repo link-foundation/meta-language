@@ -3,13 +3,13 @@
 // (requirements I195-CACHE-CLEANUP-ENTRY-POINT, -SAFETY and -BUDGET).
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 
 import { REQUIRED_CATEGORIES, checkCategories } from '../../scripts/check-cache-policy.mjs';
 import { CACHE_CLASSES, CONTAINER_LABEL } from '../../scripts/lib/cache-classes.mjs';
-import { acquireLease, diskUsage, dockerCommands, runCleanup, runningProcesses } from '../../scripts/lib/cache-cleanup.mjs';
+import { acquireLease, diskUsage, dockerCommands, linuxProcesses, runCleanup, runningProcesses } from '../../scripts/lib/cache-cleanup.mjs';
 import {
   CLEAN_CACHES, REPOSITORY_ROOT, exitedPid, git, makeBase, makeCargoTarget, makeRepository, observeCacheCleanup,
   populateCaches, put, readJson, runScript, toolDirectory, trySymlink, worktreeState,
@@ -259,9 +259,38 @@ test('cleanup keeps a target whose built binary is still running', { skip: !POSI
 
   running.kill('SIGKILL');
   await exited;
-  clean(fixture, { mode: 'full' });
-  assert.ok(!existsSync(fixture.caches.rustTarget), 'the target is removed once the binary exits');
+  const idle = clean(fixture, { mode: 'full' });
+  assert.ok(!existsSync(fixture.caches.rustTarget), `the target is removed once the binary exits: ${JSON.stringify(skippedReasons(idle))}`);
   observeCacheCleanup('I195-CACHE-CLEANUP-SAFETY', ['activeBuildOutputsPreserved'], 'cleanup keeps a target whose built binary is still running');
+});
+
+// A cargo build keeps starting and ending rustc processes; one that exits
+// while the cleanup reads it has lost its working directory, and a cleanup that
+// took it for a live Cargo process of unknown workspace kept every target.
+test('processes that exit while they are listed keep no cache', { skip: !POSIX }, (t) => {
+  const base = makeBase(t);
+  const proc = path.join(base, 'proc');
+  const fake = (pid, state, { cwd = true } = {}) => {
+    const entry = path.join(proc, String(pid));
+    mkdirSync(entry, { recursive: true });
+    writeFileSync(path.join(entry, 'stat'), `${pid} (rustc) ${state} 1 ${pid} 0`);
+    writeFileSync(path.join(entry, 'cmdline'), 'rustc\0--crate-name\0fixture\0');
+    if (cwd === true) symlinkSync(base, path.join(entry, 'cwd'));
+    if (cwd === 'unreadable') mkdirSync(path.join(entry, 'cwd'));
+  };
+  fake(100, 'S');
+  fake(101, 'Z', { cwd: false });
+  fake(102, 'R', { cwd: false });
+  fake(103, 'S', { cwd: 'unreadable' });
+  writeFileSync(path.join(proc, 'uptime'), '1.0 1.0');
+
+  const listed = Object.fromEntries(linuxProcesses(proc).map((entry) => [entry.pid, entry]));
+  assert.deepEqual(Object.keys(listed).map(Number), [100, 103], 'the zombie and the exiting process are dropped');
+  assert.equal(listed[100].cwd, base);
+  assert.equal(listed[100].program, 'rustc');
+  assert.equal(listed[100].ppid, 1);
+  assert.equal(listed[103].cwd, null, 'a live process with an unreadable directory may still use a cache');
+  observeCacheCleanup('I195-CACHE-CLEANUP-SAFETY', ['activeBuildOutputsPreserved'], 'processes that exit while they are listed keep no cache');
 });
 
 // Between compiling and running tests Cargo runs rustdoc, which neither holds

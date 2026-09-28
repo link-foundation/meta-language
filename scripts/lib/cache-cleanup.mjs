@@ -309,20 +309,39 @@ const attempt = (read) => {
   }
 };
 
-function linuxProcesses() {
+// A zombie runs nothing, and a process that exits while it is being read has
+// already released its working directory, which Linux reports as ENOENT (a
+// process of another user reports EACCES and may still use a cache).
+const LIVE_STATE = /^[^ZX]/u;
+const processState = (stat) => stat.slice(stat.lastIndexOf(')') + 2);
+const EXITING = Symbol('exiting');
+
+function workingDirectory(entry) {
+  try {
+    return readlinkSync(path.join(entry, 'cwd'));
+  } catch (error) {
+    return error.code === 'ENOENT' ? EXITING : null;
+  }
+}
+
+/** Processes read from `procRoot` (`/proc`); the parameter lets tests supply a fake one. */
+export function linuxProcesses(procRoot = '/proc') {
   const processes = [];
-  for (const name of readdirSync('/proc')) {
+  for (const name of readdirSync(procRoot)) {
     if (!/^\d+$/u.test(name)) continue;
-    const stat = attempt(() => readFileSync(`/proc/${name}/stat`, 'utf8'));
-    if (stat === null) continue;
-    const args = (attempt(() => readFileSync(`/proc/${name}/cmdline`, 'utf8')) ?? '').split('\0').filter(Boolean);
-    const environment = attempt(() => readFileSync(`/proc/${name}/environ`, 'utf8')) ?? '';
-    const targetDir = environment.split('\0').find((entry) => entry.startsWith('CARGO_TARGET_DIR='));
+    const entry = path.join(procRoot, name);
+    const stat = attempt(() => readFileSync(path.join(entry, 'stat'), 'utf8'));
+    if (stat === null || !LIVE_STATE.test(processState(stat))) continue;
+    const args = (attempt(() => readFileSync(path.join(entry, 'cmdline'), 'utf8')) ?? '').split('\0').filter(Boolean);
+    const environment = attempt(() => readFileSync(path.join(entry, 'environ'), 'utf8')) ?? '';
+    const targetDir = environment.split('\0').find((variable) => variable.startsWith('CARGO_TARGET_DIR='));
+    const cwd = workingDirectory(entry);
+    if (cwd === EXITING) continue;
     processes.push({
       pid: Number(name),
-      ppid: Number(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[1]),
-      executable: attempt(() => readlinkSync(`/proc/${name}/exe`).replace(/ \(deleted\)$/u, '')),
-      cwd: attempt(() => readlinkSync(`/proc/${name}/cwd`)),
+      ppid: Number(processState(stat).split(' ')[1]),
+      executable: attempt(() => readlinkSync(path.join(entry, 'exe')).replace(/ \(deleted\)$/u, '')),
+      cwd,
       args,
       program: args[0] ?? '',
       targetDir: targetDir ? targetDir.slice('CARGO_TARGET_DIR='.length) : null,
