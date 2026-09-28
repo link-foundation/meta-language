@@ -222,7 +222,7 @@ export async function grammarSource(id, versions) {
 // Clones the pinned upstream revision. With `treeSitter`, it also applies the
 // grammar's local patch, regenerates the parser and requires it to equal the
 // one Rust compiles.
-async function checkoutUpstream(source, checkout, treeSitter) {
+export async function checkoutUpstream(source, checkout, treeSitter) {
   await run('git', ['clone', '--quiet', `https://github.com/${source.upstream}`, checkout]);
   await run('git', ['-C', checkout, 'checkout', '--quiet', source.revision]);
   if (!treeSitter) return;

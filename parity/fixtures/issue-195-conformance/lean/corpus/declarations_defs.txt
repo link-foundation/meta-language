@@ -1,0 +1,453 @@
+======
+Simple
+======
+
+def sampleFunction1 x := x*x + 3
+
+def result1 := sampleFunction1 4573
+
+theorem foo : p := sorry
+
+---
+
+(module
+  (definition
+    (identifier)
+    (binders
+      (identifier))
+    (binary_expression
+      (binary_expression
+        (identifier)
+        (identifier))
+      (number)))
+  (definition
+    (identifier)
+    (application
+      (identifier)
+      (number)))
+  (definition
+    (identifier)
+    (identifier)
+    (sorry)))
+
+=========
+Annotated
+=========
+
+def sampleFunction2 (x : Nat) := 2*x*x - x + 3
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    body: (binary_expression
+      left: (binary_expression
+        left: (binary_expression
+          left: (binary_expression
+            left: (number)
+            right: (identifier))
+          right: (identifier))
+        right: (identifier))
+      right: (number))))
+
+==================
+Multiple Annotated
+==================
+
+def sampleFunction2 (x y : Nat) := x + y
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        name: (identifier)
+        type: (identifier)))
+    body: (binary_expression
+      left: (identifier)
+      right: (identifier))))
+
+==================
+Implicit Arguments
+==================
+
+def foo {a} {b c : Nat} v w (x y) (z : Nat) := a + b + v + w + x + y
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (implicit_binder
+        name: (identifier))
+      (implicit_binder
+        name: (identifier)
+        name: (identifier)
+        type: (identifier))
+      (identifier)
+      (identifier)
+      (explicit_binder
+        name: (identifier)
+        name: (identifier))
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    body: (binary_expression
+      left: (binary_expression
+        left: (binary_expression
+          left: (binary_expression
+            left: (binary_expression
+              left: (identifier)
+              right: (identifier))
+            right: (identifier))
+          right: (identifier))
+        right: (identifier))
+      right: (identifier))))
+
+============================
+Typeclass Resolved Arguments
+============================
+
+def foo [Bar x] [y : Baz] : x := 1
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (instance_binder
+        type: (application
+          name: (identifier)
+          arguments: (identifier)))
+      (instance_binder
+        name: (identifier)
+        type: (identifier)))
+    type: (identifier)
+    body: (number)))
+
+====================
+First Class Function
+====================
+
+def twice (f : Nat → Nat) (a : Nat) :=
+  f (f a)
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (arrow
+          domain: (identifier)
+          codomain: (identifier)))
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    body: (application
+      name: (identifier)
+      arguments: (parenthesized
+        (application
+          name: (identifier)
+          arguments: (identifier))))))
+
+====================
+Function Return Type
+====================
+
+def foo : Nat -> Nat := id
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (arrow
+      domain: (identifier)
+      codomain: (identifier))
+    body: (identifier)))
+
+==================================
+Multiargument Function Return Type
+==================================
+
+def foo : Nat -> Nat -> Nat -> Nat := id
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (arrow
+      domain: (identifier)
+      codomain: (arrow
+        domain: (identifier)
+        codomain: (arrow
+          domain: (identifier)
+          codomain: (identifier))))
+    body: (identifier)))
+
+=============
+Def of Struct
+=============
+
+def f : Foo where
+  bar := 3
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (identifier)
+    body: (where_decl
+      name: (identifier)
+      body: (number))))
+
+==================
+Match Syntax Sugar
+==================
+
+def foo : Nat → Nat
+  | 0 => 2
+  | 2 => 3
+  | _ => 5
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (arrow
+      domain: (identifier)
+      codomain: (identifier))
+    (match_arm
+      patterns: (number)
+      body: (number))
+    (match_arm
+      patterns: (number)
+      body: (number))
+    (match_arm
+      patterns: (hole)
+      body: (number))))
+
+==========================================
+Match Syntax Sugar With Anonymous Function
+==========================================
+
+def foo : Nat -> Bool :=
+  fun
+    | 0 => true
+    | _ => false
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (arrow
+      domain: (identifier)
+      codomain: (identifier))
+    body: (fun
+      (match_arm
+        patterns: (number)
+        body: (true))
+      (match_arm
+        patterns: (hole)
+        body: (false)))))
+
+=======================
+Multimatch Syntax Sugar
+=======================
+
+def foo : Nat → Nat -> Nat
+  | 0, foo => 2
+  | 2, bar => 3
+  | _, _ => 5
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (arrow
+      domain: (identifier)
+      codomain: (arrow
+        domain: (identifier)
+        codomain: (identifier)))
+    (match_arm
+      patterns: (number)
+      patterns: (identifier)
+      body: (number))
+    (match_arm
+      patterns: (number)
+      patterns: (identifier)
+      body: (number))
+    (match_arm
+      patterns: (hole)
+      patterns: (hole)
+      body: (number))))
+
+============
+Conditionals
+============
+
+def sampleFunction3 (x : Int) :=
+if x > 100 then
+  2*x*x - x + 3
+else
+  2*x*x + x - 37
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    body: (if
+      condition: (binary_expression
+        left: (identifier)
+        right: (number))
+      then: (binary_expression
+        left: (binary_expression
+          left: (binary_expression
+            left: (binary_expression
+              left: (number)
+              right: (identifier))
+            right: (identifier))
+          right: (identifier))
+        right: (number))
+      else: (binary_expression
+        left: (binary_expression
+          left: (binary_expression
+            left: (binary_expression
+              left: (number)
+              right: (identifier))
+            right: (identifier))
+          right: (identifier))
+        right: (number)))))
+
+=======
+Theorem
+=======
+
+theorem twiceAdd2 (a : Nat) : twice (fun x => x + 2) a = a + 4 :=
+-- The proof is by reflexivity. Lean "symbolically" reduces both sides of the equality
+-- until they are identical.
+  rfl
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    type: (binary_expression
+      left: (application
+        name: (application
+          name: (identifier)
+          arguments: (parenthesized
+            (fun
+              binders: (identifier)
+              body: (binary_expression
+                left: (identifier)
+                right: (number)))))
+        arguments: (identifier))
+      right: (binary_expression
+        left: (identifier)
+        right: (number)))
+    (comment)
+    (comment)
+    body: (identifier)))
+
+============================
+Theorem With Expression Body
+============================
+
+theorem bar : 2 * 3 = 3 * 2 := Nat.mul_comm 2 3
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (binary_expression
+        left: (number)
+        right: (number)))
+    body: (application
+      name: (application
+        name: (projection
+          term: (identifier)
+          name: (identifier))
+        arguments: (number))
+      arguments: (number))))
+
+=======================
+Theorem With Match Body
+=======================
+
+theorem foo {p : α × β} :
+  p = p ↔ p = p
+  | (p1, p2), (q1, q2) => sorry
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (implicit_binder
+        name: (identifier)
+        type: (binary_expression
+          left: (identifier)
+          right: (identifier))))
+    type: (binary_expression
+      left: (binary_expression
+        left: (binary_expression
+          left: (identifier)
+          right: (identifier))
+        right: (identifier))
+      right: (identifier))
+    (match_arm
+      patterns: (tuple
+        (identifier)
+        (identifier))
+      patterns: (tuple
+        (identifier)
+        (identifier))
+      body: (sorry))))
+
+====================
+Theorem Missing Type
+====================
+
+theorem foo := sorry
+
+---
+
+(module
+  (definition
+    (identifier)
+    (sorry)))

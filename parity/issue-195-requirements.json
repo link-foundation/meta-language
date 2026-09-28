@@ -648,9 +648,9 @@
       "sha256": "f4178b54d9848d54d677cdd01b3c50972c583e9cf5f94916c747ca08876cdeae"
     },
     "planned:conformance:JavaScript": {
-      "path": "parity/fixtures/issue-195-evidence.json",
+      "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "JavaScript mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
+      "sha256": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
     },
     "planned:generative:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",
@@ -658,9 +658,9 @@
       "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:conformance:Rust": {
-      "path": "parity/fixtures/issue-195-evidence.json",
+      "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Rust mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
+      "sha256": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
     },
     "planned:generative:Rust": {
       "path": "parity/fixtures/issue-195-evidence.json",
@@ -668,9 +668,9 @@
       "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:conformance:Lean": {
-      "path": "parity/fixtures/issue-195-evidence.json",
+      "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Lean mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
+      "sha256": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
     },
     "planned:generative:Lean": {
       "path": "parity/fixtures/issue-195-evidence.json",
@@ -678,9 +678,9 @@
       "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
     },
     "planned:conformance:Rocq": {
-      "path": "parity/fixtures/issue-195-evidence.json",
+      "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Rocq mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
+      "sha256": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
     },
     "planned:generative:Rocq": {
       "path": "parity/fixtures/issue-195-evidence.json",

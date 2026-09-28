@@ -375,11 +375,13 @@ export const HIDDEN_TEXT_TERM = 'hidden_text';
 // matched by hidden grammar rules. Mirrors `insert_gap_token` in
 // rust/src/tree_sitter_adapter.rs: leading and trailing whitespace is extra
 // trivia, and the text between them is a non-extra hidden-text token.
+// Whitespace includes the invisible format characters grammars lex as extras
+// (tree-sitter-javascript's U+200B, U+2060 and U+FEFF).
 function pushGapNodes(children, start, end, text, boundaries, tokens) {
   if (start >= end) return;
   const gap = text.slice(start, end);
-  const leading = /^\p{White_Space}*/u.exec(gap)[0].length;
-  const trailing = leading === gap.length ? 0 : /\p{White_Space}*$/u.exec(gap)[0].length;
+  const leading = /^[\p{White_Space}\u200B\u2060\uFEFF]*/u.exec(gap)[0].length;
+  const trailing = leading === gap.length ? 0 : /[\p{White_Space}\u200B\u2060\uFEFF]*$/u.exec(gap)[0].length;
   const pieces = [
     [start, start + leading, 'whitespace', LinkFlags.clean().withExtra()],
     [start + leading, end - trailing, HIDDEN_TEXT_TERM, LinkFlags.clean()],

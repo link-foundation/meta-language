@@ -546,8 +546,8 @@ fn insert_gap_token(
         return;
     }
     let gap = &context.text[start..end];
-    let content_start = start + (gap.len() - gap.trim_start().len());
-    let content_end = content_start + gap.trim().len();
+    let content_start = start + (gap.len() - gap.trim_start_matches(is_gap_whitespace).len());
+    let content_end = content_start + gap.trim_matches(is_gap_whitespace).len();
     for (piece_start, piece_end, flags) in [
         (start, content_start, LinkFlags::extra()),
         (content_start, content_end, LinkFlags::clean()),
@@ -576,6 +576,13 @@ fn insert_gap_token(
             );
         }
     }
+}
+
+/// Whitespace around hidden-rule text: Unicode whitespace and the invisible
+/// format characters grammars lex as extras (tree-sitter-javascript's U+200B,
+/// U+2060 and U+FEFF).
+fn is_gap_whitespace(character: char) -> bool {
+    character.is_whitespace() || matches!(character, '\u{200B}' | '\u{2060}' | '\u{FEFF}')
 }
 
 fn flags_for_node(node: Node<'_>) -> LinkFlags {

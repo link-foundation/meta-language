@@ -1,0 +1,263 @@
+=========
+Braceless
+=========
+
+def main : IO UInt32 := do
+  IO.println "hello"
+  IO.println "world"
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (application
+        name: (projection
+          term: (identifier)
+          name: (identifier))
+        arguments: (string))
+      (application
+        name: (projection
+          term: (identifier)
+          name: (identifier))
+        arguments: (string)))))
+
+========
+Repeated
+========
+
+def main : IO UInt32 := do do
+  IO.println "hello"
+  IO.println "world"
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (do
+        (application
+          name: (projection
+            term: (identifier)
+            name: (identifier))
+          arguments: (string))
+        (application
+          name: (projection
+            term: (identifier)
+            name: (identifier))
+          arguments: (string))))))
+
+==========
+Let (Bind)
+==========
+
+def f : Unit := do
+  let c <- 2
+  let d ← 2
+  let e := 2
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (identifier)
+    body: (do
+      (let_bind
+        name: (identifier)
+        value: (number))
+      (let_bind
+        name: (identifier)
+        value: (number))
+      (let
+        name: (identifier)
+        value: (number)))))
+
+=============
+Let Annotated
+=============
+
+def f : Unit := do
+  let e : Nat := 2
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (identifier)
+    body: (do
+      (let
+        name: (identifier)
+        type: (identifier)
+        value: (number)))))
+
+===========
+Let Mutable
+===========
+
+def bar : Unit := do
+  let mut s := 0
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (identifier)
+    body: (do
+      (let_mut
+        name: (identifier)
+        value: (number)))))
+
+========
+For Loop
+========
+
+def foo (xs : Array Nat) : Unit := do
+  let mut s := 0
+  for x in xs do
+    s := s + x
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (identifier))))
+    type: (identifier)
+    body: (do
+      (let_mut
+        name: (identifier)
+        value: (number))
+      (for_in
+        var: (identifier)
+        iterable: (identifier)
+        body: (do
+          (reassign
+            name: (identifier)
+            value: (binary_expression
+              left: (identifier)
+              right: (identifier))))))))
+
+================================
+For Loop With Destructuring Bind
+================================
+
+def foo (xs : Array (Nat × Nat)) : Unit := do
+  for ⟨x, y⟩ in xs do
+    panic! "foo"
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    (binders
+      (explicit_binder
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (parenthesized
+            (binary_expression
+              (identifier)
+              (identifier))))))
+    type: (identifier)
+    body: (do
+      (for_in
+        (anonymous_constructor
+          (identifier)
+          (identifier))
+        iterable: (identifier)
+        body: (do
+          (application
+            name: (identifier)
+            arguments: (string)))))))
+
+======
+Return
+======
+
+def f : Nat := do
+  return 3
+
+---
+
+(module
+  (definition
+    (identifier)
+    (identifier)
+    (do
+      (return
+        (number)))))
+
+===============
+Return One Line
+===============
+
+#check (do return PUnit.unit : PUnit)
+
+---
+
+(module
+  (hash_command
+    (parenthesized
+      (do
+        (do_return
+          value: (projection
+            term: (identifier)
+            name: (identifier))))
+      type: (identifier))))
+
+==============
+Return Nothing
+==============
+
+def f : Unit := do
+  return
+
+---
+
+(module
+  (definition
+    (identifier)
+    (identifier)
+    (do
+      (return))))
+
+======
+Unless
+======
+
+def check : IO Unit := do
+  unless true do
+    println! "Bla"
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (do_unless
+        condition: (true)
+        body: (do
+          (application
+            name: (identifier)
+            arguments: (string)))))))

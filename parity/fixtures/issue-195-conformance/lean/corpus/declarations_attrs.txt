@@ -1,0 +1,426 @@
+==========
+Attributes
+==========
+
+@[reducible] def f := 12
+
+@[inline] instance : Foo := ⟨7⟩
+
+@[simp] theorem twotwo : 2 = 2 := rfl
+
+@[inline] constant FooBar : Nat
+
+---
+
+(module
+  (declaration
+    attributes: (attributes
+      (attribute_entry
+        name: (identifier)))
+    (definition
+      name: (identifier)
+      body: (number)))
+  (declaration
+    attributes: (attributes
+      (attribute_entry
+        name: (identifier)))
+    (definition
+      type: (identifier)
+      body: (anonymous_constructor
+        (number))))
+  (declaration
+    attributes: (attributes
+      (attribute_entry
+        name: (identifier)))
+    (definition
+      name: (identifier)
+      type: (binary_expression
+        left: (number)
+        right: (number))
+      body: (identifier)))
+  (declaration
+    attributes: (attributes
+      (attribute_entry
+        name: (identifier)))
+    (constant
+      name: (identifier)
+      type: (identifier))))
+
+===================
+Multiple Attributes
+===================
+
+@[reducible, inline] def f := 12
+
+---
+
+(module
+  (declaration
+    attributes: (attributes
+      (attribute_entry
+        name: (identifier))
+      (attribute_entry
+        name: (identifier)))
+    (definition
+      name: (identifier)
+      body: (number))))
+
+======================
+Dotted Name Attributes
+======================
+
+@[foo.bar baz.quux] def f := 12
+
+---
+
+(module
+  (declaration
+    attributes: (attributes
+      name: (identifier)
+      name: (identifier)
+      name: (identifier)
+      name: (identifier))
+    (definition
+      name: (identifier)
+      body: (number))))
+
+=================
+Missing Attribute
+=================
+
+@[] def f := 12
+
+---
+
+(module
+  (declaration
+    (attributes
+      name: (identifier
+        (MISSING _identifier)))
+    (definition
+      name: (identifier)
+      body: (number))))
+
+================
+Extern Attribute
+================
+
+@[extern "foo"] def f := 12
+
+---
+
+(module
+  (declaration
+    attributes: (attributes
+      (attribute_entry
+        name: (identifier)
+        arg: (string)))
+    (definition
+      name: (identifier)
+      body: (number))))
+
+==============================
+Explicit Attribute Declaration
+==============================
+
+attribute [reducible] f
+attribute [simp, inline] Foo
+
+---
+
+(module
+  (attribute
+    (identifier)
+    (identifier))
+  (attribute
+    (identifier)
+    (identifier)
+    (identifier)))
+
+==========================
+Explicit Attribute Removal
+==========================
+
+attribute [-reducible] f
+attribute [simp, -inline, -reducible] Foo
+
+---
+
+(module
+  (attribute
+    name: (identifier)
+    term: (identifier))
+  (attribute
+    name: (identifier)
+    name: (identifier)
+    name: (identifier)
+    term: (identifier)))
+
+====================================
+Empty Explicit Attribute Declaration
+====================================
+
+attribute [] f
+
+---
+
+(module
+  (attribute
+    (identifier
+      (MISSING _identifier))
+    (identifier)))
+
+======================
+Partial With Attribute
+======================
+
+@[reducible] partial def f := 12
+
+---
+
+(module
+  (declaration
+    attributes: (attributes
+      (attribute_entry
+        name: (identifier)))
+    (definition
+      name: (identifier)
+      body: (number))))
+
+==============
+Inductive Type
+==============
+
+inductive FooBar where
+  | foo : FooBar
+  | bar.baz : FooBar
+  | spam : Nat → FooBar
+  | quux {T: Type} [Add T] (x y : Nat) : Nat → FooBar
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier)
+      type: (identifier))
+    constructors: (constructor
+      name: (identifier)
+      name: (identifier)
+      type: (identifier))
+    constructors: (constructor
+      name: (identifier)
+      type: (arrow
+        domain: (identifier)
+        codomain: (identifier)))
+    constructors: (constructor
+      name: (identifier)
+      binders: (binders
+        (implicit_binder
+          name: (identifier)
+          type: (identifier))
+        (instance_binder
+          type: (application
+            name: (identifier)
+            arguments: (identifier)))
+        (explicit_binder
+          name: (identifier)
+          name: (identifier)
+          type: (identifier)))
+      type: (arrow
+        domain: (identifier)
+        codomain: (identifier)))))
+
+==============================
+Inductive Type No Constructors
+==============================
+
+inductive Foo
+
+---
+
+(module
+  (inductive
+    name: (identifier)))
+
+==============================
+Inductive Type With Parameters
+==============================
+
+inductive Foo (F : Type) | x (foo : F)
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    constructors: (constructor
+      name: (identifier)
+      binders: (binders
+        (explicit_binder
+          name: (identifier)
+          type: (identifier))))))
+
+=======================
+Inductive Type One Line
+=======================
+
+inductive Bit | bit0 | bit1
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier))
+    constructors: (constructor
+      name: (identifier))))
+
+================================
+Inductive Type Superfluous Where
+================================
+
+inductive Bit where | bit0 | bit1
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier))
+    constructors: (constructor
+      name: (identifier))))
+
+========================
+Inductive Type With Type
+========================
+
+inductive Foo : Bar
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    type: (identifier)))
+
+==========================
+Inductive Type Colon Equal
+==========================
+
+inductive Foo :=
+| Bar
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier))))
+
+====================
+Class Inductive Type
+====================
+
+class inductive FooBar where
+  | foo : FooBar
+  | bar.baz : FooBar
+  | spam : Nat → FooBar
+  | quux {T: Type} [Add T] (x y : Nat) : Nat → FooBar
+
+---
+
+(module
+  (class_inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier)
+      type: (identifier))
+    constructors: (constructor
+      name: (identifier)
+      name: (identifier)
+      type: (identifier))
+    constructors: (constructor
+      name: (identifier)
+      type: (arrow
+        domain: (identifier)
+        codomain: (identifier)))
+    constructors: (constructor
+      name: (identifier)
+      binders: (binders
+        (implicit_binder
+          name: (identifier)
+          type: (identifier))
+        (instance_binder
+          type: (application
+            name: (identifier)
+            arguments: (identifier)))
+        (explicit_binder
+          name: (identifier)
+          name: (identifier)
+          type: (identifier)))
+      type: (arrow
+        domain: (identifier)
+        codomain: (identifier)))))
+
+=================
+Inline Namespaced
+=================
+
+def foo.bar.baz := 12
+
+structure Foo.Bar.Baz where
+  x : Nat
+
+class Foo.Bar.Baz.Quux where
+  x : Nat
+
+instance Spam.Eggs : Foo.Bar.Baz.Quux where
+  x := 3
+
+theorem Foo.Bar.Baz.Quux.Cheese : 2 = 2 := rfl
+
+inductive A.B | C
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (number))
+  (structure
+    name: (identifier)
+    fields: (structure_field
+      name: (identifier)
+      type: (identifier)))
+  (structure
+    name: (identifier)
+    fields: (structure_field
+      name: (identifier)
+      type: (identifier)))
+  (definition
+    name: (identifier)
+    type: (projection
+      term: (identifier)
+      name: (identifier))
+    body: (where_decl
+      (identifier)
+      (number)))
+  (definition
+    name: (identifier)
+    type: (binary_expression
+      (number)
+      (number))
+    body: (identifier))
+  (inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier))))

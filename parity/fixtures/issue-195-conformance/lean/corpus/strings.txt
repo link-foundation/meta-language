@@ -1,0 +1,186 @@
+======
+String
+======
+
+#eval "foo"
+#eval "'"
+
+---
+
+(module
+  (hash_command
+    (string))
+  (hash_command
+    (string)))
+
+============
+Empty String
+============
+
+#eval ""
+
+---
+
+(module
+  (hash_command
+    (string)))
+
+================
+Escape Sequences
+================
+
+#eval "f\'o\"\ro\nb\ta\\r"
+
+---
+
+(module
+  (hash_command
+    (string
+      (escape_sequence)
+      (escape_sequence)
+      (escape_sequence)
+      (escape_sequence)
+      (escape_sequence)
+      (escape_sequence))))
+
+=========
+\x and \u
+=========
+
+#eval "\x12\u1234"
+
+---
+
+(module
+  (hash_command
+    (string
+      (escape_sequence)
+      (escape_sequence))))
+
+====
+Char
+====
+
+#eval 'f'
+#eval '"'
+
+---
+
+(module
+  (hash_command
+    (char))
+  (hash_command
+    (char)))
+
+====================
+Char Escape Sequence
+====================
+
+#eval '\''
+
+---
+
+(module
+  (hash_command
+    (char)))
+
+========
+Non-Char
+========
+
+#eval 'fa'
+
+---
+
+(module
+  (hash_command
+    (ERROR)
+    (identifier)))
+
+==================================
+Non-Interpolation in Normal String
+==================================
+
+#eval println! "The result of squaring the integer 4573 and adding 3 is {result1}"
+
+---
+
+(module
+  (hash_command
+    (application
+      (identifier)
+      (string
+        (interpolation
+          (identifier))))))
+
+=============
+Interpolation
+=============
+
+#eval println! s!"The result of squaring the integer 4573 and adding 3 is {result1}"
+
+---
+
+(module
+  (hash_command
+    (application
+      (identifier)
+      (interpolated_string
+        (string
+          (interpolation
+            (identifier)))))))
+
+=======================================
+Interpolation With Function Application
+=======================================
+
+#eval println! s!"The result of applying sampleFunction3 to 2 is {sampleFunction3 2}"
+
+---
+
+(module
+  (hash_command
+    (application
+      (identifier)
+      (interpolated_string
+        (string
+          (interpolation
+            (application
+              (identifier)
+              (number))))))))
+
+===================================
+Interpolation With Escape Sequences
+===================================
+
+#eval s!"f\'o\"\ro\nb\ta\\r {baz}"
+
+---
+
+(module
+  (hash_command
+    (interpolated_string
+      (string
+        (escape_sequence)
+        (escape_sequence)
+        (escape_sequence)
+        (escape_sequence)
+        (escape_sequence)
+        (escape_sequence)
+        (interpolation
+          (identifier))))))
+
+==============
+String With --
+==============
+
+#eval "--"
+#eval "/--"
+
+---
+
+(module
+  (hash_command
+    (string))
+  (hash_command
+    (string)))

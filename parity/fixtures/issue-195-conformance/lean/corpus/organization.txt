@@ -1,0 +1,304 @@
+===============
+Empty Namespace
+===============
+
+namespace Foo
+end Foo
+
+---
+
+(module
+  (namespace
+    (identifier))
+  (end
+    (identifier)))
+
+=============
+Empty Section
+=============
+
+section Foo
+end Foo
+
+---
+
+(module
+  (section
+    (identifier))
+  (end
+    (identifier)))
+
+======================
+Nested Empty Namespace
+======================
+
+namespace Foo
+namespace Bar
+end Bar
+end Foo
+
+---
+
+(module
+  (namespace
+    (identifier))
+  (namespace
+    (identifier))
+  (end
+    (identifier))
+  (end
+    (identifier)))
+
+====================
+Nested Empty Section
+====================
+
+section Foo
+section Bar
+end Bar
+end Foo
+
+---
+
+(module
+  (section
+    (identifier))
+  (section
+    (identifier))
+  (end
+    (identifier))
+  (end
+    (identifier)))
+
+===========================
+Namespace With Declarations
+===========================
+
+namespace Foo
+
+theorem foo : p := sorry
+theorem bar : q := sorry
+
+end Foo
+
+---
+
+(module
+  (namespace
+    (identifier))
+  (definition
+    (identifier)
+    (identifier)
+    (sorry))
+  (definition
+    (identifier)
+    (identifier)
+    (sorry))
+  (end
+    (identifier)))
+
+=========================
+Section With Declarations
+=========================
+
+section Foo
+
+theorem foo : p := sorry
+theorem bar : q := sorry
+
+end Foo
+
+---
+
+(module
+  (section
+    (identifier))
+  (definition
+    (identifier)
+    (identifier)
+    (sorry))
+  (definition
+    (identifier)
+    (identifier)
+    (sorry))
+  (end
+    (identifier)))
+
+=======================
+Namespace With Sections
+=======================
+
+namespace Foo
+
+section Bar
+
+theorem bar : q := sorry
+
+end Bar
+
+section Baz
+
+theorem baz : r := sorry
+
+end Baz
+
+end Foo
+
+---
+
+(module
+  (namespace
+    (identifier))
+  (section
+    (identifier))
+  (definition
+    (identifier)
+    (identifier)
+    (sorry))
+  (end
+    (identifier))
+  (section
+    (identifier))
+  (definition
+    (identifier)
+    (identifier)
+    (sorry))
+  (end
+    (identifier))
+  (end
+    (identifier)))
+
+=================
+Anonymous Section
+=================
+
+section
+end
+
+---
+
+(module
+  (section)
+  (end))
+
+=======================
+No Anonymous Namespaces
+=======================
+
+namespace
+end
+
+---
+
+(module
+  (namespace
+    (identifier)))
+
+=====================
+Dotted Name Namespace
+=====================
+
+namespace Foo.Bar.Baz
+end Foo.Bar.Baz
+
+---
+
+(module
+  (namespace
+    (identifier)
+    (identifier)
+    (identifier))
+  (end
+    (identifier)
+    (identifier)
+    (identifier)))
+
+===================
+Dotted Name Section
+===================
+
+section Foo.Bar.Baz
+end Foo.Bar.Baz
+
+---
+
+(module
+  (section
+    (identifier)
+    (identifier)
+    (identifier))
+  (end
+    (identifier)
+    (identifier)
+    (identifier)))
+
+=========
+Variables
+=========
+
+variable (α β γ : Type)
+variable (g : β → γ) (f : α → β) (h : α → α)
+variable {x : α} [y : α]
+
+---
+
+(module
+  (variable
+    (explicit_binder
+      name: (identifier)
+      name: (identifier)
+      name: (identifier)
+      type: (identifier)))
+  (variable
+    (explicit_binder
+      name: (identifier)
+      type: (arrow
+        domain: (identifier)
+        codomain: (identifier)))
+    (explicit_binder
+      name: (identifier)
+      type: (arrow
+        domain: (identifier)
+        codomain: (identifier)))
+    (explicit_binder
+      name: (identifier)
+      type: (arrow
+        domain: (identifier)
+        codomain: (identifier))))
+  (variable
+    (implicit_binder
+      name: (identifier)
+      type: (identifier))
+    (instance_binder
+      name: (identifier)
+      type: (identifier))))
+
+===============
+Empty Variables
+===============
+
+variable
+
+#check 2
+
+---
+
+(module
+  (ERROR)
+  (hash_command
+    (number)))
+
+=================================
+Non-Implicit-or-Explicit Variable
+=================================
+
+variable y
+
+#check 2
+
+---
+
+(module
+  (ERROR)
+  (hash_command
+    (number)))

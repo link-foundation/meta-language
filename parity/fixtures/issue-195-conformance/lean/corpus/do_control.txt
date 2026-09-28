@@ -1,0 +1,259 @@
+================
+Do In Definition
+================
+
+instance : do return ToString Nat where
+  toString (d : Nat) : String := "Foo"
+
+---
+
+(module
+  (definition
+    type: (do
+      (do_return
+        value: (application
+          name: (identifier)
+          arguments: (identifier))))
+    body: (where_decl
+      name: (identifier)
+      binders: (explicit_binder
+        name: (identifier)
+        type: (identifier))
+      type: (identifier)
+      body: (string))))
+
+===================
+Nested If/Then/Else
+===================
+
+#check if true then do if false then false else false else true
+
+---
+
+(module
+  (hash_command
+    (if
+      (true)
+      (do
+        (do_if
+          (false)
+          (false)
+          (false)))
+      (true))))
+
+===============
+Bare Identifier
+===============
+
+#check (do true : Bool)
+
+---
+
+(module
+  (hash_command
+    (parenthesized
+      (do
+        (true))
+      (identifier))))
+
+=================================
+If Condition Function Application
+=================================
+
+#check (if foo 2 then do PUnit.unit else PUnit.unit : PUnit)
+
+---
+
+(module
+  (hash_command
+    (parenthesized
+      (if
+        (application
+          (identifier)
+          (number))
+        (do
+          (projection
+            (identifier)
+            (identifier)))
+        (projection
+          (identifier)
+          (identifier)))
+      (identifier))))
+
+==============================
+Do Try Catch With Variable
+==============================
+
+def tryCatch1 : IO Unit := do
+  try
+    pure ()
+  catch e =>
+    pure ()
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (try
+        body: (application
+          name: (identifier)
+          arguments: (parenthesized))
+        var: (identifier)
+        handler: (application
+          name: (identifier)
+          arguments: (parenthesized))))))
+
+==============================
+Do Try Catch With Wildcard
+==============================
+
+def tryCatch2 : IO Unit := do
+  try
+    pure ()
+  catch _ =>
+    pure ()
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (try
+        body: (application
+          name: (identifier)
+          arguments: (parenthesized))
+        var: (hole)
+        handler: (application
+          name: (identifier)
+          arguments: (parenthesized))))))
+
+========================================
+Do Let With List Pattern And Fallback
+========================================
+
+def letListFallback (xs : List Nat) : IO Unit := do
+  let [x] := xs | return ()
+  pure ()
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (identifier))))
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (do_let
+        pattern: (list_pattern
+          (identifier))
+        value: (identifier)
+        fallback: (return
+          value: (parenthesized)))
+      (application
+        name: (identifier)
+        arguments: (parenthesized)))))
+
+==========================================
+Let Bind With Tuple Destructuring
+==========================================
+
+def letBindTuple : IO Unit := do
+  let (a, b) ← pure (1, 2)
+  return ()
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (let_bind
+        name: (tuple_pattern
+          (identifier)
+          (identifier))
+        value: (application
+          name: (identifier)
+          arguments: (tuple
+            (number)
+            (number))))
+      (return
+        value: (parenthesized)))))
+
+====================================
+Let Bind With Type Annotation
+====================================
+
+def letBindTyped : IO Unit := do
+  let x : Nat ← pure 1
+  return ()
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (let_bind
+        name: (identifier)
+        type: (identifier)
+        value: (application
+          name: (identifier)
+          arguments: (number)))
+      (return
+        value: (parenthesized)))))
+
+==========================
+Multi Iterator For Loop
+==========================
+
+def multiFor (xs ys : List Nat) : IO Unit := do
+  for x in xs, y in ys do
+    pure ()
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (identifier))))
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (for_in
+        var: (identifier)
+        iterable: (identifier)
+        var: (identifier)
+        iterable: (identifier)
+        body: (do
+          (application
+            name: (identifier)
+            arguments: (parenthesized)))))))

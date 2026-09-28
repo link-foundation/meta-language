@@ -331,7 +331,7 @@ async function embeddedRegions(inventory, host, text) {
 
 // ---- tree-sitter CLI cross-check ------------------------------------------
 
-async function cliGrammarDirectory(id, versions, scratch) {
+export async function cliGrammarDirectory(id, versions, scratch) {
   const source = await grammarSource(id, versions);
   const copy = join(scratch, id);
   await cp(source.crateDir, copy, { recursive: true, filter: (path) => !path.includes('/target/') });
@@ -418,7 +418,7 @@ export function renderCliCst(tree, text) {
   return out;
 }
 
-async function cliOutput(treeSitter, dir, text, scratch, name) {
+export async function cliOutput(treeSitter, dir, text, scratch, name) {
   const file = join(scratch, `${name.replace(/[^A-Za-z0-9]+/gu, '_')}.src`);
   await writeFile(file, text);
   const options = { cwd: dir, maxBuffer: 64 << 20, env: { ...process.env, NO_COLOR: '1' } };

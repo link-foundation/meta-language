@@ -630,6 +630,11 @@ export class LinkNetwork {
     const leading = (parsed.leading ?? []).map(insert);
     const root = insert(parsed.tree);
     const trailing = (parsed.trailing ?? []).map(insert);
+    // Whitespace before and after the grammar root belongs to no Syntax link, so
+    // the root owns its trivia, as the Document does in rust/src/tree_sitter_adapter.rs.
+    for (const node of [...(parsed.leading ?? []), ...(parsed.trailing ?? [])]) {
+      this._attachExtraTrivia(root, node, context);
+    }
     return { root, outer: [...leading, root, ...trailing] };
   }
 
