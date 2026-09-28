@@ -91,7 +91,15 @@ only when all of the following hold.
   `scripts/with-cache-cleanup.mjs` or the evidence runner works, it holds a
   lease in `.git/meta-language-cache/leases`, and the build-sensitive classes
   are then left alone. A Cargo target whose `.cargo-lock` a running Cargo
-  holds, which is probed with `flock`, is kept as well.
+  holds, which is probed with `flock`, is kept as well. Cargo releases that
+  lock before `cargo test`, `cargo run` or `cargo bench` runs rustdoc and
+  what it built, so running processes are checked too (listed from `/proc`
+  on Linux, `ps` on macOS and PowerShell on Windows): a directory is kept
+  while a process executes a binary inside it or names it in its command
+  line, and a Cargo target while a `cargo`, `rustc` or `rustdoc` process
+  works in its workspace, names it, or points `CARGO_TARGET_DIR` at it.
+  Where the working directory of a Cargo process cannot be read, every
+  target is kept while it runs.
 
 Concurrent cleanups of one worktree are serialized by
 `.git/meta-language-cache/cleanup.lock`. A second run reports `busy` and

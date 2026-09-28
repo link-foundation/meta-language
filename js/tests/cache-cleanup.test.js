@@ -3,13 +3,13 @@
 // (requirements I195-CACHE-CLEANUP-ENTRY-POINT, -SAFETY and -BUDGET).
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 
 import { REQUIRED_CATEGORIES, checkCategories } from '../../scripts/check-cache-policy.mjs';
 import { CACHE_CLASSES, CONTAINER_LABEL } from '../../scripts/lib/cache-classes.mjs';
-import { acquireLease, diskUsage, dockerCommands, runCleanup } from '../../scripts/lib/cache-cleanup.mjs';
+import { acquireLease, diskUsage, dockerCommands, runCleanup, runningProcesses } from '../../scripts/lib/cache-cleanup.mjs';
 import {
   CLEAN_CACHES, REPOSITORY_ROOT, exitedPid, git, makeBase, makeCargoTarget, makeRepository, observeCacheCleanup,
   populateCaches, put, readJson, runScript, toolDirectory, trySymlink, worktreeState,
@@ -230,6 +230,67 @@ test('cleanup keeps the outputs of active builds', async (t) => {
   if (flock) {
     observeCacheCleanup('I195-CACHE-CLEANUP-SAFETY', ['activeBuildOutputsPreserved'], 'cleanup keeps the outputs of active builds');
   }
+});
+
+// Cargo releases its lock before `cargo test` runs the binaries it built; a
+// commit hook cleanup once emptied rust/target under a running test suite.
+test('cleanup keeps a target whose built binary is still running', { skip: !POSIX }, async (t) => {
+  const fixture = fixtureWithCaches(t);
+  const binary = path.join(fixture.caches.rustTarget, 'debug/deps/unit-fixture');
+  copyFileSync(spawnSync('sh', ['-c', 'command -v sleep'], { encoding: 'utf8' }).stdout.trim(), binary);
+  chmodSync(binary, 0o755);
+  const running = spawn(binary, ['30'], { stdio: 'ignore' });
+  const exited = new Promise((resolve) => running.once('exit', resolve));
+  t.after(() => running.kill('SIGKILL'));
+  const deadline = Date.now() + 10000;
+  while (!runningProcesses().processes.some(({ pid }) => pid === running.pid)) {
+    assert.ok(Date.now() < deadline, 'the binary started');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  const busy = clean(fixture, { mode: 'full' });
+  assert.match(busy.activeBuilds.processProbe, /^(?:proc|ps)$/u);
+  const reasons = skippedReasons(busy);
+  assert.equal(reasons['rust/target'], `a running process (pid ${running.pid}) executes rust/target/debug/deps/unit-fixture`);
+  assert.ok(existsSync(binary), 'the running binary stays');
+  assert.ok(existsSync(path.join(fixture.caches.rustTarget, 'debug/deps/libfixture.rlib')), 'its target directory stays');
+  assert.ok(!existsSync(path.join(fixture.caches.rustTarget, 'debug/incremental')), 'incremental state beside it is still removed');
+  assert.ok(!existsSync(fixture.caches.consumerTarget), 'other targets are still cleaned');
+
+  running.kill('SIGKILL');
+  await exited;
+  clean(fixture, { mode: 'full' });
+  assert.ok(!existsSync(fixture.caches.rustTarget), 'the target is removed once the binary exits');
+  observeCacheCleanup('I195-CACHE-CLEANUP-SAFETY', ['activeBuildOutputsPreserved'], 'cleanup keeps a target whose built binary is still running');
+});
+
+// Between compiling and running tests Cargo runs rustdoc, which neither holds
+// the lock nor executes from the target, so a Cargo process working in the
+// workspace keeps its target too.
+test('cleanup keeps the target of a Cargo process running in its workspace', { skip: process.platform !== 'linux' }, async (t) => {
+  const fixture = fixtureWithCaches(t);
+  const tools = mkdtempSync(path.join(fixture.base, 'tools-'));
+  const cargo = path.join(tools, 'cargo');
+  copyFileSync(spawnSync('sh', ['-c', 'command -v sleep'], { encoding: 'utf8' }).stdout.trim(), cargo);
+  chmodSync(cargo, 0o755);
+  const running = spawn(cargo, ['30'], { cwd: path.dirname(fixture.caches.rustTarget), stdio: 'ignore' });
+  const exited = new Promise((resolve) => running.once('exit', resolve));
+  t.after(() => running.kill('SIGKILL'));
+  const deadline = Date.now() + 10000;
+  while (!runningProcesses().processes.some(({ pid, executable }) => pid === running.pid && executable === cargo)) {
+    assert.ok(Date.now() < deadline, 'the process started');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  const busy = clean(fixture, { mode: 'full' });
+  assert.equal(skippedReasons(busy)['rust/target'], `a running Cargo process (pid ${running.pid}) builds in its workspace`);
+  assert.ok(existsSync(path.join(fixture.caches.rustTarget, 'debug/deps/libfixture.rlib')), 'its target stays');
+  assert.ok(!existsSync(fixture.caches.consumerTarget), 'targets of other workspaces are still cleaned');
+
+  running.kill('SIGKILL');
+  await exited;
+  clean(fixture, { mode: 'full' });
+  assert.ok(!existsSync(fixture.caches.rustTarget), 'the target is removed once Cargo exits');
 });
 
 test('cleanup handles custom Cargo target directories and paths with spaces', (t) => {

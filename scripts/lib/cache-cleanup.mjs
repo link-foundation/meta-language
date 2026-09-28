@@ -22,6 +22,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
   realpathSync,
   rmSync,
   statSync,
@@ -290,6 +291,132 @@ function busyCargoTarget(target, cache) {
   }
   cache.set(target, busy);
   return busy;
+}
+
+// Cargo releases its lock once compilation ends, while `cargo test`, `cargo
+// run` and `cargo bench` still run rustdoc and the binaries it built. So a
+// directory is also busy while another process executes a binary inside it or
+// names it in its command line, and a Cargo target while a Cargo, rustc or
+// rustdoc process runs in its workspace or points CARGO_TARGET_DIR at it.
+
+const CARGO_FAMILY = /^(?:cargo|rustc|rustdoc|clippy-driver|cargo-[\w-]+)(?:\.exe)?$/iu;
+
+const attempt = (read) => {
+  try {
+    return read();
+  } catch {
+    return null;
+  }
+};
+
+function linuxProcesses() {
+  const processes = [];
+  for (const name of readdirSync('/proc')) {
+    if (!/^\d+$/u.test(name)) continue;
+    const stat = attempt(() => readFileSync(`/proc/${name}/stat`, 'utf8'));
+    if (stat === null) continue;
+    const args = (attempt(() => readFileSync(`/proc/${name}/cmdline`, 'utf8')) ?? '').split('\0').filter(Boolean);
+    const environment = attempt(() => readFileSync(`/proc/${name}/environ`, 'utf8')) ?? '';
+    const targetDir = environment.split('\0').find((entry) => entry.startsWith('CARGO_TARGET_DIR='));
+    processes.push({
+      pid: Number(name),
+      ppid: Number(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[1]),
+      executable: attempt(() => readlinkSync(`/proc/${name}/exe`).replace(/ \(deleted\)$/u, '')),
+      cwd: attempt(() => readlinkSync(`/proc/${name}/cwd`)),
+      args,
+      program: args[0] ?? '',
+      targetDir: targetDir ? targetDir.slice('CARGO_TARGET_DIR='.length) : null,
+    });
+  }
+  return processes;
+}
+
+/** Processes from `ps` or PowerShell: whole command lines, but no working directories. */
+function listedProcesses() {
+  const windows = process.platform === 'win32';
+  const listing = windows
+    ? spawnSync('powershell', ['-NoProfile', '-Command',
+      'Get-CimInstance Win32_Process | ForEach-Object { "$($_.ProcessId)`t$($_.ParentProcessId)`t$($_.ExecutablePath)`t$($_.CommandLine)" }'],
+    { encoding: 'utf8', timeout: 20000, windowsHide: true })
+    : spawnSync('ps', ['-axww', '-o', 'pid=,ppid=,command='], { encoding: 'utf8', timeout: 20000 });
+  if (listing.status !== 0 || typeof listing.stdout !== 'string') return null;
+  const processes = [];
+  for (const line of listing.stdout.split(/\r?\n/u)) {
+    const fields = windows ? line.split('\t') : /^\s*(\d+)\s+(\d+)\s+(.*)$/u.exec(line)?.slice(1);
+    if (!fields || fields.length < 3 || !/^\d+$/u.test(fields[0])) continue;
+    const command = (windows ? fields.slice(3).join('\t') : fields[2]).trim();
+    const program = windows ? fields[2] : command.split(/\s+/u)[0];
+    processes.push({
+      pid: Number(fields[0]),
+      ppid: Number(fields[1]),
+      executable: program && path.isAbsolute(program) ? program : null,
+      cwd: null,
+      args: command ? [command] : [],
+      targetDir: null,
+      program: program || command.split(/\s+/u)[0] || '',
+    });
+  }
+  return processes;
+}
+
+/** Running processes and how they were listed; `probe` is `unavailable` when they cannot be. */
+export function runningProcesses() {
+  let probe = 'unavailable';
+  let processes = [];
+  if (process.platform === 'linux' && existsSync('/proc/self/stat')) {
+    probe = 'proc';
+    processes = linuxProcesses();
+  } else {
+    const listed = listedProcesses();
+    if (listed) {
+      probe = process.platform === 'win32' ? 'powershell' : 'ps';
+      processes = listed;
+    }
+  }
+  // The cleanup itself, and whatever started it, may name the paths it cleans.
+  const parents = new Map(processes.map(({ pid, ppid }) => [pid, ppid]));
+  const ancestors = new Set();
+  for (let pid = process.pid; pid > 0 && !ancestors.has(pid); pid = parents.get(pid) ?? (pid === process.pid ? process.ppid : 0)) {
+    ancestors.add(pid);
+  }
+  return { probe, processes: processes.filter(({ pid }) => !ancestors.has(pid)) };
+}
+
+/** Whether `text` names `directory` or a path inside it. */
+function mentions(text, directory) {
+  for (let index = text.indexOf(directory); index !== -1; index = text.indexOf(directory, index + 1)) {
+    const next = text[index + directory.length];
+    if (next === undefined || next === '/' || next === '\\' || next === ' ' || next === '"' || next === "'") return true;
+  }
+  return false;
+}
+
+const cargoFamily = ({ executable, program }) => [executable, program]
+  .some((name) => typeof name === 'string' && CARGO_FAMILY.test(path.basename(name)));
+
+/** Why a running process uses `directory` or one of the Cargo `targets` in it, or null. */
+function processUsing(directory, targets, running, root, display) {
+  for (const entry of running.processes) {
+    if (entry.executable && inside(entry.executable, directory)) {
+      return `a running process (pid ${entry.pid}) executes ${display(entry.executable)}`;
+    }
+    if (entry.args.some((argument) => mentions(argument, directory))) {
+      return `a running process (pid ${entry.pid}) names it in its command line`;
+    }
+    if (targets.length === 0 || !cargoFamily(entry)) continue;
+    if (entry.args.some((argument) => targets.some((target) => mentions(argument, target)))) {
+      return `a running Cargo process (pid ${entry.pid}) names its target directory`;
+    }
+    if (entry.cwd === null) return `a running Cargo process (pid ${entry.pid}) may use it`;
+    const usesTarget = targets.some((target) => {
+      const workspace = path.dirname(target);
+      const fromEnvironment = entry.targetDir && path.resolve(entry.cwd, entry.targetDir) === target;
+      const inWorkspace = inside(entry.cwd, workspace) || (inside(entry.cwd, root) && inside(workspace, entry.cwd));
+      return fromEnvironment || inWorkspace;
+    });
+    if (usesTarget) return `a running Cargo process (pid ${entry.pid}) builds in its workspace`;
+  }
+  return null;
 }
 
 // Disk usage, counted in allocated blocks with hard links counted once.
@@ -581,7 +708,12 @@ function cleanWithLock(repository, options, base) {
 
   const leases = liveLeases(repository.stateDir);
   const lockProbe = flockAvailable();
-  report.activeBuilds = { leases: leases.map(({ pid, label }) => ({ pid, label })), cargoLockProbe: lockProbe ? 'flock' : 'unavailable' };
+  const running = runningProcesses();
+  report.activeBuilds = {
+    leases: leases.map(({ pid, label }) => ({ pid, label })),
+    cargoLockProbe: lockProbe ? 'flock' : 'unavailable',
+    processProbe: running.probe,
+  };
   const busyTargets = new Map();
 
   const selected = CACHE_CLASSES.filter((cacheClass) => !options.classes || options.classes.includes(cacheClass.id));
@@ -611,9 +743,12 @@ function cleanWithLock(repository, options, base) {
     if (!reason && candidate.activeSensitive && leases.length > 0) {
       reason = `active build (${leases.map(({ pid, label }) => `${label} pid ${pid}`).join(', ')})`;
     }
+    const targets = candidate.activeSensitive ? (candidate.target ? [candidate.target] : nestedCargoTargets(candidate.path, 3)) : [];
     if (!reason && candidate.activeSensitive && lockProbe) {
-      const targets = candidate.target ? [candidate.target] : nestedCargoTargets(candidate.path, 3);
       if (targets.some((target) => busyCargoTarget(target, busyTargets))) reason = 'a running Cargo build holds its lock';
+    }
+    if (!reason && candidate.activeSensitive) {
+      reason = processUsing(candidate.path, targets, running, context.root, (file) => displayPath(context.root, file));
     }
     if (reason === 'missing') continue;
     if (reason) entry.skipped.push({ path: display, reason });
