@@ -6,6 +6,15 @@
     "javascript": "0.25.10"
   },
   "grammars": {
+    "bash": {
+      "id": "bash",
+      "crate": "tree-sitter-bash",
+      "directory": ".",
+      "version": "0.25.1",
+      "parserSha256": "5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f",
+      "wasmSha256": "474a86db0ded2b2478e130640ebfa9493143862f57546c19cf8a8d9bf26e3a17",
+      "license": "bash.LICENSE"
+    },
     "c": {
       "id": "c",
       "crate": "tree-sitter-c",
@@ -52,6 +61,15 @@
       "wasmSha256": "19e23890eef87611c6a8c71575ec7d1b4150ba90c946f17ea818ecf329a5322b",
       "license": "csv.LICENSE"
     },
+    "dart": {
+      "id": "dart",
+      "crate": "tree-sitter-dart",
+      "directory": ".",
+      "version": "0.2.0",
+      "parserSha256": "1894ef57f8e0ceb483ccf6d548429517dc42b0d983293ebdb5ff9ff9c612c4a9",
+      "wasmSha256": "52bdbf469a2343a52385f75dab61097fe9c157e747ddfcc52200c153c4259d4b",
+      "license": "dart.LICENSE"
+    },
     "dtd": {
       "id": "dtd",
       "crate": "tree-sitter-xml",
@@ -78,6 +96,15 @@
       "parserSha256": "d27f89090319f885811fefb5c5453f9cc95543c04df02b7c43aa1fa6f7d353d9",
       "wasmSha256": "fd4081c84308f5db14a4a6e1bea91c08f9c38e5ab47e5a0730c4a39448844d00",
       "license": "graphql.LICENSE"
+    },
+    "haskell": {
+      "id": "haskell",
+      "crate": "tree-sitter-haskell",
+      "directory": ".",
+      "version": "0.23.1",
+      "parserSha256": "f05f34d3cabb3c4a0397a2ac29d4cf4212f814dec98199042228d1850055db93",
+      "wasmSha256": "ddc4978970326bc46369f3dff15027c54dac79adb7aca9ba7b6d3a20ebb1b3e0",
+      "license": "haskell.LICENSE"
     },
     "html": {
       "id": "html",
@@ -177,6 +204,24 @@
       "parserSha256": "0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c",
       "wasmSha256": "38e644a81ca11a6b98d56aaa30b056148357dcaf22f62ef3e5f47c9a968e75e8",
       "license": "markdown_inline.LICENSE"
+    },
+    "ocaml": {
+      "id": "ocaml",
+      "crate": "tree-sitter-ocaml",
+      "directory": "grammars/ocaml",
+      "version": "0.24.2",
+      "parserSha256": "ab85b3756c106d0be3509db9d33eb883ff7dda2b714c7e47ec36a2d807923c0f",
+      "wasmSha256": "c60bd9980a698106c09dccf5a089841e7d285721ad8ce9e4fd5a326bf3316d0f",
+      "license": "ocaml.LICENSE"
+    },
+    "ocaml_interface": {
+      "id": "ocaml_interface",
+      "crate": "tree-sitter-ocaml",
+      "directory": "grammars/interface",
+      "version": "0.24.2",
+      "parserSha256": "8769090544b24ca4a33b6dd0eed9b337b171005551caba2f6db83ad755046d3b",
+      "wasmSha256": "a7031fa690d59390a2c995476168fb87c5cd78a875c599f9564f7433703af21b",
+      "license": "ocaml_interface.LICENSE"
     },
     "pascal": {
       "id": "pascal",
@@ -341,6 +386,15 @@
       "parserSha256": "8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9",
       "wasmSha256": "e93163e5d306e4b328ab0b4c29ce82b086057e1d2dad47bcdcac358abfdec518",
       "license": "yaml.LICENSE"
+    },
+    "zig": {
+      "id": "zig",
+      "crate": "tree-sitter-zig",
+      "directory": ".",
+      "version": "1.1.2",
+      "parserSha256": "5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63",
+      "wasmSha256": "4dd568b541381b9ddcd0b53eda9956d26fea148b26f0af2ec52b1e8b4de3ed2e",
+      "license": "zig.LICENSE"
     }
   }
 }

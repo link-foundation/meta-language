@@ -237,14 +237,17 @@ fn grammar_for_language(language: &str) -> Option<Language> {
 /// Returns the compiled grammar for a grammar-lock id.
 pub fn grammar_by_id(id: &str) -> Option<Language> {
     Some(match id {
+        "bash" => tree_sitter_bash::LANGUAGE.into(),
         "c" => tree_sitter_c::LANGUAGE.into(),
         "cpp" => tree_sitter_cpp::LANGUAGE.into(),
         "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),
         "css" => tree_sitter_css::LANGUAGE.into(),
         "csv" => csv_grammar::LANGUAGE.into(),
+        "dart" => tree_sitter_dart::LANGUAGE.into(),
         "dtd" => tree_sitter_xml::LANGUAGE_DTD.into(),
         "go" => tree_sitter_go::LANGUAGE.into(),
         "graphql" => tree_sitter_graphql::LANGUAGE.into(),
+        "haskell" => tree_sitter_haskell::LANGUAGE.into(),
         "html" => tree_sitter_html::LANGUAGE.into(),
         "ini" => tree_sitter_ini::LANGUAGE.into(),
         "java" => tree_sitter_java::LANGUAGE.into(),
@@ -256,6 +259,8 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "lua" => tree_sitter_lua::LANGUAGE.into(),
         "markdown" => tree_sitter_md_025::LANGUAGE.into(),
         "markdown_inline" => tree_sitter_md_025::INLINE_LANGUAGE.into(),
+        "ocaml" => tree_sitter_ocaml::LANGUAGE_OCAML.into(),
+        "ocaml_interface" => tree_sitter_ocaml::LANGUAGE_OCAML_INTERFACE.into(),
         "pascal" => tree_sitter_pascal::LANGUAGE.into(),
         "perl" => ts_parser_perl::LANGUAGE.into(),
         "php" => tree_sitter_php::LANGUAGE_PHP.into(),
@@ -274,6 +279,7 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "vb" => tree_sitter_vb_dotnet::LANGUAGE.into(),
         "xml" => tree_sitter_xml::LANGUAGE_XML.into(),
         "yaml" => tree_sitter_yaml::LANGUAGE.into(),
+        "zig" => tree_sitter_zig::LANGUAGE.into(),
         _ => return None,
     })
 }

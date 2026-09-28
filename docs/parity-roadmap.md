@@ -378,3 +378,23 @@ grammar; the older `tree-sitter-perl` package points at a different grammar and
 forces a normal `tree-sitter ^0.26.3` dependency. `tree-sitter-php` is wired
 through its `LANGUAGE_PHP` symbol (the full PHP-with-template grammar) rather
 than the `LANGUAGE_PHP_ONLY` variant.
+
+## Further Programming Language Coverage
+
+The 57-target minimum audit is a floor, not a cap: further languages that ship a
+maintained tree-sitter grammar on crates.io get a default grammar CST in both
+runtimes. Each row in `parity/language-grammar-inventory.json` carries a UTF-8
+source and a malformed recovery source; `parity/fixtures/default-cst-expected.json`
+pins the CST of both (checked against the tree-sitter CLI by
+`generate-default-cst-expectations.mjs --cli`), and the Rust and JavaScript
+default-CST suites enumerate the inventory, so every row gets structural and
+recovery evidence in both runtimes.
+
+| Language | Labels (case-insensitive) | Extensions | Crate | Version | License | Grammar root |
+|---|---|---|---|---|---|---|
+| Haskell | `Haskell`, `hs` | `.hs` | [`tree-sitter-haskell`](https://github.com/tree-sitter/tree-sitter-haskell) | 0.23.1 | MIT | `haskell` |
+| OCaml | `OCaml`, `ml` | `.ml` | [`tree-sitter-ocaml`](https://github.com/tree-sitter/tree-sitter-ocaml) | 0.24.2 | MIT | `compilation_unit` |
+| OCaml Interface | `OCaml-Interface`, `OCaml Interface`, `mli` | `.mli` | [`tree-sitter-ocaml`](https://github.com/tree-sitter/tree-sitter-ocaml) (`LANGUAGE_OCAML_INTERFACE`) | 0.24.2 | MIT | `compilation_unit` |
+| Zig | `Zig` | `.zig` | [`tree-sitter-zig`](https://github.com/tree-sitter-grammars/tree-sitter-zig) | 1.1.2 | MIT | `source_file` |
+| Bash | `Bash`, `sh`, `shell` | `.sh`, `.bash` | [`tree-sitter-bash`](https://github.com/tree-sitter/tree-sitter-bash) | 0.25.1 | MIT | `program` |
+| Dart | `Dart` | `.dart` | [`tree-sitter-dart`](https://github.com/nielsenko/tree-sitter-dart) | 0.2.0 | MIT | `source_file` |

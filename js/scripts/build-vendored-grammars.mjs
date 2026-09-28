@@ -30,6 +30,7 @@ const rustLockPath = join(root, 'rust/src/data/grammar-lock.json');
  * generated parser vendored under rust/vendor (compiled by rust/build.rs).
  */
 export const GRAMMAR_SOURCES = Object.freeze({
+  bash: { crate: 'tree-sitter-bash', dir: '.' },
   c: { crate: 'tree-sitter-c', dir: '.' },
   cpp: { crate: 'tree-sitter-cpp', dir: '.' },
   csv: {
@@ -44,9 +45,11 @@ export const GRAMMAR_SOURCES = Object.freeze({
   },
   csharp: { crate: 'tree-sitter-c-sharp', dir: '.' },
   css: { crate: 'tree-sitter-css', dir: '.' },
+  dart: { crate: 'tree-sitter-dart', dir: '.' },
   dtd: { crate: 'tree-sitter-xml', dir: 'dtd' },
   go: { crate: 'tree-sitter-go', dir: '.' },
   graphql: { crate: 'tree-sitter-graphql', dir: '.' },
+  haskell: { crate: 'tree-sitter-haskell', dir: '.' },
   html: { crate: 'tree-sitter-html', dir: '.' },
   ini: { crate: 'tree-sitter-ini', dir: '.' },
   java: { crate: 'tree-sitter-java', dir: '.' },
@@ -58,6 +61,8 @@ export const GRAMMAR_SOURCES = Object.freeze({
   lua: { crate: 'tree-sitter-lua', dir: '.' },
   markdown: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown' },
   markdown_inline: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown-inline' },
+  ocaml: { crate: 'tree-sitter-ocaml', dir: 'grammars/ocaml' },
+  ocaml_interface: { crate: 'tree-sitter-ocaml', dir: 'grammars/interface' },
   pascal: { crate: 'tree-sitter-pascal', dir: '.' },
   perl: { crate: 'ts-parser-perl', dir: '.' },
   php: { crate: 'tree-sitter-php', dir: 'php' },
@@ -99,6 +104,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   vb: { crate: 'tree-sitter-vb-dotnet', dir: '.' },
   xml: { crate: 'tree-sitter-xml', dir: 'xml' },
   yaml: { crate: 'tree-sitter-yaml', dir: '.' },
+  zig: { crate: 'tree-sitter-zig', dir: '.' },
 });
 
 // zlib writes a zero mtime, so identical wasm always yields identical archives.
