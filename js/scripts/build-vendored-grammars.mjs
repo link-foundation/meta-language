@@ -68,9 +68,10 @@ export const GRAMMAR_SOURCES = Object.freeze({
     upstream: 'aruzdh/tree-sitter-rocq',
     version: '300fe33fc299c30f736fd56d8ef8a28b08acd4e6',
     revision: '300fe33fc299c30f736fd56d8ef8a28b08acd4e6',
-    // Recdef's `Function`, mutual and redefining `Ltac`, `first`/`solve`
-    // and Ltac `let ... in`, which translated Rocq programs use.
-    patch: 'rust/vendor/tree-sitter-rocq/meta-language-tactics.patch',
+    // Translated-program constructs (Recdef's `Function`, mutual and
+    // redefining `Ltac`, `first`/`solve`, Ltac `let ... in`) and the
+    // vernacular, term and Ltac syntax the pinned Rocq stdlib files use.
+    patch: 'rust/vendor/tree-sitter-rocq/meta-language.patch',
     dir: '.',
   },
   rust: { crate: 'tree-sitter-rust', dir: '.' },

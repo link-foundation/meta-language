@@ -236,10 +236,10 @@
       "id": "rocq",
       "upstream": "aruzdh/tree-sitter-rocq",
       "vendored": "rust/vendor/tree-sitter-rocq",
-      "patch": "rust/vendor/tree-sitter-rocq/meta-language-tactics.patch",
+      "patch": "rust/vendor/tree-sitter-rocq/meta-language.patch",
       "version": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-      "parserSha256": "f2296d1c1938530a2abf8fd650a72bea31ee68af31dc11035379cfa96eae5f45",
-      "wasmSha256": "6a53c7dc1492cf951caae99827dc3cfd61f06f09e15e78ace2bc1429fd560e0d",
+      "parserSha256": "4d6566a7291a13ec3da6a965920b6469bb58a183062e2dd4b2759751c153b5a6",
+      "wasmSha256": "87dd8d6725595af745ebc37f5c4ffc3ad130133cf2bd70f79dd76d1aee977061",
       "license": "rocq.LICENSE"
     },
     "ruby": {
