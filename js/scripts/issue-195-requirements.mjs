@@ -396,7 +396,7 @@ function buildFourLanguageCorpusRequirements(fixtureCatalog, extensions) {
       fixtureCatalog[fixtureId] = pinnedFixture(
         suffix === 'CONFORMANCE'
           ? 'parity/fixtures/issue-195-conformance/manifest.json'
-          : 'parity/fixtures/issue-195-evidence.json',
+          : 'parity/fixtures/issue-195-generative/manifest.json',
         `${language} ${construct}`,
       );
       requirements.push(

@@ -17,8 +17,8 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 use super::cst_lines::{
-    cst_lines_to_sexp, diagnostic_problems, document_grammar_roots, parse_cst_lines,
-    region_grammar_roots, render_cst_lines, trivia_problems, NetworkIndex,
+    cst_lines_to_sexp, diagnostic_problems, document_oracle_problems, first_difference,
+    parse_cst_lines, region_grammar_roots, render_cst_lines, trivia_problems, NetworkIndex,
 };
 use super::cst_sexpression::{normalize, parse_corpus, strip_fields, CorpusCase};
 use super::issue_195_observations::{record, Observation, CONFORMANCE_FIXTURE};
@@ -60,20 +60,6 @@ fn text<'a>(value: &'a Value, key: &str) -> &'a str {
     value[key]
         .as_str()
         .unwrap_or_else(|| panic!("{key} is a string"))
-}
-
-fn first_difference(actual: &str, expected: &str) -> String {
-    let left: Vec<&str> = actual.split('\n').collect();
-    let right: Vec<&str> = expected.split('\n').collect();
-    let at = (0..left.len().max(right.len()))
-        .find(|&index| left.get(index) != right.get(index))
-        .unwrap_or(0);
-    format!(
-        "line {}\n  actual   {}\n  expected {}",
-        at + 1,
-        left.get(at).unwrap_or(&""),
-        right.get(at).unwrap_or(&"")
-    )
 }
 
 fn parse(source: &str, language: &str) -> LinkNetwork {
@@ -120,21 +106,8 @@ fn document_problems(
     corpus_case: Option<&CorpusCase>,
 ) -> Vec<String> {
     let network = parse(source, language);
-    let index = NetworkIndex::new(&network);
-    let (tree, rendered) = render_cst_lines(&document_grammar_roots(&index, language));
-    let oracle = text(entry, "cst");
-    let mut problems = Vec::new();
-    if tree != oracle {
-        problems.push(format!(
-            "CST differs at {}",
-            first_difference(&tree, oracle)
-        ));
-    }
-    if network.reconstruct_text() != source {
-        problems.push("reconstruction differs from the source".to_string());
-    }
-    problems.extend(trivia_problems(&network, source, oracle, None));
-    problems.extend(diagnostic_problems(&network, &rendered, oracle, true));
+    let (mut problems, tree) =
+        document_oracle_problems(&network, language, source, text(entry, "cst"));
     let upstream = entry["upstream"].as_str();
     if let (Some("match"), Some(corpus_case)) = (upstream, corpus_case) {
         let expected = normalize(&corpus_case.expected);

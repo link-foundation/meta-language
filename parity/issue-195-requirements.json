@@ -653,9 +653,9 @@
       "sha256": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
     },
     "planned:generative:JavaScript": {
-      "path": "parity/fixtures/issue-195-evidence.json",
+      "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "JavaScript property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
+      "sha256": "e38033e69e20b6b50d6fe7dd5bad5650fa30b4066e17af2ffa066667255f453d"
     },
     "planned:conformance:Rust": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -663,9 +663,9 @@
       "sha256": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
     },
     "planned:generative:Rust": {
-      "path": "parity/fixtures/issue-195-evidence.json",
+      "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Rust property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
+      "sha256": "e38033e69e20b6b50d6fe7dd5bad5650fa30b4066e17af2ffa066667255f453d"
     },
     "planned:conformance:Lean": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -673,9 +673,9 @@
       "sha256": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
     },
     "planned:generative:Lean": {
-      "path": "parity/fixtures/issue-195-evidence.json",
+      "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Lean property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
+      "sha256": "e38033e69e20b6b50d6fe7dd5bad5650fa30b4066e17af2ffa066667255f453d"
     },
     "planned:conformance:Rocq": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -683,9 +683,9 @@
       "sha256": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
     },
     "planned:generative:Rocq": {
-      "path": "parity/fixtures/issue-195-evidence.json",
+      "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Rocq property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "0cccdf8a5685ab1c7fe1915f29dc413c5369110425c4f2e0826bc88aea0badcb"
+      "sha256": "e38033e69e20b6b50d6fe7dd5bad5650fa30b4066e17af2ffa066667255f453d"
     },
     "planned:semantic:JavaScript:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",

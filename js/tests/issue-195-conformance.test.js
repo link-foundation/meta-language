@@ -14,7 +14,8 @@ import { LinkNetwork } from '../src/index.js';
 import {
   cstLinesToSexp,
   diagnosticProblems,
-  documentGrammarRoots,
+  documentOracleProblems,
+  firstDifference,
   parseCstLines,
   regionGrammarRoots,
   renderCstLines,
@@ -43,14 +44,6 @@ const ASSERTIONS = [
   'mixedLanguageCasesExecuted',
 ];
 
-function firstDifference(actual, expected) {
-  const left = actual.split('\n');
-  const right = expected.split('\n');
-  const index = left.findIndex((line, position) => line !== right[position]);
-  const at = index < 0 ? Math.min(left.length, right.length) : index;
-  return `line ${at + 1}\n  actual   ${left[at]}\n  expected ${right[at]}`;
-}
-
 /** The source of every oracle case, taken from the vendored inputs. */
 function caseSources(language, details) {
   const sources = new Map();
@@ -68,11 +61,7 @@ function caseSources(language, details) {
 /** Problems of the public tree of one non-mixed case against its oracle tree. */
 function documentProblems(language, entry, source, corpusCase) {
   const network = LinkNetwork.parse(source, language);
-  const { text, rendered } = renderCstLines(documentGrammarRoots(network, language), language);
-  const problems = [];
-  if (text !== entry.cst) problems.push(`CST differs at ${firstDifference(text, entry.cst)}`);
-  if (network.reconstructText() !== source) problems.push('reconstruction differs from the source');
-  problems.push(...triviaProblems(network, source, entry.cst), ...diagnosticProblems(network, rendered, entry.cst));
+  const { problems, text } = documentOracleProblems(network, language, source, entry.cst);
   if (entry.upstream === 'match') {
     const expected = normalize(corpusCase.expected);
     let actual = normalize(cstLinesToSexp(text));

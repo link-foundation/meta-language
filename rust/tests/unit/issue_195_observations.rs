@@ -25,6 +25,9 @@ pub const EVIDENCE_FIXTURE: &str = "parity/fixtures/issue-195-evidence.json";
 /// The pinned upstream corpora, real projects and native CLI trees of the
 /// four-language conformance suite.
 pub const CONFORMANCE_FIXTURE: &str = "parity/fixtures/issue-195-conformance/manifest.json";
+/// The seeded property, fuzz, metamorphic and edit-sequence cases of the
+/// generative suite, with native CLI trees and kept reproducers.
+pub const GENERATIVE_FIXTURE: &str = "parity/fixtures/issue-195-generative/manifest.json";
 /// The grammar importer corpus.
 pub const GRAMMAR_IMPORTER_FIXTURE: &str = "parity/fixtures/grammar-importers.json";
 

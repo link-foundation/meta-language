@@ -72,7 +72,15 @@ pub fn parse_incremental(
     parser.set_language(&grammar).ok()?;
     let mut old_tree = parser.parse(old_text, None)?;
     old_tree.edit(&input_edit(old_text, range, replacement));
-    let parsed = parser.parse(&edited_text, Some(&old_tree))?;
+    let mut parsed = parser.parse(&edited_text, Some(&old_tree))?;
+    // Error recovery that reuses subtrees of the old tree can settle on another
+    // tree than a fresh parse (for example an ERROR node that swallows an
+    // `else` clause), so a tree with errors is reparsed from scratch: the
+    // network of a text never depends on its edit history, and matches the
+    // JavaScript runtime, which always parses the whole text.
+    if parsed.root_node().has_error() {
+        parsed = parser.parse(&edited_text, None)?;
+    }
 
     Some(network_from_tree(
         &edited_text,

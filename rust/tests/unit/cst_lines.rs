@@ -157,6 +157,27 @@ impl<'a> NetworkIndex<'a> {
                 _ => {}
             }
         }
+        // An incremental edit remaps link ids, so the tree order of siblings is
+        // their source order: by start, then by end, as a zero-width sibling
+        // (a MISSING node) precedes one that starts at the same byte and is
+        // longer. The sort is stable, so zero-width siblings at one point keep
+        // link order.
+        let start = |id: &LinkId| {
+            network
+                .link(*id)
+                .and_then(|link| link.metadata().span())
+                .map_or((0, 0), |span| {
+                    (span.byte_range().start(), span.byte_range().end())
+                })
+        };
+        for children in index
+            .children
+            .values_mut()
+            .chain(index.region_roots.values_mut())
+        {
+            children.sort_by_key(start);
+        }
+        index.document_roots.sort_by_key(start);
         index
     }
 
@@ -433,6 +454,47 @@ pub fn diagnostic_problems(
         problems.push(format!("is_clean() is {}", report.is_clean()));
     }
     problems
+}
+
+/// The first differing line of two CST texts, for failure messages.
+pub fn first_difference(actual: &str, expected: &str) -> String {
+    let left: Vec<&str> = actual.split('\n').collect();
+    let right: Vec<&str> = expected.split('\n').collect();
+    let at = (0..left.len().max(right.len()))
+        .find(|&index| left.get(index) != right.get(index))
+        .unwrap_or(0);
+    format!(
+        "line {}\n  actual   {}\n  expected {}",
+        at + 1,
+        left.get(at).unwrap_or(&""),
+        right.get(at).unwrap_or(&"")
+    )
+}
+
+/// Problems of the public tree of a whole `source` document against its
+/// oracle CST lines: structure, kinds, fields, spans and flags, exact
+/// reconstruction, trivia and diagnostics. Returns the rendered tree too.
+pub fn document_oracle_problems(
+    network: &LinkNetwork,
+    language: &str,
+    source: &str,
+    oracle: &str,
+) -> (Vec<String>, String) {
+    let index = NetworkIndex::new(network);
+    let (tree, rendered) = render_cst_lines(&document_grammar_roots(&index, language));
+    let mut problems = Vec::new();
+    if tree != oracle {
+        problems.push(format!(
+            "CST differs at {}",
+            first_difference(&tree, oracle)
+        ));
+    }
+    if network.reconstruct_text() != source {
+        problems.push("reconstruction differs from the source".to_string());
+    }
+    problems.extend(trivia_problems(network, source, oracle, None));
+    problems.extend(diagnostic_problems(network, &rendered, oracle, true));
+    (problems, tree)
 }
 
 /// The S-expression of canonical CST lines: named nodes with fields, ERROR and MISSING.

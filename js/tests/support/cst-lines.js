@@ -279,6 +279,29 @@ export function diagnosticProblems(network, rendered, oracleText, { checkClean =
   return problems;
 }
 
+/** The first differing line of two CST texts, for failure messages. */
+export function firstDifference(actual, expected) {
+  const left = actual.split('\n');
+  const right = expected.split('\n');
+  const index = left.findIndex((line, position) => line !== right[position]);
+  const at = index < 0 ? Math.min(left.length, right.length) : index;
+  return `line ${at + 1}\n  actual   ${left[at]}\n  expected ${right[at]}`;
+}
+
+/**
+ * Problems of the public tree of a whole `source` document against its oracle CST lines:
+ * structure, kinds, fields, spans and flags, exact reconstruction, trivia and diagnostics.
+ * Returns the rendered public tree too.
+ */
+export function documentOracleProblems(network, language, source, oracleText) {
+  const { text, rendered } = renderCstLines(documentGrammarRoots(network, language), language);
+  const problems = [];
+  if (text !== oracleText) problems.push(`CST differs at ${firstDifference(text, oracleText)}`);
+  if (network.reconstructText() !== source) problems.push('reconstruction differs from the source');
+  problems.push(...triviaProblems(network, source, oracleText), ...diagnosticProblems(network, rendered, oracleText));
+  return { problems, text };
+}
+
 /** The S-expression of canonical CST lines: named nodes with fields, ERROR and MISSING. */
 export function cstLinesToSexp(text) {
   const nodes = parseCstLines(text);
