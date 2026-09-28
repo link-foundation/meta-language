@@ -4,7 +4,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 /// Generated grammars vendored under `vendor/` (see each `NOTICE.md`).
-const VENDORED_GRAMMARS: &[&str] = &["rocq", "csv"];
+const VENDORED_GRAMMARS: &[&str] = &["rocq", "csv", "rust"];
 
 fn decompress_parser(compressed: &Path, parser: &Path) {
     let mut input = GzDecoder::new(File::open(compressed).expect("open vendored parser"));
@@ -20,6 +20,11 @@ fn compile_grammar(name: &str, out_dir: &Path) {
 
     let mut compiler = cc::Build::new();
     compiler.std("c11").include(&vendor).file(&parser);
+    let scanner = vendor.join("scanner.c");
+    if scanner.exists() {
+        compiler.file(&scanner);
+        println!("cargo:rerun-if-changed={}", scanner.display());
+    }
     if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc") {
         compiler.flag("-utf-8");
     }

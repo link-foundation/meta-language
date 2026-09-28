@@ -74,7 +74,20 @@ export const GRAMMAR_SOURCES = Object.freeze({
     patch: 'rust/vendor/tree-sitter-rocq/meta-language.patch',
     dir: '.',
   },
-  rust: { crate: 'tree-sitter-rust', dir: '.' },
+  rust: {
+    vendored: 'rust/vendor/tree-sitter-rust',
+    upstream: 'tree-sitter/tree-sitter-rust',
+    version: 'v0.24.2',
+    revision: '77a3747266f4d621d0757825e6b11edcbf991ca5',
+    // Syntax real published crates use that the release reports as errors:
+    // `~` and bare `$` in macro token trees, unit structs with a where
+    // clause, attributes on struct-pattern fields and later tuple elements,
+    // `as T <= e`, unit types in where predicates, turbofish on functions
+    // named like primitive types, the 2015 `try!` macro and cargo script
+    // frontmatter.
+    patch: 'rust/vendor/tree-sitter-rust/meta-language.patch',
+    dir: '.',
+  },
   scala: { crate: 'tree-sitter-scala', dir: '.' },
   sql: { crate: 'tree-sitter-sequel', dir: '.' },
   swift: { crate: 'tree-sitter-swift', dir: '.' },

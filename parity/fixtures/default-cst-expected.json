@@ -385,8 +385,8 @@
     "Rust": {
       "grammars": {
         "rust": {
-          "version": "0.24.2",
-          "parserSha256": "9602518f9e57919910bf0e777e52f6bfc9325d4c182e998bdb4efd5682b76e4a"
+          "version": "v0.24.2",
+          "parserSha256": "c2625aed5481577ae5499995e80c1700921119e75c9ec8fc351ca02f3d9f46fa"
         }
       },
       "sourceSha256": "a06eaced682e65f5b3c30d9e8fe7fe0cb1051f1dd73023ecc70a02f554a62c0b",

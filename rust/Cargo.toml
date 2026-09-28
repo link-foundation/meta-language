@@ -24,6 +24,7 @@ include = [
     "src/data/language-trigrams.json",
     "vendor/tree-sitter-rocq/**",
     "vendor/tree-sitter-csv/**",
+    "vendor/tree-sitter-rust/**",
     "examples/**/*.rs",
     "README.md",
     "LICENSE",
@@ -93,7 +94,6 @@ tree-sitter-proto = "=0.4.0"
 tree-sitter-python = "=0.25.0"
 tree-sitter-r = "=1.2.0"
 tree-sitter-ruby = "=0.23.1"
-tree-sitter-rust = "=0.24.2"
 tree-sitter-language = "0.1.7"
 tree-sitter-scala = "=0.25.1"
 tree-sitter-sequel = "=0.3.11"

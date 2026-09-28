@@ -253,11 +253,12 @@
     },
     "rust": {
       "id": "rust",
-      "crate": "tree-sitter-rust",
-      "directory": ".",
-      "version": "0.24.2",
-      "parserSha256": "9602518f9e57919910bf0e777e52f6bfc9325d4c182e998bdb4efd5682b76e4a",
-      "wasmSha256": "bad860425fafa0321d6898b6cbaeee1f571f75fa7584bf726c3ec04f3b19c474",
+      "upstream": "tree-sitter/tree-sitter-rust",
+      "vendored": "rust/vendor/tree-sitter-rust",
+      "patch": "rust/vendor/tree-sitter-rust/meta-language.patch",
+      "version": "v0.24.2",
+      "parserSha256": "c2625aed5481577ae5499995e80c1700921119e75c9ec8fc351ca02f3d9f46fa",
+      "wasmSha256": "e25f46ff07a8b0be5b857abeb9c3c56df012dbc9769e9b5fca69239c7869dab5",
       "license": "rust.LICENSE"
     },
     "scala": {
