@@ -355,6 +355,14 @@ export async function cliGrammarDirectory(id, versions, scratch) {
     await writeFile(join(dir, 'src/grammar.json'), JSON.stringify({ name: id, rules: {} }));
   }
   await ensureGrammarConfig(dir);
+  // The CLI loads every grammar a tree-sitter.json lists; tree-sitter-hcl
+  // also lists its Terraform dialect, whose grammar.json the crate omits.
+  const configPath = join(dir, 'tree-sitter.json');
+  const config = JSON.parse(await readFile(configPath, 'utf8'));
+  const own = config.grammars.filter((grammar) => resolve(dir, grammar.path ?? '.') === resolve(dir));
+  if (own.length && own.length < config.grammars.length) {
+    await writeFile(configPath, JSON.stringify({ ...config, grammars: own }));
+  }
   return dir;
 }
 

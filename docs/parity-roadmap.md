@@ -398,3 +398,29 @@ recovery evidence in both runtimes.
 | Zig | `Zig` | `.zig` | [`tree-sitter-zig`](https://github.com/tree-sitter-grammars/tree-sitter-zig) | 1.1.2 | MIT | `source_file` |
 | Bash | `Bash`, `sh`, `shell` | `.sh`, `.bash` | [`tree-sitter-bash`](https://github.com/tree-sitter/tree-sitter-bash) | 0.25.1 | MIT | `program` |
 | Dart | `Dart` | `.dart` | [`tree-sitter-dart`](https://github.com/nielsenko/tree-sitter-dart) | 0.2.0 | MIT | `source_file` |
+| Agda | `Agda` | `.agda` | [`tree-sitter-agda`](https://github.com/tree-sitter/tree-sitter-agda) | 1.3.3 | MIT | `source_file` |
+| CMake | `CMake` | `.cmake`, `CMakeLists.txt` | [`tree-sitter-cmake`](https://github.com/uyha/tree-sitter-cmake) | 0.7.5 | MIT | `source_file` |
+| Diff | `Diff`, `patch` | `.diff`, `.patch` | [`tree-sitter-diff`](https://github.com/tree-sitter/tree-sitter-diff) | 0.1.0 | MIT | `source` |
+| Elixir | `Elixir`, `ex`, `exs` | `.ex`, `.exs` | [`tree-sitter-elixir`](https://github.com/elixir-lang/tree-sitter-elixir) | 0.3.5 | Apache-2.0 | `source` |
+| Elm | `Elm` | `.elm` | [`tree-sitter-elm`](https://github.com/elm-tooling/tree-sitter-elm) | 5.9.4 | MIT | `file` |
+| Erlang | `Erlang`, `erl` | `.erl`, `.hrl` | [`tree-sitter-erlang`](https://github.com/WhatsApp/tree-sitter-erlang) | 0.20.0 | MIT | `source_file` |
+| Groovy | `Groovy`, `gradle` | `.groovy`, `.gradle` | [`tree-sitter-groovy`](https://github.com/amaanq/tree-sitter-groovy) | 0.1.2 | MIT | `program` |
+| HCL | `HCL`, `terraform` | `.hcl`, `.tf`, `.tfvars` | [`tree-sitter-hcl`](https://github.com/tree-sitter-grammars/tree-sitter-hcl) | 1.1.0 | Apache-2.0 | `config_file` |
+| Make | `Make`, `makefile` | `.mk`, `Makefile` (any path ending in `makefile`) | [`tree-sitter-make`](https://github.com/tree-sitter-grammars/tree-sitter-make) | 1.1.1 | MIT | `makefile` |
+| MATLAB | `MATLAB` | `.m` | [`tree-sitter-matlab`](https://github.com/acristoffers/tree-sitter-matlab) | 1.3.1 | MIT | `source_file` |
+| Nix | `Nix` | `.nix` | [`tree-sitter-nix`](https://github.com/nix-community/tree-sitter-nix) | 0.3.0 | MIT | `source_code` |
+| Odin | `Odin` | `.odin` | [`tree-sitter-odin`](https://github.com/tree-sitter-grammars/tree-sitter-odin) | 1.3.0 | MIT | `source_file` |
+| PowerShell | `PowerShell`, `pwsh`, `ps1` | `.ps1`, `.psm1`, `.psd1` | [`tree-sitter-powershell`](https://github.com/airbus-cert/tree-sitter-powershell) | 0.26.4 | MIT | `program` |
+| Racket | `Racket`, `rkt` | `.rkt` | [`tree-sitter-racket`](https://github.com/6cdh/tree-sitter-racket) | 0.25.0 | MIT | `program` |
+| Regex | `Regex`, `regexp` | none (label only) | [`tree-sitter-regex`](https://github.com/tree-sitter/tree-sitter-regex) | 0.25.0 | MIT | `pattern` |
+| Scheme | `Scheme`, `scm` | `.scm`, `.ss` | [`tree-sitter-scheme`](https://github.com/6cdh/tree-sitter-scheme) | 0.24.7 | MIT | `program` |
+| Solidity | `Solidity`, `sol` | `.sol` | [`tree-sitter-solidity`](https://github.com/JoranHonig/tree-sitter-solidity) | 1.2.13 | MIT | `source_file` |
+
+Crates are only added when they build with the crate's `rust-version` 1.77
+(edition 2021 or earlier) and depend on `tree-sitter-language` rather than an
+older `tree-sitter`, and when the grammar's node and field names survive the
+MSVC build (`symbolNamesSha256` in `parity/fixtures/default-cst-expected.json`
+pins them for both runtimes). `tree-sitter-commonlisp`, `tree-sitter-glsl` and
+`tree-sitter-clojure` use edition 2024, `tree-sitter-dockerfile` depends on
+`tree-sitter` 0.20 and `tree-sitter-gleam` ships no license text for its
+Apache-2.0 license, so they wait for compatible releases.

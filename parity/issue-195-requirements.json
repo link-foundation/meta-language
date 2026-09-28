@@ -31,632 +31,802 @@
     "inventory:LiNo": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"LiNo\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:LiNo": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"LiNo\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:txt": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"txt\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:txt": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"txt\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Markdown": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Markdown\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Markdown": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Markdown\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:PDF": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PDF\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:PDF": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PDF\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:DOCX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DOCX\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:DOCX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DOCX\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:JavaScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JavaScript\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:JavaScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JavaScript\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Rust": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rust\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Rust": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rust\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Lean": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lean\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Lean": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lean\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Rocq": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rocq\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Rocq": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Rocq\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Python": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Python\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Python": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Python\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:C": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:C": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:C++": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C++\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:C++": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C++\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:C#": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C#\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:C#": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"C#\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Java": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Java\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Java": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Java\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:TypeScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TypeScript\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:TypeScript": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TypeScript\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:TSX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TSX\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:TSX": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TSX\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Visual Basic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Visual Basic\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Visual Basic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Visual Basic\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Delphi/Object Pascal": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Delphi/Object Pascal\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Delphi/Object Pascal": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Delphi/Object Pascal\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Go": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Go\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Go": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Go\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:R": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"R\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:R": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"R\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Ruby": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Ruby\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Ruby": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Ruby\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:PHP": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PHP\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:PHP": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"PHP\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Swift": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Swift\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Swift": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Swift\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Kotlin": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Kotlin\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Kotlin": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Kotlin\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Scala": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Scala\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Scala": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Scala\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Lua": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lua\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Lua": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Lua\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Perl": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Perl\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Perl": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Perl\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Haskell": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Haskell\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Haskell": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Haskell\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:OCaml": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"OCaml\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:OCaml": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"OCaml\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:OCaml Interface": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"OCaml Interface\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:OCaml Interface": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"OCaml Interface\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Zig": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Zig\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Zig": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Zig\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Bash": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bash\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Bash": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bash\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Dart": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Dart\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Dart": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Dart\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Agda": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Agda\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Agda": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Agda\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:CMake": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"CMake\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:CMake": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"CMake\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Diff": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Diff\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Diff": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Diff\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Elixir": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Elixir\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Elixir": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Elixir\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Elm": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Elm\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Elm": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Elm\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Erlang": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Erlang\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Erlang": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Erlang\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Groovy": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Groovy\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Groovy": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Groovy\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:HCL": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"HCL\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:HCL": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"HCL\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Make": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Make\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Make": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Make\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:MATLAB": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"MATLAB\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:MATLAB": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"MATLAB\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Nix": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Nix\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Nix": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Nix\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Odin": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Odin\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Odin": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Odin\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:PowerShell": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"PowerShell\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:PowerShell": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"PowerShell\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Racket": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Racket\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Racket": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Racket\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Regex": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Regex\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Regex": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Regex\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Scheme": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Scheme\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Scheme": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Scheme\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "inventory:Solidity": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Solidity\"]",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
+    },
+    "planned:cst-negative:Solidity": {
+      "path": "parity/language-grammar-inventory.json",
+      "selector": "languages[name=\"Solidity\"].source + negativeMutation",
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:sql-ansi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-ansi\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:sql-ansi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-ansi\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:sql-postgres": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-postgres\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:sql-postgres": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-postgres\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:sql-mysql": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-mysql\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:sql-mysql": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-mysql\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:sql-sqlite": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-sqlite\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:sql-sqlite": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-sqlite\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:sql-server": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-server\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:sql-server": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-server\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:sql-oracle": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-oracle\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:sql-oracle": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-oracle\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:sql-bigquery": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-bigquery\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:sql-bigquery": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-bigquery\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:sql-snowflake": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-snowflake\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:sql-snowflake": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"sql-snowflake\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:HTML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"HTML\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:HTML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"HTML\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:CSS": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSS\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:CSS": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSS\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:JSON": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:JSON": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:YAML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"YAML\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:YAML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"YAML\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:TOML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TOML\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:TOML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"TOML\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:XML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"XML\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:XML": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"XML\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:DTD": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DTD\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:DTD": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"DTD\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:INI": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"INI\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:INI": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"INI\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Protocol Buffers": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Protocol Buffers\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Protocol Buffers": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Protocol Buffers\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:GraphQL": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"GraphQL\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:GraphQL": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"GraphQL\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:CSV": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSV\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:CSV": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"CSV\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:JSON5": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON5\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:JSON5": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"JSON5\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:English": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"English\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:English": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"English\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Mandarin Chinese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Mandarin Chinese\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Mandarin Chinese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Mandarin Chinese\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Hindi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Hindi\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Hindi": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Hindi\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Spanish": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Spanish\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Spanish": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Spanish\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Modern Standard Arabic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Modern Standard Arabic\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Modern Standard Arabic": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Modern Standard Arabic\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:French": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"French\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:French": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"French\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Bengali": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bengali\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Bengali": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Bengali\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Portuguese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Portuguese\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Portuguese": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Portuguese\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Russian": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Russian\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Russian": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Russian\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "inventory:Urdu": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Urdu\"]",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:cst-negative:Urdu": {
       "path": "parity/language-grammar-inventory.json",
       "selector": "languages[name=\"Urdu\"].source + negativeMutation",
-      "sha256": "0583ced9eb86431aa902104d52816fc025bf7c93d3c28f939e63142aa546bf56"
+      "sha256": "ca17964f57a6ef6ff216b53a3d53f9a91819afa709dd3df08b597e9afe5456ff"
     },
     "planned:embedded:HTML:JavaScript": {
       "path": "parity/fixtures/issue-195-evidence.json",
@@ -1987,6 +2157,127 @@
       ]
     },
     {
+      "id": "I195-CST-agda",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Agda",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "agda"
+        ],
+        "extensions": [
+          ".agda"
+        ],
+        "family": "formal"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-agda-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Agda"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-agda-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-agda-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Agda"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-agda-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-agda-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Agda"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-agda-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-agda-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Agda"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-agda-rust-negative.json"
+        }
+      ]
+    },
+    {
       "id": "I195-CST-bash",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "default-cst",
@@ -2600,6 +2891,128 @@
       ]
     },
     {
+      "id": "I195-CST-cmake",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "CMake",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "cmake"
+        ],
+        "extensions": [
+          ".cmake",
+          "cmakelists.txt"
+        ],
+        "family": "build"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-cmake-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:CMake"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-cmake-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-cmake-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:CMake"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-cmake-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-cmake-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:CMake"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-cmake-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-cmake-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:CMake"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-cmake-rust-negative.json"
+        }
+      ]
+    },
+    {
       "id": "I195-CST-css",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "default-cst",
@@ -3088,6 +3501,129 @@
       ]
     },
     {
+      "id": "I195-CST-diff",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Diff",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "diff",
+          "patch"
+        ],
+        "extensions": [
+          ".diff",
+          ".patch"
+        ],
+        "family": "data"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-diff-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Diff"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-diff-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-diff-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Diff"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-diff-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-diff-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Diff"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-diff-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-diff-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Diff"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-diff-rust-negative.json"
+        }
+      ]
+    },
+    {
       "id": "I195-CST-docx",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "default-cst",
@@ -3330,6 +3866,251 @@
       ]
     },
     {
+      "id": "I195-CST-elixir",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Elixir",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "elixir",
+          "ex",
+          "exs"
+        ],
+        "extensions": [
+          ".ex",
+          ".exs"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-elixir-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Elixir"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-elixir-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-elixir-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Elixir"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-elixir-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-elixir-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Elixir"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-elixir-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-elixir-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Elixir"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-elixir-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-elm",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Elm",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "elm"
+        ],
+        "extensions": [
+          ".elm"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-elm-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Elm"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-elm-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-elm-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Elm"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-elm-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-elm-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Elm"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-elm-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-elm-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Elm"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-elm-rust-negative.json"
+        }
+      ]
+    },
+    {
       "id": "I195-CST-english",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "default-cst",
@@ -3446,6 +4227,129 @@
             "exactReconstruction"
           ],
           "evidenceArtifact": "issue-195-results/i195-cst-english-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-erlang",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Erlang",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "erlang",
+          "erl"
+        ],
+        "extensions": [
+          ".erl",
+          ".hrl"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-erlang-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Erlang"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-erlang-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-erlang-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Erlang"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-erlang-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-erlang-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Erlang"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-erlang-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-erlang-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Erlang"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-erlang-rust-negative.json"
         }
       ]
     },
@@ -3815,6 +4719,129 @@
       ]
     },
     {
+      "id": "I195-CST-groovy",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Groovy",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "groovy",
+          "gradle"
+        ],
+        "extensions": [
+          ".groovy",
+          ".gradle"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-groovy-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Groovy"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-groovy-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-groovy-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Groovy"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-groovy-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-groovy-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Groovy"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-groovy-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-groovy-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Groovy"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-groovy-rust-negative.json"
+        }
+      ]
+    },
+    {
       "id": "I195-CST-haskell",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "default-cst",
@@ -3933,6 +4960,130 @@
             "exactReconstruction"
           ],
           "evidenceArtifact": "issue-195-results/i195-cst-haskell-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-hcl",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "HCL",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "hcl",
+          "terraform"
+        ],
+        "extensions": [
+          ".hcl",
+          ".tf",
+          ".tfvars"
+        ],
+        "family": "data"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-hcl-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:HCL"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-hcl-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-hcl-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:HCL"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-hcl-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-hcl-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:HCL"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-hcl-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-hcl-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:HCL"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-hcl-rust-negative.json"
         }
       ]
     },
@@ -5275,6 +6426,129 @@
       ]
     },
     {
+      "id": "I195-CST-make",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Make",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "make",
+          "makefile"
+        ],
+        "extensions": [
+          ".mk",
+          "makefile"
+        ],
+        "family": "build"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-make-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Make"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-make-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-make-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Make"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-make-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-make-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Make"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-make-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-make-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Make"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-make-rust-negative.json"
+        }
+      ]
+    },
+    {
       "id": "I195-CST-mandarin-chinese",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "default-cst",
@@ -5519,6 +6793,127 @@
       ]
     },
     {
+      "id": "I195-CST-matlab",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "MATLAB",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "matlab"
+        ],
+        "extensions": [
+          ".m"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-matlab-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:MATLAB"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-matlab-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-matlab-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:MATLAB"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-matlab-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-matlab-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:MATLAB"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-matlab-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-matlab-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:MATLAB"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-matlab-rust-negative.json"
+        }
+      ]
+    },
+    {
       "id": "I195-CST-modern-standard-arabic",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "default-cst",
@@ -5636,6 +7031,127 @@
             "exactReconstruction"
           ],
           "evidenceArtifact": "issue-195-results/i195-cst-modern-standard-arabic-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-nix",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Nix",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "nix"
+        ],
+        "extensions": [
+          ".nix"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-nix-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Nix"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-nix-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-nix-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Nix"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-nix-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-nix-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Nix"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-nix-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-nix-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Nix"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-nix-rust-negative.json"
         }
       ]
     },
@@ -5881,6 +7397,127 @@
             "exactReconstruction"
           ],
           "evidenceArtifact": "issue-195-results/i195-cst-ocaml-interface-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-odin",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Odin",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "odin"
+        ],
+        "extensions": [
+          ".odin"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-odin-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Odin"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-odin-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-odin-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Odin"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-odin-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-odin-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Odin"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-odin-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-odin-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Odin"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-odin-rust-negative.json"
         }
       ]
     },
@@ -6370,6 +8007,131 @@
       ]
     },
     {
+      "id": "I195-CST-powershell",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "PowerShell",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "powershell",
+          "pwsh",
+          "ps1"
+        ],
+        "extensions": [
+          ".ps1",
+          ".psm1",
+          ".psd1"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-powershell-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:PowerShell"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-powershell-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-powershell-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:PowerShell"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-powershell-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-powershell-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:PowerShell"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-powershell-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-powershell-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:PowerShell"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-powershell-rust-negative.json"
+        }
+      ]
+    },
+    {
       "id": "I195-CST-protocol-buffers",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "default-cst",
@@ -6732,6 +8494,248 @@
             "exactReconstruction"
           ],
           "evidenceArtifact": "issue-195-results/i195-cst-r-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-racket",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Racket",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "racket",
+          "rkt"
+        ],
+        "extensions": [
+          ".rkt"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-racket-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Racket"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-racket-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-racket-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Racket"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-racket-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-racket-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Racket"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-racket-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-racket-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Racket"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-racket-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-regex",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Regex",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "regex",
+          "regexp"
+        ],
+        "extensions": [],
+        "family": "pattern"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-regex-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Regex"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-regex-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-regex-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Regex"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-regex-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-regex-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Regex"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-regex-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-regex-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Regex"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-regex-rust-negative.json"
         }
       ]
     },
@@ -7339,6 +9343,251 @@
             "exactReconstruction"
           ],
           "evidenceArtifact": "issue-195-results/i195-cst-scala-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-scheme",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Scheme",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "scheme",
+          "scm"
+        ],
+        "extensions": [
+          ".scm",
+          ".ss"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-scheme-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Scheme"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-scheme-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-scheme-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Scheme"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-scheme-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-scheme-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Scheme"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-scheme-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-scheme-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Scheme"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-scheme-rust-negative.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CST-solidity",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "area": "default-cst",
+      "scope": {
+        "language": "Solidity",
+        "version": "the version pinned by the runtime lockfiles",
+        "edition": "every advertised alias, dialect, and registered profile",
+        "construct": "complete lossless concrete syntax tree through the ordinary parse API",
+        "aliases": [
+          "solidity",
+          "sol"
+        ],
+        "extensions": [
+          ".sol"
+        ],
+        "family": "programming"
+      },
+      "expectedBehavior": "Both runtimes select a real grammar by default and independently verify complete CST structure, recovery, and byte-exact reconstruction for every alias and extension path.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/network.js",
+          "js/src/programming-language-parser.js"
+        ],
+        "rust": [
+          "rust/src/language_parser.rs",
+          "rust/src/tree_sitter_adapter.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cst-solidity-javascript-positive",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Solidity"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-solidity-javascript-positive.json"
+        },
+        {
+          "testId": "i195-cst-solidity-javascript-negative",
+          "runtime": "javascript",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Solidity"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-solidity-javascript-negative.json"
+        },
+        {
+          "testId": "i195-cst-solidity-rust-positive",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "inventory:Solidity"
+          ],
+          "assertions": [
+            "ordinaryPublicParseApi",
+            "realGrammarNodes",
+            "independentExpectedStructure",
+            "grammarVersionRecorded",
+            "hierarchy",
+            "namedFields",
+            "childOrder",
+            "tokens",
+            "commentsAndTrivia",
+            "exactUtf8Spans",
+            "errorAndMissingNodes",
+            "embeddedLanguageBoundaries",
+            "exactReconstruction",
+            "allAliases",
+            "extensionDispatch"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-solidity-rust-positive.json"
+        },
+        {
+          "testId": "i195-cst-solidity-rust-negative",
+          "runtime": "rust",
+          "kind": "negative",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cst-negative:Solidity"
+          ],
+          "assertions": [
+            "malformedInputRetained",
+            "diagnosticReported",
+            "notReportedAsClean",
+            "exactReconstruction"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cst-solidity-rust-negative.json"
         }
       ]
     },
