@@ -2,7 +2,8 @@
 // JavaScript the core can represent faithfully: Number and BigInt arithmetic,
 // strings and booleans; top-level functions and object-literal namespaces of methods
 // whose types come from JSDoc (`@param`, `@returns`, and `@typedef` unions of
-// `{ $: 'tag', … }` object types for data types); bodies made of `const`,
+// `{ $: 'tag', … }` object types for data types) or, where JSDoc is silent,
+// are inferred from how the program uses them; bodies made of `const`,
 // `if`, `return`, `throw` and `switch` statements; and a top level of
 // `console.log`, `const` and `node:assert` statements, which are the
 // program's effects. A function whose leading statements throw on a negative
@@ -10,6 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
+import { inferJavaScriptTypes } from './javascript-infer.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING } from './types.js';
 
@@ -85,7 +87,7 @@ class JavaScriptParser {
       }
       effects.push(this.mainStatement());
     }
-    return { language: 'JavaScript', items, main: { effects, span: { start: 0, end: this.source.length } } };
+    return inferJavaScriptTypes({ language: 'JavaScript', items, main: { effects, span: { start: 0, end: this.source.length } } });
   }
 
   /** `import assert from 'node:assert/strict'` is the only portable import. */
@@ -227,18 +229,15 @@ class JavaScriptParser {
       if (!c.eat(',')) break;
     }
     c.expect(')', name);
-    const where = span(docToken, c.peek());
-    if (!doc) throw unsupported(`untyped function ${name}`, 'declare its types with JSDoc @param and @returns tags', where);
+    // A type JSDoc does not declare is inferred once the whole program is read.
     const params = tokens.map((token) => {
-      const text = doc.params.get(token.value);
-      if (!text) throw unsupported(`untyped parameter ${token.value}`, 'give every parameter a JSDoc @param type', span(token, token));
-      return { name: token.value, type: this.type(text, doc.range), span: span(token, token) };
+      const text = doc?.params.get(token.value);
+      return { name: token.value, type: text ? this.type(text, doc.range) : null, span: span(token, token) };
     });
-    for (const documented of doc.params.keys()) {
+    for (const documented of doc?.params.keys() ?? []) {
       if (!params.some((param) => param.name === documented)) throw typeError(`@param ${documented} is not a parameter of ${name}`, doc.range);
     }
-    if (!doc.returns) throw unsupported(`function ${name} without @returns`, 'declare the result type with a JSDoc @returns tag', where);
-    const ret = this.type(doc.returns, doc.range);
+    const ret = doc?.returns ? this.type(doc.returns, doc.range) : null;
     const outer = this.scope;
     this.scope = { locals: new Set(params.map((param) => param.name)), tdz: new Set() };
     const statements = this.blockStatements();
@@ -1165,7 +1164,9 @@ function guardedParameter(statement, params) {
   if (cond.op === 'gt' && isZero(cond.left)) variable = cond.right;
   if (variable?.k !== 'name' || variable.path.length !== 1) return null;
   const param = params.find((candidate) => candidate.name === variable.path[0]);
-  return param && param.type === INT ? param : null;
+  // An undeclared parameter compared with the BigInt 0n is a bigint.
+  const zero = cond.op === 'lt' ? cond.right : cond.left;
+  return param && (param.type === INT || (param.type === null && !zero.type)) ? param : null;
 }
 
 /**

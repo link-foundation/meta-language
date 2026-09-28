@@ -3,7 +3,7 @@ use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::surface::{
     SEffect, SExpr, SItem, SNode, SPatternNode, SProgram, SPropNode,
 };
-use meta_language::translation::types::{FLOAT, NAT};
+use meta_language::translation::types::{Type, BOOL, FLOAT, INT, NAT, STRING};
 use meta_language::translation::{Language, Span};
 
 const TREE: &str = "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n";
@@ -138,6 +138,86 @@ fn number_literals_are_ieee_doubles_kept_as_javascript_prints_them() {
             panic!("a number literal")
         };
         assert_eq!((value.as_str(), ty.as_ref()), (text, Some(&FLOAT)));
+    }
+}
+
+fn signature(program: &SProgram, name: &str) -> (Vec<Option<Type>>, Option<Type>) {
+    fn find(items: &[SItem], name: &str) -> Option<(Vec<Option<Type>>, Option<Type>)> {
+        items.iter().find_map(|item| match item {
+            SItem::Fn(function) if function.name == name => Some((
+                function
+                    .params
+                    .iter()
+                    .map(|param| param.ty.clone())
+                    .collect(),
+                function.ret.clone(),
+            )),
+            SItem::Module(module) => find(&module.items, name),
+            _ => None,
+        })
+    }
+    find(&program.items, name).unwrap_or_else(|| panic!("no function {name}"))
+}
+
+#[test]
+fn types_jsdoc_leaves_out_are_inferred_from_the_uses() {
+    let program = parse(&format!(
+        "{TREE}function answer() {{ return 42; }}\nfunction fact(n) {{ if (n < 0n) throw new RangeError('negative'); return n === 0n ? 1n : n * fact(n - 1n); }}\nfunction label(n) {{ return n + '!'; }}\nfunction pick(flag, a, b) {{ return flag ? a : b; }}\nfunction sum(t) {{ switch (t.$) {{ case 'leaf': return 0n; case 'node': return sum(t.left) + t.value + sum(t.right); }} }}\nconst M = {{ sq(x) {{ return x * x; }}, two(x) {{ return M.sq(x) + M.sq(x); }} }};\nconsole.log(answer());\nconsole.log(label(fact(3n)));\nconsole.log(pick(true, 'a', 'b'));\nconsole.log(M.two(1.5));\n"
+    ));
+    let tree = Type::Named {
+        path: vec!["crate".to_owned(), "Tree".to_owned()],
+        span: None,
+    };
+    let without_spans = |(params, ret): (Vec<Option<Type>>, Option<Type>)| {
+        let strip = |ty: Option<Type>| match ty {
+            Some(Type::Named { path, .. }) => Some(Type::Named { path, span: None }),
+            other => other,
+        };
+        (
+            params.into_iter().map(strip).collect::<Vec<_>>(),
+            strip(ret),
+        )
+    };
+    assert_eq!(signature(&program, "answer"), (vec![], Some(FLOAT)));
+    assert_eq!(signature(&program, "fact"), (vec![Some(NAT)], Some(INT)));
+    assert_eq!(
+        signature(&program, "label"),
+        (vec![Some(INT)], Some(STRING))
+    );
+    assert_eq!(
+        signature(&program, "pick"),
+        (vec![Some(BOOL), Some(STRING), Some(STRING)], Some(STRING))
+    );
+    assert_eq!(
+        without_spans(signature(&program, "sum")),
+        (vec![Some(tree)], Some(INT))
+    );
+    assert_eq!(signature(&program, "sq"), (vec![Some(FLOAT)], Some(FLOAT)));
+    assert_eq!(signature(&program, "two"), (vec![Some(FLOAT)], Some(FLOAT)));
+}
+
+#[test]
+fn uses_that_need_different_types_are_type_errors() {
+    let cases = [
+        (
+            "function id(x) { return x; }\nconsole.log(id(1));\nconsole.log(id('a'));",
+            "one value is used as a string and as a number; declare the types of the function with JSDoc at 64..67",
+        ),
+        (
+            "function f(x) { return x + 1n; }\nconsole.log(f(1));",
+            "a BigInt is used as a number; JavaScript does not mix BigInt with other types at 23..29",
+        ),
+        (
+            "function f(x) { return !x; }\nconsole.log(f(1));",
+            "one value is used as a number and as a boolean; declare the types of the function with JSDoc at 43..44",
+        ),
+    ];
+    for (source, message) in cases {
+        assert_eq!(
+            rejection(source),
+            (ErrorKind::Type, message.to_owned()),
+            "{source}"
+        );
     }
 }
 

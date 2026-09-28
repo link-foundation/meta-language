@@ -4,7 +4,8 @@
 //! faithfully: Number and `BigInt` arithmetic, strings and booleans; top-level functions
 //! and object-literal namespaces of methods whose types come from `JSDoc`
 //! (`@param`, `@returns`, and `@typedef` unions of `{ $: 'tag', … }` object
-//! types for data types); bodies made of `const`, `if`, `return`, `throw` and
+//! types for data types) or, where `JSDoc` is silent, are inferred from how the
+//! program uses them; bodies made of `const`, `if`, `return`, `throw` and
 //! `switch` statements; and a top level of `console.log`, `const` and
 //! `node:assert` statements, which are the program's effects. A function
 //! whose leading statements throw on a negative argument takes a natural
@@ -27,6 +28,7 @@ use super::{Language, Span};
 
 mod declarations;
 mod expressions;
+mod infer;
 mod lowering;
 mod statements;
 use self::lowering::{assertion_kind, guarded_parameter, lower, prop_of};

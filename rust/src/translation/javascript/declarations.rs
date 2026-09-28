@@ -1,5 +1,6 @@
 //! Files, imports, `JSDoc` typedefs, functions, namespaces and blocks.
 
+use super::infer::infer_javascript_types;
 use super::{
     describe, guarded_parameter, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     non_empty, span, tokenize, type_error, unsupported, Assertion, HashSet, JavaScriptParser,
@@ -69,7 +70,7 @@ impl JavaScriptParser {
             }
             effects.push(self.main_statement()?);
         }
-        Ok(SProgram {
+        infer_javascript_types(SProgram {
             language: Language::JavaScript,
             items,
             main: Some(SMain {
@@ -376,47 +377,40 @@ impl JavaScriptParser {
             }
         }
         self.cursor.expect(")", Some(&name))?;
-        let place = self.to_here(doc_token);
-        let Some(doc) = doc else {
-            return Err(unsupported(
-                &format!("untyped function {name}"),
-                "declare its types with JSDoc @param and @returns tags",
-                Some(place),
-            ));
-        };
+        // A type JSDoc does not declare is inferred once the whole program is read.
         let mut params = Vec::new();
         for token in &tokens {
-            let Some((_, text)) = doc.params.iter().find(|(param, _)| *param == token.value) else {
-                return Err(unsupported(
-                    &format!("untyped parameter {}", token.value),
-                    "give every parameter a JSDoc @param type",
-                    Some(span(token, token)),
-                ));
-            };
+            let text = doc.as_ref().and_then(|doc| {
+                doc.params
+                    .iter()
+                    .find(|(param, _)| *param == token.value)
+                    .map(|(_, text)| (text.clone(), doc.range))
+            });
             params.push(SParam {
                 name: token.value.clone(),
-                ty: Some(self.ty(text, doc.range)?),
+                ty: text
+                    .map(|(text, range)| self.ty(&text, range))
+                    .transpose()?,
                 span: Some(span(token, token)),
                 guard: None,
                 rocq_type: None,
             });
         }
-        for (documented, _) in &doc.params {
-            if !params.iter().any(|param| param.name == *documented) {
-                return Err(type_error(
-                    format!("@param {documented} is not a parameter of {name}"),
-                    Some(doc.range),
-                ));
+        if let Some(doc) = &doc {
+            for (documented, _) in &doc.params {
+                if !params.iter().any(|param| param.name == *documented) {
+                    return Err(type_error(
+                        format!("@param {documented} is not a parameter of {name}"),
+                        Some(doc.range),
+                    ));
+                }
             }
         }
-        let Some(returns) = non_empty(doc.returns) else {
-            return Err(unsupported(
-                &format!("function {name} without @returns"),
-                "declare the result type with a JSDoc @returns tag",
-                Some(place),
-            ));
-        };
-        let ret = self.ty(&returns, doc.range)?;
+        let ret =
+            match doc.and_then(|doc| non_empty(doc.returns).map(|returns| (returns, doc.range))) {
+                Some((returns, range)) => Some(self.ty(&returns, range)?),
+                None => None,
+            };
         let outer = std::mem::replace(
             &mut self.scope,
             Scope {
@@ -441,7 +435,7 @@ impl JavaScriptParser {
         Ok(SFn {
             name,
             params,
-            ret: Some(ret),
+            ret,
             body,
             span: Some(self.to_here(doc_token)),
         })

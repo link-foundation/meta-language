@@ -27,6 +27,31 @@
       }
     },
     {
+      "name": "corpus/inferred.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/inferred.mjs",
+      "parse": {
+        "sha256": "2cd98ab3fa68b89c5e5cf3aece31dd6581ce6be4a13429f033a97cd53746d85b"
+      },
+      "check": {
+        "sha256": "a87847b835c0c46ff447c46e43e661eb14f3ec522c85cf6a508fbfc63ba099f1"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "05f990b83cfe984846080bda796ea6ff86f6ada9a43934e646b3c332e805ad8e"
+        },
+        "rust": {
+          "sha256": "922d5705101b60734cd2de8b7ed5c09046b5e4390d804e4934ec47b660db82fa"
+        },
+        "lean": {
+          "sha256": "cce026626b96babace84548eb68111ef09b4c764cbda006c007031ece6927313"
+        },
+        "rocq": {
+          "sha256": "6b000b015c4423743663078f5feb9c63333b7748c58144ac50eb5d135612926d"
+        }
+      }
+    },
+    {
       "name": "corpus/numbers.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/numbers.mjs",
@@ -13209,9 +13234,23 @@
       "extension": "mjs",
       "source": "function f(n) { return n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "untyped function f: declare its types with JSDoc @param and @returns tags at 0..14"
+        "sha256": "6b2f6ab0eba1d352bd322540a900ae772ac2205a7367c77e2fcef2d5b25cd12d"
+      },
+      "check": {
+        "sha256": "b25a48f3b5fddc0a54570458d1d58ca2fd6f0a51bf4d27dfefd9273db0f2b217"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "68536931dfd75e6af2ed48b84e1f81fc02eb28ef12d7ded66c09befb9e8123c7"
+        },
+        "rust": {
+          "sha256": "5ff0efc7e26b75902ac2fa9226bf7b85033afdb8855690964f1e67a95224e660"
+        },
+        "lean": {
+          "sha256": "962ec0dda262f22cb5cf7fa97666b3fbeb2f41584bdfda3960aca4dc5b7aeaf9"
+        },
+        "rocq": {
+          "sha256": "d50a2b00bd38fe143a8d2807368cf592cd0a1041d781b27185ef901df008d4af"
         }
       }
     },
@@ -13220,9 +13259,23 @@
       "extension": "mjs",
       "source": "/** @param {bigint} n */\nfunction f(n) { return n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "function f without @returns: declare the result type with a JSDoc @returns tag at 25..39"
+        "sha256": "02d741d77f69b8442f061a4d1e9b6115108a11fd1a74ecd30248f596e8abcd51"
+      },
+      "check": {
+        "sha256": "15edffe7e9fb9c698208f694d660b0f91ff816c88874e4fafc800539f562f3fb"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "05592a712ab27630ef274ec1c9881fa7836cf224c81384cbb0545bc4d3702ab9"
+        },
+        "rust": {
+          "sha256": "48d498c74cbb924ac0dca6107ec54446e3aa882abc0e238488eb0a40820bcd78"
+        },
+        "lean": {
+          "sha256": "f9aefce6cde49d07ef9c7e96fc1b9ca990df1b64a2f70ea4f212eb2136c59c20"
+        },
+        "rocq": {
+          "sha256": "a8e4233265216d8a0af4d2c8138dac1553c380601a5ae65c44acd303863b5904"
         }
       }
     },
@@ -14788,9 +14841,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n, m) { return n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "untyped parameter m: give every parameter a JSDoc @param type at 64..65"
+        "sha256": "80b0b21ce583df684ef6897a11ff46c22c6da7c70fcb997fa491d7a1e6f17008"
+      },
+      "check": {
+        "sha256": "4157e9a932399e0d9adf236287be4b544d485a4784f1f1548d77d50f41dcf52c"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "91121b9f322239f130eb220688535bdc73de69b5ddd84682d7d708bed8d5b10a"
+        },
+        "rust": {
+          "sha256": "dd63351b166b80cb4916beb88ddb92961943fded29000246713b3e4cf7c6526e"
+        },
+        "lean": {
+          "sha256": "ead6e18db29a43a4783ed392262b8fde36aa24ef2a92d73531adc22a5c77964b"
+        },
+        "rocq": {
+          "sha256": "a18d62e26f3ff133c12924c2c1119fc076faf6b81aee6aaf158a92f08a6b2bda"
         }
       }
     },
@@ -14799,9 +14866,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nconsole.log('x');\nfunction f(n) { return n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "untyped function f: declare its types with JSDoc @param and @returns tags at 68..82"
+        "sha256": "f4b1348b4cee69439bfbc541b7098b241d59d1fa078abdfbe9aae2eb8fa649c7"
+      },
+      "check": {
+        "sha256": "90cc24465d7e794315189110c73365d44f07c1e1ba292b0370455c9f7d1ed493"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "9fcfbfa2387c88575f6926a51f16383997f26c4902265f75597c69e2cb2363ac"
+        },
+        "rust": {
+          "sha256": "54e369f0ce2d9222ec6c9a3c18dfc909d844fc7991cd4fd86a6f85ba5de54cdb"
+        },
+        "lean": {
+          "sha256": "1cfb096bd1fd9e866db14a4856c8a27374b65bb90ec21adfc17ee2356fc493b8"
+        },
+        "rocq": {
+          "sha256": "2117a720043a92154e7a57d142a07d482d70d618c59bd0186476b9f934841dc1"
         }
       }
     },
@@ -14909,9 +14990,23 @@
       "extension": "mjs",
       "source": "const A = { f(n) { return n; } };",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "untyped function f: declare its types with JSDoc @param and @returns tags at 12..17"
+        "sha256": "bfbe19ad23ee72ec3fafdcd0862b25ae7ecccd84bcca8a0a679c70fcba515032"
+      },
+      "check": {
+        "sha256": "86f87bb4bc62962f00fa80798ad6b799858a23d467d3543c6b9941f9b90efaaf"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "b38a2bddd3b803943e5452759f015251e2c9afb1e51bdf7f0a31b87a3ad08021"
+        },
+        "rust": {
+          "sha256": "455f6a66ff2b5546deb55924f315f3fdc4415cbae3fc1f5b239625d12df7ea92"
+        },
+        "lean": {
+          "sha256": "d53b2de0e72a19e9279fc3f1e54cc31f137af4192c58aeb45e22b9d84b839a8b"
+        },
+        "rocq": {
+          "sha256": "c25fa287aa9b5ed9d4068c0d75905b1a0e35e7ac81c62a674d14337c7a9c6ad7"
         }
       }
     },

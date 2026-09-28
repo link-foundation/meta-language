@@ -745,14 +745,18 @@ pub(super) fn guarded_parameter(statement: &Stmt, params: &[SParam]) -> Option<u
         return None;
     };
     let is_zero = |expr: &SExpr| matches!(&expr.node, SNode::Num { value, .. } if value == "0");
-    let variable = match op {
-        BinaryOp::Lt if is_zero(right) => left,
-        BinaryOp::Gt if is_zero(left) => right,
+    let (variable, zero) = match op {
+        BinaryOp::Lt if is_zero(right) => (left, right),
+        BinaryOp::Gt if is_zero(left) => (right, left),
         _ => return None,
     };
     let name = variable.simple_name()?;
+    // An undeclared parameter compared with the BigInt 0n is a bigint.
+    let bigint_zero = matches!(&zero.node, SNode::Num { ty: None, .. });
     params
         .iter()
         .position(|param| param.name == name)
-        .filter(|&index| params[index].ty == Some(INT))
+        .filter(|&index| {
+            params[index].ty == Some(INT) || (params[index].ty.is_none() && bigint_zero)
+        })
 }
