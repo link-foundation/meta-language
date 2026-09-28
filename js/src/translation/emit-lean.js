@@ -2,13 +2,15 @@
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
 // Lean kernel checks termination. Theorems are reconstructed from portable
-// proof plans with Lean tactics and re-checked by the Lean kernel.
+// proof plans with Lean tactics and re-checked by the Lean kernel. A
+// JavaScript Number is a `Float`; the kernel cannot compute with `Float`,
+// so an assertion about Numbers is checked when `main` runs, as in the source.
 
 import { unsupported } from './diagnostics.js';
 import { propFunctions } from './proof.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
-import { EmitState, orderDeclarations } from './emit-common.js';
+import { EmitState, numberDependence, orderDeclarations } from './emit-common.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 
 const KEYWORDS = new Set([
@@ -20,7 +22,7 @@ const KEYWORDS = new Set([
   'prefix', 'postfix', 'macro_rules', 'elab', 'opaque', 'omit', 'include', 'nomatch', 'nofun', 'try', 'catch',
   'finally', 'unless', 'break', 'continue', 'fun', 'Type', 'Prop', 'Sort', 'this', 'at', 'using', 'obtain',
   // Names the emitted code relies on, and names Lean derives inside a type's namespace.
-  'Nat', 'Int', 'String', 'Bool', 'Unit', 'IO', 'true', 'false', 'main', 'toString', 'decide', 'panic',
+  'Nat', 'Int', 'String', 'Bool', 'Unit', 'IO', 'true', 'false', 'main', 'toString', 'decide', 'panic', 'Float',
   'rec', 'recOn', 'casesOn', 'noConfusion', 'noConfusionType', 'below', 'brecOn', 'binductionOn', 'ibelow',
   'ctorIdx', 'toCtorIdx', 'sizeOf_spec', 'injEq', 'inj', 'induct', 'eq_def', 'mk',
 ]);
@@ -38,6 +40,107 @@ def ml_nonzero (divisor : Int) : Int :=
   if divisor == 0 then panic! "division by zero" else divisor`,
   divideNat: `def ml_nonzero_nat (divisor : Nat) : Nat :=
   if divisor == 0 then panic! "division by zero" else divisor`,
+  jsNumber: `/-- ECMAScript Number::toString: the shortest decimal that reads back as the
+value, the nearer one and then the even one on a tie, laid out as JavaScript
+prints it; exact Nat arithmetic on the bits. -/
+def ml_js_layout (digits : List Char) (n : Int) : String :=
+  let k : Int := digits.length
+  let text := String.ofList
+  let zeros (count : Int) := List.replicate count.toNat '0'
+  if k ≤ n ∧ n ≤ 21 then text (digits ++ zeros (n - k))
+  else if 0 < n ∧ n ≤ 21 then text (digits.take n.toNat ++ '.' :: digits.drop n.toNat)
+  else if -6 < n ∧ n ≤ 0 then text ('0' :: '.' :: zeros (-n) ++ digits)
+  else
+    let e := n - 1
+    let exp := (if e < 0 then "e-" else "e+") ++ toString e.natAbs
+    if k == 1 then text digits ++ exp
+    else text (digits.take 1 ++ '.' :: digits.drop 1) ++ exp
+
+/-- \`c · 10^q\` compared with \`x · s / d\`. -/
+def ml_js_cmp (c : Nat) (q : Int) (x s d : Nat) : Ordering :=
+  if 0 ≤ q then compare (c * 10 ^ q.toNat * d) (x * s)
+  else compare (c * d) (x * s * 10 ^ (-q).toNat)
+
+def ml_js_shortest (m : Nat) (e : Int) (lowerCloser : Bool) : String :=
+  -- The value is 4m and the rounding interval [lo, hi], in units of 2^(e-2) = s / d.
+  let s := 2 ^ (e - 2).toNat
+  let d := 2 ^ (2 - e).toNat
+  let v := 4 * m
+  let lo := if lowerCloser then v - 1 else v - 2
+  let hi := v + 2
+  let inclusive := m % 2 == 0
+  let above (c : Nat) (q : Int) : Bool :=
+    match ml_js_cmp c q lo s d with
+    | .gt => true | .eq => inclusive | .lt => false
+  let below (c : Nat) (q : Int) : Bool :=
+    match ml_js_cmp c q hi s d with
+    | .lt => true | .eq => inclusive | .gt => false
+  -- floor (log10 value) from the bit length, then corrected exactly
+  let bits : Int := (Nat.log2 m : Int) + 1 + e
+  let guess : Int := Int.fdiv ((bits - 1) * 78913) 262144
+  let e10 :=
+    if ml_js_cmp 1 (guess + 1) v s d != .gt then guess + 1
+    else if ml_js_cmp 1 guess v s d == .gt then guess - 1
+    else guess
+  let rec search (fuel : Nat) (p : Nat) : String :=
+    match fuel with
+    | 0 => ""
+    | fuel + 1 =>
+      let q : Int := e10 - p + 1
+      let c :=
+        if 0 ≤ q then v * s / (d * 10 ^ q.toNat)
+        else v * s * 10 ^ (-q).toNat / d
+      let lowOk := above c q ∧ below c q
+      let highOk := above (c + 1) q ∧ below (c + 1) q
+      if lowOk ∨ highOk then
+        let pick :=
+          if lowOk ∧ highOk then
+            match ml_js_cmp (2 * c + 1) q (2 * v) s d with
+            | .gt => c | .lt => c + 1 | .eq => if c % 2 == 0 then c else c + 1
+          else if lowOk then c else c + 1
+        let text := (toString pick).toList
+        let n : Int := q + text.length
+        ml_js_layout (text.reverse.dropWhile (· == '0')).reverse n
+      else search fuel (p + 1)
+  search 17 1
+
+def ml_js_number (x : Float) : String :=
+  let bits : Nat := x.toBits.toNat
+  let negative := bits ≥ 2 ^ 63
+  let exponent : Nat := (bits / 2 ^ 52) % 2048
+  let fraction : Nat := bits % 2 ^ 52
+  if exponent == 2047 then
+    if fraction != 0 then "NaN" else if negative then "-Infinity" else "Infinity"
+  else if exponent == 0 ∧ fraction == 0 then "0"
+  else
+    let body :=
+      if exponent == 0 then ml_js_shortest fraction (-1074) false
+      else ml_js_shortest (fraction + 2 ^ 52) ((exponent : Int) - 1075) (fraction == 0 ∧ exponent > 1)
+    if negative then "-" ++ body else body`,
+  jsConsole: `/-- What console.log prints: -0 as "-0", where String(-0) is "0". -/
+def ml_js_console (x : Float) : String :=
+  if x.toBits == 0x8000000000000000 then "-0" else ml_js_number x`,
+  floatRem: `/-- ECMAScript \`%\` on binary64 (C fmod): the exact remainder, truncated, with
+the sign of the dividend; computed on the bits, so it is exact. -/
+def ml_float_rem (x y : Float) : Float :=
+  let decompose (f : Float) : Nat × Int :=
+    let b : Nat := f.toBits.toNat
+    let exponent : Nat := (b / 2 ^ 52) % 2048
+    let fraction : Nat := b % 2 ^ 52
+    if exponent == 0 then (fraction, -1074) else (fraction + 2 ^ 52, (exponent : Int) - 1075)
+  if x.isNaN || y.isNaN || x.isInf || y == 0 then 0 / 0
+  else if y.isInf || x == 0 then x
+  else
+    let (mx, ex) := decompose x
+    let (my, ey) := decompose y
+    let e := min ex ey
+    let r := (mx * 2 ^ (ex - e).toNat) % (my * 2 ^ (ey - e).toNat)
+    let magnitude := Float.scaleB (Float.ofNat r) e
+    if x.toBits.toNat ≥ 2 ^ 63 then -magnitude else magnitude`,
+  floatSame: `/-- SameValue, as Object.is and assert.strictEqual compare: NaN equals NaN,
+and 0 differs from -0. -/
+def ml_float_same (a b : Float) : Bool :=
+  if a.isNaN then b.isNaN else a.toBits == b.toBits`,
 };
 
 function ident(name) {
@@ -64,6 +167,7 @@ class LeanEmitter {
     // Inside \`| p + 1 =>\` of a match on \`x\`, \`x\` is written \`p + 1\`: Lean's
     // structural recursion sees through the pattern but not the variable.
     this.successors = new Map();
+    this.usesNumber = numberDependence(program);
   }
 
   file() {
@@ -95,7 +199,7 @@ class LeanEmitter {
       'set_option linter.unusedVariables false',
       'set_option linter.unusedSimpArgs false',
       '',
-      ...['fixed', 'fixedNat', 'toNatChecked', 'divide', 'divideNat'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
+      ...['fixed', 'fixedNat', 'toNatChecked', 'divide', 'divideNat', 'jsNumber', 'jsConsole', 'floatRem', 'floatSame'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -119,6 +223,9 @@ class LeanEmitter {
       case 'fixed':
         this.state.encode(`machine-integer:${typeKey(type)}`, `${typeKey(type)} values are ${type.signed ? 'Int' : 'Nat'} values; every operation checks the ${typeKey(type)} range and panics outside it, where Rust panics`);
         return type.signed ? 'Int' : 'Nat';
+      case 'float':
+        this.state.encode('floats', 'a JavaScript Number is a Lean Float, the same IEEE-754 binary64 with the same arithmetic; % is ml_float_rem, the exact truncated remainder, and ml_js_number prints a value as JavaScript does');
+        return 'Float';
       case 'bool':
         return 'Bool';
       case 'string':
@@ -256,7 +363,7 @@ class LeanEmitter {
       case 'match':
         return this.match(e, depth);
       case 'toString':
-        return e.arg.type.kind === 'string' ? this.expr(e.arg, depth) : this.toText(e.arg, depth);
+        return e.arg.type.kind === 'string' ? this.expr(e.arg, depth) : this.toText(e.arg, depth, e.console);
       case 'cast':
         return this.cast(e, depth);
       case 'abort':
@@ -275,6 +382,8 @@ class LeanEmitter {
         return `(${e.value} : Int)`;
       case 'fixed':
         return `(${e.value} : ${e.type.signed ? 'Int' : 'Nat'})`;
+      case 'float':
+        return leanFloat(e.value, this.type(e.type));
       case 'bool':
         return String(e.value);
       case 'string':
@@ -284,9 +393,14 @@ class LeanEmitter {
     }
   }
 
-  toText(arg, depth) {
+  toText(arg, depth, console = false) {
     if (arg.type.kind === 'data' || arg.type.kind === 'unit') {
       throw unsupported('output of structured values', `a ${arg.type.kind} value has no portable textual form`, arg.span);
+    }
+    if (arg.type.kind === 'float') {
+      this.helpers.add('jsNumber');
+      if (console) this.helpers.add('jsConsole');
+      return `(${console ? 'ml_js_console' : 'ml_js_number'} ${this.expr(arg, depth)})`;
     }
     return `(toString ${this.expr(arg, depth)})`;
   }
@@ -329,6 +443,11 @@ class LeanEmitter {
   }
 
   arithmetic(e, left, right) {
+    if (e.semantics === 'ieee') {
+      if (e.op !== 'rem') return `(${left} ${{ add: '+', sub: '-', mul: '*', div: '/' }[e.op]} ${right})`;
+      this.helpers.add('floatRem');
+      return `(ml_float_rem ${left} ${right})`;
+    }
     const fixed = e.type.kind === 'fixed';
     // Machine-integer operations run in Int and are range-checked afterwards.
     const wide = (text, operand) => (operand.type.kind === 'fixed' && !operand.type.signed ? `(Int.ofNat ${text})` : text);
@@ -406,7 +525,12 @@ class LeanEmitter {
     effects.forEach((effect, index) => {
       if (effect.k === 'print') lines.push(`  IO.println ${this.expr(effect.expr, 1)}`);
       else if (effect.k === 'let') lines.push(`  let ${effect.name} := ${this.expr(effect.value, 1)}`);
-      else {
+      else if (this.usesNumber(effect.prop)) {
+        // The kernel cannot evaluate Float, so the assertion runs where the source's does.
+        assertion += 1;
+        lines.push(`  if !${this.check(effect.prop)} then throw (IO.userError "assertion ${assertion} failed")`);
+        this.state.assertionTheorem(`assertion ${assertion}`, effect, { discharge: 'runtime-assertion' });
+      } else {
         assertion += 1;
         const lets = effects.slice(0, index).filter((item) => item.k === 'let')
           .map((item) => `let ${item.name} := ${this.expr(item.value, 1)}; `).join('');
@@ -418,6 +542,40 @@ class LeanEmitter {
     this.state.encode('program-output', 'main prints the lines the source program prints, in order, with IO.println');
     return [...theorems, `def main : IO Unit := do\n${lines.length ? lines.join('\n') : '  pure ()'}`].join('\n\n');
   }
+
+  /** A proposition as a Bool computed at run time. */
+  check(prop) {
+    switch (prop.p) {
+      case 'and':
+        return `(${this.check(prop.left)} && ${this.check(prop.right)})`;
+      case 'or':
+        return `(${this.check(prop.left)} || ${this.check(prop.right)})`;
+      case 'implies':
+        return `(!${this.check(prop.left)} || ${this.check(prop.right)})`;
+      case 'not':
+        return `(!${this.check(prop.arg)})`;
+      case 'bool':
+        return this.expr(prop.expr, 1);
+      case 'forall':
+        throw new Error('no run-time check for a quantified proposition');
+      default: {
+        const left = this.expr(prop.left, 1);
+        const right = this.expr(prop.right, 1);
+        if (prop.sameValue) {
+          this.helpers.add('floatSame');
+          return `(${prop.p === 'eq' ? '' : '!'}ml_float_same ${left} ${right})`;
+        }
+        if (prop.p === 'eq' || prop.p === 'ne') return `(${left} ${prop.p === 'eq' ? '==' : '!='} ${right})`;
+        return `(decide (${left} ${{ lt: '<', le: '≤', gt: '>', ge: '≥' }[prop.p]} ${right}))`;
+      }
+    }
+  }
+}
+
+/** A Number's canonical JavaScript text as a Float term; Lean reads decimal literals correctly rounded. */
+function leanFloat(value, type) {
+  const special = { NaN: '0.0 / 0.0', Infinity: '1.0 / 0.0', '-Infinity': '-1.0 / 0.0' }[value];
+  return `(${special ?? value.replace('e+', 'e')} : ${type})`;
 }
 
 function collectUnfold(plan) {

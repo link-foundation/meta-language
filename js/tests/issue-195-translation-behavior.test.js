@@ -26,8 +26,9 @@ test('JavaScript console output translation executes in Rust and detects effect 
   const fixture = cases.find(({ sourceLanguage, targetLanguage }) =>
     sourceLanguage === 'JavaScript' && targetLanguage === 'Rust');
   const translation = translateProgram(fixture.source, 'JavaScript', 'Rust');
-  assert.match(translation.code, /pub fn main\(\)/u);
-  assert.match(translation.code, /println!\("42"\)/u);
+  assert.equal(translation.contract.support, 'semantic-translation');
+  assert.match(translation.code, /fn main\(\)/u);
+  assert.match(translation.code, /js_console\(42f64\)/u);
   const directory = await mkdtemp(path.join(tmpdir(), 'issue-195-js-to-rust-'));
   try {
     const source = path.join(directory, 'translated.rs');
@@ -35,7 +36,7 @@ test('JavaScript console output translation executes in Rust and detects effect 
     await writeFile(source, translation.code);
     execFileSync('rustc', ['--edition', '2024', '--crate-type', 'bin', '-o', executable, source]);
     assert.equal(execFileSync(executable).toString(), fixture.expectedStdout);
-    await writeFile(source, translation.code.replace('println!("42")', 'println!("0")'));
+    await writeFile(source, translation.code.replace('js_console(42f64)', 'js_console(0f64)'));
     execFileSync('rustc', ['--edition', '2024', '--crate-type', 'bin', '-o', executable, source]);
     assert.notEqual(execFileSync(executable).toString(), fixture.expectedStdout);
   } finally {
@@ -44,10 +45,16 @@ test('JavaScript console output translation executes in Rust and detects effect 
 });
 
 test('unimplemented source forms remain marked as transport only', () => {
-  const translation = translateProgram('console.log(9007199254740993);', 'JavaScript', 'Rust');
+  const translation = translateProgram('console.log(eval("6 * 7"));', 'JavaScript', 'Rust');
   assert.equal(translation.contract.support, 'portable-encoding');
   assert.match(translation.contract.obligation, /semantic translation is not implemented/u);
-  assert.doesNotMatch(translation.code, /pub fn main\(\)/u);
+  assert.doesNotMatch(translation.code, /fn main\(\)/u);
+});
+
+test('JavaScript Numbers above 2^53 round as JavaScript rounds them', () => {
+  const translation = translateProgram('console.log(9007199254740993);', 'JavaScript', 'Rust');
+  assert.equal(translation.contract.support, 'semantic-translation');
+  assert.match(translation.code, /js_console\(9007199254740992f64\)/u);
 });
 
 test('Rust identifiers reserved by strict JavaScript stay transport only', () => {

@@ -1,6 +1,6 @@
 // JavaScript frontend for the portable core. It reads the subset of modern
-// JavaScript the core can represent faithfully: BigInt arithmetic, strings
-// and booleans; top-level functions and object-literal namespaces of methods
+// JavaScript the core can represent faithfully: Number and BigInt arithmetic,
+// strings and booleans; top-level functions and object-literal namespaces of methods
 // whose types come from JSDoc (`@param`, `@returns`, and `@typedef` unions of
 // `{ $: 'tag', … }` object types for data types); bodies made of `const`,
 // `if`, `return`, `throw` and `switch` statements; and a top level of
@@ -11,7 +11,7 @@
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
-import { BOOL, INT, NAT, STRING } from './types.js';
+import { BOOL, FLOAT, INT, NAT, STRING } from './types.js';
 
 const ROOT = 'crate';
 const EQUALITY = { '===': 'eq', '!==': 'ne' };
@@ -177,11 +177,9 @@ class JavaScriptParser {
     if (name === 'bigint') return INT;
     if (name === 'boolean') return BOOL;
     if (name === 'string') return STRING;
-    if (name === 'number') {
-      throw unsupported('JavaScript number', 'numbers are IEEE-754 doubles, which are outside the portable core; use bigint', range);
-    }
+    if (name === 'number') return FLOAT;
     if (!/^[A-Za-z_$][\w$]*$/u.test(name) || ['object', 'any', 'unknown', 'void', 'undefined', 'null', 'Object', 'Function', 'Array', 'symbol'].includes(name)) {
-      throw unsupported(`JSDoc type {${name}}`, 'portable types are bigint, boolean, string and @typedef data types', range);
+      throw unsupported(`JSDoc type {${name}}`, 'portable types are number, bigint, boolean, string and @typedef data types', range);
     }
     return { kind: 'named', path: [ROOT, name], span: range };
   }
@@ -520,7 +518,10 @@ class JavaScriptParser {
     const value = c.peek();
     if (value.kind === 'number') {
       c.next();
-      return { k: 'numLit', value: this.bigint(value), ...(negative && { negative }), span: span(token, value) };
+      if (value.suffix !== 'n') {
+        throw unsupported('case test on a Number', 'a value switch compares BigInt or boolean literals; compare Numbers with if and ===', span(token, value));
+      }
+      return { k: 'numLit', value: value.value, ...(negative && { negative }), span: span(token, value) };
     }
     if (!negative && (c.is('true') || c.is('false'))) {
       c.next();
@@ -589,8 +590,9 @@ class JavaScriptParser {
     if (!kind) throw unsupported(name, 'the portable assertions are assert, ok, strictEqual, notStrictEqual and deepStrictEqual', where);
     if (args.length !== 2) throw unsupported(`${name} message`, 'custom assertion messages are not kept', where);
     const [left, right] = args;
-    if (kind === 'eq' || kind === 'ne') return { k: 'assert', prop: { p: kind, left, right, reference: true, span: where }, span: where };
-    return { k: 'assert', prop: { p: kind === 'deep' ? 'eq' : 'ne', left, right, span: where }, span: where };
+    // These assertions compare primitives with Object.is (SameValue): NaN equals NaN, and 0 differs from -0.
+    if (kind === 'eq' || kind === 'ne') return { k: 'assert', prop: { p: kind, left, right, reference: true, sameValue: true, span: where }, span: where };
+    return { k: 'assert', prop: { p: kind === 'deep' ? 'eq' : 'ne', left, right, sameValue: true, span: where }, span: where };
   }
 
   arguments(context) {
@@ -988,10 +990,7 @@ class JavaScriptParser {
     switch (token.kind) {
       case 'number':
         c.next();
-        if (c.is('.') && c.peek(1).kind === 'number' && c.peek(1).start === c.peek().end) {
-          throw unsupported('JavaScript number', 'numbers are IEEE-754 doubles, which are outside the portable core; use BigInt literals such as 5n', span(token, c.peek(1)));
-        }
-        return { k: 'num', value: this.bigint(token), span: span(token, token) };
+        return this.numberLiteral(token);
       case 'string':
         c.next();
         return { k: 'str', value: token.value, span: span(token, token) };
@@ -1033,20 +1032,14 @@ class JavaScriptParser {
     return tokens.length - 1;
   }
 
-  /** `5n`, `0x1fn`: BigInt literals. Plain numbers are doubles and are rejected. */
-  bigint(token) {
-    const radix = /^([xob])([0-9a-f]*)n$/u.exec(token.suffix);
-    if (token.value === '0' && radix) {
-      const literal = `0${radix[1]}${radix[2]}`;
-      try {
-        return BigInt(literal).toString();
-      } catch {
-        // `BigInt('0x')` throws a raw SyntaxError; report it as a syntax diagnostic at the literal.
-        throw new TranslationError('syntax', `Cannot convert ${literal} to a BigInt`, span(token, token));
-      }
-    }
-    if (token.suffix === 'n') return token.value;
-    throw unsupported('JavaScript number', 'numbers are IEEE-754 doubles, which are outside the portable core; use BigInt literals such as 5n', span(token, token));
+  /**
+   * `5n` and `0x1fn` are BigInt literals, which the lexer keeps as decimal
+   * digits; `42`, `1.5` and `1e21` are Numbers, IEEE-754 doubles, which the
+   * lexer keeps as `String(value)`.
+   */
+  numberLiteral(token) {
+    if (token.suffix === 'n') return { k: 'num', value: token.value, span: span(token, token) };
+    return { k: 'num', value: token.value, type: FLOAT, span: span(token, token) };
   }
 
   /** Template literals concatenate their text with `String(value)` of each substitution. */
@@ -1112,7 +1105,11 @@ class JavaScriptParser {
       c.next();
       return { k: 'bool', value: token.value === 'true', span: span(token, token) };
     }
-    if (['null', 'undefined', 'NaN', 'Infinity'].includes(token.value)) {
+    if (token.value === 'NaN' || token.value === 'Infinity') {
+      c.next();
+      return { k: 'num', value: token.value, type: FLOAT, span: span(token, token) };
+    }
+    if (['null', 'undefined'].includes(token.value)) {
       throw unsupported(token.value, 'outside the portable core', span(token, token));
     }
     if (['this', 'super', 'new', 'function', 'class', 'import', 'arguments'].includes(token.value)) {

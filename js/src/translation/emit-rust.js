@@ -1,7 +1,8 @@
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
 // the translation carries in its own prelude, so no value is ever narrowed;
 // machine integers stay Rust machine integers with checked arithmetic, which
-// panics exactly where the source aborts. Data types are enums whose
+// panics exactly where the source aborts; a JavaScript Number is an `f64`,
+// printed by `ml_number::js_number` exactly as JavaScript prints it. Data types are enums whose
 // data-typed fields are boxed. Every value is owned: a variable is cloned
 // where it is consumed. Theorems cannot be proved in Rust: each becomes an
 // executable property, checked over a bounded domain by
@@ -20,7 +21,7 @@ const KEYWORDS = new Set([
   // Names the emitted code relies on.
   'ml', 'main', 'std', 'core', 'alloc', 'String', 'Vec', 'Box', 'Option', 'Some', 'None', 'Ok', 'Err', 'Result',
   'bool', 'str', 'char', 'u8', 'u16', 'u32', 'u64', 'u128', 'usize', 'i8', 'i16', 'i32', 'i64', 'i128', 'isize',
-  'f32', 'f64', 'Big', 'Clone', 'Debug', 'PartialEq', 'Eq', 'ToString', 'ml_main', 'ml_check_theorems',
+  'f32', 'f64', 'Big', 'Clone', 'Debug', 'PartialEq', 'Eq', 'ToString', 'ml_main', 'ml_check_theorems', 'ml_number',
 ]);
 
 const PRELUDE = `/// Unbounded integers for the portable core's naturals and integers.
@@ -299,6 +300,102 @@ pub mod ml {
     }
 }`;
 
+const NUMBER_PRELUDE = `/// JavaScript's Number operations that Rust's f64 does not share.
+pub mod ml_number {
+    /// ECMAScript Number::toString: the shortest decimal that reads back as
+    /// the value, the even one on a tie, laid out as JavaScript prints it.
+    pub fn js_number(x: f64) -> String {
+        if x.is_nan() {
+            return String::from("NaN");
+        }
+        if x.is_infinite() {
+            return String::from(if x > 0.0 { "Infinity" } else { "-Infinity" });
+        }
+        if x == 0.0 {
+            return String::from("0");
+        }
+        let (mut digits, n) = decimal(&format!("{:e}", x.abs()));
+        // Rust's shortest digits round a tie away from zero; ECMAScript takes the even neighbour.
+        let (exact, _) = decimal(&format!("{:.800e}", x.abs()));
+        let rest = &exact[digits.len().min(exact.len())..];
+        if digits.len() > 1 && rest.starts_with('5') && rest[1..].bytes().all(|b| b == b'0') {
+            let last = digits.as_bytes()[digits.len() - 1] - b'0';
+            let down = exact[..digits.len()].to_string();
+            let other = if digits == down { increment(&down) } else { Some(down) };
+            if let Some(other) = other {
+                let back = format!("{}.{}e{}", &other[..1], &other[1..], n - 1);
+                if last % 2 == 1 && back.parse::<f64>() == Ok(x.abs()) {
+                    digits = other.trim_end_matches('0').to_string();
+                }
+            }
+        }
+        let k = digits.len() as i32;
+        let body = if k <= n && n <= 21 {
+            format!("{digits}{}", "0".repeat((n - k) as usize))
+        } else if 0 < n && n <= 21 {
+            format!("{}.{}", &digits[..n as usize], &digits[n as usize..])
+        } else if -6 < n && n <= 0 {
+            format!("0.{}{digits}", "0".repeat((-n) as usize))
+        } else {
+            let sign = if n - 1 < 0 { '-' } else { '+' };
+            let power = (n - 1).abs();
+            if k == 1 {
+                format!("{digits}e{sign}{power}")
+            } else {
+                format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
+            }
+        };
+        if x < 0.0 {
+            format!("-{body}")
+        } else {
+            body
+        }
+    }
+
+    /// What console.log prints: -0 as "-0", where String(-0) is "0".
+    pub fn js_console(x: f64) -> String {
+        if x == 0.0 && x.is_sign_negative() {
+            String::from("-0")
+        } else {
+            js_number(x)
+        }
+    }
+
+    /// SameValue, as Object.is and assert.strictEqual compare: NaN equals
+    /// NaN, and 0 differs from -0.
+    pub fn same_value(a: f64, b: f64) -> bool {
+        if a.is_nan() || b.is_nan() {
+            a.is_nan() && b.is_nan()
+        } else {
+            a.to_bits() == b.to_bits()
+        }
+    }
+
+    /// A decimal digit string plus one, or None when it gains a digit.
+    fn increment(digits: &str) -> Option<String> {
+        let mut bytes = digits.as_bytes().to_vec();
+        for index in (0..bytes.len()).rev() {
+            if bytes[index] == b'9' {
+                bytes[index] = b'0';
+            } else {
+                bytes[index] += 1;
+                return String::from_utf8(bytes).ok();
+            }
+        }
+        None
+    }
+
+    /// The significant digits without trailing zeros, and the exponent n with
+    /// value 0.digits × 10^n, of Rust's {:e} text.
+    fn decimal(text: &str) -> (String, i32) {
+        let (mantissa, exponent) = text.split_once('e').expect("exponent");
+        let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
+        let digits = digits.trim_end_matches('0').to_string();
+        let digits = if digits.is_empty() { String::from("0") } else { digits };
+        (digits, exponent.parse::<i32>().expect("exponent") + 1)
+    }
+}`;
+
 function ident(name) {
   let result = name.replace(/[^A-Za-z0-9_]/gu, '_');
   if (/^[0-9]/u.test(result) || result.startsWith('__') || result === '_' || result === '') result = `x${result}`;
@@ -318,7 +415,7 @@ function camel(name) {
   return ident(parts.map((part) => part[0].toUpperCase() + part.slice(1)).join('') || 'T');
 }
 
-const COPY = new Set(['bool', 'fixed', 'unit']);
+const COPY = new Set(['bool', 'fixed', 'float', 'unit']);
 
 export function emitRust(program) {
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
@@ -340,6 +437,7 @@ class RustEmitter {
     this.temporaries = 0;
     this.theoremChecks = [];
     this.usesBig = false;
+    this.usesNumber = false;
   }
 
   file() {
@@ -361,6 +459,7 @@ class RustEmitter {
       '#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types)]',
       '',
       ...(this.usesBig ? [PRELUDE, ''] : []),
+      ...(this.usesNumber ? [NUMBER_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -399,6 +498,9 @@ class RustEmitter {
         return 'crate::ml::Big';
       case 'fixed':
         return typeKey(type);
+      case 'float':
+        this.floats();
+        return 'f64';
       case 'bool':
         return 'bool';
       case 'string':
@@ -545,6 +647,11 @@ class RustEmitter {
       case 'bool':
         return this.expr(prop.expr);
       default: {
+        if (prop.sameValue) {
+          this.usesNumber = true;
+          const same = `crate::ml_number::same_value(${this.expr(prop.left)}, ${this.expr(prop.right)})`;
+          return prop.p === 'eq' ? same : `!${same}`;
+        }
         const operator = { eq: '==', ne: '!=', lt: '<', le: '<=', gt: '>', ge: '>=' }[prop.p];
         return `(${this.borrow(prop.left)} ${operator} ${this.borrow(prop.right)})`;
       }
@@ -558,6 +665,7 @@ class RustEmitter {
 
   /** An expression whose value is only read: variables are borrowed, not cloned. */
   borrow(e) {
+    if (e.type?.kind === 'float') return this.expr(e);
     return e.k === 'var' ? `&${e.name}` : `&${this.expr(e)}`;
   }
 
@@ -587,6 +695,7 @@ class RustEmitter {
       case 'unary':
         if (e.op === 'not') return `!${this.receiver(e.arg)}`;
         if (e.type.kind === 'fixed') return this.checked(`${this.receiver(e.arg)}.checked_neg()`, e.type, 'negation');
+        if (e.type.kind === 'float') return `(-${this.receiver(e.arg)})`;
         return `${this.receiver(e.arg)}.neg()`;
       case 'binary':
         return this.binary(e);
@@ -600,6 +709,10 @@ class RustEmitter {
         if (e.arg.type.kind === 'string') return this.expr(e.arg);
         if (e.arg.type.kind === 'data' || e.arg.type.kind === 'unit') {
           throw unsupported('output of structured values', `a ${e.arg.type.kind} value has no portable textual form`, e.arg.span);
+        }
+        if (e.arg.type.kind === 'float') {
+          this.usesNumber = true;
+          return `crate::ml_number::${e.console ? 'js_console' : 'js_number'}(${this.expr(e.arg)})`;
         }
         return `${this.receiver(e.arg)}.to_string()`;
       case 'cast':
@@ -622,6 +735,9 @@ class RustEmitter {
       }
       case 'fixed':
         return e.value.startsWith('-') ? `(${e.value}${typeKey(e.type)})` : `${e.value}${typeKey(e.type)}`;
+      case 'float':
+        this.floats();
+        return rustFloat(e.value);
       case 'bool':
         return String(e.value);
       case 'string':
@@ -654,8 +770,19 @@ class RustEmitter {
         return `(${this.borrow(e.left)} ${operator} ${this.borrow(e.right)})`;
       }
       default:
+        if (e.semantics === 'ieee') return this.floatArithmetic(e);
         return e.type.kind === 'fixed' ? this.fixedArithmetic(e) : this.bigArithmetic(e);
     }
+  }
+
+  floats() {
+    this.state.encode('floats', 'a JavaScript Number is an f64 with the same IEEE-754 arithmetic; % on f64 is the same truncated remainder, and ml_number::js_number prints a value as JavaScript does');
+  }
+
+  /** f64 arithmetic is IEEE-754 binary64 arithmetic, as JavaScript's; Rust's `%` is fmod, as JavaScript's. */
+  floatArithmetic(e) {
+    const operator = { add: '+', sub: '-', mul: '*', div: '/', rem: '%' }[e.op];
+    return `(${this.expr(e.left)} ${operator} ${this.expr(e.right)})`;
   }
 
   fixedArithmetic(e) {
@@ -767,6 +894,13 @@ class RustEmitter {
     this.state.encode('program-output', 'main prints the lines the source program prints, in order, with println!');
     return `fn ml_main() {\n${indent(lines.join('\n'), 1)}\n}`;
   }
+}
+
+/** A Number's canonical JavaScript text as an f64 expression. */
+function rustFloat(value) {
+  const special = { NaN: 'f64::NAN', Infinity: 'f64::INFINITY', '-Infinity': 'f64::NEG_INFINITY' }[value];
+  if (special) return special;
+  return value.startsWith('-') ? `(${value}f64)` : `${value}f64`;
 }
 
 function block(text) {

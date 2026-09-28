@@ -182,12 +182,13 @@ export class EmitState {
     this.theorems.push({ source: entry.fullName, target: [...this.modulePath(entry.fullName), name].join('.'), kind: 'theorem', ...details });
   }
 
-  assertionTheorem(name, effect) {
+  assertionTheorem(name, effect, details = {}) {
     this.theorems.push({
       source: `main:assert@${effect.span ? effect.span.start : '?'}`,
       target: name,
       kind: 'assertion',
       closedGoal: true,
+      ...details,
     });
   }
 
@@ -236,6 +237,38 @@ export function dependencies(entry) {
   }
   found.delete(entry.fullName);
   return found;
+}
+
+/**
+ * A test for whether a node computes with JavaScript Numbers: it has a
+ * Number-typed part, or uses a declaration that does, directly or not.
+ */
+export function numberDependence(program) {
+  const direct = (node) => {
+    let found = false;
+    const visit = (value) => {
+      if (found || !value || typeof value !== 'object') return;
+      if (Array.isArray(value)) value.forEach(visit);
+      else if (value.kind === 'float') found = true;
+      else Object.values(value).forEach(visit);
+    };
+    visit(node);
+    return found;
+  };
+  const entries = [...program.declarations.values()];
+  const uses = new Map(entries.map((entry) => [entry.fullName, dependencies(entry)]));
+  const numeric = new Set(entries.filter((entry) => entry.k !== 'theorem' && direct(entry)).map((entry) => entry.fullName));
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const entry of entries) {
+      if (!numeric.has(entry.fullName) && [...uses.get(entry.fullName)].some((name) => numeric.has(name))) {
+        numeric.add(entry.fullName);
+        grew = true;
+      }
+    }
+  }
+  return (node) => direct(node) || [...dependencies({ k: 'fn', params: [], ret: null, body: node })].some((name) => numeric.has(name));
 }
 
 /**

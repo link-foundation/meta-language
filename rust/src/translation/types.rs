@@ -2,7 +2,8 @@
 //!
 //! Numeric types keep their source semantics apart:
 //! `nat` and `int` are unbounded, `fixed` is a Rust machine integer whose
-//! arithmetic aborts on overflow. Data types are named by their qualified path.
+//! arithmetic aborts on overflow, and `float` is a JavaScript Number, an
+//! IEEE-754 binary64. Data types are named by their qualified path.
 //!
 //! Mirrors `js/src/translation/types.js`; the serialised form is the same JSON
 //! object (`{ "kind": "fixed", "bits": 32, "signed": true }`).
@@ -20,6 +21,8 @@ pub enum Type {
     Bool,
     String,
     Unit,
+    /// A JavaScript Number: an IEEE-754 binary64.
+    Float,
     Fixed {
         bits: u32,
         signed: bool,
@@ -45,6 +48,7 @@ pub const INT: Type = Type::Int;
 pub const BOOL: Type = Type::Bool;
 pub const STRING: Type = Type::String;
 pub const UNIT: Type = Type::Unit;
+pub const FLOAT: Type = Type::Float;
 
 #[must_use]
 pub const fn fixed(bits: u32, signed: bool) -> Type {
@@ -76,6 +80,7 @@ impl Type {
             Self::Bool => "bool",
             Self::String => "string",
             Self::Unit => "unit",
+            Self::Float => "float",
             Self::Fixed { .. } => "fixed",
             Self::Data { .. } => "data",
             Self::Named { .. } => "named",
@@ -92,6 +97,17 @@ impl Type {
     #[must_use]
     pub const fn is_numeric(&self) -> bool {
         matches!(self, Self::Nat | Self::Int | Self::Fixed { .. })
+    }
+
+    #[must_use]
+    pub const fn is_float(&self) -> bool {
+        matches!(self, Self::Float)
+    }
+
+    /// True for the types `<` orders: the integers and Numbers.
+    #[must_use]
+    pub const fn is_ordered(&self) -> bool {
+        self.is_numeric() || self.is_float()
     }
 
     /// True when every value of the type is a non-negative integer.

@@ -8,7 +8,7 @@
 import { typeError, unsupported } from './diagnostics.js';
 import { normaliseProof } from './proof.js';
 import {
-  BOOL, INT, NAT, STRING, UNIT, data, fixedBounds, isNatural, isNumeric, sameType, typeKey,
+  BOOL, FLOAT, INT, NAT, STRING, UNIT, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
 } from './types.js';
 
 const COMPARISONS = new Set(['eq', 'ne', 'lt', 'le', 'gt', 'ge']);
@@ -237,6 +237,8 @@ class Checker {
       throw unsupported('output of structured values', `printing a ${typeKey(value.type)} value has no portable textual form`, expr.span);
     }
     const text = { k: 'toString', arg: value, type: STRING };
+    // console.log prints -0 as "-0", where String(-0) is "0".
+    if (style === 'js-console' && isFloat(value.type)) return { ...text, console: true };
     if (style === 'js-console' && (value.type.kind === 'int' || value.type.kind === 'nat')) {
       // Node's console.log prints BigInt values with their `n` suffix.
       return { k: 'binary', op: 'concat', left: text, right: literal(STRING, 'n'), type: STRING };
@@ -248,6 +250,9 @@ class Checker {
     switch (prop.p) {
       case 'forall': {
         const binders = prop.binders.map((binder) => ({ name: binder.name, type: this.resolveType(binder.type, path, prop.span) }));
+        if (binders.some((binder) => isFloat(binder.type))) {
+          throw unsupported('quantification over Numbers', 'a theorem quantifies over integers, naturals, booleans, strings or data', prop.span);
+        }
         const inner = new Map(env);
         for (const binder of binders) bindLocal(inner, binder.name, binder.type);
         return { p: 'forall', binders, body: this.prop(prop.body, inner, path) };
@@ -263,13 +268,17 @@ class Checker {
       default: {
         if (!COMPARISONS.has(prop.p)) throw typeError(`unknown proposition ${prop.p}`, prop.span);
         const [left, right] = this.operands(prop.left, prop.right, env, path, prop.span);
-        if (prop.p !== 'eq' && prop.p !== 'ne' && !isNumeric(left.type)) {
+        if (prop.p !== 'eq' && prop.p !== 'ne' && !isOrdered(left.type)) {
           throw typeError(`ordering on ${typeKey(left.type)}`, prop.span);
         }
         if (prop.reference && (left.type.kind === 'data' || left.type.kind === 'unit')) {
           throw unsupported('identity comparison of objects', 'JavaScript compares objects by identity; use assert.deepStrictEqual', prop.span);
         }
         // Equality propositions over data are structural; executable targets get a generated equality.
+        // Over Numbers, assert.strictEqual's SameValue differs from ===: NaN equals NaN, and 0 differs from -0.
+        if (prop.sameValue && isFloat(left.type) && (prop.p === 'eq' || prop.p === 'ne')) {
+          return { p: prop.p, left, right, domain: left.type, sameValue: true };
+        }
         return { p: prop.p, left, right, domain: left.type };
       }
     }
@@ -299,6 +308,8 @@ class Checker {
   exprInner(node, env, path, expected, allowLiteral) {
     switch (node.k) {
       case 'num': {
+        // A JavaScript Number literal: its canonical text, `String(value)`, with the sign applied.
+        if (node.type && isFloat(node.type)) return literal(FLOAT, node.negative ? negateNumber(node.value) : node.value);
         const type = node.type ?? (expected && isNumeric(expected) ? expected : undefined);
         if (!type) {
           if (allowLiteral) return { k: 'lit', type: { kind: 'literal' }, value: node.value };
@@ -338,6 +349,7 @@ class Checker {
         if (node.op === 'neg') {
           if (node.arg.k === 'num') return this.expr({ ...node.arg, negative: !node.arg.negative, span: node.span }, env, path, expected, allowLiteral);
           const arg = this.expr(node.arg, env, path, expected && isNumeric(expected) ? expected : undefined);
+          if (isFloat(arg.type)) return { k: 'unary', op: 'neg', arg, type: FLOAT, semantics: 'ieee' };
           if (arg.type.kind === 'nat' && this.language === 'JavaScript') {
             // A guarded natural is still a BigInt, and its negation an integer.
             return { k: 'unary', op: 'neg', arg: coerce(arg, INT, this.language, node.span), type: INT, semantics: 'exact' };
@@ -380,7 +392,7 @@ class Checker {
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
         if (arg.type.kind === 'string') return arg;
-        if (!isNumeric(arg.type) && arg.type.kind !== 'bool') throw typeError(`toString of ${typeKey(arg.type)}`, node.span);
+        if (!isOrdered(arg.type) && arg.type.kind !== 'bool') throw typeError(`toString of ${typeKey(arg.type)}`, node.span);
         return { k: 'toString', arg, type: STRING };
       }
       case 'show':
@@ -418,7 +430,7 @@ class Checker {
       if (left.type.kind === 'data' || left.type.kind === 'unit') {
         throw unsupported('structural equality of data values', 'comparisons of data values are not in the portable core', node.span);
       }
-      if (op !== 'eq' && op !== 'ne' && !isNumeric(left.type)) throw typeError(`ordering on ${typeKey(left.type)}`, node.span);
+      if (op !== 'eq' && op !== 'ne' && !isOrdered(left.type)) throw typeError(`ordering on ${typeKey(left.type)}`, node.span);
       return { k: 'binary', op, left, right, type: BOOL, domain: left.type };
     }
     if (op === 'plus') return this.plus(node, env, path, expected, allowLiteral);
@@ -470,7 +482,7 @@ class Checker {
       right = widen(right);
     }
     [left, right] = unify(left, right, this.language, node.span);
-    if (!isNumeric(left.type)) throw typeError(`arithmetic on ${typeKey(left.type)}`, node.span);
+    if (!isOrdered(left.type)) throw typeError(`arithmetic on ${typeKey(left.type)}`, node.span);
     const semantics = arithmeticSemantics(this.language, op, left.type, node);
     return { k: 'binary', op, left, right, type: left.type, domain: left.type, ...semantics };
   }
@@ -854,6 +866,17 @@ function literal(type, value) {
   return { k: 'lit', type, value };
 }
 
+/** Integers and Numbers: the types with an order and arithmetic. */
+function isOrdered(type) {
+  return isNumeric(type) || isFloat(type);
+}
+
+/** The canonical text of a negated Number: `-x`, and NaN for NaN. */
+function negateNumber(text) {
+  if (text === 'NaN') return text;
+  return text.startsWith('-') ? text.slice(1) : `-${text}`;
+}
+
 /**
  * Inside `match v with | succ k => …`, the value `k + 1` is `v` itself.
  * Rewriting it to `v` keeps recursion such as `fib (n + 1) + fib n`
@@ -906,6 +929,9 @@ function without(map, names) {
 }
 
 function arithmeticSemantics(language, op, type, node) {
+  // IEEE-754 binary64 arithmetic rounds to nearest, even on a tie; `%` is the
+  // exact truncated remainder (C fmod); nothing aborts.
+  if (isFloat(type)) return { semantics: 'ieee' };
   const division = op === 'div' || op === 'rem';
   if (type.kind === 'fixed') {
     // Rust integer arithmetic with overflow checks: `/` and `%` truncate,
@@ -923,6 +949,12 @@ function arithmeticSemantics(language, op, type, node) {
 
 function unify(left, right, language, span) {
   if (sameType(left.type, right.type)) return [left, right];
+  if (isFloat(left.type) || isFloat(right.type)) {
+    if (language === 'JavaScript' && (isNumeric(left.type) || isNumeric(right.type))) {
+      throw typeError('mixing BigInt and Number: JavaScript throws "TypeError: Cannot mix BigInt and other types, use explicit conversions"', span);
+    }
+    throw typeError(`operand types differ: ${typeKey(left.type)} and ${typeKey(right.type)}`, span);
+  }
   if (language === 'JavaScript') {
     // Guarded parameters are naturals, but every BigInt operation is an integer operation.
     return [coerce(left, INT, language, span), coerce(right, INT, language, span)];

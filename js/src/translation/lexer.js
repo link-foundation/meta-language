@@ -65,6 +65,12 @@ export function tokenize(source, language) {
       index = token.end;
       continue;
     }
+    if (language === 'JavaScript' && (/[0-9]/u.test(char) || (char === '.' && /[0-9]/u.test(source[index + 1] ?? '')))) {
+      const token = javascriptNumber(source, index);
+      tokens.push(token);
+      index = token.end;
+      continue;
+    }
     if (/[0-9]/u.test(char)) {
       const match = /^[0-9][0-9_]*(?:[a-z][a-z0-9]*)?/u.exec(source.slice(index));
       const raw = match[0];
@@ -107,6 +113,36 @@ export function tokenize(source, language) {
   }
   tokens.push({ kind: 'eof', value: '', start: source.length, end: source.length, raw: '' });
   return { tokens, comments: commentList };
+}
+
+const DIGITS = { 16: '[0-9a-fA-F]', 8: '[0-7]', 2: '[01]', 10: '[0-9]' };
+const run = (digit) => `${digit}(?:_?${digit})*`;
+const JS_NUMBER = new RegExp(
+  `^(?:0[xX]${run(DIGITS[16])}|0[oO]${run(DIGITS[8])}|0[bB]${run(DIGITS[2])}`
+  + `|(?:(?:0|[1-9](?:_?${run(DIGITS[10])})?)(?:\\.(?:${run(DIGITS[10])})?)?|\\.${run(DIGITS[10])})`
+  + `(?:[eE][+-]?${run(DIGITS[10])})?)n?`,
+  'u',
+);
+
+/**
+ * An ECMAScript numeric literal. A BigInt (`5n`, `0x1fn`) keeps its decimal
+ * digits as `value` with suffix `n`; a Number keeps `String(Number(raw))`, the
+ * value JavaScript prints, with an empty suffix.
+ */
+function javascriptNumber(source, index) {
+  const match = JS_NUMBER.exec(source.slice(index));
+  const raw = match?.[0] ?? source[index];
+  const end = index + raw.length;
+  const next = source[end] ?? '';
+  const malformed = () => new TranslationError('syntax', `malformed number ${source.slice(index, end + next.length)}`, { start: index, end: end + next.length });
+  // `08`, `1_`, `3in` and `1.5n` are SyntaxErrors in JavaScript.
+  if (!match || /[0-9A-Za-z_$]/u.test(next)) throw malformed();
+  const text = raw.replaceAll('_', '');
+  if (text.endsWith('n')) {
+    if (/[.eE]/u.test(text) && !/^0[xX]/u.test(text)) throw malformed();
+    return { kind: 'number', value: BigInt(text.slice(0, -1)).toString(), suffix: 'n', raw, start: index, end };
+  }
+  return { kind: 'number', value: String(Number(text)), suffix: '', raw, start: index, end };
 }
 
 function blockCommentEnd(source, index, comments) {

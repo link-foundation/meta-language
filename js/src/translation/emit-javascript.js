@@ -1,6 +1,6 @@
-// JavaScript emitter. Every portable number is a BigInt, so naturals and
+// JavaScript emitter. Every portable integer is a BigInt, so naturals and
 // integers stay unbounded and machine integers are range-checked exactly as
-// Rust checks them. Data values are plain objects whose `$` property names
+// Rust checks them; a Number stays a Number. Data values are plain objects whose `$` property names
 // the constructor. Modules become object literals referenced by qualified
 // names. Theorems cannot be proved in JavaScript: each becomes an executable
 // property, checked over a bounded domain by `--ml-check-theorems`, while the
@@ -58,6 +58,10 @@ function ml_divide(a, b, rounding, byZero, remainder) {
   const keys = Object.keys(left);
   return keys.length === Object.keys(right).length && keys.every((key) => ml_equal(left[key], right[key]));
 }`,
+  showNumber: `// console.log prints -0 as -0, where String(-0) is "0".
+function ml_showNumber(value) {
+  return Object.is(value, -0) ? '-0' : String(value);
+}`,
   forall: `function ml_forall(values, property) {
   return values.every(property);
 }`,
@@ -112,7 +116,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'forall', 'domains'];
+    const helperOrder = ['natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'forall', 'domains'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -129,6 +133,7 @@ class JavaScriptEmitter {
       ...entry.flatMap((block) => [block, '']),
     ].join('\n');
     this.state.encode('numbers', 'every natural, integer and machine integer is a BigInt; machine-integer results are range-checked and throw RangeError where Rust would panic');
+    if (this.usesFloat) this.state.encode('floats', 'a Number is a JavaScript Number, an IEEE-754 double, with its own arithmetic, comparisons and String conversion');
     return {
       language: 'JavaScript',
       text,
@@ -164,6 +169,7 @@ class JavaScriptEmitter {
 
   fn(entry) {
     const { params, body } = renameFunction(entry, ident, this.state.localReserved());
+    if (params.some((param) => param.type.kind === 'float') || entry.ret.kind === 'float') this.usesFloat = true;
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const guards = params.flatMap((param) => this.parameterGuard(param));
@@ -262,7 +268,8 @@ class JavaScriptEmitter {
         const [left, right] = [this.expr(prop.left), this.expr(prop.right)];
         const structured = prop.left.type.kind === 'data' || prop.left.type.kind === 'unit';
         if (structured) this.helpers.add('equal');
-        const equal = structured ? `ml_equal(${left}, ${right})` : `(${left} === ${right})`;
+        const same = prop.sameValue ? `Object.is(${left}, ${right})` : `(${left} === ${right})`;
+        const equal = structured ? `ml_equal(${left}, ${right})` : same;
         return prop.p === 'eq' ? equal : `!${equal}`;
       }
       default: {
@@ -339,6 +346,7 @@ class JavaScriptEmitter {
   }
 
   expr(e) {
+    if (e.type?.kind === 'float') this.usesFloat = true;
     switch (e.k) {
       case 'lit':
         return this.literal(e);
@@ -355,7 +363,7 @@ class JavaScriptEmitter {
       }
       case 'unary':
         if (e.op === 'not') return `!${this.expr(e.arg)}`;
-        return this.checked(`-${this.expr(e.arg)}`, e.type, 'negation');
+        return this.checked(negate(this.expr(e.arg)), e.type, 'negation');
       case 'binary':
         return this.binary(e);
       case 'if':
@@ -364,6 +372,10 @@ class JavaScriptEmitter {
       case 'match':
         return `(() => {\n${indent(this.statements(e).join('\n'), 1)}\n})()`;
       case 'toString':
+        if (e.console && e.arg.type.kind === 'float') {
+          this.helpers.add('showNumber');
+          return `ml_showNumber(${this.expr(e.arg)})`;
+        }
         return e.arg.type.kind === 'string' ? this.expr(e.arg) : this.toText(e.arg);
       case 'cast':
         return this.cast(e);
@@ -381,6 +393,8 @@ class JavaScriptEmitter {
       case 'int':
       case 'fixed':
         return e.value.startsWith('-') ? `(${e.value}n)` : `${e.value}n`;
+      case 'float':
+        return e.value.startsWith('-') ? `(${e.value})` : e.value;
       case 'bool':
         return String(e.value);
       case 'string':
@@ -438,6 +452,7 @@ class JavaScriptEmitter {
         return this.checked(`(${left} - ${right})`, e.type, 'subtraction');
       case 'div':
       case 'rem': {
+        if (e.semantics === 'ieee') return `(${left} ${e.op === 'div' ? '/' : '%'} ${right})`;
         this.helpers.add('divide');
         const call = `ml_divide(${left}, ${right}, '${e.rounding}', '${e.byZero}', ${e.op === 'rem'})`;
         return this.checked(call, e.type, e.op === 'div' ? 'division' : 'remainder');
@@ -472,6 +487,11 @@ class JavaScriptEmitter {
     this.state.encode('program-output', 'main prints the lines the source program prints, in order, with console.log');
     return `function main() {\n${indent(lines.join('\n'), 1)}\n}`;
   }
+}
+
+/** `-x`, parenthesised so that `-(-x)` does not read as a decrement. */
+function negate(text) {
+  return text.startsWith('-') ? `-(${text})` : `-${text}`;
 }
 
 function fieldKey(name) {

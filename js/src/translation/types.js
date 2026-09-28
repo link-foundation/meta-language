@@ -1,12 +1,14 @@
 // Portable-core types. Numeric types keep their source semantics apart:
 // `nat` and `int` are unbounded, `fixed` is a Rust machine integer whose
-// arithmetic aborts on overflow. Data types are named by their qualified path.
+// arithmetic aborts on overflow, `float` is a JavaScript Number (an IEEE-754
+// binary64). Data types are named by their qualified path.
 
 export const NAT = Object.freeze({ kind: 'nat' });
 export const INT = Object.freeze({ kind: 'int' });
 export const BOOL = Object.freeze({ kind: 'bool' });
 export const STRING = Object.freeze({ kind: 'string' });
 export const UNIT = Object.freeze({ kind: 'unit' });
+export const FLOAT = Object.freeze({ kind: 'float' });
 
 export function fixed(bits, signed) {
   return Object.freeze({ kind: 'fixed', bits, signed });
@@ -33,6 +35,10 @@ export function sameType(left, right) {
 
 export function isNumeric(type) {
   return type.kind === 'nat' || type.kind === 'int' || type.kind === 'fixed';
+}
+
+export function isFloat(type) {
+  return type.kind === 'float';
 }
 
 /** True when every value of the type is a non-negative integer. */
