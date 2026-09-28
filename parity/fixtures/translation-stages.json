@@ -2,6 +2,31 @@
   "generator": "js/scripts/build-translation-stage-fixtures.mjs",
   "programs": [
     {
+      "name": "corpus/async.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/async.mjs",
+      "parse": {
+        "sha256": "1c408349fdf316f423aa7f255ec8addd2ffe901096dfb154396a5e3996c04e0c"
+      },
+      "check": {
+        "sha256": "858d2cc52d0f92fffc7544e0f0d9ecd18d49b4690f82c4bdafdbfb446ce21f35"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "20c65e56b1f3a4b66eefcebc15f3891034ebad88684f27ed55737579a9607d80"
+        },
+        "rust": {
+          "sha256": "93379d1be179f5beef57150dcbf6d73d9fbf8cb3da9be24f7b88f7d0787ef1ca"
+        },
+        "lean": {
+          "sha256": "01c78ef3588dd110f6555c02512b23408e515a8888a692b0f1f2f8a6306aae3a"
+        },
+        "rocq": {
+          "sha256": "7e8f5759728d452f019d4e5ea3549ab649d0e2d37ec3e4d4649e997fbd6ab1b3"
+        }
+      }
+    },
+    {
       "name": "corpus/const-functions.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/const-functions.mjs",
@@ -13572,13 +13597,68 @@
       }
     },
     {
-      "name": "frontend-javascript/frontend-javascript-negative-asyncFunction",
+      "name": "frontend-javascript/frontend-javascript-negative-asyncUnawaited",
       "extension": "mjs",
-      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nasync function f(n) { return n; }",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nasync function f(n) { return n; }\nconsole.log(String(f(1n)));",
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "async function: asynchronous code is outside the portable core at 50..55"
+          "message": "call of async function f without await: the Promise it returns is outside the portable core; await it where it is called at 103..108"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-negative-asyncSyncCaller",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nasync function f(n) { return n; }\n/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction g(n) { return f(n); }",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "call of async function f without await: the Promise it returns is outside the portable core; await it where it is called at 157..161"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-negative-asyncUnawaitedField",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nasync function f(n) { return n; }\nconsole.log(String((await f(1n) + f(2n))));",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "call of async function f without await: the Promise it returns is outside the portable core; await it where it is called at 118..123"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-negative-awaitOutsideAsync",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { return await n; }",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "await outside an async function: await is only valid in async functions and at the top level of a module at 73..78"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-negative-asyncMethod",
+      "extension": "mjs",
+      "source": "const A = { async f() { return 1n; } };",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "async member: accessors and asynchronous methods are outside the portable core at 12..18"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-negative-asyncArrowStatement",
+      "extension": "mjs",
+      "source": "async () => 1n;",
+      "parse": {
+        "error": {
+          "kind": "unsupported",
+          "message": "async function: only async functions declared by name or bound to a top-level constant are portable at 0..5"
         }
       }
     },
@@ -14426,17 +14506,6 @@
         "error": {
           "kind": "unsupported",
           "message": "export \"let\": only function and const declarations are exported at 0..7"
-        }
-      }
-    },
-    {
-      "name": "frontend-javascript/frontend-javascript-error-export-async",
-      "extension": "mjs",
-      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nexport async function f(n) { return n; }",
-      "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "export \"async\": only function and const declarations are exported at 50..57"
         }
       }
     },
@@ -15895,7 +15964,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "await operator: outside the portable core at 75..80"
+          "message": "await outside an async function: await is only valid in async functions and at the top level of a module at 75..80"
         }
       }
     },
@@ -16323,6 +16392,256 @@
         "error": {
           "kind": "unsupported",
           "message": "spread argument: pass each argument at 77..80"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-async-function",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nasync function f(n) { return n; }",
+      "parse": {
+        "sha256": "c280f46855adea043eb4cb65b09deebeccae13d1da319ab666d22d82715f6aca"
+      },
+      "check": {
+        "sha256": "33eabe981e82db3cb1d2c774640cc2ac3fc54fa992a849401b48ecb1df161243"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "e1e8573dc2bd7894d7212a9186f284b581b33dc296775bb8f73a49cf41727545"
+        },
+        "rust": {
+          "sha256": "de773da6471d689819248d0d9a6a31a461aa9edbec97f440d42fae5ab7672e80"
+        },
+        "lean": {
+          "sha256": "807357f16551e0d21fd8842ae9803f85e7ac07f438d5e74e63b69b63c5299b2b"
+        },
+        "rocq": {
+          "sha256": "395366a7b7cefc411c9309d98ffc881b9c225537b436e6bfb86af68293e14894"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-export-async",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nexport async function f(n) { return n; }",
+      "parse": {
+        "sha256": "0910f85587b94be5066a3503e33c71bf636f2089cef619ce7599d803a702f84e"
+      },
+      "check": {
+        "sha256": "323fe189ffd553faa50f7bee04b5b807584e0a3dc7d2705366f9eb6b8c811197"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "dbc24710b1f908f3c94c489a88cb459b415a9325a9c5f851c43797131a6c7a0c"
+        },
+        "rust": {
+          "sha256": "5ea4878f2dc4759453fa17637e1d919e0cf3c494bdc847e19ef8c670889462eb"
+        },
+        "lean": {
+          "sha256": "b9881b9bc6a4ab4582e52dc4b9a9284af93c05e69e4261fff4ef883b3b2144c0"
+        },
+        "rocq": {
+          "sha256": "dd468ad6821cba488a2b8e33d28ee69126ff995cb6af0509de771d15cd27e54a"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-async-awaited",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nasync function f(n) { return n; }\nconsole.log(String(await f(1n)));",
+      "parse": {
+        "sha256": "9a122d2548b09ffd8d76c5db53940bebb4850178970b3c5e46c5796b06fedebe"
+      },
+      "check": {
+        "sha256": "b40b7a7407691bd164afc622e6ba97c813bb0291cfbc4988699a16a6e19f4e78"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "888d340be54135555ef8b19b2e231c1ba7f1ad56bd7ff5dacf1ddbdea73dac51"
+        },
+        "rust": {
+          "sha256": "f294b3c85212c2b31a52083856c4ae6af450efb358d3459b2b9774a30bb4c686"
+        },
+        "lean": {
+          "sha256": "5f1dba617f35dd82389a7b6d4f83da03e702eb1e664a2ffcece5ca8ede286c8e"
+        },
+        "rocq": {
+          "sha256": "42bb227dfe3424030af795d05184c7dfa0ca30a3a44e75ca071711321f4b22c4"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-async-nested",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nasync function f(n) { return n + 1n; }\nasync function g(n) { return await f(await f(n)); }\nconsole.log(String(await g(1n)));",
+      "parse": {
+        "sha256": "162b9943a5a785d434eab092b354b111c358a4fe26e8943707ae826e5e2de356"
+      },
+      "check": {
+        "sha256": "1a9d8b96c61dfceed9a8277a201decd0b4f61d99f19fce3076599e287866fe8a"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "c7143a7a5f0f4717aa54a4dd937507c4fbf5bb8bba69c762d51bb85564e6e139"
+        },
+        "rust": {
+          "sha256": "889da6e99035ecd624bf21334bec6eef61ddd42114801b9542bddaac493e5906"
+        },
+        "lean": {
+          "sha256": "226ccddcdd51e4ed764542943e640b0d225beec24f610c300cf084216ef73d27"
+        },
+        "rocq": {
+          "sha256": "84d62e5e386b645b416840de1fef6e5fdaa782badf7b27aad363abdad7a94cd5"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-async-return-call",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nasync function f(n) { return n; }\nasync function g(n) { return f(n); }\nconsole.log(String(await g(1n)));",
+      "parse": {
+        "sha256": "bcfd4d00f22fec715c6dea5804d59236c5ef4fe3efc6a69f218f0bd959e367e6"
+      },
+      "check": {
+        "sha256": "e50f096a9beb56b4d8ad8d28af433669c8274814e663689c9c21d717af725962"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "579fc5fee2ad411c7f11da8010360c1a0c9a7b9061ca64db42b133f6668f4c26"
+        },
+        "rust": {
+          "sha256": "619d553b89680ac91c19fcc359af19a54b5cb24847476ae4ed7eaeac05a4fde1"
+        },
+        "lean": {
+          "sha256": "c9fa9053730d2b20fafa804d803c3afddd3b52fe5407a1ef2744abb84355ee09"
+        },
+        "rocq": {
+          "sha256": "82e1b177eca36e03c7a0e3b103d7b3440b9947b85d705011ed973da388f097e9"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-async-arrow",
+      "extension": "mjs",
+      "source": "const f = async (n) => n + 1n;\nconst g = async n => f(n);\nconsole.log(String(await g(1n)));",
+      "parse": {
+        "sha256": "9a00823fc1b84a004014a7dd8b78ac4c791fc7f6700c9679bf5afde2645a3ad5"
+      },
+      "check": {
+        "sha256": "8873fee66df1204b4a6bf1ec3f27c6792c6479a3537f89dbba616ce9ee3e221a"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "51bd6bb9b75a2a7e9b687204a7d3b2b20dd6313347604d421d8d1dc0b41b6f3a"
+        },
+        "rust": {
+          "sha256": "e7cc8b67c0ab515c8547adf2930b14346ae5bc9b7ba38b9689955f898f3fcae8"
+        },
+        "lean": {
+          "sha256": "f32052fa8be22abe3f1bae062461d75f2209651b23e408b229767d4185dc75fa"
+        },
+        "rocq": {
+          "sha256": "f86bab2ec5e79fcda6e51784ce61de7ad9dd69805a8fd230b01f12c96fee7ae4"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-async-function-expression",
+      "extension": "mjs",
+      "source": "const f = async function (n) { return n; };\nconsole.log(String(await f(1n)));",
+      "parse": {
+        "sha256": "9ccff918b2fe02967ae7f30b4a869cba6966c84c5270c9e9248b9a63dd93a052"
+      },
+      "check": {
+        "sha256": "51e8fcc9552de0b791b40d00aa2d9802070ca6f403ce451e8ac5016e52ae4563"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "7d1af750f97d5dadd61513d866d29e4df88a45707d35c7b4155b783f92c35026"
+        },
+        "rust": {
+          "sha256": "7487d9ce0b3df346199ef1b26fd86645a5251d4d33b4a383e2e47007c48b246e"
+        },
+        "lean": {
+          "sha256": "a70385277a8d2a36033000cc8b1cfc12c641b2fac4c06c8ef40d36ebc8a2682e"
+        },
+        "rocq": {
+          "sha256": "b4760ee1c4015da5dfcd8b19ac6d7c00cc64f99d449bb8f5d582c97871d587e5"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-async-promise-doc",
+      "extension": "mjs",
+      "source": "/**\n * @param {bigint} n\n * @returns {Promise<bigint>}\n */\nasync function f(n) { return n; }\nconsole.log(String(await f(1n)));",
+      "parse": {
+        "sha256": "f00ee37e5b04e5dd6e3631b2ec2181cf4dd641fdd7fc36d2f90b1b49eed82135"
+      },
+      "check": {
+        "sha256": "2aec22f0090b95ddf22557401c980fbab943cd9fdf53932fd9abc9efcddcd3aa"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "3feb8d355724a754d478c035ccb485b2e9406e7a7d124d4c0c99e30813cdee00"
+        },
+        "rust": {
+          "sha256": "87c10d2a03ca34e927bc155ad415affdc3d376265106d627c19cbce88250e0be"
+        },
+        "lean": {
+          "sha256": "7373d310be8a62dca33d6302bb650a420a90e69d9608df9f3e23eaeefb29e035"
+        },
+        "rocq": {
+          "sha256": "94977d9a4c3a53307bd774f099f9c64278a19383ae06cc5283878ff708dac8e3"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-async-parameter-name",
+      "extension": "mjs",
+      "source": "const f = async => async + 1n;\nconsole.log(String(f(1n)));",
+      "parse": {
+        "sha256": "278a31e06ac502953adc47442a408a1e8491b0f61f5bc9b9b74d9f9e7a9fb959"
+      },
+      "check": {
+        "sha256": "202a8be98a75b93d17a53ece0151faa0c9914f13f5b52732e39cceec84444d6c"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "7c4b77a8c3bd1ecfa8351638f26b1a92dc7d75307d44849c42a3fddf4a7780cc"
+        },
+        "rust": {
+          "sha256": "36bd1284c52b9276629b599b9010f5de97e521a81020e8bab29b97ba67ba7a62"
+        },
+        "lean": {
+          "sha256": "dd861e05df2c5f11589433b34dafeb23174fcfa3fe9305136b9ad89f990ffa40"
+        },
+        "rocq": {
+          "sha256": "2f55bcf3cd9cbda995a435c4bb66b464a77a7d64ec917465315fa6d6e1123979"
+        }
+      }
+    },
+    {
+      "name": "frontend-javascript/frontend-javascript-accept-await-value",
+      "extension": "mjs",
+      "source": "console.log(String(await 1n));",
+      "parse": {
+        "sha256": "37eb64355fa1de4a78d910b325a322e8e8ddb0be9c7a1ce5ff9a0d2d46d52c89"
+      },
+      "check": {
+        "sha256": "6597ebc809605d0dd94a2603c0c2f884cbdbb688d9ebfe43c8bd3cce6f98d019"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "86e79a439b7c3716dc5f729b7380a1ccd60638a3d921671445b70160bb805bc7"
+        },
+        "rust": {
+          "sha256": "df26b061bc418d696859c7bbc0e9b69a52be03e84ab05b32b2175ad7e9d35532"
+        },
+        "lean": {
+          "sha256": "774c43cedf8d99de03a303095011ee8735d5ddf9fa69b8c7ff9f1f21a7bba930"
+        },
+        "rocq": {
+          "sha256": "d3d2a2ccb48c7f324054ea96ef5b8f4001a7c9c3c3b2129250b21757b18afd61"
         }
       }
     },

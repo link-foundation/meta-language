@@ -227,7 +227,7 @@ class Checker {
       }
       throw typeError(`unknown effect ${effect.k}`, effect.span);
     }
-    return { effects, span: main.span };
+    return { effects, span: main.span, ...(main.sequentialAsync ? { sequentialAsync: true } : {}) };
   }
 
   show(expr, env, path, style) {

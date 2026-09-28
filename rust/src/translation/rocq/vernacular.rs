@@ -566,6 +566,7 @@ impl RocqParser {
             SMain {
                 effects,
                 span: Some(main_span),
+                sequential_async: false,
             },
             main_span,
         ))

@@ -484,6 +484,7 @@ class JavaScriptEmitter {
         this.state.assertionTheorem(`assertion ${assertion}`, effect);
       }
     }
+    if (main.sequentialAsync) this.state.encode('sequential-async', 'an async function is the function its body computes and await is its call: every call of one is awaited where it is made, so nothing runs concurrently and the output is the same, in the same order');
     this.state.encode('program-output', 'main prints the lines the source program prints, in order, with console.log');
     return `function main() {\n${indent(lines.join('\n'), 1)}\n}`;
   }

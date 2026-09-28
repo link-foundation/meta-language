@@ -659,6 +659,9 @@ pub struct Main {
     pub effects: Vec<Effect>,
     #[serde(default)]
     pub span: Option<Span>,
+    /// Every call of an async function is awaited where it is made.
+    #[serde(rename = "sequentialAsync", default, skip_serializing_if = "is_false")]
+    pub sequential_async: bool,
 }
 
 /// A checked portable-core program.

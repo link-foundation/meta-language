@@ -122,3 +122,17 @@ fn rust_identifier_reserved_by_strict_javascript_stays_transport_only() {
     );
     assert!(!translated.code().contains("export function public"));
 }
+
+#[test]
+fn a_program_of_awaited_async_functions_is_a_semantic_translation_in_every_target() {
+    let source = "async function answer() { return 42; }\nconsole.log(await answer());\n";
+    for target in ["Rust", "Lean", "Rocq"] {
+        let translated =
+            translate_program(source, "JavaScript", target).expect("translation descriptor");
+        assert_eq!(
+            translated.contract().support,
+            TranslationSupport::SemanticTranslation,
+            "{target}"
+        );
+    }
+}

@@ -319,6 +319,18 @@ impl JavaScriptParser {
                 here,
             ));
         }
+        if token.kind == TokenKind::Identifier && token.value == "await" {
+            if !self.in_async {
+                return Err(unsupported(
+                    "await outside an async function",
+                    "await is only valid in async functions and at the top level of a module",
+                    here,
+                ));
+            }
+            self.cursor.advance();
+            self.sequential_async = true;
+            return self.awaited(Self::unary);
+        }
         if token.kind == TokenKind::Identifier
             && ["typeof", "void", "delete", "await", "yield"].contains(&token.value.as_str())
         {
@@ -329,6 +341,32 @@ impl JavaScriptParser {
             ));
         }
         self.postfix()
+    }
+
+    /// An expression whose value is awaited: when it is a call of an async
+    /// function, that call is awaited where it is made, which is its ordinary
+    /// call. Any other value is awaited as itself.
+    pub(super) fn awaited(&mut self, read: fn(&mut Self) -> Result<SExpr>) -> Result<SExpr> {
+        let before = self.unawaited.len();
+        let expr = read(self)?;
+        let path = match &expr.node {
+            SNode::App { func, .. } => match &func.node {
+                SNode::Name { path } => Some(path),
+                _ => None,
+            },
+            SNode::Name { path } => Some(path),
+            _ => None,
+        };
+        let awaits_last = match (path, self.unawaited.last()) {
+            (Some(path), Some((name, _))) => {
+                path.first().map(String::as_str) == Some(ROOT) && path[1..].join(".") == *name
+            }
+            _ => false,
+        };
+        if self.unawaited.len() > before && awaits_last {
+            self.unawaited.pop();
+        }
+        Ok(expr)
     }
 
     pub(super) fn postfix(&mut self) -> Result<SExpr> {
@@ -727,6 +765,9 @@ impl JavaScriptParser {
                 "the JavaScript standard library is outside the portable core",
                 Some(called),
             ));
+        }
+        if segments.len() == 1 && self.async_names.contains(&name) {
+            self.unawaited.push((name, called));
         }
         let mut path = vec![ROOT.to_owned()];
         path.extend(segments);

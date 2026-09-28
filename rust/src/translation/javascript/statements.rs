@@ -31,7 +31,13 @@ impl JavaScriptParser {
                     Some(self.to_here(&token)),
                 ));
             }
-            let expr = self.expr()?;
+            // An async function returning a call of another adopts the Promise
+            // it returns, which awaits it.
+            let expr = if self.in_async {
+                self.awaited(Self::expr)?
+            } else {
+                self.expr()?
+            };
             self.cursor.eat(";");
             return Ok(Stmt::Return {
                 expr,

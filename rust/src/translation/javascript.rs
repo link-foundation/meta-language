@@ -213,6 +213,13 @@ struct JavaScriptParser {
     data_types: Vec<SData>,
     scope: Scope,
     assertion: Option<Assertion>,
+    /// Async functions run sequentially: each call of one is awaited where it
+    /// is made, so nothing else runs until its result is back. `await` is
+    /// allowed at the top level of the module and in async functions.
+    async_names: HashSet<String>,
+    in_async: bool,
+    unawaited: Vec<(String, Span)>,
+    sequential_async: bool,
 }
 
 impl JavaScriptParser {
@@ -228,6 +235,10 @@ impl JavaScriptParser {
             data_types: Vec::new(),
             scope: Scope::default(),
             assertion: None,
+            async_names: HashSet::new(),
+            in_async: true,
+            unawaited: Vec::new(),
+            sequential_async: false,
         }
     }
 

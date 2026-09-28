@@ -387,6 +387,7 @@ impl Checker {
         Ok(Main {
             effects,
             span: main.span,
+            sequential_async: main.sequential_async,
         })
     }
 

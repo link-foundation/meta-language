@@ -28,15 +28,19 @@ impl JavaScriptParser {
             locals: HashSet::new(),
             tdz: self.block_declarations(self.cursor.index, ScanEnd::File),
         };
+        self.async_names = self.async_declarations(self.cursor.index);
         while !self.cursor.at_end() {
             let start = self.peek();
             if self.cursor.is("import") {
                 self.import_declaration()?;
                 continue;
             }
+            let exports_async =
+                |cursor: &TokenCursor| cursor.is("async") && cursor.is_at("function", 1);
             if self.cursor.eat("export").is_some()
                 && !self.cursor.is("function")
                 && !self.cursor.is("const")
+                && !exports_async(&self.cursor)
             {
                 return Err(unsupported(
                     &format!("export {}", describe(self.cursor.peek())),
@@ -44,15 +48,20 @@ impl JavaScriptParser {
                     Some(self.to_here(&start)),
                 ));
             }
+            if self.cursor.is("async") && self.cursor.is_at("function", 1) {
+                self.cursor.advance();
+                items.push(SItem::Fn(self.function_declaration(&start, true)?));
+                continue;
+            }
             if self.cursor.is("async") {
                 return Err(unsupported(
                     "async function",
-                    "asynchronous code is outside the portable core",
+                    "only async functions declared by name or bound to a top-level constant are portable",
                     Some(self.to_here(&start)),
                 ));
             }
             if self.cursor.is("function") {
-                items.push(SItem::Fn(self.function_declaration(&start)?));
+                items.push(SItem::Fn(self.function_declaration(&start, false)?));
                 continue;
             }
             if self.cursor.is("const")
@@ -96,12 +105,20 @@ impl JavaScriptParser {
             }
             effects.push(self.main_statement()?);
         }
+        if let Some((name, place)) = self.unawaited.first() {
+            return Err(unsupported(
+                &format!("call of async function {name} without await"),
+                "the Promise it returns is outside the portable core; await it where it is called",
+                Some(*place),
+            ));
+        }
         infer_javascript_types(SProgram {
             language: Language::JavaScript,
             items,
             main: Some(SMain {
                 effects,
                 span: Some(Span::new(0, self.source.len())),
+                sequential_async: self.sequential_async,
             }),
         })
     }
@@ -353,7 +370,7 @@ impl JavaScriptParser {
         }))
     }
 
-    pub(super) fn function_declaration(&mut self, start: &Token) -> Result<SFn> {
+    pub(super) fn function_declaration(&mut self, start: &Token, is_async: bool) -> Result<SFn> {
         self.cursor
             .expect("function", Some("function declaration"))?;
         if self.cursor.is("*") {
@@ -364,15 +381,20 @@ impl JavaScriptParser {
             ));
         }
         let name = self.cursor.identifier(Some("function"))?;
-        self.function_rest(start, &name)
+        self.function_rest(start, &name, is_async)
     }
 
     /// Parameters and body of a function or method; `doc_token` is where its `JSDoc` ends.
-    pub(super) fn function_rest(&mut self, doc_token: &Token, name_token: &Token) -> Result<SFn> {
+    pub(super) fn function_rest(
+        &mut self,
+        doc_token: &Token,
+        name_token: &Token,
+        is_async: bool,
+    ) -> Result<SFn> {
         let doc = self.jsdoc_for(doc_token)?;
         self.cursor.expect("(", Some(&name_token.value))?;
         let tokens = self.parameters(&name_token.value)?;
-        self.function_body(doc_token, name_token, doc, &tokens, Body::Block)
+        self.function_body(doc_token, name_token, doc, &tokens, Body::Block, is_async)
     }
 
     /// `const name = (…) => …` or `const name = function (…) { … }` before any
@@ -384,6 +406,10 @@ impl JavaScriptParser {
         let name_token = self.cursor.identifier(Some("function"))?;
         self.cursor.expect("=", Some("function"))?;
         self.scope.tdz.remove(&name_token.value);
+        let is_async = self.cursor.is("async") && !self.cursor.is_at("=>", 1);
+        if is_async {
+            self.cursor.advance();
+        }
         let function = if self.cursor.eat("function").is_some() {
             if self.cursor.is("*") {
                 return Err(unsupported(
@@ -408,7 +434,7 @@ impl JavaScriptParser {
             }
             self.cursor.expect("(", Some(&name_token.value))?;
             let tokens = self.parameters(&name_token.value)?;
-            self.function_body(start, &name_token, doc, &tokens, Body::Block)?
+            self.function_body(start, &name_token, doc, &tokens, Body::Block, is_async)?
         } else {
             let tokens = if self.cursor.eat("(").is_some() {
                 self.parameters(&name_token.value)?
@@ -416,18 +442,71 @@ impl JavaScriptParser {
                 vec![self.cursor.identifier(Some("parameter"))?]
             };
             self.cursor.expect("=>", Some(&name_token.value))?;
-            self.function_body(start, &name_token, doc, &tokens, Body::Arrow)?
+            self.function_body(start, &name_token, doc, &tokens, Body::Arrow, is_async)?
         };
         self.cursor.eat(";");
         Ok(function)
     }
 
-    /// Whether the tokens from `index` are a function expression or an arrow function.
+    /// Names of the top-level async functions, which every call must await.
+    fn async_declarations(&self, index: usize) -> HashSet<String> {
+        let tokens = &self.cursor.tokens;
+        let value = |at: usize| tokens.get(at).map(|token| token.value.as_str());
+        let identifier = |at: usize| {
+            tokens
+                .get(at)
+                .filter(|token| token.kind == TokenKind::Identifier)
+        };
+        let mut names = HashSet::new();
+        let mut depth = 0_i64;
+        for (at, token) in tokens.iter().enumerate().skip(index) {
+            if token.kind == TokenKind::Punct {
+                match token.value.as_str() {
+                    "(" | "[" | "{" => depth += 1,
+                    ")" | "]" | "}" => depth -= 1,
+                    _ => {}
+                }
+            }
+            if depth != 0 || token.kind != TokenKind::Identifier {
+                continue;
+            }
+            if token.value == "async" && value(at + 1) == Some("function") {
+                if let Some(name) = identifier(at + 2) {
+                    names.insert(name.value.clone());
+                }
+            }
+            if token.value == "const"
+                && value(at + 2) == Some("=")
+                && value(at + 3) == Some("async")
+                && value(at + 4) != Some("=>")
+                && self.starts_function(at + 3)
+            {
+                if let Some(name) = identifier(at + 1) {
+                    names.insert(name.value.clone());
+                }
+            }
+        }
+        names
+    }
+
+    /// Whether the tokens from `index` are a function expression or an arrow
+    /// function, either maybe async.
     pub(super) fn starts_function(&self, index: usize) -> bool {
         let tokens = &self.cursor.tokens;
-        let Some(token) = tokens.get(index) else {
+        let Some(mut token) = tokens.get(index) else {
             return false;
         };
+        let mut index = index;
+        if token.kind == TokenKind::Identifier
+            && token.value == "async"
+            && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>")
+        {
+            index += 1;
+            let Some(next) = tokens.get(index) else {
+                return false;
+            };
+            token = next;
+        }
         let arrow = |at: usize| tokens.get(at).is_some_and(|token| token.value == "=>");
         match token.kind {
             TokenKind::Identifier => token.value == "function" || arrow(index + 1),
@@ -473,6 +552,8 @@ impl JavaScriptParser {
     }
 
     /// A function from its parameters; `body` says how its body is written.
+    /// An async function is the function its body computes, and its `JSDoc`
+    /// may declare the result as `Promise<T>`.
     fn function_body(
         &mut self,
         doc_token: &Token,
@@ -480,8 +561,12 @@ impl JavaScriptParser {
         doc: Option<JsDoc>,
         tokens: &[Token],
         body: Body,
+        is_async: bool,
     ) -> Result<SFn> {
         let name = name_token.value.clone();
+        if is_async {
+            self.sequential_async = true;
+        }
         // A type JSDoc does not declare is inferred once the whole program is read.
         let mut params = Vec::new();
         for token in tokens {
@@ -513,7 +598,10 @@ impl JavaScriptParser {
         }
         let ret =
             match doc.and_then(|doc| non_empty(doc.returns).map(|returns| (returns, doc.range))) {
-                Some((returns, range)) => Some(self.ty(&returns, range)?),
+                Some((returns, range)) => {
+                    let promised = if is_async { promised(&returns) } else { None };
+                    Some(self.ty(promised.unwrap_or(&returns), range)?)
+                }
                 None => None,
             };
         let outer = std::mem::replace(
@@ -523,10 +611,16 @@ impl JavaScriptParser {
                 tdz: HashSet::new(),
             },
         );
+        let outer_async = std::mem::replace(&mut self.in_async, is_async);
         let statements = match body {
             Body::Arrow if !self.cursor.is("{") => {
                 let token = self.peek();
-                self.expr().map(|expr| {
+                let expr = if is_async {
+                    self.awaited(Self::expr)
+                } else {
+                    self.expr()
+                };
+                expr.map(|expr| {
                     vec![Stmt::Return {
                         expr,
                         span: self.to_here(&token),
@@ -536,6 +630,7 @@ impl JavaScriptParser {
             _ => self.block_statements(),
         };
         self.scope = outer;
+        self.in_async = outer_async;
         let statements = statements?;
         // `if (n < 0n) throw …` as a leading statement makes `n` a natural number.
         let mut index = 0;
@@ -591,7 +686,7 @@ impl JavaScriptParser {
             }
             self.cursor.advance();
             if self.cursor.is("(") {
-                items.push(SItem::Fn(self.function_rest(&member, &member)?));
+                items.push(SItem::Fn(self.function_rest(&member, &member, false)?));
             } else if self.cursor.eat(":").is_some() {
                 if self.cursor.is("{") {
                     items.push(SItem::Module(
@@ -690,4 +785,13 @@ impl JavaScriptParser {
         self.cursor.expect("}", Some("block"))?;
         Ok(statements)
     }
+}
+
+/// `T` of an async function's `@returns {Promise<T>}`.
+fn promised(text: &str) -> Option<&str> {
+    js_trim(text)
+        .strip_prefix("Promise")
+        .map(js_trim)?
+        .strip_prefix('<')?
+        .strip_suffix('>')
 }

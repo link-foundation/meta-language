@@ -698,6 +698,7 @@ impl<'a> LeanParser<'a> {
             SMain {
                 effects,
                 span: Some(at),
+                sequential_async: false,
             },
             at,
         ))

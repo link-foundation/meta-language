@@ -43,6 +43,13 @@ class JavaScriptParser {
     // Locals in scope, and names of the current block still in their temporal dead zone.
     this.scope = { locals: new Set(), tdz: new Set() };
     this.assertion = null;
+    // Async functions run sequentially: each call of one is awaited where it is
+    // made, so nothing else runs until its result is back. `await` is allowed at
+    // the top level of the module and in async functions.
+    this.asyncNames = new Set();
+    this.inAsync = true;
+    this.unawaited = [];
+    this.sequentialAsync = false;
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -58,6 +65,7 @@ class JavaScriptParser {
       c.eat(';');
     }
     this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index, () => c.atEnd()) };
+    this.asyncNames = this.asyncDeclarations(c.index);
     while (!c.atEnd()) {
       const start = c.peek();
       if (c.is('import')) {
@@ -65,11 +73,16 @@ class JavaScriptParser {
         continue;
       }
       if (c.eat('export')) {
-        if (!c.is('function') && !c.is('const')) {
+        if (!c.is('function') && !c.is('const') && !(c.is('async') && c.is('function', 1))) {
           throw unsupported(`export ${describe(c.peek())}`, 'only function and const declarations are exported', span(start, c.peek()));
         }
       }
-      if (c.is('async')) throw unsupported('async function', 'asynchronous code is outside the portable core', span(start, c.peek()));
+      if (c.is('async') && c.is('function', 1)) {
+        c.next();
+        items.push(this.functionDeclaration(start, true));
+        continue;
+      }
+      if (c.is('async')) throw unsupported('async function', 'only async functions declared by name or bound to a top-level constant are portable', span(start, c.peek()));
       if (c.is('function')) {
         items.push(this.functionDeclaration(start));
         continue;
@@ -98,14 +111,45 @@ class JavaScriptParser {
       }
       effects.push(this.mainStatement());
     }
-    return inferJavaScriptTypes({ language: 'JavaScript', items, main: { effects, span: { start: 0, end: this.source.length } } });
+    if (this.unawaited.length) {
+      const [call] = this.unawaited;
+      throw unsupported(`call of async function ${call.name} without await`, 'the Promise it returns is outside the portable core; await it where it is called', call.span);
+    }
+    const main = { effects, span: { start: 0, end: this.source.length } };
+    if (this.sequentialAsync) main.sequentialAsync = true;
+    return inferJavaScriptTypes({ language: 'JavaScript', items, main });
   }
 
-  /** Whether the tokens from `index` are a function expression or an arrow function. */
+  /** Names of the top-level async functions, which every call must await. */
+  asyncDeclarations(index) {
+    const tokens = this.cursor.tokens;
+    const names = new Set();
+    let depth = 0;
+    for (let at = index; at < tokens.length; at += 1) {
+      const token = tokens[at];
+      if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) depth += 1;
+      if (token.kind === 'punct' && [')', ']', '}'].includes(token.value)) depth -= 1;
+      if (depth !== 0 || token.kind !== 'identifier') continue;
+      const next = tokens[at + 1];
+      if (token.value === 'async' && next?.value === 'function' && tokens[at + 2]?.kind === 'identifier') names.add(tokens[at + 2].value);
+      if (token.value === 'const' && next?.kind === 'identifier' && tokens[at + 2]?.value === '=' && tokens[at + 3]?.value === 'async' &&
+        tokens[at + 4]?.value !== '=>' && this.startsFunction(at + 3)) {
+        names.add(next.value);
+      }
+    }
+    return names;
+  }
+
+  /** Whether the tokens from `index` are a function expression or an arrow function, either maybe async. */
   startsFunction(index) {
     const tokens = this.cursor.tokens;
-    const token = tokens[index];
+    let token = tokens[index];
     if (!token) return false;
+    if (token.kind === 'identifier' && token.value === 'async' && tokens[index + 1]?.value !== '=>') {
+      index += 1;
+      token = tokens[index];
+      if (!token) return false;
+    }
     if (token.kind === 'identifier' && token.value === 'function') return true;
     if (token.kind === 'identifier' && tokens[index + 1]?.value === '=>') return true;
     return token.kind === 'punct' && token.value === '(' && tokens[this.matching(index) + 1]?.value === '=>';
@@ -225,21 +269,21 @@ class JavaScriptParser {
     return { params, returns, range: { start: doc.start, end: doc.end } };
   }
 
-  functionDeclaration(start) {
+  functionDeclaration(start, isAsync = false) {
     const c = this.cursor;
     c.expect('function', 'function declaration');
     if (c.is('*')) throw unsupported('generator function', 'generators are outside the portable core', span(start, c.peek()));
     const name = c.identifier('function');
-    return this.functionRest(start, name);
+    return this.functionRest(start, name, isAsync);
   }
 
   /** Parameters and body of a function or method; `docToken` is where its JSDoc ends. */
-  functionRest(docToken, nameToken) {
+  functionRest(docToken, nameToken, isAsync = false) {
     const c = this.cursor;
     const doc = this.jsdocFor(docToken);
     c.expect('(', nameToken.value);
     const tokens = this.parameters(nameToken.value);
-    return this.functionBody(docToken, nameToken, doc, tokens, () => this.blockStatements());
+    return this.functionBody(docToken, nameToken, doc, tokens, () => this.blockStatements(), isAsync);
   }
 
   /**
@@ -254,6 +298,8 @@ class JavaScriptParser {
     const nameToken = c.identifier('function');
     c.expect('=', 'function');
     this.scope.tdz.delete(nameToken.value);
+    const isAsync = c.is('async') && !c.is('=>', 1);
+    if (isAsync) c.next();
     let fn;
     if (c.eat('function')) {
       if (c.is('*')) throw unsupported('generator function', 'generators are outside the portable core', span(start, c.peek()));
@@ -264,7 +310,7 @@ class JavaScriptParser {
       if (c.isKind('identifier')) c.next();
       c.expect('(', nameToken.value);
       const tokens = this.parameters(nameToken.value);
-      fn = this.functionBody(start, nameToken, doc, tokens, () => this.blockStatements());
+      fn = this.functionBody(start, nameToken, doc, tokens, () => this.blockStatements(), isAsync);
     } else {
       let tokens;
       if (c.eat('(')) tokens = this.parameters(nameToken.value);
@@ -273,9 +319,9 @@ class JavaScriptParser {
       fn = this.functionBody(start, nameToken, doc, tokens, () => {
         if (c.is('{')) return this.blockStatements();
         const token = c.peek();
-        const expr = this.expr();
+        const expr = isAsync ? this.awaited(() => this.expr()) : this.expr();
         return [{ s: 'return', expr, span: span(token, c.peek()) }];
-      });
+      }, isAsync);
     }
     c.eat(';');
     return fn;
@@ -298,10 +344,15 @@ class JavaScriptParser {
     return tokens;
   }
 
-  /** A function from its parameters; `statements` reads its body in the parameters' scope. */
-  functionBody(docToken, nameToken, doc, tokens, statementsOf) {
+  /**
+   * A function from its parameters; `statementsOf` reads its body in the
+   * parameters' scope. An async function is the function its body computes,
+   * and its JSDoc may declare the result as `Promise<T>`.
+   */
+  functionBody(docToken, nameToken, doc, tokens, statementsOf, isAsync = false) {
     const c = this.cursor;
     const name = nameToken.value;
+    if (isAsync) this.sequentialAsync = true;
     // A type JSDoc does not declare is inferred once the whole program is read.
     const params = tokens.map((token) => {
       const text = doc?.params.get(token.value);
@@ -310,11 +361,16 @@ class JavaScriptParser {
     for (const documented of doc?.params.keys() ?? []) {
       if (!params.some((param) => param.name === documented)) throw typeError(`@param ${documented} is not a parameter of ${name}`, doc.range);
     }
-    const ret = doc?.returns ? this.type(doc.returns, doc.range) : null;
+    const promised = isAsync ? /^\s*Promise\s*<([\s\S]*)>\s*$/u.exec(doc?.returns ?? '') : null;
+    const returns = promised ? promised[1] : doc?.returns;
+    const ret = returns ? this.type(returns, doc.range) : null;
     const outer = this.scope;
+    const outerAsync = this.inAsync;
+    this.inAsync = isAsync;
     this.scope = { locals: new Set(params.map((param) => param.name)), tdz: new Set() };
     const statements = statementsOf();
     this.scope = outer;
+    this.inAsync = outerAsync;
     // `if (n < 0n) throw …` as a leading statement makes `n` a natural number.
     let index = 0;
     for (; index < statements.length; index += 1) {
@@ -437,7 +493,9 @@ class JavaScriptParser {
       if (c.is(';') || c.is('}') || this.source.slice(token.end, c.peek().start).includes('\n')) {
         throw unsupported('return without a value', 'the function would return undefined, which is not a portable value', span(token, c.peek()));
       }
-      const expr = this.expr();
+      // An async function returning a call of another adopts the Promise it
+      // returns, which awaits it.
+      const expr = this.inAsync ? this.awaited(() => this.expr()) : this.expr();
       c.eat(';');
       return { s: 'return', expr, span: span(token, c.peek()) };
     }
@@ -1023,6 +1081,14 @@ class JavaScriptParser {
     if (c.is('+')) throw unsupported('unary +', 'unary plus throws a TypeError on BigInt values', span(token, token));
     if (c.is('~')) throw unsupported('bitwise ~', 'bitwise operators are outside the portable core', span(token, token));
     if (c.is('++') || c.is('--')) throw unsupported(`${token.value} operator`, 'mutation is outside the portable core', span(token, token));
+    if (token.kind === 'identifier' && token.value === 'await') {
+      if (!this.inAsync) {
+        throw unsupported('await outside an async function', 'await is only valid in async functions and at the top level of a module', span(token, token));
+      }
+      c.next();
+      this.sequentialAsync = true;
+      return this.awaited(() => this.unary());
+    }
     if (token.kind === 'identifier' && ['typeof', 'void', 'delete', 'await', 'yield'].includes(token.value)) {
       throw unsupported(`${token.value} operator`, 'outside the portable core', span(token, token));
     }
@@ -1170,6 +1236,22 @@ class JavaScriptParser {
     return { k: 'ctorObject', tag, fields, span: span(start, c.peek()) };
   }
 
+  /**
+   * An expression whose value is awaited: when it is a call of an async
+   * function, that call is awaited where it is made, which is its ordinary
+   * call. Any other value is awaited as itself.
+   */
+  awaited(read) {
+    const before = this.unawaited.length;
+    const expr = read();
+    const call = this.unawaited[this.unawaited.length - 1];
+    const path = expr.k === 'app' ? expr.fn.path : expr.path;
+    if (this.unawaited.length > before && ['app', 'name'].includes(expr.k) && path?.[0] === ROOT && path.slice(1).join('.') === call.name) {
+      this.unawaited.pop();
+    }
+    return expr;
+  }
+
   identifier() {
     const c = this.cursor;
     const token = c.peek();
@@ -1208,6 +1290,7 @@ class JavaScriptParser {
     if (GLOBALS.has(segments[0]) || name === 'String') {
       throw unsupported(name, 'the JavaScript standard library is outside the portable core', called);
     }
+    if (segments.length === 1 && this.asyncNames.has(name)) this.unawaited.push({ name, span: called });
     if (!args.length) return { k: 'name', path: [ROOT, ...segments], span: called };
     return { k: 'app', fn: { k: 'name', path: [ROOT, ...segments], span: where }, args, span: called };
   }

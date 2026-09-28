@@ -42,7 +42,12 @@ const negatives = {
   consoleFormat: "console.log('a', 1n);",
   consoleError: "console.error('a');",
   otherImport: "import fs from 'node:fs';",
-  asyncFunction: `${doc}async function f(n) { return n; }`,
+  asyncUnawaited: `${doc}async function f(n) { return n; }\nconsole.log(String(f(1n)));`,
+  asyncSyncCaller: `${doc}async function f(n) { return n; }\n${doc}function g(n) { return f(n); }`,
+  asyncUnawaitedField: `${doc}async function f(n) { return n; }\nconsole.log(String((await f(1n) + f(2n))));`,
+  awaitOutsideAsync: `${doc}function f(n) { return await n; }`,
+  asyncMethod: 'const A = { async f() { return 1n; } };',
+  asyncArrowStatement: 'async () => 1n;',
   generator: `${doc}function* f(n) { return n; }`,
   tdzOwn: `${doc}function f(n) { const x = x; return n; }`,
   tdzLater: `${doc}function f(n) { const y = x; const x = n; return y; }`,
@@ -120,7 +125,6 @@ const errors = {
   'number-in-template': 'console.log(`${1}`);',
   // Top level and imports.
   'export-let': 'export let x = 1n;',
-  'export-async': `${doc}export async function f(n) { return n; }`,
   'import-named': "import { equal } from 'node:assert';",
   'import-strict-without-as': "import { strict } from 'node:assert';",
   'import-namespace': "import * as assert from 'node:assert';",
@@ -296,6 +300,16 @@ const errors = {
 
 // Programs the frontend accepts, covering every construct it reads.
 const positives = {
+  'async-function': `${doc}async function f(n) { return n; }`,
+  'export-async': `${doc}export async function f(n) { return n; }`,
+  'async-awaited': `${doc}async function f(n) { return n; }\nconsole.log(String(await f(1n)));`,
+  'async-nested': `${doc}async function f(n) { return n + 1n; }\nasync function g(n) { return await f(await f(n)); }\nconsole.log(String(await g(1n)));`,
+  'async-return-call': `${doc}async function f(n) { return n; }\nasync function g(n) { return f(n); }\nconsole.log(String(await g(1n)));`,
+  'async-arrow': 'const f = async (n) => n + 1n;\nconst g = async n => f(n);\nconsole.log(String(await g(1n)));',
+  'async-function-expression': 'const f = async function (n) { return n; };\nconsole.log(String(await f(1n)));',
+  'async-promise-doc': '/**\n * @param {bigint} n\n * @returns {Promise<bigint>}\n */\nasync function f(n) { return n; }\nconsole.log(String(await f(1n)));',
+  'async-parameter-name': 'const f = async => async + 1n;\nconsole.log(String(f(1n)));',
+  'await-value': 'console.log(String(await 1n));',
   arithmetic: nFn('  return (n + 1n) * 2n - n / 3n % 4n;'),
   comparisons: jsFn('f', [['a', 'bigint'], ['b', 'bigint']], 'boolean', '  return a < b && a <= b || a > b && a >= b || a === b || a !== b;'),
   'logical-not': jsFn('f', [['p', 'boolean']], 'boolean', '  return !p && !!p || !(p || p);'),

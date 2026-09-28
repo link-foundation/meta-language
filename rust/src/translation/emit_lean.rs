@@ -835,6 +835,12 @@ impl LeanEmitter<'_> {
                 }
             }
         }
+        if main.sequential_async {
+            self.state.encode(
+                "sequential-async",
+                "an async function is the function its body computes and await is its call: every call of one is awaited where it is made, so nothing runs concurrently and the output is the same, in the same order",
+            );
+        }
         self.state.encode(
             "program-output",
             "main prints the lines the source program prints, in order, with IO.println",

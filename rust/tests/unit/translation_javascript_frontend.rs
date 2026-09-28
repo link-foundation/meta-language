@@ -310,3 +310,53 @@ fn const_functions_javascript_could_not_call_as_translated_are_rejected() {
         );
     }
 }
+
+#[test]
+fn an_async_function_whose_every_call_is_awaited_is_the_function_its_body_computes() {
+    let program = parse(
+        "/** @param {bigint} n @returns {Promise<bigint>} */\nasync function square(n) { return n * n; }\nasync function twice(n) { return await square(await square(n)); }\nconst inc = async (x) => x + 1;\nexport async function again(x) { return inc(x); }\nconsole.log(await twice(2n));\nconsole.log(await again(41));\n",
+    );
+    assert_eq!(signature(&program, "square"), (vec![Some(INT)], Some(INT)));
+    assert_eq!(signature(&program, "twice"), (vec![Some(INT)], Some(INT)));
+    assert_eq!(signature(&program, "inc"), (vec![Some(FLOAT)], Some(FLOAT)));
+    assert_eq!(
+        signature(&program, "again"),
+        (vec![Some(FLOAT)], Some(FLOAT))
+    );
+    assert!(program.main.expect("a main").sequential_async);
+    assert!(
+        !parse("console.log(1);")
+            .main
+            .expect("a main")
+            .sequential_async
+    );
+}
+
+#[test]
+fn a_promise_the_program_could_observe_is_rejected_where_it_is_made() {
+    let cases = [
+        (
+            "async function f() { return 1; }\nconsole.log(f());",
+            "call of async function f without await: the Promise it returns is outside the portable core; await it where it is called at 45..48",
+        ),
+        (
+            "async function f() { return 1; }\nfunction g() { return f(); }\nconsole.log(g());",
+            "call of async function f without await: the Promise it returns is outside the portable core; await it where it is called at 55..58",
+        ),
+        (
+            "function f(n) { return await n; }",
+            "await outside an async function: await is only valid in async functions and at the top level of a module at 23..28",
+        ),
+        (
+            "async () => 1;",
+            "async function: only async functions declared by name or bound to a top-level constant are portable at 0..5",
+        ),
+    ];
+    for (source, message) in cases {
+        assert_eq!(
+            rejection(source),
+            (ErrorKind::Unsupported, message.to_owned()),
+            "{source}"
+        );
+    }
+}

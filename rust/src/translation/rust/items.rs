@@ -654,6 +654,7 @@ impl RustParser {
         Ok(SMain {
             effects,
             span: span(&start, self.cursor.peek()),
+            sequential_async: false,
         })
     }
 
