@@ -6,6 +6,8 @@
  * its reason so a missing assertion can be traced to the report that failed it.
  */
 
+import { createHash } from 'node:crypto';
+
 export const DELIVERY_CONSUMER_ASSERTIONS = [
   'cleanEnvironment',
   'exactArtifactChecksum',
@@ -30,7 +32,7 @@ export function deliveryChecks(report, side, expectedSha256, context) {
     programs.length === delivery.programs.length &&
     programs.every(({ emitted, bindings }) => emitted && bindings.length > 0) &&
     translations.length === delivery.translations.length &&
-    translations.every(({ decodes }) => decodes);
+    translations.every((translation, index) => traces(translation, delivery.translations[index]));
   const offline = side === 'npm'
     ? observed.offline?.networkAttempts?.length === 0 && observed.offline.guardRejectsNetwork === true
     : observed.offline?.builtOffline === true &&
@@ -49,6 +51,18 @@ export function deliveryChecks(report, side, expectedSha256, context) {
       observed.publicEntryPoints.privatePathRejected === true,
     offlineFirstParse: offline && corpusParsed,
   };
+}
+
+/**
+ * Whether a translated artifact names its exact source: a source envelope decodes
+ * to it, or a semantic translation's provenance has its language, size and SHA-256.
+ */
+function traces({ decodes, provenance }, { source, sourceLanguage }) {
+  if (decodes === true) return true;
+  const bytes = Buffer.from(source, 'utf8');
+  return provenance?.sourceLanguage === sourceLanguage &&
+    provenance.sourceBytes === bytes.length &&
+    provenance.sourceSha256 === createHash('sha256').update(bytes).digest('hex');
 }
 
 /**

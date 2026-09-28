@@ -359,7 +359,7 @@ import * as api from 'meta-language';
 
 const [corpusPath, outputPath] = process.argv.slice(2);
 const corpus = JSON.parse(readFileSync(corpusPath, 'utf8'));
-const { LinkNetwork, LinkType, analyzeProgram, constructProgram, translateProgram, decodeProgramTranslation } = api;
+const { LinkNetwork, LinkType, analyzeProgram, constructProgram, translateProgram, decodeProgramTranslation, readTranslationProvenance } = api;
 let privatePathRejected = false;
 try {
   await import(corpus.delivery.privateJavaScriptPath);
@@ -389,11 +389,15 @@ const programs = corpus.delivery.programs.map(({ language, source }) => ({
 }));
 const translations = corpus.delivery.translations.map(({ source, sourceLanguage, targetLanguage }) => {
   const translated = translateProgram(source, sourceLanguage, targetLanguage);
+  // A semantic translation names its source by provenance; anything else carries it in an envelope.
+  const semantic = translated.contract.support === 'semantic-translation';
+  const provenance = semantic ? readTranslationProvenance(translated.code, targetLanguage) : null;
   return {
     sourceLanguage,
     targetLanguage,
     code: translated.code,
-    decodes: decodeProgramTranslation(translated.code, targetLanguage).source === source,
+    decodes: !semantic && decodeProgramTranslation(translated.code, targetLanguage).source === source,
+    provenance: provenance && { ...provenance },
   };
 });
 const networkAttempts = [...(globalThis.__issue195NetworkAttempts ?? ['guard missing'])];
@@ -414,8 +418,9 @@ writeFileSync(outputPath, JSON.stringify({
 `;
 
 const CRATE_CONSUMER = `use meta_language::{
-    analyze_program, construct_program, decode_program_translation, translate_program,
-    LinkNetwork, LinkType, ParseConfiguration, ProgramProjectContext,
+    analyze_program, construct_program, decode_program_translation, read_translation_provenance,
+    translate_program, LinkNetwork, LinkType, ParseConfiguration, ProgramProjectContext,
+    TranslationSupport,
 };
 use serde_json::{json, Value};
 
@@ -496,12 +501,26 @@ fn main() {
             let target = text(case, "targetLanguage");
             let translated =
                 translate_program(source, text(case, "sourceLanguage"), target).expect("translate");
-            let decoded = decode_program_translation(translated.code(), target).expect("decode");
+            // A semantic translation names its source by provenance; anything else carries it in an envelope.
+            let semantic = translated.contract().support == TranslationSupport::SemanticTranslation;
+            let provenance = if semantic {
+                let provenance = read_translation_provenance(translated.code(), target).expect("provenance");
+                json!({
+                    "sourceLanguage": provenance.source_language,
+                    "sourceSha256": provenance.source_sha256,
+                    "sourceBytes": provenance.source_bytes,
+                })
+            } else {
+                Value::Null
+            };
+            let decodes = !semantic
+                && decode_program_translation(translated.code(), target).expect("decode").source() == source;
             json!({
                 "sourceLanguage": text(case, "sourceLanguage"),
                 "targetLanguage": target,
                 "code": translated.code(),
-                "decodes": decoded.source() == source,
+                "decodes": decodes,
+                "provenance": provenance,
             })
         })
         .collect();

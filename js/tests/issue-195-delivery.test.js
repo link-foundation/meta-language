@@ -138,3 +138,23 @@ test('the hashed evidence corpus is checked out with LF line endings on every pl
   assert.match(attributes, /: eol: lf$/mu);
   assert.equal(corpusBytes.includes(Buffer.from('\r\n')), false);
 });
+
+test('a semantic translation traces its source by provenance, and only its exact source', () => {
+  const provenance = ({ source, sourceLanguage }) => ({
+    sourceLanguage,
+    sourceSha256: sha256(Buffer.from(source, 'utf8')),
+    sourceBytes: Buffer.byteLength(source, 'utf8'),
+  });
+  const withTranslations = (translations) => {
+    const report = consumerReport('linux-x64');
+    for (const side of ['npm', 'crate']) {
+      report[side] = { ...report[side], observations: { ...report[side].observations, translations } };
+    }
+    return report;
+  };
+  const traced = withTranslations(delivery.translations.map((translation) => ({ decodes: false, provenance: provenance(translation) })));
+  assert.equal(deliveryAssertions(traced, ['npm', 'crate'], expected, context).offlineFirstParse, true);
+  const other = withTranslations(delivery.translations.map((translation) =>
+    ({ decodes: false, provenance: provenance({ ...translation, source: `${translation.source} ` }) })));
+  assert.equal(deliveryAssertions(other, ['npm', 'crate'], expected, context).offlineFirstParse, false);
+});

@@ -279,14 +279,16 @@
         "analyzeProgram",
         "constructProgram",
         "translateProgram",
-        "decodeProgramTranslation"
+        "decodeProgramTranslation",
+        "readTranslationProvenance"
       ],
       "rust": [
         "LinkNetwork::parse",
         "analyze_program",
         "construct_program",
         "translate_program",
-        "decode_program_translation"
+        "decode_program_translation",
+        "read_translation_provenance"
       ]
     },
     "privateJavaScriptPath": "meta-language/src/network.js",
