@@ -85,7 +85,7 @@ export const CACHE_CLEANUP_REQUIREMENTS = Object.freeze([
     id: 'I195-CACHE-CLEANUP-POLICY',
     construct: 'CI policy check for hooks, wrappers, teardown, categories and build profiles',
     expectedBehavior:
-      'node scripts/check-cache-policy.mjs passes on the repository and fails when the hook or its pre-commit entry is disabled, a cargo or npm step bypasses the wrapper, a job lacks the always-run teardown, a required category has no class, or the dev and test profiles are not lean.',
+      'node scripts/check-cache-policy.mjs passes on the repository and fails when the hook or its pre-commit entry is disabled, a cargo or npm step bypasses the wrapper, a job lacks the teardown that runs after failures, a required category has no class, or the dev and test profiles are not lean.',
     assertions: [
       'policyPassesOnRepository',
       'disabledHookDetected',

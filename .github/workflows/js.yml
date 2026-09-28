@@ -125,7 +125,7 @@ jobs:
         run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
@@ -253,6 +253,6 @@ jobs:
         run: npm view "meta-language@$PACKAGE_VERSION" version
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown

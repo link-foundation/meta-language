@@ -8,7 +8,7 @@
 //   test hooks;
 // - every required cache category has a class;
 // - every CI job that runs cargo, npm or the acceptance scripts ends with an
-//   always-run teardown, and its build, test, coverage, package and acceptance
+//   teardown that runs after failures, and its build, test, coverage, package and acceptance
 //   commands go through scripts/with-cache-cleanup.mjs;
 // - the Cargo dev profile keeps debug information and incremental state lean.
 //
@@ -87,7 +87,7 @@ export function parseWorkflow(text) {
       each.name = /name:\s*(.+)/u.exec(each.text)?.[1]?.trim() ?? each.text.split('\n')[0].trim();
       const run = /^ {6}[- ] run:\s*(.*)$/mu.exec(each.text);
       each.run = run ? code(each.text.slice(each.text.indexOf(run[0]) + run[0].length - run[1].length)) : '';
-      each.always = /^\s+(?:-\s+)?if:\s*\$?\{?\{?\s*always\(\)/mu.test(each.text);
+      each.afterFailure = /^\s+(?:-\s+)?if:\s*\$?\{?\{?\s*(?:always\(\)|!\s*cancelled\(\))/mu.test(each.text);
     }
   }
   return jobs;
@@ -104,8 +104,8 @@ export function checkWorkflow(file, text) {
     }
     if (touching.length === 0) continue;
     const last = job.steps.at(-1);
-    if (!last || !TEARDOWN.test(last.run) || !last.always) {
-      problems.push(`${file} job ${job.id} runs cargo or npm but does not end with an "if: always()" step running scripts/clean-caches.mjs --event ci-teardown`);
+    if (!last || !TEARDOWN.test(last.run) || !last.afterFailure) {
+      problems.push(`${file} job ${job.id} runs cargo or npm but does not end with an "if: \${{ !cancelled() }}" step running scripts/clean-caches.mjs --event ci-teardown`);
     }
   }
   return problems;

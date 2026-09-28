@@ -1555,7 +1555,7 @@
         "aliases": [],
         "extensions": []
       },
-      "expectedBehavior": "node scripts/check-cache-policy.mjs passes on the repository and fails when the hook or its pre-commit entry is disabled, a cargo or npm step bypasses the wrapper, a job lacks the always-run teardown, a required category has no class, or the dev and test profiles are not lean.",
+      "expectedBehavior": "node scripts/check-cache-policy.mjs passes on the repository and fails when the hook or its pre-commit entry is disabled, a cargo or npm step bypasses the wrapper, a job lacks the teardown that runs after failures, a required category has no class, or the dev and test profiles are not lean.",
       "requiredRuntimes": [
         "tooling"
       ],

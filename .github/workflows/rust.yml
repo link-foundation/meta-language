@@ -168,7 +168,7 @@ jobs:
         run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
@@ -341,7 +341,7 @@ jobs:
         run: node js/scripts/check-js-rust-parity.mjs --manifest-only
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
@@ -479,7 +479,7 @@ jobs:
         run: cargo check --examples --all-features
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
@@ -544,7 +544,7 @@ jobs:
         run: echo "::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
@@ -592,7 +592,7 @@ jobs:
         run: rust-script scripts/check-crate-size.rs
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
@@ -789,7 +789,7 @@ jobs:
         run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
@@ -959,7 +959,7 @@ jobs:
         run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
@@ -1108,6 +1108,6 @@ jobs:
         uses: actions/deploy-pages@v5
 
       - name: Clean regenerable caches
-        if: always() && hashFiles('scripts/clean-caches.mjs') != ''
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown

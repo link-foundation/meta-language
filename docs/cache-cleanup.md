@@ -107,7 +107,7 @@ report says what was skipped.
 | every commit | `.githooks/pre-commit`, installed by `node scripts/install-dev-hooks.mjs`, runs `clean-caches.mjs --event pre-commit` on every commit, including documentation-only commits. The `clean-caches` hook of `.pre-commit-config.yaml` does the same for `pre-commit run`. |
 | build, test, coverage, benchmark, package | `node scripts/with-cache-cleanup.mjs --event <event> -- <command>` runs the command and cleans afterwards, also when it fails or is interrupted. |
 | end of the acceptance run | `js/scripts/run-issue-195-evidence.mjs` cleans the worktree for the `acceptance` event and records the measurement in `issue-195-results/artifacts/cache-cleanup.json` (`I195-CACHE-CLEANUP-MEASURED`). |
-| CI teardown | Every CI job that runs cargo, npm or the acceptance scripts ends with an `if: always()` step running `clean-caches.mjs --event ci-teardown`. |
+| CI teardown | Every CI job that runs cargo, npm or the acceptance scripts ends with an `if: ${{ !cancelled() }}` step running `clean-caches.mjs --event ci-teardown`, so it runs after failures. The workflows avoid `always()` so a cancelled run stops promptly; a cancelled step's wrapper receives the runner's signal and cleans up before it exits. |
 
 The wrapper holds a lease while the command runs. The first `SIGINT`,
 `SIGTERM` or `SIGHUP` is forwarded to the command, and the wrapper waits for
@@ -155,7 +155,7 @@ following holds:
   without the wrapper. The acceptance runners are not wrapped: the evidence
   runner holds its own lease and cleans at its end, and a wrapper's lease
   would hold that cleanup back;
-- a job that runs cargo or npm does not end with the always-run teardown;
+- a job that runs cargo or npm does not end with the teardown that runs after failures;
 - a required category has no class;
 - the dev or test profile is not lean;
 - the bootstrap is undocumented, or a lifecycle script touches git hooks.

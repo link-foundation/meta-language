@@ -80,12 +80,14 @@ test('a missing, misplaced or conditional CI teardown is detected', () => {
   const workflow = (steps) => `name: W\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n${steps}`;
   const wrapped = '      - run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo build\n';
   const teardown = (condition) => `      - name: Clean\n${condition}        run: node scripts/clean-caches.mjs --event ci-teardown\n`;
-  assert.deepEqual(checkWorkflow('w.yml', workflow(wrapped + teardown('        if: always()\n'))), []);
-  const expected = ['w.yml job build runs cargo or npm but does not end with an "if: always()" step running scripts/clean-caches.mjs --event ci-teardown'];
+  assert.deepEqual(checkWorkflow('w.yml', workflow(wrapped + teardown('        if: ${{ !cancelled() }}\n'))), []);
+  assert.deepEqual(checkWorkflow('w.yml', workflow(wrapped + teardown('        if: always()\n'))), [], 'always() also runs after failures');
+  const expected = ['w.yml job build runs cargo or npm but does not end with an "if: ${{ !cancelled() }}" step running scripts/clean-caches.mjs --event ci-teardown'];
   assert.deepEqual(checkWorkflow('w.yml', workflow(wrapped)), expected, 'missing');
-  assert.deepEqual(checkWorkflow('w.yml', workflow(teardown('        if: always()\n') + wrapped)), expected, 'not last');
+  assert.deepEqual(checkWorkflow('w.yml', workflow(teardown('        if: ${{ !cancelled() }}\n') + wrapped)), expected, 'not last');
   assert.deepEqual(checkWorkflow('w.yml', workflow(wrapped + teardown(''))), expected, 'skipped after a failure');
   assert.deepEqual(checkWorkflow('w.yml', workflow(wrapped + teardown('        if: success()\n'))), expected, 'only on success');
+  assert.deepEqual(checkWorkflow('w.yml', workflow(wrapped + teardown('        if: cancelled()\n'))), expected, 'only on cancellation');
   assert.deepEqual(checkWorkflow('w.yml', workflow('      - run: npx --yes secretlint "**/*"\n')), expected, 'npx touches the npm cache');
   assert.deepEqual(checkWorkflow('w.yml', workflow('      - run: echo no caches\n')), [], 'a job without cargo or npm needs none');
   assert.deepEqual(checkWorkflow('w.yml', workflow(`${wrapped}      - if: \${{ always() }}\n        run: node scripts/clean-caches.mjs --event ci-teardown\n`)), [], 'if as the first key');
