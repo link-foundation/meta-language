@@ -112,7 +112,7 @@ test('executed translation callbacks reach the evaluator; green no-op and missin
         testId: cell.testId, kind: cell.kind,
         outcome: observed.complete ? 'passed' : 'missing',
         positiveEvidence: observed.complete,
-        command: 'node --test tests/issue-195-translation-behavior.test.js',
+        command: 'node --test tests/issue-195-translation-pairs.test.js',
         toolchainVersions: { node: process.version },
         grammarVersions: { manifest: 'test' },
         evidenceArtifacts: ['execution-records.jsonl'],
@@ -132,14 +132,18 @@ test('executed translation callbacks reach the evaluator; green no-op and missin
       ...process.env, ISSUE_195_OBSERVATION_FILE: observations, ISSUE_195_COMMIT: commit,
     };
     delete childEnvironment.NODE_TEST_CONTEXT;
-    const testOutput = execFileSync(process.execPath, ['--test', 'tests/issue-195-translation-behavior.test.js'], {
+    const testOutput = execFileSync(process.execPath, [
+      '--test', '--test-name-pattern', '^Rust -> JavaScript translation',
+      'tests/issue-195-translation-pairs.test.js',
+    ], {
       cwd: path.join(root, 'js'),
       env: childEnvironment,
       stdio: 'pipe',
     }).toString();
-    assert.match(testOutput, /Rust function translation exports an executable JavaScript function/u);
+    assert.match(testOutput, /Rust -> JavaScript translation of the project corpus/u);
     const records = (await readFile(observations, 'utf8')).trim().split('\n')
-      .map(JSON.parse).filter((record) => record.testId === cell.testId);
+      .map(JSON.parse).filter((record) => record.testId === cell.testId
+        && cell.assertions.includes(record.assertionId));
     assert.equal(records.length, cell.assertions.length * cell.fixtureIds.length);
     assert.equal(evaluate(records).passed, true);
     const fullFixtureManifest = {
