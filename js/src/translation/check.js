@@ -66,7 +66,7 @@ class Checker {
       if (item.k !== 'module' && scope.names.has(item.name)) {
         throw typeError(`duplicate declaration ${fullName}`, item.span);
       }
-      if (/^ml_/u.test(item.name)) {
+      if (/^ml_/u.test(item.name) && !item.generated) {
         throw unsupported('reserved identifier', `${item.name} uses the translator's reserved ml_ prefix`, item.span);
       }
       if (item.k === 'module') {
@@ -310,6 +310,8 @@ class Checker {
       case 'num': {
         // A JavaScript Number literal: its canonical text, `String(value)`, with the sign applied.
         if (node.type && isFloat(node.type)) return literal(FLOAT, node.negative ? negateNumber(node.value) : node.value);
+        // The 1 of `x++` takes the type of `x`, which may be a Number.
+        if (node.unit && expected && isFloat(expected)) return literal(FLOAT, node.value);
         const type = node.type ?? (expected && isNumeric(expected) ? expected : undefined);
         if (!type) {
           if (allowLiteral) return { k: 'lit', type: { kind: 'literal' }, value: node.value };

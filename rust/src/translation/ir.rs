@@ -729,11 +729,11 @@ impl<'a> Scope<'a> {
     }
 
     pub fn fresh(&mut self, name: &str) -> String {
-        let base = (self.ident)(name);
-        let mut candidate = base.clone();
+        // A suffixed name is legal on its own: `end_2` needs none of the quoting of Lean's `«end»`.
+        let mut candidate = (self.ident)(name);
         let mut index = 2;
         while self.used.contains(&candidate) {
-            candidate = format!("{base}_{index}");
+            candidate = (self.ident)(&format!("{name}_{index}"));
             index += 1;
         }
         self.used.insert(candidate.clone());

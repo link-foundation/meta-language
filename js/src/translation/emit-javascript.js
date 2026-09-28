@@ -8,7 +8,7 @@
 
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
-import { renameFunction, renameMain, renameTheorem } from './ir.js';
+import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState } from './emit-common.js';
 
 const KEYWORDS = new Set([
@@ -173,7 +173,11 @@ class JavaScriptEmitter {
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const guards = params.flatMap((param) => this.parameterGuard(param));
-    const lines = [...guards, ...this.statements(body)];
+    const loop = tailLoop(entry, body);
+    // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
+    this.loopParams = loop && params.map((param) => param.name);
+    const lines = [...guards, ...(loop ? ['for (;;) {', indent(this.statements(loop).join('\n'), 1), '}'] : this.statements(body))];
+    this.loopParams = null;
     return `${name}(${params.map((param) => param.name).join(', ')}) {\n${indent(lines.join('\n'), 1)}\n}`;
   }
 
@@ -297,6 +301,12 @@ class JavaScriptEmitter {
       case 'abort':
         this.helpers.add('abort');
         return [`return ml_abort(${JSON.stringify(e.message)});`];
+      case 'recur': {
+        const args = e.args.map((arg) => this.expr(arg));
+        const names = this.loopParams;
+        if (names.length === 1) return [`${names[0]} = ${args[0]};`, 'continue;'];
+        return [...(names.length ? [`[${names.join(', ')}] = [${args.join(', ')}];`] : []), 'continue;'];
+      }
       default:
         return [`return ${this.expr(e)};`];
     }

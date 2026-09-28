@@ -12,13 +12,14 @@ import { BOOL, FLOAT, INT, STRING, UNIT } from './types.js';
 const ROOT = 'crate';
 const LOGICAL = new Set(['and', 'or']);
 const ORDER = new Set(['eq', 'ne', 'lt', 'le', 'gt', 'ge']);
-const ARITHMETIC = new Set(['sub', 'mul', 'div', 'rem']);
+const ARITHMETIC = new Set(['add', 'sub', 'mul', 'div', 'rem']);
 
 /** Fills in the missing parameter and result types of the functions of a parsed JavaScript program. */
 export function inferJavaScriptTypes(program) {
   const functions = [];
   collectFunctions(program.items, [ROOT], functions);
-  if (functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type))) return program;
+  const untyped = program.items.some((item) => item.k === 'data' && item.ctors.some((ctor) => ctor.fields.some((field) => !field.type)));
+  if (!untyped && functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type))) return program;
   const inference = new Inference(program.items);
   inference.run(functions, program.main);
   return program;
@@ -43,6 +44,8 @@ class Inference {
     this.plus = [];
     this.fields = [];
     this.signatures = new Map();
+    // The types of the fields the translator makes up, which are inferred like parameters.
+    this.fieldTerms = new Map();
   }
 
   fresh(bigint = false) {
@@ -56,6 +59,13 @@ class Inference {
     let current = term;
     while (current.kind === 'var' && this.bindings[current.id]) current = this.bindings[current.id];
     return current;
+  }
+
+  /** The type of a constructor field as a term, one per field even when it is not declared. */
+  field(field) {
+    if (field.type) return this.declared(field.type);
+    if (!this.fieldTerms.has(field)) this.fieldTerms.set(field, this.fresh());
+    return this.fieldTerms.get(field);
   }
 
   /** A declared surface type as a term; the frontend writes `bigint` as `int`. */
@@ -118,6 +128,7 @@ class Inference {
       });
       if (!fn.ret) fn.ret = this.surface(signature.ret, fn.span);
     }
+    for (const [field, term] of this.fieldTerms) field.type = this.surface(term, field.span);
   }
 
   /** Deferred `+` and field constraints, until nothing more is known; then `+` of unknowns adds numbers. */
@@ -165,7 +176,7 @@ class Inference {
       return this.fieldStep({ object, field, result, where });
     }
     const declared = (this.data.get(type.name) ?? []).flatMap((ctor) => ctor.fields).find((candidate) => candidate.name === field);
-    if (declared) this.unify(result, this.declared(declared.type), where);
+    if (declared) this.unify(result, this.field(declared), where);
     return true;
   }
 
@@ -191,6 +202,8 @@ class Inference {
   expr(node, env) {
     switch (node.k) {
       case 'num':
+        // The 1 of `x++` has the type of `x`, a Number or a BigInt.
+        if (node.unit) return this.fresh();
         return node.type ? this.declared(node.type) : this.fresh(true);
       case 'bool':
         return BOOL;
@@ -295,7 +308,7 @@ class Inference {
         const ctor = (this.data.get(name) ?? []).find((candidate) => candidate.name === tag);
         pattern.args.forEach((arg, index) => {
           const field = ctor?.fields[index];
-          this.pattern(arg, field ? this.declared(field.type) : this.fresh(), scope, where);
+          this.pattern(arg, field ? this.field(field) : this.fresh(), scope, where);
         });
         return;
       }
@@ -324,7 +337,7 @@ class Inference {
     const ctor = ctors.find((candidate) => candidate.name === node.tag);
     for (const [field, type, where] of fieldTypes) {
       const declared = ctor.fields.find((candidate) => candidate.name === field);
-      if (declared) this.unify(type, this.declared(declared.type), where ?? node.span);
+      if (declared) this.unify(type, this.field(declared), where ?? node.span);
     }
     return { kind: 'data', name };
   }

@@ -12,6 +12,7 @@
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
+import { imperative, lowerImperative, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING } from './types.js';
 
@@ -20,6 +21,8 @@ const EQUALITY = { '===': 'eq', '!==': 'ne' };
 const RELATIONAL = { '<': 'lt', '<=': 'le', '>': 'gt', '>=': 'ge' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const ASSIGNMENTS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '**=', '<<=', '>>=', '>>>=', '&=', '|=', '^=', '&&=', '||=', '??=']);
+// `x op= e` is `x = x op e`; `+=` adds numbers or concatenates strings like `+`.
+const COMPOUND = { '+=': 'plus', '-=': 'sub', '*=': 'mul', '/=': 'div', '%=': 'rem', '&&=': 'and', '||=': 'or' };
 const ERRORS = new Set(['Error', 'RangeError', 'TypeError']);
 const GLOBALS = new Set([
   'Math', 'Number', 'BigInt', 'parseInt', 'parseFloat', 'JSON', 'Array', 'Object', 'Symbol', 'Date', 'Promise', 'Reflect',
@@ -40,8 +43,14 @@ class JavaScriptParser {
     this.docs = comments.filter((comment) => comment.text.startsWith('/**') && comment.text !== '/**/');
     // Tags of every @typedef data type, for `switch (x.$)`.
     this.dataTypes = new Map();
-    // Locals in scope, and names of the current block still in their temporal dead zone.
-    this.scope = { locals: new Set(), tdz: new Set() };
+    // Locals in scope, the ones `let` or a parameter makes assignable, and
+    // names of the current block still in their temporal dead zone.
+    this.scope = { locals: new Set(), tdz: new Set(), mutable: new Set() };
+    // Enclosing loops and switches, for `break` and `continue`.
+    this.jumps = { loops: 0, switches: 0 };
+    // Functions and data types that loops and joins of statements lower to, and their count.
+    this.generated = [];
+    this.generatedCount = 0;
     this.assertion = null;
     // Async functions run sequentially: each call of one is awaited where it is
     // made, so nothing else runs until its result is back. `await` is allowed at
@@ -64,7 +73,7 @@ class JavaScriptParser {
       c.next();
       c.eat(';');
     }
-    this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index, () => c.atEnd()) };
+    this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index, () => c.atEnd()), mutable: new Set() };
     this.asyncNames = this.asyncDeclarations(c.index);
     while (!c.atEnd()) {
       const start = c.peek();
@@ -115,6 +124,7 @@ class JavaScriptParser {
       const [call] = this.unawaited;
       throw unsupported(`call of async function ${call.name} without await`, 'the Promise it returns is outside the portable core; await it where it is called', call.span);
     }
+    items.push(...this.generated);
     const main = { effects, span: { start: 0, end: this.source.length } };
     if (this.sequentialAsync) main.sequentialAsync = true;
     return inferJavaScriptTypes({ language: 'JavaScript', items, main });
@@ -355,6 +365,7 @@ class JavaScriptParser {
     if (isAsync) this.sequentialAsync = true;
     // A type JSDoc does not declare is inferred once the whole program is read.
     const params = tokens.map((token) => {
+      reserved(token);
       const text = doc?.params.get(token.value);
       return { name: token.value, type: text ? this.type(text, doc.range) : null, span: span(token, token) };
     });
@@ -366,20 +377,28 @@ class JavaScriptParser {
     const ret = returns ? this.type(returns, doc.range) : null;
     const outer = this.scope;
     const outerAsync = this.inAsync;
+    const outerJumps = this.jumps;
     this.inAsync = isAsync;
-    this.scope = { locals: new Set(params.map((param) => param.name)), tdz: new Set() };
+    this.jumps = { loops: 0, switches: 0 };
+    const names = params.map((param) => param.name);
+    this.scope = { locals: new Set(names), tdz: new Set(), mutable: new Set(names) };
     const statements = statementsOf();
     this.scope = outer;
     this.inAsync = outerAsync;
-    // `if (n < 0n) throw …` as a leading statement makes `n` a natural number.
+    this.jumps = outerJumps;
+    // `if (n < 0n) throw …` as a leading statement makes `n` a natural number,
+    // unless the body assigns it another value.
+    const { assigned } = statementUses(statements);
     let index = 0;
     for (; index < statements.length; index += 1) {
       const param = guardedParameter(statements[index], params);
-      if (!param) break;
+      if (!param || assigned.has(param.name)) break;
       param.type = NAT;
       param.guard = true;
     }
-    const body = this.lower(statements.slice(index), span(nameToken, c.peek()));
+    const where = span(nameToken, c.peek());
+    const rest = statements.slice(index);
+    const body = imperative(rest) ? lowerImperative(this, name, params, rest, where) : this.lower(rest, where);
     return { k: 'fn', name, params, ret, body, span: span(docToken, c.peek()) };
   }
 
@@ -436,7 +455,7 @@ class JavaScriptParser {
       const token = c.next();
       if (['{', '(', '['].includes(token.value) && token.kind === 'punct') depth += 1;
       else if (['}', ')', ']'].includes(token.value) && token.kind === 'punct') depth -= 1;
-      else if (depth === 0 && token.kind === 'identifier' && token.value === 'const') {
+      else if (depth === 0 && token.kind === 'identifier' && (token.value === 'const' || token.value === 'let')) {
         if (c.peek().kind === 'identifier') names.add(c.peek().value);
         else if (c.is('{')) {
           for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
@@ -454,7 +473,7 @@ class JavaScriptParser {
     const outer = this.scope;
     const tdz = new Set(outer.tdz);
     for (const name of this.blockDeclarations(c.index, () => c.is('}'))) tdz.add(name);
-    this.scope = { locals: new Set(outer.locals), tdz };
+    this.scope = { locals: new Set(outer.locals), tdz, mutable: new Set(outer.mutable) };
     try {
       return parse();
     } finally {
@@ -462,9 +481,11 @@ class JavaScriptParser {
     }
   }
 
-  declareLocal(name) {
+  declareLocal(name, mutable = false) {
     this.scope.locals.add(name);
     this.scope.tdz.delete(name);
+    if (mutable) this.scope.mutable.add(name);
+    else this.scope.mutable.delete(name);
   }
 
   blockStatements() {
@@ -485,8 +506,13 @@ class JavaScriptParser {
     const c = this.cursor;
     const token = c.peek();
     if (c.is('const')) return this.constStatement();
-    if (c.is('let') || c.is('var')) {
-      throw unsupported(`${token.value} declaration`, 'mutable bindings are outside the portable core; use const', span(token, token));
+    if (c.is('let')) {
+      const statements = this.letDeclarations();
+      c.eat(';');
+      return statements.length === 1 ? statements[0] : { s: 'block', body: statements, inline: true, span: span(token, c.peek()) };
+    }
+    if (c.is('var')) {
+      throw unsupported('var declaration', 'var bindings are hoisted to the function and shared by its blocks; use let or const', span(token, token));
     }
     if (c.is('return')) {
       c.next();
@@ -504,11 +530,20 @@ class JavaScriptParser {
     if (c.is('switch')) return this.switchStatement();
     if (c.is('{')) return { s: 'block', body: this.blockStatements(), span: span(token, c.peek()) };
     if (c.eat(';')) return { s: 'empty', span: span(token, token) };
-    if (['for', 'while', 'do'].includes(token.value) && token.kind === 'identifier') {
-      throw unsupported(`${token.value} loop`, 'loops over mutable state are outside the portable core; use recursion', span(token, token));
-    }
-    if (['break', 'continue', 'try', 'function', 'class', 'label', 'with', 'debugger'].includes(token.value) && token.kind === 'identifier') {
+    if (c.is('while')) return this.whileStatement();
+    if (c.is('do')) return this.doStatement();
+    if (c.is('for')) return this.forStatement();
+    if (c.is('break') || c.is('continue')) return this.jumpStatement();
+    if (['try', 'function', 'class', 'label', 'with', 'debugger'].includes(token.value) && token.kind === 'identifier') {
       throw unsupported(`${token.value} statement`, 'outside the portable core', span(token, token));
+    }
+    if (token.kind === 'identifier' && c.peek(1).kind === 'punct' && c.peek(1).value === ':') {
+      throw unsupported(`label ${token.value}`, 'labels are outside the portable core; a break or continue applies to the innermost loop', span(token, c.peek(1)));
+    }
+    if (this.startsAssignment()) {
+      const statement = this.assignment();
+      c.eat(';');
+      return statement;
     }
     const expr = this.expr();
     c.eat(';');
@@ -521,6 +556,7 @@ class JavaScriptParser {
     if (c.is('{')) return this.destructuring(start);
     if (c.is('[')) throw unsupported('array destructuring', 'arrays are outside the portable core', span(start, c.peek()));
     const name = c.identifier('const');
+    reserved(name);
     if (!c.eat('=')) throw this.fail('expected = in const');
     const value = this.expr();
     if (c.is(',')) throw unsupported('several declarators', 'declare one binding per const', span(start, c.peek()));
@@ -538,6 +574,7 @@ class JavaScriptParser {
       if (c.is('...')) throw unsupported('rest property', 'name every field', span(c.peek(), c.peek()));
       const key = c.identifier('destructuring');
       const local = c.eat(':') ? c.identifier('destructuring') : key;
+      reserved(local);
       if (c.is('=')) throw unsupported('default value', 'every field has a value', span(key, c.peek()));
       pairs.push({ field: key.value, name: local.value, span: span(key, local) });
       if (!c.eat(',')) break;
@@ -554,6 +591,158 @@ class JavaScriptParser {
     }));
     for (const pair of pairs) this.declareLocal(pair.name);
     return { s: 'block', body: statements, inline: true, span: span(start, c.peek()) };
+  }
+
+  /** `let a = 1n, b = a;` declares assignable locals; each needs a value, since undefined is not portable. */
+  letDeclarations() {
+    const c = this.cursor;
+    const start = c.next();
+    if (c.is('{') || c.is('[')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
+    const statements = [];
+    do {
+      const name = c.identifier('let');
+      reserved(name);
+      // The binding is in its temporal dead zone in its own initialiser.
+      this.scope.tdz.add(name.value);
+      if (!c.eat('=')) {
+        throw unsupported(`let ${name.value} without a value`, 'an uninitialised let holds undefined, which is not a portable value; give it an initial value', span(start, name));
+      }
+      const value = this.expr();
+      this.declareLocal(name.value, true);
+      statements.push({ s: 'let', name: name.value, value, span: span(start, c.peek()) });
+    } while (c.eat(','));
+    return statements;
+  }
+
+  /** Whether the statement is `x = e`, `x op= e`, `x++`, `x--`, `++x` or `--x`. */
+  startsAssignment() {
+    const c = this.cursor;
+    if ((c.is('++') || c.is('--')) && c.isKind('identifier', 1)) return true;
+    if (!c.isKind('identifier')) return false;
+    const next = c.peek(1);
+    return next.kind === 'punct' && (ASSIGNMENTS.has(next.value) || next.value === '++' || next.value === '--');
+  }
+
+  /** An assignment of a local: `x op= e` is `x = x op e`, and `x++` is `x = x + 1`. */
+  assignment() {
+    const c = this.cursor;
+    const start = c.peek();
+    const prefix = c.is('++') || c.is('--') ? c.next() : null;
+    const target = c.identifier('assignment');
+    const op = prefix ? prefix.value : c.next().value;
+    const where = span(start, c.peek());
+    if (this.scope.tdz.has(target.value)) {
+      throw unsupported(`assignment of ${target.value} before its declaration`, 'the binding is in its temporal dead zone, where assigning it throws a ReferenceError', where);
+    }
+    if (!this.scope.locals.has(target.value)) {
+      throw unsupported(`assignment of ${target.value}`, 'only local variables declared with let, and parameters, are assignable', where);
+    }
+    if (!this.scope.mutable.has(target.value)) {
+      throw unsupported(`assignment of constant ${target.value}`, 'assigning a const binding throws a TypeError; declare it with let', where);
+    }
+    const read = { k: 'name', path: [target.value], span: span(target, target) };
+    let value;
+    if (op === '++' || op === '--') {
+      // One of the variable's own type: a Number or a BigInt.
+      const one = { k: 'num', value: '1', unit: true, span: where };
+      value = { k: 'binary', op: op === '++' ? 'add' : 'sub', left: read, right: one, span: where };
+    } else if (op === '=') {
+      value = this.expr();
+    } else if (COMPOUND[op]) {
+      const right = this.expr();
+      value = { k: 'binary', op: COMPOUND[op], left: read, right, span: joined(read, right, start) };
+    } else {
+      throw unsupported(`${op} assignment`, 'the portable compound assignments are +=, -=, *=, /=, %=, &&= and ||=', where);
+    }
+    return { s: 'assign', name: target.value, value, span: span(start, c.peek()) };
+  }
+
+  /** The body of a loop, where `break` and `continue` apply to it. */
+  loopBody() {
+    this.jumps.loops += 1;
+    try {
+      return this.branch();
+    } finally {
+      this.jumps.loops -= 1;
+    }
+  }
+
+  whileStatement() {
+    const c = this.cursor;
+    const start = c.next();
+    c.expect('(', 'while');
+    const cond = this.expr();
+    c.expect(')', 'while');
+    const body = this.loopBody();
+    return { s: 'while', cond, body, span: span(start, c.peek()) };
+  }
+
+  doStatement() {
+    const c = this.cursor;
+    const start = c.next();
+    const body = this.loopBody();
+    c.expect('while', 'do');
+    c.expect('(', 'do');
+    const cond = this.expr();
+    c.expect(')', 'do');
+    c.eat(';');
+    return { s: 'doWhile', body, cond, span: span(start, c.peek()) };
+  }
+
+  /** `for (let i = 0n; i < n; i++) …`: the variables of its head belong to the loop. */
+  forStatement() {
+    const c = this.cursor;
+    const start = c.next();
+    if (c.is('await')) throw unsupported('for await', 'asynchronous iteration is outside the portable core', span(start, c.peek()));
+    c.expect('(', 'for');
+    const declared = c.is('let') || c.is('const') || c.is('var');
+    if (c.isKind('identifier', declared ? 1 : 0) && (c.is('of', declared ? 2 : 1) || c.is('in', declared ? 2 : 1))) {
+      const kind = c.peek(declared ? 2 : 1).value;
+      throw unsupported(`for…${kind} loop`, 'iteration over arrays, strings and objects is outside the portable core; count with for (let i = …; …; …)', span(start, c.peek()));
+    }
+    const outer = this.scope;
+    this.scope = { locals: new Set(outer.locals), tdz: new Set(outer.tdz), mutable: new Set(outer.mutable) };
+    try {
+      const init = [];
+      if (c.is('let')) {
+        init.push(...this.letDeclarations());
+      } else if (c.is('const') || c.is('var')) {
+        throw unsupported(`for with ${c.peek().value}`, 'declare the loop variables with let', span(c.peek(), c.peek()));
+      } else {
+        while (!c.is(';')) {
+          if (!this.startsAssignment()) throw this.fail('expected an assignment in the for initialiser');
+          init.push(this.assignment());
+          if (!c.eat(',')) break;
+        }
+      }
+      c.expect(';', 'for');
+      const cond = c.is(';') ? null : this.expr();
+      c.expect(';', 'for');
+      const update = [];
+      while (!c.is(')')) {
+        if (!this.startsAssignment()) throw unsupported('for update', 'the update of a for loop is a list of assignments', span(c.peek(), c.peek()));
+        update.push(this.assignment());
+        if (!c.eat(',')) break;
+      }
+      c.expect(')', 'for');
+      const body = this.loopBody();
+      return { s: 'for', init, cond, update, body, span: span(start, c.peek()) };
+    } finally {
+      this.scope = outer;
+    }
+  }
+
+  jumpStatement() {
+    const c = this.cursor;
+    const token = c.next();
+    const where = span(token, token);
+    if (c.isKind('identifier') && !c.is('case') && !c.is('default') && !this.source.slice(token.end, c.peek().start).includes('\n')) {
+      throw unsupported(`labelled ${token.value}`, 'labels are outside the portable core; a break or continue applies to the innermost loop', span(token, c.peek()));
+    }
+    if (token.value === 'continue' && !this.jumps.loops) throw new TranslationError('syntax', 'continue outside a loop', where);
+    if (token.value === 'break' && !this.jumps.loops && !this.jumps.switches) throw new TranslationError('syntax', 'break outside a loop or switch', where);
+    c.eat(';');
+    return { s: token.value, span: where };
   }
 
   throwStatement() {
@@ -620,12 +809,14 @@ class JavaScriptParser {
       c.expect(':', 'case');
       if (c.is('case') || c.is('default')) continue;
       const body = [];
+      this.jumps.switches += 1;
       while (!c.is('case') && !c.is('default') && !c.is('}')) {
         if (c.is('const') || c.is('let')) {
           throw unsupported('declaration in a case clause', 'case clauses share one scope; wrap the case body in braces', span(c.peek(), c.peek()));
         }
         body.push(this.statement());
       }
+      this.jumps.switches -= 1;
       clauses.push({ tests, body, span: span(clauseStart, c.peek()) });
       tests = [];
     }
@@ -1304,6 +1495,13 @@ class JavaScriptParser {
       throw unsupported(`function value ${token.value}`, 'functions are only portable when called', span(token, token));
     }
     return { k: 'name', path: [token.value], span: span(token, token) };
+  }
+}
+
+/** Local names with the translator's `ml_` prefix could meet the names it makes up. */
+function reserved(token) {
+  if (/^ml_/u.test(token.value)) {
+    throw unsupported('reserved identifier', `${token.value} uses the translator's reserved ml_ prefix`, span(token, token));
   }
 }
 

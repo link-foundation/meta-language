@@ -10,7 +10,7 @@
 
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
-import { renameFunction, renameMain, renameTheorem } from './ir.js';
+import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState } from './emit-common.js';
 
 const KEYWORDS = new Set([
@@ -527,13 +527,33 @@ class RustEmitter {
       if (!ctor.fields.length) return `    ${local},`;
       return `    ${local}(${ctor.fields.map((field) => this.fieldType(field.type)).join(', ')}),`;
     });
-    return ['#[derive(Clone, Debug, PartialEq, Eq)]', `pub enum ${name} {`, ...variants, '}'].join('\n');
+    // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
+    const derives = this.holdsFloat(entry.fullName) ? 'Clone, Debug, PartialEq' : 'Clone, Debug, PartialEq, Eq';
+    return [`#[derive(${derives})]`, `pub enum ${name} {`, ...variants, '}'].join('\n');
+  }
+
+  holdsFloat(name, seen = new Set()) {
+    if (seen.has(name)) return false;
+    seen.add(name);
+    const entry = this.program.declarations.get(name);
+    return entry.ctors.some((ctor) => ctor.fields.some((field) => (
+      field.type.kind === 'float' || (field.type.kind === 'data' && this.holdsFloat(field.type.name, seen))
+    )));
   }
 
   fn(entry) {
     const { params, body } = renameFunction(entry, snake, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
+    const loop = tailLoop(entry, body);
+    if (loop) {
+      // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
+      this.loopParams = params.map((param) => param.name);
+      const text = this.expr(loop);
+      this.loopParams = null;
+      const binders = params.map((param) => `mut ${param.name}: ${this.type(param.type)}`).join(', ');
+      return `pub fn ${name}(${binders}) -> ${this.type(entry.ret)} {\n${indent(`loop {\n${indent(`return ${text};`, 1)}\n}`, 1)}\n}`;
+    }
     const binders = params.map((param) => `${param.name}: ${this.type(param.type)}`).join(', ');
     return `pub fn ${name}(${binders}) -> ${this.type(entry.ret)} {\n${indent(this.expr(body), 1)}\n}`;
   }
@@ -719,6 +739,12 @@ class RustEmitter {
         return this.cast(e);
       case 'abort':
         return `panic!("{}", ${rustString(e.message)})`;
+      case 'recur': {
+        const args = e.args.map((arg) => this.expr(arg));
+        const names = this.loopParams;
+        const assign = names.length === 1 ? `${names[0]} = ${args[0]};\n` : names.length ? `(${names.join(', ')}) = (${args.join(', ')});\n` : '';
+        return `{\n${indent(`${assign}continue;`, 1)}\n}`;
+      }
       default:
         throw new Error(`no Rust expression for ${e.k}`);
     }

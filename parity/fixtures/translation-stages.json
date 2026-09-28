@@ -127,6 +127,31 @@
       }
     },
     {
+      "name": "corpus/loops.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/loops.mjs",
+      "parse": {
+        "sha256": "260c0c653db9907e9b09da6afaeb03808b51b80038285c2e1abbe97a3f3666dc"
+      },
+      "check": {
+        "sha256": "810597648a0778a74049168282eb41c1a36b1108d5f7e8b7e2f6f2aaeb95bf83"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "185daa772aee95b099c5a733714704bf4e0888ff7629fabc731bc03834baa842"
+        },
+        "rust": {
+          "sha256": "06aafcf93aaceab7cd20f01348caf602ebdc0de940e8ef3a8f795c117e3fd3bc"
+        },
+        "lean": {
+          "sha256": "2ac9023b8f52994d0beb30f3f7be5574cdde0ed47605c2a367274fbc15f19238"
+        },
+        "rocq": {
+          "sha256": "2afe7367514d46f960775f361c47b49dfe193b95f1269f3742255721568a433e"
+        }
+      }
+    },
+    {
       "name": "corpus/numbers.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/numbers.mjs",
@@ -13347,9 +13372,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { let x = n; return x; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "let declaration: mutable bindings are outside the portable core; use const at 66..69"
+        "sha256": "92bb7366a7e06a639e29e9057ab55937a357bc2bb0e0a2dff62ed307bbc998e6"
+      },
+      "check": {
+        "sha256": "9a886dafc3027be9656538869cd78ccd713c512b7b594a912416a8dca45c99b2"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "a50b4a579c9ce5f704a777d31eaf75606cec9338a922554f113dee1a8d94f746"
+        },
+        "rust": {
+          "sha256": "297d2c50a9f9da3b755eaaa4ed8a3c7e9ef5defb4fbfa2314348f6eb1b0396e7"
+        },
+        "lean": {
+          "sha256": "909d936852845a6764cc5ca154222ad0ed2717f55b6cc975033e9ac9af0dbab4"
+        },
+        "rocq": {
+          "sha256": "c430e0aea286a40992ecdbcdfe8182ce90ab6794cdb2261b2b367b5c5a092dbc"
         }
       }
     },
@@ -13358,9 +13397,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { for (;;) {} }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "for loop: loops over mutable state are outside the portable core; use recursion at 66..69"
+        "sha256": "f620e38fc9236d0fed4209079b28186edc5eac13caf7f849940ca0b6301dff63"
+      },
+      "check": {
+        "sha256": "bf3f07fb1982e2d0733d56b9f8b9c81f23d4ce9bbe386f73714a12976f67b7ec"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "7802130ae45786a74b27dbd1e3361f77ac8ae7c99015a0754c0823b36f99f4e1"
+        },
+        "rust": {
+          "sha256": "ac13ffac7910b75300f2df6ad1fd444eb1528f3ef1a432facf9e2d05d916e5e4"
+        },
+        "lean": {
+          "sha256": "282ecfec6bda52d55e4e9b3d46924172ec02f79d16e0676fbdfb57814f951f35"
+        },
+        "rocq": {
+          "sha256": "ebe923e76f6bbe650a6287cd54c5dd82b424327b5f6cf957fca87ac3d6c737f1"
         }
       }
     },
@@ -13479,9 +13532,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { n = 1n; return n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "assignment: mutation is outside the portable core at 66..68"
+        "sha256": "e52be593f51b0c351083420548f42dc99403b16d3154a2d00c0a8b7a636ad6c5"
+      },
+      "check": {
+        "sha256": "2441218fa0e5eb9a91382fe1c88799df9835374acca78c48b4e3063d97673203"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "38bf742462adbbd55edd1012d1930c4937b34e5273fdd9ef92e1b051cdb10679"
+        },
+        "rust": {
+          "sha256": "5a80b4a562a43ac54f4516e8f83ac290d30e4a7cc85abb6b6b10c7e6755a9dc7"
+        },
+        "lean": {
+          "sha256": "af439bd70203a99e849f8a01e72e9876138b796a8c09dce21bd7310000833a9b"
+        },
+        "rocq": {
+          "sha256": "b52cab8f0d579e092f4fc3208666036b68227e1678e8098bf1c379c15d24b91f"
         }
       }
     },
@@ -13490,9 +13557,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { n++; return n; }",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "++ operator: mutation is outside the portable core at 67..69"
+        "sha256": "29dc98cda2a452cd83a3ad23897044166bcffacc65b5091d73ba2c0bfc7def08"
+      },
+      "check": {
+        "sha256": "0b4d6e85f6e36826fe3e05ab6bc4c1317003c0e97ff9ca9f6f125320bb8c3aac"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "47c0ae19896f0bf95b12abffabb92ea85f74a204f8448cf8851bf97f177efa51"
+        },
+        "rust": {
+          "sha256": "e2571996f982850969ab21e4ea5198d4a40f8f61c6e6a96e3e117a11d289f7f1"
+        },
+        "lean": {
+          "sha256": "a78f937000a9c1f4bdcda2fef34ac37adb7a1c0f8960773d50850bbc3c4de6c2"
+        },
+        "rocq": {
+          "sha256": "5dd319674a91532f5828e0de977f95e103cfe25709d61561c08af408ba4d0608"
         }
       }
     },
@@ -14856,7 +14937,7 @@
           "sha256": "9a2c8ab5608af89b7da8be5f907b4fca1c592a6fcbc63aede29ca5ae6d1211f4"
         },
         "rust": {
-          "sha256": "d1d9f442ae643d5996ba897e22525f00a36fd0923f3ba3f3b93955347c58a3b7"
+          "sha256": "ce08b5137777424a55ab09bbc15681d6ba1fc786fe1fb247eb6a1891c1b25b54"
         },
         "lean": {
           "sha256": "b45496ad192c70da23f08cd5e12316aa6b334506e1ee75234c3d1019e59935fe"
@@ -15160,7 +15241,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "var declaration: mutable bindings are outside the portable core; use const at 68..71"
+          "message": "var declaration: var bindings are hoisted to the function and shared by its blocks; use let or const at 68..71"
         }
       }
     },
@@ -15169,9 +15250,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  while (n > 0n) {}\n  return n;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "while loop: loops over mutable state are outside the portable core; use recursion at 68..73"
+        "sha256": "9bffffc44fe85b8aee40ae3438deed4b47434f4709dce8b26c1cb19062d16098"
+      },
+      "check": {
+        "sha256": "635f1d263d9d8166a0664b371512994aeac8b3190a2590bbae257c5eca7cd9d1"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "5045d4d9afc8f26107245738077fba4cf4d99daf51df2ec7fb6f529170f6755d"
+        },
+        "rust": {
+          "sha256": "1ed0a76b36939aaeac20e7541ffbfe7eb5d48ba4954e60e91d76f0a028a34a60"
+        },
+        "lean": {
+          "sha256": "3113f176fc3fbd64e709297c7a32e79ea5f295f8bdec56a06900b2d29531ace6"
+        },
+        "rocq": {
+          "sha256": "52edc6e1538bf92ac2e95f424cb7a8b3a89641f790457b77160cabed830eae29"
         }
       }
     },
@@ -15180,9 +15275,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  do {} while (n > 0n);\n  return n;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "do loop: loops over mutable state are outside the portable core; use recursion at 68..70"
+        "sha256": "50b504a75996a3bc267359f2ce974e175c7ef316defd0d50de2906b4cb349fc2"
+      },
+      "check": {
+        "sha256": "b97b44617c20b6fac06868bac8e86abbaabb6d44d72c016a10a6f4a16638234b"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "f1fd3f0810bd4797b72969c0eb10aa63996246aeb3da4f7326e091febfca3a80"
+        },
+        "rust": {
+          "sha256": "a2ee57cac733364457f232a3b631ad6f476ce212bcd29bd6670883ac28c57195"
+        },
+        "lean": {
+          "sha256": "5773bdba77c3da35a3959f13c946cd53b89660418426c146d1db03d4a354ed35"
+        },
+        "rocq": {
+          "sha256": "76e0738cc18b511ac28f5cc96f85d4334f4a2353e0bbb87308ddeba3815e064e"
         }
       }
     },
@@ -15192,8 +15301,8 @@
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  break;\n}\n",
       "parse": {
         "error": {
-          "kind": "unsupported",
-          "message": "break statement: outside the portable core at 68..73"
+          "kind": "syntax",
+          "message": "break outside a loop or switch at 68..73"
         }
       }
     },
@@ -15203,8 +15312,8 @@
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  continue;\n}\n",
       "parse": {
         "error": {
-          "kind": "unsupported",
-          "message": "continue statement: outside the portable core at 68..76"
+          "kind": "syntax",
+          "message": "continue outside a loop at 68..76"
         }
       }
     },
@@ -15766,9 +15875,23 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) {\n  n += 1n;\n  return n;\n}\n",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "assignment: mutation is outside the portable core at 68..70"
+        "sha256": "aacf68b6fc0c4a118328adb0de71c9d6fcf5e34ad50f6d783393e58a21751231"
+      },
+      "check": {
+        "sha256": "3dde2e9d6d1f96429984aca63370067aa1119308a03d04924c5ff16311ff0674"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "47c0ae19896f0bf95b12abffabb92ea85f74a204f8448cf8851bf97f177efa51"
+        },
+        "rust": {
+          "sha256": "e2571996f982850969ab21e4ea5198d4a40f8f61c6e6a96e3e117a11d289f7f1"
+        },
+        "lean": {
+          "sha256": "a78f937000a9c1f4bdcda2fef34ac37adb7a1c0f8960773d50850bbc3c4de6c2"
+        },
+        "rocq": {
+          "sha256": "5dd319674a91532f5828e0de977f95e103cfe25709d61561c08af408ba4d0608"
         }
       }
     },
@@ -15779,7 +15902,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "assignment: mutation is outside the portable core at 68..70"
+          "message": "??= assignment: the portable compound assignments are +=, -=, *=, /=, %=, &&= and ||= at 68..74"
         }
       }
     },

@@ -11,9 +11,9 @@ export class Scope {
   }
 
   fresh(name) {
-    const base = this.ident(name);
-    let candidate = base;
-    for (let index = 2; this.used.has(candidate); index += 1) candidate = `${base}_${index}`;
+    // A suffixed name is legal on its own: `end_2` needs none of the quoting of Lean's `«end»`.
+    let candidate = this.ident(name);
+    for (let index = 2; this.used.has(candidate); index += 1) candidate = this.ident(`${name}_${index}`);
     this.used.add(candidate);
     return candidate;
   }
@@ -105,6 +105,38 @@ export function renameFunction(entry, ident, reserved) {
     return { ...param, name };
   });
   return { params, body: renameExpr(entry.body, env, scope) };
+}
+
+/**
+ * The body of a loop the lowering lifted to a function, when every call it
+ * makes to itself is in tail position, with those calls as `recur` nodes
+ * that an emitter prints as the next iteration of a loop, so a loop of a
+ * million iterations needs no million stack frames; null otherwise.
+ */
+export function tailLoop(entry, body) {
+  if (!entry.generated || !entry.recursive) return null;
+  const rewrite = (e) => {
+    switch (e.k) {
+      case 'call':
+        return e.fn === entry.fullName ? { k: 'recur', args: e.args, type: e.type } : e;
+      case 'if':
+        return { ...e, then: rewrite(e.then), else: rewrite(e.else) };
+      case 'let':
+        return { ...e, body: rewrite(e.body) };
+      case 'match':
+        return { ...e, cases: e.cases.map((kase) => ({ ...kase, body: rewrite(kase.body) })) };
+      default:
+        return e;
+    }
+  };
+  const result = rewrite(body);
+  const callsItself = (node) => {
+    if (!node || typeof node !== 'object') return false;
+    if (Array.isArray(node)) return node.some(callsItself);
+    if (node.k === 'call' && node.fn === entry.fullName) return true;
+    return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && callsItself(value));
+  };
+  return callsItself(result) ? null : result;
 }
 
 export function renameTheorem(entry, ident, reserved) {
