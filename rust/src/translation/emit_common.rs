@@ -422,6 +422,11 @@ impl<'p> EmitState<'p> {
     }
 
     pub fn assertion_theorem(&mut self, name: &str, effect: &Effect) {
+        self.assertion_theorem_with(name, effect, None);
+    }
+
+    /// An assertion with how it is discharged, such as `runtime-assertion`.
+    pub fn assertion_theorem_with(&mut self, name: &str, effect: &Effect, discharge: Option<&str>) {
         let span = match effect {
             Effect::Print { span, .. } | Effect::Let { span, .. } | Effect::Assert { span, .. } => {
                 *span
@@ -435,7 +440,7 @@ impl<'p> EmitState<'p> {
             target: name.to_owned(),
             kind: "assertion".to_owned(),
             closed_goal: true,
-            discharge: None,
+            discharge: discharge.map(str::to_owned),
             check: None,
         });
     }
@@ -568,6 +573,62 @@ pub fn dependencies(entry: &Decl) -> HashSet<String> {
     }
     found.remove(entry.full_name());
     found
+}
+
+/// Whether a node computes with JavaScript Numbers: it has a Number-typed
+/// part, or uses a declaration that does, directly or not.
+pub struct NumberDependence {
+    numeric: HashSet<String>,
+}
+
+impl NumberDependence {
+    #[must_use]
+    pub fn new(program: &Program) -> Self {
+        let mut numeric: HashSet<String> = program
+            .declarations
+            .iter()
+            .filter(|entry| !matches!(entry, Decl::Theorem(_)) && mentions_float(entry))
+            .map(|entry| entry.full_name().to_owned())
+            .collect();
+        let uses: Vec<(String, HashSet<String>)> = program
+            .declarations
+            .iter()
+            .map(|entry| (entry.full_name().to_owned(), dependencies(entry)))
+            .collect();
+        let mut grew = true;
+        while grew {
+            grew = false;
+            for (name, used) in &uses {
+                if !numeric.contains(name) && used.iter().any(|name| numeric.contains(name)) {
+                    numeric.insert(name.clone());
+                    grew = true;
+                }
+            }
+        }
+        Self { numeric }
+    }
+
+    #[must_use]
+    pub fn prop(&self, prop: &Prop) -> bool {
+        let mut found = HashSet::new();
+        prop_dependencies(prop, &mut found);
+        mentions_float(prop) || found.iter().any(|name| self.numeric.contains(name))
+    }
+}
+
+/// True when a node has a part of type `float`.
+fn mentions_float(node: &impl Serialize) -> bool {
+    fn visit(value: &serde_json::Value) -> bool {
+        match value {
+            serde_json::Value::Array(items) => items.iter().any(visit),
+            serde_json::Value::Object(fields) => {
+                fields.get("kind").and_then(serde_json::Value::as_str) == Some("float")
+                    || fields.values().any(visit)
+            }
+            _ => false,
+        }
+    }
+    serde_json::to_value(node).is_ok_and(|value| visit(&value))
 }
 
 /// Declarations in an order where each follows everything it uses.

@@ -3,7 +3,7 @@
 use super::{
     block, comparison_operator, format_escape, indent, own, rename_function, rename_theorem, snake,
     Binder, Decl, Emitted, Expr, ModuleTree, Prop, Result, RustEmitter, TheoremCheck, Type,
-    PRELUDE,
+    NUMBER_PRELUDE, PRELUDE,
 };
 
 impl<'p> RustEmitter<'p> {
@@ -37,12 +37,16 @@ impl<'p> RustEmitter<'p> {
                 "// Translated from {} by meta-language: portable core, Rust target.",
                 program.source_language.as_str()
             ),
-            "#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types)]"
+            "#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]"
                 .to_owned(),
             String::new(),
         ];
         if self.uses_big {
             lines.push(PRELUDE.to_owned());
+            lines.push(String::new());
+        }
+        if self.uses_number {
+            lines.push(NUMBER_PRELUDE.to_owned());
             lines.push(String::new());
         }
         let has_main = main.is_some();
@@ -96,6 +100,10 @@ impl<'p> RustEmitter<'p> {
                 "crate::ml::Big".to_owned()
             }
             Type::Fixed { .. } => ty.key(),
+            Type::Float => {
+                self.floats();
+                "f64".to_owned()
+            }
             Type::Bool => "bool".to_owned(),
             Type::String => "String".to_owned(),
             Type::Unit => "()".to_owned(),
@@ -375,6 +383,19 @@ impl<'p> RustEmitter<'p> {
             Prop::Bool { expr } => self.expr(expr)?,
             other => {
                 let (op, comparison) = other.comparison().expect("a comparison");
+                if comparison.same_value {
+                    self.uses_number = true;
+                    let same = format!(
+                        "crate::ml_number::same_value({}, {})",
+                        self.expr(&comparison.left)?,
+                        self.expr(&comparison.right)?
+                    );
+                    return Ok(if matches!(other, Prop::Eq(_)) {
+                        same
+                    } else {
+                        format!("!{same}")
+                    });
+                }
                 format!(
                     "({} {} {})",
                     self.borrow(&comparison.left)?,
@@ -387,6 +408,9 @@ impl<'p> RustEmitter<'p> {
 
     /// An expression whose value is only read: variables are borrowed, not cloned.
     pub(super) fn borrow(&mut self, expr: &Expr) -> Result<String> {
+        if expr.ty.is_float() {
+            return self.expr(expr);
+        }
         match expr.var_name() {
             Some(name) => Ok(format!("&{name}")),
             None => Ok(format!("&{}", self.expr(expr)?)),

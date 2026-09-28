@@ -4,7 +4,9 @@
 //! `Nat`/`Int` with explicit range checks that `panic!` where Rust would
 //! panic. Recursion is structural and annotated as such, so the Lean kernel
 //! checks termination. Theorems are reconstructed from portable proof plans
-//! with Lean tactics and re-checked by the Lean kernel.
+//! with Lean tactics and re-checked by the Lean kernel. A JavaScript Number
+//! is a `Float`; the kernel cannot compute with `Float`, so an assertion about
+//! Numbers is checked when `main` runs, as in the source.
 //!
 //! Mirrors `js/src/translation/emit-lean.js`.
 
@@ -12,16 +14,21 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 
 use super::diagnostics::{type_error, unsupported, Result};
-use super::emit_common::{order_declarations, CtorStyle, EmitOptions, EmitState, Emitted};
+use super::emit_common::{
+    order_declarations, CtorStyle, EmitOptions, EmitState, Emitted, NumberDependence,
+};
 use super::ir::{
     rename_function, rename_main, rename_theorem, ByZero, Case, DataDecl, Decl, Effect, Expr,
-    FnDecl, Hints, LitValue, Main, Node, Pattern, Plan, Program, Prop, TheoremDecl,
+    FnDecl, Hints, LitValue, Main, Node, Pattern, Plan, Program, Prop, Semantics, TheoremDecl,
 };
 use super::lean_root_names::LEAN_ROOT_NAMES;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{fixed_bounds, Type};
 use super::Language;
+
+mod helpers;
+use self::helpers::HELPERS;
 
 const KEYWORDS: &[&str] = &[
     "abbrev",
@@ -115,6 +122,7 @@ const KEYWORDS: &[&str] = &[
     "toString",
     "decide",
     "panic",
+    "Float",
     "rec",
     "recOn",
     "casesOn",
@@ -132,37 +140,6 @@ const KEYWORDS: &[&str] = &[
     "induct",
     "eq_def",
     "mk",
-];
-
-/// Helper definitions by name, in the order the file lists the ones it uses.
-const HELPERS: [(&str, &str); 5] = [
-    (
-        "fixed",
-        "/-- Machine-integer results: out of range is where Rust panics. -/
-def ml_fixed (value lo hi : Int) (what : String) : Int :=
-  if value < lo || value > hi then panic! s!\"{what} overflowed\" else value",
-    ),
-    (
-        "fixedNat",
-        "def ml_fixed_nat (value : Int) (hi : Nat) (what : String) : Nat :=
-  if value < 0 || value > Int.ofNat hi then panic! s!\"{what} overflowed\" else value.toNat",
-    ),
-    (
-        "toNatChecked",
-        "def ml_to_nat_checked (value : Int) : Nat :=
-  if value < 0 then panic! s!\"{value} is not a natural number\" else value.toNat",
-    ),
-    (
-        "divide",
-        "/-- Division that aborts on a zero divisor, as JavaScript and Rust do. -/
-def ml_nonzero (divisor : Int) : Int :=
-  if divisor == 0 then panic! \"division by zero\" else divisor",
-    ),
-    (
-        "divideNat",
-        "def ml_nonzero_nat (divisor : Nat) : Nat :=
-  if divisor == 0 then panic! \"division by zero\" else divisor",
-    ),
 ];
 
 /// A legal Lean identifier for a source name.
@@ -217,6 +194,7 @@ pub fn emit_lean(program: &Program) -> Result<Emitted> {
         state,
         helpers: HashSet::new(),
         successors: HashMap::new(),
+        uses_number: NumberDependence::new(program),
     }
     .file()
 }
@@ -228,6 +206,7 @@ struct LeanEmitter<'p> {
     // Inside `| p + 1 =>` of a match on `x`, `x` is written `p + 1`: Lean's
     // structural recursion sees through the pattern but not the variable.
     successors: HashMap<String, String>,
+    uses_number: NumberDependence,
 }
 
 impl LeanEmitter<'_> {
@@ -309,6 +288,13 @@ impl LeanEmitter<'_> {
                     &format!("{key} values are {represented} values; every operation checks the {key} range and panics outside it, where Rust panics"),
                 );
                 represented.to_owned()
+            }
+            Type::Float => {
+                self.state.encode(
+                    "floats",
+                    "a JavaScript Number is a Lean Float, the same IEEE-754 binary64 with the same arithmetic; % is ml_float_rem, the exact truncated remainder, and ml_js_number prints a value as JavaScript does",
+                );
+                "Float".to_owned()
             }
             Type::Bool => "Bool".to_owned(),
             Type::String => "String".to_owned(),
@@ -523,7 +509,12 @@ impl LeanEmitter<'_> {
 
     fn expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
         Ok(match &e.node {
-            Node::Lit { value } => literal(&e.ty, value)?,
+            Node::Lit { value } => {
+                if e.ty.is_float() {
+                    self.ty(&e.ty)?;
+                }
+                literal(&e.ty, value)?
+            }
             Node::Unit => "()".to_owned(),
             Node::Var { name } => self.successors.get(name).unwrap_or(name).clone(),
             Node::Call { func, args } => {
@@ -564,11 +555,11 @@ impl LeanEmitter<'_> {
                 )
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
-            Node::ToString { arg } => {
+            Node::ToString { arg, console } => {
                 if arg.ty == Type::String {
                     self.expr(arg, depth)?
                 } else {
-                    self.text_of(arg, depth)?
+                    self.text_of(arg, depth, *console)?
                 }
             }
             Node::Cast {
@@ -596,13 +587,25 @@ impl LeanEmitter<'_> {
         Ok(format!("({})", parts.join(" ")))
     }
 
-    fn text_of(&mut self, arg: &Expr, depth: usize) -> Result<String> {
+    fn text_of(&mut self, arg: &Expr, depth: usize, console: bool) -> Result<String> {
         if matches!(arg.ty, Type::Data { .. } | Type::Unit) {
             return Err(unsupported(
                 "output of structured values",
                 &format!("a {} value has no portable textual form", arg.ty.kind()),
                 arg.span,
             ));
+        }
+        if arg.ty.is_float() {
+            self.helpers.insert("jsNumber");
+            if console {
+                self.helpers.insert("jsConsole");
+            }
+            let function = if console {
+                "ml_js_console"
+            } else {
+                "ml_js_number"
+            };
+            return Ok(format!("({function} {})", self.expr(arg, depth)?));
         }
         Ok(format!("(toString {})", self.expr(arg, depth)?))
     }
@@ -655,11 +658,24 @@ impl LeanEmitter<'_> {
             domain,
             rounding,
             by_zero,
-            ..
+            semantics,
         } = &e.node
         else {
             unreachable!("binary expressions only");
         };
+        if *semantics == Some(Semantics::Ieee) {
+            let operator = match op {
+                BinaryOp::Add => "+",
+                BinaryOp::Sub => "-",
+                BinaryOp::Mul => "*",
+                BinaryOp::Div => "/",
+                _ => {
+                    self.helpers.insert("floatRem");
+                    return Ok(format!("(ml_float_rem {left_text} {right_text})"));
+                }
+            };
+            return Ok(format!("({left_text} {operator} {right_text})"));
+        }
         let fixed = matches!(e.ty, Type::Fixed { .. });
         // Machine-integer operations run in Int and are range-checked afterwards.
         let wide = |text: String, operand: &Expr| {
@@ -789,6 +805,19 @@ impl LeanEmitter<'_> {
                 Effect::Let { name, value, .. } => {
                     lines.push(format!("  let {name} := {}", self.expr(value, 1)?));
                 }
+                Effect::Assert { prop, .. } if self.uses_number.prop(prop) => {
+                    // The kernel cannot evaluate Float, so the assertion runs where the source's does.
+                    assertion += 1;
+                    lines.push(format!(
+                        "  if !{} then throw (IO.userError \"assertion {assertion} failed\")",
+                        self.check(prop)?
+                    ));
+                    self.state.assertion_theorem_with(
+                        &format!("assertion {assertion}"),
+                        effect,
+                        Some("runtime-assertion"),
+                    );
+                }
                 Effect::Assert { prop, .. } => {
                     assertion += 1;
                     let mut lets = String::new();
@@ -818,10 +847,58 @@ impl LeanEmitter<'_> {
         theorems.push(format!("def main : IO Unit := do\n{body}"));
         Ok(theorems.join("\n\n"))
     }
+
+    /// A proposition as a Bool computed at run time.
+    fn check(&mut self, prop: &Prop) -> Result<String> {
+        Ok(match prop {
+            Prop::And { left, right } => {
+                format!("({} && {})", self.check(left)?, self.check(right)?)
+            }
+            Prop::Or { left, right } => {
+                format!("({} || {})", self.check(left)?, self.check(right)?)
+            }
+            Prop::Implies { left, right } => {
+                format!("(!{} || {})", self.check(left)?, self.check(right)?)
+            }
+            Prop::Not { arg } => format!("(!{})", self.check(arg)?),
+            Prop::Bool { expr } => self.expr(expr, 1)?,
+            Prop::Forall { .. } => {
+                return Err(type_error(
+                    "no run-time check for a quantified proposition".to_owned(),
+                    None,
+                ))
+            }
+            other => {
+                let (op, comparison) = other.comparison().expect("a comparison");
+                let left = self.expr(&comparison.left, 1)?;
+                let right = self.expr(&comparison.right, 1)?;
+                let equal = matches!(other, Prop::Eq(_));
+                if comparison.same_value {
+                    self.helpers.insert("floatSame");
+                    let not = if equal { "" } else { "!" };
+                    return Ok(format!("({not}ml_float_same {left} {right})"));
+                }
+                let operator = match op {
+                    BinaryOp::Eq => "==",
+                    BinaryOp::Ne => "!=",
+                    BinaryOp::Lt => "<",
+                    BinaryOp::Le => "≤",
+                    BinaryOp::Gt => ">",
+                    _ => "≥",
+                };
+                if matches!(op, BinaryOp::Eq | BinaryOp::Ne) {
+                    format!("({left} {operator} {right})")
+                } else {
+                    format!("(decide ({left} {operator} {right}))")
+                }
+            }
+        })
+    }
 }
 
 fn literal(ty: &Type, value: &LitValue) -> Result<String> {
     Ok(match ty {
+        Type::Float => lean_float(&value.text()),
         Type::Nat => format!("({} : Nat)", value.text()),
         Type::Int => format!("({} : Int)", value.text()),
         Type::Fixed { signed, .. } => {
@@ -840,6 +917,18 @@ fn literal(ty: &Type, value: &LitValue) -> Result<String> {
             ))
         }
     })
+}
+
+/// A Number's canonical JavaScript text as a Float term; Lean reads decimal
+/// literals correctly rounded.
+fn lean_float(value: &str) -> String {
+    let text = match value {
+        "NaN" => "0.0 / 0.0".to_owned(),
+        "Infinity" => "1.0 / 0.0".to_owned(),
+        "-Infinity" => "-1.0 / 0.0".to_owned(),
+        _ => value.replacen("e+", "e", 1),
+    };
+    format!("({text} : Float)")
 }
 
 /// A string literal as JavaScript's `JSON.stringify` writes it.

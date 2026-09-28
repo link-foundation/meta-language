@@ -1,13 +1,13 @@
 //! The JavaScript emitter: writes a checked program as a strict ES module
 //! with its translation contract.
 //!
-//! Every portable number is a `BigInt`, so naturals and integers stay unbounded
-//! and machine integers are range-checked exactly as Rust checks them. Data
-//! values are plain objects whose `$` property names the constructor. Modules
-//! become object literals referenced by qualified names. Theorems cannot be
-//! proved in JavaScript: each becomes an executable property, checked over a
-//! bounded domain by `--ml-check-theorems`, while the proof obligation stays
-//! discharged by the source language's kernel.
+//! Every portable integer is a `BigInt`, so naturals and integers stay unbounded
+//! and machine integers are range-checked exactly as Rust checks them; a Number
+//! stays a Number. Data values are plain objects whose `$` property names the
+//! constructor. Modules become object literals referenced by qualified names.
+//! Theorems cannot be proved in JavaScript: each becomes an executable
+//! property, checked over a bounded domain by `--ml-check-theorems`, while the
+//! proof obligation stays discharged by the source language's kernel.
 //!
 //! Mirrors `js/src/translation/emit-javascript.js`.
 
@@ -23,6 +23,9 @@ use super::lexer::json_string;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{fixed_bounds, Type};
 use super::Language;
+
+mod helpers;
+use self::helpers::Helper;
 
 const KEYWORDS: &[&str] = &[
     "break",
@@ -98,92 +101,6 @@ const KEYWORDS: &[&str] = &[
     "get",
     "set",
 ];
-
-/// Runtime helpers, declared in the order they are written to the file.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum Helper {
-    NatSub,
-    Fixed,
-    Divide,
-    ToNatChecked,
-    Abort,
-    Assert,
-    Equal,
-    Forall,
-    Domains,
-}
-
-impl Helper {
-    const fn text(self) -> &'static str {
-        match self {
-            Self::NatSub => {
-                "function ml_natSub(a, b) {
-  return a > b ? a - b : 0n;
-}"
-            }
-            Self::Fixed => {
-                "function ml_fixed(value, min, max, what) {
-  if (value < min || value > max) throw new RangeError(`${what} overflowed`);
-  return value;
-}"
-            }
-            Self::Divide => {
-                "// Integer division with the source's rounding; by zero it either aborts or is total (x / 0 = 0, x % 0 = x).
-function ml_divide(a, b, rounding, byZero, remainder) {
-  if (b === 0n) {
-    if (byZero === 'abort') throw new RangeError('division by zero');
-    return remainder ? a : 0n;
-  }
-  let q = a / b;
-  const r = a - q * b;
-  if (r !== 0n) {
-    if (rounding === 'floor' && (r < 0n) !== (b < 0n)) q -= 1n;
-    if (rounding === 'euclid' && r < 0n) q = b > 0n ? q - 1n : q + 1n;
-  }
-  return remainder ? a - q * b : q;
-}"
-            }
-            Self::ToNatChecked => {
-                "function ml_toNatChecked(value) {
-  if (value < 0n) throw new RangeError(`${value} is not a natural number`);
-  return value;
-}"
-            }
-            Self::Abort => {
-                "function ml_abort(message) {
-  throw new Error(message);
-}"
-            }
-            Self::Assert => {
-                "function ml_assert(holds, statement) {
-  if (!holds) throw new Error(`assertion failed: ${statement}`);
-}"
-            }
-            Self::Equal => {
-                "function ml_equal(left, right) {
-  if (typeof left !== 'object' || left === null) return left === right;
-  const keys = Object.keys(left);
-  return keys.length === Object.keys(right).length && keys.every((key) => ml_equal(left[key], right[key]));
-}"
-            }
-            Self::Forall => {
-                "function ml_forall(values, property) {
-  return values.every(property);
-}"
-            }
-            Self::Domains => {
-                "// Bounded domains for executable theorem checks.
-const ml_nat = [0n, 1n, 2n, 3n, 4n, 5n, 6n];
-const ml_int = [-4n, -3n, -2n, -1n, 0n, 1n, 2n, 3n, 4n];
-const ml_small_nat = [0n, 1n, 2n];
-const ml_small_int = [-1n, 0n, 1n];
-function ml_product(lists) {
-  return lists.reduce((rows, list) => rows.flatMap((row) => list.map((value) => [...row, value])), [[]]);
-}"
-            }
-        }
-    }
-}
 
 fn ident(name: &str) -> String {
     let mut result: String = name
@@ -285,6 +202,7 @@ pub fn emit_javascript(program: &Program) -> Result<Emitted> {
         helpers: BTreeSet::new(),
         temporaries: 0,
         theorem_checks: Vec::new(),
+        uses_float: false,
     }
     .file()
 }
@@ -309,6 +227,7 @@ struct JavaScriptEmitter<'p> {
     helpers: BTreeSet<Helper>,
     temporaries: usize,
     theorem_checks: Vec<TheoremCheck>,
+    uses_float: bool,
 }
 
 impl<'p> JavaScriptEmitter<'p> {
@@ -381,6 +300,9 @@ impl<'p> JavaScriptEmitter<'p> {
             lines.push(String::new());
         }
         self.state.encode("numbers", "every natural, integer and machine integer is a BigInt; machine-integer results are range-checked and throw RangeError where Rust would panic");
+        if self.uses_float {
+            self.state.encode("floats", "a Number is a JavaScript Number, an IEEE-754 double, with its own arithmetic, comparisons and String conversion");
+        }
         Ok(self
             .state
             .finish(lines.join("\n"), main.map(|_| "main".to_owned())))
@@ -425,6 +347,9 @@ impl<'p> JavaScriptEmitter<'p> {
 
     fn function(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
         let (params, body) = rename_function(function, &ident, &self.state.local_reserved());
+        if params.iter().any(|param| param.ty.is_float()) || function.ret.is_float() {
+            self.uses_float = true;
+        }
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
         let mut lines: Vec<String> = params
@@ -594,6 +519,8 @@ impl<'p> JavaScriptEmitter<'p> {
                 let equal = if structured {
                     self.helpers.insert(Helper::Equal);
                     format!("ml_equal({left}, {right})")
+                } else if comparison.same_value {
+                    format!("Object.is({left}, {right})")
                 } else {
                     format!("({left} === {right})")
                 };
@@ -756,6 +683,9 @@ impl<'p> JavaScriptEmitter<'p> {
     }
 
     fn expr(&mut self, e: &Expr) -> Result<String> {
+        if e.ty.is_float() {
+            self.uses_float = true;
+        }
         match &e.node {
             Node::Lit { value } => literal(&e.ty, value),
             Node::Unit => Ok("null".to_owned()),
@@ -779,7 +709,7 @@ impl<'p> JavaScriptEmitter<'p> {
                 let arg = self.expr(arg)?;
                 Ok(match op {
                     UnaryOp::Not => format!("!{arg}"),
-                    UnaryOp::Neg => self.checked(format!("-{arg}"), &e.ty, "negation"),
+                    UnaryOp::Neg => self.checked(negate(&arg), &e.ty, "negation"),
                 })
             }
             Node::Binary { .. } => self.binary(e),
@@ -797,8 +727,11 @@ impl<'p> JavaScriptEmitter<'p> {
                 "(() => {{\n{}\n}})()",
                 indent(&self.statements(e)?.join("\n"), 1)
             )),
-            Node::ToString { arg } => {
-                if matches!(arg.ty, Type::String) {
+            Node::ToString { arg, console } => {
+                if *console && arg.ty.is_float() {
+                    self.helpers.insert(Helper::ShowNumber);
+                    Ok(format!("ml_showNumber({})", self.expr(arg)?))
+                } else if matches!(arg.ty, Type::String) {
                     self.expr(arg)
                 } else {
                     self.text_of(arg)
@@ -872,6 +805,9 @@ impl<'p> JavaScriptEmitter<'p> {
                     self.checked(comparison("-"), &e.ty, "subtraction")
                 }
             }
+            BinaryOp::Div | BinaryOp::Rem if *semantics == Some(Semantics::Ieee) => {
+                comparison(if *op == BinaryOp::Div { "/" } else { "%" })
+            }
             BinaryOp::Div | BinaryOp::Rem => {
                 self.helpers.insert(Helper::Divide);
                 let rounding = match rounding {
@@ -943,6 +879,15 @@ impl<'p> JavaScriptEmitter<'p> {
     }
 }
 
+/// `-x`, parenthesised so that `-(-x)` does not read as a decrement.
+fn negate(text: &str) -> String {
+    if text.starts_with('-') {
+        format!("-({text})")
+    } else {
+        format!("-{text}")
+    }
+}
+
 fn literal(ty: &Type, value: &LitValue) -> Result<String> {
     let text = value.text();
     match ty {
@@ -950,6 +895,11 @@ fn literal(ty: &Type, value: &LitValue) -> Result<String> {
             format!("({text}n)")
         } else {
             format!("{text}n")
+        }),
+        Type::Float => Ok(if text.starts_with('-') {
+            format!("({text})")
+        } else {
+            text
         }),
         Type::Bool => Ok(text),
         Type::String => Ok(json_string(&text)),

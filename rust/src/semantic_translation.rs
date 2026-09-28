@@ -235,6 +235,12 @@ fn runtime_dependencies(target_language: &str, code: &str) -> Vec<String> {
                     "ml::Big arbitrary-precision integers, defined inside the artifact".to_owned(),
                 );
             }
+            if code.contains("\npub mod ml_number {") {
+                dependencies.push(
+                    "ml_number JavaScript Number formatting and SameValue, defined inside the artifact"
+                        .to_owned(),
+                );
+            }
         }
         "Lean" => {
             dependencies.push("Lean 4.33.1 core library".to_owned());

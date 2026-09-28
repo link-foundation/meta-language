@@ -4,7 +4,9 @@
 //! source sizes (unary `nat` cannot hold 20!). Structural recursion over data
 //! is a `Fixpoint`; recursion that decreases a natural is a `Function` with
 //! the measure `N.to_nat`, whose obligations `lia` discharges and whose
-//! equation lemma the reconstructed proofs rewrite with.
+//! equation lemma the reconstructed proofs rewrite with. A JavaScript Number
+//! is a primitive `float`, which the kernel computes with, so assertions about
+//! Numbers are still theorems closed by computation.
 //!
 //! Mirrors `js/src/translation/emit-rocq.js`.
 
@@ -23,7 +25,11 @@ use super::types::Type;
 use super::Language;
 
 mod expressions;
+mod floats;
 mod proofs;
+
+pub use self::floats::FLOAT_PRELUDE;
+use self::floats::{FLOAT_REM, FLOAT_SAME, JS_CONSOLE, JS_NUMBER};
 
 const KEYWORDS: &[&str] = &[
     "as",
@@ -100,6 +106,8 @@ const KEYWORDS: &[&str] = &[
     "main",
     "lia",
     "nia",
+    "float",
+    "PrimFloat",
     // Imported constructors: a pattern variable with one of these names would match the constructor instead.
     "left",
     "right",
@@ -189,16 +197,24 @@ enum Helper {
     ZToString,
     BoolToString,
     Euclid,
+    JsNumber,
+    JsConsole,
+    FloatSame,
+    FloatRem,
     Tactics,
     Decide,
 }
 
 impl Helper {
-    const ALL: [Self; 6] = [
+    const ALL: [Self; 10] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
         Self::Euclid,
+        Self::JsNumber,
+        Self::JsConsole,
+        Self::FloatSame,
+        Self::FloatRem,
         Self::Tactics,
         Self::Decide,
     ];
@@ -209,6 +225,10 @@ impl Helper {
             Self::ZToString => Z_TO_STRING,
             Self::BoolToString => BOOL_TO_STRING,
             Self::Euclid => EUCLID,
+            Self::JsNumber => JS_NUMBER,
+            Self::JsConsole => JS_CONSOLE,
+            Self::FloatSame => FLOAT_SAME,
+            Self::FloatRem => FLOAT_REM,
             Self::Tactics => TACTICS,
             Self::Decide => DECIDE,
         }
@@ -285,6 +305,7 @@ pub fn emit_rocq(program: &Program) -> Result<Emitted> {
         helpers: HashSet::from([Helper::Tactics]),
         nat_functions: HashMap::new(),
         current: None,
+        uses_float: false,
     }
     .file()
 }
@@ -303,6 +324,7 @@ struct RocqEmitter<'p> {
     /// Functions recursive on a natural: the decreasing parameter and the arity.
     nat_functions: HashMap<String, (usize, usize)>,
     current: Option<Current>,
+    uses_float: bool,
 }
 
 impl RocqEmitter<'_> {
@@ -326,13 +348,20 @@ impl RocqEmitter<'_> {
         };
         let helper_text = Helper::ALL.into_iter().filter(|helper| {
             self.helpers.contains(helper)
-                || (*helper == Helper::Digits && self.helpers.contains(&Helper::ZToString))
+                || (*helper == Helper::Digits
+                    && (self.helpers.contains(&Helper::ZToString)
+                        || self.helpers.contains(&Helper::JsNumber)))
         });
         let mut lines: Vec<String> = vec![format!(
             "(* Translated from {} by meta-language: portable core, Rocq target. *)",
             program.source_language.as_str()
         )];
-        lines.extend(ROCQ_PRELUDE.iter().map(|line| (*line).to_owned()));
+        let prelude = if self.uses_float {
+            FLOAT_PRELUDE
+        } else {
+            ROCQ_PRELUDE
+        };
+        lines.extend(prelude.iter().map(|line| (*line).to_owned()));
         lines.push(String::new());
         for helper in helper_text {
             lines.push(helper.text().to_owned());
@@ -380,6 +409,10 @@ impl RocqEmitter<'_> {
             Type::Fixed { signed, .. } => {
                 self.state.fixed_to_unbounded(ty);
                 if *signed { "Z" } else { "N" }.to_owned()
+            }
+            Type::Float => {
+                self.floats();
+                "float".to_owned()
             }
             Type::Bool => "bool".to_owned(),
             Type::String => "string".to_owned(),

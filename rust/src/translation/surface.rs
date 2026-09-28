@@ -434,6 +434,10 @@ pub struct SComparison {
     /// JavaScript's `assert.equal`, which compares objects by identity.
     #[serde(default, skip_serializing_if = "is_false")]
     pub reference: bool,
+    /// `assert.strictEqual` and its kin compare with `SameValue`
+    /// (`Object.is`): `NaN` equals `NaN`, and `0` differs from `-0`.
+    #[serde(default, rename = "sameValue", skip_serializing_if = "is_false")]
+    pub same_value: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

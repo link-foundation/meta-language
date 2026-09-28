@@ -123,6 +123,7 @@ impl RocqParser {
                 left,
                 right,
                 reference: false,
+                same_value: false,
             };
             return Ok(SProp {
                 node: prop_relation(&relation.value, comparison)

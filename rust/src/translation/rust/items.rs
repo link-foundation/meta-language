@@ -704,6 +704,7 @@ impl RustParser {
                     left: args.remove(0),
                     right,
                     reference: false,
+                    same_value: false,
                 };
                 let node = if token.value == "assert_eq" {
                     SPropNode::Eq(comparison)

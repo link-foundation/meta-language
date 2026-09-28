@@ -4,8 +4,8 @@ use super::{
     describe, guarded_parameter, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     non_empty, span, tokenize, type_error, unsupported, Assertion, HashSet, JavaScriptParser,
     JsDoc, Language, Result, SCtor, SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram,
-    ScanEnd, Scope, Span, Stmt, Token, TokenCursor, TokenKind, TranslationError, Type, BOOL, INT,
-    NAT, ROOT, STRING,
+    ScanEnd, Scope, Span, Stmt, Token, TokenCursor, TokenKind, TranslationError, Type, BOOL, FLOAT,
+    INT, NAT, ROOT, STRING,
 };
 
 impl JavaScriptParser {
@@ -261,13 +261,7 @@ impl JavaScriptParser {
             "bigint" => return Ok(INT),
             "boolean" => return Ok(BOOL),
             "string" => return Ok(STRING),
-            "number" => {
-                return Err(unsupported(
-                    "JavaScript number",
-                    "numbers are IEEE-754 doubles, which are outside the portable core; use bigint",
-                    Some(range),
-                ))
-            }
+            "number" => return Ok(FLOAT),
             _ => {}
         }
         let reserved = [
@@ -285,7 +279,7 @@ impl JavaScriptParser {
         if !is_identifier_name(name) || reserved.contains(&name) {
             return Err(unsupported(
                 &format!("JSDoc type {{{name}}}"),
-                "portable types are bigint, boolean, string and @typedef data types",
+                "portable types are number, bigint, boolean, string and @typedef data types",
                 Some(range),
             ));
         }

@@ -402,6 +402,7 @@ fn prop_of(expr: SExpr) -> SProp {
                 left: *left,
                 right: *right,
                 reference: false,
+                same_value: false,
             };
             match op {
                 BinaryOp::Eq => SPropNode::Eq(comparison),

@@ -3,7 +3,7 @@ use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::surface::{
     SEffect, SExpr, SItem, SNode, SPatternNode, SProgram, SPropNode,
 };
-use meta_language::translation::types::NAT;
+use meta_language::translation::types::{FLOAT, NAT};
 use meta_language::translation::{Language, Span};
 
 const TREE: &str = "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n";
@@ -124,14 +124,27 @@ fn spans_count_utf16_code_units() {
 }
 
 #[test]
+fn number_literals_are_ieee_doubles_kept_as_javascript_prints_them() {
+    let program = parse("console.log(1e21 + 0x10);");
+    let effects = &program.main.as_ref().expect("a main").effects;
+    let SEffect::Print { expr, .. } = &effects[0] else {
+        panic!("a print")
+    };
+    let SNode::Binary { left, right, .. } = &expr.node else {
+        panic!("an addition")
+    };
+    for (operand, text) in [(left, "1e+21"), (right, "16")] {
+        let SNode::Num { value, ty, .. } = &operand.node else {
+            panic!("a number literal")
+        };
+        assert_eq!((value.as_str(), ty.as_ref()), (text, Some(&FLOAT)));
+    }
+}
+
+#[test]
 fn rejections_name_the_construct_and_its_span() {
     let doc = "/**\n * @param {bigint} n\n * @returns {bigint}\n */\n";
     let cases = [
-        (
-            "console.log(String(1 + 2));".to_owned(),
-            ErrorKind::Unsupported,
-            "JavaScript number: numbers are IEEE-754 doubles, which are outside the portable core; use BigInt literals such as 5n at 19..20",
-        ),
         (
             format!("{doc}function f(n) {{ let x = n; return x; }}"),
             ErrorKind::Unsupported,
@@ -160,7 +173,7 @@ fn rejections_name_the_construct_and_its_span() {
         (
             "console.log(String(0xn));".to_owned(),
             ErrorKind::Syntax,
-            "Cannot convert 0x to a BigInt at 19..22",
+            "malformed number 0x at 19..21",
         ),
     ];
     for (source, kind, message) in cases {

@@ -51,6 +51,9 @@ impl RustEmitter<'_> {
                     let text = format!("{}.checked_neg()", self.receiver(arg)?);
                     return Ok(self.checked(&text, &expr.ty, "negation"));
                 }
+                if expr.ty.is_float() {
+                    return Ok(format!("(-{})", self.receiver(arg)?));
+                }
                 Ok(format!("{}.neg()", self.receiver(arg)?))
             }
             Node::Binary { .. } => self.binary(expr),
@@ -74,7 +77,7 @@ impl RustEmitter<'_> {
                 Ok(block(&format!("let {name} = {value};\n{body}")))
             }
             Node::Match { .. } => self.match_expr(expr),
-            Node::ToString { arg } => {
+            Node::ToString { arg, console } => {
                 match arg.ty {
                     Type::String => return self.expr(arg),
                     Type::Data { .. } | Type::Unit => {
@@ -83,6 +86,11 @@ impl RustEmitter<'_> {
                             &format!("a {} value has no portable textual form", arg.ty.kind()),
                             arg.span,
                         ));
+                    }
+                    Type::Float => {
+                        self.uses_number = true;
+                        let function = if *console { "js_console" } else { "js_number" };
+                        return Ok(format!("crate::ml_number::{function}({})", self.expr(arg)?));
                     }
                     _ => {}
                 }
@@ -115,6 +123,10 @@ impl RustEmitter<'_> {
                     format!("{text}{}", expr.ty.key())
                 }
             }
+            Type::Float => {
+                self.floats();
+                rust_float(&text)
+            }
             Type::Bool => text,
             Type::String => format!("String::from({})", rust_string(&text)),
             other => unreachable!("no Rust literal for {}", other.kind()),
@@ -132,7 +144,11 @@ impl RustEmitter<'_> {
 
     pub(super) fn binary(&mut self, expr: &Expr) -> Result<String> {
         let Node::Binary {
-            op, left, right, ..
+            op,
+            left,
+            right,
+            semantics,
+            ..
         } = &expr.node
         else {
             unreachable!("a binary expression")
@@ -156,9 +172,34 @@ impl RustEmitter<'_> {
                 comparison_operator(*op),
                 self.borrow(right)?
             )),
+            _ if *semantics == Some(Semantics::Ieee) => self.float_arithmetic(*op, left, right),
             _ if matches!(expr.ty, Type::Fixed { .. }) => self.fixed_arithmetic(expr),
             _ => self.big_arithmetic(expr),
         }
+    }
+
+    pub(super) fn floats(&mut self) {
+        self.state.encode(
+            "floats",
+            "a JavaScript Number is an f64 with the same IEEE-754 arithmetic; % on f64 is the same truncated remainder, and ml_number::js_number prints a value as JavaScript does",
+        );
+    }
+
+    /// f64 arithmetic is IEEE-754 binary64 arithmetic, as JavaScript's; Rust's
+    /// `%` is fmod, as JavaScript's.
+    fn float_arithmetic(&mut self, op: BinaryOp, left: &Expr, right: &Expr) -> Result<String> {
+        let operator = match op {
+            BinaryOp::Add => "+",
+            BinaryOp::Sub => "-",
+            BinaryOp::Mul => "*",
+            BinaryOp::Div => "/",
+            _ => "%",
+        };
+        Ok(format!(
+            "({} {operator} {})",
+            self.expr(left)?,
+            self.expr(right)?
+        ))
     }
 
     pub(super) fn fixed_arithmetic(&mut self, expr: &Expr) -> Result<String> {
@@ -434,5 +475,16 @@ impl RustEmitter<'_> {
             "fn ml_main() {{\n{}\n}}",
             indent(&lines.join("\n"), 1)
         ))
+    }
+}
+
+/// A Number's canonical JavaScript text as an `f64` expression.
+fn rust_float(value: &str) -> String {
+    match value {
+        "NaN" => "f64::NAN".to_owned(),
+        "Infinity" => "f64::INFINITY".to_owned(),
+        "-Infinity" => "f64::NEG_INFINITY".to_owned(),
+        _ if value.starts_with('-') => format!("({value}f64)"),
+        _ => format!("{value}f64"),
     }
 }

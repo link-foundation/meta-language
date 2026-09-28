@@ -1,7 +1,7 @@
 //! JavaScript frontend for the portable core.
 //!
 //! It reads the subset of modern JavaScript the core can represent
-//! faithfully: `BigInt` arithmetic, strings and booleans; top-level functions
+//! faithfully: Number and `BigInt` arithmetic, strings and booleans; top-level functions
 //! and object-literal namespaces of methods whose types come from `JSDoc`
 //! (`@param`, `@returns`, and `@typedef` unions of `{ $: 'tag', … }` object
 //! types for data types); bodies made of `const`, `if`, `return`, `throw` and
@@ -14,7 +14,6 @@
 
 use std::collections::HashSet;
 
-use super::decimal::Decimal;
 use super::diagnostics::{type_error, unsupported, Result, TranslationError};
 use super::lexer::{
     describe, is_js_space, tokenize, Comment, Source, Token, TokenCursor, TokenKind,
@@ -23,7 +22,7 @@ use super::surface::{
     BinaryOp, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain, SModule, SNode,
     SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow, STagTest, ShowStyle, UnaryOp,
 };
-use super::types::{Type, BOOL, INT, NAT, STRING};
+use super::types::{Type, BOOL, FLOAT, INT, NAT, STRING};
 use super::{Language, Span};
 
 mod declarations;
@@ -81,8 +80,6 @@ const OBJECT_PROTOTYPE: [&str; 12] = [
     "__proto__",
     "toLocaleString",
 ];
-const NUMBER_REASON: &str =
-    "numbers are IEEE-754 doubles, which are outside the portable core; use BigInt literals such as 5n";
 
 /// What an `assert.method(…)` call asserts.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -374,41 +371,18 @@ fn non_empty(text: Option<String>) -> Option<String> {
     text.filter(|text| !text.is_empty())
 }
 
-/// `5n`, `0x1fn`: `BigInt` literals. Plain numbers are doubles and are rejected.
-fn bigint(token: &Token) -> Result<String> {
-    if token.value == "0" {
-        if let Some(radix) = radix_suffix(&token.suffix) {
-            let literal = format!("0{radix}");
-            // `BigInt('0x')` throws a SyntaxError with this message; report it
-            // as a syntax diagnostic at the literal.
-            return Decimal::parse(&literal)
-                .map(|value| value.to_string())
-                .ok_or_else(|| {
-                    TranslationError::syntax(
-                        format!("Cannot convert {literal} to a BigInt"),
-                        Some(span(token, token)),
-                    )
-                });
-        }
-    }
-    if token.suffix == "n" {
-        return Ok(token.value.clone());
-    }
-    Err(unsupported(
-        "JavaScript number",
-        NUMBER_REASON,
-        Some(span(token, token)),
-    ))
-}
-
-/// The radix letter and digits of a suffix matching `^([xob])([0-9a-f]*)n$`.
-fn radix_suffix(suffix: &str) -> Option<&str> {
-    let body = suffix.strip_suffix('n')?;
-    let mut chars = body.chars();
-    let radix = chars.next()?;
-    (matches!(radix, 'x' | 'o' | 'b')
-        && chars.all(|ch| ch.is_ascii_digit() || ('a'..='f').contains(&ch)))
-    .then_some(body)
+/// `5n` and `0x1fn` are `BigInt` literals, which the lexer keeps as decimal
+/// digits; `42`, `1.5` and `1e21` are Numbers, IEEE-754 doubles, which the
+/// lexer keeps as `String(value)`.
+fn number_literal(token: &Token) -> SExpr {
+    node(
+        SNode::Num {
+            value: token.value.clone(),
+            ty: (token.suffix != "n").then_some(FLOAT),
+            negative: false,
+        },
+        span(token, token),
+    )
 }
 
 fn has_ctor(data: &SData, tag: &str) -> bool {

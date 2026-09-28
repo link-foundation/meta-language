@@ -14,16 +14,25 @@ use super::types::Type;
 use super::{Language, Span};
 
 mod rename;
+#[allow(clippy::trivially_copy_pass_by_ref)] // serde passes fields by reference
+const fn is_false(value: &bool) -> bool {
+    !*value
+}
+
 pub use self::rename::*;
 
 /// Arithmetic semantics: exact on unbounded integers, checked (aborting)
-/// machine arithmetic, or truncated natural subtraction.
+/// machine arithmetic, truncated natural subtraction, or IEEE-754 binary64
+/// arithmetic on JavaScript Numbers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Semantics {
     Exact,
     Checked,
     Truncated,
+    /// Round to nearest, even on a tie; `%` is the exact truncated remainder
+    /// (C `fmod`); nothing aborts.
+    Ieee,
 }
 
 /// What division by zero does: abort (JavaScript, Rust) or yield a total value (Lean, Rocq).
@@ -110,7 +119,9 @@ impl Expr {
         match &self.node {
             Node::Lit { .. } | Node::Unit | Node::Var { .. } | Node::Abort { .. } => Vec::new(),
             Node::Call { args, .. } | Node::Ctor { args, .. } => args.iter().collect(),
-            Node::Unary { arg, .. } | Node::ToString { arg } | Node::Cast { arg, .. } => vec![arg],
+            Node::Unary { arg, .. } | Node::ToString { arg, .. } | Node::Cast { arg, .. } => {
+                vec![arg]
+            }
             Node::Binary { left, right, .. } => vec![left, right],
             Node::If {
                 cond,
@@ -147,8 +158,9 @@ impl Expr {
                 arg: Box::new(visit(arg)),
                 semantics: *semantics,
             },
-            Node::ToString { arg } => Node::ToString {
+            Node::ToString { arg, console } => Node::ToString {
                 arg: Box::new(visit(arg)),
+                console: *console,
             },
             Node::Cast {
                 arg,
@@ -282,6 +294,9 @@ pub enum Node {
     },
     ToString {
         arg: Box<Expr>,
+        /// `console.log` of a Number, which prints -0 as "-0" where `String(-0)` is "0".
+        #[serde(default, skip_serializing_if = "is_false")]
+        console: bool,
     },
     Cast {
         arg: Box<Expr>,
@@ -364,6 +379,10 @@ pub struct Comparison {
     pub left: Expr,
     pub right: Expr,
     pub domain: Type,
+    /// Over Numbers, `assert.strictEqual` compares with `SameValue`, not
+    /// `===`: `NaN` equals `NaN`, and `0` differs from `-0`.
+    #[serde(default, rename = "sameValue", skip_serializing_if = "is_false")]
+    pub same_value: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

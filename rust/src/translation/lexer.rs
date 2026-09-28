@@ -10,7 +10,9 @@ use std::sync::OnceLock;
 
 use regex::Regex;
 
+use super::decimal::Decimal;
 use super::diagnostics::{Result, TranslationError};
+use super::js_number::js_number_literal;
 use super::{Language, Span};
 
 /// Source text addressed by UTF-16 code units, as JavaScript strings are.
@@ -382,6 +384,18 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
             tokens.push(token);
             continue;
         }
+        if language == Language::JavaScript
+            && (ch.is_some_and(|ch| ch.is_ascii_digit())
+                || (ch == Some('.')
+                    && source
+                        .char_at(index + 1)
+                        .is_some_and(|ch| ch.is_ascii_digit())))
+        {
+            let token = javascript_number(source, index)?;
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
         if ch.is_some_and(|ch| ch.is_ascii_digit()) {
             let mut stop = index;
             while source
@@ -487,6 +501,60 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
         tokens,
         comments: comment_list,
     })
+}
+
+fn javascript_number_regex() -> &'static Regex {
+    static NUMBER: OnceLock<Regex> = OnceLock::new();
+    NUMBER.get_or_init(|| {
+        let run = |digit: &str| format!("{digit}(?:_?{digit})*");
+        let decimal = run("[0-9]");
+        Regex::new(&format!(
+            r"^(?:0[xX]{}|0[oO]{}|0[bB]{}|(?:(?:0|[1-9](?:_?{decimal})?)(?:\.(?:{decimal})?)?|\.{decimal})(?:[eE][+-]?{decimal})?)n?",
+            run("[0-9a-fA-F]"),
+            run("[0-7]"),
+            run("[01]"),
+        ))
+        .expect("JavaScript numeric literal")
+    })
+}
+
+/// An ECMAScript numeric literal. A `BigInt` (`5n`, `0x1fn`) keeps its decimal
+/// digits as `value` with suffix `n`; a Number keeps `String(Number(raw))`, the
+/// value JavaScript prints, with an empty suffix.
+fn javascript_number(source: &Source, index: usize) -> Result<Token> {
+    let rest = source.slice(index, source.len());
+    let found = javascript_number_regex().find(&rest);
+    let raw = found.map_or_else(|| source.slice(index, index + 1), |m| m.as_str().to_owned());
+    let end = index + raw.len();
+    let next = source.char_at(end);
+    let malformed = || {
+        let stop = if end < source.len() { end + 1 } else { end };
+        TranslationError::syntax(
+            format!("malformed number {}", source.slice(index, stop)),
+            Some(span(index, stop)),
+        )
+    };
+    // `08`, `1_`, `3in` and `1.5n` are SyntaxErrors in JavaScript.
+    if found.is_none()
+        || next.is_some_and(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '$')
+    {
+        return Err(malformed());
+    }
+    let text = raw.replace('_', "");
+    let token = if let Some(digits) = text.strip_suffix('n') {
+        let hex = digits.starts_with("0x") || digits.starts_with("0X");
+        if !hex && digits.contains(['.', 'e', 'E']) {
+            return Err(malformed());
+        }
+        let value = Decimal::parse(digits).ok_or_else(malformed)?;
+        let mut token = Token::new(TokenKind::Number, value.digits, raw, index, end);
+        token.suffix = String::from("n");
+        token
+    } else {
+        let value = js_number_literal(&text).ok_or_else(malformed)?;
+        Token::new(TokenKind::Number, value, raw, index, end)
+    };
+    Ok(token)
 }
 
 fn block_comment_end(source: &Source, index: usize, comments: &CommentSyntax) -> Result<usize> {

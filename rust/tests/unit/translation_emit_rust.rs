@@ -11,7 +11,7 @@ use serde_json::{json, Value};
 
 const HARNESS: &str = "\nfn ml_main() {\n    println!(\"{}\", (crate::q(7i32, 2i32)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n";
 
-const HEADER: &str = "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types)]\n\n";
+const HEADER: &str = "// Translated from Rust by meta-language: portable core, Rust target.\n#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]\n\n";
 
 fn fixed(signed: bool) -> Value {
     json!({ "kind": "fixed", "bits": 32, "signed": signed })

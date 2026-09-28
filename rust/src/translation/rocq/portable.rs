@@ -177,6 +177,7 @@ pub(super) fn scope_prop(prop: SProp, scope: &str) -> SProp {
         left: with_scope(comparison.left, scope),
         right: with_scope(comparison.right, scope),
         reference: comparison.reference,
+        same_value: comparison.same_value,
     };
     let node = match prop.node {
         SPropNode::Forall { binders, body } => SPropNode::Forall {

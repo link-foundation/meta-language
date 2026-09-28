@@ -456,7 +456,7 @@ class RustEmitter {
     const entry = this.entry(Boolean(main));
     const text = [
       `// Translated from ${this.program.sourceLanguage} by meta-language: portable core, Rust target.`,
-      '#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types)]',
+      '#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]',
       '',
       ...(this.usesBig ? [PRELUDE, ''] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE, ''] : []),

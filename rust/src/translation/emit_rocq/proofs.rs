@@ -202,6 +202,17 @@ impl RocqEmitter<'_> {
             }
             Prop::Not { arg } => format!("(~ {})", self.prop(arg)?),
             Prop::Bool { expr } => format!("({} = true)", self.expr(expr)?),
+            Prop::Eq(comparison) | Prop::Ne(comparison) if comparison.left.ty.is_float() => {
+                self.float_prop(prop)?
+            }
+            Prop::Lt(comparison)
+            | Prop::Le(comparison)
+            | Prop::Gt(comparison)
+            | Prop::Ge(comparison)
+                if comparison.domain.is_float() =>
+            {
+                self.float_prop(prop)?
+            }
             Prop::Eq(comparison) => {
                 let left = self.expr(&comparison.left)?;
                 format!("({left} = {})", self.expr(&comparison.right)?)
@@ -227,6 +238,28 @@ impl RocqEmitter<'_> {
         })
     }
 
+    /// Number propositions are the source's Boolean tests computing to true.
+    fn float_prop(&mut self, prop: &Prop) -> Result<String> {
+        let (op, comparison) = prop.comparison().expect("a comparison");
+        let left = self.expr(&comparison.left)?;
+        let right = self.expr(&comparison.right)?;
+        if comparison.same_value {
+            self.helpers.insert(Helper::FloatSame);
+            let expected = matches!(prop, Prop::Eq(_));
+            return Ok(format!("(ml_float_same {left} {right} = {expected})"));
+        }
+        let test = self.comparison(op, &Type::Float, &left, &right)?;
+        Ok(format!("({test} = true)"))
+    }
+
+    pub(super) fn floats(&mut self) {
+        self.uses_float = true;
+        self.state.encode(
+            "floats",
+            "a JavaScript Number is a Rocq primitive float, the same IEEE-754 binary64 with the same arithmetic, which the kernel computes with; % is ml_float_rem, the exact truncated remainder, and ml_js_number prints a value as JavaScript does",
+        );
+    }
+
     pub(super) fn numeric_module(&mut self, ty: &Type) -> Result<&'static str> {
         match ty {
             Type::Nat => Ok("N"),
@@ -234,6 +267,10 @@ impl RocqEmitter<'_> {
             Type::Fixed { signed, .. } => {
                 self.state.fixed_to_unbounded(ty);
                 Ok(if *signed { "Z" } else { "N" })
+            }
+            Type::Float => {
+                self.floats();
+                Ok("PrimFloat")
             }
             other => Err(internal(format!("not numeric: {}", other.kind()))),
         }

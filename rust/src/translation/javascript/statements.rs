@@ -1,7 +1,7 @@
 //! Statements: bindings, destructuring, control flow, switches, `main`, console and assertions.
 
 use super::{
-    assertion_kind, bigint, has_ctor, node, prop_of, span, type_error, unsupported, AssertionKind,
+    assertion_kind, has_ctor, node, prop_of, span, type_error, unsupported, AssertionKind,
     CaseTest, Clause, JavaScriptParser, Result, SComparison, SData, SEffect, SExpr, SNode, SProp,
     SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind, ERRORS,
 };
@@ -351,8 +351,15 @@ impl JavaScriptParser {
         let value = self.peek();
         if value.kind == TokenKind::Number {
             self.cursor.advance();
+            if value.suffix != "n" {
+                return Err(unsupported(
+                    "case test on a Number",
+                    "a value switch compares BigInt or boolean literals; compare Numbers with if and ===",
+                    Some(span(&token, &value)),
+                ));
+            }
             return Ok(CaseTest::NumLit {
-                value: bigint(&value)?,
+                value: value.value.clone(),
                 negative,
                 span: span(&token, &value),
             });
@@ -533,10 +540,12 @@ impl JavaScriptParser {
             AssertionKind::Deep => (false, true),
             AssertionKind::NotDeep => (false, false),
         };
+        // These assertions compare primitives with Object.is (SameValue): NaN equals NaN, and 0 differs from -0.
         let comparison = SComparison {
             left,
             right,
             reference,
+            same_value: true,
         };
         let prop = SProp {
             node: if equal {

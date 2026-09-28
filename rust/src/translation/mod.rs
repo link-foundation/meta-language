@@ -21,6 +21,7 @@ pub mod emit_rocq;
 pub mod emit_rust;
 pub mod ir;
 pub mod javascript;
+pub mod js_number;
 pub mod lean;
 pub mod lean_root_names;
 pub mod lexer;

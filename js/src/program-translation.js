@@ -158,6 +158,9 @@ function runtimeDependencies(targetLanguage, code) {
     return [
       'Rust 1.98.1 standard library',
       ...(code.includes('\npub mod ml {') ? ['ml::Big arbitrary-precision integers, defined inside the artifact'] : []),
+      ...(code.includes('\npub mod ml_number {')
+        ? ['ml_number JavaScript Number formatting and SameValue, defined inside the artifact']
+        : []),
     ];
   }
   if (targetLanguage === 'Lean') {

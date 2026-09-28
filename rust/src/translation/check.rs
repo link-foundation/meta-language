@@ -23,7 +23,7 @@ use super::surface::{
     BinaryOp, Flavor, Rounding, SCase, SCasePattern, SEffect, SExpr, SItem, SMain, SNode, SPattern,
     SPatternNode, SProgram, SProp, SPropNode, SRow, ShowStyle, UnaryOp,
 };
-use super::types::{data, fixed, fixed_bounds, Type, BOOL, INT, NAT, STRING, UNIT};
+use super::types::{data, fixed, fixed_bounds, Type, BOOL, FLOAT, INT, NAT, STRING, UNIT};
 use super::{Language, Span};
 
 mod expressions;
@@ -287,6 +287,15 @@ fn text_lit(ty: Type, value: impl Into<String>) -> Expr {
     Expr::lit(ty, LitValue::Text(value.into()))
 }
 
+/// The canonical text of a negated Number: `-x`, and `NaN` for `NaN`.
+fn negate_number(text: &str) -> String {
+    if text == "NaN" {
+        return text.to_owned();
+    }
+    text.strip_prefix('-')
+        .map_or_else(|| format!("-{text}"), str::to_owned)
+}
+
 fn surface_let(name: &str, value: &str, body: SExpr, span: Option<Span>) -> SExpr {
     SExpr::new(
         SNode::Let {
@@ -454,6 +463,11 @@ fn arithmetic_semantics(
     ty: &Type,
     rounding: Option<Rounding>,
 ) -> (Semantics, Option<Rounding>, Option<ByZero>) {
+    // IEEE-754 binary64 arithmetic rounds to nearest, even on a tie; `%` is the
+    // exact truncated remainder (C fmod); nothing aborts.
+    if ty.is_float() {
+        return (Semantics::Ieee, None, None);
+    }
     let division = matches!(op, BinaryOp::Div | BinaryOp::Rem);
     if matches!(ty, Type::Fixed { .. }) {
         // Rust integer arithmetic with overflow checks: `/` and `%` truncate,

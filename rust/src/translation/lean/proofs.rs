@@ -308,6 +308,7 @@ impl LeanParser<'_> {
                         left,
                         right,
                         reference: false,
+                        same_value: false,
                     }),
                     span: Some(self.span_to_next(&token)),
                 });

@@ -414,9 +414,12 @@ impl Checker {
         }
         let console_bigint =
             style == ShowStyle::JsConsole && matches!(value.ty, Type::Int | Type::Nat);
+        // console.log prints -0 as "-0", where String(-0) is "0".
+        let console = style == ShowStyle::JsConsole && value.ty.is_float();
         let text = Expr::new(
             Node::ToString {
                 arg: Box::new(value),
+                console,
             },
             STRING,
         );
@@ -447,6 +450,13 @@ impl Checker {
                         name: binder.name.clone(),
                         ty: self.resolve_type(binder.ty.as_ref(), path, prop.span)?,
                     });
+                }
+                if checked.iter().any(|binder| binder.ty.is_float()) {
+                    return Err(unsupported(
+                        "quantification over Numbers",
+                        "a theorem quantifies over integers, naturals, booleans, strings or data",
+                        prop.span,
+                    ));
                 }
                 let mut inner = env.clone();
                 for binder in &checked {
@@ -494,7 +504,7 @@ impl Checker {
                     _ => BinaryOp::Ge,
                 };
                 let (left, right) = self.operands(&pair.left, &pair.right, env, path, prop.span)?;
-                if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_numeric() {
+                if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_ordered() {
                     return Err(type_error(
                         format!("ordering on {}", left.ty.key()),
                         prop.span,
@@ -508,13 +518,18 @@ impl Checker {
                     ));
                 }
                 // Equality propositions over data are structural; executable targets get a generated equality.
+                // Over Numbers, assert.strictEqual's SameValue differs from ===: NaN equals NaN, and 0 differs from -0.
                 let domain = left.ty.clone();
+                let same_value = pair.same_value
+                    && domain.is_float()
+                    && matches!(op, BinaryOp::Eq | BinaryOp::Ne);
                 Prop::compare(
                     op,
                     Comparison {
                         left,
                         right,
                         domain,
+                        same_value,
                     },
                 )
             }
@@ -564,7 +579,16 @@ impl Checker {
         if left.ty.same(&right.ty) {
             return Ok((left, right));
         }
-        if self.language == Language::JavaScript {
+        if left.ty.is_float() || right.ty.is_float() {
+            if self.language == Language::JavaScript
+                && (left.ty.is_numeric() || right.ty.is_numeric())
+            {
+                return Err(type_error(
+                    "mixing BigInt and Number: JavaScript throws \"TypeError: Cannot mix BigInt and other types, use explicit conversions\"",
+                    span,
+                ));
+            }
+        } else if self.language == Language::JavaScript {
             // Guarded parameters are naturals, but every BigInt operation is an integer operation.
             let left = coerce(left, &INT, self.language, span, None)?;
             let right = coerce(right, &INT, self.language, span, None)?;

@@ -28,6 +28,9 @@ impl RocqEmitter<'_> {
                 if *semantics == Some(Semantics::Checked) {
                     self.state.checked_to_total("negation");
                 }
+                if e.ty.is_float() {
+                    return Ok(format!("(PrimFloat.opp {})", self.expr(arg)?));
+                }
                 Ok(format!("(Z.opp {})", self.expr(arg)?))
             }
             Node::Binary { .. } => self.binary(e),
@@ -48,7 +51,7 @@ impl RocqEmitter<'_> {
                 Ok(format!("(let {name} := {value} in {})", self.expr(body)?))
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases),
-            Node::ToString { arg } => self.text_of(arg),
+            Node::ToString { arg, console } => self.text_of(arg, *console),
             Node::Cast {
                 arg,
                 from,
@@ -99,6 +102,18 @@ impl RocqEmitter<'_> {
             }
             Type::Bool => text,
             Type::String => format!("\"{}\"%string", text.replace('"', "\"\"")),
+            Type::Float => {
+                self.floats();
+                match text.as_str() {
+                    "NaN" => "PrimFloat.nan".to_owned(),
+                    "Infinity" => "PrimFloat.infinity".to_owned(),
+                    "-Infinity" => "PrimFloat.neg_infinity".to_owned(),
+                    _ => text.strip_prefix('-').map_or_else(
+                        || format!("{text}%float"),
+                        |magnitude| format!("(PrimFloat.opp {magnitude}%float)"),
+                    ),
+                }
+            }
             other => return Err(internal(format!("no Rocq literal for {}", other.kind()))),
         })
     }
@@ -109,6 +124,7 @@ impl RocqEmitter<'_> {
             Type::Int | Type::Fixed { signed: true, .. } => "0%Z".to_owned(),
             Type::Bool => "false".to_owned(),
             Type::String => "EmptyString".to_owned(),
+            Type::Float => "0%float".to_owned(),
             Type::Unit => "tt".to_owned(),
             Type::Data { name } => {
                 let entry = self.program.data(name);
@@ -170,19 +186,7 @@ impl RocqEmitter<'_> {
             | BinaryOp::Ge => {
                 let domain =
                     domain.ok_or_else(|| internal("comparison without a domain".to_owned()))?;
-                let module = match domain {
-                    Type::Bool => "Bool",
-                    Type::String => "String",
-                    other => self.numeric_module(other)?,
-                };
-                Ok(match op {
-                    BinaryOp::Eq => format!("({module}.eqb {left} {right})"),
-                    BinaryOp::Ne => format!("(negb ({module}.eqb {left} {right}))"),
-                    BinaryOp::Lt => format!("({module}.ltb {left} {right})"),
-                    BinaryOp::Le => format!("({module}.leb {left} {right})"),
-                    BinaryOp::Gt => format!("({module}.ltb {right} {left})"),
-                    _ => format!("({module}.leb {right} {left})"),
-                })
+                self.comparison(*op, domain, &left, &right)
             }
             _ => {
                 let domain =
@@ -193,6 +197,13 @@ impl RocqEmitter<'_> {
                 }
                 if *by_zero == Some(ByZero::Abort) {
                     self.state.abort_to_total("division by zero");
+                }
+                if *semantics == Some(Semantics::Ieee) {
+                    if *op == BinaryOp::Rem {
+                        self.helpers.insert(Helper::FloatRem);
+                        return Ok(format!("(ml_float_rem {left} {right})"));
+                    }
+                    return Ok(format!("(PrimFloat.{} {left} {right})", op_name(*op)));
                 }
                 match op {
                     BinaryOp::Add => Ok(format!("({module}.add {left} {right})")),
@@ -226,6 +237,29 @@ impl RocqEmitter<'_> {
                 }
             }
         }
+    }
+
+    /// A Boolean comparison test.
+    pub(super) fn comparison(
+        &mut self,
+        op: BinaryOp,
+        domain: &Type,
+        left: &str,
+        right: &str,
+    ) -> Result<String> {
+        let module = match domain {
+            Type::Bool => "Bool",
+            Type::String => "String",
+            other => self.numeric_module(other)?,
+        };
+        Ok(match op {
+            BinaryOp::Eq => format!("({module}.eqb {left} {right})"),
+            BinaryOp::Ne => format!("(negb ({module}.eqb {left} {right}))"),
+            BinaryOp::Lt => format!("({module}.ltb {left} {right})"),
+            BinaryOp::Le => format!("({module}.leb {left} {right})"),
+            BinaryOp::Gt => format!("({module}.ltb {right} {left})"),
+            _ => format!("({module}.leb {right} {left})"),
+        })
     }
 
     pub(super) fn match_expr(&mut self, scrutinee: &Expr, cases: &[Case]) -> Result<String> {
@@ -307,10 +341,18 @@ impl RocqEmitter<'_> {
         })
     }
 
-    pub(super) fn text_of(&mut self, arg: &Expr) -> Result<String> {
+    pub(super) fn text_of(&mut self, arg: &Expr, console: bool) -> Result<String> {
         let text = self.expr(arg)?;
         match &arg.ty {
             Type::String => Ok(text),
+            Type::Float => {
+                self.helpers.insert(Helper::JsNumber);
+                if console {
+                    self.helpers.insert(Helper::JsConsole);
+                    return Ok(format!("(ml_js_console {text})"));
+                }
+                Ok(format!("(ml_js_number {text})"))
+            }
             Type::Bool => {
                 self.helpers.insert(Helper::BoolToString);
                 Ok(format!("(ml_bool_to_string {text})"))

@@ -1,10 +1,10 @@
 //! Expression checking: operators, arithmetic, applications and constructors.
 
 use super::{
-    arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds, op_name,
-    plain_binary, text_lit, type_error, unsupported, BinaryOp, Checker, Ctor, Decimal, Decl, Entry,
-    Env, Expr, Flavor, Language, LitValue, Node, Result, Rounding, SExpr, SNode, Semantics, Span,
-    Type, UnaryOp, BOOL, INT, STRING, UNIT,
+    arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
+    negate_number, op_name, plain_binary, text_lit, type_error, unsupported, BinaryOp, Checker,
+    Ctor, Decimal, Decl, Entry, Env, Expr, Flavor, Language, LitValue, Node, Result, Rounding,
+    SExpr, SNode, Semantics, Span, Type, UnaryOp, BOOL, FLOAT, INT, STRING, UNIT,
 };
 
 impl Checker {
@@ -43,6 +43,15 @@ impl Checker {
                 ty,
                 negative,
             } => {
+                // A JavaScript Number literal: its canonical text, `String(value)`, with the sign applied.
+                if ty.as_ref().is_some_and(Type::is_float) {
+                    let text = if *negative {
+                        negate_number(value)
+                    } else {
+                        value.clone()
+                    };
+                    return Ok(text_lit(FLOAT, text));
+                }
                 let ty = ty
                     .clone()
                     .or_else(|| expected.filter(|ty| ty.is_numeric()).cloned());
@@ -132,6 +141,16 @@ impl Checker {
                 }
                 let numeric = expected.filter(|ty| ty.is_numeric());
                 let arg = self.expr(arg, env, path, numeric, false)?;
+                if arg.ty.is_float() {
+                    return Ok(Expr::new(
+                        Node::Unary {
+                            op: UnaryOp::Neg,
+                            arg: Box::new(arg),
+                            semantics: Some(Semantics::Ieee),
+                        },
+                        FLOAT,
+                    ));
+                }
                 if arg.ty == Type::Nat && self.language == Language::JavaScript {
                     // A guarded natural is still a BigInt, and its negation an integer.
                     return Ok(Expr::new(
@@ -250,10 +269,16 @@ impl Checker {
                 if arg.ty == Type::String {
                     return Ok(arg);
                 }
-                if !arg.ty.is_numeric() && arg.ty != Type::Bool {
+                if !arg.ty.is_ordered() && arg.ty != Type::Bool {
                     return Err(type_error(format!("toString of {}", arg.ty.key()), span));
                 }
-                Ok(Expr::new(Node::ToString { arg: Box::new(arg) }, STRING))
+                Ok(Expr::new(
+                    Node::ToString {
+                        arg: Box::new(arg),
+                        console: false,
+                    },
+                    STRING,
+                ))
             }
             SNode::Show { arg, style } => self.show(arg, env, path, *style),
             SNode::Cast {
@@ -318,7 +343,7 @@ impl Checker {
                         span,
                     ));
                 }
-                if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_numeric() {
+                if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_ordered() {
                     return Err(type_error(format!("ordering on {}", left.ty.key()), span));
                 }
                 let domain = left.ty.clone();
@@ -420,6 +445,7 @@ impl Checker {
         Ok(Expr::new(
             Node::ToString {
                 arg: Box::new(checked),
+                console: false,
             },
             STRING,
         ))
@@ -501,7 +527,7 @@ impl Checker {
             right = widen(right)?;
         }
         let (left, right) = self.unify(left, right, span)?;
-        if !left.ty.is_numeric() {
+        if !left.ty.is_ordered() {
             return Err(type_error(format!("arithmetic on {}", left.ty.key()), span));
         }
         let ty = left.ty.clone();

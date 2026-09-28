@@ -1,10 +1,10 @@
 //! Expressions from operator precedence down to literals and references.
 
 use super::{
-    bigint, binary, describe, has_ctor, is_tag_field, joined, node, span, tokenize, type_error,
-    unsupported, wild, BinaryOp, JavaScriptParser, Language, Result, SData, SExpr, SNode, SPattern,
-    SPatternNode, SRow, STagTest, ShowStyle, Span, Token, TokenCursor, TokenKind, UnaryOp,
-    ASSIGNMENTS, GLOBALS, NUMBER_REASON, ROOT,
+    binary, describe, has_ctor, is_tag_field, joined, node, number_literal, span, tokenize,
+    type_error, unsupported, wild, BinaryOp, JavaScriptParser, Language, Result, SData, SExpr,
+    SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span, Token, TokenCursor, TokenKind,
+    UnaryOp, ASSIGNMENTS, FLOAT, GLOBALS, ROOT,
 };
 
 impl JavaScriptParser {
@@ -419,24 +419,7 @@ impl JavaScriptParser {
         match token.kind {
             TokenKind::Number => {
                 self.cursor.advance();
-                if self.cursor.is(".")
-                    && self.cursor.is_kind_at(TokenKind::Number, 1)
-                    && self.cursor.peek_at(1).start == self.cursor.peek().end
-                {
-                    return Err(unsupported(
-                        "JavaScript number",
-                        NUMBER_REASON,
-                        Some(span(&token, self.cursor.peek_at(1))),
-                    ));
-                }
-                return Ok(node(
-                    SNode::Num {
-                        value: bigint(&token)?,
-                        ty: None,
-                        negative: false,
-                    },
-                    span(&token, &token),
-                ));
+                return Ok(number_literal(&token));
             }
             TokenKind::String => {
                 self.cursor.advance();
@@ -667,7 +650,18 @@ impl JavaScriptParser {
                 span(&token, &token),
             ));
         }
-        if ["null", "undefined", "NaN", "Infinity"].contains(&token.value.as_str()) {
+        if token.value == "NaN" || token.value == "Infinity" {
+            self.cursor.advance();
+            return Ok(node(
+                SNode::Num {
+                    value: token.value.clone(),
+                    ty: Some(FLOAT),
+                    negative: false,
+                },
+                span(&token, &token),
+            ));
+        }
+        if ["null", "undefined"].contains(&token.value.as_str()) {
             return Err(unsupported(&token.value, "outside the portable core", here));
         }
         let expressions = [

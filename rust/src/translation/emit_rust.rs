@@ -3,8 +3,9 @@
 //! Naturals and integers are `ml::Big`, an unbounded integer the translation
 //! carries in its own prelude, so no value is ever narrowed; machine integers
 //! stay Rust machine integers with checked arithmetic, which panics exactly
-//! where the source aborts. Data types are enums whose data-typed fields are
-//! boxed. Every value is owned: a variable is cloned where it is consumed.
+//! where the source aborts; a JavaScript Number is an `f64`, printed by
+//! `ml_number::js_number` exactly as JavaScript prints it. Data types are enums
+//! whose data-typed fields are boxed. Every value is owned: a variable is cloned where it is consumed.
 //! Theorems cannot be proved in Rust: each becomes an executable property,
 //! checked over a bounded domain by `--ml-check-theorems`, while the proof
 //! stays discharged by the source kernel.
@@ -26,6 +27,9 @@ use super::Language;
 
 mod declarations;
 mod expressions;
+mod number_prelude;
+
+use self::number_prelude::NUMBER_PRELUDE;
 
 const KEYWORDS: &[&str] = &[
     "as",
@@ -122,6 +126,7 @@ const KEYWORDS: &[&str] = &[
     "ToString",
     "ml_main",
     "ml_check_theorems",
+    "ml_number",
 ];
 
 const PRELUDE: &str = r#"/// Unbounded integers for the portable core's naturals and integers.
@@ -511,6 +516,7 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
         temporaries: 0,
         theorem_checks: Vec::new(),
         uses_big: false,
+        uses_number: false,
     }
     .file()
 }
@@ -536,10 +542,14 @@ struct RustEmitter<'p> {
     temporaries: usize,
     theorem_checks: Vec<TheoremCheck>,
     uses_big: bool,
+    uses_number: bool,
 }
 
 const fn is_copy(ty: &Type) -> bool {
-    matches!(ty, Type::Bool | Type::Fixed { .. } | Type::Unit)
+    matches!(
+        ty,
+        Type::Bool | Type::Fixed { .. } | Type::Float | Type::Unit
+    )
 }
 
 const fn comparison_operator(op: BinaryOp) -> &'static str {

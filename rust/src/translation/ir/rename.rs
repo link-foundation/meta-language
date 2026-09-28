@@ -140,6 +140,7 @@ pub fn rename_prop(prop: &Prop, env: &Env, scope: &mut Scope<'_>) -> Prop {
                     left,
                     right,
                     domain: comparison.domain.clone(),
+                    same_value: comparison.same_value,
                 },
             )
         }
