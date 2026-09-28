@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { buildCacheCleanupRequirements } from './issue-195-cache-requirements.mjs';
+
 export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
@@ -10,6 +12,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
   acceptanceGate:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287',
+  cacheCleanup:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580',
 });
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({
@@ -851,6 +855,9 @@ export async function buildIssue195Manifest(root) {
     ...buildCrossCuttingRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildValidationAndDeliveryRequirements(fixtureCatalog, inventory.extensionDispatch),
     ...buildGateRequirements(fixtureCatalog),
+    ...buildCacheCleanupRequirements(fixtureCatalog, {
+      requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.cacheCleanup,
+    }),
   ];
 
   const digests = {

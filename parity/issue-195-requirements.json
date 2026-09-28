@@ -5,7 +5,8 @@
   "sources": {
     "issue": "https://github.com/link-foundation/meta-language/issues/195",
     "clarification": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509",
-    "acceptanceGate": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287"
+    "acceptanceGate": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+    "cacheCleanup": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580"
   },
   "checkpoints": {
     "pre-merge": "All implementation and candidate-artifact requirements must pass on the exact merge candidate.",
@@ -1271,9 +1272,378 @@
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: falsified-capability-declaration",
       "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+    },
+    "planned:cache-cleanup:i195-cache-cleanup-entry-point": {
+      "path": "scripts/lib/cache-classes.mjs",
+      "selector": "single documented entry point for every regenerable cache class",
+      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+    },
+    "planned:cache-cleanup:i195-cache-cleanup-safety": {
+      "path": "scripts/lib/cache-classes.mjs",
+      "selector": "repository-scoped, validated and concurrency-safe deletion",
+      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+    },
+    "planned:cache-cleanup:i195-cache-cleanup-hook": {
+      "path": "scripts/lib/cache-classes.mjs",
+      "selector": "every-commit hook installed by the developer bootstrap",
+      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+    },
+    "planned:cache-cleanup:i195-cache-cleanup-events": {
+      "path": "scripts/lib/cache-classes.mjs",
+      "selector": "cleanup after build, test, coverage, benchmark, package, acceptance and CI teardown",
+      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+    },
+    "planned:cache-cleanup:i195-cache-cleanup-budget": {
+      "path": "scripts/lib/cache-classes.mjs",
+      "selector": "aggregate disk budget, warm cache, full clean and low-disk preflight",
+      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+    },
+    "planned:cache-cleanup:i195-cache-cleanup-policy": {
+      "path": "scripts/lib/cache-classes.mjs",
+      "selector": "CI policy check for hooks, wrappers, teardown, categories and build profiles",
+      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+    },
+    "planned:cache-cleanup:i195-cache-cleanup-measured": {
+      "path": "scripts/lib/cache-classes.mjs",
+      "selector": "measured disk use of the acceptance run before and after cleanup",
+      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
     }
   },
   "atomicRequirements": [
+    {
+      "id": "I195-CACHE-CLEANUP-BUDGET",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
+      "area": "cache-cleanup",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, git hooks and CI workflows)",
+        "version": "Node.js 20 or later",
+        "edition": "every checkout, worktree and CI job of this repository",
+        "construct": "aggregate disk budget, warm cache, full clean and low-disk preflight",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Pruning removes transient caches and then warm caches in priority order until the aggregate fits the configured budget, keeps a warm cache that fits, removes every class in full mode, and escalates to a full clean when free disk space is below the preflight floor.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "scripts/clean-caches.mjs",
+          "scripts/lib/cache-cleanup.mjs",
+          "scripts/lib/cache-classes.mjs",
+          "scripts/with-cache-cleanup.mjs",
+          "scripts/install-dev-hooks.mjs",
+          "scripts/check-cache-policy.mjs",
+          ".githooks/pre-commit"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cache-cleanup-budget-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cache-cleanup:i195-cache-cleanup-budget"
+          ],
+          "assertions": [
+            "budgetEnforced",
+            "warmCacheKeptWithinBudget",
+            "fullModeRemovesEveryClass",
+            "lowDiskPreflightEscalates"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cache-cleanup-budget-tooling-behavior.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CACHE-CLEANUP-ENTRY-POINT",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
+      "area": "cache-cleanup",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, git hooks and CI workflows)",
+        "version": "Node.js 20 or later",
+        "edition": "every checkout, worktree and CI job of this repository",
+        "construct": "single documented entry point for every regenerable cache class",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "node scripts/clean-caches.mjs discovers and removes Rust targets, JavaScript caches and temporary package consumers, generated parser and compiler intermediates, Lean and Rocq build output, acceptance and benchmark scratch, marked temporary clones with their nested Rust targets, and project-labeled container and BuildKit caches, reporting bytes before, after and reclaimed, and a repeated run is a no-op.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "scripts/clean-caches.mjs",
+          "scripts/lib/cache-cleanup.mjs",
+          "scripts/lib/cache-classes.mjs",
+          "scripts/with-cache-cleanup.mjs",
+          "scripts/install-dev-hooks.mjs",
+          "scripts/check-cache-policy.mjs",
+          ".githooks/pre-commit"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cache-cleanup-entry-point-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cache-cleanup:i195-cache-cleanup-entry-point"
+          ],
+          "assertions": [
+            "singleDocumentedEntryPoint",
+            "everyRequiredCategoryRegistered",
+            "everyClassRemovedFromFixture",
+            "repeatedRunIsIdempotent",
+            "reportsBeforeAfterReclaimed"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cache-cleanup-entry-point-tooling-behavior.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CACHE-CLEANUP-EVENTS",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
+      "area": "cache-cleanup",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, git hooks and CI workflows)",
+        "version": "Node.js 20 or later",
+        "edition": "every checkout, worktree and CI job of this repository",
+        "construct": "cleanup after build, test, coverage, benchmark, package, acceptance and CI teardown",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "node scripts/with-cache-cleanup.mjs runs the command with bounded parallelism, no incremental compilation and a bounded compiler cache, waits for it on success, failure and interruption, then cleans the caches and exits with the command status.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "scripts/clean-caches.mjs",
+          "scripts/lib/cache-cleanup.mjs",
+          "scripts/lib/cache-classes.mjs",
+          "scripts/with-cache-cleanup.mjs",
+          "scripts/install-dev-hooks.mjs",
+          "scripts/check-cache-policy.mjs",
+          ".githooks/pre-commit"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cache-cleanup-events-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cache-cleanup:i195-cache-cleanup-events"
+          ],
+          "assertions": [
+            "cleanupAfterSuccess",
+            "cleanupAfterFailure",
+            "cleanupAfterInterruption",
+            "exitStatusPreserved",
+            "childrenAwaited",
+            "boundedGrowthEnvironment"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cache-cleanup-events-tooling-behavior.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CACHE-CLEANUP-HOOK",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
+      "area": "cache-cleanup",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, git hooks and CI workflows)",
+        "version": "Node.js 20 or later",
+        "edition": "every checkout, worktree and CI job of this repository",
+        "construct": "every-commit hook installed by the developer bootstrap",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "node scripts/install-dev-hooks.mjs on a fresh clone installs a pre-commit hook that runs the cleanup on every commit, including documentation-only commits, chains an existing hook without losing its status, and is never installed into a downstream consumer by a build or package script.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "scripts/clean-caches.mjs",
+          "scripts/lib/cache-cleanup.mjs",
+          "scripts/lib/cache-classes.mjs",
+          "scripts/with-cache-cleanup.mjs",
+          "scripts/install-dev-hooks.mjs",
+          "scripts/check-cache-policy.mjs",
+          ".githooks/pre-commit"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cache-cleanup-hook-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cache-cleanup:i195-cache-cleanup-hook"
+          ],
+          "assertions": [
+            "freshCloneBootstrapInstallsHook",
+            "nonCodeCommitRunsCleanup",
+            "existingHooksComposed",
+            "downstreamGitConfigUntouched"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cache-cleanup-hook-tooling-behavior.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CACHE-CLEANUP-MEASURED",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
+      "area": "cache-cleanup",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, git hooks and CI workflows)",
+        "version": "Node.js 20 or later",
+        "edition": "every checkout, worktree and CI job of this repository",
+        "construct": "measured disk use of the acceptance run before and after cleanup",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "After the full pre-merge evidence run, the cleanup of the real worktree reports measured bytes before, after and reclaimed, ends within the budget, leaves the tracked state unchanged, and keeps every execution record, log and artifact the gate reads.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "scripts/clean-caches.mjs",
+          "scripts/lib/cache-cleanup.mjs",
+          "scripts/lib/cache-classes.mjs",
+          "scripts/with-cache-cleanup.mjs",
+          "scripts/install-dev-hooks.mjs",
+          "scripts/check-cache-policy.mjs",
+          ".githooks/pre-commit"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cache-cleanup-measured-tooling-measured",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cache-cleanup:i195-cache-cleanup-measured"
+          ],
+          "assertions": [
+            "beforeAfterReclaimedMeasured",
+            "withinBudgetAfterCleanup",
+            "trackedStateUnchanged",
+            "evidencePreservedAfterCleanup"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cache-cleanup-measured-tooling-measured.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CACHE-CLEANUP-POLICY",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
+      "area": "cache-cleanup",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, git hooks and CI workflows)",
+        "version": "Node.js 20 or later",
+        "edition": "every checkout, worktree and CI job of this repository",
+        "construct": "CI policy check for hooks, wrappers, teardown, categories and build profiles",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "node scripts/check-cache-policy.mjs passes on the repository and fails when the hook or its pre-commit entry is disabled, a cargo or npm step bypasses the wrapper, a job lacks the always-run teardown, a required category has no class, or the dev and test profiles are not lean.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "scripts/clean-caches.mjs",
+          "scripts/lib/cache-cleanup.mjs",
+          "scripts/lib/cache-classes.mjs",
+          "scripts/with-cache-cleanup.mjs",
+          "scripts/install-dev-hooks.mjs",
+          "scripts/check-cache-policy.mjs",
+          ".githooks/pre-commit"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cache-cleanup-policy-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cache-cleanup:i195-cache-cleanup-policy"
+          ],
+          "assertions": [
+            "policyPassesOnRepository",
+            "disabledHookDetected",
+            "unwrappedCommandDetected",
+            "missingTeardownDetected",
+            "omittedCategoryDetected",
+            "unboundedProfileDetected"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cache-cleanup-policy-tooling-behavior.json"
+        }
+      ]
+    },
+    {
+      "id": "I195-CACHE-CLEANUP-SAFETY",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
+      "area": "cache-cleanup",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, git hooks and CI workflows)",
+        "version": "Node.js 20 or later",
+        "edition": "every checkout, worktree and CI job of this repository",
+        "construct": "repository-scoped, validated and concurrency-safe deletion",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The cleanup deletes only git-ignored, untracked paths inside its own worktree (or scratch it marked, or an explicit Cargo target directory), rejects traversal and symlink escapes, keeps source, tracked vendored grammars, fixtures, proofs, uncommitted work, evidence, other worktrees and outputs of active builds, tolerates missing tools and paths with spaces, touches only project-labeled container resources, and serializes concurrent runs.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "scripts/clean-caches.mjs",
+          "scripts/lib/cache-cleanup.mjs",
+          "scripts/lib/cache-classes.mjs",
+          "scripts/with-cache-cleanup.mjs",
+          "scripts/install-dev-hooks.mjs",
+          "scripts/check-cache-policy.mjs",
+          ".githooks/pre-commit"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-cache-cleanup-safety-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:cache-cleanup:i195-cache-cleanup-safety"
+          ],
+          "assertions": [
+            "sourceAndTrackedFilesPreserved",
+            "ignoredOnlyInsideRepository",
+            "symlinkAndTraversalRejected",
+            "otherWorktreesPreserved",
+            "activeBuildOutputsPreserved",
+            "evidencePreserved",
+            "customTargetDirectoriesHandled",
+            "pathsWithSpacesHandled",
+            "missingToolsTolerated",
+            "onlyLabeledContainerResources",
+            "concurrentCleanupsSerialized"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-cache-cleanup-safety-tooling-behavior.json"
+        }
+      ]
+    },
     {
       "id": "I195-CONFORMANCE-javascript",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",

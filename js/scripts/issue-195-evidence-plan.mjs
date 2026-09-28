@@ -14,6 +14,11 @@ export function evidenceGroupFor(requirement, cell) {
     const target = requirement.scope.language.split(' -> ')[1];
     return `translation:${target}:${cell.runtime}`;
   }
+  if (requirement.area === 'cache-cleanup') {
+    // The runner measures the real worktree after every other group ran; the
+    // behavioral cells run in temporary fixtures inside the JavaScript suite.
+    return requirement.id === 'I195-CACHE-CLEANUP-MEASURED' ? 'cache-cleanup:measured' : 'suite:javascript';
+  }
   if (requirement.area === 'package-delivery') {
     if (requirement.id.includes('-NPM-')) return 'delivery:npm';
     if (requirement.id.includes('-CRATE-')) return 'delivery:crate';

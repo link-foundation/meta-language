@@ -14,7 +14,9 @@ import {
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { acquireLease } from '../../scripts/lib/cache-cleanup.mjs';
 import { buildIssue195Manifest } from './issue-195-acceptance-lib.mjs';
+import { measureCacheCleanup } from './issue-195-cache-evidence.mjs';
 import {
   DELIVERY_CONSUMER_ASSERTIONS,
   deliveryAssertions,
@@ -61,6 +63,10 @@ if (prepareCandidatesDirectory) {
 }
 
 await prepareDirectories();
+// While the run builds, a concurrent cleanup (a pre-commit hook, another
+// wrapper) keeps the outputs it uses; the run's own final cleanup ignores it.
+const lease = acquireLease({ cwd: root, label: `issue-195 ${checkpoint} evidence` });
+process.on('exit', () => lease.release());
 process.env.ISSUE_195_OBSERVATION_FILE = observationsPath;
 process.env.ISSUE_195_COMMIT = commit;
 const toolchainVersions = readToolchainVersions();
@@ -246,6 +252,7 @@ async function producePreMergeEvidence() {
     ...delivery,
   ]);
   for (const [group, record] of nativeGroups) groups.set(group, record);
+  groups.set('cache-cleanup:measured', produceCacheCleanupEvidence());
   for (const runtime of ['javascript', 'rust']) {
     for (const target of ['JavaScript', 'Rust', 'Lean', 'Rocq']) {
       // Native logs support the translation; the native negative control is not its failure.
@@ -260,6 +267,31 @@ async function producePreMergeEvidence() {
     }
   }
   return groups;
+}
+
+/**
+ * Cleans the worktree after every other group ran, keeping the records, logs,
+ * artifacts and native evidence the cells cite, and records the measurement.
+ */
+function produceCacheCleanupEvidence() {
+  const reportPath = path.join(artifactsDirectory, 'cache-cleanup.json');
+  const testId = 'i195-cache-cleanup-measured-tooling-measured';
+  console.log('issue-195 evidence: cache-cleanup');
+  const { checks, report } = measureCacheCleanup({ root, resultsDirectory, reportPath });
+  console.log(
+    `issue-195 evidence: cache cleanup reclaimed ${report.reclaimedBytes} of ${report.beforeBytes} bytes, ${report.afterBytes} remain`,
+  );
+  for (const [assertionId, holds] of Object.entries(checks)) {
+    if (holds) observe(testId, assertionId, 'evidence runner cache cleanup of the worktree');
+    else console.log(`issue-195 evidence: cache cleanup check ${assertionId} failed`);
+  }
+  return {
+    commands: [renderCommand('node', [
+      'scripts/clean-caches.mjs', '--event', 'acceptance', '--results-dir', relative(resultsDirectory),
+    ])],
+    artifacts: [relative(reportPath)],
+    failureLogs: Object.values(checks).every(Boolean) ? [] : [relative(reportPath)],
+  };
 }
 
 async function producePublishedEvidence() {
