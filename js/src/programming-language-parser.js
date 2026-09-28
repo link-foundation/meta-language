@@ -39,6 +39,20 @@ const GRAMMARS = new Map(
   ),
 );
 
+/**
+ * Returns the node kind and field names of a default grammar by its
+ * grammar-lock id (`{ nodeKinds, fields }`, fields from field id 1), or
+ * undefined for an unknown id. They equal the names the Rust runtime compiles.
+ */
+export function grammarNames(id) {
+  const language = GRAMMARS.get(id);
+  if (!language) return undefined;
+  return {
+    nodeKinds: Array.from({ length: language.nodeTypeCount }, (_, symbol) => language.nodeTypeForId(symbol) ?? ''),
+    fields: Array.from({ length: language.fieldCount }, (_, field) => language.fieldNameForId(field + 1) ?? ''),
+  };
+}
+
 const LEAN_PUBLIC_ROOT = 'file';
 // The patched runtime copies each chunk the input callback returns into a buffer of 5119
 // 16-bit units and keeps their low bytes, so the callback returns UTF-8 bytes as a string of

@@ -57,7 +57,16 @@ export const GRAMMAR_SOURCES = Object.freeze({
   json: { crate: 'tree-sitter-json', dir: '.' },
   json5: { crate: 'tree-sitter-json5-orchard', dir: '.' },
   kotlin: { crate: 'tree-sitter-kotlin-ng', dir: '.' },
-  lean: { crate: 'tree-sitter-lean4', dir: '.' },
+  lean: {
+    vendored: 'rust/vendor/tree-sitter-lean',
+    upstream: 'wvhulle/tree-sitter-lean',
+    version: 'bd942cd2795016239be02b3b3d5ef635645ddd38',
+    revision: 'bd942cd2795016239be02b3b3d5ef635645ddd38',
+    // The tree-sitter-lean4 0.3.0 crate's sources, vendored so rust/build.rs
+    // compiles them with MSVC's /utf-8: the crate's build script does not, and
+    // its non-ASCII node names then are not UTF-8 on Windows.
+    dir: '.',
+  },
   lua: { crate: 'tree-sitter-lua', dir: '.' },
   markdown: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown' },
   markdown_inline: { crate: 'tree-sitter-md-025', dir: 'tree-sitter-markdown-inline' },
@@ -280,6 +289,12 @@ async function buildOne(id, versions, treeSitter) {
     const grammarDir = join(work, 'crate', source.dir);
     await localizeSharedIncludes(grammarDir);
     await ensureGrammarConfig(grammarDir);
+    if (!existsSync(join(grammarDir, 'src/grammar.json'))) {
+      // tree-sitter-lean commits no grammar.json. The CLI reads only the name
+      // from it; without one it evaluates grammar.js and then fails to run
+      // emcc with "Argument list too long".
+      await writeFile(join(grammarDir, 'src/grammar.json'), JSON.stringify({ name: id, rules: {} }));
+    }
     const output = join(work, `${id}.wasm`);
     await run(treeSitter, ['build', '--wasm', '-o', output, grammarDir], {
       cwd: work,

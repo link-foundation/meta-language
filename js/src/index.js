@@ -9,6 +9,7 @@ export * from './language-profile.js';
 export * from './language-support.js';
 export * from './network.js';
 export * from './parser-registry.js';
+export { grammarNames } from './programming-language-parser.js';
 export * from './program-representation.js';
 export * from './program-snapshot.js';
 export * from './program-translation.js';

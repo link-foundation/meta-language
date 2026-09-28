@@ -4,7 +4,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 /// Generated grammars vendored under `vendor/` (see each `NOTICE.md`).
-const VENDORED_GRAMMARS: &[&str] = &["rocq", "csv", "rust"];
+const VENDORED_GRAMMARS: &[&str] = &["rocq", "csv", "rust", "lean"];
 
 fn decompress_parser(compressed: &Path, parser: &Path) {
     let mut input = GzDecoder::new(File::open(compressed).expect("open vendored parser"));

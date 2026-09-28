@@ -157,6 +157,16 @@ async function markdownRows(text) {
   return rows;
 }
 
+// Digest of the grammar's node kind and field names, which both runtimes
+// must read identically from the parser they compile (`grammarNames`).
+async function symbolNamesSha256(id) {
+  const language = await loadGrammar(id);
+  return sha256(JSON.stringify({
+    nodeKinds: Array.from({ length: language.nodeTypeCount }, (_, symbol) => language.nodeTypeForId(symbol) ?? ''),
+    fields: Array.from({ length: language.fieldCount }, (_, field) => language.fieldNameForId(field + 1) ?? ''),
+  }));
+}
+
 async function languageRows(grammars, text) {
   if (grammars.includes('markdown_inline')) return markdownRows(text);
   const tree = await parse(grammars[0], text);
@@ -470,10 +480,11 @@ async function generate() {
   for (const language of inventory.languages) {
     if (!language.grammars) continue;
     result[language.name] = {
-      grammars: Object.fromEntries(language.grammars.map((id) => [id, {
+      grammars: Object.fromEntries(await Promise.all(language.grammars.map(async (id) => [id, {
         version: lock.grammars[id].version,
         parserSha256: lock.grammars[id].parserSha256,
-      }])),
+        symbolNamesSha256: await symbolNamesSha256(id),
+      }]))),
       sourceSha256: sha256(language.source),
       recoverySourceSha256: sha256(language.recoverySource),
       positive: await languageRows(language.grammars, language.source),

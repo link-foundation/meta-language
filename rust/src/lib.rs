@@ -191,6 +191,7 @@ pub use translation_rules::{
     TranslationRule, TranslationRuleRegistry, TranslationRuleSet, TranslationRuleSetLoadError,
     TranslationTemplate,
 };
+pub use tree_sitter_adapter::{grammar_names, GrammarNames};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 mod self_description;

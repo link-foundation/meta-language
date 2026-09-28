@@ -44,6 +44,20 @@ mod rust_grammar {
     pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_rust) };
 }
 
+#[allow(unsafe_code)]
+mod lean_grammar {
+    use tree_sitter_language::LanguageFn;
+
+    unsafe extern "C" {
+        fn tree_sitter_lean() -> *const ();
+    }
+
+    // SAFETY: build.rs compiles the generated parser and scanner from the
+    // pinned revision recorded in vendor/tree-sitter-lean/NOTICE.md with this
+    // exact symbol.
+    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_lean) };
+}
+
 use crate::line_index::LineIndex;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point,
@@ -234,6 +248,57 @@ fn grammar_for_language(language: &str) -> Option<Language> {
     grammar_by_id(&grammar.id)
 }
 
+/// The node kind and field names a compiled default grammar declares.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GrammarNames {
+    /// Node kind names by symbol id; bytes that are not UTF-8 read as U+FFFD.
+    pub node_kinds: Vec<String>,
+    /// Field names by field id, starting at field id 1.
+    pub fields: Vec<String>,
+}
+
+/// Returns the node kind and field names of a default grammar by its
+/// grammar-lock id, or `None` for an unknown id.
+///
+/// Both runtimes compile the same generated parser, so the names equal the
+/// WebAssembly grammar's. A C compiler that re-encodes the parser's non-ASCII
+/// names (MSVC without `/utf-8`) makes them differ instead of failing.
+#[must_use]
+#[allow(unsafe_code)]
+pub fn grammar_names(id: &str) -> Option<GrammarNames> {
+    use std::ffi::{c_char, CStr};
+    use tree_sitter::ffi;
+
+    let raw = grammar_by_id(id)?.into_raw();
+    let name = |pointer: *const c_char| {
+        if pointer.is_null() {
+            String::new()
+        } else {
+            // SAFETY: the grammar's names are NUL-terminated static strings.
+            unsafe { CStr::from_ptr(pointer) }
+                .to_string_lossy()
+                .into_owned()
+        }
+    };
+    // SAFETY: `raw` is the live language `into_raw` released, and the name
+    // functions return null for ids outside the grammar's tables.
+    let (node_kinds, fields) = unsafe {
+        let symbols = u16::try_from(ffi::ts_language_symbol_count(raw)).unwrap_or(u16::MAX);
+        let fields = u16::try_from(ffi::ts_language_field_count(raw)).unwrap_or(u16::MAX);
+        (
+            (0..symbols)
+                .map(|symbol| name(ffi::ts_language_symbol_name(raw, symbol)))
+                .collect(),
+            (1..=fields)
+                .map(|field| name(ffi::ts_language_field_name_for_id(raw, field)))
+                .collect(),
+        )
+    };
+    // SAFETY: returns the ownership `into_raw` released, so the language is freed.
+    drop(unsafe { Language::from_raw(raw) });
+    Some(GrammarNames { node_kinds, fields })
+}
+
 /// Returns the compiled grammar for a grammar-lock id.
 pub fn grammar_by_id(id: &str) -> Option<Language> {
     Some(match id {
@@ -255,7 +320,7 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "json" => tree_sitter_json::LANGUAGE.into(),
         "json5" => tree_sitter_json5_orchard::LANGUAGE.into(),
         "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
-        "lean" => tree_sitter_lean4::language(),
+        "lean" => lean_grammar::LANGUAGE.into(),
         "lua" => tree_sitter_lua::LANGUAGE.into(),
         "markdown" => tree_sitter_md_025::LANGUAGE.into(),
         "markdown_inline" => tree_sitter_md_025::INLINE_LANGUAGE.into(),

@@ -171,9 +171,9 @@
     },
     "lean": {
       "id": "lean",
-      "crate": "tree-sitter-lean4",
-      "directory": ".",
-      "version": "0.3.0",
+      "upstream": "wvhulle/tree-sitter-lean",
+      "vendored": "rust/vendor/tree-sitter-lean",
+      "version": "bd942cd2795016239be02b3b3d5ef635645ddd38",
       "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b",
       "wasmSha256": "899cf73abfb11fcc72cf82f6b39c6edbd30e26a8b80185401f88ce36da0b8ff2",
       "license": "lean.LICENSE"

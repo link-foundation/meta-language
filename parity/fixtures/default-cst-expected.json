@@ -17,11 +17,13 @@
       "grammars": {
         "markdown": {
           "version": "0.5.6",
-          "parserSha256": "0f51c93b5d79d08bc74088d91a9aafb7e40ad7e2f169164865c01d392277bb07"
+          "parserSha256": "0f51c93b5d79d08bc74088d91a9aafb7e40ad7e2f169164865c01d392277bb07",
+          "symbolNamesSha256": "88537312f123708286a554bdf4365f7b90d6fb98eff3a5c467af0fe8af46c401"
         },
         "markdown_inline": {
           "version": "0.5.6",
-          "parserSha256": "0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c"
+          "parserSha256": "0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c",
+          "symbolNamesSha256": "9fcba5f1336a2c03d456ad92d8023effb1ef05eec15265a371f7466ec2b26db0"
         }
       },
       "sourceSha256": "b98c24560064099134a729569dd9edde7860c119a703308b2f7a05dff49dd19f",
@@ -189,7 +191,8 @@
       "grammars": {
         "xml": {
           "version": "0.7.0",
-          "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844"
+          "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844",
+          "symbolNamesSha256": "802cf81d276876367f09cb37f7e0e2a5b321c580896e48907ff458982a63ee8b"
         }
       },
       "sourceSha256": "eba929e8d01405e4fadb6e3e0b0731a2f701c32277d4538556bd984a7efe5f14",
@@ -274,7 +277,8 @@
       "grammars": {
         "javascript": {
           "version": "0.25.0",
-          "parserSha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384"
+          "parserSha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
+          "symbolNamesSha256": "622e68da5db282e18b3195c9bce05257fd564959286bfade63535f2d35d8c7dc"
         }
       },
       "sourceSha256": "6c015b7945621d7c4c5474d18fa5f803a2b196e4c25a4ef1fbc286a34c3a5ea3",
@@ -386,7 +390,8 @@
       "grammars": {
         "rust": {
           "version": "v0.24.2",
-          "parserSha256": "c2625aed5481577ae5499995e80c1700921119e75c9ec8fc351ca02f3d9f46fa"
+          "parserSha256": "c2625aed5481577ae5499995e80c1700921119e75c9ec8fc351ca02f3d9f46fa",
+          "symbolNamesSha256": "ac2bce3458755e66976e89965ff5c3ff9ca73a54cc356966766c6c8ce73795f7"
         }
       },
       "sourceSha256": "a06eaced682e65f5b3c30d9e8fe7fe0cb1051f1dd73023ecc70a02f554a62c0b",
@@ -503,8 +508,9 @@
     "Lean": {
       "grammars": {
         "lean": {
-          "version": "0.3.0",
-          "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b"
+          "version": "bd942cd2795016239be02b3b3d5ef635645ddd38",
+          "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b",
+          "symbolNamesSha256": "52b852ec67d1ddacab5f0e3ef309329fb6cd7587b5245e9e00cce23c561aad3e"
         }
       },
       "sourceSha256": "54511cb66984cb58e1aed692fe18e511074cf45158c0642344e5cc324ef4cbe5",
@@ -574,7 +580,8 @@
       "grammars": {
         "rocq": {
           "version": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-          "parserSha256": "4d6566a7291a13ec3da6a965920b6469bb58a183062e2dd4b2759751c153b5a6"
+          "parserSha256": "4d6566a7291a13ec3da6a965920b6469bb58a183062e2dd4b2759751c153b5a6",
+          "symbolNamesSha256": "358bface6718216d2db2713c4aa1b9a8a081f863027010252a269dea5057a58c"
         }
       },
       "sourceSha256": "df989a05c1013e458a48b1f27b812fae6eee0ad139c3592862ff2a9bf10857bb",
@@ -668,7 +675,8 @@
       "grammars": {
         "python": {
           "version": "0.25.0",
-          "parserSha256": "a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0"
+          "parserSha256": "a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0",
+          "symbolNamesSha256": "23968ed5da29ba93be88cfb31e329c2994f344b4e74775c43d2ad693d9b76ede"
         }
       },
       "sourceSha256": "f2299cb39840320af7014a1c62cf90ada4e6559be2ab68859d28644d48ca22b2",
@@ -746,7 +754,8 @@
       "grammars": {
         "c": {
           "version": "0.24.2",
-          "parserSha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2"
+          "parserSha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2",
+          "symbolNamesSha256": "f236cc4286cec11f7c4537bc4963aa14932965231d9f1f8e766afd21f2192463"
         }
       },
       "sourceSha256": "a49f672e959e9de3bb2ad7b8938c0dfc08af53da899eb939bcd5a6a871853f99",
@@ -828,7 +837,8 @@
       "grammars": {
         "cpp": {
           "version": "0.23.4",
-          "parserSha256": "2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814"
+          "parserSha256": "2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814",
+          "symbolNamesSha256": "2595436330f22f51b51528824125b04264227defc69772bd4abc0f8cc125f55f"
         }
       },
       "sourceSha256": "f0aa82ce3ce5b49664ff7addecafe4223624328392e36698f5acc9851b9f5868",
@@ -933,7 +943,8 @@
       "grammars": {
         "csharp": {
           "version": "0.23.5",
-          "parserSha256": "0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427"
+          "parserSha256": "0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427",
+          "symbolNamesSha256": "e6e0f152091b321970d34e7070523ab899d066366a82dd1911c619062c4840db"
         }
       },
       "sourceSha256": "ee81a05c93cffcea4fdd85646fea5f1e145e4db6339a9bc074d2820a5f283aed",
@@ -1019,7 +1030,8 @@
       "grammars": {
         "java": {
           "version": "0.23.5",
-          "parserSha256": "4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4"
+          "parserSha256": "4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4",
+          "symbolNamesSha256": "ec2918959fe400b4e8bf4d90fec28ce87d3d7c1b77189d5bd08c32f2979a6101"
         }
       },
       "sourceSha256": "e05009e596feafc58589e83fc06aadda39934241eeef990da58d9287038129b3",
@@ -1114,7 +1126,8 @@
       "grammars": {
         "typescript": {
           "version": "0.23.2",
-          "parserSha256": "74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa"
+          "parserSha256": "74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa",
+          "symbolNamesSha256": "59dd1253c407fe3103b1ccf97de2254e12ba486661adbb9b0f9dbab00b67b6eb"
         }
       },
       "sourceSha256": "bd4a475af8977b9f9ea4f55ad531d5fdc8fd6ffcaaf8bda175f1f2e13642eff1",
@@ -1203,7 +1216,8 @@
       "grammars": {
         "tsx": {
           "version": "0.23.2",
-          "parserSha256": "1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885"
+          "parserSha256": "1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885",
+          "symbolNamesSha256": "42a641764acf52bb05f5fd76cb8ab198f8d02a858ae2172d4d4cefae70cdc1f6"
         }
       },
       "sourceSha256": "871e3ece1f497d033d52cf9a599176539a73e13cb54cbfb8ded1b04a6133d8c1",
@@ -1294,7 +1308,8 @@
       "grammars": {
         "vb": {
           "version": "0.1.0",
-          "parserSha256": "7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8"
+          "parserSha256": "7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8",
+          "symbolNamesSha256": "ca7a6f7a2be2976a7addd04c3689d3e0987168d8821c362d6a3adfdb7c58b7c0"
         }
       },
       "sourceSha256": "754add4e1e2bb354ca4ccd93b4aabe76cb9a872f1bc3fc6195777f0fea1112d3",
@@ -1354,7 +1369,8 @@
       "grammars": {
         "pascal": {
           "version": "0.10.2",
-          "parserSha256": "d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329"
+          "parserSha256": "d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329",
+          "symbolNamesSha256": "26822dd5a2466678d4e6bb22558e2a7df8993f282bb9096562fa91036c070541"
         }
       },
       "sourceSha256": "365558dfd9978b73d9f04e7e82c7a5521ed220e22cf7474554f05636eefaa7f5",
@@ -1425,7 +1441,8 @@
       "grammars": {
         "go": {
           "version": "0.25.0",
-          "parserSha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85"
+          "parserSha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85",
+          "symbolNamesSha256": "3ea913428dd5f75fb7bbbdfa6d16ab5c12f0298ba636bffa38453fabd5447bc0"
         }
       },
       "sourceSha256": "439a1db9bac27fed483b965e6236ffb461ab55b2655353b0b7deed27e0c3229e",
@@ -1501,7 +1518,8 @@
       "grammars": {
         "r": {
           "version": "1.2.0",
-          "parserSha256": "622165734714c6e81f70d99d522d78cf98915fdf2b1032f8bb33e775a0b971c0"
+          "parserSha256": "622165734714c6e81f70d99d522d78cf98915fdf2b1032f8bb33e775a0b971c0",
+          "symbolNamesSha256": "6d42ac062934e33ec076ebcf29faa3176afebccd152da1ac7112db4a5f8ee9bb"
         }
       },
       "sourceSha256": "f3a1ac67ce888520f736d5db1a28c98103acb99fcee01ef64dd9457f2c42701a",
@@ -1579,7 +1597,8 @@
       "grammars": {
         "ruby": {
           "version": "0.23.1",
-          "parserSha256": "4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15"
+          "parserSha256": "4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15",
+          "symbolNamesSha256": "41b44632bb1a62a107c36a31158b2821ed9a4e1f8f22aa3f096fa291913c5579"
         }
       },
       "sourceSha256": "feff660c638e0cc3b9dd88750f33aa7b1ca5b1571a5f908b9d3ee532b711f015",
@@ -1636,7 +1655,8 @@
       "grammars": {
         "php": {
           "version": "0.24.2",
-          "parserSha256": "59ad8e5e4fde3fe60687a488ab8420612840cc966b83739af1b3a4317ed27ec6"
+          "parserSha256": "59ad8e5e4fde3fe60687a488ab8420612840cc966b83739af1b3a4317ed27ec6",
+          "symbolNamesSha256": "bdc7065ee3b06c9731f97a4d1363fc17de212e119285020949dd966d0890e90f"
         }
       },
       "sourceSha256": "89a0fe83d703ab1b43017e21e2a74a9a30d46aa00d1c9a422e1bae49b1f56088",
@@ -1711,7 +1731,8 @@
       "grammars": {
         "swift": {
           "version": "0.7.3",
-          "parserSha256": "d3edff6effe31b9a507f496577407987343b101b23eb7bee7a9b050e8ab5d27a"
+          "parserSha256": "d3edff6effe31b9a507f496577407987343b101b23eb7bee7a9b050e8ab5d27a",
+          "symbolNamesSha256": "79f39fb7a799e5fa11c18983c9f8a86ab93bafb099cb147082dcb8d1e6e242b5"
         }
       },
       "sourceSha256": "764225d7164473132d008abbf05d6a3334311b020e60fa6ca70d08910c9ffadf",
@@ -1803,7 +1824,8 @@
       "grammars": {
         "kotlin": {
           "version": "1.1.0",
-          "parserSha256": "9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3"
+          "parserSha256": "9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3",
+          "symbolNamesSha256": "a5130369d555629f1aed60ccc6dab3be188847a2dffb30c2210c2d284da6fd4f"
         }
       },
       "sourceSha256": "d71479d083a74fa744402c3dd9bed81fff92612b4a2662919c57883f47913656",
@@ -1891,7 +1913,8 @@
       "grammars": {
         "scala": {
           "version": "0.25.1",
-          "parserSha256": "049ef02b206b3ff06b5066040d01ad04161bc1afc2bd26073c9a865082af9d1e"
+          "parserSha256": "049ef02b206b3ff06b5066040d01ad04161bc1afc2bd26073c9a865082af9d1e",
+          "symbolNamesSha256": "22e1d9f3d6d63c2e7fb01e73e5b9adae2ab2386369b31dfdfcd3ff91d9b4524c"
         }
       },
       "sourceSha256": "804ca082470559215f011e2ddc92ecb4e151faf265e6377d30c223cf3d74ceeb",
@@ -1984,7 +2007,8 @@
       "grammars": {
         "lua": {
           "version": "0.2.0",
-          "parserSha256": "fa3a2efe5803017c536d4727fe408b9eaf3e33b86662a5b1a1d12227d0022231"
+          "parserSha256": "fa3a2efe5803017c536d4727fe408b9eaf3e33b86662a5b1a1d12227d0022231",
+          "symbolNamesSha256": "a07a8b5795a458fbd419101586e327c1a97970e455cb55690b94e39716df6cfa"
         }
       },
       "sourceSha256": "af9a70ad44eea6b728dacdb249e271130a036b158ab3bde87923eebe1cb357b0",
@@ -2066,7 +2090,8 @@
       "grammars": {
         "perl": {
           "version": "1.1.2",
-          "parserSha256": "38ebca6dd96edeb01da421780001ea26b572133e83525c993bbeb78e8e9a24bc"
+          "parserSha256": "38ebca6dd96edeb01da421780001ea26b572133e83525c993bbeb78e8e9a24bc",
+          "symbolNamesSha256": "716a927cc1ccf6b964d56a91b5096e02579433274086c8654cdd373f9bd01795"
         }
       },
       "sourceSha256": "daa717b9832b2b448bdca7bd07ef468487c7ab7d3eedf6552acf660ba0bde4dc",
@@ -2173,7 +2198,8 @@
       "grammars": {
         "haskell": {
           "version": "0.23.1",
-          "parserSha256": "f05f34d3cabb3c4a0397a2ac29d4cf4212f814dec98199042228d1850055db93"
+          "parserSha256": "f05f34d3cabb3c4a0397a2ac29d4cf4212f814dec98199042228d1850055db93",
+          "symbolNamesSha256": "9357dd394961ca7d50a44407b4e2917eb9c5a75200772d5d3baa5c4af80ecf16"
         }
       },
       "sourceSha256": "c6008748831f344748ca545751a51ba4a6bfd9292d974089c841604de4346807",
@@ -2254,7 +2280,8 @@
       "grammars": {
         "ocaml": {
           "version": "0.24.2",
-          "parserSha256": "ab85b3756c106d0be3509db9d33eb883ff7dda2b714c7e47ec36a2d807923c0f"
+          "parserSha256": "ab85b3756c106d0be3509db9d33eb883ff7dda2b714c7e47ec36a2d807923c0f",
+          "symbolNamesSha256": "3a30fb6ef94245bb47f910c71357a52a73672f594b96bc6caf5b4f840c1c587c"
         }
       },
       "sourceSha256": "377db1c1462371f77641afeae15a229df6e4e1aa52fb5a8119f80240ba7ac11b",
@@ -2330,7 +2357,8 @@
       "grammars": {
         "ocaml_interface": {
           "version": "0.24.2",
-          "parserSha256": "8769090544b24ca4a33b6dd0eed9b337b171005551caba2f6db83ad755046d3b"
+          "parserSha256": "8769090544b24ca4a33b6dd0eed9b337b171005551caba2f6db83ad755046d3b",
+          "symbolNamesSha256": "4e2c10a8b31a17dd1b332a45d35caadf0f7fe43c615f6ea2ec2f9d0e988bc7fb"
         }
       },
       "sourceSha256": "d2d75b6e89ab9946fe33571fc93e93a875cdad87a47c5e54bb8dd5545e600b59",
@@ -2382,7 +2410,8 @@
       "grammars": {
         "zig": {
           "version": "1.1.2",
-          "parserSha256": "5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63"
+          "parserSha256": "5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63",
+          "symbolNamesSha256": "ba63a383b2f593941dffaad38b03dcb2be4ce60902fc6c512510f4f3fba1bf2d"
         }
       },
       "sourceSha256": "40f6b2f1a71e5579b77813d844fd1fef4cdb7850227297d8cda9c10ee6298379",
@@ -2465,7 +2494,8 @@
       "grammars": {
         "bash": {
           "version": "0.25.1",
-          "parserSha256": "5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f"
+          "parserSha256": "5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f",
+          "symbolNamesSha256": "86e525de5121a8ec703764751430631c3ef1c0a349617dfa21aa47268891cfd1"
         }
       },
       "sourceSha256": "bd159752fc1ba0a03e0b2c38e6550b0cdf7ec94442bc0e8cfb323917b8b33128",
@@ -2539,7 +2569,8 @@
       "grammars": {
         "dart": {
           "version": "0.2.0",
-          "parserSha256": "1894ef57f8e0ceb483ccf6d548429517dc42b0d983293ebdb5ff9ff9c612c4a9"
+          "parserSha256": "1894ef57f8e0ceb483ccf6d548429517dc42b0d983293ebdb5ff9ff9c612c4a9",
+          "symbolNamesSha256": "1d63539307afe7e43714fdd5c185dabaa91cd1314055aa12d46c7851af0875f4"
         }
       },
       "sourceSha256": "bb96faf6bc77f37b1ffa22d95b8e04ad9f855450c3b3cafd42d97257594a0774",
@@ -2626,7 +2657,8 @@
       "grammars": {
         "sql": {
           "version": "0.3.11",
-          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580"
+          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+          "symbolNamesSha256": "31703fb967280d9a4d9aba677020f85cc006ef007ddcfa04022a0ad7ddc119f7"
         }
       },
       "sourceSha256": "e4ac746a85c0979890d610dbf5b3bd27c55ca2e607aab3f3b4b4b3a8606c8e7b",
@@ -2708,7 +2740,8 @@
       "grammars": {
         "sql": {
           "version": "0.3.11",
-          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580"
+          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+          "symbolNamesSha256": "31703fb967280d9a4d9aba677020f85cc006ef007ddcfa04022a0ad7ddc119f7"
         }
       },
       "sourceSha256": "acd942922570dfa2e8c87820476fb4e12ca8fa9378ef495d80cd93a7dda6b33e",
@@ -2793,7 +2826,8 @@
       "grammars": {
         "sql": {
           "version": "0.3.11",
-          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580"
+          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+          "symbolNamesSha256": "31703fb967280d9a4d9aba677020f85cc006ef007ddcfa04022a0ad7ddc119f7"
         }
       },
       "sourceSha256": "d173f0808972d7ed51007ff990d7e502c99ca2ae4f7555c18238697162592e95",
@@ -2884,7 +2918,8 @@
       "grammars": {
         "sql": {
           "version": "0.3.11",
-          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580"
+          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+          "symbolNamesSha256": "31703fb967280d9a4d9aba677020f85cc006ef007ddcfa04022a0ad7ddc119f7"
         }
       },
       "sourceSha256": "30ae52281b6a2740fd16c955d9a3d34b5bd32d224e1d531a2ad3e6ef65f8c8ca",
@@ -2961,7 +2996,8 @@
       "grammars": {
         "sql": {
           "version": "0.3.11",
-          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580"
+          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+          "symbolNamesSha256": "31703fb967280d9a4d9aba677020f85cc006ef007ddcfa04022a0ad7ddc119f7"
         }
       },
       "sourceSha256": "75eac18587f5be8f1622c4cc3f7ddda8b0c170bd2a0924e3e05d5b9736bb4bea",
@@ -3054,7 +3090,8 @@
       "grammars": {
         "sql": {
           "version": "0.3.11",
-          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580"
+          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+          "symbolNamesSha256": "31703fb967280d9a4d9aba677020f85cc006ef007ddcfa04022a0ad7ddc119f7"
         }
       },
       "sourceSha256": "28bbf71d21d90972d840c49832ccf4a4820574316c035999dd8106c271186fc4",
@@ -3122,7 +3159,8 @@
       "grammars": {
         "sql": {
           "version": "0.3.11",
-          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580"
+          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+          "symbolNamesSha256": "31703fb967280d9a4d9aba677020f85cc006ef007ddcfa04022a0ad7ddc119f7"
         }
       },
       "sourceSha256": "76e57b93f6f0966dcfbfacc7b70c2e817688b2f5a131d25f854e53dd624f7af7",
@@ -3195,7 +3233,8 @@
       "grammars": {
         "sql": {
           "version": "0.3.11",
-          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580"
+          "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+          "symbolNamesSha256": "31703fb967280d9a4d9aba677020f85cc006ef007ddcfa04022a0ad7ddc119f7"
         }
       },
       "sourceSha256": "18f94eebd76d38db1cfa1816960f7ad307e7249a2879381441181a43a565d6f9",
@@ -3274,7 +3313,8 @@
       "grammars": {
         "html": {
           "version": "0.23.2",
-          "parserSha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1"
+          "parserSha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1",
+          "symbolNamesSha256": "8db265ac8f6aa567e82713ad0973759024c81c6564bd47424ae0e2d7b8b4e540"
         }
       },
       "sourceSha256": "e275722e3dda255400f21aa3e0b2bf7ad8b55e48ca3ea3d96a2b1fb74c908e72",
@@ -3396,7 +3436,8 @@
       "grammars": {
         "css": {
           "version": "0.25.0",
-          "parserSha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e"
+          "parserSha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e",
+          "symbolNamesSha256": "7cfdb76437cf5d0bdb3ce7b9254a1be31aa124ebee8304603b727a5571410c69"
         }
       },
       "sourceSha256": "b0c546beeef68ca8c7e8e5396e1293f8b5ca8214b35c20622ce95d9cfa763f01",
@@ -3468,7 +3509,8 @@
       "grammars": {
         "json": {
           "version": "0.24.8",
-          "parserSha256": "e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab"
+          "parserSha256": "e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab",
+          "symbolNamesSha256": "cdd99652fbf02be9ed75d1192e6cb14ae50342bc169c117e2ba898d2a60eb81f"
         }
       },
       "sourceSha256": "17d9c0be51052d7de23ecbbe1ae54c278e4b4acd62d512cda932a44c93721bfb",
@@ -3542,7 +3584,8 @@
       "grammars": {
         "yaml": {
           "version": "0.7.2",
-          "parserSha256": "8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9"
+          "parserSha256": "8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9",
+          "symbolNamesSha256": "0a8d1ecaa5e6a6f496bd5781c0fcd88421d8f52ffa1697857e8878db53473e38"
         }
       },
       "sourceSha256": "9c9bc147c451a61b08ced56488ed586898b93408a6a2ff68df3d326342854a77",
@@ -3601,7 +3644,8 @@
       "grammars": {
         "toml": {
           "version": "0.7.0",
-          "parserSha256": "1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3"
+          "parserSha256": "1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3",
+          "symbolNamesSha256": "f96b6e497bbb4c2f4e2e5a7db57ed77b021c87d2a40ffa8d31d0822f90f21f4c"
         }
       },
       "sourceSha256": "dcd1e74705c8f8a5a381dbab7213559082e39ee8acb6046ddf87c2bbd604f9c9",
@@ -3648,7 +3692,8 @@
       "grammars": {
         "xml": {
           "version": "0.7.0",
-          "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844"
+          "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844",
+          "symbolNamesSha256": "802cf81d276876367f09cb37f7e0e2a5b321c580896e48907ff458982a63ee8b"
         }
       },
       "sourceSha256": "c25621cbf5fb33f63daa4df1a80f68763f6806d7b9c6689c87ef15a9a4a68522",
@@ -3723,7 +3768,8 @@
       "grammars": {
         "dtd": {
           "version": "0.7.0",
-          "parserSha256": "79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932"
+          "parserSha256": "79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932",
+          "symbolNamesSha256": "1bfc8c6c2dc109a9b7c73a47d6ada6c949c00777d24284479163ddb2f3f21572"
         }
       },
       "sourceSha256": "74f3a0eaf6cf827e08b7d6ab00aa18c6c518e092b7c6d1d80378f4a83f066299",
@@ -3775,7 +3821,8 @@
       "grammars": {
         "ini": {
           "version": "1.4.0",
-          "parserSha256": "3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123"
+          "parserSha256": "3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123",
+          "symbolNamesSha256": "193f97f0a39f063215a3e2405c4482895a6fdf5e3be1f73fa6b9a1d258160369"
         }
       },
       "sourceSha256": "b5bb3ec1d09118cb345d63088fc1cb016751e495879346f16322cb54325f1618",
@@ -3806,7 +3853,8 @@
       "grammars": {
         "proto": {
           "version": "0.4.0",
-          "parserSha256": "ecdea8962be9f1879e067ee23127abd79ec8d3fad83799eb9052ffa48ec78448"
+          "parserSha256": "ecdea8962be9f1879e067ee23127abd79ec8d3fad83799eb9052ffa48ec78448",
+          "symbolNamesSha256": "f282e43e9496fcf1e2f1f9975ceac8c66902dd7fabce63a60b1616d105cb283c"
         }
       },
       "sourceSha256": "c73ba1aab5191594c8d8a9e044059b0cea35be1818c6888b445a48b174991f61",
@@ -3876,7 +3924,8 @@
       "grammars": {
         "graphql": {
           "version": "0.1.0",
-          "parserSha256": "d27f89090319f885811fefb5c5453f9cc95543c04df02b7c43aa1fa6f7d353d9"
+          "parserSha256": "d27f89090319f885811fefb5c5453f9cc95543c04df02b7c43aa1fa6f7d353d9",
+          "symbolNamesSha256": "b640501327e5ca90930b40333bb33224801db27dc0155385755814395b6fde17"
         }
       },
       "sourceSha256": "ac3a070814f12d52a3907812fbfede5bd74f5589c45dea1f7f47772245ea4745",
@@ -3949,7 +3998,8 @@
       "grammars": {
         "csv": {
           "version": "f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
-          "parserSha256": "eacf58622b8d50ab75acf91172d35e314874327d98d1bd03acfd1ab789ddb1d1"
+          "parserSha256": "eacf58622b8d50ab75acf91172d35e314874327d98d1bd03acfd1ab789ddb1d1",
+          "symbolNamesSha256": "2ffe7d248c472f72713096455325ff018667339503ff2e2e0c44f039767c9e3e"
         }
       },
       "sourceSha256": "cc9dd1b2cba097089cb60affcee67bd077ee61a1a42f464203490a48746f5af2",
@@ -3998,7 +4048,8 @@
       "grammars": {
         "json5": {
           "version": "0.1.0",
-          "parserSha256": "0024a5353393c7186a9a4f531f451279d301c7c3925ba292348176a83d3765b4"
+          "parserSha256": "0024a5353393c7186a9a4f531f451279d301c7c3925ba292348176a83d3765b4",
+          "symbolNamesSha256": "17a3343fd7baccd7e95d39b3fd6c523a841b9fcffd83ba22dff357819592123c"
         }
       },
       "sourceSha256": "8bc1d4ae719423ed0bed7f90d5b216f7ee74a03858ffa5fd44579856fd43528b",

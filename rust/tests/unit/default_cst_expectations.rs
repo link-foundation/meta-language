@@ -4,8 +4,8 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use meta_language::{
-    grammar_provenance, language_candidates_for_path, language_for_path, LinkId, LinkNetwork,
-    LinkType, ParseConfiguration,
+    grammar_names, grammar_provenance, language_candidates_for_path, language_for_path, LinkId,
+    LinkNetwork, LinkType, ParseConfiguration,
 };
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -355,6 +355,26 @@ fn has_flag(row: &Value, flags: &str) -> bool {
         .is_some_and(|row_flags| row_flags.chars().any(|flag| flags.contains(flag)))
 }
 
+/// The digest of a compiled grammar's node kind and field names, as the
+/// expectation generator computes it from the WebAssembly grammar, and the
+/// names that are not UTF-8 (an MSVC build without `/utf-8` garbles them).
+fn symbol_names_sha256(id: &str) -> Option<(String, Vec<String>)> {
+    let names = grammar_names(id)?;
+    let json = format!(
+        "{{\"nodeKinds\":{},\"fields\":{}}}",
+        serde_json::to_string(&names.node_kinds).ok()?,
+        serde_json::to_string(&names.fields).ok()?
+    );
+    let garbled = names
+        .node_kinds
+        .iter()
+        .chain(&names.fields)
+        .filter(|name| name.contains('\u{fffd}'))
+        .cloned()
+        .collect();
+    Some((format!("{:x}", Sha256::digest(json.as_bytes())), garbled))
+}
+
 /// A parse language with its positive and recovery sources, aliases,
 /// extensions and independent expectation
 /// (`{ grammars, positive, recovery, embedded }`).
@@ -439,6 +459,18 @@ fn positive_cst_problems(subject: &CstSubject<'_>) -> Vec<String> {
             }),
             format!("expected grammar {id}"),
         );
+        if let Some(want_names) = grammar["symbolNamesSha256"].as_str() {
+            let names = symbol_names_sha256(id);
+            check(
+                names
+                    .as_ref()
+                    .is_some_and(|(digest, _)| digest == want_names),
+                format!(
+                    "grammar {id} node kind and field names (names that are not UTF-8: {:?})",
+                    names.map(|(_, garbled)| garbled)
+                ),
+            );
+        }
     }
     // childOrder, tokens, commentsAndTrivia, exactUtf8Spans
     let mut children: HashMap<LinkId, Vec<LinkId>> = HashMap::new();

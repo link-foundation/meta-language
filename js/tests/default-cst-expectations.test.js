@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import {
   LinkNetwork,
   LinkType,
+  grammarNames,
   grammarProvenance,
   languageCandidatesForPath,
   languageForPath,
@@ -16,6 +17,7 @@ const parityJson = async (name) =>
 const inventoryBytes = await readFile(new URL('../../parity/language-grammar-inventory.json', import.meta.url));
 const inventory = JSON.parse(inventoryBytes);
 const inventoryDigest = createHash('sha256').update(inventoryBytes).digest('hex');
+const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 // Tree-sitter languages and built-in grammar languages together cover the
 // inventory.
 const expected = {
@@ -248,6 +250,12 @@ function positiveCstProblems({ name, source, recoverySource, aliases, extensions
   check(Object.keys(want.grammars).every((id) => recorded.some((grammar) =>
     grammar.id === id && grammar.version === want.grammars[id].version && grammar.parserSha256 === want.grammars[id].parserSha256)),
   'expected grammar versions');
+  for (const [id, grammar] of Object.entries(want.grammars)) {
+    if (!grammar.symbolNamesSha256) continue;
+    const names = grammarNames(id);
+    check(names !== undefined && sha256(JSON.stringify(names)) === grammar.symbolNamesSha256,
+      `grammar ${id} node kind and field names`);
+  }
   // childOrder, tokens, commentsAndTrivia, exactUtf8Spans
   const trivia = network.links().filter((link) => link.metadata().linkType === LinkType.Trivia)
     .map((link) => `${link.metadata().span.byteRange.start}:${link.metadata().span.byteRange.end}`);

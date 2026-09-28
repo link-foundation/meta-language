@@ -288,6 +288,13 @@ export function languageCandidatesForPath(path: string): string[];
 export function languageForPath(path: string): string | undefined;
 export function grammarProvenance(language: string): readonly GrammarProvenance[];
 
+/** Node kind and field names of a default grammar; `fields` starts at field id 1. */
+export interface GrammarNames {
+  nodeKinds: string[];
+  fields: string[];
+}
+export function grammarNames(grammarId: string): GrammarNames | undefined;
+
 export class LinkId {
   constructor(value: number | string | LinkId);
   static from(value: number | string | LinkId): LinkId;
