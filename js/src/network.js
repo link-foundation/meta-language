@@ -22,7 +22,7 @@ import { LinkCliSubstitution, SubstitutionReport } from './substitution.js';
 import { ReplacementReport, ReplacementRule, TextReplacement } from './transform.js';
 import { EmbeddedRegion, detectEmbeddedRegions, detectEmbeddedRegionsInTree } from './regions.js';
 import { annotateNaturalLanguage } from './natural-language.js';
-import { insertLinoSemantics } from './lino-semantics.js';
+import { formatLinoReadings, insertLinoSemantics, linoReading } from './lino-semantics.js';
 import { grammarProvenance } from './language-catalog.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 
@@ -40,18 +40,27 @@ export class LinkNetwork {
   }
 
   static parse(text, language, configuration = ParseConfiguration.default()) {
+    return LinkNetwork._parseWithLinks(text, language, configuration).network;
+  }
+
+  /**
+   * Parses a LiNo document and returns `{ network, links }`: its network and
+   * the ids of its top-level links in document order, as the official
+   * links-notation parser lists them.
+   */
+  static parseLinksNotation(text, configuration = ParseConfiguration.default()) {
+    return LinkNetwork._parseWithLinks(text, 'LiNo', configuration);
+  }
+
+  static _parseWithLinks(text, language, configuration) {
     const parsed = parseProgrammingLanguage(text, language);
-    if (parsed) {
-      const network = new LinkNetwork();
-      const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);
-      network._attachEmbeddedRegions(document, text, language, configuration, parsed);
-      annotateNaturalLanguage(network, document, text, language);
-      if (parsed.canonical === 'LiNo') {
-        insertLinoSemantics(network, text, language);
-      }
-      return network;
-    }
-    return LinkNetwork.parseLosslessText(text, language, configuration);
+    if (!parsed) return { network: LinkNetwork.parseLosslessText(text, language, configuration), links: [] };
+    const network = new LinkNetwork();
+    const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);
+    network._attachEmbeddedRegions(document, text, language, configuration, parsed);
+    annotateNaturalLanguage(network, document, text, language);
+    const links = parsed.canonical === 'LiNo' ? insertLinoSemantics(network, text, language) : [];
+    return { network, links };
   }
 
   static parseLosslessText(text, language, configuration = ParseConfiguration.default()) {
@@ -297,6 +306,24 @@ export class LinkNetwork {
         metadata.language === language
       );
     })?.id();
+  }
+
+  /**
+   * The links-notation reading of the link `id` that `parseLinksNotation`
+   * inserted: a reference is its name and a link is `[name or null,
+   * ...values]`. A named link appearing as a value outside its own source (a
+   * reference to it) reads as its name.
+   */
+  linksNotationReading(id) {
+    return linoReading(this, id);
+  }
+
+  /**
+   * The links-notation text of the links `ids`, one per line, which reads
+   * back as the same links.
+   */
+  linksNotationText(ids) {
+    return formatLinoReadings(ids.map((id) => linoReading(this, id)));
   }
 
   link(id) {

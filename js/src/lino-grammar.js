@@ -470,7 +470,7 @@ function follows(text, position, allowed) {
 }
 
 /** `text` with every character of the given ranges replaced by a space. */
-function blankRanges(text, ranges) {
+export function blankRanges(text, ranges) {
   let blanked = '';
   let position = 0;
   for (const [start, end] of ranges) {

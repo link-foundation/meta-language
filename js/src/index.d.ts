@@ -701,9 +701,16 @@ export function constructProgramFromFragments(
   project?: ProgramProjectContext,
 ): ProgramRepresentation;
 
+/** A reference is its name; a link is its name or null followed by its values. */
+export type LinksNotationReading = string | [string | null, ...LinksNotationReading[]];
+
 export class LinkNetwork {
   constructor();
   static parse(text: string, language: string, configuration?: ParseConfiguration): LinkNetwork;
+  static parseLinksNotation(
+    text: string,
+    configuration?: ParseConfiguration,
+  ): { network: LinkNetwork; links: LinkId[] };
   static parseLosslessText(
     text: string,
     language: string,
@@ -748,6 +755,8 @@ export class LinkNetwork {
     metadata?: { named?: boolean; span?: SourceSpan; flags?: LinkFlags },
   ): LinkId;
   insertConceptExpression(concept: string, language: string, text: string): LinkId;
+  linksNotationReading(id: LinkId): LinksNotationReading;
+  linksNotationText(ids: LinkId[]): string;
   link(id: LinkId | number): Link | undefined;
   links(): Link[];
   len(): number;

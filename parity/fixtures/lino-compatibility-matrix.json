@@ -1,0 +1,482 @@
+{
+  "schemaVersion": 1,
+  "description": "Links Notation compatibility matrix of docs/vision.md#links-notation-fitness. Every feature is decoded by the official links-notation parser and by meta-language's native lossless LiNo reading, reconstructed exactly, edited and encoded; links is the reading both must produce, a reference as its string and a link as [id or null, ...values]. Every regression is an input relative-meta-logic reported against links-notation (link-foundation/relative-meta-logic#184); it must be read losslessly and in linear time in both runtimes.",
+  "releases": {
+    "npm": {
+      "package": "links-notation",
+      "version": "0.22.0",
+      "manifest": "js/package.json",
+      "lockfile": "js/package-lock.json"
+    },
+    "cratesIo": {
+      "package": "links-notation",
+      "version": "0.22.0",
+      "manifest": "rust/Cargo.toml",
+      "lockfile": "rust/Cargo.lock"
+    },
+    "auditedAt": "2026-09-29"
+  },
+  "maximumDepth": 64,
+  "features": [
+    {
+      "id": "named-links",
+      "name": "Named links",
+      "source": "papa: loves mama\n",
+      "edit": {
+        "replace": "mama",
+        "with": "grandma"
+      },
+      "links": [
+        [
+          "papa",
+          "loves",
+          "mama"
+        ]
+      ]
+    },
+    {
+      "id": "anonymous-links",
+      "name": "Anonymous links",
+      "source": "(loves mama)\n",
+      "edit": {
+        "replace": "loves",
+        "with": "adores"
+      },
+      "links": [
+        [
+          null,
+          "loves",
+          "mama"
+        ]
+      ]
+    },
+    {
+      "id": "arbitrary-arity",
+      "name": "Links of any arity",
+      "source": "(a)\n(a b)\n(a b c d e f g)\n",
+      "edit": {
+        "replace": "g",
+        "with": "h"
+      },
+      "links": [
+        [
+          null,
+          "a"
+        ],
+        [
+          null,
+          "a",
+          "b"
+        ],
+        [
+          null,
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "g"
+        ]
+      ]
+    },
+    {
+      "id": "shared-references",
+      "name": "Shared references",
+      "source": "(a b)\n(c b)\n",
+      "edit": {
+        "replace": "c",
+        "with": "d"
+      },
+      "links": [
+        [
+          null,
+          "a",
+          "b"
+        ],
+        [
+          null,
+          "c",
+          "b"
+        ]
+      ]
+    },
+    {
+      "id": "recursive-references",
+      "name": "Recursive references",
+      "source": "(loop: loop next)\n",
+      "edit": {
+        "replace": "next",
+        "with": "again"
+      },
+      "links": [
+        [
+          "loop",
+          "loop",
+          "next"
+        ]
+      ]
+    },
+    {
+      "id": "forward-references",
+      "name": "Forward references",
+      "source": "(a: b)\n(b: c)\n",
+      "edit": {
+        "replace": "c",
+        "with": "d"
+      },
+      "links": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ]
+      ]
+    },
+    {
+      "id": "identity",
+      "name": "Identity of equal-content links",
+      "source": "(x: a b)\n(y: a b)\n",
+      "edit": {
+        "replace": "y",
+        "with": "z"
+      },
+      "links": [
+        [
+          "x",
+          "a",
+          "b"
+        ],
+        [
+          "y",
+          "a",
+          "b"
+        ]
+      ]
+    },
+    {
+      "id": "ordering",
+      "name": "Ordering of values and links",
+      "source": "(a b c)\n(c b a)\n",
+      "edit": {
+        "replace": "a",
+        "with": "z"
+      },
+      "links": [
+        [
+          null,
+          "a",
+          "b",
+          "c"
+        ],
+        [
+          null,
+          "c",
+          "b",
+          "a"
+        ]
+      ]
+    },
+    {
+      "id": "indentation",
+      "name": "Indented definitions",
+      "source": "parent:\n  child one\n  child two\n",
+      "edit": {
+        "replace": "two",
+        "with": "three"
+      },
+      "links": [
+        [
+          "parent",
+          [
+            null,
+            "child",
+            "one"
+          ],
+          [
+            null,
+            "child",
+            "two"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "nested-multiline-groups",
+      "name": "Nested multiline groups",
+      "source": "(outer\n  (inner a\n    b)\n  c)\n",
+      "edit": {
+        "replace": "inner",
+        "with": "core"
+      },
+      "links": [
+        [
+          null,
+          [
+            null,
+            "outer"
+          ],
+          [
+            null,
+            [
+              null,
+              "outer"
+            ],
+            [
+              null,
+              [
+                null,
+                "inner",
+                "a"
+              ],
+              [
+                null,
+                [
+                  null,
+                  "inner",
+                  "a"
+                ],
+                [
+                  null,
+                  "b"
+                ]
+              ]
+            ]
+          ],
+          [
+            null,
+            [
+              null,
+              "outer"
+            ],
+            [
+              null,
+              "c"
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "quoting",
+      "name": "Quoted references",
+      "source": "(\"a b\" 'c d' `e f`)\n",
+      "edit": {
+        "replace": "\"a b\"",
+        "with": "\"x y\""
+      },
+      "links": [
+        [
+          null,
+          "a b",
+          "c d",
+          "e f"
+        ]
+      ]
+    },
+    {
+      "id": "escaping",
+      "name": "Escaped delimiters in quoted references",
+      "source": "(\"\"say \"hi\" now\"\" ''it's'')\n",
+      "edit": {
+        "replace": "''it's''",
+        "with": "''it''''s''"
+      },
+      "links": [
+        [
+          null,
+          "say \"hi\" now",
+          "it's"
+        ]
+      ]
+    },
+    {
+      "id": "comments-and-trivia",
+      "name": "Comments, blank lines and trivia",
+      "source": "# heading\n\na: b  # trailing\n  (c d)\n",
+      "edit": {
+        "replace": "d",
+        "with": "e"
+      },
+      "links": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          null,
+          [
+            "a",
+            "b"
+          ],
+          [
+            null,
+            "c",
+            "d"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "unicode",
+      "name": "Unicode references",
+      "source": "(любовь: 愛 💞)\n",
+      "edit": {
+        "replace": "愛",
+        "with": "ai"
+      },
+      "links": [
+        [
+          "любовь",
+          "愛",
+          "💞"
+        ]
+      ]
+    },
+    {
+      "id": "source-mappings",
+      "name": "Exact source mappings across line endings and multibyte text",
+      "source": "a: b\r\n(c ü)\r\n",
+      "edit": {
+        "replace": "ü",
+        "with": "ö"
+      },
+      "links": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          null,
+          "c",
+          "ü"
+        ]
+      ]
+    }
+  ],
+  "regressions": [
+    {
+      "id": "lone-carriage-returns-and-unicode-spaces",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/312",
+      "name": "lone carriage returns, Unicode spaces and a last line of spaces",
+      "units": 500,
+      "shape": {
+        "kind": "repeat",
+        "head": "",
+        "unit": "a\rb c d\n(e)\n   \n",
+        "tail": "  "
+      }
+    },
+    {
+      "id": "indented-identifiers",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/313",
+      "name": "indented identifiers",
+      "units": 250,
+      "shape": {
+        "kind": "repeat",
+        "head": "",
+        "unit": "id:\n  a\n  b\n    c\n",
+        "tail": ""
+      }
+    },
+    {
+      "id": "deep-parentheses",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/314",
+      "name": "deep parentheses",
+      "units": 500,
+      "shape": {
+        "kind": "nest",
+        "open": "(",
+        "middle": "a",
+        "close": ")",
+        "tail": "\n"
+      }
+    },
+    {
+      "id": "unclosed-groups",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/314",
+      "name": "unclosed groups",
+      "units": 500,
+      "shape": {
+        "kind": "repeat",
+        "head": "",
+        "unit": "(a ",
+        "tail": "\n"
+      }
+    },
+    {
+      "id": "deep-indentation",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/315",
+      "name": "deep indentation",
+      "units": 500,
+      "shape": {
+        "kind": "staircase",
+        "text": "a",
+        "modulo": 60
+      }
+    },
+    {
+      "id": "long-delimiter-run",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/316",
+      "name": "long delimiter run",
+      "units": 2000,
+      "shape": {
+        "kind": "nest",
+        "open": "\"",
+        "middle": "x",
+        "close": "\"",
+        "tail": "\n"
+      }
+    },
+    {
+      "id": "unclosed-quotes",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/316",
+      "name": "unclosed quotes",
+      "units": 500,
+      "shape": {
+        "kind": "repeat",
+        "head": "",
+        "unit": "\"a ",
+        "tail": "\n"
+      }
+    },
+    {
+      "id": "comments-and-groups",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/313",
+      "name": "comments and groups",
+      "units": 250,
+      "shape": {
+        "kind": "repeat",
+        "head": "",
+        "unit": "a: b c # note\n  child (x y)\n",
+        "tail": ""
+      }
+    },
+    {
+      "id": "failing-indented-lines",
+      "upstream": "https://github.com/link-foundation/links-notation/issues/313",
+      "name": "failing indented lines",
+      "units": 100,
+      "shape": {
+        "kind": "repeat",
+        "head": "x\n",
+        "unit": "  (broken\n",
+        "tail": ""
+      }
+    }
+  ],
+  "excessiveNesting": {
+    "upstream": "https://github.com/link-foundation/links-notation/issues/315",
+    "units": 100000,
+    "shape": {
+      "kind": "nest",
+      "open": "(",
+      "middle": "a",
+      "close": ")",
+      "tail": "\n"
+    }
+  }
+}

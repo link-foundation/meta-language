@@ -30,6 +30,9 @@ pub const CONFORMANCE_FIXTURE: &str = "parity/fixtures/issue-195-conformance/man
 pub const GENERATIVE_FIXTURE: &str = "parity/fixtures/issue-195-generative/manifest.json";
 /// The grammar importer corpus.
 pub const GRAMMAR_IMPORTER_FIXTURE: &str = "parity/fixtures/grammar-importers.json";
+/// The Links Notation compatibility matrix: releases, features and upstream
+/// regressions.
+pub const LINO_MATRIX_FIXTURE: &str = "parity/fixtures/lino-compatibility-matrix.json";
 
 struct Journal {
     digests: HashMap<&'static str, String>,

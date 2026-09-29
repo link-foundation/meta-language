@@ -695,6 +695,17 @@ fn read_quoted(
     let Some(empty_reference) = empty_reference else {
         return Some(end - start);
     };
+    let value = quoted_body(text, start, quote, count, end);
+    Some(if is_substantive_body(&value) {
+        end - start
+    } else {
+        empty_reference
+    })
+}
+
+/// The value of the reference opened by `count` delimiters at `start` and
+/// closed at `end`: a run of 2N delimiters inside is an escaped N.
+fn quoted_body(text: &[u8], start: usize, quote: u8, count: usize, end: usize) -> Vec<u8> {
     let mut value = Vec::new();
     let mut position = start + count;
     while position < end {
@@ -709,11 +720,19 @@ fn read_quoted(
         value.resize(value.len() + length - escaped - closes, quote);
         position += length;
     }
-    Some(if is_substantive_body(&value) {
-        end - start
-    } else {
-        empty_reference
-    })
+    value
+}
+
+/// The value of the `quoted_reference` node spanning `start..end` of `text`:
+/// the empty reference when the node is its opening run alone.
+pub fn quoted_reference_value(text: &str, start: usize, end: usize) -> String {
+    let bytes = text.as_bytes();
+    let quote = bytes[start];
+    let count = run_length(bytes, start, quote).min(end - start);
+    if end - start == count {
+        return String::new();
+    }
+    String::from_utf8_lossy(&quoted_body(bytes, start, quote, count, end)).into_owned()
 }
 
 fn run_length(text: &[u8], start: usize, quote: u8) -> usize {

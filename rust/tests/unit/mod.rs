@@ -66,6 +66,7 @@ mod language_profile;
 mod link_network;
 mod link_network_trivia;
 mod links_notation;
+mod lino_compatibility_matrix;
 mod lino_grammar;
 mod lino_grammar_scaling;
 mod lino_serialization;

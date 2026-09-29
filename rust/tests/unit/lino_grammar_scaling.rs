@@ -1,17 +1,23 @@
 //! Stack-safety and complexity guard for the built-in `LiNo` grammar, the
 //! counterpart of `js/tests/lino-grammar-scaling.test.js`.
 //!
-//! Each input below made an earlier Links Notation parser overflow the stack or
-//! read the document in superlinear time (the regressions relative-meta-logic
-//! tracks against links-notation): deep parentheses, long runs of unclosed
-//! groups or quotes, deep indentation, long delimiter runs and many failing
-//! lines. Every input is parsed at two sizes and the cost per byte compared: a
-//! linear parse keeps it flat and a quadratic one multiplies it by the size
-//! ratio.
+//! Each regression of `parity/fixtures/lino-compatibility-matrix.json` made an
+//! earlier Links Notation parser overflow the stack or read the document in
+//! superlinear time (the findings relative-meta-logic reported against
+//! links-notation): lone carriage returns, deep parentheses, long runs of
+//! unclosed groups or quotes, deep indentation, long delimiter runs and many
+//! failing lines. Every input is parsed at two sizes and the cost per byte
+//! compared: a linear parse keeps it flat and a quadratic one multiplies it by
+//! the size ratio.
 
+use std::fs;
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use meta_language::{LinkNetwork, ParseConfiguration};
+use serde_json::Value;
+
+use super::issue_195_observations::{record, Observation, LINO_MATRIX_FIXTURE};
 
 /// Ratio between the large and the small input.
 const SIZE_RATIO: usize = 8;
@@ -29,89 +35,61 @@ const ATTEMPTS: usize = 3;
 /// Deepest nesting links-notation 0.22 accepts.
 const LINO_MAX_DEPTH: usize = 64;
 
-struct ScalingCase {
-    name: &'static str,
-    units: usize,
-    source: fn(usize) -> String,
+fn matrix() -> Value {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join(LINO_MATRIX_FIXTURE);
+    serde_json::from_str(&fs::read_to_string(path).expect("matrix")).expect("matrix JSON")
 }
 
-fn deep_parentheses(units: usize) -> String {
-    format!("{}a{}\n", "(".repeat(units), ")".repeat(units))
+fn field<'a>(shape: &'a Value, key: &str) -> &'a str {
+    shape[key]
+        .as_str()
+        .unwrap_or_else(|| panic!("{key} is a string"))
 }
 
-fn unclosed_groups(units: usize) -> String {
-    format!("{}\n", "(a ".repeat(units))
+/// The source of a matrix input shape holding `units` units.
+fn shape_source(shape: &Value, units: usize) -> String {
+    match field(shape, "kind") {
+        "repeat" => format!(
+            "{}{}{}",
+            field(shape, "head"),
+            field(shape, "unit").repeat(units),
+            field(shape, "tail")
+        ),
+        "nest" => format!(
+            "{}{}{}{}",
+            field(shape, "open").repeat(units),
+            field(shape, "middle"),
+            field(shape, "close").repeat(units),
+            field(shape, "tail")
+        ),
+        "staircase" => {
+            let modulo =
+                usize::try_from(shape["modulo"].as_u64().expect("modulo")).expect("modulo fits");
+            let lines: Vec<String> = (0..units)
+                .map(|depth| format!("{}{}", " ".repeat(depth % modulo), field(shape, "text")))
+                .collect();
+            format!("{}\n", lines.join("\n"))
+        }
+        kind => panic!("unknown input shape {kind}"),
+    }
 }
 
-fn deep_indentation(units: usize) -> String {
-    let lines: Vec<String> = (0..units)
-        .map(|depth| format!("{}a", " ".repeat(depth % (LINO_MAX_DEPTH - 4))))
-        .collect();
-    format!("{}\n", lines.join("\n"))
+fn units(value: &Value) -> usize {
+    usize::try_from(value["units"].as_u64().expect("units")).expect("units fit")
 }
 
-fn indented_identifiers(units: usize) -> String {
-    "id:\n  a\n  b\n    c\n".repeat(units)
+fn observe(assertions: &[&str], test_name: &str) {
+    record(&Observation {
+        requirement_id: "I195-LINO-UPSTREAM-REGRESSIONS",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-lino-upstream-regressions",
+        fixture_file: LINO_MATRIX_FIXTURE,
+        assertions,
+        test_name,
+    });
 }
-
-fn long_delimiter_run(units: usize) -> String {
-    format!("{}x{}\n", "\"".repeat(units), "\"".repeat(units))
-}
-
-fn unclosed_quotes(units: usize) -> String {
-    format!("{}\n", "\"a ".repeat(units))
-}
-
-fn comments_and_groups(units: usize) -> String {
-    "a: b c # note\n  child (x y)\n".repeat(units)
-}
-
-fn failing_indented_lines(units: usize) -> String {
-    format!("x\n{}", "  (broken\n".repeat(units))
-}
-
-const LINO_SCALING_CASES: &[ScalingCase] = &[
-    ScalingCase {
-        name: "deep parentheses",
-        units: 500,
-        source: deep_parentheses,
-    },
-    ScalingCase {
-        name: "unclosed groups",
-        units: 500,
-        source: unclosed_groups,
-    },
-    ScalingCase {
-        name: "deep indentation",
-        units: 500,
-        source: deep_indentation,
-    },
-    ScalingCase {
-        name: "indented identifiers",
-        units: 250,
-        source: indented_identifiers,
-    },
-    ScalingCase {
-        name: "long delimiter run",
-        units: 2000,
-        source: long_delimiter_run,
-    },
-    ScalingCase {
-        name: "unclosed quotes",
-        units: 500,
-        source: unclosed_quotes,
-    },
-    ScalingCase {
-        name: "comments and groups",
-        units: 250,
-        source: comments_and_groups,
-    },
-    ScalingCase {
-        name: "failing indented lines",
-        units: 100,
-        source: failing_indented_lines,
-    },
-];
 
 /// The whole `LiNo` parse: the grammar CST and the links-notation semantics.
 fn parse(source: &str) -> LinkNetwork {
@@ -145,9 +123,11 @@ fn nanos_per_byte(source: &str) -> f64 {
 
 #[test]
 fn lino_grammar_reads_every_regression_input_in_linear_time() {
-    for case in LINO_SCALING_CASES {
-        let small = (case.source)(case.units);
-        let large = (case.source)(case.units * SIZE_RATIO);
+    let matrix = matrix();
+    for case in matrix["regressions"].as_array().expect("regressions") {
+        let name = field(case, "name");
+        let small = shape_source(&case["shape"], units(case));
+        let large = shape_source(&case["shape"], units(case) * SIZE_RATIO);
         let mut reports = Vec::new();
         let passed = (0..ATTEMPTS).any(|_| {
             let small_cost = nanos_per_byte(&small);
@@ -163,11 +143,14 @@ fn lino_grammar_reads_every_regression_input_in_linear_time() {
         });
         assert!(
             passed,
-            "{}: per-byte parse cost grew more than {MAX_PER_BYTE_GROWTH:.1}x:\n  {}",
-            case.name,
+            "{name}: per-byte parse cost grew more than {MAX_PER_BYTE_GROWTH:.1}x:\n  {}",
             reports.join("\n  ")
         );
     }
+    observe(
+        &["everyRegressionInputLossless", "everyRegressionInputLinear"],
+        "lino_grammar_reads_every_regression_input_in_linear_time",
+    );
 }
 
 fn has_error_node(network: &LinkNetwork) -> bool {
@@ -179,10 +162,17 @@ fn has_error_node(network: &LinkNetwork) -> bool {
 
 #[test]
 fn links_nested_deeper_than_the_official_limit_become_an_error_not_a_stack_overflow() {
-    let too_deep = deep_parentheses(100_000);
+    let matrix = matrix();
+    assert_eq!(matrix["maximumDepth"].as_u64(), Some(LINO_MAX_DEPTH as u64));
+    let excessive = &matrix["excessiveNesting"];
+    let too_deep = shape_source(&excessive["shape"], units(excessive));
     let network = parse(&too_deep);
     assert_eq!(network.reconstruct_text(), too_deep);
     assert!(has_error_node(&network));
-    let deepest = deep_parentheses(LINO_MAX_DEPTH);
+    let deepest = shape_source(&excessive["shape"], LINO_MAX_DEPTH);
     assert!(!has_error_node(&parse(&deepest)));
+    observe(
+        &["excessiveNestingIsErrorNode"],
+        "links_nested_deeper_than_the_official_limit_become_an_error_not_a_stack_overflow",
+    );
 }
