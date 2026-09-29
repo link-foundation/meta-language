@@ -1,5 +1,10 @@
 # Case Study: Issue #32 — Publish Steps Override Workflow-Level CARGO_TOKEN Fallback
 
+> **Historical case study.** This records the investigation of issue #32 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 The CI/CD pipeline's publish steps used a step-level `env` block that overrode the workflow-level `CARGO_TOKEN` fallback chain, breaking repositories that only configure `CARGO_REGISTRY_TOKEN` as a secret. Additionally, the `version-and-commit.rs` script lacked push retry logic, causing failures in multi-workflow repositories with concurrent release jobs.

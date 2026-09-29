@@ -1,0 +1,37 @@
+{
+  "description": "Statements the documentation check (js/scripts/issue-195-documentation.mjs) must reject while the ledger has open rows, and qualified statements it must accept. Each entry names the document kind it is audited as; rejected entries name the claim the check reports.",
+  "rejected": [
+    { "kind": "document", "claim": "overall-completion", "text": "Issue #195 is now complete." },
+    { "kind": "document", "claim": "overall-completion", "text": "All requirements are verified and the work is delivered." },
+    { "kind": "document", "claim": "fully-implemented", "text": "This release fully implements the vision." },
+    { "kind": "document", "claim": "external-production-parsers", "text": "Parsing runs without external production parsers." },
+    { "kind": "document", "claim": "external-production-parsers", "text": "Every catalog language is parsed by native merged grammars." },
+    { "kind": "document", "claim": "future-emitters", "text": "The interchange layer emits grammars back to every supported format." },
+    { "kind": "document", "claim": "approximate-round-trips", "text": "Imports support an approximate round trip through links." },
+    { "kind": "document", "claim": "approximate-round-trips", "text": "Lossy round trips are acceptable for exotic formats." },
+    { "kind": "document", "claim": "automatic-merge", "text": "The pipeline automatically merges every source grammar." },
+    { "kind": "document", "claim": "proof-preservation", "text": "Proofs are preserved by every translation." },
+    { "kind": "document", "claim": "full-language-translation", "text": "The translator translates every construct of JavaScript and Rust." },
+    { "kind": "document", "claim": "incomplete-scope-as-finished", "text": "The portable core is the complete contract." },
+    { "kind": "document", "claim": "full-pass-count", "text": "Acceptance: 219/219 requirements passing." },
+    { "kind": "document", "claim": "closing-directive", "text": "Fixes #195" },
+    { "kind": "document", "claim": "closing-directive", "text": "Closes https://github.com/link-foundation/meta-language/issues/195" },
+    { "kind": "case-study", "claim": "closing-directive", "text": "Resolves #195." },
+    { "kind": "contract", "claim": "overall-completion", "text": "The whole specification is delivered." },
+    { "kind": "ledger", "claim": "ledger-pass", "text": "# Ledger\n\nAcceptance result: **PASS**\n" }
+  ],
+  "accepted": [
+    { "kind": "document", "text": "Issue #195 stays open until every requirement is verified and delivered." },
+    { "kind": "document", "text": "Parsing without external production parsers is the target, not the current state." },
+    { "kind": "document", "text": "Native merged grammars for every language remain open ledger rows." },
+    { "kind": "document", "text": "Reverse conversion to every grammar format is planned." },
+    { "kind": "document", "text": "The specification forbids an approximate round trip." },
+    { "kind": "document", "text": "Proofs are not yet preserved." },
+    { "kind": "document", "text": "Acceptance: 226/266 requirements passing, so the work is incomplete." },
+    { "kind": "document", "text": "Issue #195 (stays open until every requirement is verified and delivered)." },
+    { "kind": "document", "text": "```\nFixes #195\n```" },
+    { "kind": "contract", "text": "Native merged grammars for every language are the vision this document specifies." },
+    { "kind": "case-study", "text": "The whole scope was delivered for issue #10." },
+    { "kind": "ledger", "text": "# Ledger\n\nAcceptance result: **FAIL**\n" }
+  ]
+}

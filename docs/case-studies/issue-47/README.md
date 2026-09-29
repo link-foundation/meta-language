@@ -1,5 +1,10 @@
 # Case Study: Issue #47 - Compare all competitors in all scopes; richest feature set
 
+> **Historical case study.** This records the investigation of issue #47 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 Issue [#47](https://github.com/link-foundation/meta-language/issues/47) asks

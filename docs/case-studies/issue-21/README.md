@@ -1,5 +1,10 @@
 # Case Study: Issue #21 - Integrate Best Practices to Prevent Repeating CI/CD Issues
 
+> **Historical case study.** This records the investigation of issue #21 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 This case study analyzes a series of CI/CD failures in the `browser-commander` repository (issues #27, #29, #31, #33) and identifies best practices that should be integrated into the `rust-ai-driven-development-pipeline-template` to prevent similar issues from occurring in derived repositories.

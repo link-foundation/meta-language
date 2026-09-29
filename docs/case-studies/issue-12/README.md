@@ -1,5 +1,10 @@
 # Issue 12: Delphi/Object Pascal Grammar
 
+> **Historical case study.** This records the investigation of issue #12 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 Issue #12 asked for a Pascal/Delphi grammar adapter, byte-exact
 reconstruction, gap documentation, a license record, and a decision on whether
 to fork for fuller Delphi coverage.

@@ -1,5 +1,10 @@
 # Case Study: Issue #29 - Unsupported Look-Ahead Regex in create-github-release.rs
 
+> **Historical case study.** This records the investigation of issue #29 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 The `scripts/create-github-release.rs` script used a regex pattern containing a positive look-ahead assertion `(?=...)`, which is not supported by Rust's `regex` crate. This caused a panic during GitHub release creation, preventing releases from completing even though crates.io publishing succeeded.

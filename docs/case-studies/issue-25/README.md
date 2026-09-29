@@ -1,5 +1,10 @@
 # Case Study: Issue #25 - version-and-commit.rs Checks Git Tags Instead of Crates.io
 
+> **Historical case study.** This records the investigation of issue #25 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 The `version-and-commit.rs` script used `git rev-parse` to check if a version tag existed, then exited early with `already_released=true` if it did. This created a permanent release pipeline failure loop when GitHub releases created tags without the crate being published to crates.io.

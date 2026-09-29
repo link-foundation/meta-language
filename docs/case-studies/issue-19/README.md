@@ -1,5 +1,10 @@
 # Case Study: Issue #19 - Supporting Both Single-Language and Multi-Language Repositories in CI/CD Scripts
 
+> **Historical case study.** This records the investigation of issue #19 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 This case study documents the investigation and resolution of a CI/CD pipeline failure that occurred when scripts designed for a multi-language repository structure (`./js/` subfolder) were used in a single-language repository. The root cause was identified as the `command-stream` library's implementation of `cd` as a virtual command that calls `process.chdir()`, permanently changing the Node.js process working directory.

@@ -1,5 +1,10 @@
 # Issue 38 Case Study: Decouple Documentation Deployment From Package Release Publication
 
+> **Historical case study.** This records the investigation of issue #38 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 Issue [#38](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/38) reported that Rust API documentation deployment was coupled to package release publication in `.github/workflows/release.yml`. A failed package or GitHub release caused `deploy-docs` to be skipped, even when the package build had already succeeded and documentation could still be generated.

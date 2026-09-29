@@ -1,5 +1,10 @@
 # Case Study: Issue #93 — Easy grammar extensibility and grammar inference
 
+> **Historical case study.** This records the investigation of issue #93 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 Issue [#93](https://github.com/link-foundation/meta-language/issues/93) asks to

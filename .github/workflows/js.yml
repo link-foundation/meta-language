@@ -135,6 +135,12 @@ jobs:
         run: npm run check:naming
         working-directory: js
 
+      - name: Check that the documentation, the pull request description and the release reports agree with the requirement ledger
+        run: npm run check:documentation -- --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Verify npm package contents
         run: node ../scripts/with-cache-cleanup.mjs --event package -- npm pack --dry-run
         working-directory: js

@@ -15,11 +15,11 @@ description, an interactive WebAssembly demo, and the full
 
 ## Vision
 
-[`docs/vision.md`](docs/vision.md) is the authoritative specification of what
-meta-language is for and how it is built: one common language of links for
+[`docs/vision.md`](docs/vision.md) is the authoritative specification of the
+target meta-language is built toward: one common language of links for
 grammars, syntax trees, semantics and transformations, native merged grammars
 for every language, and full JavaScript, Rust, Lean and Rocq translation. It
-describes the target, not the current state; the generated
+describes that target, not the current state; the generated
 [requirement ledger](docs/issue-195-requirement-ledger.md) reports what is
 verified today. Where another document disagrees with the vision, the vision is
 the contract.

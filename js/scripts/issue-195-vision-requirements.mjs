@@ -89,6 +89,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-VISION-CONTRADICTION-AUDIT',
     area: 'vision-and-traceability',
     specification: 'documentation-consistency',
+    fixture: 'parity/documentation/claim-fixtures.json',
     construct: 'repository audit for statements that contradict the specification',
     expectedBehavior:
       'A check reads every documentation file, package README, changelog fragment and case study. It fails when one of them presents future emitters, approximate round trips, external production parsers or an incomplete scope as the finished contract, and it fails when a case study lacks the historical label.',
@@ -98,7 +99,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'caseStudiesLabeledHistorical',
       'contradictionFixturesRejected',
     ],
-    tooling: null,
+    tooling: ['js/scripts/issue-195-documentation.mjs', 'js/scripts/check-documentation.mjs'],
   },
   {
     id: 'I195-VISION-FOUNDATION-NEUTRAL',
@@ -647,6 +648,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-DOCUMENTATION-RECONCILED',
     area: 'documentation-consistency',
     specification: 'documentation-consistency',
+    fixture: 'parity/documentation/claim-fixtures.json',
     construct: 'README, vision, register, ledger, PR body and releases agree with the evidence',
     expectedBehavior:
       'A check compares the README, docs/vision.md, the source register, the generated ledger, the pull request description and the release reports. It fails when any of them states or implies completion while a ledger row fails, or carries an issue-closing directive before every requirement is verified and delivered.',
@@ -656,7 +658,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'releaseReportsConsistentWithLedger',
       'noClosingDirectiveBeforeDelivery',
     ],
-    tooling: null,
+    tooling: ['js/scripts/issue-195-documentation.mjs', 'js/scripts/check-documentation.mjs'],
   },
 ]);
 

@@ -1,5 +1,10 @@
 # Case Study: Issue #3 - Top-10 languages and mixed-mode txt/Markdown/HTML
 
+> **Historical case study.** This records the investigation of issue #3 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 Issue [#3](https://github.com/link-foundation/meta-language/issues/3) asked for

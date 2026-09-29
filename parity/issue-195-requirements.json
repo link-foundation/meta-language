@@ -1559,9 +1559,9 @@
       "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
-      "path": "docs/vision.md",
-      "selector": "#documentation-consistency: repository audit for statements that contradict the specification",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "parity/documentation/claim-fixtures.json",
+      "selector": "docs/vision.md#documentation-consistency: repository audit for statements that contradict the specification",
+      "sha256": "c12bf9798fa53447f138e10f146e06694aab4c96ff7c8a28bf93a44c3da89776"
     },
     "planned:repository-directive:i195-vision-foundation-neutral": {
       "path": "docs/vision.md",
@@ -1759,9 +1759,9 @@
       "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:repository-directive:i195-documentation-reconciled": {
-      "path": "docs/vision.md",
-      "selector": "#documentation-consistency: README, vision, register, ledger, PR body and releases agree with the evidence",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "parity/documentation/claim-fixtures.json",
+      "selector": "docs/vision.md#documentation-consistency: README, vision, register, ledger, PR body and releases agree with the evidence",
+      "sha256": "c12bf9798fa53447f138e10f146e06694aab4c96ff7c8a28bf93a44c3da89776"
     }
   },
   "atomicRequirements": [
@@ -15313,7 +15313,10 @@
         "tooling"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "tooling": [
+          "js/scripts/issue-195-documentation.mjs",
+          "js/scripts/check-documentation.mjs"
+        ]
       },
       "verifications": [
         {
@@ -15336,7 +15339,7 @@
       "traceability": {
         "specification": "docs/vision.md#documentation-consistency",
         "inventories": [
-          "docs/vision.md"
+          "parity/documentation/claim-fixtures.json"
         ],
         "sources": [
           "acceptanceGate",
@@ -26427,7 +26430,10 @@
         "tooling"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "tooling": [
+          "js/scripts/issue-195-documentation.mjs",
+          "js/scripts/check-documentation.mjs"
+        ]
       },
       "verifications": [
         {
@@ -26450,7 +26456,7 @@
       "traceability": {
         "specification": "docs/vision.md#documentation-consistency",
         "inventories": [
-          "docs/vision.md"
+          "parity/documentation/claim-fixtures.json"
         ],
         "sources": [
           "acceptanceGate",
