@@ -7,6 +7,12 @@ import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import { DOWNSTREAM_CONSUMERS } from '../scripts/issue-195-downstream.mjs';
+import {
+  FINITE_EVIDENCE_QUALIFIER,
+  renderIssue195Markdown,
+  universalClaimProblems,
+  universalClaimRequirements,
+} from '../scripts/issue-195-acceptance-lib.mjs';
 import { evidenceGroupFor } from '../scripts/issue-195-evidence-plan.mjs';
 import {
   AREA_SPECIFICATIONS,
@@ -110,6 +116,38 @@ test('docs/vision.md states what finite tests establish', () => {
   assert.match(section, /never present a finite sample as a universal result/u);
   observe('I195-ACCEPTANCE-FINITE-CLAIMS-DOCUMENTED', ['finiteEvidenceLimitsDocumented'],
     'docs/vision.md states what finite tests establish');
+});
+
+test('the generated ledger presents universal claims only as finite evidence unless proved', () => {
+  const universal = universalClaimRequirements(manifest);
+  for (const id of ['I195-INTERCHANGE-REVERSE-CONVERSION', 'I195-SEMANTICS-FAITHFUL-BEHAVIOR', 'I195-SEMANTICS-PROOF-PRESERVATION', 'I195-TRANSLATE-rust-to-lean']) {
+    assert.ok(universal.includes(id), `${id} states a universal claim`);
+  }
+  assert.ok(!universal.includes('I195-CST-rust'), 'byte-exact reconstruction of every alias path is a finite claim');
+  assert.ok(!universal.includes('I195-ACCEPTANCE-GATE-MUTATIONS'), 'rejecting each listed mutation is a finite claim');
+  const report = {
+    commit: '0'.repeat(40),
+    checkpoint: 'pre-merge',
+    generatedAt: '2026-01-01T00:00:00.000Z',
+    passed: true,
+    summary: { passed: manifest.atomicRequirements.length, requirements: manifest.atomicRequirements.length, verificationCells: 1 },
+    requirements: manifest.atomicRequirements.map(({ id, area }) => ({ id, area, passed: true, cells: [] })),
+  };
+  const markdown = renderIssue195Markdown(manifest, report);
+  assert.deepEqual(universalClaimProblems(manifest, markdown), []);
+  assert.ok(markdown.includes(`| \`I195-INTERCHANGE-REVERSE-CONVERSION\` | grammar-interchange | ${FINITE_EVIDENCE_QUALIFIER} |`));
+  assert.ok(markdown.includes('| `I195-CST-rust` | default-cst | PASS |'));
+
+  // A finite sample presented as universal is rejected three ways.
+  const bare = markdown.replace(`\`I195-SEMANTICS-FAITHFUL-BEHAVIOR\` | full-semantics | ${FINITE_EVIDENCE_QUALIFIER} |`, '`I195-SEMANTICS-FAITHFUL-BEHAVIOR` | full-semantics | PASS |');
+  assert.ok(bare !== markdown, 'the fault replaced the qualified row');
+  assert.match(universalClaimProblems(manifest, bare).join('\n'), /I195-SEMANTICS-FAITHFUL-BEHAVIOR states a universal claim but is shown as a bare PASS/u);
+  const boasted = markdown.replace('## Enforcement status', 'The round trip is semantically equivalent for every grammar.\n\n## Enforcement status');
+  assert.match(universalClaimProblems(manifest, boasted).join('\n'), /universal claim "semantically equivalent" outside/u);
+  const unscoped = markdown.split('\n## Finite evidence and universal claims')[0];
+  assert.match(universalClaimProblems(manifest, unscoped).join('\n'), /does not state what finite tests establish/u);
+  observe('I195-ACCEPTANCE-FINITE-CLAIMS-DOCUMENTED', ['universalClaimsRequireProofs'],
+    'the generated ledger presents universal claims only as finite evidence unless proved');
 });
 
 test('every ledger row traces to its specification, inventories, sources, CI and packages', () => {

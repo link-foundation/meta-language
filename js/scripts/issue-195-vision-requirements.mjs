@@ -122,6 +122,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-DEPENDENCY-INVENTORY',
     area: 'dependency-freshness',
     specification: 'dependencies',
+    fixture: 'parity/dependency-inventory.json',
     construct: 'inventory of every dependency, toolchain, action and image at its current stable release',
     expectedBehavior:
       'docs/dependency-audit.md, dated, lists every runtime, development, build and optional dependency, lockfile resolution, vendored grammar asset, generator, toolchain, workflow action and pinned build image with its current stable release. A check fails when a retained item is behind that release without a recorded compatibility reason.',
@@ -547,6 +548,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-DOWNSTREAM-CONSUMER-MATRIX',
     area: 'downstream-consumers',
     specification: 'downstream-consumers',
+    fixture: 'docs/downstream-consumers.md',
     construct: 'consumer matrix for relative-meta-logic and formal-ai',
     expectedBehavior:
       'docs/downstream-consumers.md maps every requirement and actual usage of link-foundation/relative-meta-logic and link-assistant/formal-ai to meta-language capabilities, ledger rows and tests, and a check fails when a mapped row or test does not exist.',

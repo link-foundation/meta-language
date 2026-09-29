@@ -1569,9 +1569,9 @@
       "sha256": "d467454d4c210687750d4ab2db7856d31ce18bc599c195e7ea37a15a3c811413"
     },
     "planned:repository-directive:i195-dependency-inventory": {
-      "path": "docs/vision.md",
-      "selector": "#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "parity/dependency-inventory.json",
+      "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
+      "sha256": "2b2971d4f6f47584f77fdc347367e37d641bf63984cbe95a9006639345398adb"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1719,9 +1719,9 @@
       "sha256": "229acd49fc222aea49610b1f5fd1581d78bc3f57df66a0356edfed5d7443805c"
     },
     "planned:repository-directive:i195-downstream-consumer-matrix": {
-      "path": "docs/vision.md",
-      "selector": "#downstream-consumers: consumer matrix for relative-meta-logic and formal-ai",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "docs/downstream-consumers.md",
+      "selector": "docs/vision.md#downstream-consumers: consumer matrix for relative-meta-logic and formal-ai",
+      "sha256": "418e4ca850984e308b4b5534296d1ec59ecde2df111663f723ef1b0dea80b4d9"
     },
     "planned:repository-directive:i195-downstream-rml-workloads": {
       "path": "docs/vision.md",
@@ -15224,7 +15224,7 @@
       "traceability": {
         "specification": "docs/vision.md#dependencies",
         "inventories": [
-          "docs/vision.md"
+          "parity/dependency-inventory.json"
         ],
         "sources": [
           "acceptanceGate",
@@ -15403,7 +15403,7 @@
       "traceability": {
         "specification": "docs/vision.md#downstream-consumers",
         "inventories": [
-          "docs/vision.md"
+          "docs/downstream-consumers.md"
         ],
         "sources": [
           "acceptanceGate",

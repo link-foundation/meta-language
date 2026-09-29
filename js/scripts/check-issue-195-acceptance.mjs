@@ -10,6 +10,7 @@ import {
   evaluateIssue195Acceptance,
   renderIssue195Markdown,
   runIssue195GateFaultInjections,
+  universalClaimProblems,
   validateIssue195Manifest,
 } from './issue-195-acceptance-lib.mjs';
 
@@ -146,6 +147,9 @@ if (jsonReportPath) {
   await writeFile(resolved, stableJson(report));
 }
 const markdown = renderIssue195Markdown(manifest, report);
+const claimProblems = universalClaimProblems(manifest, markdown);
+for (const problem of claimProblems) console.error(`issue-195: ${problem}`);
+if (claimProblems.length) process.exit(1);
 const markdownReportPath = option('--markdown-report');
 if (markdownReportPath) {
   const resolved = path.resolve(root, markdownReportPath);
