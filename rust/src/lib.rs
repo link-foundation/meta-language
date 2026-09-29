@@ -3,6 +3,7 @@ pub mod api_styles;
 pub mod benchmark;
 mod binary_format;
 mod builtin_grammar;
+mod concept_distinctions;
 mod concept_ontology;
 mod concept_records;
 pub mod configuration;
@@ -60,6 +61,12 @@ pub use api_styles::{
     API_OPERATIONS, ApiOperation, ApiOperationEntry, ApiStyle, ApiStyleCell, ApiStyleFixture,
     FluentNetworkApi, FluentPipeline, LinkCliSubstitution, LinkCliSubstitutionError,
     LinkCliSubstitutionKind, run_api_style_fixture,
+};
+pub use concept_distinctions::{
+    ConceptCorrespondence, ConceptDistinctionProblem, CorrespondenceRelation, PrecedenceUse,
+    REQUIRED_CONCEPT_DISTINCTIONS, REQUIRED_FOUNDATION_DISTINCTIONS, RequiredDistinction,
+    check_concept_distinctions, concept_correspondence, concept_correspondence_in,
+    grammar_precedence_concepts, source_meanings_in,
 };
 pub use concept_ontology::{
     ConceptOntologyImportReport, ConceptOntologySeedReport, ConceptRecordSeedReport,

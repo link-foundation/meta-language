@@ -1,0 +1,444 @@
+{
+  "description": "Concept correspondences and distinctions both runtimes must agree on (requirement I195-GRAMMAR-CONCEPT-DISTINCTIONS): spellings share a concept only when each means exactly one concept and it is the same one; lookalike spellings with different meanings stay distinct; ordered and unordered choice, lexical and syntactic precedence, binding and assignment, and the foundation models are required distinctions.",
+  "correspondences": [
+    {
+      "first": {
+        "source": "bnf",
+        "name": "|"
+      },
+      "second": {
+        "source": "lark",
+        "name": "|"
+      },
+      "relation": "shared",
+      "shared": "grammar.unordered-choice",
+      "meanings": null,
+      "justified": true,
+      "correspondence": null,
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "abnf",
+        "name": "/"
+      },
+      "second": {
+        "source": "antlr",
+        "name": "|"
+      },
+      "relation": "shared",
+      "shared": "grammar.unordered-choice",
+      "meanings": null,
+      "justified": true,
+      "correspondence": null,
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "tree-sitter",
+        "name": "token(prec(n, e))"
+      },
+      "second": {
+        "source": "lark",
+        "name": "TERMINAL.n"
+      },
+      "relation": "shared",
+      "shared": "grammar.lexical-precedence",
+      "meanings": null,
+      "justified": true,
+      "correspondence": null,
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "tree-sitter",
+        "name": "prec(n, e)"
+      },
+      "second": {
+        "source": "bison",
+        "name": "%left"
+      },
+      "relation": "shared",
+      "shared": "grammar.syntactic-precedence",
+      "meanings": null,
+      "justified": true,
+      "correspondence": null,
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "Lean",
+        "name": "Int64"
+      },
+      "second": {
+        "source": "Rust",
+        "name": "i64"
+      },
+      "relation": "shared",
+      "shared": "integer-model.fixed-width-integer",
+      "meanings": null,
+      "justified": true,
+      "correspondence": null,
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "Python",
+        "name": "="
+      },
+      "second": {
+        "source": "Rust",
+        "name": "let"
+      },
+      "within": "binding",
+      "relation": "shared",
+      "shared": "binding",
+      "meanings": null,
+      "justified": true,
+      "correspondence": null,
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "pest",
+        "name": "|"
+      },
+      "second": {
+        "source": "bnf",
+        "name": "|"
+      },
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "grammar.ordered-choice",
+        "grammar.unordered-choice"
+      ],
+      "justified": true,
+      "correspondence": null,
+      "lookalike": true
+    },
+    {
+      "first": {
+        "source": "peg",
+        "name": "/"
+      },
+      "second": {
+        "source": "abnf",
+        "name": "/"
+      },
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "grammar.ordered-choice",
+        "grammar.unordered-choice"
+      ],
+      "justified": true,
+      "correspondence": null,
+      "lookalike": true
+    },
+    {
+      "first": {
+        "source": "tree-sitter",
+        "name": "token(prec(n, e))"
+      },
+      "second": {
+        "source": "tree-sitter",
+        "name": "prec(n, e)"
+      },
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "grammar.lexical-precedence",
+        "grammar.syntactic-precedence"
+      ],
+      "justified": true,
+      "correspondence": null,
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "Rust",
+        "name": "panic!"
+      },
+      "second": {
+        "source": "Lean",
+        "name": "panic!"
+      },
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "effect-model.abort",
+        "effect-model.panic-with-default-value"
+      ],
+      "justified": true,
+      "correspondence": "conditional",
+      "lookalike": true
+    },
+    {
+      "first": {
+        "source": "Lean",
+        "name": "Prop"
+      },
+      "second": {
+        "source": "Rocq",
+        "name": "Prop"
+      },
+      "within": "universe-model",
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "universe-model.non-cumulative-sort-hierarchy",
+        "universe-model.cumulative-type-hierarchy"
+      ],
+      "justified": true,
+      "correspondence": "conditional",
+      "lookalike": true
+    },
+    {
+      "first": {
+        "source": "Lean",
+        "name": "Nat"
+      },
+      "second": {
+        "source": "Lean",
+        "name": "Int"
+      },
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "integer-model.natural-number",
+        "integer-model.unbounded-integer"
+      ],
+      "justified": true,
+      "correspondence": "embedding",
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "Rust",
+        "name": "arithmetic with overflow checks"
+      },
+      "second": {
+        "source": "Lean",
+        "name": "UInt64 arithmetic"
+      },
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "overflow-model.abort",
+        "overflow-model.wrapping"
+      ],
+      "justified": true,
+      "correspondence": "conditional",
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "meta-language",
+        "name": "bounded property check"
+      },
+      "second": {
+        "source": "Lean",
+        "name": "theorem"
+      },
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "proof-system.bounded-property-check",
+        "proof-system.lean-kernel"
+      ],
+      "justified": true,
+      "correspondence": null,
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "Rocq",
+        "name": "Theorem"
+      },
+      "second": {
+        "source": "Lean",
+        "name": "theorem"
+      },
+      "relation": "distinct",
+      "shared": null,
+      "meanings": [
+        "proof-system.rocq-kernel",
+        "proof-system.lean-kernel"
+      ],
+      "justified": false,
+      "correspondence": "restatement",
+      "lookalike": false
+    },
+    {
+      "first": {
+        "source": "Python",
+        "name": "="
+      },
+      "second": {
+        "source": "Rust",
+        "name": "let"
+      },
+      "relation": "ambiguous",
+      "shared": null,
+      "meanings": null,
+      "justified": false,
+      "correspondence": null,
+      "lookalike": true
+    },
+    {
+      "first": {
+        "source": "Rocq",
+        "name": "Prop"
+      },
+      "second": {
+        "source": "Lean",
+        "name": "Prop"
+      },
+      "relation": "ambiguous",
+      "shared": null,
+      "meanings": null,
+      "justified": false,
+      "correspondence": null,
+      "lookalike": true
+    },
+    {
+      "first": {
+        "source": "bnf",
+        "name": "/"
+      },
+      "second": {
+        "source": "abnf",
+        "name": "/"
+      },
+      "relation": "unknown",
+      "shared": null,
+      "meanings": null,
+      "justified": false,
+      "correspondence": null,
+      "lookalike": false
+    }
+  ],
+  "lookalikeGrammars": [
+    {
+      "format": "pest",
+      "source": "a = { \"x\" | \"y\" }",
+      "concept": "grammar.ordered-choice"
+    },
+    {
+      "format": "bnf",
+      "source": "<a> ::= \"x\" | \"y\"",
+      "concept": "grammar.unordered-choice"
+    },
+    {
+      "format": "abnf",
+      "source": "a = \"x\" / \"y\"",
+      "concept": "grammar.unordered-choice"
+    }
+  ],
+  "precedence": {
+    "grammar": {
+      "name": "precedence",
+      "rules": {
+        "expression": {
+          "type": "PREC_LEFT",
+          "value": 2,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "keyword"
+              },
+              {
+                "type": "STRING",
+                "value": "+"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              }
+            ]
+          }
+        },
+        "keyword": {
+          "type": "TOKEN",
+          "content": {
+            "type": "PREC",
+            "value": 1,
+            "content": {
+              "type": "STRING",
+              "value": "if"
+            }
+          }
+        },
+        "identifier": {
+          "type": "TOKEN",
+          "content": {
+            "type": "PATTERN",
+            "value": "[a-z]+"
+          }
+        },
+        "operator": {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "TOKEN",
+              "content": {
+                "type": "PREC",
+                "value": 3,
+                "content": {
+                  "type": "STRING",
+                  "value": "=="
+                }
+              }
+            },
+            {
+              "type": "PREC_DYNAMIC",
+              "value": 1,
+              "content": {
+                "type": "SYMBOL",
+                "name": "expression"
+              }
+            },
+            {
+              "type": "PREC_RIGHT",
+              "value": 1,
+              "content": {
+                "type": "SYMBOL",
+                "name": "identifier"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "uses": [
+      {
+        "rule": "expression",
+        "label": "prec_left=2",
+        "concept": "grammar.syntactic-precedence"
+      },
+      {
+        "rule": "keyword",
+        "label": "prec=1",
+        "concept": "grammar.lexical-precedence"
+      },
+      {
+        "rule": "operator",
+        "label": "prec=3",
+        "concept": "grammar.lexical-precedence"
+      },
+      {
+        "rule": "operator",
+        "label": "prec_dynamic=1",
+        "concept": "grammar.syntactic-precedence"
+      },
+      {
+        "rule": "operator",
+        "label": "prec_right=1",
+        "concept": "grammar.syntactic-precedence"
+      }
+    ]
+  }
+}

@@ -109,6 +109,10 @@
           "name": "/"
         },
         {
+          "source": "pest",
+          "name": "|"
+        },
+        {
           "source": "meta-language",
           "name": "ordered choice"
         },
@@ -809,6 +813,82 @@
       "formerNames": [
         "rule-kind-token"
       ]
+    },
+    {
+      "id": "grammar.lexical-precedence",
+      "phrase": "lexical precedence",
+      "role": "concept",
+      "definition": "A priority that decides which token the lexer produces when several token rules match the same input.",
+      "constraints": [
+        "Lexical precedence orders token rules; it never decides between parse alternatives.",
+        "It stays distinct from syntactic precedence even where both are spelled alike, as prec inside and outside token in tree-sitter.",
+        "Grammar formats without lexical precedence keep it as a fidelity note."
+      ],
+      "sourceAliases": [
+        {
+          "source": "tree-sitter",
+          "name": "token(prec(n, e))"
+        },
+        {
+          "source": "lark",
+          "name": "TERMINAL.n"
+        },
+        {
+          "source": "antlr",
+          "name": "lexer rule order"
+        },
+        {
+          "source": "meta-language",
+          "name": "lexical precedence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.syntactic-precedence",
+      "phrase": "syntactic precedence",
+      "role": "concept",
+      "definition": "A priority and associativity that decide between parse alternatives when a grammar is ambiguous.",
+      "constraints": [
+        "Syntactic precedence resolves conflicts between parse alternatives; it never decides which token the lexer produces.",
+        "It stays distinct from lexical precedence even where both are spelled alike, as prec inside and outside token in tree-sitter.",
+        "Grammar formats without syntactic precedence keep it as a fidelity note."
+      ],
+      "sourceAliases": [
+        {
+          "source": "tree-sitter",
+          "name": "prec(n, e)"
+        },
+        {
+          "source": "tree-sitter",
+          "name": "prec.left(n, e)"
+        },
+        {
+          "source": "tree-sitter",
+          "name": "prec.right(n, e)"
+        },
+        {
+          "source": "lark",
+          "name": "rule.n"
+        },
+        {
+          "source": "bison",
+          "name": "%left"
+        },
+        {
+          "source": "bison",
+          "name": "%right"
+        },
+        {
+          "source": "bison",
+          "name": "%nonassoc"
+        },
+        {
+          "source": "meta-language",
+          "name": "syntactic precedence"
+        }
+      ],
+      "formerNames": []
     },
     {
       "id": "grammar.grammar",

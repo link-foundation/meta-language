@@ -863,6 +863,13 @@
         "integer-model.unbounded-integer"
       ],
       "reason": "Both are unbounded, but natural subtraction truncates at zero where integer subtraction is exact."
+    },
+    {
+      "models": [
+        "universe-model.non-cumulative-sort-hierarchy",
+        "universe-model.cumulative-type-hierarchy"
+      ],
+      "reason": "Lean and Rocq both spell Prop and Type, but only the Rocq hierarchy is cumulative, so a Rocq type used in a larger universe needs an explicit lift in Lean."
     }
   ],
   "languages": [

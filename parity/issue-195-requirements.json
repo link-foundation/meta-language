@@ -1566,7 +1566,7 @@
     "planned:repository-directive:i195-vision-foundation-neutral": {
       "path": "parity/foundation-models.json",
       "selector": "docs/vision.md#foundation-neutrality: foundation-neutral shared concepts",
-      "sha256": "d467454d4c210687750d4ab2db7856d31ce18bc599c195e7ea37a15a3c811413"
+      "sha256": "8725245ca39348e4331897e85659325c055a53e4fea1f2635c14e457cc45320b"
     },
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
@@ -1609,9 +1609,9 @@
       "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
     },
     "planned:repository-directive:i195-grammar-concept-distinctions": {
-      "path": "docs/vision.md",
-      "selector": "#grammar-feature-union: preserved semantic distinctions between grammar concepts",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "parity/fixtures/concept-distinctions.json",
+      "selector": "docs/vision.md#grammar-feature-union: preserved semantic distinctions between grammar concepts",
+      "sha256": "682d1bb95106edadd7bede5367d1f8ff8e5160a8265647d9717e505f90c5238b"
     },
     "planned:repository-directive:i195-grammar-lossless-trees": {
       "path": "parity/language-grammar-inventory.json",
@@ -1691,12 +1691,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "faacb470ee124d3d967114f4a0c63da2751ab9380a18b58b72ecc8d7ad3e9fff"
+      "sha256": "1020b29f671aff552a93db537c0571975cb5d780f4769f012d439e3149031d24"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "faacb470ee124d3d967114f4a0c63da2751ab9380a18b58b72ecc8d7ad3e9fff"
+      "sha256": "1020b29f671aff552a93db537c0571975cb5d780f4769f012d439e3149031d24"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -17263,8 +17263,16 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/concept-distinctions.js",
+          "js/src/concept-records.js",
+          "js/src/foundation-models.js"
+        ],
+        "rust": [
+          "rust/src/concept_distinctions.rs",
+          "rust/src/concept_records.rs",
+          "rust/src/foundation_models.rs"
+        ]
       },
       "verifications": [
         {
@@ -17301,7 +17309,7 @@
       "traceability": {
         "specification": "docs/vision.md#grammar-feature-union",
         "inventories": [
-          "docs/vision.md"
+          "parity/fixtures/concept-distinctions.json"
         ],
         "sources": [
           "acceptanceGate",

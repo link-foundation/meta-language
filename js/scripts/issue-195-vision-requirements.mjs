@@ -239,12 +239,13 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-GRAMMAR-CONCEPT-DISTINCTIONS',
     area: 'native-grammar',
     specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/concept-distinctions.json',
     construct: 'preserved semantic distinctions between grammar concepts',
     expectedBehavior:
       'Concepts are shared only under a justified one-to-one correspondence of meaning. Ordered and unordered choice, lexical and syntactic precedence, integer and overflow models, binding rules, effects and proof universes stay distinct, and fixtures with the same spelling but different meanings are not merged.',
     assertions: ['sharedOnlyWithJustifiedCorrespondence', 'requiredDistinctionsPreserved', 'lookalikeConceptsKeptDistinct'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/src/concept-distinctions.js', 'js/src/concept-records.js', 'js/src/foundation-models.js'],
+    rust: ['rust/src/concept_distinctions.rs', 'rust/src/concept_records.rs', 'rust/src/foundation_models.rs'],
   },
   {
     id: 'I195-GRAMMAR-LOSSLESS-TREES',

@@ -6,6 +6,7 @@ export * from './grammar-emitters.js';
 export * from './graphql-adapter.js';
 export * from './language-catalog.js';
 export * from './concept-records.js';
+export * from './concept-distinctions.js';
 export * from './language-profile.js';
 export * from './language-support.js';
 export * from './network.js';

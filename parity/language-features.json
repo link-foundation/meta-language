@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "issue": 163,
   "relatedIssues": [195],
-  "updated": "2026-09-23",
+  "updated": "2026-09-29",
   "operationFamilies": [
     "parse",
     "query",
@@ -658,6 +658,26 @@
         "evidence": [
           "js/src/primitives.js",
           "js/tests/core.test.js"
+        ]
+      }
+    },
+    {
+      "id": "concept-distinctions",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/concept_distinctions.rs",
+          "rust/tests/unit/concept_distinctions.rs",
+          "parity/fixtures/concept-distinctions.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/concept-distinctions.js",
+          "js/tests/concept-distinctions.test.js",
+          "parity/fixtures/concept-distinctions.json"
         ]
       }
     }

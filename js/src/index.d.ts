@@ -341,6 +341,52 @@ export function insertConceptRecord(
   nameOrRecord: string | ConceptRecord,
 ): { concept: LinkId; links: number };
 
+/** Two concepts that must never be merged, with the reason. */
+export interface RequiredDistinction {
+  readonly concepts: readonly [string, string];
+  readonly reason: string;
+}
+
+export type CorrespondenceRelation = 'shared' | 'distinct' | 'ambiguous' | 'unknown';
+
+/** The relation between two source spellings and what justifies it. */
+export interface ConceptCorrespondence {
+  relation: CorrespondenceRelation;
+  first: string[];
+  second: string[];
+  shared: string | null;
+  justification: string | null;
+  correspondence: string | null;
+}
+
+export interface ConceptDistinctionProblem {
+  kind: string;
+  subject: string;
+  message: string;
+}
+
+export interface ConceptCorrespondenceOptions {
+  within?: string;
+  records?: readonly ConceptRecord[];
+  register?: unknown;
+}
+
+/** One use of precedence in a grammar and the concept it expresses. */
+export interface PrecedenceUse {
+  rule: string;
+  label: string;
+  concept: 'grammar.lexical-precedence' | 'grammar.syntactic-precedence';
+}
+
+export const REQUIRED_CONCEPT_DISTINCTIONS: readonly RequiredDistinction[];
+export const REQUIRED_FOUNDATION_DISTINCTIONS: readonly (readonly [string, string])[];
+export function sourceMeanings(alias: SourceAlias, options?: ConceptCorrespondenceOptions): string[];
+export function conceptCorrespondence(first: SourceAlias, second: SourceAlias, options?: ConceptCorrespondenceOptions): ConceptCorrespondence;
+export function checkConceptDistinctions(records?: readonly ConceptRecord[], register?: unknown): ConceptDistinctionProblem[];
+/** The concept a grammar expression denotes; a choice is ordered or unordered choice. */
+export function grammarExprConceptId(expression: { kind: string; ordered?: boolean }): string;
+export function grammarPrecedenceConcepts(grammar: Grammar): PrecedenceUse[];
+
 /** Node kind and field names of a default grammar; `fields` starts at field id 1. */
 export interface GrammarNames {
   nodeKinds: string[];
