@@ -25,11 +25,26 @@ import { annotateNaturalLanguage } from './natural-language.js';
 import { formatLinoReadings, insertLinoSemantics, linoReading } from './lino-semantics.js';
 import { grammarProvenance } from './language-catalog.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
+import {
+  CONCEPT_RECORDS,
+  FORMER_CONCEPT_ID_VOCABULARY,
+  conceptRecord,
+  currentConceptId,
+  insertConceptRecord,
+} from './concept-records.js';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 // The type-point prefix of an external concept identifier vocabulary, as in Rust.
 const EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-identifier:';
+const FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-id:';
+
+function externalVocabularyFromTerm(term) {
+  for (const prefix of [EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX, FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX]) {
+    if (term?.startsWith(prefix)) return term.slice(prefix.length);
+  }
+  return undefined;
+}
 
 export class LinkNetwork {
   constructor() {
@@ -250,6 +265,70 @@ export class LinkNetwork {
   /** Seeds the Hawaii statehood worked example shared with the Rust runtime. */
   seedStatehoodWorkedExample() {
     return seedStatehoodWorkedExample(this);
+  }
+
+  /**
+   * Assigns the concept record named `nameOrRecord` (an identity, a former
+   * name or a record): its concept link, definition, English phrase, source
+   * aliases and former names. Returns the concept link id.
+   */
+  insertConceptRecord(nameOrRecord) {
+    return insertConceptRecord(this, nameOrRecord).concept;
+  }
+
+  /** Assigns every concept record and returns the counts of concepts and links added. */
+  seedConceptRecords() {
+    let links = 0;
+    for (const record of CONCEPT_RECORDS) links += insertConceptRecord(this, record).links;
+    return { concepts: CONCEPT_RECORDS.length, links };
+  }
+
+  /**
+   * Merges the concept, expression and alias links of the network `source`
+   * into this one, as Rust's `import_concept_ontology`. A concept imported
+   * under a former identity is renamed to its current identity and keeps the
+   * former one as a meta-language alias, and a concept with a record is
+   * assigned the record instead of the imported definition.
+   */
+  importConceptOntology(source) {
+    const concepts = new Map();
+    const report = { concepts: 0, assigned: 0, renamed: 0, aliasLinks: 0, syntaxMappings: 0 };
+    for (const link of source.links()) {
+      const metadata = link.metadata();
+      if (metadata.linkType !== LinkType.Concept || metadata.term === undefined) continue;
+      const id = currentConceptId(metadata.term);
+      const record = conceptRecord(id);
+      const concept = record
+        ? insertConceptRecord(this, record).concept
+        : this.internConcept(id, metadata.definition);
+      if (record) report.assigned += 1;
+      if (id !== metadata.term) {
+        this._insertConceptAliasLink(concept, FORMER_CONCEPT_ID_VOCABULARY, metadata.term);
+        report.renamed += 1;
+      }
+      concepts.set(link.id().asU64(), [concept, id]);
+      report.concepts += 1;
+    }
+    for (const link of source.links()) {
+      const metadata = link.metadata();
+      const references = link.references();
+      if (metadata.linkType !== LinkType.Semantic || references.length !== 2) continue;
+      const target = concepts.get(references[0].asU64());
+      const context = source.link(references[1])?.metadata();
+      if (!target || !context || metadata.term === undefined) continue;
+      if (context.linkType === LinkType.Language) {
+        const language = metadata.language ?? context.term;
+        if (language === undefined) continue;
+        this._insertConceptSyntaxMapping(target[0], target[1], language, metadata.term, false);
+        report.syntaxMappings += 1;
+      } else if (context.linkType === LinkType.Type) {
+        const vocabulary = metadata.language ?? externalVocabularyFromTerm(context.term);
+        if (vocabulary === undefined) continue;
+        this._insertConceptAliasLink(target[0], vocabulary, metadata.term);
+        report.aliasLinks += 1;
+      }
+    }
+    return report;
   }
 
   _insertConceptAliasLink(conceptLink, vocabulary, externalId) {

@@ -288,6 +288,59 @@ export function languageCandidatesForPath(path: string): string[];
 export function languageForPath(path: string): string | undefined;
 export function grammarProvenance(language: string): readonly GrammarProvenance[];
 
+/** Whether a canonical name is a concept (a noun phrase) or an operation (a verb phrase). */
+export type ConceptRole = 'concept' | 'operation';
+
+/** The name a source (a grammar format, a programming language, a surface) gives a concept. */
+export interface SourceAlias {
+  readonly source: string;
+  readonly name: string;
+}
+
+/** A concept whose phrase is a synonym of another's, with what distinguishes them. */
+export interface ConceptDistinction {
+  readonly id: string;
+  readonly reason: string;
+}
+
+/** The record of one canonical concept or operation (parity/naming/canonical-concepts.json). */
+export interface ConceptRecord {
+  readonly id: string;
+  readonly phrase: string;
+  readonly role: ConceptRole;
+  readonly definition: string;
+  readonly constraints: readonly string[];
+  readonly sourceAliases: readonly SourceAlias[];
+  readonly formerNames: readonly string[];
+  readonly represents?: string;
+  readonly distinctFrom?: readonly ConceptDistinction[];
+}
+
+export interface ConceptRecordSeedReport {
+  concepts: number;
+  links: number;
+}
+
+export interface ConceptOntologyImportReport {
+  concepts: number;
+  assigned: number;
+  renamed: number;
+  aliasLinks: number;
+  syntaxMappings: number;
+}
+
+export const CONCEPT_RECORDS: readonly ConceptRecord[];
+export const FORMER_CONCEPT_ID_VOCABULARY: 'meta-language';
+export const FORMER_CONCEPT_IDS: readonly (readonly [former: string, current: string])[];
+export function currentConceptId(id: string): string;
+export function conceptRecords(): readonly ConceptRecord[];
+export function conceptRecord(name: string): ConceptRecord | undefined;
+export function conceptRecordsForSourceName(source: string, name: string): ConceptRecord[];
+export function insertConceptRecord(
+  network: LinkNetwork,
+  nameOrRecord: string | ConceptRecord,
+): { concept: LinkId; links: number };
+
 /** Node kind and field names of a default grammar; `fields` starts at field id 1. */
 export interface GrammarNames {
   nodeKinds: string[];
@@ -755,6 +808,12 @@ export class LinkNetwork {
     metadata?: { named?: boolean; span?: SourceSpan; flags?: LinkFlags },
   ): LinkId;
   insertConceptExpression(concept: string, language: string, text: string): LinkId;
+  /** Assigns a concept record (by record, identity or former name) and returns its concept link. */
+  insertConceptRecord(nameOrRecord: string | ConceptRecord): LinkId;
+  /** Assigns every concept record. */
+  seedConceptRecords(): ConceptRecordSeedReport;
+  /** Merges the concepts of `source`, renaming former identities and assigning concept records. */
+  importConceptOntology(source: LinkNetwork): ConceptOntologyImportReport;
   linksNotationReading(id: LinkId): LinksNotationReading;
   linksNotationText(ids: LinkId[]): string;
   link(id: LinkId | number): Link | undefined;

@@ -4,6 +4,7 @@ pub mod benchmark;
 mod binary_format;
 mod builtin_grammar;
 mod concept_ontology;
+mod concept_records;
 pub mod configuration;
 pub mod document_formatting;
 mod docx_parser;
@@ -60,8 +61,12 @@ pub use api_styles::{
     LinkCliSubstitutionError, LinkCliSubstitutionKind, API_OPERATIONS,
 };
 pub use concept_ontology::{
-    current_concept_id, ConceptOntologyImportReport, ConceptOntologySeedReport, FORMER_CONCEPT_IDS,
-    FORMER_CONCEPT_ID_VOCABULARY,
+    current_concept_id, ConceptOntologyImportReport, ConceptOntologySeedReport,
+    ConceptRecordSeedReport, FORMER_CONCEPT_IDS, FORMER_CONCEPT_ID_VOCABULARY,
+};
+pub use concept_records::{
+    concept_record, concept_records, concept_records_for_source_name, ConceptDistinction,
+    ConceptRecord, ConceptRole, SourceAlias,
 };
 pub use configuration::{
     AccessMode, FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,

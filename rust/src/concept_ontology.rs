@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
+use crate::concept_records::{concept_record, concept_records, ConceptRecord};
 use crate::grammar::GRAMMAR_CONCEPTS;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::lino_serialization::LinoSerializationError;
@@ -48,23 +49,29 @@ pub fn current_concept_id(id: &str) -> &str {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ConceptOntologyImportReport {
     concepts: usize,
+    assigned: usize,
+    renamed: usize,
     alias_links: usize,
     syntax_mappings: usize,
 }
 
 impl ConceptOntologyImportReport {
-    const fn new(concepts: usize, alias_links: usize, syntax_mappings: usize) -> Self {
-        Self {
-            concepts,
-            alias_links,
-            syntax_mappings,
-        }
-    }
-
     /// Number of language-free concepts imported from the source.
     #[must_use]
     pub const fn concepts(self) -> usize {
         self.concepts
+    }
+
+    /// Number of imported concepts assigned their concept record.
+    #[must_use]
+    pub const fn assigned(self) -> usize {
+        self.assigned
+    }
+
+    /// Number of concepts imported under a former identity and renamed to the current one.
+    #[must_use]
+    pub const fn renamed(self) -> usize {
+        self.renamed
     }
 
     /// Number of external-id alias links imported from the source.
@@ -77,6 +84,27 @@ impl ConceptOntologyImportReport {
     #[must_use]
     pub const fn syntax_mappings(self) -> usize {
         self.syntax_mappings
+    }
+}
+
+/// Summary returned after assigning every concept record to a network.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ConceptRecordSeedReport {
+    concepts: usize,
+    links: usize,
+}
+
+impl ConceptRecordSeedReport {
+    /// Number of concept records assigned.
+    #[must_use]
+    pub const fn concepts(self) -> usize {
+        self.concepts
+    }
+
+    /// Number of links the assignment added.
+    #[must_use]
+    pub const fn links(self) -> usize {
+        self.links
     }
 }
 
@@ -598,14 +626,19 @@ impl LinkNetwork {
         text: &str,
     ) -> Result<ConceptOntologyImportReport, LinoSerializationError> {
         let source = Self::from_lino(text)?;
-        Ok(self.import_concept_ontology_network(&source))
+        Ok(self.import_concept_ontology(&source))
     }
 
-    fn import_concept_ontology_network(&mut self, source: &Self) -> ConceptOntologyImportReport {
+    /// Merges the concept, expression, and alias links of `source` into this network.
+    ///
+    /// A concept imported under a former identity is renamed to its current
+    /// identity and keeps the former one as a [`FORMER_CONCEPT_ID_VOCABULARY`]
+    /// alias, and a concept with a concept record is assigned the record
+    /// instead of the imported definition. Merging the same network
+    /// repeatedly is idempotent.
+    pub fn import_concept_ontology(&mut self, source: &Self) -> ConceptOntologyImportReport {
         let mut concept_links: BTreeMap<LinkId, (LinkId, String)> = BTreeMap::new();
-        let mut concepts = 0;
-        let mut alias_links = 0;
-        let mut syntax_mappings = 0;
+        let mut report = ConceptOntologyImportReport::default();
 
         for link in source.links() {
             if link.metadata().link_type() != Some(LinkType::Concept) {
@@ -614,9 +647,19 @@ impl LinkNetwork {
             let Some(term) = link.metadata().term() else {
                 continue;
             };
-            let concept_link = self.intern_concept(term, link.metadata().definition());
-            concept_links.insert(link.id(), (concept_link, term.to_string()));
-            concepts += 1;
+            let id = current_concept_id(term);
+            let concept_link = if let Some(record) = concept_record(id) {
+                report.assigned += 1;
+                self.insert_concept_record(record)
+            } else {
+                self.intern_concept(id, link.metadata().definition())
+            };
+            if id != term {
+                self.insert_concept_alias_link(concept_link, FORMER_CONCEPT_ID_VOCABULARY, term);
+                report.renamed += 1;
+            }
+            concept_links.insert(link.id(), (concept_link, id.to_string()));
+            report.concepts += 1;
         }
 
         for link in source.links() {
@@ -650,7 +693,7 @@ impl LinkNetwork {
                             term,
                             false,
                         );
-                        syntax_mappings += 1;
+                        report.syntax_mappings += 1;
                     }
                 }
                 Some(LinkType::Type) => {
@@ -662,14 +705,43 @@ impl LinkNetwork {
                     });
                     if let Some(vocabulary) = vocabulary {
                         self.insert_concept_alias(*target_concept, vocabulary, term);
-                        alias_links += 1;
+                        report.alias_links += 1;
                     }
                 }
                 _ => {}
             }
         }
 
-        ConceptOntologyImportReport::new(concepts, alias_links, syntax_mappings)
+        report
+    }
+
+    /// Assigns a concept record to this network and returns its concept link.
+    ///
+    /// The concept link carries the record's identity and definition, with
+    /// its English phrase, an alias link for every name a source gives it,
+    /// and a [`FORMER_CONCEPT_ID_VOCABULARY`] alias link for every former name.
+    pub fn insert_concept_record(&mut self, record: &ConceptRecord) -> LinkId {
+        let concept_link = self.intern_concept(&record.id, Some(&record.definition));
+        self.insert_concept_syntax_mapping(concept_link, &record.id, "en", &record.phrase, false);
+        for alias in &record.source_aliases {
+            self.insert_concept_alias_link(concept_link, &alias.source, &alias.name);
+        }
+        for former in &record.former_names {
+            self.insert_concept_alias_link(concept_link, FORMER_CONCEPT_ID_VOCABULARY, former);
+        }
+        concept_link
+    }
+
+    /// Assigns every concept record and returns the counts of concepts and links added.
+    pub fn seed_concept_records(&mut self) -> ConceptRecordSeedReport {
+        let before = self.len();
+        for record in concept_records() {
+            self.insert_concept_record(record);
+        }
+        ConceptRecordSeedReport {
+            concepts: concept_records().len(),
+            links: self.len() - before,
+        }
     }
 
     fn insert_external_aliases(

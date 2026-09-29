@@ -82,6 +82,10 @@ description, an interactive WebAssembly demo, and the full
   queryable external-id aliases, LiNo concept-set import, and
   `seed_common_concept_ontology()` for the default 351-concept semantic
   lexicon plus structural programming-language concepts.
+- Concept records for every canonical concept and operation, shared with the
+  JavaScript runtime (`concept_records()`, `seed_concept_records()`,
+  `import_concept_ontology()`). Each record has a readable English phrase, a
+  definition, constraints, source aliases and former names.
 - Object-identity links, many-valued `TruthValue` semantics, and fixed-point
   `ProbabilisticTruthValue` confidence semantics.
 - A testable parity registry and upstream-provenanced `PARITY_FIXTURES` for

@@ -113,6 +113,10 @@ jobs:
         run: npm run check:language-catalog
         working-directory: js
 
+      - name: Check the shared concept records
+        run: npm run check:concept-records
+        working-directory: js
+
       - name: Check issue 195 atomic requirement manifest
         run: npm run check:issue-195
         working-directory: js

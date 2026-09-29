@@ -1689,14 +1689,14 @@
       "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
     },
     "planned:repository-directive:i195-naming-convention": {
-      "path": "docs/vision.md",
-      "selector": "#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "parity/naming/canonical-concepts.json",
+      "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
+      "sha256": "faacb470ee124d3d967114f4a0c63da2751ab9380a18b58b72ecc8d7ad3e9fff"
     },
     "planned:repository-directive:i195-naming-concept-records": {
-      "path": "docs/vision.md",
-      "selector": "#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "parity/naming/canonical-concepts.json",
+      "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
+      "sha256": "faacb470ee124d3d967114f4a0c63da2751ab9380a18b58b72ecc8d7ad3e9fff"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -19517,8 +19517,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/concept-records.js",
+          "js/src/network.js"
+        ],
+        "rust": [
+          "rust/src/concept_records.rs",
+          "rust/src/concept_ontology.rs"
+        ]
       },
       "verifications": [
         {
@@ -19561,7 +19567,7 @@
       "traceability": {
         "specification": "docs/vision.md#readable-english-names",
         "inventories": [
-          "docs/vision.md"
+          "parity/naming/canonical-concepts.json"
         ],
         "sources": [
           "acceptanceGate",
@@ -19599,8 +19605,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/concept-records.js",
+          "js/src/network.js"
+        ],
+        "rust": [
+          "rust/src/concept_records.rs",
+          "rust/src/concept_ontology.rs"
+        ]
       },
       "verifications": [
         {
@@ -19639,7 +19651,7 @@
       "traceability": {
         "specification": "docs/vision.md#readable-english-names",
         "inventories": [
-          "docs/vision.md"
+          "parity/naming/canonical-concepts.json"
         ],
         "sources": [
           "acceptanceGate",
