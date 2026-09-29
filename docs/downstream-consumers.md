@@ -110,18 +110,22 @@ has no JavaScript use of it.
 
 This table inspects the pinned pull request head
 `f24d0f1f183fc92b39563d2f6fd5d3795d3235c5`, rather than treating its
-new code as part of the older default branch. The pull request has not been
-run against clean installed artifacts from this branch. Its own tests and
-corpus cases are consumer fixtures, not observations of the issue 195
-acceptance suite.
+new code as part of the older default branch. Its JavaScript package still
+pins meta-language `^0.46.0` and its Rust crate pins 0.58.2. On 2026-09-29,
+a packed JavaScript 0.58.2 candidate from this branch passed all 145 targeted
+consumer tests covering the meta-language facade, LiNo front end and formal
+workspace after the source rendering correction below. The complete RML
+JavaScript suite also passed (1,506 tests). Rust candidate integration has not
+yet been recorded as an issue 195 acceptance observation. These direct
+consumer test runs are not observations of the issue 195 acceptance suite.
 
 | Consumer usage or requirement | meta-language capability | Ledger rows | Tests | Status |
 |---|---|---|---|---|
 | Parse and normalize RML's Links Notation source in both runtimes, including comments, indentation, Unicode space, quote runs, depth and scaling cases | [JavaScript front end][rml-pr184-lino-js], [Rust front end][rml-pr184-lino-rs] and [shared cases][rml-pr184-lino-cases] still call `links-notation` 0.20 after consumer-owned preprocessing. This pull request does not call meta-language's LiNo grammar. | `I195-CST-lino`, `I195-LINO-UPGRADE`, `I195-LINO-UPSTREAM-REGRESSIONS`, `I195-LINO-COMPATIBILITY-MATRIX`, `I195-DOWNSTREAM-RML-PR184-AUDIT` | `js/tests/lino-grammar.test.js`, `rust/tests/unit/lino_grammar.rs` (meta-language only) | not yet verified |
 | Round-trip RML source through meta-language and compare links and evaluation | [JavaScript facade][rml-pr184-meta-js] and [Rust facade][rml-pr184-meta-rs] parse with the unregistered `RML` label, reconstruct tokens, then call RML's own LiNo parser and evaluator. Neither facade tests a registered RML grammar. | `I195-GRAMMAR-LOSSLESS-TREES`, `I195-DOWNSTREAM-RML-WORKLOADS` | `rust/tests/unit/parity_corpora.rs` (meta-language only) | not yet verified |
 | Rewrite a JavaScript identifier as part of RML's meta-language integration | The [JavaScript facade][rml-pr184-meta-js] reconstructs a meta-language network, then uses RML's own `parseJs` and `printJs` CST for lexical edits; the [Rust facade][rml-pr184-meta-rs] uses meta-language query and replacement. The two implementations are not the same binding-aware operation. | `I195-XFORM-javascript-query`, `I195-XFORM-javascript-replace`, `I195-RENAME-javascript`, `I195-PARITY-TRANSFORMS` | `js/tests/issue-195-binding-rename.test.js`, `rust/tests/unit/issue_195_binding_rename.rs` (meta-language only) | not yet implemented |
-| Load and validate linked Lean and Rocq formal corpus content | [JavaScript corpus][rml-pr184-corpus-js] and [Rust corpus][rml-pr184-corpus-rs] first round-trip the source through the `RML` network, then use RML's own form parser and trusted contract to interpret and fingerprint declarations. Meta-language does not validate declarations or certify proofs. | `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-GRAMMAR-LOSSLESS-TREES`, `I195-SEMANTICS-PROOF-PRESERVATION` | none | not yet verified |
-| Keep JavaScript and Rust RML behavior aligned across the pull request's tests | [JavaScript LiNo tests][rml-pr184-tests-js], [Rust LiNo tests][rml-pr184-tests-rs], and facade tests in both runtimes exercise consumer code, but have not run against this branch's clean candidate packages. | `I195-PARITY-CST`, `I195-PARITY-TRANSFORMS`, `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-DELIVERY-RML-CANDIDATE` | none | not yet verified |
+| Load and validate linked Lean and Rocq formal corpus content | [JavaScript corpus][rml-pr184-corpus-js] and [Rust corpus][rml-pr184-corpus-rs] first round-trip the source through the `RML` network, then use RML's own form parser and trusted contract to interpret and fingerprint declarations. Meta-language does not validate declarations or certify proofs. | `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-GRAMMAR-LOSSLESS-TREES`, `I195-SEMANTICS-PROOF-PRESERVATION` | [JavaScript consumer tests][rml-pr184-theory-js], [Rust consumer tests][rml-pr184-theory-rs]; none here | not yet verified |
+| Keep JavaScript and Rust RML behavior aligned across the pull request's tests | [JavaScript LiNo tests][rml-pr184-tests-js], [Rust LiNo tests][rml-pr184-tests-rs], and facade tests in both runtimes exercise consumer code. The 145 targeted tests and complete JavaScript suite (1,506 tests) passed on a packed candidate; the Rust candidate and full acceptance matrix remain unverified. | `I195-PARITY-CST`, `I195-PARITY-TRANSFORMS`, `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-DELIVERY-RML-CANDIDATE` | `js/tests/core.test.js`, `rust/tests/unit/source_generation.rs` (source rendering parity) | not yet verified |
 
 [rml-pr184-lino-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/src/rml-lino-frontend.mjs
 [rml-pr184-lino-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/lino_frontend.rs
@@ -132,6 +136,8 @@ acceptance suite.
 [rml-pr184-corpus-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/formal_corpus.rs
 [rml-pr184-tests-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/tests/lino-frontend.test.mjs
 [rml-pr184-tests-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/tests/lino_frontend_tests.rs
+[rml-pr184-theory-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/tests/theory-network.test.mjs
+[rml-pr184-theory-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/tests/theory_network_tests.rs
 
 ## formal-ai
 
@@ -180,7 +186,11 @@ acceptance suite.
   tests) passed on meta-language 0.46.0 and also passed when pointed at this
   branch's JavaScript sources through a scratch link. The second run is not a
   clean installed artifact and does not satisfy any delivery or downstream
-  row. RML's Rust facade was not built against 0.58.2 during the audit.
+  row. In the current RML pull request, a packed 0.58.2 JavaScript candidate
+  initially failed two of 145 targeted tests because `renderSource('RML')`
+  inserted recovery `)` tokens in otherwise lossless source. Both cases pass
+  after the fix, as do all 145 targeted tests. The Rust candidate workload
+  has not yet been recorded as an acceptance observation.
 - RML parses with the label `RML`, which is not registered. Both runtimes
   then fall back to the lossless text network; `rust/src/parser_registry.rs`
   documents the fallback. A JavaScript probe during the audit returned a
@@ -212,8 +222,10 @@ acceptance suite.
 
 ## What remains unverified
 
-- No workload of either consumer has been run against clean installed
-  meta-language artifacts. `I195-DOWNSTREAM-RML-WORKLOADS`,
+- The targeted and full RML JavaScript suites passed against a clean packed
+  candidate, but Rust candidate and published workloads and all formal-ai candidate
+  and published workloads have not been recorded by the acceptance runner.
+  `I195-DOWNSTREAM-RML-WORKLOADS`,
   `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS` and
   `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` remain unverified.
 - `I195-DELIVERY-RML-CANDIDATE`, `I195-DELIVERY-RML-PUBLISHED`,
