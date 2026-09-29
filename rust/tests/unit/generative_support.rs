@@ -373,7 +373,7 @@ pub fn generate_inputs(language: &str, seeds: &[SeedSource], seed: &str) -> Vec<
             .collect();
         let mut source = parts[0].to_string();
         for part in &parts[1..] {
-            source.push_str(random.pick(&SEPARATORS));
+            source.push_str(random.pick::<&str>(&SEPARATORS));
             source.push_str(part);
         }
         inputs.push(input(format!("property/{index}"), source));
