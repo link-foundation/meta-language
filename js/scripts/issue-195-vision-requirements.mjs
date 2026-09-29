@@ -641,7 +641,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'mergedGrammarCachesClassRegistered',
       'canonicalGrammarsPreserved',
     ],
-    tooling: null,
+    tooling: ['scripts/lib/cache-classes.mjs', 'scripts/lib/cache-cleanup.mjs'],
   },
   {
     id: 'I195-DOCUMENTATION-RECONCILED',

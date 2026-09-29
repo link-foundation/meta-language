@@ -34,6 +34,43 @@ export const SCRATCH_PREFIXES = Object.freeze([
   'meta-language-',
 ]);
 
+/** Git-ignored directory of this repository's regenerable grammar work. */
+export const GRAMMAR_CACHE_ROOT = '.grammar-cache';
+
+/**
+ * Kinds of regenerable grammar work, each a directory of GRAMMAR_CACHE_ROOT
+ * with one entry per cached item. Canonical native grammars, fixtures,
+ * licenses and evidence are tracked or protected elsewhere and never live
+ * here. The warm cache removes the cheapest to regenerate first.
+ */
+export const GRAMMAR_CACHE_KINDS = Object.freeze({
+  corpora: Object.freeze({
+    category: 'grammar-corpora',
+    note: 'imported grammar corpus: a pinned upstream grammar checkout or independent test corpus',
+    priority: 40,
+  }),
+  oracles: Object.freeze({
+    category: 'oracle-build',
+    note: 'generator or oracle build: a built grammar generator, reference parser or native tool',
+    priority: 25,
+  }),
+  merged: Object.freeze({
+    category: 'merged-grammar-cache',
+    note: 'merged-grammar cache: intermediate output of the multi-source grammar merge',
+    priority: 5,
+  }),
+});
+
+/**
+ * The cache directory of `name` for grammar work of `kind` in the repository
+ * at `root`, such as `.grammar-cache/corpora/tree-sitter-rust@<revision>`.
+ */
+export function grammarCacheDirectory(root, kind, name) {
+  if (!Object.hasOwn(GRAMMAR_CACHE_KINDS, kind)) throw new Error(`unknown grammar cache kind ${kind}`);
+  if (!/^[\w@.+-]+$/u.test(name) || /^\.+$/u.test(name)) throw new Error(`grammar cache entry ${JSON.stringify(name)} is not a single path segment`);
+  return path.join(root, GRAMMAR_CACHE_ROOT, kind, name);
+}
+
 const ROCQ_OUTPUT = /(?:\.(?:vo|vok|vos|glob|aux)|^\.(?:lia|nia)\.cache|^Makefile\.coq(?:\.conf)?|^\.Makefile\.coq\.d)$/u;
 const NATIVE_INTERMEDIATE = /\.(?:o|obj|a|lib|so|dylib|dll|exp|pdb|wasm)$/u;
 const INTERMEDIATE_DIRECTORIES = new Set(['build', '.build', 'node_modules', 'target']);
@@ -199,6 +236,17 @@ function discoverAcceptanceScratch(context) {
   return candidates;
 }
 
+function discoverGrammarCaches(context) {
+  const candidates = [];
+  for (const [kind, { note, priority }] of Object.entries(GRAMMAR_CACHE_KINDS)) {
+    const directory = path.join(context.root, GRAMMAR_CACHE_ROOT, kind);
+    for (const entry of children(directory)) {
+      candidates.push({ path: path.join(directory, entry.name), tier: 'warm', note, priority });
+    }
+  }
+  return candidates;
+}
+
 /** Reads a scratch marker, or null when the directory is not marked. */
 export function readScratchMarker(directory) {
   try {
@@ -268,6 +316,13 @@ export const CACHE_CLASSES = Object.freeze([
     covers: ['acceptance-scratch', 'nested-consumer-target', 'nested-clone'],
     activeSensitive: true,
     discover: discoverAcceptanceScratch,
+  },
+  {
+    id: 'grammar-caches',
+    title: 'Imported grammar corpora, generator and oracle builds, and merged-grammar caches',
+    covers: Object.values(GRAMMAR_CACHE_KINDS).map(({ category }) => category),
+    activeSensitive: true,
+    discover: discoverGrammarCaches,
   },
   {
     id: 'temporary-clones',

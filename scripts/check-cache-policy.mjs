@@ -28,7 +28,7 @@ export const REQUIRED_CATEGORIES = Object.freeze([
   'custom-target-directory', 'js-build-cache', 'js-test-coverage', 'js-package-consumer',
   'generated-parser-intermediates', 'generated-compiler-intermediates', 'lean-build', 'rocq-build',
   'acceptance-scratch', 'benchmark-scratch', 'container', 'buildkit', 'nested-temporary-clone',
-  'nested-consumer-target',
+  'nested-consumer-target', 'grammar-corpora', 'oracle-build', 'merged-grammar-cache',
 ]);
 
 /**

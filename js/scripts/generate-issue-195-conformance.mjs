@@ -13,8 +13,9 @@
 //   TREE_SITTER_CLI=tree-sitter node js/scripts/generate-issue-195-conformance.mjs --check
 //
 // It needs git, network access (upstream clones and project files) and the
-// tree-sitter CLI the grammar lock names. `--work DIR` keeps the upstream
-// checkouts for later runs.
+// tree-sitter CLI the grammar lock names. The pinned upstream checkouts are
+// imported grammar corpora: they are kept in .grammar-cache/corpora (or in
+// `--work DIR`) for later runs, and scripts/clean-caches.mjs removes them.
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -28,6 +29,7 @@ import { cliGrammarDirectory, cliOutput } from './generate-default-cst-expectati
 import { cliCstToLines, cstLinesToSexp, parseCstLines, rowOffsets } from '../tests/support/cst-lines.js';
 import { normalize, parseCorpus, stripFields } from '../tests/support/cst-sexpression.js';
 
+import { GRAMMAR_CACHE_ROOT } from '../../scripts/lib/cache-classes.mjs';
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 
 const run = promisify(execFile);
@@ -100,7 +102,13 @@ async function gitHead(checkout) {
  * regenerated, verified to produce the parser.c the grammar lock records.
  */
 async function upstreamCheckout(language, work, lock, versions, treeSitter) {
-  const checkout = join(work, `tree-sitter-${language.id}`);
+  const checkout = join(work, `tree-sitter-${language.id}@${language.revision}`);
+  const expected = lock.grammars[language.id].parserSha256;
+  const current = async () => existsSync(checkout) &&
+    (await gitHead(checkout).catch(() => null)) === language.revision &&
+    sha256(await readFile(join(checkout, 'src/parser.c')).catch(() => '')) === expected;
+  // A cached checkout that an interrupted run or an older patch left behind is made again.
+  if (existsSync(checkout) && !(await current())) await rm(checkout, { recursive: true, force: true });
   if (!existsSync(checkout)) {
     if (language.patch) {
       await checkoutUpstream({ ...GRAMMAR_SOURCES[language.id], ...(await grammarSource(language.id, versions)) }, checkout, treeSitter);
@@ -111,7 +119,7 @@ async function upstreamCheckout(language, work, lock, versions, treeSitter) {
   }
   if ((await gitHead(checkout)) !== language.revision) throw new Error(`${checkout} is not at ${language.revision}`);
   const parser = sha256(await readFile(join(checkout, 'src/parser.c')));
-  if (parser !== lock.grammars[language.id].parserSha256) {
+  if (parser !== expected) {
     throw new Error(`${language.upstream}@${language.revision} parser.c ${parser} differs from the grammar lock`);
   }
   return checkout;
@@ -380,31 +388,27 @@ async function main() {
   const args = process.argv.slice(2);
   const treeSitter = process.env.TREE_SITTER_CLI ?? 'tree-sitter';
   const workIndex = args.indexOf('--work');
-  const work = workIndex >= 0 ? resolve(args[workIndex + 1]) : makeScratchDirectory('issue-195-upstream-');
+  const work = workIndex >= 0 ? resolve(args[workIndex + 1]) : join(root, GRAMMAR_CACHE_ROOT, 'corpora');
   await mkdir(work, { recursive: true });
-  try {
-    const outputs = await generate(work, treeSitter);
-    if (args.includes('--check')) {
-      const stale = [];
-      for (const [path, content] of outputs) {
-        const current = await readFile(path).catch(() => null);
-        if (!current || !current.equals(Buffer.from(content))) stale.push(relative(path));
-      }
-      if (stale.length) {
-        console.error(`stale conformance fixtures (run node js/scripts/generate-issue-195-conformance.mjs):\n  ${stale.join('\n  ')}`);
-        process.exit(1);
-      }
-      console.log(`issue 195 conformance fixtures match (${outputs.size} files)`);
-      return;
-    }
+  const outputs = await generate(work, treeSitter);
+  if (args.includes('--check')) {
+    const stale = [];
     for (const [path, content] of outputs) {
-      await mkdir(dirname(path), { recursive: true });
-      await writeFile(path, content);
+      const current = await readFile(path).catch(() => null);
+      if (!current || !current.equals(Buffer.from(content))) stale.push(relative(path));
     }
-    console.log(`wrote ${outputs.size} files to ${relative(fixtureDir)}`);
-  } finally {
-    if (workIndex < 0) await rm(work, { recursive: true, force: true });
+    if (stale.length) {
+      console.error(`stale conformance fixtures (run node js/scripts/generate-issue-195-conformance.mjs):\n  ${stale.join('\n  ')}`);
+      process.exit(1);
+    }
+    console.log(`issue 195 conformance fixtures match (${outputs.size} files)`);
+    return;
   }
+  for (const [path, content] of outputs) {
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, content);
+  }
+  console.log(`wrote ${outputs.size} files to ${relative(fixtureDir)}`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

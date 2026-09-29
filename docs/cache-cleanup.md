@@ -60,13 +60,16 @@ required category has no class.
 | `generated-intermediates` | generated parser and compiler intermediates | `rust/web/pkg`, `_site`, and ignored `build`, `.build`, `node_modules`, `target` directories and object files under the vendored grammars |
 | `proof-build` | Lean and Rocq build output | `.lake` directories, `build` next to a `lakefile`, and `.vo`, `.vok`, `.vos`, `.glob`, `.aux`, `Makefile.coq` and `.lia.cache` files |
 | `acceptance-scratch` | acceptance scratch, nested consumer targets, nested clones | every child of `issue-195-results/work` (candidate packages, clean consumers with their Rust targets, downstream clones) except the evidence below, and the legacy `.issue-195-work` |
+| `grammar-caches` | imported grammar corpora, generator and oracle builds, merged-grammar caches | every entry of `.grammar-cache/corpora` (pinned upstream grammar checkouts and independent test corpora, such as the ones `js/scripts/generate-issue-195-conformance.mjs` clones), `.grammar-cache/oracles` (built grammar generators, reference parsers and native tools) and `.grammar-cache/merged` (intermediate output of the multi-source grammar merge). They are the warm cache. The canonical native grammars, fixtures, licenses and evidence are tracked or protected and never live there. |
 | `temporary-clones` | nested temporary clones | directories in the OS temporary directory that a repository script created with `scripts/lib/scratch.mjs`, whose marker names this worktree and whose creator has exited |
 | `containers` | container and BuildKit caches | `docker container/image/volume prune --filter label=org.link-foundation.meta-language=cache`, and `docker buildx prune --builder meta-language`. `js/scripts/build-web-tree-sitter-runtime.mjs` labels its containers. |
 
 Transient caches are removed on every run. The warm cache (Cargo profile
-directories and rustdoc output) is kept while the total stays within the
+directories, rustdoc output and the grammar caches) is kept while the total stays within the
 budget. When it does not fit, it is removed in priority order until it does:
-rustdoc first, then optimized builds, then the debug and test build.
+merged-grammar caches first, then rustdoc, optimized builds, oracle builds,
+the debug and test build and, last, the imported grammar corpora, which need
+the network to restore.
 
 ## Safety
 

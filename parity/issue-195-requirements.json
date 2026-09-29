@@ -1511,37 +1511,37 @@
     "planned:cache-cleanup:i195-cache-cleanup-entry-point": {
       "path": "scripts/lib/cache-classes.mjs",
       "selector": "single documented entry point for every regenerable cache class",
-      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+      "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:cache-cleanup:i195-cache-cleanup-safety": {
       "path": "scripts/lib/cache-classes.mjs",
       "selector": "repository-scoped, validated and concurrency-safe deletion",
-      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+      "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:cache-cleanup:i195-cache-cleanup-hook": {
       "path": "scripts/lib/cache-classes.mjs",
       "selector": "every-commit hook installed by the developer bootstrap",
-      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+      "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:cache-cleanup:i195-cache-cleanup-events": {
       "path": "scripts/lib/cache-classes.mjs",
       "selector": "cleanup after build, test, coverage, benchmark, package, acceptance and CI teardown",
-      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+      "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:cache-cleanup:i195-cache-cleanup-budget": {
       "path": "scripts/lib/cache-classes.mjs",
       "selector": "aggregate disk budget, warm cache, full clean and low-disk preflight",
-      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+      "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:cache-cleanup:i195-cache-cleanup-policy": {
       "path": "scripts/lib/cache-classes.mjs",
       "selector": "CI policy check for hooks, wrappers, teardown, categories and build profiles",
-      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+      "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:cache-cleanup:i195-cache-cleanup-measured": {
       "path": "scripts/lib/cache-classes.mjs",
       "selector": "measured disk use of the acceptance run before and after cleanup",
-      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+      "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
@@ -1756,7 +1756,7 @@
     "planned:repository-directive:i195-cache-cleanup-grammar-caches": {
       "path": "scripts/lib/cache-classes.mjs",
       "selector": "docs/vision.md#cache-cleanup: cleanup of imported grammar corpora, oracle builds and merged-grammar caches",
-      "sha256": "17637dda24d641dd15a0979cb66dbdc911d808bcfd41433e8440559ae6002e1e"
+      "sha256": "8fe73d91b896ae90e2e0b966a420d16a3a12486722da014c40c38e2b8f63634c"
     },
     "planned:repository-directive:i195-documentation-reconciled": {
       "path": "docs/vision.md",
@@ -2189,7 +2189,10 @@
         "tooling"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "tooling": [
+          "scripts/lib/cache-classes.mjs",
+          "scripts/lib/cache-cleanup.mjs"
+        ]
       },
       "verifications": [
         {

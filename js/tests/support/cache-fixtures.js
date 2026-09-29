@@ -159,6 +159,9 @@ export function populateCaches(fixture) {
     candidates: put(root, 'issue-195-results/work/candidates/npm/package.tgz', 8 * KIB),
     consumerTarget: makeCargoTarget(path.join(root, 'issue-195-results/work/consumer/rust/target'), { debug: 8 * KIB, release: 8 * KIB }),
     legacyClone: put(root, '.issue-195-work/clone/README.md', 4 * KIB),
+    grammarCorpus: put(root, '.grammar-cache/corpora/tree-sitter-demo@abc123/grammar.js', 4 * KIB),
+    oracleBuild: put(root, '.grammar-cache/oracles/demo-oracle/oracle', 4 * KIB),
+    mergedGrammar: put(root, '.grammar-cache/merged/demo/merged.lino', 4 * KIB),
     scratch: makeScratch(fixture, 'meta-language-exited', { pid: exitedPid() }),
   };
   const kept = {

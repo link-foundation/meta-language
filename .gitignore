@@ -72,6 +72,10 @@ Makefile.coq
 Makefile.coq.conf
 .Makefile.coq.d
 
+# Imported grammar corpora, oracle builds and merged-grammar caches
+# (regenerable; cleaned by scripts/clean-caches.mjs)
+/.grammar-cache/
+
 # Compiled parser intermediates of vendored grammars
 *.o
 *.obj
