@@ -132,7 +132,8 @@ test('an edited, deleted or unregistered comment is reported and automation outp
   const newcomer = { ...comments[0], id: 3, body: '## New requirement\ndo more', html_url: 'https://example.test/3' };
   const automation = [
     '<!-- hive-mind session -->\nlog', '## 🤖 Solution Draft Log\n...', '🤖 **AI Work Session Started**',
-    '## 🔄 Auto-restart 1/3\n...', '## ✅ Ready to merge\n...',
+    '## 🔄 Auto-restart 1/3\n...', '## ✅ Ready to merge\n...', '## ⏳ Usage Limit Reached\n...',
+    '⏰ **Auto Resume (on limit reset)**\n...', '## ⏰ Auto Resume (on limit reset) 1/5 Log\n...',
   ].map((body, index) => ({ ...comments[0], id: 10 + index, body }));
   const unregistered = compareWithLiveDiscussion(synthetic, { issue, comments: [...comments, newcomer, ...automation] });
   assert.deepEqual(unregistered, [

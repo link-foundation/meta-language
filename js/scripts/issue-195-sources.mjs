@@ -17,13 +17,17 @@ export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 const REPOSITORY = 'link-foundation/meta-language';
 
 // Openings of the comments that the solver automation posts (session logs,
-// restart notices and readiness markers); they carry no requirements.
+// restart, usage-limit and resume notices and readiness markers); they carry
+// no requirements.
 export const AUTOMATION_MARKERS = Object.freeze([
   '<!-- hive-mind',
   '## 🤖',
   '🤖 **AI Work Session',
   '## 🔄 Auto-restart',
   '## ❌ Auto-restart',
+  '## ⏳ Usage Limit Reached',
+  '⏰ **Auto Resume',
+  '## ⏰ Auto Resume',
   '## 🚨 Solution Draft Failed',
   '## ✅ Ready to merge',
 ]);
