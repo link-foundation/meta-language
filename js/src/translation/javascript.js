@@ -553,6 +553,10 @@ class JavaScriptParser {
     if (c.is('do')) return this.doStatement();
     if (c.is('for')) return this.forStatement();
     if (c.is('break') || c.is('continue')) return this.jumpStatement();
+    if (c.is('console') && c.is('.', 1)) {
+      const { expr, style, span: where } = this.consoleStatement();
+      return { s: 'print', expr, style, span: where };
+    }
     if (['try', 'function', 'class', 'with', 'debugger'].includes(token.value) && token.kind === 'identifier') {
       throw unsupported(`${token.value} statement`, 'outside the portable core', span(token, token));
     }

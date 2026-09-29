@@ -173,6 +173,9 @@ fn tail_calls_only(expr: &Expr, name: &str, tail: bool) -> bool {
         Node::Let { value, body, .. } => {
             tail_calls_only(value, name, false) && tail_calls_only(body, name, tail)
         }
+        Node::Print { text, body } => {
+            tail_calls_only(text, name, false) && tail_calls_only(body, name, tail)
+        }
         Node::Match { scrutinee, cases } => {
             tail_calls_only(scrutinee, name, false)
                 && cases
@@ -311,6 +314,10 @@ pub fn rename_main(
             },
             Effect::Assert { prop, span } => Effect::Assert {
                 prop: rename_prop(prop, &env, &mut scope),
+                span: *span,
+            },
+            Effect::Output { expr, span } => Effect::Output {
+                expr: rename_expr(expr, &env, &mut scope),
                 span: *span,
             },
         })

@@ -288,6 +288,8 @@ class JavaScriptEmitter {
     switch (e.k) {
       case 'let':
         return [`const ${e.name} = ${this.expr(e.value)};`, ...this.statements(e.body)];
+      case 'print':
+        return [`console.log(${this.expr(e.text)});`, ...this.statements(e.body)];
       case 'if':
         return [
           `if (${this.expr(e.cond)}) {`,
@@ -378,6 +380,8 @@ class JavaScriptEmitter {
         return this.binary(e);
       case 'if':
         return `(${this.expr(e.cond)} ? ${this.expr(e.then)} : ${this.expr(e.else)})`;
+      case 'print':
+        return `(console.log(${this.expr(e.text)}), ${this.expr(e.body)})`;
       case 'let':
       case 'match':
         return `(() => {\n${indent(this.statements(e).join('\n'), 1)}\n})()`;

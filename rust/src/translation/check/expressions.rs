@@ -312,6 +312,18 @@ impl Checker {
             SNode::CtorObject { tag, fields } => {
                 self.ctor_object(tag, fields, span, env, path, expected)
             }
+            SNode::Print { expr, style, body } => {
+                let text = self.show(expr, env, path, *style)?;
+                let body = self.expr(body, env, path, expected, allow_literal)?;
+                let ty = body.ty.clone();
+                Ok(Expr::new(
+                    Node::Print {
+                        text: Box::new(text),
+                        body: Box::new(body),
+                    },
+                    ty,
+                ))
+            }
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),
                 span,

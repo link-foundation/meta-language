@@ -315,6 +315,18 @@ impl Lowering {
             }
             Stmt::Break { .. } => return (ctx.brk)(self),
             Stmt::Continue { .. } => return (ctx.cont)(self),
+            Stmt::Print { expr, style, span } => {
+                let expr = renamed(expr, scope)?;
+                let body = rest(self, scope)?;
+                return Ok(node(
+                    SNode::Print {
+                        expr: Box::new(expr),
+                        style: *style,
+                        body: Box::new(body),
+                    },
+                    *span,
+                ));
+            }
             Stmt::Expr { span, .. } => {
                 return Err(unsupported(
                     "expression statement",

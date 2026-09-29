@@ -94,6 +94,7 @@ mod translation_javascript_frontend;
 mod translation_javascript_loops;
 mod translation_lean;
 mod translation_mutual_recursion;
+mod translation_printing;
 mod translation_rocq;
 mod translation_rules;
 mod translation_rust_frontend;

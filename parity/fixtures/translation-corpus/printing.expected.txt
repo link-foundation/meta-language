@@ -1,0 +1,35 @@
+0n
+1n
+2n
+tick 3
+tick 2
+tick 1
+6n
+loud
+loud
+20n
+loud
+loud
+loud
+loud
+20n
+even? 3
+odd? 2
+even? 1
+odd? 0
+false
+a: false
+false
+c: true
+true
+half of 9
+half of 4.5
+2.25
+odd? 1
+even? 0
+even? 2
+odd? 1
+even? 0
+half of 3
+half of 5
+4

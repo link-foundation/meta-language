@@ -250,6 +250,9 @@ class Inference {
         return STRING;
       case 'abort':
         return this.fresh();
+      case 'print':
+        this.expr(node.expr, env);
+        return this.expr(node.body, env);
       case 'ctorObject':
         return this.ctorObject(node, env);
       default:

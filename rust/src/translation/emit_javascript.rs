@@ -573,6 +573,11 @@ impl<'p> JavaScriptEmitter<'p> {
                 lines.extend(self.statements(body)?);
                 Ok(lines)
             }
+            Node::Print { text, body } => {
+                let mut lines = vec![format!("console.log({});", self.expr(text)?)];
+                lines.extend(self.statements(body)?);
+                Ok(lines)
+            }
             Node::If {
                 cond,
                 then,
@@ -729,6 +734,14 @@ impl<'p> JavaScriptEmitter<'p> {
             Node::Lit { value } => literal(&e.ty, value),
             Node::Unit => Ok("null".to_owned()),
             Node::Var { name } => Ok(name.clone()),
+            Node::Print { text, body } => Ok(format!(
+                "(console.log({}), {})",
+                self.expr(text)?,
+                self.expr(body)?
+            )),
+            Node::OutNil | Node::OutCons { .. } => {
+                unreachable!("only the Lean and Rocq emitters thread output")
+            }
             Node::Call { func, args } => {
                 let target = self.state.reference(func, ".");
                 let args = self.exprs(args)?;
@@ -904,6 +917,9 @@ impl<'p> JavaScriptEmitter<'p> {
                         json_string(&label)
                     ));
                     self.state.assertion_theorem(&label, effect);
+                }
+                Effect::Output { .. } => {
+                    unreachable!("only the Lean and Rocq emitters thread output")
                 }
             }
         }

@@ -202,6 +202,31 @@
       }
     },
     {
+      "name": "corpus/printing.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/printing.mjs",
+      "parse": {
+        "sha256": "47568b514532e4cabf64e2149e31915003e73ce336a9560df84d345b624c2f29"
+      },
+      "check": {
+        "sha256": "3796ecbef090ac9a10eccd59dda8a4f6542eb96fcd71d6d57c1d0c3f1991e164"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "051f52d9dee82c308aa3fa3ebac64c9e4142789b381a159c622aba30c6d34ae0"
+        },
+        "rust": {
+          "sha256": "e1b99c31ca0b1e6be5578e4bb6a5ef3e89408fbf65cfca17d5ff034422fe74d7"
+        },
+        "lean": {
+          "sha256": "e337997e7b9d93bd78cc2c2ec161bd064d4bb738630cb2d75417fad2741c7ec0"
+        },
+        "rocq": {
+          "sha256": "d9fc34a30e296fe20cb63a92b5aed60e48c6bf9c2f2a2b6a6098c7d16288fdda"
+        }
+      }
+    },
+    {
       "name": "corpus/project.lean",
       "extension": "lean",
       "path": "parity/fixtures/translation-corpus/project.lean",
@@ -14034,9 +14059,23 @@
       "extension": "mjs",
       "source": "if (true) console.log('x');",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "console.log: the JavaScript standard library is outside the portable core at 10..26"
+        "sha256": "b42660e43ffaa78af1f6bdf93e96fefe67a5152d421a57b60c19ff61af05d2bc"
+      },
+      "check": {
+        "sha256": "bb359b41dc96bce490bd3a6b6c87d47acc40073a2f2b70dcd3a5cb932794f329"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "30c35604c3b35c19cf71d754ef6a159dc9743a7ce8a89ef7af7ded5f90d48dd9"
+        },
+        "rust": {
+          "sha256": "95a6a5ddc1c09bf466a84f00f7f48603b6402cc276fbd84dc9692c4b4c3055a8"
+        },
+        "lean": {
+          "sha256": "f2257035ff3fea39a6ac562a93392b346e0829622fd1b46151b7d2074253429b"
+        },
+        "rocq": {
+          "sha256": "2dc2c841477011c08761a9eb36f3159b13ce82cfa118f0362c4b52ee53784bb2"
         }
       }
     },
@@ -14781,9 +14820,23 @@
       "extension": "mjs",
       "source": "do { console.log('x'); } while (true);",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "console.log: the JavaScript standard library is outside the portable core at 5..21"
+        "sha256": "5c451975c2d86c3c9d0c4ff3bfe3476da2f054d9977253fc652d2a1fc7b25d7a"
+      },
+      "check": {
+        "sha256": "6c513788b6f986b266b60d937d6e68566acc5493e5bcfc4d1d919857282f79f4"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "ed5b49b6b6c21a50cb7f6d9037d333b9fa34333a9963c87f4ee180c28aedf91a"
+        },
+        "rust": {
+          "sha256": "1b0d6d156d76e13b5c849a9aa56703a464c80839fc0fdf2ac8adfb6c8e3141b8"
+        },
+        "lean": {
+          "sha256": "6cad47e04064caa95c46368167df8cf05013d5fc09214e121c6ff2306aa27ac6"
+        },
+        "rocq": {
+          "sha256": "398ae870c9dc01b4231483b2cbd230ad2c4948e187beb9da9c65c9950d4cc057"
         }
       }
     },

@@ -9,6 +9,7 @@
 import { unsupported } from './diagnostics.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
+import { threadOutput } from './output.js';
 import { EmitState, mutualGroups, orderDeclarations } from './emit-common.js';
 
 const KEYWORDS = new Set([
@@ -191,7 +192,8 @@ function ident(name) {
   return result;
 }
 
-export function emitRocq(program) {
+export function emitRocq(source) {
+  const program = threadOutput(source);
   const state = new EmitState(program, 'Rocq', ident, KEYWORDS, {
     ctorStyle: 'module',
     // Rocq derives these from inductives and Functions in the same namespace.
@@ -284,6 +286,8 @@ class RocqEmitter {
         return 'string';
       case 'unit':
         return 'unit';
+      case 'output':
+        return 'list string';
       case 'data':
         return this.state.ref(type.name);
       default:
@@ -516,6 +520,10 @@ class RocqEmitter {
         return this.literal(e);
       case 'unit':
         return 'tt';
+      case 'outNil':
+        return '(@nil string)';
+      case 'outCons':
+        return `(${this.expr(e.head)} :: ${this.expr(e.tail)})`;
       case 'var':
         return e.name;
       case 'call': {
@@ -604,6 +612,8 @@ class RocqEmitter {
         return '0%float';
       case 'unit':
         return 'tt';
+      case 'output':
+        return '(@nil string)';
       case 'data': {
         const entry = this.program.declarations.get(type.name);
         const ctor = entry.ctors.find((candidate) => candidate.fields.every((field) => field.type.kind !== 'data'))
@@ -764,6 +774,7 @@ class RocqEmitter {
       if (index >= effects.length) return 'nil';
       const effect = effects[index];
       if (effect.k === 'print') return `${this.expr(effect.expr)} ::\n  ${build(index + 1)}`;
+      if (effect.k === 'output') return `app (List.rev ${this.expr(effect.expr)})\n  (${build(index + 1)})`;
       if (effect.k === 'let') return `let ${effect.name} := ${this.expr(effect.value)} in\n  ${build(index + 1)}`;
       assertion += 1;
       const lets = effects.slice(0, index).filter((item) => item.k === 'let')
@@ -777,6 +788,7 @@ class RocqEmitter {
     const body = build(0);
     if (main.sequentialAsync) this.state.encode('sequential-async', 'an async function is the function its body computes and await is its call: every call of one is awaited where it is made, so nothing runs concurrently and the output is the same, in the same order');
     this.state.encode('program-output', 'main is the list of lines the source program prints, in order; evaluating it with vm_compute runs the program');
+    if (this.program.outputThreaded) this.state.encode('output-threading', 'a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main lists the lines of each step in the order they were printed');
     return [...theorems, `Definition main : list string :=\n  ${body}.`].join('\n\n');
   }
 }

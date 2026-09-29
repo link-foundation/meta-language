@@ -357,6 +357,7 @@ impl Checker {
             items,
             main,
             declarations,
+            output_threaded: false,
         })
     }
 

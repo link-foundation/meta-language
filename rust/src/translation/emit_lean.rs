@@ -15,19 +15,21 @@ use std::fmt::Write as _;
 
 use super::diagnostics::{type_error, unsupported, Result};
 use super::emit_common::{
-    mutual_groups, order_declarations, CtorStyle, EmitOptions, EmitState, Emitted, NumberDependence,
+    mutual_groups, order_declarations, CtorStyle, Dependence, EmitOptions, EmitState, Emitted,
 };
 use super::ir::{
-    rename_function, rename_main, rename_theorem, ByZero, Case, DataDecl, Decl, Effect, Expr,
-    FnDecl, Hints, LitValue, Main, Node, Pattern, Plan, Program, Prop, Semantics, TheoremDecl,
+    rename_function, rename_theorem, ByZero, Case, DataDecl, Decl, Expr, FnDecl, Hints, LitValue,
+    Node, Pattern, Plan, Program, Prop, Semantics, TheoremDecl,
 };
 use super::lean_root_names::LEAN_ROOT_NAMES;
+use super::output::thread_output;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{fixed_bounds, Type};
 use super::Language;
 
 mod helpers;
+mod main;
 use self::helpers::HELPERS;
 
 const KEYWORDS: &[&str] = &[
@@ -176,7 +178,8 @@ fn generated(name: &str) -> Vec<String> {
 ///
 /// # Errors
 /// On constructs the target cannot express faithfully.
-pub fn emit_lean(program: &Program) -> Result<Emitted> {
+pub fn emit_lean(source: &Program) -> Result<Emitted> {
+    let program = &*thread_output(source)?;
     let state = EmitState::new(
         program,
         Language::Lean,
@@ -194,7 +197,8 @@ pub fn emit_lean(program: &Program) -> Result<Emitted> {
         state,
         helpers: HashSet::new(),
         successors: HashMap::new(),
-        uses_number: NumberDependence::new(program),
+        uses_number: Dependence::numbers(program),
+        uses_partial: Dependence::partial(program),
     }
     .file()
 }
@@ -206,7 +210,8 @@ struct LeanEmitter<'p> {
     // Inside `| p + 1 =>` of a match on `x`, `x` is written `p + 1`: Lean's
     // structural recursion sees through the pattern but not the variable.
     successors: HashMap<String, String>,
-    uses_number: NumberDependence,
+    uses_number: Dependence,
+    uses_partial: Dependence,
 }
 
 impl LeanEmitter<'_> {
@@ -302,6 +307,7 @@ impl LeanEmitter<'_> {
             Type::Bool => "Bool".to_owned(),
             Type::String => "String".to_owned(),
             Type::Unit => "Unit".to_owned(),
+            Type::Output => "List String".to_owned(),
             Type::Data { name } => self.state.reference(name, "."),
             other => {
                 return Err(type_error(
@@ -325,7 +331,13 @@ impl LeanEmitter<'_> {
             let local = self.state.ctor_local(&data.full_name, &ctor.name);
             lines.push(format!("  | {local}{fields} : {name}"));
         }
-        lines.push("  deriving Repr, DecidableEq, Inhabited".to_owned());
+        // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
+        let deriving = if data.output {
+            "Inhabited"
+        } else {
+            "Repr, DecidableEq, Inhabited"
+        };
+        lines.push(format!("  deriving {deriving}"));
         Ok(lines.join("\n"))
     }
 
@@ -529,6 +541,14 @@ impl LeanEmitter<'_> {
                 literal(&e.ty, value)?
             }
             Node::Unit => "()".to_owned(),
+            Node::OutNil => "([] : List String)".to_owned(),
+            Node::OutCons { head, tail } => {
+                format!(
+                    "({} :: {})",
+                    self.expr(head, depth)?,
+                    self.expr(tail, depth)?
+                )
+            }
             Node::Var { name } => self.successors.get(name).unwrap_or(name).clone(),
             Node::Call { func, args } => {
                 let head = self.state.reference(func, ".");
@@ -584,6 +604,13 @@ impl LeanEmitter<'_> {
             Node::Abort { message } => {
                 self.state.abort_to_total(message);
                 format!("(panic! {} : {})", json_string(message), self.ty(&e.ty)?)
+            }
+            // Output threading leaves no `print` node.
+            Node::Print { .. } => {
+                return Err(type_error(
+                    "print with its output not threaded".to_owned(),
+                    e.span,
+                ))
             }
         })
     }
@@ -803,115 +830,6 @@ impl LeanEmitter<'_> {
         self.state.checked_to_total("conversion to a natural");
         self.helpers.insert("toNatChecked");
         Ok(format!("(ml_to_nat_checked {arg})"))
-    }
-
-    fn main(&mut self, main: &Main) -> Result<String> {
-        let effects = rename_main(main, &ident, &self.state.local_reserved());
-        let mut lines = Vec::new();
-        let mut theorems = Vec::new();
-        let mut assertion = 0;
-        for (index, effect) in effects.iter().enumerate() {
-            match effect {
-                Effect::Print { expr, .. } => {
-                    lines.push(format!("  IO.println {}", self.expr(expr, 1)?));
-                }
-                Effect::Let { name, value, .. } => {
-                    lines.push(format!("  let {name} := {}", self.expr(value, 1)?));
-                }
-                Effect::Assert { prop, .. } if self.uses_number.prop(prop) => {
-                    // The kernel cannot evaluate Float, so the assertion runs where the source's does.
-                    assertion += 1;
-                    lines.push(format!(
-                        "  if !{} then throw (IO.userError \"assertion {assertion} failed\")",
-                        self.check(prop)?
-                    ));
-                    self.state.assertion_theorem_with(
-                        &format!("assertion {assertion}"),
-                        effect,
-                        Some("runtime-assertion"),
-                    );
-                }
-                Effect::Assert { prop, .. } => {
-                    assertion += 1;
-                    let mut lets = String::new();
-                    for earlier in &effects[..index] {
-                        if let Effect::Let { name, value, .. } = earlier {
-                            let _ = write!(lets, "let {name} := {}; ", self.expr(value, 1)?);
-                        }
-                    }
-                    let name = format!("ml_assertion_{assertion}");
-                    theorems.push(format!(
-                        "theorem {name} : {lets}{} := by\n  try rfl\n  try decide",
-                        self.prop(prop)?
-                    ));
-                    self.state.assertion_theorem(&name, effect);
-                }
-            }
-        }
-        if main.sequential_async {
-            self.state.encode(
-                "sequential-async",
-                "an async function is the function its body computes and await is its call: every call of one is awaited where it is made, so nothing runs concurrently and the output is the same, in the same order",
-            );
-        }
-        self.state.encode(
-            "program-output",
-            "main prints the lines the source program prints, in order, with IO.println",
-        );
-        let body = if lines.is_empty() {
-            "  pure ()".to_owned()
-        } else {
-            lines.join("\n")
-        };
-        theorems.push(format!("def main : IO Unit := do\n{body}"));
-        Ok(theorems.join("\n\n"))
-    }
-
-    /// A proposition as a Bool computed at run time.
-    fn check(&mut self, prop: &Prop) -> Result<String> {
-        Ok(match prop {
-            Prop::And { left, right } => {
-                format!("({} && {})", self.check(left)?, self.check(right)?)
-            }
-            Prop::Or { left, right } => {
-                format!("({} || {})", self.check(left)?, self.check(right)?)
-            }
-            Prop::Implies { left, right } => {
-                format!("(!{} || {})", self.check(left)?, self.check(right)?)
-            }
-            Prop::Not { arg } => format!("(!{})", self.check(arg)?),
-            Prop::Bool { expr } => self.expr(expr, 1)?,
-            Prop::Forall { .. } => {
-                return Err(type_error(
-                    "no run-time check for a quantified proposition".to_owned(),
-                    None,
-                ))
-            }
-            other => {
-                let (op, comparison) = other.comparison().expect("a comparison");
-                let left = self.expr(&comparison.left, 1)?;
-                let right = self.expr(&comparison.right, 1)?;
-                let equal = matches!(other, Prop::Eq(_));
-                if comparison.same_value {
-                    self.helpers.insert("floatSame");
-                    let not = if equal { "" } else { "!" };
-                    return Ok(format!("({not}ml_float_same {left} {right})"));
-                }
-                let operator = match op {
-                    BinaryOp::Eq => "==",
-                    BinaryOp::Ne => "!=",
-                    BinaryOp::Lt => "<",
-                    BinaryOp::Le => "≤",
-                    BinaryOp::Gt => ">",
-                    _ => "≥",
-                };
-                if matches!(op, BinaryOp::Eq | BinaryOp::Ne) {
-                    format!("({left} {operator} {right})")
-                } else {
-                    format!("(decide ({left} {operator} {right}))")
-                }
-            }
-        })
     }
 }
 

@@ -404,6 +404,11 @@ class Checker {
         const arg = this.expr(node.arg, env, path, node.from);
         return castTo(arg, to, node.flavor, node.span);
       }
+      case 'print': {
+        const text = this.show(node.expr, env, path, node.style);
+        const body = this.expr(node.body, env, path, expected, allowLiteral);
+        return { k: 'print', text, body, type: body.type };
+      }
       case 'abort': {
         if (!expected) throw typeError('abort needs a known result type', node.span);
         return { k: 'abort', message: node.message, type: expected };

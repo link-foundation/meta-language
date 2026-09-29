@@ -255,20 +255,33 @@ export function numberDependence(program) {
     visit(node);
     return found;
   };
+  return dependence(program, (entry) => entry.k !== 'theorem' && direct(entry), direct);
+}
+
+/**
+ * True of an expression or proposition that calls, directly or not, a
+ * recursive function with no decreasing argument: Lean defines those as
+ * partial defs, whose equations the kernel cannot unfold.
+ */
+export function opaqueDependence(program) {
+  return dependence(program, (entry) => entry.k === 'fn' && (Boolean(entry.mutual) || (entry.recursive && entry.decreasing === null)), () => false);
+}
+
+function dependence(program, marks, direct) {
   const entries = [...program.declarations.values()];
   const uses = new Map(entries.map((entry) => [entry.fullName, dependencies(entry)]));
-  const numeric = new Set(entries.filter((entry) => entry.k !== 'theorem' && direct(entry)).map((entry) => entry.fullName));
+  const marked = new Set(entries.filter(marks).map((entry) => entry.fullName));
   let grew = true;
   while (grew) {
     grew = false;
     for (const entry of entries) {
-      if (!numeric.has(entry.fullName) && [...uses.get(entry.fullName)].some((name) => numeric.has(name))) {
-        numeric.add(entry.fullName);
+      if (!marked.has(entry.fullName) && [...uses.get(entry.fullName)].some((name) => marked.has(name))) {
+        marked.add(entry.fullName);
         grew = true;
       }
     }
   }
-  return (node) => direct(node) || [...dependencies({ k: 'fn', params: [], ret: null, body: node })].some((name) => numeric.has(name));
+  return (node) => direct(node) || [...dependencies({ k: 'fn', params: [], ret: null, body: node })].some((name) => marked.has(name));
 }
 
 /**

@@ -7,6 +7,12 @@ impl RocqEmitter<'_> {
         match &e.node {
             Node::Lit { value } => self.literal(&e.ty, value),
             Node::Unit => Ok("tt".to_owned()),
+            Node::OutNil => Ok("(@nil string)".to_owned()),
+            Node::OutCons { head, tail } => {
+                Ok(format!("({} :: {})", self.expr(head)?, self.expr(tail)?))
+            }
+            // Output threading leaves no `print` node.
+            Node::Print { .. } => Err(internal("print with its output not threaded".to_owned())),
             Node::Var { name } => Ok(name.clone()),
             Node::Call { func, args } => {
                 let member = self.current.as_ref().and_then(|current| {
@@ -148,6 +154,7 @@ impl RocqEmitter<'_> {
             Type::String => "EmptyString".to_owned(),
             Type::Float => "0%float".to_owned(),
             Type::Unit => "tt".to_owned(),
+            Type::Output => "(@nil string)".to_owned(),
             Type::Data { name } => {
                 let entry = self.program.data(name);
                 let Some(ctor) = entry
@@ -442,11 +449,17 @@ impl RocqEmitter<'_> {
         let mut assertion = 0;
         let mut theorems: Vec<String> = Vec::new();
         let mut body = String::new();
+        let mut open = 0;
         for (index, effect) in effects.iter().enumerate() {
             match effect {
                 Effect::Print { expr, .. } => {
                     body.push_str(&self.expr(expr)?);
                     body.push_str(" ::\n  ");
+                }
+                Effect::Output { expr, .. } => {
+                    let expr = self.expr(expr)?;
+                    let _ = write!(body, "app (List.rev {expr})\n  (");
+                    open += 1;
                 }
                 Effect::Let { name, value, .. } => {
                     let value = self.expr(value)?;
@@ -472,6 +485,7 @@ impl RocqEmitter<'_> {
             }
         }
         body.push_str("nil");
+        body.push_str(&")".repeat(open));
         if main.sequential_async {
             self.state.encode(
                 "sequential-async",
@@ -482,6 +496,12 @@ impl RocqEmitter<'_> {
             "program-output",
             "main is the list of lines the source program prints, in order; evaluating it with vm_compute runs the program",
         );
+        if self.program.output_threaded {
+            self.state.encode(
+                "output-threading",
+                "a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main lists the lines of each step in the order they were printed",
+            );
+        }
         theorems.push(format!("Definition main : list string :=\n  {body}."));
         Ok(theorems.join("\n\n"))
     }

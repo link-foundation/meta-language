@@ -224,6 +224,12 @@ enum Stmt {
         expr: SExpr,
         span: Span,
     },
+    /// `console.log(expr)`.
+    Print {
+        expr: SExpr,
+        style: ShowStyle,
+        span: Span,
+    },
 }
 
 #[derive(Clone)]

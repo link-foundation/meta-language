@@ -23,6 +23,7 @@ use super::ir::{
     FnDecl, Hints, LitValue, Main, Node, Param, Pattern, Plan, Program, Prop, Semantics,
     TheoremDecl,
 };
+use super::output::thread_output;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::Type;
@@ -304,7 +305,8 @@ fn internal(message: String) -> TranslationError {
 ///
 /// # Errors
 /// On constructs the target cannot express faithfully.
-pub fn emit_rocq(program: &Program) -> Result<Emitted> {
+pub fn emit_rocq(source: &Program) -> Result<Emitted> {
+    let program = &*thread_output(source)?;
     let state = EmitState::new(
         program,
         Language::Rocq,
@@ -441,6 +443,7 @@ impl RocqEmitter<'_> {
             Type::Bool => "bool".to_owned(),
             Type::String => "string".to_owned(),
             Type::Unit => "unit".to_owned(),
+            Type::Output => "list string".to_owned(),
             Type::Data { name } => self.state.reference(name, "."),
             other => return Err(internal(format!("no Rocq type for {}", other.kind()))),
         })

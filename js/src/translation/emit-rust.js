@@ -725,6 +725,8 @@ class RustEmitter {
         return `{\n${indent(`let ${e.name} = ${this.expr(e.value)};\n${this.expr(e.body)}`, 1)}\n}`;
       case 'match':
         return this.match(e);
+      case 'print':
+        return `{\n${indent(`println!("{}", ${this.expr(e.text)});\n${this.expr(e.body)}`, 1)}\n}`;
       case 'toString':
         if (e.arg.type.kind === 'string') return this.expr(e.arg);
         if (e.arg.type.kind === 'data' || e.arg.type.kind === 'unit') {

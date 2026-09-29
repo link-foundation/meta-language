@@ -12,6 +12,17 @@ impl RustEmitter<'_> {
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
             Node::Var { name } => Ok(own(name, &expr.ty)),
+            Node::Print { text, body } => {
+                let text = self.expr(text)?;
+                let body = self.expr(body)?;
+                Ok(format!(
+                    "{{\n{}\n}}",
+                    indent(&format!("println!(\"{{}}\", {text});\n{body}"), 1)
+                ))
+            }
+            Node::OutNil | Node::OutCons { .. } => {
+                unreachable!("only the Lean and Rocq emitters thread output")
+            }
             Node::Call { func, args }
                 if self
                     .loop_params
@@ -486,6 +497,9 @@ impl RustEmitter<'_> {
                     ));
                     self.state
                         .assertion_theorem(&format!("assertion {assertion}"), effect);
+                }
+                Effect::Output { .. } => {
+                    unreachable!("only the Lean and Rocq emitters thread output")
                 }
             }
         }

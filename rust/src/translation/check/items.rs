@@ -63,6 +63,7 @@ impl Checker {
                     ctors: Vec::new(),
                     span,
                     generated: data.generated,
+                    output: false,
                     full_name: full_name.clone(),
                     module_path,
                 }),

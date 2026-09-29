@@ -55,7 +55,8 @@ pub(super) const fn statement_span(statement: &Stmt) -> Option<Span> {
         | Stmt::For { span, .. }
         | Stmt::Break { span }
         | Stmt::Continue { span }
-        | Stmt::Expr { span, .. } => Some(*span),
+        | Stmt::Expr { span, .. }
+        | Stmt::Print { span, .. } => Some(*span),
         Stmt::Switch(node) => Some(node.span),
         Stmt::Empty => None,
     }
@@ -167,7 +168,8 @@ pub(super) fn lower_at(list: &[&Stmt], index: usize, place: Span) -> Result<SExp
         | Stmt::DoWhile { span, .. }
         | Stmt::For { span, .. }
         | Stmt::Break { span }
-        | Stmt::Continue { span } => Err(TranslationError::syntax(
+        | Stmt::Continue { span }
+        | Stmt::Print { span, .. } => Err(TranslationError::syntax(
             "internal: an imperative statement in a pure body",
             Some(*span),
         )),

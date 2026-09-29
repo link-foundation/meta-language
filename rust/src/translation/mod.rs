@@ -25,6 +25,7 @@ pub mod js_number;
 pub mod lean;
 pub mod lean_root_names;
 pub mod lexer;
+pub mod output;
 pub mod proof;
 pub mod rocq;
 pub mod rust;

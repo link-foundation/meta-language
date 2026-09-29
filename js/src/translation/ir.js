@@ -122,6 +122,7 @@ export function tailLoop(entry, body) {
       case 'if':
         return { ...e, then: rewrite(e.then), else: rewrite(e.else) };
       case 'let':
+      case 'print':
         return { ...e, body: rewrite(e.body) };
       case 'match':
         return { ...e, cases: e.cases.map((kase) => ({ ...kase, body: rewrite(kase.body) })) };
@@ -187,7 +188,7 @@ export function renameMain(main, ident, reserved) {
       env.set(effect.name, name);
       return { ...effect, name, value };
     }
-    if (effect.k === 'print') return { ...effect, expr: renameExpr(effect.expr, env, scope) };
+    if (effect.k === 'print' || effect.k === 'output') return { ...effect, expr: renameExpr(effect.expr, env, scope) };
     return { ...effect, prop: renameProp(effect.prop, env, scope) };
   });
   return { effects };

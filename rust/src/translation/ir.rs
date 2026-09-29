@@ -117,7 +117,11 @@ impl Expr {
     #[must_use]
     pub fn children(&self) -> Vec<&Self> {
         match &self.node {
-            Node::Lit { .. } | Node::Unit | Node::Var { .. } | Node::Abort { .. } => Vec::new(),
+            Node::Lit { .. }
+            | Node::Unit
+            | Node::Var { .. }
+            | Node::Abort { .. }
+            | Node::OutNil => Vec::new(),
             Node::Call { args, .. } | Node::Ctor { args, .. } => args.iter().collect(),
             Node::Unary { arg, .. } | Node::ToString { arg, .. } | Node::Cast { arg, .. } => {
                 vec![arg]
@@ -129,6 +133,8 @@ impl Expr {
                 otherwise,
             } => vec![cond, then, otherwise],
             Node::Let { value, body, .. } => vec![value, body],
+            Node::Print { text, body } => vec![text, body],
+            Node::OutCons { head, tail } => vec![head, tail],
             Node::Match { scrutinee, cases } => {
                 let mut children = vec![&**scrutinee];
                 children.extend(cases.iter().map(|kase| &kase.body));
@@ -141,8 +147,20 @@ impl Expr {
     #[must_use]
     pub fn map_children(&self, visit: &mut impl FnMut(&Self) -> Self) -> Self {
         let node = match &self.node {
-            Node::Lit { .. } | Node::Unit | Node::Var { .. } | Node::Abort { .. } => {
-                self.node.clone()
+            Node::Lit { .. }
+            | Node::Unit
+            | Node::Var { .. }
+            | Node::Abort { .. }
+            | Node::OutNil => self.node.clone(),
+            Node::Print { text, body } => {
+                let text = Box::new(visit(text));
+                let body = Box::new(visit(body));
+                Node::Print { text, body }
+            }
+            Node::OutCons { head, tail } => {
+                let head = Box::new(visit(head));
+                let tail = Box::new(visit(tail));
+                Node::OutCons { head, tail }
             }
             Node::Call { func, args } => Node::Call {
                 func: func.clone(),
@@ -307,6 +325,18 @@ pub enum Node {
     Abort {
         message: String,
     },
+    /// Prints `text`, then is `body`.
+    Print {
+        text: Box<Expr>,
+        body: Box<Expr>,
+    },
+    /// No lines printed (see `output`).
+    OutNil,
+    /// The lines `tail` with `head` printed after them.
+    OutCons {
+        head: Box<Expr>,
+        tail: Box<Expr>,
+    },
 }
 
 impl Node {
@@ -326,6 +356,9 @@ impl Node {
             Self::ToString { .. } => "toString",
             Self::Cast { .. } => "cast",
             Self::Abort { .. } => "abort",
+            Self::Print { .. } => "print",
+            Self::OutNil => "outNil",
+            Self::OutCons { .. } => "outCons",
         }
     }
 }
@@ -528,6 +561,9 @@ pub struct DataDecl {
     pub module_path: Vec<String>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub generated: bool,
+    /// A pair of printed lines and a value (see `output`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub output: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -657,6 +693,12 @@ pub enum Effect {
         #[serde(default)]
         span: Option<Span>,
     },
+    /// Prints the lines `expr` holds, oldest first (see `output`).
+    Output {
+        expr: Expr,
+        #[serde(default)]
+        span: Option<Span>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -679,6 +721,9 @@ pub struct Program {
     pub main: Option<Main>,
     /// Every declaration in source order.
     pub declarations: Vec<Decl>,
+    /// Functions that print take and return the lines printed (see `output`).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub output_threaded: bool,
 }
 
 impl Program {

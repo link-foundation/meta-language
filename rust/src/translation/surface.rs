@@ -233,6 +233,12 @@ pub enum SNode {
     Abort {
         message: String,
     },
+    /// `console.log(expr)`, then `body`.
+    Print {
+        expr: Box<SExpr>,
+        style: ShowStyle,
+        body: Box<SExpr>,
+    },
     /// A JavaScript `{ $: 'tag', field: value }` constructor object, fields in source order.
     CtorObject {
         tag: String,
@@ -277,6 +283,7 @@ impl SNode {
             Self::Show { .. } => "show",
             Self::Cast { .. } => "cast",
             Self::Abort { .. } => "abort",
+            Self::Print { .. } => "print",
             Self::CtorObject { .. } => "ctorObject",
             Self::Cons { .. } => "cons",
             Self::Nil => "nil",

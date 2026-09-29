@@ -10,7 +10,8 @@ import { unsupported } from './diagnostics.js';
 import { propFunctions } from './proof.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
-import { EmitState, mutualGroups, numberDependence, orderDeclarations } from './emit-common.js';
+import { threadOutput } from './output.js';
+import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations } from './emit-common.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 
 const KEYWORDS = new Set([
@@ -150,7 +151,8 @@ function ident(name) {
   return result;
 }
 
-export function emitLean(program) {
+export function emitLean(source) {
+  const program = threadOutput(source);
   const state = new EmitState(program, 'Lean', ident, KEYWORDS, {
     ctorStyle: 'data',
     generated: (name) => [`${name}.eq_1`],
@@ -168,6 +170,7 @@ class LeanEmitter {
     // structural recursion sees through the pattern but not the variable.
     this.successors = new Map();
     this.usesNumber = numberDependence(program);
+    this.usesPartial = opaqueDependence(program);
   }
 
   file() {
@@ -236,6 +239,8 @@ class LeanEmitter {
         return 'String';
       case 'unit':
         return 'Unit';
+      case 'output':
+        return 'List String';
       case 'data':
         return this.state.ref(type.name);
       default:
@@ -250,7 +255,9 @@ class LeanEmitter {
       const fields = ctor.fields.map((field, index) => ` (${ident(field.name ?? `field${index}`)} : ${this.type(field.type)})`).join('');
       return `  | ${this.state.ctorLocal(entry.fullName, ctor.name)}${fields} : ${name}`;
     });
-    return [`inductive ${name} where`, ...ctors, '  deriving Repr, DecidableEq, Inhabited'].join('\n');
+    // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
+    const deriving = entry.output ? 'Inhabited' : 'Repr, DecidableEq, Inhabited';
+    return [`inductive ${name} where`, ...ctors, `  deriving ${deriving}`].join('\n');
   }
 
   definition(entry) {
@@ -354,6 +361,10 @@ class LeanEmitter {
         return this.literal(e);
       case 'unit':
         return '()';
+      case 'outNil':
+        return '([] : List String)';
+      case 'outCons':
+        return `(${this.expr(e.head, depth)} :: ${this.expr(e.tail, depth)})`;
       case 'var':
         return this.successors.get(e.name) ?? e.name;
       case 'call': {
@@ -537,9 +548,10 @@ class LeanEmitter {
     let assertion = 0;
     effects.forEach((effect, index) => {
       if (effect.k === 'print') lines.push(`  IO.println ${this.expr(effect.expr, 1)}`);
+      else if (effect.k === 'output') lines.push(`  for ml_line in ${this.expr(effect.expr, 1)}.reverse do IO.println ml_line`);
       else if (effect.k === 'let') lines.push(`  let ${effect.name} := ${this.expr(effect.value, 1)}`);
-      else if (this.usesNumber(effect.prop)) {
-        // The kernel cannot evaluate Float, so the assertion runs where the source's does.
+      else if (this.usesNumber(effect.prop) || this.onPartial(effect.prop, effects.slice(0, index))) {
+        // The kernel cannot evaluate Float or unfold a partial def, so the assertion runs where the source's does.
         assertion += 1;
         lines.push(`  if !${this.check(effect.prop)} then throw (IO.userError "assertion ${assertion} failed")`);
         this.state.assertionTheorem(`assertion ${assertion}`, effect, { discharge: 'runtime-assertion' });
@@ -554,7 +566,31 @@ class LeanEmitter {
     });
     if (main.sequentialAsync) this.state.encode('sequential-async', 'an async function is the function its body computes and await is its call: every call of one is awaited where it is made, so nothing runs concurrently and the output is the same, in the same order');
     this.state.encode('program-output', 'main prints the lines the source program prints, in order, with IO.println');
+    if (this.program.outputThreaded) this.state.encode('output-threading', 'a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main prints the lines of each step in the order they were printed');
     return [...theorems, `def main : IO Unit := do\n${lines.length ? lines.join('\n') : '  pure ()'}`].join('\n\n');
+  }
+
+  /** True when the proposition, or a main binding it reads, calls a partial def. */
+  onPartial(prop, before) {
+    const reads = new Set();
+    const collect = (node) => {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) node.forEach(collect);
+      else {
+        if (node.k === 'var') reads.add(node.name);
+        Object.entries(node).forEach(([key, value]) => key !== 'type' && collect(value));
+      }
+    };
+    collect(prop);
+    let partial = this.usesPartial(prop);
+    for (const effect of [...before].reverse()) {
+      if (partial) break;
+      if (effect.k === 'let' && reads.has(effect.name)) {
+        partial = this.usesPartial(effect.value);
+        collect(effect.value);
+      }
+    }
+    return partial;
   }
 
   /** A proposition as a Bool computed at run time. */

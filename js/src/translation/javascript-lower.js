@@ -14,9 +14,9 @@
 import { TranslationError, unsupported } from './diagnostics.js';
 
 const ROOT = 'crate';
-const IMPERATIVE = new Set(['let', 'assign', 'while', 'doWhile', 'for', 'break', 'continue']);
+const IMPERATIVE = new Set(['let', 'assign', 'while', 'doWhile', 'for', 'break', 'continue', 'print']);
 
-/** Whether statements use `let`, assignments, loops, `break` or `continue`. */
+/** Whether statements use `let`, assignments, loops, `break`, `continue` or print. */
 export function imperative(statements) {
   return statements.some(function visit(statement) {
     if (IMPERATIVE.has(statement.s)) return true;
@@ -62,6 +62,7 @@ function useStatement(statement, scope, uses) {
       return;
     case 'return':
     case 'expr':
+    case 'print':
       read(statement.expr);
       return;
     case 'block':
@@ -263,6 +264,8 @@ class Lowering {
         return ctx.brk();
       case 'continue':
         return ctx.cont();
+      case 'print':
+        return { k: 'print', expr: this.renamed(statement.expr, scope), style: statement.style, body: rest(), span: statement.span };
       case 'expr':
         throw unsupported('expression statement', 'statements with effects are outside the portable core in function bodies', statement.span);
       default:

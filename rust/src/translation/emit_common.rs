@@ -428,9 +428,10 @@ impl<'p> EmitState<'p> {
     /// An assertion with how it is discharged, such as `runtime-assertion`.
     pub fn assertion_theorem_with(&mut self, name: &str, effect: &Effect, discharge: Option<&str>) {
         let span = match effect {
-            Effect::Print { span, .. } | Effect::Let { span, .. } | Effect::Assert { span, .. } => {
-                *span
-            }
+            Effect::Print { span, .. }
+            | Effect::Let { span, .. }
+            | Effect::Assert { span, .. }
+            | Effect::Output { span, .. } => *span,
         };
         self.theorems.push(TheoremRecord {
             source: format!(
@@ -575,21 +576,45 @@ pub fn dependencies(entry: &Decl) -> HashSet<String> {
     found
 }
 
-/// Whether a node computes with JavaScript Numbers: it has a Number-typed
-/// part, or uses a declaration that does, directly or not.
-pub struct NumberDependence {
-    numeric: HashSet<String>,
+/// Whether a node depends on declarations of a kind, directly or not.
+pub struct Dependence {
+    marked: HashSet<String>,
+    /// Whether a node with a Number-typed part depends by itself.
+    floats: bool,
 }
 
-impl NumberDependence {
+impl Dependence {
+    /// Whether a node computes with JavaScript Numbers: it has a
+    /// Number-typed part, or uses a declaration that does.
     #[must_use]
-    pub fn new(program: &Program) -> Self {
-        let mut numeric: HashSet<String> = program
+    pub fn numbers(program: &Program) -> Self {
+        let marked = program
             .declarations
             .iter()
             .filter(|entry| !matches!(entry, Decl::Theorem(_)) && mentions_float(entry))
             .map(|entry| entry.full_name().to_owned())
             .collect();
+        Self::closed(program, marked, true)
+    }
+
+    /// Whether a node calls a recursive function with no decreasing
+    /// argument: Lean defines those as partial defs, whose equations the
+    /// kernel cannot unfold.
+    #[must_use]
+    pub fn partial(program: &Program) -> Self {
+        let marked = program
+            .declarations
+            .iter()
+            .filter(|entry| {
+                matches!(entry, Decl::Fn(function)
+                    if function.mutual || (function.recursive && function.decreasing.is_none()))
+            })
+            .map(|entry| entry.full_name().to_owned())
+            .collect();
+        Self::closed(program, marked, false)
+    }
+
+    fn closed(program: &Program, mut numeric: HashSet<String>, floats: bool) -> Self {
         let uses: Vec<(String, HashSet<String>)> = program
             .declarations
             .iter()
@@ -605,14 +630,24 @@ impl NumberDependence {
                 }
             }
         }
-        Self { numeric }
+        Self {
+            marked: numeric,
+            floats,
+        }
     }
 
     #[must_use]
     pub fn prop(&self, prop: &Prop) -> bool {
         let mut found = HashSet::new();
         prop_dependencies(prop, &mut found);
-        mentions_float(prop) || found.iter().any(|name| self.numeric.contains(name))
+        (self.floats && mentions_float(prop)) || found.iter().any(|name| self.marked.contains(name))
+    }
+
+    #[must_use]
+    pub fn expr(&self, expr: &Expr) -> bool {
+        let mut found = HashSet::new();
+        expr_dependencies(expr, &mut found);
+        (self.floats && mentions_float(expr)) || found.iter().any(|name| self.marked.contains(name))
     }
 }
 

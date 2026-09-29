@@ -41,6 +41,9 @@ pub enum Type {
     Literal,
     /// A proof hypothesis bound by a case split (proof plans only).
     Hypothesis,
+    /// The lines a program has printed, newest first: only the targets whose
+    /// programs are pure carry them, as a value (see `output`).
+    Output,
 }
 
 pub const NAT: Type = Type::Nat;
@@ -86,6 +89,7 @@ impl Type {
             Self::Named { .. } => "named",
             Self::Literal => "literal",
             Self::Hypothesis => "hypothesis",
+            Self::Output => "output",
         }
     }
 

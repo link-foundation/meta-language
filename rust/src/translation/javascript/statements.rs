@@ -98,6 +98,14 @@ impl JavaScriptParser {
         if self.cursor.is("break") || self.cursor.is("continue") {
             return self.jump_statement();
         }
+        if self.cursor.is("console") && self.cursor.is_at(".", 1) {
+            let (expr, place) = self.console_call()?;
+            return Ok(Stmt::Print {
+                expr,
+                style: ShowStyle::JsConsole,
+                span: place,
+            });
+        }
         if token.kind == TokenKind::Identifier {
             let statements = ["try", "function", "class", "with", "debugger"];
             if statements.contains(&token.value.as_str()) {
@@ -545,6 +553,16 @@ impl JavaScriptParser {
     }
 
     pub(super) fn console_statement(&mut self) -> Result<SEffect> {
+        let (expr, place) = self.console_call()?;
+        Ok(SEffect::Print {
+            expr,
+            style: ShowStyle::JsConsole,
+            span: Some(place),
+        })
+    }
+
+    /// `console.log(expr);`: the printed expression and the statement's span.
+    fn console_call(&mut self) -> Result<(SExpr, Span)> {
         let start = self.cursor.advance();
         self.cursor.expect(".", Some("console"))?;
         let method = self.cursor.identifier(Some("console"))?;
@@ -573,11 +591,7 @@ impl JavaScriptParser {
                 place,
             )
         });
-        Ok(SEffect::Print {
-            expr,
-            style: ShowStyle::JsConsole,
-            span: Some(place),
-        })
+        Ok((expr, place))
     }
 
     pub(super) fn assert_statement(&mut self) -> Result<SEffect> {

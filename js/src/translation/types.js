@@ -9,6 +9,9 @@ export const BOOL = Object.freeze({ kind: 'bool' });
 export const STRING = Object.freeze({ kind: 'string' });
 export const UNIT = Object.freeze({ kind: 'unit' });
 export const FLOAT = Object.freeze({ kind: 'float' });
+// The lines a program has printed, newest first: only the targets whose
+// programs are pure carry them, as a value (see output.js).
+export const OUTPUT = Object.freeze({ kind: 'output' });
 
 export function fixed(bits, signed) {
   return Object.freeze({ kind: 'fixed', bits, signed });
