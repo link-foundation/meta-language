@@ -414,6 +414,11 @@ class JavaScriptEmitter {
         return `ml_at(${this.expr(e.array)}, ${this.expr(e.index)})`;
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
+      case 'math': {
+        const args = e.args.map((arg) => this.expr(arg));
+        if (e.op === 'maxOf' || e.op === 'minOf') return `Math.${e.op.slice(0, 3)}(...${args[0]})`;
+        return `${e.type.kind === 'bool' ? 'Number' : 'Math'}.${e.op}(${args.join(', ')})`;
+      }
       default:
         throw new Error(`no JavaScript expression for ${e.k}`);
     }

@@ -21,6 +21,9 @@ const KNOWN = Symbol('known constructors');
 /** Natural numeral patterns above this unfold to equality tests rather than successor chains. */
 const NAT_PATTERN_UNFOLD = 16n;
 
+// The Math and Number functions whose value is a boolean.
+const PREDICATES = new Set(['isInteger', 'isSafeInteger', 'isFinite', 'isNaN']);
+
 /** Binds a local, forgetting constructor facts the new binding shadows. */
 function bindLocal(env, name, type) {
   env.set(name, type);
@@ -373,6 +376,8 @@ class Checker {
       }
       case 'array':
         return this.arrayLiteral(node, env, path, expected);
+      case 'math':
+        return this.math(node, env, path);
       case 'index': {
         const object = this.expr(node.object, env, path, undefined);
         if (object.type.kind !== 'array') {
@@ -496,6 +501,33 @@ class Checker {
     if (!element) throw unsupported('empty array of an unknown type', 'nothing fixes the type of the elements of this empty array; declare it with JSDoc', node.span);
     if (!parts.length) return { k: 'array', items: [], type: array(element) };
     return parts.reduce((left, right) => ({ k: 'append', left, right, type: array(element) }));
+  }
+
+  /**
+   * `Math.floor(x)`, `Math.max(a, ...xs)`, `Number.isInteger(x)`: the
+   * arguments are Numbers, which none of them converts, and a spread
+   * argument makes `max` and `min` a fold over one array.
+   */
+  math(node, env, path) {
+    const type = PREDICATES.has(node.op) ? BOOL : FLOAT;
+    const variadic = node.op === 'max' || node.op === 'min';
+    if (variadic && node.args.some((item) => item.spread)) {
+      const values = this.arrayLiteral({ k: 'array', items: node.args, span: node.span }, env, path, array(FLOAT));
+      return { k: 'math', op: `${node.op}Of`, args: [values], type };
+    }
+    const spread = node.args.find((item) => item.spread);
+    if (spread) throw unsupported('spread argument', `pass ${node.name} its argument`, spread.value.span ?? node.span);
+    if (!variadic && node.args.length !== 1) {
+      throw unsupported(`${node.name} with ${node.args.length} arguments`, `${node.name} takes one Number`, node.span);
+    }
+    const args = node.args.map(({ value }) => {
+      const arg = this.expr(value, env, path, FLOAT);
+      if (!isFloat(arg.type)) {
+        throw typeError(`${node.name} of ${typeKey(arg.type)}; it takes Numbers, and converts or rejects anything else`, value.span ?? node.span);
+      }
+      return arg;
+    });
+    return { k: 'math', op: node.op, args, type };
   }
 
   binary(node, env, path, expected, allowLiteral) {

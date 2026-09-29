@@ -122,9 +122,10 @@ impl Expr {
             | Node::Var { .. }
             | Node::Abort { .. }
             | Node::OutNil => Vec::new(),
-            Node::Call { args, .. } | Node::Ctor { args, .. } | Node::Array { items: args } => {
-                args.iter().collect()
-            }
+            Node::Call { args, .. }
+            | Node::Ctor { args, .. }
+            | Node::Array { items: args }
+            | Node::Math { args, .. } => args.iter().collect(),
             Node::Unary { arg, .. }
             | Node::ToString { arg, .. }
             | Node::Cast { arg, .. }
@@ -185,6 +186,10 @@ impl Expr {
             }
             Node::Length { array } => Node::Length {
                 array: Box::new(visit(array)),
+            },
+            Node::Math { op, args } => Node::Math {
+                op: op.clone(),
+                args: args.iter().map(&mut *visit).collect(),
             },
             Node::Call { func, args } => Node::Call {
                 func: func.clone(),
@@ -373,6 +378,12 @@ pub enum Node {
     Length {
         array: Box<Expr>,
     },
+    /// A `Math` or `Number` function of Numbers; `maxOf` and `minOf` fold
+    /// `max` and `min` over one array.
+    Math {
+        op: String,
+        args: Vec<Expr>,
+    },
     /// No lines printed (see `output`).
     OutNil,
     /// The lines `tail` with `head` printed after them.
@@ -404,6 +415,7 @@ impl Node {
             Self::Append { .. } => "append",
             Self::Index { .. } => "index",
             Self::Length { .. } => "length",
+            Self::Math { .. } => "math",
             Self::OutNil => "outNil",
             Self::OutCons { .. } => "outCons",
         }

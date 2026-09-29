@@ -159,7 +159,7 @@ fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr, Type>) {
                     walk(item, arrays);
                 }
             }
-            SNode::Array { items, .. } => {
+            SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
                 for item in items {
                     walk(&mut item.value, arrays);
                 }
@@ -734,6 +734,34 @@ impl Inference {
                     self.unify(&value, &want, item.value.span.or(expr.span))?;
                 }
                 Ok(Term::Array(Box::new(element)))
+            }
+            SNode::Math { op, args, .. } => {
+                // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.
+                for item in args {
+                    let ty = self.expr(&item.value, env)?;
+                    let ty = self.resolve(&ty);
+                    let unknown = match &ty {
+                        Term::Var(_) => true,
+                        Term::Array(element) => {
+                            item.spread && matches!(self.resolve(element), Term::Var(_))
+                        }
+                        Term::Known(_) => false,
+                    };
+                    if unknown {
+                        let want = if item.spread {
+                            Term::Array(Box::new(Term::Known(FLOAT)))
+                        } else {
+                            Term::Known(FLOAT)
+                        };
+                        self.unify(&ty, &want, item.value.span.or(expr.span))?;
+                    }
+                }
+                let predicate = ["isInteger", "isSafeInteger", "isFinite", "isNaN"];
+                Ok(Term::Known(if predicate.contains(&op.as_str()) {
+                    BOOL
+                } else {
+                    FLOAT
+                }))
             }
             SNode::Index { object, index } => {
                 let element = self.fresh(false);

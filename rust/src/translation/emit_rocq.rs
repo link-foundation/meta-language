@@ -32,12 +32,14 @@ use super::Language;
 mod arrays;
 mod expressions;
 mod floats;
+mod math;
 mod mutual;
 mod proofs;
 
 use self::arrays::{FLOAT_INDEX, LIST_AT};
 pub use self::floats::FLOAT_PRELUDE;
 use self::floats::{FLOAT_REM, FLOAT_SAME, JS_CONSOLE, JS_NUMBER};
+use self::math::MATH;
 use self::mutual::Mutual;
 
 const KEYWORDS: &[&str] = &[
@@ -218,6 +220,7 @@ enum Helper {
     JsConsole,
     FloatSame,
     FloatRem,
+    Math,
     ListAt,
     FloatIndex,
     Fix,
@@ -226,7 +229,7 @@ enum Helper {
 }
 
 impl Helper {
-    const ALL: [Self; 13] = [
+    const ALL: [Self; 14] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -235,6 +238,7 @@ impl Helper {
         Self::JsConsole,
         Self::FloatSame,
         Self::FloatRem,
+        Self::Math,
         Self::ListAt,
         Self::FloatIndex,
         Self::Fix,
@@ -252,6 +256,7 @@ impl Helper {
             Self::JsConsole => JS_CONSOLE,
             Self::FloatSame => FLOAT_SAME,
             Self::FloatRem => FLOAT_REM,
+            Self::Math => MATH,
             Self::ListAt => LIST_AT,
             Self::FloatIndex => FLOAT_INDEX,
             Self::Fix => FIX,

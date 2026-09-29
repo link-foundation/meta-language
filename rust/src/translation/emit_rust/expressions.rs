@@ -2,8 +2,8 @@
 
 use super::{
     block, comparison_operator, indent, own, rename_main, rounding_text, rust_string, snake,
-    unsupported, BinaryOp, ByZero, Decimal, Effect, Expr, Flavor, LitValue, Node, Pattern, Result,
-    Rounding, RustEmitter, Semantics, Type, UnaryOp,
+    unsupported, BinaryOp, ByZero, Decimal, Effect, Expr, Flavor, LitValue, Node, Pattern, Prelude,
+    Result, Rounding, RustEmitter, Semantics, Type, UnaryOp,
 };
 
 impl RustEmitter<'_> {
@@ -127,7 +127,7 @@ impl RustEmitter<'_> {
                         ));
                     }
                     Type::Float => {
-                        self.uses_number = true;
+                        self.preludes.insert(Prelude::Number);
                         let function = if *console { "js_console" } else { "js_number" };
                         return Ok(format!("crate::ml_number::{function}({})", self.expr(arg)?));
                     }
@@ -140,6 +140,7 @@ impl RustEmitter<'_> {
             Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
                 self.array_expr(expr)
             }
+            Node::Math { .. } => self.math(expr),
         }
     }
 
@@ -147,7 +148,7 @@ impl RustEmitter<'_> {
         let text = value.text();
         match &expr.ty {
             Type::Nat | Type::Int => {
-                self.uses_big = true;
+                self.preludes.insert(Prelude::Big);
                 let bound = 1i128 << 126;
                 let small = Decimal::parse(&text)
                     .and_then(|value| value.to_i128())

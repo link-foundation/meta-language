@@ -282,6 +282,13 @@ pub enum SNode {
         object: Box<SExpr>,
         integer: bool,
     },
+    /// A call of a Math or Number function, `Math.max(a, ...xs)`: `op` is
+    /// the function and `name` the path the program called it by.
+    Math {
+        op: String,
+        name: String,
+        args: Vec<SArrayItem>,
+    },
     // Frontend-internal forms; the checker rejects them if they reach it.
     Cons {
         head: Box<SExpr>,
@@ -325,6 +332,7 @@ impl SNode {
             Self::Array { .. } => "array",
             Self::Index { .. } => "index",
             Self::Length { .. } => "length",
+            Self::Math { .. } => "math",
             Self::Cons { .. } => "cons",
             Self::Nil => "nil",
             Self::List { .. } => "list",

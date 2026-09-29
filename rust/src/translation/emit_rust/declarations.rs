@@ -4,8 +4,8 @@ use std::collections::BTreeSet;
 
 use super::{
     block, comparison_operator, format_escape, indent, own, rename_function, rename_theorem, snake,
-    tail_loop, Binder, Decl, Emitted, Expr, ModuleTree, Prop, Result, RustEmitter, TheoremCheck,
-    Type, ARRAY_PRELUDE, NUMBER_PRELUDE, PRELUDE,
+    tail_loop, Binder, Decl, Emitted, Expr, ModuleTree, Prelude, Prop, Result, RustEmitter,
+    TheoremCheck, Type, ARRAY_PRELUDE, MATH_PRELUDE, NUMBER_PRELUDE, PRELUDE,
 };
 
 impl<'p> RustEmitter<'p> {
@@ -43,16 +43,16 @@ impl<'p> RustEmitter<'p> {
                 .to_owned(),
             String::new(),
         ];
-        if self.uses_big {
-            lines.push(PRELUDE.to_owned());
-            lines.push(String::new());
-        }
-        if self.uses_number {
-            lines.push(NUMBER_PRELUDE.to_owned());
-            lines.push(String::new());
-        }
-        if self.uses_array {
-            lines.push(ARRAY_PRELUDE.to_owned());
+        for prelude in &self.preludes {
+            lines.push(
+                match prelude {
+                    Prelude::Big => PRELUDE,
+                    Prelude::Number => NUMBER_PRELUDE,
+                    Prelude::Math => MATH_PRELUDE,
+                    Prelude::Array => ARRAY_PRELUDE,
+                }
+                .to_owned(),
+            );
             lines.push(String::new());
         }
         let has_main = main.is_some();
@@ -98,7 +98,7 @@ impl<'p> RustEmitter<'p> {
     pub(super) fn ty(&mut self, ty: &Type) -> String {
         match ty {
             Type::Nat | Type::Int => {
-                self.uses_big = true;
+                self.preludes.insert(Prelude::Big);
                 self.state.encode(
                     "unbounded-integers",
                     "naturals and integers are ml::Big, an arbitrary-precision integer defined in the translated program; naturals stay non-negative because natural subtraction truncates and conversions to naturals are checked",
@@ -333,7 +333,7 @@ impl<'p> RustEmitter<'p> {
     pub(super) fn domain(&mut self, ty: &Type, depth: i32) -> String {
         match ty {
             Type::Nat => {
-                self.uses_big = true;
+                self.preludes.insert(Prelude::Big);
                 if depth >= 3 {
                     "crate::ml::range(0, 6)"
                 } else {
@@ -342,7 +342,7 @@ impl<'p> RustEmitter<'p> {
                 .to_owned()
             }
             Type::Int => {
-                self.uses_big = true;
+                self.preludes.insert(Prelude::Big);
                 if depth >= 3 {
                     "crate::ml::range(-4, 4)"
                 } else {
@@ -442,7 +442,7 @@ impl<'p> RustEmitter<'p> {
             other => {
                 let (op, comparison) = other.comparison().expect("a comparison");
                 if comparison.same_value {
-                    self.uses_number = true;
+                    self.preludes.insert(Prelude::Number);
                     let same = format!(
                         "crate::ml_number::same_value({}, {})",
                         self.expr(&comparison.left)?,

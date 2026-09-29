@@ -146,6 +146,24 @@ def ml_array_at {α : Type} [Inhabited α] (values : Array α) (index : Int) : �
 def ml_array_at_float {α : Type} [Inhabited α] (values : Array α) (index : Float) : α :=
   if index ≥ 0 && index.floor == index && index < 9007199254740992 then ml_array_at values (Int.ofNat index.toUInt64.toNat)
   else panic! "array index out of range"`,
+  math: `/-- Math.trunc: towards zero, a zero result keeping the sign of the argument. -/
+def ml_trunc (x : Float) : Float := if x < 0 then x.ceil else x.floor
+/-- Math.round: the nearest integer, the one towards +Infinity on a tie, and -0 from -0.5 up to 0. -/
+def ml_round (x : Float) : Float :=
+  if x.isNaN || x.isInf || x == 0 then x
+  else if x > 0 ∧ x < 0.5 then 0
+  else if x < 0 ∧ x ≥ -0.5 then -0.0
+  else if x - x.floor ≥ 0.5 then x.floor + 1 else x.floor
+/-- Math.sign: 1 or -1, and -0, 0 and NaN as they are. -/
+def ml_sign (x : Float) : Float := if x > 0 then 1 else if x < 0 then -1 else x
+/-- Math.max of two Numbers: NaN when either is, and 0 above -0. -/
+def ml_max (a b : Float) : Float :=
+  if a > b then a else if b > a then b else if a == b then (if 1 / a < 0 then b else a) else 0.0 / 0.0
+/-- Math.min of two Numbers: NaN when either is, and -0 below 0. -/
+def ml_min (a b : Float) : Float :=
+  if a < b then a else if b < a then b else if a == b then (if 1 / a < 0 then a else b) else 0.0 / 0.0
+def ml_is_integer (x : Float) : Bool := x.isFinite && ml_trunc x == x
+def ml_is_safe_integer (x : Float) : Bool := ml_is_integer x && decide (x.abs ≤ 9007199254740991)`,
   floatSame: `/-- SameValue, as Object.is and assert.strictEqual compare: NaN equals NaN,
 and 0 differs from -0. -/
 def ml_float_same (a b : Float) : Bool :=
@@ -215,7 +233,7 @@ class LeanEmitter {
       'set_option linter.unusedSimpArgs false',
       'set_option linter.constructorNameAsVariable false',
       '',
-      ...['fixed', 'fixedNat', 'toNatChecked', 'divide', 'divideNat', 'jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'arrayAt', 'arrayAtFloat'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
+      ...['fixed', 'fixedNat', 'toNatChecked', 'divide', 'divideNat', 'jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'math', 'arrayAt', 'arrayAtFloat'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -432,8 +450,29 @@ class LeanEmitter {
       }
       case 'length':
         return `(${e.type.kind === 'float' ? 'Float.ofNat' : 'Int.ofNat'} ${this.expr(e.array, depth)}.size)`;
+      case 'math':
+        return this.math(e, depth);
       default:
         throw new Error(`no Lean expression for ${e.k}`);
+    }
+  }
+
+  /** Math and Number functions: Float's where they agree with JavaScript, the math helpers otherwise. */
+  math(e, depth) {
+    const args = e.args.map((arg) => this.expr(arg, depth));
+    const native = { abs: 'Float.abs', floor: 'Float.floor', ceil: 'Float.ceil', sqrt: 'Float.sqrt', isFinite: 'Float.isFinite', isNaN: 'Float.isNaN' }[e.op];
+    if (native) return `(${native} ${args[0]})`;
+    this.helpers.add('math');
+    switch (e.op) {
+      case 'max':
+      case 'min':
+        if (!args.length) return leanFloat(e.op === 'max' ? '-Infinity' : 'Infinity', 'Float');
+        return args.reduce((left, right) => `(ml_${e.op} ${left} ${right})`);
+      case 'maxOf':
+      case 'minOf':
+        return `(${args[0]}.foldl ml_${e.op.slice(0, 3)} ${leanFloat(e.op === 'maxOf' ? '-Infinity' : 'Infinity', 'Float')})`;
+      default:
+        return `(ml_${{ isInteger: 'is_integer', isSafeInteger: 'is_safe_integer' }[e.op] ?? e.op} ${args[0]})`;
     }
   }
 

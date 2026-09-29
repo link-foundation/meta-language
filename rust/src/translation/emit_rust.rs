@@ -12,6 +12,7 @@
 //!
 //! Mirrors `js/src/translation/emit-rust.js`.
 
+use std::collections::BTreeSet;
 use std::fmt::Write as _;
 
 use super::decimal::Decimal;
@@ -28,9 +29,11 @@ use super::Language;
 mod arrays;
 mod declarations;
 mod expressions;
+mod math;
 mod number_prelude;
 
 use self::arrays::ARRAY_PRELUDE;
+use self::math::MATH_PRELUDE;
 use self::number_prelude::NUMBER_PRELUDE;
 
 const KEYWORDS: &[&str] = &[
@@ -526,9 +529,7 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
         state,
         temporaries: 0,
         theorem_checks: Vec::new(),
-        uses_big: false,
-        uses_number: false,
-        uses_array: false,
+        preludes: BTreeSet::new(),
         loop_params: None,
     }
     .file()
@@ -549,14 +550,22 @@ struct TheoremCheck {
     source: String,
 }
 
+/// A generated module, in the order the file lists the ones it uses.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Prelude {
+    Big,
+    Number,
+    Math,
+    Array,
+}
+
 struct RustEmitter<'p> {
     program: &'p Program,
     state: EmitState<'p>,
     temporaries: usize,
     theorem_checks: Vec<TheoremCheck>,
-    uses_big: bool,
-    uses_number: bool,
-    uses_array: bool,
+    /// The generated modules the program uses.
+    preludes: BTreeSet<Prelude>,
     /// The lifted loop being emitted as a loop, and its parameters, which
     /// each call to it assigns before the next iteration.
     loop_params: Option<(String, Vec<String>)>,

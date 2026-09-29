@@ -202,6 +202,31 @@
       }
     },
     {
+      "name": "corpus/math.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/math.mjs",
+      "parse": {
+        "sha256": "edded4401d608560831969d57b09fd4b45bd5835b35a858731231071e535b2a3"
+      },
+      "check": {
+        "sha256": "17db96a31eaca6ef24632b3881516b9f20340b4fd8a54c72916588bedc6d7ffb"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "6de27ad27b8d57a2af7358d597ab2fc5815a420fd1136e42a521764992e5d0f5"
+        },
+        "rust": {
+          "sha256": "61c87b44a8a8fc22b26474c54adaff5d933f89c97533baac7a57b98ebd6cbd94"
+        },
+        "lean": {
+          "sha256": "36bf2426b9e921a8676d5725d970dcb21335258c28364257c7ed4a3758a0c898"
+        },
+        "rocq": {
+          "sha256": "8ae72e2494b0ee6152bc516cab2fed6bca671aa9cc75f20641d033a497d34f67"
+        }
+      }
+    },
+    {
       "name": "corpus/mutual-recursion.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/mutual-recursion.mjs",
@@ -13792,9 +13817,12 @@
       "extension": "mjs",
       "source": "/**\n * @param {bigint} n\n * @returns {bigint}\n */\nfunction f(n) { return Math.max(n, 1n); }",
       "parse": {
+        "sha256": "a52b2fa9bb7d89e6a11fdb63d68ab8540d3d08dc4e2db09aa685e08029e28f1f"
+      },
+      "check": {
         "error": {
-          "kind": "unsupported",
-          "message": "Math.max: the JavaScript standard library is outside the portable core at 73..88"
+          "kind": "type",
+          "message": "Math.max of int; it takes Numbers, and converts or rejects anything else at 82..83"
         }
       }
     },
@@ -20287,7 +20315,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "Map: the JavaScript standard library is outside the portable core at 74..79"
+          "message": "declaration of Map: it shadows the JavaScript global Map, which the translation reads as the built-in; rename it at 34..37"
         }
       }
     },

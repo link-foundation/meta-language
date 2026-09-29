@@ -1,6 +1,6 @@
 //! JavaScript arrays, which the portable core never mutates, are Rust `Vec`s.
 
-use super::{Expr, Node, Result, RustEmitter};
+use super::{Expr, Node, Prelude, Result, RustEmitter};
 
 pub(super) const ARRAY_PRELUDE: &str = r#"/// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
@@ -44,7 +44,7 @@ impl RustEmitter<'_> {
                 Ok(format!("vec![{}]", texts.join(", ")))
             }
             Node::Append { left, right } => {
-                self.uses_array = true;
+                self.preludes.insert(Prelude::Array);
                 Ok(format!(
                     "crate::ml_array::append({}, {})",
                     self.expr(left)?,
@@ -52,7 +52,7 @@ impl RustEmitter<'_> {
                 ))
             }
             Node::Index { array, index } => {
-                self.uses_array = true;
+                self.preludes.insert(Prelude::Array);
                 self.state.array_read();
                 let index = if index.ty.is_float() {
                     format!("crate::ml_array::number_index({})", self.expr(index)?)
@@ -68,7 +68,7 @@ impl RustEmitter<'_> {
                 if e.ty.is_float() {
                     return Ok(format!("({}.len() as f64)", self.receiver(array)?));
                 }
-                self.uses_big = true;
+                self.preludes.insert(Prelude::Big);
                 Ok(format!(
                     "crate::ml::Big::from_u128({}.len() as u128)",
                     self.receiver(array)?

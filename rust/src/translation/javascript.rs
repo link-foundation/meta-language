@@ -35,6 +35,7 @@ mod imperative;
 mod infer;
 mod loops;
 mod lowering;
+mod math;
 mod statements;
 use self::flow::{imperative, statement_uses};
 use self::imperative::lower_imperative;

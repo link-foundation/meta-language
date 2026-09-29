@@ -27,6 +27,7 @@ use super::Language;
 
 mod arrays;
 mod helpers;
+mod math;
 use self::helpers::Helper;
 
 const KEYWORDS: &[&str] = &[
@@ -798,10 +799,11 @@ impl<'p> JavaScriptEmitter<'p> {
             Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
                 self.array_expr(e)
             }
+            Node::Math { .. } => self.math(e),
         }
     }
 
-    fn exprs(&mut self, list: &[Expr]) -> Result<Vec<String>> {
+    pub(super) fn exprs(&mut self, list: &[Expr]) -> Result<Vec<String>> {
         list.iter().map(|arg| self.expr(arg)).collect()
     }
 

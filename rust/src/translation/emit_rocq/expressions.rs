@@ -97,6 +97,7 @@ impl RocqEmitter<'_> {
             Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
                 self.array_expr(e)
             }
+            Node::Math { .. } => self.math(e),
         }
     }
 

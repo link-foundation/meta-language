@@ -288,6 +288,14 @@ class Inference {
         }
         return { kind: 'array', element };
       }
+      case 'math':
+        // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.
+        for (const item of node.args) {
+          const type = this.resolve(this.expr(item.value, env));
+          const unknown = item.spread ? type.kind === 'var' || (type.kind === 'array' && this.resolve(type.element).kind === 'var') : type.kind === 'var';
+          if (unknown) this.unify(type, item.spread ? { kind: 'array', element: FLOAT } : FLOAT, item.value.span ?? node.span);
+        }
+        return ['isInteger', 'isSafeInteger', 'isFinite', 'isNaN'].includes(node.op) ? BOOL : FLOAT;
       case 'index': {
         const element = this.fresh();
         this.unify(this.expr(node.object, env), { kind: 'array', element }, node.object.span ?? node.span);

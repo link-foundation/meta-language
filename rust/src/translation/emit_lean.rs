@@ -31,6 +31,7 @@ use super::Language;
 mod arrays;
 mod helpers;
 mod main;
+mod math;
 use self::helpers::HELPERS;
 
 const KEYWORDS: &[&str] = &[
@@ -620,6 +621,7 @@ impl LeanEmitter<'_> {
             Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
                 self.array_expr(e, depth)?
             }
+            Node::Math { .. } => self.math(e, depth)?,
             // Output threading leaves no `print` node.
             Node::Print { .. } => {
                 return Err(type_error(

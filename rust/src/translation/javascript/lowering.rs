@@ -512,7 +512,9 @@ pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
             out.push(object);
             out.push(index);
         }
-        SNode::Array { items, .. } => out.extend(items.iter().map(|item| &item.value)),
+        SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
+            out.extend(items.iter().map(|item| &item.value));
+        }
         SNode::Unary { arg, .. } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
             out.push(arg);
         }
@@ -549,6 +551,62 @@ pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
     }
     if let Some(test) = &expr.tag_test {
         out.push(&test.object);
+    }
+    out
+}
+
+/// The subexpressions of `children`, to rewrite.
+pub(super) fn children_mut(expr: &mut SExpr) -> Vec<&mut SExpr> {
+    let mut out: Vec<&mut SExpr> = Vec::new();
+    match &mut expr.node {
+        SNode::App { func, args } => {
+            out.push(func);
+            out.extend(args);
+        }
+        SNode::Field { object, .. } | SNode::Length { object, .. } => out.push(object),
+        SNode::Index { object, index } => {
+            out.push(object);
+            out.push(index);
+        }
+        SNode::Array { items, .. } | SNode::Math { args: items, .. } => {
+            out.extend(items.iter_mut().map(|item| &mut item.value));
+        }
+        SNode::Unary { arg, .. } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
+            out.push(arg);
+        }
+        SNode::Binary { left, right, .. } => {
+            out.push(left);
+            out.push(right);
+        }
+        SNode::If {
+            cond,
+            then,
+            otherwise,
+        } => {
+            out.push(cond);
+            out.push(then);
+            out.push(otherwise);
+        }
+        SNode::Let { value, body, .. } => {
+            out.push(value);
+            out.push(body);
+        }
+        SNode::Match { scrutinees, rows } => {
+            out.extend(scrutinees);
+            out.extend(rows.iter_mut().map(|row| &mut row.body));
+        }
+        SNode::CtorObject { fields, .. } => {
+            out.extend(
+                fields
+                    .iter_mut()
+                    .filter(|(name, _)| name != "span" && name != "type")
+                    .map(|(_, value)| value),
+            );
+        }
+        _ => {}
+    }
+    if let Some(test) = &mut expr.tag_test {
+        out.push(&mut test.object);
     }
     out
 }
@@ -629,19 +687,18 @@ pub(super) fn substitute_fields(
             return Ok(());
         }
     }
-    let mut each = |child: &mut SExpr| substitute_fields(child, subject, binder_for);
     match &mut expr.node {
         SNode::Let {
             name, value, body, ..
         } => {
-            each(value)?;
+            substitute_fields(value, subject, binder_for)?;
             if name != subject {
-                each(body)?;
+                substitute_fields(body, subject, binder_for)?;
             }
         }
         SNode::Match { scrutinees, rows } => {
             for scrutinee in scrutinees {
-                each(scrutinee)?;
+                substitute_fields(scrutinee, subject, binder_for)?;
             }
             for row in rows {
                 let mut bound = HashSet::new();
@@ -649,39 +706,15 @@ pub(super) fn substitute_fields(
                     pattern_names(pattern, &mut bound);
                 }
                 if !bound.contains(subject) {
-                    each(&mut row.body)?;
+                    substitute_fields(&mut row.body, subject, binder_for)?;
                 }
             }
         }
-        SNode::App { func, args } => {
-            each(func)?;
-            for arg in args {
-                each(arg)?;
+        _ => {
+            for child in children_mut(expr) {
+                substitute_fields(child, subject, binder_for)?;
             }
         }
-        SNode::Field { object, .. } => each(object)?,
-        SNode::Unary { arg, .. } | SNode::ToString { arg } | SNode::Show { arg, .. } => each(arg)?,
-        SNode::Binary { left, right, .. } => {
-            each(left)?;
-            each(right)?;
-        }
-        SNode::If {
-            cond,
-            then,
-            otherwise,
-        } => {
-            each(cond)?;
-            each(then)?;
-            each(otherwise)?;
-        }
-        SNode::CtorObject { fields, .. } => {
-            for (name, value) in fields {
-                if name != "span" && name != "type" {
-                    each(value)?;
-                }
-            }
-        }
-        _ => {}
     }
     Ok(())
 }

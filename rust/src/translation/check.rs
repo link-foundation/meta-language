@@ -30,6 +30,7 @@ mod arrays;
 mod expressions;
 mod items;
 mod matches;
+mod math;
 mod recursion;
 pub use self::recursion::*;
 

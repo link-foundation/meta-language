@@ -792,6 +792,9 @@ impl JavaScriptParser {
         }
         let name = segments.join(".");
         let place = self.to_here(&token);
+        if let Some(math) = self.math(&token, &name)? {
+            return Ok(math);
+        }
         if !self.cursor.is("(") {
             return Err(unsupported(
                 &format!("function value {name}"),

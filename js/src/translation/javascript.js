@@ -28,6 +28,22 @@ const GLOBALS = new Set([
   'Math', 'Number', 'BigInt', 'parseInt', 'parseFloat', 'JSON', 'Array', 'Object', 'Symbol', 'Date', 'Promise', 'Reflect',
   'Proxy', 'Map', 'Set', 'WeakMap', 'WeakSet', 'globalThis', 'process', 'require', 'console', 'setTimeout', 'isNaN', 'isFinite',
 ]);
+// The exactly specified part of Math and Number: each is exact or correctly
+// rounded, so every target computes the same binary64 value.
+const MATH = {
+  'Math.abs': 'abs', 'Math.floor': 'floor', 'Math.ceil': 'ceil', 'Math.trunc': 'trunc', 'Math.round': 'round',
+  'Math.sign': 'sign', 'Math.sqrt': 'sqrt', 'Math.max': 'max', 'Math.min': 'min',
+  'Number.isInteger': 'isInteger', 'Number.isSafeInteger': 'isSafeInteger', 'Number.isFinite': 'isFinite', 'Number.isNaN': 'isNaN',
+  isFinite: 'isFinite', isNaN: 'isNaN',
+};
+// Their constants, as the source text of the Number each one is.
+const CONSTANTS = {
+  'Math.PI': '3.141592653589793', 'Math.E': '2.718281828459045', 'Math.LN2': '0.6931471805599453', 'Math.LN10': '2.302585092994046',
+  'Math.LOG2E': '1.4426950408889634', 'Math.LOG10E': '0.4342944819032518', 'Math.SQRT2': '1.4142135623730951', 'Math.SQRT1_2': '0.7071067811865476',
+  'Number.MAX_SAFE_INTEGER': '9007199254740991', 'Number.MIN_SAFE_INTEGER': '-9007199254740991', 'Number.EPSILON': '2.220446049250313e-16',
+  'Number.MAX_VALUE': '1.7976931348623157e+308', 'Number.MIN_VALUE': '5e-324', 'Number.POSITIVE_INFINITY': 'Infinity',
+  'Number.NEGATIVE_INFINITY': '-Infinity', 'Number.NaN': 'NaN',
+};
 const STRICT_ASSERTIONS = { equal: 'eq', notEqual: 'ne', deepEqual: 'deep', notDeepEqual: 'notDeep' };
 const ASSERTIONS = { strictEqual: 'eq', notStrictEqual: 'ne', deepStrictEqual: 'deep', notDeepStrictEqual: 'notDeep' };
 
@@ -316,6 +332,7 @@ class JavaScriptParser {
     c.expect('function', 'function declaration');
     if (c.is('*')) throw unsupported('generator function', 'generators are outside the portable core', span(start, c.peek()));
     const name = c.identifier('function');
+    global(name);
     return this.functionRest(start, name, isAsync);
   }
 
@@ -338,6 +355,7 @@ class JavaScriptParser {
     const doc = this.jsdocFor(start);
     c.expect('const', 'function');
     const nameToken = c.identifier('function');
+    global(nameToken);
     c.expect('=', 'function');
     this.scope.tdz.delete(nameToken.value);
     const isAsync = c.is('async') && !c.is('=>', 1);
@@ -442,6 +460,7 @@ class JavaScriptParser {
     const c = this.cursor;
     c.expect('const', 'namespace');
     const name = c.identifier('namespace');
+    global(name);
     c.expect('=', 'namespace');
     this.scope.tdz.delete(name.value);
     const module = this.namespaceBody(name.value, start);
@@ -1049,6 +1068,21 @@ class JavaScriptParser {
     return args;
   }
 
+  /** Arguments that may spread arrays, `(a, ...xs)`, as array items. */
+  spreadArguments(context) {
+    const c = this.cursor;
+    c.expect('(', context);
+    const args = [];
+    while (!c.is(')')) {
+      const spread = c.is('...');
+      if (spread) c.next();
+      args.push({ spread, value: this.expr() });
+      if (!c.eat(',')) break;
+    }
+    c.expect(')', context);
+    return args;
+  }
+
   /**
    * Statements to one expression: `const` is `let`, `if` with a returning
    * branch selects between the branch and the rest, and every path must end
@@ -1615,6 +1649,14 @@ class JavaScriptParser {
     }
     const name = segments.join('.');
     const where = span(token, c.peek());
+    if (Object.hasOwn(CONSTANTS, name) && !c.is('(')) {
+      const value = CONSTANTS[name];
+      return { k: 'num', value: value.replace(/^-/u, ''), ...(value.startsWith('-') && { negative: true }), type: FLOAT, span: where };
+    }
+    if (Object.hasOwn(MATH, name) && c.is('(')) {
+      const args = this.spreadArguments(name);
+      return { k: 'math', op: MATH[name], name, args, span: span(token, c.peek()) };
+    }
     if (!c.is('(')) {
       throw unsupported(`function value ${name}`, 'functions and namespaces are only portable when a function is called', where);
     }
@@ -1704,6 +1746,13 @@ function consoleFormat([first, ...values]) {
 function reserved(token) {
   if (/^ml_/u.test(token.value)) {
     throw unsupported('reserved identifier', `${token.value} uses the translator's reserved ml_ prefix`, span(token, token));
+  }
+}
+
+/** A top-level declaration may not shadow a global the translation reads as the built-in. */
+function global(token) {
+  if (GLOBALS.has(token.value) || token.value === 'String') {
+    throw unsupported(`declaration of ${token.value}`, `it shadows the JavaScript global ${token.value}, which the translation reads as the built-in; rename it`, span(token, token));
   }
 }
 

@@ -2,6 +2,7 @@
 
 use super::infer::infer_javascript_types;
 use super::loops::reserved;
+use super::math::global;
 use super::{
     array, describe, guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim,
     jsdoc_tags, lower, lower_imperative, non_empty, span, statement_uses, tokenize, type_error,
@@ -388,6 +389,7 @@ impl JavaScriptParser {
             ));
         }
         let name = self.cursor.identifier(Some("function"))?;
+        global(&name)?;
         self.function_rest(start, &name, is_async)
     }
 
@@ -411,6 +413,7 @@ impl JavaScriptParser {
         let doc = self.jsdoc_for(start)?;
         self.cursor.expect("const", Some("function"))?;
         let name_token = self.cursor.identifier(Some("function"))?;
+        global(&name_token)?;
         self.cursor.expect("=", Some("function"))?;
         self.scope.tdz.remove(&name_token.value);
         let is_async = self.cursor.is("async") && !self.cursor.is_at("=>", 1);
@@ -682,6 +685,7 @@ impl JavaScriptParser {
     pub(super) fn namespace(&mut self, start: &Token) -> Result<SModule> {
         self.cursor.expect("const", Some("namespace"))?;
         let name = self.cursor.identifier(Some("namespace"))?;
+        global(&name)?;
         self.cursor.expect("=", Some("namespace"))?;
         self.scope.tdz.remove(&name.value);
         let module = self.namespace_body(name.value, start)?;
