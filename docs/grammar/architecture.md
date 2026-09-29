@@ -1,5 +1,10 @@
 # Grammar architecture
 
+> This document is subordinate to the authoritative
+> [vision and architecture specification](../vision.md). It describes one
+> subsystem as it exists today; where the two disagree, the vision is the
+> contract and this document is a defect to fix.
+
 Owned by [F1](../case-studies/issue-93/proposed-issues/F1-grammar-subsystem-docs.md);
 architecture anchor for [A1](../case-studies/issue-93/proposed-issues/A1-grammar-ir.md),
 [A3](../case-studies/issue-93/proposed-issues/A3-grammar-concept-ontology.md),

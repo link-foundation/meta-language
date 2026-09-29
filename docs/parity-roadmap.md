@@ -1,5 +1,10 @@
 # Parity Implementation
 
+> This document is subordinate to the authoritative
+> [vision and architecture specification](vision.md). It describes one
+> subsystem as it exists today; where the two disagree, the vision is the
+> contract and this document is a defect to fix.
+
 This document keeps the comparison scope explicit and ties each named
 competitor or ecosystem project to executable fixtures in this crate.
 

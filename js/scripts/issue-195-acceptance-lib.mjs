@@ -16,6 +16,18 @@ export {
   buildIssue195Manifest,
 };
 
+const SOURCE_LABELS = Object.freeze({
+  issue: 'Issue #195',
+  clarification: 'Full-support clarification',
+  acceptanceGate: 'Executable acceptance-gate clarification',
+  completeScope: 'Directive to complete the entire scope',
+  deliveryCorrection: 'Correction: real translation, observed evidence and real semantics',
+  fullDelivery: 'Full delivery of every requirement',
+  cacheCleanup: 'Completion audit and cache cleanup',
+  remainingAudit: 'Audit of the remaining work (historical counts)',
+  repositoryDirective: 'Repository-wide delivery directive',
+});
+
 function allKeys(value, prefix = '') {
   if (!value || typeof value !== 'object') return [];
   const keys = [];
@@ -666,9 +678,9 @@ export function renderIssue195Markdown(manifest, report) {
     '',
     '## Authoritative sources',
     '',
-    `- [Issue #195](${manifest.sources.issue})`,
-    `- [Full-support clarification](${manifest.sources.clarification})`,
-    `- [Executable acceptance-gate clarification](${manifest.sources.acceptanceGate})`,
+    'Every source below is registered with its revision and content hash in `parity/issue-195-sources.json`; `npm run check:issue-195:sources -- --online` reports an edited or unregistered comment.',
+    '',
+    ...Object.entries(manifest.sources).map(([key, url]) => `- [${SOURCE_LABELS[key] ?? key}](${url})`),
     '',
     '## Enforcement status',
     '',

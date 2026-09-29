@@ -295,7 +295,11 @@ function produceCacheCleanupEvidence() {
 }
 
 async function producePublishedEvidence() {
-  return new Map(await produceDeliveryEvidence('published'));
+  const groups = new Map(await produceDeliveryEvidence('published'));
+  // No formal-ai release consumes the published packages yet, so its cells
+  // run nothing and stay missing until a clean formal-ai consumer is added.
+  groups.set('delivery:formal-ai', { commands: [], artifacts: [], failureLogs: [] });
+  return groups;
 }
 
 /**

@@ -117,6 +117,16 @@ jobs:
         run: npm run check:issue-195
         working-directory: js
 
+      - name: Check issue 195 source register against the ledger and the live discussion
+        run: npm run check:issue-195:sources -- --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check the downstream consumer matrix against the ledger and the tests
+        run: npm run check:downstream-consumers
+        working-directory: js
+
       - name: Verify npm package contents
         run: node ../scripts/with-cache-cleanup.mjs --event package -- npm pack --dry-run
         working-directory: js

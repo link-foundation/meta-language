@@ -1,9 +1,16 @@
+import { visionEvidenceGroup } from './issue-195-vision-requirements.mjs';
+
 /**
  * Selects the independently executable evidence group that owns a verification
  * cell. The runner only emits a result after this group and its prerequisites
  * have completed successfully.
  */
 export function evidenceGroupFor(requirement, cell) {
+  if (requirement.area === 'acceptance-gate-fault-injection') {
+    // Produced by check-issue-195-acceptance.mjs --produce-gate-results, not
+    // by the evidence runner, so buildEvidencePlan leaves these cells out.
+    return 'gate-faults';
+  }
   if (requirement.area === 'runtime-parity' || requirement.area === 'shared-concepts') {
     return 'runtime-parity';
   }
@@ -25,7 +32,9 @@ export function evidenceGroupFor(requirement, cell) {
     if (requirement.id.includes('-RML-')) return 'delivery:rml';
     throw new Error(`unknown package-delivery requirement ${requirement.id}`);
   }
-  return `suite:${cell.runtime}`;
+  // Directive rows checked by repository tooling run inside the JavaScript
+  // suite; the formal-ai release cell has its own delivery group.
+  return visionEvidenceGroup(requirement.id) ?? `suite:${cell.runtime}`;
 }
 
 export function buildEvidencePlan(manifest, checkpoint = 'pre-merge') {

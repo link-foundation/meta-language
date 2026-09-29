@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "repository": "link-foundation/meta-language",
+  "issue": 195,
+  "pullRequest": 196,
+  "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
+  "reconciledAt": "2026-09-29",
+  "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
+  "requirementSources": [
+    {
+      "key": "issue",
+      "id": 195,
+      "kind": "issue",
+      "url": "https://github.com/link-foundation/meta-language/issues/195",
+      "title": "Full four-language representation and transformation; default CST support for all languages",
+      "role": "Original request: full JavaScript, Rust, Lean and Rocq representation, transformation and translation, default CSTs, parity and delivery",
+      "ledgerCoverage": [
+        "I195-CST-",
+        "I195-EMBED-",
+        "I195-IMPORT-",
+        "I195-SEM-",
+        "I195-XFORM-",
+        "I195-TRANSLATE-",
+        "I195-RENAME-",
+        "I195-SHARED-",
+        "I195-PARITY-",
+        "I195-NATIVE-",
+        "I195-DELIVERY-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-23T07:57:12Z",
+      "updatedAt": "2026-09-23T13:36:11Z",
+      "bytes": 10229,
+      "sha256": "c7b096ac5ce0f86174f6c585c29fb804ceec960fb8d8d23d30591a465e3fdba7"
+    },
+    {
+      "key": "clarification",
+      "id": 5795832509,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509",
+      "title": "Maintainer clarification: full language support and CSTs by default are required",
+      "role": "Default CSTs for the complete language inventory, full four-language representation and transformation, evidence and release delivery",
+      "ledgerCoverage": [
+        "I195-CST-",
+        "I195-EMBED-",
+        "I195-SEM-",
+        "I195-XFORM-",
+        "I195-TRANSLATE-",
+        "I195-CONFORMANCE-",
+        "I195-DELIVERY-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-23T13:35:31Z",
+      "updatedAt": "2026-09-23T13:35:31Z",
+      "bytes": 9079,
+      "sha256": "f7eda01314c5a41516ee76c8a7a93e8a177f4dce9fdf8b4e7cbbe4b5819f27e8"
+    },
+    {
+      "key": "acceptanceGate",
+      "id": 5798732287,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
+      "title": "Required acceptance gate: executable verification of every requirement, with no coverage exemptions",
+      "role": "Executable acceptance gate: atomic ledger, full-requirements CI, behavioral matrix, 12 translations, gate fault injection, packaging and truthful status",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-23T16:36:42Z",
+      "updatedAt": "2026-09-23T16:36:42Z",
+      "bytes": 14228,
+      "sha256": "4d5c106cea1679fe021fd7e7837f0b48249bf8f824ae7b109eabfbb4fe354afc"
+    },
+    {
+      "key": "completeScope",
+      "id": 5802299918,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5802299918",
+      "title": "Maintainer directive: complete the entire scope in this PR; implementation is already authorized",
+      "role": "Complete the entire scope in this PR; never weaken the gate or substitute escalation for delivery",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-23T20:21:17Z",
+      "updatedAt": "2026-09-23T20:21:17Z",
+      "bytes": 4566,
+      "sha256": "415537610d797b666549f5f76745d7feb3badff73a5f58e64947aae3424e52be"
+    },
+    {
+      "key": "deliveryCorrection",
+      "id": 5819788893,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5819788893",
+      "title": "Required correction: deliver the actual capabilities, not a green report for weaker substitutes",
+      "role": "Real semantic translation, acceptance evidence from observed execution, semantic analysis rather than labels",
+      "ledgerCoverage": [
+        "I195-TRANSLATE-",
+        "I195-SEM-",
+        "I195-XFORM-",
+        "I195-RENAME-",
+        "I195-GATE-",
+        "I195-SEMANTICS-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-24T18:24:36Z",
+      "updatedAt": "2026-09-24T18:24:36Z",
+      "bytes": 11052,
+      "sha256": "6947ff3a348bc8afd7f637c46262099a4fd55658b880db354b1a16622e634031"
+    },
+    {
+      "key": "fullDelivery",
+      "id": 5836875663,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5836875663",
+      "title": "We need to make sure we fully deliver all requirements in this pull request.",
+      "role": "Fully deliver every requirement in this PR",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-25T17:46:33Z",
+      "updatedAt": "2026-09-25T17:46:33Z",
+      "bytes": 328,
+      "sha256": "32cd46913caf07adcfd0e18afc5b417462c703cd3dc9ccabfcd7c7926017d223"
+    },
+    {
+      "key": "cacheCleanup",
+      "id": 5856764580,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
+      "title": "Completion audit, 2026-09-27: 112 pre-merge requirements still fail; finish implementation and add automatic cache cleanup",
+      "role": "Completion audit and the automatic, safe cleanup of every build-cache class",
+      "ledgerCoverage": [
+        "I195-CACHE-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-27T14:34:53Z",
+      "updatedAt": "2026-09-27T14:34:53Z",
+      "bytes": 19138,
+      "sha256": "a973d35757b76136a7d35da2dc5b2642c01a6cb94cc70fb9e4cb39cc21009cbd"
+    },
+    {
+      "key": "remainingAudit",
+      "id": 5870004788,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5870004788",
+      "title": "What remains for full delivery — audit of `c5eb2303`, 2026-09-28",
+      "role": "Audit of the remaining work at c5eb2303 (its failure counts are historical): conformance, generative testing, full language semantics, default CSTs, cache cleanup and publication",
+      "ledgerCoverage": [
+        "I195-CONFORMANCE-",
+        "I195-GENERATIVE-",
+        "I195-SEM-",
+        "I195-SEMANTICS-",
+        "I195-TRANSLATE-",
+        "I195-CST-",
+        "I195-CACHE-",
+        "I195-DELIVERY-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-28T12:39:57Z",
+      "updatedAt": "2026-09-29T06:54:48Z",
+      "bytes": 13751,
+      "sha256": "97d706af45b1c7d7a103353243a305c6d47341ca3709425b15a42dff0e3315df"
+    },
+    {
+      "key": "repositoryDirective",
+      "id": 5885245090,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090",
+      "title": "Repository-wide delivery directive — updated 2026-09-29",
+      "role": "Repository-wide vision: committed specification and register, dependency and Links Notation fitness, native merged grammars, import/export round trips, automatic merge, readable names, consumers, independent acceptance, cleanup and publication",
+      "ledgerCoverage": [
+        "I195-VISION-",
+        "I195-DEPENDENCY-",
+        "I195-LINO-",
+        "I195-GRAMMAR-",
+        "I195-INTERCHANGE-",
+        "I195-MERGE-",
+        "I195-NAMING-",
+        "I195-SEMANTICS-",
+        "I195-DOWNSTREAM-",
+        "I195-ACCEPTANCE-",
+        "I195-CACHE-",
+        "I195-DELIVERY-",
+        "I195-DOCUMENTATION-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-29T06:55:01Z",
+      "updatedAt": "2026-09-29T06:55:01Z",
+      "bytes": 22554,
+      "sha256": "fb4380da42befa7391fb61d0e7e06411a2388b5b1ddd1acde88681b18d53e443"
+    }
+  ],
+  "statusReports": [
+    {
+      "id": 5797717687,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5797717687",
+      "title": "Progress update at `dc7d625`:",
+      "role": "Solver status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-09-23T15:31:18Z",
+      "updatedAt": "2026-09-23T15:31:18Z",
+      "bytes": 1371,
+      "sha256": "48d7effeadf0c59add095bb4c192c0067605ffe6b3bcbe739d60d16bb5b2ed1c"
+    },
+    {
+      "id": 5800036404,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5800036404",
+      "title": "Issue #195 acceptance-gate update",
+      "role": "Solver status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-09-23T17:52:47Z",
+      "updatedAt": "2026-09-23T17:52:47Z",
+      "bytes": 1789,
+      "sha256": "cba8c0387b85be80bb3c8678c21d1df3c77058a9e5fbbba945f0786983571c02"
+    },
+    {
+      "id": 5800231003,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5800231003",
+      "title": "CI investigation: aggregate is correctly reporting unfinished issue scope",
+      "role": "Solver status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-09-23T18:05:51Z",
+      "updatedAt": "2026-09-23T18:05:51Z",
+      "bytes": 2206,
+      "sha256": "b9a6fd35d4eff241e24256d7a51d887146d8e34a56e8bf959d55ba51e4a3c335"
+    },
+    {
+      "id": 5800423288,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5800423288",
+      "title": "Auto-restart 2: CI blocker confirmed",
+      "role": "Solver status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-09-23T18:18:41Z",
+      "updatedAt": "2026-09-23T18:18:41Z",
+      "bytes": 1456,
+      "sha256": "06c6eb8197004f6a9b28a37e05238eb2d7d49b6e3740a3c7a0970be7d80cad1b"
+    },
+    {
+      "id": 5800652847,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5800652847",
+      "title": "Auto-restart 3: full-requirements gate needs implementation capacity or maintainer direction",
+      "role": "Solver status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-09-23T18:34:25Z",
+      "updatedAt": "2026-09-23T18:34:25Z",
+      "bytes": 1596,
+      "sha256": "4aec6c73c00f637481d1714f48537983cc6005e6c9da5e44d19ed2f1308ad001"
+    },
+    {
+      "id": 5800842752,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5800842752",
+      "title": "Auto-restart 4: fresh CI and evaluator audit",
+      "role": "Solver status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-09-23T18:47:19Z",
+      "updatedAt": "2026-09-23T18:47:50Z",
+      "bytes": 1467,
+      "sha256": "5a25528e2d01f99fdd336b5ba23bacc0dfaff582a364152f0425e5fb87ee6a0d"
+    }
+  ]
+}

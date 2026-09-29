@@ -13,6 +13,17 @@ in **both Rust and JavaScript** with guaranteed feature parity between the two.
 description, an interactive WebAssembly demo, and the full
 [Rust API documentation](https://link-foundation.github.io/meta-language/api/).
 
+## Vision
+
+[`docs/vision.md`](docs/vision.md) is the authoritative specification of what
+meta-language is for and how it is built: one common language of links for
+grammars, syntax trees, semantics and transformations, native merged grammars
+for every language, and full JavaScript, Rust, Lean and Rocq translation. It
+describes the target, not the current state; the generated
+[requirement ledger](docs/issue-195-requirement-ledger.md) reports what is
+verified today. Where another document disagrees with the vision, the vision is
+the contract.
+
 ## Repository layout
 
 No language implementation lives at the repository root. Each language has its own

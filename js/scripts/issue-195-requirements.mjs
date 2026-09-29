@@ -3,6 +3,9 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { buildCacheCleanupRequirements } from './issue-195-cache-requirements.mjs';
+import { CONSUMER_MATRIX, downstreamByRow, parseConsumerMatrix } from './issue-195-downstream.mjs';
+import { evidenceGroupFor } from './issue-195-evidence-plan.mjs';
+import { buildVisionRequirements, traceabilityFor } from './issue-195-vision-requirements.mjs';
 
 export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
@@ -12,8 +15,18 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5795832509',
   acceptanceGate:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287',
+  completeScope:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5802299918',
+  deliveryCorrection:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5819788893',
+  fullDelivery:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5836875663',
   cacheCleanup:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580',
+  remainingAudit:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5870004788',
+  repositoryDirective:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090',
 });
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({
@@ -838,9 +851,12 @@ function buildGateRequirements(fixtureCatalog) {
 export async function buildIssue195Manifest(root) {
   const inventoryPath = path.join(root, 'parity', 'language-grammar-inventory.json');
   const corpusPath = path.join(root, 'parity', 'fixtures', 'four-language-conformance.json');
-  const [inventoryText, corpusText] = await Promise.all([
+  const registerPath = path.join(root, 'parity', 'issue-195-sources.json');
+  const [inventoryText, corpusText, registerText, consumerMatrixText] = await Promise.all([
     readFile(inventoryPath, 'utf8'),
     readFile(corpusPath, 'utf8'),
+    readFile(registerPath, 'utf8'),
+    readFile(path.join(root, CONSUMER_MATRIX), 'utf8'),
   ]);
   const inventory = JSON.parse(inventoryText);
   const fixtureCatalog = {};
@@ -858,7 +874,15 @@ export async function buildIssue195Manifest(root) {
     ...buildCacheCleanupRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.cacheCleanup,
     }),
+    ...buildVisionRequirements(fixtureCatalog, {
+      requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.repositoryDirective,
+    }),
   ];
+  const register = JSON.parse(registerText);
+  const consumersByRow = downstreamByRow(parseConsumerMatrix(consumerMatrixText));
+  for (const entry of requirements) {
+    entry.traceability = traceabilityFor(entry, { fixtureCatalog, register, evidenceGroupFor, consumersByRow });
+  }
 
   const digests = {
     'parity/language-grammar-inventory.json': sha256(inventoryText),

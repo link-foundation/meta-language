@@ -1,5 +1,10 @@
 # Grammar subsystem
 
+> This document is subordinate to the authoritative
+> [vision and architecture specification](../vision.md). It describes one
+> subsystem as it exists today; where the two disagree, the vision is the
+> contract and this document is a defect to fix.
+
 Owned by [F1](../case-studies/issue-93/proposed-issues/F1-grammar-subsystem-docs.md).
 
 The grammar subsystem is the layer that lets `meta-language` describe syntax as
