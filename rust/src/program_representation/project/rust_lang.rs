@@ -10,7 +10,7 @@
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
-use super::tree::{declaration, dirname, join_path, toml_entries, NodeId, SyntaxTree, Target};
+use super::tree::{NodeId, SyntaxTree, Target, declaration, dirname, join_path, toml_entries};
 use super::{ParsedFile, ProjectContext};
 
 const PATH_SEGMENTS: [&str; 5] = ["identifier", "type_identifier", "crate", "self", "super"];
@@ -650,10 +650,11 @@ impl Crate<'_, '_> {
         fn collect<'r>(records: &'r [ModuleRecord], module: usize, macros: &mut Vec<&'r Item>) {
             macros.extend(records[module].macros.iter());
             for item in &records[module].items {
-                if item.kind == "module" && item.attributes.iter().any(|name| name == "macro_use") {
-                    if let Some(child) = item.module {
-                        collect(records, child, macros);
-                    }
+                if item.kind == "module"
+                    && item.attributes.iter().any(|name| name == "macro_use")
+                    && let Some(child) = item.module
+                {
+                    collect(records, child, macros);
                 }
             }
         }

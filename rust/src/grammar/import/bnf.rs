@@ -1,6 +1,6 @@
 use ::bnf::{Expression as BnfExpression, Grammar as BnfGrammar, Term as BnfTerm};
 
-use super::{parse_error, unsupported_error, GrammarImportError};
+use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 
 /// Parses classic Backus-Naur Form text into the grammar IR.

@@ -3,7 +3,7 @@
 
 use meta_language::translation::diagnostics::ErrorKind;
 use meta_language::translation::rust::parse_rust;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const MAIN: &str = "fn main() { println!(\"x\"); }";
 

@@ -109,17 +109,18 @@ impl Tree<'_> {
         let prefix = field.map_or_else(String::new, |field| format!("{field}: "));
         let term = metadata.term().unwrap_or_default();
         // Every Rocq `ident` leaf carries a semantic identifier/primitive_type token child.
-        if self.language == "Rocq" && term == "ident" {
-            if let [child] = children {
-                let child_term = self
-                    .network
-                    .link(*child)
-                    .and_then(|link| link.metadata().term());
-                if matches!(child_term, Some("identifier" | "primitive_type"))
-                    && self.children(*child).is_empty()
-                {
-                    return format!("{prefix}(ident)");
-                }
+        if self.language == "Rocq"
+            && term == "ident"
+            && let [child] = children
+        {
+            let child_term = self
+                .network
+                .link(*child)
+                .and_then(|link| link.metadata().term());
+            if matches!(child_term, Some("identifier" | "primitive_type"))
+                && self.children(*child).is_empty()
+            {
+                return format!("{prefix}(ident)");
             }
         }
         let parts: Vec<String> = children

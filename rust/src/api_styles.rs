@@ -8,7 +8,7 @@ use std::collections::BTreeSet;
 use std::error::Error;
 use std::fmt;
 
-use links_notation::{parse_lino_to_links_with_config, LiNo, ParserConfig};
+use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 
 use crate::configuration::ParseConfiguration;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
@@ -482,7 +482,7 @@ impl LinkCliSubstitution {
             _ => {
                 return Err(LinkCliSubstitutionError::new(
                     "link-cli substitution requires exactly two LiNo lists",
-                ))
+                ));
             }
         };
 

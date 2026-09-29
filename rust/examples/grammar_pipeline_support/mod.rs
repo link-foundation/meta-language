@@ -7,8 +7,8 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
-    infer_cfg, validate, Grammar, GrammarFormat, GrammarParser, InferenceOptions,
-    PositiveOnlyOracle, RustParserArtifacts,
+    Grammar, GrammarFormat, GrammarParser, InferenceOptions, PositiveOnlyOracle,
+    RustParserArtifacts, infer_cfg, validate,
 };
 
 #[allow(dead_code)]

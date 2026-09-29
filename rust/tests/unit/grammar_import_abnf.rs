@@ -1,5 +1,5 @@
 use meta_language::{
-    import_abnf, CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule,
+    CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule, import_abnf,
 };
 
 const POSTAL_ADDRESS: &str = include_str!("../fixtures/grammar/abnf/postal-address.abnf");

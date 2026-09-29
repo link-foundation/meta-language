@@ -90,12 +90,11 @@ impl Source {
     #[must_use]
     pub fn code_point_text(&self, index: usize) -> String {
         let high = self.units[index];
-        if (0xD800..0xDC00).contains(&high) {
-            if let Some(low) = self.at(index + 1) {
-                if (0xDC00..0xE000).contains(&low) {
-                    return String::from_utf16_lossy(&self.units[index..index + 2]);
-                }
-            }
+        if (0xD800..0xDC00).contains(&high)
+            && let Some(low) = self.at(index + 1)
+            && (0xDC00..0xE000).contains(&low)
+        {
+            return String::from_utf16_lossy(&self.units[index..index + 2]);
         }
         String::from_utf16_lossy(&self.units[index..=index])
     }
@@ -339,17 +338,17 @@ pub fn tokenize_source(source: &Source, language: Language) -> Result<Tokens> {
             index += 1;
             continue;
         }
-        if let Some(line) = comments.line {
-            if source.starts_with(line, index) {
-                let stop = source.index_of("\n", index).unwrap_or(source.len());
-                comment_list.push(Comment {
-                    text: source.slice(index, stop),
-                    start: index,
-                    end: stop,
-                });
-                index = stop;
-                continue;
-            }
+        if let Some(line) = comments.line
+            && source.starts_with(line, index)
+        {
+            let stop = source.index_of("\n", index).unwrap_or(source.len());
+            comment_list.push(Comment {
+                text: source.slice(index, stop),
+                start: index,
+                end: stop,
+            });
+            index = stop;
+            continue;
         }
         if source.starts_with(comments.open, index) {
             let stop = block_comment_end(source, index, &comments)?;

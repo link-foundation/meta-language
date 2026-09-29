@@ -280,7 +280,7 @@ pub struct GrammarNames {
 #[must_use]
 #[allow(unsafe_code)]
 pub fn grammar_names(id: &str) -> Option<GrammarNames> {
-    use std::ffi::{c_char, CStr};
+    use std::ffi::{CStr, c_char};
     use tree_sitter::ffi;
 
     let raw = grammar_by_id(id)?.into_raw();

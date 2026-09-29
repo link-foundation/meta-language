@@ -1,9 +1,9 @@
 use std::collections::BTreeSet;
 
 use meta_language::{
-    annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, CharClassItem, Grammar,
-    GrammarConcept, GrammarExpr, GrammarRule, Link, LinkId, LinkNetwork, LinkQuery, LinkType,
-    NetworkProjection, GRAMMAR_CONCEPTS,
+    CharClassItem, GRAMMAR_CONCEPTS, Grammar, GrammarConcept, GrammarExpr, GrammarRule, Link,
+    LinkId, LinkNetwork, LinkQuery, LinkType, NetworkProjection, annotate_grammar_concepts,
+    grammar_expr_concept_id, rule_concept_id,
 };
 
 #[test]
@@ -22,11 +22,13 @@ fn common_concept_ontology_imports_meta_expression_lexicon() {
 
     assert_eq!(state_link.references(), &[state]);
     assert_eq!(state_link.metadata().link_type(), Some(LinkType::Concept));
-    assert!(state_link
-        .metadata()
-        .definition()
-        .expect("QID definition")
-        .contains("Wikidata Q35657"));
+    assert!(
+        state_link
+            .metadata()
+            .definition()
+            .expect("QID definition")
+            .contains("Wikidata Q35657")
+    );
     assert_eq!(network.reconstruct_concept("Q35657", "ru"), Some("штат"));
     assert_eq!(
         network
@@ -52,9 +54,11 @@ fn same_meta_expression_concept_reuses_one_link_across_languages() {
         .map(|language| semantic_mapping_for(&network, apple, language))
         .collect::<Vec<_>>();
 
-    assert!(language_mappings
-        .iter()
-        .all(|mapping| mapping.references()[0] == apple));
+    assert!(
+        language_mappings
+            .iter()
+            .all(|mapping| mapping.references()[0] == apple)
+    );
     assert_eq!(network.reconstruct_concept("Q89", "en"), Some("apple"));
     assert_eq!(network.reconstruct_concept("Q89", "ru"), Some("яблоко"));
 }

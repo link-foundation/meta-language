@@ -1,6 +1,6 @@
 use meta_language::{
-    parse_markup_document, BlockNode, DocumentFormatInstance, InlineNode, LinkNetwork, LinkType,
-    NetworkProjection,
+    BlockNode, DocumentFormatInstance, InlineNode, LinkNetwork, LinkType, NetworkProjection,
+    parse_markup_document,
 };
 
 #[test]
@@ -29,9 +29,11 @@ fn common_concept_ontology_includes_document_formatting_concepts() {
     let report = network.seed_common_concept_ontology();
 
     assert_eq!(report.formatting_concepts(), 18);
-    assert!(network
-        .document_formatting_concept("strong-emphasis")
-        .is_some());
+    assert!(
+        network
+            .document_formatting_concept("strong-emphasis")
+            .is_some()
+    );
     assert!(network.document_formatting_concept("heading").is_some());
 }
 
@@ -59,11 +61,13 @@ fn markdown_and_html_bold_reach_the_same_strong_concept() {
         .document_formatting_concept("strong-emphasis")
         .expect("strong concept seeded");
     assert_eq!(markdown.link, strong);
-    assert!(network
-        .projected_links(NetworkProjection::Semantic)
-        .any(|link| {
-            link.id() == strong && link.metadata().link_type() == Some(LinkType::Concept)
-        }));
+    assert!(
+        network
+            .projected_links(NetworkProjection::Semantic)
+            .any(|link| {
+                link.id() == strong && link.metadata().link_type() == Some(LinkType::Concept)
+            })
+    );
 }
 
 #[test]

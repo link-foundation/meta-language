@@ -78,15 +78,21 @@ fn natural_recursion_is_a_function_with_a_measure() {
          (if N.eqb n 0%N then 0%N else (let ml_p1 := N.pred n in (N.add n (sum_to ml_p1)))).\n\
          Proof. all: ml_obligation. Defined.\n"
     ));
-    assert!(emitted
-        .text
-        .contains("Theorem ml_assertion_1 : ((sum_to 3%N) = 6%N).\nProof. ml_decide. Qed.\n"));
-    assert!(emitted
-        .text
-        .contains("Ltac ml_decide := vm_compute; ml_prove."));
-    assert!(emitted
-        .text
-        .contains("Definition main : list string :=\n  nil.\n"));
+    assert!(
+        emitted
+            .text
+            .contains("Theorem ml_assertion_1 : ((sum_to 3%N) = 6%N).\nProof. ml_decide. Qed.\n")
+    );
+    assert!(
+        emitted
+            .text
+            .contains("Ltac ml_decide := vm_compute; ml_prove.")
+    );
+    assert!(
+        emitted
+            .text
+            .contains("Definition main : list string :=\n  nil.\n")
+    );
     let encodings: Vec<_> = emitted.encodings.iter().map(|e| e.id.as_str()).collect();
     assert_eq!(
         encodings,
@@ -118,8 +124,10 @@ fn general_recursion_is_ml_fix_over_the_one_step_unfolding() {
     assert!(emitted.text.contains(
         "Definition up (n : N) : N :=\n  ml_fix 64 (fun (ml_rec : N -> N) (n : N) =>\n    (if (N.ltb 10%N n) then n else (ml_rec (N.add n 1%N))))\n    (fun _ => 0%N) n."
     ));
-    assert!(emitted
-        .encodings
-        .iter()
-        .any(|encoding| encoding.id == "general-recursion"));
+    assert!(
+        emitted
+            .encodings
+            .iter()
+            .any(|encoding| encoding.id == "general-recursion")
+    );
 }

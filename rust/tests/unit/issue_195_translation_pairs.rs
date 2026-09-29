@@ -15,8 +15,8 @@ use std::process::Command;
 use std::sync::OnceLock;
 
 use meta_language::{
-    decode_program_translation, read_translation_provenance, translate_program, LinkNetwork,
-    LinkType, ParseConfiguration, ProgramTranslation, SemanticTranslation, TranslationSupport,
+    LinkNetwork, LinkType, ParseConfiguration, ProgramTranslation, SemanticTranslation,
+    TranslationSupport, decode_program_translation, read_translation_provenance, translate_program,
 };
 use regex::Regex;
 use serde_json::Value;
@@ -88,7 +88,13 @@ fn expected_lines() -> Vec<String> {
 }
 
 fn sha256(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut hex, byte| {
+            use std::fmt::Write as _;
+            let _ = write!(hex, "{byte:02x}");
+            hex
+        })
 }
 
 fn strings(value: &Value) -> Vec<&str> {
@@ -392,9 +398,11 @@ impl Pair {
         );
         assert!(translation.diagnostic().is_none());
         assert!(contract.obligation.is_none());
-        assert!(!translation
-            .code()
-            .contains("meta-language:portable-source-envelope"));
+        assert!(
+            !translation
+                .code()
+                .contains("meta-language:portable-source-envelope")
+        );
         assert!(decode_program_translation(translation.code(), target).is_err());
         passed.insert("noUnsupportedDescriptor");
         Self {
@@ -517,10 +525,12 @@ impl Pair {
         let mut passed = vec!["observationModelRecorded"];
 
         assert!(!contract.encoding.is_empty());
-        assert!(semantics
-            .encodings
-            .iter()
-            .any(|encoding| encoding.id == "program-output"));
+        assert!(
+            semantics
+                .encodings
+                .iter()
+                .any(|encoding| encoding.id == "program-output")
+        );
         for encoding in &semantics.encodings {
             assert!(
                 !encoding.id.is_empty() && !encoding.statement.is_empty(),

@@ -1,5 +1,5 @@
 use meta_language::{
-    emit_gbnf, import_gbnf, infer_cfg, GrammarFormat, InferenceOptions, PositiveOnlyOracle,
+    GrammarFormat, InferenceOptions, PositiveOnlyOracle, emit_gbnf, import_gbnf, infer_cfg,
 };
 
 use super::grammar_pipeline_support::{

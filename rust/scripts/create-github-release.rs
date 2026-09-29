@@ -25,7 +25,7 @@ use std::io::Write;
 #[cfg(not(test))]
 use std::path::Path;
 #[cfg(not(test))]
-use std::process::{exit, Command, Stdio};
+use std::process::{Command, Stdio, exit};
 
 #[cfg(not(test))]
 const USAGE: &str = "Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--language <name>] [--release-label <label>] [--docker-hub-url <url>]";

@@ -1,6 +1,6 @@
 use meta_language::{
-    grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
     CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, GrammarSurfaceError,
+    grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
 };
 
 #[test]

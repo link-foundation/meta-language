@@ -1,8 +1,8 @@
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat};
 
 use super::{
-    finish_lines, ordered_rules, render_rule_line, unsupported_error, EmitReport, GrammarEmitError,
-    ABNF_RULE_TEMPLATE,
+    ABNF_RULE_TEMPLATE, EmitReport, GrammarEmitError, finish_lines, ordered_rules,
+    render_rule_line, unsupported_error,
 };
 
 /// Emits Augmented Backus-Naur Form text from the grammar IR.

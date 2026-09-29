@@ -261,7 +261,9 @@ fn main() {
             ok
         }
         _ => {
-            eprintln!("usage: translation_stage_probe (roundtrip-surface|roundtrip-ir <file>|check <surface> <dir>|parse <source> <dir>|emit <ir> <dir>|pipeline <source> <dir>)");
+            eprintln!(
+                "usage: translation_stage_probe (roundtrip-surface|roundtrip-ir <file>|check <surface> <dir>|parse <source> <dir>|emit <ir> <dir>|pipeline <source> <dir>)"
+            );
             false
         }
     };

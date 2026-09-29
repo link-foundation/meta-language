@@ -93,10 +93,10 @@ impl<'a> HostTree<'a> {
     fn new(network: &'a LinkNetwork, text: &'a str) -> Self {
         let mut children: HashMap<LinkId, Vec<LinkId>> = HashMap::new();
         for link in network.links() {
-            if link.metadata().link_type() == Some(LinkType::Syntax) {
-                if let [parent] = link.references() {
-                    children.entry(*parent).or_default().push(link.id());
-                }
+            if link.metadata().link_type() == Some(LinkType::Syntax)
+                && let [parent] = link.references()
+            {
+                children.entry(*parent).or_default().push(link.id());
             }
         }
         Self {

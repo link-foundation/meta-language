@@ -8,13 +8,13 @@
 //!
 //! Mirrors `js/src/translation/lean.js`.
 
-use super::diagnostics::{type_error, unsupported, Result, TranslationError};
-use super::lexer::{describe, is_js_space, tokenize_source, Source, Token, TokenCursor, TokenKind};
+use super::diagnostics::{Result, TranslationError, type_error, unsupported};
+use super::lexer::{Source, Token, TokenCursor, TokenKind, describe, is_js_space, tokenize_source};
 use super::surface::{
     BinaryOp, SBinder, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
     SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, ShowStyle,
 };
-use super::types::{Type, BOOL, INT, NAT, STRING, UNIT};
+use super::types::{BOOL, INT, NAT, STRING, Type, UNIT};
 use super::{Language, Span};
 
 mod expressions;

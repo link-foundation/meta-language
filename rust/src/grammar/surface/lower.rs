@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use super::token::{Delimiter, QuoteKind, Token};
-use super::{lowering_error, GrammarSurfaceError};
+use super::{GrammarSurfaceError, lowering_error};
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 
 pub(super) fn lower_document(tokens: &[Token]) -> Result<Grammar, GrammarSurfaceError> {
@@ -82,13 +82,13 @@ fn validate_references(grammar: &Grammar) -> Result<(), GrammarSurfaceError> {
         .map(|rule| rule.name().to_string())
         .collect::<BTreeSet<_>>();
 
-    if let Some(start) = grammar.start() {
-        if !defined.contains(start) {
-            return Err(GrammarSurfaceError::UndefinedReference {
-                rule: "start".to_string(),
-                name: start.to_string(),
-            });
-        }
+    if let Some(start) = grammar.start()
+        && !defined.contains(start)
+    {
+        return Err(GrammarSurfaceError::UndefinedReference {
+            rule: "start".to_string(),
+            name: start.to_string(),
+        });
     }
 
     for rule in grammar.rules() {
@@ -319,13 +319,13 @@ fn parse_repeat_bounds(
         [Token::Atom(min), comma] if comma.is_atom(",") => Some((parse_usize(min, rule)?, None)),
         _ => None,
     };
-    if let Some((min, Some(max))) = bounds {
-        if max < min {
-            return Err(lowering_error(
-                rule,
-                format!("repeat maximum {max} is less than minimum {min}"),
-            ));
-        }
+    if let Some((min, Some(max))) = bounds
+        && max < min
+    {
+        return Err(lowering_error(
+            rule,
+            format!("repeat maximum {max} is less than minimum {min}"),
+        ));
     }
     Ok(bounds)
 }
@@ -334,16 +334,16 @@ fn lower_capture_group(
     tokens: &[Token],
     rule: Option<&str>,
 ) -> Result<GrammarExpr, GrammarSurfaceError> {
-    if let [Token::Atom(label), colon, rest @ ..] = tokens {
-        if colon.is_atom(":") {
-            if !valid_name(label) {
-                return Err(lowering_error(
-                    rule,
-                    format!("invalid capture label {label:?}"),
-                ));
-            }
-            return Ok(GrammarExpr::capture(label.clone(), lower_expr(rest, rule)?));
+    if let [Token::Atom(label), colon, rest @ ..] = tokens
+        && colon.is_atom(":")
+    {
+        if !valid_name(label) {
+            return Err(lowering_error(
+                rule,
+                format!("invalid capture label {label:?}"),
+            ));
         }
+        return Ok(GrammarExpr::capture(label.clone(), lower_expr(rest, rule)?));
     }
     lower_expr(tokens, rule).map(GrammarExpr::capture_unlabeled)
 }
@@ -362,18 +362,19 @@ fn lower_char_group(
     }
 
     if !negated {
-        if let [Token::Atom(range)] = items {
-            if let Some((start, end)) = parse_atom_range(range) {
-                return Ok(GrammarExpr::char_range(start, end));
-            }
+        if let [Token::Atom(range)] = items
+            && let Some((start, end)) = parse_atom_range(range)
+        {
+            return Ok(GrammarExpr::char_range(start, end));
         }
-        if let [first, second] = items {
-            if matches!(first, Token::Quoted { .. }) && matches!(second, Token::Quoted { .. }) {
-                return Ok(GrammarExpr::char_range(
-                    token_char(first, rule)?,
-                    token_char(second, rule)?,
-                ));
-            }
+        if let [first, second] = items
+            && matches!(first, Token::Quoted { .. })
+            && matches!(second, Token::Quoted { .. })
+        {
+            return Ok(GrammarExpr::char_range(
+                token_char(first, rule)?,
+                token_char(second, rule)?,
+            ));
         }
     }
 
@@ -388,10 +389,10 @@ fn char_class_item(
     token: &Token,
     rule: Option<&str>,
 ) -> Result<CharClassItem, GrammarSurfaceError> {
-    if let Token::Atom(value) = token {
-        if let Some((start, end)) = parse_atom_range(value) {
-            return Ok(CharClassItem::range(start, end));
-        }
+    if let Token::Atom(value) = token
+        && let Some((start, end)) = parse_atom_range(value)
+    {
+        return Ok(CharClassItem::range(start, end));
     }
     token_char(token, rule).map(CharClassItem::char)
 }

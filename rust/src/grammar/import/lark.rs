@@ -1,4 +1,4 @@
-use super::{parse_error, unsupported_error, GrammarImportError};
+use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 
 const FORMAT: GrammarFormat = GrammarFormat::Lark;
@@ -182,10 +182,10 @@ impl Parser {
         } else {
             Some(min)
         };
-        if let Some(max) = max {
-            if min > max {
-                return Err(self.error("repeat minimum exceeds maximum"));
-            }
+        if let Some(max) = max
+            && min > max
+        {
+            return Err(self.error("repeat minimum exceeds maximum"));
         }
         Ok(GrammarExpr::repeat(expr, min, max))
     }

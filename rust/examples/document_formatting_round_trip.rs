@@ -13,8 +13,7 @@ fn main() {
         report.formatting_concepts()
     );
 
-    let markdown =
-        "# Title\n\nA paragraph with **bold**, *italic*, and a [Link](https://example.com).\n\n- First\n- Second";
+    let markdown = "# Title\n\nA paragraph with **bold**, *italic*, and a [Link](https://example.com).\n\n- First\n- Second";
 
     let html = network
         .translate_markup_document("Markdown", "HTML", markdown)

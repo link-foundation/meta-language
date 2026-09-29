@@ -12,7 +12,7 @@
 [package]
 name = "meta-language-web"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "WebAssembly demo for the meta-language website (Links Notation playground)"
 license = "Unlicense"
 publish = false

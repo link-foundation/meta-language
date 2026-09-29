@@ -746,7 +746,7 @@ fn parse_link_type_code(code: u8) -> Result<Option<LinkType>, StorageError> {
         other => {
             return Err(StorageError::Corrupt(format!(
                 "unknown link type code {other}"
-            )))
+            )));
         }
     }))
 }

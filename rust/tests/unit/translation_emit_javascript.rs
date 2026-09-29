@@ -3,7 +3,7 @@
 
 use meta_language::translation::emit_javascript::emit_javascript;
 use meta_language::translation::ir::Program;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 fn nat() -> Value {
     json!({ "kind": "nat" })
@@ -122,9 +122,11 @@ fn range_checks_machine_integer_parameters_and_results() {
          ml_fixed(new_, 0n, 255n, 'u8 argument new_');\n  \
          return ml_fixed((a + new_), 0n, 255n, 'u8 addition');\n}"
     ));
-    assert!(emitted
-        .text
-        .contains("function ml_fixed(value, min, max, what) {"));
+    assert!(
+        emitted
+            .text
+            .contains("function ml_fixed(value, min, max, what) {")
+    );
     assert!(!emitted.text.contains("main();"));
     assert_eq!(emitted.entry, None);
 }
@@ -211,9 +213,11 @@ fn theorem(binder: &Value) -> Value {
 fn checks_theorems_on_bounded_domains() {
     let byte = json!({ "kind": "fixed", "bits": 8, "signed": true });
     let emitted = emit_javascript(&program(&[theorem(&byte)], &Value::Null)).expect("emits");
-    assert!(emitted
-        .text
-        .contains("function t(x) {\n  return (x === x);\n}"));
+    assert!(
+        emitted
+            .text
+            .contains("function t(x) {\n  return (x === x);\n}")
+    );
     assert!(emitted.text.contains(
         "  if (!(ml_product([ml_small_int]).every((args) => t(...args)))) \
          throw new Error('theorem t fails on a bounded input');"

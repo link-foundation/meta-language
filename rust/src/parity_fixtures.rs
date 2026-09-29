@@ -12,8 +12,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "JavaScript",
         source: "a + b * c\n",
         expected_reconstruction: "a + b * c\n",
-        provenance:
-            "tree-sitter/tree-sitter test/fixtures/test_grammars/readme_grammar/corpus.txt; license: MIT",
+        provenance: "tree-sitter/tree-sitter test/fixtures/test_grammars/readme_grammar/corpus.txt; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::LosslessParsing],
@@ -25,8 +24,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "JavaScript",
         source: "const a = 1; /* one */\n// e\nconst b = 2;\n",
         expected_reconstruction: "const a = 1; /* one */\n// e\nconst b = 2;\n",
-        provenance:
-            "tree-sitter/tree-sitter test/fixtures/test_grammars/extra_non_terminals/corpus.txt; license: MIT",
+        provenance: "tree-sitter/tree-sitter test/fixtures/test_grammars/extra_non_terminals/corpus.txt; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -41,8 +39,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "JavaScript",
         source: "if (a b) {\n  c d;\n}\ne f;\n",
         expected_reconstruction: "if (a b) {\n  c d;\n}\ne f;\n",
-        provenance:
-            "tree-sitter/tree-sitter test/fixtures/error_corpus/javascript_errors.txt; license: MIT",
+        provenance: "tree-sitter/tree-sitter test/fixtures/error_corpus/javascript_errors.txt; license: MIT",
         verification_expectation: ParityVerificationExpectation::Recoverable,
         transform_expectation: None,
         capabilities: &[
@@ -57,8 +54,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "JavaScript",
         source: "class Person {\n  getName() { return name; }\n}\n",
         expected_reconstruction: "class Person {\n  getName() { return name; }\n}\n",
-        provenance:
-            "tree-sitter/tree-sitter docs/src/using-parsers/queries/1-syntax.md; license: MIT",
+        provenance: "tree-sitter/tree-sitter docs/src/using-parsers/queries/1-syntax.md; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::QueryMatching],
@@ -86,8 +82,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "python round trip with indentation and comments",
         language: "Python",
         source: "x = 1\n\n# Some comment before a function.\ndef function(default=None):\n    return default\n",
-        expected_reconstruction:
-            "x = 1\n\n# Some comment before a function.\ndef function(default=None):\n    return default\n",
+        expected_reconstruction: "x = 1\n\n# Some comment before a function.\ndef function(default=None):\n    return default\n",
         provenance: "Instagram/LibCST native/libcst/tests/fixtures/comments.py; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
@@ -134,8 +129,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "Python",
         source: "old_name = call(old_name)\n",
         expected_reconstruction: "old_name = call(old_name)\n",
-        provenance:
-            "Instagram/LibCST libcst/_nodes/tests/test_removal_behavior.py; license: MIT",
+        provenance: "Instagram/LibCST libcst/_nodes/tests/test_removal_behavior.py; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: Some(ParityTransformExpectation {
             query: r#"
@@ -173,10 +167,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         target_name: "Recast",
         name: "regexp properties identity fixture",
         language: "JavaScript",
-        source:
-            "_.templateSettings = {\n    evaluate    : /<%([\\s\\S]+?)%>/g,\n    interpolate : /<%=([\\s\\S]+?)%>/g,\n    escape      : /<%-([\\s\\S]+?)%>/g // this line parsed oddly\n};\n",
-        expected_reconstruction:
-            "_.templateSettings = {\n    evaluate    : /<%([\\s\\S]+?)%>/g,\n    interpolate : /<%=([\\s\\S]+?)%>/g,\n    escape      : /<%-([\\s\\S]+?)%>/g // this line parsed oddly\n};\n",
+        source: "_.templateSettings = {\n    evaluate    : /<%([\\s\\S]+?)%>/g,\n    interpolate : /<%=([\\s\\S]+?)%>/g,\n    escape      : /<%-([\\s\\S]+?)%>/g // this line parsed oddly\n};\n",
+        expected_reconstruction: "_.templateSettings = {\n    evaluate    : /<%([\\s\\S]+?)%>/g,\n    interpolate : /<%=([\\s\\S]+?)%>/g,\n    escape      : /<%-([\\s\\S]+?)%>/g // this line parsed oddly\n};\n",
         provenance: "benjamn/recast test/data/regexp-props.js; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
@@ -230,12 +222,9 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         target_name: "jscodeshift",
         name: "reverse identifiers input fixture",
         language: "JavaScript",
-        source:
-            "var firstWord = 'Hello ';\nvar secondWord = 'world';\nvar message = firstWord + secondWord;\n",
-        expected_reconstruction:
-            "var firstWord = 'Hello ';\nvar secondWord = 'world';\nvar message = firstWord + secondWord;\n",
-        provenance:
-            "facebook/jscodeshift sample/__testfixtures__/reverse-identifiers.input.js; license: MIT",
+        source: "var firstWord = 'Hello ';\nvar secondWord = 'world';\nvar message = firstWord + secondWord;\n",
+        expected_reconstruction: "var firstWord = 'Hello ';\nvar secondWord = 'world';\nvar message = firstWord + secondWord;\n",
+        provenance: "facebook/jscodeshift sample/__testfixtures__/reverse-identifiers.input.js; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: Some(ParityTransformExpectation {
             query: r#"
@@ -244,8 +233,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
             "#,
             capture_name: "target",
             replacement: "droWtsrif",
-            expected_output:
-                "var droWtsrif = 'Hello ';\nvar secondWord = 'world';\nvar message = droWtsrif + secondWord;\n",
+            expected_output: "var droWtsrif = 'Hello ';\nvar secondWord = 'world';\nvar message = droWtsrif + secondWord;\n",
         }),
         capabilities: &[
             ParityCapability::QueryMatching,
@@ -258,12 +246,9 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         target_name: "jscodeshift",
         name: "reverse identifiers output fixture",
         language: "JavaScript",
-        source:
-            "var droWtsrif = 'Hello ';\nvar droWdnoces = 'world';\nvar egassem = droWtsrif + droWdnoces;\n",
-        expected_reconstruction:
-            "var droWtsrif = 'Hello ';\nvar droWdnoces = 'world';\nvar egassem = droWtsrif + droWdnoces;\n",
-        provenance:
-            "facebook/jscodeshift sample/__testfixtures__/reverse-identifiers.output.js; license: MIT",
+        source: "var droWtsrif = 'Hello ';\nvar droWdnoces = 'world';\nvar egassem = droWtsrif + droWdnoces;\n",
+        expected_reconstruction: "var droWtsrif = 'Hello ';\nvar droWdnoces = 'world';\nvar egassem = droWtsrif + droWdnoces;\n",
+        provenance: "facebook/jscodeshift sample/__testfixtures__/reverse-identifiers.output.js; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::SameLanguageReconstruction],
@@ -316,8 +301,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "txt",
         source: "1 - (2 + 5)\n",
         expected_reconstruction: "1 - (2 + 5)\n",
-        provenance:
-            "domenicquirl/cstree cstree/src/getting_started.rs; license: Apache-2.0 OR MIT",
+        provenance: "domenicquirl/cstree cstree/src/getting_started.rs; license: Apache-2.0 OR MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::LosslessParsing],
@@ -327,10 +311,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         target_name: "cstree",
         name: "derive syntax kind fixture",
         language: "Rust",
-        source:
-            "#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n#[repr(u32)]\nenum SyntaxKind { Int, Plus, Root }\n",
-        expected_reconstruction:
-            "#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n#[repr(u32)]\nenum SyntaxKind { Int, Plus, Root }\n",
+        source: "#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n#[repr(u32)]\nenum SyntaxKind { Int, Plus, Root }\n",
+        expected_reconstruction: "#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n#[repr(u32)]\nenum SyntaxKind { Int, Plus, Root }\n",
         provenance: "domenicquirl/cstree test_suite/tests/derive.rs; license: Apache-2.0 OR MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
@@ -346,8 +328,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "Rust",
         source: "let checkpoint = value + 1;\n",
         expected_reconstruction: "let checkpoint = value + 1;\n",
-        provenance:
-            "domenicquirl/cstree cstree/src/getting_started.rs; license: Apache-2.0 OR MIT",
+        provenance: "domenicquirl/cstree cstree/src/getting_started.rs; license: Apache-2.0 OR MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -364,8 +345,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "C#",
         source: "class C { void M() { Console.WriteLine(1); } }\n",
         expected_reconstruction: "class C { void M() { Console.WriteLine(1); } }\n",
-        provenance:
-            "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxNodeTests.cs; license: MIT",
+        provenance: "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxNodeTests.cs; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -382,8 +362,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "C#",
         source: "garbage\nusing goo.bar;\n",
         expected_reconstruction: "garbage\nusing goo.bar;\n",
-        provenance:
-            "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxNodeTests.cs; license: MIT",
+        provenance: "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxNodeTests.cs; license: MIT",
         verification_expectation: ParityVerificationExpectation::Recoverable,
         transform_expectation: None,
         capabilities: &[
@@ -398,8 +377,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "C#",
         source: "/* c */ class C { }\n",
         expected_reconstruction: "/* c */ class C { }\n",
-        provenance:
-            "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxRewriterTests.cs; license: MIT",
+        provenance: "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxRewriterTests.cs; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -414,8 +392,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "C#",
         source: "private class C { }\n",
         expected_reconstruction: "private class C { }\n",
-        provenance:
-            "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxNodeTests.cs; license: MIT",
+        provenance: "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxNodeTests.cs; license: MIT",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: Some(ParityTransformExpectation {
             query: r#"
@@ -439,8 +416,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "C#",
         source: "class C { void M() { if ( }",
         expected_reconstruction: "class C { void M() { if ( }",
-        provenance:
-            "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxNodeTests.cs; license: MIT",
+        provenance: "dotnet/roslyn src/Compilers/CSharp/Test/Syntax/Syntax/SyntaxNodeTests.cs; license: MIT",
         verification_expectation: ParityVerificationExpectation::Recoverable,
         transform_expectation: None,
         capabilities: &[
@@ -455,8 +431,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "(papa mama)\n",
         expected_reconstruction: "(papa mama)\n",
-        provenance:
-            "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/SingleLineParserTests.cs and TEST_CASE_COMPARISON.md 137/138/138/140 tests; license: Unlicense",
+        provenance: "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/SingleLineParserTests.cs and TEST_CASE_COMPARISON.md 137/138/138/140 tests; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::LosslessParsing],
@@ -468,8 +443,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "(papa loves mama)\n",
         expected_reconstruction: "(papa loves mama)\n",
-        provenance:
-            "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/SingleLineParserTests.cs; license: Unlicense",
+        provenance: "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/SingleLineParserTests.cs; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::LosslessParsing],
@@ -480,10 +454,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "n-tuple tuple fixture",
         language: "LiNo",
         source: "(papa (lovesMama: loves mama))\n(son lovesMama)\n(daughter lovesMama)\n(all (love mama))\n",
-        expected_reconstruction:
-            "(papa (lovesMama: loves mama))\n(son lovesMama)\n(daughter lovesMama)\n(all (love mama))\n",
-        provenance:
-            "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/TupleTests.cs; license: Unlicense",
+        expected_reconstruction: "(papa (lovesMama: loves mama))\n(son lovesMama)\n(daughter lovesMama)\n(all (love mama))\n",
+        provenance: "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/TupleTests.cs; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -498,8 +470,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "greeting:\n  hello\n",
         expected_reconstruction: "greeting:\n  hello\n",
-        provenance:
-            "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/IndentedIdSyntaxTests.cs; license: Unlicense",
+        provenance: "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/IndentedIdSyntaxTests.cs; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::LosslessParsing],
@@ -510,10 +481,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "self reference object fixture",
         language: "LiNo",
         source: "(obj_0: list (int 1) (int 2) (obj_1: list (int 3) (int 4) obj_0))\n",
-        expected_reconstruction:
-            "(obj_0: list (int 1) (int 2) (obj_1: list (int 3) (int 4) obj_0))\n",
-        provenance:
-            "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/NestedSelfReferenceTests.cs; license: Unlicense",
+        expected_reconstruction: "(obj_0: list (int 1) (int 2) (obj_1: list (int 3) (int 4) obj_0))\n",
+        provenance: "link-foundation/links-notation csharp/Link.Foundation.Links.Notation.Tests/NestedSelfReferenceTests.cs; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -528,8 +497,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "(papa loves mama)\n",
         expected_reconstruction: "(papa loves mama)\n",
-        provenance:
-            "link-foundation/links-notation README parse_lino_to_links/format_links round-trip API; license: Unlicense",
+        provenance: "link-foundation/links-notation README parse_lino_to_links/format_links round-trip API; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -544,8 +512,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "(() ((1 1)))\n",
         expected_reconstruction: "(() ((1 1)))\n",
-        provenance:
-            "link-foundation/link-cli csharp/Foundation.Data.Doublets.Cli.Tests/BasicQueryProcessor.cs Foundation.Data.Doublets.Cli.Tests; license: Unlicense",
+        provenance: "link-foundation/link-cli csharp/Foundation.Data.Doublets.Cli.Tests/BasicQueryProcessor.cs Foundation.Data.Doublets.Cli.Tests; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::TransformBySubstitution],
@@ -557,8 +524,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "(((1: 1 1)) ((1: 1 2)))\n",
         expected_reconstruction: "(((1: 1 1)) ((1: 1 2)))\n",
-        provenance:
-            "link-foundation/link-cli csharp/Foundation.Data.Doublets.Cli.Tests/BasicQueryProcessor.cs Foundation.Data.Doublets.Cli.Tests; license: Unlicense",
+        provenance: "link-foundation/link-cli csharp/Foundation.Data.Doublets.Cli.Tests/BasicQueryProcessor.cs Foundation.Data.Doublets.Cli.Tests; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::TransformBySubstitution],
@@ -570,8 +536,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "(((1 1)) ())\n",
         expected_reconstruction: "(((1 1)) ())\n",
-        provenance:
-            "link-foundation/link-cli csharp/Foundation.Data.Doublets.Cli.Tests/BasicQueryProcessor.cs Foundation.Data.Doublets.Cli.Tests; license: Unlicense",
+        provenance: "link-foundation/link-cli csharp/Foundation.Data.Doublets.Cli.Tests/BasicQueryProcessor.cs Foundation.Data.Doublets.Cli.Tests; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::TransformBySubstitution],
@@ -583,8 +548,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "((($index: $source $target)) (($index: $target $source)))\n",
         expected_reconstruction: "((($index: $source $target)) (($index: $target $source)))\n",
-        provenance:
-            "link-foundation/link-cli csharp/Foundation.Data.Doublets.Cli.Tests/AdvancedMixedQueryProcessor.cs Foundation.Data.Doublets.Cli.Tests; license: Unlicense",
+        provenance: "link-foundation/link-cli csharp/Foundation.Data.Doublets.Cli.Tests/AdvancedMixedQueryProcessor.cs Foundation.Data.Doublets.Cli.Tests; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::TransformBySubstitution],
@@ -596,8 +560,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "(int 42)\n(str aGVsbG8=)\n",
         expected_reconstruction: "(int 42)\n(str aGVsbG8=)\n",
-        provenance:
-            "link-foundation/lino-objects-codec csharp/tests/Lino.Objects.Codec.Tests/BasicTypesTests.cs; license: Unlicense",
+        provenance: "link-foundation/lino-objects-codec csharp/tests/Lino.Objects.Codec.Tests/BasicTypesTests.cs; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::ObjectRoundTrip],
@@ -608,10 +571,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "shared reference object fixture",
         language: "LiNo",
         source: "(obj_0: list obj_1 obj_1 obj_1)\n(obj_1: dict ((str c2hhcmVk) (str dmFsdWU=)))\n",
-        expected_reconstruction:
-            "(obj_0: list obj_1 obj_1 obj_1)\n(obj_1: dict ((str c2hhcmVk) (str dmFsdWU=)))\n",
-        provenance:
-            "link-foundation/lino-objects-codec csharp/tests/Lino.Objects.Codec.Tests/CircularReferencesTests.cs; license: Unlicense",
+        expected_reconstruction: "(obj_0: list obj_1 obj_1 obj_1)\n(obj_1: dict ((str c2hhcmVk) (str dmFsdWU=)))\n",
+        provenance: "link-foundation/lino-objects-codec csharp/tests/Lino.Objects.Codec.Tests/CircularReferencesTests.cs; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::ObjectRoundTrip],
@@ -623,8 +584,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "LiNo",
         source: "(obj_0: list obj_0)\n",
         expected_reconstruction: "(obj_0: list obj_0)\n",
-        provenance:
-            "link-foundation/lino-objects-codec csharp/tests/Lino.Objects.Codec.Tests/CircularReferencesTests.cs; license: Unlicense",
+        provenance: "link-foundation/lino-objects-codec csharp/tests/Lino.Objects.Codec.Tests/CircularReferencesTests.cs; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::ObjectRoundTrip],
@@ -636,8 +596,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "RML",
         source: "(Type: Type Type)\n(Natural: Type Natural)\n(? (Type of Type))\n",
         expected_reconstruction: "(Type: Type Type)\n(Natural: Type Natural)\n(? (Type of Type))\n",
-        provenance:
-            "link-foundation/relative-meta-logic examples/dependent-types.lino; license: Unlicense",
+        provenance: "link-foundation/relative-meta-logic examples/dependent-types.lino; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -651,10 +610,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "many-valued truth fixture",
         language: "RML",
         source: "(and: min)\n(or: max)\n(? (both true and false))\n(? (neither true nor false))\n",
-        expected_reconstruction:
-            "(and: min)\n(or: max)\n(? (both true and false))\n(? (neither true nor false))\n",
-        provenance:
-            "link-foundation/relative-meta-logic examples/belnap-four-valued.lino and examples/ternary-kleene.lino; license: Unlicense",
+        expected_reconstruction: "(and: min)\n(or: max)\n(? (both true and false))\n(? (neither true nor false))\n",
+        provenance: "link-foundation/relative-meta-logic examples/belnap-four-valued.lino and examples/ternary-kleene.lino; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::SemanticEvaluation],
@@ -665,10 +622,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "probabilistic liar paradox fixture",
         language: "RML",
         source: "(s: s is s)\n((s = false) has probability 0.5)\n(? (s = false))\n(? (not (s = false)))\n",
-        expected_reconstruction:
-            "(s: s is s)\n((s = false) has probability 0.5)\n(? (s = false))\n(? (not (s = false)))\n",
-        provenance:
-            "link-foundation/relative-meta-logic examples/liar-paradox.lino; license: Unlicense",
+        expected_reconstruction: "(s: s is s)\n((s = false) has probability 0.5)\n(? (s = false))\n(? (not (s = false)))\n",
+        provenance: "link-foundation/relative-meta-logic examples/liar-paradox.lino; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::SemanticEvaluation],
@@ -679,8 +634,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "seed concepts corpus fixture",
         language: "LiNo",
         source: "concept_links_notation\n  term \"Links Notation\"\n  intent \"concept_lookup\"\n  category \"data-format\"\n  source \"https://github.com/linksplatform/Documentation\"\n  source_kind \"project-docs\"\n",
-        expected_reconstruction:
-            "concept_links_notation\n  term \"Links Notation\"\n  intent \"concept_lookup\"\n  category \"data-format\"\n  source \"https://github.com/linksplatform/Documentation\"\n  source_kind \"project-docs\"\n",
+        expected_reconstruction: "concept_links_notation\n  term \"Links Notation\"\n  intent \"concept_lookup\"\n  category \"data-format\"\n  source \"https://github.com/linksplatform/Documentation\"\n  source_kind \"project-docs\"\n",
         provenance: "link-assistant/formal-ai data/seed/concepts.lino; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
@@ -695,10 +649,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "seed translation meanings corpus fixture",
         language: "LiNo",
         source: "meanings\n  meaning \"translate\"\n    role \"translation_action\"\n    lexeme \"en\"\n      word \"translate\"\n",
-        expected_reconstruction:
-            "meanings\n  meaning \"translate\"\n    role \"translation_action\"\n    lexeme \"en\"\n      word \"translate\"\n",
-        provenance:
-            "link-assistant/formal-ai data/seed/meanings-translation.lino; license: Unlicense",
+        expected_reconstruction: "meanings\n  meaning \"translate\"\n    role \"translation_action\"\n    lexeme \"en\"\n      word \"translate\"\n",
+        provenance: "link-assistant/formal-ai data/seed/meanings-translation.lino; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -712,10 +664,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "industry benchmark corpus fixture",
         language: "LiNo",
         source: "benchmark_suite_issue_304_industry_permissive_slice\n  record_type \"benchmark_suite\"\n  id \"issue_304_industry_permissive_slice\"\n  title \"Permissive industry benchmark slice\"\n  minimum_pass_count \"10\"\n",
-        expected_reconstruction:
-            "benchmark_suite_issue_304_industry_permissive_slice\n  record_type \"benchmark_suite\"\n  id \"issue_304_industry_permissive_slice\"\n  title \"Permissive industry benchmark slice\"\n  minimum_pass_count \"10\"\n",
-        provenance:
-            "link-assistant/formal-ai data/benchmarks/industry-suite.lino; license: Unlicense",
+        expected_reconstruction: "benchmark_suite_issue_304_industry_permissive_slice\n  record_type \"benchmark_suite\"\n  id \"issue_304_industry_permissive_slice\"\n  title \"Permissive industry benchmark slice\"\n  minimum_pass_count \"10\"\n",
+        provenance: "link-assistant/formal-ai data/benchmarks/industry-suite.lino; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[ParityCapability::SemanticEvaluation],
@@ -726,10 +676,8 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         name: "coding modification benchmark corpus fixture",
         language: "LiNo",
         source: "coding_modification_case_en_reverse_sort\n  record_type \"coding_modification_case\"\n  id \"en_reverse_sort\"\n  expected_intent \"write_program\"\n  expected_answer_contains \"names.sort_by(|a, b| b.cmp(a))\"\n",
-        expected_reconstruction:
-            "coding_modification_case_en_reverse_sort\n  record_type \"coding_modification_case\"\n  id \"en_reverse_sort\"\n  expected_intent \"write_program\"\n  expected_answer_contains \"names.sort_by(|a, b| b.cmp(a))\"\n",
-        provenance:
-            "link-assistant/formal-ai data/benchmarks/coding-modification-suite.lino; license: Unlicense",
+        expected_reconstruction: "coding_modification_case_en_reverse_sort\n  record_type \"coding_modification_case\"\n  id \"en_reverse_sort\"\n  expected_intent \"write_program\"\n  expected_answer_contains \"names.sort_by(|a, b| b.cmp(a))\"\n",
+        provenance: "link-assistant/formal-ai data/benchmarks/coding-modification-suite.lino; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -744,8 +692,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "English",
         source: "Hawaii is a state.\n",
         expected_reconstruction: "Hawaii is a state.\n",
-        provenance:
-            "link-assistant/meta-expression docs/FORMALIZE.md and js/data/semantic-lexicon.json 351 concepts; license: Unlicense",
+        provenance: "link-assistant/meta-expression docs/FORMALIZE.md and js/data/semantic-lexicon.json 351 concepts; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[
@@ -776,8 +723,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
         language: "English",
         source: "this statement is false\n",
         expected_reconstruction: "this statement is false\n",
-        provenance:
-            "link-assistant/meta-expression docs/FORMAL_AI_COMPATIBILITY.md; license: Unlicense",
+        provenance: "link-assistant/meta-expression docs/FORMAL_AI_COMPATIBILITY.md; license: Unlicense",
         verification_expectation: ParityVerificationExpectation::Clean,
         transform_expectation: None,
         capabilities: &[

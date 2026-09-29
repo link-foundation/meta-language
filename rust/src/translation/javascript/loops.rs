@@ -1,8 +1,8 @@
 //! `let`, assignments, `while`, `do … while`, `for`, `break` and `continue`.
 
 use super::{
-    joined, node, span, unsupported, JavaScriptParser, Jumps, Result, SExpr, SNode, Stmt, Token,
-    TokenKind, TranslationError, ASSIGNMENTS, COMPOUND,
+    ASSIGNMENTS, COMPOUND, JavaScriptParser, Jumps, Result, SExpr, SNode, Stmt, Token, TokenKind,
+    TranslationError, joined, node, span, unsupported,
 };
 use crate::translation::surface::BinaryOp;
 

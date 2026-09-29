@@ -11,9 +11,9 @@ use serde_json::Value;
 use crate::configuration::ParseConfiguration;
 use crate::link_network::{LinkNetwork, LinkType};
 use crate::query_plan::{
-    attach_plan_links, LoweredQueryPlan, QueryAggregate, QueryAggregateFunction,
-    QueryComparisonOperator, QueryFilter, QueryOperation as CanonicalOperation, QueryOrder,
-    QueryPlan, QuerySortDirection, QuerySourceEvidence, QueryValue as CanonicalValue,
+    LoweredQueryPlan, QueryAggregate, QueryAggregateFunction, QueryComparisonOperator, QueryFilter,
+    QueryOperation as CanonicalOperation, QueryOrder, QueryPlan, QuerySortDirection,
+    QuerySourceEvidence, QueryValue as CanonicalValue, attach_plan_links,
 };
 use crate::source::SourceSpan;
 

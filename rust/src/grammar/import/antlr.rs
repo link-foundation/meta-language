@@ -2,7 +2,7 @@ mod lexer;
 
 use lexer::{Lexer, Token, TokenKind};
 
-use super::{parse_error, unsupported_error, GrammarImportError};
+use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 
 const FORMAT: GrammarFormat = GrammarFormat::Antlr;
@@ -147,10 +147,10 @@ impl Parser {
         if self.check_colon() {
             return Ok(());
         }
-        if let Some(keyword) = self.peek().and_then(Token::ident) {
-            if matches!(keyword, "locals" | "returns" | "throws" | "options") {
-                return Err(unsupported_error(FORMAT, format!("rule prelude {keyword}")));
-            }
+        if let Some(keyword) = self.peek().and_then(Token::ident)
+            && matches!(keyword, "locals" | "returns" | "throws" | "options")
+        {
+            return Err(unsupported_error(FORMAT, format!("rule prelude {keyword}")));
         }
         if matches!(self.peek_kind(), Some(TokenKind::CharSet(_))) {
             return Err(unsupported_error(FORMAT, "rule arguments"));

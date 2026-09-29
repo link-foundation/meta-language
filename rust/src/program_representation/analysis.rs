@@ -9,7 +9,7 @@ mod javascript_hoist;
 mod resolution;
 
 use declarations::{declare_javascript, declare_proof_language, declare_rust};
-use extents::{apply_binding_extents, declare_syntax_binders, unmask_interpolations, Visibility};
+use extents::{Visibility, apply_binding_extents, declare_syntax_binders, unmask_interpolations};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SemanticToken {

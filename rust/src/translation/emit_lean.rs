@@ -13,20 +13,20 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 
-use super::diagnostics::{type_error, unsupported, Result};
+use super::Language;
+use super::diagnostics::{Result, type_error, unsupported};
 use super::emit_common::{
-    mutual_groups, order_declarations, CtorStyle, Dependence, EmitOptions, EmitState, Emitted,
+    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations,
 };
 use super::ir::{
-    rename_function, rename_theorem, ByZero, Case, DataDecl, Decl, Expr, FnDecl, Hints, LitValue,
-    Node, Pattern, Plan, Program, Prop, Semantics, TheoremDecl,
+    ByZero, Case, DataDecl, Decl, Expr, FnDecl, Hints, LitValue, Node, Pattern, Plan, Program,
+    Prop, Semantics, TheoremDecl, rename_function, rename_theorem,
 };
 use super::lean_root_names::LEAN_ROOT_NAMES;
 use super::output::thread_output;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
-use super::types::{fixed_bounds, Type};
-use super::Language;
+use super::types::{Type, fixed_bounds};
 
 mod arrays;
 mod helpers;
@@ -323,7 +323,7 @@ impl LeanEmitter<'_> {
                 return Err(type_error(
                     format!("no Lean type for {}", other.kind()),
                     None,
-                ))
+                ));
             }
         })
     }
@@ -627,7 +627,7 @@ impl LeanEmitter<'_> {
                 return Err(type_error(
                     "print with its output not threaded".to_owned(),
                     e.span,
-                ))
+                ));
             }
         })
     }
@@ -868,7 +868,7 @@ fn literal(ty: &Type, value: &LitValue) -> Result<String> {
             return Err(type_error(
                 format!("no Lean literal for {}", other.kind()),
                 None,
-            ))
+            ));
         }
     })
 }

@@ -17,7 +17,7 @@ use std::time::{Duration, Instant};
 use meta_language::{LinkNetwork, ParseConfiguration};
 use serde_json::Value;
 
-use super::issue_195_observations::{record, Observation, LINO_MATRIX_FIXTURE};
+use super::issue_195_observations::{LINO_MATRIX_FIXTURE, Observation, record};
 
 /// Ratio between the large and the small input.
 const SIZE_RATIO: usize = 8;

@@ -15,16 +15,16 @@
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
 
+use super::Language;
 use super::decimal::Decimal;
-use super::diagnostics::{unsupported, Result};
+use super::diagnostics::{Result, unsupported};
 use super::emit_common::{CtorStyle, EmitOptions, EmitState, Emitted};
 use super::ir::{
-    rename_function, rename_main, rename_theorem, tail_loop, Binder, ByZero, Decl, Effect, Expr,
-    LitValue, Node, Pattern, Program, Prop, Semantics,
+    Binder, ByZero, Decl, Effect, Expr, LitValue, Node, Pattern, Program, Prop, Semantics,
+    rename_function, rename_main, rename_theorem, tail_loop,
 };
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::Type;
-use super::Language;
 
 mod arrays;
 mod declarations;

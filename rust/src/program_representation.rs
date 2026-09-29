@@ -10,16 +10,17 @@ pub use project::{
     ProgramExpansion, ProgramProjectContext, ProgramProjectModule, ProgramProjectReference,
     ProgramProjectSource,
 };
-pub use snapshot::{construct_program_from_fragments, PROGRAM_SNAPSHOT_SCHEMA_VERSION};
+pub use snapshot::{PROGRAM_SNAPSHOT_SCHEMA_VERSION, construct_program_from_fragments};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt;
 
-use crate::{language_support, LinkNetwork, LinkType, ParseConfiguration};
+use crate::{LinkNetwork, LinkType, ParseConfiguration, language_support};
 use analysis::{
-    effect_markers, extension_markers, module_markers, proof_markers, resolve_bindings,
-    scope_by_id, semantic_tokens, syntax_facts, unique_facts, validate_identifier, SemanticToken,
+    SemanticToken, effect_markers, extension_markers, module_markers, proof_markers,
+    resolve_bindings, scope_by_id, semantic_tokens, syntax_facts, unique_facts,
+    validate_identifier,
 };
 use module_resolution::{module_requests, project_has_module};
 
@@ -671,12 +672,12 @@ fn type_facts(
         })
         .collect::<Vec<_>>();
     for (index, token) in tokens.iter().enumerate() {
-        if token.text == ":" {
-            if let Some(value) = tokens.get(index + 1) {
-                facts.push(
-                    ProgramFact::new("annotation", &value.text, value.range).with_phase("surface"),
-                );
-            }
+        if token.text == ":"
+            && let Some(value) = tokens.get(index + 1)
+        {
+            facts.push(
+                ProgramFact::new("annotation", &value.text, value.range).with_phase("surface"),
+            );
         }
         if matches!(token.text.as_str(), "universe" | "Universe" | "Type") {
             facts.push(
@@ -726,14 +727,14 @@ fn extension_facts(
         .any(|needle| term.contains(needle))
         .then(|| ProgramFact::new(&mapping.term, &mapping.term, mapping.range))
     }));
-    if language == "JavaScript" {
-        if let Some(start) = source.find("\"use strict\"") {
-            facts.push(ProgramFact::new(
-                "directive",
-                "use strict",
-                ProgramRange::new(start, start + 12),
-            ));
-        }
+    if language == "JavaScript"
+        && let Some(start) = source.find("\"use strict\"")
+    {
+        facts.push(ProgramFact::new(
+            "directive",
+            "use strict",
+            ProgramRange::new(start, start + 12),
+        ));
     }
     unique_facts(facts)
 }

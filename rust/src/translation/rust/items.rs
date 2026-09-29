@@ -1,11 +1,11 @@
 //! Attributes, items, `use` trees, enums, types, functions, blocks and `main`.
 
 use super::{
-    absolute, format, is_if_or_match, prop_of, rust_fixed_type, span, unsupported, Binding,
-    ItemsEnd, Language, Options, Result, RustParser, SComparison, SCtor, SData, SEffect, SExpr,
-    SField, SFn, SItem, SMain, SModule, SNode, SParam, SProgram, SProp, SPropNode, ShowStyle,
-    Token, TokenKind, TranslationError, Type, ACCEPTED_DERIVES, ACCEPTED_LINTS, BOOL,
-    RESERVED_ITEMS, STRING, UNIT, UNSUPPORTED_TYPES,
+    ACCEPTED_DERIVES, ACCEPTED_LINTS, BOOL, Binding, ItemsEnd, Language, Options, RESERVED_ITEMS,
+    Result, RustParser, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
+    SModule, SNode, SParam, SProgram, SProp, SPropNode, STRING, ShowStyle, Token, TokenKind,
+    TranslationError, Type, UNIT, UNSUPPORTED_TYPES, absolute, format, is_if_or_match, prop_of,
+    rust_fixed_type, span, unsupported,
 };
 
 impl RustParser {
@@ -366,10 +366,10 @@ impl RustParser {
                 span(&token, self.cursor.peek()),
             ));
         }
-        if segments.len() == 1 {
-            if let Some(fixed) = rust_fixed_type(&name) {
-                return Ok(fixed);
-            }
+        if segments.len() == 1
+            && let Some(fixed) = rust_fixed_type(&name)
+        {
+            return Ok(fixed);
         }
         if name == "bool" {
             return Ok(BOOL);
@@ -738,7 +738,7 @@ impl RustParser {
                 return Err(Self::fail(
                     &format!("expected ( after {}!", token.value),
                     self.cursor.peek(),
-                ))
+                ));
             }
         };
         self.cursor.advance();

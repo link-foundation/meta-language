@@ -8,7 +8,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-use super::tree::{declaration, split_words, NodeId, SyntaxTree, Target};
+use super::tree::{NodeId, SyntaxTree, Target, declaration, split_words};
 use super::{ParsedFile, ProjectContext};
 
 const NON_REFERENCE_CONTEXTS: [&str; 3] = ["require_command", "notation_command", "attributes"];
@@ -305,15 +305,15 @@ impl Environment<'_, '_> {
             break;
         }
         let path = found?;
-        if self.loaded.insert(name.to_string()) {
-            if let Some(file) = self.context.load(&path) {
-                for node in file.tree.nodes_with(&["require_command"]) {
-                    for (required, _) in require_names(&file.tree, node) {
-                        self.require(&required, false);
-                    }
+        if self.loaded.insert(name.to_string())
+            && let Some(file) = self.context.load(&path)
+        {
+            for node in file.tree.nodes_with(&["require_command"]) {
+                for (required, _) in require_names(&file.tree, node) {
+                    self.require(&required, false);
                 }
-                self.declare(name, &path, &file);
             }
+            self.declare(name, &path, &file);
         }
         if imported {
             self.imported.insert(name.to_string());

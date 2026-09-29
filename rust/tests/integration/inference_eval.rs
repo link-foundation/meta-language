@@ -1,4 +1,4 @@
-use meta_language::{run_corpus, Grammar, SampleConfig, GOLDEN_CORPORA};
+use meta_language::{GOLDEN_CORPORA, Grammar, SampleConfig, run_corpus};
 
 #[test]
 fn golden_corpus_runner_returns_populated_benchmark_reports() {

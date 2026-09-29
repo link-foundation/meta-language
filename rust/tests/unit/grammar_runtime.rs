@@ -1,6 +1,6 @@
 use meta_language::{
-    register_grammar, with_grammar, CharClassItem, Grammar, GrammarParser, LanguageParser,
-    LinkNetwork, LinkType, MembershipOracle, ParseConfiguration, ParserRegistry,
+    CharClassItem, Grammar, GrammarParser, LanguageParser, LinkNetwork, LinkType, MembershipOracle,
+    ParseConfiguration, ParserRegistry, register_grammar, with_grammar,
 };
 
 #[test]

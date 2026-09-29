@@ -249,8 +249,10 @@ fn coverage_upload_requires_token_and_reports_missing_token_as_notice() {
 
     let skipped = step_block(coverage, "Report skipped Codecov upload");
     assert!(skipped.contains("if: env.CODECOV_TOKEN == ''"));
-    assert!(skipped
-        .contains("::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"));
+    assert!(
+        skipped
+            .contains("::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured")
+    );
 }
 
 #[test]
@@ -300,11 +302,13 @@ fn workflow_scans_secrets_and_simulates_fresh_merges() {
     ))
     .unwrap();
     assert!(helper.contains("cd \"${REPO_ROOT}/rust\""));
-    assert!(std::path::Path::new(&format!(
-        "{}/../.secretlintrc.json",
-        env!("CARGO_MANIFEST_DIR")
-    ))
-    .exists());
+    assert!(
+        std::path::Path::new(&format!(
+            "{}/../.secretlintrc.json",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .exists()
+    );
 }
 
 #[test]
@@ -339,8 +343,10 @@ fn file_size_warnings_only_annotate_changed_files() {
     let workflow = release_workflow();
     let lint = job_block(&workflow, "lint");
     assert!(step_block(lint, "Collect changed files").contains("git diff --name-only"));
-    assert!(step_block(lint, "Check file size limit")
-        .contains("CHANGED_FILES: ${{ steps.changed-files.outputs.files }}"));
+    assert!(
+        step_block(lint, "Check file size limit")
+            .contains("CHANGED_FILES: ${{ steps.changed-files.outputs.files }}")
+    );
     assert!(lint.contains("fetch-depth: 0"));
 }
 

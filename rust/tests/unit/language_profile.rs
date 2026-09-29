@@ -128,11 +128,13 @@ fn profiled_javascript_to_javascript_transform_rejects_unsupported_syntax() {
         Some("language-profile:unsupported-feature")
     );
     assert_eq!(diagnostic.metadata().language(), Some("JavaScript"));
-    assert!(diagnostic
-        .metadata()
-        .definition()
-        .expect("diagnostic describes unsupported syntax")
-        .contains("JavaScript"));
+    assert!(
+        diagnostic
+            .metadata()
+            .definition()
+            .expect("diagnostic describes unsupported syntax")
+            .contains("JavaScript")
+    );
     assert_eq!(
         network
             .query_links(

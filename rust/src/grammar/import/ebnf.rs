@@ -3,7 +3,7 @@ use ::ebnf::{
     SymbolKind as EbnfSymbolKind,
 };
 
-use super::{parse_error, unsupported_error, GrammarImportError};
+use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 
 const EMPTY_SENTINEL: &str = "\u{0}meta-language-empty\u{0}";

@@ -1,7 +1,7 @@
 //! Mutually recursive functions: a Lean `mutual` block of partial defs, and in
 //! Rocq one `ml_fix` over the sum of the functions' parameter tuples.
 
-use meta_language::{translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, translate_program};
 
 const EVEN_ODD: &str = "/** @param {bigint} n @returns {boolean} */
 function isEven(n) { if (n === 0n) return true; return isOdd(n - 1n); }

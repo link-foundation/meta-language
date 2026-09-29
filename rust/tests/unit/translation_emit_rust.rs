@@ -7,7 +7,7 @@
 
 use meta_language::translation::emit_rust::emit_rust;
 use meta_language::translation::ir::Program;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const HARNESS: &str = "\nfn ml_main() {\n    println!(\"{}\", (crate::q(7i32, 2i32)).to_string());\n}\n\n// Deep recursion in the source is not bounded by a small native stack.\nfn main() {\n    let check = std::env::args().any(|argument| argument == \"--ml-check-theorems\");\n    let worker = std::thread::Builder::new()\n        .stack_size(1 << 28)\n        .spawn(move || { ml_main() })\n        .expect(\"spawn the program thread\");\n    if worker.join().is_err() {\n        std::process::exit(101);\n    }\n}\n";
 

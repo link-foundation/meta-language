@@ -1,10 +1,10 @@
 //! Vernacular sentences: inductives, binders, types, definitions, fixpoints and `main`.
 
 use super::{
-    builtin_type, check_portable, object_prototype_key, span, type_error, unsupported, walk_output,
-    Annotation, Definition, Language, Result, RocqParser, SBinder, SCtor, SData, SField, SFn,
-    SItem, SMain, SModule, SParam, SProgram, Token, TokenKind, TranslationError, Type,
-    EVAL_STRATEGIES, OUTSIDE_CORE_TYPES, THEOREM_KEYWORDS, UNIT, UNSUPPORTED_COMMANDS,
+    Annotation, Definition, EVAL_STRATEGIES, Language, OUTSIDE_CORE_TYPES, Result, RocqParser,
+    SBinder, SCtor, SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram, THEOREM_KEYWORDS,
+    Token, TokenKind, TranslationError, Type, UNIT, UNSUPPORTED_COMMANDS, builtin_type,
+    check_portable, object_prototype_key, span, type_error, unsupported, walk_output,
 };
 
 impl RocqParser {

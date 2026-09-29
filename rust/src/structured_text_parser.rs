@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use regex::Regex;
 
-use crate::builtin_grammar::{propagate_errors, GrammarNode};
+use crate::builtin_grammar::{GrammarNode, propagate_errors};
 use crate::line_index::LineIndex;
 use crate::lino_grammar::parse_lino_cst;
 use crate::natural_language::{annotate_natural_language, canonical_natural_language};

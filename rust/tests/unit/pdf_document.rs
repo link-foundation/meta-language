@@ -2,12 +2,11 @@
 //! cross-format concept bridge, concept-tagged parsing, and `reconstruct_text_as`.
 
 use meta_language::{
-    parse_markup_document, parse_pdf_document, pdf_profile_is_recognized, render_pdf_document,
-    BlockNode, InlineNode, LinkNetwork, LinkType, ParseConfiguration,
+    BlockNode, InlineNode, LinkNetwork, LinkType, ParseConfiguration, parse_markup_document,
+    parse_pdf_document, pdf_profile_is_recognized, render_pdf_document,
 };
 
-const SAMPLE_MARKDOWN: &str =
-    "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
+const SAMPLE_MARKDOWN: &str = "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
 
 fn pdf_from_markdown() -> String {
     let document = parse_markup_document("Markdown", SAMPLE_MARKDOWN).expect("Markdown parses");

@@ -3,7 +3,7 @@
 //! value still runs it.
 
 use meta_language::translation::javascript::parse_javascript;
-use meta_language::{translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, translate_program};
 
 const VOID: &str = "function hello(name) {
   console.log(`hello ${name}`);

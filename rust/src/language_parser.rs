@@ -1,6 +1,6 @@
 use crate::{
-    docx_parser, language_catalog, lino_parser, pdf_parser, structured_text_parser,
-    tree_sitter_adapter, LinkNetwork, ParseConfiguration,
+    LinkNetwork, ParseConfiguration, docx_parser, language_catalog, lino_parser, pdf_parser,
+    structured_text_parser, tree_sitter_adapter,
 };
 
 /// Parser boundary that produces lossless links networks for source text.

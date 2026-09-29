@@ -5,7 +5,7 @@ use ::abnf::types::{
     StringLiteral as AbnfStringLiteral, TerminalValues as AbnfTerminalValues,
 };
 
-use super::{parse_error, unsupported_error, GrammarImportError};
+use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 
 /// Parses Augmented Backus-Naur Form text into the grammar IR.

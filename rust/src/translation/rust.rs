@@ -12,14 +12,14 @@
 
 use std::collections::HashMap;
 
-use super::diagnostics::{type_error, unsupported, Result, TranslationError};
-use super::lexer::{describe, tokenize, Token, TokenCursor, TokenKind};
+use super::diagnostics::{Result, TranslationError, type_error, unsupported};
+use super::lexer::{Token, TokenCursor, TokenKind, describe, tokenize};
 use super::surface::{
     BinaryOp, Flavor, Rounding, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem,
     SMain, SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow,
     ShowStyle, UnaryOp,
 };
-use super::types::{rust_fixed_type, Type, BOOL, STRING, UNIT};
+use super::types::{BOOL, STRING, Type, UNIT, rust_fixed_type};
 use super::{Language, Span};
 
 mod expressions;
@@ -470,7 +470,7 @@ fn pattern_value(pattern: &SPattern, range: Option<Span>) -> Result<SExpr> {
                 "@ binding",
                 "the aliased pattern must bind every field",
                 range,
-            ))
+            ));
         }
     };
     Ok(SExpr::new(node, range))

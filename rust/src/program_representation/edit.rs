@@ -1,6 +1,6 @@
 use super::{
-    scope_by_id, validate_identifier, ProgramRange, ProgramRepresentation,
-    ProgramRepresentationError,
+    ProgramRange, ProgramRepresentation, ProgramRepresentationError, scope_by_id,
+    validate_identifier,
 };
 
 impl ProgramRepresentation {

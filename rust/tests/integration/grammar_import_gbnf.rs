@@ -1,4 +1,4 @@
-use meta_language::{import_gbnf, FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks};
+use meta_language::{FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks, import_gbnf};
 
 #[test]
 fn imported_gbnf_grammar_survives_links_round_trip() {

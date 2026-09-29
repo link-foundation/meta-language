@@ -8,11 +8,11 @@
 use std::fs;
 use std::path::PathBuf;
 
-use links_notation::{parse_lino_to_links, LiNo};
+use links_notation::{LiNo, parse_lino_to_links};
 use meta_language::{ByteRange, LinkId, LinkNetwork, LinkType, ParseConfiguration, SourceSpan};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
-use super::issue_195_observations::{record, Observation, LINO_MATRIX_FIXTURE};
+use super::issue_195_observations::{LINO_MATRIX_FIXTURE, Observation, record};
 
 fn repository_file(relative: &str) -> String {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

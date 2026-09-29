@@ -154,11 +154,11 @@ fn flatten_runs(nodes: &[InlineNode], style: RunStyle, runs: &mut Vec<(RunStyle,
 fn merge_adjacent_runs(runs: &mut Vec<(RunStyle, String)>) {
     let mut merged: Vec<(RunStyle, String)> = Vec::with_capacity(runs.len());
     for (style, text) in runs.drain(..) {
-        if let Some(last) = merged.last_mut() {
-            if last.0 == style {
-                last.1.push_str(&text);
-                continue;
-            }
+        if let Some(last) = merged.last_mut()
+            && last.0 == style
+        {
+            last.1.push_str(&text);
+            continue;
         }
         merged.push((style, text));
     }

@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
 use meta_language::{
-    grammar_concept_translation_rules, translate_grammar_surface, CharClassItem, Grammar,
-    GrammarExpr, GrammarFormat, GrammarRule, GrammarTranslateError, LinkQuery, LinkType,
-    TranslationRule, TranslationRuleSet,
+    CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, GrammarTranslateError,
+    LinkQuery, LinkType, TranslationRule, TranslationRuleSet, grammar_concept_translation_rules,
+    translate_grammar_surface,
 };
 
 #[test]

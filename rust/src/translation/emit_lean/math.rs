@@ -1,7 +1,7 @@
 //! The `Math` and `Number` functions: Lean's `Float` functions where they agree
 //! with JavaScript, and the generated math helpers where they do not.
 
-use super::{lean_float, Expr, LeanEmitter, Node, Result};
+use super::{Expr, LeanEmitter, Node, Result, lean_float};
 
 impl LeanEmitter<'_> {
     pub(super) fn math(&mut self, e: &Expr, depth: usize) -> Result<String> {

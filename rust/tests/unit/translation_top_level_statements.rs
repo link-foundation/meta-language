@@ -7,7 +7,7 @@ use meta_language::translation::check::check_program;
 use meta_language::translation::emit_javascript::emit_javascript;
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::surface::{SEffect, SItem, SProgram};
-use meta_language::{translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, translate_program};
 
 const FIBONACCI: &str = "let a = 0n;
 let b = 1n;
@@ -96,10 +96,22 @@ fn main_binds_each_variable_the_statements_before_a_print_assign() {
 #[test]
 fn top_level_statements_javascript_could_not_run_as_translated_are_rejected() {
     let cases = [
-        ("let x = 1n;\nif (x > 0n) { return; }\n", "top-level return statement: return leaves a function, and a module has none to leave at 26..32"),
-        ("let s = 0n;\nswitch (s) { case 0n: s = 1n; }\n", "top-level switch statement: the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts at 12..18"),
-        ("let x = 1n;\nconst f = () => 2n;\nconsole.log(x);\n", "function after a top-level statement: the statements before const f could call it before it is initialised; declare every function first at 12..18"),
-        ("const c = 1n;\nc = 2n;\n", "assignment of constant c: assigning a const binding throws a TypeError; declare it with let at 14..18"),
+        (
+            "let x = 1n;\nif (x > 0n) { return; }\n",
+            "top-level return statement: return leaves a function, and a module has none to leave at 26..32",
+        ),
+        (
+            "let s = 0n;\nswitch (s) { case 0n: s = 1n; }\n",
+            "top-level switch statement: the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts at 12..18",
+        ),
+        (
+            "let x = 1n;\nconst f = () => 2n;\nconsole.log(x);\n",
+            "function after a top-level statement: the statements before const f could call it before it is initialised; declare every function first at 12..18",
+        ),
+        (
+            "const c = 1n;\nc = 2n;\n",
+            "assignment of constant c: assigning a const binding throws a TypeError; declare it with let at 14..18",
+        ),
     ];
     for (source, message) in cases {
         let error = parse_javascript(source).expect_err(source);

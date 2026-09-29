@@ -1,10 +1,10 @@
 //! Expressions from operator precedence down to paths, macros, `if` and `match`.
 
 use super::{
-    additive_op, binary, comparison_op, describe, format, is_if_or_match, joined, method_call,
-    multiplicative_op, operator, pattern_value, rust_fixed_type, span, type_error, unsupported,
     Alias, BinaryOp, Flavor, Options, Result, RustParser, SExpr, SNode, SPattern, SPatternNode,
-    SRow, Token, TokenKind, UnaryOp,
+    SRow, Token, TokenKind, UnaryOp, additive_op, binary, comparison_op, describe, format,
+    is_if_or_match, joined, method_call, multiplicative_op, operator, pattern_value,
+    rust_fixed_type, span, type_error, unsupported,
 };
 
 impl RustParser {
@@ -56,16 +56,16 @@ impl RustParser {
                 span(&token, c.peek_at(usize::from(shift))),
             ));
         }
-        if token.kind == TokenKind::Punct {
-            if let Some(op) = comparison_op(&token.value) {
-                self.cursor.advance();
-                let right = self.additive(path, Options::default())?;
-                let after = self.cursor.peek();
-                if after.kind == TokenKind::Punct && comparison_op(&after.value).is_some() {
-                    return Err(Self::fail("comparison operators cannot be chained", after));
-                }
-                return Ok(binary(op, left, right, &token));
+        if token.kind == TokenKind::Punct
+            && let Some(op) = comparison_op(&token.value)
+        {
+            self.cursor.advance();
+            let right = self.additive(path, Options::default())?;
+            let after = self.cursor.peek();
+            if after.kind == TokenKind::Punct && comparison_op(&after.value).is_some() {
+                return Err(Self::fail("comparison operators cannot be chained", after));
             }
+            return Ok(binary(op, left, right, &token));
         }
         Ok(left)
     }
@@ -369,21 +369,22 @@ impl RustParser {
             ));
         }
         let fixed = rust_fixed_type(&segments[0]);
-        if segments.len() == 2 && segments[1] == "from" {
-            if let Some(to) = fixed.clone() {
-                if args.len() != 1 {
-                    return Err(type_error(format!("{name} expects 1 argument"), range));
-                }
-                return Ok(SExpr::new(
-                    SNode::Cast {
-                        arg: Box::new(args.remove(0)),
-                        to,
-                        from: None,
-                        flavor: Flavor::Exact,
-                    },
-                    range,
-                ));
+        if segments.len() == 2
+            && segments[1] == "from"
+            && let Some(to) = fixed.clone()
+        {
+            if args.len() != 1 {
+                return Err(type_error(format!("{name} expects 1 argument"), range));
             }
+            return Ok(SExpr::new(
+                SNode::Cast {
+                    arg: Box::new(args.remove(0)),
+                    to,
+                    from: None,
+                    flavor: Flavor::Exact,
+                },
+                range,
+            ));
         }
         if segments.len() == 2 && fixed.is_some() {
             return Err(unsupported(&name, "outside the portable core", range));
@@ -436,7 +437,7 @@ impl RustParser {
                             &format!("{}! message", token.value),
                             "the message must be a literal",
                             range,
-                        ))
+                        ));
                     }
                 };
                 Ok(SExpr::new(SNode::Abort { message }, range))

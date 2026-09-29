@@ -5,10 +5,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt;
 
-use super::{Grammar, GrammarExpr, GrammarRule, GRAMMAR_CONCEPTS};
+use super::{GRAMMAR_CONCEPTS, Grammar, GrammarExpr, GrammarRule};
 use crate::{
-    current_concept_id, LinkMetadata, LinkNetwork, LinkQuery, LinkType, ParseConfiguration,
-    TranslationRule, TranslationRuleSet, TranslationTemplate,
+    LinkMetadata, LinkNetwork, LinkQuery, LinkType, ParseConfiguration, TranslationRule,
+    TranslationRuleSet, TranslationTemplate, current_concept_id,
 };
 
 /// Error raised while translating grammar rule names and documentation.
@@ -159,13 +159,12 @@ fn translated_rule_names(
         };
 
         if let Some(previous_rule) = used_names.insert(translated_name.clone(), rule.name().into())
+            && previous_rule != rule.name()
         {
-            if previous_rule != rule.name() {
-                return Err(GrammarTranslateError::NameCollision {
-                    language: target_language.to_string(),
-                    name: translated_name,
-                });
-            }
+            return Err(GrammarTranslateError::NameCollision {
+                language: target_language.to_string(),
+                name: translated_name,
+            });
         }
         rename_map.insert(rule.name().to_string(), translated_name);
     }

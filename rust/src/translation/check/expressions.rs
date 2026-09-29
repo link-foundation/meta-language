@@ -2,10 +2,10 @@
 
 use super::arrays::array_text;
 use super::{
+    BOOL, BinaryOp, Checker, Ctor, Decimal, Decl, Entry, Env, Expr, FLOAT, Flavor, INT, Language,
+    LitValue, Node, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp,
     arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
-    negate_number, op_name, plain_binary, text_lit, type_error, unsupported, BinaryOp, Checker,
-    Ctor, Decimal, Decl, Entry, Env, Expr, Flavor, Language, LitValue, Node, Result, Rounding,
-    SExpr, SNode, Semantics, Span, Type, UnaryOp, BOOL, FLOAT, INT, STRING, UNIT,
+    negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
 };
 
 impl Checker {
@@ -105,10 +105,10 @@ impl Checker {
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
             SNode::App { func, args } => self.application(func, args, env, path, expected, span),
             SNode::Field { field, object } => {
-                if field == "length" {
-                    if let Some(length) = self.length_field(object, span, env, path)? {
-                        return Ok(length);
-                    }
+                if field == "length"
+                    && let Some(length) = self.length_field(object, span, env, path)?
+                {
+                    return Ok(length);
                 }
                 Err(unsupported(
                     "field access",
@@ -625,7 +625,7 @@ impl Checker {
                     "higher-order application",
                     "only named functions and constructors can be applied",
                     span,
-                ))
+                ));
             }
         };
         if let Some(name) = env.local(head) {
@@ -758,10 +758,10 @@ impl Checker {
             let Some(Decl::Data(entry)) = self.decls.get(name) else {
                 continue;
             };
-            if let Some(Type::Data { name: expected }) = expected {
-                if entry.full_name != *expected {
-                    continue;
-                }
+            if let Some(Type::Data { name: expected }) = expected
+                && entry.full_name != *expected
+            {
+                continue;
             }
             if let Some(ctor) = entry.ctors.iter().find(|ctor| ctor.name == tag) {
                 candidates.push((entry.full_name.clone(), ctor.clone()));

@@ -54,11 +54,7 @@ pub fn js_number(x: f64) -> String {
             format!("{}.{}e{sign}{power}", &digits[..1], &digits[1..])
         }
     };
-    if x < 0.0 {
-        format!("-{body}")
-    } else {
-        body
-    }
+    if x < 0.0 { format!("-{body}") } else { body }
 }
 
 /// `String(Number(text))` for the text of a JavaScript numeric literal

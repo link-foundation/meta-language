@@ -15,8 +15,8 @@
 //! read back by reconstruction, and only enrich the network with the formatting
 //! concepts required by issue #85 for bold/italic/heading/paragraph/list.
 
-use crate::document_formatting::{parse_docx_document, BlockNode, InlineNode};
-use crate::{tree_sitter_adapter, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration};
+use crate::document_formatting::{BlockNode, InlineNode, parse_docx_document};
+use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, tree_sitter_adapter};
 
 /// Parses DOCX `word/document.xml` `text` into a lossless network enriched with
 /// concept-tagged document-structure links.

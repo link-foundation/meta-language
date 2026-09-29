@@ -10,7 +10,7 @@ use std::collections::BTreeSet;
 use std::process::Command;
 
 use meta_language::{
-    analyze_program, ProgramBinding, ProgramProjectContext, ProgramRepresentation,
+    ProgramBinding, ProgramProjectContext, ProgramRepresentation, analyze_program,
 };
 use serde_json::Value;
 

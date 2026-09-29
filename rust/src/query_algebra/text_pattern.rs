@@ -3,8 +3,8 @@ use std::collections::BTreeSet;
 use crate::{LinkId, LinkNetwork, LinkType};
 
 use super::{
-    normalize_capture_name, structural_children, LinkRuleCaptures, LinkRuleMatch,
-    LinkRuleParseError,
+    LinkRuleCaptures, LinkRuleMatch, LinkRuleParseError, normalize_capture_name,
+    structural_children,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

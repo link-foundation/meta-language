@@ -3,7 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{LinkFlags, LinkId, LinkNetwork, LinkType, ParseConfiguration};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// A Syntax node of a public PDF network.
 struct Node {
@@ -276,9 +276,10 @@ fn pdf_grammar_cst_describes_the_indirect_objects_pdf_lib_reads() {
             let text = text_of(leaf, source);
             if leaf.term == "whitespace" {
                 assert!(leaf.flags.is_extra() && !leaf.named);
-                assert!(text
-                    .bytes()
-                    .all(|byte| matches!(byte, 0 | b'\t' | b'\n' | 0x0c | b'\r' | b' ')));
+                assert!(
+                    text.bytes()
+                        .all(|byte| matches!(byte, 0 | b'\t' | b'\n' | 0x0c | b'\r' | b' '))
+                );
             }
             if leaf.term == "comment" {
                 assert!(leaf.flags.is_extra() && leaf.named);

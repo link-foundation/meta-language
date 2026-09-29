@@ -6,7 +6,7 @@
 
 use meta_language::{Link, LinkNetwork, LinkType};
 
-use super::cst_lines::{parse_cst_lines, row_offsets, CstNode};
+use super::cst_lines::{CstNode, parse_cst_lines, row_offsets};
 
 /// FNV-1a (32-bit) of a UTF-8 string: the numeric seed of a textual seed.
 pub fn seed_number(text: &str) -> u32 {
@@ -252,13 +252,13 @@ pub fn property_problems(network: &LinkNetwork, source: &str) -> Vec<String> {
                 if parent.link_type() != Some(LinkType::Syntax) {
                     continue;
                 }
-                if let Some(outer) = parent.span() {
-                    if start < outer.byte_range().start() || end > outer.byte_range().end() {
-                        problems.push(format!(
-                            "{place} lies outside its parent {}",
-                            parent.term().unwrap_or_default()
-                        ));
-                    }
+                if let Some(outer) = parent.span()
+                    && (start < outer.byte_range().start() || end > outer.byte_range().end())
+                {
+                    problems.push(format!(
+                        "{place} lies outside its parent {}",
+                        parent.term().unwrap_or_default()
+                    ));
                 }
             }
         }

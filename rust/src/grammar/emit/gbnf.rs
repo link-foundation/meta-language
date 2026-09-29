@@ -4,8 +4,8 @@ use std::fmt::Write as _;
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat};
 
 use super::{
-    finish_lines, render_rule_line, unsupported_error, EmitReport, GrammarEmitError,
-    GBNF_RULE_TEMPLATE,
+    EmitReport, GBNF_RULE_TEMPLATE, GrammarEmitError, finish_lines, render_rule_line,
+    unsupported_error,
 };
 
 const ANY_CHAR_CLASS: &str = r"[\x00-\U0010FFFF]";

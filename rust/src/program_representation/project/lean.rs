@@ -8,7 +8,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-use super::tree::{declaration, toml_entries, NodeId, SyntaxTree, Target};
+use super::tree::{NodeId, SyntaxTree, Target, declaration, toml_entries};
 use super::{ParsedFile, ProjectContext};
 
 const DEFINITION_KEYWORDS: [&str; 7] = [

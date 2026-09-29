@@ -1,6 +1,6 @@
 use meta_language::{
-    Link, LinkNetwork, LinkType, NetworkProjection, ParseConfiguration, VerificationIssueKind,
-    DATA_FORMAT_TARGETS, LANGUAGE_FIXTURES, SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
+    DATA_FORMAT_TARGETS, LANGUAGE_FIXTURES, Link, LinkNetwork, LinkType, NetworkProjection,
+    ParseConfiguration, SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS, VerificationIssueKind,
 };
 
 #[test]
@@ -228,14 +228,18 @@ fn visual_basic_recovery_errors_round_trip_with_flags() {
 
     assert_eq!(network.reconstruct_text(), source);
     assert!(!report.is_clean());
-    assert!(report
-        .issues()
-        .iter()
-        .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink));
-    assert!(report
-        .issues()
-        .iter()
-        .any(|issue| issue.kind() == VerificationIssueKind::MissingLink));
+    assert!(
+        report
+            .issues()
+            .iter()
+            .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink)
+    );
+    assert!(
+        report
+            .issues()
+            .iter()
+            .any(|issue| issue.kind() == VerificationIssueKind::MissingLink)
+    );
 }
 
 #[test]
@@ -406,11 +410,13 @@ fn typescript_recovery_errors_round_trip_with_flags() {
 
     assert_eq!(network.reconstruct_text(), source);
     assert!(!report.is_clean());
-    assert!(report
-        .issues()
-        .iter()
-        .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink
-            || issue.kind() == VerificationIssueKind::MissingLink));
+    assert!(
+        report
+            .issues()
+            .iter()
+            .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink
+                || issue.kind() == VerificationIssueKind::MissingLink)
+    );
     assert!(network
         .links()
         .any(|link| link.metadata().flags().has_error() || link.metadata().flags().is_missing()));
@@ -424,17 +430,23 @@ fn parse_marks_recovery_errors_without_losing_original_text() {
 
     assert_eq!(network.reconstruct_text(), source);
     assert!(!report.is_clean());
-    assert!(report
-        .issues()
-        .iter()
-        .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink));
-    assert!(report
-        .issues()
-        .iter()
-        .any(|issue| issue.kind() == VerificationIssueKind::HasErrorLink));
-    assert!(network
-        .links()
-        .any(|link| link.metadata().flags().has_error()));
+    assert!(
+        report
+            .issues()
+            .iter()
+            .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink)
+    );
+    assert!(
+        report
+            .issues()
+            .iter()
+            .any(|issue| issue.kind() == VerificationIssueKind::HasErrorLink)
+    );
+    assert!(
+        network
+            .links()
+            .any(|link| link.metadata().flags().has_error())
+    );
 }
 
 #[test]
@@ -508,10 +520,12 @@ fn csv_recovery_errors_round_trip_with_flags() {
 
     assert_eq!(network.reconstruct_text(), source);
     assert!(!report.is_clean());
-    assert!(report
-        .issues()
-        .iter()
-        .any(|issue| issue.kind() == VerificationIssueKind::HasErrorLink));
+    assert!(
+        report
+            .issues()
+            .iter()
+            .any(|issue| issue.kind() == VerificationIssueKind::HasErrorLink)
+    );
 }
 
 #[test]
@@ -537,7 +551,9 @@ fn csv_accepts_rfc4180_fields_including_single_characters() {
         .collect::<Vec<_>>();
     assert_eq!(
         field_kinds,
-        ["text", "text", "text", "number", "text", "text", "float", "text", "boolean"]
+        [
+            "text", "text", "text", "number", "text", "text", "float", "text", "boolean"
+        ]
     );
 }
 
@@ -677,11 +693,13 @@ fn json_recovery_errors_round_trip_with_flags() {
 
     assert_eq!(network.reconstruct_text(), source);
     assert!(!report.is_clean());
-    assert!(report
-        .issues()
-        .iter()
-        .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink
-            || issue.kind() == VerificationIssueKind::MissingLink));
+    assert!(
+        report
+            .issues()
+            .iter()
+            .any(|issue| issue.kind() == VerificationIssueKind::ErrorLink
+                || issue.kind() == VerificationIssueKind::MissingLink)
+    );
     assert!(network
         .links()
         .any(|link| link.metadata().flags().has_error() || link.metadata().flags().is_missing()));

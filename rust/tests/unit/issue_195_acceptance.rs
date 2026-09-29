@@ -41,10 +41,12 @@ fn issue_195_manifest_has_atomic_cross_runtime_traceability() {
         let id = requirement["id"].as_str().expect("stable requirement id");
         assert!(requirement_ids.insert(id), "duplicate requirement id {id}");
         assert!(id.starts_with("I195-"), "unexpected requirement id {id}");
-        assert!(requirement["source"]
-            .as_str()
-            .expect("source permalink")
-            .starts_with("https://github.com/link-foundation/meta-language/"));
+        assert!(
+            requirement["source"]
+                .as_str()
+                .expect("source permalink")
+                .starts_with("https://github.com/link-foundation/meta-language/")
+        );
         assert!(!contains_hand_edited_completion(requirement));
 
         let scope = requirement["scope"].as_object().expect("atomic scope");

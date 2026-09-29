@@ -324,7 +324,10 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
     parity_target(
         "MPS",
         "https://github.com/JetBrains/MPS",
-        &[ParityCapability::ObjectRoundTrip, ParityCapability::SelfDescription],
+        &[
+            ParityCapability::ObjectRoundTrip,
+            ParityCapability::SelfDescription,
+        ],
         "Executable fixture covers projectional model serialization as source data.",
     ),
     parity_target(
@@ -354,7 +357,10 @@ pub const PARITY_TARGETS: &[ParityTarget] = &[
     parity_target(
         "doublets-rs",
         "https://github.com/linksplatform/doublets-rs",
-        &[ParityCapability::ObjectRoundTrip, ParityCapability::SnapshotVersioning],
+        &[
+            ParityCapability::ObjectRoundTrip,
+            ParityCapability::SnapshotVersioning,
+        ],
         "Executable fixture covers binary doublets storage round-trip gates.",
     ),
 ];

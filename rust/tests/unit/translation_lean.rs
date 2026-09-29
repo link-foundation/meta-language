@@ -6,9 +6,9 @@
 
 use meta_language::translation::diagnostics::ErrorKind;
 use meta_language::translation::lean::{annotate_layout, parse_lean, span};
-use meta_language::translation::lexer::{tokenize_source, Source};
+use meta_language::translation::lexer::{Source, tokenize_source};
 use meta_language::translation::{Language, Span};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 fn surface(source: &str) -> Value {
     serde_json::to_value(parse_lean(source).expect("the Lean source parses"))

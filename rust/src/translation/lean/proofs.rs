@@ -1,12 +1,12 @@
 //! Theorems, tactic scripts, and propositions of the Lean frontend.
 
-use super::{binder, column, connective, js_trimmed, prop_relation, span, LeanParser};
-use crate::translation::diagnostics::{unsupported, Result};
+use super::{LeanParser, binder, column, connective, js_trimmed, prop_relation, span};
+use crate::translation::Language;
+use crate::translation::diagnostics::{Result, unsupported};
 use crate::translation::lexer::{Token, TokenKind};
 use crate::translation::surface::{
     SComparison, SProof, SProp, SPropNode, SRule, SSplit, SSplitCase, SStep, STheorem,
 };
-use crate::translation::Language;
 
 impl LeanParser<'_> {
     pub(super) fn theorem(&mut self) -> Result<STheorem> {
@@ -299,20 +299,21 @@ impl LeanParser<'_> {
         }
         let left = self.binary(55)?;
         let relation = self.cursor.peek();
-        if relation.kind == TokenKind::Punct && !self.blocked(relation) {
-            if let Some(build) = prop_relation(&relation.value) {
-                self.cursor.advance();
-                let right = self.binary(55)?;
-                return Ok(SProp {
-                    node: build(SComparison {
-                        left,
-                        right,
-                        reference: false,
-                        same_value: false,
-                    }),
-                    span: Some(self.span_to_next(&token)),
-                });
-            }
+        if relation.kind == TokenKind::Punct
+            && !self.blocked(relation)
+            && let Some(build) = prop_relation(&relation.value)
+        {
+            self.cursor.advance();
+            let right = self.binary(55)?;
+            return Ok(SProp {
+                node: build(SComparison {
+                    left,
+                    right,
+                    reference: false,
+                    same_value: false,
+                }),
+                span: Some(self.span_to_next(&token)),
+            });
         }
         Ok(SProp {
             node: SPropNode::Bool { expr: left },

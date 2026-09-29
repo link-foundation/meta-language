@@ -1,9 +1,9 @@
 //! Expressions, arithmetic, matches, casts and `main`.
 
 use super::{
-    block, comparison_operator, indent, own, rename_main, rounding_text, rust_string, snake,
-    unsupported, BinaryOp, ByZero, Decimal, Effect, Expr, Flavor, LitValue, Node, Pattern, Prelude,
-    Result, Rounding, RustEmitter, Semantics, Type, UnaryOp,
+    BinaryOp, ByZero, Decimal, Effect, Expr, Flavor, LitValue, Node, Pattern, Prelude, Result,
+    Rounding, RustEmitter, Semantics, Type, UnaryOp, block, comparison_operator, indent, own,
+    rename_main, rounding_text, rust_string, snake, unsupported,
 };
 
 impl RustEmitter<'_> {

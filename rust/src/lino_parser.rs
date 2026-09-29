@@ -20,8 +20,8 @@ use crate::builtin_grammar::GrammarNode;
 use crate::line_index::LineIndex;
 use crate::lino_grammar::{parse_lino_cst, quoted_reference_value};
 use crate::{
-    structured_text_parser, ByteRange, LinkId, LinkMetadata, LinkNetwork, LinkType,
-    ParseConfiguration, SourceSpan,
+    ByteRange, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, SourceSpan,
+    structured_text_parser,
 };
 
 pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> LinkNetwork {

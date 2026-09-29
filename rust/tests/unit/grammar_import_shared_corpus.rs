@@ -1,6 +1,6 @@
 use meta_language::{
-    emit_peggy, grammar_from_lino, grammar_to_lino, import_abnf, import_bnf, import_ebnf,
-    import_pest, import_tree_sitter_json, Grammar, GrammarParser,
+    Grammar, GrammarParser, emit_peggy, grammar_from_lino, grammar_to_lino, import_abnf,
+    import_bnf, import_ebnf, import_pest, import_tree_sitter_json,
 };
 use serde_json::Value;
 

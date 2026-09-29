@@ -8,13 +8,13 @@ use std::collections::BTreeSet;
 use std::path::PathBuf;
 
 use meta_language::{
-    concept_record, concept_records, concept_records_for_source_name, current_concept_id,
-    emit_ebnf, grammar_from_lino, grammar_to_lino, import_ebnf, ConceptRole, LinkNetwork,
-    LinkQuery, LinkType, ParseConfiguration, FORMER_CONCEPT_IDS, FORMER_CONCEPT_ID_VOCABULARY,
+    ConceptRole, FORMER_CONCEPT_ID_VOCABULARY, FORMER_CONCEPT_IDS, LinkNetwork, LinkQuery,
+    LinkType, ParseConfiguration, concept_record, concept_records, concept_records_for_source_name,
+    current_concept_id, emit_ebnf, grammar_from_lino, grammar_to_lino, import_ebnf,
 };
 use serde_json::Value;
 
-use super::issue_195_observations::{record, Observation};
+use super::issue_195_observations::{Observation, record};
 
 const CANONICAL_CONCEPTS: &str = "parity/naming/canonical-concepts.json";
 
@@ -144,13 +144,13 @@ fn the_runtime_records_are_the_register() {
 
 #[test]
 fn every_runtime_name_is_unabbreviated_and_has_a_role() {
-    let abbreviations: BTreeSet<String> = repository_file("parity/naming/abbreviations.json")
-        ["abbreviations"]
-        .as_array()
-        .expect("abbreviations")
-        .iter()
-        .filter_map(|entry| entry["abbreviation"].as_str().map(str::to_owned))
-        .collect();
+    let abbreviations: BTreeSet<String> =
+        repository_file("parity/naming/abbreviations.json")["abbreviations"]
+            .as_array()
+            .expect("abbreviations")
+            .iter()
+            .filter_map(|entry| entry["abbreviation"].as_str().map(str::to_owned))
+            .collect();
     assert!(abbreviations.contains("char"));
     let mut roles = BTreeSet::new();
     for record in concept_records() {

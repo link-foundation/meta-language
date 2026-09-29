@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
-    AccessMode, DoubletsLinkStore, EngineLinkStore, Link, LinkMetadata, LinkNetwork, LinkStore,
-    LinkStoreQuery, LinkType, ParseConfiguration, StorageError, LANGUAGE_FIXTURES,
+    AccessMode, DoubletsLinkStore, EngineLinkStore, LANGUAGE_FIXTURES, Link, LinkMetadata,
+    LinkNetwork, LinkStore, LinkStoreQuery, LinkType, ParseConfiguration, StorageError,
 };
 
 fn temp_store_path(name: &str) -> PathBuf {
@@ -135,15 +135,17 @@ fn doublets_link_store_supports_crud_search_and_read_only_access() {
     assert_eq!(matches.len(), 1);
     assert_eq!(matches[0].id(), relation);
 
-    assert!(LinkStore::update(
-        &mut store,
-        relation,
-        &[],
-        LinkMetadata::new()
-            .with_link_type(LinkType::Concept)
-            .with_term("updated"),
-    )
-    .expect("update relation"));
+    assert!(
+        LinkStore::update(
+            &mut store,
+            relation,
+            &[],
+            LinkMetadata::new()
+                .with_link_type(LinkType::Concept)
+                .with_term("updated"),
+        )
+        .expect("update relation")
+    );
     assert_eq!(
         LinkStore::read(&store, relation)
             .expect("read relation")

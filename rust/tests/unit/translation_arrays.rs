@@ -2,7 +2,7 @@
 //! Rocq list, read through a bounds-checked helper, under the assumption that
 //! every read is in bounds.
 
-use meta_language::{translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, translate_program};
 
 const ARRAYS: &str = "const xs = [1, 2];
 console.log(xs[1] + xs.length);
@@ -99,10 +99,22 @@ fn a_typedef_field_may_hold_an_array_of_data_too() {
 #[test]
 fn the_array_forms_that_are_not_kept_are_refused_with_a_reason() {
     for (source, message) in [
-        ("const xs = [1, 2];\nconsole.log(xs);\n", "text of an array: console.log lays an array out with util.inspect and String joins its elements with commas, which the translation does not reproduce yet; print the elements one by one at 31..33"),
-        ("const xs = [1, 2];\nxs[0] = 3;\n", "assignment of an array element: the portable core reads arrays and does not mutate them; build a new array with [...xs, value] at 19..24"),
-        ("const xs = [1, 2];\nconsole.log(xs === xs);\n", "comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40"),
-        ("const s = 'ab';\nconsole.log(s.length);\n", "length of a string: String.prototype.length counts UTF-16 code units, which the portable string types do not keep at 28..36"),
+        (
+            "const xs = [1, 2];\nconsole.log(xs);\n",
+            "text of an array: console.log lays an array out with util.inspect and String joins its elements with commas, which the translation does not reproduce yet; print the elements one by one at 31..33",
+        ),
+        (
+            "const xs = [1, 2];\nxs[0] = 3;\n",
+            "assignment of an array element: the portable core reads arrays and does not mutate them; build a new array with [...xs, value] at 19..24",
+        ),
+        (
+            "const xs = [1, 2];\nconsole.log(xs === xs);\n",
+            "comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40",
+        ),
+        (
+            "const s = 'ab';\nconsole.log(s.length);\n",
+            "length of a string: String.prototype.length counts UTF-16 code units, which the portable string types do not keep at 28..36",
+        ),
     ] {
         assert_eq!(refusal(source), message, "{source}");
     }

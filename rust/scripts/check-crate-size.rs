@@ -30,7 +30,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 #[cfg(not(test))]
-use std::process::{exit, Command};
+use std::process::{Command, exit};
 
 #[cfg(not(test))]
 #[path = "rust-paths.rs"]

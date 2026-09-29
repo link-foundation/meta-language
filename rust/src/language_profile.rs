@@ -252,16 +252,16 @@ impl LanguageProfile {
     /// type found in identifier order.
     pub fn validate_network(&self, network: &LinkNetwork) -> Result<(), LanguageProfileViolation> {
         for link in network.links() {
-            if let Some(link_type) = link.metadata().link_type() {
-                if !self.supports_link_type(link_type) {
-                    return Err(LanguageProfileViolation::new(
-                        format!("link type `{link_type}`"),
-                        format!(
-                            "Profile `{}` for `{}` does not support link type `{link_type}`.",
-                            self.name, self.language
-                        ),
-                    ));
-                }
+            if let Some(link_type) = link.metadata().link_type()
+                && !self.supports_link_type(link_type)
+            {
+                return Err(LanguageProfileViolation::new(
+                    format!("link type `{link_type}`"),
+                    format!(
+                        "Profile `{}` for `{}` does not support link type `{link_type}`.",
+                        self.name, self.language
+                    ),
+                ));
             }
 
             if self.concepts.is_empty()

@@ -11,7 +11,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
-use super::diagnostics::{unsupported, Result};
+use super::diagnostics::{Result, unsupported};
 use super::ir::{Decl, Effect, Expr, Node, Pattern, Plan, Program, Prop};
 use super::types::Type;
 use super::{Language, Span};
@@ -367,10 +367,10 @@ impl<'p> EmitState<'p> {
             self.assumptions.len() - 1
         };
         let record = &mut self.assumptions[index];
-        if let Some(detail) = detail {
-            if !record.details.iter().any(|known| known == detail) {
-                record.details.push(detail.to_owned());
-            }
+        if let Some(detail) = detail
+            && !record.details.iter().any(|known| known == detail)
+        {
+            record.details.push(detail.to_owned());
         }
     }
 
@@ -831,7 +831,9 @@ pub fn order_declarations(
                 if closed.contains(&key) {
                     return Err(unsupported(
                         "interleaved modules",
-                        &format!("module {key} would have to be reopened after its declarations depend on later ones; the target cannot reopen a module"),
+                        &format!(
+                            "module {key} would have to be reopened after its declarations depend on later ones; the target cannot reopen a module"
+                        ),
                         entry.span(),
                     ));
                 }

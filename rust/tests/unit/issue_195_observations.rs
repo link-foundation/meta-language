@@ -78,7 +78,13 @@ fn fixture_digest(journal: &mut Journal, fixture_file: &'static str) -> String {
                 .join(fixture_file);
             let bytes = fs::read(&path)
                 .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()));
-            format!("{:x}", Sha256::digest(bytes))
+            Sha256::digest(bytes)
+                .iter()
+                .fold(String::with_capacity(64), |mut hex, byte| {
+                    use std::fmt::Write as _;
+                    let _ = write!(hex, "{byte:02x}");
+                    hex
+                })
         })
         .clone()
 }

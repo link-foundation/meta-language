@@ -1,5 +1,5 @@
 use meta_language::{
-    emit_rust_parser, CharClassItem, Grammar, RuleKind, RustFieldShape, RustTypeShape,
+    CharClassItem, Grammar, RuleKind, RustFieldShape, RustTypeShape, emit_rust_parser,
 };
 
 #[test]
@@ -70,13 +70,17 @@ fn emits_enum_shapes_for_top_level_choices_and_records_unordered_loss() {
 
     let (artifacts, report) = emit_rust_parser(&grammar).expect("Rust parser codegen emits");
 
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("unordered choice")));
-    assert!(artifacts
-        .pest_grammar
-        .contains("// NOTE: unordered choice in source is emitted as ordered pest choice."));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("unordered choice"))
+    );
+    assert!(
+        artifacts
+            .pest_grammar
+            .contains("// NOTE: unordered choice in source is emitted as ordered pest choice.")
+    );
     assert_eq!(
         artifacts.ast_shapes[0],
         RustTypeShape::enumeration(

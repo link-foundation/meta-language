@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use meta_language::{import_gbnf, GrammarFormat};
+use meta_language::{GrammarFormat, import_gbnf};
 
 use super::grammar_pipeline_support::{
     assert_runtime_accepts_all_strings, load_fixture_corpus, unique_temp_path,

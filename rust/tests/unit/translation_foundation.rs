@@ -1,7 +1,7 @@
-use meta_language::translation::decimal::Decimal;
-use meta_language::translation::lexer::{tokenize, TokenCursor};
-use meta_language::translation::types::{data, fixed, fixed_bounds, rust_fixed_type, NAT};
 use meta_language::translation::Language;
+use meta_language::translation::decimal::Decimal;
+use meta_language::translation::lexer::{TokenCursor, tokenize};
+use meta_language::translation::types::{NAT, data, fixed, fixed_bounds, rust_fixed_type};
 
 #[test]
 fn decimals_parse_and_compare() {
@@ -30,7 +30,9 @@ fn values(text: &str, language: Language) -> Vec<String> {
 fn tokens_match_the_javascript_runtime() {
     assert_eq!(
         values("def f (n : Nat) : Nat := Nat.succ n -- c", Language::Lean),
-        ["def", "f", "(", "n", ":", "Nat", ")", ":", "Nat", ":=", "Nat.succ", "n", ""]
+        [
+            "def", "f", "(", "n", ":", "Nat", ")", ":", "Nat", ":=", "Nat.succ", "n", ""
+        ]
     );
     assert_eq!(
         values("println!(\"{}\", x != 1_0u8)", Language::Rust)[0],

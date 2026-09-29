@@ -4,11 +4,11 @@ use super::infer::infer_javascript_types;
 use super::loops::reserved;
 use super::math::global;
 use super::{
-    array, describe, guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim,
-    jsdoc_tags, lower, lower_imperative, non_empty, span, statement_uses, tokenize, type_error,
-    unsupported, Assertion, HashSet, JavaScriptParser, JsDoc, Language, Result, SCtor, SData,
-    SField, SFn, SItem, SMain, SModule, SParam, SProgram, ScanEnd, Scope, Span, Stmt, Token,
-    TokenCursor, TokenKind, TranslationError, Type, BOOL, FLOAT, INT, NAT, ROOT, STRING,
+    Assertion, BOOL, FLOAT, HashSet, INT, JavaScriptParser, JsDoc, Language, NAT, ROOT, Result,
+    SCtor, SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram, STRING, ScanEnd, Scope,
+    Span, Stmt, Token, TokenCursor, TokenKind, TranslationError, Type, array, describe,
+    guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
+    lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
 
 /// How a function's body is written: a block, or an arrow's block or expression.
@@ -480,20 +480,20 @@ impl JavaScriptParser {
             if depth != 0 || token.kind != TokenKind::Identifier {
                 continue;
             }
-            if token.value == "async" && value(at + 1) == Some("function") {
-                if let Some(name) = identifier(at + 2) {
-                    names.insert(name.value.clone());
-                }
+            if token.value == "async"
+                && value(at + 1) == Some("function")
+                && let Some(name) = identifier(at + 2)
+            {
+                names.insert(name.value.clone());
             }
             if token.value == "const"
                 && value(at + 2) == Some("=")
                 && value(at + 3) == Some("async")
                 && value(at + 4) != Some("=>")
                 && self.starts_function(at + 3)
+                && let Some(name) = identifier(at + 1)
             {
-                if let Some(name) = identifier(at + 1) {
-                    names.insert(name.value.clone());
-                }
+                names.insert(name.value.clone());
             }
         }
         names

@@ -4,8 +4,8 @@ use std::fmt::Write as _;
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, RuleKind};
 
 use super::{
-    finish_lines, ordered_rules, peg_choice_alternatives, unsupported_error, EmitReport,
-    GrammarEmitError,
+    EmitReport, GrammarEmitError, finish_lines, ordered_rules, peg_choice_alternatives,
+    unsupported_error,
 };
 
 /// Bundled JavaScript parser codegen output.

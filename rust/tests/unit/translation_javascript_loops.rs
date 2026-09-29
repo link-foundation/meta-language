@@ -7,7 +7,7 @@ use meta_language::translation::check::check_program;
 use meta_language::translation::emit_javascript::emit_javascript;
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::surface::{SItem, SProgram};
-use meta_language::{translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, translate_program};
 
 const SUM: &str = "function sum(n) {
   let total = 0n;
@@ -42,10 +42,12 @@ fn a_loop_is_a_generated_function_of_the_variables_it_uses() {
         .collect();
     assert_eq!(params, ["n", "total", "i"]);
     // The one variable the loop assigns and the statements after it read is its result: no result type is needed.
-    assert!(!program
-        .items
-        .iter()
-        .any(|item| matches!(item, SItem::Data(_))));
+    assert!(
+        !program
+            .items
+            .iter()
+            .any(|item| matches!(item, SItem::Data(_)))
+    );
 }
 
 #[test]
@@ -85,20 +87,62 @@ console.log(divisor(91n) + gcd(1071n, 462n));
 #[test]
 fn mutable_bindings_javascript_could_not_run_as_translated_are_rejected() {
     let cases = [
-        ("function f(n) { var x = n; return x; }", "var declaration: var bindings are hoisted to the function and shared by its blocks; use let or const at 16..19"),
-        ("function f(n) { const x = n; x = 1n; return x; }", "assignment of constant x: assigning a const binding throws a TypeError; declare it with let at 29..33"),
-        ("function f(n) { let x; x = n; return x; }", "let x without a value: an uninitialised let holds undefined, which is not a portable value; give it an initial value at 16..20"),
-        ("function f(n) { let [a] = n; return a; }", "let destructuring: declare each binding with its own let at 16..20"),
-        ("function f(n) { x = 1n; let x = n; return x; }", "assignment of x before its declaration: the binding is in its temporal dead zone, where assigning it throws a ReferenceError at 16..20"),
-        ("function f(n) { break; }", "break outside a loop or switch at 16..21"),
-        ("function f(n) { outer: while (true) { break outer; } return n; }", "label outer: labels are outside the portable core; a break or continue applies to the innermost loop at 16..21"),
-        ("function f(n) { for (x of n) {} return n; }", "for…of without const or let: declare the loop variable with const or let, so each iteration has its own at 16..21"),
-        ("function f(n) { for (const x in n) {} return n; }", "for…in loop: iteration over the keys of objects is outside the portable core; count with for (let i = …; …; …) at 16..21"),
-        ("function f(n) { let ml_x = n; return ml_x; }", "reserved identifier: ml_x uses the translator's reserved ml_ prefix at 20..24"),
-        ("function f(n) { while (n > 0n) { if (n === 3n) return n; n--; } }", "the function returns a bigint on one path and finishes without a return value, returning undefined, on another; return a value on every path at 54..55"),
-        ("function f(n) { while (true) { return n; } return 0n; }", "unreachable statement: statements after return, throw, break, continue or a complete if are never executed at 43..54"),
-        ("function f(n) { n <<= 1n; return n; }", "<<= assignment: the portable compound assignments are +=, -=, *=, /=, %=, &&= and ||= at 16..22"),
-        ("function f(n) { for (let i = 0n; i < n; i++) { g = i; } return n; }", "assignment of g: only local variables declared with let, and parameters, are assignable at 47..51"),
+        (
+            "function f(n) { var x = n; return x; }",
+            "var declaration: var bindings are hoisted to the function and shared by its blocks; use let or const at 16..19",
+        ),
+        (
+            "function f(n) { const x = n; x = 1n; return x; }",
+            "assignment of constant x: assigning a const binding throws a TypeError; declare it with let at 29..33",
+        ),
+        (
+            "function f(n) { let x; x = n; return x; }",
+            "let x without a value: an uninitialised let holds undefined, which is not a portable value; give it an initial value at 16..20",
+        ),
+        (
+            "function f(n) { let [a] = n; return a; }",
+            "let destructuring: declare each binding with its own let at 16..20",
+        ),
+        (
+            "function f(n) { x = 1n; let x = n; return x; }",
+            "assignment of x before its declaration: the binding is in its temporal dead zone, where assigning it throws a ReferenceError at 16..20",
+        ),
+        (
+            "function f(n) { break; }",
+            "break outside a loop or switch at 16..21",
+        ),
+        (
+            "function f(n) { outer: while (true) { break outer; } return n; }",
+            "label outer: labels are outside the portable core; a break or continue applies to the innermost loop at 16..21",
+        ),
+        (
+            "function f(n) { for (x of n) {} return n; }",
+            "for…of without const or let: declare the loop variable with const or let, so each iteration has its own at 16..21",
+        ),
+        (
+            "function f(n) { for (const x in n) {} return n; }",
+            "for…in loop: iteration over the keys of objects is outside the portable core; count with for (let i = …; …; …) at 16..21",
+        ),
+        (
+            "function f(n) { let ml_x = n; return ml_x; }",
+            "reserved identifier: ml_x uses the translator's reserved ml_ prefix at 20..24",
+        ),
+        (
+            "function f(n) { while (n > 0n) { if (n === 3n) return n; n--; } }",
+            "the function returns a bigint on one path and finishes without a return value, returning undefined, on another; return a value on every path at 54..55",
+        ),
+        (
+            "function f(n) { while (true) { return n; } return 0n; }",
+            "unreachable statement: statements after return, throw, break, continue or a complete if are never executed at 43..54",
+        ),
+        (
+            "function f(n) { n <<= 1n; return n; }",
+            "<<= assignment: the portable compound assignments are +=, -=, *=, /=, %=, &&= and ||= at 16..22",
+        ),
+        (
+            "function f(n) { for (let i = 0n; i < n; i++) { g = i; } return n; }",
+            "assignment of g: only local variables declared with let, and parameters, are assignable at 47..51",
+        ),
     ];
     for (source, message) in cases {
         let error = parse_javascript(source).expect_err(source);

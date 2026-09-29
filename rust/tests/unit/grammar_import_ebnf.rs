@@ -1,4 +1,4 @@
-use meta_language::{import_ebnf, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule};
+use meta_language::{GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule, import_ebnf};
 
 const ARITHMETIC: &str = include_str!("../fixtures/grammar/ebnf/arithmetic.ebnf");
 const NUMBER: &str = include_str!("../fixtures/grammar/ebnf/number.ebnf");

@@ -2,11 +2,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use meta_language::benchmark::{
-    render_competitor_report, run_competitor_suite, run_competitor_suite_from_paths,
-    PUBLISHED_NATGI_AVG_F1,
-};
 use meta_language::SampleConfig;
+use meta_language::benchmark::{
+    PUBLISHED_NATGI_AVG_F1, render_competitor_report, run_competitor_suite,
+    run_competitor_suite_from_paths,
+};
 
 #[test]
 fn competitor_bar_runs_included_corpora_and_reports_skips() {

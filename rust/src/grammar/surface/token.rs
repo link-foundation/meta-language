@@ -1,4 +1,4 @@
-use super::{skeleton_error, GrammarSurfaceError};
+use super::{GrammarSurfaceError, skeleton_error};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Delimiter {

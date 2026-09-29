@@ -10,11 +10,11 @@
 
 use std::collections::HashMap;
 
-use super::diagnostics::{type_error, unsupported, Result};
+use super::Language;
+use super::diagnostics::{Result, type_error, unsupported};
 use super::ir::{Binder, Ctor, Expr, Field, Hints, Node, Plan, PlanCase, Proof, Prop, Split};
 use super::surface::{SProof, SSplit, SStep};
 use super::types::Type;
-use super::Language;
 
 /// What a name in a proof refers to.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -131,10 +131,10 @@ impl Normaliser<'_> {
                 SStep::Compute { .. } => hints.compute = true,
                 SStep::Arith { .. } => hints.arith = true,
                 SStep::Induction(split) => {
-                    return self.split(split, true, &steps[index + 1..], hints, locals)
+                    return self.split(split, true, &steps[index + 1..], hints, locals);
                 }
                 SStep::Cases(split) => {
-                    return self.split(split, false, &steps[index + 1..], hints, locals)
+                    return self.split(split, false, &steps[index + 1..], hints, locals);
                 }
             }
         }
@@ -376,10 +376,10 @@ fn assign_binds(
 #[must_use]
 pub fn prop_functions(prop: &Prop, mut into: Vec<String>) -> Vec<String> {
     fn visit(expr: &Expr, into: &mut Vec<String>) {
-        if let Node::Call { func, .. } = &expr.node {
-            if !into.contains(func) {
-                into.push(func.clone());
-            }
+        if let Node::Call { func, .. } = &expr.node
+            && !into.contains(func)
+        {
+            into.push(func.clone());
         }
         for child in expr.children() {
             visit(child, into);

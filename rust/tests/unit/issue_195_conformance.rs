@@ -17,11 +17,11 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 use super::cst_lines::{
-    cst_lines_to_sexp, diagnostic_problems, document_oracle_problems, first_difference,
-    parse_cst_lines, region_grammar_roots, render_cst_lines, trivia_problems, NetworkIndex,
+    NetworkIndex, cst_lines_to_sexp, diagnostic_problems, document_oracle_problems,
+    first_difference, parse_cst_lines, region_grammar_roots, render_cst_lines, trivia_problems,
 };
-use super::cst_sexpression::{normalize, parse_corpus, strip_fields, CorpusCase};
-use super::issue_195_observations::{record, Observation, CONFORMANCE_FIXTURE};
+use super::cst_sexpression::{CorpusCase, normalize, parse_corpus, strip_fields};
+use super::issue_195_observations::{CONFORMANCE_FIXTURE, Observation, record};
 
 const ASSERTIONS: [&str; 7] = [
     "claimedConstructInventoryMapped",
@@ -53,7 +53,13 @@ fn read_json(path: &str) -> Value {
 }
 
 fn sha256(bytes: impl AsRef<[u8]>) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut hex, byte| {
+            use std::fmt::Write as _;
+            let _ = write!(hex, "{byte:02x}");
+            hex
+        })
 }
 
 fn text<'a>(value: &'a Value, key: &str) -> &'a str {
@@ -193,9 +199,11 @@ fn issue_195_conformance_fixtures_record_their_provenance_and_match_their_pinned
         );
         let revision = text(grammar, "revision");
         assert!(revision.len() == 40 && revision.bytes().all(|byte| byte.is_ascii_hexdigit()));
-        assert!(!fs::read(repository_path(text(grammar, "license")))
-            .expect("grammar license")
-            .is_empty());
+        assert!(
+            !fs::read(repository_path(text(grammar, "license")))
+                .expect("grammar license")
+                .is_empty()
+        );
         assert_eq!(
             sha256(read(text(details, "oracle"))),
             text(details, "oracleSha256"),
@@ -332,9 +340,11 @@ fn check_language(language: &str) {
     );
     let mixed = by_kind("mixed");
     assert!(!mixed.is_empty() && mixed.iter().any(|entry| entry["clean"] == true));
-    assert!(by_kind("construct")
-        .iter()
-        .all(|entry| entry["clean"] == true));
+    assert!(
+        by_kind("construct")
+            .iter()
+            .all(|entry| entry["clean"] == true)
+    );
     let of_language = |list: &Value| {
         list.as_array()
             .expect("input list")

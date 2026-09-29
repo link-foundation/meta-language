@@ -15,16 +15,16 @@
 
 use std::collections::HashSet;
 
-use super::diagnostics::{type_error, unsupported, Result, TranslationError};
+use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::lexer::{
-    describe, is_js_space, tokenize, Comment, Source, Token, TokenCursor, TokenKind,
+    Comment, Source, Token, TokenCursor, TokenKind, describe, is_js_space, tokenize,
 };
 use super::surface::{
     BinaryOp, SArrayItem, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
     SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow, STagTest,
     ShowStyle, UnaryOp,
 };
-use super::types::{array, Type, BOOL, FLOAT, INT, NAT, STRING};
+use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, array};
 use super::{Language, Span};
 
 mod console;

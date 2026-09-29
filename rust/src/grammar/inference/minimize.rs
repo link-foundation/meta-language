@@ -8,9 +8,9 @@
 mod cost;
 mod transform;
 
-use super::eval::{sample, GrammarOracle, SampleConfig};
+use super::eval::{GrammarOracle, SampleConfig, sample};
 use crate::grammar::Grammar;
-use transform::{apply_candidate, enumerate_candidates, Candidate, CandidateKind};
+use transform::{Candidate, CandidateKind, apply_candidate, enumerate_candidates};
 
 const DEFAULT_PRECISION_BUDGET: f64 = 0.0;
 const DEFAULT_SAMPLE_BUDGET: usize = 256;

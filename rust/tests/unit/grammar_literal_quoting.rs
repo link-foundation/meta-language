@@ -1,7 +1,7 @@
 //! Shared BNF/EBNF literal quoting corpus: both runtimes must import the same
 //! quote and escape spellings, and emit terminals their own importers re-read.
 
-use meta_language::{emit_bnf, emit_ebnf, import_bnf, import_ebnf, Grammar, GrammarImportError};
+use meta_language::{Grammar, GrammarImportError, emit_bnf, emit_ebnf, import_bnf, import_ebnf};
 use serde_json::Value;
 
 use super::grammar_render::render_rule;

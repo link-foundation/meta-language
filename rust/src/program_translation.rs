@@ -5,10 +5,10 @@ use std::error::Error;
 use std::fmt;
 
 use crate::semantic_translation::{
-    self, ReadTranslationProvenance, SemanticTranslation, TranslationDiagnostic, SEMANTIC_ENCODING,
-    SEMANTIC_OBSERVATION,
+    self, ReadTranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION, SemanticTranslation,
+    TranslationDiagnostic,
 };
-use crate::{language_support, translation_contract, TranslationContract, TranslationSupport};
+use crate::{TranslationContract, TranslationSupport, language_support, translation_contract};
 
 const ENVELOPE_MARKER: &str = "meta-language:portable-source-envelope:v1";
 
@@ -248,28 +248,31 @@ fn target_source(
 ) -> (String, Option<&'static str>) {
     match language {
         "JavaScript" => {
-            if source_language == "Rust" {
-                if let Some((name, value)) = rust_constant_function(source) {
-                    return (
-                        format!("/*{metadata}*/\nexport function {name}() {{ return {value}; }}\n"),
-                        Some(
-                            "calling the exported zero-argument function returns the same integer",
-                        ),
-                    );
-                }
+            if source_language == "Rust"
+                && let Some((name, value)) = rust_constant_function(source)
+            {
+                return (
+                    format!("/*{metadata}*/\nexport function {name}() {{ return {value}; }}\n"),
+                    Some("calling the exported zero-argument function returns the same integer"),
+                );
             }
-            (format!(
-                "/*{metadata}*/\nexport const __meta_language_portable_v1 = Object.freeze({{ schemaVersion: 1 }});\n"
-            ), None)
+            (
+                format!(
+                    "/*{metadata}*/\nexport const __meta_language_portable_v1 = Object.freeze({{ schemaVersion: 1 }});\n"
+                ),
+                None,
+            )
         }
         "Rust" => {
-            if source_language == "JavaScript" {
-                if let Some(value) = javascript_print_number(source) {
-                    return (
-                        format!("/*{metadata}*/\npub fn main() {{ println!(\"{value}\"); }}\n"),
-                        Some("running the target main function prints the same decimal value and newline"),
-                    );
-                }
+            if source_language == "JavaScript"
+                && let Some(value) = javascript_print_number(source)
+            {
+                return (
+                    format!("/*{metadata}*/\npub fn main() {{ println!(\"{value}\"); }}\n"),
+                    Some(
+                        "running the target main function prints the same decimal value and newline",
+                    ),
+                );
             }
             (
                 format!("/*{metadata}*/\npub const __META_LANGUAGE_PORTABLE_V1: u32 = 1;\n"),

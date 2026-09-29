@@ -1,7 +1,7 @@
 //! `Math` and `Number` functions, whose arguments are Numbers.
 
 use super::{
-    array, type_error, unsupported, Checker, Env, Expr, Node, Result, SArrayItem, Span, BOOL, FLOAT,
+    BOOL, Checker, Env, Expr, FLOAT, Node, Result, SArrayItem, Span, array, type_error, unsupported,
 };
 
 /// The functions whose value is a boolean.

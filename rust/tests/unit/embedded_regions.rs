@@ -2,8 +2,8 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    script_language, ByteRange, EmbeddedRegion, LinkNetwork, LinkType, ParseConfiguration,
-    RegionDetectionPolicy,
+    ByteRange, EmbeddedRegion, LinkNetwork, LinkType, ParseConfiguration, RegionDetectionPolicy,
+    script_language,
 };
 use serde_json::Value;
 

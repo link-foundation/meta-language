@@ -2,8 +2,8 @@
 //! delimiters introduce, before syntax-driven binders and extents apply.
 
 use super::{
-    declaration_markers, find_token, inside_binder, matching_delimiter, next_identifier, BTreeMap,
-    BTreeSet, Declaration, ProgramSourceMapping, SemanticToken, TokenKind, Visibility,
+    BTreeMap, BTreeSet, Declaration, ProgramSourceMapping, SemanticToken, TokenKind, Visibility,
+    declaration_markers, find_token, inside_binder, matching_delimiter, next_identifier,
 };
 
 pub(super) fn declare_javascript(
@@ -46,10 +46,9 @@ pub(super) fn declare_javascript(
                         });
                         if let Some(local) =
                             colon.and_then(|colon| next_identifier(tokens, colon + 1))
+                            && tokens[local].range.end <= fact.range.end
                         {
-                            if tokens[local].range.end <= fact.range.end {
-                                declare(tokens, local, &token.text, None, declarations, declared);
-                            }
+                            declare(tokens, local, &token.text, None, declarations, declared);
                         }
                     }
                 }
@@ -57,17 +56,17 @@ pub(super) fn declare_javascript(
                 declare_next(tokens, index + 1, &token.text, None, declarations, declared);
             }
         }
-        if token.text == "function" {
-            if let Some(name) = next_identifier(tokens, index + 1) {
-                declare(tokens, name, "function", None, declarations, declared);
-                let open = find_token(tokens, name + 1, "(");
-                let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
-                let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
-                let scope = body
-                    .and_then(|body| brace_scopes.get(&body).copied())
-                    .unwrap_or(tokens[name].scope);
-                declare_parameters(tokens, open, close, scope, declarations, declared);
-            }
+        if token.text == "function"
+            && let Some(name) = next_identifier(tokens, index + 1)
+        {
+            declare(tokens, name, "function", None, declarations, declared);
+            let open = find_token(tokens, name + 1, "(");
+            let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
+            let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
+            let scope = body
+                .and_then(|body| brace_scopes.get(&body).copied())
+                .unwrap_or(tokens[name].scope);
+            declare_parameters(tokens, open, close, scope, declarations, declared);
         }
         if token.text == "catch" {
             let open = find_token(tokens, index + 1, "(");
@@ -115,31 +114,31 @@ pub(super) fn declare_rust(
         ) {
             declare_next(tokens, index + 1, &token.text, None, declarations, declared);
         }
-        if token.text == "fn" {
-            if let Some(name) = next_identifier(tokens, index + 1) {
-                declare(tokens, name, "function", None, declarations, declared);
-                let open = find_token(tokens, name + 1, "(");
-                let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
-                let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
-                let scope = body
-                    .and_then(|body| brace_scopes.get(&body).copied())
-                    .unwrap_or(tokens[name].scope);
-                if let (Some(open), Some(close)) = (open, close) {
-                    for cursor in open + 1..close {
-                        if tokens[cursor].kind == TokenKind::Identifier
-                            && tokens
-                                .get(cursor + 1)
-                                .is_some_and(|token| token.text == ":")
-                        {
-                            declare(
-                                tokens,
-                                cursor,
-                                "parameter",
-                                Some(scope),
-                                declarations,
-                                declared,
-                            );
-                        }
+        if token.text == "fn"
+            && let Some(name) = next_identifier(tokens, index + 1)
+        {
+            declare(tokens, name, "function", None, declarations, declared);
+            let open = find_token(tokens, name + 1, "(");
+            let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
+            let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
+            let scope = body
+                .and_then(|body| brace_scopes.get(&body).copied())
+                .unwrap_or(tokens[name].scope);
+            if let (Some(open), Some(close)) = (open, close) {
+                for cursor in open + 1..close {
+                    if tokens[cursor].kind == TokenKind::Identifier
+                        && tokens
+                            .get(cursor + 1)
+                            .is_some_and(|token| token.text == ":")
+                    {
+                        declare(
+                            tokens,
+                            cursor,
+                            "parameter",
+                            Some(scope),
+                            declarations,
+                            declared,
+                        );
                     }
                 }
             }

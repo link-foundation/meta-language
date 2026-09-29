@@ -3,7 +3,7 @@ use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::surface::{
     SEffect, SExpr, SItem, SNode, SPatternNode, SProgram, SPropNode,
 };
-use meta_language::translation::types::{Type, BOOL, FLOAT, INT, NAT, STRING};
+use meta_language::translation::types::{BOOL, FLOAT, INT, NAT, STRING, Type};
 use meta_language::translation::{Language, Span};
 
 const TREE: &str = "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n";

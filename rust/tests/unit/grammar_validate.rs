@@ -1,5 +1,5 @@
 use meta_language::{
-    parse_grammar_surface, validate, DiagnosticKind, Grammar, GrammarDiagnostic, Severity,
+    DiagnosticKind, Grammar, GrammarDiagnostic, Severity, parse_grammar_surface, validate,
 };
 
 #[test]
@@ -74,9 +74,11 @@ fn right_recursion_and_terminal_guards_are_not_left_recursion() {
 
     let diagnostics = validate(&grammar);
 
-    assert!(!diagnostics
-        .iter()
-        .any(|diagnostic| matches!(diagnostic.kind, DiagnosticKind::LeftRecursion { .. })));
+    assert!(
+        !diagnostics
+            .iter()
+            .any(|diagnostic| matches!(diagnostic.kind, DiagnosticKind::LeftRecursion { .. }))
+    );
 }
 
 #[test]
@@ -126,9 +128,11 @@ fn nullable_repetition_flags_nullable_inner_expression_only() {
 
     let good_diagnostics = validate(&good);
 
-    assert!(!good_diagnostics
-        .iter()
-        .any(|diagnostic| matches!(diagnostic.kind, DiagnosticKind::NullableRepetition { .. })));
+    assert!(
+        !good_diagnostics
+            .iter()
+            .any(|diagnostic| matches!(diagnostic.kind, DiagnosticKind::NullableRepetition { .. }))
+    );
 }
 
 #[test]

@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::sync::Arc;
 
 use crate::{
-    tree_sitter_adapter, ByteRange, Link, LinkId, LinkMetadata, LinkNetwork, LinkType,
-    ParseConfiguration,
+    ByteRange, Link, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration,
+    tree_sitter_adapter,
 };
 
 impl LinkNetwork {
@@ -95,11 +95,11 @@ fn remap_reparsed_network(
             metadata: link.metadata().clone(),
         };
 
-        if let Some(shared) = old.links.get(&id) {
-            if shared.as_ref() == &candidate {
-                links.insert(id, Arc::clone(shared));
-                continue;
-            }
+        if let Some(shared) = old.links.get(&id)
+            && shared.as_ref() == &candidate
+        {
+            links.insert(id, Arc::clone(shared));
+            continue;
         }
 
         links.insert(id, Arc::new(candidate));

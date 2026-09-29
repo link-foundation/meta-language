@@ -1,8 +1,8 @@
 //! Theorems, proof blocks, bullets and tactics.
 
 use super::{
-    collect_forall_types, describe, js_trim, span, unsupported, Bullet, Done, Language, ProofTypes,
-    Result, RocqParser, SProof, SRule, SSplit, SSplitCase, SStep, STheorem, Token, TokenKind,
+    Bullet, Done, Language, ProofTypes, Result, RocqParser, SProof, SRule, SSplit, SSplitCase,
+    SStep, STheorem, Token, TokenKind, collect_forall_types, describe, js_trim, span, unsupported,
 };
 
 impl RocqParser {

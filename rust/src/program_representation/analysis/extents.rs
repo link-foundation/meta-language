@@ -7,8 +7,8 @@
 
 use super::declarations::declare;
 use super::{
-    char_at, identifier_continue, identifier_start, mark, BTreeMap, BTreeSet, Declaration,
-    ProgramRange, ProgramSourceMapping, SemanticToken, TokenKind,
+    BTreeMap, BTreeSet, Declaration, ProgramRange, ProgramSourceMapping, SemanticToken, TokenKind,
+    char_at, identifier_continue, identifier_start, mark,
 };
 
 const RUST_ITEMS: &[&str] = &[
@@ -119,10 +119,10 @@ pub(super) fn unmask_interpolations(
         if bytes.get(offset) != Some(&b'(') {
             continue;
         }
-        if let Some(literal) = literals.get(&skip_space(source, offset + 1)) {
-            if bytes[literal.start] == b'"' {
-                unmask_format_arguments(mask, source, literal.start + 1, literal.end - 1);
-            }
+        if let Some(literal) = literals.get(&skip_space(source, offset + 1))
+            && bytes[literal.start] == b'"'
+        {
+            unmask_format_arguments(mask, source, literal.start + 1, literal.end - 1);
         }
     }
 }
@@ -184,10 +184,10 @@ pub(super) fn declare_syntax_binders(
         } else if language == "Rust" {
             match term {
                 "token_binding_pattern" => {
-                    if let Some(&name) = token_at.get(&(fact.range.start + 1)) {
-                        if tokens[first].text == "$" {
-                            binder(name, "metavariable");
-                        }
+                    if let Some(&name) = token_at.get(&(fact.range.start + 1))
+                        && tokens[first].text == "$"
+                    {
+                        binder(name, "metavariable");
                     }
                 }
                 "let_declaration" | "let_condition" => {

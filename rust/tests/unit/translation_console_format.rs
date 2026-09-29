@@ -2,7 +2,7 @@
 //! literal first string reads its directives, and the arguments left over
 //! follow after spaces.
 
-use meta_language::{translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, translate_program};
 
 const FORMAT: &str = "const x = -0;
 console.log('%s=%d items', 'n', 3n, x, true);

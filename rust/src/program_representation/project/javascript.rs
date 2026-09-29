@@ -9,8 +9,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-use super::tree::{declaration, dirname, join_path, json_string, NodeId, SyntaxTree, Target};
 use super::ProjectContext;
+use super::tree::{NodeId, SyntaxTree, Target, declaration, dirname, join_path, json_string};
 
 const ASSERT_MODULES: [&str; 4] = [
     "node:assert",
@@ -76,10 +76,10 @@ pub(super) fn analyze(context: &mut ProjectContext<'_>) {
         if kind == Some("json") && !json {
             context.diagnose("import-attribute-mismatch", request.to_string(), range);
         }
-        if let (Some(attribute), Some("json"), true) = (attribute, kind, json) {
-            if let Some(target) = exports.get("default") {
-                context.reference("attribute", "type: json", tree.span(attribute), target);
-            }
+        if let (Some(attribute), Some("json"), true) = (attribute, kind, json)
+            && let Some(target) = exports.get("default")
+        {
+            context.reference("attribute", "type: json", tree.span(attribute), target);
         }
         let Some(clause) = clause else {
             continue;

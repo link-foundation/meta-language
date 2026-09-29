@@ -135,11 +135,13 @@ fn workflows_default_to_read_only_permissions() {
 fn workflows_separate_cancellable_checks_from_serialized_writes() {
     for path in workflow_files() {
         let workflow = read_workflow(&path);
-        assert!(!workflow
-            .split("\njobs:\n")
-            .next()
-            .unwrap()
-            .contains("\nconcurrency:\n"));
+        assert!(
+            !workflow
+                .split("\njobs:\n")
+                .next()
+                .unwrap()
+                .contains("\nconcurrency:\n")
+        );
     }
 
     let rust = read_workflow(&repository_root().join(".github/workflows/rust.yml"));

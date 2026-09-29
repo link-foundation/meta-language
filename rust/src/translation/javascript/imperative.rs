@@ -19,16 +19,16 @@ use std::rc::Rc;
 use serde_json::Value;
 
 use super::flow::{
-    case_bodies, exhaustive, exits, flat, infinite, json, list_exits, local_name, loop_parts,
-    statement_uses, walked, Exits, Uses,
+    Exits, Uses, case_bodies, exhaustive, exits, flat, infinite, json, list_exits, local_name,
+    loop_parts, statement_uses, walked,
 };
 use super::lowering::{
-    default_rows, lower_tag_if, statement_span, switch_tags, tag_condition, tag_row, TagSwitch,
+    TagSwitch, default_rows, lower_tag_if, statement_span, switch_tags, tag_condition, tag_row,
 };
 use super::{
-    node, unsupported, wild, CaseTest, JavaScriptParser, Result, SCtor, SData, SExpr, SField, SFn,
-    SItem, SNode, SParam, SPattern, SPatternNode, SRow, Span, Stmt, Switch, TranslationError, Type,
-    ROOT,
+    CaseTest, JavaScriptParser, ROOT, Result, SCtor, SData, SExpr, SField, SFn, SItem, SNode,
+    SParam, SPattern, SPatternNode, SRow, Span, Stmt, Switch, TranslationError, Type, node,
+    unsupported, wild,
 };
 
 mod top_level;
@@ -306,7 +306,7 @@ impl Lowering {
                         message: message.clone(),
                     },
                     *span,
-                ))
+                ));
             }
             Stmt::Break { .. } => return (ctx.brk)(self),
             Stmt::Continue { .. } => return (ctx.cont)(self),

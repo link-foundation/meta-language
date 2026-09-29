@@ -13,17 +13,17 @@
 use std::collections::{HashMap, HashSet};
 
 use super::decimal::Decimal;
-use super::diagnostics::{type_error, unsupported, Result, TranslationError};
+use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::ir::{
     Binder, ByZero, Case, Comparison, Ctor, DataDecl, Decl, Effect, Expr, Field, FnDecl, Hints,
     Item, LitValue, Main, Node, Param, Pattern, Plan, Program, Proof, Prop, Semantics, TheoremDecl,
 };
-use super::proof::{normalise_proof, ProofContext, ProofName, TheoremHead};
+use super::proof::{ProofContext, ProofName, TheoremHead, normalise_proof};
 use super::surface::{
     BinaryOp, Flavor, Rounding, SArrayItem, SCase, SCasePattern, SEffect, SExpr, SItem, SMain,
     SNode, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow, ShowStyle, UnaryOp,
 };
-use super::types::{array, data, fixed, fixed_bounds, Type, BOOL, FLOAT, INT, NAT, STRING, UNIT};
+use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed, fixed_bounds};
 use super::{Language, Span};
 
 mod arrays;

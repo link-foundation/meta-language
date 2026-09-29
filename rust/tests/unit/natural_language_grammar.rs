@@ -1,6 +1,6 @@
 use meta_language::{
-    LinkNetwork, LinkQuery, LinkType, ParseConfiguration, QueryPredicateHost,
-    VerificationIssueKind, NATURAL_LANGUAGE_GRAMMAR_FIXTURES, NATURAL_LANGUAGE_TARGETS,
+    LinkNetwork, LinkQuery, LinkType, NATURAL_LANGUAGE_GRAMMAR_FIXTURES, NATURAL_LANGUAGE_TARGETS,
+    ParseConfiguration, QueryPredicateHost, VerificationIssueKind,
 };
 
 #[test]

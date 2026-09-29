@@ -1,6 +1,6 @@
 //! Module requests extracted from grammar nodes and compared with project declarations.
 
-use super::{unique_facts, ProgramFact, ProgramProjectContext, ProgramSourceMapping};
+use super::{ProgramFact, ProgramProjectContext, ProgramSourceMapping, unique_facts};
 
 pub(super) fn module_requests(
     syntax: &[ProgramSourceMapping],

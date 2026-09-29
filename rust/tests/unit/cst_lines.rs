@@ -264,16 +264,15 @@ pub fn render_cst_lines(roots: &GrammarRoots<'_>) -> (String, HashSet<LinkId>) {
         let index = roots.index;
         let metadata = index.network.link(id).expect("syntax link").metadata();
         let mut children = index.children(id);
-        if roots.language == "Rocq" && metadata.term() == Some("ident") {
-            if let [child] = children {
-                if index
-                    .term(*child)
-                    .is_some_and(|term| SEMANTIC_ROCQ_LEAVES.contains(&term))
-                    && index.children(*child).is_empty()
-                {
-                    children = &[];
-                }
-            }
+        if roots.language == "Rocq"
+            && metadata.term() == Some("ident")
+            && let [child] = children
+            && index
+                .term(*child)
+                .is_some_and(|term| SEMANTIC_ROCQ_LEAVES.contains(&term))
+            && index.children(*child).is_empty()
+        {
+            children = &[];
         }
         rendered.insert(id);
         let flags = metadata.flags();

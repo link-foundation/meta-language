@@ -8,8 +8,8 @@
 //! Mirrors `js/tests/issue-195-structured-transformations.test.js`.
 
 use meta_language::{
-    construct_program, construct_program_from_fragments, ProgramProjectContext, ProgramRange,
-    ProgramRepresentation,
+    ProgramProjectContext, ProgramRange, ProgramRepresentation, construct_program,
+    construct_program_from_fragments,
 };
 use serde_json::Value;
 
@@ -362,10 +362,12 @@ fn check_program(operation: &str, fixture: &Program<'_>) {
         .map(|(_, range)| ProgramRange::new(range.start() + prefix, range.end() + prefix))
         .collect::<Vec<_>>();
     assert_eq!(shifted, original, "{label} spans shift");
-    assert!(!edited
-        .diagnostics()
-        .iter()
-        .any(|diagnostic| diagnostic.kind() == "missing-project-context"));
+    assert!(
+        !edited
+            .diagnostics()
+            .iter()
+            .any(|diagnostic| diagnostic.kind() == "missing-project-context")
+    );
     let missing = with_import
         .diagnostics()
         .iter()

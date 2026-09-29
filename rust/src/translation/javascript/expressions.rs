@@ -1,10 +1,10 @@
 //! Expressions from operator precedence down to literals and references.
 
 use super::{
-    binary, describe, has_ctor, is_tag_field, joined, node, number_literal, span, tokenize,
-    type_error, unsupported, wild, BinaryOp, JavaScriptParser, Language, Result, SArrayItem, SData,
-    SExpr, SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span, Token, TokenCursor,
-    TokenKind, UnaryOp, ASSIGNMENTS, FLOAT, GLOBALS, ROOT,
+    ASSIGNMENTS, BinaryOp, FLOAT, GLOBALS, JavaScriptParser, Language, ROOT, Result, SArrayItem,
+    SData, SExpr, SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span, Token,
+    TokenCursor, TokenKind, UnaryOp, binary, describe, has_ctor, is_tag_field, joined, node,
+    number_literal, span, tokenize, type_error, unsupported, wild,
 };
 
 impl JavaScriptParser {
@@ -147,13 +147,13 @@ impl JavaScriptParser {
                 return Err(type_error(
                     format!("no @typedef has tag {tag}"),
                     Some(place),
-                ))
+                ));
             }
             _ => {
                 return Err(type_error(
                     format!("tag {tag} is ambiguous between data types"),
                     Some(place),
-                ))
+                ));
             }
         };
         let arity = data

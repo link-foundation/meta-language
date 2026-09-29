@@ -2,8 +2,8 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    analyze_program, ByteRange, LinkNetwork, LinkType, ParseConfiguration, ProgramProjectContext,
-    ProgramRepresentation,
+    ByteRange, LinkNetwork, LinkType, ParseConfiguration, ProgramProjectContext,
+    ProgramRepresentation, analyze_program,
 };
 use serde_json::Value;
 
@@ -22,10 +22,12 @@ fn pinned_external_corpora_and_projects_exercise_every_four_language_frontend() 
         .expect("external fixtures")
     {
         let provenance = &fixture["provenance"];
-        assert!(provenance["url"]
-            .as_str()
-            .expect("provenance URL")
-            .starts_with("https://github.com/"));
+        assert!(
+            provenance["url"]
+                .as_str()
+                .expect("provenance URL")
+                .starts_with("https://github.com/")
+        );
         assert!(!provenance["revision"].as_str().unwrap().is_empty());
         assert!(!provenance["license"].as_str().unwrap().is_empty());
         assert_structured_source(

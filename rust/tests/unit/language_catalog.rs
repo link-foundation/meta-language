@@ -2,8 +2,8 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    canonical_language_name, grammar_provenance, language_candidates_for_path, language_catalog,
-    language_entry, language_for_path, LinkNetwork, LinkType, ParseConfiguration,
+    LinkNetwork, LinkType, ParseConfiguration, canonical_language_name, grammar_provenance,
+    language_candidates_for_path, language_catalog, language_entry, language_for_path,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -150,7 +150,14 @@ fn grammar_provenance_names_the_locked_grammar_versions_and_digests() {
                 );
                 assert_eq!(
                     grammar.parser_sha256,
-                    format!("{:x}", Sha256::digest(&specification))
+                    Sha256::digest(&specification).iter().fold(
+                        String::with_capacity(64),
+                        |mut hex, byte| {
+                            use std::fmt::Write as _;
+                            let _ = write!(hex, "{byte:02x}");
+                            hex
+                        }
+                    )
                 );
                 continue;
             }

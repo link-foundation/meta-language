@@ -19,15 +19,15 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 use super::cst_lines::{
-    document_grammar_roots, document_oracle_problems, first_difference, parse_cst_lines,
-    render_cst_lines, NetworkIndex,
+    NetworkIndex, document_grammar_roots, document_oracle_problems, first_difference,
+    parse_cst_lines, render_cst_lines,
 };
 use super::generative_support::{
+    EDIT_CASES, EDIT_STEPS, Edit, FUZZ_CASES, METAMORPHIC_CASES, PROPERTY_CASES, RELATIONS, Random,
     apply_text_edit, generate_inputs, property_problems, random_edit, relation_applies,
-    relation_holds, relation_transform, seed_sources, Edit, Random, EDIT_CASES, EDIT_STEPS,
-    FUZZ_CASES, METAMORPHIC_CASES, PROPERTY_CASES, RELATIONS,
+    relation_holds, relation_transform, seed_sources,
 };
-use super::issue_195_observations::{record, Observation, GENERATIVE_FIXTURE};
+use super::issue_195_observations::{GENERATIVE_FIXTURE, Observation, record};
 
 const ASSERTIONS: [&str; 8] = [
     "propertyBasedCasesExecuted",
@@ -56,7 +56,13 @@ fn read_json(path: &str) -> Value {
 }
 
 fn sha256(bytes: impl AsRef<[u8]>) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut hex, byte| {
+            use std::fmt::Write as _;
+            let _ = write!(hex, "{byte:02x}");
+            hex
+        })
 }
 
 fn text<'a>(value: &'a Value, key: &str) -> &'a str {
@@ -102,8 +108,8 @@ fn is_malformed(cst: &str) -> bool {
 }
 
 #[test]
-fn issue_195_generative_fixtures_record_their_seed_and_oracle_and_the_seed_regenerates_their_inputs(
-) {
+fn issue_195_generative_fixtures_record_their_seed_and_oracle_and_the_seed_regenerates_their_inputs()
+ {
     let manifest = read_json("manifest.json");
     let reproducers = read_json("reproducers.json");
     let lock: Value = serde_json::from_slice(
@@ -404,12 +410,16 @@ fn check_language(language: &str) {
         METAMORPHIC_CASES * RELATIONS.len()
     );
     assert_eq!(of_kind("edit").len(), EDIT_CASES);
-    assert!(of_kind("edit")
-        .iter()
-        .all(|entry| entry["steps"].as_array().map(Vec::len) == Some(EDIT_STEPS)));
-    assert!(of_kind("metamorphic")
-        .iter()
-        .any(|entry| entry["relationHolds"] == true));
+    assert!(
+        of_kind("edit")
+            .iter()
+            .all(|entry| entry["steps"].as_array().map(Vec::len) == Some(EDIT_STEPS))
+    );
+    assert!(
+        of_kind("metamorphic")
+            .iter()
+            .any(|entry| entry["relationHolds"] == true)
+    );
     let kept = reproducers["cases"]
         .as_array()
         .expect("reproducers")
@@ -422,9 +432,11 @@ fn check_language(language: &str) {
         .filter(|entry| entry["clean"] == false)
         .collect();
     assert!(!malformed.is_empty());
-    assert!(malformed
-        .iter()
-        .all(|entry| is_malformed(text(entry, "cst"))));
+    assert!(
+        malformed
+            .iter()
+            .all(|entry| is_malformed(text(entry, "cst")))
+    );
     assert!(
         cases.iter().any(|entry| text(entry, "source")
             .chars()

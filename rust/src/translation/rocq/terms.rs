@@ -1,12 +1,12 @@
 //! Propositions, terms, applications, matches and patterns.
 
 use super::{
+    BinaryOp, DECIMAL_STRINGS, EXPRESSION_STOP, Flavor, INT, INT_TO_NAT, NAT, NAT_IDENTITY,
+    NAT_TO_INT, PREDECESSOR, Result, RocqParser, SBinder, SComparison, SExpr, SNode, SPattern,
+    SPatternNode, SProp, SPropNode, SRow, SUCCESSOR, Token, TokenKind, TranslationError, UnaryOp,
     arity, binary, binary_function, boolean_relation, connective, decimal_conversion, describe,
     is_prop_relation, joined, notation, outside_core, pattern_value, prop_relation, scope_prop,
-    span, type_error, unreachable_relation, unsupported, with_scope, BinaryOp, Flavor, Result,
-    RocqParser, SBinder, SComparison, SExpr, SNode, SPattern, SPatternNode, SProp, SPropNode, SRow,
-    Token, TokenKind, TranslationError, UnaryOp, DECIMAL_STRINGS, EXPRESSION_STOP, INT, INT_TO_NAT,
-    NAT, NAT_IDENTITY, NAT_TO_INT, PREDECESSOR, SUCCESSOR,
+    span, type_error, unreachable_relation, unsupported, with_scope,
 };
 
 impl RocqParser {
@@ -267,12 +267,13 @@ impl RocqParser {
     pub(super) fn relation(&mut self, level: u32) -> Result<SExpr> {
         let left = self.infix(60)?;
         let token = self.peek().clone();
-        if level >= 70 && token.kind == TokenKind::Punct {
-            if let Some(op) = boolean_relation(&token.value) {
-                self.cursor.advance();
-                let right = self.infix(60)?;
-                return Ok(binary(op, left, right, &token));
-            }
+        if level >= 70
+            && token.kind == TokenKind::Punct
+            && let Some(op) = boolean_relation(&token.value)
+        {
+            self.cursor.advance();
+            let right = self.infix(60)?;
+            return Ok(binary(op, left, right, &token));
         }
         Ok(left)
     }
@@ -444,10 +445,11 @@ impl RocqParser {
                 let [inner] = arity::<1>(&name, args, range)?;
                 if let SNode::App { func, args } = inner.node {
                     let converts = matches!(&func.node, SNode::Name { path } if accepted.contains(&path.join(".").as_str()));
-                    if converts && args.len() == 1 {
-                        if let Some(arg) = args.into_iter().next() {
-                            return Ok(node(SNode::ToString { arg: Box::new(arg) }));
-                        }
+                    if converts
+                        && args.len() == 1
+                        && let Some(arg) = args.into_iter().next()
+                    {
+                        return Ok(node(SNode::ToString { arg: Box::new(arg) }));
                     }
                 }
                 return Err(unsupported(

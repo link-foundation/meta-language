@@ -1,4 +1,4 @@
-use meta_language::{import_abnf, FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks};
+use meta_language::{FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks, import_abnf};
 
 const POSTAL_ADDRESS: &str = include_str!("../fixtures/grammar/abnf/postal-address.abnf");
 

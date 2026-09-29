@@ -5,8 +5,8 @@
 //! accelerators can suggest names or merge ordering behind the same traits.
 
 use crate::grammar::{
-    grammar_expr_concept_id, CharClassItem, Grammar, GrammarExpr, GrammarRule, RuleKind,
-    GRAMMAR_CONCEPTS,
+    CharClassItem, GRAMMAR_CONCEPTS, Grammar, GrammarExpr, GrammarRule, RuleKind,
+    grammar_expr_concept_id,
 };
 
 use super::minimize::mdl_cost;

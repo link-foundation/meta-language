@@ -1,8 +1,8 @@
 //! Recursion analysis and structural natural-number decomposition.
 
 use super::{
-    binary_node, text_lit, BinaryOp, Case, Decimal, Decl, Expr, FnDecl, HashMap, HashSet, LitValue,
-    Node, Pattern, Semantics, Type, NAT,
+    BinaryOp, Case, Decimal, Decl, Expr, FnDecl, HashMap, HashSet, LitValue, NAT, Node, Pattern,
+    Semantics, Type, binary_node, text_lit,
 };
 
 /// Inside `match v with | succ k => …`, the value `k + 1` is `v` itself.
@@ -49,10 +49,9 @@ pub(super) fn reuse_successors(expr: &Expr, predecessors: &HashMap<String, Strin
                     let mut inner = without(predecessors, &bound);
                     if let (Pattern::NatSucc { name }, Some(variable)) =
                         (&kase.pattern, scrutinee.var_name())
+                        && !bound.contains(&variable)
                     {
-                        if !bound.contains(&variable) {
-                            inner.insert(name.clone(), variable.to_owned());
-                        }
+                        inner.insert(name.clone(), variable.to_owned());
                     }
                     Case {
                         pattern: kase.pattern.clone(),
@@ -325,44 +324,43 @@ pub(super) fn split_natural(expr: &Expr, name: &str, fresh: &mut usize) -> Optio
         then,
         otherwise,
     } = &expr.node
+        && let Some(zero_then) = zero_test(cond, name)
     {
-        if let Some(zero_then) = zero_test(cond, name) {
-            let (zero, positive) = if zero_then {
-                (then, otherwise)
-            } else {
-                (otherwise, then)
-            };
-            *fresh += 1;
-            let pred = format!("ml_p{fresh}");
-            let ty = match &cond.node {
-                Node::Binary {
-                    domain: Some(domain),
-                    ..
-                } => domain.clone(),
-                _ => NAT,
-            };
-            let succ_body = predecessor_of(positive, name, &pred, &ty);
-            let succ_body = split_or_same(&succ_body, &pred, fresh);
-            let succ_body = split_or_same(&succ_body, name, fresh);
-            let zero = split_or_same(zero, name, fresh);
-            return Some(Expr {
-                node: Node::Match {
-                    scrutinee: Box::new(Expr::var(name, ty).with_span(cond.span)),
-                    cases: vec![
-                        Case {
-                            pattern: Pattern::NatZero,
-                            body: zero,
-                        },
-                        Case {
-                            pattern: Pattern::NatSucc { name: pred },
-                            body: succ_body,
-                        },
-                    ],
-                },
-                ty: expr.ty.clone(),
-                span: expr.span,
-            });
-        }
+        let (zero, positive) = if zero_then {
+            (then, otherwise)
+        } else {
+            (otherwise, then)
+        };
+        *fresh += 1;
+        let pred = format!("ml_p{fresh}");
+        let ty = match &cond.node {
+            Node::Binary {
+                domain: Some(domain),
+                ..
+            } => domain.clone(),
+            _ => NAT,
+        };
+        let succ_body = predecessor_of(positive, name, &pred, &ty);
+        let succ_body = split_or_same(&succ_body, &pred, fresh);
+        let succ_body = split_or_same(&succ_body, name, fresh);
+        let zero = split_or_same(zero, name, fresh);
+        return Some(Expr {
+            node: Node::Match {
+                scrutinee: Box::new(Expr::var(name, ty).with_span(cond.span)),
+                cases: vec![
+                    Case {
+                        pattern: Pattern::NatZero,
+                        body: zero,
+                    },
+                    Case {
+                        pattern: Pattern::NatSucc { name: pred },
+                        body: succ_body,
+                    },
+                ],
+            },
+            ty: expr.ty.clone(),
+            span: expr.span,
+        });
     }
     match &expr.node {
         Node::Let { name: local, .. } if local == name => return None,
@@ -447,27 +445,26 @@ impl Predecessor<'_> {
             rounding,
             by_zero,
         } = &node.node
+            && domain.is_natural()
+            && is_alias(left)
+            && let Some(k) = nat_literal(right).filter(|k| k.digits != "0")
         {
-            if domain.is_natural() && is_alias(left) {
-                if let Some(k) = nat_literal(right).filter(|k| k.digits != "0") {
-                    if *op == BinaryOp::Sub {
-                        return self.minus(&k, node);
-                    }
-                    if matches!(op, BinaryOp::Eq | BinaryOp::Ne) {
-                        return Expr {
-                            node: binary_node(
-                                *op,
-                                Box::new(self.pred_var()),
-                                Box::new(text_lit(self.ty.clone(), decrement(&k))),
-                                Some(domain.clone()),
-                                *semantics,
-                                *rounding,
-                                *by_zero,
-                            ),
-                            ..node.clone()
-                        };
-                    }
-                }
+            if *op == BinaryOp::Sub {
+                return self.minus(&k, node);
+            }
+            if matches!(op, BinaryOp::Eq | BinaryOp::Ne) {
+                return Expr {
+                    node: binary_node(
+                        *op,
+                        Box::new(self.pred_var()),
+                        Box::new(text_lit(self.ty.clone(), decrement(&k))),
+                        Some(domain.clone()),
+                        *semantics,
+                        *rounding,
+                        *by_zero,
+                    ),
+                    ..node.clone()
+                };
             }
         }
         // JavaScript's `n - 1n` on a natural `n` is the checked conversion of
@@ -475,40 +472,34 @@ impl Predecessor<'_> {
         if let Node::Cast {
             arg, to: Type::Nat, ..
         } = &node.node
-        {
-            if let Node::Binary {
+            && let Node::Binary {
                 op: BinaryOp::Sub,
                 left,
                 right,
                 ..
             } = &arg.node
-            {
-                if let Node::Cast {
-                    arg: inner,
-                    from: Type::Nat,
-                    ..
-                } = &left.node
-                {
-                    if is_alias(inner) {
-                        if let Some(k) = nat_literal(right).filter(|k| k.digits != "0") {
-                            let like = Expr {
-                                node: binary_node(
-                                    BinaryOp::Sub,
-                                    Box::new(self.pred_var()),
-                                    Box::new(self.pred_var()),
-                                    None,
-                                    Some(Semantics::Truncated),
-                                    None,
-                                    None,
-                                ),
-                                ty: self.ty.clone(),
-                                span: node.span,
-                            };
-                            return self.minus(&k, &like);
-                        }
-                    }
-                }
-            }
+            && let Node::Cast {
+                arg: inner,
+                from: Type::Nat,
+                ..
+            } = &left.node
+            && is_alias(inner)
+            && let Some(k) = nat_literal(right).filter(|k| k.digits != "0")
+        {
+            let like = Expr {
+                node: binary_node(
+                    BinaryOp::Sub,
+                    Box::new(self.pred_var()),
+                    Box::new(self.pred_var()),
+                    None,
+                    Some(Semantics::Truncated),
+                    None,
+                    None,
+                ),
+                ty: self.ty.clone(),
+                span: node.span,
+            };
+            return self.minus(&k, &like);
         }
         match &node.node {
             Node::Let {

@@ -3,13 +3,12 @@
 //! package round-trip, and `reconstruct_text_as`.
 
 use meta_language::{
-    docx_package_is_recognized, docx_profile_is_recognized, parse_docx_document,
-    parse_docx_package, parse_markup_document, render_docx_document, render_docx_package,
-    BlockNode, InlineNode, LinkNetwork, LinkType, ParseConfiguration,
+    BlockNode, InlineNode, LinkNetwork, LinkType, ParseConfiguration, docx_package_is_recognized,
+    docx_profile_is_recognized, parse_docx_document, parse_docx_package, parse_markup_document,
+    render_docx_document, render_docx_package,
 };
 
-const SAMPLE_MARKDOWN: &str =
-    "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
+const SAMPLE_MARKDOWN: &str = "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
 
 fn docx_from_markdown() -> String {
     let document = parse_markup_document("Markdown", SAMPLE_MARKDOWN).expect("Markdown parses");

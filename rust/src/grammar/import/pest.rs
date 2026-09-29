@@ -6,7 +6,7 @@ use pest_meta::{
     validator,
 };
 
-use super::{parse_error, unsupported_error, GrammarImportError};
+use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 
 /// Parses PEG `.pest` grammar text into the grammar IR.

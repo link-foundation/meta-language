@@ -1,4 +1,4 @@
-use meta_language::{import_bnf, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule};
+use meta_language::{GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule, import_bnf};
 
 const ARITHMETIC: &str = include_str!("../fixtures/grammar/bnf/arithmetic.bnf");
 const LIST: &str = include_str!("../fixtures/grammar/bnf/list.bnf");

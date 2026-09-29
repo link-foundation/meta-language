@@ -154,8 +154,7 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
     },
     GrammarConcept {
         id: "grammar.positive-predicate",
-        definition:
-            "A positive lookahead predicate that tests an expression without consuming input.",
+        definition: "A positive lookahead predicate that tests an expression without consuming input.",
         syntax: &[("peg", "&e"), ("meta-language", "positive predicate")],
     },
     GrammarConcept {

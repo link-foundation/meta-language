@@ -3,8 +3,8 @@ use std::fmt::Write as _;
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, RuleKind};
 
 use super::{
-    finish_lines, ordered_rules, peg_choice_alternatives, render_rule_line_with_modifier,
-    unsupported_error, EmitReport, GrammarEmitError, PEST_RULE_TEMPLATE,
+    EmitReport, GrammarEmitError, PEST_RULE_TEMPLATE, finish_lines, ordered_rules,
+    peg_choice_alternatives, render_rule_line_with_modifier, unsupported_error,
 };
 
 /// Emits pest PEG grammar text from the grammar IR.

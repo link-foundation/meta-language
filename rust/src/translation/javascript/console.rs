@@ -2,7 +2,7 @@
 //!
 //! Mirrors `consoleFormat` in `js/src/translation/javascript.js`.
 
-use super::{unsupported, BinaryOp, Result, SExpr, SNode, ShowStyle};
+use super::{BinaryOp, Result, SExpr, SNode, ShowStyle, unsupported};
 
 /// The style of the value a directive takes, when it is portable.
 const fn directive_style(directive: char) -> Option<ShowStyle> {

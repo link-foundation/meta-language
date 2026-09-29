@@ -3,7 +3,7 @@
 //! heading/paragraph/list and bold/italic structure, and the rendered PDF parses
 //! into the same language-free concept tree as its Markdown source.
 
-use meta_language::{parse_markup_document, parse_pdf_document, LinkNetwork, ParseConfiguration};
+use meta_language::{LinkNetwork, ParseConfiguration, parse_markup_document, parse_pdf_document};
 
 fn main() {
     let mut network = LinkNetwork::self_describing();
@@ -13,8 +13,7 @@ fn main() {
         report.formatting_concepts()
     );
 
-    let markdown =
-        "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
+    let markdown = "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
 
     // Markdown ⇄ PDF travels through the shared formatting concept layer.
     let pdf = network

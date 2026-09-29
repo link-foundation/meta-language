@@ -14,20 +14,20 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 use std::rc::Rc;
 
-use super::diagnostics::{unsupported, ErrorKind, Result, TranslationError};
+use super::Language;
+use super::diagnostics::{ErrorKind, Result, TranslationError, unsupported};
 use super::emit_common::{
-    mutual_groups, order_declarations, CtorStyle, EmitOptions, EmitState, Emitted,
+    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations,
 };
 use super::ir::{
-    rename_function, rename_main, rename_theorem, ByZero, Case, DataDecl, Decl, Effect, Expr,
-    FnDecl, Hints, LitValue, Main, Node, Param, Pattern, Plan, Program, Prop, Semantics,
-    TheoremDecl,
+    ByZero, Case, DataDecl, Decl, Effect, Expr, FnDecl, Hints, LitValue, Main, Node, Param,
+    Pattern, Plan, Program, Prop, Semantics, TheoremDecl, rename_function, rename_main,
+    rename_theorem,
 };
 use super::output::thread_output;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::Type;
-use super::Language;
 
 mod arrays;
 mod expressions;

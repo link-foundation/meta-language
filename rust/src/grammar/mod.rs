@@ -35,29 +35,29 @@ pub mod translate;
 pub mod validate;
 
 pub use concepts::{
-    annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, GrammarConcept,
-    GRAMMAR_CONCEPTS,
+    GRAMMAR_CONCEPTS, GrammarConcept, annotate_grammar_concepts, grammar_expr_concept_id,
+    rule_concept_id,
 };
 pub use emit::{
-    emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser, emit_peggy, emit_pest,
-    emit_rust_parser, emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report,
-    emit_tree_sitter_json, render_rust_type, EmitReport, GrammarEmitError, JsParserArtifacts,
-    RustParserArtifacts,
+    EmitReport, GrammarEmitError, JsParserArtifacts, RustParserArtifacts, emit_abnf, emit_bnf,
+    emit_ebnf, emit_gbnf, emit_javascript_parser, emit_peggy, emit_pest, emit_rust_parser,
+    emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report, emit_tree_sitter_json,
+    render_rust_type,
 };
 pub use fidelity::{
-    canonical_grammar_format, current_grammar_construct, grammar_format_profile,
-    GrammarFidelityLevel, GrammarFormatProfile, FORMER_GRAMMAR_CONSTRUCTS, GRAMMAR_CONSTRUCTS,
-    GRAMMAR_FORMATS,
+    FORMER_GRAMMAR_CONSTRUCTS, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS, GrammarFidelityLevel,
+    GrammarFormatProfile, canonical_grammar_format, current_grammar_construct,
+    grammar_format_profile,
 };
 pub use import::{
-    import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
-    import_tree_sitter_json, GrammarImportError,
+    GrammarImportError, import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf,
+    import_lark, import_pest, import_tree_sitter_json,
 };
 pub use inference::active::{
-    clean_structural_acceptance, learn_dfa, learn_grammar, ActiveLearningConfig,
-    ActiveLearningError, Dfa, GrammarAcceptorOracle, Oracle as ActiveLearningOracle,
-    ParserAcceptancePredicate, ParserMembershipOracle, SamplingEquivalenceOracle,
-    Symbol as ActiveSymbol,
+    ActiveLearningConfig, ActiveLearningError, Dfa, GrammarAcceptorOracle,
+    Oracle as ActiveLearningOracle, ParserAcceptancePredicate, ParserMembershipOracle,
+    SamplingEquivalenceOracle, Symbol as ActiveSymbol, clean_structural_acceptance, learn_dfa,
+    learn_grammar,
 };
 pub use inference::advisor::{
     AdviceDecision, AdviceDecisionKind, AdviceSource, ConceptNamingAdvisor, FallbackAdvisor,
@@ -67,40 +67,40 @@ pub use inference::advisor::{
 #[cfg(feature = "llm-assist")]
 pub use inference::advisor::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
 pub use inference::cfg::{
-    infer_cfg, infer_cfg_with_advisors, InferenceOptions, InferenceReport, InferenceResult, Oracle,
-    PositiveOnlyOracle,
+    InferenceOptions, InferenceReport, InferenceResult, Oracle, PositiveOnlyOracle, infer_cfg,
+    infer_cfg_with_advisors,
 };
 pub use inference::eval::{
-    evaluate, mdl, run_corpus, run_named_corpus, sample, size_symbols, BenchmarkReport, EvalError,
-    GoldenCorpus, GrammarOracle, MembershipOracle, MetricScores, SampleConfig, ScoringMode,
-    GOLDEN_CORPORA,
+    BenchmarkReport, EvalError, GOLDEN_CORPORA, GoldenCorpus, GrammarOracle, MembershipOracle,
+    MetricScores, SampleConfig, ScoringMode, evaluate, mdl, run_corpus, run_named_corpus, sample,
+    size_symbols,
 };
 pub use inference::lexical::{
-    categorise, infer_lexical_classes, CharCategory, LexicalConfig, LexicalModel, Token,
+    CharCategory, LexicalConfig, LexicalModel, Token, categorise, infer_lexical_classes,
 };
 pub use inference::minimize::{
-    mdl_cost, minimize, Mdl, MinimizeOptions, MinimizeReport, MinimizeResult,
+    Mdl, MinimizeOptions, MinimizeReport, MinimizeResult, mdl_cost, minimize,
 };
 pub use inference::prior::{
-    build_structural_prior, ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, SeedTree,
-    StructuralPrior, WhitespacePolicy,
+    ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, SeedTree, StructuralPrior,
+    WhitespacePolicy, build_structural_prior,
 };
 pub use inference::semantic::{
-    default_pattern_catalog, evaluate_atom, evaluate_clause, evaluate_constraint,
-    evaluate_probabilistic, mine_semantic_constraints, ConstraintAtom, ConstraintClause,
-    ConstraintPattern, LengthUnit, NonTerminalRef, SemanticConstraint, SemanticInferenceConfig,
+    ConstraintAtom, ConstraintClause, ConstraintPattern, LengthUnit, NonTerminalRef,
+    SemanticConstraint, SemanticInferenceConfig, default_pattern_catalog, evaluate_atom,
+    evaluate_clause, evaluate_constraint, evaluate_probabilistic, mine_semantic_constraints,
 };
-pub use inference::sequitur::{run_sequitur, Symbol};
-pub use inference::state_merging::{infer_dfa, InferredAutomaton, MergeStrategy, Sample};
-pub use runtime::{register_grammar, with_grammar, GrammarParser};
+pub use inference::sequitur::{Symbol, run_sequitur};
+pub use inference::state_merging::{InferredAutomaton, MergeStrategy, Sample, infer_dfa};
+pub use runtime::{GrammarParser, register_grammar, with_grammar};
 pub use surface::{
-    grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
-    GrammarSurfaceError,
+    GrammarSurfaceError, grammar_from_lino, grammar_to_lino, parse_grammar_surface,
+    write_grammar_surface,
 };
 pub use translate::{
-    grammar_concept_translation_rules, translate_grammar_surface, GrammarTranslateError,
+    GrammarTranslateError, grammar_concept_translation_rules, translate_grammar_surface,
 };
-pub use validate::{validate, DiagnosticKind, GrammarDiagnostic, RuleSpan, Severity};
+pub use validate::{DiagnosticKind, GrammarDiagnostic, RuleSpan, Severity, validate};
 
 use std::collections::BTreeSet;
 use std::fmt;

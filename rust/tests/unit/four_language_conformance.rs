@@ -4,11 +4,11 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use meta_language::{
-    analyze_program, construct_program, construct_program_from_fragments,
-    decode_program_translation, language_support, translate_program, translation_contracts, LinkId,
-    LinkNetwork, LinkQuery, LinkType, ParseConfiguration, ProgramConstructStatus,
-    ProgramProjectContext, ProgramRepresentation, ReplacementRule, RepresentationLevel,
-    TranslationSupport, LANGUAGE_REPRESENTATION_SCHEMA_VERSION,
+    LANGUAGE_REPRESENTATION_SCHEMA_VERSION, LinkId, LinkNetwork, LinkQuery, LinkType,
+    ParseConfiguration, ProgramConstructStatus, ProgramProjectContext, ProgramRepresentation,
+    ReplacementRule, RepresentationLevel, TranslationSupport, analyze_program, construct_program,
+    construct_program_from_fragments, decode_program_translation, language_support,
+    translate_program, translation_contracts,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -330,7 +330,14 @@ fn every_rust_grammar_inventory_frontend_retains_and_diagnoses_prohibited_nul_in
     let inventory_path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
     let inventory_bytes = fs::read(&inventory_path).expect("grammar inventory is readable");
-    let fixture_digest = format!("{:x}", Sha256::digest(&inventory_bytes));
+    let fixture_digest =
+        Sha256::digest(&inventory_bytes)
+            .iter()
+            .fold(String::with_capacity(64), |mut hex, byte| {
+                use std::fmt::Write as _;
+                let _ = write!(hex, "{byte:02x}");
+                hex
+            });
     let inventory: Value =
         serde_json::from_slice(&inventory_bytes).expect("grammar inventory is valid JSON");
     for fixture in inventory["languages"].as_array().unwrap() {
@@ -769,17 +776,21 @@ fn structured_construction_query_edits_cloning_movement_and_emission_reparse_cle
             second_source.to_string() + first_source,
             "{language} move"
         );
-        assert!(program
-            .replace(meta_language::ProgramRange::new(0, source.len() + 1), "")
-            .is_err());
+        assert!(
+            program
+                .replace(meta_language::ProgramRange::new(0, source.len() + 1), "")
+                .is_err()
+        );
         assert!(program.move_range(first, 1).is_err());
     }
-    assert!(construct_program(
-        "const = ;\n",
-        "JavaScript",
-        ProgramProjectContext::default()
-    )
-    .is_err());
+    assert!(
+        construct_program(
+            "const = ;\n",
+            "JavaScript",
+            ProgramProjectContext::default()
+        )
+        .is_err()
+    );
 }
 
 #[test]
@@ -848,11 +859,13 @@ fn all_twelve_translation_hooks_emit_reversible_target_native_source_envelopes()
     for contract in contracts {
         assert_eq!(contract.support, TranslationSupport::PortableEncoding);
         assert!(contract.encoding.contains("portable source envelope v1"));
-        assert!(contract
-            .obligation
-            .as_deref()
-            .unwrap()
-            .contains("semantic translation is not implemented"));
+        assert!(
+            contract
+                .obligation
+                .as_deref()
+                .unwrap()
+                .contains("semantic translation is not implemented")
+        );
         let fixture = corpus()["semanticPrograms"]
             .as_array()
             .unwrap()

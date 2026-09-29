@@ -1,6 +1,6 @@
 use meta_language::{
-    evaluate, infer_cfg, mdl_cost, minimize, Grammar, GrammarExpr, GrammarOracle, InferenceOptions,
-    MinimizeOptions, PositiveOnlyOracle, SampleConfig,
+    Grammar, GrammarExpr, GrammarOracle, InferenceOptions, MinimizeOptions, PositiveOnlyOracle,
+    SampleConfig, evaluate, infer_cfg, mdl_cost, minimize,
 };
 
 #[test]

@@ -1,5 +1,5 @@
 use meta_language::{
-    emit_javascript_parser, emit_peggy, CharClassItem, Grammar, JsParserArtifacts, RuleKind,
+    CharClassItem, Grammar, JsParserArtifacts, RuleKind, emit_javascript_parser, emit_peggy,
 };
 
 const COVERING_PEGGY: &str = include_str!("../fixtures/grammar/emit/covering.peggy");
@@ -58,26 +58,36 @@ fn emits_peggy_golden_with_native_operators_rule_kind_notes_and_report() {
 
     let expected = COVERING_PEGGY.replace("\r\n", "\n");
     assert_eq!(text, expected);
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("unordered choice")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("RuleKind::Atomic")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("RuleKind::Silent")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("RuleKind::Token")));
-    assert!(!report
-        .lossy
-        .iter()
-        .any(|note| note.contains("capture label")));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("unordered choice"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("RuleKind::Atomic"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("RuleKind::Silent"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("RuleKind::Token"))
+    );
+    assert!(
+        !report
+            .lossy
+            .iter()
+            .any(|note| note.contains("capture label"))
+    );
 }
 
 #[test]
@@ -145,7 +155,9 @@ fn peggy_escapes_literals_character_classes_and_module_string() {
         artifacts.peggy_grammar,
         "escaped = \"\\\"\\\\\\n\\t\" [\\n-\\n] [\"\\\\\\t-\\t\\]\\^]\n"
     );
-    assert!(artifacts
-        .module
-        .contains("const GRAMMAR = \"escaped = \\\"\\\\\\\"\\\\\\\\\\\\n\\\\t\\\""));
+    assert!(
+        artifacts
+            .module
+            .contains("const GRAMMAR = \"escaped = \\\"\\\\\\\"\\\\\\\\\\\\n\\\\t\\\"")
+    );
 }

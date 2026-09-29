@@ -2,11 +2,11 @@
 
 use super::arrays::array_text;
 use super::{
-    array, build_items, coerce, data, fixed, flatten, full, normalise_proof, plain_binary,
-    text_lit, type_error, unsupported, BinaryOp, Binder, Checker, Comparison, Ctor, DataDecl, Decl,
-    Effect, Entry, Env, Expr, Field, FnDecl, HashMap, Hints, Item, Language, Main, Node, Param,
-    Plan, Proof, ProofScope, Prop, Result, SEffect, SExpr, SItem, SMain, SProp, SPropNode, Scope,
-    ShowStyle, Span, TheoremDecl, TheoremHead, Type, BOOL, INT, NAT, STRING, UNIT,
+    BOOL, BinaryOp, Binder, Checker, Comparison, Ctor, DataDecl, Decl, Effect, Entry, Env, Expr,
+    Field, FnDecl, HashMap, Hints, INT, Item, Language, Main, NAT, Node, Param, Plan, Proof,
+    ProofScope, Prop, Result, SEffect, SExpr, SItem, SMain, SProp, SPropNode, STRING, Scope,
+    ShowStyle, Span, TheoremDecl, TheoremHead, Type, UNIT, array, build_items, coerce, data, fixed,
+    flatten, full, normalise_proof, plain_binary, text_lit, type_error, unsupported,
 };
 
 impl Checker {
@@ -274,10 +274,10 @@ impl Checker {
         else {
             return Ok(ty.clone());
         };
-        if let Some(Entry::Decl(name)) = self.lookup(segments, path, span)? {
-            if matches!(self.decls.get(&name), Some(Decl::Data(_))) {
-                return Ok(data(name));
-            }
+        if let Some(Entry::Decl(name)) = self.lookup(segments, path, span)?
+            && matches!(self.decls.get(&name), Some(Decl::Data(_)))
+        {
+            return Ok(data(name));
         }
         Err(type_error(
             format!("unknown type {}", segments.join(".")),
@@ -329,10 +329,10 @@ impl Checker {
         let mut scope = self.modules.get(&module_path.join("."))?;
         for index in 0..names.len().saturating_sub(1) {
             let rest = names[index..].join(".");
-            if index == names.len() - 2 {
-                if let Some(entry) = scope.names.get(&rest) {
-                    return Some(entry.clone());
-                }
+            if index == names.len() - 2
+                && let Some(entry) = scope.names.get(&rest)
+            {
+                return Some(entry.clone());
             }
             let module = scope.modules.get(&names[index])?;
             scope = self.modules.get(module)?;
@@ -344,10 +344,10 @@ impl Checker {
         // Inside `namespace T`, the constructors of a sibling `inductive T` are in scope.
         if let Some((sibling, parent_path)) = scope.path.split_last() {
             let parent = self.modules.get(&parent_path.join("."))?;
-            if let Some(Entry::Decl(name)) = parent.names.get(sibling) {
-                if let Some(Decl::Data(decl)) = self.decls.get(name) {
-                    return parent.names.get(&format!("{}.{last}", decl.name)).cloned();
-                }
+            if let Some(Entry::Decl(name)) = parent.names.get(sibling)
+                && let Some(Decl::Data(decl)) = self.decls.get(name)
+            {
+                return parent.names.get(&format!("{}.{last}", decl.name)).cloned();
             }
         }
         None
@@ -423,7 +423,7 @@ impl Checker {
                         value.ty.key()
                     ),
                     expr.span,
-                ))
+                ));
             }
             Type::Array { .. } => return Err(array_text(expr.span)),
             _ => {}

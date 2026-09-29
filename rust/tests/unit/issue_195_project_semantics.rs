@@ -9,10 +9,10 @@
 //! themselves are in experiments/issue-195-projects.
 
 use meta_language::{
-    analyze_program, ProgramConstructStatus, ProgramProjectContext, ProgramProjectSource,
-    ProgramRange, ProgramRepresentation, SEMANTIC_CONSTRUCTS,
+    ProgramConstructStatus, ProgramProjectContext, ProgramProjectSource, ProgramRange,
+    ProgramRepresentation, SEMANTIC_CONSTRUCTS, analyze_program,
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use super::issue_195_observations as observations;
 
@@ -336,10 +336,12 @@ fn check_project(fixture: &Value) {
         // expansions that the missing context cannot produce.
         assert!(!evidence.is_empty());
         assert_eq!(expansions(&program), fixture["expansions"], "{test_name}");
-        assert!(construct_of(&bare, construct)
-            .evidence()
-            .iter()
-            .all(|fact| fact.file().is_none()));
+        assert!(
+            construct_of(&bare, construct)
+                .evidence()
+                .iter()
+                .all(|fact| fact.file().is_none())
+        );
         assert!(!program.project_references().is_empty() && !program.project_modules().is_empty());
 
         observations::record(&observations::Observation {

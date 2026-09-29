@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use meta_language::{LinkFlags, LinkId, LinkNetwork, LinkType, ParseConfiguration};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// A Syntax node of a public `LiNo` network.
 struct Node {
@@ -196,9 +196,11 @@ fn lino_grammar_cst_carries_the_links_of_the_official_links_notation_parser() {
             covered = leaf.end;
             if leaf.term == "whitespace" {
                 assert!(leaf.flags.is_extra() && !leaf.named);
-                assert!(source[leaf.start..leaf.end]
-                    .bytes()
-                    .all(|byte| matches!(byte, b' ' | b'\t' | b'\r' | b'\n')));
+                assert!(
+                    source[leaf.start..leaf.end]
+                        .bytes()
+                        .all(|byte| matches!(byte, b' ' | b'\t' | b'\r' | b'\n'))
+                );
             }
             if leaf.term == "comment" {
                 let text = &source[leaf.start..leaf.end];
@@ -262,8 +264,9 @@ fn lino_grammar_cst_records_id_value_and_child_fields_and_recovers_per_line() {
         ]
     );
     assert!(tree.flags.has_error() && !tree.flags.is_error());
-    assert!(tree
-        .children
-        .iter()
-        .any(|child| child.term == "ERROR" && child.flags.is_error()));
+    assert!(
+        tree.children
+            .iter()
+            .any(|child| child.term == "ERROR" && child.flags.is_error())
+    );
 }

@@ -3,7 +3,7 @@
 
 use meta_language::translation::diagnostics::ErrorKind;
 use meta_language::translation::rocq::parse_rocq;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 fn surface(source: &str) -> Value {
     let program = parse_rocq(source).unwrap_or_else(|error| panic!("{source}: {error}"));
@@ -92,8 +92,16 @@ fn reads_a_structured_proof() {
 #[test]
 fn reports_errors_as_the_javascript_frontend() {
     let cases = [
-        ("End A.", ErrorKind::Syntax, "unmatched End but found \"End\" at 0..3"),
-        ("Module A.\nEnd B.", ErrorKind::Syntax, "End B closes module A at 10..13"),
+        (
+            "End A.",
+            ErrorKind::Syntax,
+            "unmatched End but found \"End\" at 0..3",
+        ),
+        (
+            "Module A.\nEnd B.",
+            ErrorKind::Syntax,
+            "End B closes module A at 10..13",
+        ),
         (
             "Definition f (n : N) : N := N.add n.",
             ErrorKind::Unsupported,

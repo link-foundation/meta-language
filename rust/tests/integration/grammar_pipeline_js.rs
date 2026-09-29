@@ -1,7 +1,7 @@
 use meta_language::emit_javascript_parser;
 
 use super::grammar_pipeline_support::{
-    infer_valid_grammar_from_strings, load_fixture_corpus, run_javascript_parser, ExternalRun,
+    ExternalRun, infer_valid_grammar_from_strings, load_fixture_corpus, run_javascript_parser,
 };
 
 #[test]

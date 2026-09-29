@@ -1,8 +1,8 @@
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use super::{
-    construct_program, LinkType, ProgramProjectContext, ProgramProjectSource,
-    ProgramRepresentation, ProgramRepresentationError,
+    LinkType, ProgramProjectContext, ProgramProjectSource, ProgramRepresentation,
+    ProgramRepresentationError, construct_program,
 };
 
 /// Schema revision for source-buffer-independent program snapshots.

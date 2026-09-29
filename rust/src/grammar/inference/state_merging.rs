@@ -539,10 +539,9 @@ impl WorkAutomaton {
             if let (Some(left_target), Some(right_target)) = (
                 self.transitions[left].get(&symbol).copied(),
                 self.transitions[right].get(&symbol).copied(),
-            ) {
-                if !self.alergia_compatible(left_target, right_target, alpha, seen) {
-                    return false;
-                }
+            ) && !self.alergia_compatible(left_target, right_target, alpha, seen)
+            {
+                return false;
             }
         }
 
@@ -765,10 +764,10 @@ fn blue_states(machine: &WorkAutomaton, red: &BTreeSet<usize>) -> Vec<usize> {
 
     for red_state in machine.red_sorted(red) {
         for target in machine.transitions[red_state].values() {
-            if let Some(target) = machine.active_representative(*target) {
-                if !red.contains(&target) {
-                    blue.insert(target);
-                }
+            if let Some(target) = machine.active_representative(*target)
+                && !red.contains(&target)
+            {
+                blue.insert(target);
             }
         }
     }

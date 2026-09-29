@@ -12,14 +12,14 @@
 use std::borrow::Cow;
 use std::collections::HashSet;
 
-use super::diagnostics::{unsupported, Result};
+use super::Span;
+use super::diagnostics::{Result, unsupported};
 use super::ir::{
     Case, Comparison, Ctor, DataDecl, Decl, Effect, Expr, Field, FnDecl, LitValue, Main, Node,
     Param, Pattern, Program, Prop, TheoremDecl,
 };
 use super::surface::BinaryOp;
-use super::types::{data, Type, BOOL};
-use super::Span;
+use super::types::{BOOL, Type, data};
 
 /// The checked program with its output threaded through, or the program
 /// itself when nothing prints below main.
@@ -32,11 +32,12 @@ pub fn thread_output(program: &Program) -> Result<Cow<'_, Program>> {
     while grew {
         grew = false;
         for entry in &program.declarations {
-            if let Decl::Fn(function) = entry {
-                if !effectful.contains(&function.full_name) && prints(&function.body, &effectful) {
-                    effectful.insert(function.full_name.clone());
-                    grew = true;
-                }
+            if let Decl::Fn(function) = entry
+                && !effectful.contains(&function.full_name)
+                && prints(&function.body, &effectful)
+            {
+                effectful.insert(function.full_name.clone());
+                grew = true;
             }
         }
     }
@@ -553,7 +554,7 @@ impl Threader<'_> {
                     "output in a compound assertion",
                     "an operand that prints runs only when the assertion evaluates it; assert on a value computed before",
                     span,
-                ))
+                ));
             }
             other => {
                 let (op, comparison) = other.comparison().expect("a comparison");

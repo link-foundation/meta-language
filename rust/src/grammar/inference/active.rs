@@ -6,7 +6,7 @@
 //! oracle; when only membership is available, the provided adapters use a
 //! deterministic bounded sampler as an approximate equivalence oracle.
 
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, btree_map::Entry};
 use std::error::Error;
 use std::fmt;
 

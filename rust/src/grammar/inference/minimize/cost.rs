@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use super::Mdl;
-use crate::grammar::inference::eval::{size_symbols, GrammarOracle};
+use crate::grammar::inference::eval::{GrammarOracle, size_symbols};
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr};
 
 const OPERATOR_SYMBOLS: usize = 16;

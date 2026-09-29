@@ -4,8 +4,8 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
-    grammar_from_lino, grammar_to_lino, import_bnf, Grammar, GrammarFormat, GrammarRule,
-    LinkNetwork, ParseConfiguration,
+    Grammar, GrammarFormat, GrammarRule, LinkNetwork, ParseConfiguration, grammar_from_lino,
+    grammar_to_lino, import_bnf,
 };
 
 const ARITHMETIC_BNF: &str = include_str!("../fixtures/grammar/bnf/arithmetic.bnf");
@@ -22,9 +22,11 @@ fn describe_cli_reports_self_description_roots() {
     assert!(stdout.contains("(link:"));
     assert!(stdout.contains("(reference:"));
     assert!(stdout.contains("(Type: Type Type)"));
-    assert!(stdout
-        .lines()
-        .all(|line| line.starts_with('(') && line.ends_with(')')));
+    assert!(
+        stdout
+            .lines()
+            .all(|line| line.starts_with('(') && line.ends_with(')'))
+    );
 
     let network = LinkNetwork::parse(&stdout, "LiNo", ParseConfiguration::default());
     assert_eq!(network.reconstruct_text(), stdout);

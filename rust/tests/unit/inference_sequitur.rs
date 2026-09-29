@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use meta_language::{
-    run_sequitur, size_symbols, Grammar, GrammarExpr, GrammarFormat, GrammarOracle,
+    Grammar, GrammarExpr, GrammarFormat, GrammarOracle, run_sequitur, size_symbols,
 };
 
 #[test]

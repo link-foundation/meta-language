@@ -1,8 +1,8 @@
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat};
 
 use super::{
-    expanded_chars, finish_lines, ordered_rules, render_rule_line, unsupported_error, EmitReport,
-    GrammarEmitError, HelperRules, BNF_RULE_TEMPLATE,
+    BNF_RULE_TEMPLATE, EmitReport, GrammarEmitError, HelperRules, expanded_chars, finish_lines,
+    ordered_rules, render_rule_line, unsupported_error,
 };
 
 const MAX_BNF_EXPANSION: u32 = 256;

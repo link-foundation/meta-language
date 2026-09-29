@@ -2,7 +2,7 @@
 //! target's own function where it agrees with JavaScript, and a generated
 //! helper where it does not.
 
-use meta_language::{translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, translate_program};
 
 const MATH: &str = "/**
  * @param {number[]} xs
@@ -87,12 +87,30 @@ fn inference_makes_a_parameter_a_math_function_reads_a_number() {
 #[test]
 fn the_math_and_number_forms_that_are_not_kept_are_refused_with_a_reason() {
     for (source, message) in [
-        ("console.log(Math.floor(1n));\n", "Math.floor of int; it takes Numbers, and converts or rejects anything else at 23..25"),
-        ("console.log(Math.sin(1));\n", "Math.sin: the JavaScript standard library is outside the portable core at 12..23"),
-        ("console.log(Math.abs(1, 2));\n", "Math.abs with 2 arguments: Math.abs takes one Number at 12..26"),
-        ("const xs = [1, 2];\nconsole.log(Math.abs(...xs));\n", "spread argument: pass Math.abs its argument at 43..45"),
-        ("const m = Math.max;\n", "function value Math.max: functions and namespaces are only portable when a function is called at 10..18"),
-        ("function isNaN(x) {\n  return x;\n}\n", "declaration of isNaN: it shadows the JavaScript global isNaN, which the translation reads as the built-in; rename it at 9..14"),
+        (
+            "console.log(Math.floor(1n));\n",
+            "Math.floor of int; it takes Numbers, and converts or rejects anything else at 23..25",
+        ),
+        (
+            "console.log(Math.sin(1));\n",
+            "Math.sin: the JavaScript standard library is outside the portable core at 12..23",
+        ),
+        (
+            "console.log(Math.abs(1, 2));\n",
+            "Math.abs with 2 arguments: Math.abs takes one Number at 12..26",
+        ),
+        (
+            "const xs = [1, 2];\nconsole.log(Math.abs(...xs));\n",
+            "spread argument: pass Math.abs its argument at 43..45",
+        ),
+        (
+            "const m = Math.max;\n",
+            "function value Math.max: functions and namespaces are only portable when a function is called at 10..18",
+        ),
+        (
+            "function isNaN(x) {\n  return x;\n}\n",
+            "declaration of isNaN: it shadows the JavaScript global isNaN, which the translation reads as the built-in; rename it at 9..14",
+        ),
     ] {
         assert_eq!(refusal(source), message, "{source}");
     }

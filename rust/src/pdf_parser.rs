@@ -14,9 +14,9 @@
 //! read back by reconstruction, and only enrich the network with the formatting
 //! concepts required by issue #84 for bold/italic/heading/paragraph/list.
 
-use crate::document_formatting::{parse_pdf_document, BlockNode, InlineNode};
+use crate::document_formatting::{BlockNode, InlineNode, parse_pdf_document};
 use crate::{
-    structured_text_parser, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration,
+    LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, structured_text_parser,
 };
 
 /// Parses PDF `text` into a lossless network enriched with concept-tagged

@@ -1,11 +1,11 @@
 //! Expressions, `match` alternatives, and patterns of the Lean frontend.
 
 use super::{
-    annotate_layout, bind_or_ctor, column, expr, is_item_keyword, operator_name, pattern,
-    plain_application, span, syntax_at, LeanParser, PatternHead, BINARY,
+    BINARY, LeanParser, PatternHead, annotate_layout, bind_or_ctor, column, expr, is_item_keyword,
+    operator_name, pattern, plain_application, span, syntax_at,
 };
-use crate::translation::diagnostics::{type_error, unsupported, Result};
-use crate::translation::lexer::{describe, tokenize_source, Source, Token, TokenKind};
+use crate::translation::diagnostics::{Result, type_error, unsupported};
+use crate::translation::lexer::{Source, Token, TokenKind, describe, tokenize_source};
 use crate::translation::surface::{
     BinaryOp, Flavor, SExpr, SNode, SPattern, SPatternNode, SRow, ShowStyle, UnaryOp,
 };
@@ -490,18 +490,17 @@ impl LeanParser<'_> {
                     op: UnaryOp::Neg,
                     arg,
                 } = &inner.node
+                    && let SNode::Num { value, .. } = &arg.node
                 {
-                    if let SNode::Num { value, .. } = &arg.node {
-                        return Ok(expr(
-                            SNode::Num {
-                                value: value.clone(),
-                                ty: Some(ty),
-                                negative: true,
-                                unit: false,
-                            },
-                            ascribed,
-                        ));
-                    }
+                    return Ok(expr(
+                        SNode::Num {
+                            value: value.clone(),
+                            ty: Some(ty),
+                            negative: true,
+                            unit: false,
+                        },
+                        ascribed,
+                    ));
                 }
                 return Ok(expr(
                     SNode::Cast {

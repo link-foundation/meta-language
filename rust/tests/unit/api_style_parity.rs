@@ -1,7 +1,7 @@
 use meta_language::{
-    ApiOperation, ApiStyle, ApiStyleFixture, FluentNetworkApi, LinkCliSubstitution,
+    API_OPERATIONS, ApiOperation, ApiStyle, ApiStyleFixture, FluentNetworkApi, LinkCliSubstitution,
     LinkCliSubstitutionKind, LinkMetadata, LinkNetwork, LinkQuery, LinkType, ParseConfiguration,
-    ReplacementRule, API_OPERATIONS,
+    ReplacementRule,
 };
 
 #[test]

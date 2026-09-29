@@ -4,9 +4,9 @@
 use std::collections::HashSet;
 use std::fmt::Write as _;
 
-use super::{ident, LeanEmitter};
-use crate::translation::diagnostics::{type_error, Result};
-use crate::translation::ir::{rename_main, Effect, Expr, Main, Node, Prop};
+use super::{LeanEmitter, ident};
+use crate::translation::diagnostics::{Result, type_error};
+use crate::translation::ir::{Effect, Expr, Main, Node, Prop, rename_main};
 use crate::translation::surface::BinaryOp;
 
 impl LeanEmitter<'_> {
@@ -95,11 +95,11 @@ impl LeanEmitter<'_> {
             if partial {
                 break;
             }
-            if let Effect::Let { name, value, .. } = effect {
-                if reads.contains(name.as_str()) {
-                    partial = self.uses_partial.expr(value);
-                    expr_reads(value, &mut reads);
-                }
+            if let Effect::Let { name, value, .. } = effect
+                && reads.contains(name.as_str())
+            {
+                partial = self.uses_partial.expr(value);
+                expr_reads(value, &mut reads);
             }
         }
         partial
@@ -123,7 +123,7 @@ impl LeanEmitter<'_> {
                 return Err(type_error(
                     "no run-time check for a quantified proposition".to_owned(),
                     None,
-                ))
+                ));
             }
             other => {
                 let (op, comparison) = other.comparison().expect("a comparison");

@@ -2,12 +2,12 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{
-    analyze_program, construct_program, decode_program_translation, translate_program, Link,
-    LinkNetwork, LinkType, ParseConfiguration, ProgramConstructStatus, ProgramFact,
-    ProgramProjectContext, ProgramRange, ProgramRepresentation,
+    Link, LinkNetwork, LinkType, ParseConfiguration, ProgramConstructStatus, ProgramFact,
+    ProgramProjectContext, ProgramRange, ProgramRepresentation, analyze_program, construct_program,
+    decode_program_translation, translate_program,
 };
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
 fn main() {
@@ -86,7 +86,7 @@ fn main() {
         "{}",
         serde_json::to_string(&json!({
             "schemaVersion": 1,
-            "fixtureDigest": format!("{:x}", Sha256::digest(fs::read(corpus_path()).expect("shared corpus is readable"))),
+            "fixtureDigest": Sha256::digest(fs::read(corpus_path()).expect("shared corpus is readable")).iter().fold(String::with_capacity(64), |mut hex, byte| { use std::fmt::Write as _; let _ = write!(hex, "{byte:02x}"); hex }),
             "positive": positive,
             "negative": negative,
             "inventory": inventory,

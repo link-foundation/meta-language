@@ -1,9 +1,9 @@
 use std::fmt::Write as _;
 
 use meta_language::{
-    emit_bnf, grammar_format_profile, import_bnf, CharClassItem, Grammar, GrammarEmitError,
-    GrammarFidelityLevel, GrammarFormat, GrammarRule, RuleKind, GRAMMAR_CONSTRUCTS,
-    GRAMMAR_FORMATS,
+    CharClassItem, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS, Grammar, GrammarEmitError,
+    GrammarFidelityLevel, GrammarFormat, GrammarRule, RuleKind, emit_bnf, grammar_format_profile,
+    import_bnf,
 };
 
 #[test]

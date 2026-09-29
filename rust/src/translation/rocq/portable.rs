@@ -1,8 +1,8 @@
 //! Portability checks, effects and notation-scope resolution.
 
 use super::{
-    scope_type, unsupported, BinaryOp, ProofTypes, Result, SComparison, SEffect, SExpr, SNode,
-    SPattern, SPatternNode, SProp, SPropNode, SRow, ShowStyle, Span, Type,
+    BinaryOp, ProofTypes, Result, SComparison, SEffect, SExpr, SNode, SPattern, SPatternNode,
+    SProp, SPropNode, SRow, ShowStyle, Span, Type, scope_type, unsupported,
 };
 
 /// Lists only appear as the program output: the first list node, in the

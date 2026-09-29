@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::concept_records::{concept_record, concept_records, ConceptRecord};
+use crate::concept_records::{ConceptRecord, concept_record, concept_records};
 use crate::grammar::GRAMMAR_CONCEPTS;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::lino_serialization::LinoSerializationError;
@@ -8,7 +8,7 @@ use crate::lino_serialization::LinoSerializationError;
 mod semantic_lexicon;
 
 use semantic_lexicon::{
-    is_wikidata_qid, is_wordnet_cili_id, semantic_lexicon, SemanticLexiconConcept,
+    SemanticLexiconConcept, is_wikidata_qid, is_wordnet_cili_id, semantic_lexicon,
 };
 
 const EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX: &str = "external-identifier:";
@@ -686,10 +686,10 @@ impl LinkNetwork {
         if let Some(vocabulary) = external_vocabulary_for_id(concept.id()) {
             aliases.insert((vocabulary, concept.id()));
         }
-        if let Some(entity_id) = concept.entity_id.as_deref() {
-            if let Some(vocabulary) = external_vocabulary_for_id(entity_id) {
-                aliases.insert((vocabulary, entity_id));
-            }
+        if let Some(entity_id) = concept.entity_id.as_deref()
+            && let Some(vocabulary) = external_vocabulary_for_id(entity_id)
+        {
+            aliases.insert((vocabulary, entity_id));
         }
 
         aliases

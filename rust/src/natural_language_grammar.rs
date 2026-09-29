@@ -38,8 +38,7 @@ impl NaturalLanguageGrammarFixture {
     }
 }
 
-const STARTER_GRAMMAR_PROVENANCE: &str =
-    "repo-authored starter pass/fail sentence; license: Unlicense; \
+const STARTER_GRAMMAR_PROVENANCE: &str = "repo-authored starter pass/fail sentence; license: Unlicense; \
      morphosyntax tag names use Universal Dependencies v2 UPOS/UFeats/deprel vocabulary; \
      no UD treebank sentence data imported";
 

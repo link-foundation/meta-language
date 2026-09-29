@@ -1,6 +1,6 @@
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 
-use super::{ordered_rules, unsupported_error, EmitReport, GrammarEmitError};
+use super::{EmitReport, GrammarEmitError, ordered_rules, unsupported_error};
 
 const FORMAT: GrammarFormat = GrammarFormat::TreeSitter;
 const EXTRAS_RULE: &str = "_extras";
@@ -56,19 +56,17 @@ pub fn emit_tree_sitter_json(grammar: &Grammar) -> Result<(String, EmitReport), 
 }
 
 fn emit_rule(rule: &GrammarRule, report: &mut EmitReport) -> Result<Json, GrammarEmitError> {
-    if rule.kind() == RuleKind::Token {
-        if let GrammarExpr::Capture {
+    if rule.kind() == RuleKind::Token
+        && let GrammarExpr::Capture {
             label: Some(label),
             expr,
         } = rule.expr()
-        {
-            if label == "immediate_token" {
-                return Ok(node(
-                    "IMMEDIATE_TOKEN",
-                    vec![("content", emit_node(expr, report)?)],
-                ));
-            }
-        }
+        && label == "immediate_token"
+    {
+        return Ok(node(
+            "IMMEDIATE_TOKEN",
+            vec![("content", emit_node(expr, report)?)],
+        ));
     }
     if rule.kind() == RuleKind::Atomic {
         report.add_lossy(format!(
@@ -161,13 +159,13 @@ fn emit_repeat(
     max: Option<usize>,
     report: &mut EmitReport,
 ) -> Result<Json, GrammarEmitError> {
-    if let Some(max) = max {
-        if max < min {
-            return Err(unsupported_error(
-                FORMAT,
-                format!("Repeat with min {min} greater than max Some({max})"),
-            ));
-        }
+    if let Some(max) = max
+        && max < min
+    {
+        return Err(unsupported_error(
+            FORMAT,
+            format!("Repeat with min {min} greater than max Some({max})"),
+        ));
     }
     report.add_lossy(format!(
         "tree-sitter desugared Repeat with min {min} and max {max:?}"
@@ -198,10 +196,10 @@ fn emit_capture(
         report.add_lossy("tree-sitter dropped anonymous capture");
         return emit_node(expr, report);
     };
-    if label == "regex" {
-        if let GrammarExpr::Terminal(value) = expr {
-            return Ok(pattern(value.clone()));
-        }
+    if label == "regex"
+        && let GrammarExpr::Terminal(value) = expr
+    {
+        return Ok(pattern(value.clone()));
     }
     for (prefix, kind) in PRECEDENCE_TYPES {
         if let Some(value) = label.strip_prefix(prefix) {

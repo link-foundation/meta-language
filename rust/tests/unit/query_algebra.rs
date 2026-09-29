@@ -37,12 +37,16 @@ fn ast_grep_style_rule_algebra_supports_relations_booleans_and_named_refs() {
         matches[0].captures().first("target"),
         Some(first_identifier)
     );
-    assert!(matches
-        .iter()
-        .all(|rule_match| rule_match.link_id() != second_identifier));
-    assert!(matches
-        .iter()
-        .all(|rule_match| rule_match.link_id() != number));
+    assert!(
+        matches
+            .iter()
+            .all(|rule_match| rule_match.link_id() != second_identifier)
+    );
+    assert!(
+        matches
+            .iter()
+            .all(|rule_match| rule_match.link_id() != number)
+    );
 }
 
 #[test]

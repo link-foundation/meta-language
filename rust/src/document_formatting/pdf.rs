@@ -218,11 +218,11 @@ fn flatten_runs(nodes: &[InlineNode], style: RunStyle, runs: &mut Vec<(RunStyle,
 fn merge_adjacent_runs(runs: &mut Vec<(RunStyle, String)>) {
     let mut merged: Vec<(RunStyle, String)> = Vec::with_capacity(runs.len());
     for (style, text) in runs.drain(..) {
-        if let Some(last) = merged.last_mut() {
-            if last.0 == style {
-                last.1.push_str(&text);
-                continue;
-            }
+        if let Some(last) = merged.last_mut()
+            && last.0 == style
+        {
+            last.1.push_str(&text);
+            continue;
         }
         merged.push((style, text));
     }
@@ -434,13 +434,12 @@ fn strip_marker(runs: &mut [(RunStyle, String)]) {
         *text = rest.to_string();
         return;
     }
-    if let Some(dot) = text.find(". ") {
-        if text[..dot]
+    if let Some(dot) = text.find(". ")
+        && text[..dot]
             .chars()
             .all(|character| character.is_ascii_digit())
-            && dot > 0
-        {
-            *text = text[dot + 2..].to_string();
-        }
+        && dot > 0
+    {
+        *text = text[dot + 2..].to_string();
     }
 }

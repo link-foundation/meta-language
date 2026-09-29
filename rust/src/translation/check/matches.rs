@@ -1,9 +1,9 @@
 //! Pattern-match compilation and exhaustiveness.
 
 use super::{
-    decrement, surface_let, type_error, unsupported, BinaryOp, Case, Checker, Column, Ctor,
-    Decimal, Entry, Env, Expr, Fact, Field, HashSet, Language, NPat, Node, Pattern, Result, Row,
-    SCase, SCasePattern, SExpr, SNode, SPatternNode, SRow, Span, Type, NAT_PATTERN_UNFOLD,
+    BinaryOp, Case, Checker, Column, Ctor, Decimal, Entry, Env, Expr, Fact, Field, HashSet,
+    Language, NAT_PATTERN_UNFOLD, NPat, Node, Pattern, Result, Row, SCase, SCasePattern, SExpr,
+    SNode, SPatternNode, SRow, Span, Type, decrement, surface_let, type_error, unsupported,
 };
 
 impl Checker {
@@ -331,24 +331,23 @@ impl Checker {
             SPatternNode::Wild => Ok(NPat::Wild),
             SPatternNode::Bind { name } => Ok(NPat::Bind(name)),
             SPatternNode::BindOrCtor { name } => {
-                if let Type::Data { name: data_name } = ty {
-                    if let Some(ctor) = self
+                if let Type::Data { name: data_name } = ty
+                    && let Some(ctor) = self
                         .data_decl(data_name)?
                         .ctors
                         .iter()
                         .find(|ctor| ctor.name == name)
-                    {
-                        if !ctor.fields.is_empty() {
-                            return Err(type_error(
-                                format!("{name} pattern needs {} fields", ctor.fields.len()),
-                                at,
-                            ));
-                        }
-                        return Ok(NPat::Data {
-                            ctor: ctor.name.clone(),
-                            args: Vec::new(),
-                        });
+                {
+                    if !ctor.fields.is_empty() {
+                        return Err(type_error(
+                            format!("{name} pattern needs {} fields", ctor.fields.len()),
+                            at,
+                        ));
                     }
+                    return Ok(NPat::Data {
+                        ctor: ctor.name.clone(),
+                        args: Vec::new(),
+                    });
                 }
                 if natural && self.language == Language::Rocq && name == "O" {
                     return Ok(zero());
@@ -520,11 +519,11 @@ impl Checker {
         expected: Option<&Type>,
     ) -> Result<Expr> {
         let variable = env.local(scrutinee).map(str::to_owned);
-        if let Some(variable) = &variable {
-            if let Some(fact) = env.known.get(variable) {
-                let fact = fact.clone();
-                return self.known_match(cases, span, &fact, variable, env, path, expected);
-            }
+        if let Some(variable) = &variable
+            && let Some(fact) = env.known.get(variable)
+        {
+            let fact = fact.clone();
+            return self.known_match(cases, span, &fact, variable, env, path, expected);
         }
         let scrutinee = self.expr(scrutinee, env, path, None, false)?;
         let ty = scrutinee.ty.clone();
@@ -532,18 +531,17 @@ impl Checker {
         for kase in cases {
             let mut inner = env.clone();
             let pattern = self.pattern(&kase.pattern, &ty, &mut inner, kase.span.or(span))?;
-            if let (Some(variable), Pattern::Ctor { ctor, binds, .. }) = (&variable, &pattern) {
-                if binds.iter().all(Option::is_some)
-                    && !binds.iter().flatten().any(|bind| bind == variable)
-                {
-                    inner.known.insert(
-                        variable.clone(),
-                        Fact {
-                            ctor: ctor.clone(),
-                            binds: binds.iter().flatten().cloned().collect(),
-                        },
-                    );
-                }
+            if let (Some(variable), Pattern::Ctor { ctor, binds, .. }) = (&variable, &pattern)
+                && binds.iter().all(Option::is_some)
+                && !binds.iter().flatten().any(|bind| bind == variable)
+            {
+                inner.known.insert(
+                    variable.clone(),
+                    Fact {
+                        ctor: ctor.clone(),
+                        binds: binds.iter().flatten().cloned().collect(),
+                    },
+                );
             }
             pending.push((pattern, &kase.body, inner));
         }

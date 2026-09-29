@@ -1,9 +1,9 @@
 //! Lowering statement lists into expressions and tagged-union switches into matches.
 
 use super::{
-    node, type_error, unsupported, wild, AssertionKind, BinaryOp, CaseTest, HashSet, Result,
-    SComparison, SData, SExpr, SNode, SParam, SPattern, SPatternNode, SProp, SPropNode, SRow,
-    STagTest, Span, Stmt, Switch, TranslationError, UnaryOp, INT, OBJECT_PROTOTYPE, ROOT,
+    AssertionKind, BinaryOp, CaseTest, HashSet, INT, OBJECT_PROTOTYPE, ROOT, Result, SComparison,
+    SData, SExpr, SNode, SParam, SPattern, SPatternNode, SProp, SPropNode, SRow, STagTest, Span,
+    Stmt, Switch, TranslationError, UnaryOp, node, type_error, unsupported, wild,
 };
 
 /// What `assert.method` asserts: the lookup is in plain objects, so the names
@@ -664,10 +664,10 @@ pub(super) fn collect_binders(expr: &SExpr, names: &mut HashSet<String>) {
 
 /// Whether an expression reads a field of `subject`.
 pub(super) fn reads_fields(expr: &SExpr, subject: &str) -> bool {
-    if let SNode::Field { object, .. } = &expr.node {
-        if object.simple_name() == Some(subject) {
-            return true;
-        }
+    if let SNode::Field { object, .. } = &expr.node
+        && object.simple_name() == Some(subject)
+    {
+        return true;
     }
     children(expr)
         .into_iter()
@@ -680,12 +680,12 @@ pub(super) fn substitute_fields(
     subject: &str,
     binder_for: &mut dyn FnMut(&str) -> Result<String>,
 ) -> Result<()> {
-    if let SNode::Field { object, field } = &expr.node {
-        if object.simple_name() == Some(subject) {
-            let name = binder_for(field)?;
-            expr.node = SNode::Name { path: vec![name] };
-            return Ok(());
-        }
+    if let SNode::Field { object, field } = &expr.node
+        && object.simple_name() == Some(subject)
+    {
+        let name = binder_for(field)?;
+        expr.node = SNode::Name { path: vec![name] };
+        return Ok(());
     }
     match &mut expr.node {
         SNode::Let {

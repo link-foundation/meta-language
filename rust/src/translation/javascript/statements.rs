@@ -5,9 +5,9 @@ use super::imperative::lower_top_level;
 use super::loops::reserved;
 use super::lowering::statement_span;
 use super::{
-    assertion_kind, has_ctor, node, prop_of, span, type_error, unsupported, AssertionKind,
-    CaseTest, Clause, JavaScriptParser, Result, SComparison, SData, SEffect, SExpr, SNode, SProp,
-    SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind, ERRORS,
+    AssertionKind, CaseTest, Clause, ERRORS, JavaScriptParser, Result, SComparison, SData, SEffect,
+    SExpr, SNode, SProp, SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind,
+    assertion_kind, has_ctor, node, prop_of, span, type_error, unsupported,
 };
 
 impl JavaScriptParser {
@@ -320,14 +320,14 @@ impl JavaScriptParser {
             _ => None,
         };
         let tagged = tag_object.is_some();
-        if let Some(object) = &tag_object {
-            if object.simple_name().is_none() {
-                return Err(unsupported(
-                    "switch on the tag of an expression",
-                    "bind the value with const and switch on its tag",
-                    discriminant.span,
-                ));
-            }
+        if let Some(object) = &tag_object
+            && object.simple_name().is_none()
+        {
+            return Err(unsupported(
+                "switch on the tag of an expression",
+                "bind the value with const and switch on its tag",
+                discriminant.span,
+            ));
         }
         let mut clauses = Vec::new();
         let mut tests = Vec::new();
@@ -534,10 +534,10 @@ impl JavaScriptParser {
         if self.cursor.is("console") && self.cursor.is_at(".", 1) {
             return self.console_statement();
         }
-        if let Some(assertion) = &self.assertion {
-            if self.cursor.is(&assertion.name) {
-                return self.assert_statement();
-            }
+        if let Some(assertion) = &self.assertion
+            && self.cursor.is(&assertion.name)
+        {
+            return self.assert_statement();
         }
         let statements = ["switch", "try", "throw", "class", "return"];
         if token.kind == TokenKind::Identifier && statements.contains(&token.value.as_str()) {

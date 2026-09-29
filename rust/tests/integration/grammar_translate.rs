@@ -1,6 +1,6 @@
 use meta_language::{
-    emit_bnf, grammar_concept_translation_rules, translate_grammar_surface, Grammar, GrammarFormat,
-    GrammarRule,
+    Grammar, GrammarFormat, GrammarRule, emit_bnf, grammar_concept_translation_rules,
+    translate_grammar_surface,
 };
 
 #[test]

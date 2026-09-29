@@ -1,6 +1,6 @@
 use meta_language::{
-    import_tree_sitter_json, CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError,
-    RuleKind,
+    CharClassItem, GrammarExpr, GrammarFormat, GrammarImportError, RuleKind,
+    import_tree_sitter_json,
 };
 
 #[test]

@@ -3,9 +3,9 @@
 use std::collections::BTreeSet;
 
 use super::{
-    block, comparison_operator, format_escape, indent, own, rename_function, rename_theorem, snake,
-    tail_loop, Binder, Decl, Emitted, Expr, ModuleTree, Prelude, Prop, Result, RustEmitter,
-    TheoremCheck, Type, ARRAY_PRELUDE, MATH_PRELUDE, NUMBER_PRELUDE, PRELUDE,
+    ARRAY_PRELUDE, Binder, Decl, Emitted, Expr, MATH_PRELUDE, ModuleTree, NUMBER_PRELUDE, PRELUDE,
+    Prelude, Prop, Result, RustEmitter, TheoremCheck, Type, block, comparison_operator,
+    format_escape, indent, own, rename_function, rename_theorem, snake, tail_loop,
 };
 
 impl<'p> RustEmitter<'p> {

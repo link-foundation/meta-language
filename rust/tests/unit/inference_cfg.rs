@@ -1,6 +1,6 @@
 use meta_language::{
-    infer_cfg, GrammarExpr, GrammarFormat, GrammarOracle, InferenceOptions, MembershipOracle,
-    Oracle, PositiveOnlyOracle,
+    GrammarExpr, GrammarFormat, GrammarOracle, InferenceOptions, MembershipOracle, Oracle,
+    PositiveOnlyOracle, infer_cfg,
 };
 
 #[test]
@@ -76,9 +76,11 @@ fn membership_oracle_can_tighten_over_general_recursive_candidate() {
 
     assert!(GrammarOracle::new(&loose.grammar).accepts("[a,b,a]"));
     assert!(!GrammarOracle::new(&strict.grammar).accepts("[a,b,a]"));
-    assert!(examples
-        .iter()
-        .all(|example| GrammarOracle::new(&strict.grammar).accepts(example)));
+    assert!(
+        examples
+            .iter()
+            .all(|example| GrammarOracle::new(&strict.grammar).accepts(example))
+    );
     assert!(strict.report.merges_rejected >= loose.report.merges_rejected);
 }
 

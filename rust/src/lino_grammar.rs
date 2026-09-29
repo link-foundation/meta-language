@@ -28,7 +28,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::builtin_grammar::{fill_extras, propagate_errors, GrammarNode};
+use crate::builtin_grammar::{GrammarNode, fill_extras, propagate_errors};
 
 /// How deep `LiNo` links may nest: every parenthesized group and every
 /// indentation level is one level. The official parsers of every runtime
@@ -338,16 +338,16 @@ impl<'a, 'r> LinoGrammarParser<'a, 'r> {
     // singleLineAnyLink = singleLineLink eol / singleLineValueLink eol
     fn single_line_any_link(&mut self) -> Parsed<GrammarNode> {
         let start = self.position;
-        if let Some(link) = self.single_line_link()? {
-            if self.eol() {
-                return Ok(Some(link));
-            }
+        if let Some(link) = self.single_line_link()?
+            && self.eol()
+        {
+            return Ok(Some(link));
         }
         self.position = start;
-        if let Some(values) = self.single_line_values()? {
-            if self.eol() {
-                return Ok(Some(GrammarNode::spanning("link", values)));
-            }
+        if let Some(values) = self.single_line_values()?
+            && self.eol()
+        {
+            return Ok(Some(GrammarNode::spanning("link", values)));
         }
         Ok(self.fail(start))
     }

@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::configuration::ParseConfiguration;
 use crate::embedded_region_parser;
-use crate::language_catalog::{grammar_provenance, GrammarProvenance};
+use crate::language_catalog::{GrammarProvenance, grammar_provenance};
 use crate::language_parser::{BuiltInLanguageParser, LanguageParser};
 use crate::language_profile::LanguageProfile;
 use crate::link_flags::LinkFlags;
@@ -12,7 +12,7 @@ use crate::mixed_regions::EmbeddedRegion;
 use crate::natural_language::annotate_natural_language;
 pub use crate::network_projection::NetworkProjection;
 use crate::query::{LinkQuery, QueryMatch, QueryPredicateHost, RejectPredicateHost};
-use crate::self_description::{definition_expression, SELF_DESCRIPTION_ROOTS};
+use crate::self_description::{SELF_DESCRIPTION_ROOTS, definition_expression};
 use crate::source::{ByteRange, Point, SourceSpan};
 use crate::substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, VariableSubstitutionRule,
@@ -688,15 +688,15 @@ impl LinkNetwork {
 
         if rule.pattern().is_empty() {
             let bindings = SubstitutionBindings::default();
-            if let Some(references) = bindings.resolve_values(rule.replacement()) {
-                if !references.is_empty() {
-                    let created = self.insert_dynamic_link(
-                        &references,
-                        LinkMetadata::new().with_link_type(LinkType::Relation),
-                    );
-                    report.created.push(created);
-                    report.bindings.push(bindings);
-                }
+            if let Some(references) = bindings.resolve_values(rule.replacement())
+                && !references.is_empty()
+            {
+                let created = self.insert_dynamic_link(
+                    &references,
+                    LinkMetadata::new().with_link_type(LinkType::Relation),
+                );
+                report.created.push(created);
+                report.bindings.push(bindings);
             }
             return report;
         }
@@ -836,10 +836,10 @@ impl LinkNetwork {
     ) -> LinkId {
         let definition = definition.map(|definition| self.intern_arc(Arc::from(definition)));
         if let Some(id) = self.terms.get(term).copied() {
-            if let Some(definition) = definition {
-                if let Some(link) = self.links.get_mut(&id) {
-                    Arc::make_mut(link).metadata_mut().definition = Some(definition);
-                }
+            if let Some(definition) = definition
+                && let Some(link) = self.links.get_mut(&id)
+            {
+                Arc::make_mut(link).metadata_mut().definition = Some(definition);
             }
             return id;
         }

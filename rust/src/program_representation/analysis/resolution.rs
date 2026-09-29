@@ -5,7 +5,7 @@
 
 use std::cmp::Ordering;
 
-use super::extents::{is_rust_item, rust_use_aliases, Visibility};
+use super::extents::{Visibility, is_rust_item, rust_use_aliases};
 use super::{
     BTreeSet, Declaration, ProgramFact, ProgramRange, ProgramScope, ProgramSourceMapping,
     SemanticToken, TokenKind,

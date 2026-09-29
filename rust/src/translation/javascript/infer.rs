@@ -13,8 +13,8 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{
-    type_error, BinaryOp, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode, SPattern, SPatternNode,
-    SProgram, SProp, SPropNode, Span, Type, UnaryOp, BOOL, FLOAT, INT, ROOT, STRING,
+    BOOL, BinaryOp, FLOAT, INT, ROOT, Result, SCtor, SEffect, SExpr, SFn, SItem, SNode, SPattern,
+    SPatternNode, SProgram, SProp, SPropNode, STRING, Span, Type, UnaryOp, type_error,
 };
 use crate::translation::types::UNIT;
 
@@ -83,10 +83,10 @@ fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr, Type>) {
         }
     }
     fn walk(node: &mut SExpr, arrays: &HashMap<*const SExpr, Type>) {
-        if let Some(ty) = arrays.get(&std::ptr::from_ref::<SExpr>(node)) {
-            if let SNode::Array { element, .. } = &mut node.node {
-                *element = Some(ty.clone());
-            }
+        if let Some(ty) = arrays.get(&std::ptr::from_ref::<SExpr>(node))
+            && let SNode::Array { element, .. } = &mut node.node
+        {
+            *element = Some(ty.clone());
         }
         if let Some(test) = &mut node.tag_test {
             walk(&mut test.object, arrays);
@@ -382,7 +382,9 @@ impl Inference {
         };
         if let Some(described) = described {
             return Err(type_error(
-                format!("the function returns {described} on one path and finishes without a return value, returning undefined, on another; return a value on every path"),
+                format!(
+                    "the function returns {described} on one path and finishes without a return value, returning undefined, on another; return a value on every path"
+                ),
                 place,
             ));
         }
@@ -634,10 +636,10 @@ impl Inference {
             SNode::Str { .. } => Ok(Term::Known(STRING)),
             SNode::Unit => Ok(Term::Known(UNIT)),
             SNode::Name { path } => {
-                if let [name] = path.as_slice() {
-                    if let Some(term) = env.get(name) {
-                        return Ok(term.clone());
-                    }
+                if let [name] = path.as_slice()
+                    && let Some(term) = env.get(name)
+                {
+                    return Ok(term.clone());
                 }
                 self.call(path, &[], env, expr.span)
             }

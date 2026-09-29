@@ -6,8 +6,6 @@ use lindera::dictionary::load_dictionary;
 use lindera::mode::Mode;
 #[cfg(feature = "lindera")]
 use lindera::segmenter::Segmenter;
-#[cfg(feature = "lindera")]
-use lindera::tokenizer::Tokenizer;
 use lingua::Language::{
     Arabic, Bengali, Chinese, English, French, Hindi, Portuguese, Russian, Spanish, Urdu,
 };
@@ -305,8 +303,7 @@ fn mandarin_segments(text: &str) -> (&'static str, Vec<WordSegment>) {
         return ("lindera-jieba", Vec::new());
     };
     let segmenter = Segmenter::new(Mode::Normal, dictionary, None);
-    let tokenizer = Tokenizer::new(segmenter);
-    let Ok(tokens) = tokenizer.tokenize(text) else {
+    let Ok(tokens) = segmenter.segment(std::borrow::Cow::Borrowed(text)) else {
         return ("lindera-jieba", Vec::new());
     };
 

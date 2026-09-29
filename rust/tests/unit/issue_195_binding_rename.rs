@@ -2,7 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-use meta_language::{analyze_program, ProgramProjectContext};
+use meta_language::{ProgramProjectContext, analyze_program};
 use serde_json::Value;
 
 #[test]
@@ -81,10 +81,12 @@ fn binding_rename_rejects_capture_of_an_unresolved_reference() {
         .iter()
         .find(|binding| binding.name() == "x")
         .expect("x binding");
-    assert!(program
-        .unresolved_references()
-        .iter()
-        .any(|reference| reference.name() == "y"));
+    assert!(
+        program
+            .unresolved_references()
+            .iter()
+            .any(|reference| reference.name() == "y")
+    );
     let error = program
         .rename_binding(binding.id(), "y")
         .expect_err("rename must reject capture of the global y reference");
@@ -135,10 +137,12 @@ fn binding_rename_distinguishes_disjoint_nested_names_from_capture() {
 
         let result = program.rename_binding(binding.id(), fixture["replacement"].as_str().unwrap());
         if fixture["allowed"] == false {
-            assert!(result
-                .expect_err("capture must be rejected")
-                .to_string()
-                .contains("capture"));
+            assert!(
+                result
+                    .expect_err("capture must be rejected")
+                    .to_string()
+                    .contains("capture")
+            );
             continue;
         }
         let renamed = result.expect("disjoint nested name is safe");
@@ -206,10 +210,12 @@ fn javascript_var_bindings_use_function_scope_and_include_early_references() {
             .len(),
         0
     );
-    assert!(lexical
-        .unresolved_references()
-        .iter()
-        .any(|reference| reference.name() == "x"));
+    assert!(
+        lexical
+            .unresolved_references()
+            .iter()
+            .any(|reference| reference.name() == "x")
+    );
 }
 
 fn javascript_observation(source: &str) -> Value {

@@ -2,8 +2,8 @@
 //! never mutates an array.
 
 use super::{
-    array, type_error, unsupported, Checker, Env, Expr, Language, Node, Result, SArrayItem, SExpr,
-    Span, TranslationError, Type, FLOAT, INT,
+    Checker, Env, Expr, FLOAT, INT, Language, Node, Result, SArrayItem, SExpr, Span,
+    TranslationError, Type, array, type_error, unsupported,
 };
 
 impl Checker {
@@ -21,10 +21,10 @@ impl Checker {
     ) -> Result<Expr> {
         let mut element = expected.and_then(Type::element).cloned();
         // Inference fixes the element type of an array literal with no element of its own.
-        if element.is_none() {
-            if let Some(inferred) = inferred {
-                element = Some(self.resolve_type(Some(inferred), path, span)?);
-            }
+        if element.is_none()
+            && let Some(inferred) = inferred
+        {
+            element = Some(self.resolve_type(Some(inferred), path, span)?);
         }
         let mut parts: Vec<Expr> = Vec::new();
         let mut run: Option<usize> = None;

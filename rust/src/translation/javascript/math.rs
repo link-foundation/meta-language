@@ -1,8 +1,8 @@
 //! The exactly specified part of `Math` and `Number`: each function is exact
 //! or correctly rounded, so every target computes the same binary64 value.
 
-use super::{node, span, unsupported, JavaScriptParser, Result, SArrayItem, SExpr, SNode, Token};
 use super::{FLOAT, GLOBALS};
+use super::{JavaScriptParser, Result, SArrayItem, SExpr, SNode, Token, node, span, unsupported};
 
 /// The functions, by the path a program calls them by, and the op each is.
 const MATH: [(&str, &str); 15] = [

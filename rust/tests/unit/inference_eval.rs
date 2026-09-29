@@ -1,6 +1,6 @@
 use meta_language::{
-    evaluate, mdl, run_named_corpus, sample, size_symbols, CharClassItem, EvalError, GoldenCorpus,
-    Grammar, GrammarOracle, SampleConfig, ScoringMode, GOLDEN_CORPORA,
+    CharClassItem, EvalError, GOLDEN_CORPORA, GoldenCorpus, Grammar, GrammarOracle, SampleConfig,
+    ScoringMode, evaluate, mdl, run_named_corpus, sample, size_symbols,
 };
 
 #[test]
@@ -94,9 +94,11 @@ fn sampler_is_seeded_deterministic_and_uses_distinct_draw_order() {
 
     assert_eq!(first, second);
     assert_ne!(first, different_seed);
-    assert!(first
-        .iter()
-        .all(|sample| ["a", "b", "c"].contains(&sample.as_str())));
+    assert!(
+        first
+            .iter()
+            .all(|sample| ["a", "b", "c"].contains(&sample.as_str()))
+    );
 }
 
 #[test]

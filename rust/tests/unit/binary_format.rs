@@ -12,9 +12,11 @@ fn arbitrary_file_bytes_round_trip_without_utf8_loss() {
         .filter(|link| link.metadata().link_type() == Some(LinkType::Token))
         .collect::<Vec<_>>();
     assert_eq!(tokens.len(), 1);
-    assert!(tokens
-        .iter()
-        .all(|link| link.metadata().language() == Some("application/pdf")));
+    assert!(
+        tokens
+            .iter()
+            .all(|link| link.metadata().language() == Some("application/pdf"))
+    );
 }
 
 #[test]

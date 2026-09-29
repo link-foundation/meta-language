@@ -1,10 +1,8 @@
 use meta_language::{
-    ByteRange, LanguageIdentificationDetector, LinkFlags, LinkId, LinkMetadata, LinkNetwork,
-    LinkQuery, LinkType, NetworkProjection, ParseConfiguration, Point, ProbabilisticTruthValue,
-    Probability, RegionDetectionPolicy, SourceSpan, SubstitutionRule, TriviaAttachmentPolicy,
-    TruthValue, VerificationIssueKind, DATA_FORMAT_TARGETS, GRAMMAR_EMBEDDING_TARGETS,
-    LANGUAGE_FIXTURES, MARKUP_LANGUAGE_TARGETS, NATURAL_LANGUAGE_TARGETS,
-    PROGRAMMING_LANGUAGE_TARGETS, SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS,
+    ByteRange, LANGUAGE_FIXTURES, LanguageIdentificationDetector, LinkFlags, LinkId, LinkMetadata,
+    LinkNetwork, LinkQuery, LinkType, NATURAL_LANGUAGE_TARGETS, NetworkProjection,
+    ParseConfiguration, Point, ProbabilisticTruthValue, Probability, RegionDetectionPolicy,
+    SourceSpan, SubstitutionRule, TriviaAttachmentPolicy, TruthValue, VerificationIssueKind,
 };
 
 #[test]
@@ -135,18 +133,24 @@ fn parse_is_lossless_by_default_and_matches_explicit_lossless_boundary() {
 
     assert_eq!(parsed, explicit);
     assert_eq!(parsed.reconstruct_text(), "alpha beta");
-    assert!(parsed
-        .projected_links(NetworkProjection::Lossless)
-        .any(|link| link.metadata().flags().is_extra()));
-    assert!(parsed
-        .projected_links(NetworkProjection::ConcreteSyntax)
-        .any(|link| link.metadata().link_type() == Some(LinkType::Trivia)));
-    assert!(parsed
-        .projected_links(NetworkProjection::AbstractSyntax)
-        .all(|link| !matches!(
-            link.metadata().link_type(),
-            Some(LinkType::Token | LinkType::Trivia)
-        )));
+    assert!(
+        parsed
+            .projected_links(NetworkProjection::Lossless)
+            .any(|link| link.metadata().flags().is_extra())
+    );
+    assert!(
+        parsed
+            .projected_links(NetworkProjection::ConcreteSyntax)
+            .any(|link| link.metadata().link_type() == Some(LinkType::Trivia))
+    );
+    assert!(
+        parsed
+            .projected_links(NetworkProjection::AbstractSyntax)
+            .all(|link| !matches!(
+                link.metadata().link_type(),
+                Some(LinkType::Token | LinkType::Trivia)
+            ))
+    );
 }
 
 #[test]
@@ -241,9 +245,11 @@ fn mutable_snapshot_edits_preserve_parent_bytes_and_share_unchanged_links() {
         let mut mutable = snapshot.to_mutable("mark first token missing");
         assert_eq!(snapshot.network().shared_link_count(unchanged), Some(2));
 
-        assert!(mutable
-            .network_mut()
-            .set_flags(edited, LinkFlags::missing()));
+        assert!(
+            mutable
+                .network_mut()
+                .set_flags(edited, LinkFlags::missing())
+        );
         assert_eq!(snapshot.network().reconstruct_text(), "alpha beta");
         assert_eq!(mutable.network().reconstruct_text(), "lpha beta");
         assert_eq!(snapshot.network().shared_link_count(unchanged), Some(2));
@@ -322,9 +328,11 @@ fn snapshot_diff_reports_structural_changes_from_an_edited_fork() {
     );
 
     let mut mutable = snapshot.to_mutable("rename alpha");
-    assert!(mutable
-        .network_mut()
-        .apply_edit(find_range(source, "alpha"), "gamma"));
+    assert!(
+        mutable
+            .network_mut()
+            .apply_edit(find_range(source, "alpha"), "gamma")
+    );
     assert_eq!(snapshot.network().shared_link_count(beta), Some(2));
     let committed = mutable.commit();
 
@@ -369,9 +377,11 @@ fn mixed_language_regions_are_embedded_in_one_network() {
     assert_eq!(network.reconstruct_text(), source);
     assert!(languages.contains(&"Rust"));
     assert!(languages.contains(&"HTML"));
-    assert!(regions
-        .iter()
-        .all(|region| region.span().byte_range().end() <= source.len()));
+    assert!(
+        regions
+            .iter()
+            .all(|region| region.span().byte_range().end() <= source.len())
+    );
 }
 
 #[test]
@@ -384,10 +394,12 @@ fn content_driven_and_html_region_detection_cover_embedding_targets() {
             .with_region_detection_policy(RegionDetectionPolicy::ContentDriven),
     );
     let markdown_regions = markdown_network.embedded_regions();
-    assert!(markdown_regions
-        .iter()
-        .map(meta_language::EmbeddedRegion::language)
-        .any(|language| language == "sql-ansi"));
+    assert!(
+        markdown_regions
+            .iter()
+            .map(meta_language::EmbeddedRegion::language)
+            .any(|language| language == "sql-ansi")
+    );
 
     let html = "<script>const x = 1;</script><style>.x { color: red; }</style><p style=\"color: blue\">text</p>";
     let html_network = LinkNetwork::parse(html, "HTML", ParseConfiguration::default());
@@ -706,9 +718,11 @@ fn query_matching_finds_tokens_by_type_term_and_language() {
     let matches = network.query_links(&query);
 
     assert_eq!(matches.len(), 2);
-    assert!(matches
-        .iter()
-        .all(|link| link.metadata().term() == Some("x")));
+    assert!(
+        matches
+            .iter()
+            .all(|link| link.metadata().term() == Some("x"))
+    );
 }
 
 #[test]
@@ -760,9 +774,11 @@ fn concept_links_reconstruct_to_target_language_syntax() {
         network.reconstruct_concept("statehood", "Spanish"),
         Some("Hawaii es un estado.")
     );
-    assert!(network
-        .projected_links(NetworkProjection::Semantic)
-        .any(|link| link.metadata().link_type() == Some(LinkType::Concept)));
+    assert!(
+        network
+            .projected_links(NetworkProjection::Semantic)
+            .any(|link| link.metadata().link_type() == Some(LinkType::Concept))
+    );
 }
 
 #[test]
@@ -812,159 +828,4 @@ fn probabilistic_truth_values_cover_relative_meta_logic_probability_cases() {
     assert_eq!(event.negate().true_probability().basis_points(), 2_500);
     assert_eq!(liar.and(event).true_probability().basis_points(), 3_750);
     assert_eq!(liar.or(event).true_probability().basis_points(), 8_750);
-}
-
-#[test]
-fn language_targets_cover_markup_programming_natural_and_embedding_scope() {
-    assert_eq!(MARKUP_LANGUAGE_TARGETS.len(), 5);
-    assert_eq!(PROGRAMMING_LANGUAGE_TARGETS.len(), 10);
-    assert_eq!(NATURAL_LANGUAGE_TARGETS.len(), 10);
-
-    let markup_names = MARKUP_LANGUAGE_TARGETS
-        .iter()
-        .map(meta_language::LanguageTarget::name)
-        .collect::<Vec<_>>();
-    assert!(markup_names.contains(&"txt"));
-    assert!(markup_names.contains(&"Markdown"));
-    assert!(markup_names.contains(&"HTML"));
-    assert!(markup_names.contains(&"PDF"));
-    assert!(markup_names.contains(&"DOCX"));
-
-    assert!(GRAMMAR_EMBEDDING_TARGETS.iter().any(|target| {
-        target.host_language() == "Markdown"
-            && target.embedded_language() == "Programming language region"
-    }));
-    assert!(GRAMMAR_EMBEDDING_TARGETS.iter().any(|target| {
-        target.host_language() == "HTML" && target.embedded_language() == "JavaScript"
-    }));
-
-    assert!(PROGRAMMING_LANGUAGE_TARGETS
-        .iter()
-        .all(|target| target.basis().contains("TIOBE May 2026")));
-    assert!(PROGRAMMING_LANGUAGE_TARGETS
-        .iter()
-        .any(|target| target.name() == "sql-ansi"));
-    assert!(NATURAL_LANGUAGE_TARGETS
-        .iter()
-        .all(|target| target.basis().contains("Ethnologue/Britannica")));
-}
-
-#[test]
-fn data_format_targets_cover_interchange_format_scope() {
-    assert_eq!(DATA_FORMAT_TARGETS.len(), 9);
-
-    let names = DATA_FORMAT_TARGETS
-        .iter()
-        .map(meta_language::LanguageTarget::name)
-        .collect::<Vec<_>>();
-    assert_eq!(
-        names,
-        vec!["JSON", "YAML", "TOML", "XML", "INI", "protobuf", "GraphQL", "CSV", "JSON5"]
-    );
-
-    assert!(DATA_FORMAT_TARGETS
-        .iter()
-        .all(|target| target.family() == meta_language::LanguageFamily::DataFormat));
-    assert!(DATA_FORMAT_TARGETS
-        .iter()
-        .all(|target| target.basis().contains("Issue #47")));
-
-    assert!(names.contains(&"CSV"));
-    assert!(names.contains(&"JSON5"));
-}
-
-#[test]
-fn second_tier_programming_targets_cover_next_grammar_wave_scope() {
-    assert_eq!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.len(), 6);
-
-    let names = SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
-        .iter()
-        .map(meta_language::LanguageTarget::name)
-        .collect::<Vec<_>>();
-    assert_eq!(
-        names,
-        vec!["PHP", "Swift", "Kotlin", "Scala", "Lua", "Perl"]
-    );
-
-    assert!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
-        .iter()
-        .all(|target| target.family() == meta_language::LanguageFamily::Programming));
-    assert!(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS
-        .iter()
-        .all(|target| target.basis().contains("Issue #47 R-2")));
-
-    assert!(names.contains(&"Perl"));
-}
-
-#[test]
-fn natural_language_targets_follow_ethnologue_2025_total_speaker_order() {
-    let target_names = NATURAL_LANGUAGE_TARGETS
-        .iter()
-        .map(meta_language::LanguageTarget::name)
-        .collect::<Vec<_>>();
-
-    assert_eq!(
-        target_names,
-        vec![
-            "English",
-            "Mandarin Chinese",
-            "Hindi",
-            "Spanish",
-            "Modern Standard Arabic",
-            "French",
-            "Bengali",
-            "Portuguese",
-            "Russian",
-            "Urdu",
-        ]
-    );
-}
-
-#[test]
-fn every_language_target_has_an_executable_lossless_fixture() {
-    let target_languages = MARKUP_LANGUAGE_TARGETS
-        .iter()
-        .chain(PROGRAMMING_LANGUAGE_TARGETS.iter())
-        .chain(SECOND_TIER_PROGRAMMING_LANGUAGE_TARGETS.iter())
-        .chain(NATURAL_LANGUAGE_TARGETS.iter())
-        .chain(DATA_FORMAT_TARGETS.iter())
-        .map(meta_language::LanguageTarget::name)
-        .collect::<Vec<_>>();
-
-    assert_eq!(LANGUAGE_FIXTURES.len(), target_languages.len());
-
-    for language in &target_languages {
-        assert!(
-            LANGUAGE_FIXTURES
-                .iter()
-                .any(|fixture| fixture.language() == *language),
-            "missing executable language fixture for {language}"
-        );
-    }
-
-    for fixture in LANGUAGE_FIXTURES {
-        assert!(
-            target_languages.contains(&fixture.language()),
-            "{} fixture is not tied to a requested language target",
-            fixture.language()
-        );
-
-        let network = LinkNetwork::parse(
-            fixture.source(),
-            fixture.language(),
-            ParseConfiguration::default(),
-        );
-
-        assert_eq!(
-            network.reconstruct_text(),
-            fixture.source(),
-            "{} fixture failed reconstruction",
-            fixture.description()
-        );
-        assert!(
-            network.verify_full_match(None).is_clean(),
-            "{} fixture should parse cleanly",
-            fixture.description()
-        );
-    }
 }

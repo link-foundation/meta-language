@@ -11,14 +11,14 @@
 
 use std::collections::HashMap;
 
-use super::diagnostics::{type_error, unsupported, Result, TranslationError};
-use super::lexer::{describe, is_js_space, tokenize_source, Source, Token, TokenCursor, TokenKind};
+use super::diagnostics::{Result, TranslationError, type_error, unsupported};
+use super::lexer::{Source, Token, TokenCursor, TokenKind, describe, is_js_space, tokenize_source};
 use super::surface::{
     BinaryOp, Flavor, Rounding, SBinder, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn,
     SItem, SMain, SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProof, SProp,
     SPropNode, SRow, SRule, SSplit, SSplitCase, SStep, STheorem, ShowStyle, UnaryOp,
 };
-use super::types::{Type, BOOL, INT, NAT, STRING, UNIT};
+use super::types::{BOOL, INT, NAT, STRING, Type, UNIT};
 use super::{Language, Span};
 
 mod portable;

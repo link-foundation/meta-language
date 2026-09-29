@@ -13,17 +13,16 @@
 
 use std::collections::BTreeSet;
 
-use super::diagnostics::{type_error, unsupported, Result, TranslationError};
+use super::Language;
+use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::emit_common::{EmitOptions, EmitState, Emitted};
 use super::ir::{
-    rename_function, rename_main, rename_theorem, tail_loop, Binder, ByZero, Case, Ctor, Decl,
-    Effect, Expr, FnDecl, LitValue, Main, Node, Param, Pattern, Program, Prop, Semantics,
-    TheoremDecl,
+    Binder, ByZero, Case, Ctor, Decl, Effect, Expr, FnDecl, LitValue, Main, Node, Param, Pattern,
+    Program, Prop, Semantics, TheoremDecl, rename_function, rename_main, rename_theorem, tail_loop,
 };
 use super::lexer::json_string;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
-use super::types::{fixed_bounds, Type};
-use super::Language;
+use super::types::{Type, fixed_bounds};
 
 mod arrays;
 mod helpers;
@@ -463,7 +462,7 @@ impl<'p> JavaScriptEmitter<'p> {
                 return Err(malformed(format!(
                     "no JavaScript domain for {}",
                     other.kind()
-                )))
+                )));
             }
         };
         Ok(values)

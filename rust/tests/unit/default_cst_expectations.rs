@@ -4,10 +4,10 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use meta_language::{
-    grammar_names, grammar_provenance, language_candidates_for_path, language_for_path, LinkId,
-    LinkNetwork, LinkType, ParseConfiguration,
+    LinkId, LinkNetwork, LinkType, ParseConfiguration, grammar_names, grammar_provenance,
+    language_candidates_for_path, language_for_path,
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
 fn parity_json(name: &str) -> Value {
@@ -372,7 +372,16 @@ fn symbol_names_sha256(id: &str) -> Option<(String, Vec<String>)> {
         .filter(|name| name.contains('\u{fffd}'))
         .cloned()
         .collect();
-    Some((format!("{:x}", Sha256::digest(json.as_bytes())), garbled))
+    Some((
+        Sha256::digest(json.as_bytes())
+            .iter()
+            .fold(String::with_capacity(64), |mut hex, byte| {
+                use std::fmt::Write as _;
+                let _ = write!(hex, "{byte:02x}");
+                hex
+            }),
+        garbled,
+    ))
 }
 
 /// A parse language with its positive and recovery sources, aliases,
@@ -636,7 +645,14 @@ fn every_rust_inventory_language_parses_to_its_complete_lossless_default_cst() {
     )
     .expect("inventory is readable");
     let inventory: Value = serde_json::from_slice(&inventory_bytes).expect("inventory is JSON");
-    let digest = format!("{:x}", Sha256::digest(&inventory_bytes));
+    let digest =
+        Sha256::digest(&inventory_bytes)
+            .iter()
+            .fold(String::with_capacity(64), |mut hex, byte| {
+                use std::fmt::Write as _;
+                let _ = write!(hex, "{byte:02x}");
+                hex
+            });
     let expected = expected_languages();
     let mut failures = Vec::new();
     for language in inventory["languages"].as_array().expect("languages") {
@@ -683,7 +699,14 @@ fn every_rust_embedded_language_path_parses_to_its_complete_lossless_default_cst
     let evidence_bytes = fs::read(root.join("parity/fixtures/issue-195-evidence.json"))
         .expect("evidence fixtures are readable");
     let evidence: Value = serde_json::from_slice(&evidence_bytes).expect("evidence is JSON");
-    let digest = format!("{:x}", Sha256::digest(&evidence_bytes));
+    let digest =
+        Sha256::digest(&evidence_bytes)
+            .iter()
+            .fold(String::with_capacity(64), |mut hex, byte| {
+                use std::fmt::Write as _;
+                let _ = write!(hex, "{byte:02x}");
+                hex
+            });
     let expectations =
         parity_json("fixtures/default-cst-expected.json")["embeddedFixtures"].clone();
     let expected = expected_languages();

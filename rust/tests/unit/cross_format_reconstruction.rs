@@ -11,9 +11,9 @@
 use std::collections::BTreeMap;
 
 use meta_language::{
-    canonical_document_format, document_format_profile, parse_markup_document, BlockNode,
-    FormattingDocument, InlineNode, LinkNetwork, ParseConfiguration, CROSS_FORMAT_CONCEPTS,
-    DOCUMENT_FORMATS,
+    BlockNode, CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS, FormattingDocument, InlineNode,
+    LinkNetwork, ParseConfiguration, canonical_document_format, document_format_profile,
+    parse_markup_document,
 };
 
 /// Whether `format` represents `concept` natively (no lossy fallback).

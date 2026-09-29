@@ -23,7 +23,7 @@
 //! is counted in bytes, so the JavaScript parser computes the same tree over
 //! string indices.
 
-use crate::builtin_grammar::{fill_extras, propagate_errors, GrammarNode};
+use crate::builtin_grammar::{GrammarNode, fill_extras, propagate_errors};
 
 /// Parses `text` as a PDF file into a lossless CST.
 pub fn parse_pdf_cst(text: &str) -> GrammarNode {
@@ -486,20 +486,21 @@ impl<'a> PdfGrammarParser<'a> {
             "[" => return Some(self.array()),
             _ => {}
         }
-        if is_unsigned(token) && !self.content {
-            if let [_, Some(generation), Some(keyword)] = self.peek_tokens() {
-                if is_unsigned(generation) && is_keyword(keyword, "R") {
-                    self.position = keyword.end;
-                    return Some(GrammarNode::spanning(
-                        "indirect_reference",
-                        vec![
-                            leaf_for(token).with_field("object_number"),
-                            leaf_for(generation).with_field("generation"),
-                            GrammarNode::anonymous("R", keyword.start, keyword.end),
-                        ],
-                    ));
-                }
-            }
+        if is_unsigned(token)
+            && !self.content
+            && let [_, Some(generation), Some(keyword)] = self.peek_tokens()
+            && is_unsigned(generation)
+            && is_keyword(keyword, "R")
+        {
+            self.position = keyword.end;
+            return Some(GrammarNode::spanning(
+                "indirect_reference",
+                vec![
+                    leaf_for(token).with_field("object_number"),
+                    leaf_for(generation).with_field("generation"),
+                    GrammarNode::anonymous("R", keyword.start, keyword.end),
+                ],
+            ));
         }
         if !VALUE_TOKENS.contains(&token.kind) {
             return None;

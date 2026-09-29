@@ -2,7 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-use meta_language::{decode_program_translation, translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, decode_program_translation, translate_program};
 use serde_json::Value;
 
 fn corpus() -> Value {
@@ -76,9 +76,11 @@ fn translated_rust_function_exports_javascript_behavior() {
     let expected_result = fixture["expectedResult"].as_u64().expect("expected result");
     let translated = translate_program(source_text, "Rust", "JavaScript")
         .expect("Rust to JavaScript translation");
-    assert!(translated
-        .code()
-        .contains("export function answer() { return 42; }"));
+    assert!(
+        translated
+            .code()
+            .contains("export function answer() { return 42; }")
+    );
     assert_eq!(
         decode_program_translation(translated.code(), "JavaScript")
             .expect("envelope still decodes")

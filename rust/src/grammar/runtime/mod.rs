@@ -154,10 +154,10 @@ fn validate_grammar(grammar: &Grammar) -> Vec<String> {
     if grammar.rules().is_empty() {
         diagnostics.push("grammar has no start rule".to_string());
     }
-    if let Some(start) = grammar.start() {
-        if grammar.rule(start).is_none() {
-            diagnostics.push(format!("start rule `{start}` is not defined"));
-        }
+    if let Some(start) = grammar.start()
+        && grammar.rule(start).is_none()
+    {
+        diagnostics.push(format!("start rule `{start}` is not defined"));
     }
     diagnostics.extend(
         grammar

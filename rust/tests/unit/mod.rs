@@ -64,6 +64,7 @@ mod issue_195_translation_pairs;
 mod language_catalog;
 mod language_identification;
 mod language_profile;
+mod language_targets;
 mod link_network;
 mod link_network_trivia;
 mod links_notation;

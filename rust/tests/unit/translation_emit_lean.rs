@@ -1,6 +1,6 @@
 use meta_language::translation::emit_lean::emit_lean;
 use meta_language::translation::ir::Program;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// The checked IR of `def monus (a b : Nat) : Nat := a - b` with a `main`
 /// that prints `monus 3 5`, as the JavaScript checker serialises it.
@@ -64,15 +64,21 @@ fn program(value: Value) -> Program {
 #[test]
 fn emits_a_function_and_main_with_their_contract() {
     let emitted = emit_lean(&program(monus())).expect("the program emits");
-    assert!(emitted
-        .text
-        .starts_with("-- Translated from Lean by meta-language: portable core, Lean target.\n"));
-    assert!(emitted
-        .text
-        .contains("set_option linter.constructorNameAsVariable false\n\n"));
-    assert!(emitted
-        .text
-        .contains("def monus (a : Nat) (b : Nat) : Nat :=\n  (a - b)\n"));
+    assert!(
+        emitted
+            .text
+            .starts_with("-- Translated from Lean by meta-language: portable core, Lean target.\n")
+    );
+    assert!(
+        emitted
+            .text
+            .contains("set_option linter.constructorNameAsVariable false\n\n")
+    );
+    assert!(
+        emitted
+            .text
+            .contains("def monus (a : Nat) (b : Nat) : Nat :=\n  (a - b)\n")
+    );
     assert!(emitted.text.ends_with(
         "def main : IO Unit := do\n  IO.println (toString (monus (3 : Nat) (5 : Nat)))\n"
     ));

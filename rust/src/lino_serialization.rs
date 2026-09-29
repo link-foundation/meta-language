@@ -34,7 +34,7 @@ use std::fmt;
 use std::fmt::Write as _;
 use std::sync::Arc;
 
-use links_notation::{parse_lino_to_links_with_config, LiNo, ParserConfig};
+use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 
 use crate::link_flags::LinkFlags;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
@@ -113,7 +113,7 @@ impl LinkNetwork {
                     LiNo::Link { .. } => {
                         return Err(LinoSerializationError::Structure(
                             "statement values must be references or a meta sublink".to_string(),
-                        ))
+                        ));
                     }
                 }
             }
@@ -123,10 +123,8 @@ impl LinkNetwork {
                 )
             })?;
             let (metadata, registered) = decode_meta(meta_values)?;
-            if registered {
-                if let Some(term) = metadata.term() {
-                    network.terms.insert(Arc::from(term), link_id);
-                }
+            if registered && let Some(term) = metadata.term() {
+                network.terms.insert(Arc::from(term), link_id);
             }
             network.next_id = network.next_id.max(link_id.0 + 1);
             network.links.insert(
@@ -220,7 +218,7 @@ fn decode_meta(fields: &[LiNo<String>]) -> Result<(LinkMetadata, bool), LinoSeri
             other => {
                 return Err(LinoSerializationError::Structure(format!(
                     "unknown meta field `{other}`"
-                )))
+                )));
             }
         }
     }
@@ -307,7 +305,7 @@ fn parse_link_type(token: &str) -> Result<LinkType, LinoSerializationError> {
         other => {
             return Err(LinoSerializationError::Structure(format!(
                 "unknown link type `{other}`"
-            )))
+            )));
         }
     })
 }

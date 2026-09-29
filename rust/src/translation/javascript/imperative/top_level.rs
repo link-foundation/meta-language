@@ -5,8 +5,8 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 use super::{
-    ctor_row, flat, internal, named, node, statement_uses, union, untyped, visible, Ctx, Fall,
-    JavaScriptParser, Lowering, Result, SCtor, SData, SExpr, SItem, SNode, Span, Stmt, Var,
+    Ctx, Fall, JavaScriptParser, Lowering, Result, SCtor, SData, SExpr, SItem, SNode, Span, Stmt,
+    Var, ctor_row, flat, internal, named, node, statement_uses, union, untyped, visible,
 };
 use crate::translation::surface::SEffect;
 

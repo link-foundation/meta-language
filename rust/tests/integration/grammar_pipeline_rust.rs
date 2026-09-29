@@ -1,4 +1,4 @@
-use meta_language::{emit_rust_parser, import_pest, GrammarFormat, GrammarRule};
+use meta_language::{GrammarFormat, GrammarRule, emit_rust_parser, import_pest};
 
 use super::grammar_pipeline_support::{
     assert_runtime_accepts_all_strings, assert_runtime_rejects, compile_and_run_rust_parser,
@@ -15,10 +15,12 @@ fn infer_emit_rust_reparses_examples() {
     assert!(!artifacts.pest_grammar.trim().is_empty());
     assert!(!artifacts.parser_struct.trim().is_empty());
     assert!(!artifacts.ast_types.trim().is_empty());
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("unordered choice")));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("unordered choice"))
+    );
     pest_meta::parse_and_optimize(&artifacts.pest_grammar).expect("pest grammar validates");
 
     let emitted_grammar = import_pest(&artifacts.pest_grammar).expect("emitted pest imports");

@@ -1,7 +1,7 @@
 //! `console.log` in a function: Rust prints where the source prints; Lean and
 //! Rocq thread the lines printed through every function that prints.
 
-use meta_language::{translate_program, TranslationSupport};
+use meta_language::{TranslationSupport, translate_program};
 
 const LOUD: &str = "function loud(x) {
   console.log('loud');
