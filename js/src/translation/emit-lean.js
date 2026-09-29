@@ -10,7 +10,7 @@ import { unsupported } from './diagnostics.js';
 import { propFunctions } from './proof.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
-import { EmitState, numberDependence, orderDeclarations } from './emit-common.js';
+import { EmitState, mutualGroups, numberDependence, orderDeclarations } from './emit-common.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 
 const KEYWORDS = new Set([
@@ -185,9 +185,13 @@ class LeanEmitter {
         blocks.push(`namespace ${this.state.moduleName(open)}`);
       }
     };
+    const groups = mutualGroups(this.program);
     for (const entry of orderDeclarations(this.program)) {
       moveTo(entry.modulePath);
-      if (entry.k === 'data') blocks.push(this.data(entry));
+      const group = groups.get(entry.fullName);
+      if (group) {
+        if (group[0] === entry) blocks.push(this.mutual(group));
+      } else if (entry.k === 'data') blocks.push(this.data(entry));
       else if (entry.k === 'fn') blocks.push(this.fn(entry));
       else blocks.push(this.theorem(entry));
     }
@@ -249,13 +253,16 @@ class LeanEmitter {
     return [`inductive ${name} where`, ...ctors, '  deriving Repr, DecidableEq, Inhabited'].join('\n');
   }
 
-  fn(entry) {
+  definition(entry) {
     const { params, body } = renameFunction(entry, ident, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
-    if (entry.mutual) throw unsupported('mutual recursion', `${entry.fullName} is mutually recursive; the Lean target emits only single recursive definitions`, entry.span);
     const binders = params.map((param) => ` (${param.name} : ${this.type(param.type)})`).join('');
-    const text = `def ${name}${binders} : ${this.type(entry.ret)} :=\n  ${this.expr(body, 1)}`;
+    return `def ${name}${binders} : ${this.type(entry.ret)} :=\n  ${this.expr(body, 1)}`;
+  }
+
+  fn(entry) {
+    const text = this.definition(entry);
     if (!entry.recursive) return text;
     if (entry.decreasing === null) {
       this.state.encode('general-recursion', 'recursion without a structurally decreasing argument is a Lean partial def: it runs as the source does but its equations are opaque to proofs');
@@ -264,6 +271,12 @@ class LeanEmitter {
     // Lean tries structural recursion on each argument before well-founded
     // recursion, so the structurally decreasing argument needs no annotation.
     return text;
+  }
+
+  /** Mutually recursive functions are one `mutual` block of partial defs. */
+  mutual(group) {
+    this.state.encode('mutual-recursion', 'mutually recursive functions are a Lean mutual block of partial defs: they run as the source does but their equations are opaque to proofs');
+    return ['mutual', ...group.map((entry) => `partial ${this.definition(entry)}`), 'end'].join('\n\n');
   }
 
   theorem(entry) {

@@ -12,9 +12,12 @@
 
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
+use std::rc::Rc;
 
 use super::diagnostics::{unsupported, ErrorKind, Result, TranslationError};
-use super::emit_common::{order_declarations, CtorStyle, EmitOptions, EmitState, Emitted};
+use super::emit_common::{
+    mutual_groups, order_declarations, CtorStyle, EmitOptions, EmitState, Emitted,
+};
 use super::ir::{
     rename_function, rename_main, rename_theorem, ByZero, Case, DataDecl, Decl, Effect, Expr,
     FnDecl, Hints, LitValue, Main, Node, Param, Pattern, Plan, Program, Prop, Semantics,
@@ -27,10 +30,12 @@ use super::Language;
 
 mod expressions;
 mod floats;
+mod mutual;
 mod proofs;
 
 pub use self::floats::FLOAT_PRELUDE;
 use self::floats::{FLOAT_REM, FLOAT_SAME, JS_CONSOLE, JS_NUMBER};
+use self::mutual::Mutual;
 
 const KEYWORDS: &[&str] = &[
     "as",
@@ -329,6 +334,8 @@ struct Current {
     recursive: bool,
     /// Recursive with no termination argument: self-calls go through `ml_fix`.
     general: bool,
+    /// A member of a mutually recursive group: calls of the group go through `ml_rec`.
+    mutual: Option<Rc<Mutual>>,
 }
 
 struct RocqEmitter<'p> {
@@ -347,12 +354,15 @@ impl RocqEmitter<'_> {
         let mut blocks: Vec<String> = Vec::new();
         let order = order_declarations(program, true)?;
         let mut open_modules: Vec<String> = Vec::new();
+        let groups = mutual_groups(program);
         for entry in order {
             self.move_to(&mut open_modules, entry.module_path(), &mut blocks);
-            blocks.push(match entry {
-                Decl::Data(data) => self.data(entry, data)?,
-                Decl::Fn(function) => self.function(entry, function)?,
-                Decl::Theorem(theorem) => self.theorem(entry, theorem)?,
+            blocks.push(match (entry, groups.get(entry.full_name())) {
+                (_, Some(group)) if std::ptr::eq(group[0], entry) => self.mutual(group)?,
+                (_, Some(_)) => continue,
+                (Decl::Data(data), None) => self.data(entry, data)?,
+                (Decl::Fn(function), None) => self.function(entry, function)?,
+                (Decl::Theorem(theorem), None) => self.theorem(entry, theorem)?,
             });
         }
         self.move_to(&mut open_modules, &[], &mut blocks);
@@ -505,6 +515,7 @@ impl RocqEmitter<'_> {
             name: name.clone(),
             recursive: function.recursive,
             general: function.recursive && function.decreasing.is_none() && !function.mutual,
+            mutual: None,
         });
         let mut binders = String::new();
         for param in &params {
@@ -514,16 +525,6 @@ impl RocqEmitter<'_> {
         let result = self.ty(&function.ret)?;
         let text = self.expr(&body)?;
         self.current = None;
-        if function.mutual {
-            return Err(unsupported(
-                "mutual recursion",
-                &format!(
-                    "{} is mutually recursive; the Rocq target emits only single recursive definitions",
-                    function.full_name
-                ),
-                function.span,
-            ));
-        }
         if !function.recursive {
             return Ok(format!(
                 "Definition {name}{binders} : {result} :=\n  {text}."

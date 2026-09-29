@@ -152,6 +152,31 @@
       }
     },
     {
+      "name": "corpus/mutual-recursion.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/mutual-recursion.mjs",
+      "parse": {
+        "sha256": "648f37dad27401e6e60650623d860f49246ccc9513327ce55b28c749e6295f6f"
+      },
+      "check": {
+        "sha256": "6859a50d10f08eb7b185af6f0a8ca71b3f33a8151d19221206d01c745920a0d7"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "5263485d36671849c92d69db83ed0abbd6e9cca9a4806fada370075f92315a70"
+        },
+        "rust": {
+          "sha256": "53f58c4394a32b59c2ffb4ed8d407f48c5d890bb1ee1abe93e8bf6f1ae7657e5"
+        },
+        "lean": {
+          "sha256": "e392b20030b666aab9b0556ff5315091be28ea2b3f38a0360be956092093b234"
+        },
+        "rocq": {
+          "sha256": "1198d3d2103920e0970ac02ec03686091bf979793acdcbd89a02a3c578fc4dd9"
+        }
+      }
+    },
+    {
       "name": "corpus/numbers.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/numbers.mjs",
@@ -1408,13 +1433,13 @@
         "lean": {
           "error": {
             "kind": "unsupported",
-            "message": "cyclic declarations: a.b.g depends on declarations that depend on it, which needs mutual definitions at 24..53"
+            "message": "mutual recursion across modules: a.b.g and a.h are mutually recursive in different modules; the target defines them together in one module at 59..88"
           }
         },
         "rocq": {
           "error": {
             "kind": "unsupported",
-            "message": "cyclic declarations: a.b.g depends on declarations that depend on it, which needs mutual definitions at 24..53"
+            "message": "mutual recursion across modules: a.b.g and a.h are mutually recursive in different modules; the target defines them together in one module at 59..88"
           }
         }
       }
@@ -3676,13 +3701,13 @@
         "lean": {
           "error": {
             "kind": "unsupported",
-            "message": "cyclic declarations: a.b.g depends on declarations that depend on it, which needs mutual definitions at 24..53"
+            "message": "mutual recursion across modules: a.b.g and a.h are mutually recursive in different modules; the target defines them together in one module at 59..88"
           }
         },
         "rocq": {
           "error": {
             "kind": "unsupported",
-            "message": "cyclic declarations: a.b.g depends on declarations that depend on it, which needs mutual definitions at 24..53"
+            "message": "mutual recursion across modules: a.b.g and a.h are mutually recursive in different modules; the target defines them together in one module at 59..88"
           }
         }
       }
@@ -5983,16 +6008,10 @@
           "sha256": "e5978a894ed4c2366a1c85d12fdebf1a9758ca0d7cbf179a7da89263e8a5445e"
         },
         "lean": {
-          "error": {
-            "kind": "unsupported",
-            "message": "cyclic declarations: even depends on declarations that depend on it, which needs mutual definitions at 0..67"
-          }
+          "sha256": "18cffa4fe59ea78d7b61526b0f3e7278edae4794621ef9f8d38de528487ff253"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "cyclic declarations: even depends on declarations that depend on it, which needs mutual definitions at 0..67"
-          }
+          "sha256": "58777dc27024f7252c7d576aced1669c5700c0ccbdd42e8387e5dac37eca216b"
         }
       }
     },
@@ -6514,16 +6533,10 @@
           "sha256": "f5286d43c57db79b7a84a786f6832d8b3e700261d2582a35608d30a3f0d99d20"
         },
         "lean": {
-          "error": {
-            "kind": "unsupported",
-            "message": "cyclic declarations: even depends on declarations that depend on it, which needs mutual definitions at 51..238"
-          }
+          "sha256": "f96079f0702d57ff6b0c65b645f2da3bf4f9b71904eb2ebd91e0699590a96c69"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "cyclic declarations: even depends on declarations that depend on it, which needs mutual definitions at 51..238"
-          }
+          "sha256": "c11570b50a1d7a357b835a6288251df90563dff29038042f7567a61ec5ca4ae7"
         }
       }
     },
@@ -8770,16 +8783,10 @@
           "sha256": "ac3725f23578ab51d5f72a0e8e0cf374e0a2e39d7b6e326784fd820d97a574bb"
         },
         "lean": {
-          "error": {
-            "kind": "unsupported",
-            "message": "cyclic declarations: even depends on declarations that depend on it, which needs mutual definitions at 0..67"
-          }
+          "sha256": "eafc6a77215567e2e6948a8a61eac3040593b7a19cdb6f70bd1c7eec31dafed3"
         },
         "rocq": {
-          "error": {
-            "kind": "unsupported",
-            "message": "cyclic declarations: even depends on declarations that depend on it, which needs mutual definitions at 0..67"
-          }
+          "sha256": "457016882abc564205a40d3898f3fbc82924522182e02949c10349f0edd9f457"
         }
       }
     },
@@ -11856,13 +11863,13 @@
         "lean": {
           "error": {
             "kind": "unsupported",
-            "message": "cyclic declarations: a.b.g depends on declarations that depend on it, which needs mutual definitions at 24..53"
+            "message": "mutual recursion across modules: a.b.g and a.h are mutually recursive in different modules; the target defines them together in one module at 59..88"
           }
         },
         "rocq": {
           "error": {
             "kind": "unsupported",
-            "message": "cyclic declarations: a.b.g depends on declarations that depend on it, which needs mutual definitions at 24..53"
+            "message": "mutual recursion across modules: a.b.g and a.h are mutually recursive in different modules; the target defines them together in one module at 59..88"
           }
         }
       }

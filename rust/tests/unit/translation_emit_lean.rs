@@ -110,15 +110,7 @@ fn aborting_natural_division_uses_the_natural_divisor_check() {
 }
 
 #[test]
-fn rejects_mutual_recursion_and_structured_output() {
-    let mut mutual = monus();
-    mutual["declarations"][0]["mutual"] = json!(true);
-    let error = emit_lean(&program(mutual)).expect_err("mutual recursion is unsupported");
-    assert_eq!(
-        error.message(),
-        "mutual recursion: monus is mutually recursive; the Lean target emits only single recursive definitions at 0..37"
-    );
-
+fn rejects_structured_output() {
     let mut unit = monus();
     unit["main"]["effects"][0]["expr"]["arg"] =
         json!({ "k": "unit", "type": { "kind": "unit" }, "span": { "start": 5, "end": 7 } });

@@ -15,7 +15,7 @@ use std::fmt::Write as _;
 
 use super::diagnostics::{type_error, unsupported, Result};
 use super::emit_common::{
-    order_declarations, CtorStyle, EmitOptions, EmitState, Emitted, NumberDependence,
+    mutual_groups, order_declarations, CtorStyle, EmitOptions, EmitState, Emitted, NumberDependence,
 };
 use super::ir::{
     rename_function, rename_main, rename_theorem, ByZero, Case, DataDecl, Decl, Effect, Expr,
@@ -213,12 +213,15 @@ impl LeanEmitter<'_> {
     fn file(mut self) -> Result<Emitted> {
         let mut blocks = Vec::new();
         let mut open: Vec<String> = Vec::new();
+        let groups = mutual_groups(self.program);
         for entry in order_declarations(self.program, false)? {
             self.move_to(&mut open, entry.module_path(), &mut blocks);
-            let block = match entry {
-                Decl::Data(data) => self.data(entry, data)?,
-                Decl::Fn(function) => self.function(entry, function)?,
-                Decl::Theorem(theorem) => self.theorem(entry, theorem)?,
+            let block = match (entry, groups.get(entry.full_name())) {
+                (_, Some(group)) if std::ptr::eq(group[0], entry) => self.mutual(group)?,
+                (_, Some(_)) => continue,
+                (Decl::Data(data), None) => self.data(entry, data)?,
+                (Decl::Fn(function), None) => self.function(entry, function)?,
+                (Decl::Theorem(theorem), None) => self.theorem(entry, theorem)?,
             };
             blocks.push(block);
         }
@@ -326,20 +329,10 @@ impl LeanEmitter<'_> {
         Ok(lines.join("\n"))
     }
 
-    fn function(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
+    fn definition(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
         let (params, body) = rename_function(function, &ident, &self.state.local_reserved());
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
-        if function.mutual {
-            return Err(unsupported(
-                "mutual recursion",
-                &format!(
-                    "{} is mutually recursive; the Lean target emits only single recursive definitions",
-                    function.full_name
-                ),
-                function.span,
-            ));
-        }
         let mut binders = String::new();
         for param in &params {
             let ty = self.ty(&param.ty)?;
@@ -347,7 +340,11 @@ impl LeanEmitter<'_> {
         }
         let ret = self.ty(&function.ret)?;
         let body = self.expr(&body, 1)?;
-        let text = format!("def {name}{binders} : {ret} :=\n  {body}");
+        Ok(format!("def {name}{binders} : {ret} :=\n  {body}"))
+    }
+
+    fn function(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {
+        let text = self.definition(entry, function)?;
         if !function.recursive {
             return Ok(text);
         }
@@ -364,6 +361,22 @@ impl LeanEmitter<'_> {
             // needs no annotation.
             Some(_) => Ok(text),
         }
+    }
+
+    /// Mutually recursive functions are one `mutual` block of partial defs.
+    fn mutual(&mut self, group: &[&Decl]) -> Result<String> {
+        self.state.encode(
+            "mutual-recursion",
+            "mutually recursive functions are a Lean mutual block of partial defs: they run as the source does but their equations are opaque to proofs",
+        );
+        let mut blocks = vec!["mutual".to_owned()];
+        for entry in group {
+            if let Decl::Fn(function) = entry {
+                blocks.push(format!("partial {}", self.definition(entry, function)?));
+            }
+        }
+        blocks.push("end".to_owned());
+        Ok(blocks.join("\n\n"))
     }
 
     fn theorem(&mut self, entry: &Decl, theorem: &TheoremDecl) -> Result<String> {

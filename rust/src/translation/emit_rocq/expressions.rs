@@ -9,6 +9,17 @@ impl RocqEmitter<'_> {
             Node::Unit => Ok("tt".to_owned()),
             Node::Var { name } => Ok(name.clone()),
             Node::Call { func, args } => {
+                let member = self.current.as_ref().and_then(|current| {
+                    let mutual = current.mutual.as_ref()?;
+                    Some((Rc::clone(mutual), mutual.index(func)?))
+                });
+                if let Some((mutual, index)) = member {
+                    let mut parts = Vec::new();
+                    for arg in args {
+                        parts.push(self.expr(arg)?);
+                    }
+                    return Ok(mutual.call(index, &parts));
+                }
                 let head = match &self.current {
                     Some(current) if current.full_name == *func && current.general => {
                         let mut parts = Vec::new();

@@ -272,6 +272,33 @@ export function numberDependence(program) {
 }
 
 /**
+ * Each function the checker marked mutual, mapped to its group: the
+ * functions it calls that call it back, directly or not, itself included,
+ * in source order. A function on a cycle of calls is itself mutual, so the
+ * cycles run through mutual functions only.
+ */
+export function mutualGroups(program) {
+  const members = [...program.declarations.values()].filter((entry) => entry.k === 'fn' && entry.mutual);
+  const calls = new Map(members.map((entry) => [entry.fullName, dependencies(entry)]));
+  const reached = (from) => {
+    const seen = new Set([from]);
+    const stack = [from];
+    while (stack.length) {
+      for (const name of calls.get(stack.pop()) ?? []) {
+        if (calls.has(name) && !seen.has(name)) {
+          seen.add(name);
+          stack.push(name);
+        }
+      }
+    }
+    return seen;
+  };
+  const reach = new Map(members.map((entry) => [entry.fullName, reached(entry.fullName)]));
+  return new Map(members.map((entry) => [entry.fullName, members
+    .filter((other) => reach.get(entry.fullName).has(other.fullName) && reach.get(other.fullName).has(entry.fullName))]));
+}
+
+/**
  * Declarations in an order where each follows everything it uses. Source
  * order is kept where possible and, among ready declarations, the ones in
  * the module being emitted come first so modules stay contiguous.
@@ -280,12 +307,16 @@ export function orderDeclarations(program, { requireContiguousModules = false } 
   const entries = [...program.declarations.values()];
   const position = new Map(entries.map((entry, index) => [entry.fullName, index]));
   const pending = new Map(entries.map((entry) => [entry.fullName, dependencies(entry)]));
+  // A group of mutually recursive functions is ready, and placed, as one.
+  const groups = mutualGroups(program);
+  const unit = (entry) => groups.get(entry.fullName) ?? [entry];
   const done = new Set();
   const order = [];
   let current = [];
   while (order.length < entries.length) {
     const ready = entries.filter((entry) => !done.has(entry.fullName)
-      && [...pending.get(entry.fullName)].every((name) => done.has(name) || !position.has(name)));
+      && unit(entry).every((member) => [...pending.get(member.fullName)]
+        .every((name) => done.has(name) || !position.has(name) || groups.get(entry.fullName)?.some((other) => other.fullName === name))));
     if (!ready.length) {
       const stuck = entries.find((entry) => !done.has(entry.fullName));
       throw unsupported('cyclic declarations', `${stuck.fullName} depends on declarations that depend on it, which needs mutual definitions`, stuck.span);
@@ -298,8 +329,13 @@ export function orderDeclarations(program, { requireContiguousModules = false } 
     ready.sort((left, right) => (shared(right) - shared(left))
       || (position.get(left.fullName) - position.get(right.fullName)));
     const [next] = ready;
-    order.push(next);
-    done.add(next.fullName);
+    for (const member of unit(next)) {
+      if (member.modulePath.join('.') !== next.modulePath.join('.')) {
+        throw unsupported('mutual recursion across modules', `${next.fullName} and ${member.fullName} are mutually recursive in different modules; the target defines them together in one module`, member.span);
+      }
+      order.push(member);
+      done.add(member.fullName);
+    }
     current = next.modulePath;
   }
   if (requireContiguousModules) {

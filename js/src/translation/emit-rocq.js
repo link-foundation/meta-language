@@ -9,7 +9,7 @@
 import { unsupported } from './diagnostics.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
-import { EmitState, orderDeclarations } from './emit-common.js';
+import { EmitState, mutualGroups, orderDeclarations } from './emit-common.js';
 
 const KEYWORDS = new Set([
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
@@ -202,6 +202,13 @@ export function emitRocq(program) {
   return emitter.file();
 }
 
+/** The injection of the `index`th of `count` types into their sum `A + (B + (C + …))`. */
+function injection(index, count, text) {
+  let wrapped = index < count - 1 ? `(inl ${text})` : text;
+  for (let level = 0; level < index; level += 1) wrapped = `(inr ${wrapped})`;
+  return wrapped;
+}
+
 class RocqEmitter {
   constructor(program, state) {
     this.program = program;
@@ -225,9 +232,13 @@ class RocqEmitter {
         blocks.push(`Module ${this.state.moduleName(openModules)}.`);
       }
     };
+    const groups = mutualGroups(this.program);
     for (const entry of order) {
       moveTo(entry.modulePath);
-      if (entry.k === 'data') blocks.push(this.data(entry));
+      const group = groups.get(entry.fullName);
+      if (group) {
+        if (group[0] === entry) blocks.push(this.mutual(group));
+      } else if (entry.k === 'data') blocks.push(this.data(entry));
       else if (entry.k === 'fn') blocks.push(this.fn(entry));
       else if (entry.k === 'theorem') blocks.push(this.theorem(entry));
     }
@@ -300,7 +311,6 @@ class RocqEmitter {
     const result = this.type(entry.ret);
     const text = this.expr(body);
     this.current = null;
-    if (entry.mutual) throw unsupported('mutual recursion', `${entry.fullName} is mutually recursive; the Rocq target emits only single recursive definitions`, entry.span);
     if (!entry.recursive) return `Definition ${name}${binders} : ${result} :=\n  ${text}.`;
     if (general) return this.generalRecursion(name, params, binders, result, text, entry.ret);
     const decreasing = params[entry.decreasing];
@@ -327,6 +337,53 @@ class RocqEmitter {
     const args = params.length ? tuple : 'tt';
     const input = params.length === 1 ? params[0].name : params.length ? 'ml_args' : '_';
     return `Definition ${name}${binders} : ${result} :=\n  ml_fix 64 (fun (ml_rec : ${domain} -> ${result}) (${input} : ${domain}) =>\n    ${unpack}${text})\n    (fun _ => ${this.inhabitant(ret)}) ${args}.`;
+  }
+
+  /**
+   * Mutually recursive functions are one `ml_fix` over the sum of their
+   * parameter tuples, returning the sum of their results: the case of a
+   * function is its injection, a call of any of them is a call of `ml_rec`
+   * projected back, and each function is its projection of the whole.
+   */
+  mutual(group) {
+    this.helpers.add('fix');
+    this.state.encode('mutual-recursion', 'mutually recursive functions are one ml_fix over the sum of their parameter tuples, which unfolds lazily to 2^64 nested calls: every run that terminates computes the same value, and Rocq accepts each function as a plain Definition, its projection of the whole');
+    const members = group.map((entry) => {
+      const { params, body } = renameFunction(entry, ident, this.state.localReserved());
+      const name = this.state.localName(entry.fullName);
+      this.state.map(entry, name);
+      const tuple = params.length === 1 ? params[0].name : params.length ? `(${params.map((param) => param.name).join(', ')})` : 'tt';
+      return {
+        entry,
+        name,
+        params,
+        body,
+        tuple,
+        domain: params.length > 1 ? `(${params.map((param) => this.type(param.type)).join(' * ')})` : params.length ? this.type(params[0].type) : 'unit',
+        result: this.type(entry.ret),
+        inhabitant: this.inhabitant(entry.ret),
+      };
+    });
+    const whole = `ml_mutual_${members[0].name}`;
+    const inject = (index, text) => injection(index, members.length, text);
+    const sum = (parts) => parts.reduceRight((rest, part) => `(${part} + ${rest})`);
+    const domain = sum(members.map((member) => member.domain));
+    const result = sum(members.map((member) => member.result));
+    const indices = new Map(members.map((member, index) => [member.entry.fullName, index]));
+    const cases = members.map((member, index) => {
+      this.current = { entry: member.entry, name: member.name, general: false, mutual: { indices, members } };
+      const text = this.expr(member.body);
+      this.current = null;
+      const pattern = member.params.length ? member.tuple : '_';
+      return `    | ${inject(index, pattern)} => ${inject(index, `(${text})`)}`;
+    });
+    const fallback = members.map((member, index) => `${inject(index, '_')} => ${inject(index, member.inhabitant)}`).join(' | ');
+    const definition = `Definition ${whole} : ${domain} -> ${result} :=\n  ml_fix 64 (fun (ml_rec : ${domain} -> ${result}) (ml_args : ${domain}) =>\n    match ml_args with\n${cases.join('\n')}\n    end)\n    (fun ml_args => match ml_args with ${fallback} end).`;
+    const projections = members.map((member, index) => {
+      const binders = member.params.map((param) => ` (${param.name} : ${this.type(param.type)})`).join('');
+      return `Definition ${member.name}${binders} : ${member.result} :=\n  match ${whole} ${inject(index, member.tuple)} with ${inject(index, 'ml_r')} => ml_r | _ => ${member.inhabitant} end.`;
+    });
+    return [definition, ...projections].join('\n\n');
   }
 
   theorem(entry) {
@@ -462,6 +519,13 @@ class RocqEmitter {
       case 'var':
         return e.name;
       case 'call': {
+        const member = this.current?.mutual?.indices.get(e.fn);
+        if (member !== undefined) {
+          const args = e.args.map((arg) => this.expr(arg));
+          const tuple = args.length === 1 ? args[0] : args.length ? `(${args.join(', ')})` : 'tt';
+          const inject = (text) => injection(member, this.current.mutual.members.length, text);
+          return `(match ml_rec ${inject(tuple)} with ${inject('ml_r')} => ml_r | _ => ${this.current.mutual.members[member].inhabitant} end)`;
+        }
         const self = this.current && e.fn === this.current.entry.fullName && this.current.entry.recursive;
         if (self && this.current.general) {
           const args = e.args.map((arg) => this.expr(arg));

@@ -631,6 +631,54 @@ fn mentions_float(node: &impl Serialize) -> bool {
     serde_json::to_value(node).is_ok_and(|value| visit(&value))
 }
 
+/// Each function the checker marked mutual, mapped to its group.
+///
+/// A group is the functions it calls that call it back, directly or not,
+/// itself included, in source order. A function on a cycle of calls is itself
+/// mutual, so the cycles run through mutual functions only.
+#[must_use]
+pub fn mutual_groups(program: &Program) -> HashMap<String, Vec<&Decl>> {
+    let members: Vec<&Decl> = program
+        .declarations
+        .iter()
+        .filter(|entry| matches!(entry, Decl::Fn(function) if function.mutual))
+        .collect();
+    let calls: HashMap<&str, HashSet<String>> = members
+        .iter()
+        .map(|entry| (entry.full_name(), dependencies(entry)))
+        .collect();
+    let reached = |from: &str| {
+        let mut seen: HashSet<String> = HashSet::from([from.to_owned()]);
+        let mut stack = vec![from.to_owned()];
+        while let Some(name) = stack.pop() {
+            for next in calls.get(name.as_str()).into_iter().flatten() {
+                if calls.contains_key(next.as_str()) && seen.insert(next.clone()) {
+                    stack.push(next.clone());
+                }
+            }
+        }
+        seen
+    };
+    let reach: HashMap<&str, HashSet<String>> = members
+        .iter()
+        .map(|entry| (entry.full_name(), reached(entry.full_name())))
+        .collect();
+    members
+        .iter()
+        .map(|entry| {
+            let group = members
+                .iter()
+                .copied()
+                .filter(|other| {
+                    reach[entry.full_name()].contains(other.full_name())
+                        && reach[other.full_name()].contains(entry.full_name())
+                })
+                .collect();
+            (entry.full_name().to_owned(), group)
+        })
+        .collect()
+}
+
 /// Declarations in an order where each follows everything it uses.
 ///
 /// Source order is kept where possible and, among ready declarations, the
@@ -650,15 +698,28 @@ pub fn order_declarations(
         .map(|(index, entry)| (entry.full_name(), index))
         .collect();
     let pending: Vec<HashSet<String>> = entries.iter().map(dependencies).collect();
+    // A group of mutually recursive functions is ready, and placed, as one.
+    let groups = mutual_groups(program);
+    let unit = |index: usize| -> Vec<&Decl> {
+        groups
+            .get(entries[index].full_name())
+            .cloned()
+            .unwrap_or_else(|| vec![&entries[index]])
+    };
     let mut done: HashSet<&str> = HashSet::new();
     let mut order: Vec<&Decl> = Vec::new();
     let mut current: &[String] = &[];
     while order.len() < entries.len() {
         let mut ready: Vec<usize> = (0..entries.len())
             .filter(|&index| {
+                let members = unit(index);
                 !done.contains(entries[index].full_name())
-                    && pending[index].iter().all(|name| {
-                        done.contains(name.as_str()) || !position.contains_key(name.as_str())
+                    && members.iter().all(|member| {
+                        pending[position[member.full_name()]].iter().all(|name| {
+                            done.contains(name.as_str())
+                                || !position.contains_key(name.as_str())
+                                || members.iter().any(|other| other.full_name() == name)
+                        })
                     })
             })
             .collect();
@@ -686,8 +747,21 @@ pub fn order_declarations(
         };
         ready.sort_by(|&left, &right| shared(right).cmp(&shared(left)).then(left.cmp(&right)));
         let next = &entries[ready[0]];
-        order.push(next);
-        done.insert(next.full_name());
+        for member in unit(ready[0]) {
+            if member.module_path() != next.module_path() {
+                return Err(unsupported(
+                    "mutual recursion across modules",
+                    &format!(
+                        "{} and {} are mutually recursive in different modules; the target defines them together in one module",
+                        next.full_name(),
+                        member.full_name()
+                    ),
+                    member.span(),
+                ));
+            }
+            order.push(member);
+            done.insert(member.full_name());
+        }
         current = next.module_path();
     }
     if require_contiguous_modules {
