@@ -7876,6 +7876,20 @@
       "dependsOn": []
     },
     {
+      "id": "generator js/scripts/build-foundation-models.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/build-foundation-models.mjs",
+      "declaredIn": [
+        "js/scripts/build-foundation-models.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": []
+    },
+    {
       "id": "generator js/scripts/build-language-catalog.mjs@script",
       "category": "generator",
       "name": "js/scripts/build-language-catalog.mjs",

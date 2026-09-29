@@ -52,7 +52,7 @@ they are.
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 15 | 14 | 1 | 0 |
+| Generators | 16 | 15 | 1 | 0 |
 | Toolchains and tools | 16 | 13 | 2 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -525,6 +525,7 @@ they are.
 |---|---|---|---|---|---|---|
 | `js/scripts/build-bidi-table.mjs` | `js/scripts/build-bidi-table.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-concept-records.mjs` | `js/scripts/build-concept-records.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-foundation-models.mjs` | `js/scripts/build-foundation-models.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-language-catalog.mjs` | `js/scripts/build-language-catalog.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-language-identification.mjs` | `js/scripts/build-language-identification.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-lean-root-names.mjs` | `js/scripts/build-lean-root-names.mjs` | `script` |  | derived | current |  |
