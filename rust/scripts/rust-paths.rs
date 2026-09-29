@@ -48,8 +48,10 @@ pub fn get_rust_root(explicit_root: Option<&str>, verbose: bool) -> Result<Strin
 
     // Check CLI arguments
     let args: Vec<String> = env::args().collect();
-    if let Some(idx) = args.iter().position(|a| a == "--rust-root")
-        && let Some(root) = args.get(idx + 1)
+    if let Some(root) = args
+        .iter()
+        .position(|a| a == "--rust-root")
+        .and_then(|idx| args.get(idx + 1))
     {
         if verbose {
             eprintln!("Using CLI configured Rust root: {root}");
@@ -58,9 +60,8 @@ pub fn get_rust_root(explicit_root: Option<&str>, verbose: bool) -> Result<Strin
     }
 
     // Check environment variable
-    if let Ok(root) = env::var("RUST_ROOT")
-        && !root.is_empty()
-    {
+    // rust-script builds these scripts with the 2021 edition, so no let chains.
+    if let Some(root) = env::var("RUST_ROOT").ok().filter(|root| !root.is_empty()) {
         if verbose {
             eprintln!("Using environment configured Rust root: {root}");
         }
