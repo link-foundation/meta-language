@@ -26,6 +26,7 @@ use super::surface::{
 use super::types::{Type, BOOL, FLOAT, INT, NAT, STRING};
 use super::{Language, Span};
 
+mod console;
 mod declarations;
 mod expressions;
 mod flow;

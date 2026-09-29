@@ -407,6 +407,8 @@ impl Checker {
         style: ShowStyle,
     ) -> Result<Expr> {
         let value = self.expr(expr, env, path, None, false)?;
+        let bigint = matches!(value.ty, Type::Int | Type::Nat);
+        refuse_format(style, &value.ty, bigint, expr.span)?;
         match value.ty {
             Type::String => return Ok(value),
             Type::Data { .. } | Type::Unit => {
@@ -421,10 +423,9 @@ impl Checker {
             }
             _ => {}
         }
-        let console_bigint =
-            style == ShowStyle::JsConsole && matches!(value.ty, Type::Int | Type::Nat);
+        let console_bigint = style.is_console() && bigint;
         // console.log prints -0 as "-0", where String(-0) is "0".
-        let console = style == ShowStyle::JsConsole && value.ty.is_float();
+        let console = style.is_console() && value.ty.is_float();
         let text = Expr::new(
             Node::ToString {
                 arg: Box::new(value),
@@ -637,5 +638,27 @@ impl Checker {
             return Ok((then, otherwise));
         }
         self.unify(then, otherwise, span)
+    }
+}
+
+/// Refuses the `console.log` arguments whose `util.format` rendering is not kept.
+fn refuse_format(style: ShowStyle, ty: &Type, bigint: bool, place: Option<Span>) -> Result<()> {
+    match style {
+        ShowStyle::JsFormatFirst if *ty == Type::String => Err(unsupported(
+            "console.log with a computed first string",
+            "util.format reads the % directives of a first string argument, which only the run knows; pass a literal format string, or print one template literal",
+            place,
+        )),
+        ShowStyle::JsFormatNumber if !bigint && !ty.is_float() => Err(unsupported(
+            &format!("%d of a {}", ty.key()),
+            "%d prints a BigInt or a Number; the conversion Number(value) of other values is not kept",
+            place,
+        )),
+        ShowStyle::JsFormatInteger if !bigint => Err(unsupported(
+            &format!("%i of a {}", ty.key()),
+            "%i prints a BigInt; the conversion parseInt(value) of other values is not kept",
+            place,
+        )),
+        _ => Ok(()),
     }
 }

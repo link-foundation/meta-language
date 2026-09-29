@@ -13,6 +13,8 @@ import {
 
 const COMPARISONS = new Set(['eq', 'ne', 'lt', 'le', 'gt', 'ge']);
 const ARITHMETIC = new Set(['add', 'sub', 'mul', 'div', 'rem']);
+// The styles of the values console.log shows: its argument, or those util.format reads.
+const CONSOLE_STYLES = new Set(['js-console', 'js-format-first', 'js-format-number', 'js-format-integer']);
 // Environment entry recording, for a local, the constructor it is known to
 // have matched and the locals naming its fields.
 const KNOWN = Symbol('known constructors');
@@ -232,14 +234,25 @@ class Checker {
 
   show(expr, env, path, style) {
     const value = this.expr(expr, env, path, undefined);
+    const bigint = value.type.kind === 'int' || value.type.kind === 'nat';
+    if (style === 'js-format-first' && value.type.kind === 'string') {
+      throw unsupported('console.log with a computed first string', 'util.format reads the % directives of a first string argument, which only the run knows; pass a literal format string, or print one template literal', expr.span);
+    }
+    if (style === 'js-format-number' && !bigint && !isFloat(value.type)) {
+      throw unsupported(`%d of a ${typeKey(value.type)}`, '%d prints a BigInt or a Number; the conversion Number(value) of other values is not kept', expr.span);
+    }
+    if (style === 'js-format-integer' && !bigint) {
+      throw unsupported(`%i of a ${typeKey(value.type)}`, '%i prints a BigInt; the conversion parseInt(value) of other values is not kept', expr.span);
+    }
     if (value.type.kind === 'string') return value;
     if (value.type.kind === 'data' || value.type.kind === 'unit') {
       throw unsupported('output of structured values', `printing a ${typeKey(value.type)} value has no portable textual form`, expr.span);
     }
     const text = { k: 'toString', arg: value, type: STRING };
+    const consoleStyle = CONSOLE_STYLES.has(style);
     // console.log prints -0 as "-0", where String(-0) is "0".
-    if (style === 'js-console' && isFloat(value.type)) return { ...text, console: true };
-    if (style === 'js-console' && (value.type.kind === 'int' || value.type.kind === 'nat')) {
+    if (consoleStyle && isFloat(value.type)) return { ...text, console: true };
+    if (consoleStyle && bigint) {
       // Node's console.log prints BigInt values with their `n` suffix.
       return { k: 'binary', op: 'concat', left: text, right: literal(STRING, 'n'), type: STRING };
     }

@@ -136,6 +136,26 @@ pub enum ShowStyle {
     JsConsole,
     #[serde(rename = "js-template")]
     JsTemplate,
+    /// The first of several `console.log` arguments, when it is not a literal string.
+    #[serde(rename = "js-format-first")]
+    JsFormatFirst,
+    /// The argument of a `%d` directive.
+    #[serde(rename = "js-format-number")]
+    JsFormatNumber,
+    /// The argument of a `%i` directive.
+    #[serde(rename = "js-format-integer")]
+    JsFormatInteger,
+}
+
+impl ShowStyle {
+    /// True for the values `console.log` shows: its argument, or those `util.format` reads.
+    #[must_use]
+    pub const fn is_console(self) -> bool {
+        matches!(
+            self,
+            Self::JsConsole | Self::JsFormatFirst | Self::JsFormatNumber | Self::JsFormatInteger
+        )
+    }
 }
 
 /// Conversion semantics: exact, checked (aborts when out of range) or clamped.

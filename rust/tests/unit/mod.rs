@@ -85,6 +85,7 @@ mod source_generation;
 mod source_points;
 mod storage;
 mod substitution;
+mod translation_console_format;
 mod translation_emit_javascript;
 mod translation_emit_lean;
 mod translation_emit_rocq;

@@ -1,5 +1,6 @@
 //! Statements: bindings, destructuring, control flow, switches, `main`, console and assertions.
 
+use super::console::console_format;
 use super::imperative::lower_top_level;
 use super::loops::reserved;
 use super::lowering::statement_span;
@@ -584,11 +585,7 @@ impl JavaScriptParser {
         self.cursor.eat(";");
         let place = self.to_here(&start);
         if args.len() > 1 {
-            return Err(unsupported(
-                "console.log with several arguments",
-                "several arguments are formatted by util.format; pass one string",
-                Some(place),
-            ));
+            return Ok((console_format(args)?, place));
         }
         let expr = args.pop().unwrap_or_else(|| {
             node(

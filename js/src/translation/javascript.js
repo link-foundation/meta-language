@@ -946,8 +946,7 @@ class JavaScriptParser {
     const args = this.arguments('console.log');
     c.eat(';');
     const where = span(start, c.peek());
-    if (args.length > 1) throw unsupported('console.log with several arguments', 'several arguments are formatted by util.format; pass one string', where);
-    const expr = args[0] ?? { k: 'str', value: '', span: where };
+    const expr = args.length > 1 ? consoleFormat(args) : (args[0] ?? { k: 'str', value: '', span: where });
     return { k: 'print', expr, style: 'js-console', span: where };
   }
 
@@ -1555,6 +1554,64 @@ class JavaScriptParser {
 }
 
 /** Local names with the translator's `ml_` prefix could meet the names it makes up. */
+const FORMAT_STYLES = { s: 'js-console', d: 'js-format-number', i: 'js-format-integer' };
+
+/**
+ * `console.log(a, b, …)` prints `util.format(a, b, …)`: a literal first
+ * string reads its `%s`, `%d`, `%i`, `%c` and `%%` directives, each taking
+ * the next argument, and the arguments left over follow, each after a space,
+ * strings as they are and other values as the console shows them. A first
+ * argument that is not a literal string is shown like the rest, and the
+ * checker refuses it when it is a string, whose directives only the run
+ * reads.
+ */
+function consoleFormat([first, ...values]) {
+  const pieces = [];
+  let next = 0;
+  if (first.k === 'str') {
+    const source = first.value;
+    let text = '';
+    for (let index = 0; index < source.length; index += 1) {
+      const char = source[index];
+      const directive = source[index + 1];
+      if (char !== '%' || directive === undefined) {
+        text += char;
+        continue;
+      }
+      if (directive === '%') {
+        text += '%';
+        index += 1;
+        continue;
+      }
+      // A directive with no argument left, or an unknown one, stays as it is written.
+      if (next === values.length || !'sdifjoOc'.includes(directive)) {
+        text += char;
+        continue;
+      }
+      const value = values[next];
+      next += 1;
+      index += 1;
+      if (directive === 'c') {
+        if (value.k !== 'str') throw unsupported('%c with a computed style', 'console.log discards the CSS a %c directive takes; pass it as a string literal', value.span);
+        continue;
+      }
+      if (!FORMAT_STYLES[directive]) {
+        throw unsupported(`console.log %${directive} directive`, 'the portable directives are %s, %d, %i, %c and %%', first.span);
+      }
+      if (text) pieces.push({ k: 'str', value: text, span: first.span });
+      text = '';
+      pieces.push({ k: 'show', arg: value, style: FORMAT_STYLES[directive], span: value.span });
+    }
+    if (text || !pieces.length) pieces.push({ k: 'str', value: text, span: first.span });
+  } else {
+    pieces.push({ k: 'show', arg: first, style: 'js-format-first', span: first.span });
+  }
+  for (const value of values.slice(next)) {
+    pieces.push({ k: 'str', value: ' ', span: value.span }, { k: 'show', arg: value, style: 'js-console', span: value.span });
+  }
+  return pieces.reduce((left, right) => ({ k: 'binary', op: 'concat', left, right, span: first.span }));
+}
+
 function reserved(token) {
   if (/^ml_/u.test(token.value)) {
     throw unsupported('reserved identifier', `${token.value} uses the translator's reserved ml_ prefix`, span(token, token));

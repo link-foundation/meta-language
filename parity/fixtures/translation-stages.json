@@ -27,6 +27,31 @@
       }
     },
     {
+      "name": "corpus/console-format.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/console-format.mjs",
+      "parse": {
+        "sha256": "56ff79ee2406dcbaf3439e2c9751dbc99a996550b835dd3f1876b1f0e3a04fff"
+      },
+      "check": {
+        "sha256": "35b1333e323a928df38476f89b99864f0438341259ee6addb3f6e55e973246e7"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "6327ad1af079b0052f4505d10db51b36e10116e82cb19debb4553c464d350d48"
+        },
+        "rust": {
+          "sha256": "ba610ed855ddff9bf0d1abef508cf3b5302619a3622534f2facff9a58dd59677"
+        },
+        "lean": {
+          "sha256": "8f5c1f6bcd995f9037c4d6c9f0924d4042e8d0767a3719a7d045d1b1dcf3313a"
+        },
+        "rocq": {
+          "sha256": "92be3f8dd91aa9f0ac4a4cf484214ef91c662675993e68676005cd3474f62713"
+        }
+      }
+    },
+    {
       "name": "corpus/const-functions.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/const-functions.mjs",
@@ -13750,9 +13775,23 @@
       "extension": "mjs",
       "source": "console.log('a', 1n);",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "console.log with several arguments: several arguments are formatted by util.format; pass one string at 0..7"
+        "sha256": "c8b955d483bb959e52b2a2e10270d103f032338fd5abda4a575cb1b45323bd24"
+      },
+      "check": {
+        "sha256": "e6b10e2a7ff347c60ff9495dfd7a96343236293da2a7066694f2827175baccd2"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "255194ccfeb0ffc3b81f4eb7ba4ee36f2a3a3b2a49cccc3aac69a6e3435a8c16"
+        },
+        "rust": {
+          "sha256": "4bec339402e271789c754ed951500928c354e8ee3ee04b8c53d80fb300b6667c"
+        },
+        "lean": {
+          "sha256": "9c22ffe414b162cf7e4c293e2bd62d4ae2f81a2c7f9490d99d7fdb4b1b6f76c4"
+        },
+        "rocq": {
+          "sha256": "832b35e26d7d237ceec8f917ce42df55811c67363b67cae0e4e6da417c945630"
         }
       }
     },
