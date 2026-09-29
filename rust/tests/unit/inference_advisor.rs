@@ -35,8 +35,8 @@ fn concept_naming_advisor_falls_back_to_unique_structural_names() {
     let expr = Grammar::expr();
     let grammar = Grammar::builder()
         .start("root")
-        .rule("root", expr.nt("seq_2"))
-        .rule("seq_2", expr.term("existing"))
+        .rule("root", expr.nt("sequence_2"))
+        .rule("sequence_2", expr.term("existing"))
         .build();
     let rule_expr = expr.seq([expr.term("a"), expr.term("b")]);
     let request = NamingRequest {
@@ -50,7 +50,7 @@ fn concept_naming_advisor_falls_back_to_unique_structural_names() {
     assert_eq!(
         candidates.first(),
         Some(&NameCandidate {
-            name: "seq_2_2".to_string(),
+            name: "sequence_2_2".to_string(),
             concept: None,
             source: AdviceSource::Deterministic,
         })

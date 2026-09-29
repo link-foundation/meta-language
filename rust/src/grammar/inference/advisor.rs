@@ -361,26 +361,32 @@ fn inference_concept(id: &str) -> Option<InferenceNamingConcept> {
 
 fn structural_name(expr: &GrammarExpr) -> String {
     match expr {
-        GrammarExpr::Empty => "empty".to_string(),
+        GrammarExpr::Empty => "empty_expression".to_string(),
         GrammarExpr::Terminal(_) | GrammarExpr::TerminalInsensitive(_) => "literal".to_string(),
-        GrammarExpr::CharRange(_, _) => "char_range".to_string(),
-        GrammarExpr::CharClass { .. } => "char_class".to_string(),
-        GrammarExpr::AnyChar => "any_char".to_string(),
+        GrammarExpr::CharRange(_, _) => "character_range".to_string(),
+        GrammarExpr::CharClass { .. } => "character_class".to_string(),
+        GrammarExpr::AnyChar => "any_character".to_string(),
         GrammarExpr::NonTerminal(name) => sanitize_identifier(name),
         GrammarExpr::Choice {
             ordered,
             alternatives,
         } => {
-            let prefix = if *ordered { "ordered_choice" } else { "choice" };
+            let prefix = if *ordered {
+                "ordered_choice"
+            } else {
+                "unordered_choice"
+            };
             format!("{prefix}_{}", alternatives.len())
         }
-        GrammarExpr::Sequence(items) => format!("seq_{}", items.len()),
-        GrammarExpr::Optional(inner) => format!("{}_opt", structural_stem(inner)),
-        GrammarExpr::ZeroOrMore(inner) => format!("{}_star", structural_stem(inner)),
-        GrammarExpr::OneOrMore(inner) => format!("{}_plus", structural_stem(inner)),
-        GrammarExpr::Repeat { expr, .. } => format!("{}_repeat", structural_stem(expr)),
-        GrammarExpr::And(inner) => format!("{}_and", structural_stem(inner)),
-        GrammarExpr::Not(inner) => format!("{}_not", structural_stem(inner)),
+        GrammarExpr::Sequence(items) => format!("sequence_{}", items.len()),
+        GrammarExpr::Optional(inner) => format!("optional_{}", structural_stem(inner)),
+        GrammarExpr::ZeroOrMore(inner) => {
+            format!("zero_or_more_{}", structural_stem(inner))
+        }
+        GrammarExpr::OneOrMore(inner) => format!("one_or_more_{}", structural_stem(inner)),
+        GrammarExpr::Repeat { expr, .. } => format!("repeated_{}", structural_stem(expr)),
+        GrammarExpr::And(inner) => format!("{}_positive_predicate", structural_stem(inner)),
+        GrammarExpr::Not(inner) => format!("{}_negative_predicate", structural_stem(inner)),
         GrammarExpr::Capture { label, expr } => label.as_deref().map_or_else(
             || format!("{}_capture", structural_stem(expr)),
             sanitize_identifier,
