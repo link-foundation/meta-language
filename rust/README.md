@@ -3,7 +3,7 @@
 [![Rust](https://github.com/link-foundation/meta-language/actions/workflows/rust.yml/badge.svg)](https://github.com/link-foundation/meta-language/actions/workflows/rust.yml)
 [![Crates.io](https://img.shields.io/crates/v/meta-language?label=crates.io&style=flat)](https://crates.io/crates/meta-language)
 [![Docs.rs](https://docs.rs/meta-language/badge.svg)](https://docs.rs/meta-language)
-[![Rust Version](https://img.shields.io/badge/rust-1.77%2B-blue.svg)](https://www.rust-lang.org/)
+[![Rust Version](https://img.shields.io/badge/rust-1.90%2B-blue.svg)](https://www.rust-lang.org/)
 [![Codecov](https://codecov.io/gh/link-foundation/meta-language/branch/main/graph/badge.svg)](https://codecov.io/gh/link-foundation/meta-language)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://unlicense.org/)
 

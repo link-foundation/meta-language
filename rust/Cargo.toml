@@ -9,7 +9,7 @@ keywords = ["links", "language", "cst", "ast"]
 categories = ["parser-implementations", "data-structures"]
 repository = "https://github.com/link-foundation/meta-language"
 documentation = "https://github.com/link-foundation/meta-language"
-rust-version = "1.77"
+rust-version = "1.90"
 
 # Narrow allowlist of files shipped in the published `.crate` archive.
 # Keeping this list tight prevents docs, case studies, generated CI artifacts,

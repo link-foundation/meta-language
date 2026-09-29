@@ -421,7 +421,7 @@ recovery evidence in both runtimes.
 | Scheme | `Scheme`, `scm` | `.scm`, `.ss` | [`tree-sitter-scheme`](https://github.com/6cdh/tree-sitter-scheme) | 0.24.7 | MIT | `program` |
 | Solidity | `Solidity`, `sol` | `.sol` | [`tree-sitter-solidity`](https://github.com/JoranHonig/tree-sitter-solidity) | 1.2.13 | MIT | `source_file` |
 
-Crates are only added when they build with the crate's `rust-version` 1.77
+Crates are only added when they build with the crate's `rust-version` 1.90
 (edition 2021 or earlier) and depend on `tree-sitter-language` rather than an
 older `tree-sitter`, and when the grammar's node and field names survive the
 MSVC build (`symbolNamesSha256` in `parity/fixtures/default-cst-expected.json`
