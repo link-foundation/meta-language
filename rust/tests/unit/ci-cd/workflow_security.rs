@@ -150,6 +150,7 @@ fn workflows_separate_cancellable_checks_from_serialized_writes() {
         "secrets-scan",
         "fresh-merge",
         "cargo-lock",
+        "msrv",
         "lint",
         "coverage",
         "build",

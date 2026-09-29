@@ -128,6 +128,7 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("secrets-scan", 10),
         ("fresh-merge", 20),
         ("cargo-lock", 5),
+        ("msrv", 30),
         ("lint", 10),
         ("test", 20),
         ("coverage", 15),
@@ -320,6 +321,17 @@ fn binary_release_is_guarded_by_committed_cargo_lock() {
         // every main push, including docs-only changes.
         assert!(job.contains("github.event_name == 'push'"));
     }
+}
+
+#[test]
+fn minimum_supported_rust_version_is_checked_with_the_declared_toolchain() {
+    let workflow = release_workflow();
+    let msrv = job_block(&workflow, "msrv");
+    let version = step_block(msrv, "Read the declared rust-version");
+    assert!(version.contains("rust-version"));
+    assert!(version.contains("Cargo.toml"));
+    assert!(msrv.contains("toolchain: ${{ steps.msrv.outputs.version }}"));
+    assert!(msrv.contains("cargo check --locked --all-features --all-targets"));
 }
 
 #[test]
