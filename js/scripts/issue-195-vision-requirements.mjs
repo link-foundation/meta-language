@@ -129,7 +129,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'retainedItemsAtCurrentStableRelease',
       'staleDependencyRejected',
     ],
-    tooling: null,
+    tooling: ['js/scripts/dependency-inventory.mjs', 'js/scripts/check-dependencies.mjs'],
   },
   {
     id: 'I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED',

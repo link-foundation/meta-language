@@ -23,6 +23,8 @@
     "check:issue-195:sources": "node scripts/check-issue-195-sources.mjs",
     "check:downstream-consumers": "node scripts/check-downstream-consumers.mjs",
     "check:naming": "node scripts/check-naming.mjs",
+    "check:dependencies": "node scripts/check-dependencies.mjs",
+    "dependencies:refresh": "node scripts/check-dependencies.mjs --refresh",
     "check:documentation": "node scripts/check-documentation.mjs",
     "check:default-cst": "node scripts/generate-default-cst-expectations.mjs --check",
     "check:lino-grammar": "node scripts/generate-lino-grammar-cases.mjs --check",

@@ -15,6 +15,14 @@ on:
       - 'CONTRIBUTING.md'
       - 'docs/cache-cleanup.md'
       - 'rust/Cargo.toml'
+      - 'rust/Cargo.lock'
+      - 'rust/web/Cargo.*'
+      - 'rust/scripts/**'
+      - 'rust/src/data/grammar-lock.json'
+      - 'rust/vendor/*/NOTICE.md'
+      - 'experiments/**/Cargo.toml'
+      - '**/lean-toolchain'
+      - 'docs/dependency-audit.md'
       - '.secretlintrc.json'
   pull_request:
     types: [opened, synchronize, reopened]
@@ -29,6 +37,14 @@ on:
       - 'CONTRIBUTING.md'
       - 'docs/cache-cleanup.md'
       - 'rust/Cargo.toml'
+      - 'rust/Cargo.lock'
+      - 'rust/web/Cargo.*'
+      - 'rust/scripts/**'
+      - 'rust/src/data/grammar-lock.json'
+      - 'rust/vendor/*/NOTICE.md'
+      - 'experiments/**/Cargo.toml'
+      - '**/lean-toolchain'
+      - 'docs/dependency-audit.md'
       - '.secretlintrc.json'
   release:
     types: [published]
@@ -129,6 +145,10 @@ jobs:
 
       - name: Check the downstream consumer matrix against the ledger and the tests
         run: npm run check:downstream-consumers
+        working-directory: js
+
+      - name: Check that every dependency, toolchain, action and image is inventoried at its current stable release or records why not
+        run: npm run check:dependencies
         working-directory: js
 
       - name: Check readable English names against WordNet, the concept records and the source inventory
