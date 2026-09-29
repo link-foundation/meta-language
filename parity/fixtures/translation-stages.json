@@ -302,6 +302,31 @@
       }
     },
     {
+      "name": "corpus/top-level-statements.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/top-level-statements.mjs",
+      "parse": {
+        "sha256": "d29e48b39eff4e9d5de6148c1e72d9253477733e7494702967097ba2ee430bb8"
+      },
+      "check": {
+        "sha256": "662fe4e20a3c9f39aa068e800f3a601623e28c6172a468cfdd762a7a5b3efd5a"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "9ee2ffbe51530fb966f0184e72def72eaa866f9e61ce9b540c6d6f35cdc9d727"
+        },
+        "rust": {
+          "sha256": "570e3febceed317974335c5d97e5fecc96d579f7abe4b9a6c3559cb2f2b0d759"
+        },
+        "lean": {
+          "sha256": "2313b6f55d9db2494689f32ebe445e3dbd4044a1590dcb5169c397910f220bd1"
+        },
+        "rocq": {
+          "sha256": "c3752e5cce4f1ecd5fd27028362a5ca5b689b7646e4df83f61be46b252519d0f"
+        }
+      }
+    },
+    {
       "name": "check/lean-large-numeral-before-succ",
       "extension": "lean",
       "source": "def f : Nat → Nat\n  | 1000 => 7\n  | 0 => 1\n  | n + 2 => n\n  | _ => 3\ndef main : IO Unit := do\n  IO.println \"x\"\n",
@@ -14011,7 +14036,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "top-level if statement: the top level may only print with console.log, bind with const and assert at 0..2"
+          "message": "console.log: the JavaScript standard library is outside the portable core at 10..26"
         }
       }
     },
@@ -14670,9 +14695,23 @@
       "extension": "mjs",
       "source": "let x = 1n;",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "top-level let statement: the top level may only print with console.log, bind with const and assert at 0..3"
+        "sha256": "db47aff068cb0fd11de1beedf442eab9942df75e7c2f4c517fc236d87869477d"
+      },
+      "check": {
+        "sha256": "67de0f239ff5e5328ff7480dcbcf750f8a2e85240e4774f4a10c8cdc820d2ae1"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "e121e5c10237481ff37528752d0d9adda0376f154aec5f3ba4e570b92c328c33"
+        },
+        "rust": {
+          "sha256": "d73a3df89de4778bcef1e803849339587d21434adacac848a1306ca5f776de05"
+        },
+        "lean": {
+          "sha256": "af95520bba5912e1bde59d60450c324a2cd83713c77c68a4cd1f4e6b4552f487"
+        },
+        "rocq": {
+          "sha256": "9b49814515646d43242bd7b0d02b58c27cb4de9e92e8a17424f9017b6f173cb5"
         }
       }
     },
@@ -14683,7 +14722,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "top-level var statement: the top level may only print with console.log, bind with const and assert at 0..3"
+          "message": "var declaration: var bindings are hoisted to the function and shared by its blocks; use let or const at 0..3"
         }
       }
     },
@@ -14692,9 +14731,23 @@
       "extension": "mjs",
       "source": "for (;;) {}",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "top-level for statement: the top level may only print with console.log, bind with const and assert at 0..3"
+        "sha256": "e8cef72f6239199b80d3454c20ca59338355688cbd7dfaebbc7c08a8e6a5a47c"
+      },
+      "check": {
+        "sha256": "e7b0ee5e909d898df9ea76d894b5a2673b66bfbf0505638a8114160ca85193d8"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "420a2b3741443e98763a2ccd1884e7ed3ca8e1f8a79765259588b3289b342fb7"
+        },
+        "rust": {
+          "sha256": "59bb53666bd88f9e319293612912ebfaf33ea82a71e086c8110989f7c1c0d680"
+        },
+        "lean": {
+          "sha256": "0bad346121000ea92ac102a5aed01964eb48d1046a2b9b1398bd1ef196dca3d1"
+        },
+        "rocq": {
+          "sha256": "65345a5d4806e00bc817ed807d4eba794ff96ed29b774cbee2192c5ddd4ccacd"
         }
       }
     },
@@ -14703,9 +14756,23 @@
       "extension": "mjs",
       "source": "while (true) {}",
       "parse": {
-        "error": {
-          "kind": "unsupported",
-          "message": "top-level while statement: the top level may only print with console.log, bind with const and assert at 0..5"
+        "sha256": "69f46414669a425eb2f59dec256071604e7f031f1445d1aae5b76ac8648ffd16"
+      },
+      "check": {
+        "sha256": "ce4bdb3d4a2dd94fdc221910dddd6b5036c030d531512b6787cdb991f6422660"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "2ada31f2327aa4809cc3f9f43ffce1a2a5133664502244adec95ce6f25fe9611"
+        },
+        "rust": {
+          "sha256": "853b6807bc4f586f5217a2e48ef2d7581a96d8c05e65a90d136e5d12ffee329d"
+        },
+        "lean": {
+          "sha256": "cb7e15e575cd92753d56743ff412112c452b02e92282a4805ddf97fcc73b04d3"
+        },
+        "rocq": {
+          "sha256": "e2108a9076887123e95483bc8a7e48f6ec0e808d983c532eb451497c3d16ecfd"
         }
       }
     },
@@ -14716,7 +14783,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "top-level do statement: the top level may only print with console.log, bind with const and assert at 0..2"
+          "message": "console.log: the JavaScript standard library is outside the portable core at 5..21"
         }
       }
     },
@@ -14727,7 +14794,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "top-level switch statement: the top level may only print with console.log, bind with const and assert at 0..6"
+          "message": "top-level switch statement: the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts at 0..6"
         }
       }
     },
@@ -14738,7 +14805,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "top-level try statement: the top level may only print with console.log, bind with const and assert at 0..3"
+          "message": "top-level try statement: the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts at 0..3"
         }
       }
     },
@@ -14749,7 +14816,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "top-level throw statement: the top level may only print with console.log, bind with const and assert at 0..5"
+          "message": "top-level throw statement: the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts at 0..5"
         }
       }
     },
@@ -14760,7 +14827,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "top-level class statement: the top level may only print with console.log, bind with const and assert at 0..5"
+          "message": "top-level class statement: the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts at 0..5"
         }
       }
     },
@@ -14771,7 +14838,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "top-level return statement: the top level may only print with console.log, bind with const and assert at 0..6"
+          "message": "top-level return statement: the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts at 0..6"
         }
       }
     },
@@ -15386,7 +15453,7 @@
       "parse": {
         "error": {
           "kind": "unsupported",
-          "message": "label statement: outside the portable core at 68..73"
+          "message": "label label: labels are outside the portable core; a break or continue applies to the innermost loop at 68..73"
         }
       }
     },

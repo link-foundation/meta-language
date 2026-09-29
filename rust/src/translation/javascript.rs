@@ -286,6 +286,8 @@ struct JavaScriptParser {
     unawaited: Vec<(String, Span)>,
     sequential_async: bool,
     jumps: Jumps,
+    /// Whether a top-level statement is being read, where `return` is a syntax error.
+    top_level: bool,
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
     generated_count: usize,
@@ -309,6 +311,7 @@ impl JavaScriptParser {
             unawaited: Vec::new(),
             sequential_async: false,
             jumps: Jumps::default(),
+            top_level: false,
             generated: Vec::new(),
             generated_count: 0,
         }

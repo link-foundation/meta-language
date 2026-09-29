@@ -1,6 +1,8 @@
 //! Statements: bindings, destructuring, control flow, switches, `main`, console and assertions.
 
+use super::imperative::lower_top_level;
 use super::loops::reserved;
+use super::lowering::statement_span;
 use super::{
     assertion_kind, has_ctor, node, prop_of, span, type_error, unsupported, AssertionKind,
     CaseTest, Clause, JavaScriptParser, Result, SComparison, SData, SEffect, SExpr, SNode, SProp,
@@ -33,6 +35,13 @@ impl JavaScriptParser {
             ));
         }
         if self.cursor.is("return") {
+            if self.top_level {
+                return Err(unsupported(
+                    "top-level return statement",
+                    "return leaves a function, and a module has none to leave",
+                    Some(span(&token, &token)),
+                ));
+            }
             self.cursor.advance();
             let next = self.cursor.peek().start;
             let line_break = token.end < next
@@ -90,7 +99,7 @@ impl JavaScriptParser {
             return self.jump_statement();
         }
         if token.kind == TokenKind::Identifier {
-            let statements = ["try", "function", "class", "label", "with", "debugger"];
+            let statements = ["try", "function", "class", "with", "debugger"];
             if statements.contains(&token.value.as_str()) {
                 return Err(unsupported(
                     &format!("{} statement", token.value),
@@ -446,6 +455,53 @@ impl JavaScriptParser {
         }
     }
 
+    /// Whether the next top-level statement declares or assigns variables, or is a block, if or loop.
+    pub(super) fn starts_top_level_imperative(&self) -> bool {
+        let words = ["let", "var", "if", "for", "while", "do"];
+        if self.cursor.is_kind(TokenKind::Identifier)
+            && words.iter().any(|word| self.cursor.is(word))
+        {
+            return true;
+        }
+        self.cursor.is("{") || self.starts_assignment()
+    }
+
+    /// A top-level statement read as a function body's, where `return` has no function to leave.
+    pub(super) fn top_level_statement(&mut self) -> Result<Stmt> {
+        self.top_level = true;
+        let statement = self.statement();
+        self.top_level = false;
+        statement
+    }
+
+    /// Top-level statements that declare or assign variables are one
+    /// expression, whose value carries the top-level variables they declare
+    /// or assign; main binds each of them for the statements after it.
+    pub(super) fn flush(
+        &mut self,
+        pending: &mut Vec<Stmt>,
+        effects: &mut Vec<SEffect>,
+    ) -> Result<()> {
+        if pending.is_empty() {
+            return Ok(());
+        }
+        let statements = std::mem::take(pending);
+        let variables: Vec<String> = effects
+            .iter()
+            .filter_map(|effect| match effect {
+                SEffect::Let { name, .. } if !name.starts_with("ml_") => Some(name.clone()),
+                _ => None,
+            })
+            .collect();
+        let bounds = |statement: &Stmt| statement_span(statement).unwrap_or(Span::new(0, 0));
+        let place = Span::new(
+            bounds(&statements[0]).start,
+            bounds(&statements[statements.len() - 1]).end,
+        );
+        effects.extend(lower_top_level(self, &statements, &variables, place)?);
+        Ok(())
+    }
+
     pub(super) fn main_statement(&mut self) -> Result<SEffect> {
         let token = self.peek();
         if self.cursor.is("const") {
@@ -473,13 +529,11 @@ impl JavaScriptParser {
                 return self.assert_statement();
             }
         }
-        let statements = [
-            "let", "var", "if", "for", "while", "do", "switch", "try", "throw", "class", "return",
-        ];
+        let statements = ["switch", "try", "throw", "class", "return"];
         if token.kind == TokenKind::Identifier && statements.contains(&token.value.as_str()) {
             return Err(unsupported(
                 &format!("top-level {} statement", token.value),
-                "the top level may only print with console.log, bind with const and assert",
+                "the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts",
                 Some(span(&token, &token)),
             ));
         }

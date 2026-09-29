@@ -12,7 +12,7 @@
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
-import { imperative, lowerImperative, statementUses } from './javascript-lower.js';
+import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING } from './types.js';
 
@@ -48,6 +48,8 @@ class JavaScriptParser {
     this.scope = { locals: new Set(), tdz: new Set(), mutable: new Set() };
     // Enclosing loops and switches, for `break` and `continue`.
     this.jumps = { loops: 0, switches: 0 };
+    // Whether a top-level statement is being read, where `return` is a syntax error.
+    this.topLevel = false;
     // Functions and data types that loops and joins of statements lower to, and their count.
     this.generated = [];
     this.generatedCount = 0;
@@ -75,6 +77,13 @@ class JavaScriptParser {
     }
     this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index, () => c.atEnd()), mutable: new Set() };
     this.asyncNames = this.asyncDeclarations(c.index);
+    // Top-level statements that declare or assign variables, lowered together
+    // before the next statement that prints, binds a constant or asserts.
+    let pending = [];
+    const flush = () => {
+      if (pending.length) effects.push(...this.lowerTopLevel(pending, effects));
+      pending = [];
+    };
     while (!c.atEnd()) {
       const start = c.peek();
       if (c.is('import')) {
@@ -97,7 +106,7 @@ class JavaScriptParser {
         continue;
       }
       if (c.is('const') && c.peek(1).kind === 'identifier' && c.is('=', 2) && this.startsFunction(c.index + 3)) {
-        if (effects.length) {
+        if (effects.length || pending.length) {
           throw unsupported(
             'function after a top-level statement',
             `the statements before const ${c.peek(1).value} could call it before it is initialised; declare every function first`,
@@ -108,7 +117,7 @@ class JavaScriptParser {
         continue;
       }
       if (c.is('const') && c.peek(1).kind === 'identifier' && c.is('=', 2) && c.is('{', 3) && !(c.is('$', 4) && c.is(':', 5))) {
-        if (effects.length) {
+        if (effects.length || pending.length) {
           throw unsupported(
             'namespace after a top-level statement',
             `the statements before const ${c.peek(1).value} would run before it is initialised; declare every namespace first`,
@@ -118,8 +127,14 @@ class JavaScriptParser {
         items.push(this.namespace(start));
         continue;
       }
+      if (this.startsTopLevelImperative()) {
+        pending.push(this.topLevelStatement());
+        continue;
+      }
+      flush();
       effects.push(this.mainStatement());
     }
+    flush();
     if (this.unawaited.length) {
       const [call] = this.unawaited;
       throw unsupported(`call of async function ${call.name} without await`, 'the Promise it returns is outside the portable core; await it where it is called', call.span);
@@ -378,14 +393,17 @@ class JavaScriptParser {
     const outer = this.scope;
     const outerAsync = this.inAsync;
     const outerJumps = this.jumps;
+    const outerTopLevel = this.topLevel;
     this.inAsync = isAsync;
     this.jumps = { loops: 0, switches: 0 };
+    this.topLevel = false;
     const names = params.map((param) => param.name);
     this.scope = { locals: new Set(names), tdz: new Set(), mutable: new Set(names) };
     const statements = statementsOf();
     this.scope = outer;
     this.inAsync = outerAsync;
     this.jumps = outerJumps;
+    this.topLevel = outerTopLevel;
     // `if (n < 0n) throw …` as a leading statement makes `n` a natural number,
     // unless the body assigns it another value.
     const { assigned } = statementUses(statements);
@@ -515,6 +533,7 @@ class JavaScriptParser {
       throw unsupported('var declaration', 'var bindings are hoisted to the function and shared by its blocks; use let or const', span(token, token));
     }
     if (c.is('return')) {
+      if (this.topLevel) throw unsupported('top-level return statement', 'return leaves a function, and a module has none to leave', span(token, token));
       c.next();
       if (c.is(';') || c.is('}') || this.source.slice(token.end, c.peek().start).includes('\n')) {
         throw unsupported('return without a value', 'the function would return undefined, which is not a portable value', span(token, c.peek()));
@@ -534,7 +553,7 @@ class JavaScriptParser {
     if (c.is('do')) return this.doStatement();
     if (c.is('for')) return this.forStatement();
     if (c.is('break') || c.is('continue')) return this.jumpStatement();
-    if (['try', 'function', 'class', 'label', 'with', 'debugger'].includes(token.value) && token.kind === 'identifier') {
+    if (['try', 'function', 'class', 'with', 'debugger'].includes(token.value) && token.kind === 'identifier') {
       throw unsupported(`${token.value} statement`, 'outside the portable core', span(token, token));
     }
     if (token.kind === 'identifier' && c.peek(1).kind === 'punct' && c.peek(1).value === ':') {
@@ -862,6 +881,34 @@ class JavaScriptParser {
     return { name, ctors };
   }
 
+  /** Whether the next top-level statement declares or assigns variables, or is a block, if or loop. */
+  startsTopLevelImperative() {
+    const c = this.cursor;
+    if (['let', 'var', 'if', 'for', 'while', 'do'].some((word) => c.is(word)) && c.peek().kind === 'identifier') return true;
+    return c.is('{') || this.startsAssignment();
+  }
+
+  /** A top-level statement read as a function body's, where `return` has no function to leave. */
+  topLevelStatement() {
+    this.topLevel = true;
+    try {
+      return this.statement();
+    } finally {
+      this.topLevel = false;
+    }
+  }
+
+  /**
+   * Top-level statements that declare or assign variables are one
+   * expression, whose value carries the top-level variables they declare
+   * or assign; main binds each of them for the statements after it.
+   */
+  lowerTopLevel(statements, effects) {
+    const variables = effects.filter((effect) => effect.k === 'let' && !effect.name.startsWith('ml_')).map((effect) => effect.name);
+    const where = { start: statements[0].span.start, end: statements.at(-1).span.end };
+    return lowerTopLevel(this, statements, variables, where);
+  }
+
   mainStatement() {
     const c = this.cursor;
     const token = c.peek();
@@ -872,8 +919,8 @@ class JavaScriptParser {
     }
     if (c.is('console') && c.is('.', 1)) return this.consoleStatement();
     if (this.assertion && c.is(this.assertion.name)) return this.assertStatement();
-    if (token.kind === 'identifier' && ['let', 'var', 'if', 'for', 'while', 'do', 'switch', 'try', 'throw', 'class', 'return'].includes(token.value)) {
-      throw unsupported(`top-level ${token.value} statement`, 'the top level may only print with console.log, bind with const and assert', span(token, token));
+    if (token.kind === 'identifier' && ['switch', 'try', 'throw', 'class', 'return'].includes(token.value)) {
+      throw unsupported(`top-level ${token.value} statement`, 'the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts', span(token, token));
     }
     throw unsupported('top-level expression statement', 'a statement that discards its value has no portable effect', span(token, token));
   }

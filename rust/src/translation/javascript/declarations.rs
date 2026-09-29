@@ -31,6 +31,9 @@ impl JavaScriptParser {
             mutable: HashSet::new(),
         };
         self.async_names = self.async_declarations(self.cursor.index);
+        // Top-level statements that declare or assign variables, lowered together
+        // before the next statement that prints, binds a constant or asserts.
+        let mut pending = Vec::new();
         while !self.cursor.at_end() {
             let start = self.peek();
             if self.cursor.is("import") {
@@ -71,7 +74,7 @@ impl JavaScriptParser {
                 && self.cursor.is_at("=", 2)
                 && self.starts_function(self.cursor.index + 3)
             {
-                if !effects.is_empty() {
+                if !effects.is_empty() || !pending.is_empty() {
                     let name = self.peek_at(1);
                     return Err(unsupported(
                         "function after a top-level statement",
@@ -91,7 +94,7 @@ impl JavaScriptParser {
                 && self.cursor.is_at("{", 3)
                 && !(self.cursor.is_at("$", 4) && self.cursor.is_at(":", 5))
             {
-                if !effects.is_empty() {
+                if !effects.is_empty() || !pending.is_empty() {
                     let name = self.peek_at(1);
                     return Err(unsupported(
                         "namespace after a top-level statement",
@@ -105,8 +108,14 @@ impl JavaScriptParser {
                 items.push(SItem::Module(self.namespace(&start)?));
                 continue;
             }
+            if self.starts_top_level_imperative() {
+                pending.push(self.top_level_statement()?);
+                continue;
+            }
+            self.flush(&mut pending, &mut effects)?;
             effects.push(self.main_statement()?);
         }
+        self.flush(&mut pending, &mut effects)?;
         if let Some((name, place)) = self.unawaited.first() {
             return Err(unsupported(
                 &format!("call of async function {name} without await"),
@@ -621,6 +630,7 @@ impl JavaScriptParser {
         );
         let outer_async = std::mem::replace(&mut self.in_async, is_async);
         let outer_jumps = std::mem::take(&mut self.jumps);
+        let outer_top_level = std::mem::replace(&mut self.top_level, false);
         let statements = match body {
             Body::Arrow if !self.cursor.is("{") => {
                 let token = self.peek();
@@ -641,6 +651,7 @@ impl JavaScriptParser {
         self.scope = outer;
         self.in_async = outer_async;
         self.jumps = outer_jumps;
+        self.top_level = outer_top_level;
         let statements = statements?;
         // `if (n < 0n) throw …` as a leading statement makes `n` a natural number,
         // unless the body assigns it another value.

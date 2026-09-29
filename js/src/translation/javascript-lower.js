@@ -131,6 +131,56 @@ export function lowerImperative(parser, name, params, statements, where) {
 }
 
 /**
+ * Top-level statements that declare or assign variables, after main has
+ * bound `variables`: main effects that bind the top-level variables the
+ * statements declare or assign to their values after them. The statements
+ * are one expression; when they leave several variables, its value is of a
+ * generated data type that carries them all, and each is bound by a match.
+ */
+export function lowerTopLevel(parser, statements, variables, where) {
+  const lowering = new Lowering(parser, 'main');
+  const list = flat(statements);
+  const declared = new Set(list.filter((statement) => statement.s === 'let').map((statement) => statement.name));
+  const { assigned } = statementUses(list);
+  const kept = union(declared, assigned);
+  let carried = [];
+  let data = null;
+  const fall = (scope) => {
+    carried = visible(scope).filter((entry) => kept.has(entry.source));
+    if (carried.length === 1) return named(carried[0].ir, where);
+    // Statements that leave no variable still run, for the aborts they may reach.
+    if (!carried.length) return { k: 'bool', value: true, span: where };
+    // An if or switch at the end falls off it in each branch, each with the same variables.
+    data ??= lowering.generatedName('top');
+    return { k: 'ctorObject', tag: `${data}_done`, fields: Object.fromEntries(carried.map((entry) => [entry.ir, named(entry.ir, where)])), span: where };
+  };
+  const ctx = {
+    fall,
+    ret: () => internal('return at the top level', where),
+    brk: () => internal('break outside a loop', where),
+    cont: () => internal('continue outside a loop', where),
+    ...dead(),
+    live: union(variables, kept),
+  };
+  const value = lowering.seq(list, 0, ctx, variables.map((name) => ({ source: name, ir: name })));
+  if (carried.length === 1) return [{ k: 'let', name: carried[0].source, value, span: where }];
+  if (!carried.length) return [{ k: 'let', name: lowering.generatedName('top'), value, span: where }];
+  const ctor = `${data}_done`;
+  parser.generated.push({ k: 'data', name: data, ctors: [{ name: ctor, fields: carried.map((entry) => ({ name: entry.ir, type: null })) }], span: where, generated: true });
+  const whole = `${data}_value`;
+  const project = (entry) => ({
+    k: 'match',
+    scrutinees: [named(whole, where)],
+    rows: [{ patterns: [{ k: 'ctor', path: [ROOT, data, ctor], args: carried.map((other) => ({ k: 'bind', name: other.ir, span: where })), span: where }], body: named(entry.ir, where), span: where }],
+    span: where,
+  });
+  return [
+    { k: 'let', name: whole, value, span: where },
+    ...carried.map((entry) => ({ k: 'let', name: entry.source, value: project(entry), span: where })),
+  ];
+}
+
+/**
  * The source names a context's continuations may read: `live` after
  * falling off the end, `brkLive` after `break`, `contLive` after `continue`.
  */

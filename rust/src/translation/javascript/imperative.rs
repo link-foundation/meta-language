@@ -31,6 +31,9 @@ use super::{
     ROOT,
 };
 
+mod top_level;
+pub(super) use self::top_level::lower_top_level;
+
 /// A variable in scope: its source name and the name it has in the translation.
 #[derive(Clone)]
 struct Var {
