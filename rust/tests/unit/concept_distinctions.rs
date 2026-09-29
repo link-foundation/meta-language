@@ -127,8 +127,16 @@ fn every_fixture_correspondence_relates_the_spellings_as_recorded() {
         }
         if actual.relation == CorrespondenceRelation::Shared {
             let shared = actual.shared.clone().expect("a shared concept");
-            assert_eq!(actual.first, [shared.clone()], "{label}");
-            assert_eq!(actual.second, [shared], "{label}");
+            assert_eq!(
+                actual.first.as_slice(),
+                std::slice::from_ref(&shared),
+                "{label}"
+            );
+            assert_eq!(
+                actual.second.as_slice(),
+                std::slice::from_ref(&shared),
+                "{label}"
+            );
             let justification = actual.justification.expect("a justification");
             assert!(justification.ends_with('.'), "{label}");
             assert!(justification.split_whitespace().count() >= 3, "{label}");
