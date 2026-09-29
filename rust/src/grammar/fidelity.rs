@@ -24,27 +24,55 @@ pub const GRAMMAR_FORMATS: &[&str] = &["bnf"];
 /// Every [`GrammarFormatProfile`] must classify each construct as either
 /// lossless/equivalent support or exactly one documented lossy fallback.
 pub const GRAMMAR_CONSTRUCTS: &[&str] = &[
-    "empty",
+    "empty-expression",
     "sequence",
     "ordered-choice",
     "unordered-choice",
-    "optional",
-    "zero-or-more",
-    "one-or-more",
-    "repeat-range",
-    "char-range",
-    "char-class",
-    "any-char",
+    "optional-expression",
+    "zero-or-more-repetition",
+    "one-or-more-repetition",
+    "counted-repetition",
+    "character-range",
+    "character-class",
+    "any-character",
     "terminal",
     "case-insensitive-terminal",
-    "non-terminal",
-    "and-predicate",
-    "not-predicate",
+    "nonterminal",
+    "positive-predicate",
+    "negative-predicate",
     "capture",
-    "rule-kind-atomic",
-    "rule-kind-silent",
-    "rule-kind-token",
+    "atomic-rule",
+    "silent-rule",
+    "token-rule",
 ];
+
+/// Construct names used before the readable names, each with the construct
+/// that replaced it. Profile lookups still accept a former name.
+pub const FORMER_GRAMMAR_CONSTRUCTS: &[(&str, &str)] = &[
+    ("empty", "empty-expression"),
+    ("optional", "optional-expression"),
+    ("zero-or-more", "zero-or-more-repetition"),
+    ("one-or-more", "one-or-more-repetition"),
+    ("repeat-range", "counted-repetition"),
+    ("char-range", "character-range"),
+    ("char-class", "character-class"),
+    ("any-char", "any-character"),
+    ("non-terminal", "nonterminal"),
+    ("and-predicate", "positive-predicate"),
+    ("not-predicate", "negative-predicate"),
+    ("rule-kind-atomic", "atomic-rule"),
+    ("rule-kind-silent", "silent-rule"),
+    ("rule-kind-token", "token-rule"),
+];
+
+/// The current name of a grammar construct: `construct` itself, or the name that replaced it.
+#[must_use]
+pub fn current_grammar_construct(construct: &str) -> &str {
+    FORMER_GRAMMAR_CONSTRUCTS
+        .iter()
+        .find(|(former, _)| *former == construct)
+        .map_or(construct, |(_, current)| current)
+}
 
 /// Round-trip fidelity level for one construct in one grammar format.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -150,14 +178,16 @@ impl GrammarFormatProfile {
     /// Whether this format represents a construct without a lossy fallback.
     #[must_use]
     pub fn supports_construct(&self, construct: &str) -> bool {
-        self.profile.supports_concept(construct)
+        self.profile
+            .supports_concept(current_grammar_construct(construct))
     }
 
     /// Documented lossy fallback for a construct this format cannot represent
     /// natively.
     #[must_use]
     pub fn construct_fallback(&self, construct: &str) -> Option<&str> {
-        self.profile.concept_fallback(construct)
+        self.profile
+            .concept_fallback(current_grammar_construct(construct))
     }
 
     /// Fidelity level for a construct, or `None` when the construct is outside
@@ -165,7 +195,10 @@ impl GrammarFormatProfile {
     #[must_use]
     pub fn construct_fidelity(&self, construct: &str) -> Option<GrammarFidelityLevel> {
         if self.supports_construct(construct) {
-            if self.equivalent_constructs.contains(construct) {
+            if self
+                .equivalent_constructs
+                .contains(current_grammar_construct(construct))
+            {
                 Some(GrammarFidelityLevel::Equivalent)
             } else {
                 Some(GrammarFidelityLevel::Lossless)
@@ -224,11 +257,11 @@ fn bnf_profile() -> GrammarFormatProfile {
     with_lossless_constructs(
         base_profile("bnf", "Backus-Naur Form"),
         [
-            "empty",
+            "empty-expression",
             "sequence",
             "unordered-choice",
             "terminal",
-            "non-terminal",
+            "nonterminal",
         ],
     )
     .with_lossy_fallback(
@@ -236,31 +269,31 @@ fn bnf_profile() -> GrammarFormatProfile {
         "emitted as an unordered BNF alternative; priority semantics are not preserved",
     )
     .with_lossy_fallback(
-        "optional",
+        "optional-expression",
         "emitted through a synthetic helper production with an empty alternative",
     )
     .with_lossy_fallback(
-        "zero-or-more",
+        "zero-or-more-repetition",
         "emitted through a recursive synthetic helper production with an empty alternative",
     )
     .with_lossy_fallback(
-        "one-or-more",
+        "one-or-more-repetition",
         "emitted through a recursive synthetic helper production plus one required item",
     )
     .with_lossy_fallback(
-        "repeat-range",
+        "counted-repetition",
         "emitted as required occurrences plus optional or recursive synthetic helper productions",
     )
     .with_lossy_fallback(
-        "char-range",
+        "character-range",
         "expanded to a synthetic helper production enumerating each character when the range is bounded",
     )
     .with_lossy_fallback(
-        "char-class",
+        "character-class",
         "expanded to a synthetic helper production for finite non-negated classes; unsupported classes are rejected",
     )
     .with_lossy_fallback(
-        "any-char",
+        "any-character",
         "unsupported by BNF emission and rejected instead of silently broadening the language",
     )
     .with_lossy_fallback(
@@ -268,11 +301,11 @@ fn bnf_profile() -> GrammarFormatProfile {
         "emitted as a case-sensitive literal and reported as lossy",
     )
     .with_lossy_fallback(
-        "and-predicate",
+        "positive-predicate",
         "unsupported by BNF emission and rejected because lookahead has no BNF equivalent",
     )
     .with_lossy_fallback(
-        "not-predicate",
+        "negative-predicate",
         "unsupported by BNF emission and rejected because lookahead has no BNF equivalent",
     )
     .with_lossy_fallback(
@@ -280,15 +313,15 @@ fn bnf_profile() -> GrammarFormatProfile {
         "emitted as the captured expression while dropping the capture label",
     )
     .with_lossy_fallback(
-        "rule-kind-atomic",
+        "atomic-rule",
         "emitted as a normal BNF production; rule-kind metadata is dropped",
     )
     .with_lossy_fallback(
-        "rule-kind-silent",
+        "silent-rule",
         "emitted as a normal BNF production; rule-kind metadata is dropped",
     )
     .with_lossy_fallback(
-        "rule-kind-token",
+        "token-rule",
         "emitted as a normal BNF production; rule-kind metadata is dropped",
     )
 }

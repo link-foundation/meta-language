@@ -42,7 +42,7 @@ impl RunStyle {
     fn wrap(self, text: String) -> InlineNode {
         match self {
             Self::Regular => InlineNode::Text(text),
-            Self::Strong => wrapped("strong", text),
+            Self::Strong => wrapped("strong-emphasis", text),
             Self::Emphasis => wrapped("emphasis", text),
         }
     }
@@ -139,7 +139,7 @@ fn flatten_runs(nodes: &[InlineNode], style: RunStyle, runs: &mut Vec<(RunStyle,
                 concept, children, ..
             } => {
                 let child_style = match concept.as_str() {
-                    "strong" => RunStyle::Strong,
+                    "strong-emphasis" => RunStyle::Strong,
                     "emphasis" => RunStyle::Emphasis,
                     // Unsupported inline concepts (hyperlink, image, …) keep the
                     // surrounding style; their text is preserved but unstyled.

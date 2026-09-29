@@ -7,34 +7,78 @@ use crate::rust_codec::{FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, 
 const GRAMMAR: &str = "grammar::grammar";
 const RULE: &str = "grammar::rule";
 
-const EXPR_EMPTY: &str = "grammar::expr::empty";
-const EXPR_TERMINAL: &str = "grammar::expr::terminal";
-const EXPR_TERMINAL_INSENSITIVE: &str = "grammar::expr::terminal-insensitive";
-const EXPR_CHAR_RANGE: &str = "grammar::expr::char-range";
-const EXPR_CHAR_CLASS: &str = "grammar::expr::char-class";
-const EXPR_ANY_CHAR: &str = "grammar::expr::any-char";
-const EXPR_NON_TERMINAL: &str = "grammar::expr::non-terminal";
-const EXPR_CHOICE: &str = "grammar::expr::choice";
-const EXPR_SEQUENCE: &str = "grammar::expr::sequence";
-const EXPR_OPTIONAL: &str = "grammar::expr::optional";
-const EXPR_ZERO_OR_MORE: &str = "grammar::expr::zero-or-more";
-const EXPR_ONE_OR_MORE: &str = "grammar::expr::one-or-more";
-const EXPR_REPEAT: &str = "grammar::expr::repeat";
-const EXPR_AND: &str = "grammar::expr::and";
-const EXPR_NOT: &str = "grammar::expr::not";
-const EXPR_CAPTURE: &str = "grammar::expr::capture";
+const EXPR_EMPTY: &str = "grammar::expression::empty-expression";
+const EXPR_TERMINAL: &str = "grammar::expression::terminal";
+const EXPR_TERMINAL_INSENSITIVE: &str = "grammar::expression::case-insensitive-terminal";
+const EXPR_CHAR_RANGE: &str = "grammar::expression::character-range";
+const EXPR_CHAR_CLASS: &str = "grammar::expression::character-class";
+const EXPR_ANY_CHAR: &str = "grammar::expression::any-character";
+const EXPR_NON_TERMINAL: &str = "grammar::expression::nonterminal";
+const EXPR_CHOICE: &str = "grammar::expression::choice";
+const EXPR_SEQUENCE: &str = "grammar::expression::sequence";
+const EXPR_OPTIONAL: &str = "grammar::expression::optional-expression";
+const EXPR_ZERO_OR_MORE: &str = "grammar::expression::zero-or-more-repetition";
+const EXPR_ONE_OR_MORE: &str = "grammar::expression::one-or-more-repetition";
+const EXPR_REPEAT: &str = "grammar::expression::counted-repetition";
+const EXPR_AND: &str = "grammar::expression::positive-predicate";
+const EXPR_NOT: &str = "grammar::expression::negative-predicate";
+const EXPR_CAPTURE: &str = "grammar::expression::capture";
 
-const CHAR_CLASS_CHAR: &str = "grammar::char-class-item::char";
-const CHAR_CLASS_RANGE: &str = "grammar::char-class-item::range";
+const CHAR_CLASS_CHAR: &str = "grammar::character-class-item::character";
+const CHAR_CLASS_RANGE: &str = "grammar::character-class-item::character-range";
 
-const VALUE_NONE: &str = "grammar::value::none";
-const VALUE_SOME: &str = "grammar::value::some";
+const VALUE_NONE: &str = "grammar::value::absent-value";
+const VALUE_SOME: &str = "grammar::value::present-value";
 const VALUE_STRING_PREFIX: &str = "grammar::value::string::";
-const VALUE_CHAR_PREFIX: &str = "grammar::value::char::";
-const VALUE_BOOL_PREFIX: &str = "grammar::value::bool::";
-const VALUE_USIZE_PREFIX: &str = "grammar::value::usize::";
+const VALUE_CHAR_PREFIX: &str = "grammar::value::character::";
+const VALUE_BOOL_PREFIX: &str = "grammar::value::boolean-value::";
+const VALUE_USIZE_PREFIX: &str = "grammar::value::natural-number::";
 const VALUE_RULE_KIND_PREFIX: &str = "grammar::value::rule-kind::";
 const VALUE_FORMAT_PREFIX: &str = "grammar::value::format::";
+
+/// Grammar link tags written before the readable-name renames, and the tag
+/// each became. Decoding reads a network written with either.
+const FORMER_GRAMMAR_TAGS: &[(&str, &str)] = &[
+    ("grammar::expr::empty", EXPR_EMPTY),
+    ("grammar::expr::terminal", EXPR_TERMINAL),
+    (
+        "grammar::expr::terminal-insensitive",
+        EXPR_TERMINAL_INSENSITIVE,
+    ),
+    ("grammar::expr::char-range", EXPR_CHAR_RANGE),
+    ("grammar::expr::char-class", EXPR_CHAR_CLASS),
+    ("grammar::expr::any-char", EXPR_ANY_CHAR),
+    ("grammar::expr::non-terminal", EXPR_NON_TERMINAL),
+    ("grammar::expr::choice", EXPR_CHOICE),
+    ("grammar::expr::sequence", EXPR_SEQUENCE),
+    ("grammar::expr::optional", EXPR_OPTIONAL),
+    ("grammar::expr::zero-or-more", EXPR_ZERO_OR_MORE),
+    ("grammar::expr::one-or-more", EXPR_ONE_OR_MORE),
+    ("grammar::expr::repeat", EXPR_REPEAT),
+    ("grammar::expr::and", EXPR_AND),
+    ("grammar::expr::not", EXPR_NOT),
+    ("grammar::expr::capture", EXPR_CAPTURE),
+    ("grammar::char-class-item::char", CHAR_CLASS_CHAR),
+    ("grammar::char-class-item::range", CHAR_CLASS_RANGE),
+    ("grammar::value::none", VALUE_NONE),
+    ("grammar::value::some", VALUE_SOME),
+];
+
+/// Grammar value prefixes written before the readable-name renames, and the
+/// prefix each became.
+const FORMER_VALUE_PREFIXES: &[(&str, &str)] = &[
+    ("grammar::value::char::", VALUE_CHAR_PREFIX),
+    ("grammar::value::bool::", VALUE_BOOL_PREFIX),
+    ("grammar::value::usize::", VALUE_USIZE_PREFIX),
+];
+
+/// The current grammar link tag for `term`, reading a former tag as the tag it became.
+fn current_grammar_tag(term: &str) -> &str {
+    FORMER_GRAMMAR_TAGS
+        .iter()
+        .find(|(former, _)| *former == term)
+        .map_or(term, |(_, current)| current)
+}
 
 impl ToLinks for Grammar {
     fn to_links(&self, encoder: &mut LinksEncoder) -> LinkId {
@@ -558,7 +602,7 @@ fn grammar_link(network: &LinkNetwork, link: LinkId) -> Result<(&str, &[LinkId])
     let Some(term) = link.metadata().term() else {
         return Err(malformed(link.id(), "grammar link is missing its term tag"));
     };
-    Ok((term, link.references()))
+    Ok((current_grammar_tag(term), link.references()))
 }
 
 fn expect_grammar_type(link: &Link) -> Result<(), LinksCodecError> {
@@ -582,6 +626,12 @@ fn prefixed_value<'network>(
 ) -> Result<&'network str, LinksCodecError> {
     let (term, _) = grammar_link(network, link)?;
     term.strip_prefix(prefix)
+        .or_else(|| {
+            FORMER_VALUE_PREFIXES
+                .iter()
+                .filter(|(_, current)| *current == prefix)
+                .find_map(|(former, _)| term.strip_prefix(former))
+        })
         .ok_or_else(|| invalid_value(link, type_name, Some(term), "wrong value prefix"))
 }
 
@@ -636,7 +686,7 @@ fn hex_encode(value: &str) -> String {
 }
 
 fn hex_decode(link: LinkId, type_name: &str, value: &str) -> Result<String, LinksCodecError> {
-    if value.len() % 2 != 0 {
+    if !value.len().is_multiple_of(2) {
         return Err(invalid_value(
             link,
             type_name,
@@ -646,7 +696,7 @@ fn hex_decode(link: LinkId, type_name: &str, value: &str) -> Result<String, Link
     }
 
     let mut bytes = Vec::with_capacity(value.len() / 2);
-    for pair in value.as_bytes().chunks_exact(2) {
+    for pair in value.as_bytes().as_chunks::<2>().0 {
         let high = hex_digit(pair[0])
             .ok_or_else(|| invalid_value(link, type_name, Some(value), "invalid hex digit"))?;
         let low = hex_digit(pair[1])

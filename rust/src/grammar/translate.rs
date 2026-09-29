@@ -7,8 +7,8 @@ use std::fmt;
 
 use super::{Grammar, GrammarExpr, GrammarRule, GRAMMAR_CONCEPTS};
 use crate::{
-    LinkMetadata, LinkNetwork, LinkQuery, LinkType, ParseConfiguration, TranslationRule,
-    TranslationRuleSet, TranslationTemplate,
+    current_concept_id, LinkMetadata, LinkNetwork, LinkQuery, LinkType, ParseConfiguration,
+    TranslationRule, TranslationRuleSet, TranslationTemplate,
 };
 
 /// Error raised while translating grammar rule names and documentation.
@@ -182,7 +182,7 @@ struct ResolvedConcept {
 fn resolve_rule_concept(rule: &GrammarRule, rules: &TranslationRuleSet) -> Option<ResolvedConcept> {
     rule.concept()
         .map(|concept| ResolvedConcept {
-            concept: concept.to_string(),
+            concept: current_concept_id(concept).to_string(),
             explicit: true,
         })
         .or_else(|| infer_concept_from_surface(rule.name(), rules))
@@ -443,9 +443,9 @@ fn has_surface_boundaries(text: &str, source: &str, start: usize, end: usize) ->
     let before = text[..start].chars().next_back();
     let after = text[end..].chars().next();
 
-    let start_ok = first.map_or(true, |character| !is_word_character(character))
+    let start_ok = first.is_none_or(|character| !is_word_character(character))
         || !before.is_some_and(is_word_character);
-    let end_ok = last.map_or(true, |character| !is_word_character(character))
+    let end_ok = last.is_none_or(|character| !is_word_character(character))
         || !after.is_some_and(is_word_character);
 
     start_ok && end_ok
@@ -484,22 +484,22 @@ const GRAMMAR_SURFACE_TRANSLATIONS: &[SurfaceTranslation] = &[
         russian: "выбор",
     },
     SurfaceTranslation {
-        concept: "grammar.repetition",
+        concept: "grammar.counted-repetition",
         english: "repetition",
         russian: "повторение",
     },
     SurfaceTranslation {
-        concept: "grammar.zero-or-more",
+        concept: "grammar.zero-or-more-repetition",
         english: "zero or more",
         russian: "ноль или более",
     },
     SurfaceTranslation {
-        concept: "grammar.one-or-more",
+        concept: "grammar.one-or-more-repetition",
         english: "one or more",
         russian: "один или более",
     },
     SurfaceTranslation {
-        concept: "grammar.optional",
+        concept: "grammar.optional-expression",
         english: "optional",
         russian: "необязательный",
     },
@@ -509,22 +509,22 @@ const GRAMMAR_SURFACE_TRANSLATIONS: &[SurfaceTranslation] = &[
         russian: "терминал",
     },
     SurfaceTranslation {
-        concept: "grammar.non-terminal",
+        concept: "grammar.nonterminal",
         english: "non-terminal",
         russian: "нетерминал",
     },
     SurfaceTranslation {
-        concept: "grammar.char-class",
+        concept: "grammar.character-class",
         english: "character class",
         russian: "класс символов",
     },
     SurfaceTranslation {
-        concept: "grammar.char-range",
+        concept: "grammar.character-range",
         english: "character range",
         russian: "диапазон символов",
     },
     SurfaceTranslation {
-        concept: "grammar.any-char",
+        concept: "grammar.any-character",
         english: "any character",
         russian: "любой символ",
     },
@@ -544,7 +544,7 @@ const GRAMMAR_SURFACE_TRANSLATIONS: &[SurfaceTranslation] = &[
         russian: "захват",
     },
     SurfaceTranslation {
-        concept: "grammar.empty",
+        concept: "grammar.empty-expression",
         english: "empty",
         russian: "пусто",
     },
@@ -624,7 +624,7 @@ const GRAMMAR_SURFACE_TRANSLATIONS: &[SurfaceTranslation] = &[
         russian: "строка",
     },
     SurfaceTranslation {
-        concept: "grammar.boolean",
+        concept: "grammar.boolean-value",
         english: "boolean",
         russian: "логическое",
     },

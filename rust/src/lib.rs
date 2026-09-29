@@ -59,7 +59,10 @@ pub use api_styles::{
     ApiStyleFixture, FluentNetworkApi, FluentPipeline, LinkCliSubstitution,
     LinkCliSubstitutionError, LinkCliSubstitutionKind, API_OPERATIONS,
 };
-pub use concept_ontology::{ConceptOntologyImportReport, ConceptOntologySeedReport};
+pub use concept_ontology::{
+    current_concept_id, ConceptOntologyImportReport, ConceptOntologySeedReport, FORMER_CONCEPT_IDS,
+    FORMER_CONCEPT_ID_VOCABULARY,
+};
 pub use configuration::{
     AccessMode, FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
@@ -102,6 +105,7 @@ pub use grammar::{
     SemanticInferenceConfig, Severity, StructuralPrior, Symbol, Token, WhitespacePolicy,
     GOLDEN_CORPORA, GRAMMAR_CONCEPTS, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS,
 };
+pub use grammar::{current_grammar_construct, FORMER_GRAMMAR_CONSTRUCTS};
 #[cfg(feature = "llm-assist")]
 pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
 pub use graphql_adapter::{

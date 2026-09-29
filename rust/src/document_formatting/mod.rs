@@ -50,7 +50,7 @@ const DOCUMENT_FORMATTING_CONCEPTS: &[FormattingConcept] = &[
         templates: &[("Markdown", "*{}*"), ("HTML", "<em>{}</em>")],
     },
     FormattingConcept {
-        id: "strong",
+        id: "strong-emphasis",
         definition: "Inline strong importance (bold) applied to a text fragment.",
         templates: &[("Markdown", "**{}**"), ("HTML", "<strong>{}</strong>")],
     },
@@ -100,7 +100,7 @@ const DOCUMENT_FORMATTING_CONCEPTS: &[FormattingConcept] = &[
         templates: &[("Markdown", "{}"), ("HTML", "<p>{}</p>")],
     },
     FormattingConcept {
-        id: "blockquote",
+        id: "block-quote",
         definition: "Quoted block set off from the surrounding text.",
         templates: &[
             ("Markdown", "> {}"),
@@ -363,7 +363,7 @@ fn store_capture(instance: &mut DocumentFormatInstance, hole: Hole, captured: &s
 
 /// Stores a heading level, rejecting a fragment whose repeated level holes
 /// disagree (for example an HTML `<h2>...</h1>`).
-fn assign_level(instance: &mut DocumentFormatInstance, level: u8) -> Option<()> {
+const fn assign_level(instance: &mut DocumentFormatInstance, level: u8) -> Option<()> {
     match instance.level {
         Some(existing) if existing != level => None,
         _ => {
@@ -374,6 +374,7 @@ fn assign_level(instance: &mut DocumentFormatInstance, level: u8) -> Option<()> 
 }
 
 fn template_for(concept: &str, language: &str) -> Option<&'static str> {
+    let concept = crate::current_concept_id(concept);
     DOCUMENT_FORMATTING_CONCEPTS
         .iter()
         .find(|entry| entry.id == concept)?
@@ -388,7 +389,7 @@ fn template_for(concept: &str, language: &str) -> Option<&'static str> {
 const INLINE_RESOLUTION_ORDER: &[&str] = &[
     "image",
     "hyperlink",
-    "strong",
+    "strong-emphasis",
     "emphasis",
     "strikethrough",
     "inline-code",
@@ -406,6 +407,7 @@ impl LinkNetwork {
         let mut syntax_mappings = 0;
         for concept in DOCUMENT_FORMATTING_CONCEPTS {
             let concept_link = self.intern_concept(concept.id, Some(concept.definition));
+            self.insert_former_concept_ids(concept_link, concept.id);
             for (language, template) in concept.templates {
                 self.insert_concept_syntax_mapping(
                     concept_link,
@@ -498,7 +500,7 @@ impl LinkNetwork {
     #[must_use]
     pub fn document_formatting_concept(&self, concept: &str) -> Option<LinkId> {
         let _ = template_for(concept, "Markdown")?;
-        self.find_term(concept)
+        self.find_term(crate::current_concept_id(concept))
             .filter(|link| self.is_concept_link(*link))
     }
 

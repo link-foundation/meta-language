@@ -28,6 +28,8 @@ import { seedStatehoodWorkedExample } from './concept-ontology.js';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+// The type-point prefix of an external concept identifier vocabulary, as in Rust.
+const EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-identifier:';
 
 export class LinkNetwork {
   constructor() {
@@ -253,7 +255,7 @@ export class LinkNetwork {
   _insertConceptAliasLink(conceptLink, vocabulary, externalId) {
     const vocabularyLink = this.insertTypedPoint(
       LinkType.Type,
-      `external-id:${vocabulary}`,
+      `${EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX}${vocabulary}`,
       'External concept identifier vocabulary.',
     );
     const existing = this._findSemanticPair(conceptLink, vocabularyLink, externalId, vocabulary);

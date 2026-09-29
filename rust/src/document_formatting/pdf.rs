@@ -68,7 +68,7 @@ impl RunStyle {
         match self {
             Self::Regular => InlineNode::Text(text),
             Self::Strong => InlineNode::Wrapped {
-                concept: "strong".to_string(),
+                concept: "strong-emphasis".to_string(),
                 attributes: std::collections::BTreeMap::new(),
                 children: vec![InlineNode::Text(text)],
             },
@@ -203,7 +203,7 @@ fn flatten_runs(nodes: &[InlineNode], style: RunStyle, runs: &mut Vec<(RunStyle,
                 concept, children, ..
             } => {
                 let child_style = match concept.as_str() {
-                    "strong" => RunStyle::Strong,
+                    "strong-emphasis" => RunStyle::Strong,
                     "emphasis" => RunStyle::Emphasis,
                     // Unsupported inline concepts (hyperlink, image, …) keep the
                     // surrounding style; their text is preserved but unstyled.

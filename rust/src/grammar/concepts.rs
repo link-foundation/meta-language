@@ -52,21 +52,21 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
             ("abnf", "/"),
             ("antlr", "|"),
             ("lark", "|"),
-            ("meta-language", "choice"),
+            ("meta-language", "unordered choice"),
         ],
     },
     GrammarConcept {
-        id: "grammar.repetition",
+        id: "grammar.counted-repetition",
         definition: "A counted repetition with explicit minimum and optional maximum bounds.",
         syntax: &[
             ("ebnf", "{ }"),
             ("abnf", "m*n"),
             ("gbnf", "{m,n}"),
-            ("meta-language", "repeat"),
+            ("meta-language", "counted repetition"),
         ],
     },
     GrammarConcept {
-        id: "grammar.zero-or-more",
+        id: "grammar.zero-or-more-repetition",
         definition: "A repetition that accepts zero or more occurrences.",
         syntax: &[
             ("peg", "*"),
@@ -77,18 +77,18 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
         ],
     },
     GrammarConcept {
-        id: "grammar.one-or-more",
+        id: "grammar.one-or-more-repetition",
         definition: "A repetition that accepts one or more occurrences.",
         syntax: &[
             ("peg", "+"),
             ("antlr", "+"),
             ("lark", "+"),
             ("gbnf", "+"),
-            ("meta-language", "one or more"),
+            ("meta-language", "one or more repetition"),
         ],
     },
     GrammarConcept {
-        id: "grammar.optional",
+        id: "grammar.optional-expression",
         definition: "An expression that may be present or absent.",
         syntax: &[
             ("ebnf", "[ ]"),
@@ -111,7 +111,7 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
         ],
     },
     GrammarConcept {
-        id: "grammar.non-terminal",
+        id: "grammar.nonterminal",
         definition: "A reference to another named grammar rule.",
         syntax: &[
             ("bnf", "<name>"),
@@ -119,11 +119,11 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
             ("peg", "name"),
             ("antlr", "name"),
             ("lark", "name"),
-            ("meta-language", "non-terminal"),
+            ("meta-language", "nonterminal"),
         ],
     },
     GrammarConcept {
-        id: "grammar.char-class",
+        id: "grammar.character-class",
         definition: "A set of characters accepted at one input position.",
         syntax: &[
             ("peg", "[a-z]"),
@@ -134,7 +134,7 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
         ],
     },
     GrammarConcept {
-        id: "grammar.char-range",
+        id: "grammar.character-range",
         definition: "An inclusive range between two character endpoints.",
         syntax: &[
             ("abnf", "%x30-39"),
@@ -143,25 +143,25 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
         ],
     },
     GrammarConcept {
-        id: "grammar.any-char",
+        id: "grammar.any-character",
         definition: "A wildcard grammar expression that accepts any single character.",
         syntax: &[
             ("peg", "."),
             ("lark", "."),
             ("gbnf", "."),
-            ("meta-language", "any"),
+            ("meta-language", "any character"),
         ],
     },
     GrammarConcept {
         id: "grammar.positive-predicate",
         definition:
             "A positive lookahead predicate that tests an expression without consuming input.",
-        syntax: &[("peg", "&e"), ("meta-language", "and predicate")],
+        syntax: &[("peg", "&e"), ("meta-language", "positive predicate")],
     },
     GrammarConcept {
         id: "grammar.negative-predicate",
         definition: "A negative lookahead predicate that rejects when an expression would match.",
-        syntax: &[("peg", "!e"), ("meta-language", "not predicate")],
+        syntax: &[("peg", "!e"), ("meta-language", "negative predicate")],
     },
     GrammarConcept {
         id: "grammar.capture",
@@ -173,12 +173,12 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
         ],
     },
     GrammarConcept {
-        id: "grammar.empty",
+        id: "grammar.empty-expression",
         definition: "A grammar expression that accepts the empty string.",
         syntax: &[
             ("bnf", "empty alternative"),
             ("ebnf", "empty alternative"),
-            ("meta-language", "empty"),
+            ("meta-language", "empty expression"),
         ],
     },
 ];
@@ -187,19 +187,19 @@ pub const GRAMMAR_CONCEPTS: &[GrammarConcept] = &[
 #[must_use]
 pub const fn grammar_expr_concept_id(expr: &GrammarExpr) -> &'static str {
     match expr {
-        GrammarExpr::Empty => "grammar.empty",
+        GrammarExpr::Empty => "grammar.empty-expression",
         GrammarExpr::Terminal(_) | GrammarExpr::TerminalInsensitive(_) => "grammar.terminal",
-        GrammarExpr::CharRange(_, _) => "grammar.char-range",
-        GrammarExpr::CharClass { .. } => "grammar.char-class",
-        GrammarExpr::AnyChar => "grammar.any-char",
-        GrammarExpr::NonTerminal(_) => "grammar.non-terminal",
+        GrammarExpr::CharRange(_, _) => "grammar.character-range",
+        GrammarExpr::CharClass { .. } => "grammar.character-class",
+        GrammarExpr::AnyChar => "grammar.any-character",
+        GrammarExpr::NonTerminal(_) => "grammar.nonterminal",
         GrammarExpr::Choice { ordered: true, .. } => "grammar.ordered-choice",
         GrammarExpr::Choice { ordered: false, .. } => "grammar.unordered-choice",
         GrammarExpr::Sequence(_) => "grammar.sequence",
-        GrammarExpr::Optional(_) => "grammar.optional",
-        GrammarExpr::ZeroOrMore(_) => "grammar.zero-or-more",
-        GrammarExpr::OneOrMore(_) => "grammar.one-or-more",
-        GrammarExpr::Repeat { .. } => "grammar.repetition",
+        GrammarExpr::Optional(_) => "grammar.optional-expression",
+        GrammarExpr::ZeroOrMore(_) => "grammar.zero-or-more-repetition",
+        GrammarExpr::OneOrMore(_) => "grammar.one-or-more-repetition",
+        GrammarExpr::Repeat { .. } => "grammar.counted-repetition",
         GrammarExpr::And(_) => "grammar.positive-predicate",
         GrammarExpr::Not(_) => "grammar.negative-predicate",
         GrammarExpr::Capture { .. } => "grammar.capture",
@@ -228,6 +228,7 @@ impl LinkNetwork {
     pub fn seed_grammar_concept_ontology(&mut self) -> usize {
         for concept in GRAMMAR_CONCEPTS {
             let concept_link = self.intern_concept(concept.id, Some(concept.definition));
+            self.insert_former_concept_ids(concept_link, concept.id);
 
             for (language, syntax) in concept.syntax {
                 self.insert_concept_syntax_mapping(

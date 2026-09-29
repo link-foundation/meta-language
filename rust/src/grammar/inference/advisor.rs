@@ -35,7 +35,7 @@ const INFERENCE_NAMING_CONCEPTS: &[InferenceNamingConcept] = &[
         name: "string",
     },
     InferenceNamingConcept {
-        id: "grammar.boolean",
+        id: "grammar.boolean-value",
         name: "boolean",
     },
     InferenceNamingConcept {
@@ -568,7 +568,7 @@ fn unique_rule_name(base: &str, grammar: &Grammar) -> String {
 fn validate_name_candidate(request: &NamingRequest<'_>, candidate: &NameCandidate) -> bool {
     is_valid_identifier(&candidate.name)
         && request.grammar.rule(&candidate.name).is_none()
-        && candidate.concept.as_deref().map_or(true, known_concept_id)
+        && candidate.concept.as_deref().is_none_or(known_concept_id)
 }
 
 fn is_valid_identifier(value: &str) -> bool {

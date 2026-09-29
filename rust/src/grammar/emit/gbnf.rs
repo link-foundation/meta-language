@@ -117,10 +117,10 @@ impl GbnfEmitter {
                 (self.emit_repeat(expr, *min, *max)?, Precedence::Postfix)
             }
             GrammarExpr::And(_) => {
-                return Err(unsupported_error(GrammarFormat::Gbnf, "and-predicate"));
+                return Err(unsupported_error(GrammarFormat::Gbnf, "positive-predicate"));
             }
             GrammarExpr::Not(_) => {
-                return Err(unsupported_error(GrammarFormat::Gbnf, "not-predicate"));
+                return Err(unsupported_error(GrammarFormat::Gbnf, "negative-predicate"));
             }
             GrammarExpr::Capture { label, expr } => {
                 report_capture_loss(&mut self.report, label.as_ref());

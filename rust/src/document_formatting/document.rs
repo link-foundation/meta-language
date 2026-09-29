@@ -335,7 +335,7 @@ fn parse_inline_markdown(input: &str) -> Vec<InlineNode> {
         if let Some(inner_len) = wrapped_span(rest, "**", "**") {
             flush_text(&mut nodes, &mut text);
             let inner = &rest[2..2 + inner_len];
-            nodes.push(wrapped("strong", parse_inline_markdown(inner)));
+            nodes.push(wrapped("strong-emphasis", parse_inline_markdown(inner)));
             cursor += 4 + inner_len;
         } else if let Some(inner_len) = wrapped_span(rest, "*", "*") {
             flush_text(&mut nodes, &mut text);
@@ -452,7 +452,7 @@ fn parse_inline_html(input: &str) -> Vec<InlineNode> {
         let rest = &input[cursor..];
         if let Some((inner, consumed)) = html_tag_span(rest, "strong") {
             flush_html_text(&mut nodes, &mut text);
-            nodes.push(wrapped("strong", parse_inline_html(inner)));
+            nodes.push(wrapped("strong-emphasis", parse_inline_html(inner)));
             cursor += consumed;
         } else if let Some((inner, consumed)) = html_tag_span(rest, "em") {
             flush_html_text(&mut nodes, &mut text);

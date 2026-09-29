@@ -45,8 +45,9 @@ pub use emit::{
     RustParserArtifacts,
 };
 pub use fidelity::{
-    canonical_grammar_format, grammar_format_profile, GrammarFidelityLevel, GrammarFormatProfile,
-    GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS,
+    canonical_grammar_format, current_grammar_construct, grammar_format_profile,
+    GrammarFidelityLevel, GrammarFormatProfile, FORMER_GRAMMAR_CONSTRUCTS, GRAMMAR_CONSTRUCTS,
+    GRAMMAR_FORMATS,
 };
 pub use import::{
     import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,

@@ -41,7 +41,7 @@ A grammar is data in the network. The links codec in
 `FromLinks` for `Grammar`. Each encoded grammar node is inserted with
 `LinkType::Grammar` from [`src/link_network.rs`](../../rust/src/link_network.rs) and a
 stable term such as `grammar::grammar`, `grammar::rule`, or
-`grammar::expr::sequence`.
+`grammar::expression::sequence`.
 
 The self-description root in
 [`src/self_description.rs`](../../rust/src/self_description.rs) declares the

@@ -6,7 +6,43 @@ use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::lino_serialization::LinoSerializationError;
 use serde_json::Value;
 
-const EXTERNAL_ID_VOCABULARY_PREFIX: &str = "external-id:";
+const EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX: &str = "external-identifier:";
+/// The vocabulary prefix written before identifiers were spelled out; imports still read it.
+const FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX: &str = "external-id:";
+
+/// The alias vocabulary that keeps the former identities of meta-language concepts.
+pub const FORMER_CONCEPT_ID_VOCABULARY: &str = "meta-language";
+
+/// Former concept identities, each with the readable English identity that replaced it.
+///
+/// Seeding records
+/// every former identity as a [`FORMER_CONCEPT_ID_VOCABULARY`] alias of its
+/// concept, and [`current_concept_id`] resolves one, so links and grammars
+/// written with a former identity still resolve.
+pub const FORMER_CONCEPT_IDS: &[(&str, &str)] = &[
+    ("grammar.repetition", "grammar.counted-repetition"),
+    ("grammar.zero-or-more", "grammar.zero-or-more-repetition"),
+    ("grammar.one-or-more", "grammar.one-or-more-repetition"),
+    ("grammar.optional", "grammar.optional-expression"),
+    ("grammar.non-terminal", "grammar.nonterminal"),
+    ("grammar.char-class", "grammar.character-class"),
+    ("grammar.char-range", "grammar.character-range"),
+    ("grammar.any-char", "grammar.any-character"),
+    ("grammar.empty", "grammar.empty-expression"),
+    ("grammar.boolean", "grammar.boolean-value"),
+    ("sequence", "sequential-composition"),
+    ("strong", "strong-emphasis"),
+    ("blockquote", "block-quote"),
+];
+
+/// The current identity of a concept: `id` itself, or the identity that replaced it.
+#[must_use]
+pub fn current_concept_id(id: &str) -> &str {
+    FORMER_CONCEPT_IDS
+        .iter()
+        .find(|(former, _)| *former == id)
+        .map_or(id, |(_, current)| current)
+}
 
 /// Summary returned after importing concept links from an ontology source.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -269,7 +305,7 @@ const STRUCTURAL_CONCEPTS: &[StructuralConcept] = &[
         ],
     },
     StructuralConcept {
-        id: "sequence",
+        id: "sequential-composition",
         definition: "Ordered execution or evaluation of multiple operations.",
         syntax: &[
             ("Rust", ";"),
@@ -456,6 +492,7 @@ impl LinkNetwork {
         for concept in STRUCTURAL_CONCEPTS {
             structural_concepts.insert(concept.id);
             let concept_link = self.intern_concept(concept.id, Some(concept.definition));
+            alias_links += self.insert_former_concept_ids(concept_link, concept.id);
 
             for (language, syntax) in concept.syntax {
                 self.insert_concept_syntax_mapping(
@@ -656,6 +693,27 @@ impl LinkNetwork {
                 let (_alias, inserted) =
                     self.insert_concept_alias_link(concept_link, vocabulary, external_id);
                 inserted
+            })
+            .count()
+    }
+
+    /// Records each former identity of `concept_id` as an alias of its concept.
+    pub(crate) fn insert_former_concept_ids(
+        &mut self,
+        concept_link: LinkId,
+        concept_id: &str,
+    ) -> usize {
+        FORMER_CONCEPT_IDS
+            .iter()
+            .filter(|(former, current)| {
+                *current == concept_id
+                    && self
+                        .insert_concept_alias_link(
+                            concept_link,
+                            FORMER_CONCEPT_ID_VOCABULARY,
+                            former,
+                        )
+                        .1
             })
             .count()
     }
@@ -910,9 +968,10 @@ fn external_vocabulary_for_id(value: &str) -> Option<&'static str> {
 }
 
 fn external_vocabulary_term(vocabulary: &str) -> String {
-    format!("{EXTERNAL_ID_VOCABULARY_PREFIX}{vocabulary}")
+    format!("{EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX}{vocabulary}")
 }
 
 fn external_vocabulary_from_term(term: &str) -> Option<&str> {
-    term.strip_prefix(EXTERNAL_ID_VOCABULARY_PREFIX)
+    term.strip_prefix(EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX)
+        .or_else(|| term.strip_prefix(FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX))
 }

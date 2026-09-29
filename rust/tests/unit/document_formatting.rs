@@ -14,11 +14,11 @@ fn seeding_attaches_per_format_syntax_mappings_to_each_concept() {
     assert_eq!(report.syntax_mappings(), report.concepts() * 2);
 
     assert_eq!(
-        network.reconstruct_concept("strong", "Markdown"),
+        network.reconstruct_concept("strong-emphasis", "Markdown"),
         Some("**{}**")
     );
     assert_eq!(
-        network.reconstruct_concept("strong", "HTML"),
+        network.reconstruct_concept("strong-emphasis", "HTML"),
         Some("<strong>{}</strong>")
     );
 }
@@ -29,7 +29,9 @@ fn common_concept_ontology_includes_document_formatting_concepts() {
     let report = network.seed_common_concept_ontology();
 
     assert_eq!(report.formatting_concepts(), 18);
-    assert!(network.document_formatting_concept("strong").is_some());
+    assert!(network
+        .document_formatting_concept("strong-emphasis")
+        .is_some());
     assert!(network.document_formatting_concept("heading").is_some());
 }
 
@@ -45,8 +47,8 @@ fn markdown_and_html_bold_reach_the_same_strong_concept() {
         .resolve_document_format("HTML", "<strong>bold</strong>")
         .expect("HTML bold resolves");
 
-    assert_eq!(markdown.concept, "strong");
-    assert_eq!(html.concept, "strong");
+    assert_eq!(markdown.concept, "strong-emphasis");
+    assert_eq!(html.concept, "strong-emphasis");
     // Both surface syntaxes reach the one language-free concept link.
     assert_eq!(markdown.link, html.link);
     assert_eq!(markdown.content, "bold");
@@ -54,7 +56,7 @@ fn markdown_and_html_bold_reach_the_same_strong_concept() {
 
     // The shared link is surfaced as a concept under semantic projection.
     let strong = network
-        .document_formatting_concept("strong")
+        .document_formatting_concept("strong-emphasis")
         .expect("strong concept seeded");
     assert_eq!(markdown.link, strong);
     assert!(network
@@ -137,7 +139,7 @@ fn markdown_parses_into_the_language_free_concept_layer() {
     };
     assert!(children.iter().any(|node| matches!(
         node,
-        InlineNode::Wrapped { concept, .. } if concept == "strong"
+        InlineNode::Wrapped { concept, .. } if concept == "strong-emphasis"
     )));
     assert!(children.iter().any(|node| matches!(
         node,

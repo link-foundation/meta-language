@@ -26,7 +26,7 @@ pub const CROSS_FORMAT_CONCEPTS: &[&str] = &[
     "bullet-list",
     "ordered-list",
     "list-item",
-    "strong",
+    "strong-emphasis",
     "emphasis",
     "hyperlink",
 ];
@@ -100,7 +100,7 @@ fn txt_profile(profile: LanguageProfile) -> LanguageProfile {
             "flattened to plain lines with a `N. ` marker per item",
         )
         .with_concept_fallback("list-item", "rendered as a single plain line")
-        .with_concept_fallback("strong", "rendered as unstyled plain text")
+        .with_concept_fallback("strong-emphasis", "rendered as unstyled plain text")
         .with_concept_fallback("emphasis", "rendered as unstyled plain text")
         .with_concept_fallback("hyperlink", "rendered as its visible text (URL dropped)")
 }
@@ -113,7 +113,7 @@ fn markdown_profile(profile: LanguageProfile) -> LanguageProfile {
             "paragraph",
             "bullet-list",
             "list-item",
-            "strong",
+            "strong-emphasis",
             "emphasis",
             "hyperlink",
         ],
@@ -138,7 +138,7 @@ fn pdf_profile(profile: LanguageProfile) -> LanguageProfile {
             "bullet-list",
             "ordered-list",
             "list-item",
-            "strong",
+            "strong-emphasis",
             "emphasis",
         ],
     )
@@ -157,7 +157,7 @@ fn docx_profile(profile: LanguageProfile) -> LanguageProfile {
             "bullet-list",
             "ordered-list",
             "list-item",
-            "strong",
+            "strong-emphasis",
             "emphasis",
         ],
     )

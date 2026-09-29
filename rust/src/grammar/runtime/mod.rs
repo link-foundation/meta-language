@@ -16,20 +16,20 @@ use crate::{
     ParseConfiguration, ParserRegistry, SourceSpan,
 };
 
-const EXPR_EMPTY: &str = "grammar::runtime::expr::empty";
-const EXPR_TERMINAL: &str = "grammar::runtime::expr::terminal";
-const EXPR_TERMINAL_INSENSITIVE: &str = "grammar::runtime::expr::terminal-insensitive";
-const EXPR_CHAR_RANGE: &str = "grammar::runtime::expr::char-range";
-const EXPR_CHAR_CLASS: &str = "grammar::runtime::expr::char-class";
-const EXPR_ANY_CHAR: &str = "grammar::runtime::expr::any-char";
-const EXPR_CHOICE: &str = "grammar::runtime::expr::choice";
-const EXPR_SEQUENCE: &str = "grammar::runtime::expr::sequence";
-const EXPR_OPTIONAL: &str = "grammar::runtime::expr::optional";
-const EXPR_ZERO_OR_MORE: &str = "grammar::runtime::expr::zero-or-more";
-const EXPR_ONE_OR_MORE: &str = "grammar::runtime::expr::one-or-more";
-const EXPR_REPEAT: &str = "grammar::runtime::expr::repeat";
-const EXPR_AND: &str = "grammar::runtime::expr::and";
-const EXPR_NOT: &str = "grammar::runtime::expr::not";
+const EXPR_EMPTY: &str = "grammar::runtime::expression::empty-expression";
+const EXPR_TERMINAL: &str = "grammar::runtime::expression::terminal";
+const EXPR_TERMINAL_INSENSITIVE: &str = "grammar::runtime::expression::case-insensitive-terminal";
+const EXPR_CHAR_RANGE: &str = "grammar::runtime::expression::character-range";
+const EXPR_CHAR_CLASS: &str = "grammar::runtime::expression::character-class";
+const EXPR_ANY_CHAR: &str = "grammar::runtime::expression::any-character";
+const EXPR_CHOICE: &str = "grammar::runtime::expression::choice";
+const EXPR_SEQUENCE: &str = "grammar::runtime::expression::sequence";
+const EXPR_OPTIONAL: &str = "grammar::runtime::expression::optional-expression";
+const EXPR_ZERO_OR_MORE: &str = "grammar::runtime::expression::zero-or-more-repetition";
+const EXPR_ONE_OR_MORE: &str = "grammar::runtime::expression::one-or-more-repetition";
+const EXPR_REPEAT: &str = "grammar::runtime::expression::counted-repetition";
+const EXPR_AND: &str = "grammar::runtime::expression::positive-predicate";
+const EXPR_NOT: &str = "grammar::runtime::expression::negative-predicate";
 
 /// A [`LanguageParser`] that interprets a [`Grammar`] at runtime.
 ///
@@ -356,7 +356,7 @@ impl<'grammar, 'text> RuntimeMatcher<'grammar, 'text> {
             let candidate = self.match_expr(alternative, position)?;
             let replace_best = candidate
                 .as_ref()
-                .is_some_and(|node| best.as_ref().map_or(true, |best| node.end > best.end));
+                .is_some_and(|node| best.as_ref().is_none_or(|best| node.end > best.end));
             if replace_best {
                 best = candidate;
             }
@@ -456,7 +456,7 @@ impl<'grammar, 'text> RuntimeMatcher<'grammar, 'text> {
             .map(|value| (value, position + value.len_utf8()))
     }
 
-    fn valid_position(&self, position: usize) -> bool {
+    const fn valid_position(&self, position: usize) -> bool {
         position <= self.text.len() && self.text.is_char_boundary(position)
     }
 }
@@ -597,7 +597,7 @@ fn rule_term(name: &str) -> String {
 }
 
 fn non_terminal_term(name: &str) -> String {
-    format!("grammar::runtime::expr::non-terminal::{name}")
+    format!("grammar::runtime::expression::nonterminal::{name}")
 }
 
 fn capture_term(label: Option<&str>) -> String {

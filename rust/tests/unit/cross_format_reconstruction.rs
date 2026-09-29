@@ -78,8 +78,8 @@ fn intersection_sample(source: &str, target: &str) -> FormattingDocument {
 
 fn paragraph_inline(both: &impl Fn(&str) -> bool) -> Vec<InlineNode> {
     let mut nodes = vec![InlineNode::Text("The system is ".to_string())];
-    if both("strong") {
-        nodes.push(wrapped("strong", "ready"));
+    if both("strong-emphasis") {
+        nodes.push(wrapped("strong-emphasis", "ready"));
         nodes.push(InlineNode::Text(" for ".to_string()));
     } else {
         nodes.push(InlineNode::Text("ready for ".to_string()));
@@ -99,8 +99,8 @@ fn paragraph_inline(both: &impl Fn(&str) -> bool) -> Vec<InlineNode> {
 
 fn list_items(both: &impl Fn(&str) -> bool) -> Vec<Vec<InlineNode>> {
     let mut second = vec![InlineNode::Text("Second ".to_string())];
-    if both("strong") {
-        second.push(wrapped("strong", "strong"));
+    if both("strong-emphasis") {
+        second.push(wrapped("strong-emphasis", "strong"));
         second.push(InlineNode::Text(" item".to_string()));
     } else {
         second.push(InlineNode::Text("strong item".to_string()));
@@ -225,7 +225,7 @@ fn txt_profile_flags_every_unsupported_concept_as_a_fallback() {
         "bullet-list",
         "ordered-list",
         "list-item",
-        "strong",
+        "strong-emphasis",
         "emphasis",
         "hyperlink",
     ] {

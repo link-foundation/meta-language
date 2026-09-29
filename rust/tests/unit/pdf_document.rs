@@ -51,7 +51,7 @@ fn pdf_render_and_parse_are_inverses_on_the_concept_tree() {
     };
     assert!(children.iter().any(|node| matches!(
         node,
-        InlineNode::Wrapped { concept, .. } if concept == "strong"
+        InlineNode::Wrapped { concept, .. } if concept == "strong-emphasis"
     )));
     assert!(children.iter().any(|node| matches!(
         node,
@@ -114,7 +114,7 @@ fn pdf_parser_preserves_bytes_and_tags_the_document_structure() {
         "paragraph",
         "bullet-list",
         "list-item",
-        "strong",
+        "strong-emphasis",
         "emphasis",
     ] {
         assert!(

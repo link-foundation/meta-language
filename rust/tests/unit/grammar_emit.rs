@@ -735,7 +735,7 @@ fn unsupported_constructs_report_format_and_construct() {
             .build(),
     )
     .expect_err("GBNF has no positive lookahead");
-    assert_unsupported(gbnf_error, GrammarFormat::Gbnf, "and-predicate");
+    assert_unsupported(gbnf_error, GrammarFormat::Gbnf, "positive-predicate");
 
     let gbnf_error = emit_gbnf(
         &Grammar::builder()
@@ -743,7 +743,7 @@ fn unsupported_constructs_report_format_and_construct() {
             .build(),
     )
     .expect_err("GBNF rejects general negative lookahead");
-    assert_unsupported(gbnf_error, GrammarFormat::Gbnf, "not-predicate");
+    assert_unsupported(gbnf_error, GrammarFormat::Gbnf, "negative-predicate");
 
     let gbnf_error = emit_gbnf(
         &Grammar::builder()

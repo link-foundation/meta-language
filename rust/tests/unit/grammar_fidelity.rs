@@ -28,11 +28,11 @@ fn bnf_profile_classifies_native_and_lossy_constructs() {
     let profile = grammar_format_profile("Backus-Naur Form").expect("BNF profile");
 
     for construct in [
-        "empty",
+        "empty-expression",
         "sequence",
         "unordered-choice",
         "terminal",
-        "non-terminal",
+        "nonterminal",
     ] {
         assert!(profile.supports_construct(construct), "{construct}");
         assert_eq!(
@@ -44,20 +44,20 @@ fn bnf_profile_classifies_native_and_lossy_constructs() {
 
     for construct in [
         "ordered-choice",
-        "optional",
-        "zero-or-more",
-        "one-or-more",
-        "repeat-range",
-        "char-range",
-        "char-class",
-        "any-char",
+        "optional-expression",
+        "zero-or-more-repetition",
+        "one-or-more-repetition",
+        "counted-repetition",
+        "character-range",
+        "character-class",
+        "any-character",
         "case-insensitive-terminal",
-        "and-predicate",
-        "not-predicate",
+        "positive-predicate",
+        "negative-predicate",
         "capture",
-        "rule-kind-atomic",
-        "rule-kind-silent",
-        "rule-kind-token",
+        "atomic-rule",
+        "silent-rule",
+        "token-rule",
     ] {
         assert!(!profile.supports_construct(construct), "{construct}");
         assert!(
@@ -160,19 +160,19 @@ fn bnf_unrepresentable_constructs_return_documented_errors() {
 
     for (construct, grammar, expected_error) in [
         (
-            "any-char",
+            "any-character",
             Grammar::builder().rule("start", expr.any()).build(),
             "AnyChar",
         ),
         (
-            "and-predicate",
+            "positive-predicate",
             Grammar::builder()
                 .rule("start", expr.and(expr.term("peek")))
                 .build(),
             "And",
         ),
         (
-            "not-predicate",
+            "negative-predicate",
             Grammar::builder()
                 .rule("start", expr.not(expr.term("skip")))
                 .build(),

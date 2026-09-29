@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 
 use meta_language::{
-    CharClassItem, FromLinks, Grammar, GrammarExpr, GrammarFormat, GrammarRule, LinkType,
-    LinksDecoder, LinksEncoder, RuleKind, ToLinks,
+    CharClassItem, FromLinks, Grammar, GrammarExpr, GrammarFormat, GrammarRule, LinkNetwork,
+    LinkType, LinksDecoder, LinksEncoder, RuleKind, ToLinks,
 };
 
 #[test]
@@ -133,6 +133,98 @@ fn grammar_round_trips_through_links_for_hand_built_fixtures() {
         let mut links_decoder = LinksDecoder::new(&network);
         let decoded_grammar =
             Grammar::from_links(&mut links_decoder, root).expect("grammar decodes");
+        assert_eq!(decoded_grammar, grammar);
+    }
+}
+
+/// The grammar link tags renamed to readable English names, longest first so
+/// no replacement rewrites part of a longer tag, with the tag each replaced.
+const RENAMED_GRAMMAR_TAGS: &[(&str, &str)] = &[
+    (
+        "grammar::character-class-item::character-range",
+        "grammar::char-class-item::range",
+    ),
+    (
+        "grammar::character-class-item::character",
+        "grammar::char-class-item::char",
+    ),
+    (
+        "grammar::expression::case-insensitive-terminal",
+        "grammar::expr::terminal-insensitive",
+    ),
+    (
+        "grammar::expression::zero-or-more-repetition",
+        "grammar::expr::zero-or-more",
+    ),
+    (
+        "grammar::expression::one-or-more-repetition",
+        "grammar::expr::one-or-more",
+    ),
+    (
+        "grammar::expression::counted-repetition",
+        "grammar::expr::repeat",
+    ),
+    (
+        "grammar::expression::optional-expression",
+        "grammar::expr::optional",
+    ),
+    (
+        "grammar::expression::positive-predicate",
+        "grammar::expr::and",
+    ),
+    (
+        "grammar::expression::negative-predicate",
+        "grammar::expr::not",
+    ),
+    (
+        "grammar::expression::empty-expression",
+        "grammar::expr::empty",
+    ),
+    (
+        "grammar::expression::character-range",
+        "grammar::expr::char-range",
+    ),
+    (
+        "grammar::expression::character-class",
+        "grammar::expr::char-class",
+    ),
+    (
+        "grammar::expression::any-character",
+        "grammar::expr::any-char",
+    ),
+    (
+        "grammar::expression::nonterminal",
+        "grammar::expr::non-terminal",
+    ),
+    ("grammar::expression::", "grammar::expr::"),
+    ("grammar::value::absent-value", "grammar::value::none"),
+    ("grammar::value::present-value", "grammar::value::some"),
+    ("grammar::value::character::", "grammar::value::char::"),
+    ("grammar::value::boolean-value::", "grammar::value::bool::"),
+    (
+        "grammar::value::natural-number::",
+        "grammar::value::usize::",
+    ),
+];
+
+#[test]
+fn grammar_networks_written_with_the_former_tags_still_decode() {
+    for grammar in fixture_grammars() {
+        let mut encoder = LinksEncoder::new();
+        let root = grammar.to_links(&mut encoder);
+        // Links Notation text percent-encodes the `:` of a term.
+        let written = |tag: &str| tag.replace(':', "%3A");
+        let mut text = encoder.into_network().to_lino();
+        for (current, former) in RENAMED_GRAMMAR_TAGS {
+            text = text.replace(&written(current), &written(former));
+        }
+        assert!(!text.contains(&written("grammar::expression::")), "{text}");
+        assert!(text.contains(&written("grammar::expr::")), "{text}");
+
+        let network = LinkNetwork::from_lino(&text).expect("former network reads");
+        let mut links_decoder = LinksDecoder::new(&network);
+        let decoded_grammar =
+            Grammar::from_links(&mut links_decoder, root).expect("former grammar decodes");
         assert_eq!(decoded_grammar, grammar);
     }
 }
