@@ -9,6 +9,7 @@ pub mod configuration;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
+mod foundation_models;
 pub mod grammar;
 pub mod graphql_adapter;
 mod incremental;
@@ -79,6 +80,12 @@ pub use document_formatting::{
     docx_profile_is_recognized, parse_docx_document, parse_docx_package, parse_markup_document,
     parse_pdf_document, pdf_profile_is_recognized, render_docx_document, render_docx_package,
     render_pdf_document,
+};
+pub use foundation_models::{
+    CORRESPONDENCE_KINDS, FoundationCorrespondence, FoundationDistinction, FoundationFamily,
+    FoundationModel, FoundationProblem, FoundationRegister, LOGIC_FAMILIES, LanguageFoundation,
+    check_foundation_models, foundation_correspondences, foundation_model, foundation_register,
+    language_foundation_models,
 };
 pub use grammar::{
     ActiveLearningConfig, ActiveLearningError, ActiveLearningOracle, ActiveSymbol, AdviceDecision,

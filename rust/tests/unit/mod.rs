@@ -13,6 +13,7 @@ mod docx_document;
 mod doublets_storage;
 mod embedded_regions;
 mod error_recovery_parity;
+mod foundation_models;
 mod four_language_conformance;
 mod generative_support;
 mod grammar_docs;

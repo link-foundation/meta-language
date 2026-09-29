@@ -2,6 +2,11 @@ const TRUTH_VALUE_NAMES = new Set(['True', 'False', 'Unknown', 'Both']);
 const PROBABILITY_SCALE_BASIS_POINTS = 10_000;
 const PROBABILITY_SCALE_BIGINT = 10_000n;
 
+/**
+ * A many-valued truth value: the `logic-model.belnap-four-valued` model of
+ * data/foundation-models.json, one logic among the recorded models rather than
+ * a built-in universal logic.
+ */
 export class TruthValue {
   constructor(value) {
     if (!TRUTH_VALUE_NAMES.has(value)) {
@@ -171,6 +176,7 @@ export class Probability {
 Probability.ZERO = Object.freeze(new Probability(0));
 Probability.ONE = Object.freeze(new Probability(PROBABILITY_SCALE_BASIS_POINTS));
 
+/** A probabilistic truth value: the `logic-model.probabilistic-truth` model of data/foundation-models.json. */
 export class ProbabilisticTruthValue {
   constructor(trueProbability) {
     this._trueProbability = Probability.from(trueProbability);

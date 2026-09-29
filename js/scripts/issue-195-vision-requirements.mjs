@@ -105,6 +105,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-VISION-FOUNDATION-NEUTRAL',
     area: 'vision-and-traceability',
     specification: 'foundation-neutrality',
+    fixture: 'parity/foundation-models.json',
     construct: 'foundation-neutral shared concepts',
     expectedBehavior:
       'The shared concepts represent integer and overflow models, universes, effects and proof systems as distinct data with explicit correspondences. No RML-specific syntax, foundation or proof authority is built into meta-language, and a check rejects a hard-coded universal logic.',
@@ -114,7 +115,8 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'distinctModelsKeptDistinct',
       'hardCodedFoundationRejected',
     ],
-    tooling: null,
+    javascript: ['js/src/foundation-models.js', 'js/scripts/build-foundation-models.mjs'],
+    rust: ['rust/src/foundation_models.rs'],
   },
   {
     id: 'I195-DEPENDENCY-INVENTORY',

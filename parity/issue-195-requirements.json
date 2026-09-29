@@ -1564,9 +1564,9 @@
       "sha256": "c12bf9798fa53447f138e10f146e06694aab4c96ff7c8a28bf93a44c3da89776"
     },
     "planned:repository-directive:i195-vision-foundation-neutral": {
-      "path": "docs/vision.md",
-      "selector": "#foundation-neutrality: foundation-neutral shared concepts",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "parity/foundation-models.json",
+      "selector": "docs/vision.md#foundation-neutrality: foundation-neutral shared concepts",
+      "sha256": "d467454d4c210687750d4ab2db7856d31ce18bc599c195e7ea37a15a3c811413"
     },
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "docs/vision.md",
@@ -26482,24 +26482,31 @@
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090",
       "area": "vision-and-traceability",
       "scope": {
-        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
-        "version": "Node.js 22 or later",
-        "edition": "every checkout and CI job of this repository",
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
         "construct": "foundation-neutral shared concepts",
         "aliases": [],
         "extensions": []
       },
       "expectedBehavior": "The shared concepts represent integer and overflow models, universes, effects and proof systems as distinct data with explicit correspondences. No RML-specific syntax, foundation or proof authority is built into meta-language, and a check rejects a hard-coded universal logic.",
       "requiredRuntimes": [
-        "tooling"
+        "javascript",
+        "rust"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "javascript": [
+          "js/src/foundation-models.js",
+          "js/scripts/build-foundation-models.mjs"
+        ],
+        "rust": [
+          "rust/src/foundation_models.rs"
+        ]
       },
       "verifications": [
         {
-          "testId": "i195-vision-foundation-neutral-tooling-behavior",
-          "runtime": "tooling",
+          "testId": "i195-vision-foundation-neutral-javascript-behavior",
+          "runtime": "javascript",
           "kind": "positive",
           "checkpoint": "pre-merge",
           "fixtureIds": [
@@ -26511,13 +26518,29 @@
             "distinctModelsKeptDistinct",
             "hardCodedFoundationRejected"
           ],
-          "evidenceArtifact": "issue-195-results/i195-vision-foundation-neutral-tooling-behavior.json"
+          "evidenceArtifact": "issue-195-results/i195-vision-foundation-neutral-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-vision-foundation-neutral-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-vision-foundation-neutral"
+          ],
+          "assertions": [
+            "foundationsRepresentedAsData",
+            "noRelativeMetaLogicSpecificSyntax",
+            "distinctModelsKeptDistinct",
+            "hardCodedFoundationRejected"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-vision-foundation-neutral-rust-behavior.json"
         }
       ],
       "traceability": {
         "specification": "docs/vision.md#foundation-neutrality",
         "inventories": [
-          "docs/vision.md"
+          "parity/foundation-models.json"
         ],
         "sources": [
           "acceptanceGate",
@@ -26527,10 +26550,12 @@
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
-          "suite:javascript"
+          "suite:javascript",
+          "suite:rust"
         ],
         "packages": [
-          "repository tooling, not packaged"
+          "npm:meta-language",
+          "crates.io:meta-language"
         ],
         "downstream": []
       }
