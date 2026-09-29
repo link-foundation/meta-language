@@ -1571,7 +1571,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "2b2971d4f6f47584f77fdc347367e37d641bf63984cbe95a9006639345398adb"
+      "sha256": "080a20bd87339da6c90520a47bb80b83c2aed3c5d626c90ddb50822fb4a7ba7b"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
