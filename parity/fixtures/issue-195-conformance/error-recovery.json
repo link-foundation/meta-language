@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "description": "Malformed inputs whose error recovery differed between the JavaScript runtime and the native runtime before the JavaScript runtime parsed UTF-8. `expected` is the tree the native tree-sitter 0.25.10 CLI prints for the pinned grammar (fields kept, spans dropped); `utf16Tree` is the tree the stock web-tree-sitter runtime, which parses UTF-16, produced instead (reproducible with `tree-sitter parse --encoding utf16-le`). Both runtimes must produce `expected`.",
-  "oracle": "tree-sitter CLI 0.25.10 `tree-sitter parse` over the grammar revisions pinned in parity/language-grammar-inventory.json",
+  "description": "Malformed inputs whose error recovery differed between the JavaScript runtime and the native runtime before the JavaScript runtime parsed UTF-8. `expected` is the tree the native tree-sitter 0.27.0 CLI prints for the pinned grammar (fields kept, spans dropped); `utf16Tree` is the tree the stock web-tree-sitter runtime, which parses UTF-16, produced instead (reproducible with `tree-sitter parse --encoding utf16-le`). Both runtimes must produce `expected`.",
+  "oracle": "tree-sitter CLI 0.27.0 `tree-sitter parse` over the grammar revisions pinned in parity/language-grammar-inventory.json",
   "cases": [
     {
       "id": "lean-import-without-module",

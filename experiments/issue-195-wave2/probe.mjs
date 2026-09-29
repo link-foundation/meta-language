@@ -12,7 +12,7 @@ const root = new URL('../../', import.meta.url);
 const require = createRequire(new URL('js/package.json', root));
 const { Language, Parser } = await import(require.resolve('web-tree-sitter'));
 await Parser.init({
-  wasmBinary: gunzipSync(await readFile(new URL('js/src/vendor/web-tree-sitter/tree-sitter.wasm.gz', root))),
+  wasmBinary: gunzipSync(await readFile(new URL('js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz', root))),
 });
 
 const encoder = new TextEncoder();

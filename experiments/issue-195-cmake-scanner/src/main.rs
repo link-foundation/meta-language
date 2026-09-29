@@ -3,7 +3,7 @@
 //!   INITIAL_TOKEN=zero|garbage|none cargo run -q
 use tree_sitter::{Language, Parser};
 
-extern "C" {
+unsafe extern "C" {
     fn tree_sitter_cmake() -> *const ();
 }
 

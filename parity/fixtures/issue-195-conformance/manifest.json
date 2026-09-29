@@ -3,10 +3,10 @@
   "generator": "js/scripts/generate-issue-195-conformance.mjs",
   "inputs": {
     "cases.json": "7935e7c06620bf577ed9ba8d5719a4fe98f799c896e6ce64d1ea62695028f452",
-    "error-recovery.json": "b187a38a8db99ca1e060b0f61c17ac61a86b6cfd861c7777f9ae6b6a8807ac72"
+    "error-recovery.json": "bc1a2e675624050939dfd55c4fd2c55b174055cb4681f2f9357fd9756932e7cb"
   },
   "oracle": {
-    "tool": "tree-sitter 0.25.10 (da6fe9beb4f7f67beb75914ca8e0d48ae48d6406)",
+    "tool": "tree-sitter 0.27.0",
     "command": "tree-sitter parse --cst <file> (cwd: the pinned grammar)",
     "format": "Canonical CST lines (js/tests/support/cst-lines.js): <2 spaces per depth><field: ><•>KIND SR:SC-ER:EC with zero-based rows and UTF-8 byte columns; anonymous kinds are JSON-quoted, error nodes are ERROR, missing nodes are MISSING <kind>, and • marks nodes that contain an error.",
     "publicProjections": [
@@ -382,7 +382,7 @@
         "upstream": "aruzdh/tree-sitter-rocq",
         "revision": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
         "patch": "rust/vendor/tree-sitter-rocq/meta-language.patch",
-        "parserSha256": "4d6566a7291a13ec3da6a965920b6469bb58a183062e2dd4b2759751c153b5a6",
+        "parserSha256": "4f0807b15d47e4335c28ccb7be5eb8d01851baaab4843dfa24b2d8fb1966ecd2",
         "license": "js/src/vendor/grammars/rocq.LICENSE"
       },
       "corpus": {
@@ -698,7 +698,7 @@
         "revision": "77a3747266f4d621d0757825e6b11edcbf991ca5",
         "tag": "v0.24.2",
         "patch": "rust/vendor/tree-sitter-rust/meta-language.patch",
-        "parserSha256": "c2625aed5481577ae5499995e80c1700921119e75c9ec8fc351ca02f3d9f46fa",
+        "parserSha256": "555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3",
         "license": "js/src/vendor/grammars/rust.LICENSE"
       },
       "corpus": {

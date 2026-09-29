@@ -1,9 +1,9 @@
 {
   "description": "Grammar crates pinned by rust/Cargo.lock and their WebAssembly builds used by the JavaScript runtime.",
-  "treeSitterCli": "tree-sitter 0.25.10 (da6fe9beb4f7f67beb75914ca8e0d48ae48d6406)",
+  "treeSitterCli": "tree-sitter 0.27.0",
   "treeSitterRuntime": {
-    "rust": "0.25.10",
-    "javascript": "0.25.10"
+    "rust": "0.27.0",
+    "javascript": "0.27.0"
   },
   "grammars": {
     "agda": {
@@ -12,7 +12,7 @@
       "directory": ".",
       "version": "1.3.3",
       "parserSha256": "ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980",
-      "wasmSha256": "559f22c3f6b0e9ed333bca1104643462b2a0c5db2a932dcf3748051ecdb58e4d",
+      "wasmSha256": "9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a",
       "license": "agda.LICENSE"
     },
     "bash": {
@@ -21,7 +21,7 @@
       "directory": ".",
       "version": "0.25.1",
       "parserSha256": "5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f",
-      "wasmSha256": "474a86db0ded2b2478e130640ebfa9493143862f57546c19cf8a8d9bf26e3a17",
+      "wasmSha256": "f0270796c32f9acfc180e6068d6bef6614b983107b679a247fb63b200c6346e7",
       "license": "bash.LICENSE"
     },
     "c": {
@@ -30,7 +30,7 @@
       "directory": ".",
       "version": "0.24.2",
       "parserSha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2",
-      "wasmSha256": "fa5c7f64735914f32849b44ef5ff0e459a43f5e5d28ccdc3f11785a2043948b4",
+      "wasmSha256": "2030a766fa6c6fe18039524008e52fd4a4995bdd9ed07fc4a73ec892450d2f4a",
       "license": "c.LICENSE"
     },
     "cmake": {
@@ -40,7 +40,7 @@
       "patch": "rust/vendor/tree-sitter-cmake/scanner-state.patch",
       "version": "v0.7.5",
       "parserSha256": "ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2",
-      "wasmSha256": "127f28dc05f11ba2c6bdda2de9542b576dcd06610ec30c35da96ffad505b1dc9",
+      "wasmSha256": "5925d5f08a726ebb9024ccae1e12165a56c35630c53d9dd7fc3eeb87434849c2",
       "license": "cmake.LICENSE"
     },
     "cpp": {
@@ -49,7 +49,7 @@
       "directory": ".",
       "version": "0.23.4",
       "parserSha256": "2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814",
-      "wasmSha256": "84cd0ee5427a58e49791e157c50a9e7020766faad9922dfbc98c1efc8e1040d6",
+      "wasmSha256": "f5ff3ba7af054af846f37dfd2525bdfede95530d5747a8fe30df87d070ece607",
       "license": "cpp.LICENSE"
     },
     "csharp": {
@@ -58,7 +58,7 @@
       "directory": ".",
       "version": "0.23.5",
       "parserSha256": "0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427",
-      "wasmSha256": "f265130d20fe62d3dc0cec756ee5a4159bd9825894a48fc0f7e72c8bd30ef099",
+      "wasmSha256": "a4b053f6fdedfc9c94876b415441ea953c0046ef83d45e0cbc4d9b8938ae6cbc",
       "license": "csharp.LICENSE"
     },
     "css": {
@@ -67,7 +67,7 @@
       "directory": ".",
       "version": "0.25.0",
       "parserSha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e",
-      "wasmSha256": "c2b8c4f2f69454a60a7562d6b21150b4879fc26e9a69d4674b9d7c11df838b62",
+      "wasmSha256": "f0fa4c3171f3322560e3a56445989f2da9d77c38bae61e9f07ae0b3e01d88b36",
       "license": "css.LICENSE"
     },
     "csv": {
@@ -76,8 +76,8 @@
       "vendored": "rust/vendor/tree-sitter-csv",
       "patch": "rust/vendor/tree-sitter-csv/rfc4180-quotes.patch",
       "version": "f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
-      "parserSha256": "eacf58622b8d50ab75acf91172d35e314874327d98d1bd03acfd1ab789ddb1d1",
-      "wasmSha256": "19e23890eef87611c6a8c71575ec7d1b4150ba90c946f17ea818ecf329a5322b",
+      "parserSha256": "6a7ede804cb8ced3f9466cecf38872d175e6179e8ea951956a195b2d55add8bc",
+      "wasmSha256": "926e300e68fca1881734251e2b0b3a51cc56625c1afd3471f3102ce5274a1cd9",
       "license": "csv.LICENSE"
     },
     "dart": {
@@ -86,7 +86,7 @@
       "directory": ".",
       "version": "0.2.0",
       "parserSha256": "1894ef57f8e0ceb483ccf6d548429517dc42b0d983293ebdb5ff9ff9c612c4a9",
-      "wasmSha256": "52bdbf469a2343a52385f75dab61097fe9c157e747ddfcc52200c153c4259d4b",
+      "wasmSha256": "e700b38561a3f1e641340fac8232dfca493dbc024d142d338a5075feca3e9efc",
       "license": "dart.LICENSE"
     },
     "diff": {
@@ -95,7 +95,7 @@
       "directory": ".",
       "version": "0.1.0",
       "parserSha256": "4c9e3e545073a7d93088f7d90b0ee89e56fb43ca751f25fa440c4a1906ecb3e6",
-      "wasmSha256": "b8c7d229c87f95bd444348c03aaf189adb106fb30e8379e9b9a88e8a4e40f5f0",
+      "wasmSha256": "8c32b60b7900e18ad10e2223e6311f4f1aff29b4d12226862a2a889a99596f29",
       "license": "diff.LICENSE"
     },
     "dtd": {
@@ -104,7 +104,7 @@
       "directory": "dtd",
       "version": "0.7.0",
       "parserSha256": "79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932",
-      "wasmSha256": "e74dac556b2ef4ad7b10a721d7c171731f176b649c26123b01d5099658fa0cb4",
+      "wasmSha256": "2534944fea9484174b791535509c09a25fcd1c4099da9392056b009311dcfe81",
       "license": "dtd.LICENSE"
     },
     "elixir": {
@@ -113,7 +113,7 @@
       "directory": ".",
       "version": "0.3.5",
       "parserSha256": "d1c2000b477e873e44e485f55809e3af7e2bfce83fa4d58cfa3a9f83660e7d79",
-      "wasmSha256": "1160c3b90a7c1eb7cb8f8e5c3a1960db3219c97c10fa21b1421b79142cc2e556",
+      "wasmSha256": "33f71c86131d02eab80841e4142005ccaa54bcc06bcc3a7e8dc6a9a8a0ca5e94",
       "license": "elixir.LICENSE"
     },
     "elm": {
@@ -122,7 +122,7 @@
       "directory": ".",
       "version": "5.9.4",
       "parserSha256": "7c993bdabb63c6c6424fc0b433073c9000446a0e3de189d8a2ab93b33636369d",
-      "wasmSha256": "c0092d7eccfcb82604dc0aa27bfb5de6353e2c49d4f8f2b6e304c98f4958cae1",
+      "wasmSha256": "30e2708c30704223fa0351428d4e81aef32acd9121a7ea35606ddc9fa45bc319",
       "license": "elm.LICENSE"
     },
     "erlang": {
@@ -131,7 +131,7 @@
       "directory": ".",
       "version": "0.20.0",
       "parserSha256": "c8c83443d536875c2f28f12ae4f0242f477cac82115073f4d9506c2bb188dbcc",
-      "wasmSha256": "d70bd1cdb516291ae072b69e417880c8fd0c73925d3f3d8c93668f8e48d30166",
+      "wasmSha256": "345a2693219c24236afdbacf3af1082aaa59eef6c21c06371845690505ee3af3",
       "license": "erlang.LICENSE"
     },
     "go": {
@@ -140,16 +140,16 @@
       "directory": ".",
       "version": "0.25.0",
       "parserSha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85",
-      "wasmSha256": "62de6d1fe0c811f194a97672fde719c1a9ca84a7f69685e88ee0883b7fcad238",
+      "wasmSha256": "058a4f6c7cb7156c599c2ca07af9645f03b3f655b84bced9c72816e755c7030b",
       "license": "go.LICENSE"
     },
     "graphql": {
       "id": "graphql",
       "crate": "tree-sitter-graphql",
       "directory": ".",
-      "version": "0.1.0",
-      "parserSha256": "d27f89090319f885811fefb5c5453f9cc95543c04df02b7c43aa1fa6f7d353d9",
-      "wasmSha256": "fd4081c84308f5db14a4a6e1bea91c08f9c38e5ab47e5a0730c4a39448844d00",
+      "version": "0.2.1",
+      "parserSha256": "d41ba0018a0ae351422f4dcb8352bb7dc41289b060bdfd43ab2fa7ad4c6554fd",
+      "wasmSha256": "cd31229d62a387903e456fade513321b9db8855094c79a092ad8a4d4a511a57a",
       "license": "graphql.LICENSE"
     },
     "groovy": {
@@ -158,7 +158,7 @@
       "directory": ".",
       "version": "0.1.2",
       "parserSha256": "786637c026add3b2112aa717fa17b34e3093ea291b3b46d60438ba84382fdb06",
-      "wasmSha256": "e7c401106c07f3e41da60ee0411ba01d8938c43296e50ec25f8517f3508eb364",
+      "wasmSha256": "9c7236d8ab8c127a59644321213e479ab8ac0f53ac5720c1461ef406e46db4a6",
       "license": "groovy.LICENSE"
     },
     "haskell": {
@@ -167,7 +167,7 @@
       "directory": ".",
       "version": "0.23.1",
       "parserSha256": "f05f34d3cabb3c4a0397a2ac29d4cf4212f814dec98199042228d1850055db93",
-      "wasmSha256": "ddc4978970326bc46369f3dff15027c54dac79adb7aca9ba7b6d3a20ebb1b3e0",
+      "wasmSha256": "2ec313cca08aa64f8175ebc9334304b2a128eff0d7b2de687c0d7757a19ab99f",
       "license": "haskell.LICENSE"
     },
     "hcl": {
@@ -176,7 +176,7 @@
       "directory": ".",
       "version": "1.1.0",
       "parserSha256": "0c821e2979f54f8f460201eafe9464d5d3dae0076c5bdd51567a798fb7add543",
-      "wasmSha256": "1b4b186da007c48980f7ec7259b15edb2ea6cb1b8cf7ad01d5c9c39456aa52fb",
+      "wasmSha256": "c7fa4ff3cecbd8c9eba1b9643b511a5b226b47d29eb5ec38656a5bc7a216bfc5",
       "license": "hcl.LICENSE"
     },
     "html": {
@@ -185,7 +185,7 @@
       "directory": ".",
       "version": "0.23.2",
       "parserSha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1",
-      "wasmSha256": "6b997d3b7754edd84eea05dc6e53f06a94112a5d97b90d90af820afb065ac05d",
+      "wasmSha256": "11960fcc4fe3a01930de6bbae9b2c5c4d0a6c16012a5d20cc2069fa5b78d3bbd",
       "license": "html.LICENSE"
     },
     "ini": {
@@ -194,7 +194,7 @@
       "directory": ".",
       "version": "1.4.0",
       "parserSha256": "3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123",
-      "wasmSha256": "4884a74e0e60d02fc897b1f780c044e578ff839c9eeb6f4742d2feaef9839ece",
+      "wasmSha256": "49e4442e41b44226268a89d810a4a3d2b3dde810b539579c2acd4a55223d8548",
       "license": "ini.LICENSE"
     },
     "java": {
@@ -203,7 +203,7 @@
       "directory": ".",
       "version": "0.23.5",
       "parserSha256": "4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4",
-      "wasmSha256": "a2f2689856a2aceeb50c23bb4bda86daf872abdcb75ecbf33e71e6f3fb2c014f",
+      "wasmSha256": "6476728734128931bd50de2d1e5e9c75c506b51e278f54eaf709836a0de35759",
       "license": "java.LICENSE"
     },
     "javascript": {
@@ -212,7 +212,7 @@
       "directory": ".",
       "version": "0.25.0",
       "parserSha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
-      "wasmSha256": "35070cda936e479202e22c72cf129d6894eee7f4de8b41912a516cfdbe109204",
+      "wasmSha256": "7ccbce5ba189363aee524c4be7f3a0bdb25b961d4c6d2472a8f3aeb526eecbfe",
       "license": "javascript.LICENSE"
     },
     "json": {
@@ -221,7 +221,7 @@
       "directory": ".",
       "version": "0.24.8",
       "parserSha256": "e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab",
-      "wasmSha256": "6862a0aac3af8bed434d4031afbe330895a277cc80e80733ea67b6dee01d4500",
+      "wasmSha256": "564e489724cbcf9b4563cd758a7fb7f355f896b11127819ae9e8ef71e7c15e60",
       "license": "json.LICENSE"
     },
     "json5": {
@@ -230,7 +230,7 @@
       "directory": ".",
       "version": "0.1.0",
       "parserSha256": "0024a5353393c7186a9a4f531f451279d301c7c3925ba292348176a83d3765b4",
-      "wasmSha256": "f1ccbd6f0eb0b07b233094e3779daa8fe7c111658f23a491b6cb957b997c6e11",
+      "wasmSha256": "b726ecea6c05ff5b62b9a32563762d297e019c5eaaa7371d20b2245ca17421f4",
       "license": "json5.LICENSE"
     },
     "kotlin": {
@@ -239,7 +239,7 @@
       "directory": ".",
       "version": "1.1.0",
       "parserSha256": "9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3",
-      "wasmSha256": "35470989975963d68d2f60e6ae7180a12807bf9136a12e1cdcf23da9d0882f38",
+      "wasmSha256": "5d44eef5c02b4546f01ddc376ed237294b18604f727b192a832a5ce08a040e8f",
       "license": "kotlin.LICENSE"
     },
     "lean": {
@@ -248,16 +248,16 @@
       "vendored": "rust/vendor/tree-sitter-lean",
       "version": "bd942cd2795016239be02b3b3d5ef635645ddd38",
       "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b",
-      "wasmSha256": "899cf73abfb11fcc72cf82f6b39c6edbd30e26a8b80185401f88ce36da0b8ff2",
+      "wasmSha256": "7b58425afbe7f59e90fa9f01ebafe9241cdedbf1fe7e2daca4bec2f15122cc59",
       "license": "lean.LICENSE"
     },
     "lua": {
       "id": "lua",
       "crate": "tree-sitter-lua",
       "directory": ".",
-      "version": "0.2.0",
-      "parserSha256": "fa3a2efe5803017c536d4727fe408b9eaf3e33b86662a5b1a1d12227d0022231",
-      "wasmSha256": "79f8f2dc2e924aafb21183c04a3edd9bf529bd4ee8da207d50960a0562be1f47",
+      "version": "0.5.0",
+      "parserSha256": "933206d96a78f7785c13b2600182f1527dcd755c200b1271bb5bc4d8da4b17b3",
+      "wasmSha256": "43db0f3e64ffd4ed1ada7a77e4489e54afa5afd7b5aa013679d8284d4ea0f074",
       "license": "lua.LICENSE"
     },
     "make": {
@@ -266,7 +266,7 @@
       "directory": ".",
       "version": "1.1.1",
       "parserSha256": "659bb2a3712bc6ecf77a96c82de2bc3062141f405c96d52582b2e01bd8722152",
-      "wasmSha256": "c2a057ef58739b2f8025bc3f7d04a62ae3daad8aeb7979b2db6097800950cded",
+      "wasmSha256": "3cd0a9967c477e0cf3330d96ae79e2bbc8580119daf7e02266649fa6cd136e76",
       "license": "make.LICENSE"
     },
     "markdown": {
@@ -275,7 +275,7 @@
       "directory": "tree-sitter-markdown",
       "version": "0.5.6",
       "parserSha256": "0f51c93b5d79d08bc74088d91a9aafb7e40ad7e2f169164865c01d392277bb07",
-      "wasmSha256": "6d129b4d3d4f4fd7fa88f2243db845d53d65dcd2521614ce94209e6c45a05b6a",
+      "wasmSha256": "479b27880bce5dc9501d8cfa7f427eb2f5ffcb143ef5863fa02296da02c830e9",
       "license": "markdown.LICENSE"
     },
     "markdown_inline": {
@@ -284,7 +284,7 @@
       "directory": "tree-sitter-markdown-inline",
       "version": "0.5.6",
       "parserSha256": "0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c",
-      "wasmSha256": "38e644a81ca11a6b98d56aaa30b056148357dcaf22f62ef3e5f47c9a968e75e8",
+      "wasmSha256": "3e1db657850e83e19e2769157c24eac7b590d8bc869c2753201417c40298b388",
       "license": "markdown_inline.LICENSE"
     },
     "matlab": {
@@ -293,7 +293,7 @@
       "directory": ".",
       "version": "1.3.1",
       "parserSha256": "d13d9cfa1cead80c000e21ed37833df31d910fe531a5cb11165a850c384a4960",
-      "wasmSha256": "4c7cdf9e2d4320b93332390f08cfc2226d340eeae5ab17ad634639dad90f5068",
+      "wasmSha256": "2fd8f9f251c59a0242a8899d6725a8edc47ff477371497ba2025f9ee8cc8a57c",
       "license": "matlab.LICENSE"
     },
     "nix": {
@@ -302,25 +302,25 @@
       "directory": ".",
       "version": "0.3.0",
       "parserSha256": "2b1d7945441b83e324cd225663481d35e51cd9ae84189cc7e69f58a11ecb85ad",
-      "wasmSha256": "10a66e15b62be1a59cd256abf4b48fdeac07e50c0a8e50ceb64296fcec019930",
+      "wasmSha256": "98faa2e223fc3fe88c20c02c51fd739da8ebe1f1591b131d0964ede6cf320b08",
       "license": "nix.LICENSE"
     },
     "ocaml": {
       "id": "ocaml",
       "crate": "tree-sitter-ocaml",
       "directory": "grammars/ocaml",
-      "version": "0.24.2",
-      "parserSha256": "ab85b3756c106d0be3509db9d33eb883ff7dda2b714c7e47ec36a2d807923c0f",
-      "wasmSha256": "c60bd9980a698106c09dccf5a089841e7d285721ad8ce9e4fd5a326bf3316d0f",
+      "version": "0.26.0",
+      "parserSha256": "f76cc46f96f9ed152354743539cc642dcb6a67343795dd9d548fc4d0b0ebce74",
+      "wasmSha256": "bfa3eef92b9d3cc1117aa486d46ecb06c98a3a28c1747660aaa5851df5e4530c",
       "license": "ocaml.LICENSE"
     },
     "ocaml_interface": {
       "id": "ocaml_interface",
       "crate": "tree-sitter-ocaml",
       "directory": "grammars/interface",
-      "version": "0.24.2",
-      "parserSha256": "8769090544b24ca4a33b6dd0eed9b337b171005551caba2f6db83ad755046d3b",
-      "wasmSha256": "a7031fa690d59390a2c995476168fb87c5cd78a875c599f9564f7433703af21b",
+      "version": "0.26.0",
+      "parserSha256": "62634bd351247bd2152eb15438f5bea3f0a1ccce4291f318aa86a79d29bf111e",
+      "wasmSha256": "3ce03850c36618e3530292372aae9156a45b5a923210a87c285539d7f13b0354",
       "license": "ocaml_interface.LICENSE"
     },
     "odin": {
@@ -329,7 +329,7 @@
       "directory": ".",
       "version": "1.3.0",
       "parserSha256": "8f672d8d022d70eeae822796924f2e45e692d6b2acd2ddc79bfeb5f696fa24f0",
-      "wasmSha256": "0fa018a7182e62a6414379018fb1bbe2e46ca39f6f1cd6584a4609481c1f303e",
+      "wasmSha256": "8ce37ea03c3d565d1c4e922d357a82fd9aa5184c36f712509803a63fec8d3194",
       "license": "odin.LICENSE"
     },
     "pascal": {
@@ -338,16 +338,16 @@
       "directory": ".",
       "version": "0.10.2",
       "parserSha256": "d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329",
-      "wasmSha256": "9f04719399fff078431f3fd6fa77fbb8a5b3c9681edfd2d97c4dfe5ad86a5d35",
+      "wasmSha256": "e1ae02b62ce27ba86d202e77fa42f5e59d8e945b00ff64803cc275741ecca628",
       "license": "pascal.LICENSE"
     },
     "perl": {
       "id": "perl",
       "crate": "ts-parser-perl",
       "directory": ".",
-      "version": "1.1.2",
-      "parserSha256": "38ebca6dd96edeb01da421780001ea26b572133e83525c993bbeb78e8e9a24bc",
-      "wasmSha256": "ae40bd28ba389d92fde2f8b4eb024581e038395f639df1e7ec6be4ddbe379e46",
+      "version": "2.0.0",
+      "parserSha256": "1317bdaae2f50f5f82b6dbc7176425e9cee64a0dbfbb82aa17959aaefc54f199",
+      "wasmSha256": "af4e99e2379e9ae0228357a15f0d3b6037846b8a328deafb70dfa7a13b58b140",
       "license": "perl.LICENSE"
     },
     "php": {
@@ -356,7 +356,7 @@
       "directory": "php",
       "version": "0.24.2",
       "parserSha256": "59ad8e5e4fde3fe60687a488ab8420612840cc966b83739af1b3a4317ed27ec6",
-      "wasmSha256": "507649c167779621b46bfcfab2bd88744883a92ed52991bd1bdc35e2af1f935e",
+      "wasmSha256": "a100e693f0133e5f559a5d90daf4ba9c12607162108c80368f2dfcbac0ec8bff",
       "license": "php.LICENSE"
     },
     "powershell": {
@@ -365,16 +365,16 @@
       "directory": ".",
       "version": "0.26.4",
       "parserSha256": "f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720",
-      "wasmSha256": "2a24f946f96e67ac812fb6c7d647576a033febc0c48f4c91a340b549e7eac73d",
+      "wasmSha256": "84555e38f85a391095b349a906b9790d319e3946ce12d9bc21dbec5cded5dad9",
       "license": "powershell.LICENSE"
     },
     "proto": {
       "id": "proto",
       "crate": "tree-sitter-proto",
       "directory": ".",
-      "version": "0.4.0",
-      "parserSha256": "ecdea8962be9f1879e067ee23127abd79ec8d3fad83799eb9052ffa48ec78448",
-      "wasmSha256": "0b226f4132ac4493642b8df1fbeb7541c92e36e3fb152064ef662d072135b795",
+      "version": "0.6.0",
+      "parserSha256": "ac481450c32e8fa52976075581701ecc63790fbab4c9c4f10d0901c9a39b61eb",
+      "wasmSha256": "2179ef77376c7c1a1c08c145915c8902436d6f08724cb055ce597879f107bf61",
       "license": "proto.LICENSE"
     },
     "python": {
@@ -383,16 +383,16 @@
       "directory": ".",
       "version": "0.25.0",
       "parserSha256": "a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0",
-      "wasmSha256": "a43153418b186cd2c170ba6e848d37e7f8abfcaab275f632a64504020f491cbc",
+      "wasmSha256": "3523e4dc3d12894bbb2f7ea4b86b50eec69aed321c3d9b49271d82ed9f5f79b0",
       "license": "python.LICENSE"
     },
     "r": {
       "id": "r",
       "crate": "tree-sitter-r",
       "directory": ".",
-      "version": "1.2.0",
-      "parserSha256": "622165734714c6e81f70d99d522d78cf98915fdf2b1032f8bb33e775a0b971c0",
-      "wasmSha256": "b492695b6767dfd1216ceed4efa3e62977b1ac3261899eb405a88aa4a1352e8e",
+      "version": "1.3.0",
+      "parserSha256": "43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771",
+      "wasmSha256": "8443d229942c1719c40fac5729e8d9252e48950aa2e0dbcf86c52bd38e875209",
       "license": "r.LICENSE"
     },
     "racket": {
@@ -401,7 +401,7 @@
       "directory": ".",
       "version": "0.25.0",
       "parserSha256": "3cbab79ab9bd99684a7de4cb93a0aafd6773bb3ecf6720c59f1b7cdb0ceddd9c",
-      "wasmSha256": "4df830bc80ccc709b0a048d015118272e97274fe4e273600914bffc0a95d8edc",
+      "wasmSha256": "5affec93f88d8b9e66aee6ad9a385d04f6af07dfc55bc6944993b02af1fa21b2",
       "license": "racket.LICENSE"
     },
     "regex": {
@@ -410,7 +410,7 @@
       "directory": ".",
       "version": "0.25.0",
       "parserSha256": "ddf28eb5ad0dd0898b9ed0f2593852edac639a339a410d9e93350e472859700f",
-      "wasmSha256": "b6dfb344bc1249597eba4ee5183f9e6b0a2c7fb269f634812f776c28c3c470b3",
+      "wasmSha256": "0b64ac3dc55cfb73a95da3ea3eb1ac89e0f8fafd6050aa32139988b8413c14f1",
       "license": "regex.LICENSE"
     },
     "rocq": {
@@ -419,8 +419,8 @@
       "vendored": "rust/vendor/tree-sitter-rocq",
       "patch": "rust/vendor/tree-sitter-rocq/meta-language.patch",
       "version": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-      "parserSha256": "4d6566a7291a13ec3da6a965920b6469bb58a183062e2dd4b2759751c153b5a6",
-      "wasmSha256": "87dd8d6725595af745ebc37f5c4ffc3ad130133cf2bd70f79dd76d1aee977061",
+      "parserSha256": "4f0807b15d47e4335c28ccb7be5eb8d01851baaab4843dfa24b2d8fb1966ecd2",
+      "wasmSha256": "9d0d3172500d14ee0d06d61b0d3a3a33e757003a94eb7f1c7221b11c740e0530",
       "license": "rocq.LICENSE"
     },
     "ruby": {
@@ -429,7 +429,7 @@
       "directory": ".",
       "version": "0.23.1",
       "parserSha256": "4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15",
-      "wasmSha256": "e77f88559b47c0fe2771821c6c160cdf6bbfe17afcd642ab3fdda9aebb70b2f3",
+      "wasmSha256": "2a06cd2fa165a2913f6598b92c9d3d3132ecfbf3fa7ffa8ca93b31efb2bfb58d",
       "license": "ruby.LICENSE"
     },
     "rust": {
@@ -438,17 +438,17 @@
       "vendored": "rust/vendor/tree-sitter-rust",
       "patch": "rust/vendor/tree-sitter-rust/meta-language.patch",
       "version": "v0.24.2",
-      "parserSha256": "c2625aed5481577ae5499995e80c1700921119e75c9ec8fc351ca02f3d9f46fa",
-      "wasmSha256": "e25f46ff07a8b0be5b857abeb9c3c56df012dbc9769e9b5fca69239c7869dab5",
+      "parserSha256": "555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3",
+      "wasmSha256": "9e42546db0d259b49f09ce1170528b57d97453f19824ca27197016c330dcae03",
       "license": "rust.LICENSE"
     },
     "scala": {
       "id": "scala",
       "crate": "tree-sitter-scala",
       "directory": ".",
-      "version": "0.25.1",
-      "parserSha256": "049ef02b206b3ff06b5066040d01ad04161bc1afc2bd26073c9a865082af9d1e",
-      "wasmSha256": "4f099f94793e54287875a3e8bc041a548733bb592f426ce3837c3d2a76afb1ca",
+      "version": "0.26.2",
+      "parserSha256": "9f6d03fa6c63d2d855b6f9e0368046a58568587eefc38b5e38bdb001e8ec68db",
+      "wasmSha256": "c2d92c43913a24efa76528c6aff75c97c0964798c4d360c7dc1951b04058fe52",
       "license": "scala.LICENSE"
     },
     "scheme": {
@@ -457,7 +457,7 @@
       "directory": ".",
       "version": "0.24.7",
       "parserSha256": "5d4c1786eb70c3be05f395e5a26edbb7cca12e7547f7a1d8cdb94e092ee74d0d",
-      "wasmSha256": "348a014a27fe0e087fafd2a4dc5f700ca24c0e401db87aad3a12e068dfa80d5c",
+      "wasmSha256": "f138334dfc4d3df3c85c3e0d675e154f2bd6b1a8d4325f04c53512eef099241e",
       "license": "scheme.LICENSE"
     },
     "solidity": {
@@ -466,7 +466,7 @@
       "directory": ".",
       "version": "1.2.13",
       "parserSha256": "e71971f6ddc0704e81f4af3f43ecc79793742bb5f1d256a5fdd718aa06d74acb",
-      "wasmSha256": "ac4d44dc54b7a475c2284ae27ab0af932043e2cfd4e200a416b2ac5d40f433d7",
+      "wasmSha256": "7ae2d8aff2ec119ff8706667f45f5ff0d4edea901acef86e227664de83c6df51",
       "license": "solidity.LICENSE"
     },
     "sql": {
@@ -475,7 +475,7 @@
       "directory": ".",
       "version": "0.3.11",
       "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
-      "wasmSha256": "f9d5638965f6f7ecc6b6979b8717f44e756687a1cbe4fef411b84506bdb81451",
+      "wasmSha256": "e03fb5079e88cfe0807056c284fd2b0589cee35df9bbb3d07e72f2f4178de8de",
       "license": "sql.LICENSE"
     },
     "swift": {
@@ -484,7 +484,7 @@
       "directory": ".",
       "version": "0.7.3",
       "parserSha256": "d3edff6effe31b9a507f496577407987343b101b23eb7bee7a9b050e8ab5d27a",
-      "wasmSha256": "92a6aa39712255e7332d1b06db52bc6d49e9f563215846978c0ca63b6cc38359",
+      "wasmSha256": "1fda79c994cb9cb6c7d6bc71520698742e9e88946c92186520a314bbeb45a4fd",
       "license": "swift.LICENSE"
     },
     "toml": {
@@ -493,7 +493,7 @@
       "directory": ".",
       "version": "0.7.0",
       "parserSha256": "1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3",
-      "wasmSha256": "1e1a98653af3577c723f93bb4063dcee96ef11f7be861094b60d8bec50dd5b78",
+      "wasmSha256": "057f48e81072cb0eb5969632a7cf032fc6d33cd4ba3198c3f58227346c012d97",
       "license": "toml.LICENSE"
     },
     "tsx": {
@@ -502,7 +502,7 @@
       "directory": "tsx",
       "version": "0.23.2",
       "parserSha256": "1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885",
-      "wasmSha256": "772bd591654c4d7c7c4427652138af9f118212738cadbbfef96adf2275736d35",
+      "wasmSha256": "3c6cb1c86cecc6d8c99b3a7dfc0aba8b838e2adf036bb23f384d6d8be395ae30",
       "license": "tsx.LICENSE"
     },
     "typescript": {
@@ -511,7 +511,7 @@
       "directory": "typescript",
       "version": "0.23.2",
       "parserSha256": "74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa",
-      "wasmSha256": "427ea5f2c24c98989a53ee3520df03afa1f9ade5bc21362de17b9982ac374a88",
+      "wasmSha256": "d24392183c75c103feafb827c9c086de00c30198e27f362cc971fbca6e91a87f",
       "license": "typescript.LICENSE"
     },
     "vb": {
@@ -520,7 +520,7 @@
       "directory": ".",
       "version": "0.1.0",
       "parserSha256": "7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8",
-      "wasmSha256": "f8bcf03f07a8d957f26ae728d8a0cb5e90240f095c44e5174ecea15c38059e85",
+      "wasmSha256": "4bc68c0fb1cbc42a44eb3199affe54173b6519f52ffdd173e31c9dc87b9099f8",
       "license": "vb.LICENSE"
     },
     "xml": {
@@ -529,7 +529,7 @@
       "directory": "xml",
       "version": "0.7.0",
       "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844",
-      "wasmSha256": "fafa7327c7a09ba74612e23543ff4e93ee08b785f0a8c2f8292c03f0b65c4917",
+      "wasmSha256": "2edd39d0ef194dc70878fe99b277180547fabf252f85b58e537db5a11e3027fa",
       "license": "xml.LICENSE"
     },
     "yaml": {
@@ -538,7 +538,7 @@
       "directory": ".",
       "version": "0.7.2",
       "parserSha256": "8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9",
-      "wasmSha256": "e93163e5d306e4b328ab0b4c29ce82b086057e1d2dad47bcdcac358abfdec518",
+      "wasmSha256": "f89cf2a8ccd4f29292e502f1c37efb4f1dead281246605e0a890c697d4db88c7",
       "license": "yaml.LICENSE"
     },
     "zig": {
@@ -547,7 +547,7 @@
       "directory": ".",
       "version": "1.1.2",
       "parserSha256": "5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63",
-      "wasmSha256": "4dd568b541381b9ddcd0b53eda9956d26fea148b26f0af2ec52b1e8b4de3ed2e",
+      "wasmSha256": "cc95fa4d69178617b19fe50b070dc871e315aea55107fcd1bcd238ae77811edd",
       "license": "zig.LICENSE"
     }
   }

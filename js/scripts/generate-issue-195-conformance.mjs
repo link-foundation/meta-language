@@ -126,7 +126,10 @@ async function upstreamCheckout(language, work, lock, versions, treeSitter) {
 }
 
 /** Visible named node kinds of the grammar (no hidden `_` rules or supertypes). */
-async function inventory(checkout) {
+async function inventory(checkout, treeSitter) {
+  // Upstreams that commit only parser.c (tree-sitter-lean) get node-types.json
+  // from their grammar.js; --no-parser leaves the verified parser.c untouched.
+  if (!existsSync(join(checkout, 'src/node-types.json'))) await run(treeSitter, ['generate', '--no-parser'], { cwd: checkout });
   const types = JSON.parse(await readFile(join(checkout, 'src/node-types.json'), 'utf8'));
   return [...new Set(types.filter((type) => type.named && !type.type.startsWith('_') && !type.subtypes)
     .map((type) => type.type))].sort();
@@ -374,7 +377,7 @@ async function generate(work, treeSitter) {
         oracle: `${language.id}/oracle.json`,
         oracleSha256: sha256(oracleText),
         cases: counts,
-        inventory: await inventory(checkout),
+        inventory: await inventory(checkout, treeSitter),
       };
     }
   } finally {

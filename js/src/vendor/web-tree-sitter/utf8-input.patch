@@ -1,5 +1,5 @@
 diff --git a/lib/binding_web/lib/tree-sitter.c b/lib/binding_web/lib/tree-sitter.c
-index 6148e54..75d36fa 100644
+index 828132a..8e62b12 100644
 --- a/lib/binding_web/lib/tree-sitter.c
 +++ b/lib/binding_web/lib/tree-sitter.c
 @@ -28,12 +28,14 @@ void *ts_init() {

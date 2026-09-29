@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Rebuilds js/src/vendor/web-tree-sitter/tree-sitter.wasm.gz, the web-tree-sitter
+// Rebuilds js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz, the web-tree-sitter
 // runtime patched to read UTF-8 input (utf8-input.patch). The published runtime
 // always parses UTF-16, and tree-sitter charges error recovery per skipped byte,
 // so on malformed input it chose different recoveries than the native runtime
@@ -31,23 +31,26 @@ const packagePath = join(root, 'js/node_modules/web-tree-sitter');
 
 const SOURCE = Object.freeze({
   upstream: 'tree-sitter/tree-sitter',
-  version: '0.25.10',
-  revision: 'da6fe9beb4f7f67beb75914ca8e0d48ae48d6406',
-  emscripten: '4.0.4',
+  version: '0.27.0',
+  revision: '6070dbfefd326bd735e5683eb128cc1b57dad0c0',
+  // crates/loader/emscripten-version at the pinned revision.
+  emscripten: '4.0.15',
   patch: 'js/src/vendor/web-tree-sitter/utf8-input.patch',
 });
 
-// xtask/src/build_wasm.rs at the pinned revision.
+// crates/xtask/src/build_wasm.rs at the pinned revision.
 const EXPORTED_RUNTIME_METHODS = [
   'AsciiToString', 'stringToUTF8', 'UTF8ToString', 'lengthBytesUTF8',
   'stringToUTF16', 'loadWebAssemblyModule', 'getValue', 'setValue',
+  'HEAPF32', 'HEAPF64', 'HEAP_DATA_VIEW', 'HEAP8', 'HEAPU8', 'HEAP16', 'HEAPU16',
+  'HEAP32', 'HEAPU32', 'HEAP64', 'HEAPU64', 'LE_HEAP_STORE_I64',
 ];
 
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 async function compile(checkout, output) {
   const exported = [
-    await readFile(join(checkout, 'lib/src/wasm/stdlib-symbols.txt'), 'utf8'),
+    await readFile(join(checkout, 'lib/src/wasm-stdlib/imports.txt'), 'utf8'),
     await readFile(join(checkout, 'lib/binding_web/lib/exports.txt'), 'utf8'),
   ].join('').replaceAll('"', '').split('\n').filter(Boolean).map((line) => `_${line}`).join('')
     .replace(/,$/u, '');
@@ -56,22 +59,22 @@ async function compile(checkout, output) {
     // The label lets scripts/clean-caches.mjs find the container if it outlives an interrupted run.
     'run', '--rm', '--label', CONTAINER_LABEL, '--volume', `${checkout}:/src`, '--volume', `${output}:/out`,
     '--user', String(process.getuid()), '--workdir', '/src', `emscripten/emsdk:${SOURCE.emscripten}`,
-    'emcc', '-O3', '--minify', '0', '-gsource-map', '--source-map-base', '.', '-fno-exceptions', '-std=c11',
+    'emcc', '-O3', '--minify', '0', '-s', 'EXPORT_ES6=1', '-gsource-map=inline', '-fno-exceptions', '-std=c11',
     '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'INITIAL_MEMORY=33554432', '-s', 'ALLOW_MEMORY_GROWTH=1',
-    '-s', 'SUPPORT_BIG_ENDIAN=1', '-s', 'MAIN_MODULE=2', '-s', 'FILESYSTEM=0', '-s', 'NODEJS_CATCH_EXIT=0',
-    '-s', 'NODEJS_CATCH_REJECTION=0', '-s', `EXPORTED_FUNCTIONS=${exported}`,
+    '-s', 'SUPPORT_BIG_ENDIAN=1', '-s', 'WASM_BIGINT=1', '-s', 'MAIN_MODULE=2', '-s', 'FILESYSTEM=0',
+    '-s', 'NODEJS_CATCH_EXIT=0', '-s', 'NODEJS_CATCH_REJECTION=0', '-s', `EXPORTED_FUNCTIONS=${exported}`,
     '-s', `EXPORTED_RUNTIME_METHODS=${EXPORTED_RUNTIME_METHODS.join(',')}`,
-    '-D', 'fprintf(...)=', '-D', 'NDEBUG=', '-D', '_POSIX_C_SOURCE=200112L', '-D', '_DEFAULT_SOURCE=',
-    '-D', '_DARWIN_C_SOURCE=', '-I', 'lib/src', '-I', 'lib/include',
+    '-D', 'fprintf(...)=', '-D', 'printf(...)=', '-D', 'NDEBUG=', '-D', '_POSIX_C_SOURCE=200112L',
+    '-D', '_DEFAULT_SOURCE=', '-D', '_BSD_SOURCE=', '-D', '_DARWIN_C_SOURCE=', '-I', 'lib/src', '-I', 'lib/include',
     '--js-library', 'lib/binding_web/lib/imports.js', '--pre-js', 'lib/binding_web/lib/prefix.js',
-    '-s', 'EXPORT_ES6=1', '-o', '/out/tree-sitter.mjs', 'lib/src/lib.c', 'lib/binding_web/lib/tree-sitter.c',
+    '-o', '/out/web-tree-sitter.mjs', 'lib/src/lib.c', 'lib/binding_web/lib/tree-sitter.c',
   ], { maxBuffer: 64 * 1024 * 1024 });
-  return readFile(join(output, 'tree-sitter.wasm'));
+  return readFile(join(output, 'web-tree-sitter.wasm'));
 }
 
 async function packageRuntime() {
   const metadata = JSON.parse(await readFile(join(packagePath, 'package.json'), 'utf8'));
-  return { version: metadata.version, wasm: await readFile(join(packagePath, 'tree-sitter.wasm')) };
+  return { version: metadata.version, wasm: await readFile(join(packagePath, 'web-tree-sitter.wasm')) };
 }
 
 /** Verifies the vendored runtime against its lock and the installed package. */
@@ -89,7 +92,7 @@ export async function checkRuntimeLock() {
     problems.push('the installed web-tree-sitter wasm differs from the locked unpatched build');
   }
   if (sha256(await readFile(join(root, SOURCE.patch))) !== lock.patchSha256) problems.push('patch digest mismatch');
-  const wasm = gunzipSync(await readFile(join(vendorDir, 'tree-sitter.wasm.gz')));
+  const wasm = gunzipSync(await readFile(join(vendorDir, 'web-tree-sitter.wasm.gz')));
   if (sha256(wasm) !== lock.wasmSha256) problems.push('vendored runtime wasm digest mismatch');
   return problems;
 }
@@ -119,7 +122,7 @@ async function main() {
     }
     await run('git', ['-C', checkout, 'apply', join(root, SOURCE.patch)]);
     const patched = await compile(checkout, join(work, 'patched'));
-    await writeFile(join(vendorDir, 'tree-sitter.wasm.gz'), gzipSync(patched, { level: 9 }));
+    await writeFile(join(vendorDir, 'web-tree-sitter.wasm.gz'), gzipSync(patched, { level: 9 }));
     await writeFile(join(vendorDir, 'LICENSE'), await readFile(join(checkout, 'LICENSE')));
     const lock = {
       description: 'web-tree-sitter runtime patched to parse UTF-8 input, as the native runtime does.',

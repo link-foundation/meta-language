@@ -43,7 +43,7 @@ export function formatCstLine(node) {
 }
 
 const CLI_RANGE = /^(\d+):(\d+) +- (\d+):(\d+) +/u;
-const CLI_ESCAPES = { n: '\n', r: '\r', t: '\t', 0: '\0', '\\': '\\', v: '\v', f: '\f' };
+const CLI_ESCAPES = { n: '\n', r: '\r', t: '\t', 0: '\0', '\\': '\\', v: '\v', f: '\f', '"': '"', '`': '`' };
 
 // `(x as f64).log10() as usize` in the CLI: the digit count minus one, and 0 for 0.
 const log10 = (value) => (value === 0 ? 0 : String(value).length - 1);
@@ -58,7 +58,7 @@ function cliTotalWidth(source) {
 
 /**
  * Converts `tree-sitter parse --cst` output (ANSI colours allowed) of `source` into canonical
- * CST lines, following the renderer of the pinned CLI (0.25.10, `cli/src/parse.rs`): each line
+ * CST lines, following the renderer of the pinned CLI (0.27.0, `crates/cli/src/parse.rs`): each line
  * is a padded range, `"  ".repeat(depth + 1)`, one more space for error-free nodes printed inside
  * an error subtree, then `field: `, `•` (named nodes containing an error), and the kind.
  * `offset` shifts the points of a region parsed on its own to its place in a host document.
@@ -91,7 +91,7 @@ export function cliCstToLines(output, source, offset = { row: 0, column: 0 }) {
     }
     if (rest.startsWith('"') && !field && !bullet) {
       node.named = false;
-      node.kind = rest.slice(1, -1).replace(/\\([nrt0\\vf])/gu, (_, code) => CLI_ESCAPES[code]);
+      node.kind = rest.slice(1, -1).replace(/\\([nrt0\\vf"`])/gu, (_, code) => CLI_ESCAPES[code]);
     } else {
       node.named = true;
       node.kind = rest.split(' ')[0];

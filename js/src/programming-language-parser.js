@@ -7,6 +7,7 @@ import { canonicalLanguageName, languageEntry } from './language-catalog.js';
 import { parseLinoCst } from './lino-grammar.js';
 import { parsePdfCst } from './pdf-grammar.js';
 import { parseNaturalLanguageCst, parsePlainTextCst } from './text-grammar.js';
+import { treeSitterNodeKind } from './tree-sitter-node-kind.js';
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 
 const encoder = new TextEncoder();
@@ -26,7 +27,7 @@ export const GRAMMAR_LOCK = Object.freeze(
 // which doubles tree-sitter's per-byte error-recovery costs, so malformed input
 // recovered differently than in the native runtime, which parses UTF-8.
 await WebTreeSitterParser.init({
-  wasmBinary: gunzipSync(await readFile(new URL('./vendor/web-tree-sitter/tree-sitter.wasm.gz', import.meta.url))),
+  wasmBinary: gunzipSync(await readFile(new URL('./vendor/web-tree-sitter/web-tree-sitter.wasm.gz', import.meta.url))),
 });
 const GRAMMARS = new Map(
   await Promise.all(
@@ -449,7 +450,7 @@ function propertyOrCall(node, name) {
 
 const treeSitterAdapter = (input) => Object.freeze({
   input,
-  term: (node) => node.type,
+  term: treeSitterNodeKind,
   startOffset: (node) => input.offsetOf(node.startIndex),
   endOffset: (node) => input.offsetOf(node.endIndex),
   isNamed: (node) => propertyOrCall(node, 'isNamed'),

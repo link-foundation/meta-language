@@ -9,13 +9,13 @@ import { parseCorpus } from './issue-195-upstream-corpus.mjs';
 
 const [directory, grammar, limit = '20'] = process.argv.slice(2);
 const load = async (wasmBinary) => {
-  const module = await import(`../js/node_modules/web-tree-sitter/tree-sitter.js?${wasmBinary ? 'utf8' : 'utf16'}`);
+  const module = await import(`../js/node_modules/web-tree-sitter/web-tree-sitter.js?${wasmBinary ? 'utf8' : 'utf16'}`);
   await module.Parser.init(wasmBinary ? { wasmBinary } : undefined);
   const language = await module.Language.load(gunzipSync(readFileSync(`js/src/vendor/grammars/${grammar}.wasm.gz`)));
   return { module, language };
 };
 const stock = await load();
-const utf8 = await load(gunzipSync(readFileSync('js/src/vendor/web-tree-sitter/tree-sitter.wasm.gz')));
+const utf8 = await load(gunzipSync(readFileSync('js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz')));
 const encoder = new TextEncoder();
 const parse = ({ module, language }, input) => {
   const parser = new module.Parser();

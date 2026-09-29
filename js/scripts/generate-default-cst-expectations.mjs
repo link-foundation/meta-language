@@ -33,6 +33,7 @@ import {
 } from './build-vendored-grammars.mjs';
 
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
+import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -60,7 +61,7 @@ const MARKDOWN_INLINE_CONTAINERS = new Set(['inline', 'pipe_table_cell']);
 // The same UTF-8 runtime the package parses with (see
 // js/scripts/build-web-tree-sitter-runtime.mjs), so node offsets are UTF-8 bytes.
 await Parser.init({
-  wasmBinary: gunzipSync(await readFile(join(root, 'js/src/vendor/web-tree-sitter/tree-sitter.wasm.gz'))),
+  wasmBinary: gunzipSync(await readFile(join(root, 'js/src/vendor/web-tree-sitter/web-tree-sitter.wasm.gz'))),
 });
 const languages = new Map();
 async function loadGrammar(id) {
@@ -104,7 +105,7 @@ function grammarRows(tree, text) {
   const bytes = byteOffsets(text);
   const rows = [];
   const walk = (node, depth, field) => {
-    rows.push([depth, field, node.type, node.isNamed ? 1 : 0, bytes[node.startIndex], bytes[node.endIndex], flagsOf(node)]);
+    rows.push([depth, field, treeSitterNodeKind(node), node.isNamed ? 1 : 0, bytes[node.startIndex], bytes[node.endIndex], flagsOf(node)]);
     node.children.forEach((child, index) => walk(child, depth + 1, node.fieldNameForChild(index)));
   };
   walk(tree.rootNode, 0, null);
@@ -125,7 +126,7 @@ async function markdownRows(text) {
   // `extra` holds block nodes (excluded from an inline parse) to place among
   // this node's children.
   const walk = async (node, depth, field, extra) => {
-    rows.push([depth, field, node.type, node.isNamed ? 1 : 0, bytes[node.startIndex], bytes[node.endIndex], flagsOf(node)]);
+    rows.push([depth, field, treeSitterNodeKind(node), node.isNamed ? 1 : 0, bytes[node.startIndex], bytes[node.endIndex], flagsOf(node)]);
     let children = node.children.map((child, index) => ({ node: child, field: node.fieldNameForChild(index), extra: [] }));
     let injected = extra;
     if (MARKDOWN_INLINE_CONTAINERS.has(node.type) && node.tree === block) {
@@ -367,11 +368,12 @@ export async function cliGrammarDirectory(id, versions, scratch) {
 }
 
 // `tree-sitter parse --cst` output for a web-tree-sitter tree, reproducing
-// the CLI 0.25.10 renderer (crates/cli/src/parse.rs: cst_render_node,
-// write_node_text, render_node_range) so the native parse must match byte for
-// byte: kinds, UTF-8 row/column ranges, named fields, error and missing nodes
-// and leaf text.
-const INVISIBLE = { '\n': '\\n', '\r': '\\r', '\t': '\\t', '\0': '\\0', '\\': '\\\\', '\v': '\\v', '\f': '\\f' };
+// the CLI 0.27.0 renderer (crates/cli/src/parse.rs: cst_render_node,
+// write_node_text, CstNodeText, CstNodeRange) so the native parse must match
+// byte for byte: kinds, UTF-8 row/column ranges, named fields, error and
+// missing nodes and leaf text. Text escapes invisible characters and both
+// delimiters, `"` and `` ` ``.
+const INVISIBLE = { '\n': '\\n', '\r': '\\r', '\t': '\\t', '\0': '\\0', '\\': '\\\\', '\v': '\\v', '\f': '\\f', '`': '\\`', '"': '\\"' };
 const escapeInvisible = (text) => [...text].map((character) => INVISIBLE[character] ?? character).join('');
 const log10 = (value) => (value > 0 ? Math.floor(Math.log10(value)) : 0);
 
@@ -404,7 +406,7 @@ export function renderCliCst(tree, text) {
     if (node.isNamed) {
       if (field) out += `${field}: `;
       if (node.hasError || node.isError) out += '•';
-      out += `${node.type} `;
+      out += treeSitterNodeKind(node);
       if (node.childCount === 0) {
         const source = new TextDecoder().decode(utf8.subarray(startByte, endByte));
         const pieces = source.match(/[^\n]*\n|[^\n]+$/gu) ?? [];
@@ -415,14 +417,16 @@ export function renderCliCst(tree, text) {
             const pieceBytes = encoder.encode(piece).length;
             const column = pieceBytes + (index === 0 ? start.column : 0);
             out += `\n${range({ row, column: start.column }, { row, column })}${'  '.repeat(indent + 1)}`;
+          } else {
+            out += ' ';
           }
           out += `\`${escapeInvisible(piece)}\``;
         });
       }
     } else if (node.isMissing) {
-      out += `MISSING: "${node.type}"`;
+      out += `MISSING: "${treeSitterNodeKind(node)}"`;
     } else {
-      out += `"${escapeInvisible(node.type)}"`;
+      out += `"${escapeInvisible(treeSitterNodeKind(node))}"`;
     }
     out += '\n';
     if (node.childCount > 0) {
@@ -448,8 +452,10 @@ export async function cliOutput(treeSitter, dir, text, scratch, name) {
     if (!error.stdout) throw error;
     stdout = error.stdout;
   }
-  // The tree ends at the blank line before the parse summary.
-  return stdout.replace(/\x1b\[[0-9;]*m/gu, '').split('\n\n')[0].concat('\n');
+  // The tree ends at the parse summary, the line that starts with the file.
+  const lines = stdout.replace(/\x1b\[[0-9;]*m/gu, '').split('\n');
+  const summary = lines.findIndex((line) => line.startsWith(`${file}\t`));
+  return lines.slice(0, summary < 0 ? lines.length : summary).join('\n').replace(/\n*$/u, '\n');
 }
 
 function compareOutput(label, expected, actual) {

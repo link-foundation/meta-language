@@ -2,8 +2,8 @@
   "description": "Grammar concrete syntax trees for the inventory sources and the shared embedded-language fixtures of parity/fixtures/issue-195-evidence.json, produced directly by the pinned tree-sitter grammars (no meta-language adapter) and cross-checked with the native tree-sitter CLI. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.",
   "generator": {
     "script": "js/scripts/generate-default-cst-expectations.mjs",
-    "webTreeSitter": "0.25.10",
-    "treeSitterCli": "tree-sitter 0.25.10 (da6fe9beb4f7f67beb75914ca8e0d48ae48d6406)"
+    "webTreeSitter": "0.27.0",
+    "treeSitterCli": "tree-sitter 0.27.0"
   },
   "publicProjections": {
     "Lean": "The public root is a `file` node spanning the whole source whose only grammar child is the grammar root `module`.",
@@ -390,7 +390,7 @@
       "grammars": {
         "rust": {
           "version": "v0.24.2",
-          "parserSha256": "c2625aed5481577ae5499995e80c1700921119e75c9ec8fc351ca02f3d9f46fa",
+          "parserSha256": "555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3",
           "symbolNamesSha256": "ac2bce3458755e66976e89965ff5c3ff9ca73a54cc356966766c6c8ce73795f7"
         }
       },
@@ -580,7 +580,7 @@
       "grammars": {
         "rocq": {
           "version": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
-          "parserSha256": "4d6566a7291a13ec3da6a965920b6469bb58a183062e2dd4b2759751c153b5a6",
+          "parserSha256": "4f0807b15d47e4335c28ccb7be5eb8d01851baaab4843dfa24b2d8fb1966ecd2",
           "symbolNamesSha256": "358bface6718216d2db2713c4aa1b9a8a081f863027010252a269dea5057a58c"
         }
       },
@@ -1517,9 +1517,9 @@
     "R": {
       "grammars": {
         "r": {
-          "version": "1.2.0",
-          "parserSha256": "622165734714c6e81f70d99d522d78cf98915fdf2b1032f8bb33e775a0b971c0",
-          "symbolNamesSha256": "6d42ac062934e33ec076ebcf29faa3176afebccd152da1ac7112db4a5f8ee9bb"
+          "version": "1.3.0",
+          "parserSha256": "43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771",
+          "symbolNamesSha256": "845e4b0c67dc140fe102f935b14c79608589a18c7c35dbcec3c4fdc6c0f4a470"
         }
       },
       "sourceSha256": "f3a1ac67ce888520f736d5db1a28c98103acb99fcee01ef64dd9457f2c42701a",
@@ -1912,9 +1912,9 @@
     "Scala": {
       "grammars": {
         "scala": {
-          "version": "0.25.1",
-          "parserSha256": "049ef02b206b3ff06b5066040d01ad04161bc1afc2bd26073c9a865082af9d1e",
-          "symbolNamesSha256": "22e1d9f3d6d63c2e7fb01e73e5b9adae2ab2386369b31dfdfcd3ff91d9b4524c"
+          "version": "0.26.2",
+          "parserSha256": "9f6d03fa6c63d2d855b6f9e0368046a58568587eefc38b5e38bdb001e8ec68db",
+          "symbolNamesSha256": "10793b01723b94d14a36a61b830de9a31fbcfe482340c871713e4c03b922c1a1"
         }
       },
       "sourceSha256": "804ca082470559215f011e2ddc92ecb4e151faf265e6377d30c223cf3d74ceeb",
@@ -1954,8 +1954,6 @@
         [4,null,"=",0,67,68,""],
         [4,"body","identifier",1,69,70,""],
         [3,null,"block_comment",1,71,79,"X"],
-        [4,null,"/*",0,71,73,""],
-        [4,null,"*/",0,76,79,""],
         [3,null,";",0,80,81,""],
         [3,null,"val_definition",1,82,103,""],
         [4,null,"val",0,82,85,""],
@@ -2006,9 +2004,9 @@
     "Lua": {
       "grammars": {
         "lua": {
-          "version": "0.2.0",
-          "parserSha256": "fa3a2efe5803017c536d4727fe408b9eaf3e33b86662a5b1a1d12227d0022231",
-          "symbolNamesSha256": "a07a8b5795a458fbd419101586e327c1a97970e455cb55690b94e39716df6cfa"
+          "version": "0.5.0",
+          "parserSha256": "933206d96a78f7785c13b2600182f1527dcd755c200b1271bb5bc4d8da4b17b3",
+          "symbolNamesSha256": "3a261d21d47cae67127607545d03ab255092c76a5b676ded5d32c0cb289e172f"
         }
       },
       "sourceSha256": "af9a70ad44eea6b728dacdb249e271130a036b158ab3bde87923eebe1cb357b0",
@@ -2032,7 +2030,7 @@
         [4,null,"expression_list",1,36,45,""],
         [5,null,"binary_expression",1,36,45,""],
         [6,"left","identifier",1,36,37,""],
-        [6,null,"..",0,38,40,""],
+        [6,"operator","..",0,38,40,""],
         [6,"right","string",1,41,45,""],
         [7,"start","\"",0,41,42,""],
         [7,"content","string_content",1,42,44,""],
@@ -2047,7 +2045,7 @@
         [2,null,"assignment_statement",1,70,94,""],
         [3,null,"variable_list",1,70,71,""],
         [4,"name","identifier",1,70,71,""],
-        [3,null,"=",0,72,73,""],
+        [3,"operator","=",0,72,73,""],
         [3,null,"expression_list",1,74,94,""],
         [4,"value","table_constructor",1,74,94,""],
         [5,null,"{",0,74,75,""],
@@ -2060,7 +2058,7 @@
         [6,null,"[",0,83,84,""],
         [6,"name","number",1,84,85,""],
         [6,null,"]",0,85,86,""],
-        [6,null,"=",0,87,88,""],
+        [6,"operator","=",0,87,88,""],
         [6,"value","string",1,89,92,""],
         [7,"start","\"",0,89,90,""],
         [7,"content","string_content",1,90,91,""],
@@ -2089,9 +2087,9 @@
     "Perl": {
       "grammars": {
         "perl": {
-          "version": "1.1.2",
-          "parserSha256": "38ebca6dd96edeb01da421780001ea26b572133e83525c993bbeb78e8e9a24bc",
-          "symbolNamesSha256": "716a927cc1ccf6b964d56a91b5096e02579433274086c8654cdd373f9bd01795"
+          "version": "2.0.0",
+          "parserSha256": "1317bdaae2f50f5f82b6dbc7176425e9cee64a0dbfbb82aa17959aaefc54f199",
+          "symbolNamesSha256": "7519079dc7cd730bd3cada7f3970c22cf21ca1116ba3f7974d765ca6cb891b4c"
         }
       },
       "sourceSha256": "daa717b9832b2b448bdca7bd07ef468487c7ab7d3eedf6552acf660ba0bde4dc",
@@ -2108,11 +2106,11 @@
         [4,null,"assignment_expression",1,16,28,""],
         [5,"left","variable_declaration",1,16,23,""],
         [6,null,"my",0,16,18,""],
-        [6,"variables","(",0,19,20,""],
+        [6,null,"(",0,19,20,""],
         [6,"variables","scalar",1,20,22,""],
         [7,null,"$",0,20,21,""],
         [7,null,"varname",1,21,22,""],
-        [6,"variables",")",0,22,23,""],
+        [6,null,")",0,22,23,""],
         [5,"operator","=",0,24,25,""],
         [5,"right","array",1,26,28,""],
         [6,null,"@",0,26,27,""],
@@ -2138,12 +2136,13 @@
         [5,null,"@",0,50,51,""],
         [5,null,"varname",1,51,55,""],
         [3,"operator","=",0,56,57,""],
-        [3,"right","(",0,58,59,""],
-        [3,"right","list_expression",1,59,63,""],
-        [4,null,"number",1,59,60,""],
-        [4,null,",",0,60,61,""],
-        [4,null,"number",1,62,63,""],
-        [3,"right",")",0,63,64,""],
+        [3,"right","parenthesized_expression",1,58,64,""],
+        [4,null,"(",0,58,59,""],
+        [4,null,"list_expression",1,59,63,""],
+        [5,null,"number",1,59,60,""],
+        [5,null,",",0,60,61,""],
+        [5,null,"number",1,62,63,""],
+        [4,null,")",0,63,64,""],
         [1,null,";",0,64,65,""],
         [1,null,"expression_statement",1,66,89,""],
         [2,null,"ambiguous_function_call_expression",1,66,89,""],
@@ -2180,11 +2179,11 @@
         [4,null,"assignment_expression",1,8,19,""],
         [5,"left","variable_declaration",1,8,14,""],
         [6,null,"my",0,8,10,""],
-        [6,"variables","(",0,11,12,""],
+        [6,null,"(",0,11,12,""],
         [6,"variables","scalar",1,12,14,""],
         [7,null,"$",0,12,13,""],
         [7,null,"varname",1,13,14,""],
-        [6,"variables",")",0,14,14,"M"],
+        [6,null,")",0,14,14,"M"],
         [5,"operator","=",0,15,16,""],
         [5,"right","array",1,17,19,""],
         [6,null,"@",0,17,18,""],
@@ -2279,9 +2278,9 @@
     "OCaml": {
       "grammars": {
         "ocaml": {
-          "version": "0.24.2",
-          "parserSha256": "ab85b3756c106d0be3509db9d33eb883ff7dda2b714c7e47ec36a2d807923c0f",
-          "symbolNamesSha256": "3a30fb6ef94245bb47f910c71357a52a73672f594b96bc6caf5b4f840c1c587c"
+          "version": "0.26.0",
+          "parserSha256": "f76cc46f96f9ed152354743539cc642dcb6a67343795dd9d548fc4d0b0ebce74",
+          "symbolNamesSha256": "16ed00b075f8ad70613b068432522e5c27bcf273c51c9eecd2d68ad2a6ff6983"
         }
       },
       "sourceSha256": "377db1c1462371f77641afeae15a229df6e4e1aa52fb5a8119f80240ba7ac11b",
@@ -2356,13 +2355,13 @@
     "OCaml Interface": {
       "grammars": {
         "ocaml_interface": {
-          "version": "0.24.2",
-          "parserSha256": "8769090544b24ca4a33b6dd0eed9b337b171005551caba2f6db83ad755046d3b",
-          "symbolNamesSha256": "4e2c10a8b31a17dd1b332a45d35caadf0f7fe43c615f6ea2ec2f9d0e988bc7fb"
+          "version": "0.26.0",
+          "parserSha256": "62634bd351247bd2152eb15438f5bea3f0a1ccce4291f318aa86a79d29bf111e",
+          "symbolNamesSha256": "2c85a97a8d34326fd13ba1d303689941932f3300918abcf19d72e30f09815a7d"
         }
       },
       "sourceSha256": "d2d75b6e89ab9946fe33571fc93e93a875cdad87a47c5e54bb8dd5545e600b59",
-      "recoverySourceSha256": "cb89fd0ea6d900395a07c9075cca70a554882ed7047b8965b61e4fb91f2e7bce",
+      "recoverySourceSha256": "372b5f25da08cd0fc152af6c2e94518a9bde25f8e174d7293eae1c16798b4921",
       "positive": [
         [0,null,"compilation_unit",1,0,68,""],
         [1,null,"comment",1,0,11,"X"],
@@ -2392,17 +2391,16 @@
         [1,null,"comment",1,59,67,"X"]
       ],
       "recovery": [
-        [0,null,"compilation_unit",1,0,15,""],
-        [1,null,"value_specification",1,0,14,""],
+        [0,null,"compilation_unit",1,0,13,""],
+        [1,null,"value_specification",1,0,12,""],
         [2,null,"val",0,0,3,""],
         [2,null,"value_name",1,4,5,""],
         [2,null,":",0,6,7,""],
-        [2,"type","function_type",1,8,14,""],
-        [3,"domain","type_constructor_path",1,8,11,""],
-        [4,null,"type_constructor",1,8,11,""],
-        [3,null,"->",0,12,14,""],
-        [3,"codomain","type_constructor_path",1,14,14,""],
-        [4,null,"type_constructor",1,14,14,"M"]
+        [2,"type","parenthesized_type",1,8,12,""],
+        [3,null,"(",0,8,9,""],
+        [3,null,"type_constructor_path",1,9,12,""],
+        [4,null,"type_constructor",1,9,12,""],
+        [3,null,")",0,12,12,"M"]
       ],
       "embedded": []
     },
@@ -3796,21 +3794,19 @@
         [0,null,"ERROR",1,0,28,"E"],
         [1,null,"function",0,0,8,""],
         [1,null,"function_name",1,9,17,""],
-        [1,null,"function_parameter_declaration",1,17,25,""],
-        [2,null,"(",0,17,18,""],
-        [2,null,"parameter_list",1,18,25,""],
-        [3,null,"script_parameter",1,18,25,""],
-        [4,null,"attribute_list",1,18,23,""],
-        [5,null,"attribute",1,18,23,""],
-        [6,null,"type_literal",1,18,23,""],
-        [7,null,"[",0,18,19,""],
-        [7,null,"type_spec",1,19,22,""],
-        [8,null,"type_name",1,19,22,""],
-        [9,null,"type_identifier",1,19,22,""],
-        [7,null,"]",0,22,23,""],
-        [4,null,"variable",1,23,25,""],
-        [2,null,")",0,25,25,"M"],
-        [1,null,"{",0,26,27,""],
+        [1,null,"(",0,17,18,""],
+        [1,null,"parameter_list",1,18,25,""],
+        [2,null,"script_parameter",1,18,25,""],
+        [3,null,"attribute_list",1,18,23,""],
+        [4,null,"attribute",1,18,23,""],
+        [5,null,"type_literal",1,18,23,""],
+        [6,null,"[",0,18,19,""],
+        [6,null,"type_spec",1,19,22,""],
+        [7,null,"type_name",1,19,22,""],
+        [8,null,"type_identifier",1,19,22,""],
+        [6,null,"]",0,22,23,""],
+        [3,null,"variable",1,23,25,""],
+        [1,null,"{",0,25,27,""],
         [1,null,"ERROR",1,27,28,"E"]
       ],
       "embedded": []
@@ -5340,9 +5336,9 @@
     "Protocol Buffers": {
       "grammars": {
         "proto": {
-          "version": "0.4.0",
-          "parserSha256": "ecdea8962be9f1879e067ee23127abd79ec8d3fad83799eb9052ffa48ec78448",
-          "symbolNamesSha256": "f282e43e9496fcf1e2f1f9975ceac8c66902dd7fabce63a60b1616d105cb283c"
+          "version": "0.6.0",
+          "parserSha256": "ac481450c32e8fa52976075581701ecc63790fbab4c9c4f10d0901c9a39b61eb",
+          "symbolNamesSha256": "452c9216d3e7646926f94c00be854a45c0b1e2fdaee37434995f6a36c0609eca"
         }
       },
       "sourceSha256": "c73ba1aab5191594c8d8a9e044059b0cea35be1818c6888b445a48b174991f61",
@@ -5353,7 +5349,9 @@
         [1,null,"syntax",1,9,27,""],
         [2,null,"syntax",0,9,15,""],
         [2,null,"=",0,16,17,""],
-        [2,null,"\"proto3\"",0,18,26,""],
+        [2,"version","string",1,18,26,""],
+        [3,null,"\"",0,18,19,""],
+        [3,null,"\"",0,25,26,""],
         [2,null,";",0,26,27,""],
         [1,null,"message",1,28,85,""],
         [2,null,"message",0,28,35,""],
@@ -5387,7 +5385,9 @@
         [1,null,"syntax",1,0,18,""],
         [2,null,"syntax",0,0,6,""],
         [2,null,"=",0,7,8,""],
-        [2,null,"\"proto3\"",0,9,17,""],
+        [2,"version","string",1,9,17,""],
+        [3,null,"\"",0,9,10,""],
+        [3,null,"\"",0,16,17,""],
         [2,null,";",0,17,18,""],
         [1,null,"message",1,19,51,""],
         [2,null,"message",0,19,26,""],
@@ -5411,9 +5411,9 @@
     "GraphQL": {
       "grammars": {
         "graphql": {
-          "version": "0.1.0",
-          "parserSha256": "d27f89090319f885811fefb5c5453f9cc95543c04df02b7c43aa1fa6f7d353d9",
-          "symbolNamesSha256": "b640501327e5ca90930b40333bb33224801db27dc0155385755814395b6fde17"
+          "version": "0.2.1",
+          "parserSha256": "d41ba0018a0ae351422f4dcb8352bb7dc41289b060bdfd43ab2fa7ad4c6554fd",
+          "symbolNamesSha256": "0d49cd680dc880ffbe1dfdf7a8570e395bd82ac8cc4978c98ce221aad18b8a1f"
         }
       },
       "sourceSha256": "ac3a070814f12d52a3907812fbfede5bd74f5589c45dea1f7f47772245ea4745",
@@ -5452,8 +5452,6 @@
         [11,null,"=",0,48,49,""],
         [11,null,"value",1,50,54,""],
         [12,null,"string_value",1,50,54,""],
-        [13,null,"\"",0,50,51,""],
-        [13,null,"\"",0,53,54,""],
         [9,null,")",0,54,55,""],
         [8,null,":",0,55,56,""],
         [8,null,"type",1,57,63,""],
@@ -5486,7 +5484,7 @@
       "grammars": {
         "csv": {
           "version": "f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
-          "parserSha256": "eacf58622b8d50ab75acf91172d35e314874327d98d1bd03acfd1ab789ddb1d1",
+          "parserSha256": "6a7ede804cb8ced3f9466cecf38872d175e6179e8ea951956a195b2d55add8bc",
           "symbolNamesSha256": "2ffe7d248c472f72713096455325ff018667339503ff2e2e0c44f039767c9e3e"
         }
       },

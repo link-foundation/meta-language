@@ -14,8 +14,9 @@ UTF-8 (tree-sitter panicked on `×`) or that silently read `?` (`→`, `∀`,
 `⟨`). `build.rs` compiles this copy with `-utf-8` like the other vendored
 grammars. `node js/scripts/build-vendored-grammars.mjs --only lean` clones
 the revision and requires its `src/parser.c` to equal `src/parser.c.gz`;
-regenerating `grammar.js` with tree-sitter CLI 0.25.10 reproduces the same
-`parser.c`.
+regenerating `grammar.js` with tree-sitter CLI 0.27.0 reproduces the same
+`parser.c` apart from its first comment, which no longer names the CLI
+version.
 
 The uncompressed `parser.c` SHA-256 is
 `d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b`.

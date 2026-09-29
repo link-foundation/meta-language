@@ -1262,7 +1262,7 @@
       "sources": [
         {
           "path": "Cargo.toml",
-          "source": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"
+          "source": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2024\"\n"
         },
         {
           "path": "src/macros.rs",
@@ -1535,7 +1535,7 @@
             "kind": "project-file",
             "name": "Cargo.toml",
             "file": "Cargo.toml",
-            "text": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"
+            "text": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2024\"\n"
           },
           {
             "kind": "project-file",
@@ -1565,7 +1565,7 @@
             "kind": "project-manifest",
             "name": "Cargo.toml",
             "file": "Cargo.toml",
-            "text": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"
+            "text": "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2024\"\n"
           },
           {
             "kind": "project-package",
@@ -1575,9 +1575,9 @@
           },
           {
             "kind": "project-edition",
-            "name": "2021",
+            "name": "2024",
             "file": "Cargo.toml",
-            "text": "2021"
+            "text": "2024"
           }
         ]
       },

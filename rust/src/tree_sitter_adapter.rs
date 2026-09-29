@@ -488,21 +488,18 @@ fn convert_node_with<'tree>(
 
 struct ChildNode<'tree> {
     node: Node<'tree>,
-    field: Option<&'static str>,
+    field: Option<&'tree str>,
     injected: Vec<Node<'tree>>,
 }
 
 fn children_with_fields(node: Node<'_>) -> Vec<ChildNode<'_>> {
     (0..node.child_count())
-        .map(|index| {
-            let index_u32 = u32::try_from(index).expect("tree-sitter child index fits in u32");
-            ChildNode {
-                node: node
-                    .child(index)
-                    .expect("tree-sitter child index should be valid"),
-                field: node.field_name_for_child(index_u32),
-                injected: Vec::new(),
-            }
+        .map(|index| ChildNode {
+            node: node
+                .child(index)
+                .expect("tree-sitter child index should be valid"),
+            field: node.field_name_for_child(index),
+            injected: Vec::new(),
         })
         .collect()
 }

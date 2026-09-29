@@ -39,10 +39,10 @@
   },
   "inputs": {
     "reproducers.json": "0789c7978e4e6616eec6ebfec6d39c44009788f9c660740fa2e06e94400dbe0d",
-    "issue-195-conformance/manifest.json": "1b67d524a17b0ab5b2c24bc60671d43a690e245885303501fee165d0d128b5d3"
+    "issue-195-conformance/manifest.json": "51ccaf37cd8ccfab3751db4d5c9c63a51c458b11d0822902eacd228c8cd1cc29"
   },
   "oracle": {
-    "tool": "tree-sitter 0.25.10 (da6fe9beb4f7f67beb75914ca8e0d48ae48d6406)",
+    "tool": "tree-sitter 0.27.0",
     "command": "tree-sitter parse --cst <file> (cwd: the pinned grammar)",
     "format": "Canonical CST lines, as in parity/fixtures/issue-195-conformance/manifest.json."
   },
@@ -53,7 +53,7 @@
   "languages": {
     "JavaScript": {
       "file": "javascript.json",
-      "sha256": "b9802fc836af601a48a2094dc4012f5917fb7222cc660d2a4ded273e48cc22cc",
+      "sha256": "107c7b44a94c150c64d88ea5a1d9d09c838de0aa0f4ee688f0908bc2921b9ce0",
       "seedSources": 122,
       "cases": {
         "property": 16,
@@ -67,7 +67,7 @@
     },
     "Lean": {
       "file": "lean.json",
-      "sha256": "e3a7d0cb5d29673ea09b2212e7412b340e2c0671214486296070a227d797cf14",
+      "sha256": "40a2056a869f32cbb8d2f810ccc699206c90aed82fa72b08fc4b05fa269421c7",
       "seedSources": 260,
       "cases": {
         "property": 16,

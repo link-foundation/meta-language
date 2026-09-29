@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Rebuilds js/src/vendor/grammars/*.wasm from the exact grammar crates pinned
 // in rust/Cargo.lock, so both runtimes parse with byte-identical generated
-// parsers. Requires `cargo fetch` (for crate sources), the tree-sitter CLI
-// 0.25.10 and Docker or emcc (used by `tree-sitter build --wasm`).
+// parsers. Requires `cargo fetch` (for crate sources) and the tree-sitter CLI
+// 0.27.0, which downloads the WASI SDK that `tree-sitter build --wasm` uses.
 //
 //   node js/scripts/build-vendored-grammars.mjs [--only id,id] [--jobs N]
 //   node js/scripts/build-vendored-grammars.mjs --check   # verify lock only
 //   node js/scripts/build-vendored-grammars.mjs --notice  # refresh licenses and NOTICE.md
+//   node js/scripts/build-vendored-grammars.mjs --regenerate  # after a CLI update: replace the
+//                                                             # vendored parsers patched grammars generate
 import { createHash } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { execFile } from 'node:child_process';
@@ -226,9 +228,9 @@ export async function ensureGrammarConfig(grammarDir) {
   await writeFile(join(grammarDir, 'tree-sitter.json'), JSON.stringify(config));
 }
 
-// The Docker emcc build mounts only the grammar's `src`, so a scanner that
-// includes a sibling grammar's shared header (TypeScript/TSX use
-// `../../common/scanner.h`) gets a byte-identical local copy instead.
+// A scanner that includes a sibling grammar's shared header (TypeScript/TSX
+// use `../../common/scanner.h`) gets a byte-identical local copy, so the wasm
+// build reads nothing outside the grammar's `src`.
 async function localizeSharedIncludes(grammarDir) {
   const scannerPath = join(grammarDir, 'src/scanner.c');
   if (!existsSync(scannerPath)) return;
@@ -264,8 +266,9 @@ export async function grammarSource(id, versions) {
 
 // Clones the pinned upstream revision. With `treeSitter`, it also applies the
 // grammar's local patch, regenerates the parser and requires it to equal the
-// one Rust compiles.
-export async function checkoutUpstream(source, checkout, treeSitter) {
+// one Rust compiles; with `regenerate`, a regenerated parser and its headers
+// replace the vendored ones instead (after a CLI update).
+export async function checkoutUpstream(source, checkout, treeSitter, { regenerate = false } = {}) {
   await run('git', ['clone', '--quiet', `https://github.com/${source.upstream}`, checkout]);
   await run('git', ['-C', checkout, 'checkout', '--quiet', source.revision]);
   if (!treeSitter) return;
@@ -276,6 +279,7 @@ export async function checkoutUpstream(source, checkout, treeSitter) {
     const { stdout: changed } = await run('git', ['-C', checkout, 'diff', '--name-only']);
     if (!changed.trim().split('\n').every((path) => path.endsWith('src/scanner.c'))) {
       await run(treeSitter, ['generate'], { cwd: join(checkout, source.dir) });
+      if (regenerate) await replaceVendoredParser(source, join(checkout, source.dir, 'src'));
     }
   }
   const upstream = await readFile(join(checkout, source.dir, 'src/parser.c'));
@@ -283,6 +287,18 @@ export async function checkoutUpstream(source, checkout, treeSitter) {
     const patched = source.patch ? ` with ${source.patch}` : '';
     throw new Error(`${source.upstream}@${source.revision}${patched} parser.c differs from ${source.vendored}`);
   }
+}
+
+// Writes a regenerated parser (deterministically compressed) and the generated
+// headers the vendored copy keeps, so rust/build.rs compiles them.
+async function replaceVendoredParser(source, generated) {
+  const parser = await readFile(join(generated, 'parser.c'));
+  await writeFile(join(root, source.vendored, 'src/parser.c.gz'), gzipSync(parser, { level: 9 }));
+  const headers = join(root, source.vendored, 'src/tree_sitter');
+  for (const header of await readdir(headers)) {
+    if (existsSync(join(generated, 'tree_sitter', header))) await cp(join(generated, 'tree_sitter', header), join(headers, header));
+  }
+  source.parser = parser;
 }
 
 /** Rewrites every grammar's license file from its pinned source. */
@@ -305,15 +321,15 @@ async function refreshLicenses(lock, versions) {
   }
 }
 
-async function buildOne(id, versions, treeSitter) {
+async function buildOne(id, versions, treeSitter, options) {
   const source = await grammarSource(id, versions);
-  // Docker can only mount writable, non-hidden paths, so build from a copy.
+  // Build from a scratch copy so the cargo registry sources stay untouched.
   const work = makeScratchDirectory(`grammar-${id}-`);
   try {
     if (source.vendored) {
       // The CLI needs the full grammar tree, so build from the pinned upstream
       // checkout and require its parser to equal the one Rust compiles.
-      await checkoutUpstream(source, join(work, 'crate'), treeSitter);
+      await checkoutUpstream(source, join(work, 'crate'), treeSitter, options);
     } else {
       await cp(source.crateDir, join(work, 'crate'), { recursive: true });
     }
@@ -322,8 +338,8 @@ async function buildOne(id, versions, treeSitter) {
     await ensureGrammarConfig(grammarDir);
     if (!existsSync(join(grammarDir, 'src/grammar.json'))) {
       // tree-sitter-lean commits no grammar.json. The CLI reads only the name
-      // from it; without one it evaluates grammar.js and then fails to run
-      // emcc with "Argument list too long".
+      // from it; without one it would evaluate grammar.js, so a stub with the
+      // name is enough.
       await writeFile(join(grammarDir, 'src/grammar.json'), JSON.stringify({ name: id, rules: {} }));
     }
     const output = join(work, `${id}.wasm`);
@@ -461,7 +477,7 @@ async function main() {
         const id = queue.shift();
         const started = Date.now();
         try {
-          grammars[id] = await buildOne(id, versions, treeSitter);
+          grammars[id] = await buildOne(id, versions, treeSitter, { regenerate: args.includes('--regenerate') });
           console.log(`built ${id} in ${((Date.now() - started) / 1000).toFixed(1)}s`);
         } catch (error) {
           failures.push(id);
