@@ -101,10 +101,12 @@ pub(super) fn scope_expr(node: SExpr, ty: &Type) -> SExpr {
             value,
             ty: None,
             negative,
+            ..
         } => SNode::Num {
             value,
             ty: Some(ty.clone()),
             negative,
+            unit: false,
         },
         SNode::Unary { op, arg } => SNode::Unary {
             op,
@@ -219,6 +221,7 @@ pub(super) fn pattern_value(pattern: &SPattern, range: Span) -> Result<SExpr> {
             value: value.clone(),
             ty: None,
             negative: false,
+            unit: false,
         })),
         SPatternNode::Ctor { path, args } => {
             let name = path.join(".");
@@ -228,6 +231,7 @@ pub(super) fn pattern_value(pattern: &SPattern, range: Span) -> Result<SExpr> {
                     value: "1".to_owned(),
                     ty: None,
                     negative: false,
+                    unit: false,
                 });
                 return Ok(node(SNode::Binary {
                     op: BinaryOp::Add,

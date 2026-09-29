@@ -42,6 +42,7 @@ impl Checker {
                 value,
                 ty,
                 negative,
+                unit,
             } => {
                 // A JavaScript Number literal: its canonical text, `String(value)`, with the sign applied.
                 if ty.as_ref().is_some_and(Type::is_float) {
@@ -51,6 +52,10 @@ impl Checker {
                         value.clone()
                     };
                     return Ok(text_lit(FLOAT, text));
+                }
+                // The 1 of `x++` takes the type of `x`, which may be a Number.
+                if *unit && expected.is_some_and(Type::is_float) {
+                    return Ok(text_lit(FLOAT, value.clone()));
                 }
                 let ty = ty
                     .clone()
@@ -125,6 +130,7 @@ impl Checker {
                     value,
                     ty,
                     negative,
+                    ..
                 } = &arg.node
                 {
                     let flipped = SExpr {
@@ -132,6 +138,7 @@ impl Checker {
                             value: value.clone(),
                             ty: ty.clone(),
                             negative: !negative,
+                            unit: false,
                         },
                         span,
                         block: arg.block,

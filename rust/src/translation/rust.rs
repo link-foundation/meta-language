@@ -454,6 +454,7 @@ fn pattern_value(pattern: &SPattern, range: Option<Span>) -> Result<SExpr> {
             value: value.clone(),
             ty: None,
             negative: *negative,
+            unit: false,
         },
         SPatternNode::BoolLit { value, .. } => SNode::Bool { value: *value },
         SPatternNode::Ctor { path, args } if args.is_empty() => SNode::Name { path: path.clone() },

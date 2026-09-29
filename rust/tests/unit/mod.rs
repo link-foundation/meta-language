@@ -91,6 +91,7 @@ mod translation_emit_rocq;
 mod translation_emit_rust;
 mod translation_foundation;
 mod translation_javascript_frontend;
+mod translation_javascript_loops;
 mod translation_lean;
 mod translation_rocq;
 mod translation_rules;

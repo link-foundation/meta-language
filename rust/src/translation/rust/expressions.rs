@@ -226,6 +226,7 @@ impl RustParser {
                     value: token.value.clone(),
                     ty,
                     negative: false,
+                    unit: false,
                 },
                 span(&token, &token),
             ));

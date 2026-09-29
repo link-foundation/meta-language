@@ -1,9 +1,11 @@
 //! Modules, data, functions, theorem runners and propositions.
 
+use std::collections::BTreeSet;
+
 use super::{
     block, comparison_operator, format_escape, indent, own, rename_function, rename_theorem, snake,
-    Binder, Decl, Emitted, Expr, ModuleTree, Prop, Result, RustEmitter, TheoremCheck, Type,
-    NUMBER_PRELUDE, PRELUDE,
+    tail_loop, Binder, Decl, Emitted, Expr, ModuleTree, Prop, Result, RustEmitter, TheoremCheck,
+    Type, NUMBER_PRELUDE, PRELUDE,
 };
 
 impl<'p> RustEmitter<'p> {
@@ -130,8 +132,14 @@ impl<'p> RustEmitter<'p> {
             "data",
             "a data type is an enum with one tuple variant per constructor; data-typed fields are boxed, and values are compared structurally",
         );
+        // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
+        let derives = if self.holds_float(&data.full_name, &mut BTreeSet::new()) {
+            "Clone, Debug, PartialEq"
+        } else {
+            "Clone, Debug, PartialEq, Eq"
+        };
         let mut lines = vec![
-            "#[derive(Clone, Debug, PartialEq, Eq)]".to_owned(),
+            format!("#[derive({derives})]"),
             format!("pub enum {name} {{"),
         ];
         for ctor in &data.ctors {
@@ -161,6 +169,25 @@ impl<'p> RustEmitter<'p> {
         let (params, body) = rename_function(function, &snake, &self.state.local_reserved());
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
+        if tail_loop(function) {
+            // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
+            let names = params.iter().map(|param| param.name.clone()).collect();
+            self.loop_params = Some((function.full_name.clone(), names));
+            let text = self.expr(&body);
+            self.loop_params = None;
+            let text = text?;
+            let binders: Vec<String> = params
+                .iter()
+                .map(|param| format!("mut {}: {}", param.name, self.ty(&param.ty)))
+                .collect();
+            let ret = self.ty(&function.ret);
+            let body = format!("loop {{\n{}\n}}", indent(&format!("return {text};"), 1));
+            return Ok(format!(
+                "pub fn {name}({}) -> {ret} {{\n{}\n}}",
+                binders.join(", "),
+                indent(&body, 1)
+            ));
+        }
         let binders: Vec<String> = params
             .iter()
             .map(|param| format!("{}: {}", param.name, self.ty(&param.ty)))
@@ -172,6 +199,19 @@ impl<'p> RustEmitter<'p> {
             binders.join(", "),
             indent(&body, 1)
         ))
+    }
+
+    fn holds_float(&self, name: &str, seen: &mut BTreeSet<String>) -> bool {
+        if !seen.insert(name.to_owned()) {
+            return false;
+        }
+        self.program.data(name).ctors.iter().any(|ctor| {
+            ctor.fields.iter().any(|field| match &field.ty {
+                Type::Float => true,
+                Type::Data { name } => self.holds_float(name, seen),
+                _ => false,
+            })
+        })
     }
 
     pub(super) fn theorem(&mut self, entry: &'p Decl) -> Result<String> {

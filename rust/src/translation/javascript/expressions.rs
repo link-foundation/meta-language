@@ -695,6 +695,7 @@ impl JavaScriptParser {
                     value: token.value.clone(),
                     ty: Some(FLOAT),
                     negative: false,
+                    unit: false,
                 },
                 span(&token, &token),
             ));

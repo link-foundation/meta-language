@@ -226,9 +226,9 @@ fn rejections_name_the_construct_and_its_span() {
     let doc = "/**\n * @param {bigint} n\n * @returns {bigint}\n */\n";
     let cases = [
         (
-            format!("{doc}function f(n) {{ let x = n; return x; }}"),
+            format!("{doc}function f(n) {{ var x = n; return x; }}"),
             ErrorKind::Unsupported,
-            "let declaration: mutable bindings are outside the portable core; use const at 66..69",
+            "var declaration: var bindings are hoisted to the function and shared by its blocks; use let or const at 66..69",
         ),
         (
             format!("{doc}function f(n) {{ return n; return n; }}"),

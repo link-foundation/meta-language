@@ -307,6 +307,7 @@ impl RustParser {
             name,
             ctors,
             span: span(&start, self.cursor.peek()),
+            generated: false,
         }))
     }
 
@@ -464,6 +465,7 @@ impl RustParser {
             ret: Some(ret),
             body,
             span: span(&start, self.cursor.peek()),
+            generated: false,
         })
     }
 
@@ -482,6 +484,7 @@ impl RustParser {
             ret: Some(ret),
             body,
             span: span(&start, self.cursor.peek()),
+            generated: false,
         })
     }
 

@@ -16,8 +16,9 @@ use std::collections::BTreeSet;
 use super::diagnostics::{type_error, unsupported, Result, TranslationError};
 use super::emit_common::{EmitOptions, EmitState, Emitted};
 use super::ir::{
-    rename_function, rename_main, rename_theorem, Binder, ByZero, Case, Ctor, Decl, Effect, Expr,
-    FnDecl, LitValue, Main, Node, Param, Pattern, Program, Prop, Semantics, TheoremDecl,
+    rename_function, rename_main, rename_theorem, tail_loop, Binder, ByZero, Case, Ctor, Decl,
+    Effect, Expr, FnDecl, LitValue, Main, Node, Param, Pattern, Program, Prop, Semantics,
+    TheoremDecl,
 };
 use super::lexer::json_string;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
@@ -203,6 +204,7 @@ pub fn emit_javascript(program: &Program) -> Result<Emitted> {
         temporaries: 0,
         theorem_checks: Vec::new(),
         uses_float: false,
+        loop_params: None,
     }
     .file()
 }
@@ -228,6 +230,9 @@ struct JavaScriptEmitter<'p> {
     temporaries: usize,
     theorem_checks: Vec<TheoremCheck>,
     uses_float: bool,
+    /// The lifted loop being emitted as a loop, and its parameters, which
+    /// each call to it assigns before the next iteration.
+    loop_params: Option<(String, Vec<String>)>,
 }
 
 impl<'p> JavaScriptEmitter<'p> {
@@ -356,7 +361,18 @@ impl<'p> JavaScriptEmitter<'p> {
             .iter()
             .filter_map(|param| self.parameter_guard(param))
             .collect();
-        lines.extend(self.statements(&body)?);
+        if tail_loop(function) {
+            // A lifted loop runs as a loop: each iteration assigns the parameters their next values.
+            let names = params.iter().map(|param| param.name.clone()).collect();
+            self.loop_params = Some((function.full_name.clone(), names));
+            let statements = self.statements(&body);
+            self.loop_params = None;
+            lines.push("for (;;) {".to_owned());
+            lines.push(indent(&statements?.join("\n"), 1));
+            lines.push("}".to_owned());
+        } else {
+            lines.extend(self.statements(&body)?);
+        }
         let names: Vec<&str> = params.iter().map(|param| param.name.as_str()).collect();
         Ok(format!(
             "{name}({}) {{\n{}\n}}",
@@ -577,6 +593,29 @@ impl<'p> JavaScriptEmitter<'p> {
             Node::Abort { message } => {
                 self.helpers.insert(Helper::Abort);
                 Ok(vec![format!("return ml_abort({});", json_string(message))])
+            }
+            Node::Call { func, args }
+                if self
+                    .loop_params
+                    .as_ref()
+                    .is_some_and(|(name, _)| name == func) =>
+            {
+                let mut texts = Vec::with_capacity(args.len());
+                for arg in args {
+                    texts.push(self.expr(arg)?);
+                }
+                let names = self
+                    .loop_params
+                    .as_ref()
+                    .map(|(_, names)| names.as_slice())
+                    .unwrap_or_default();
+                let mut lines = match names {
+                    [] => Vec::new(),
+                    [name] => vec![format!("{name} = {};", texts[0])],
+                    _ => vec![format!("[{}] = [{}];", names.join(", "), texts.join(", "))],
+                };
+                lines.push("continue;".to_owned());
+                Ok(lines)
             }
             _ => Ok(vec![format!("return {};", self.expr(e)?)]),
         }

@@ -147,6 +147,45 @@ pub fn rename_prop(prop: &Prop, env: &Env, scope: &mut Scope<'_>) -> Prop {
     }
 }
 
+/// Whether a function lifted from a loop calls itself only in tail position.
+///
+/// An emitter can then print those calls as the next iteration of a loop, so
+/// a loop of a million iterations needs no million stack frames.
+#[must_use]
+pub fn tail_loop(entry: &FnDecl) -> bool {
+    entry.generated && entry.recursive && tail_calls_only(&entry.body, &entry.full_name, true)
+}
+
+fn tail_calls_only(expr: &Expr, name: &str, tail: bool) -> bool {
+    match &expr.node {
+        Node::Call { func, args } => {
+            (tail || func != name) && args.iter().all(|arg| tail_calls_only(arg, name, false))
+        }
+        Node::If {
+            cond,
+            then,
+            otherwise,
+        } => {
+            tail_calls_only(cond, name, false)
+                && tail_calls_only(then, name, tail)
+                && tail_calls_only(otherwise, name, tail)
+        }
+        Node::Let { value, body, .. } => {
+            tail_calls_only(value, name, false) && tail_calls_only(body, name, tail)
+        }
+        Node::Match { scrutinee, cases } => {
+            tail_calls_only(scrutinee, name, false)
+                && cases
+                    .iter()
+                    .all(|kase| tail_calls_only(&kase.body, name, tail))
+        }
+        _ => expr
+            .children()
+            .into_iter()
+            .all(|child| tail_calls_only(child, name, false)),
+    }
+}
+
 /// A function's parameters and body with target local names.
 pub fn rename_function(
     entry: &FnDecl,

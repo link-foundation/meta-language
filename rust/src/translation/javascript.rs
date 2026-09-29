@@ -28,15 +28,30 @@ use super::{Language, Span};
 
 mod declarations;
 mod expressions;
+mod flow;
+mod imperative;
 mod infer;
+mod loops;
 mod lowering;
 mod statements;
+use self::flow::{imperative, statement_uses};
+use self::imperative::lower_imperative;
 use self::lowering::{assertion_kind, guarded_parameter, lower, prop_of};
 
 const ROOT: &str = "crate";
 const ASSIGNMENTS: [&str; 16] = [
     "=", "+=", "-=", "*=", "/=", "%=", "**=", "<<=", ">>=", ">>>=", "&=", "|=", "^=", "&&=", "||=",
     "??=",
+];
+/// `x op= e` is `x = x op e`; `+=` adds numbers or concatenates strings like `+`.
+const COMPOUND: [(&str, BinaryOp); 7] = [
+    ("+=", BinaryOp::Plus),
+    ("-=", BinaryOp::Sub),
+    ("*=", BinaryOp::Mul),
+    ("/=", BinaryOp::Div),
+    ("%=", BinaryOp::Rem),
+    ("&&=", BinaryOp::And),
+    ("||=", BinaryOp::Or),
 ];
 const ERRORS: [&str; 3] = ["Error", "RangeError", "TypeError"];
 const GLOBALS: [&str; 24] = [
@@ -103,11 +118,20 @@ pub fn parse_javascript(source: &str) -> Result<SProgram> {
     JavaScriptParser::new(source, tokens.tokens, &tokens.comments).file()
 }
 
-/// Locals in scope, and names of the current block still in their temporal dead zone.
+/// Locals in scope, the ones `let` or a parameter makes assignable, and
+/// names of the current block still in their temporal dead zone.
 #[derive(Clone, Default)]
 struct Scope {
     locals: HashSet<String>,
     tdz: HashSet<String>,
+    mutable: HashSet<String>,
+}
+
+/// Enclosing loops and switches, for `break` and `continue`.
+#[derive(Clone, Copy, Default)]
+struct Jumps {
+    loops: usize,
+    switches: usize,
 }
 
 /// The local name of the imported `node:assert` module.
@@ -131,10 +155,47 @@ struct JsDocTag {
 }
 
 /// Function-body statements before lowering to one expression.
+#[derive(Clone)]
 enum Stmt {
     Const {
         name: String,
         value: SExpr,
+        span: Span,
+    },
+    /// `let name = value`, an assignable local.
+    Let {
+        name: String,
+        value: SExpr,
+        span: Span,
+    },
+    /// `name = value`, and `x op= e`, `x++` and `x--` read as one.
+    Assign {
+        name: String,
+        value: SExpr,
+        span: Span,
+    },
+    While {
+        cond: SExpr,
+        body: Vec<Self>,
+        span: Span,
+    },
+    DoWhile {
+        body: Vec<Self>,
+        cond: SExpr,
+        span: Span,
+    },
+    /// `for (init; cond; update) body`, whose `init` are `let` declarations or assignments.
+    For {
+        init: Vec<Self>,
+        cond: Option<SExpr>,
+        update: Vec<Self>,
+        body: Vec<Self>,
+        span: Span,
+    },
+    Break {
+        span: Span,
+    },
+    Continue {
         span: Span,
     },
     Return {
@@ -160,10 +221,12 @@ enum Stmt {
     },
     Switch(Switch),
     Expr {
+        expr: SExpr,
         span: Span,
     },
 }
 
+#[derive(Clone)]
 struct Switch {
     /// The switch subject: the discriminant, or the object of `x.$`.
     scrutinee: SExpr,
@@ -173,12 +236,14 @@ struct Switch {
     span: Span,
 }
 
+#[derive(Clone)]
 struct Clause {
     tests: Vec<CaseTest>,
     body: Vec<Stmt>,
     span: Span,
 }
 
+#[derive(Clone)]
 enum CaseTest {
     Default {
         span: Span,
@@ -220,6 +285,10 @@ struct JavaScriptParser {
     in_async: bool,
     unawaited: Vec<(String, Span)>,
     sequential_async: bool,
+    jumps: Jumps,
+    /// Functions and data types that loops and joins of statements lower to, and their count.
+    generated: Vec<SItem>,
+    generated_count: usize,
 }
 
 impl JavaScriptParser {
@@ -239,6 +308,9 @@ impl JavaScriptParser {
             in_async: true,
             unawaited: Vec::new(),
             sequential_async: false,
+            jumps: Jumps::default(),
+            generated: Vec::new(),
+            generated_count: 0,
         }
     }
 
@@ -393,6 +465,7 @@ fn number_literal(token: &Token) -> SExpr {
             value: token.value.clone(),
             ty: (token.suffix != "n").then_some(FLOAT),
             negative: false,
+            unit: false,
         },
         span(token, token),
     )

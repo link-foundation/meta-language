@@ -384,6 +384,7 @@ impl LeanParser<'_> {
                         value: "1".to_owned(),
                         ty: None,
                         negative: false,
+                        unit: false,
                     },
                     None,
                 )),
@@ -397,6 +398,7 @@ impl LeanParser<'_> {
                     value: "0".to_owned(),
                     ty: Some(NAT),
                     negative: false,
+                    unit: false,
                 }
             }
             _ => {
@@ -430,6 +432,7 @@ impl LeanParser<'_> {
                         value: token.value,
                         ty: None,
                         negative: false,
+                        unit: false,
                     },
                     at,
                 ));
@@ -478,6 +481,7 @@ impl LeanParser<'_> {
                             value: value.clone(),
                             ty: Some(ty),
                             negative: *negative,
+                            unit: false,
                         },
                         ascribed,
                     ));
@@ -493,6 +497,7 @@ impl LeanParser<'_> {
                                 value: value.clone(),
                                 ty: Some(ty),
                                 negative: true,
+                                unit: false,
                             },
                             ascribed,
                         ));

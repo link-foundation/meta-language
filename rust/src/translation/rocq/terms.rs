@@ -431,6 +431,7 @@ impl RocqParser {
                     value: "1".to_owned(),
                     ty: name.starts_with("Z.").then_some(INT),
                     negative: false,
+                    unit: false,
                 });
                 return Ok(node(SNode::Binary {
                     op,
@@ -703,6 +704,7 @@ impl RocqParser {
                     value: token.value.clone(),
                     ty: None,
                     negative: false,
+                    unit: false,
                 },
                 Some(span(&token, &token)),
             ));
@@ -748,6 +750,7 @@ impl RocqParser {
                             value,
                             ty: Some(ty),
                             negative,
+                            unit: false,
                         },
                         span: ascribed_span,
                         block: inner.block,

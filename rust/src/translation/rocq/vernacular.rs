@@ -268,6 +268,7 @@ impl RocqParser {
             name,
             ctors,
             span: Some(span(&start, self.peek())),
+            generated: false,
         })
     }
 
@@ -444,6 +445,7 @@ impl RocqParser {
             ret: Some(ret),
             body,
             span: Some(span(&start, self.peek())),
+            generated: false,
         })))
     }
 

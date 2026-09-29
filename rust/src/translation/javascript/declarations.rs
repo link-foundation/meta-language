@@ -1,12 +1,13 @@
 //! Files, imports, `JSDoc` typedefs, functions, namespaces and blocks.
 
 use super::infer::infer_javascript_types;
+use super::loops::reserved;
 use super::{
-    describe, guarded_parameter, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
-    non_empty, span, tokenize, type_error, unsupported, Assertion, HashSet, JavaScriptParser,
-    JsDoc, Language, Result, SCtor, SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram,
-    ScanEnd, Scope, Span, Stmt, Token, TokenCursor, TokenKind, TranslationError, Type, BOOL, FLOAT,
-    INT, NAT, ROOT, STRING,
+    describe, guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags,
+    lower, lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
+    Assertion, HashSet, JavaScriptParser, JsDoc, Language, Result, SCtor, SData, SField, SFn,
+    SItem, SMain, SModule, SParam, SProgram, ScanEnd, Scope, Span, Stmt, Token, TokenCursor,
+    TokenKind, TranslationError, Type, BOOL, FLOAT, INT, NAT, ROOT, STRING,
 };
 
 /// How a function's body is written: a block, or an arrow's block or expression.
@@ -27,6 +28,7 @@ impl JavaScriptParser {
         self.scope = Scope {
             locals: HashSet::new(),
             tdz: self.block_declarations(self.cursor.index, ScanEnd::File),
+            mutable: HashSet::new(),
         };
         self.async_names = self.async_declarations(self.cursor.index);
         while !self.cursor.at_end() {
@@ -112,6 +114,7 @@ impl JavaScriptParser {
                 Some(*place),
             ));
         }
+        items.append(&mut self.generated);
         infer_javascript_types(SProgram {
             language: Language::JavaScript,
             items,
@@ -207,11 +210,13 @@ impl JavaScriptParser {
                     name: name.clone(),
                     ctors: ctors.clone(),
                     span: None,
+                    generated: false,
                 });
                 items.push(SItem::Data(SData {
                     name,
                     ctors,
                     span: Some(range),
+                    generated: false,
                 }));
             }
         }
@@ -570,6 +575,7 @@ impl JavaScriptParser {
         // A type JSDoc does not declare is inferred once the whole program is read.
         let mut params = Vec::new();
         for token in tokens {
+            reserved(token)?;
             let text = doc.as_ref().and_then(|doc| {
                 doc.params
                     .iter()
@@ -604,14 +610,17 @@ impl JavaScriptParser {
                 }
                 None => None,
             };
+        let names: HashSet<String> = params.iter().map(|param| param.name.clone()).collect();
         let outer = std::mem::replace(
             &mut self.scope,
             Scope {
-                locals: params.iter().map(|param| param.name.clone()).collect(),
+                locals: names.clone(),
                 tdz: HashSet::new(),
+                mutable: names,
             },
         );
         let outer_async = std::mem::replace(&mut self.in_async, is_async);
+        let outer_jumps = std::mem::take(&mut self.jumps);
         let statements = match body {
             Body::Arrow if !self.cursor.is("{") => {
                 let token = self.peek();
@@ -631,24 +640,37 @@ impl JavaScriptParser {
         };
         self.scope = outer;
         self.in_async = outer_async;
+        self.jumps = outer_jumps;
         let statements = statements?;
-        // `if (n < 0n) throw …` as a leading statement makes `n` a natural number.
+        // `if (n < 0n) throw …` as a leading statement makes `n` a natural number,
+        // unless the body assigns it another value.
+        let assigned = statement_uses(&statements).assigned;
         let mut index = 0;
         while index < statements.len() {
             let Some(param) = guarded_parameter(&statements[index], &params) else {
                 break;
             };
+            if assigned.contains(&params[param].name) {
+                break;
+            }
             params[param].ty = Some(NAT);
             params[param].guard = Some(true);
             index += 1;
         }
-        let body = lower(&statements[index..], self.to_here(name_token))?;
+        let place = self.to_here(name_token);
+        let tail = &statements[index..];
+        let body = if imperative(tail) {
+            lower_imperative(self, &name, &params, tail, place)?
+        } else {
+            lower(tail, place)?
+        };
         Ok(SFn {
             name,
             params,
             ret,
             body,
             span: Some(self.to_here(doc_token)),
+            generated: false,
         })
     }
 
@@ -714,7 +736,7 @@ impl JavaScriptParser {
         })
     }
 
-    /// Names a block declares with `const`, which are in their temporal dead zone until declared.
+    /// Names a block declares with `const` or `let`, which are in their temporal dead zone until declared.
     pub(super) fn block_declarations(&mut self, from: usize, end: ScanEnd) -> HashSet<String> {
         let mut names = HashSet::new();
         let saved = self.cursor.index;
@@ -734,7 +756,10 @@ impl JavaScriptParser {
                 depth += 1;
             } else if punct && ["}", ")", "]"].contains(&token.value.as_str()) {
                 depth -= 1;
-            } else if depth == 0 && token.kind == TokenKind::Identifier && token.value == "const" {
+            } else if depth == 0
+                && token.kind == TokenKind::Identifier
+                && (token.value == "const" || token.value == "let")
+            {
                 let c = &self.cursor;
                 if c.peek().kind == TokenKind::Identifier {
                     names.insert(c.peek().value.clone());
@@ -755,9 +780,14 @@ impl JavaScriptParser {
         names
     }
 
-    pub(super) fn declare_local(&mut self, name: &str) {
+    pub(super) fn declare_local(&mut self, name: &str, mutable: bool) {
         self.scope.locals.insert(name.to_owned());
         self.scope.tdz.remove(name);
+        if mutable {
+            self.scope.mutable.insert(name.to_owned());
+        } else {
+            self.scope.mutable.remove(name);
+        }
     }
 
     pub(super) fn block_statements(&mut self) -> Result<Vec<Stmt>> {
@@ -767,6 +797,7 @@ impl JavaScriptParser {
         let inner = Scope {
             locals: self.scope.locals.clone(),
             tdz,
+            mutable: self.scope.mutable.clone(),
         };
         let outer = std::mem::replace(&mut self.scope, inner);
         let statements = self.block_body();

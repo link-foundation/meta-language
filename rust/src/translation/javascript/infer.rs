@@ -22,16 +22,41 @@ use crate::translation::types::UNIT;
 pub(super) fn infer_javascript_types(mut program: SProgram) -> Result<SProgram> {
     let mut functions = Vec::new();
     collect_functions(&program.items, &[ROOT.to_owned()], &mut functions);
-    if functions.iter().all(|(_, function)| {
-        function.ret.is_some() && function.params.iter().all(|param| param.ty.is_some())
-    }) {
+    let untyped = program.items.iter().any(|item| {
+        matches!(item, SItem::Data(data) if data.ctors.iter().any(|ctor| {
+            ctor.fields.iter().any(|field| field.ty == Type::Literal)
+        }))
+    });
+    if !untyped
+        && functions.iter().all(|(_, function)| {
+            function.ret.is_some() && function.params.iter().all(|param| param.ty.is_some())
+        })
+    {
         return Ok(program);
     }
     let mut inference = Inference::new(&program.items);
     let inferred = inference.run(&functions, &program)?;
     let mut inferred = inferred.into_iter();
     fill_functions(&mut program.items, &mut inferred);
+    fill_fields(&mut program.items, &inference);
     Ok(program)
+}
+
+/// Writes the inferred types of the fields the translator makes up back.
+fn fill_fields(items: &mut [SItem], inference: &Inference) {
+    for item in items {
+        let SItem::Data(data) = item else {
+            continue;
+        };
+        for ctor in &mut data.ctors {
+            for (index, field) in ctor.fields.iter_mut().enumerate() {
+                let key = (data.name.clone(), ctor.name.clone(), index);
+                if let Some(term) = inference.field_terms.get(&key) {
+                    field.ty = inference.surface(term, field.span);
+                }
+            }
+        }
+    }
 }
 
 fn collect_functions<'a>(
@@ -113,6 +138,9 @@ struct Inference {
     fields: Vec<FieldOf>,
     signatures: HashMap<String, Signature>,
     context: Vec<String>,
+    /// The types of the fields the translator makes up, which are inferred
+    /// like parameters, by data type, constructor and position.
+    field_terms: HashMap<(String, String, usize), Term>,
 }
 
 type Env = HashMap<String, Term>;
@@ -134,6 +162,30 @@ impl Inference {
             fields: Vec::new(),
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],
+            field_terms: HashMap::new(),
+        }
+    }
+
+    /// The type of a constructor field as a term, one per field even when it is not declared.
+    fn field(&mut self, data: &str, ctor: &str, index: usize) -> Term {
+        let declared = self
+            .data
+            .iter()
+            .find(|(name, _)| name == data)
+            .and_then(|(_, ctors)| ctors.iter().find(|candidate| candidate.name == ctor))
+            .and_then(|ctor| ctor.fields.get(index))
+            .map(|field| field.ty.clone());
+        match declared {
+            Some(ty) if ty != Type::Literal => self.declared(Some(&ty)),
+            _ => {
+                let key = (data.to_owned(), ctor.to_owned(), index);
+                if let Some(term) = self.field_terms.get(&key) {
+                    return term.clone();
+                }
+                let term = self.fresh(false);
+                self.field_terms.insert(key, term.clone());
+                term
+            }
         }
     }
 
@@ -346,14 +398,15 @@ impl Inference {
             .iter()
             .find(|(data, _)| *data == name)
             .and_then(|(_, ctors)| {
-                ctors
-                    .iter()
-                    .flat_map(|ctor| &ctor.fields)
-                    .find(|field| field.name.as_deref() == Some(constraint.field.as_str()))
-            })
-            .map(|field| field.ty.clone());
-        if let Some(declared) = declared {
-            let term = self.declared(Some(&declared));
+                ctors.iter().find_map(|ctor| {
+                    ctor.fields
+                        .iter()
+                        .position(|field| field.name.as_deref() == Some(constraint.field.as_str()))
+                        .map(|index| (ctor.name.clone(), index))
+                })
+            });
+        if let Some((ctor, index)) = declared {
+            let term = self.field(&name, &ctor, index);
             self.unify(&constraint.result, &term, constraint.place)?;
         }
         Ok(true)
@@ -391,6 +444,8 @@ impl Inference {
 
     fn expr(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {
         match &expr.node {
+            // The 1 of `x++` has the type of `x`, a Number or a BigInt.
+            SNode::Num { unit: true, .. } => Ok(self.fresh(false)),
             SNode::Num { ty, .. } => Ok(match ty {
                 Some(ty) => self.declared(Some(ty)),
                 None => self.fresh(true),
@@ -529,12 +584,12 @@ impl Inference {
                 self.unify(&left_term, &right_term, place)?;
                 Ok(Term::Known(BOOL))
             }
-            BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Rem => {
+            BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Rem => {
                 self.unify(&left_term, &right_term, place)?;
                 Ok(left_term)
             }
             BinaryOp::Concat => Ok(Term::Known(STRING)),
-            BinaryOp::Plus | BinaryOp::Add => {
+            BinaryOp::Plus => {
                 let result = self.fresh(false);
                 self.plus.push(Plus {
                     left: left_term,
@@ -561,28 +616,23 @@ impl Inference {
                     _ => return Ok(()),
                 };
                 self.unify(ty, &Term::Known(Type::Data { name: name.clone() }), place)?;
-                let fields: Vec<Option<Type>> = self
+                let count = self
                     .data
                     .iter()
                     .find(|(data, _)| *data == name)
                     .and_then(|(_, ctors)| ctors.iter().find(|ctor| ctor.name == tag))
-                    .map(|ctor| {
-                        ctor.fields
-                            .iter()
-                            .map(|field| Some(field.ty.clone()))
-                            .collect()
-                    })
-                    .unwrap_or_default();
+                    .map_or(0, |ctor| ctor.fields.len());
                 for (index, arg) in args.iter().enumerate() {
-                    let term = match fields.get(index) {
-                        Some(Some(field)) => self.declared(Some(field)),
-                        _ => self.fresh(false),
+                    let term = if index < count {
+                        self.field(&name, &tag, index)
+                    } else {
+                        self.fresh(false)
                     };
                     self.pattern(arg, &term, scope, place)?;
                 }
                 Ok(())
             }
-            SPatternNode::BindOrCtor { name } => {
+            SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
                 scope.insert(name.clone(), ty.clone());
                 Ok(())
             }
@@ -620,12 +670,12 @@ impl Inference {
             return Ok(self.fresh(false));
         };
         for (field, term, span) in terms {
-            if let Some(declared) = ctor
+            if let Some(index) = ctor
                 .fields
                 .iter()
-                .find(|candidate| candidate.name.as_deref() == Some(field.as_str()))
+                .position(|candidate| candidate.name.as_deref() == Some(field.as_str()))
             {
-                let declared = self.declared(Some(&declared.ty));
+                let declared = self.field(name, tag, index);
                 self.unify(&term, &declared, span.or(place))?;
             }
         }

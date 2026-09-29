@@ -526,6 +526,8 @@ pub struct DataDecl {
     pub span: Option<Span>,
     pub full_name: String,
     pub module_path: Vec<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub generated: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -544,6 +546,9 @@ pub struct FnDecl {
     pub decreasing: Option<usize>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub mutual: bool,
+    /// A function the translator made up, such as a lifted loop.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub generated: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

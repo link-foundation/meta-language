@@ -25,7 +25,12 @@ impl Checker {
                     span,
                 ));
             }
-            if name.starts_with("ml_") {
+            let generated = match item {
+                SItem::Fn(function) => function.generated,
+                SItem::Data(data) => data.generated,
+                _ => false,
+            };
+            if name.starts_with("ml_") && !generated {
                 return Err(unsupported(
                     "reserved identifier",
                     &format!("{name} uses the translator's reserved ml_ prefix"),
@@ -53,19 +58,21 @@ impl Checker {
                     self.declare(&module.items, &inner)?;
                     continue;
                 }
-                SItem::Data(_) => Decl::Data(DataDecl {
+                SItem::Data(data) => Decl::Data(DataDecl {
                     name: name.clone(),
                     ctors: Vec::new(),
                     span,
+                    generated: data.generated,
                     full_name: full_name.clone(),
                     module_path,
                 }),
-                SItem::Fn(_) => Decl::Fn(FnDecl {
+                SItem::Fn(function) => Decl::Fn(FnDecl {
                     name: name.clone(),
                     params: Vec::new(),
                     ret: UNIT,
                     body: Expr::new(Node::Unit, UNIT),
                     span,
+                    generated: function.generated,
                     full_name: full_name.clone(),
                     module_path,
                     recursive: false,

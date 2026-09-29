@@ -261,6 +261,7 @@ impl Checker {
                                 value: decrement(&value),
                                 ty: None,
                                 negative: false,
+                                unit: false,
                             },
                             None,
                         );
@@ -328,6 +329,7 @@ impl Checker {
         };
         match pattern.node {
             SPatternNode::Wild => Ok(NPat::Wild),
+            SPatternNode::Bind { name } => Ok(NPat::Bind(name)),
             SPatternNode::BindOrCtor { name } => {
                 if let Type::Data { name: data_name } = ty {
                     if let Some(ctor) = self
@@ -383,6 +385,7 @@ impl Checker {
                         value,
                         ty: None,
                         negative,
+                        unit: false,
                     },
                     None,
                 );

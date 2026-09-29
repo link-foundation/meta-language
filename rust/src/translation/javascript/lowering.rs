@@ -48,7 +48,14 @@ pub(super) const fn statement_span(statement: &Stmt) -> Option<Span> {
         | Stmt::Throw { span, .. }
         | Stmt::Block { span, .. }
         | Stmt::If { span, .. }
-        | Stmt::Expr { span } => Some(*span),
+        | Stmt::Let { span, .. }
+        | Stmt::Assign { span, .. }
+        | Stmt::While { span, .. }
+        | Stmt::DoWhile { span, .. }
+        | Stmt::For { span, .. }
+        | Stmt::Break { span }
+        | Stmt::Continue { span }
+        | Stmt::Expr { span, .. } => Some(*span),
         Stmt::Switch(node) => Some(node.span),
         Stmt::Empty => None,
     }
@@ -147,12 +154,23 @@ pub(super) fn lower_at(list: &[&Stmt], index: usize, place: Span) -> Result<SExp
             ))
         }
         Stmt::Switch(switch) => lower_switch(switch, list, index, place),
-        Stmt::Expr { span } => Err(unsupported(
+        Stmt::Expr { span, .. } => Err(unsupported(
             "expression statement",
             "statements with effects are outside the portable core in function bodies",
             Some(*span),
         )),
         Stmt::Empty => Err(TranslationError::syntax("unknown statement empty", None)),
+        // Bodies with these statements are lowered by `imperative`.
+        Stmt::Let { span, .. }
+        | Stmt::Assign { span, .. }
+        | Stmt::While { span, .. }
+        | Stmt::DoWhile { span, .. }
+        | Stmt::For { span, .. }
+        | Stmt::Break { span }
+        | Stmt::Continue { span } => Err(TranslationError::syntax(
+            "internal: an imperative statement in a pure body",
+            Some(*span),
+        )),
     }
 }
 
@@ -209,9 +227,9 @@ pub(super) fn switch_tags(node: &Switch) -> Vec<&str> {
 
 /// The subject, data type and covered tags of a tag switch or tag test.
 pub(super) struct TagSwitch<'a> {
-    subject: &'a str,
-    data: &'a SData,
-    covered: Vec<&'a str>,
+    pub(super) subject: &'a str,
+    pub(super) data: &'a SData,
+    pub(super) covered: Vec<&'a str>,
 }
 
 /// A switch is a match. In a tag switch, `x.field` of the subject in a case
@@ -534,7 +552,7 @@ pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
 /// The names patterns bind.
 pub(super) fn pattern_names(pattern: &SPattern, names: &mut HashSet<String>) {
     match &pattern.node {
-        SPatternNode::BindOrCtor { name } => {
+        SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
             names.insert(name.clone());
         }
         SPatternNode::Ctor { args, .. } => {

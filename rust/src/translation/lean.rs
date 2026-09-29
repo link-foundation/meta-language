@@ -489,6 +489,7 @@ impl<'a> LeanParser<'a> {
             name,
             ctors,
             span: Some(self.span_to_next(&start)),
+            generated: false,
         })
     }
 
@@ -623,6 +624,7 @@ impl<'a> LeanParser<'a> {
                 ret,
                 body,
                 span: Some(self.span_to_next(&start)),
+                generated: false,
             })));
         }
         if !self.cursor.is("|") {
@@ -650,6 +652,7 @@ impl<'a> LeanParser<'a> {
             ret,
             body,
             span: Some(self.span_to_next(&start)),
+            generated: false,
         })))
     }
 

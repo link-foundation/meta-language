@@ -1,5 +1,6 @@
 //! Statements: bindings, destructuring, control flow, switches, `main`, console and assertions.
 
+use super::loops::reserved;
 use super::{
     assertion_kind, has_ctor, node, prop_of, span, type_error, unsupported, AssertionKind,
     CaseTest, Clause, JavaScriptParser, Result, SComparison, SData, SEffect, SExpr, SNode, SProp,
@@ -12,10 +13,22 @@ impl JavaScriptParser {
         if self.cursor.is("const") {
             return self.const_statement();
         }
-        if self.cursor.is("let") || self.cursor.is("var") {
+        if self.cursor.is("let") {
+            let mut statements = self.let_declarations()?;
+            self.cursor.eat(";");
+            if statements.len() == 1 {
+                return Ok(statements.remove(0));
+            }
+            return Ok(Stmt::Block {
+                body: statements,
+                inline: true,
+                span: self.to_here(&token),
+            });
+        }
+        if self.cursor.is("var") {
             return Err(unsupported(
-                &format!("{} declaration", token.value),
-                "mutable bindings are outside the portable core; use const",
+                "var declaration",
+                "var bindings are hoisted to the function and shared by its blocks; use let or const",
                 Some(span(&token, &token)),
             ));
         }
@@ -64,17 +77,20 @@ impl JavaScriptParser {
         if self.cursor.eat(";").is_some() {
             return Ok(Stmt::Empty);
         }
+        if self.cursor.is("while") {
+            return self.while_statement();
+        }
+        if self.cursor.is("do") {
+            return self.do_statement();
+        }
+        if self.cursor.is("for") {
+            return self.for_statement();
+        }
+        if self.cursor.is("break") || self.cursor.is("continue") {
+            return self.jump_statement();
+        }
         if token.kind == TokenKind::Identifier {
-            if ["for", "while", "do"].contains(&token.value.as_str()) {
-                return Err(unsupported(
-                    &format!("{} loop", token.value),
-                    "loops over mutable state are outside the portable core; use recursion",
-                    Some(span(&token, &token)),
-                ));
-            }
-            let statements = [
-                "break", "continue", "try", "function", "class", "label", "with", "debugger",
-            ];
+            let statements = ["try", "function", "class", "label", "with", "debugger"];
             if statements.contains(&token.value.as_str()) {
                 return Err(unsupported(
                     &format!("{} statement", token.value),
@@ -82,10 +98,24 @@ impl JavaScriptParser {
                     Some(span(&token, &token)),
                 ));
             }
+            let colon = self.cursor.peek_at(1);
+            if colon.kind == TokenKind::Punct && colon.value == ":" {
+                return Err(unsupported(
+                    &format!("label {}", token.value),
+                    "labels are outside the portable core; a break or continue applies to the innermost loop",
+                    Some(span(&token, colon)),
+                ));
+            }
         }
-        self.expr()?;
+        if self.starts_assignment() {
+            let statement = self.assignment()?;
+            self.cursor.eat(";");
+            return Ok(statement);
+        }
+        let expr = self.expr()?;
         self.cursor.eat(";");
         Ok(Stmt::Expr {
+            expr,
             span: self.to_here(&token),
         })
     }
@@ -109,6 +139,7 @@ impl JavaScriptParser {
             ));
         }
         let name = self.cursor.identifier(Some("const"))?;
+        reserved(&name)?;
         if self.cursor.eat("=").is_none() {
             return Err(self.fail_here("expected = in const"));
         }
@@ -121,7 +152,7 @@ impl JavaScriptParser {
             ));
         }
         self.cursor.eat(";");
-        self.declare_local(&name.value);
+        self.declare_local(&name.value, false);
         Ok((name.value, value, self.to_here(start)))
     }
 
@@ -144,6 +175,7 @@ impl JavaScriptParser {
             } else {
                 key.clone()
             };
+            reserved(&local)?;
             if self.cursor.is("=") {
                 return Err(unsupported(
                     "default value",
@@ -176,7 +208,7 @@ impl JavaScriptParser {
             })
             .collect();
         for (_, name, _) in &pairs {
-            self.declare_local(name);
+            self.declare_local(name, false);
         }
         Ok(Stmt::Block {
             body: statements,
@@ -295,6 +327,7 @@ impl JavaScriptParser {
                 continue;
             }
             let mut body = Vec::new();
+            self.jumps.switches += 1;
             while !self.cursor.is("case") && !self.cursor.is("default") && !self.cursor.is("}") {
                 if self.cursor.is("const") || self.cursor.is("let") {
                     let token = self.peek();
@@ -306,6 +339,7 @@ impl JavaScriptParser {
                 }
                 body.push(self.statement()?);
             }
+            self.jumps.switches -= 1;
             clauses.push(Clause {
                 tests: std::mem::take(&mut tests),
                 body,

@@ -12,6 +12,28 @@ impl RustEmitter<'_> {
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
             Node::Var { name } => Ok(own(name, &expr.ty)),
+            Node::Call { func, args }
+                if self
+                    .loop_params
+                    .as_ref()
+                    .is_some_and(|(name, _)| name == func) =>
+            {
+                let mut texts = Vec::with_capacity(args.len());
+                for arg in args {
+                    texts.push(self.expr(arg)?);
+                }
+                let names = self
+                    .loop_params
+                    .as_ref()
+                    .map(|(_, names)| names.as_slice())
+                    .unwrap_or_default();
+                let assign = match names {
+                    [] => String::new(),
+                    [name] => format!("{name} = {};\n", texts[0]),
+                    _ => format!("({}) = ({});\n", names.join(", "), texts.join(", ")),
+                };
+                Ok(block(&format!("{assign}continue;")))
+            }
             Node::Call { func, args } => {
                 let head = format!("crate::{}", self.state.reference(func, "::"));
                 let mut texts = Vec::with_capacity(args.len());

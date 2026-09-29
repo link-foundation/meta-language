@@ -156,6 +156,9 @@ pub enum SNode {
         ty: Option<Type>,
         #[serde(default, skip_serializing_if = "is_false")]
         negative: bool,
+        /// The 1 of `x++`, which takes the type of `x`.
+        #[serde(default, skip_serializing_if = "is_false")]
+        unit: bool,
     },
     Bool {
         value: bool,
@@ -380,6 +383,10 @@ pub enum SPatternNode {
     BindOrCtor {
         name: String,
     },
+    /// A binder, which the JavaScript frontend's generated matches use.
+    Bind {
+        name: String,
+    },
     Ctor {
         path: Vec<String>,
         args: Vec<SPattern>,
@@ -588,6 +595,9 @@ pub struct SData {
     pub ctors: Vec<SCtor>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
+    /// A data type the translator made up, whose name may use the reserved `ml_` prefix.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub generated: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -599,6 +609,9 @@ pub struct SFn {
     pub body: SExpr,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
+    /// A function the translator made up, such as a lifted loop.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub generated: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

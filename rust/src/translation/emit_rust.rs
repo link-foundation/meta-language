@@ -18,8 +18,8 @@ use super::decimal::Decimal;
 use super::diagnostics::{unsupported, Result};
 use super::emit_common::{CtorStyle, EmitOptions, EmitState, Emitted};
 use super::ir::{
-    rename_function, rename_main, rename_theorem, Binder, ByZero, Decl, Effect, Expr, LitValue,
-    Node, Pattern, Program, Prop, Semantics,
+    rename_function, rename_main, rename_theorem, tail_loop, Binder, ByZero, Decl, Effect, Expr,
+    LitValue, Node, Pattern, Program, Prop, Semantics,
 };
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::Type;
@@ -517,6 +517,7 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
         theorem_checks: Vec::new(),
         uses_big: false,
         uses_number: false,
+        loop_params: None,
     }
     .file()
 }
@@ -543,6 +544,9 @@ struct RustEmitter<'p> {
     theorem_checks: Vec<TheoremCheck>,
     uses_big: bool,
     uses_number: bool,
+    /// The lifted loop being emitted as a loop, and its parameters, which
+    /// each call to it assigns before the next iteration.
+    loop_params: Option<(String, Vec<String>)>,
 }
 
 const fn is_copy(ty: &Type) -> bool {
