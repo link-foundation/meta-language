@@ -8816,6 +8816,20 @@
       }
     },
     {
+      "id": "published crate src/data/foundation-models.json@include",
+      "category": "published",
+      "scope": "crate",
+      "name": "src/data/foundation-models.json",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      }
+    },
+    {
       "id": "published crate src/data/grammar-lock.json@include",
       "category": "published",
       "scope": "crate",
