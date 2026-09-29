@@ -240,9 +240,10 @@ impl LeanEmitter<'_> {
                 "-- Translated from {} by meta-language: portable core, Lean target.",
                 self.program.source_language.as_str()
             ),
-            "-- Source binders are kept even where unused, and proof hints are shared by every closing tactic.".to_owned(),
+            "-- Source binders are kept even where unused or named like a constructor, and proof hints are shared by every closing tactic.".to_owned(),
             "set_option linter.unusedVariables false".to_owned(),
             "set_option linter.unusedSimpArgs false".to_owned(),
+            "set_option linter.constructorNameAsVariable false".to_owned(),
             String::new(),
         ];
         for (name, text) in HELPERS {

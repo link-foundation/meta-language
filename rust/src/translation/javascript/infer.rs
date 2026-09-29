@@ -224,6 +224,26 @@ impl Inference {
     fn unify(&mut self, left: &Term, right: &Term, place: Option<Span>) -> Result<()> {
         let a = self.resolve(left);
         let b = self.resolve(right);
+        // Only a function that finishes without a return value makes
+        // undefined, the unit value.
+        let other = match (&a, &b) {
+            (Term::Known(Type::Unit), other) | (other, Term::Known(Type::Unit)) => Some(other),
+            _ => None,
+        };
+        let described = match other {
+            Some(Term::Known(Type::Unit)) | None => None,
+            Some(Term::Var(variable)) => self
+                .bigints
+                .contains(variable)
+                .then(|| "a bigint".to_owned()),
+            Some(Term::Known(ty)) => Some(describe(ty)),
+        };
+        if let Some(described) = described {
+            return Err(type_error(
+                format!("the function returns {described} on one path and finishes without a return value, returning undefined, on another; return a value on every path"),
+                place,
+            ));
+        }
         match (&a, &b) {
             (Term::Var(x), Term::Var(y)) => {
                 if x != y {

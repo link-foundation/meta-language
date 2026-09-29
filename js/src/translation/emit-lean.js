@@ -202,9 +202,10 @@ class LeanEmitter {
     const main = this.program.main ? this.main(this.program.main) : null;
     const text = [
       `-- Translated from ${this.program.sourceLanguage} by meta-language: portable core, Lean target.`,
-      '-- Source binders are kept even where unused, and proof hints are shared by every closing tactic.',
+      '-- Source binders are kept even where unused or named like a constructor, and proof hints are shared by every closing tactic.',
       'set_option linter.unusedVariables false',
       'set_option linter.unusedSimpArgs false',
+      'set_option linter.constructorNameAsVariable false',
       '',
       ...['fixed', 'fixedNat', 'toNatChecked', 'divide', 'divideNat', 'jsNumber', 'jsConsole', 'floatRem', 'floatSame'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
       ...blocks.flatMap((block) => [block, '']),

@@ -94,7 +94,7 @@ fn mutable_bindings_javascript_could_not_run_as_translated_are_rejected() {
         ("function f(n) { outer: while (true) { break outer; } return n; }", "label outer: labels are outside the portable core; a break or continue applies to the innermost loop at 16..21"),
         ("function f(n) { for (const x of n) {} return n; }", "for…of loop: iteration over arrays, strings and objects is outside the portable core; count with for (let i = …; …; …) at 16..21"),
         ("function f(n) { let ml_x = n; return ml_x; }", "reserved identifier: ml_x uses the translator's reserved ml_ prefix at 20..24"),
-        ("function f(n) { while (n > 0n) { n--; } }", "missing return: the function can finish without returning and return undefined, which is not a portable value at 9..10"),
+        ("function f(n) { while (n > 0n) { if (n === 3n) return n; n--; } }", "the function returns a bigint on one path and finishes without a return value, returning undefined, on another; return a value on every path at 54..55"),
         ("function f(n) { while (true) { return n; } return 0n; }", "unreachable statement: statements after return, throw, break, continue or a complete if are never executed at 43..54"),
         ("function f(n) { n <<= 1n; return n; }", "<<= assignment: the portable compound assignments are +=, -=, *=, /=, %=, &&= and ||= at 16..22"),
         ("function f(n) { for (let i = 0n; i < n; i++) { g = i; } return n; }", "assignment of g: only local variables declared with let, and parameters, are assignable at 47..51"),

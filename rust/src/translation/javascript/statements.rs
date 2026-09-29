@@ -46,12 +46,13 @@ impl JavaScriptParser {
             let next = self.cursor.peek().start;
             let line_break = token.end < next
                 && self.source.units()[token.end..next].contains(&u16::from(b'\n'));
+            // `return;` returns undefined, the unit value.
             if self.cursor.is(";") || self.cursor.is("}") || line_break {
-                return Err(unsupported(
-                    "return without a value",
-                    "the function would return undefined, which is not a portable value",
-                    Some(self.to_here(&token)),
-                ));
+                self.cursor.eat(";");
+                return Ok(Stmt::Return {
+                    expr: node(SNode::Unit, span(&token, &token)),
+                    span: self.to_here(&token),
+                });
             }
             // An async function returning a call of another adopts the Promise
             // it returns, which awaits it.
@@ -545,11 +546,17 @@ impl JavaScriptParser {
                 Some(span(&token, &token)),
             ));
         }
-        Err(unsupported(
-            "top-level expression statement",
-            "a statement that discards its value has no portable effect",
-            Some(span(&token, &token)),
-        ))
+        // A statement that discards its value still runs it, for the lines it
+        // prints and the aborts it may reach.
+        let value = self.expr()?;
+        self.cursor.eat(";");
+        self.generated_count += 1;
+        Ok(SEffect::Let {
+            name: format!("ml_main_ignored{}", self.generated_count),
+            ty: None,
+            value,
+            span: Some(self.to_here(&token)),
+        })
     }
 
     pub(super) fn console_statement(&mut self) -> Result<SEffect> {

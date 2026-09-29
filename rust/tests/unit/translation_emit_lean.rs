@@ -69,7 +69,7 @@ fn emits_a_function_and_main_with_their_contract() {
         .starts_with("-- Translated from Lean by meta-language: portable core, Lean target.\n"));
     assert!(emitted
         .text
-        .contains("set_option linter.unusedSimpArgs false\n\n"));
+        .contains("set_option linter.constructorNameAsVariable false\n\n"));
     assert!(emitted
         .text
         .contains("def monus (a : Nat) (b : Nat) : Nat :=\n  (a - b)\n"));

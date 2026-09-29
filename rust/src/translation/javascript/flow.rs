@@ -11,7 +11,8 @@ use serde_json::Value;
 use super::lowering::switch_tags;
 use super::{CaseTest, SExpr, SNode, Span, Stmt, Switch};
 
-/// Whether statements use `let`, assignments, loops, `break`, `continue` or print.
+/// Whether statements use `let`, assignments, loops, `break`, `continue`,
+/// print or discard a value.
 pub(super) fn imperative(statements: &[Stmt]) -> bool {
     statements.iter().any(|statement| match statement {
         Stmt::Let { .. }
@@ -21,7 +22,8 @@ pub(super) fn imperative(statements: &[Stmt]) -> bool {
         | Stmt::For { .. }
         | Stmt::Break { .. }
         | Stmt::Continue { .. }
-        | Stmt::Print { .. } => true,
+        | Stmt::Print { .. }
+        | Stmt::Expr { .. } => true,
         Stmt::Block { body, .. } => imperative(body),
         Stmt::If {
             then, otherwise, ..

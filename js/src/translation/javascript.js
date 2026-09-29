@@ -535,8 +535,10 @@ class JavaScriptParser {
     if (c.is('return')) {
       if (this.topLevel) throw unsupported('top-level return statement', 'return leaves a function, and a module has none to leave', span(token, token));
       c.next();
+      // `return;` returns undefined, the unit value.
       if (c.is(';') || c.is('}') || this.source.slice(token.end, c.peek().start).includes('\n')) {
-        throw unsupported('return without a value', 'the function would return undefined, which is not a portable value', span(token, c.peek()));
+        c.eat(';');
+        return { s: 'return', expr: { k: 'unit', span: span(token, token) }, span: span(token, c.peek()) };
       }
       // An async function returning a call of another adopts the Promise it
       // returns, which awaits it.
@@ -926,7 +928,11 @@ class JavaScriptParser {
     if (token.kind === 'identifier' && ['switch', 'try', 'throw', 'class', 'return'].includes(token.value)) {
       throw unsupported(`top-level ${token.value} statement`, 'the top level prints with console.log, binds with const or let, assigns, branches with if, loops and asserts', span(token, token));
     }
-    throw unsupported('top-level expression statement', 'a statement that discards its value has no portable effect', span(token, token));
+    // A statement that discards its value still runs it, for the lines it prints and the aborts it may reach.
+    const expr = this.expr();
+    c.eat(';');
+    this.generatedCount += 1;
+    return { k: 'let', name: `ml_main_ignored${this.generatedCount}`, value: expr, span: span(token, c.peek()) };
   }
 
   consoleStatement() {
@@ -994,9 +1000,8 @@ class JavaScriptParser {
       }
     };
     const at = (index) => {
-      if (index === list.length) {
-        throw unsupported('missing return', 'the function can finish without returning and return undefined, which is not a portable value', where);
-      }
+      // A function that finishes without returning returns undefined, the unit value.
+      if (index === list.length) return { k: 'unit', span: where };
       const statement = list[index];
       switch (statement.s) {
         case 'const':

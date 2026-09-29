@@ -80,6 +80,11 @@ class Inference {
     const a = this.resolve(left);
     const b = this.resolve(right);
     if (a === b) return;
+    // Only a function that finishes without a return value makes undefined, the unit value.
+    const other = a.kind === 'unit' ? b : b.kind === 'unit' ? a : null;
+    if (other && other.kind !== 'unit' && (other.kind !== 'var' || this.bigints.has(other.id))) {
+      throw typeError(`the function returns ${other.kind === 'var' ? 'a bigint' : describe(other)} on one path and finishes without a return value, returning undefined, on another; return a value on every path`, where);
+    }
     if (a.kind === 'var' && b.kind === 'var') {
       if (a.id === b.id) return;
       if (this.bigints.has(a.id)) this.bigints.add(b.id);

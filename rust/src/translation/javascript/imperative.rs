@@ -139,13 +139,8 @@ pub(super) fn lower_imperative(
         count: parser.generated_count,
     };
     let ctx = Ctx {
-        fall: Rc::new(move |_, _| {
-            Err(unsupported(
-                "missing return",
-                "the function can finish without returning and return undefined, which is not a portable value",
-                Some(place),
-            ))
-        }),
+        // A function that finishes without returning returns undefined, the unit value.
+        fall: Rc::new(move |_, _| Ok(node(SNode::Unit, place))),
         ret: Rc::new(|_, value| Ok(value)),
         brk: Rc::new(move |_| Err(internal("break outside a loop", place))),
         cont: Rc::new(move |_| Err(internal("continue outside a loop", place))),
@@ -327,12 +322,13 @@ impl Lowering {
                     *span,
                 ));
             }
-            Stmt::Expr { span, .. } => {
-                return Err(unsupported(
-                    "expression statement",
-                    "statements with effects are outside the portable core in function bodies",
-                    Some(*span),
-                ))
+            // A statement that discards its value still runs it, for the lines
+            // it prints and the aborts it may reach.
+            Stmt::Expr { expr, span } => {
+                let name = self.generated_name("ignored");
+                let value = renamed(expr, scope)?;
+                let body = rest(self, scope)?;
+                return Ok(let_node(name, value, body, *span));
             }
             _ => {}
         }

@@ -14,9 +14,9 @@
 import { TranslationError, unsupported } from './diagnostics.js';
 
 const ROOT = 'crate';
-const IMPERATIVE = new Set(['let', 'assign', 'while', 'doWhile', 'for', 'break', 'continue', 'print']);
+const IMPERATIVE = new Set(['let', 'assign', 'while', 'doWhile', 'for', 'break', 'continue', 'print', 'expr']);
 
-/** Whether statements use `let`, assignments, loops, `break`, `continue` or print. */
+/** Whether statements use `let`, assignments, loops, `break`, `continue`, print or discard a value. */
 export function imperative(statements) {
   return statements.some(function visit(statement) {
     if (IMPERATIVE.has(statement.s)) return true;
@@ -120,9 +120,8 @@ function flat(statements) {
 export function lowerImperative(parser, name, params, statements, where) {
   const lowering = new Lowering(parser, name);
   const ctx = {
-    fall: () => {
-      throw unsupported('missing return', 'the function can finish without returning and return undefined, which is not a portable value', where);
-    },
+    // A function that finishes without returning returns undefined, the unit value.
+    fall: () => ({ k: 'unit', span: where }),
     ret: (value) => value,
     brk: () => internal('break outside a loop', where),
     cont: () => internal('continue outside a loop', where),
@@ -267,7 +266,8 @@ class Lowering {
       case 'print':
         return { k: 'print', expr: this.renamed(statement.expr, scope), style: statement.style, body: rest(), span: statement.span };
       case 'expr':
-        throw unsupported('expression statement', 'statements with effects are outside the portable core in function bodies', statement.span);
+        // A statement that discards its value still runs it, for the lines it prints and the aborts it may reach.
+        return { k: 'let', name: this.generatedName('ignored'), value: this.renamed(statement.expr, scope), body: rest(), span: statement.span };
       default:
     }
     const lowerWith = (inner) => this.compound(statement, inner, scope);

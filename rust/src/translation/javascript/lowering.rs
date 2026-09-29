@@ -74,12 +74,9 @@ pub(super) fn unreachable(list: &[&Stmt], index: usize) -> Result<()> {
 }
 
 pub(super) fn lower_at(list: &[&Stmt], index: usize, place: Span) -> Result<SExpr> {
+    // A function that finishes without returning returns undefined, the unit value.
     let Some(statement) = list.get(index) else {
-        return Err(unsupported(
-            "missing return",
-            "the function can finish without returning and return undefined, which is not a portable value",
-            Some(place),
-        ));
+        return Ok(node(SNode::Unit, place));
     };
     match statement {
         Stmt::Const { name, value, span } => Ok(node(
