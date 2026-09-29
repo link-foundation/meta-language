@@ -18,6 +18,7 @@ mod four_language_conformance;
 mod generative_support;
 mod grammar_docs;
 mod grammar_emit;
+mod grammar_emit_antlr_lark;
 mod grammar_emit_javascript;
 mod grammar_emit_rust;
 mod grammar_emit_tree_sitter;

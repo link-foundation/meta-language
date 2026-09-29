@@ -8,20 +8,25 @@ use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 use crate::translation_rules::TranslationTemplate;
 
 mod abnf;
+mod antlr;
 mod bnf;
 mod ebnf;
 mod gbnf;
 mod javascript;
+mod lark;
 mod pest;
 mod rust;
+mod structural;
 mod tree_sitter;
 mod tree_sitter_json;
 
 pub use abnf::emit_abnf;
+pub use antlr::emit_antlr;
 pub use bnf::emit_bnf;
 pub use ebnf::emit_ebnf;
 pub use gbnf::emit_gbnf;
 pub use javascript::{JsParserArtifacts, emit_javascript_parser, emit_peggy};
+pub use lark::emit_lark;
 pub use pest::emit_pest;
 pub use rust::{RustParserArtifacts, emit_rust_parser, render_rust_type};
 pub use tree_sitter::{emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report};

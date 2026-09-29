@@ -7,11 +7,11 @@ use clap::{Parser, Subcommand, ValueEnum};
 
 use meta_language::{
     Grammar, InferenceOptions, LinkNetwork, MembershipOracle, ParseConfiguration,
-    PositiveOnlyOracle, SampleConfig, emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_pest,
-    emit_tree_sitter_grammar_js, evaluate, grammar_concept_translation_rules, grammar_from_lino,
-    grammar_to_lino, import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark,
-    import_pest, import_tree_sitter_json, infer_cfg, parse_grammar_surface,
-    translate_grammar_surface, write_grammar_surface,
+    PositiveOnlyOracle, SampleConfig, emit_abnf, emit_antlr, emit_bnf, emit_ebnf, emit_gbnf,
+    emit_lark, emit_pest, emit_tree_sitter_grammar_js, evaluate, grammar_concept_translation_rules,
+    grammar_from_lino, grammar_to_lino, import_abnf, import_antlr, import_bnf, import_ebnf,
+    import_gbnf, import_lark, import_pest, import_tree_sitter_json, infer_cfg,
+    parse_grammar_surface, translate_grammar_surface, write_grammar_surface,
 };
 
 #[derive(Parser, Debug)]
@@ -181,21 +181,6 @@ enum EmitFormatArg {
     Antlr,
     /// Lark grammar.
     Lark,
-}
-
-impl EmitFormatArg {
-    const fn as_str(self) -> &'static str {
-        match self {
-            Self::Bnf => "bnf",
-            Self::Ebnf => "ebnf",
-            Self::Abnf => "abnf",
-            Self::Peg => "peg",
-            Self::Gbnf => "gbnf",
-            Self::TreeSitter => "tree-sitter",
-            Self::Antlr => "antlr",
-            Self::Lark => "lark",
-        }
-    }
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -408,7 +393,13 @@ fn render_grammar(grammar: &Grammar, format: GrammarFormatArg) -> Result<String,
         GrammarFormatArg::TreeSitter => {
             emit_tree_sitter_grammar_js(grammar).map_err(|error| error.to_string())
         }
-        GrammarFormatArg::Antlr | GrammarFormatArg::Lark | GrammarFormatArg::Inferred => {
+        GrammarFormatArg::Antlr => emit_antlr(grammar)
+            .map(|(text, _report)| text)
+            .map_err(|error| error.to_string()),
+        GrammarFormatArg::Lark => emit_lark(grammar)
+            .map(|(text, _report)| text)
+            .map_err(|error| error.to_string()),
+        GrammarFormatArg::Inferred => {
             Err(format!("unsupported output format: {}", format.as_str()))
         }
     }
@@ -434,9 +425,12 @@ fn render_emit_format(grammar: &Grammar, format: EmitFormatArg) -> Result<String
         EmitFormatArg::TreeSitter => {
             emit_tree_sitter_grammar_js(grammar).map_err(|error| error.to_string())
         }
-        EmitFormatArg::Antlr | EmitFormatArg::Lark => {
-            Err(format!("unsupported output format: {}", format.as_str()))
-        }
+        EmitFormatArg::Antlr => emit_antlr(grammar)
+            .map(|(text, _report)| text)
+            .map_err(|error| error.to_string()),
+        EmitFormatArg::Lark => emit_lark(grammar)
+            .map(|(text, _report)| text)
+            .map_err(|error| error.to_string()),
     }
 }
 

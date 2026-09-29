@@ -1057,10 +1057,16 @@ export class GrammarImportError extends Error {
 }
 export function importAbnf(source: string): Grammar;
 export const import_abnf: typeof importAbnf;
+export function importAntlr(source: string): Grammar;
+export const import_antlr: typeof importAntlr;
 export function importBnf(source: string): Grammar;
 export const import_bnf: typeof importBnf;
 export function importEbnf(source: string): Grammar;
 export const import_ebnf: typeof importEbnf;
+export function importGbnf(source: string): Grammar;
+export const import_gbnf: typeof importGbnf;
+export function importLark(source: string): Grammar;
+export const import_lark: typeof importLark;
 export function importPest(source: string): Grammar;
 export const import_pest: typeof importPest;
 export function importTreeSitterJson(source: string | unknown): Grammar;
@@ -1084,6 +1090,8 @@ export function emitBnf(grammar: Grammar): GrammarEmitResult;
 export const emit_bnf: typeof emitBnf;
 export function emitEbnf(grammar: Grammar): GrammarEmitResult;
 export const emit_ebnf: typeof emitEbnf;
+export function emitGbnf(grammar: Grammar): GrammarEmitResult;
+export const emit_gbnf: typeof emitGbnf;
 export function emitPest(grammar: Grammar): GrammarEmitResult;
 export const emit_pest: typeof emitPest;
 export function emitTreeSitterJson(grammar: Grammar): GrammarEmitResult;

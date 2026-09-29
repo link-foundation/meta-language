@@ -133,19 +133,51 @@ fn translate_grammar_cli_translates_rule_surface_to_target_language() {
 }
 
 #[test]
-fn emit_grammar_cli_reports_unsupported_formats_without_panic() {
+fn emit_grammar_cli_emits_antlr_and_lark() {
     let grammar = import_bnf(ARITHMETIC_BNF).expect("BNF fixture imports");
-    let input = write_temp_file("unsupported-input", "lino", &grammar_to_lino(&grammar));
+    let input = write_temp_file("antlr-lark-input", "lino", &grammar_to_lino(&grammar));
+    for (format, expected) in [("antlr", "grammar Expr;"), ("lark", "expr: ")] {
+        let output = Command::new(env!("CARGO_BIN_EXE_meta-language"))
+            .args(["emit-grammar", "--format", format])
+            .arg(&input)
+            .output()
+            .expect("failed to execute binary");
+
+        assert_success(&output);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(stdout.contains(expected), "{format}: {stdout}");
+    }
+}
+
+#[test]
+fn import_grammar_cli_converts_to_antlr_and_lark() {
+    let fixture = fixture_path("tests/fixtures/grammar/bnf/arithmetic.bnf");
+    for (format, expected) in [("antlr", "grammar Expr;"), ("lark", "expr: ")] {
+        let output = Command::new(env!("CARGO_BIN_EXE_meta-language"))
+            .args(["import-grammar", "--format", "bnf", "--to", format])
+            .arg(&fixture)
+            .output()
+            .expect("failed to execute binary");
+
+        assert_success(&output);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(stdout.contains(expected), "{format}: {stdout}");
+    }
+}
+
+#[test]
+fn import_grammar_cli_reports_unsupported_formats_without_panic() {
+    let fixture = fixture_path("tests/fixtures/grammar/bnf/arithmetic.bnf");
     let output = Command::new(env!("CARGO_BIN_EXE_meta-language"))
-        .args(["emit-grammar", "--format", "antlr"])
-        .arg(&input)
+        .args(["import-grammar", "--format", "bnf", "--to", "inferred"])
+        .arg(fixture)
         .output()
         .expect("failed to execute binary");
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
-        stderr.contains("unsupported output format: antlr"),
+        stderr.contains("unsupported output format: inferred"),
         "{stderr}"
     );
     assert!(!stderr.contains("panicked"), "{stderr}");

@@ -39,10 +39,10 @@ pub use concepts::{
     rule_concept_id,
 };
 pub use emit::{
-    EmitReport, GrammarEmitError, JsParserArtifacts, RustParserArtifacts, emit_abnf, emit_bnf,
-    emit_ebnf, emit_gbnf, emit_javascript_parser, emit_peggy, emit_pest, emit_rust_parser,
-    emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report, emit_tree_sitter_json,
-    render_rust_type,
+    EmitReport, GrammarEmitError, JsParserArtifacts, RustParserArtifacts, emit_abnf, emit_antlr,
+    emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser, emit_lark, emit_peggy, emit_pest,
+    emit_rust_parser, emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report,
+    emit_tree_sitter_json, render_rust_type,
 };
 pub use fidelity::{
     FORMER_GRAMMAR_CONSTRUCTS, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS, GrammarFidelityLevel,
