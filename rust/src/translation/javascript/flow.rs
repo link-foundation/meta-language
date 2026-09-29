@@ -216,9 +216,7 @@ impl Exits {
 
 /// A loop whose condition is always true, which only `break` and `return` leave.
 pub(super) fn infinite(cond: Option<&SExpr>) -> bool {
-    cond.map_or(true, |cond| {
-        matches!(cond.node, SNode::Bool { value: true })
-    })
+    cond.is_none_or(|cond| matches!(cond.node, SNode::Bool { value: true }))
 }
 
 /// A loop's condition, body, span, and whether it is a `do … while`.

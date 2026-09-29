@@ -566,7 +566,7 @@ fn smallest<'a>(
         {
             continue;
         }
-        if best.map_or(true, |best| {
+        if best.is_none_or(|best| {
             fact.range.end - fact.range.start < best.range.end - best.range.start
         }) {
             best = Some(fact);

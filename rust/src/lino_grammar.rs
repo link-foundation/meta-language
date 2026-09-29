@@ -534,7 +534,7 @@ impl<'a, 'r> LinoGrammarParser<'a, 'r> {
         self.position >= self.text.len()
     }
 
-    fn fail(&mut self, start: usize) -> Option<GrammarNode> {
+    const fn fail(&mut self, start: usize) -> Option<GrammarNode> {
         self.position = start;
         None
     }
@@ -549,7 +549,7 @@ impl<'a, 'r> LinoGrammarParser<'a, 'r> {
     }
 
     // Every enclosing group and every indentation level is one level of depth.
-    fn depth(&self) -> usize {
+    const fn depth(&self) -> usize {
         self.context_depth + self.indentation_stack.len() - 1
     }
 
@@ -688,7 +688,7 @@ fn read_quoted(
     count: usize,
     end: Option<usize>,
 ) -> Option<usize> {
-    let empty_reference = (count % 2 == 0).then_some(count);
+    let empty_reference = count.is_multiple_of(2).then_some(count);
     let Some(end) = end else {
         return empty_reference;
     };
@@ -784,7 +784,7 @@ impl DelimiterRuns {
         }
     }
 
-    fn count(&self) -> usize {
+    const fn count(&self) -> usize {
         self.starts.len()
     }
 

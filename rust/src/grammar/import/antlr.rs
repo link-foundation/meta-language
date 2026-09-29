@@ -505,7 +505,7 @@ impl Parser {
         matches!(self.peek_kind(), Some(TokenKind::Semicolon))
     }
 
-    fn is_end(&self) -> bool {
+    const fn is_end(&self) -> bool {
         self.cursor >= self.tokens.len()
     }
 

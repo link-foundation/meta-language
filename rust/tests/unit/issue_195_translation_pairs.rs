@@ -360,7 +360,7 @@ impl Pair {
         self.translation.code()
     }
 
-    fn semantics(&self) -> &SemanticTranslation {
+    const fn semantics(&self) -> &SemanticTranslation {
         self.translation.semantics().expect("semantic translation")
     }
 

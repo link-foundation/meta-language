@@ -227,9 +227,7 @@ fn is_special_sequence_start(text: &str, index: usize) -> bool {
         .chars()
         .rev()
         .find(|character| !character.is_whitespace())
-        .map_or(true, |character| {
-            matches!(character, '=' | '|' | ',' | '(' | '[' | '{' | ';')
-        })
+        .is_none_or(|character| matches!(character, '=' | '|' | ',' | '(' | '[' | '{' | ';'))
 }
 
 fn normalize_empty_alternatives(text: &str) -> String {
@@ -356,7 +354,7 @@ impl<'text> Scanner<'text> {
         Some((index, character, was_code, previous_depth))
     }
 
-    fn scan_quoted(&mut self, character: char, quote: char) {
+    const fn scan_quoted(&mut self, character: char, quote: char) {
         if self.escaped {
             self.escaped = false;
         } else if character == '\\' {

@@ -235,7 +235,7 @@ impl Lcg {
         Self(seed)
     }
 
-    fn next(&mut self) -> u32 {
+    const fn next(&mut self) -> u32 {
         self.0 = self.0.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
         self.0
     }

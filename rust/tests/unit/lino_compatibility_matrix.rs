@@ -126,7 +126,8 @@ fn the_locked_links_notation_crate_is_the_audited_release_and_the_matrix_is_its_
     let matrix = matrix();
     let crates_io = &matrix["releases"]["cratesIo"];
     let (package, version) = (text(crates_io, "package"), text(crates_io, "version"));
-    let lockfile = repository_file(text(crates_io, "lockfile"));
+    // A Windows checkout may write the lockfile with CRLF line endings.
+    let lockfile = repository_file(text(crates_io, "lockfile")).replace("\r\n", "\n");
     assert!(
         lockfile.contains(&format!("name = \"{package}\"\nversion = \"{version}\"\n")),
         "Cargo.lock resolves {package} {version}"

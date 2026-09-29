@@ -29,7 +29,7 @@ impl Random {
         Self { state }
     }
 
-    pub fn next_u32(&mut self) -> u32 {
+    pub const fn next_u32(&mut self) -> u32 {
         self.state = self.state.wrapping_add(0x6d2b_79f5);
         let mut value = self.state;
         value = (value ^ (value >> 15)).wrapping_mul(value | 1);
@@ -373,7 +373,7 @@ pub fn generate_inputs(language: &str, seeds: &[SeedSource], seed: &str) -> Vec<
             .collect();
         let mut source = parts[0].to_string();
         for part in &parts[1..] {
-            source.push_str(*random.pick(&SEPARATORS));
+            source.push_str(random.pick(&SEPARATORS));
             source.push_str(part);
         }
         inputs.push(input(format!("property/{index}"), source));

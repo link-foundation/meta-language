@@ -602,7 +602,7 @@ fn seq_expr(items: Vec<GrammarExpr>) -> GrammarExpr {
     }
 }
 
-fn choice_len(expr: &GrammarExpr) -> usize {
+const fn choice_len(expr: &GrammarExpr) -> usize {
     match expr {
         GrammarExpr::Choice { alternatives, .. } => alternatives.len(),
         GrammarExpr::Empty => 0,

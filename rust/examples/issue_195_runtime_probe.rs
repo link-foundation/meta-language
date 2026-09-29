@@ -626,7 +626,7 @@ fn strings(value: &Value) -> Vec<String> {
         .collect()
 }
 
-fn canonical_language(language: &str) -> &str {
+const fn canonical_language(language: &str) -> &str {
     if language.eq_ignore_ascii_case("coq") {
         "Rocq"
     } else {

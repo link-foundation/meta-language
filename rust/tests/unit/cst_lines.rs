@@ -315,7 +315,7 @@ pub fn row_offsets(source: &str) -> Vec<usize> {
         .collect()
 }
 
-fn is_gap_whitespace(character: char) -> bool {
+const fn is_gap_whitespace(character: char) -> bool {
     character.is_whitespace() || matches!(character, '\u{200B}' | '\u{2060}' | '\u{FEFF}')
 }
 
@@ -341,7 +341,7 @@ pub fn trivia_problems(
         node_ranges.insert((start, end));
         let leaf = nodes
             .get(position + 1)
-            .map_or(true, |next| next.depth != node.depth + 1);
+            .is_none_or(|next| next.depth != node.depth + 1);
         if leaf {
             in_leaf[start - from..end - from].fill(true);
         }

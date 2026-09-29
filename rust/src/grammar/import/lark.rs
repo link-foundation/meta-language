@@ -361,7 +361,7 @@ impl Parser {
         error_at(offset, message)
     }
 
-    fn is_end(&self) -> bool {
+    const fn is_end(&self) -> bool {
         self.cursor >= self.tokens.len()
     }
 

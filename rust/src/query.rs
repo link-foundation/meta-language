@@ -100,18 +100,16 @@ impl LinkQuery {
     fn matches_metadata(&self, link: &Link) -> bool {
         let metadata = link.metadata();
         self.link_type
-            .map_or(true, |link_type| metadata.link_type() == Some(link_type))
+            .is_none_or(|link_type| metadata.link_type() == Some(link_type))
             && self
                 .term
                 .as_deref()
-                .map_or(true, |term| metadata.term() == Some(term))
+                .is_none_or(|term| metadata.term() == Some(term))
             && self
                 .language
                 .as_deref()
-                .map_or(true, |language| metadata.language() == Some(language))
-            && self
-                .named
-                .map_or(true, |named| metadata.is_named() == named)
+                .is_none_or(|language| metadata.language() == Some(language))
+            && self.named.is_none_or(|named| metadata.is_named() == named)
     }
 
     pub(crate) const fn link_type_filter(&self) -> Option<LinkType> {
@@ -903,7 +901,7 @@ impl QueryParser {
         self.tokens.get(self.position + 1)
     }
 
-    fn is_at_end(&self) -> bool {
+    const fn is_at_end(&self) -> bool {
         self.position >= self.tokens.len()
     }
 }

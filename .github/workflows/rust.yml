@@ -293,7 +293,7 @@ jobs:
       - name: Clean caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
-        run: node scripts/clean-caches.mjs --ci
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run

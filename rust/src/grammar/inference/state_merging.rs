@@ -832,7 +832,7 @@ fn compatibility_bound(alpha: f64, left_total: u64, right_total: u64) -> f64 {
     multiplier * (1.0 / count_to_f64(left_total).sqrt() + 1.0 / count_to_f64(right_total).sqrt())
 }
 
-fn normalised_alpha(alpha: f64) -> f64 {
+const fn normalised_alpha(alpha: f64) -> f64 {
     if alpha.is_finite() {
         alpha.clamp(0.000_001, 0.999_999)
     } else {

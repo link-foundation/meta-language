@@ -145,10 +145,7 @@ pub fn minimize(grammar: &Grammar, examples: &[String], opts: MinimizeOptions) -
                 cost: trial_cost,
                 delta,
             };
-            if best
-                .as_ref()
-                .map_or(true, |best| scored.is_better_than(best))
-            {
+            if best.as_ref().is_none_or(|best| scored.is_better_than(best)) {
                 best = Some(scored);
             }
         }
@@ -186,7 +183,7 @@ impl ScoredCandidate {
     }
 }
 
-fn record_acceptance(report: &mut MinimizeReport, kind: CandidateKind) {
+const fn record_acceptance(report: &mut MinimizeReport, kind: CandidateKind) {
     match kind {
         CandidateKind::Merge => {
             report.merges_applied = report.merges_applied.saturating_add(1);

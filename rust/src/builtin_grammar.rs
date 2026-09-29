@@ -83,7 +83,7 @@ impl GrammarNode {
     }
 
     /// Whether this node is a token: a node without children covering text.
-    pub fn is_token(&self) -> bool {
+    pub const fn is_token(&self) -> bool {
         self.children.is_empty() && self.start < self.end
     }
 }

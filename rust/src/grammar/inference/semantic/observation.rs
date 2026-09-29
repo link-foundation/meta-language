@@ -209,7 +209,7 @@ fn has_word_boundary_before(input: &str, position: usize) -> bool {
         || input[..position]
             .chars()
             .next_back()
-            .map_or(true, |character| !is_identifier_character(character))
+            .is_none_or(|character| !is_identifier_character(character))
 }
 
 fn has_word_boundary_after(input: &str, position: usize) -> bool {
@@ -217,7 +217,7 @@ fn has_word_boundary_after(input: &str, position: usize) -> bool {
         || input[position..]
             .chars()
             .next()
-            .map_or(true, |character| !is_identifier_character(character))
+            .is_none_or(|character| !is_identifier_character(character))
 }
 
 fn next_identifier(input: &str, start: usize) -> Option<ObservedValue> {

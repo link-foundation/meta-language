@@ -350,7 +350,7 @@ fn compute_min_lengths(grammar: &Grammar) -> HashMap<String, Option<usize>> {
                 continue;
             };
             let current = lengths.get(rule.name()).copied().flatten();
-            if current.map_or(true, |current| next < current) {
+            if current.is_none_or(|current| next < current) {
                 lengths.insert(rule.name().to_string(), Some(next));
                 changed = true;
             }
@@ -509,7 +509,7 @@ impl SplitMix64 {
         Self { state: seed }
     }
 
-    fn next_u64(&mut self) -> u64 {
+    const fn next_u64(&mut self) -> u64 {
         self.state = self.state.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut value = self.state;
         value = (value ^ (value >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
@@ -526,7 +526,7 @@ impl SplitMix64 {
         usize::try_from(value).unwrap_or(0)
     }
 
-    fn next_bool(&mut self) -> bool {
+    const fn next_bool(&mut self) -> bool {
         self.next_u64() & 1 == 1
     }
 }

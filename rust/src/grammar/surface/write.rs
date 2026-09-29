@@ -154,7 +154,7 @@ fn write_char_class_item(item: &CharClassItem) -> String {
     }
 }
 
-fn simple_class_char(value: char) -> bool {
+const fn simple_class_char(value: char) -> bool {
     !value.is_whitespace()
         && !matches!(
             value,

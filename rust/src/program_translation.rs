@@ -399,14 +399,16 @@ fn hex_encode(bytes: &[u8]) -> String {
 }
 
 fn hex_decode(encoded: &str) -> Result<Vec<u8>, ProgramTranslationError> {
-    if encoded.len() % 2 != 0 {
+    if !encoded.len().is_multiple_of(2) {
         return Err(ProgramTranslationError::InvalidEnvelope(
             "hexadecimal payload has odd length".to_string(),
         ));
     }
     encoded
         .as_bytes()
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| {
             let high = hex_digit(pair[0])?;
             let low = hex_digit(pair[1])?;

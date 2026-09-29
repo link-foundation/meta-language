@@ -724,7 +724,7 @@ fn nearest_rule_name<'a>(name: &str, candidates: &'a [String]) -> Option<&'a str
             continue;
         }
 
-        let should_replace = best.map_or(true, |(best_name, best_distance)| {
+        let should_replace = best.is_none_or(|(best_name, best_distance)| {
             distance < best_distance
                 || (distance == best_distance && candidate.as_str() < best_name)
         });
@@ -768,10 +768,7 @@ fn canonical_cycle_key(cycle: &[String]) -> String {
             .map(|offset| nodes[(start + offset) % nodes.len()].as_str())
             .collect::<Vec<_>>()
             .join("\0");
-        if best
-            .as_ref()
-            .map_or(true, |candidate| rotation < *candidate)
-        {
+        if best.as_ref().is_none_or(|candidate| rotation < *candidate) {
             best = Some(rotation);
         }
     }

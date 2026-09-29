@@ -229,9 +229,7 @@ impl SyntaxTree {
         let mut current = self.parent(previous);
         while let Some(node) = current.filter(|node| Some(*node) != enclosing) {
             if self.nodes[node].end == self.nodes[previous].end
-                && enclosing.map_or(true, |outer| {
-                    self.nodes[node].start >= self.nodes[outer].start
-                })
+                && enclosing.is_none_or(|outer| self.nodes[node].start >= self.nodes[outer].start)
             {
                 candidate = node;
             }

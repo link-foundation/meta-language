@@ -785,7 +785,7 @@ enum ComparableValue<'a> {
     Text(&'a str),
 }
 
-fn probability_for_truth(value: TruthValue) -> Probability {
+const fn probability_for_truth(value: TruthValue) -> Probability {
     match value {
         TruthValue::True => Probability::ONE,
         TruthValue::False => Probability::ZERO,

@@ -291,7 +291,7 @@ impl RawItem {
     }
 
     // An indented id: `name:` with no values and the lines below it.
-    fn is_indented_id(&self) -> bool {
+    const fn is_indented_id(&self) -> bool {
         matches!(self, Self::Link { id: Some(_), values, children, .. }
             if values.is_empty() && !children.is_empty())
     }

@@ -691,7 +691,7 @@ fn insert_gap_token(
 /// Whitespace around hidden-rule text: Unicode whitespace and the invisible
 /// format characters grammars lex as extras (tree-sitter-javascript's U+200B,
 /// U+2060 and U+FEFF).
-fn is_gap_whitespace(character: char) -> bool {
+const fn is_gap_whitespace(character: char) -> bool {
     character.is_whitespace() || matches!(character, '\u{200B}' | '\u{2060}' | '\u{FEFF}')
 }
 

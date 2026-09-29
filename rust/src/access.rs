@@ -242,7 +242,7 @@ impl EngineNetwork {
     ///
     /// Returns [`ReadOnlyViolation`] when this handle was created under
     /// [`AccessMode::ReadOnly`].
-    pub fn as_mutable(&mut self) -> Result<&mut LinkNetwork, ReadOnlyViolation> {
+    pub const fn as_mutable(&mut self) -> Result<&mut LinkNetwork, ReadOnlyViolation> {
         match self {
             Self::Mutable(network) => Ok(network),
             Self::ReadOnly(_) => Err(ReadOnlyViolation),
