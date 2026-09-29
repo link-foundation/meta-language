@@ -1699,9 +1699,9 @@
       "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
-      "path": "docs/vision.md",
-      "selector": "#readable-english-names: CI check of the naming convention",
-      "sha256": "2de0c9cc7a67897f60f59dc6a8c75f7342dcb04eb9f487bf2f734772734199a4"
+      "path": "parity/naming/naming-fixtures.json",
+      "selector": "docs/vision.md#readable-english-names: CI check of the naming convention",
+      "sha256": "5968ab33a07c75a95b74e27d8c3a4297c1637ccf5e8984a63013fdc9286202a2"
     },
     "planned:repository-directive:i195-semantics-construct-inventory": {
       "path": "parity/fixtures/four-language-conformance.json",
@@ -19447,7 +19447,16 @@
         "tooling"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "tooling": [
+          "js/scripts/english-vocabulary.mjs",
+          "js/scripts/issue-195-naming.mjs",
+          "js/scripts/check-naming.mjs",
+          "parity/naming/canonical-concepts.json",
+          "parity/naming/technical-vocabulary.json",
+          "parity/naming/abbreviations.json",
+          "parity/naming/naming-fixtures.json",
+          ".github/workflows/js.yml"
+        ]
       },
       "verifications": [
         {
@@ -19472,7 +19481,7 @@
       "traceability": {
         "specification": "docs/vision.md#readable-english-names",
         "inventories": [
-          "docs/vision.md"
+          "parity/naming/naming-fixtures.json"
         ],
         "sources": [
           "acceptanceGate",

@@ -45,7 +45,13 @@ changes this repository. Human contributors follow them too; see
   change.
 - Canonical concept names are unabbreviated English noun phrases, and operations
   are verb phrases (see
-  [readable English names](docs/vision.md#readable-english-names)).
+  [readable English names](docs/vision.md#readable-english-names)). A new
+  canonical name needs a record in
+  [`parity/naming/canonical-concepts.json`](parity/naming/canonical-concepts.json);
+  `cd js && npm run check:naming` checks every record and source name against
+  WordNet 3.1, the registered abbreviations and technical terms, and the
+  positive and negative fixtures in
+  [`parity/naming/naming-fixtures.json`](parity/naming/naming-fixtures.json).
 - Keep experiments in `experiments/` and runnable demonstrations in `examples/`.
 - Run the JavaScript checks (`cd js && npm test && npm run check`) and the Rust
   checks (`cargo fmt --check`, `cargo clippy --all-targets --all-features` and

@@ -127,6 +127,10 @@ jobs:
         run: npm run check:downstream-consumers
         working-directory: js
 
+      - name: Check readable English names against WordNet, the concept records and the source inventory
+        run: npm run check:naming
+        working-directory: js
+
       - name: Verify npm package contents
         run: node ../scripts/with-cache-cleanup.mjs --event package -- npm pack --dry-run
         working-directory: js

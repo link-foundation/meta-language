@@ -1,0 +1,2733 @@
+{
+  "description": "The concept record of every canonical name meta-language defines: its stable identity, the readable English phrase the identity spells, its role (a concept is a noun phrase, an operation or relation a verb phrase), its definition, its constraints, the names other sources give it, and the former names that still decode to it. js/scripts/check-naming.mjs checks the records and that every name the sources define has one.",
+  "exemptions": [
+    {
+      "pattern": "^Q[0-9]+$",
+      "reason": "Wikidata item identifiers are external identifiers, not English names."
+    }
+  ],
+  "concepts": [
+    {
+      "id": "grammar.rule",
+      "phrase": "rule",
+      "role": "concept",
+      "definition": "A named grammar production that binds a non-terminal to an expression.",
+      "constraints": [
+        "A rule binds exactly one nonterminal name to one grammar expression.",
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "bnf",
+          "name": "::="
+        },
+        {
+          "source": "ebnf",
+          "name": "="
+        },
+        {
+          "source": "abnf",
+          "name": "="
+        },
+        {
+          "source": "peg",
+          "name": "="
+        },
+        {
+          "source": "meta-language",
+          "name": "rule"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "rule"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "правило"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.sequence",
+      "phrase": "sequence",
+      "role": "concept",
+      "definition": "An ordered concatenation of grammar expressions.",
+      "constraints": [
+        "A sequence matches its expressions in order, each after the previous one.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "bnf",
+          "name": "a b"
+        },
+        {
+          "source": "ebnf",
+          "name": "a , b"
+        },
+        {
+          "source": "peg",
+          "name": "a b"
+        },
+        {
+          "source": "gbnf",
+          "name": "a b"
+        },
+        {
+          "source": "meta-language",
+          "name": "sequence"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "sequence"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "последовательность"
+        }
+      ],
+      "formerNames": [
+        "grammar::expr::sequence"
+      ]
+    },
+    {
+      "id": "grammar.ordered-choice",
+      "phrase": "ordered choice",
+      "role": "concept",
+      "definition": "A prioritized grammar alternative where earlier matches win.",
+      "constraints": [
+        "The first alternative that matches wins; later alternatives are not tried.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "peg",
+          "name": "/"
+        },
+        {
+          "source": "meta-language",
+          "name": "ordered choice"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "ordered choice"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "упорядоченный выбор"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unordered-choice",
+      "phrase": "unordered choice",
+      "role": "concept",
+      "definition": "A grammar alternative whose branches are not semantically prioritized.",
+      "constraints": [
+        "Every alternative is a possible match; none is preferred.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "bnf",
+          "name": "|"
+        },
+        {
+          "source": "ebnf",
+          "name": "|"
+        },
+        {
+          "source": "abnf",
+          "name": "/"
+        },
+        {
+          "source": "antlr",
+          "name": "|"
+        },
+        {
+          "source": "lark",
+          "name": "|"
+        },
+        {
+          "source": "meta-language",
+          "name": "unordered choice"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "choice"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "выбор"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.choice",
+      "phrase": "choice",
+      "role": "concept",
+      "definition": "A grammar alternative among expressions, ordered or unordered.",
+      "constraints": [
+        "A choice is either an ordered choice or an unordered choice.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "meta-language",
+          "name": "choice"
+        }
+      ],
+      "formerNames": [
+        "grammar::expr::choice"
+      ]
+    },
+    {
+      "id": "grammar.counted-repetition",
+      "phrase": "counted repetition",
+      "role": "concept",
+      "definition": "A counted repetition with explicit minimum and optional maximum bounds.",
+      "constraints": [
+        "The minimum count is at most the maximum count when a maximum is given.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "ebnf",
+          "name": "{ }"
+        },
+        {
+          "source": "abnf",
+          "name": "m*n"
+        },
+        {
+          "source": "gbnf",
+          "name": "{m,n}"
+        },
+        {
+          "source": "meta-language",
+          "name": "counted repetition"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "repetition"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "повторение"
+        }
+      ],
+      "formerNames": [
+        "grammar.repetition",
+        "repeat-range",
+        "grammar::expr::repeat"
+      ]
+    },
+    {
+      "id": "grammar.zero-or-more-repetition",
+      "phrase": "zero or more repetition",
+      "role": "concept",
+      "definition": "A repetition that accepts zero or more occurrences.",
+      "constraints": [
+        "The repetition also accepts no occurrence at all.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "peg",
+          "name": "*"
+        },
+        {
+          "source": "ebnf",
+          "name": "{ }"
+        },
+        {
+          "source": "antlr",
+          "name": "*"
+        },
+        {
+          "source": "lark",
+          "name": "*"
+        },
+        {
+          "source": "gbnf",
+          "name": "*"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "zero or more"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "ноль или более"
+        }
+      ],
+      "formerNames": [
+        "grammar.zero-or-more",
+        "zero-or-more",
+        "grammar::expr::zero-or-more"
+      ]
+    },
+    {
+      "id": "grammar.one-or-more-repetition",
+      "phrase": "one or more repetition",
+      "role": "concept",
+      "definition": "A repetition that accepts one or more occurrences.",
+      "constraints": [
+        "The repetition requires at least one occurrence.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "peg",
+          "name": "+"
+        },
+        {
+          "source": "antlr",
+          "name": "+"
+        },
+        {
+          "source": "lark",
+          "name": "+"
+        },
+        {
+          "source": "gbnf",
+          "name": "+"
+        },
+        {
+          "source": "meta-language",
+          "name": "one or more repetition"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "one or more"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "один или более"
+        }
+      ],
+      "formerNames": [
+        "grammar.one-or-more",
+        "one-or-more",
+        "grammar::expr::one-or-more"
+      ]
+    },
+    {
+      "id": "grammar.optional-expression",
+      "phrase": "optional expression",
+      "role": "concept",
+      "definition": "An expression that may be present or absent.",
+      "constraints": [
+        "The expression accepts zero or one occurrence of its inner expression.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "optional"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "необязательный"
+        },
+        {
+          "source": "peg",
+          "name": "e?"
+        },
+        {
+          "source": "ebnf",
+          "name": "[ e ]"
+        },
+        {
+          "source": "meta-language",
+          "name": "optional expression"
+        }
+      ],
+      "formerNames": [
+        "grammar.optional",
+        "optional",
+        "grammar::expr::optional"
+      ]
+    },
+    {
+      "id": "grammar.terminal",
+      "phrase": "terminal",
+      "role": "concept",
+      "definition": "A literal terminal token matched directly in the input.",
+      "constraints": [
+        "The literal text is matched exactly, letter case included.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "bnf",
+          "name": "\"lit\""
+        },
+        {
+          "source": "ebnf",
+          "name": "\"lit\""
+        },
+        {
+          "source": "abnf",
+          "name": "%i\"lit\""
+        },
+        {
+          "source": "peg",
+          "name": "\"lit\""
+        },
+        {
+          "source": "lark",
+          "name": "\"lit\""
+        },
+        {
+          "source": "tree-sitter",
+          "name": "token"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "terminal"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "терминал"
+        }
+      ],
+      "formerNames": [
+        "grammar::expr::terminal"
+      ]
+    },
+    {
+      "id": "grammar.case-insensitive-terminal",
+      "phrase": "case insensitive terminal",
+      "role": "concept",
+      "definition": "A literal terminal token matched in the input without regard to letter case.",
+      "constraints": [
+        "The literal text is matched with letter case ignored.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "abnf",
+          "name": "\"lit\""
+        },
+        {
+          "source": "lark",
+          "name": "\"lit\"i"
+        },
+        {
+          "source": "meta-language",
+          "name": "case-insensitive terminal"
+        }
+      ],
+      "formerNames": [
+        "grammar::expr::terminal-insensitive"
+      ]
+    },
+    {
+      "id": "grammar.nonterminal",
+      "phrase": "nonterminal",
+      "role": "concept",
+      "definition": "A reference to another named grammar rule.",
+      "constraints": [
+        "The referenced rule is defined in the same grammar.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "bnf",
+          "name": "<name>"
+        },
+        {
+          "source": "ebnf",
+          "name": "name"
+        },
+        {
+          "source": "peg",
+          "name": "name"
+        },
+        {
+          "source": "antlr",
+          "name": "name"
+        },
+        {
+          "source": "lark",
+          "name": "name"
+        },
+        {
+          "source": "meta-language",
+          "name": "nonterminal"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "non-terminal"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "нетерминал"
+        }
+      ],
+      "formerNames": [
+        "grammar.non-terminal",
+        "non-terminal",
+        "grammar::expr::non-terminal"
+      ]
+    },
+    {
+      "id": "grammar.character-class",
+      "phrase": "character class",
+      "role": "concept",
+      "definition": "A set of characters accepted at one input position.",
+      "constraints": [
+        "A character class lists characters and character ranges, and may be negated.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "character class"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "класс символов"
+        },
+        {
+          "source": "peg",
+          "name": "[a-z]"
+        },
+        {
+          "source": "gbnf",
+          "name": "[a-z]"
+        },
+        {
+          "source": "meta-language",
+          "name": "character class"
+        }
+      ],
+      "formerNames": [
+        "grammar.char-class",
+        "char-class",
+        "grammar::expr::char-class"
+      ]
+    },
+    {
+      "id": "grammar.character-range",
+      "phrase": "character range",
+      "role": "concept",
+      "definition": "An inclusive range between two character endpoints.",
+      "constraints": [
+        "The first endpoint is not greater than the second endpoint.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "abnf",
+          "name": "%x30-39"
+        },
+        {
+          "source": "lark",
+          "name": "\"a\"..\"z\""
+        },
+        {
+          "source": "meta-language",
+          "name": "'a'..='z'"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "character range"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "диапазон символов"
+        }
+      ],
+      "formerNames": [
+        "grammar.char-range",
+        "char-range",
+        "grammar::expr::char-range"
+      ]
+    },
+    {
+      "id": "grammar.any-character",
+      "phrase": "any character",
+      "role": "concept",
+      "definition": "A wildcard grammar expression that accepts any single character.",
+      "constraints": [
+        "The expression consumes exactly one character and fails at the end of input.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "peg",
+          "name": "."
+        },
+        {
+          "source": "lark",
+          "name": "."
+        },
+        {
+          "source": "gbnf",
+          "name": "."
+        },
+        {
+          "source": "meta-language",
+          "name": "any character"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "any character"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "любой символ"
+        }
+      ],
+      "formerNames": [
+        "grammar.any-char",
+        "any-char",
+        "grammar::expr::any-char"
+      ]
+    },
+    {
+      "id": "grammar.positive-predicate",
+      "phrase": "positive predicate",
+      "role": "concept",
+      "definition": "A positive lookahead predicate that tests an expression without consuming input.",
+      "constraints": [
+        "The predicate consumes no input whether it succeeds or fails.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "peg",
+          "name": "&e"
+        },
+        {
+          "source": "meta-language",
+          "name": "positive predicate"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "positive predicate"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "положительный предикат"
+        }
+      ],
+      "formerNames": [
+        "and-predicate",
+        "grammar::expr::and"
+      ]
+    },
+    {
+      "id": "grammar.negative-predicate",
+      "phrase": "negative predicate",
+      "role": "concept",
+      "definition": "A negative lookahead predicate that rejects when an expression would match.",
+      "constraints": [
+        "The predicate consumes no input whether it succeeds or fails.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "peg",
+          "name": "!e"
+        },
+        {
+          "source": "meta-language",
+          "name": "negative predicate"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "negative predicate"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "отрицательный предикат"
+        }
+      ],
+      "formerNames": [
+        "not-predicate",
+        "grammar::expr::not"
+      ]
+    },
+    {
+      "id": "grammar.capture",
+      "phrase": "capture",
+      "role": "concept",
+      "definition": "A labelled or anonymous capture of a grammar subexpression.",
+      "constraints": [
+        "A labelled capture carries its label as a readable name.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "meta-language",
+          "name": "name:e"
+        },
+        {
+          "source": "antlr",
+          "name": "label=e"
+        },
+        {
+          "source": "lark",
+          "name": "name:e"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "capture"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "захват"
+        }
+      ],
+      "formerNames": [
+        "grammar::expr::capture"
+      ]
+    },
+    {
+      "id": "grammar.empty-expression",
+      "phrase": "empty expression",
+      "role": "concept",
+      "definition": "A grammar expression that accepts the empty string.",
+      "constraints": [
+        "The expression always succeeds and consumes no input.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "Importers and emitters of every grammar format map it to the same concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "bnf",
+          "name": "empty alternative"
+        },
+        {
+          "source": "ebnf",
+          "name": "empty alternative"
+        },
+        {
+          "source": "meta-language",
+          "name": "empty expression"
+        },
+        {
+          "source": "English grammar surface",
+          "name": "empty"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "пусто"
+        }
+      ],
+      "formerNames": [
+        "grammar.empty",
+        "empty",
+        "grammar::expr::empty"
+      ]
+    },
+    {
+      "id": "grammar.atomic-rule",
+      "phrase": "atomic rule",
+      "role": "concept",
+      "definition": "A grammar rule whose expression matches without implicit whitespace between its parts.",
+      "constraints": [
+        "An atomic rule is a rule kind; its expression is an ordinary grammar expression.",
+        "Grammar formats without atomic rules keep the kind as a fidelity note."
+      ],
+      "sourceAliases": [
+        {
+          "source": "pest",
+          "name": "@{ }"
+        }
+      ],
+      "formerNames": [
+        "rule-kind-atomic"
+      ]
+    },
+    {
+      "id": "grammar.silent-rule",
+      "phrase": "silent rule",
+      "role": "concept",
+      "definition": "A grammar rule that matches without producing a parse tree node of its own.",
+      "constraints": [
+        "A silent rule is a rule kind; its expression is an ordinary grammar expression.",
+        "Grammar formats without silent rules keep the kind as a fidelity note."
+      ],
+      "sourceAliases": [
+        {
+          "source": "pest",
+          "name": "_{ }"
+        },
+        {
+          "source": "tree-sitter",
+          "name": "_name"
+        }
+      ],
+      "formerNames": [
+        "rule-kind-silent"
+      ]
+    },
+    {
+      "id": "grammar.token-rule",
+      "phrase": "token rule",
+      "role": "concept",
+      "definition": "A grammar rule whose whole match is reported as one lexical token.",
+      "constraints": [
+        "A token rule is a rule kind; its expression is an ordinary grammar expression.",
+        "Grammar formats without token rules keep the kind as a fidelity note."
+      ],
+      "sourceAliases": [
+        {
+          "source": "tree-sitter",
+          "name": "token(e)"
+        },
+        {
+          "source": "antlr",
+          "name": "LexerRule"
+        }
+      ],
+      "formerNames": [
+        "rule-kind-token"
+      ]
+    },
+    {
+      "id": "grammar.grammar",
+      "phrase": "grammar",
+      "role": "concept",
+      "definition": "A named set of grammar rules with a start rule.",
+      "constraints": [
+        "Every nonterminal a rule references names a rule of the grammar.",
+        "The grammar round-trips through links without losing a rule."
+      ],
+      "sourceAliases": [
+        {
+          "source": "antlr",
+          "name": "grammar Name;"
+        },
+        {
+          "source": "meta-language",
+          "name": "grammar"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.character-class-item.character",
+      "phrase": "character",
+      "role": "concept",
+      "definition": "A single character listed in a character class.",
+      "constraints": [
+        "The item matches exactly the listed character."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "CharClassItem::Char"
+        }
+      ],
+      "formerNames": [
+        "grammar::char-class-item::char"
+      ],
+      "represents": "grammar.value.character"
+    },
+    {
+      "id": "grammar.character-class-item.character-range",
+      "phrase": "character range",
+      "role": "concept",
+      "definition": "A character range listed in a character class.",
+      "constraints": [
+        "The item matches every character between its two endpoints inclusive."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "CharClassItem::Range"
+        }
+      ],
+      "formerNames": [
+        "grammar::char-class-item::range"
+      ],
+      "represents": "grammar.character-range"
+    },
+    {
+      "id": "grammar.value.absent-value",
+      "phrase": "absent value",
+      "role": "concept",
+      "definition": "A grammar field value that is absent.",
+      "constraints": [
+        "An absent value carries no inner value.",
+        "A grammar link stores the value under this tag so the grammar reads back unchanged."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "None"
+        },
+        {
+          "source": "JavaScript",
+          "name": "null"
+        }
+      ],
+      "formerNames": [
+        "grammar::value::none"
+      ]
+    },
+    {
+      "id": "grammar.value.present-value",
+      "phrase": "present value",
+      "role": "concept",
+      "definition": "A grammar field value that is present and carries an inner value.",
+      "constraints": [
+        "A present value carries exactly one inner value.",
+        "A grammar link stores the value under this tag so the grammar reads back unchanged."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "Some"
+        }
+      ],
+      "formerNames": [
+        "grammar::value::some"
+      ]
+    },
+    {
+      "id": "grammar.value.string",
+      "phrase": "string",
+      "role": "concept",
+      "definition": "A text value stored in a grammar link.",
+      "constraints": [
+        "The text is stored as written, escapes resolved.",
+        "A grammar link stores the value under this tag so the grammar reads back unchanged."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "String"
+        }
+      ],
+      "formerNames": [],
+      "represents": "grammar.string"
+    },
+    {
+      "id": "grammar.value.character",
+      "phrase": "character",
+      "role": "concept",
+      "definition": "A single Unicode scalar value stored in a grammar link.",
+      "constraints": [
+        "The value is exactly one Unicode scalar value.",
+        "A grammar link stores the value under this tag so the grammar reads back unchanged."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "char"
+        }
+      ],
+      "formerNames": [
+        "grammar::value::char"
+      ]
+    },
+    {
+      "id": "grammar.value.boolean-value",
+      "phrase": "boolean value",
+      "role": "concept",
+      "definition": "A truth value stored in a grammar link.",
+      "constraints": [
+        "The value is true or false.",
+        "A grammar link stores the value under this tag so the grammar reads back unchanged."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "bool"
+        }
+      ],
+      "formerNames": [
+        "grammar::value::bool"
+      ],
+      "represents": "grammar.boolean-value"
+    },
+    {
+      "id": "grammar.value.natural-number",
+      "phrase": "natural number",
+      "role": "concept",
+      "definition": "A non-negative whole number stored in a grammar link.",
+      "constraints": [
+        "The value is zero or a positive whole number.",
+        "A grammar link stores the value under this tag so the grammar reads back unchanged."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "usize"
+        }
+      ],
+      "formerNames": [
+        "grammar::value::usize"
+      ]
+    },
+    {
+      "id": "grammar.value.rule-kind",
+      "phrase": "rule kind",
+      "role": "concept",
+      "definition": "The kind of a grammar rule: normal, atomic, silent or token.",
+      "constraints": [
+        "The value is one of the rule kinds meta-language records.",
+        "A grammar link stores the value under this tag so the grammar reads back unchanged."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "RuleKind"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.value.format",
+      "phrase": "format",
+      "role": "concept",
+      "definition": "The grammar notation a grammar is imported from or emitted as.",
+      "constraints": [
+        "The value is one of the grammar formats meta-language imports or emits.",
+        "A grammar link stores the value under this tag so the grammar reads back unchanged."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "GrammarFormat"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression",
+      "phrase": "expression",
+      "role": "concept",
+      "definition": "A rule for a complete expression of a grammar.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "expression"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "выражение"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.term",
+      "phrase": "term",
+      "role": "concept",
+      "definition": "A rule for an operand of addition or subtraction in an expression grammar.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "term"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "слагаемое"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.factor",
+      "phrase": "factor",
+      "role": "concept",
+      "definition": "A rule for an operand of multiplication or division in an expression grammar.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "factor"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "множитель"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.number",
+      "phrase": "number",
+      "role": "concept",
+      "definition": "A rule for a numeric literal.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "number"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "число"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.digit",
+      "phrase": "digit",
+      "role": "concept",
+      "definition": "A rule for one decimal digit.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "digit"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "цифра"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.letter",
+      "phrase": "letter",
+      "role": "concept",
+      "definition": "A rule for one alphabetic letter.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "letter"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "буква"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.identifier",
+      "phrase": "identifier",
+      "role": "concept",
+      "definition": "A rule for a name made of letters, digits and underscores that starts with a letter.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "identifier"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "идентификатор"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.statement",
+      "phrase": "statement",
+      "role": "concept",
+      "definition": "A rule for one statement of a program grammar.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "statement"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "оператор"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.item",
+      "phrase": "item",
+      "role": "concept",
+      "definition": "A rule for one element of a list.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "item"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "элемент"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.list",
+      "phrase": "list",
+      "role": "concept",
+      "definition": "A rule for a delimited sequence of items.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "list"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "список"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.value",
+      "phrase": "value",
+      "role": "concept",
+      "definition": "A rule for any value of a data grammar.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "value"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "значение"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.name",
+      "phrase": "name",
+      "role": "concept",
+      "definition": "A rule for the key of an object member.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "name"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "имя"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object",
+      "phrase": "object",
+      "role": "concept",
+      "definition": "A rule for a delimited set of named members.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "object"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "объект"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.member",
+      "phrase": "member",
+      "role": "concept",
+      "definition": "A rule for one name and value pair of an object.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "member"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "член"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.string",
+      "phrase": "string",
+      "role": "concept",
+      "definition": "A rule for a quoted text literal.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "string"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "строка"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.boolean-value",
+      "phrase": "boolean value",
+      "role": "concept",
+      "definition": "A rule for the literals true and false.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "boolean"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "логическое"
+        }
+      ],
+      "formerNames": [
+        "grammar.boolean"
+      ]
+    },
+    {
+      "id": "grammar.null",
+      "phrase": "null",
+      "role": "concept",
+      "definition": "A rule for the literal that denotes no value.",
+      "constraints": [
+        "Grammar inference and the grammar surface translation use this concept to name rules.",
+        "The English and Russian grammar surfaces translate the rule name through this concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English grammar surface",
+          "name": "null"
+        },
+        {
+          "source": "Russian grammar surface",
+          "name": "нуль"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "function",
+      "phrase": "function",
+      "role": "concept",
+      "definition": "Reusable computation with parameters and a result boundary.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "fn"
+        },
+        {
+          "source": "Python",
+          "name": "def"
+        },
+        {
+          "source": "JavaScript",
+          "name": "function"
+        },
+        {
+          "source": "C",
+          "name": "function"
+        },
+        {
+          "source": "C++",
+          "name": "function"
+        },
+        {
+          "source": "C#",
+          "name": "method"
+        },
+        {
+          "source": "Java",
+          "name": "method"
+        },
+        {
+          "source": "Visual Basic",
+          "name": "Function"
+        },
+        {
+          "source": "R",
+          "name": "function"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "CREATE FUNCTION"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": "function"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "binding",
+      "phrase": "binding",
+      "role": "concept",
+      "definition": "Association between a name and a value or computation.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "let"
+        },
+        {
+          "source": "Python",
+          "name": "="
+        },
+        {
+          "source": "JavaScript",
+          "name": "let"
+        },
+        {
+          "source": "C",
+          "name": "="
+        },
+        {
+          "source": "C++",
+          "name": "="
+        },
+        {
+          "source": "C#",
+          "name": "="
+        },
+        {
+          "source": "Java",
+          "name": "="
+        },
+        {
+          "source": "Visual Basic",
+          "name": "Dim"
+        },
+        {
+          "source": "R",
+          "name": "<-"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "AS"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": ":="
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "application",
+      "phrase": "application",
+      "role": "concept",
+      "definition": "Application of a callable expression to arguments.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "call(...)"
+        },
+        {
+          "source": "Python",
+          "name": "call(...)"
+        },
+        {
+          "source": "JavaScript",
+          "name": "call(...)"
+        },
+        {
+          "source": "C",
+          "name": "call(...)"
+        },
+        {
+          "source": "C++",
+          "name": "call(...)"
+        },
+        {
+          "source": "C#",
+          "name": "call(...)"
+        },
+        {
+          "source": "Java",
+          "name": "call(...)"
+        },
+        {
+          "source": "Visual Basic",
+          "name": "Call"
+        },
+        {
+          "source": "R",
+          "name": "call(...)"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "CALL"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": "call(...)"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "sequential-composition",
+      "phrase": "sequential composition",
+      "role": "concept",
+      "definition": "Ordered execution or evaluation of multiple operations.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": ";"
+        },
+        {
+          "source": "Python",
+          "name": "newline"
+        },
+        {
+          "source": "JavaScript",
+          "name": ";"
+        },
+        {
+          "source": "C",
+          "name": ";"
+        },
+        {
+          "source": "C++",
+          "name": ";"
+        },
+        {
+          "source": "C#",
+          "name": ";"
+        },
+        {
+          "source": "Java",
+          "name": ";"
+        },
+        {
+          "source": "Visual Basic",
+          "name": "newline"
+        },
+        {
+          "source": "R",
+          "name": ";"
+        },
+        {
+          "source": "sql-ansi",
+          "name": ";"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": "begin ... end"
+        }
+      ],
+      "formerNames": [
+        "sequence"
+      ]
+    },
+    {
+      "id": "branch",
+      "phrase": "branch",
+      "role": "concept",
+      "definition": "Conditional selection among alternative operations.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "if"
+        },
+        {
+          "source": "Python",
+          "name": "if"
+        },
+        {
+          "source": "JavaScript",
+          "name": "if"
+        },
+        {
+          "source": "C",
+          "name": "if"
+        },
+        {
+          "source": "C++",
+          "name": "if"
+        },
+        {
+          "source": "C#",
+          "name": "if"
+        },
+        {
+          "source": "Java",
+          "name": "if"
+        },
+        {
+          "source": "Visual Basic",
+          "name": "If"
+        },
+        {
+          "source": "R",
+          "name": "if"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "CASE"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": "if"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "loop",
+      "phrase": "loop",
+      "role": "concept",
+      "definition": "Repeated execution or evaluation over a condition or iterable.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "loop"
+        },
+        {
+          "source": "Python",
+          "name": "for"
+        },
+        {
+          "source": "JavaScript",
+          "name": "for"
+        },
+        {
+          "source": "C",
+          "name": "for"
+        },
+        {
+          "source": "C++",
+          "name": "for"
+        },
+        {
+          "source": "C#",
+          "name": "for"
+        },
+        {
+          "source": "Java",
+          "name": "for"
+        },
+        {
+          "source": "Visual Basic",
+          "name": "For"
+        },
+        {
+          "source": "R",
+          "name": "for"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "WHILE"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": "for"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "parameter",
+      "phrase": "parameter",
+      "role": "concept",
+      "definition": "Named input accepted by a function abstraction.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "parameter"
+        },
+        {
+          "source": "Python",
+          "name": "parameter"
+        },
+        {
+          "source": "JavaScript",
+          "name": "parameter"
+        },
+        {
+          "source": "C",
+          "name": "parameter"
+        },
+        {
+          "source": "C++",
+          "name": "parameter"
+        },
+        {
+          "source": "C#",
+          "name": "parameter"
+        },
+        {
+          "source": "Java",
+          "name": "parameter"
+        },
+        {
+          "source": "Visual Basic",
+          "name": "parameter"
+        },
+        {
+          "source": "R",
+          "name": "parameter"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "parameter"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": "parameter"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "argument",
+          "reason": "A parameter is the name a function declares; an argument is the value an application supplies for it."
+        }
+      ]
+    },
+    {
+      "id": "argument",
+      "phrase": "argument",
+      "role": "concept",
+      "definition": "Concrete input supplied to a function application.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "argument"
+        },
+        {
+          "source": "Python",
+          "name": "argument"
+        },
+        {
+          "source": "JavaScript",
+          "name": "argument"
+        },
+        {
+          "source": "C",
+          "name": "argument"
+        },
+        {
+          "source": "C++",
+          "name": "argument"
+        },
+        {
+          "source": "C#",
+          "name": "argument"
+        },
+        {
+          "source": "Java",
+          "name": "argument"
+        },
+        {
+          "source": "Visual Basic",
+          "name": "argument"
+        },
+        {
+          "source": "R",
+          "name": "argument"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "argument"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": "argument"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.statement",
+          "reason": "An argument is a value supplied to a function application; a statement is a grammar rule for one step of a program."
+        }
+      ]
+    },
+    {
+      "id": "return",
+      "phrase": "return",
+      "role": "concept",
+      "definition": "Transfer of a function result to its caller.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "return"
+        },
+        {
+          "source": "Python",
+          "name": "return"
+        },
+        {
+          "source": "JavaScript",
+          "name": "return"
+        },
+        {
+          "source": "C",
+          "name": "return"
+        },
+        {
+          "source": "C++",
+          "name": "return"
+        },
+        {
+          "source": "C#",
+          "name": "return"
+        },
+        {
+          "source": "Java",
+          "name": "return"
+        },
+        {
+          "source": "Visual Basic",
+          "name": "Return"
+        },
+        {
+          "source": "R",
+          "name": "return"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "RETURN"
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": "Result"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "assignment",
+      "phrase": "assignment",
+      "role": "concept",
+      "definition": "Update that stores a value into a named location.",
+      "constraints": [
+        "The structural concept is independent of any one programming language.",
+        "Every language syntax that expresses it is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "="
+        },
+        {
+          "source": "Python",
+          "name": "="
+        },
+        {
+          "source": "JavaScript",
+          "name": "="
+        },
+        {
+          "source": "C",
+          "name": "="
+        },
+        {
+          "source": "C++",
+          "name": "="
+        },
+        {
+          "source": "C#",
+          "name": "="
+        },
+        {
+          "source": "Java",
+          "name": "="
+        },
+        {
+          "source": "Visual Basic",
+          "name": "="
+        },
+        {
+          "source": "R",
+          "name": "<-"
+        },
+        {
+          "source": "sql-ansi",
+          "name": "="
+        },
+        {
+          "source": "Delphi/Object Pascal",
+          "name": ":="
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "statehood",
+      "phrase": "statehood",
+      "role": "concept",
+      "definition": "Statehood proposition connecting Hawaii (Q782) to U.S. state (Q35657).",
+      "constraints": [
+        "The worked example links the Wikidata items Q782 and Q35657 through the statehood proposition.",
+        "Every natural language syntax of the proposition is a syntax alias of the concept."
+      ],
+      "sourceAliases": [
+        {
+          "source": "English",
+          "name": "Hawaii is a state."
+        },
+        {
+          "source": "en",
+          "name": "Hawaii is a state."
+        },
+        {
+          "source": "Russian",
+          "name": "Гавайи это штат."
+        },
+        {
+          "source": "ru",
+          "name": "Гавайи это штат."
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "ontology.external-identifier",
+      "phrase": "external identifier",
+      "role": "concept",
+      "definition": "An identifier that an external vocabulary such as Wikidata assigns to a concept.",
+      "constraints": [
+        "The link stores the identifier under the external-identifier: prefix and the vocabulary name.",
+        "Networks that use the former external-id: prefix still load."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Wikidata",
+          "name": "external-id"
+        }
+      ],
+      "formerNames": [
+        "external-id"
+      ]
+    },
+    {
+      "id": "emphasis",
+      "phrase": "emphasis",
+      "role": "concept",
+      "definition": "Inline emphasis (italic) applied to a text fragment.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "*{}*"
+        },
+        {
+          "source": "HTML",
+          "name": "<em>{}</em>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "strong-emphasis",
+      "phrase": "strong emphasis",
+      "role": "concept",
+      "definition": "Inline strong importance (bold) applied to a text fragment.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "**{}**"
+        },
+        {
+          "source": "HTML",
+          "name": "<strong>{}</strong>"
+        }
+      ],
+      "formerNames": [
+        "strong"
+      ]
+    },
+    {
+      "id": "strikethrough",
+      "phrase": "strikethrough",
+      "role": "concept",
+      "definition": "Inline strikethrough (deleted) text fragment.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "~~{}~~"
+        },
+        {
+          "source": "HTML",
+          "name": "<del>{}</del>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "inline-code",
+      "phrase": "inline code",
+      "role": "concept",
+      "definition": "Inline monospaced code span.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "`{}`"
+        },
+        {
+          "source": "HTML",
+          "name": "<code>{}</code>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "hyperlink",
+      "phrase": "hyperlink",
+      "role": "concept",
+      "definition": "Inline hyperlink wrapping text and targeting a destination.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "image",
+      "phrase": "image",
+      "role": "concept",
+      "definition": "Inline image with alternative text and a source reference.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "line-break",
+      "phrase": "line break",
+      "role": "concept",
+      "definition": "Explicit inline line break inside a block.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "  \n"
+        },
+        {
+          "source": "HTML",
+          "name": "<br />"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "heading",
+      "phrase": "heading",
+      "role": "concept",
+      "definition": "Section heading carrying a level from 1 (most significant) downward.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "{markers} {}"
+        },
+        {
+          "source": "HTML",
+          "name": "<h{level}>{}</h{level}>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "paragraph",
+      "phrase": "paragraph",
+      "role": "concept",
+      "definition": "Block of running text.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "{}"
+        },
+        {
+          "source": "HTML",
+          "name": "<p>{}</p>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "block-quote",
+      "phrase": "block quote",
+      "role": "concept",
+      "definition": "Quoted block set off from the surrounding text.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "> {}"
+        },
+        {
+          "source": "HTML",
+          "name": "<blockquote>{}</blockquote>"
+        }
+      ],
+      "formerNames": [
+        "blockquote"
+      ]
+    },
+    {
+      "id": "bullet-list",
+      "phrase": "bullet list",
+      "role": "concept",
+      "definition": "Unordered list container.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "{}"
+        },
+        {
+          "source": "HTML",
+          "name": "<ul>{}</ul>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "ordered-list",
+      "phrase": "ordered list",
+      "role": "concept",
+      "definition": "Ordered list container.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "{}"
+        },
+        {
+          "source": "HTML",
+          "name": "<ol>{}</ol>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "list-item",
+      "phrase": "list item",
+      "role": "concept",
+      "definition": "Single item within a list.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "- {}"
+        },
+        {
+          "source": "HTML",
+          "name": "<li>{}</li>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "code-block",
+      "phrase": "code block",
+      "role": "concept",
+      "definition": "Fenced block of preformatted code carrying an optional language.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "```{lang}\n{}\n```"
+        },
+        {
+          "source": "HTML",
+          "name": "<pre><code class=\"language-{lang}\">{}</code></pre>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "thematic-break",
+      "phrase": "thematic break",
+      "role": "concept",
+      "definition": "Thematic break (horizontal rule) between sections.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "---"
+        },
+        {
+          "source": "HTML",
+          "name": "<hr />"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "table",
+      "phrase": "table",
+      "role": "concept",
+      "definition": "Tabular data container.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "{}"
+        },
+        {
+          "source": "HTML",
+          "name": "<table>{}</table>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "table-row",
+      "phrase": "table row",
+      "role": "concept",
+      "definition": "Row within a table.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "{}"
+        },
+        {
+          "source": "HTML",
+          "name": "<tr>{}</tr>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "table-cell",
+      "phrase": "table cell",
+      "role": "concept",
+      "definition": "Cell within a table row.",
+      "constraints": [
+        "Every document format that supports the element maps it to this concept.",
+        "The formatting concept round-trips through Markdown and HTML templates."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Markdown",
+          "name": "{}"
+        },
+        {
+          "source": "HTML",
+          "name": "<td>{}</td>"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.modules-and-imports",
+      "phrase": "modules and imports",
+      "role": "concept",
+      "definition": "The modules a program defines and the modules it imports.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "import"
+        },
+        {
+          "source": "Rust",
+          "name": "use"
+        },
+        {
+          "source": "Lean",
+          "name": "import"
+        },
+        {
+          "source": "Rocq",
+          "name": "Require Import"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.scopes-and-bindings",
+      "phrase": "scopes and bindings",
+      "role": "concept",
+      "definition": "The scopes of a program and the names bound in each scope.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "let"
+        },
+        {
+          "source": "Rust",
+          "name": "let"
+        },
+        {
+          "source": "Lean",
+          "name": "let"
+        },
+        {
+          "source": "Rocq",
+          "name": "let"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.recursive-definitions",
+      "phrase": "recursive definitions",
+      "role": "concept",
+      "definition": "The definitions of a program that refer to themselves.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "partial def"
+        },
+        {
+          "source": "Rocq",
+          "name": "Fixpoint"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.types-and-universes",
+      "phrase": "types and universes",
+      "role": "concept",
+      "definition": "The types a program declares and the universes those types live in.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "Type u"
+        },
+        {
+          "source": "Rocq",
+          "name": "Type"
+        },
+        {
+          "source": "Rust",
+          "name": "struct"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.effects",
+      "phrase": "effects",
+      "role": "concept",
+      "definition": "The side effects a program performs, such as input, output and mutation.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "IO"
+        },
+        {
+          "source": "JavaScript",
+          "name": "await"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.attributes",
+      "phrase": "attributes",
+      "role": "concept",
+      "definition": "The annotations attached to declarations of a program.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "#[attribute]"
+        },
+        {
+          "source": "Lean",
+          "name": "@[attribute]"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.macros-and-notation",
+      "phrase": "macros and notation",
+      "role": "concept",
+      "definition": "The macros and custom notation a program defines or uses.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Rust",
+          "name": "macro_rules!"
+        },
+        {
+          "source": "Lean",
+          "name": "notation"
+        },
+        {
+          "source": "Rocq",
+          "name": "Notation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.proof-terms-and-tactics",
+      "phrase": "proof terms and tactics",
+      "role": "concept",
+      "definition": "The proofs of a program, written as terms or as tactic scripts.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "Lean",
+          "name": "by"
+        },
+        {
+          "source": "Rocq",
+          "name": "Proof."
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "program.surface-expansion-elaboration-traces",
+      "phrase": "surface expansion elaboration traces",
+      "role": "concept",
+      "definition": "The record of how surface syntax was expanded and elaborated into core terms.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable.",
+        "The construct is unavailable when no expansion or elaboration trace was produced."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "program.project-context-and-dependencies",
+      "phrase": "project context and dependencies",
+      "role": "concept",
+      "definition": "The project a program belongs to and the packages it depends on.",
+      "constraints": [
+        "Each language frontend reports evidence for this construct or states why it is unavailable."
+      ],
+      "sourceAliases": [
+        {
+          "source": "JavaScript",
+          "name": "package.json"
+        },
+        {
+          "source": "Rust",
+          "name": "Cargo.toml"
+        },
+        {
+          "source": "Lean",
+          "name": "lakefile.lean"
+        },
+        {
+          "source": "Rocq",
+          "name": "_CoqProject"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "operation.parse",
+      "phrase": "parse",
+      "role": "operation",
+      "definition": "Parse source text into a links network.",
+      "constraints": [
+        "Every supported programming interface style reaches this operation."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "operation.query",
+      "phrase": "query",
+      "role": "operation",
+      "definition": "Query links in a network.",
+      "constraints": [
+        "Every supported programming interface style reaches this operation."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "operation.transform",
+      "phrase": "transform",
+      "role": "operation",
+      "definition": "Transform query-selected links or source ranges.",
+      "constraints": [
+        "Every supported programming interface style reaches this operation."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "operation.substitute",
+      "phrase": "substitute",
+      "role": "operation",
+      "definition": "Apply structural substitutions.",
+      "constraints": [
+        "Every supported programming interface style reaches this operation."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "operation.serialize",
+      "phrase": "serialize",
+      "role": "operation",
+      "definition": "Serialize and load network data.",
+      "constraints": [
+        "Every supported programming interface style reaches this operation."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "operation.snapshot",
+      "phrase": "snapshot",
+      "role": "operation",
+      "definition": "Capture immutable network versions.",
+      "constraints": [
+        "Every supported programming interface style reaches this operation."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "operation.translate",
+      "phrase": "translate",
+      "role": "operation",
+      "definition": "Reconstruct through translation rules.",
+      "constraints": [
+        "Every supported programming interface style reaches this operation."
+      ],
+      "sourceAliases": [],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "operation.transform",
+          "reason": "Translating reconstructs a network in another language through translation rules; transforming rewrites selected links or source ranges within one network."
+        }
+      ]
+    },
+    {
+      "id": "operation.verify",
+      "phrase": "verify",
+      "role": "operation",
+      "definition": "Verify parse and structural diagnostics.",
+      "constraints": [
+        "Every supported programming interface style reaches this operation."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "translation.parse",
+      "phrase": "parse",
+      "role": "operation",
+      "definition": "Parse a corpus program into its links network before translation.",
+      "constraints": [
+        "Each translation corpus program records a digest for this stage."
+      ],
+      "sourceAliases": [],
+      "formerNames": [],
+      "represents": "operation.parse"
+    },
+    {
+      "id": "translation.check",
+      "phrase": "check",
+      "role": "operation",
+      "definition": "Check the parsed links network of a corpus program before emitting it.",
+      "constraints": [
+        "Each translation corpus program records a digest for this stage."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "translation.emit",
+      "phrase": "emit",
+      "role": "operation",
+      "definition": "Emit a corpus program in each target language from its links network.",
+      "constraints": [
+        "Each translation corpus program records a digest for this stage.",
+        "Each target language has its own digest."
+      ],
+      "sourceAliases": [],
+      "formerNames": []
+    }
+  ]
+}

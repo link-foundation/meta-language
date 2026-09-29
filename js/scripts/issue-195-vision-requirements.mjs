@@ -479,6 +479,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-NAMING-CI-ENFORCEMENT',
     area: 'readable-naming',
     specification: 'readable-english-names',
+    fixture: 'parity/naming/naming-fixtures.json',
     construct: 'CI check of the naming convention',
     expectedBehavior:
       'CI checks the vocabulary, phrase role, abbreviation expansion, collisions, duplicates and full inventory coverage of every canonical name. Positive and negative fixtures with deliberately abbreviated, ambiguous and duplicate names are rejected.',
@@ -490,7 +491,16 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'duplicatesRejected',
       'fullInventoryCovered',
     ],
-    tooling: null,
+    tooling: [
+      'js/scripts/english-vocabulary.mjs',
+      'js/scripts/issue-195-naming.mjs',
+      'js/scripts/check-naming.mjs',
+      'parity/naming/canonical-concepts.json',
+      'parity/naming/technical-vocabulary.json',
+      'parity/naming/abbreviations.json',
+      'parity/naming/naming-fixtures.json',
+      '.github/workflows/js.yml',
+    ],
   },
   {
     id: 'I195-SEMANTICS-CONSTRUCT-INVENTORY',

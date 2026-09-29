@@ -22,6 +22,7 @@
     "check:issue-195": "node scripts/check-issue-195-acceptance.mjs",
     "check:issue-195:sources": "node scripts/check-issue-195-sources.mjs",
     "check:downstream-consumers": "node scripts/check-downstream-consumers.mjs",
+    "check:naming": "node scripts/check-naming.mjs",
     "check:default-cst": "node scripts/generate-default-cst-expectations.mjs --check",
     "check:lino-grammar": "node scripts/generate-lino-grammar-cases.mjs --check",
     "check:pdf-grammar": "node scripts/generate-pdf-grammar-cases.mjs --check",
@@ -57,6 +58,7 @@
   },
   "devDependencies": {
     "franc-min": "6.2.0",
-    "pdf-lib": "1.17.1"
+    "pdf-lib": "1.17.1",
+    "wordnet-db": "3.1.14"
   }
 }
