@@ -120,7 +120,7 @@ export function buildCacheCleanupRequirements(fixtureCatalog, { requirement, ver
       area: 'cache-cleanup',
       scope: {
         language: 'repository tooling (Node.js scripts, git hooks and CI workflows)',
-        version: 'Node.js 20 or later',
+        version: 'Node.js 22 or later',
         edition: 'every checkout, worktree and CI job of this repository',
         construct,
         aliases: [],

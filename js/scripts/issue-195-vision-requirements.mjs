@@ -16,7 +16,7 @@ export const FOUR_LANGUAGE_CORPUS = 'parity/fixtures/four-language-conformance.j
 
 const REPOSITORY_TOOLING = {
   language: 'repository tooling (Node.js scripts, documentation and CI workflows)',
-  version: 'Node.js 20 or later',
+  version: 'Node.js 22 or later',
   edition: 'every checkout and CI job of this repository',
 };
 const BOTH_PACKAGES = {

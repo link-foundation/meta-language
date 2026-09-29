@@ -255,7 +255,7 @@
       "command": "lean",
       "extension": ".lean",
       "tool": "lean",
-      "declaredVersion": "4.33.1",
+      "declaredVersion": "4.34.1",
       "rejectedSuffix": "\ntheorem rejected : 1 = 2 := rfl\n"
     },
     "Rocq": {

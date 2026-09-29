@@ -12,12 +12,12 @@ use sha2::{Digest, Sha256};
 use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::{
-    Assumption, Emitted, Encoding, Mapping, IN_BOUNDS_READS, NON_ABORTING,
+    Assumption, Emitted, Encoding, IN_BOUNDS_READS, Mapping, NON_ABORTING,
 };
 use crate::translation::{
-    emit_javascript::emit_javascript, emit_lean::emit_lean, emit_rocq::emit_rocq,
+    Span, emit_javascript::emit_javascript, emit_lean::emit_lean, emit_rocq::emit_rocq,
     emit_rust::emit_rust, javascript::parse_javascript, lean::parse_lean, rocq::parse_rocq,
-    rust::parse_rust, Span,
+    rust::parse_rust,
 };
 
 const PROVENANCE_MARKER: &str = "meta-language:translation-provenance:v1";
@@ -222,10 +222,18 @@ pub fn assumption_statements(assumptions: &[Assumption]) -> &'static [&'static s
 
 const fn observation_procedure(target_language: &str) -> &'static str {
     match target_language.as_bytes() {
-        b"JavaScript" => "run the module with node; --ml-check-theorems evaluates the theorem properties instead of main",
-        b"Rust" => "compile with rustc and run the binary; --ml-check-theorems evaluates the theorem properties instead of main",
-        b"Lean" => "lean --run executes main after the Lean kernel has checked every definition and theorem",
-        _ => "rocq compile checks every definition and proof; Eval vm_compute in main prints the list of output lines",
+        b"JavaScript" => {
+            "run the module with node; --ml-check-theorems evaluates the theorem properties instead of main"
+        }
+        b"Rust" => {
+            "compile with rustc and run the binary; --ml-check-theorems evaluates the theorem properties instead of main"
+        }
+        b"Lean" => {
+            "lean --run executes main after the Lean kernel has checked every definition and theorem"
+        }
+        _ => {
+            "rocq compile checks every definition and proof; Eval vm_compute in main prints the list of output lines"
+        }
     }
 }
 
@@ -254,7 +262,7 @@ fn runtime_dependencies(target_language: &str, code: &str) -> Vec<String> {
             }
         }
         "Lean" => {
-            dependencies.push("Lean 4.33.1 core library".to_owned());
+            dependencies.push("Lean 4.34.1 core library".to_owned());
             dependencies.extend(
                 code.lines()
                     .filter_map(|line| line.strip_prefix("import "))

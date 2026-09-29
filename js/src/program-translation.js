@@ -165,7 +165,7 @@ function runtimeDependencies(targetLanguage, code) {
   }
   if (targetLanguage === 'Lean') {
     const imports = [...code.matchAll(/^import ([^\n]+)$/gmu)].map((match) => match[1].trim());
-    return ['Lean 4.33.1 core library', ...imports];
+    return ['Lean 4.34.1 core library', ...imports];
   }
   const libraries = [...code.matchAll(/^From ([A-Za-z]+) Require Import ([^.\n]+)\.$/gmu)]
     .flatMap((match) => match[2].trim().split(/\s+/u).map((module) => `${match[1]}.${module}`));

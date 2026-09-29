@@ -36,7 +36,7 @@
     {
       "name": "Lean",
       "aliases": ["lean", "lean4"],
-      "version": "Lean 4.33.1",
+      "version": "Lean 4.34.1",
       "edition": "Lean 4",
       "extensions": [".lean"],
       "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "parsed" },
@@ -1611,7 +1611,7 @@
         },
         {
           "path": "lean-toolchain",
-          "source": "leanprover/lean4:v4.33.1\n"
+          "source": "leanprover/lean4:v4.34.1\n"
         }
       ],
       "modules": [
@@ -1819,13 +1819,13 @@
             "kind": "project-file",
             "name": "lean-toolchain",
             "file": "lean-toolchain",
-            "text": "leanprover/lean4:v4.33.1\n"
+            "text": "leanprover/lean4:v4.34.1\n"
           },
           {
             "kind": "project-toolchain",
-            "name": "leanprover/lean4:v4.33.1",
+            "name": "leanprover/lean4:v4.34.1",
             "file": "lean-toolchain",
-            "text": "leanprover/lean4:v4.33.1"
+            "text": "leanprover/lean4:v4.34.1"
           },
           {
             "kind": "project-manifest",
@@ -2266,7 +2266,7 @@
         "proof": false
       },
       "Lean": {
-        "runtime": "Lean 4.33.1 core library",
+        "runtime": "Lean 4.34.1 core library",
         "proof": true,
         "forbidden": [
           "sorry",

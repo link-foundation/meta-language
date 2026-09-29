@@ -203,7 +203,7 @@ function readToolchainVersions() {
   };
   const expected = [
     ['rustc', versions.rustc, '1.98.1'],
-    ['lean', versions.lean, '4.33.1'],
+    ['lean', versions.lean, '4.34.1'],
     ['rocq', versions.rocq, '9.2'],
   ];
   for (const [tool, actual, wanted] of expected) {

@@ -38,7 +38,7 @@ const SUPPORT = Object.freeze([
   language({
     name: 'Lean',
     aliases: ['lean', 'lean4'],
-    version: 'Lean 4.33.1',
+    version: 'Lean 4.34.1',
     edition: 'Lean 4',
     extensions: ['.lean'],
     proofSyntax: RepresentationLevel.Parsed,
@@ -124,7 +124,7 @@ function translation(source, target) {
 
 function runtimeFor(languageName) {
   if (languageName === 'Lean') {
-    return 'Lean 4.33.1 kernel and project environment';
+    return 'Lean 4.34.1 kernel and project environment';
   }
   if (languageName === 'Rocq') {
     return 'Rocq 9.2 kernel and project environment';

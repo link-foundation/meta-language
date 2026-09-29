@@ -51,7 +51,7 @@
     "directory": "js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "links-notation": "0.22.0",
