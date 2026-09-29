@@ -3,6 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use meta_language::{LinkFlags, LinkId, LinkNetwork, LinkType, ParseConfiguration};
+use serde::Deserialize;
 use serde_json::{json, Value};
 
 /// A Syntax node of a public `LiNo` network.
@@ -87,31 +88,61 @@ fn build(
     }
 }
 
+/// The value of a whole quoted reference: an opening run of N delimiters, runs
+/// inside in which each 2N delimiters are an escaped N, and a closing run whose
+/// last N delimiters close it. N even delimiters alone are the empty reference.
 fn decode_quoted(text: &str) -> String {
     let quote = text.chars().next().expect("quoted reference");
     let count = text
         .chars()
         .take_while(|character| *character == quote)
         .count();
-    let quotes = quote.to_string().repeat(count);
-    text[count..text.len() - count].replace(&quotes.repeat(2), &quotes)
+    if count == text.len() {
+        return String::new();
+    }
+    let characters: Vec<char> = text.chars().collect();
+    let mut value = String::new();
+    let mut position = count;
+    while position < characters.len() {
+        let run = characters[position..]
+            .iter()
+            .take_while(|character| **character == quote)
+            .count();
+        if run == 0 {
+            value.push(characters[position]);
+            position += 1;
+            continue;
+        }
+        let closes = if position + run == characters.len() {
+            count
+        } else {
+            0
+        };
+        let kept = run - run / (2 * count) * count - closes;
+        value.push_str(&quote.to_string().repeat(kept));
+        position += run;
+    }
+    value
 }
 
-/// Projects a `link` or reference node to the official {id, values, children} shape.
+/// Projects a `link`, `group` or reference node to the official shape:
+/// {id, values, children} for links and references, {nested, children} for
+/// parenthesized groups.
 fn official_shape(node: &Node, source: &str) -> Value {
     let text = &source[node.start..node.end];
+    let with_field = |field: &str| {
+        node.children
+            .iter()
+            .filter(|child| child.field.as_deref() == Some(field))
+            .map(|child| official_shape(child, source))
+            .collect::<Vec<_>>()
+    };
     match node.term.as_str() {
         "reference" => json!({"id": text, "values": [], "children": []}),
         "quoted_reference" => json!({"id": decode_quoted(text), "values": [], "children": []}),
+        "group" => json!({"nested": with_field("link"), "children": with_field("child")}),
         term => {
             assert_eq!(term, "link");
-            let with_field = |field: &str| {
-                node.children
-                    .iter()
-                    .filter(|child| child.field.as_deref() == Some(field))
-                    .map(|child| official_shape(child, source))
-                    .collect::<Vec<_>>()
-            };
             json!({
                 "id": with_field("id").first().map(|id| id["id"].clone()),
                 "values": with_field("value"),
@@ -133,9 +164,12 @@ fn leaves(node: &Node) -> Vec<&Node> {
 fn lino_grammar_cst_carries_the_links_of_the_official_links_notation_parser() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/lino-grammar-cases.json");
-    let fixture: Value =
-        serde_json::from_str(&fs::read_to_string(path).expect("LiNo grammar cases are readable"))
-            .expect("LiNo grammar cases are valid JSON");
+    let text = fs::read_to_string(path).expect("LiNo grammar cases are readable");
+    // The deep-nesting cases hold links nested further than serde_json's
+    // default recursion limit.
+    let mut deserializer = serde_json::Deserializer::from_str(&text);
+    deserializer.disable_recursion_limit();
+    let fixture = Value::deserialize(&mut deserializer).expect("LiNo grammar cases are valid JSON");
     for case in fixture["cases"].as_array().expect("cases") {
         let source = case["source"].as_str().expect("source");
         let network = LinkNetwork::parse(source, "LiNo", ParseConfiguration::default());
@@ -151,7 +185,7 @@ fn lino_grammar_cst_carries_the_links_of_the_official_links_notation_parser() {
             let links = tree
                 .children
                 .iter()
-                .filter(|child| child.named)
+                .filter(|child| child.named && !child.flags.is_extra())
                 .map(|child| official_shape(child, source))
                 .collect::<Vec<_>>();
             assert_eq!(Value::from(links), case["links"], "links of {source:?}");
@@ -165,6 +199,11 @@ fn lino_grammar_cst_carries_the_links_of_the_official_links_notation_parser() {
                 assert!(source[leaf.start..leaf.end]
                     .bytes()
                     .all(|byte| matches!(byte, b' ' | b'\t' | b'\r' | b'\n')));
+            }
+            if leaf.term == "comment" {
+                let text = &source[leaf.start..leaf.end];
+                assert!(leaf.flags.is_extra() && leaf.named);
+                assert!(text.starts_with('#') && !text.contains(['\r', '\n']));
             }
         }
         assert_eq!(covered, source.len());
@@ -206,11 +245,12 @@ fn lino_grammar_cst_records_id_value_and_child_fields_and_recovers_per_line() {
             "    :",
             "    child: link",
             "      value: reference",
-            "      value: link",
+            "      value: group",
             "        (",
-            "        id: reference",
-            "        :",
-            "        value: reference",
+            "        link: link",
+            "          id: reference",
+            "          :",
+            "          value: reference",
             "        )",
             "  ERROR",
             "    (",

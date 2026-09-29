@@ -67,6 +67,7 @@ mod link_network;
 mod link_network_trivia;
 mod links_notation;
 mod lino_grammar;
+mod lino_grammar_scaling;
 mod lino_serialization;
 mod natural_language_grammar;
 mod parity_corpora;

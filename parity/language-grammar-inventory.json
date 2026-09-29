@@ -92,7 +92,7 @@
     "Urdu": []
   },
   "builtinGrammars": {
-    "links-notation": { "version": "0.13.0", "specification": "parity/grammars/links-notation-0.13.0.pegjs", "reference": "links-notation@0.13.0 src/grammar.pegjs" },
+    "links-notation": { "version": "0.22.0", "specification": "parity/grammars/links-notation-0.22.0.pegjs", "reference": "links-notation@0.22.0 src/grammar.pegjs" },
     "pdf-cos": { "version": "1.0.0", "specification": "parity/grammars/pdf-cos.ebnf", "reference": "ISO 32000-2:2020 section 7" },
     "plain-text": { "version": "1.0.0", "specification": "parity/grammars/plain-text.ebnf", "reference": "Unicode White_Space and general categories" },
     "natural-language": { "version": "1.0.0", "specification": "parity/grammars/natural-language.ebnf", "reference": "Unicode White_Space, general categories and sentence terminals" }

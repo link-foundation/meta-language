@@ -118,13 +118,47 @@ impl<'a> Parser<'a> {
         }
     }
 
+    // Nested parentheses are read with an explicit stack of open relations, so
+    // a document of any nesting depth is read without deep recursion.
     fn parse_parenthesized_relation(&mut self) -> LinkId {
+        let mut open = vec![self.open_relation()];
+        loop {
+            self.skip_inline_whitespace();
+            let next = self.peek_byte();
+            if next == Some(b'(') {
+                open.push(self.open_relation());
+                continue;
+            }
+            let reference = match next {
+                Some(b')') => {
+                    self.cursor += 1;
+                    None
+                }
+                Some(_) => self.parse_atom_reference().map(|(id, _span)| id),
+                None => None,
+            };
+            let relation = open.last_mut().expect("an open relation");
+            if let Some(reference) = reference {
+                relation.references.push(reference);
+                continue;
+            }
+            let relation = open.pop().expect("an open relation");
+            let id = self.close_relation(&relation);
+            match open.last_mut() {
+                Some(parent) => parent.references.push(id),
+                None => return id,
+            }
+        }
+    }
+
+    // Reads `(` and a leading `name:` of the relation it opens.
+    fn open_relation(&mut self) -> OpenRelation {
         let start = self.cursor;
         self.cursor += 1;
         self.skip_inline_whitespace();
 
         let mut references = Vec::new();
-        let mut relation_id = None;
+        let mut named = None;
 
         if self.peek_byte() != Some(b')') {
             if let Some((candidate, candidate_span)) = self.parse_atom_text() {
@@ -137,38 +171,28 @@ impl<'a> Parser<'a> {
                         start,
                         candidate_span.byte_range().end(),
                     );
-                    relation_id = Some(id);
+                    named = Some(id);
                 } else {
                     references.push(self.reference_for_atom(candidate));
                 }
             }
         }
 
-        loop {
-            self.skip_inline_whitespace();
-            match self.peek_byte() {
-                Some(b')') => {
-                    self.cursor += 1;
-                    break;
-                }
-                Some(_) => {
-                    if let Some(reference) = self.parse_expression() {
-                        references.push(reference);
-                    } else {
-                        break;
-                    }
-                }
-                None => break,
-            }
+        OpenRelation {
+            start,
+            references,
+            named,
         }
+    }
 
+    fn close_relation(&mut self, relation: &OpenRelation) -> LinkId {
         let end = self.cursor;
-        if let Some(id) = relation_id {
-            self.network.set_references(id, &references);
-            self.network.set_span(id, self.span(start, end));
+        if let Some(id) = relation.named {
+            self.network.set_references(id, &relation.references);
+            self.network.set_span(id, self.span(relation.start, end));
             id
         } else {
-            self.insert_relation(&references, None, start, end)
+            self.insert_relation(&relation.references, None, relation.start, end)
         }
     }
 
@@ -262,6 +286,13 @@ impl<'a> Parser<'a> {
             self.lines.byte_point(end),
         )
     }
+}
+
+/// A parenthesized relation whose `)` has not been read yet.
+struct OpenRelation {
+    start: usize,
+    references: Vec<LinkId>,
+    named: Option<LinkId>,
 }
 
 fn parse_line_references(

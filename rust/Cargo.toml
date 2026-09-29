@@ -65,7 +65,7 @@ lingua = { version = "1.8.0", default-features = false, features = [
     "spanish",
     "urdu",
 ] }
-links-notation = "0.13"
+links-notation = { version = "0.22", default-features = false }
 pest_meta = "2.8.6"
 regex = "1"
 serde = { version = "1", features = ["derive"] }
@@ -140,11 +140,11 @@ llm-assist = []
 no-default-features = true
 
 [dev-dependencies]
-links-notation = "0.13"
+links-notation = { version = "0.22", default-features = false }
 pest = "2.8.6"
 pest_derive = "2.8.6"
 regex = "1"
-serde_json = "1"
+serde_json = { version = "1", features = ["unbounded_depth"] }
 walkdir = "2"
 
 [build-dependencies]

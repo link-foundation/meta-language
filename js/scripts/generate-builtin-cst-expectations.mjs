@@ -8,7 +8,7 @@
 //   segmentation of Intl.Segmenter, grouped by the grammar's lexical classes
 //   (parity/grammars/plain-text.ebnf, parity/grammars/natural-language.ebnf);
 // - LiNo and PDF: hand-written trees for the grammars in
-//   parity/grammars/links-notation-0.13.0.pegjs and parity/grammars/pdf-cos.ebnf,
+//   parity/grammars/links-notation-0.22.0.pegjs and parity/grammars/pdf-cos.ebnf,
 //   whose tokens must tile the source exactly and whose structure must project
 //   to what the official links-notation parser and pdf-lib read from the
 //   positive source, while both oracles reject the recovery source.
@@ -26,6 +26,8 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { DEFAULT_MAX_DEPTH } from 'links-notation/src/Parser.js';
+import { stripComments } from 'links-notation/src/comments.js';
 import { parse as parseLinks } from 'links-notation/src/parser-generated.js';
 import { PDFDict, PDFName, PDFParser, PDFRef } from 'pdf-lib';
 
@@ -132,13 +134,13 @@ const LINO_TREES = {
   'papa (lovesMama: loves mama)\n  child: "quoted value"\n(1 2)\n': ['lino_document', [
     ['link', [
       ['value:reference', 'papa'], ws(' '),
-      ['value:link', ['(', ['id:reference', 'lovesMama'], ':', ws(' '), ['value:reference', 'loves'], ws(' '),
-        ['value:reference', 'mama'], ')']],
+      ['value:group', ['(', ['link:link', [['id:reference', 'lovesMama'], ':', ws(' '), ['value:reference', 'loves'],
+        ws(' '), ['value:reference', 'mama']]], ')']],
       ws('\n  '),
       ['child:link', [['id:reference', 'child'], ':', ws(' '), ['value:quoted_reference', '"quoted value"']]],
     ]],
     ws('\n'),
-    ['link', ['(', ['value:reference', '1'], ws(' '), ['value:reference', '2'], ')']],
+    ['group', ['(', ['link:link', [['value:reference', '1'], ws(' '), ['value:reference', '2']]], ')']],
     ws('\n'),
   ]],
   '(unclosed\n': ['lino_document', [{ error: ['(', ['reference', 'unclosed']] }, ws('\n')]],
@@ -235,10 +237,14 @@ function rowTree(rows, text) {
 const structural = (node) => !node.flags.includes('X') && node.children !== undefined;
 const fieldChildren = (node, field) => node.children.filter((child) => child.field === field);
 
-// A LiNo link as the official parser returns it: {id, values, children}.
+// A LiNo link as the official parser returns it: {id, values, children}, or
+// {nested, children} for a parenthesized group.
 function linoLink(node) {
   if (node.kind === 'reference') return { id: node.text, values: [], children: [] };
   if (node.kind === 'quoted_reference') return { id: node.text.slice(1, -1), values: [], children: [] };
+  if (node.kind === 'group') {
+    return { nested: fieldChildren(node, 'link').map(linoLink), children: fieldChildren(node, 'child').map(linoLink) };
+  }
   if (node.kind !== 'link') throw new Error(`no LiNo projection for ${node.kind}`);
   const [id] = fieldChildren(node, 'id');
   return {
@@ -248,16 +254,18 @@ function linoLink(node) {
   };
 }
 
-const normalizeLink = (link) => ({
-  id: link.id ?? null,
-  values: (link.values ?? []).map(normalizeLink),
-  children: (link.children ?? []).map(normalizeLink),
-});
+const normalizeLink = (link) => (link.nested !== undefined
+  ? { nested: link.nested.map(normalizeLink), children: (link.children ?? []).map(normalizeLink) }
+  : {
+    id: link.id ?? null,
+    values: (link.values ?? []).map(normalizeLink),
+    children: (link.children ?? []).map(normalizeLink),
+  });
 
 function checkLino(source, rows, positive) {
   let official = null;
   try {
-    official = parseLinks(source).map(normalizeLink);
+    official = parseLinks(stripComments(source), { maxDepth: DEFAULT_MAX_DEPTH }).map(normalizeLink);
   } catch {
     official = null;
   }
@@ -266,7 +274,7 @@ function checkLino(source, rows, positive) {
     if (official !== null || !hasError) throw new Error(`LiNo recovery ${JSON.stringify(source)} must be rejected by links-notation and have error rows`);
     return;
   }
-  const projected = rowTree(rows, source).children.filter((child) => structural(child) && child.kind === 'link').map(linoLink);
+  const projected = rowTree(rows, source).children.filter((child) => structural(child) && ['link', 'group'].includes(child.kind)).map(linoLink);
   if (hasError || JSON.stringify(projected) !== JSON.stringify(official)) {
     throw new Error(`LiNo ${JSON.stringify(source)}: rows project to ${JSON.stringify(projected)}, links-notation reads ${JSON.stringify(official)}`);
   }

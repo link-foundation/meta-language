@@ -109,43 +109,65 @@ class LinoSemanticsParser {
     return next === OPEN ? this.parseParenthesizedRelation() : this.parseAtomReference();
   }
 
+  // Nested parentheses are read with an explicit stack of open relations, so
+  // a document of any nesting depth is read without deep recursion.
   parseParenthesizedRelation() {
+    const open = [this.openRelation()];
+    for (;;) {
+      const relation = open.at(-1);
+      this.skipWhitespace(false);
+      const next = this.peek();
+      if (next === OPEN) {
+        open.push(this.openRelation());
+        continue;
+      }
+      let reference;
+      if (next === CLOSE) {
+        this.cursor += 1;
+      } else if (next !== undefined) {
+        reference = this.parseAtomReference();
+      }
+      if (reference !== undefined) {
+        relation.references.push(reference);
+        continue;
+      }
+      open.pop();
+      const id = this.closeRelation(relation);
+      if (open.length === 0) return id;
+      open.at(-1).references.push(id);
+    }
+  }
+
+  // Reads `(` and a leading `name:` of the relation it opens.
+  openRelation() {
     const start = this.cursor;
     this.cursor += 1;
     this.skipWhitespace(false);
     const references = [];
-    let relation;
+    let named;
     if (this.peek() !== CLOSE) {
       const atom = this.parseAtomText();
       if (atom) {
         this.skipWhitespace(false);
         if (this.peek() === COLON) {
           this.cursor += 1;
-          relation = this.insertRelation([], atom.text, start, atom.end);
+          named = this.insertRelation([], atom.text, start, atom.end);
         } else {
           references.push(this.referenceForAtom(atom.text));
         }
       }
     }
-    for (;;) {
-      this.skipWhitespace(false);
-      const next = this.peek();
-      if (next === CLOSE) {
-        this.cursor += 1;
-        break;
-      }
-      if (next === undefined) break;
-      const reference = this.parseExpression();
-      if (reference === undefined) break;
-      references.push(reference);
-    }
-    if (relation === undefined) {
+    return { start, references, named };
+  }
+
+  closeRelation({ start, references, named }) {
+    if (named === undefined) {
       return this.insertRelation(references, undefined, start, this.cursor);
     }
-    const link = this.network.link(relation);
+    const link = this.network.link(named);
     link.setReferences(references);
     link.setMetadata(link.metadata().withSpan(this.span(start, this.cursor)));
-    return relation;
+    return named;
   }
 
   parseAtomReference() {
@@ -215,8 +237,14 @@ class LinoSemanticsParser {
   }
 
   point(byte) {
+    // The last line starting at or before `byte`, found by binary search.
     let row = 0;
-    while (row + 1 < this.lineStarts.length && this.lineStarts[row + 1] <= byte) row += 1;
+    let high = this.lineStarts.length - 1;
+    while (row < high) {
+      const middle = (row + high + 1) >> 1;
+      if (this.lineStarts[middle] <= byte) row = middle;
+      else high = middle - 1;
+    }
     return new Point(row, byte - this.lineStarts[row]);
   }
 }

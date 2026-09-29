@@ -8,7 +8,7 @@ use std::collections::BTreeSet;
 use std::error::Error;
 use std::fmt;
 
-use links_notation::{parse_lino_to_links, LiNo};
+use links_notation::{parse_lino_to_links_with_config, LiNo, ParserConfig};
 
 use crate::configuration::ParseConfiguration;
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
@@ -474,7 +474,7 @@ impl LinkCliSubstitution {
     /// Returns [`LinkCliSubstitutionError`] when the text is not a two-sided
     /// link-cli substitution command.
     pub fn parse(source: &str) -> Result<Self, LinkCliSubstitutionError> {
-        let statements = parse_lino_to_links(source)
+        let statements = parse_lino_to_links_with_config(source, &ParserConfig::without_comments())
             .map_err(|error| LinkCliSubstitutionError::new(error.to_string()))?;
         let (pattern, replacement) = match statements.as_slice() {
             [pattern, replacement] => (pattern, replacement),

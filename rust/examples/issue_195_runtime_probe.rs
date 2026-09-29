@@ -6,6 +6,7 @@ use meta_language::{
     LinkNetwork, LinkType, ParseConfiguration, ProgramConstructStatus, ProgramFact,
     ProgramProjectContext, ProgramRange, ProgramRepresentation,
 };
+use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
@@ -117,9 +118,12 @@ fn grammar_case_observations(language: &str, fixture: &str) -> Vec<Value> {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures")
         .join(fixture);
-    let cases: Value =
-        serde_json::from_str(&fs::read_to_string(path).expect("grammar cases are readable"))
-            .expect("grammar cases are valid JSON");
+    let text = fs::read_to_string(path).expect("grammar cases are readable");
+    // The deep-nesting cases hold links nested further than serde_json's
+    // default recursion limit.
+    let mut deserializer = serde_json::Deserializer::from_str(&text);
+    deserializer.disable_recursion_limit();
+    let cases = Value::deserialize(&mut deserializer).expect("grammar cases are valid JSON");
     cases["cases"]
         .as_array()
         .expect("grammar cases")

@@ -521,7 +521,7 @@ pub const PARITY_FIXTURES: &[ParityFixture] = &[
             ParityCapability::ObjectRoundTrip,
         ],
     },
-    // Upstream: link-foundation/links-notation README documents parse_lino_to_links/format_links as the round-trip API the 0.13 crate exposes; license: Unlicense.
+    // Upstream: link-foundation/links-notation README documents parse_lino_to_links/format_links as the round-trip API the 0.22 crate exposes; license: Unlicense.
     ParityFixture {
         target_name: "links-notation",
         name: "whole network serialization fixture",

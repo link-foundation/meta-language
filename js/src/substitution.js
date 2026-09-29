@@ -51,7 +51,7 @@ export class LinkCliSubstitution {
   }
 
   static parse(source) {
-    const parsed = new Parser().parse(source);
+    const parsed = new Parser({ comments: false }).parse(source);
     const [patternSide, replacementSide] = normalizeTwoSidedCommand(parsed);
     return new LinkCliSubstitution(parseSide(patternSide), parseSide(replacementSide));
   }

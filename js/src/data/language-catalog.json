@@ -3,7 +3,7 @@
   "source": "parity/language-grammar-inventory.json",
   "treeSitterCli": "tree-sitter 0.25.10 (da6fe9beb4f7f67beb75914ca8e0d48ae48d6406)",
   "languages": [
-    {"name":"LiNo","family":"meta","aliases":["lino"],"extensions":[".lino"],"grammars":[{"id":"links-notation","version":"0.13.0","parserSha256":"f67e147d49d59c4d7fc0b7d66effb0a6aa9ccdf4058c8f01b5097e5207228346"}]},
+    {"name":"LiNo","family":"meta","aliases":["lino"],"extensions":[".lino"],"grammars":[{"id":"links-notation","version":"0.22.0","parserSha256":"b514b75e820829c7cd2dc79856252dd772aa6e3d5fc93dfca23a82fdd4f88418"}]},
     {"name":"txt","family":"document","aliases":["txt","text","plain text"],"extensions":[".txt",".text"],"grammars":[{"id":"plain-text","version":"1.0.0","parserSha256":"0c63bf89373001d981e0254be32b5179bbcd17e6630dd232644335bacaa911d2"}]},
     {"name":"Markdown","family":"document","aliases":["markdown","md"],"extensions":[".md",".markdown"],"grammars":[{"id":"markdown","version":"0.5.6","parserSha256":"0f51c93b5d79d08bc74088d91a9aafb7e40ad7e2f169164865c01d392277bb07"},{"id":"markdown_inline","version":"0.5.6","parserSha256":"0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c"}]},
     {"name":"PDF","family":"document","aliases":["pdf"],"extensions":[".pdf"],"grammars":[{"id":"pdf-cos","version":"1.0.0","parserSha256":"204927a48c4bf3c14d36ead2757b8a8d71e519008140a01e2237fb708698e39e"}]},

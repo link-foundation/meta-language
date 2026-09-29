@@ -101,7 +101,7 @@ export class LinkNetwork {
     if (network._insertCanonicalLino(source)) {
       return network;
     }
-    for (const parsed of new Parser().parse(source)) {
+    for (const parsed of new Parser({ comments: false }).parse(source)) {
       network._insertParsedLinoLink(parsed);
     }
     return network;

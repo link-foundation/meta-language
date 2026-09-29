@@ -9,7 +9,7 @@
 //! languages, source spans, parse flags, and term registration.
 //!
 //! The emitted dialect is plain links-notation accepted by the
-//! [`links_notation`] 0.13 crate, so other ecosystem parsers can consume the
+//! [`links_notation`] 0.22 crate, so other ecosystem parsers can consume the
 //! output. Each statement has the shape:
 //!
 //! ```text
@@ -34,7 +34,7 @@ use std::fmt;
 use std::fmt::Write as _;
 use std::sync::Arc;
 
-use links_notation::{parse_lino_to_links, LiNo};
+use links_notation::{parse_lino_to_links_with_config, LiNo, ParserConfig};
 
 use crate::link_flags::LinkFlags;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
@@ -87,7 +87,7 @@ impl LinkNetwork {
     /// Returns [`LinoSerializationError`] when the text is not valid
     /// links-notation or does not match the serialization schema.
     pub fn from_lino(text: &str) -> Result<Self, LinoSerializationError> {
-        let statements = parse_lino_to_links(text)
+        let statements = parse_lino_to_links_with_config(text, &ParserConfig::without_comments())
             .map_err(|error| LinoSerializationError::Parse(error.to_string()))?;
         let mut network = Self::new();
         for statement in &statements {

@@ -278,7 +278,7 @@ function loadRule(links, ruleLink) {
 
 function parseCanonicalNetwork(source) {
   const links = new Map();
-  for (const statement of new Parser().parse(source)) {
+  for (const statement of new Parser({ comments: false }).parse(source)) {
     const id = numericId(statement.id, 'top-level statement must be an identified link');
     const references = [];
     let metadata;
