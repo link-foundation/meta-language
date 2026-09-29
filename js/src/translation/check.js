@@ -8,7 +8,7 @@
 import { typeError, unsupported } from './diagnostics.js';
 import { normaliseProof } from './proof.js';
 import {
-  BOOL, FLOAT, INT, NAT, STRING, UNIT, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
+  BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, isFloat, isNatural, isNumeric, sameType, typeKey,
 } from './types.js';
 
 const COMPARISONS = new Set(['eq', 'ne', 'lt', 'le', 'gt', 'ge']);
@@ -156,6 +156,7 @@ class Checker {
 
   resolveType(type, path, span) {
     if (!type) throw typeError('missing type annotation', span);
+    if (type.kind === 'array') return array(this.resolveType(type.element, path, span));
     if (type.kind !== 'named') return type;
     const entry = this.lookup(type.path, path, span);
     if (!entry || entry.k !== 'data') throw typeError(`unknown type ${type.path.join('.')}`, type.span ?? span);
@@ -248,6 +249,7 @@ class Checker {
     if (value.type.kind === 'data' || value.type.kind === 'unit') {
       throw unsupported('output of structured values', `printing a ${typeKey(value.type)} value has no portable textual form`, expr.span);
     }
+    if (value.type.kind === 'array') throw arrayText(expr.span);
     const text = { k: 'toString', arg: value, type: STRING };
     const consoleStyle = CONSOLE_STYLES.has(style);
     // console.log prints -0 as "-0", where String(-0) is "0".
@@ -355,7 +357,32 @@ class Checker {
       case 'app':
         return this.application(node.k === 'app' ? node.fn : node, node.args ?? [], env, path, expected, node.span);
       case 'field': {
+        if (node.field === 'length') {
+          const object = this.expr(node.object, env, path, undefined);
+          if (object.type.kind === 'array') return { k: 'length', array: object, type: FLOAT };
+          if (object.type.kind === 'string') {
+            throw unsupported('length of a string', 'String.prototype.length counts UTF-16 code units, which the portable string types do not keep', node.span);
+          }
+        }
         throw unsupported('field access', `field ${node.field} is only portable inside a constructor match`, node.span);
+      }
+      case 'length': {
+        const object = this.expr(node.object, env, path, undefined);
+        if (object.type.kind !== 'array') throw typeError(`length of ${typeKey(object.type)}`, node.span);
+        return { k: 'length', array: object, type: node.integer ? INT : FLOAT };
+      }
+      case 'array':
+        return this.arrayLiteral(node, env, path, expected);
+      case 'index': {
+        const object = this.expr(node.object, env, path, undefined);
+        if (object.type.kind !== 'array') {
+          throw unsupported(`indexing of ${typeKey(object.type)}`, 'only arrays are indexed in the portable core', node.span);
+        }
+        const index = this.expr(node.index, env, path, undefined);
+        if (!isFloat(index.type) && index.type.kind !== 'int' && index.type.kind !== 'nat') {
+          throw typeError(`array index of type ${typeKey(index.type)}; an index is a Number or a BigInt`, node.index.span ?? node.span);
+        }
+        return { k: 'index', array: object, index, type: object.type.element };
       }
       case 'unary': {
         if (node.op === 'not') {
@@ -407,6 +434,7 @@ class Checker {
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
         if (arg.type.kind === 'string') return arg;
+        if (arg.type.kind === 'array') throw arrayText(node.span);
         if (!isOrdered(arg.type) && arg.type.kind !== 'bool') throw typeError(`toString of ${typeKey(arg.type)}`, node.span);
         return { k: 'toString', arg, type: STRING };
       }
@@ -433,6 +461,43 @@ class Checker {
     }
   }
 
+  /**
+   * `[a, ...xs, b]` is the array of the runs of elements between the spread
+   * arrays, appended in order; `[...xs]` is `xs` itself, since no array is
+   * ever mutated.
+   */
+  arrayLiteral(node, env, path, expected) {
+    let element = expected?.kind === 'array' ? expected.element : undefined;
+    // Inference fixes the element type of an array literal with no element of its own.
+    if (!element && node.element) element = this.resolveType(node.element, path, node.span);
+    const parts = [];
+    let run = null;
+    for (const item of node.items) {
+      const want = element && item.spread ? array(element) : element;
+      let value = this.expr(item.value, env, path, want);
+      if (item.spread && value.type.kind !== 'array') {
+        throw unsupported(`spread of ${typeKey(value.type)}`, 'only arrays are spread into an array literal', item.value.span ?? node.span);
+      }
+      let type = item.spread ? value.type.element : value.type;
+      // Guarded parameters are naturals, and every BigInt an integer.
+      if (!element && this.language === 'JavaScript' && type.kind === 'nat') type = INT;
+      element ??= type;
+      value = coerce(value, item.spread ? array(element) : element, this.language, item.value.span ?? node.span);
+      if (item.spread) {
+        parts.push(value);
+        run = null;
+      } else if (run) {
+        run.items.push(value);
+      } else {
+        run = { k: 'array', items: [value], type: array(element) };
+        parts.push(run);
+      }
+    }
+    if (!element) throw unsupported('empty array of an unknown type', 'nothing fixes the type of the elements of this empty array; declare it with JSDoc', node.span);
+    if (!parts.length) return { k: 'array', items: [], type: array(element) };
+    return parts.reduce((left, right) => ({ k: 'append', left, right, type: array(element) }));
+  }
+
   binary(node, env, path, expected, allowLiteral) {
     const { op } = node;
     if (op === 'and' || op === 'or') {
@@ -449,6 +514,9 @@ class Checker {
       const [left, right] = this.operands(node.left, node.right, env, path, node.span);
       if (left.type.kind === 'data' || left.type.kind === 'unit') {
         throw unsupported('structural equality of data values', 'comparisons of data values are not in the portable core', node.span);
+      }
+      if (left.type.kind === 'array') {
+        throw unsupported('comparison of arrays', '=== of two arrays compares which array each is, which a value translation does not keep; compare their elements', node.span);
       }
       if (op !== 'eq' && op !== 'ne' && !isOrdered(left.type)) throw typeError(`ordering on ${typeKey(left.type)}`, node.span);
       return { k: 'binary', op, left, right, type: BOOL, domain: left.type };
@@ -473,6 +541,7 @@ class Checker {
       if (checked.type.kind === 'data' || checked.type.kind === 'unit') {
         throw unsupported('string conversion of structured values', `String(${typeKey(checked.type)}) has no portable textual form`, surface.span);
       }
+      if (checked.type.kind === 'array') throw arrayText(surface.span);
       return { k: 'toString', arg: checked, type: STRING };
     };
     return { k: 'binary', op: 'concat', left: text(left, node.left), right: text(right, node.right), type: STRING };
@@ -880,6 +949,11 @@ class Checker {
     }
     throw unsupported('pattern', `${pattern.k} patterns are not in the portable core`, span);
   }
+}
+
+/** Arrays have a text, but not one the translation reproduces yet. */
+function arrayText(span) {
+  return unsupported('text of an array', 'console.log lays an array out with util.inspect and String joins its elements with commas, which the translation does not reproduce yet; print the elements one by one', span);
 }
 
 function literal(type, value) {

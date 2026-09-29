@@ -153,7 +153,7 @@ impl JavaScriptParser {
         if self.cursor.is("[") {
             return Err(unsupported(
                 "array destructuring",
-                "arrays are outside the portable core",
+                "bind each element by its index, const a = xs[0]",
                 Some(self.to_here(start)),
             ));
         }

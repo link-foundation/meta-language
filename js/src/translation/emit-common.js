@@ -12,6 +12,10 @@ export const ASSUMPTIONS = {
     id: 'non-aborting-executions',
     statement: 'the translation agrees with the source on executions that do not abort; the source aborts on machine-integer overflow, checked conversion failure, division by zero or an explicit panic, and the target computes an unspecified value there instead',
   },
+  inBoundsReads: {
+    id: 'in-bounds-array-reads',
+    statement: 'the translation agrees with the source on executions whose array reads are in bounds; JavaScript reads undefined at an index outside an array, where the target aborts',
+  },
 };
 
 export class EmitState {
@@ -174,6 +178,11 @@ export class EmitState {
     this.assume(ASSUMPTIONS.nonAborting, `no abort: ${message}`);
   }
 
+  /** An array read: in bounds it is the element, outside it JavaScript's undefined, which the targets do not model. */
+  arrayRead() {
+    this.assume(ASSUMPTIONS.inBoundsReads);
+  }
+
   encode(id, statement) {
     if (!this.encodings.has(id)) this.encodings.set(id, { id, statement });
   }
@@ -206,6 +215,7 @@ export function dependencies(entry) {
   const found = new Set();
   const types = (type) => {
     if (type?.kind === 'data') found.add(type.name);
+    if (type?.kind === 'array') types(type.element);
   };
   const visit = (node) => {
     if (!node || typeof node !== 'object') return;

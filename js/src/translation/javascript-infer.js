@@ -46,6 +46,8 @@ class Inference {
     this.signatures = new Map();
     // The types of the fields the translator makes up, which are inferred like parameters.
     this.fieldTerms = new Map();
+    // Array literals with no element of their own, whose element type the rest of the program fixes.
+    this.emptyArrays = new Map();
   }
 
   fresh(bigint = false) {
@@ -73,6 +75,7 @@ class Inference {
     if (!type) return this.fresh();
     if (type.kind === 'named') return { kind: 'data', name: type.path.at(-1) };
     if (type.kind === 'nat') return INT;
+    if (type.kind === 'array') return { kind: 'array', element: this.declared(type.element) };
     return type;
   }
 
@@ -100,6 +103,10 @@ class Inference {
       return;
     }
     if (isInteger(a) && isInteger(b)) return;
+    if (a.kind === 'array' && b.kind === 'array') {
+      this.unify(a.element, b.element, where);
+      return;
+    }
     if (a.kind !== b.kind || (a.kind === 'data' && a.name !== b.name) || (a.kind === 'fixed' && (a.bits !== b.bits || a.signed !== b.signed))) {
       throw typeError(`one value is used as ${describe(a)} and as ${describe(b)}; declare the types of the function with JSDoc`, where);
     }
@@ -134,6 +141,7 @@ class Inference {
       if (!fn.ret) fn.ret = this.surface(signature.ret, fn.span);
     }
     for (const [field, term] of this.fieldTerms) field.type = this.surface(term, field.span);
+    for (const [node, term] of this.emptyArrays) node.element = this.surface(term, node.span);
   }
 
   /** Deferred `+` and field constraints, until nothing more is known; then `+` of unknowns adds numbers. */
@@ -151,6 +159,12 @@ class Inference {
           this.fields.splice(this.fields.indexOf(constraint), 1);
           progress = true;
         }
+      }
+      // `.length` of a value nothing else fixes reads an array.
+      const length = this.fields.find(({ object, field }) => field === 'length' && this.resolve(object).kind === 'var');
+      if (!progress && length) {
+        this.unify(length.object, { kind: 'array', element: this.fresh() }, length.where);
+        progress = true;
       }
       if (!progress && this.plus.length) {
         this.plusStep(this.plus.shift(), true);
@@ -174,6 +188,10 @@ class Inference {
 
   fieldStep({ object, field, result, where }) {
     const type = this.resolve(object);
+    if (type.kind === 'array' && field === 'length') {
+      this.unify(result, FLOAT, where);
+      return true;
+    }
     if (type.kind !== 'data') {
       const owners = [...this.data].filter(([, ctors]) => ctors.some((ctor) => ctor.fields.some((candidate) => candidate.name === field)));
       if (type.kind !== 'var' || owners.length !== 1) return false;
@@ -190,6 +208,7 @@ class Inference {
     const type = this.resolve(term);
     if (type.kind === 'var') return this.bigints.has(type.id) ? INT : FLOAT;
     if (type.kind === 'data') return { kind: 'named', path: [ROOT, type.name], span: where };
+    if (type.kind === 'array') return { kind: 'array', element: this.surface(type.element, where) };
     return type;
   }
 
@@ -260,6 +279,24 @@ class Inference {
         return this.expr(node.body, env);
       case 'ctorObject':
         return this.ctorObject(node, env);
+      case 'array': {
+        const element = this.fresh();
+        if (node.items.every((item) => item.spread)) this.emptyArrays.set(node, element);
+        for (const item of node.items) {
+          const value = this.expr(item.value, env);
+          this.unify(value, item.spread ? { kind: 'array', element } : element, item.value.span ?? node.span);
+        }
+        return { kind: 'array', element };
+      }
+      case 'index': {
+        const element = this.fresh();
+        this.unify(this.expr(node.object, env), { kind: 'array', element }, node.object.span ?? node.span);
+        this.expr(node.index, env);
+        return element;
+      }
+      case 'length':
+        this.unify(this.expr(node.object, env), { kind: 'array', element: this.fresh() }, node.span);
+        return node.integer ? this.fresh(true) : FLOAT;
       default:
         return this.fresh();
     }
@@ -394,6 +431,8 @@ function describe(type) {
       return 'a string';
     case 'data':
       return `a ${type.name}`;
+    case 'array':
+      return 'an array';
     default:
       return type.kind;
   }

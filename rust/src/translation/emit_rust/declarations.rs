@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 use super::{
     block, comparison_operator, format_escape, indent, own, rename_function, rename_theorem, snake,
     tail_loop, Binder, Decl, Emitted, Expr, ModuleTree, Prop, Result, RustEmitter, TheoremCheck,
-    Type, NUMBER_PRELUDE, PRELUDE,
+    Type, ARRAY_PRELUDE, NUMBER_PRELUDE, PRELUDE,
 };
 
 impl<'p> RustEmitter<'p> {
@@ -49,6 +49,10 @@ impl<'p> RustEmitter<'p> {
         }
         if self.uses_number {
             lines.push(NUMBER_PRELUDE.to_owned());
+            lines.push(String::new());
+        }
+        if self.uses_array {
+            lines.push(ARRAY_PRELUDE.to_owned());
             lines.push(String::new());
         }
         let has_main = main.is_some();
@@ -110,6 +114,13 @@ impl<'p> RustEmitter<'p> {
             Type::String => "String".to_owned(),
             Type::Unit => "()".to_owned(),
             Type::Data { name } => format!("crate::{}", self.state.reference(name, "::")),
+            Type::Array { element } => {
+                self.state.encode(
+                    "arrays",
+                    "a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics",
+                );
+                format!("Vec<{}>", self.ty(element))
+            }
             other => unreachable!("no Rust type for {}", other.kind()),
         }
     }
@@ -206,12 +217,19 @@ impl<'p> RustEmitter<'p> {
             return false;
         }
         self.program.data(name).ctors.iter().any(|ctor| {
-            ctor.fields.iter().any(|field| match &field.ty {
-                Type::Float => true,
-                Type::Data { name } => self.holds_float(name, seen),
-                _ => false,
-            })
+            ctor.fields
+                .iter()
+                .any(|field| self.type_holds_float(&field.ty, seen))
         })
+    }
+
+    fn type_holds_float(&self, ty: &Type, seen: &mut BTreeSet<String>) -> bool {
+        match ty {
+            Type::Float => true,
+            Type::Array { element } => self.type_holds_float(element, seen),
+            Type::Data { name } => self.holds_float(name, seen),
+            _ => false,
+        }
     }
 
     pub(super) fn theorem(&mut self, entry: &'p Decl) -> Result<String> {

@@ -14,7 +14,7 @@ import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
-import { BOOL, FLOAT, INT, NAT, STRING } from './types.js';
+import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 
 const ROOT = 'crate';
 const EQUALITY = { '===': 'eq', '!==': 'ne' };
@@ -242,11 +242,25 @@ class JavaScriptParser {
               if (value.kind !== 'string') throw unsupported(`@typedef ${tag.name}`, 'the $ tag must be a string literal type', range);
               name = value.value;
             } else {
-              const type = c.identifier('field type');
-              if (!c.is(',') && !c.is(';') && !c.is('}')) {
-                throw unsupported(`field type of ${key.value}`, 'field types are bigint, boolean, string or a @typedef name', range);
+              let type = c.identifier('field type').value;
+              if (c.is('<')) {
+                // Array<T>, whose closing brackets may be read as one >> token.
+                let depth = 0;
+                do {
+                  const token = c.next();
+                  type += token.value;
+                  for (const char of token.value) depth += char === '<' ? 1 : char === '>' ? -1 : 0;
+                } while (depth > 0 && !c.atEnd());
               }
-              fields.push({ name: key.value, type: this.type(type.value, range) });
+              while (c.is('[')) {
+                c.next();
+                c.expect(']', 'field type');
+                type += '[]';
+              }
+              if (!c.is(',') && !c.is(';') && !c.is('}')) {
+                throw unsupported(`field type of ${key.value}`, 'field types are number, bigint, boolean, string, a @typedef name or an array T[] of one', range);
+              }
+              fields.push({ name: key.value, type: this.type(type, range) });
             }
             if (!c.eat(',') && !c.eat(';')) break;
           }
@@ -270,8 +284,11 @@ class JavaScriptParser {
     if (name === 'boolean') return BOOL;
     if (name === 'string') return STRING;
     if (name === 'number') return FLOAT;
+    if (name.endsWith('[]')) return array(this.type(name.slice(0, -2), range));
+    const generic = /^(?:Array|ReadonlyArray)<(.+)>$/u.exec(name);
+    if (generic) return array(this.type(generic[1], range));
     if (!/^[A-Za-z_$][\w$]*$/u.test(name) || ['object', 'any', 'unknown', 'void', 'undefined', 'null', 'Object', 'Function', 'Array', 'symbol'].includes(name)) {
-      throw unsupported(`JSDoc type {${name}}`, 'portable types are number, bigint, boolean, string and @typedef data types', range);
+      throw unsupported(`JSDoc type {${name}}`, 'portable types are number, bigint, boolean, string, arrays T[] of them and @typedef data types', range);
     }
     return { kind: 'named', path: [ROOT, name], span: range };
   }
@@ -579,7 +596,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     if (c.is('{')) return this.destructuring(start);
-    if (c.is('[')) throw unsupported('array destructuring', 'arrays are outside the portable core', span(start, c.peek()));
+    if (c.is('[')) throw unsupported('array destructuring', 'bind each element by its index, const a = xs[0]', span(start, c.peek()));
     const name = c.identifier('const');
     reserved(name);
     if (!c.eat('=')) throw this.fail('expected = in const');
@@ -723,7 +740,9 @@ class JavaScriptParser {
     const declared = c.is('let') || c.is('const') || c.is('var');
     if (c.isKind('identifier', declared ? 1 : 0) && (c.is('of', declared ? 2 : 1) || c.is('in', declared ? 2 : 1))) {
       const kind = c.peek(declared ? 2 : 1).value;
-      throw unsupported(`for…${kind} loop`, 'iteration over arrays, strings and objects is outside the portable core; count with for (let i = …; …; …)', span(start, c.peek()));
+      if (kind === 'in') throw unsupported('for…in loop', 'iteration over the keys of objects is outside the portable core; count with for (let i = …; …; …)', span(start, c.peek()));
+      if (!declared || c.is('var')) throw unsupported('for…of without const or let', 'declare the loop variable with const or let, so each iteration has its own', span(start, c.peek()));
+      return this.forOf(start);
     }
     const outer = this.scope;
     this.scope = { locals: new Set(outer.locals), tdz: new Set(outer.tdz), mutable: new Set(outer.mutable) };
@@ -755,6 +774,51 @@ class JavaScriptParser {
     } finally {
       this.scope = outer;
     }
+  }
+
+  /**
+   * `for (const x of xs) body` reads the elements of an array in order: it
+   * is a loop over the indices of the array, whose body first binds `x` to
+   * the element at the index. The array is evaluated once, before the loop.
+   */
+  forOf(start) {
+    const c = this.cursor;
+    const binding = c.next().value;
+    const name = c.identifier('for…of');
+    reserved(name);
+    c.next();
+    const iterable = this.expr();
+    c.expect(')', 'for');
+    this.generatedCount += 1;
+    const values = `ml_values${this.generatedCount}`;
+    const index = `ml_index${this.generatedCount}`;
+    const outer = this.scope;
+    this.scope = { locals: new Set(outer.locals), tdz: new Set(outer.tdz), mutable: new Set(outer.mutable) };
+    let body;
+    try {
+      this.declareLocal(name.value, binding === 'let');
+      body = this.loopBody();
+    } finally {
+      this.scope = outer;
+    }
+    const where = span(start, c.peek());
+    const read = (local) => ({ k: 'name', path: [local], span: where });
+    const element = { k: 'index', object: read(values), index: read(index), span: where };
+    return {
+      s: 'block',
+      body: [
+        { s: 'const', name: values, value: iterable, span: where },
+        {
+          s: 'for',
+          init: [{ s: 'let', name: index, value: { k: 'num', value: '0', span: where }, span: where }],
+          cond: { k: 'binary', op: 'lt', left: read(index), right: { k: 'length', object: read(values), integer: true, span: where }, span: where },
+          update: [{ s: 'assign', name: index, value: { k: 'binary', op: 'add', left: read(index), right: { k: 'num', value: '1', span: where }, span: where }, span: where }],
+          body: [{ s: binding, name: name.value, value: element, span: where }, { s: 'block', body, span: where }],
+          span: where,
+        },
+      ],
+      span: where,
+    };
   }
 
   jumpStatement() {
@@ -1360,7 +1424,16 @@ class JavaScriptParser {
         continue;
       }
       if (c.is('?.')) throw unsupported('optional chaining', 'null and undefined are outside the portable core', span(token, token));
-      if (c.is('[')) throw unsupported('indexing', 'arrays and computed properties are outside the portable core', span(token, token));
+      if (c.is('[')) {
+        c.next();
+        const index = this.expr();
+        const close = c.expect(']', 'index');
+        expr = { k: 'index', object: expr, index, span: joined(expr, close, token) };
+        if (c.peek().kind === 'punct' && (ASSIGNMENTS.has(c.peek().value) || c.is('++') || c.is('--'))) {
+          throw unsupported('assignment of an array element', 'the portable core reads arrays and does not mutate them; build a new array with [...xs, value]', expr.span);
+        }
+        continue;
+      }
       if (c.is('(')) throw unsupported('call of a computed function', 'only named functions can be called', span(token, token));
       if (c.isKind('template')) throw unsupported('tagged template', 'template tags are functions as values', span(token, token));
       if (c.is('++') || c.is('--')) throw unsupported(`${token.value} operator`, 'mutation is outside the portable core', span(token, token));
@@ -1397,9 +1470,25 @@ class JavaScriptParser {
       return { ...inner, span: span(token, c.peek()) };
     }
     if (c.is('{')) return this.objectLiteral();
-    if (c.is('[')) throw unsupported('array literal', 'arrays are outside the portable core', span(token, token));
+    if (c.is('[')) return this.arrayLiteral();
     if (c.is('/')) throw unsupported('regular expression', 'outside the portable core', span(token, token));
     throw this.fail('expected an expression');
+  }
+
+  /** `[a, ...xs, b]`: the elements in order, with the elements of each spread array in place. */
+  arrayLiteral() {
+    const c = this.cursor;
+    const start = c.next();
+    const items = [];
+    while (!c.is(']')) {
+      if (c.is(',')) throw unsupported('array hole', 'a hole is an element that reads undefined, which is not a portable value', span(c.peek(), c.peek()));
+      const spread = c.is('...');
+      if (spread) c.next();
+      items.push({ spread, value: this.expr() });
+      if (!c.eat(',')) break;
+    }
+    c.expect(']', 'array literal');
+    return { k: 'array', items, span: span(start, c.peek()) };
   }
 
   matching(index) {

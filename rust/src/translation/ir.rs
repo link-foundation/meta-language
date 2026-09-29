@@ -122,11 +122,19 @@ impl Expr {
             | Node::Var { .. }
             | Node::Abort { .. }
             | Node::OutNil => Vec::new(),
-            Node::Call { args, .. } | Node::Ctor { args, .. } => args.iter().collect(),
-            Node::Unary { arg, .. } | Node::ToString { arg, .. } | Node::Cast { arg, .. } => {
-                vec![arg]
+            Node::Call { args, .. } | Node::Ctor { args, .. } | Node::Array { items: args } => {
+                args.iter().collect()
             }
-            Node::Binary { left, right, .. } => vec![left, right],
+            Node::Unary { arg, .. }
+            | Node::ToString { arg, .. }
+            | Node::Cast { arg, .. }
+            | Node::Length { array: arg } => vec![arg],
+            Node::Binary { left, right, .. }
+            | Node::Append { left, right }
+            | Node::Index {
+                array: left,
+                index: right,
+            } => vec![left, right],
             Node::If {
                 cond,
                 then,
@@ -162,6 +170,22 @@ impl Expr {
                 let tail = Box::new(visit(tail));
                 Node::OutCons { head, tail }
             }
+            Node::Array { items } => Node::Array {
+                items: items.iter().map(&mut *visit).collect(),
+            },
+            Node::Append { left, right } => {
+                let left = Box::new(visit(left));
+                let right = Box::new(visit(right));
+                Node::Append { left, right }
+            }
+            Node::Index { array, index } => {
+                let array = Box::new(visit(array));
+                let index = Box::new(visit(index));
+                Node::Index { array, index }
+            }
+            Node::Length { array } => Node::Length {
+                array: Box::new(visit(array)),
+            },
             Node::Call { func, args } => Node::Call {
                 func: func.clone(),
                 args: args.iter().map(&mut *visit).collect(),
@@ -330,6 +354,25 @@ pub enum Node {
         text: Box<Expr>,
         body: Box<Expr>,
     },
+    /// A JavaScript array of `items`.
+    Array {
+        items: Vec<Expr>,
+    },
+    /// The elements of `left`, then those of `right`.
+    Append {
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    /// The element of `array` at `index`, a Number or an integer; a read
+    /// outside the array aborts.
+    Index {
+        array: Box<Expr>,
+        index: Box<Expr>,
+    },
+    /// The number of elements of `array`, as a Number or an integer.
+    Length {
+        array: Box<Expr>,
+    },
     /// No lines printed (see `output`).
     OutNil,
     /// The lines `tail` with `head` printed after them.
@@ -357,6 +400,10 @@ impl Node {
             Self::Cast { .. } => "cast",
             Self::Abort { .. } => "abort",
             Self::Print { .. } => "print",
+            Self::Array { .. } => "array",
+            Self::Append { .. } => "append",
+            Self::Index { .. } => "index",
+            Self::Length { .. } => "length",
             Self::OutNil => "outNil",
             Self::OutCons { .. } => "outCons",
         }

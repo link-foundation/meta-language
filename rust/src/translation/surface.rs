@@ -265,6 +265,23 @@ pub enum SNode {
         #[serde(with = "ordered_fields")]
         fields: Vec<(String, SExpr)>,
     },
+    /// A JavaScript array literal `[a, ...xs, b]`.
+    Array {
+        items: Vec<SArrayItem>,
+        /// The element type inference fixed for a literal with no element of its own.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        element: Option<Type>,
+    },
+    /// `xs[i]`, a read of an array element.
+    Index {
+        object: Box<SExpr>,
+        index: Box<SExpr>,
+    },
+    /// The length of an array: a Number, or for the counter of a for…of loop a `BigInt`.
+    Length {
+        object: Box<SExpr>,
+        integer: bool,
+    },
     // Frontend-internal forms; the checker rejects them if they reach it.
     Cons {
         head: Box<SExpr>,
@@ -305,6 +322,9 @@ impl SNode {
             Self::Abort { .. } => "abort",
             Self::Print { .. } => "print",
             Self::CtorObject { .. } => "ctorObject",
+            Self::Array { .. } => "array",
+            Self::Index { .. } => "index",
+            Self::Length { .. } => "length",
             Self::Cons { .. } => "cons",
             Self::Nil => "nil",
             Self::List { .. } => "list",
@@ -312,6 +332,13 @@ impl SNode {
             Self::Default => "default",
         }
     }
+}
+
+/// An element of an array literal, or with `spread` the elements of an array.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SArrayItem {
+    pub spread: bool,
+    pub value: SExpr,
 }
 
 /// An object whose keys keep their insertion order, as JavaScript objects do.

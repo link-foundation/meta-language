@@ -178,6 +178,15 @@ pub mod ml {
             self.negative
         }
 
+        /// The array index this names, if it is one.
+        pub fn to_index(&self) -> Option<usize> {
+            if self.negative || self.magnitude.len() > 2 {
+                return None;
+            }
+            let value = self.magnitude.iter().rev().fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));
+            usize::try_from(value).ok()
+        }
+
         pub fn neg(&self) -> Self {
             Self::from_parts(!self.negative, self.magnitude.clone())
         }
@@ -396,6 +405,32 @@ pub mod ml_number {
     }
 }`;
 
+const ARRAY_PRELUDE = `/// Reads of JavaScript arrays, which the portable core never mutates.
+pub mod ml_array {
+    /// The element at an index; a read outside the array, undefined in
+    /// JavaScript, aborts.
+    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
+        match index.and_then(|index| values.get(index)) {
+            Some(value) => value.clone(),
+            None => panic!("array index out of range"),
+        }
+    }
+
+    /// The index a Number names: a non-negative integer, -0 included.
+    pub fn number_index(index: f64) -> Option<usize> {
+        if index >= 0.0 && index.fract() == 0.0 && index < 9007199254740992.0 {
+            Some(index as usize)
+        } else {
+            None
+        }
+    }
+
+    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
+        left.extend(right);
+        left
+    }
+}`;
+
 function ident(name) {
   let result = name.replace(/[^A-Za-z0-9_]/gu, '_');
   if (/^[0-9]/u.test(result) || result.startsWith('__') || result === '_' || result === '') result = `x${result}`;
@@ -438,6 +473,7 @@ class RustEmitter {
     this.theoremChecks = [];
     this.usesBig = false;
     this.usesNumber = false;
+    this.usesArray = false;
   }
 
   file() {
@@ -460,6 +496,7 @@ class RustEmitter {
       '',
       ...(this.usesBig ? [PRELUDE, ''] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE, ''] : []),
+      ...(this.usesArray ? [ARRAY_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -509,6 +546,9 @@ class RustEmitter {
         return '()';
       case 'data':
         return `crate::${this.state.ref(type.name, '::')}`;
+      case 'array':
+        this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Rust Vec; a read outside it panics');
+        return `Vec<${this.type(type.element)}>`;
       default:
         throw new Error(`no Rust type for ${type.kind}`);
     }
@@ -536,9 +576,9 @@ class RustEmitter {
     if (seen.has(name)) return false;
     seen.add(name);
     const entry = this.program.declarations.get(name);
-    return entry.ctors.some((ctor) => ctor.fields.some((field) => (
-      field.type.kind === 'float' || (field.type.kind === 'data' && this.holdsFloat(field.type.name, seen))
-    )));
+    const floats = (type) => type.kind === 'float' || (type.kind === 'array' && floats(type.element))
+      || (type.kind === 'data' && this.holdsFloat(type.name, seen));
+    return entry.ctors.some((ctor) => ctor.fields.some((field) => floats(field.type)));
   }
 
   fn(entry) {
@@ -741,9 +781,28 @@ class RustEmitter {
         return this.cast(e);
       case 'abort':
         return `panic!("{}", ${rustString(e.message)})`;
+      case 'array':
+        return e.items.length ? `vec![${e.items.map((item) => this.expr(item)).join(', ')}]` : `Vec::<${this.type(e.type.element)}>::new()`;
+      case 'append':
+        this.usesArray = true;
+        return `crate::ml_array::append(${this.expr(e.left)}, ${this.expr(e.right)})`;
+      case 'index': {
+        this.usesArray = true;
+        this.state.arrayRead();
+        const index = e.index.type.kind === 'float'
+          ? `crate::ml_array::number_index(${this.expr(e.index)})`
+          : `${this.receiver(e.index)}.to_index()`;
+        return `crate::ml_array::at(${this.borrow(e.array)}, ${index})`;
+      }
+      case 'length':
+        if (e.type.kind === 'float') return `(${this.receiver(e.array)}.len() as f64)`;
+        this.usesBig = true;
+        return `crate::ml::Big::from_u128(${this.receiver(e.array)}.len() as u128)`;
       case 'recur': {
-        const args = e.args.map((arg) => this.expr(arg));
-        const names = this.loopParams;
+        // A variable the next iteration keeps as it is, an array most of all, is not copied.
+        const kept = e.args.map((arg, index) => arg.k === 'var' && arg.name === this.loopParams[index]);
+        const args = e.args.map((arg) => this.expr(arg)).filter((_, index) => !kept[index]);
+        const names = this.loopParams.filter((_, index) => !kept[index]);
         const assign = names.length === 1 ? `${names[0]} = ${args[0]};\n` : names.length ? `(${names.join(', ')}) = (${args.join(', ')});\n` : '';
         return `{\n${indent(`${assign}continue;`, 1)}\n}`;
       }

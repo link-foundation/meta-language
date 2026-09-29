@@ -507,7 +507,12 @@ pub(super) fn children(expr: &SExpr) -> Vec<&SExpr> {
             out.push(func);
             out.extend(args);
         }
-        SNode::Field { object, .. } => out.push(object),
+        SNode::Field { object, .. } | SNode::Length { object, .. } => out.push(object),
+        SNode::Index { object, index } => {
+            out.push(object);
+            out.push(index);
+        }
+        SNode::Array { items, .. } => out.extend(items.iter().map(|item| &item.value)),
         SNode::Unary { arg, .. } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
             out.push(arg);
         }

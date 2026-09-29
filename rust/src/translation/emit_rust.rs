@@ -25,10 +25,12 @@ use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::Type;
 use super::Language;
 
+mod arrays;
 mod declarations;
 mod expressions;
 mod number_prelude;
 
+use self::arrays::ARRAY_PRELUDE;
 use self::number_prelude::NUMBER_PRELUDE;
 
 const KEYWORDS: &[&str] = &[
@@ -283,6 +285,15 @@ pub mod ml {
             self.negative
         }
 
+        /// The array index this names, if it is one.
+        pub fn to_index(&self) -> Option<usize> {
+            if self.negative || self.magnitude.len() > 2 {
+                return None;
+            }
+            let value = self.magnitude.iter().rev().fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));
+            usize::try_from(value).ok()
+        }
+
         pub fn neg(&self) -> Self {
             Self::from_parts(!self.negative, self.magnitude.clone())
         }
@@ -517,6 +528,7 @@ pub fn emit_rust(program: &Program) -> Result<Emitted> {
         theorem_checks: Vec::new(),
         uses_big: false,
         uses_number: false,
+        uses_array: false,
         loop_params: None,
     }
     .file()
@@ -544,6 +556,7 @@ struct RustEmitter<'p> {
     theorem_checks: Vec<TheoremCheck>,
     uses_big: bool,
     uses_number: bool,
+    uses_array: bool,
     /// The lifted loop being emitted as a loop, and its parameters, which
     /// each call to it assigns before the next iteration.
     loop_params: Option<(String, Vec<String>)>,

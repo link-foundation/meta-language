@@ -94,6 +94,9 @@ impl RocqEmitter<'_> {
                     self.inhabitant(&e.ty)?
                 ))
             }
+            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
+                self.array_expr(e)
+            }
         }
     }
 
@@ -146,7 +149,7 @@ impl RocqEmitter<'_> {
         })
     }
 
-    pub(super) fn inhabitant(&self, ty: &Type) -> Result<String> {
+    pub(super) fn inhabitant(&mut self, ty: &Type) -> Result<String> {
         Ok(match ty {
             Type::Nat | Type::Fixed { signed: false, .. } => "0%N".to_owned(),
             Type::Int | Type::Fixed { signed: true, .. } => "0%Z".to_owned(),
@@ -155,8 +158,10 @@ impl RocqEmitter<'_> {
             Type::Float => "0%float".to_owned(),
             Type::Unit => "tt".to_owned(),
             Type::Output => "(@nil string)".to_owned(),
+            Type::Array { element } => format!("(@nil {})", self.ty(element)?),
             Type::Data { name } => {
-                let entry = self.program.data(name);
+                let program = self.program;
+                let entry = program.data(name);
                 let Some(ctor) = entry
                     .ctors
                     .iter()

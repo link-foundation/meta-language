@@ -28,6 +28,7 @@ use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{fixed_bounds, Type};
 use super::Language;
 
+mod arrays;
 mod helpers;
 mod main;
 use self::helpers::HELPERS;
@@ -310,6 +311,13 @@ impl LeanEmitter<'_> {
             Type::Unit => "Unit".to_owned(),
             Type::Output => "List String".to_owned(),
             Type::Data { name } => self.state.reference(name, "."),
+            Type::Array { element } => {
+                self.state.encode(
+                    "arrays",
+                    "a JavaScript array, which the portable core never mutates, is a Lean Array; a read outside it panics",
+                );
+                format!("(Array {})", self.ty(element)?)
+            }
             other => {
                 return Err(type_error(
                     format!("no Lean type for {}", other.kind()),
@@ -333,8 +341,11 @@ impl LeanEmitter<'_> {
             lines.push(format!("  | {local}{fields} : {name}"));
         }
         // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
+        // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
         let deriving = if data.output {
             "Inhabited"
+        } else if self.undecidable(&data.full_name, &mut HashSet::new()) {
+            "Repr, Inhabited"
         } else {
             "Repr, DecidableEq, Inhabited"
         };
@@ -605,6 +616,9 @@ impl LeanEmitter<'_> {
             Node::Abort { message } => {
                 self.state.abort_to_total(message);
                 format!("(panic! {} : {})", json_string(message), self.ty(&e.ty)?)
+            }
+            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
+                self.array_expr(e, depth)?
             }
             // Output threading leaves no `print` node.
             Node::Print { .. } => {

@@ -28,6 +28,11 @@ pub const NON_ABORTING: AssumptionText = AssumptionText {
     statement: "the translation agrees with the source on executions that do not abort; the source aborts on machine-integer overflow, checked conversion failure, division by zero or an explicit panic, and the target computes an unspecified value there instead",
 };
 
+pub const IN_BOUNDS_READS: AssumptionText = AssumptionText {
+    id: "in-bounds-array-reads",
+    statement: "the translation agrees with the source on executions whose array reads are in bounds; JavaScript reads undefined at an index outside an array, where the target aborts",
+};
+
 /// Where a source declaration went in the target.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -397,6 +402,11 @@ impl<'p> EmitState<'p> {
         self.assume(NON_ABORTING, Some(&format!("no abort: {message}")));
     }
 
+    /// An array read: in bounds it is the element, outside it JavaScript's undefined, which the targets do not model.
+    pub fn array_read(&mut self) {
+        self.assume(IN_BOUNDS_READS, None);
+    }
+
     pub fn encode(&mut self, id: &str, statement: &str) {
         if !self.encodings.iter().any(|encoding| encoding.id == id) {
             self.encodings.push(Encoding {
@@ -472,8 +482,12 @@ impl<'p> EmitState<'p> {
 }
 
 fn type_dependencies(ty: &Type, found: &mut HashSet<String>) {
-    if let Type::Data { name } = ty {
-        found.insert(name.clone());
+    match ty {
+        Type::Data { name } => {
+            found.insert(name.clone());
+        }
+        Type::Array { element } => type_dependencies(element, found),
+        _ => {}
     }
 }
 

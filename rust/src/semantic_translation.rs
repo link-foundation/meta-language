@@ -11,7 +11,9 @@ use sha2::{Digest, Sha256};
 
 use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
-use crate::translation::emit_common::{Assumption, Emitted, Encoding, Mapping, NON_ABORTING};
+use crate::translation::emit_common::{
+    Assumption, Emitted, Encoding, Mapping, IN_BOUNDS_READS, NON_ABORTING,
+};
 use crate::translation::{
     emit_javascript::emit_javascript, emit_lean::emit_lean, emit_rocq::emit_rocq,
     emit_rust::emit_rust, javascript::parse_javascript, lean::parse_lean, rocq::parse_rocq,
@@ -197,15 +199,24 @@ pub fn record(
     (format!("{header}\n{}", emitted.text), semantics)
 }
 
-/// The fixed assumption statements a contract lists for these assumptions.
+/// The fixed assumption statements a contract lists for these assumptions, in their order.
 pub fn assumption_statements(assumptions: &[Assumption]) -> &'static [&'static str] {
-    debug_assert!(assumptions
+    const NONE: &[&str] = &[];
+    const ABORTS: &[&str] = &[NON_ABORTING.statement];
+    const READS: &[&str] = &[IN_BOUNDS_READS.statement];
+    const ABORTS_READS: &[&str] = &[NON_ABORTING.statement, IN_BOUNDS_READS.statement];
+    const READS_ABORTS: &[&str] = &[IN_BOUNDS_READS.statement, NON_ABORTING.statement];
+    let ids: Vec<&str> = assumptions
         .iter()
-        .all(|assumption| assumption.id == NON_ABORTING.id));
-    if assumptions.is_empty() {
-        &[]
-    } else {
-        &[NON_ABORTING.statement]
+        .map(|assumption| assumption.id.as_str())
+        .collect();
+    match ids.as_slice() {
+        [] => NONE,
+        [first] if *first == NON_ABORTING.id => ABORTS,
+        [first] if *first == IN_BOUNDS_READS.id => READS,
+        [first, _] if *first == NON_ABORTING.id => ABORTS_READS,
+        [_, _] => READS_ABORTS,
+        _ => unreachable!("unknown assumptions {ids:?}"),
     }
 }
 

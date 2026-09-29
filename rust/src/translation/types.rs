@@ -31,6 +31,10 @@ pub enum Type {
     Data {
         name: std::string::String,
     },
+    /// A JavaScript array, which the portable core reads and never mutates.
+    Array {
+        element: Box<Self>,
+    },
     /// A surface reference to a declared type, resolved by the checker.
     Named {
         path: Vec<std::string::String>,
@@ -59,6 +63,13 @@ pub const fn fixed(bits: u32, signed: bool) -> Type {
 }
 
 #[must_use]
+pub fn array(element: Type) -> Type {
+    Type::Array {
+        element: Box::new(element),
+    }
+}
+
+#[must_use]
 pub fn data(name: impl Into<std::string::String>) -> Type {
     Type::Data { name: name.into() }
 }
@@ -70,6 +81,7 @@ impl Type {
         match self {
             Self::Fixed { bits, signed } => format!("{}{bits}", if *signed { 'i' } else { 'u' }),
             Self::Data { name } => format!("data:{name}"),
+            Self::Array { element } => format!("array:{}", element.key()),
             other => other.kind().to_owned(),
         }
     }
@@ -86,6 +98,7 @@ impl Type {
             Self::Float => "float",
             Self::Fixed { .. } => "fixed",
             Self::Data { .. } => "data",
+            Self::Array { .. } => "array",
             Self::Named { .. } => "named",
             Self::Literal => "literal",
             Self::Hypothesis => "hypothesis",
@@ -123,6 +136,15 @@ impl Type {
     #[must_use]
     pub const fn is_literal(&self) -> bool {
         matches!(self, Self::Literal)
+    }
+
+    /// The element type of an array.
+    #[must_use]
+    pub fn element(&self) -> Option<&Self> {
+        match self {
+            Self::Array { element } => Some(element),
+            _ => None,
+        }
     }
 
     /// The data type's qualified name.

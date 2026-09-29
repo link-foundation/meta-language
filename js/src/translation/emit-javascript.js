@@ -62,6 +62,12 @@ function ml_divide(a, b, rounding, byZero, remainder) {
 function ml_showNumber(value) {
   return Object.is(value, -0) ? '-0' : String(value);
 }`,
+  at: `// An element of an array; a read outside it, undefined in JavaScript, aborts.
+function ml_at(values, index) {
+  const at = Number(index);
+  if (!Number.isInteger(at) || at < 0 || at >= values.length) throw new RangeError(\`array index \${index} out of range\`);
+  return values[at];
+}`,
   forall: `function ml_forall(values, property) {
   return values.every(property);
 }`,
@@ -116,7 +122,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'forall', 'domains'];
+    const helperOrder = ['natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'at', 'forall', 'domains'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -396,9 +402,25 @@ class JavaScriptEmitter {
       case 'abort':
         this.helpers.add('abort');
         return `ml_abort(${JSON.stringify(e.message)})`;
+      case 'array':
+        this.arrays();
+        return `[${e.items.map((item) => this.expr(item)).join(', ')}]`;
+      case 'append':
+        return `[...${this.expr(e.left)}, ...${this.expr(e.right)}]`;
+      case 'index':
+        this.arrays();
+        this.helpers.add('at');
+        this.state.arrayRead();
+        return `ml_at(${this.expr(e.array)}, ${this.expr(e.index)})`;
+      case 'length':
+        return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       default:
         throw new Error(`no JavaScript expression for ${e.k}`);
     }
+  }
+
+  arrays() {
+    this.state.encode('arrays', 'a JavaScript array stays an array, which the portable core never mutates; a read outside it throws RangeError where JavaScript reads undefined');
   }
 
   literal(e) {

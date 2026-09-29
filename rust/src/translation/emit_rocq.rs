@@ -29,11 +29,13 @@ use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::Type;
 use super::Language;
 
+mod arrays;
 mod expressions;
 mod floats;
 mod mutual;
 mod proofs;
 
+use self::arrays::{FLOAT_INDEX, LIST_AT};
 pub use self::floats::FLOAT_PRELUDE;
 use self::floats::{FLOAT_REM, FLOAT_SAME, JS_CONSOLE, JS_NUMBER};
 use self::mutual::Mutual;
@@ -216,13 +218,15 @@ enum Helper {
     JsConsole,
     FloatSame,
     FloatRem,
+    ListAt,
+    FloatIndex,
     Fix,
     Tactics,
     Decide,
 }
 
 impl Helper {
-    const ALL: [Self; 11] = [
+    const ALL: [Self; 13] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -231,6 +235,8 @@ impl Helper {
         Self::JsConsole,
         Self::FloatSame,
         Self::FloatRem,
+        Self::ListAt,
+        Self::FloatIndex,
         Self::Fix,
         Self::Tactics,
         Self::Decide,
@@ -246,6 +252,8 @@ impl Helper {
             Self::JsConsole => JS_CONSOLE,
             Self::FloatSame => FLOAT_SAME,
             Self::FloatRem => FLOAT_REM,
+            Self::ListAt => LIST_AT,
+            Self::FloatIndex => FLOAT_INDEX,
             Self::Fix => FIX,
             Self::Tactics => TACTICS,
             Self::Decide => DECIDE,
@@ -445,11 +453,22 @@ impl RocqEmitter<'_> {
             Type::Unit => "unit".to_owned(),
             Type::Output => "list string".to_owned(),
             Type::Data { name } => self.state.reference(name, "."),
+            Type::Array { element } => {
+                self.state.encode(
+                    "arrays",
+                    "a JavaScript array, which the portable core never mutates, is a Rocq list; a read walks it to the index",
+                );
+                format!("(list {})", self.ty(element)?)
+            }
             other => return Err(internal(format!("no Rocq type for {}", other.kind()))),
         })
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
+        fn lists(ty: &Type) -> bool {
+            ty.element()
+                .is_some_and(|element| matches!(element, Type::Data { .. }) || lists(element))
+        }
         let name = self.state.local_name(&data.full_name).to_owned();
         let mut lines = vec![format!("Inductive {name} : Type :=")];
         for ctor in &data.ctors {
@@ -462,6 +481,14 @@ impl RocqEmitter<'_> {
             lines.push(format!("| {local} : {fields}{name}"));
         }
         self.state.map(entry, &name);
+        // A type nested through list has no registered All scheme, which Rocq would warn of on every definition.
+        let nested = data
+            .ctors
+            .iter()
+            .any(|ctor| ctor.fields.iter().any(|field| lists(&field.ty)));
+        if nested {
+            lines.insert(0, "#[warnings=\"-register-all\"]".to_owned());
+        }
         Ok(lines.join("\n") + ".")
     }
 

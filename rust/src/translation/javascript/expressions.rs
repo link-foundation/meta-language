@@ -2,9 +2,9 @@
 
 use super::{
     binary, describe, has_ctor, is_tag_field, joined, node, number_literal, span, tokenize,
-    type_error, unsupported, wild, BinaryOp, JavaScriptParser, Language, Result, SData, SExpr,
-    SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span, Token, TokenCursor, TokenKind,
-    UnaryOp, ASSIGNMENTS, FLOAT, GLOBALS, ROOT,
+    type_error, unsupported, wild, BinaryOp, JavaScriptParser, Language, Result, SArrayItem, SData,
+    SExpr, SNode, SPattern, SPatternNode, SRow, STagTest, ShowStyle, Span, Token, TokenCursor,
+    TokenKind, UnaryOp, ASSIGNMENTS, FLOAT, GLOBALS, ROOT,
 };
 
 impl JavaScriptParser {
@@ -421,11 +421,33 @@ impl JavaScriptParser {
                 ));
             }
             if self.cursor.is("[") {
-                return Err(unsupported(
-                    "indexing",
-                    "arrays and computed properties are outside the portable core",
-                    here,
-                ));
+                self.cursor.advance();
+                let index = self.expr()?;
+                let close = self.cursor.expect("]", Some("index"))?;
+                let place = Span::new(
+                    expr.span.map_or(token.start, |place| place.start),
+                    close.end,
+                );
+                expr = node(
+                    SNode::Index {
+                        object: Box::new(expr),
+                        index: Box::new(index),
+                    },
+                    place,
+                );
+                let next = self.cursor.peek();
+                if next.kind == TokenKind::Punct
+                    && (ASSIGNMENTS.contains(&next.value.as_str())
+                        || self.cursor.is("++")
+                        || self.cursor.is("--"))
+                {
+                    return Err(unsupported(
+                        "assignment of an array element",
+                        "the portable core reads arrays and does not mutate them; build a new array with [...xs, value]",
+                        Some(place),
+                    ));
+                }
+                continue;
             }
             if self.cursor.is("(") {
                 return Err(unsupported(
@@ -500,11 +522,7 @@ impl JavaScriptParser {
             return self.object_literal();
         }
         if self.cursor.is("[") {
-            return Err(unsupported(
-                "array literal",
-                "arrays are outside the portable core",
-                here,
-            ));
+            return self.array_literal();
         }
         if self.cursor.is("/") {
             return Err(unsupported(
@@ -514,6 +532,38 @@ impl JavaScriptParser {
             ));
         }
         Err(self.fail_here("expected an expression"))
+    }
+
+    /// `[a, ...xs, b]`: the elements in order, with the elements of each spread array in place.
+    fn array_literal(&mut self) -> Result<SExpr> {
+        let start = self.cursor.advance();
+        let mut items = Vec::new();
+        while !self.cursor.is("]") {
+            if self.cursor.is(",") {
+                let token = self.peek();
+                return Err(unsupported(
+                    "array hole",
+                    "a hole is an element that reads undefined, which is not a portable value",
+                    Some(span(&token, &token)),
+                ));
+            }
+            let spread = self.cursor.eat("...").is_some();
+            items.push(SArrayItem {
+                spread,
+                value: self.expr()?,
+            });
+            if self.cursor.eat(",").is_none() {
+                break;
+            }
+        }
+        self.cursor.expect("]", Some("array literal"))?;
+        Ok(node(
+            SNode::Array {
+                items,
+                element: None,
+            },
+            self.to_here(&start),
+        ))
     }
 
     pub(super) fn matching(&self, index: usize) -> usize {

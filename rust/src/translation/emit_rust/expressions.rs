@@ -29,16 +29,22 @@ impl RustEmitter<'_> {
                     .as_ref()
                     .is_some_and(|(name, _)| name == func) =>
             {
-                let mut texts = Vec::with_capacity(args.len());
-                for arg in args {
-                    texts.push(self.expr(arg)?);
-                }
-                let names = self
+                let params = self
                     .loop_params
                     .as_ref()
-                    .map(|(_, names)| names.as_slice())
+                    .map(|(_, names)| names.clone())
                     .unwrap_or_default();
-                let assign = match names {
+                // A variable the next iteration keeps as it is, an array most of all, is not copied.
+                let mut texts = Vec::with_capacity(args.len());
+                let mut names = Vec::with_capacity(args.len());
+                for (arg, param) in args.iter().zip(&params) {
+                    let text = self.expr(arg)?;
+                    if arg.var_name() != Some(param.as_str()) {
+                        texts.push(text);
+                        names.push(param.clone());
+                    }
+                }
+                let assign = match names.as_slice() {
                     [] => String::new(),
                     [name] => format!("{name} = {};\n", texts[0]),
                     _ => format!("({}) = ({});\n", names.join(", "), texts.join(", ")),
@@ -131,6 +137,9 @@ impl RustEmitter<'_> {
             }
             Node::Cast { .. } => self.cast(expr),
             Node::Abort { message } => Ok(format!("panic!(\"{{}}\", {})", rust_string(message))),
+            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
+                self.array_expr(expr)
+            }
         }
     }
 

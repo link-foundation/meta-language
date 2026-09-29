@@ -11,6 +11,7 @@ pub(super) enum Helper {
     Assert,
     Equal,
     ShowNumber,
+    At,
     Forall,
     Domains,
 }
@@ -72,6 +73,14 @@ function ml_divide(a, b, rounding, byZero, remainder) {
                 "// console.log prints -0 as -0, where String(-0) is \"0\".
 function ml_showNumber(value) {
   return Object.is(value, -0) ? '-0' : String(value);
+}"
+            }
+            Self::At => {
+                "// An element of an array; a read outside it, undefined in JavaScript, aborts.
+function ml_at(values, index) {
+  const at = Number(index);
+  if (!Number.isInteger(at) || at < 0 || at >= values.length) throw new RangeError(`array index ${index} out of range`);
+  return values[at];
 }"
             }
             Self::Forall => {

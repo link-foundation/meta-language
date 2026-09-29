@@ -197,12 +197,21 @@ impl JavaScriptParser {
         if self.cursor.is_kind_at(TokenKind::Identifier, declared)
             && (self.cursor.is_at("of", declared + 1) || self.cursor.is_at("in", declared + 1))
         {
-            let kind = self.cursor.peek_at(declared + 1).value.clone();
-            return Err(unsupported(
-                &format!("for…{kind} loop"),
-                "iteration over arrays, strings and objects is outside the portable core; count with for (let i = …; …; …)",
-                Some(self.to_here(&start)),
-            ));
+            if self.cursor.is_at("in", declared + 1) {
+                return Err(unsupported(
+                    "for…in loop",
+                    "iteration over the keys of objects is outside the portable core; count with for (let i = …; …; …)",
+                    Some(self.to_here(&start)),
+                ));
+            }
+            if declared == 0 || self.cursor.is("var") {
+                return Err(unsupported(
+                    "for…of without const or let",
+                    "declare the loop variable with const or let, so each iteration has its own",
+                    Some(self.to_here(&start)),
+                ));
+            }
+            return self.for_of(&start);
         }
         let outer = self.scope.clone();
         let result = self.for_rest(&start);
@@ -262,6 +271,117 @@ impl JavaScriptParser {
             update,
             body,
             span: self.to_here(start),
+        })
+    }
+
+    /// `for (const x of xs) body` reads the elements of an array in order: it
+    /// is a loop over the indices of the array, whose body first binds `x` to
+    /// the element at the index. The array is evaluated once, before the loop.
+    fn for_of(&mut self, start: &Token) -> Result<Stmt> {
+        let mutable = self.cursor.advance().value == "let";
+        let name = self.cursor.identifier(Some("for…of"))?;
+        reserved(&name)?;
+        self.cursor.advance();
+        let iterable = self.expr()?;
+        self.cursor.expect(")", Some("for"))?;
+        self.generated_count += 1;
+        let values = format!("ml_values{}", self.generated_count);
+        let index = format!("ml_index{}", self.generated_count);
+        let outer = self.scope.clone();
+        self.declare_local(&name.value, mutable);
+        let body = self.loop_body();
+        self.scope = outer;
+        let body = body?;
+        let place = self.to_here(start);
+        let read = |local: &str| {
+            node(
+                SNode::Name {
+                    path: vec![local.to_owned()],
+                },
+                place,
+            )
+        };
+        let number = |value: &str| {
+            node(
+                SNode::Num {
+                    value: value.to_owned(),
+                    ty: None,
+                    negative: false,
+                    unit: false,
+                },
+                place,
+            )
+        };
+        let binary = |op, left, right| {
+            node(
+                SNode::Binary {
+                    op,
+                    left: Box::new(left),
+                    right: Box::new(right),
+                    rounding: None,
+                },
+                place,
+            )
+        };
+        let element = node(
+            SNode::Index {
+                object: Box::new(read(&values)),
+                index: Box::new(read(&index)),
+            },
+            place,
+        );
+        let length = node(
+            SNode::Length {
+                object: Box::new(read(&values)),
+                integer: true,
+            },
+            place,
+        );
+        let bind = if mutable {
+            Stmt::Let {
+                name: name.value,
+                value: element,
+                span: place,
+            }
+        } else {
+            Stmt::Const {
+                name: name.value,
+                value: element,
+                span: place,
+            }
+        };
+        Ok(Stmt::Block {
+            body: vec![
+                Stmt::Const {
+                    name: values,
+                    value: iterable,
+                    span: place,
+                },
+                Stmt::For {
+                    init: vec![Stmt::Let {
+                        name: index.clone(),
+                        value: number("0"),
+                        span: place,
+                    }],
+                    cond: Some(binary(BinaryOp::Lt, read(&index), length)),
+                    update: vec![Stmt::Assign {
+                        name: index.clone(),
+                        value: binary(BinaryOp::Add, read(&index), number("1")),
+                        span: place,
+                    }],
+                    body: vec![
+                        bind,
+                        Stmt::Block {
+                            body,
+                            inline: false,
+                            span: place,
+                        },
+                    ],
+                    span: place,
+                },
+            ],
+            inline: false,
+            span: place,
         })
     }
 

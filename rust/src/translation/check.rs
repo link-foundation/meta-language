@@ -13,19 +13,20 @@
 use std::collections::{HashMap, HashSet};
 
 use super::decimal::Decimal;
-use super::diagnostics::{type_error, unsupported, Result};
+use super::diagnostics::{type_error, unsupported, Result, TranslationError};
 use super::ir::{
     Binder, ByZero, Case, Comparison, Ctor, DataDecl, Decl, Effect, Expr, Field, FnDecl, Hints,
     Item, LitValue, Main, Node, Param, Pattern, Plan, Program, Proof, Prop, Semantics, TheoremDecl,
 };
 use super::proof::{normalise_proof, ProofContext, ProofName, TheoremHead};
 use super::surface::{
-    BinaryOp, Flavor, Rounding, SCase, SCasePattern, SEffect, SExpr, SItem, SMain, SNode, SPattern,
-    SPatternNode, SProgram, SProp, SPropNode, SRow, ShowStyle, UnaryOp,
+    BinaryOp, Flavor, Rounding, SArrayItem, SCase, SCasePattern, SEffect, SExpr, SItem, SMain,
+    SNode, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow, ShowStyle, UnaryOp,
 };
-use super::types::{data, fixed, fixed_bounds, Type, BOOL, FLOAT, INT, NAT, STRING, UNIT};
+use super::types::{array, data, fixed, fixed_bounds, Type, BOOL, FLOAT, INT, NAT, STRING, UNIT};
 use super::{Language, Span};
 
+mod arrays;
 mod expressions;
 mod items;
 mod matches;

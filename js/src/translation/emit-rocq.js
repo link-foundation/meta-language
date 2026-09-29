@@ -164,6 +164,22 @@ Definition ml_float_rem (x y : float) : float :=
       if sx then PrimFloat.opp magnitude else magnitude
   | _, _ => x
   end.`,
+  listAt: `(* The element at an index, walking the list; a read outside it, undefined
+   in JavaScript, is unreachable under the non-aborting assumption. *)
+Fixpoint ml_list_at {A : Type} (values : list A) (index : Z) (fallback : A) : A :=
+  match values with
+  | nil => fallback
+  | cons value rest => if Z.eqb index 0 then value else ml_list_at rest (Z.pred index) fallback
+  end.`,
+  floatIndex: `(* The index a Number names, exactly from its binary form; -1 when it names none. *)
+Definition ml_float_index (x : float) : Z :=
+  match Prim2SF x with
+  | S754_zero _ => 0%Z
+  | S754_finite false m e =>
+      if Z.leb 0 e then Z.shiftl (Z.pos m) e
+      else if Z.eqb (Z.modulo (Z.pos m) (2 ^ (- e))) 0 then Z.div (Z.pos m) (2 ^ (- e)) else (-1)%Z
+  | _ => (-1)%Z
+  end.`,
   fix: `(* The least fixed point of a one-step unfolding F, unfolded lazily: level k
    nests 2^k calls of F before it would reach the fallback. *)
 Fixpoint ml_fix {A B : Type} (k : nat) (F : (A -> B) -> A -> B) (fallback : A -> B) : A -> B :=
@@ -246,7 +262,7 @@ class RocqEmitter {
     }
     moveTo([]);
     const mainText = this.program.main ? this.main(this.program.main) : null;
-    const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'jsNumber', 'jsConsole', 'floatSame', 'floatRem', 'fix', 'tactics', 'decide']
+    const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'jsNumber', 'jsConsole', 'floatSame', 'floatRem', 'listAt', 'floatIndex', 'fix', 'tactics', 'decide']
       .filter((name) => this.helpers.has(name) || (name === 'digits' && (this.helpers.has('zToString') || this.helpers.has('jsNumber'))))
       .map((name) => HELPERS[name]);
     const text = [
@@ -290,6 +306,9 @@ class RocqEmitter {
         return 'list string';
       case 'data':
         return this.state.ref(type.name);
+      case 'array':
+        this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Rocq list; a read walks it to the index');
+        return `(list ${this.type(type.element)})`;
       default:
         throw new Error(`no Rocq type for ${type.kind}`);
     }
@@ -302,7 +321,10 @@ class RocqEmitter {
       return `| ${this.state.ctorLocal(entry.fullName, ctor.name)} : ${fields}${name}`;
     });
     this.state.map(entry, name);
-    return [`Inductive ${name} : Type :=`, ...ctors].join('\n') + '.';
+    // A type nested through list has no registered All scheme, which Rocq would warn of on every definition.
+    const lists = (type) => type.kind === 'array' && (type.element.kind === 'data' || lists(type.element));
+    const nested = entry.ctors.some((ctor) => ctor.fields.some((field) => lists(field.type)));
+    return [...(nested ? ['#[warnings="-register-all"]'] : []), `Inductive ${name} : Type :=`, ...ctors].join('\n') + '.';
   }
 
   fn(entry) {
@@ -566,6 +588,27 @@ class RocqEmitter {
       case 'abort':
         this.state.abortToTotal(e.message);
         return `(* unreachable under the non-aborting assumption: ${e.message.replace(/\*\)/gu, '* )')} *) ${this.inhabitant(e.type)}`;
+      case 'array':
+        return `(${[...e.items.map((item) => this.expr(item)), `@nil ${this.type(e.type.element)}`].join(' :: ')})`;
+      case 'append':
+        return `(List.app ${this.expr(e.left)} ${this.expr(e.right)})`;
+      case 'index': {
+        this.state.arrayRead();
+        this.state.abortToTotal('array index out of range');
+        this.helpers.add('listAt');
+        let index = this.expr(e.index);
+        if (e.index.type.kind === 'float') {
+          this.helpers.add('floatIndex');
+          index = `(ml_float_index ${index})`;
+        } else if (e.index.type.kind === 'nat') index = `(Z.of_N ${index})`;
+        return `(ml_list_at ${this.expr(e.array)} ${index} ${this.inhabitant(e.type)})`;
+      }
+      case 'length': {
+        const length = `(Z.of_nat (List.length ${this.expr(e.array)}))`;
+        if (e.type.kind !== 'float') return length;
+        this.floats();
+        return `(PrimFloat.of_uint63 (Uint63.of_Z ${length}))`;
+      }
       default:
         throw new Error(`no Rocq expression for ${e.k}`);
     }
@@ -614,6 +657,8 @@ class RocqEmitter {
         return 'tt';
       case 'output':
         return '(@nil string)';
+      case 'array':
+        return `(@nil ${this.type(type.element)})`;
       case 'data': {
         const entry = this.program.declarations.get(type.name);
         const ctor = entry.ctors.find((candidate) => candidate.fields.every((field) => field.type.kind !== 'data'))

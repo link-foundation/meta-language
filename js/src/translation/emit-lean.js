@@ -138,6 +138,14 @@ def ml_float_rem (x y : Float) : Float :=
     let r := (mx * 2 ^ (ex - e).toNat) % (my * 2 ^ (ey - e).toNat)
     let magnitude := Float.scaleB (Float.ofNat r) e
     if x.toBits.toNat ≥ 2 ^ 63 then -magnitude else magnitude`,
+  arrayAt: `/-- The element at an index; a read outside the array, undefined in JavaScript, panics. -/
+def ml_array_at {α : Type} [Inhabited α] (values : Array α) (index : Int) : α :=
+  if h : 0 ≤ index ∧ index.toNat < values.size then values[index.toNat]'h.2
+  else panic! "array index out of range"`,
+  arrayAtFloat: `/-- The index a Number names: a non-negative integer, -0 included. -/
+def ml_array_at_float {α : Type} [Inhabited α] (values : Array α) (index : Float) : α :=
+  if index ≥ 0 && index.floor == index && index < 9007199254740992 then ml_array_at values (Int.ofNat index.toUInt64.toNat)
+  else panic! "array index out of range"`,
   floatSame: `/-- SameValue, as Object.is and assert.strictEqual compare: NaN equals NaN,
 and 0 differs from -0. -/
 def ml_float_same (a b : Float) : Bool :=
@@ -207,7 +215,7 @@ class LeanEmitter {
       'set_option linter.unusedSimpArgs false',
       'set_option linter.constructorNameAsVariable false',
       '',
-      ...['fixed', 'fixedNat', 'toNatChecked', 'divide', 'divideNat', 'jsNumber', 'jsConsole', 'floatRem', 'floatSame'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
+      ...['fixed', 'fixedNat', 'toNatChecked', 'divide', 'divideNat', 'jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'arrayAt', 'arrayAtFloat'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -244,6 +252,9 @@ class LeanEmitter {
         return 'List String';
       case 'data':
         return this.state.ref(type.name);
+      case 'array':
+        this.state.encode('arrays', 'a JavaScript array, which the portable core never mutates, is a Lean Array; a read outside it panics');
+        return `(Array ${this.type(type.element)})`;
       default:
         throw new Error(`no Lean type for ${type.kind}`);
     }
@@ -257,8 +268,17 @@ class LeanEmitter {
       return `  | ${this.state.ctorLocal(entry.fullName, ctor.name)}${fields} : ${name}`;
     });
     // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
-    const deriving = entry.output ? 'Inhabited' : 'Repr, DecidableEq, Inhabited';
+    // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
+    const deriving = entry.output || this.undecidable(entry.fullName) ? (entry.output ? 'Inhabited' : 'Repr, Inhabited') : 'Repr, DecidableEq, Inhabited';
     return [`inductive ${name} where`, ...ctors, `  deriving ${deriving}`].join('\n');
+  }
+
+  undecidable(name, seen = new Set()) {
+    if (seen.has(name)) return false;
+    seen.add(name);
+    const bad = (type, nested) => type.kind === 'float' || (type.kind === 'array' && bad(type.element, true))
+      || (type.kind === 'data' && (nested || this.undecidable(type.name, seen)));
+    return this.program.declarations.get(name).ctors.some((ctor) => ctor.fields.some((field) => bad(field.type, false)));
   }
 
   definition(entry) {
@@ -394,6 +414,24 @@ class LeanEmitter {
       case 'abort':
         this.state.abortToTotal(e.message);
         return `(panic! ${JSON.stringify(e.message)} : ${this.type(e.type)})`;
+      case 'array':
+        return `(#[${e.items.map((item) => this.expr(item, depth)).join(', ')}] : ${this.type(e.type)})`;
+      case 'append':
+        return `(${this.expr(e.left, depth)} ++ ${this.expr(e.right, depth)})`;
+      case 'index': {
+        this.state.arrayRead();
+        this.state.abortToTotal('array index out of range');
+        this.helpers.add('arrayAt');
+        const values = this.expr(e.array, depth);
+        const index = this.expr(e.index, depth);
+        if (e.index.type.kind === 'float') {
+          this.helpers.add('arrayAtFloat');
+          return `(ml_array_at_float ${values} ${index})`;
+        }
+        return `(ml_array_at ${values} ${e.index.type.kind === 'nat' ? `(Int.ofNat ${index})` : index})`;
+      }
+      case 'length':
+        return `(${e.type.kind === 'float' ? 'Float.ofNat' : 'Int.ofNat'} ${this.expr(e.array, depth)}.size)`;
       default:
         throw new Error(`no Lean expression for ${e.k}`);
     }

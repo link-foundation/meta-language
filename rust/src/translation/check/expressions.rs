@@ -1,5 +1,6 @@
 //! Expression checking: operators, arithmetic, applications and constructors.
 
+use super::arrays::array_text;
 use super::{
     arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
     negate_number, op_name, plain_binary, text_lit, type_error, unsupported, BinaryOp, Checker,
@@ -103,11 +104,18 @@ impl Checker {
             }
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
             SNode::App { func, args } => self.application(func, args, env, path, expected, span),
-            SNode::Field { field, .. } => Err(unsupported(
-                "field access",
-                &format!("field {field} is only portable inside a constructor match"),
-                span,
-            )),
+            SNode::Field { field, object } => {
+                if field == "length" {
+                    if let Some(length) = self.length_field(object, span, env, path)? {
+                        return Ok(length);
+                    }
+                }
+                Err(unsupported(
+                    "field access",
+                    &format!("field {field} is only portable inside a constructor match"),
+                    span,
+                ))
+            }
             SNode::Unary {
                 op: UnaryOp::Not,
                 arg,
@@ -276,6 +284,9 @@ impl Checker {
                 if arg.ty == Type::String {
                     return Ok(arg);
                 }
+                if arg.ty.element().is_some() {
+                    return Err(array_text(span));
+                }
                 if !arg.ty.is_ordered() && arg.ty != Type::Bool {
                     return Err(type_error(format!("toString of {}", arg.ty.key()), span));
                 }
@@ -324,6 +335,11 @@ impl Checker {
                     ty,
                 ))
             }
+            SNode::Length { object, integer } => self.length(object, *integer, span, env, path),
+            SNode::Array { items, element } => {
+                self.array_literal(items, element.as_ref(), span, env, path, expected)
+            }
+            SNode::Index { object, index } => self.index(object, index, span, env, path),
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),
                 span,
@@ -359,6 +375,13 @@ impl Checker {
                     return Err(unsupported(
                         "structural equality of data values",
                         "comparisons of data values are not in the portable core",
+                        span,
+                    ));
+                }
+                if left.ty.element().is_some() {
+                    return Err(unsupported(
+                        "comparison of arrays",
+                        "=== of two arrays compares which array each is, which a value translation does not keep; compare their elements",
                         span,
                     ));
                 }
@@ -460,6 +483,9 @@ impl Checker {
                 &format!("String({}) has no portable textual form", checked.ty.key()),
                 surface.span,
             ));
+        }
+        if checked.ty.element().is_some() {
+            return Err(array_text(surface.span));
         }
         Ok(Expr::new(
             Node::ToString {

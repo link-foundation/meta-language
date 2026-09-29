@@ -20,10 +20,11 @@ use super::lexer::{
     describe, is_js_space, tokenize, Comment, Source, Token, TokenCursor, TokenKind,
 };
 use super::surface::{
-    BinaryOp, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain, SModule, SNode,
-    SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow, STagTest, ShowStyle, UnaryOp,
+    BinaryOp, SArrayItem, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
+    SModule, SNode, SParam, SPattern, SPatternNode, SProgram, SProp, SPropNode, SRow, STagTest,
+    ShowStyle, UnaryOp,
 };
-use super::types::{Type, BOOL, FLOAT, INT, NAT, STRING};
+use super::types::{array, Type, BOOL, FLOAT, INT, NAT, STRING};
 use super::{Language, Span};
 
 mod console;

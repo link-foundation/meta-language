@@ -21,12 +21,19 @@ export function data(name) {
   return Object.freeze({ kind: 'data', name });
 }
 
+/** A JavaScript array whose elements all have one type; the portable core never mutates it. */
+export function array(element) {
+  return Object.freeze({ kind: 'array', element });
+}
+
 export function typeKey(type) {
   switch (type.kind) {
     case 'fixed':
       return `${type.signed ? 'i' : 'u'}${type.bits}`;
     case 'data':
       return `data:${type.name}`;
+    case 'array':
+      return `array:${typeKey(type.element)}`;
     default:
       return type.kind;
   }

@@ -1,10 +1,11 @@
 //! Declarations, item and type resolution, `main`, propositions and unification.
 
+use super::arrays::array_text;
 use super::{
-    build_items, coerce, data, fixed, flatten, full, normalise_proof, plain_binary, text_lit,
-    type_error, unsupported, BinaryOp, Binder, Checker, Comparison, Ctor, DataDecl, Decl, Effect,
-    Entry, Env, Expr, Field, FnDecl, HashMap, Hints, Item, Language, Main, Node, Param, Plan,
-    Proof, ProofScope, Prop, Result, SEffect, SExpr, SItem, SMain, SProp, SPropNode, Scope,
+    array, build_items, coerce, data, fixed, flatten, full, normalise_proof, plain_binary,
+    text_lit, type_error, unsupported, BinaryOp, Binder, Checker, Comparison, Ctor, DataDecl, Decl,
+    Effect, Entry, Env, Expr, Field, FnDecl, HashMap, Hints, Item, Language, Main, Node, Param,
+    Plan, Proof, ProofScope, Prop, Result, SEffect, SExpr, SItem, SMain, SProp, SPropNode, Scope,
     ShowStyle, Span, TheoremDecl, TheoremHead, Type, BOOL, INT, NAT, STRING, UNIT,
 };
 
@@ -263,6 +264,9 @@ impl Checker {
         let Some(ty) = ty else {
             return Err(type_error("missing type annotation", span));
         };
+        if let Some(element) = ty.element() {
+            return Ok(array(self.resolve_type(Some(element), path, span)?));
+        }
         let Type::Named {
             path: segments,
             span: type_span,
@@ -421,6 +425,7 @@ impl Checker {
                     expr.span,
                 ))
             }
+            Type::Array { .. } => return Err(array_text(expr.span)),
             _ => {}
         }
         let console_bigint = style.is_console() && bigint;

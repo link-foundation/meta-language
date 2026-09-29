@@ -3,11 +3,11 @@
 use super::infer::infer_javascript_types;
 use super::loops::reserved;
 use super::{
-    describe, guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags,
-    lower, lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
-    Assertion, HashSet, JavaScriptParser, JsDoc, Language, Result, SCtor, SData, SField, SFn,
-    SItem, SMain, SModule, SParam, SProgram, ScanEnd, Scope, Span, Stmt, Token, TokenCursor,
-    TokenKind, TranslationError, Type, BOOL, FLOAT, INT, NAT, ROOT, STRING,
+    array, describe, guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim,
+    jsdoc_tags, lower, lower_imperative, non_empty, span, statement_uses, tokenize, type_error,
+    unsupported, Assertion, HashSet, JavaScriptParser, JsDoc, Language, Result, SCtor, SData,
+    SField, SFn, SItem, SMain, SModule, SParam, SProgram, ScanEnd, Scope, Span, Stmt, Token,
+    TokenCursor, TokenKind, TranslationError, Type, BOOL, FLOAT, INT, NAT, ROOT, STRING,
 };
 
 /// How a function's body is written: a block, or an arrow's block or expression.
@@ -264,17 +264,40 @@ impl JavaScriptParser {
                     }
                     tag = Some(value.value);
                 } else {
-                    let ty = c.identifier(Some("field type"))?;
+                    let mut ty = c.identifier(Some("field type"))?.value;
+                    if c.is("<") {
+                        // Array<T>, whose closing brackets may be read as one >> token.
+                        let mut depth = 0i32;
+                        loop {
+                            let token = c.advance();
+                            for char in token.value.chars() {
+                                depth += match char {
+                                    '<' => 1,
+                                    '>' => -1,
+                                    _ => 0,
+                                };
+                            }
+                            ty.push_str(&token.value);
+                            if depth <= 0 || c.at_end() {
+                                break;
+                            }
+                        }
+                    }
+                    while c.is("[") {
+                        c.advance();
+                        c.expect("]", Some("field type"))?;
+                        ty.push_str("[]");
+                    }
                     if !c.is(",") && !c.is(";") && !c.is("}") {
                         return Err(unsupported(
                             &format!("field type of {}", key.value),
-                            "field types are bigint, boolean, string or a @typedef name",
+                            "field types are number, bigint, boolean, string, a @typedef name or an array T[] of one",
                             Some(range),
                         ));
                     }
                     fields.push(SField {
                         name: Some(key.value),
-                        ty: self.ty(&ty.value, range)?,
+                        ty: self.ty(&ty, range)?,
                         rocq_type: None,
                         span: None,
                     });
@@ -314,37 +337,7 @@ impl JavaScriptParser {
 
     #[allow(clippy::unused_self)] // a method, as in the JavaScript frontend
     pub(super) fn ty(&self, text: &str, range: Span) -> Result<Type> {
-        let name = js_trim(text);
-        match name {
-            "bigint" => return Ok(INT),
-            "boolean" => return Ok(BOOL),
-            "string" => return Ok(STRING),
-            "number" => return Ok(FLOAT),
-            _ => {}
-        }
-        let reserved = [
-            "object",
-            "any",
-            "unknown",
-            "void",
-            "undefined",
-            "null",
-            "Object",
-            "Function",
-            "Array",
-            "symbol",
-        ];
-        if !is_identifier_name(name) || reserved.contains(&name) {
-            return Err(unsupported(
-                &format!("JSDoc type {{{name}}}"),
-                "portable types are number, bigint, boolean, string and @typedef data types",
-                Some(range),
-            ));
-        }
-        Ok(Type::Named {
-            path: vec![ROOT.to_owned(), name.to_owned()],
-            span: Some(range),
-        })
+        jsdoc_type(text, range)
     }
 
     /// The `JSDoc` block directly before a declaration.
@@ -836,4 +829,50 @@ fn promised(text: &str) -> Option<&str> {
         .map(js_trim)?
         .strip_prefix('<')?
         .strip_suffix('>')
+}
+
+/// The portable type a `JSDoc` type names.
+fn jsdoc_type(text: &str, range: Span) -> Result<Type> {
+    let name = js_trim(text);
+    match name {
+        "bigint" => return Ok(INT),
+        "boolean" => return Ok(BOOL),
+        "string" => return Ok(STRING),
+        "number" => return Ok(FLOAT),
+        _ => {}
+    }
+    if let Some(element) = name.strip_suffix("[]") {
+        return Ok(array(jsdoc_type(element, range)?));
+    }
+    let generic = name
+        .strip_prefix("Array<")
+        .or_else(|| name.strip_prefix("ReadonlyArray<"))
+        .and_then(|rest| rest.strip_suffix('>'))
+        .filter(|element| !element.is_empty());
+    if let Some(element) = generic {
+        return Ok(array(jsdoc_type(element, range)?));
+    }
+    let reserved = [
+        "object",
+        "any",
+        "unknown",
+        "void",
+        "undefined",
+        "null",
+        "Object",
+        "Function",
+        "Array",
+        "symbol",
+    ];
+    if !is_identifier_name(name) || reserved.contains(&name) {
+        return Err(unsupported(
+            &format!("JSDoc type {{{name}}}"),
+            "portable types are number, bigint, boolean, string, arrays T[] of them and @typedef data types",
+            Some(range),
+        ));
+    }
+    Ok(Type::Named {
+        path: vec![ROOT.to_owned(), name.to_owned()],
+        span: Some(range),
+    })
 }

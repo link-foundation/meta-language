@@ -25,6 +25,7 @@ use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
 use super::types::{fixed_bounds, Type};
 use super::Language;
 
+mod arrays;
 mod helpers;
 use self::helpers::Helper;
 
@@ -793,6 +794,9 @@ impl<'p> JavaScriptEmitter<'p> {
             Node::Abort { message } => {
                 self.helpers.insert(Helper::Abort);
                 Ok(format!("ml_abort({})", json_string(message)))
+            }
+            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
+                self.array_expr(e)
             }
         }
     }

@@ -36,10 +36,144 @@ pub(super) fn infer_javascript_types(mut program: SProgram) -> Result<SProgram> 
     }
     let mut inference = Inference::new(&program.items);
     let inferred = inference.run(&functions, &program)?;
+    let arrays: HashMap<*const SExpr, Type> = inference
+        .empty_arrays
+        .iter()
+        .map(|(node, (term, place))| (*node, inference.surface(term, *place)))
+        .collect();
     let mut inferred = inferred.into_iter();
     fill_functions(&mut program.items, &mut inferred);
     fill_fields(&mut program.items, &inference);
+    if !arrays.is_empty() {
+        fill_arrays(&mut program, &arrays);
+    }
     Ok(program)
+}
+
+/// Writes the inferred element types of the array literals with no element of their own back.
+fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr, Type>) {
+    fn walk_items(items: &mut [SItem], arrays: &HashMap<*const SExpr, Type>) {
+        for item in items {
+            match item {
+                SItem::Fn(function) => walk(&mut function.body, arrays),
+                SItem::Module(module) => walk_items(&mut module.items, arrays),
+                SItem::Data(_) | SItem::Theorem(_) => {}
+            }
+        }
+    }
+    fn walk_prop(prop: &mut SProp, arrays: &HashMap<*const SExpr, Type>) {
+        match &mut prop.node {
+            SPropNode::Eq(comparison)
+            | SPropNode::Ne(comparison)
+            | SPropNode::Lt(comparison)
+            | SPropNode::Le(comparison)
+            | SPropNode::Gt(comparison)
+            | SPropNode::Ge(comparison) => {
+                walk(&mut comparison.left, arrays);
+                walk(&mut comparison.right, arrays);
+            }
+            SPropNode::And { left, right }
+            | SPropNode::Or { left, right }
+            | SPropNode::Implies { left, right } => {
+                walk_prop(left, arrays);
+                walk_prop(right, arrays);
+            }
+            SPropNode::Not { arg } | SPropNode::Forall { body: arg, .. } => walk_prop(arg, arrays),
+            SPropNode::Bool { expr: value } => walk(value, arrays),
+        }
+    }
+    fn walk(node: &mut SExpr, arrays: &HashMap<*const SExpr, Type>) {
+        if let Some(ty) = arrays.get(&std::ptr::from_ref::<SExpr>(node)) {
+            if let SNode::Array { element, .. } = &mut node.node {
+                *element = Some(ty.clone());
+            }
+        }
+        if let Some(test) = &mut node.tag_test {
+            walk(&mut test.object, arrays);
+        }
+        match &mut node.node {
+            SNode::App { func, args } => {
+                walk(func, arrays);
+                for arg in args {
+                    walk(arg, arrays);
+                }
+            }
+            SNode::Field { object, .. }
+            | SNode::Unary { arg: object, .. }
+            | SNode::ToString { arg: object }
+            | SNode::Show { arg: object, .. }
+            | SNode::Cast { arg: object, .. }
+            | SNode::Length { object, .. } => walk(object, arrays),
+            SNode::Binary { left, right, .. }
+            | SNode::Let {
+                value: left,
+                body: right,
+                ..
+            }
+            | SNode::Print {
+                expr: left,
+                body: right,
+                ..
+            }
+            | SNode::Cons {
+                head: left,
+                tail: right,
+            }
+            | SNode::Index {
+                object: left,
+                index: right,
+            } => {
+                walk(left, arrays);
+                walk(right, arrays);
+            }
+            SNode::If {
+                cond,
+                then,
+                otherwise,
+            } => {
+                walk(cond, arrays);
+                walk(then, arrays);
+                walk(otherwise, arrays);
+            }
+            SNode::Match { scrutinees, rows } => {
+                for scrutinee in scrutinees {
+                    walk(scrutinee, arrays);
+                }
+                for row in rows {
+                    walk(&mut row.body, arrays);
+                }
+            }
+            SNode::Match1 { scrutinee, cases } => {
+                walk(scrutinee, arrays);
+                for case in cases {
+                    walk(&mut case.body, arrays);
+                }
+            }
+            SNode::CtorObject { fields, .. } => {
+                for (_, value) in fields {
+                    walk(value, arrays);
+                }
+            }
+            SNode::List { items } => {
+                for item in items {
+                    walk(item, arrays);
+                }
+            }
+            SNode::Array { items, .. } => {
+                for item in items {
+                    walk(&mut item.value, arrays);
+                }
+            }
+            _ => {}
+        }
+    }
+    walk_items(&mut program.items, arrays);
+    for effect in program.main.iter_mut().flat_map(|main| &mut main.effects) {
+        match effect {
+            SEffect::Print { expr: value, .. } | SEffect::Let { value, .. } => walk(value, arrays),
+            SEffect::Assert { prop: value, .. } => walk_prop(value, arrays),
+        }
+    }
 }
 
 /// Writes the inferred types of the fields the translator makes up back.
@@ -108,6 +242,8 @@ fn fill_functions(items: &mut [SItem], inferred: &mut impl Iterator<Item = (Vec<
 enum Term {
     Var(usize),
     Known(Type),
+    /// An array, whose element type may still be unknown.
+    Array(Box<Self>),
 }
 
 struct Signature {
@@ -141,6 +277,9 @@ struct Inference {
     /// The types of the fields the translator makes up, which are inferred
     /// like parameters, by data type, constructor and position.
     field_terms: HashMap<(String, String, usize), Term>,
+    /// Array literals with no element of their own, whose element type the
+    /// rest of the program fixes, by node.
+    empty_arrays: HashMap<*const SExpr, (Term, Option<Span>)>,
 }
 
 type Env = HashMap<String, Term>;
@@ -163,6 +302,7 @@ impl Inference {
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],
             field_terms: HashMap::new(),
+            empty_arrays: HashMap::new(),
         }
     }
 
@@ -217,6 +357,7 @@ impl Inference {
                 name: path.last().cloned().unwrap_or_default(),
             }),
             Some(Type::Nat) => Term::Known(INT),
+            Some(Type::Array { element }) => Term::Array(Box::new(self.declared(Some(element)))),
             Some(other) => Term::Known(other.clone()),
         }
     }
@@ -237,6 +378,7 @@ impl Inference {
                 .contains(variable)
                 .then(|| "a bigint".to_owned()),
             Some(Term::Known(ty)) => Some(describe(ty)),
+            Some(Term::Array(_)) => Some("an array".to_owned()),
         };
         if let Some(described) = described {
             return Err(type_error(
@@ -254,32 +396,32 @@ impl Inference {
                 }
                 Ok(())
             }
-            (Term::Var(variable), Term::Known(ty)) | (Term::Known(ty), Term::Var(variable)) => {
-                if self.bigints.contains(variable) && !is_integer(ty) {
+            (Term::Var(variable), other) | (other, Term::Var(variable)) => {
+                let integer = matches!(other, Term::Known(ty) if is_integer(ty));
+                if self.bigints.contains(variable) && !integer {
                     return Err(type_error(
                         format!(
                             "a BigInt is used as {}; JavaScript does not mix BigInt with other types",
-                            describe(ty)
+                            describe_term(other)
                         ),
                         place,
                     ));
                 }
-                self.bindings[*variable] = Some(Term::Known(ty.clone()));
+                self.bindings[*variable] = Some(other.clone());
                 Ok(())
             }
-            (Term::Known(x), Term::Known(y)) => {
-                if x == y || (is_integer(x) && is_integer(y)) {
-                    return Ok(());
-                }
-                Err(type_error(
-                    format!(
-                        "one value is used as {} and as {}; declare the types of the function with JSDoc",
-                        describe(x),
-                        describe(y)
-                    ),
-                    place,
-                ))
+            (Term::Array(x), Term::Array(y)) => self.unify(x, y, place),
+            (Term::Known(x), Term::Known(y)) if x == y || (is_integer(x) && is_integer(y)) => {
+                Ok(())
             }
+            _ => Err(type_error(
+                format!(
+                    "one value is used as {} and as {}; declare the types of the function with JSDoc",
+                    describe_term(&a),
+                    describe_term(&b)
+                ),
+                place,
+            )),
         }
     }
 
@@ -363,6 +505,17 @@ impl Inference {
                 }
             }
             self.fields = waiting;
+            // `.length` of a value nothing else fixes reads an array.
+            let length = self.fields.iter().find(|constraint| {
+                constraint.field == "length"
+                    && matches!(self.resolve(&constraint.object), Term::Var(_))
+            });
+            if let (false, Some(length)) = (progress, length) {
+                let (object, place) = (length.object.clone(), length.place);
+                let array = Term::Array(Box::new(self.fresh(false)));
+                self.unify(&object, &array, place)?;
+                progress = true;
+            }
             if !progress && !self.plus.is_empty() {
                 let first = self.plus.remove(0);
                 self.plus_step(&first, true)?;
@@ -390,6 +543,10 @@ impl Inference {
     fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
         let name = match self.resolve(&constraint.object) {
             Term::Known(Type::Data { name }) => name,
+            Term::Array(_) if constraint.field == "length" => {
+                self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
+                return Ok(true);
+            }
             other => {
                 let owners: Vec<&String> = self
                     .data
@@ -447,6 +604,9 @@ impl Inference {
                 span: place,
             },
             Term::Known(ty) => ty,
+            Term::Array(element) => Type::Array {
+                element: Box::new(self.surface(&element, place)),
+            },
         }
     }
 
@@ -555,6 +715,46 @@ impl Inference {
             SNode::Print { expr, body, .. } => {
                 self.expr(expr, env)?;
                 self.expr(body, env)
+            }
+            SNode::Array { items, .. } => {
+                let element = self.fresh(false);
+                if items.iter().all(|item| item.spread) {
+                    self.empty_arrays.insert(
+                        std::ptr::from_ref::<SExpr>(expr),
+                        (element.clone(), expr.span),
+                    );
+                }
+                for item in items {
+                    let value = self.expr(&item.value, env)?;
+                    let want = if item.spread {
+                        Term::Array(Box::new(element.clone()))
+                    } else {
+                        element.clone()
+                    };
+                    self.unify(&value, &want, item.value.span.or(expr.span))?;
+                }
+                Ok(Term::Array(Box::new(element)))
+            }
+            SNode::Index { object, index } => {
+                let element = self.fresh(false);
+                let array = self.expr(object, env)?;
+                self.unify(
+                    &array,
+                    &Term::Array(Box::new(element.clone())),
+                    object.span.or(expr.span),
+                )?;
+                self.expr(index, env)?;
+                Ok(element)
+            }
+            SNode::Length { object, integer } => {
+                let array = self.expr(object, env)?;
+                let element = self.fresh(false);
+                self.unify(&array, &Term::Array(Box::new(element)), expr.span)?;
+                Ok(if *integer {
+                    self.fresh(true)
+                } else {
+                    Term::Known(FLOAT)
+                })
             }
             _ => Ok(self.fresh(false)),
         }
@@ -736,6 +936,14 @@ const fn is_integer(ty: &Type) -> bool {
     matches!(ty, Type::Int | Type::Nat | Type::Fixed { .. })
 }
 
+fn describe_term(term: &Term) -> String {
+    match term {
+        Term::Known(ty) => describe(ty),
+        Term::Array(_) => "an array".to_owned(),
+        Term::Var(_) => "an unknown type".to_owned(),
+    }
+}
+
 fn describe(ty: &Type) -> String {
     match ty {
         Type::Float => "a number".to_owned(),
@@ -743,6 +951,7 @@ fn describe(ty: &Type) -> String {
         Type::Bool => "a boolean".to_owned(),
         Type::String => "a string".to_owned(),
         Type::Data { name } => format!("a {name}"),
+        Type::Array { .. } => "an array".to_owned(),
         other => other.kind().to_owned(),
     }
 }

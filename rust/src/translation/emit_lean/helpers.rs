@@ -1,7 +1,7 @@
 //! The Lean helper definitions a translation may use.
 
 /// Helper definitions by name, in the order the file lists the ones it uses.
-pub(super) const HELPERS: [(&str, &str); 9] = [
+pub(super) const HELPERS: [(&str, &str); 11] = [
     (
         "fixed",
         r#"/-- Machine-integer results: out of range is where Rust panics. -/
@@ -141,5 +141,19 @@ def ml_float_rem (x y : Float) : Float :=
 and 0 differs from -0. -/
 def ml_float_same (a b : Float) : Bool :=
   if a.isNaN then b.isNaN else a.toBits == b.toBits",
+    ),
+    (
+        "arrayAt",
+        r#"/-- The element at an index; a read outside the array, undefined in JavaScript, panics. -/
+def ml_array_at {α : Type} [Inhabited α] (values : Array α) (index : Int) : α :=
+  if h : 0 ≤ index ∧ index.toNat < values.size then values[index.toNat]'h.2
+  else panic! "array index out of range""#,
+    ),
+    (
+        "arrayAtFloat",
+        r#"/-- The index a Number names: a non-negative integer, -0 included. -/
+def ml_array_at_float {α : Type} [Inhabited α] (values : Array α) (index : Float) : α :=
+  if index ≥ 0 && index.floor == index && index < 9007199254740992 then ml_array_at values (Int.ofNat index.toUInt64.toNat)
+  else panic! "array index out of range""#,
     ),
 ];
