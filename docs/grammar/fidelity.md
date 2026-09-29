@@ -1,5 +1,9 @@
 # Grammar-format round-trip fidelity matrix
 
+This matrix reports what the current implementation does; the lossy entries
+are unfinished requirements under [the vision](../vision.md#grammar-import-conversion-and-reverse-conversion).
+A profile or a diagnostic does not establish semantic preservation.
+
 `meta-language` imports external grammar notations into the shared
 [`Grammar` IR](architecture.md), emits that IR back to a target notation, and
 re-imports the emitted text to check what survived the trip. This page records
@@ -101,6 +105,6 @@ same rule list, that lossy helper fallbacks re-import without undefined
 non-terminals, and that unsupported BNF constructs return documented
 `GrammarEmitError::Unsupported` errors instead of silent output.
 
-Later importer/emitter issues can add rows by extending `GRAMMAR_FORMATS`,
-adding a `grammar_format_profile` branch, and adding same-format fixtures for
-that row.
+Complete coverage in this pull request requires extending `GRAMMAR_FORMATS`,
+adding a `grammar_format_profile` branch, and executing same-format and
+cross-format fixtures under independent target tools for every required format.

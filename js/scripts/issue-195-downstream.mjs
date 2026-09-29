@@ -47,7 +47,10 @@ export function parseConsumerMatrix(markdown) {
     const commit = inspected?.match(/commit `([0-9a-f]{40})`/u)?.[1] ?? null;
     const lines = (section ?? '').split('\n').filter((line) => line.startsWith('|'));
     const header = lines.length > 0 ? cells(lines[0]) : [];
-    const mappings = lines.slice(2).map((line) => {
+    const mappings = lines.slice(2).filter((line) => {
+      const row = cells(line);
+      return row.join('|') !== COLUMNS.join('|') && !row.every((cell) => /^:?-+:?$/u.test(cell));
+    }).map((line) => {
       const [usage, capability, rows, tests, status] = cells(line);
       return {
         usage,

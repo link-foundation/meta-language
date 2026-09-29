@@ -91,3 +91,16 @@ test('a mapping to a missing ledger row or test, or without a row, is rejected',
   const missing = validateConsumerMatrix(parseConsumerMatrix(`${scope}${section('relative-meta-logic', covered)}`), context);
   assert.match(missing.join('\n'), /has no formal-ai section/u);
 });
+
+test('a current pull request audit adds mappings to the same consumer section', () => {
+  const currentAudit = [
+    '### Current pull request',
+    '| Consumer usage or requirement | meta-language capability | Ledger rows | Tests | Status |',
+    '|---|---|---|---|---|',
+    '| Current workflow | `LinkNetwork` | `I195-DOWNSTREAM-CONSUMER-MATRIX` | none | not yet verified |',
+    '',
+  ].join('\n');
+  const matrix = parseConsumerMatrix(`${scope}${section('relative-meta-logic', covered)}${currentAudit}${section('formal-ai', covered)}`);
+  assert.equal(matrix.consumers['relative-meta-logic'].mappings.length, 2);
+  assert.deepEqual(validateConsumerMatrix(matrix, context), []);
+});

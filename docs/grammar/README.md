@@ -38,9 +38,9 @@ Grammar IR as links
 ```
 
 Every stage should enter or leave through the IR. Stages whose public API has
-already landed link to concrete Rust items. Stages owned by later issues are
-documented as contracts and examples in `text` fences until those APIs land and
-can be promoted to rustdoc doctests.
+already landed link to concrete Rust items. Missing stages remain required work
+in this pull request under [the vision](../vision.md); a `text` example is a
+description, not executable evidence.
 
 ## Documentation map
 

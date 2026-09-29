@@ -427,6 +427,11 @@ Two consumers define the concrete downstream workloads:
   project is `link-assistant/formal-ai`; `link-foundation/formal-ai` does not
   exist.
 
+The RML inventory covers the current implementation in pull request #184, with
+its revision pinned, rather than relying only on the older default branch. The
+formal-ai projection workload includes translation among Rust, JavaScript and
+TypeScript; a TypeScript concrete syntax tree alone does not satisfy it.
+
 [`docs/downstream-consumers.md`](downstream-consumers.md) maps each consumer's
 requirements and actual usage to meta-language capabilities and tests. Their
 workloads (parse → common links → semantic transformation or translation →
@@ -453,6 +458,10 @@ Compatibility changes are resolved rather than kept behind obsolete pins. As the
 native grammars replace external parsers, the production parser dependencies
 (tree-sitter, web-tree-sitter and the vendored grammar binaries) are removed.
 Independent oracles are kept only in their test and development role.
+A recorded compatibility reason explains a stale item but does not complete its
+upgrade. Delivery evidence separately checks that retained dependencies,
+transitive resolutions, tools, actions, images and version-coupled artifacts are
+current at the audit date.
 
 ## Acceptance and evidence
 
@@ -511,6 +520,10 @@ are not evidence.
   - acceptance definitions changed to obtain green results.
 
 A red aggregate while scope remains unfinished is the truthful status.
+The Full Requirements Aggregate is an enforced required check for merging into
+the default branch. A workflow that runs but can be bypassed does not establish
+this requirement. Published delivery is checked separately because it requires
+the released artifacts.
 
 ## What finite tests establish
 

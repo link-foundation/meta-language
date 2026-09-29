@@ -27,6 +27,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5870004788',
   repositoryDirective:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090',
+  consolidatedChecklist:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5895896874',
 });
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({
@@ -876,6 +878,12 @@ export async function buildIssue195Manifest(root) {
     }),
     ...buildVisionRequirements(fixtureCatalog, {
       requirement, verification, pinnedFixture, source: ISSUE_195_SOURCES.repositoryDirective,
+      sourceByRequirement: {
+        'I195-DEPENDENCY-CURRENT-STABLE-DELIVERY': ISSUE_195_SOURCES.consolidatedChecklist,
+        'I195-DOWNSTREAM-RML-PR184-AUDIT': ISSUE_195_SOURCES.consolidatedChecklist,
+        'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS': ISSUE_195_SOURCES.consolidatedChecklist,
+        'I195-ACCEPTANCE-REQUIRED-MERGE-CHECK': ISSUE_195_SOURCES.consolidatedChecklist,
+      },
     }),
   ];
   const register = JSON.parse(registerText);

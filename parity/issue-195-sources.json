@@ -190,6 +190,22 @@
       "updatedAt": "2026-09-29T06:55:01Z",
       "bytes": 22554,
       "sha256": "fb4380da42befa7391fb61d0e7e06411a2388b5b1ddd1acde88681b18d53e443"
+    },
+    {
+      "key": "consolidatedChecklist",
+      "id": 5895896874,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5895896874",
+      "title": "Single consolidated remaining-delivery checklist — 2026-09-30",
+      "role": "Consolidated remaining delivery: full native grammars, interchange, merge, semantics, current dependencies, consumer workloads, acceptance, cleanup and publication",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-29T18:09:07Z",
+      "updatedAt": "2026-09-29T18:09:07Z",
+      "bytes": 26326,
+      "sha256": "892674d3c77511b5f2b3881e943eb9811a9d8a654c60985366a9c4a882b50294"
     }
   ],
   "statusReports": [
@@ -252,6 +268,18 @@
       "updatedAt": "2026-09-23T18:34:25Z",
       "bytes": 1596,
       "sha256": "4aec6c73c00f637481d1714f48537983cc6005e6c9da5e44d19ed2f1308ad001"
+    },
+    {
+      "id": 5894384291,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5894384291",
+      "title": "Automation stopped: the AI session failed",
+      "role": "Automation status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-09-29T16:31:11Z",
+      "updatedAt": "2026-09-29T16:31:11Z",
+      "bytes": 750,
+      "sha256": "8c4ad9e7f140c968c529bb85df426f9390b812eb0099b625ad4947201b752aa1"
     },
     {
       "id": 5800842752,

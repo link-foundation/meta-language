@@ -56,10 +56,11 @@ That snippet is shown as text here because this Markdown file is not compiled by
 rustdoc. The equivalent IR-builder round trip is doctested in the module docs for
 [`src/grammar/mod.rs`](../../rust/src/grammar/mod.rs).
 
-Use `emit_rust_parser` for a `.pest` grammar, `pest_derive` parser stub, and AST
-type declarations. Use `emit_javascript_parser` for Peggy grammar text plus an
-ESM wrapper that imports `peggy`, calls `peggy.generate(GRAMMAR)`, and exports
-`parser`.
+The existing `emit_rust_parser` produces a `.pest` grammar, `pest_derive` parser
+stub and AST declarations. The existing `emit_javascript_parser` produces Peggy
+grammar text and an ESM wrapper that calls `peggy.generate(GRAMMAR)`. Those
+external engines do not satisfy the [native grammar execution requirement](../vision.md#native-merged-grammars);
+their use in production remains unfinished work.
 
 ## See also
 

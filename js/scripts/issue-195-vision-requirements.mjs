@@ -149,6 +149,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     tooling: null,
   },
   {
+    id: 'I195-DEPENDENCY-CURRENT-STABLE-DELIVERY',
+    area: 'dependency-freshness',
+    specification: 'dependencies',
+    fixture: 'parity/dependency-inventory.json',
+    construct: 'current stable retained dependencies and build tools in delivered packages',
+    expectedBehavior:
+      'Every retained runtime, development, build and optional dependency, transitive resolution, generator, toolchain, workflow action, build image and version-coupled artifact is updated to the current stable compatible release at the recorded audit date. A compatibility reason alone does not count as an upgrade, and the delivery gate rejects stale retained items.',
+    assertions: [
+      'allRetainedItemsCurrent',
+      'transitiveResolutionsCurrent',
+      'buildToolsAndImagesCurrent',
+      'versionCoupledArtifactsRegenerated',
+      'staleDeliveredItemRejected',
+    ],
+    tooling: null,
+  },
+  {
     id: 'I195-LINO-UPGRADE',
     area: 'links-notation-fitness',
     specification: 'links-notation-fitness',
@@ -568,6 +585,17 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: null,
   },
   {
+    id: 'I195-DOWNSTREAM-RML-PR184-AUDIT',
+    area: 'downstream-consumers',
+    specification: 'downstream-consumers',
+    fixture: 'docs/downstream-consumers.md',
+    construct: 'current relative-meta-logic pull request 184 workload inventory',
+    expectedBehavior:
+      'The consumer audit inspects the current relative-meta-logic pull request 184 implementation, records its pinned revision and actual required workloads, and maps every workload to implementation and executable acceptance rows rather than relying only on the older default-branch audit.',
+    assertions: ['currentPullRequestRevisionPinned', 'actualWorkloadsInventoried', 'eachWorkloadMappedToExecutableAcceptance'],
+    tooling: null,
+  },
+  {
     id: 'I195-DOWNSTREAM-FORMAL-AI-WORKLOADS',
     area: 'downstream-consumers',
     specification: 'downstream-consumers',
@@ -575,6 +603,18 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'The link-assistant/formal-ai workloads identified by the consumer matrix run against clean installed artifacts of both packages through the common links representation.',
     assertions: ['workloadsRunOnInstalledArtifacts', 'sharedConceptsReused', 'distinctionsPreserved'],
+    javascript: null,
+    rust: null,
+  },
+  {
+    id: 'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS',
+    area: 'downstream-consumers',
+    specification: 'downstream-consumers',
+    fixture: 'docs/downstream-consumers.md',
+    construct: 'Rust, JavaScript and TypeScript semantic projection for formal-ai',
+    expectedBehavior:
+      'Both runtime packages translate the required Rust, JavaScript and TypeScript projection pairs through the common editable links representation, execute formal-ai projection rules, and preserve the required semantics on clean installed artifacts. A TypeScript concrete syntax tree alone does not count as translation.',
+    assertions: ['allRequiredProjectionPairsTranslate', 'consumerRulesExecute', 'semanticOutcomesPreserved', 'cleanInstalledArtifactsUsed'],
     javascript: null,
     rust: null,
   },
@@ -624,6 +664,16 @@ export const VISION_REQUIREMENTS = Object.freeze([
     tooling: null,
   },
   {
+    id: 'I195-ACCEPTANCE-REQUIRED-MERGE-CHECK',
+    area: 'independent-acceptance',
+    specification: 'acceptance-and-evidence',
+    construct: 'enforced full requirements merge check on the default branch',
+    expectedBehavior:
+      'The default branch has an active repository or organization rule that requires the Full Requirements Aggregate check to pass on the current merge candidate before a pull request can merge. Live GitHub rule inspection and a failing-check probe verify enforcement; a workflow file or a red optional check alone does not count.',
+    assertions: ['activeRuleTargetsDefaultBranch', 'fullAggregateRequired', 'failingCheckBlocksMerge', 'publishedDeliverySeparatelyVerified'],
+    tooling: null,
+  },
+  {
     id: 'I195-ACCEPTANCE-FINITE-CLAIMS-DOCUMENTED',
     area: 'independent-acceptance',
     specification: 'what-finite-tests-establish',
@@ -670,7 +720,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
 const RUNTIMES = ['javascript', 'rust', 'tooling'];
 
 /** Builds the ledger entries with the ledger's own constructors. */
-export function buildVisionRequirements(fixtureCatalog, { requirement, verification, pinnedFixture, source }) {
+export function buildVisionRequirements(fixtureCatalog, { requirement, verification, pinnedFixture, source, sourceByRequirement = {} }) {
   return VISION_REQUIREMENTS.map((row) => {
     const fixtureId = `planned:repository-directive:${row.id.toLowerCase()}`;
     fixtureCatalog[fixtureId] = row.fixture
@@ -679,7 +729,7 @@ export function buildVisionRequirements(fixtureCatalog, { requirement, verificat
     const requiredRuntimes = RUNTIMES.filter((runtime) => runtime in row);
     return requirement({
       id: row.id,
-      source,
+      source: sourceByRequirement[row.id] ?? source,
       area: row.area,
       scope: {
         ...(requiredRuntimes.includes('tooling') ? REPOSITORY_TOOLING : BOTH_PACKAGES),

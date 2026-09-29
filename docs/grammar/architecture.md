@@ -97,8 +97,9 @@ spell a construct differently.
 
 This mirrors the document-format path described in
 [`docs/cross-format-fidelity.md`](../cross-format-fidelity.md): parse into a
-shared concept layer, then render in the target format with documented fallbacks
-where exact fidelity is impossible.
+shared concept layer, then render in the target format with a faithful lowering
+or runtime encoding where direct spelling is impossible. A lossy fallback is an
+identified gap against the [vision](../vision.md), not complete conversion.
 
 ## See also
 

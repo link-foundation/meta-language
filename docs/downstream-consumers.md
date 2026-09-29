@@ -28,8 +28,8 @@ satisfied.
 - RML pull request
   [#184](https://github.com/link-foundation/relative-meta-logic/pull/184) was
   open at the audit date, head `f24d0f1f183fc92b39563d2f6fd5d3795d3235c5`
-  on branch `issue-183-7fedfddffe9c`. It is not part of the inspected RML
-  commit and is described only in the facts section.
+  on branch `issue-183-7fedfddffe9c`. Its implementation is audited separately
+  below; the default-branch table describes the earlier committed consumer.
 - meta-language itself was read at the working tree of this branch, whose
   JavaScript and Rust packages both declare version 0.58.2.
 
@@ -106,6 +106,33 @@ has no JavaScript use of it.
 [rml-lean-rs]: https://github.com/link-foundation/relative-meta-logic/blob/c5513f2b958a8bd160b58c7054d408d4c446bf98/rust/src/lean_export.rs
 [rml-rocq-rs]: https://github.com/link-foundation/relative-meta-logic/blob/c5513f2b958a8bd160b58c7054d408d4c446bf98/rust/src/rocq.rs
 
+### Current RML pull request 184
+
+This table inspects the pinned pull request head
+`f24d0f1f183fc92b39563d2f6fd5d3795d3235c5`, rather than treating its
+new code as part of the older default branch. The pull request has not been
+run against clean installed artifacts from this branch. Its own tests and
+corpus cases are consumer fixtures, not observations of the issue 195
+acceptance suite.
+
+| Consumer usage or requirement | meta-language capability | Ledger rows | Tests | Status |
+|---|---|---|---|---|
+| Parse and normalize RML's Links Notation source in both runtimes, including comments, indentation, Unicode space, quote runs, depth and scaling cases | [JavaScript front end][rml-pr184-lino-js], [Rust front end][rml-pr184-lino-rs] and [shared cases][rml-pr184-lino-cases] still call `links-notation` 0.20 after consumer-owned preprocessing. This pull request does not call meta-language's LiNo grammar. | `I195-CST-lino`, `I195-LINO-UPGRADE`, `I195-LINO-UPSTREAM-REGRESSIONS`, `I195-LINO-COMPATIBILITY-MATRIX`, `I195-DOWNSTREAM-RML-PR184-AUDIT` | `js/tests/lino-grammar.test.js`, `rust/tests/unit/lino_grammar.rs` (meta-language only) | not yet verified |
+| Round-trip RML source through meta-language and compare links and evaluation | [JavaScript facade][rml-pr184-meta-js] and [Rust facade][rml-pr184-meta-rs] parse with the unregistered `RML` label, reconstruct tokens, then call RML's own LiNo parser and evaluator. Neither facade tests a registered RML grammar. | `I195-GRAMMAR-LOSSLESS-TREES`, `I195-DOWNSTREAM-RML-WORKLOADS` | `rust/tests/unit/parity_corpora.rs` (meta-language only) | not yet verified |
+| Rewrite a JavaScript identifier as part of RML's meta-language integration | The [JavaScript facade][rml-pr184-meta-js] reconstructs a meta-language network, then uses RML's own `parseJs` and `printJs` CST for lexical edits; the [Rust facade][rml-pr184-meta-rs] uses meta-language query and replacement. The two implementations are not the same binding-aware operation. | `I195-XFORM-javascript-query`, `I195-XFORM-javascript-replace`, `I195-RENAME-javascript`, `I195-PARITY-TRANSFORMS` | `js/tests/issue-195-binding-rename.test.js`, `rust/tests/unit/issue_195_binding_rename.rs` (meta-language only) | not yet implemented |
+| Load and validate linked Lean and Rocq formal corpus content | [JavaScript corpus][rml-pr184-corpus-js] and [Rust corpus][rml-pr184-corpus-rs] first round-trip the source through the `RML` network, then use RML's own form parser and trusted contract to interpret and fingerprint declarations. Meta-language does not validate declarations or certify proofs. | `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-GRAMMAR-LOSSLESS-TREES`, `I195-SEMANTICS-PROOF-PRESERVATION` | none | not yet verified |
+| Keep JavaScript and Rust RML behavior aligned across the pull request's tests | [JavaScript LiNo tests][rml-pr184-tests-js], [Rust LiNo tests][rml-pr184-tests-rs], and facade tests in both runtimes exercise consumer code, but have not run against this branch's clean candidate packages. | `I195-PARITY-CST`, `I195-PARITY-TRANSFORMS`, `I195-DOWNSTREAM-RML-WORKLOADS`, `I195-DELIVERY-RML-CANDIDATE` | none | not yet verified |
+
+[rml-pr184-lino-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/src/rml-lino-frontend.mjs
+[rml-pr184-lino-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/lino_frontend.rs
+[rml-pr184-lino-cases]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/test-corpus/lino-frontend/cases.json
+[rml-pr184-meta-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/src/rml-meta-language.mjs
+[rml-pr184-meta-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/meta_language_support.rs
+[rml-pr184-corpus-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/src/rml-formal-corpus.mjs
+[rml-pr184-corpus-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/src/formal_corpus.rs
+[rml-pr184-tests-js]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/js/tests/lino-frontend.test.mjs
+[rml-pr184-tests-rs]: https://github.com/link-foundation/relative-meta-logic/blob/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/rust/tests/lino_frontend_tests.rs
+
 ## formal-ai
 
 | Consumer usage or requirement | meta-language capability | Ledger rows | Tests | Status |
@@ -120,7 +147,7 @@ has no JavaScript use of it.
 | Project programs between Rust, JavaScript and TypeScript with rule sets written in Links Notation: `project` in [rust/src/rust_projection.rs][fai-proj] (L65) using `TranslationRuleSet::from_lino`, `LinkNetwork::from_lino` and `query_matches`, tested by formal-ai's [issue_1138_rust_projection.rs][fai-proj-test] | Rule sets and networks serialized to and from Links Notation; query matching | `I195-PARITY-TRANSLATIONS` | `rust/tests/unit/translation_rules.rs` (`translation_rule_sets_round_trip_through_lino`), `rust/tests/unit/lino_serialization.rs`, `rust/tests/unit/query_matching.rs` | covered by tests |
 | formal-ai's own projection rule sets run against the current crate | Same API as the previous row | `I195-PARITY-TRANSLATIONS` | none | not yet verified |
 | Translation between Rust and JavaScript in both directions, required by [the three-roots architect note][fai-three-roots] | Rust to JavaScript and JavaScript to Rust translation; formal-ai does not call it at the inspected commit | `I195-TRANSLATE-rust-to-javascript`, `I195-TRANSLATE-javascript-to-rust`, `I195-SEMANTICS-FAITHFUL-BEHAVIOR` | `rust/tests/unit/issue_195_translation_pairs.rs`, `rust/tests/unit/issue_195_translation_behavior.rs`, `rust/tests/unit/translation_emit_javascript.rs`, `rust/tests/unit/translation_emit_rust.rs` | not yet verified |
-| Translation to and from TypeScript, required by the same [architect note][fai-three-roots] (L10) | TypeScript has a CST but is not a translation pair in meta-language | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS` | none | not yet implemented |
+| Translation to and from TypeScript, required by the same [architect note][fai-three-roots] (L10) | TypeScript has a CST but is not a translation pair in meta-language | `I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS`, `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS` | none | not yet implemented |
 | Census and serialization of formal-ai's own Rust syntax: `ast_census` and `network_lino` in [rust/src/agentic_coding/self_ast.rs][fai-self-ast] (L148, L270) and `parse_network` in [rust/src/grammar_kinds.rs][fai-kinds] (L167) | `to_lino` / `from_lino` and grammar node kinds over the Rust CST | `I195-CST-rust`, `I195-GRAMMAR-CONCEPT-DISTINCTIONS` | `rust/tests/unit/lino_serialization.rs`, `rust/tests/unit/default_cst_expectations.rs` | covered by tests |
 | formal-ai's Links Notation seed and benchmark data parse and reconstruct losslessly | LiNo CST; formal-ai fixtures from `data/seed/` and `data/benchmarks/` in the parity corpora | `I195-CST-lino` | `rust/tests/unit/parity_corpora.rs` (Rust only) | covered by tests |
 | A JavaScript use of meta-language inside formal-ai | None exists at the inspected commit; formal-ai's [package.json][fai-pkg] has no meta-language dependency | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS`, `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` | none | not yet implemented |
