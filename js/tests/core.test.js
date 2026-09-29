@@ -83,6 +83,14 @@ test('lossless source tokens expose the Rust-compatible Token link type alias', 
   assert.equal(tokenLinks[0].metadata().linkType, LinkType.Token);
 });
 
+test('unknown-language source rendering omits inserted recovery tokens', () => {
+  for (const source of ["# it's (\n(a \"(\" b)\n", '(a: a is a)\n(? (a = a)']) {
+    const network = LinkNetwork.parse(source, 'RML', ParseConfiguration.default());
+    assert.equal(network.reconstructText(), source);
+    assert.equal(network.renderSource('RML'), source);
+  }
+});
+
 test('S-expression query transform replaces captured identifier source ranges', () => {
   const network = LinkNetwork.parse(
     'const oldName = call(oldName);\n',

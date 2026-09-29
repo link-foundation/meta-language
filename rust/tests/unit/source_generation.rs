@@ -85,6 +85,15 @@ fn render_source_matches_reconstruct_text_for_span_backed_parse_networks() {
 }
 
 #[test]
+fn unknown_language_source_rendering_omits_inserted_recovery_tokens() {
+    for source in ["# it's (\n(a \"(\" b)\n", "(a: a is a)\n(? (a = a)"] {
+        let network = LinkNetwork::parse(source, "RML", ParseConfiguration::default());
+        assert_eq!(network.reconstruct_text(), source);
+        assert_eq!(network.render_source("RML"), source);
+    }
+}
+
+#[test]
 fn syntax_nodes_accept_runtime_sized_child_lists() {
     let mut network = LinkNetwork::new();
     let children = (0..17)

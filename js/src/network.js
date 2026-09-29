@@ -590,7 +590,7 @@ export class LinkNetwork {
 
   renderSource(language) {
     return this._sourceTokenLinks()
-      .filter((link) => link.metadata().language === language)
+      .filter((link) => link.metadata().language === language && !link.metadata().flags.isMissing)
       .sort(sourceOrder)
       .map((link) => link.metadata().term ?? '')
       .join('');

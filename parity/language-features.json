@@ -278,7 +278,9 @@
         "status": "implemented",
         "evidence": [
           "rust/src/source.rs",
-          "rust/tests/unit/link_network.rs"
+          "rust/src/source_generation.rs",
+          "rust/tests/unit/link_network.rs",
+          "rust/tests/unit/source_generation.rs"
         ]
       },
       "javascript": {
