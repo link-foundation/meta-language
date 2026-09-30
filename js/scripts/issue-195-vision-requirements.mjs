@@ -163,7 +163,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'versionCoupledArtifactsRegenerated',
       'staleDeliveredItemRejected',
     ],
-    tooling: null,
+    tooling: ['js/scripts/dependency-inventory.mjs', 'js/scripts/check-dependencies.mjs'],
   },
   {
     id: 'I195-LINO-UPGRADE',
@@ -671,7 +671,8 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'The default branch has an active repository or organization rule that requires the Full Requirements Aggregate check to pass on the current merge candidate before a pull request can merge. Live GitHub rule inspection and a failing-check probe verify enforcement; a workflow file or a red optional check alone does not count.',
     assertions: ['activeRuleTargetsDefaultBranch', 'fullAggregateRequired', 'failingCheckBlocksMerge', 'publishedDeliverySeparatelyVerified'],
-    tooling: null,
+    tooling: ['js/scripts/issue-195-merge-enforcement.mjs', 'js/scripts/check-issue-195-merge-enforcement.mjs'],
+    group: 'merge-enforcement',
   },
   {
     id: 'I195-ACCEPTANCE-FINITE-CLAIMS-DOCUMENTED',

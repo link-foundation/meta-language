@@ -26,6 +26,8 @@ const SOURCE_LABELS = Object.freeze({
   cacheCleanup: 'Completion audit and cache cleanup',
   remainingAudit: 'Audit of the remaining work (historical counts)',
   repositoryDirective: 'Repository-wide delivery directive',
+  consolidatedChecklist: 'Consolidated acceptance and delivery checklist',
+  currentHeadAudit: 'Audit of PR head 7489adfb and remaining delivery work',
 });
 
 function allKeys(value, prefix = '') {

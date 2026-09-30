@@ -51,6 +51,7 @@ function baselineManifest(reference) {
       execFileSync('git', ['show', `${reference}:parity/issue-195-requirements.json`], {
         cwd: root,
         encoding: 'utf8',
+        maxBuffer: 64 * 1024 * 1024,
         stdio: ['ignore', 'pipe', 'pipe'],
       }),
     );

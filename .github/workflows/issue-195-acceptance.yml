@@ -38,12 +38,13 @@ jobs:
           node js/scripts/run-issue-195-evidence.mjs
           --checkpoint "$ACCEPTANCE_CHECKPOINT"
           --commit "$GITHUB_SHA"
-          --prepare-candidates issue-195-candidates
+          --prepare-candidates .issue-195-work/candidates
 
       - uses: actions/upload-artifact@v7
         with:
           name: issue-195-candidates-${{ github.sha }}
-          path: issue-195-candidates/
+          path: .issue-195-work/candidates/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
 
@@ -114,21 +115,21 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: issue-195-candidates-${{ github.sha }}
-          path: issue-195-candidates
+          path: .issue-195-work/candidates
 
       - name: Install and parse the exact artifacts in clean consumers
         shell: bash
         run: >-
           node js/scripts/run-issue-195-consumer.mjs
-          --npm-tarball "$(ls issue-195-candidates/*.tgz)"
-          --crate "$(ls issue-195-candidates/*.crate)"
+          --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
+          --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-consumer"
-          --out issue-195-platform/report.json
+          --out issue-195-artifacts/platform/report.json
 
       - uses: actions/upload-artifact@v7
         with:
           name: issue-195-platform-${{ matrix.os }}-${{ github.sha }}
-          path: issue-195-platform/report.json
+          path: issue-195-artifacts/platform/report.json
           if-no-files-found: error
           retention-days: 30
 
@@ -149,6 +150,11 @@ jobs:
 
   acceptance:
     name: Full Requirements Aggregate
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+      actions: read
     needs: [candidates, consumers]
     if: ${{ !cancelled() && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
@@ -215,16 +221,18 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: issue-195-candidates-${{ github.sha }}
-          path: issue-195-candidates
+          path: .issue-195-work/candidates
 
       - name: Download platform consumer reports
         uses: actions/download-artifact@v8
         with:
           pattern: issue-195-platform-*-${{ github.sha }}
-          path: issue-195-platform-reports
+          path: issue-195-artifacts/platform-reports
 
       - name: Produce checkpoint evidence
         env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_195_PULL_REQUEST_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
         run: >-
@@ -232,8 +240,8 @@ jobs:
           --checkpoint "$ACCEPTANCE_CHECKPOINT"
           --commit "$GITHUB_SHA"
           --results-dir issue-195-results
-          --candidates issue-195-candidates
-          --platform-reports issue-195-platform-reports
+          --candidates .issue-195-work/candidates
+          --platform-reports issue-195-artifacts/platform-reports
 
       - name: Evaluate every required verification cell
         if: always()

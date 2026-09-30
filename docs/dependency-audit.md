@@ -6,7 +6,7 @@
 
 # Dependency audit
 
-Audit date: 2026-09-29
+Audit date: 2026-09-30
 
 This inventory lists every runtime, development, build and optional dependency
 of the two published packages and the website crate, every lockfile
@@ -45,7 +45,7 @@ they are.
 | Category | Items | Current | Behind | Not applicable |
 |---|---|---|---|---|
 | JavaScript engines | 1 | 1 | 0 | 0 |
-| npm packages | 17 | 11 | 6 | 0 |
+| npm packages | 17 | 17 | 0 | 0 |
 | Rust package settings | 5 | 5 | 0 | 0 |
 | Rust crates | 328 | 291 | 37 | 0 |
 | Experiment manifests | 3 | 3 | 0 | 0 |
@@ -71,19 +71,19 @@ they are.
 |---|---|---|---|---|---|---|---|---|---|
 | `@pdf-lib/standard-fonts` | `js/package-lock.json` | `js/package-lock.json` | `1.0.0` | transitive, development |  | 1.0.0 (npm registry, @pdf-lib/standard-fonts latest) | version | current |  |
 | `@pdf-lib/upng` | `js/package-lock.json` | `js/package-lock.json` | `1.0.1` | transitive, development |  | 1.0.1 (npm registry, @pdf-lib/upng latest) | version | current |  |
-| `@peggyjs/from-mem` | `js/package-lock.json` | `js/package-lock.json` | `3.1.3` | transitive, runtime |  | 3.1.4 (npm registry, @peggyjs/from-mem latest) | version | behind | Held by the requirement of `peggy` 5.1.0 (`3.1.3`), which does not admit 3.1.4; it moves when that dependent does. |
+| `@peggyjs/from-mem` | `js/package-lock.json` | `js/package-lock.json` | `3.1.4` | transitive, runtime |  | 3.1.4 (npm registry, @peggyjs/from-mem latest) | version | current |  |
 | `collapse-white-space` | `js/package-lock.json` | `js/package-lock.json` | `2.1.0` | transitive, development |  | 2.1.0 (npm registry, collapse-white-space latest) | version | current |  |
-| `commander` | `js/package-lock.json` | `js/package-lock.json` | `14.0.3` | transitive, runtime |  | 15.0.0 (npm registry, commander latest) | version | behind | Held by the requirement of `peggy` 5.1.0 (`^14.0.3`), which does not admit 15.0.0; it moves when that dependent does. |
+| `commander` | `js/package-lock.json` | `js/package-lock.json` | `15.0.0` | transitive, runtime |  | 15.0.0 (npm registry, commander latest) | version | current |  |
 | `franc-min` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `6.2.0` | direct, development | `6.2.0` | 6.2.0 (npm registry, franc-min latest) | version | current |  |
 | `links-notation` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.22.0` | direct, runtime | `0.22.0` | 0.22.0 (npm registry, links-notation latest) | version | current |  |
 | `n-gram` | `js/package-lock.json` | `js/package-lock.json` | `2.0.2` | transitive, development |  | 2.0.2 (npm registry, n-gram latest) | version | current |  |
-| `pako` | `js/package-lock.json` | `js/package-lock.json` | `1.0.11` | transitive, development |  | 3.0.2 (npm registry, pako latest) | version | behind | Held by the requirement of `@pdf-lib/standard-fonts` 1.0.0 (`^1.0.6`), `@pdf-lib/upng` 1.0.1 (`^1.0.10`), `pdf-lib` 1.17.1 (`^1.0.11`), which does not admit 3.0.2; it moves when that dependent does. |
+| `pako` | `js/package-lock.json` | `js/package-lock.json` | `3.0.2` | transitive, development |  | 3.0.2 (npm registry, pako latest) | version | current |  |
 | `pdf-lib` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `1.17.1` | direct, development | `1.17.1` | 1.17.1 (npm registry, pdf-lib latest) | version | current |  |
 | `peggy` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `5.1.0` | direct, runtime | `5.1.0` | 5.1.0 (npm registry, peggy latest) | version | current |  |
-| `semver` | `js/package-lock.json` | `js/package-lock.json` | `7.7.4` | transitive, runtime |  | 7.8.5 (npm registry, semver latest) | version | behind | Held by the requirement of `@peggyjs/from-mem` 3.1.3 (`7.7.4`), which does not admit 7.8.5; it moves when that dependent does. |
-| `source-map-generator` | `js/package-lock.json` | `js/package-lock.json` | `2.0.6` | transitive, runtime |  | 2.0.7 (npm registry, source-map-generator latest) | version | behind | Held by the requirement of `peggy` 5.1.0 (`2.0.6`), which does not admit 2.0.7; it moves when that dependent does. |
+| `semver` | `js/package-lock.json` | `js/package-lock.json` | `7.8.5` | transitive, runtime |  | 7.8.5 (npm registry, semver latest) | version | current |  |
+| `source-map-generator` | `js/package-lock.json` | `js/package-lock.json` | `2.0.7` | transitive, runtime |  | 2.0.7 (npm registry, source-map-generator latest) | version | current |  |
 | `trigram-utils` | `js/package-lock.json` | `js/package-lock.json` | `2.0.1` | transitive, development |  | 2.0.1 (npm registry, trigram-utils latest) | version | current |  |
-| `tslib` | `js/package-lock.json` | `js/package-lock.json` | `1.14.1` | transitive, development |  | 2.8.1 (npm registry, tslib latest) | version | behind | Held by the requirement of `pdf-lib` 1.17.1 (`^1.11.1`), which does not admit 2.8.1; it moves when that dependent does. |
+| `tslib` | `js/package-lock.json` | `js/package-lock.json` | `2.8.1` | transitive, development |  | 2.8.1 (npm registry, tslib latest) | version | current |  |
 | `web-tree-sitter` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.27.0` | direct, runtime | `0.27.0` | 0.27.0 (npm registry, web-tree-sitter latest) | version | current |  |
 | `wordnet-db` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `3.1.14` | direct, development | `3.1.14` | 3.1.14 (npm registry, wordnet-db latest) | version | current |  |
 
@@ -584,7 +584,7 @@ they are.
 | `ocaml/setup-ocaml` | `.github/workflows/issue-195-acceptance.yml` | `v3` | v3.9.0 (GitHub release, ocaml/setup-ocaml) | major | current |  |
 | `peter-evans/create-pull-request` | `.github/workflows/rust.yml` | `v8` | v8.1.1 (GitHub release, peter-evans/create-pull-request) | major | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `cargo-llvm-cov` |  | floating | current |  |
-| `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.87.21 (GitHub release, taiki-e/install-action) | major | current |  |
+| `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.87.22 (GitHub release, taiki-e/install-action) | major | current |  |
 
 ## Build images
 
@@ -626,14 +626,8 @@ they are.
 
 ## Behind the current stable release
 
-46 retained items are behind their current stable release on 2026-09-29, each for the recorded reason:
+40 retained items are behind their current stable release on 2026-09-30, each for the recorded reason:
 
-- `@peggyjs/from-mem` `3.1.3` → `3.1.4` (`js/package-lock.json`): Held by the requirement of `peggy` 5.1.0 (`3.1.3`), which does not admit 3.1.4; it moves when that dependent does.
-- `commander` `14.0.3` → `15.0.0` (`js/package-lock.json`): Held by the requirement of `peggy` 5.1.0 (`^14.0.3`), which does not admit 15.0.0; it moves when that dependent does.
-- `pako` `1.0.11` → `3.0.2` (`js/package-lock.json`): Held by the requirement of `@pdf-lib/standard-fonts` 1.0.0 (`^1.0.6`), `@pdf-lib/upng` 1.0.1 (`^1.0.10`), `pdf-lib` 1.17.1 (`^1.0.11`), which does not admit 3.0.2; it moves when that dependent does.
-- `semver` `7.7.4` → `7.8.5` (`js/package-lock.json`): Held by the requirement of `@peggyjs/from-mem` 3.1.3 (`7.7.4`), which does not admit 7.8.5; it moves when that dependent does.
-- `source-map-generator` `2.0.6` → `2.0.7` (`js/package-lock.json`): Held by the requirement of `peggy` 5.1.0 (`2.0.6`), which does not admit 2.0.7; it moves when that dependent does.
-- `tslib` `1.14.1` → `2.8.1` (`js/package-lock.json`): Held by the requirement of `pdf-lib` 1.17.1 (`^1.11.1`), which does not admit 2.8.1; it moves when that dependent does.
 - `abnf-core` `0.5.0` → `0.6.0` (`rust/Cargo.lock`): Held by the requirement of `abnf` 0.13.0 (`^0.5`), which does not admit 0.6.0; it moves when that dependent does.
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.16.1 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.
 - `cc` `1.2.67` → `1.5.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does.

@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import {
   AUDIT_DOCUMENT,
   INVENTORY_FILE,
+  checkDeliveredDependencies,
   checkInventory,
   collectDependencies,
   refreshInventory,
@@ -77,7 +78,14 @@ async function main(argv) {
     console.error(`${INVENTORY_FILE} is missing; run node js/scripts/check-dependencies.mjs --refresh`);
     return 1;
   }
-  const problems = checkInventory(inventory, collected);
+  const consumerIndex = argv.indexOf('--consumer-lock');
+  if (consumerIndex >= 0 && (!argv[consumerIndex + 1] || argv[consumerIndex + 1].startsWith('--'))) {
+    throw new Error('--consumer-lock requires a clean consumer package-lock.json path');
+  }
+  const npmConsumerLock = consumerIndex >= 0 ? JSON.parse(readFileSync(path.resolve(argv[consumerIndex + 1]), 'utf8')) : undefined;
+  const problems = argv.includes('--delivery')
+    ? checkDeliveredDependencies(inventory, collected, { npmConsumerLock })
+    : checkInventory(inventory, collected);
   const documentPath = path.join(root, AUDIT_DOCUMENT);
   const rendered = renderAuditDocument(inventory);
   if (!existsSync(documentPath) || readFileSync(documentPath, 'utf8') !== rendered) {

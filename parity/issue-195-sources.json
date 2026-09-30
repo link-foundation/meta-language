@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-09-29",
+  "reconciledAt": "2026-09-30",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -206,6 +206,22 @@
       "updatedAt": "2026-09-29T18:09:07Z",
       "bytes": 26326,
       "sha256": "892674d3c77511b5f2b3881e943eb9811a9d8a654c60985366a9c4a882b50294"
+    },
+    {
+      "key": "currentHeadAudit",
+      "id": 5906611497,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5906611497",
+      "title": "What remains after the latest changes — audit of PR head `7489adfb`",
+      "role": "Current-head audit: native grammars, interchange, merge, full semantics, dependency upgrades, actual consumer workloads, live merge enforcement and publication; preserves all earlier scope",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-09-30T07:45:57Z",
+      "updatedAt": "2026-09-30T07:45:57Z",
+      "bytes": 10244,
+      "sha256": "6c5c9d97df6e84de8bcfb9e5288b798699889305faae45a88214874f12c393db"
     }
   ],
   "statusReports": [

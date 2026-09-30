@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +15,14 @@ import {
 import { translateProgram } from '../src/program-translation.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+test('the scope gate reads the full committed ledger after it grows beyond the default subprocess buffer', () => {
+  const checked = spawnSync(process.execPath, [
+    path.join(root, 'js/scripts/check-issue-195-acceptance.mjs'), '--scope-baseline', 'HEAD',
+  ], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  assert.equal(checked.status, 0, checked.error?.message ?? checked.stdout);
+  assert.match(checked.stdout, /required scope is not reduced relative to HEAD/);
+});
 
 function clone(value) {
   return structuredClone(value);

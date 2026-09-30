@@ -29,6 +29,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090',
   consolidatedChecklist:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5895896874',
+  currentHeadAudit:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5906611497',
 });
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({

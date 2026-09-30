@@ -23,9 +23,11 @@ import {
   supportedPlatformCoverage,
 } from './issue-195-delivery.mjs';
 import { buildEvidencePlan, observedEvidenceForCell } from './issue-195-evidence-plan.mjs';
+import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const commit = option('--commit', process.env.GITHUB_SHA ?? git(['rev-parse', 'HEAD']));
+verifyEvaluatedCheckout(root, commit);
 const checkpoint = option('--checkpoint', 'pre-merge');
 const resultsDirectory = safeResultsDirectory(option('--results-dir', 'issue-195-results'));
 const logsDirectory = path.join(resultsDirectory, 'logs');
@@ -56,6 +58,7 @@ const prepareCandidatesDirectory = option('--prepare-candidates', null);
 if (prepareCandidatesDirectory) {
   await mkdir(logsDirectory, { recursive: true });
   const prepared = await prepareCandidates(path.resolve(prepareCandidatesDirectory));
+  verifyEvaluatedCheckout(root, commit);
   console.log(
     `issue-195 evidence: prepared ${path.basename(prepared.tarball)} and ${path.basename(prepared.crate)}`,
   );
@@ -78,6 +81,7 @@ console.log(
 const evidenceGroups = checkpoint === 'release-delivery'
   ? await producePublishedEvidence()
   : await producePreMergeEvidence();
+verifyEvaluatedCheckout(root, commit);
 if (runnerObservations.length > 0) {
   // One write keeps runner records whole next to the suites' own callbacks.
   await appendFile(
@@ -251,6 +255,7 @@ async function producePreMergeEvidence() {
     ['runtime-parity', bundle(runtimeParity)],
     ...delivery,
   ]);
+  groups.set('merge-enforcement', await produceMergeEnforcementEvidence());
   for (const [group, record] of nativeGroups) groups.set(group, record);
   groups.set('cache-cleanup:measured', produceCacheCleanupEvidence());
   for (const runtime of ['javascript', 'rust']) {
@@ -267,6 +272,22 @@ async function producePreMergeEvidence() {
     }
   }
   return groups;
+}
+
+async function produceMergeEnforcementEvidence() {
+  const reportPath = path.join(artifactsDirectory, 'merge-enforcement.json');
+  const execution = await runCommand('merge-enforcement', 'node', [
+    path.join(root, 'js/scripts/check-issue-195-merge-enforcement.mjs'),
+    '--commit', commit, '--report', reportPath,
+  ], { allowFailure: true });
+  const report = JSON.parse(await readFile(reportPath, 'utf8'));
+  for (const [assertionId, holds] of Object.entries(report.checks)) {
+    if (holds === true) observe(
+      'i195-acceptance-required-merge-check-tooling-behavior', assertionId,
+      'live GitHub merge enforcement and separate release checkpoint inspection',
+    );
+  }
+  return { ...bundle(execution), artifacts: [relative(reportPath)] };
 }
 
 /**

@@ -73,6 +73,22 @@ rust-script scripts/check-file-size.rs
 rust-script scripts/check-crate-size.rs
 ```
 
+The issue #195 delivery diagnostics can also inspect live merge enforcement
+and reject stale delivered dependencies:
+
+```bash
+cd js
+npm run check:issue-195:merge-enforcement
+npm run check:dependencies:delivery
+```
+
+The dependency delivery check is separate from inventory integrity: a recorded
+compatibility reason explains a stale pin but does not verify its upgrade.
+The delivery check also needs the `package-lock.json` of a clean installed
+candidate, supplied with `-- --consumer-lock /path/to/consumer/package-lock.json`.
+It checks the dependency versions that the installed package resolves,
+including nested copies; repository overrides alone do not establish delivery.
+
 ## Changelog
 
 User-facing changes need a fragment in `changelog.d/`:

@@ -179,6 +179,7 @@ test('inventory malformed-input checks emit observed evidence for each JavaScrip
     };
     delete childEnvironment.NODE_TEST_CONTEXT;
     execFileSync(process.execPath, [
+      ...process.execArgv,
       '--test', '--test-name-pattern=every JavaScript grammar inventory frontend retains',
       'tests/four-language-conformance.test.js',
     ], { cwd: path.join(root, 'js'), env: childEnvironment, stdio: 'pipe' });

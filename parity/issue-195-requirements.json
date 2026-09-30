@@ -12,7 +12,8 @@
     "cacheCleanup": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5856764580",
     "remainingAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5870004788",
     "repositoryDirective": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090",
-    "consolidatedChecklist": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5895896874"
+    "consolidatedChecklist": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5895896874",
+    "currentHeadAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5906611497"
   },
   "checkpoints": {
     "pre-merge": "All implementation and candidate-artifact requirements must pass on the exact merge candidate.",
@@ -1457,57 +1458,57 @@
     "fault:plain-text-parser-fallback": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: plain-text-parser-fallback",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:lexical-parser-fallback": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: lexical-parser-fallback",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:removed-inventory-row-or-alias": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: removed-inventory-row-or-alias",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:dropped-fields-trivia-or-spans": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: dropped-fields-trivia-or-spans",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:stubbed-binding-resolution": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: stubbed-binding-resolution",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:rename-capture-bug": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: rename-capture-bug",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:stale-structure-after-edit": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: stale-structure-after-edit",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:unsupported-translation-descriptor": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: unsupported-translation-descriptor",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:relabeled-source-translation": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: relabeled-source-translation",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:skipped-test-or-job": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: skipped-test-or-job",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "fault:falsified-capability-declaration": {
       "path": "js/tests/issue-195-acceptance.test.js",
       "selector": "fault injection: falsified-capability-declaration",
-      "sha256": "6cedda1dfd424835d251fadabdddf383cefaf71c8ebea55ecb699be9467f1cb1"
+      "sha256": "35d99826d5ff6c72461a9228a13d991eaf817454146b17cb5c4e65628a1527e7"
     },
     "planned:cache-cleanup:i195-cache-cleanup-entry-point": {
       "path": "scripts/lib/cache-classes.mjs",
@@ -1552,7 +1553,7 @@
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
       "selector": "docs/vision.md#sources-of-truth: register of every requirement source with its revision and content hash",
-      "sha256": "8795e65d20b5c26b84d1578799d58a65bbfe1adf040dd3cb52200cdc94276ee5"
+      "sha256": "3c544f03924a1a9b3514c6f3139460012030aebd9c4e4b7d5c3731571aae9f79"
     },
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
@@ -1572,7 +1573,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "080a20bd87339da6c90520a47bb80b83c2aed3c5d626c90ddb50822fb4a7ba7b"
+      "sha256": "81c883c1f8457d9df12762a44e723c94c4c89279830ecf38726756bb7b7d4e1c"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1582,7 +1583,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "080a20bd87339da6c90520a47bb80b83c2aed3c5d626c90ddb50822fb4a7ba7b"
+      "sha256": "81c883c1f8457d9df12762a44e723c94c4c89279830ecf38726756bb7b7d4e1c"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1834,7 +1835,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -1898,7 +1900,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -1975,7 +1978,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2006,7 +2010,10 @@
         "tooling"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "tooling": [
+          "js/scripts/issue-195-merge-enforcement.mjs",
+          "js/scripts/check-issue-195-merge-enforcement.mjs"
+        ]
       },
       "verifications": [
         {
@@ -2036,11 +2043,12 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
-          "suite:javascript"
+          "merge-enforcement"
         ],
         "packages": [
           "repository tooling, not packaged"
@@ -2105,7 +2113,8 @@
           "cacheCleanup",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2175,7 +2184,8 @@
           "cacheCleanup",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2246,7 +2256,8 @@
           "cacheCleanup",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2310,7 +2321,8 @@
           "cacheCleanup",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2379,7 +2391,8 @@
           "cacheCleanup",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2448,7 +2461,8 @@
           "cacheCleanup",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2519,7 +2533,8 @@
           "cacheCleanup",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2595,7 +2610,8 @@
           "cacheCleanup",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2689,7 +2705,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2783,7 +2800,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2877,7 +2895,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2971,7 +2990,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3117,7 +3137,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3266,7 +3287,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3411,7 +3433,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3558,7 +3581,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3710,7 +3734,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3859,7 +3884,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4008,7 +4034,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4154,7 +4181,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4302,7 +4330,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4448,7 +4477,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4598,7 +4628,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4746,7 +4777,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4892,7 +4924,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5040,7 +5073,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5189,7 +5223,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5335,7 +5370,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5480,7 +5516,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5628,7 +5665,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5773,7 +5811,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5920,7 +5959,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6070,7 +6110,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6220,7 +6261,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6367,7 +6409,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6516,7 +6559,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6661,7 +6705,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6808,7 +6853,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6956,7 +7002,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7104,7 +7151,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7256,7 +7304,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7405,7 +7454,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7553,7 +7603,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7701,7 +7752,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7848,7 +7900,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7996,7 +8049,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8145,7 +8199,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8293,7 +8348,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8439,7 +8495,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8587,7 +8644,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8735,7 +8793,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8881,7 +8940,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9027,7 +9087,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9174,7 +9235,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9322,7 +9384,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9468,7 +9531,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9614,7 +9678,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9764,7 +9829,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9910,7 +9976,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10057,7 +10124,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10207,7 +10275,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10355,7 +10424,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10502,7 +10572,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10650,7 +10721,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10797,7 +10869,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10942,7 +11015,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11089,7 +11163,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11238,7 +11313,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11385,7 +11461,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11532,7 +11609,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11681,7 +11759,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11829,7 +11908,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11976,7 +12056,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12121,7 +12202,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12268,7 +12350,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12418,7 +12501,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12566,7 +12650,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12716,7 +12801,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12865,7 +12951,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13014,7 +13101,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13162,7 +13250,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13310,7 +13399,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13456,7 +13546,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13602,7 +13693,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13750,7 +13842,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13899,7 +13992,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14048,7 +14142,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14195,7 +14290,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14344,7 +14440,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14490,7 +14587,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14640,7 +14738,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14788,7 +14887,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14880,7 +14980,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14974,7 +15075,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15068,7 +15170,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15161,7 +15264,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15254,7 +15358,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15347,7 +15452,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15379,7 +15485,10 @@
         "tooling"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "tooling": [
+          "js/scripts/dependency-inventory.mjs",
+          "js/scripts/check-dependencies.mjs"
+        ]
       },
       "verifications": [
         {
@@ -15410,7 +15519,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15472,7 +15582,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15530,7 +15641,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15592,7 +15704,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15654,7 +15767,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15727,7 +15841,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15805,7 +15920,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15867,7 +15983,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15946,7 +16063,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16027,7 +16145,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16138,7 +16257,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16247,7 +16367,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16356,7 +16477,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16465,7 +16587,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16574,7 +16697,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16640,7 +16764,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16702,7 +16827,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16764,7 +16890,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16826,7 +16953,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16888,7 +17016,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16950,7 +17079,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17012,7 +17142,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17074,7 +17205,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17136,7 +17268,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17198,7 +17331,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17260,7 +17394,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17355,7 +17490,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17450,7 +17586,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17545,7 +17682,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17640,7 +17778,8 @@
           "completeScope",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17725,7 +17864,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17806,7 +17946,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17885,7 +18026,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17966,7 +18108,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18049,7 +18192,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18131,7 +18275,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18219,7 +18364,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18307,7 +18453,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18395,7 +18542,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18483,7 +18631,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18571,7 +18720,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18656,7 +18806,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18735,7 +18886,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18812,7 +18964,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18891,7 +19044,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18968,7 +19122,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19045,7 +19200,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19132,7 +19288,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19219,7 +19376,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19304,7 +19462,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19387,7 +19546,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19470,7 +19630,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19553,7 +19714,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19632,7 +19794,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19713,7 +19876,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19792,7 +19956,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19869,7 +20034,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19941,7 +20107,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20028,7 +20195,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20113,7 +20281,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20203,7 +20372,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20291,7 +20461,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20379,7 +20550,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20467,7 +20639,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20562,7 +20735,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20658,7 +20832,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20754,7 +20929,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20848,7 +21024,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20944,7 +21121,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21043,7 +21221,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21141,7 +21320,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21236,7 +21416,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21331,7 +21512,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21427,7 +21609,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21521,7 +21704,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21615,7 +21799,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21709,7 +21894,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21803,7 +21989,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21897,7 +22084,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21991,7 +22179,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22085,7 +22274,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22179,7 +22369,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22273,7 +22464,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22365,7 +22557,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22457,7 +22650,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22549,7 +22743,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22641,7 +22836,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22733,7 +22929,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22825,7 +23022,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22917,7 +23115,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23009,7 +23208,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23101,7 +23301,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23193,7 +23394,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23285,7 +23487,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23377,7 +23580,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23469,7 +23673,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23561,7 +23766,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23653,7 +23859,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23745,7 +23952,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23837,7 +24045,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23929,7 +24138,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24021,7 +24231,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24113,7 +24324,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24205,7 +24417,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24297,7 +24510,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24389,7 +24603,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24481,7 +24696,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24573,7 +24789,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24665,7 +24882,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24757,7 +24975,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24849,7 +25068,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24941,7 +25161,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25033,7 +25254,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25114,7 +25336,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25197,7 +25420,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25278,7 +25502,8 @@
           "fullDelivery",
           "remainingAudit",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25375,7 +25600,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25469,7 +25695,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25563,7 +25790,8 @@
           "acceptanceGate",
           "completeScope",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25674,7 +25902,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25788,7 +26017,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25902,7 +26132,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26018,7 +26249,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26130,7 +26362,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26242,7 +26475,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26356,7 +26590,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26468,7 +26703,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26580,7 +26816,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26694,7 +26931,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26808,7 +27046,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26920,7 +27159,8 @@
           "deliveryCorrection",
           "fullDelivery",
           "remainingAudit",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26984,7 +27224,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27066,7 +27307,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27133,7 +27375,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27199,7 +27442,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27265,7 +27509,8 @@
           "completeScope",
           "fullDelivery",
           "repositoryDirective",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27369,7 +27614,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27475,7 +27721,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27581,7 +27828,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27687,7 +27935,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27793,7 +28042,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27901,7 +28151,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28007,7 +28258,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28115,7 +28367,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28222,7 +28475,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28326,7 +28580,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28430,7 +28685,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28534,7 +28790,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28638,7 +28895,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28742,7 +29000,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28846,7 +29105,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28950,7 +29210,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29054,7 +29315,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29158,7 +29420,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29262,7 +29525,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29366,7 +29630,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29470,7 +29735,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29574,7 +29840,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29678,7 +29945,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29782,7 +30050,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29886,7 +30155,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29990,7 +30260,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30094,7 +30365,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30198,7 +30470,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30302,7 +30575,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30408,7 +30682,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30512,7 +30787,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30616,7 +30892,8 @@
           "completeScope",
           "deliveryCorrection",
           "fullDelivery",
-          "consolidatedChecklist"
+          "consolidatedChecklist",
+          "currentHeadAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [

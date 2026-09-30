@@ -607,6 +607,80 @@ export function checkInventory(inventory, collected, { today = new Date().toISOS
   return problems;
 }
 
+/**
+ * Delivery requires current dependencies, including transitive resolutions
+ * and generated descendants. A compatibility reason explains an inventory
+ * item; it cannot waive the separate delivery obligation.
+ */
+export function checkDeliveredDependencies(inventory, collected, options = {}) {
+  const problems = checkInventory(inventory, collected, options);
+  let effective;
+  try {
+    effective = statuses(inventory.items ?? []);
+  } catch (error) {
+    problems.push({ kind: 'delivery-comparison', message: error.message });
+    return problems;
+  }
+  for (const item of inventory.items ?? []) {
+    if (effective.get(item.id) === 'behind') problems.push({
+      kind: 'stale-delivered-dependency',
+      message: `${item.id}: delivered pin ${item.pinned} is behind the current stable release or its generating dependency; compatibility reasons do not satisfy delivery`,
+    });
+  }
+  const runtimePackages = (inventory.items ?? []).filter(({ category, kind }) =>
+    category === 'npm' && kind === 'runtime');
+  if (runtimePackages.length > 0) {
+    const packages = options.npmConsumerLock?.packages;
+    if (!packages?.['node_modules/meta-language']) {
+      problems.push({ kind: 'missing-delivery-consumer', message: 'provide the lockfile of a clean installed meta-language candidate; repository overrides do not establish delivered npm resolutions' });
+    } else {
+      const versions = new Map();
+      const visited = new Set();
+      const pending = ['node_modules/meta-language'];
+      while (pending.length > 0) {
+        const location = pending.pop();
+        if (visited.has(location)) continue;
+        visited.add(location);
+        const entry = packages[location];
+        for (const name of Object.keys(entry.dependencies ?? {})) {
+          let parent = location;
+          let resolved;
+          for (;;) {
+            const candidate = `${parent ? `${parent}/` : ''}node_modules/${name}`;
+            if (packages[candidate]) { resolved = candidate; break; }
+            if (!parent) break;
+            parent = parent.slice(0, parent.lastIndexOf('node_modules/')).replace(/\/$/u, '');
+          }
+          if (!resolved) {
+            problems.push({ kind: 'missing-consumer-resolution', message: `${location}: installed dependency ${name} is missing` });
+            continue;
+          }
+          versions.set(name, [...new Set([...(versions.get(name) ?? []), packages[resolved].version])]);
+          pending.push(resolved);
+        }
+      }
+      for (const name of versions.keys()) {
+        if (!runtimePackages.some((item) => item.source.package === name)) {
+          problems.push({ kind: 'uninventoried-consumer-dependency', message: `${name}: installed runtime dependency has no audited current release` });
+        }
+      }
+      for (const item of runtimePackages) {
+        const installed = versions.get(item.source.package) ?? [];
+        let stale = installed.length === 0;
+        try {
+          stale ||= installed.some((version) => !version || isPrerelease(version) || compareVersions(version, item.current) < 0);
+        } catch {
+          stale = true;
+        }
+        if (stale) {
+          problems.push({ kind: 'stale-consumer-resolution', message: `${item.source.package}: clean consumer resolves ${installed.join(', ') || 'no installed version'}, audited current release is ${item.current}` });
+        }
+      }
+    }
+  }
+  return problems;
+}
+
 // --- Refresh (online) -----------------------------------------------------
 
 async function mapLimit(values, limit, task) {
