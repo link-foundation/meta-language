@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -208,10 +208,10 @@ test('evidence rejects an arbitrary commit, a changed tracked file and an untrac
     assert.doesNotThrow(() => verifyEvaluatedCheckout(directory, revision));
     assert.throws(() => verifyEvaluatedCheckout(directory, 'd'.repeat(40)), /checked-out commit/);
     await writeFile(path.join(directory, 'source.js'), 'export const value = 2;\n');
-    assert.throws(() => verifyEvaluatedCheckout(directory, revision), /uncommitted changes/);
+    assert.throws(() => verifyEvaluatedCheckout(directory, revision), /uncommitted changes[\s\S]*source\.js/);
     git(['restore', 'source.js']);
     await writeFile(path.join(directory, 'extra.test.js'), 'throw new Error("not in the commit");\n');
-    assert.throws(() => verifyEvaluatedCheckout(directory, revision), /uncommitted changes/);
+    assert.throws(() => verifyEvaluatedCheckout(directory, revision), /uncommitted changes[\s\S]*extra\.test\.js/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -225,4 +225,40 @@ test('the evidence runner rejects a mislabeled revision before planning or produ
     assert.match(error.stderr, /evaluated commit differs from the checked-out commit/);
     return true;
   });
+});
+
+test('installed OCaml tools leave the evaluated checkout clean without hiding source changes', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'issue-195-ocaml-checkout-'));
+  const git = (args) => execFileSync('git', args, { cwd: directory, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  try {
+    git(['init']);
+    git(['config', 'user.email', 'test@example.invalid']);
+    git(['config', 'user.name', 'Evidence test']);
+    await writeFile(path.join(directory, '.gitignore'), await readFile(
+      new URL('../../.gitignore', import.meta.url), 'utf8',
+    ));
+    await writeFile(path.join(directory, 'source.js'), 'export const value = 1;\n');
+    git(['add', '.gitignore', 'source.js']);
+    git(['commit', '-m', 'fixture']);
+    const revision = git(['rev-parse', 'HEAD']);
+    // setup-ocaml creates its local switch in this directory before the
+    // evidence producer runs. Its installed binaries are regenerable tools.
+    await mkdir(path.join(directory, '_opam', 'bin'), { recursive: true });
+    await writeFile(path.join(directory, '_opam', 'bin', 'rocq'), 'installed compiler\n');
+    assert.doesNotThrow(() => verifyEvaluatedCheckout(directory, revision));
+    await writeFile(path.join(directory, 'source.js'), 'export const value = 2;\n');
+    assert.throws(() => verifyEvaluatedCheckout(directory, revision), /uncommitted changes/);
+    git(['restore', 'source.js']);
+    await writeFile(path.join(directory, 'extra.test.js'), 'uncommitted test\n');
+    assert.throws(() => verifyEvaluatedCheckout(directory, revision), /uncommitted changes/);
+    await rm(path.join(directory, 'extra.test.js'));
+    // Git still reports edits to tracked files even inside an ignored folder.
+    git(['add', '--force', '_opam/bin/rocq']);
+    git(['commit', '-m', 'tracked fixture']);
+    const trackedRevision = git(['rev-parse', 'HEAD']);
+    await writeFile(path.join(directory, '_opam', 'bin', 'rocq'), 'changed tracked file\n');
+    assert.throws(() => verifyEvaluatedCheckout(directory, trackedRevision), /uncommitted changes/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

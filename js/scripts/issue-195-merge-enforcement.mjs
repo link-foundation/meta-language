@@ -15,8 +15,9 @@ const RELEASE_REQUIREMENTS = Object.freeze([
 export function verifyEvaluatedCheckout(root, commit) {
   const git = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   if (git(['rev-parse', 'HEAD']) !== commit) throw new Error('evaluated commit differs from the checked-out commit');
-  if (git(['status', '--porcelain', '--untracked-files=normal'])) {
-    throw new Error('evaluated checkout has uncommitted changes; commit them before recording evidence');
+  const changes = git(['status', '--porcelain', '--untracked-files=normal']);
+  if (changes) {
+    throw new Error(`evaluated checkout has uncommitted changes; commit them before recording evidence:\n${changes}`);
   }
 }
 

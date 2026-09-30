@@ -60,6 +60,8 @@ rust/web/pkg/
 /*.tgz
 
 # Lean (lake) and Rocq build output (cleaned by scripts/clean-caches.mjs)
+# The local OCaml/opam switch contains installed toolchain dependencies.
+/_opam/
 .lake/
 *.vo
 *.vok
