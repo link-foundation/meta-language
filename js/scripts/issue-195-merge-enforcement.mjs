@@ -161,10 +161,13 @@ export async function inspectMergeEnforcement({ repository, pullRequest, query =
 }
 
 export async function githubQuery(args, { environment = process.env, execute = execFileSync } = {}) {
-  // setup-ocaml forces terminal colors for later steps. GitHub CLI honors
-  // NO_COLOR for JSON too; preserve authentication and the caller's environment.
+  // setup-ocaml forces terminal colors for later steps. Forced settings can
+  // override NO_COLOR, so remove both controls from this JSON subprocess.
+  const queryEnvironment = { ...environment, NO_COLOR: '1', CLICOLOR: '0' };
+  delete queryEnvironment.CLICOLOR_FORCE;
+  delete queryEnvironment.GH_FORCE_TTY;
   return JSON.parse(execute('gh', args, {
     encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
-    env: { ...environment, NO_COLOR: '1' },
+    env: queryEnvironment,
   }));
 }

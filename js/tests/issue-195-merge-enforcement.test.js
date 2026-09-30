@@ -198,16 +198,19 @@ for (const forcedColors of [{ CLICOLOR_FORCE: '1' }, { GH_FORCE_TTY: '1' }, { CL
   test(`GitHub JSON subprocess disables forced colors: ${Object.keys(forcedColors).join(', ')}`, async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'issue-195-github-colors-'));
     const executable = path.join(directory, 'github-fixture.cjs');
-    const environment = { ...process.env, ...forcedColors, GH_TOKEN: 'fixture-authentication' };
+    const environment = { ...process.env, GH_TOKEN: 'fixture-authentication' };
     delete environment.NO_COLOR;
+    delete environment.CLICOLOR_FORCE;
+    delete environment.GH_FORCE_TTY;
+    Object.assign(environment, forcedColors);
     const originalEnvironment = { ...environment };
     try {
       // Exercise a real subprocess using the documented GitHub CLI color
       // controls. The same forced settings are inherited from setup-ocaml.
       await writeFile(executable, `
         if (process.env.GH_TOKEN !== 'fixture-authentication') process.exit(2);
-        const colored = !process.env.NO_COLOR &&
-          (process.env.CLICOLOR_FORCE === '1' || process.env.GH_FORCE_TTY === '1');
+        // Forced terminal settings can take precedence over NO_COLOR.
+        const colored = process.env.CLICOLOR_FORCE === '1' || process.env.GH_FORCE_TTY === '1';
         const body = JSON.stringify({ default_branch: 'main' });
         process.stdout.write(colored ? '\\x1b[1;37m' + body + '\\x1b[0m' : body);
       `);
