@@ -160,6 +160,11 @@ export async function inspectMergeEnforcement({ repository, pullRequest, query =
   };
 }
 
-async function githubQuery(args) {
-  return JSON.parse(execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }));
+export async function githubQuery(args, { environment = process.env, execute = execFileSync } = {}) {
+  // setup-ocaml forces terminal colors for later steps. GitHub CLI honors
+  // NO_COLOR for JSON too; preserve authentication and the caller's environment.
+  return JSON.parse(execute('gh', args, {
+    encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
+    env: { ...environment, NO_COLOR: '1' },
+  }));
 }

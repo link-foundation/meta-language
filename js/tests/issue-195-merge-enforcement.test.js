@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { evaluateMergeEnforcement, inspectMergeEnforcement, verifyEvaluatedCheckout } from '../scripts/issue-195-merge-enforcement.mjs';
+import { evaluateMergeEnforcement, githubQuery, inspectMergeEnforcement, verifyEvaluatedCheckout } from '../scripts/issue-195-merge-enforcement.mjs';
 
 const manifest = JSON.parse(await readFile(
   new URL('../../parity/issue-195-requirements.json', import.meta.url), 'utf8',
@@ -192,6 +192,45 @@ test('live inspection retrieves all check attempts and verifies the revision aga
     query: async (args) => args[0] === 'pr' && ++revisionQueries === 2
       ? { ...live.mergeState, baseRefOid: 'd'.repeat(40) } : query(args),
   }), /revision changed/);
+});
+
+for (const forcedColors of [{ CLICOLOR_FORCE: '1' }, { GH_FORCE_TTY: '1' }, { CLICOLOR_FORCE: '1', GH_FORCE_TTY: '1' }]) {
+  test(`GitHub JSON subprocess disables forced colors: ${Object.keys(forcedColors).join(', ')}`, async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'issue-195-github-colors-'));
+    const executable = path.join(directory, 'github-fixture.cjs');
+    const environment = { ...process.env, ...forcedColors, GH_TOKEN: 'fixture-authentication' };
+    delete environment.NO_COLOR;
+    const originalEnvironment = { ...environment };
+    try {
+      // Exercise a real subprocess using the documented GitHub CLI color
+      // controls. The same forced settings are inherited from setup-ocaml.
+      await writeFile(executable, `
+        if (process.env.GH_TOKEN !== 'fixture-authentication') process.exit(2);
+        const colored = !process.env.NO_COLOR &&
+          (process.env.CLICOLOR_FORCE === '1' || process.env.GH_FORCE_TTY === '1');
+        const body = JSON.stringify({ default_branch: 'main' });
+        process.stdout.write(colored ? '\\x1b[1;37m' + body + '\\x1b[0m' : body);
+      `);
+      const result = await githubQuery(['api', 'repos/link-foundation/meta-language'], {
+        environment,
+        execute: (command, args, settings) => {
+          assert.equal(command, 'gh');
+          assert.deepEqual(args, ['api', 'repos/link-foundation/meta-language']);
+          return execFileSync(process.execPath, [executable, ...args], settings);
+        },
+      });
+      assert.deepEqual(result, { default_branch: 'main' });
+      assert.deepEqual(environment, originalEnvironment);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+}
+
+test('invalid GitHub JSON remains an error', async () => {
+  await assert.rejects(githubQuery(['api', 'repos/link-foundation/meta-language'], {
+    execute: () => 'not JSON',
+  }), SyntaxError);
 });
 
 test('evidence rejects an arbitrary commit, a changed tracked file and an untracked executable', async () => {
