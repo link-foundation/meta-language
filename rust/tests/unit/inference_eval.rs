@@ -327,7 +327,7 @@ fn sampler_exercises_expression_variants_and_depth_limited_shortest_paths() {
     let samples = sample(&grammar, &config).expect("samples");
     let oracle = GrammarOracle::new(&grammar);
 
-    assert!(!samples.is_empty());
+    assert_ne!(samples, [] as [String; 0]);
     assert!(
         samples.iter().all(|text| oracle.accepts(text)),
         "{samples:?}"

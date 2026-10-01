@@ -425,7 +425,7 @@ fn emits_gbnf_json_object_fixture_for_llm_constraints() {
     let (text, report) = emit_gbnf(&grammar).expect("GBNF emits JSON object grammar");
 
     assert_eq!(text, normalized_fixture(JSON_OBJECT_GBNF));
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
     assert!(
         import_gbnf(&text)
             .expect("emitted JSON GBNF imports")
@@ -444,7 +444,7 @@ fn gbnf_folds_single_char_negative_predicate_before_any_char() {
     let (text, report) = emit_gbnf(&grammar).expect("GBNF emits predicate peephole");
 
     assert_eq!(text, "root ::= [^,]\n");
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
 }
 
 #[test]
@@ -474,7 +474,7 @@ fn pest_escapes_literals_and_char_ranges() {
         text,
         "escaped = { \"\\\"\\\\\\n\\t\" ~ '\\n'..'\\n' ~ (\"\\\"\" | \"\\\\\" | '\\t'..'\\t') }\n"
     );
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
     assert!(
         import_pest(&text)
             .expect("escaped pest imports")
@@ -664,7 +664,7 @@ fn abnf_emits_numeric_literals_empty_and_repeat_prefix_forms() {
             "empty = \"\"\n",
         )
     );
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
     assert!(
         import_abnf(&text)
             .expect("emitted ABNF imports")

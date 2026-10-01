@@ -149,7 +149,7 @@ fn reconstruct_text_as_pdf_renders_a_structurally_equivalent_pdf() {
 fn out_of_profile_pdf_parses_to_an_empty_document_without_panicking() {
     // A PDF without the profile's marked content yields no blocks (graceful).
     let bare = "%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n";
-    assert!(parse_pdf_document(bare).blocks.is_empty());
+    assert_eq!(parse_pdf_document(bare).blocks, [] as [BlockNode; 0]);
     assert!(!pdf_profile_is_recognized(bare));
 
     // It still parses losslessly as a network.

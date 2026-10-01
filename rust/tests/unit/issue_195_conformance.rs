@@ -199,10 +199,9 @@ fn issue_195_conformance_fixtures_record_their_provenance_and_match_their_pinned
         );
         let revision = text(grammar, "revision");
         assert!(revision.len() == 40 && revision.bytes().all(|byte| byte.is_ascii_hexdigit()));
-        assert!(
-            !fs::read(repository_path(text(grammar, "license")))
-                .expect("grammar license")
-                .is_empty()
+        assert_ne!(
+            fs::read(repository_path(text(grammar, "license"))).expect("grammar license"),
+            [] as [u8; 0]
         );
         assert_eq!(
             sha256(read(text(details, "oracle"))),
@@ -224,7 +223,7 @@ fn issue_195_conformance_fixtures_record_their_provenance_and_match_their_pinned
             assert_eq!(commit.len(), 40);
             assert!(text(project, "url").contains(commit));
             assert_eq!(sha256(read(text(project, "file"))), text(project, "sha256"));
-            assert!(!read(text(project, "licenseFile")).is_empty());
+            assert_ne!(read(text(project, "licenseFile")), [] as [u8; 0]);
         }
     }
 }
@@ -247,10 +246,16 @@ fn issue_195_conformance_comparison_rejects_a_tree_that_differs_from_the_oracle(
         entry
     };
     let clean = cst.replace('•', "").replacen("ERROR ", "program ", 1);
-    assert!(!document_problems("JavaScript", &with_cst(clean), source, None).is_empty());
+    assert_ne!(
+        document_problems("JavaScript", &with_cst(clean), source, None),
+        [] as [String; 0]
+    );
     let (head, last) = cst.rsplit_once(':').expect("an end point");
     let shifted = format!("{head}:{}", last.parse::<usize>().expect("column") + 1);
-    assert!(!document_problems("JavaScript", &with_cst(shifted), source, None).is_empty());
+    assert_ne!(
+        document_problems("JavaScript", &with_cst(shifted), source, None),
+        [] as [String; 0]
+    );
 }
 
 fn has_astral_character(source: &str) -> bool {

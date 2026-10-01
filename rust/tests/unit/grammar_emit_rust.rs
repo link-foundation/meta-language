@@ -8,7 +8,7 @@ fn emits_rust_parser_bundle_for_sum_grammar() {
 
     let (artifacts, report) = emit_rust_parser(&grammar).expect("Rust parser codegen emits");
 
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
     assert_eq!(
         artifacts.pest_grammar,
         "sum = { num ~ (\"+\" ~ num)* }\nnum = @{ '0'..'9'+ }\n"

@@ -12,9 +12,9 @@ fn infer_emit_rust_reparses_examples() {
     let (artifacts, report) = emit_rust_parser(&grammar).expect("Rust parser codegen emits");
 
     assert_eq!(grammar.source_format(), Some(GrammarFormat::Inferred));
-    assert!(!artifacts.pest_grammar.trim().is_empty());
-    assert!(!artifacts.parser_struct.trim().is_empty());
-    assert!(!artifacts.ast_types.trim().is_empty());
+    assert_ne!(artifacts.pest_grammar.trim(), "");
+    assert_ne!(artifacts.parser_struct.trim(), "");
+    assert_ne!(artifacts.ast_types.trim(), "");
     assert!(
         report
             .lossy

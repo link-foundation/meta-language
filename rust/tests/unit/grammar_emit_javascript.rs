@@ -108,7 +108,7 @@ fn emits_javascript_parser_bundle_for_sum_grammar() {
     let (artifacts, report) =
         emit_javascript_parser(&grammar).expect("JavaScript parser codegen emits");
 
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
     assert_eq!(
         artifacts,
         JsParserArtifacts {
@@ -150,7 +150,7 @@ fn peggy_escapes_literals_character_classes_and_module_string() {
     let (artifacts, report) =
         emit_javascript_parser(&grammar).expect("JavaScript parser codegen emits escapes");
 
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
     assert_eq!(
         artifacts.peggy_grammar,
         "escaped = \"\\\"\\\\\\n\\t\" [\\n-\\n] [\"\\\\\\t-\\t\\]\\^]\n"

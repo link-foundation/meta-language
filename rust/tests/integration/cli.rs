@@ -100,7 +100,7 @@ fn infer_cli_reads_example_directory_and_reports_metrics_to_stderr() {
     let grammar = grammar_from_lino(&stdout).expect("stdout is LiNo grammar");
 
     assert_eq!(grammar.source_format(), Some(GrammarFormat::Inferred));
-    assert!(!grammar.rules().is_empty());
+    assert_ne!(grammar.rules(), []);
     assert!(stderr.contains("precision="), "{stderr}");
     assert!(stderr.contains("recall="), "{stderr}");
     assert!(stderr.contains("f1="), "{stderr}");

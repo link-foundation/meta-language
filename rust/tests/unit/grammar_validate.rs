@@ -196,7 +196,7 @@ fn valid_arithmetic_grammar_has_no_errors_and_validation_is_deterministic() {
 
 #[test]
 fn empty_grammar_and_single_rule_cycle_do_not_panic() {
-    assert!(validate(&Grammar::new()).is_empty());
+    assert_eq!(validate(&Grammar::new()), [] as [GrammarDiagnostic; 0]);
 
     let expr = Grammar::expr();
     let grammar = Grammar::builder()

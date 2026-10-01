@@ -28,7 +28,7 @@ fn emits_sum_tree_sitter_grammar_js_skeleton() {
 
     assert_eq!(text, normalized_fixture(SUM_GRAMMAR_JS));
     assert_eq!(reported_text, text);
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
 }
 
 #[test]

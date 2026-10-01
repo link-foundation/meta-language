@@ -88,8 +88,8 @@ fn natural_language_morphosyntax_links_are_queryable_by_ud_terms() {
             .with_term("ufeat:Number=Sing"),
     );
 
-    assert!(!proper_nouns.is_empty());
-    assert!(!singular_features.is_empty());
+    assert_ne!(proper_nouns, [] as [&meta_language::Link; 0]);
+    assert_ne!(singular_features, [] as [&meta_language::Link; 0]);
 }
 
 #[test]

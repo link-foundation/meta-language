@@ -30,7 +30,7 @@ fn shared_graphql_fixtures_lower_to_canonical_query_plans() {
             serde_json::from_str(&lowered.plan().canonical_json()).expect("canonical plan is JSON");
 
         assert_eq!(actual, fixture["canonicalPlan"], "{}", fixture["name"]);
-        assert!(!lowered.plan().source_evidence().is_empty());
+        assert_ne!(lowered.plan().source_evidence(), []);
         let root = lowered
             .network()
             .link(lowered.root_link())

@@ -223,9 +223,18 @@ fn issue_195_generative_prng_and_edits_are_the_ones_the_javascript_suite_uses() 
 #[test]
 fn issue_195_generative_property_checks_reject_a_network_that_breaks_them() {
     let network = parse("let a = 1;\n", "JavaScript");
-    assert!(property_problems(&network, "let a = 1;\n").is_empty());
-    assert!(!property_problems(&network, "let a = 2;\n").is_empty());
-    assert!(!property_problems(&network, "let a = 1;\n\n").is_empty());
+    assert_eq!(
+        property_problems(&network, "let a = 1;\n"),
+        [] as [String; 0]
+    );
+    assert_ne!(
+        property_problems(&network, "let a = 2;\n"),
+        [] as [String; 0]
+    );
+    assert_ne!(
+        property_problems(&network, "let a = 1;\n\n"),
+        [] as [String; 0]
+    );
     let base = public_tree(&network, "JavaScript");
     let variant = public_tree(&parse("\n\nlet a = 1;\n", "JavaScript"), "JavaScript");
     assert!(relation_holds("prepend-blank-lines", &base, &variant));
@@ -431,7 +440,7 @@ fn check_language(language: &str) {
         .iter()
         .filter(|entry| entry["clean"] == false)
         .collect();
-    assert!(!malformed.is_empty());
+    assert_ne!(malformed, [] as [&Value; 0]);
     assert!(
         malformed
             .iter()
@@ -537,7 +546,7 @@ fn issue_195_generative_kept_edit_sequences_match_a_fresh_parse() {
                 public_tree(&fresh, language),
                 "{language} {source:?}"
             );
-            assert!(property_problems(&network, &source).is_empty());
+            assert_eq!(property_problems(&network, &source), [] as [String; 0]);
         }
     }
 }

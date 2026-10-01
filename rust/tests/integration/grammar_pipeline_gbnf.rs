@@ -18,7 +18,7 @@ fn infer_emit_gbnf_round_trips() {
     assert_eq!(grammar, repeated.grammar);
 
     let (gbnf, report) = emit_gbnf(&grammar).expect("GBNF emits");
-    assert!(!gbnf.trim().is_empty());
+    assert_ne!(gbnf.trim(), "");
     assert!(
         report
             .lossy

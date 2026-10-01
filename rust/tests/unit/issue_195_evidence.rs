@@ -28,8 +28,8 @@ fn pinned_external_corpora_and_projects_exercise_every_four_language_frontend() 
                 .expect("provenance URL")
                 .starts_with("https://github.com/")
         );
-        assert!(!provenance["revision"].as_str().unwrap().is_empty());
-        assert!(!provenance["license"].as_str().unwrap().is_empty());
+        assert_ne!(provenance["revision"].as_str().unwrap(), "");
+        assert_ne!(provenance["license"].as_str().unwrap(), "");
         assert_structured_source(
             fixture["source"].as_str().unwrap(),
             fixture["language"].as_str().unwrap(),

@@ -334,7 +334,7 @@ fn check_project(fixture: &Value) {
 
         // validContextEnablesBehavior: the valid project enables the links and
         // expansions that the missing context cannot produce.
-        assert!(!evidence.is_empty());
+        assert_ne!(evidence, [] as [Value; 0]);
         assert_eq!(expansions(&program), fixture["expansions"], "{test_name}");
         assert!(
             construct_of(&bare, construct)

@@ -520,11 +520,11 @@ impl Pair {
     fn check_records(&mut self) {
         let semantics = self.semantics();
         let contract = self.translation.contract();
-        assert!(!contract.observation.is_empty());
+        assert_ne!(contract.observation, "");
         assert!(semantics.observation_procedure.contains(tool(self.target)));
         let mut passed = vec!["observationModelRecorded"];
 
-        assert!(!contract.encoding.is_empty());
+        assert_ne!(contract.encoding, "");
         assert!(
             semantics
                 .encodings

@@ -25,7 +25,7 @@ fn translated_grammar_can_still_be_consumed_by_emitters() {
 
     let (bnf, report) = emit_bnf(&russian).expect("translated grammar emits as BNF");
 
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
     assert!(bnf.contains("<выражение> ::= <слагаемое>"));
     assert!(bnf.contains("<множитель>"));
 }

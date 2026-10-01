@@ -92,7 +92,7 @@ fn empty_input_returns_empty_inferred_grammar_without_panicking() {
         result.grammar.source_format(),
         Some(GrammarFormat::Inferred)
     );
-    assert!(result.grammar.rules().is_empty());
+    assert_eq!(result.grammar.rules(), []);
     assert_eq!(result.report.rules, 0);
 }
 

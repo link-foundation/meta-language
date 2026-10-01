@@ -114,7 +114,7 @@ fn babel_recast_style_quasiquote_replacement_checks_placeholders_and_parentheses
     let report = network.replace(&matches, &ReplacementRule::quasiquote("target", template));
 
     assert_eq!(report.text_replacements().len(), 1);
-    assert!(report.template_errors().is_empty());
+    assert_eq!(report.template_errors(), []);
     assert_eq!(
         network.reconstruct_text(),
         "const result = (oldValue + 1);\n"

@@ -45,7 +45,10 @@ fn lean_definitions_theorems_and_output() {
     assert!(!text.contains("ml_Z_to_string"));
     assert!(!text.contains("ml_decide"));
     assert_eq!(emitted.entry.as_deref(), Some("main"));
-    assert!(emitted.assumptions.is_empty());
+    assert_eq!(
+        emitted.assumptions,
+        [] as [meta_language::translation::emit_common::Assumption; 0]
+    );
     let encodings: Vec<_> = emitted.encodings.iter().map(|e| e.id.as_str()).collect();
     assert_eq!(encodings, ["program-output"]);
     assert_eq!(emitted.theorems.len(), 1);

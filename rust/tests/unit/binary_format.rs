@@ -23,7 +23,7 @@ fn arbitrary_file_bytes_round_trip_without_utf8_loss() {
 fn empty_files_round_trip_and_keep_their_format() {
     let network = LinkNetwork::parse_bytes(&[], "application/octet-stream");
 
-    assert!(network.reconstruct_bytes().is_empty());
+    assert_eq!(network.reconstruct_bytes(), [] as [u8; 0]);
     assert!(network.links().any(|link| {
         link.metadata().link_type() == Some(LinkType::Document)
             && link.metadata().language() == Some("application/octet-stream")

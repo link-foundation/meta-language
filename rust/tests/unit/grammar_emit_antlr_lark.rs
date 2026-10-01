@@ -777,7 +777,7 @@ fn cross_format_sources_keep_rule_structure() {
         text.contains("trailer : [a-z]+ ;") || text.contains("regex="),
         "{text}"
     );
-    assert!(!report.lossy.is_empty());
+    assert_ne!(report.lossy, [] as [String; 0]);
 }
 
 fn fixture_importer(format: &str) -> Importer {
@@ -795,7 +795,7 @@ fn fixture_importer(format: &str) -> Importer {
 fn shared_importer_fixtures_round_trip_through_antlr_and_lark() {
     let fixture: Value = serde_json::from_str(FIXTURE).expect("fixture is JSON");
     let cases = fixture["cases"].as_array().expect("cases");
-    assert!(!cases.is_empty());
+    assert_ne!(cases.as_slice(), []);
     for case in cases {
         let id = case["id"].as_str().expect("id");
         let format = case["format"].as_str().expect("format");
