@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-09-30",
+  "reconciledAt": "2026-10-01",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -308,6 +308,18 @@
       "updatedAt": "2026-09-23T18:47:50Z",
       "bytes": 1467,
       "sha256": "5a25528e2d01f99fdd336b5ba23bacc0dfaff582a364152f0425e5fb87ee6a0d"
+    },
+    {
+      "id": 5940086274,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5940086274",
+      "title": "Maintainer working-process directive: bulk-draft locally, push, and let CI build and verify",
+      "role": "Maintainer working-process directive (draft locally, verify in CI); carries no product requirements",
+      "author": "konard",
+      "createdAt": "2026-10-01T20:37:46Z",
+      "updatedAt": "2026-10-01T20:38:11Z",
+      "bytes": 466,
+      "sha256": "c5e4451fdcd0484a8046d766d2ef381ca9a976c2ca410e2f872cf44330cbcd31"
     }
   ]
 }

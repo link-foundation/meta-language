@@ -30,6 +30,7 @@ export const AUTOMATION_MARKERS = Object.freeze([
   '## ⏰ Auto Resume',
   '## 🚨 Solution Draft Failed',
   '## ✅ Ready to merge',
+  '## 📎 Intermediate working-session log',
 ]);
 
 export function contentHash(body) {
