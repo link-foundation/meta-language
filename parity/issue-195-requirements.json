@@ -1666,19 +1666,19 @@
       "sha256": "383eb71fb75c0b112951fd52766b54bd41e69ebda640670781fb22d35be95bf4"
     },
     "planned:repository-directive:i195-merge-binding-aware-rename": {
-      "path": "docs/vision.md",
-      "selector": "#automatic-merging-concept-recognition-deduplication-and-renaming: binding-aware grammar renaming",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "path": "parity/fixtures/grammar-merge.json",
+      "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: binding-aware grammar renaming",
+      "sha256": "7d184beb6b2500a4b220f7f0f793ac66233e497b4a135879909e54164aa11620"
     },
     "planned:repository-directive:i195-merge-meaning-aware-deduplication": {
-      "path": "docs/vision.md",
-      "selector": "#automatic-merging-concept-recognition-deduplication-and-renaming: deduplication by meaning",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "path": "parity/fixtures/grammar-merge.json",
+      "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: deduplication by meaning",
+      "sha256": "7d184beb6b2500a4b220f7f0f793ac66233e497b4a135879909e54164aa11620"
     },
     "planned:repository-directive:i195-merge-uncertainty-preserved": {
-      "path": "docs/vision.md",
-      "selector": "#automatic-merging-concept-recognition-deduplication-and-renaming: uncertain matches kept explicit",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "path": "parity/fixtures/grammar-merge.json",
+      "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: uncertain matches kept explicit",
+      "sha256": "7d184beb6b2500a4b220f7f0f793ac66233e497b4a135879909e54164aa11620"
     },
     "planned:repository-directive:i195-merge-shipped-grammars-are-merged": {
       "path": "parity/language-grammar-inventory.json",
@@ -1686,9 +1686,9 @@
       "sha256": "383eb71fb75c0b112951fd52766b54bd41e69ebda640670781fb22d35be95bf4"
     },
     "planned:repository-directive:i195-merge-determinism": {
-      "path": "docs/vision.md",
-      "selector": "#automatic-merging-concept-recognition-deduplication-and-renaming: deterministic, idempotent and incremental merge",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "path": "parity/fixtures/grammar-merge.json",
+      "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: deterministic, idempotent and incremental merge",
+      "sha256": "7d184beb6b2500a4b220f7f0f793ac66233e497b4a135879909e54164aa11620"
     },
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "docs/vision.md",
@@ -19579,8 +19579,12 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/grammar-merge.js"
+        ],
+        "rust": [
+          "rust/src/grammar/merge.rs"
+        ]
       },
       "verifications": [
         {
@@ -19623,7 +19627,7 @@
       "traceability": {
         "specification": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming",
         "inventories": [
-          "docs/vision.md"
+          "parity/fixtures/grammar-merge.json"
         ],
         "sources": [
           "acceptanceGate",
@@ -19663,8 +19667,12 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/grammar-merge.js"
+        ],
+        "rust": [
+          "rust/src/grammar/merge.rs"
+        ]
       },
       "verifications": [
         {
@@ -19707,7 +19715,7 @@
       "traceability": {
         "specification": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming",
         "inventories": [
-          "docs/vision.md"
+          "parity/fixtures/grammar-merge.json"
         ],
         "sources": [
           "acceptanceGate",
@@ -19747,8 +19755,12 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/grammar-merge.js"
+        ],
+        "rust": [
+          "rust/src/grammar/merge.rs"
+        ]
       },
       "verifications": [
         {
@@ -19787,7 +19799,7 @@
       "traceability": {
         "specification": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming",
         "inventories": [
-          "docs/vision.md"
+          "parity/fixtures/grammar-merge.json"
         ],
         "sources": [
           "acceptanceGate",
@@ -19989,8 +20001,12 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/grammar-merge.js"
+        ],
+        "rust": [
+          "rust/src/grammar/merge.rs"
+        ]
       },
       "verifications": [
         {
@@ -20027,7 +20043,7 @@
       "traceability": {
         "specification": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming",
         "inventories": [
-          "docs/vision.md"
+          "parity/fixtures/grammar-merge.json"
         ],
         "sources": [
           "acceptanceGate",

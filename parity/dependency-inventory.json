@@ -352,6 +352,22 @@
       "evidence": "npm registry, wordnet-db latest"
     },
     {
+      "id": "setting experiments/grammar-merge-rust-stub/Cargo.toml edition@2024",
+      "category": "setting",
+      "scope": "experiments/grammar-merge-rust-stub/Cargo.toml",
+      "name": "edition",
+      "declaredIn": [
+        "experiments/grammar-merge-rust-stub/Cargo.toml"
+      ],
+      "pinned": "2024",
+      "compare": "version",
+      "source": {
+        "type": "rust-edition"
+      },
+      "current": "2024",
+      "evidence": "Rust editions, the newest stable edition"
+    },
+    {
       "id": "setting experiments/issue-195-cmake-scanner/Cargo.toml edition@2024",
       "category": "setting",
       "scope": "experiments/issue-195-cmake-scanner/Cargo.toml",
@@ -6646,6 +6662,60 @@
       "role": "transitive",
       "current": "1.0.23",
       "evidence": "crates.io, zmij"
+    },
+    {
+      "id": "experiment experiments/grammar-merge-rust-stub/Cargo.toml serde_json@=1.0.151",
+      "category": "experiment",
+      "scope": "experiments/grammar-merge-rust-stub/Cargo.toml",
+      "name": "serde_json",
+      "declaredIn": [
+        "experiments/grammar-merge-rust-stub/Cargo.toml"
+      ],
+      "pinned": "=1.0.151",
+      "compare": "version",
+      "source": {
+        "type": "crate",
+        "crate": "serde_json"
+      },
+      "kind": "runtime",
+      "current": "1.0.151",
+      "evidence": "crates.io, serde_json"
+    },
+    {
+      "id": "experiment experiments/grammar-merge-rust-stub/Cargo.toml serde@=1.0.229",
+      "category": "experiment",
+      "scope": "experiments/grammar-merge-rust-stub/Cargo.toml",
+      "name": "serde",
+      "declaredIn": [
+        "experiments/grammar-merge-rust-stub/Cargo.toml"
+      ],
+      "pinned": "=1.0.229",
+      "compare": "version",
+      "source": {
+        "type": "crate",
+        "crate": "serde"
+      },
+      "kind": "runtime",
+      "current": "1.0.229",
+      "evidence": "crates.io, serde"
+    },
+    {
+      "id": "experiment experiments/grammar-merge-rust-stub/Cargo.toml sha2@=0.11.0",
+      "category": "experiment",
+      "scope": "experiments/grammar-merge-rust-stub/Cargo.toml",
+      "name": "sha2",
+      "declaredIn": [
+        "experiments/grammar-merge-rust-stub/Cargo.toml"
+      ],
+      "pinned": "=0.11.0",
+      "compare": "version",
+      "source": {
+        "type": "crate",
+        "crate": "sha2"
+      },
+      "kind": "runtime",
+      "current": "0.11.0",
+      "evidence": "crates.io, sha2"
     },
     {
       "id": "experiment experiments/issue-195-cmake-scanner/Cargo.toml cc@=1.5.1",

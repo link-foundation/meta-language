@@ -33,6 +33,8 @@ end=$(grep -n '^/// Fluent builder for order-preserving grammars.' "$mod" | cut 
 mkdir -p "$here/tests/probe"
 sed 's|\.join("\.\.")|.join("../..")|' "$root/rust/tests/unit/grammar_merge.rs" > "$here/tests/probe/grammar_merge_copy.rs"
 cd "$here"
+# The lockfile would be scanned by the dependency inventory; the pins live in Cargo.toml.
+trap 'rm -f "$here/Cargo.lock"' EXIT
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/grammar-merge-stub-target}" cargo clippy --quiet -- -D warnings
 node "$here/export-js-grammars.mjs" /tmp/grammar-merge-js-grammars.json
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/grammar-merge-stub-target}" cargo test --quiet -- --nocapture "$@"

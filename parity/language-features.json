@@ -495,6 +495,26 @@
       }
     },
     {
+      "id": "grammar-merge",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/grammar/merge.rs",
+          "rust/tests/unit/grammar_merge.rs",
+          "parity/fixtures/grammar-merge.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/grammar-merge.js",
+          "js/tests/grammar-merge.test.js",
+          "parity/fixtures/grammar-merge.json"
+        ]
+      }
+    },
+    {
       "id": "javascript-parser-codegen",
       "required": true,
       "rust": {

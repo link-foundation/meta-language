@@ -46,9 +46,9 @@ they are.
 |---|---|---|---|---|
 | JavaScript engines | 1 | 1 | 0 | 0 |
 | npm packages | 17 | 17 | 0 | 0 |
-| Rust package settings | 5 | 5 | 0 | 0 |
+| Rust package settings | 6 | 6 | 0 | 0 |
 | Rust crates | 328 | 291 | 37 | 0 |
-| Experiment manifests | 3 | 3 | 0 | 0 |
+| Experiment manifests | 6 | 6 | 0 | 0 |
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
@@ -91,6 +91,7 @@ they are.
 
 | Item | Scope | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|---|
+| `edition` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `experiments/issue-195-projects/rust/Cargo.toml` | `experiments/issue-195-projects/rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/Cargo.toml` | `rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
@@ -434,6 +435,9 @@ they are.
 
 | Item | Scope | Declared in | Pinned | Role | Requirement | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|---|---|---|
+| `serde_json` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=1.0.151` | runtime |  | 1.0.151 (crates.io, serde_json) | version | current |  |
+| `serde` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=1.0.229` | runtime |  | 1.0.229 (crates.io, serde) | version | current |  |
+| `sha2` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=0.11.0` | runtime |  | 0.11.0 (crates.io, sha2) | version | current |  |
 | `cc` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=1.5.1` | build |  | 1.5.1 (crates.io, cc) | version | current |  |
 | `tree-sitter-language` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.1.8` | runtime |  | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
 | `tree-sitter` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.27.0` | runtime |  | 0.27.0 (crates.io, tree-sitter) | version | current |  |
