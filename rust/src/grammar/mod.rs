@@ -29,6 +29,7 @@ pub mod fidelity;
 pub mod import;
 pub mod inference;
 mod links;
+pub mod merge;
 pub mod runtime;
 pub mod surface;
 pub mod translate;
@@ -92,6 +93,15 @@ pub use inference::semantic::{
 };
 pub use inference::sequitur::{Symbol, run_sequitur};
 pub use inference::state_merging::{InferredAutomaton, MergeStrategy, Sample, infer_dfa};
+pub use merge::{
+    GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
+    GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,
+    GrammarMergeFailureKind, GrammarMergeFailureReason, GrammarMergeNomination,
+    GrammarMergeNominationBasis, GrammarMergeNominationOutcome, GrammarMergeOptions,
+    GrammarMergeResult, GrammarMergeSource, GrammarRenameError, GrammarRenameErrorKind,
+    MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
+    normalized_rule_definition, rename_grammar_rule, restore_source_names,
+};
 pub use runtime::{GrammarParser, register_grammar, with_grammar};
 pub use surface::{
     GrammarSurfaceError, grammar_from_lino, grammar_to_lino, parse_grammar_surface,

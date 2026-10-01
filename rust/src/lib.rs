@@ -125,6 +125,15 @@ pub use grammar::{
     size_symbols, translate_grammar_surface, validate, with_grammar, write_grammar_surface,
 };
 pub use grammar::{FORMER_GRAMMAR_CONSTRUCTS, current_grammar_construct};
+pub use grammar::{
+    GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
+    GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,
+    GrammarMergeFailureKind, GrammarMergeFailureReason, GrammarMergeNomination,
+    GrammarMergeNominationBasis, GrammarMergeNominationOutcome, GrammarMergeOptions,
+    GrammarMergeResult, GrammarMergeSource, GrammarRenameError, GrammarRenameErrorKind,
+    MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
+    normalized_rule_definition, rename_grammar_rule, restore_source_names,
+};
 #[cfg(feature = "llm-assist")]
 pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
 pub use graphql_adapter::{

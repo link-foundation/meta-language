@@ -1143,6 +1143,86 @@ export const emit_pest: typeof emitPest;
 export function emitTreeSitterJson(grammar: Grammar): GrammarEmitResult;
 export const emit_tree_sitter_json: typeof emitTreeSitterJson;
 
+export const GRAMMAR_MERGE_METHOD: 'recursive-structural-bisimulation';
+export interface GrammarMergeSource {
+  id: string;
+  language: string;
+  edition?: string;
+  precedence?: number;
+  grammar: Grammar;
+}
+export interface GrammarMergeDecision {
+  kind: 'merged' | 'kept-unique' | 'renamed-for-collision' | 'homonym-kept-distinct' | 'uncertain';
+  name: string;
+  members: string[];
+  basis: string;
+  definition: string | null;
+}
+export interface GrammarMergeNomination {
+  basis: 'name-similarity' | 'identical-samples';
+  members: [string, string];
+  outcome: 'proven' | 'unproven';
+}
+export interface GrammarMergeAlternative {
+  reason: 'start-rule' | 'distinct-meaning' | 'uncertain-match' | 'edition';
+  name: string;
+  options: string[];
+}
+export interface GrammarMergeFailure {
+  kind: 'unresolved-required-equivalence';
+  members: [string, string];
+  reason: 'unknown-rule' | 'different-language-or-edition' | 'not-proven';
+}
+export interface MergedGrammarGroup {
+  key: string;
+  language: string;
+  edition: string;
+  fingerprint: string;
+  sources: string[];
+  grammar: Grammar;
+  identities: Record<string, string>;
+  decisions: GrammarMergeDecision[];
+  nominations: GrammarMergeNomination[];
+  alternatives: GrammarMergeAlternative[];
+}
+export interface GrammarMergeResult {
+  status: 'complete' | 'incomplete';
+  groups: MergedGrammarGroup[];
+  alternatives: GrammarMergeAlternative[];
+  failures: GrammarMergeFailure[];
+  reused: string[];
+  recomputed: string[];
+}
+export interface GrammarMergeOptions {
+  samples?: Record<string, string[]>;
+  requiredEquivalences?: Array<[string, string]>;
+  previous?: GrammarMergeResult | null;
+}
+export class GrammarMergeError extends Error {
+  failures: GrammarMergeFailure[];
+}
+export function mergeGrammars(sources: readonly GrammarMergeSource[], options?: GrammarMergeOptions): GrammarMergeResult;
+export function assertMergeComplete(result: GrammarMergeResult): GrammarMergeResult;
+export function normalizedRuleDefinition(rule: GrammarRuleValue): string;
+export interface RuleAlias {
+  canonical: string;
+  original: string;
+}
+export class GrammarRenameError extends Error {
+  kind: 'invalid-name' | 'unknown-rule' | 'collision';
+}
+export function renameGrammarRule(
+  grammar: Grammar,
+  from: string,
+  to: string,
+  options?: { namespace?: string | null; aliases?: readonly RuleAlias[] },
+): { grammar: Grammar; aliases: RuleAlias[] };
+export function restoreSourceNames(
+  grammar: Grammar,
+  aliases: readonly RuleAlias[],
+  options?: { namespace?: string | null },
+): Grammar;
+
 export class ApiOperationEntry {
   operation: string;
   name(): string;
