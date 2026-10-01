@@ -156,13 +156,23 @@ jobs:
       checks: read
       actions: read
     needs: [candidates, consumers]
-    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+    # GitHub reports a skipped job as a successful required check. This job
+    # always runs and fails itself when there are no candidates to evaluate.
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     concurrency:
       group: issue-195-acceptance-${{ github.ref }}
       cancel-in-progress: true
     steps:
+      - name: Require delivery candidates
+        if: ${{ needs.candidates.result != 'success' }}
+        env:
+          CANDIDATES_RESULT: ${{ needs.candidates.result }}
+        run: |
+          echo "::error::Delivery Candidates finished as '${CANDIDATES_RESULT}'; the Full Requirements Aggregate cannot pass without them"
+          exit 1
+
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -232,6 +242,8 @@ jobs:
       - name: Produce checkpoint evidence
         env:
           GH_TOKEN: ${{ github.token }}
+          # Optional: repository Administration read exposes ruleset bypass actors.
+          ISSUE_195_RULESET_TOKEN: ${{ secrets.ISSUE_195_RULESET_TOKEN }}
           ISSUE_195_PULL_REQUEST_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -244,7 +256,7 @@ jobs:
           --platform-reports issue-195-artifacts/platform-reports
 
       - name: Evaluate every required verification cell
-        if: always()
+        if: ${{ always() && needs.candidates.result == 'success' }}
         env:
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
@@ -258,7 +270,7 @@ jobs:
           --markdown-report issue-195-artifacts/report.md
 
       - name: Publish per-requirement evidence report
-        if: always()
+        if: ${{ always() && needs.candidates.result == 'success' }}
         uses: actions/upload-artifact@v7
         with:
           name: issue-195-requirement-report-${{ github.sha }}

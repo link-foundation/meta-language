@@ -31,6 +31,34 @@ function targetsDefaultBranch(ruleset, branch) {
     Array.isArray(names.exclude) && names.exclude.length === 0;
 }
 
+/**
+ * Problems that let the aggregate job finish as skipped. GitHub reports a
+ * skipped job as a successful required check, so the job must always run and
+ * fail itself when the delivery candidates it evaluates are unavailable.
+ */
+export function aggregateSkipProblems(workflow) {
+  if (typeof workflow !== 'string') return ['the acceptance workflow is unavailable'];
+  const lines = workflow.split(/\r?\n/);
+  const start = lines.findIndex((line) => line === `    name: ${FULL_REQUIREMENTS_CHECK}`);
+  if (start < 1 || !/^  [\w-]+:$/.test(lines[start - 1])) {
+    return [`the acceptance workflow has no job named ${FULL_REQUIREMENTS_CHECK}`];
+  }
+  const length = lines.slice(start).findIndex((line) => /^  \S/.test(line));
+  const job = lines.slice(start, length < 0 ? undefined : start + length);
+  const problems = [];
+  if (!job.includes('    if: ${{ always() }}')) {
+    problems.push(`${FULL_REQUIREMENTS_CHECK} must run with if: \${{ always() }}; otherwise it can be skipped and count as passing`);
+  }
+  const steps = job.findIndex((line) => line === '    steps:');
+  const next = job.findIndex((line, index) => index > steps + 1 && line.startsWith('      - '));
+  const guard = steps < 0 ? [] : job.slice(steps + 1, next < 0 ? job.length : next);
+  if (!guard.includes("        if: ${{ needs.candidates.result != 'success' }}") ||
+      !guard.some((line) => /^\s+exit 1$/.test(line))) {
+    problems.push(`the first ${FULL_REQUIREMENTS_CHECK} step must fail when Delivery Candidates did not succeed; a skipped aggregate counts as passing`);
+  }
+  return problems;
+}
+
 function verifyDeliverySeparation(manifest, commit) {
   const preMerge = evaluateIssue195Acceptance(manifest, [], { checkpoint: 'pre-merge', commit });
   const release = evaluateIssue195Acceptance(manifest, [], { checkpoint: 'release-delivery', commit });
@@ -47,7 +75,7 @@ function verifyDeliverySeparation(manifest, commit) {
 }
 
 /** Evaluate observed GitHub responses; mock responses never produce ledger records. */
-export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, runningWorkflowId = null }) {
+export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, acceptanceWorkflow, runningWorkflowId = null }) {
   const errors = [];
   const branch = snapshot.repository?.default_branch;
   const pull = snapshot.pullRequest;
@@ -73,6 +101,12 @@ export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, run
   });
   const activeRuleTargetsDefaultBranch = activeRules.length > 0;
   if (!activeRuleTargetsDefaultBranch) errors.push('no active, non-bypassable rule targets the default branch');
+  for (const ruleset of snapshot.rulesets ?? []) {
+    if (!Array.isArray(ruleset.bypass_actors)) {
+      errors.push(`ruleset ${ruleset.id} hides its bypass actors from this token; ` +
+        'provide a token with repository Administration read permission as ISSUE_195_RULESET_TOKEN');
+    }
+  }
   const requiredChecks = activeRules.flatMap((rule) => {
     const parameters = rule.parameters;
     return rule.type === 'required_status_checks' &&
@@ -80,8 +114,10 @@ export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, run
       parameters.do_not_enforce_on_create === false
       ? parameters.required_status_checks ?? [] : [];
   }).filter(({ context }) => context === FULL_REQUIREMENTS_CHECK);
-  const fullAggregateRequired = requiredChecks.length > 0;
-  if (!fullAggregateRequired) errors.push('Full Requirements Aggregate is not a strict required check');
+  const skipProblems = aggregateSkipProblems(acceptanceWorkflow);
+  errors.push(...skipProblems);
+  const fullAggregateRequired = requiredChecks.length > 0 && skipProblems.length === 0;
+  if (requiredChecks.length === 0) errors.push('Full Requirements Aggregate is not a strict required check');
 
   const matchesCandidate = (workflow) => workflow?.event === 'pull_request' && workflow.head_sha === head &&
     workflow.path === '.github/workflows/issue-195-acceptance.yml' &&
@@ -124,7 +160,7 @@ export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, run
 }
 
 /** Fetch live, read-only evidence. Preserve raw responses for independent review. */
-export async function inspectMergeEnforcement({ repository, pullRequest, query = githubQuery }) {
+export async function inspectMergeEnforcement({ repository, pullRequest, query = githubQuery, rulesetQuery = query }) {
   const prefix = `repos/${repository}`;
   const [metadata, pull, mergeState] = await Promise.all([
     query(['api', prefix]),
@@ -137,7 +173,8 @@ export async function inspectMergeEnforcement({ repository, pullRequest, query =
     query(['api', `${prefix}/commits/${pull.merge_commit_sha}`]),
     query(['api', `${prefix}/commits/${pull.head.sha}/check-runs?filter=all`, '--paginate', '--slurp']),
     ...[...new Set(effectiveRules.map(({ ruleset_id: id }) => id))].map((id) =>
-      query(['api', `${prefix}/rulesets/${id}`])),
+      // Bypass actors are only visible with repository Administration read.
+      rulesetQuery(['api', `${prefix}/rulesets/${id}`])),
   ]);
   const checkRuns = checkPages.flatMap((page) => page.check_runs);
   const workflowRuns = await Promise.all(checkRuns.filter(({ name }) => name === FULL_REQUIREMENTS_CHECK)
@@ -160,12 +197,17 @@ export async function inspectMergeEnforcement({ repository, pullRequest, query =
   };
 }
 
-export async function githubQuery(args, { environment = process.env, execute = execFileSync } = {}) {
+export async function githubQuery(args, { environment = process.env, token = null, execute = execFileSync } = {}) {
   // setup-ocaml forces terminal colors for later steps. Forced settings can
   // override NO_COLOR, so remove both controls from this JSON subprocess.
   const queryEnvironment = { ...environment, NO_COLOR: '1', CLICOLOR: '0' };
   delete queryEnvironment.CLICOLOR_FORCE;
   delete queryEnvironment.GH_FORCE_TTY;
+  if (token) {
+    // GH_TOKEN takes precedence over GITHUB_TOKEN; drop both defaults.
+    delete queryEnvironment.GITHUB_TOKEN;
+    queryEnvironment.GH_TOKEN = token;
+  }
   return JSON.parse(execute('gh', args, {
     encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
     env: queryEnvironment,

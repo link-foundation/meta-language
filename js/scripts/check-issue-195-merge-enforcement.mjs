@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { buildIssue195Manifest } from './issue-195-acceptance-lib.mjs';
-import { evaluateMergeEnforcement, inspectMergeEnforcement, verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
+import {
+  evaluateMergeEnforcement, githubQuery, inspectMergeEnforcement, verifyEvaluatedCheckout,
+} from './issue-195-merge-enforcement.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const option = (name, fallback) => {
@@ -22,13 +24,21 @@ await mkdir(path.dirname(output), { recursive: true });
 let report;
 try {
   verifyEvaluatedCheckout(root, commit);
+  // The workflow token cannot read ruleset bypass actors; an optional token
+  // with repository Administration read permission can.
+  const rulesetToken = process.env.ISSUE_195_RULESET_TOKEN || null;
   const snapshot = await inspectMergeEnforcement({
     repository: 'link-foundation/meta-language', pullRequest: 196,
+    rulesetQuery: (args) => githubQuery(args, { token: rulesetToken }),
   });
+  snapshot.rulesetCredential = rulesetToken ? 'ISSUE_195_RULESET_TOKEN' : 'GH_TOKEN';
+  const acceptanceWorkflow = await readFile(path.join(root, '.github/workflows/issue-195-acceptance.yml'), 'utf8');
   verifyEvaluatedCheckout(root, commit);
   report = {
     commit, head, snapshot,
-    ...evaluateMergeEnforcement(snapshot, { head, commit, runningWorkflowId, manifest: await buildIssue195Manifest(root) }),
+    ...evaluateMergeEnforcement(snapshot, {
+      head, commit, runningWorkflowId, acceptanceWorkflow, manifest: await buildIssue195Manifest(root),
+    }),
   };
 } catch (error) {
   report = { commit, head, checks: {}, errors: [error.message] };
