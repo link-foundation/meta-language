@@ -13,7 +13,7 @@ STR, SLICE = '""', '[]'
 def arr(t): return f'[] as [{t}; 0]'
 AS_SLICE = 'as_slice'
 
-# (relative path, line) -> empty value; AS_SLICE means `x.as_slice(), []`.
+# (relative path, line) -> empty value; (AS_SLICE, empty) compares `x.as_slice()`.
 SITES = {
     'tests/integration/grammar_translate.rs': {28: arr('String')},
     'tests/integration/grammar_cli_pipeline.rs': {33: STR},
@@ -41,7 +41,8 @@ SITES = {
     'tests/unit/issue_195_conformance.rs': {
         202: arr('u8'), 227: arr('u8'), 250: arr('String'), 253: arr('String')},
     'tests/unit/issue_195_translation_pairs.rs': {523: STR, 527: STR},
-    'tests/unit/grammar_emit_antlr_lark.rs': {780: arr('String'), 798: AS_SLICE},
+    # serde_json::Value compares with many types, so its empty slice needs a type.
+    'tests/unit/grammar_emit_antlr_lark.rs': {780: arr('String'), 798: (AS_SLICE, arr('Value'))},
     'tests/unit/docx_document.rs': {173: arr('BlockNode'), 182: arr('BlockNode')},
     'tests/unit/grammar_emit_tree_sitter.rs': {31: arr('String')},
     'tests/unit/grammar_emit_javascript.rs': {111: arr('String'), 153: arr('String')},
@@ -72,8 +73,8 @@ def rewrite(text, line, empty):
     match = re.fullmatch(r'(.*)\s*\.is_empty\(\)\s*,?', receiver, re.S)
     assert match, f'line {line}: unexpected condition {inner!r}'
     receiver = match.group(1).rstrip()
-    if empty == AS_SLICE:
-        receiver, empty = f'{receiver}.as_slice()', '[]'
+    if isinstance(empty, tuple):
+        receiver, empty = f'{receiver}.as_slice()', empty[1]
     macro = 'assert_ne!' if negated else 'assert_eq!'
     return text[:start] + f'{macro}({receiver}, {empty})' + text[i + 1:]
 

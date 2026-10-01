@@ -795,7 +795,7 @@ fn fixture_importer(format: &str) -> Importer {
 fn shared_importer_fixtures_round_trip_through_antlr_and_lark() {
     let fixture: Value = serde_json::from_str(FIXTURE).expect("fixture is JSON");
     let cases = fixture["cases"].as_array().expect("cases");
-    assert_ne!(cases.as_slice(), []);
+    assert_ne!(cases.as_slice(), [] as [Value; 0]);
     for case in cases {
         let id = case["id"].as_str().expect("id");
         let format = case["format"].as_str().expect("format");
