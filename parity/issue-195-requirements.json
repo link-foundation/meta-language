@@ -19583,7 +19583,7 @@
           "js/src/grammar-merge.js"
         ],
         "rust": [
-          "rust/src/grammar/merge.rs"
+          "rust/src/grammar/merge/mod.rs"
         ]
       },
       "verifications": [
@@ -19671,7 +19671,7 @@
           "js/src/grammar-merge.js"
         ],
         "rust": [
-          "rust/src/grammar/merge.rs"
+          "rust/src/grammar/merge/mod.rs"
         ]
       },
       "verifications": [
@@ -19759,7 +19759,7 @@
           "js/src/grammar-merge.js"
         ],
         "rust": [
-          "rust/src/grammar/merge.rs"
+          "rust/src/grammar/merge/mod.rs"
         ]
       },
       "verifications": [
@@ -20005,7 +20005,7 @@
           "js/src/grammar-merge.js"
         ],
         "rust": [
-          "rust/src/grammar/merge.rs"
+          "rust/src/grammar/merge/mod.rs"
         ]
       },
       "verifications": [

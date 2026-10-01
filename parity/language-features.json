@@ -500,7 +500,7 @@
       "rust": {
         "status": "implemented",
         "evidence": [
-          "rust/src/grammar/merge.rs",
+          "rust/src/grammar/merge/mod.rs",
           "rust/tests/unit/grammar_merge.rs",
           "parity/fixtures/grammar-merge.json"
         ]

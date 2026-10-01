@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Copies the grammar IR (rust/src/grammar/mod.rs, from `use std::...` up to the
-# builders) into the stub crate, lints rust/src/grammar/merge.rs against it, and
+# builders) into the stub crate, lints rust/src/grammar/merge/ against it, and
 # runs rust/tests/unit/grammar_merge.rs on the grammars the JavaScript pest
 # importer produces for the fixture (export-js-grammars.mjs, src/facade.rs).
 set -eu
@@ -10,7 +10,7 @@ mod="$root/rust/src/grammar/mod.rs"
 start=$(grep -n '^use std::collections::BTreeSet;' "$mod" | cut -d: -f1)
 end=$(grep -n '^/// Fluent builder for order-preserving grammars.' "$mod" | cut -d: -f1)
 {
-  echo '//! Generated stub: grammar IR copy plus rust/src/grammar/merge.rs.'
+  echo '//! Generated stub: grammar IR copy plus rust/src/grammar/merge/.'
   echo '#![allow(dead_code, clippy::all, clippy::pedantic, clippy::nursery, missing_docs)]'
   echo 'pub mod grammar {'
   echo '#![allow(dead_code, clippy::all, clippy::pedantic, clippy::nursery, missing_docs)]'
@@ -19,7 +19,7 @@ end=$(grep -n '^/// Fluent builder for order-preserving grammars.' "$mod" | cut 
   echo '#[derive(Clone, Copy, Debug, Default)] pub struct GrammarBuilder;'
   echo 'impl GrammarBuilder { pub const fn new() -> Self { Self } }'
   echo '#[derive(Clone, Copy, Debug, Default)] pub struct ExprBuilder;'
-  echo "#[path = \"$root/rust/src/grammar/merge.rs\"]"
+  echo "#[path = \"$root/rust/src/grammar/merge/mod.rs\"]"
   echo '#[warn(clippy::all, clippy::pedantic, clippy::nursery)]'
   echo '#[allow(clippy::module_name_repetitions, clippy::too_many_lines, clippy::missing_errors_doc, clippy::missing_panics_doc)]'
   echo '#[deny(missing_docs)]'

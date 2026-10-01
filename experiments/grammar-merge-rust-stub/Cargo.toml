@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2024"
 publish = false
 
-# Standalone probe: compiles rust/src/grammar/merge.rs against a copy of the
+# Standalone probe: compiles rust/src/grammar/merge/ against a copy of the
 # grammar IR with the crate's clippy configuration, without building the whole
 # meta-language crate. Regenerate the IR copy with build-stub.sh.
 

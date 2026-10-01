@@ -411,7 +411,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'sourceAliasesKept',
     ],
     javascript: ['js/src/grammar-merge.js'],
-    rust: ['rust/src/grammar/merge.rs'],
+    rust: ['rust/src/grammar/merge/mod.rs'],
   },
   {
     id: 'I195-MERGE-MEANING-AWARE-DEDUPLICATION',
@@ -423,7 +423,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'Duplicates are recognized by meaning-aware normalization, recursive graph and alpha-equivalence, lexical and parser semantics and justified mappings. Name similarity and generated samples only nominate candidates, differently named equivalent concepts are merged, and identically named non-equivalent concepts are not.',
     assertions: ['equivalentConceptsMerged', 'homonymsKeptDistinct', 'samplesOnlyNominate', 'equivalenceJustified'],
     javascript: ['js/src/grammar-merge.js'],
-    rust: ['rust/src/grammar/merge.rs'],
+    rust: ['rust/src/grammar/merge/mod.rs'],
   },
   {
     id: 'I195-MERGE-UNCERTAINTY-PRESERVED',
@@ -435,7 +435,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'Uncertain matches, distinct meanings and version, dialect or ambiguity alternatives stay explicit instead of being conflated. An unresolved required equivalence is reported as failing work.',
     assertions: ['uncertainMatchesNotConflated', 'alternativesExplicit', 'unresolvedEquivalenceFails'],
     javascript: ['js/src/grammar-merge.js'],
-    rust: ['rust/src/grammar/merge.rs'],
+    rust: ['rust/src/grammar/merge/mod.rs'],
   },
   {
     id: 'I195-MERGE-SHIPPED-GRAMMARS-ARE-MERGED',
@@ -466,7 +466,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'editionBoundariesPreserved',
     ],
     javascript: ['js/src/grammar-merge.js'],
-    rust: ['rust/src/grammar/merge.rs'],
+    rust: ['rust/src/grammar/merge/mod.rs'],
   },
   {
     id: 'I195-MERGE-QUALITY-EVIDENCE',

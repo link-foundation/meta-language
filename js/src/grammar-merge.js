@@ -1,6 +1,6 @@
 // Deterministic, meaning-aware merging of grammars from several sources, and
 // binding-aware renaming of grammar rules. It mirrors
-// rust/src/grammar/merge.rs: both runtimes normalize rule definitions the same
+// rust/src/grammar/merge/: both runtimes normalize rule definitions the same
 // way, prove equivalence by the same recursive structural bisimulation and
 // print the same canonical definitions, so their decisions agree.
 import { createHash } from 'node:crypto';
