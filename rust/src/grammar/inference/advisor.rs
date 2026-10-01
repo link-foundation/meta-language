@@ -764,9 +764,9 @@ fn score_from_delta(delta: f64) -> f64 {
 
     let magnitude = delta.abs() / (1.0 + delta.abs());
     if delta < -COST_EPSILON {
-        (1.0 + magnitude) * 0.5
+        f64::midpoint(1.0, magnitude)
     } else if delta > COST_EPSILON {
-        (1.0 - magnitude) * 0.5
+        f64::midpoint(1.0, -magnitude)
     } else {
         0.5
     }
