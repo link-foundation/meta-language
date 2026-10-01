@@ -357,7 +357,14 @@ fn find_dependency_artifact(
         })
         .collect::<Vec<_>>();
     candidates.sort();
-    candidates.into_iter().next().ok_or_else(|| {
+    // A restored target cache can keep artifacts built by an older rustc next to
+    // the current build; only the most recently built one matches the compiler.
+    let newest = candidates.into_iter().max_by_key(|path| {
+        fs::metadata(path)
+            .and_then(|metadata| metadata.modified())
+            .ok()
+    });
+    newest.ok_or_else(|| {
         format!(
             "no dependency artifact with prefixes {prefixes:?} and extensions {extensions:?} in {}",
             deps_dir.display()
@@ -375,4 +382,29 @@ fn ensure_success(label: &str, output: &std::process::Output) -> Result<(), Stri
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::{self, File};
+    use std::time::{Duration, SystemTime};
+
+    use super::{find_dependency_artifact, unique_temp_path};
+
+    #[test]
+    fn dependency_lookup_prefers_the_most_recently_built_artifact() {
+        let deps_dir = unique_temp_path("dependency-artifacts");
+        fs::create_dir_all(&deps_dir).expect("dependency directory is created");
+        let stale = deps_dir.join("libpest-0000.rlib");
+        let current = deps_dir.join("libpest-ffff.rlib");
+        for (path, age) in [(&stale, 3600), (&current, 0)] {
+            File::create(path)
+                .and_then(|file| file.set_modified(SystemTime::now() - Duration::from_secs(age)))
+                .expect("artifact is created with its build time");
+        }
+
+        let found = find_dependency_artifact(&deps_dir, &["libpest-"], &["rlib"]);
+        fs::remove_dir_all(&deps_dir).ok();
+        assert_eq!(found, Ok(current));
+    }
 }

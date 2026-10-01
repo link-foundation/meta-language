@@ -63,7 +63,6 @@ fn merge_rule(
                 ));
             }
             rules.push(GrammarRule::new(name, expr));
-            Ok(())
         }
         AbnfKind::Incremental => {
             let Some(index) = find_rule_index(rules, name) else {
@@ -73,9 +72,9 @@ fn merge_rule(
                 ));
             };
             append_choice_alternative(&mut rules[index].expr, expr);
-            Ok(())
         }
     }
+    Ok(())
 }
 
 fn find_rule_index(rules: &[GrammarRule], name: &str) -> Option<usize> {
