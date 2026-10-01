@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # Copies the grammar IR (rust/src/grammar/mod.rs, from `use std::...` up to the
-# builders) into the stub crate and lints rust/src/grammar/merge.rs against it.
+# builders) into the stub crate, lints rust/src/grammar/merge.rs against it, and
+# runs rust/tests/unit/grammar_merge.rs on the grammars the JavaScript pest
+# importer produces for the fixture (export-js-grammars.mjs, src/facade.rs).
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)
@@ -22,7 +24,15 @@ end=$(grep -n '^/// Fluent builder for order-preserving grammars.' "$mod" | cut 
   echo '#[allow(clippy::module_name_repetitions, clippy::too_many_lines, clippy::missing_errors_doc, clippy::missing_panics_doc)]'
   echo '#[deny(missing_docs)]'
   echo 'pub mod merge;'
+  echo 'pub use merge::*;'
   echo '}'
+  echo 'mod facade;'
+  echo 'pub use facade::*;'
+  echo 'pub use grammar::*;'
 } > "$here/src/lib.rs"
+mkdir -p "$here/tests/probe"
+sed 's|\.join("\.\.")|.join("../..")|' "$root/rust/tests/unit/grammar_merge.rs" > "$here/tests/probe/grammar_merge_copy.rs"
 cd "$here"
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/grammar-merge-stub-target}" cargo clippy --quiet -- -D warnings
+node "$here/export-js-grammars.mjs" /tmp/grammar-merge-js-grammars.json
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/grammar-merge-stub-target}" cargo test --quiet -- --nocapture "$@"

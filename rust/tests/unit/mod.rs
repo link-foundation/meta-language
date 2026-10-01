@@ -35,6 +35,7 @@ mod grammar_import_shared_corpus;
 mod grammar_import_tree_sitter_json;
 mod grammar_ir;
 mod grammar_literal_quoting;
+mod grammar_merge;
 mod grammar_parsing;
 mod grammar_render;
 mod grammar_runtime;

@@ -1,2 +1,3 @@
 Cargo.lock
 src/lib.rs
+tests/probe/grammar_merge_copy.rs
