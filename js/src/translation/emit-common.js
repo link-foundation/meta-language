@@ -8,10 +8,6 @@ import { typeKey } from './types.js';
 
 /** Assumption texts are fixed so that contracts compare across runtimes. */
 export const ASSUMPTIONS = {
-  nonAborting: {
-    id: 'non-aborting-executions',
-    statement: 'the translation agrees with the source on executions that do not abort; the source aborts on machine-integer overflow, checked conversion failure, division by zero or an explicit panic, and the target computes an unspecified value there instead',
-  },
   inBoundsReads: {
     id: 'in-bounds-array-reads',
     statement: 'the translation agrees with the source on executions whose array reads are in bounds; JavaScript reads undefined at an index outside an array, where the target aborts',
@@ -164,18 +160,10 @@ export class EmitState {
     if (detail && !record.details.includes(detail)) record.details.push(detail);
   }
 
-  fixedToUnbounded(type) {
+  /** A machine integer of a pure target: its unbounded representation, with Rust's aborts threaded as values (output.js). */
+  machineInteger(type, representation) {
     const key = typeKey(type);
-    this.encode(`machine-integer:${key}`, `${key} values are represented by the target's unbounded ${type.signed ? 'integers' : 'naturals'}; they agree while no operation overflows`);
-    this.assume(ASSUMPTIONS.nonAborting, `${key} arithmetic stays in range`);
-  }
-
-  checkedToTotal(operation) {
-    this.assume(ASSUMPTIONS.nonAborting, `checked ${operation} does not fail`);
-  }
-
-  abortToTotal(message) {
-    this.assume(ASSUMPTIONS.nonAborting, `no abort: ${message}`);
+    this.encode(`machine-integer:${key}`, `${key} values are ${representation} values; every ${key} operation tests where Rust panics, overflow or a zero divisor, and aborts there with Rust's panic message, and otherwise computes the in-range result exactly`);
   }
 
   /** An array read: in bounds it is the element, outside it JavaScript's undefined, which the targets do not model. */
@@ -208,6 +196,11 @@ export class EmitState {
   encodingList() {
     return [...this.encodings.values()];
   }
+}
+
+/** An operation that may abort, which output.js threads as a value before a pure target sees it. */
+export function unthreaded(what) {
+  return new Error(`${what} reaches a pure target's emitter without its abort threaded`);
 }
 
 /** Declarations every declaration refers to (types, functions, constructors, lemmas). */

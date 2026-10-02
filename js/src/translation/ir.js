@@ -188,6 +188,12 @@ export function renameMain(main, ident, reserved) {
       env.set(effect.name, name);
       return { ...effect, name, value };
     }
+    if (effect.k === 'unwrap') {
+      const pair = renameExpr(effect.pair, env, scope);
+      const name = scope.fresh(effect.name);
+      env.set(effect.name, name);
+      return { ...effect, name, pair };
+    }
     if (effect.k === 'print' || effect.k === 'output') return { ...effect, expr: renameExpr(effect.expr, env, scope) };
     return { ...effect, prop: renameProp(effect.prop, env, scope) };
   });

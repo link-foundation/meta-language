@@ -8,10 +8,9 @@
 
 import { unsupported } from './diagnostics.js';
 import { propFunctions } from './proof.js';
-import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
-import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations } from './emit-common.js';
+import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations, unthreaded } from './emit-common.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 
 const KEYWORDS = new Set([
@@ -29,18 +28,6 @@ const KEYWORDS = new Set([
 ]);
 
 const HELPERS = {
-  fixed: `/-- Machine-integer results: out of range is where Rust panics. -/
-def ml_fixed (value lo hi : Int) (what : String) : Int :=
-  if value < lo || value > hi then panic! s!"{what} overflowed" else value`,
-  fixedNat: `def ml_fixed_nat (value : Int) (hi : Nat) (what : String) : Nat :=
-  if value < 0 || value > Int.ofNat hi then panic! s!"{what} overflowed" else value.toNat`,
-  toNatChecked: `def ml_to_nat_checked (value : Int) : Nat :=
-  if value < 0 then panic! s!"{value} is not a natural number" else value.toNat`,
-  divide: `/-- Division that aborts on a zero divisor, as JavaScript and Rust do. -/
-def ml_nonzero (divisor : Int) : Int :=
-  if divisor == 0 then panic! "division by zero" else divisor`,
-  divideNat: `def ml_nonzero_nat (divisor : Nat) : Nat :=
-  if divisor == 0 then panic! "division by zero" else divisor`,
   jsNumber: `/-- ECMAScript Number::toString: the shortest decimal that reads back as the
 value, the nearer one and then the even one on a tie, laid out as JavaScript
 prints it; exact Nat arithmetic on the bits. -/
@@ -233,7 +220,7 @@ class LeanEmitter {
       'set_option linter.unusedSimpArgs false',
       'set_option linter.constructorNameAsVariable false',
       '',
-      ...['fixed', 'fixedNat', 'toNatChecked', 'divide', 'divideNat', 'jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'math', 'arrayAt', 'arrayAtFloat'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
+      ...['jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'math', 'arrayAt', 'arrayAtFloat'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -255,7 +242,7 @@ class LeanEmitter {
       case 'int':
         return 'Int';
       case 'fixed':
-        this.state.encode(`machine-integer:${typeKey(type)}`, `${typeKey(type)} values are ${type.signed ? 'Int' : 'Nat'} values; every operation checks the ${typeKey(type)} range and panics outside it, where Rust panics`);
+        this.state.machineInteger(type, type.signed ? 'Int' : 'Nat');
         return type.signed ? 'Int' : 'Nat';
       case 'float':
         this.state.encode('floats', 'a JavaScript Number is a Lean Float, the same IEEE-754 binary64 with the same arithmetic; % is ml_float_rem, the exact truncated remainder, and ml_js_number prints a value as JavaScript does');
@@ -416,7 +403,8 @@ class LeanEmitter {
       }
       case 'unary':
         if (e.op === 'not') return `(!${this.expr(e.arg, depth)})`;
-        return this.checked(`(-${this.expr(e.arg, depth)})`, e.type, 'negation');
+        if (e.semantics === 'checked') throw unthreaded('a machine-integer negation');
+        return `(-${this.expr(e.arg, depth)})`;
       case 'binary':
         return this.binary(e, depth);
       case 'if':
@@ -430,15 +418,13 @@ class LeanEmitter {
       case 'cast':
         return this.cast(e, depth);
       case 'abort':
-        this.state.abortToTotal(e.message);
-        return `(panic! ${JSON.stringify(e.message)} : ${this.type(e.type)})`;
+        throw unthreaded('an abort');
       case 'array':
         return `(#[${e.items.map((item) => this.expr(item, depth)).join(', ')}] : ${this.type(e.type)})`;
       case 'append':
         return `(${this.expr(e.left, depth)} ++ ${this.expr(e.right, depth)})`;
       case 'index': {
         this.state.arrayRead();
-        this.state.abortToTotal('array index out of range');
         this.helpers.add('arrayAt');
         const values = this.expr(e.array, depth);
         const index = this.expr(e.index, depth);
@@ -507,19 +493,6 @@ class LeanEmitter {
     return `(toString ${this.expr(arg, depth)})`;
   }
 
-  /** Range-checks a machine-integer result computed in Int. */
-  checked(text, type, what) {
-    if (type.kind !== 'fixed') return text;
-    this.state.abortToTotal(`${typeKey(type)} ${what} overflow`);
-    const { min, max } = fixedBounds(type);
-    if (type.signed) {
-      this.helpers.add('fixed');
-      return `(ml_fixed ${text} (${min}) ${max} "${typeKey(type)} ${what}")`;
-    }
-    this.helpers.add('fixedNat');
-    return `(ml_fixed_nat ${text} ${max} "${typeKey(type)} ${what}")`;
-  }
-
   binary(e, depth) {
     const left = this.expr(e.left, depth);
     const right = this.expr(e.right, depth);
@@ -550,33 +523,22 @@ class LeanEmitter {
       this.helpers.add('floatRem');
       return `(ml_float_rem ${left} ${right})`;
     }
-    const fixed = e.type.kind === 'fixed';
-    // Machine-integer operations run in Int and are range-checked afterwards.
-    const wide = (text, operand) => (operand.type.kind === 'fixed' && !operand.type.signed ? `(Int.ofNat ${text})` : text);
-    const [a, b] = fixed ? [wide(left, e.left), wide(right, e.right)] : [left, right];
+    // A machine-integer operation, one that may abort, reaches here as its abort test and its value computed on the representation (output.js).
+    if (e.semantics === 'checked' || e.byZero === 'abort' || e.type.kind === 'fixed') throw unthreaded(`a machine-integer ${e.op}`);
     switch (e.op) {
       case 'add':
-        return this.checked(`(${a} + ${b})`, e.type, 'addition');
+        return `(${left} + ${right})`;
       case 'mul':
-        return this.checked(`(${a} * ${b})`, e.type, 'multiplication');
+        return `(${left} * ${right})`;
       case 'sub':
-        return this.checked(`(${a} - ${b})`, e.type, 'subtraction');
+        return `(${left} - ${right})`;
       case 'div':
       case 'rem': {
         const division = e.op === 'div';
-        let divisor = b;
-        if (e.byZero === 'abort') {
-          this.state.abortToTotal('division by zero');
-          const natural = !fixed && e.domain.kind === 'nat';
-          this.helpers.add(natural ? 'divideNat' : 'divide');
-          divisor = `(${natural ? 'ml_nonzero_nat' : 'ml_nonzero'} ${b})`;
-        }
-        let text;
-        if (!fixed && e.domain.kind === 'nat') text = `(${a} ${division ? '/' : '%'} ${divisor})`;
-        else if (e.rounding === 'trunc') text = `(Int.${division ? 'tdiv' : 'tmod'} ${a} ${divisor})`;
-        else if (e.rounding === 'floor') text = `(Int.${division ? 'fdiv' : 'fmod'} ${a} ${divisor})`;
-        else text = `(${a} ${division ? '/' : '%'} ${divisor})`;
-        return this.checked(text, e.type, division ? 'division' : 'remainder');
+        if (e.domain.kind === 'nat') return `(${left} ${division ? '/' : '%'} ${right})`;
+        if (e.rounding === 'trunc') return `(Int.${division ? 'tdiv' : 'tmod'} ${left} ${right})`;
+        if (e.rounding === 'floor') return `(Int.${division ? 'fdiv' : 'fmod'} ${left} ${right})`;
+        return `(${left} ${division ? '/' : '%'} ${right})`;
       }
       default:
         throw new Error(`no Lean operator ${e.op}`);
@@ -613,10 +575,8 @@ class LeanEmitter {
     const naturalTo = e.to.kind === 'nat' || (e.to.kind === 'fixed' && !e.to.signed);
     if (naturalFrom === naturalTo) return arg;
     if (naturalFrom) return `(Int.ofNat ${arg})`;
-    if (e.flavor === 'clamp') return `(Int.toNat ${arg})`;
-    this.state.checkedToTotal('conversion to a natural');
-    this.helpers.add('toNatChecked');
-    return `(ml_to_nat_checked ${arg})`;
+    if (e.flavor === 'checked') throw unthreaded('a checked conversion to a natural');
+    return `(Int.toNat ${arg})`;
   }
 
   main(main) {
@@ -628,23 +588,34 @@ class LeanEmitter {
       if (effect.k === 'print') lines.push(`  IO.println ${this.expr(effect.expr, 1)}`);
       else if (effect.k === 'output') lines.push(`  for ml_line in ${this.expr(effect.expr, 1)}.reverse do IO.println ml_line`);
       else if (effect.k === 'let') lines.push(`  let ${effect.name} := ${this.expr(effect.value, 1)}`);
-      else if (this.usesNumber(effect.prop) || this.onPartial(effect.prop, effects.slice(0, index))) {
+      else if (effect.k === 'unwrap') {
+        // The value of a step, or the source's abort: its message, uncaught, ends main.
+        const [made, aborted] = effect.ctors.map((ctor) => this.state.ctorRef(effect.data, ctor));
+        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with | ${made} _ ml_v => pure ml_v | ${aborted} _ ml_m => throw (IO.userError ml_m))`);
+      } else if (this.usesNumber(effect.prop) || this.onPartial(effect.prop, effects.slice(0, index))) {
         // The kernel cannot evaluate Float or unfold a partial def, so the assertion runs where the source's does.
         assertion += 1;
         lines.push(`  if !${this.check(effect.prop)} then throw (IO.userError "assertion ${assertion} failed")`);
         this.state.assertionTheorem(`assertion ${assertion}`, effect, { discharge: 'runtime-assertion' });
       } else {
         assertion += 1;
-        const lets = effects.slice(0, index).filter((item) => item.k === 'let')
-          .map((item) => `let ${item.name} := ${this.expr(item.value, 1)}; `).join('');
+        // The assertion is stated of the values main computes before it; a run that aborts before it never reaches it.
+        const statement = effects.slice(0, index).reduceRight((rest, item) => {
+          if (item.k === 'let') return `let ${item.name} := ${this.expr(item.value, 1)}; ${rest}`;
+          if (item.k !== 'unwrap') return rest;
+          const [made, aborted] = item.ctors.map((ctor) => this.state.ctorRef(item.data, ctor));
+          return `(match ${this.expr(item.pair, 1)} with | ${made} _ ${item.name} => ${rest} | ${aborted} _ _ => True)`;
+        }, this.prop(effect.prop));
         const name = `ml_assertion_${assertion}`;
-        theorems.push(`theorem ${name} : ${lets}${this.prop(effect.prop)} := by\n  try rfl\n  try decide`);
+        const unreached = this.program.abortsThreaded ? '\n  try exact True.intro' : '';
+        theorems.push(`theorem ${name} : ${statement} := by\n  try rfl\n  try decide${unreached}`);
         this.state.assertionTheorem(name, effect);
       }
     });
     if (main.sequentialAsync) this.state.encode('sequential-async', 'an async function is the function its body computes and await is its call: every call of one is awaited where it is made, so nothing runs concurrently and the output is the same, in the same order');
     this.state.encode('program-output', 'main prints the lines the source program prints, in order, with IO.println');
     if (this.program.outputThreaded) this.state.encode('output-threading', 'a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main prints the lines of each step in the order they were printed');
+    if (this.program.abortsThreaded) this.state.encode('abort-threading', 'a function that may abort, directly or through a function it calls, returns the source\'s abort message with the lines printed before it in the generated ml_io data type; main prints those lines and throws IO.userError with the message, which lean --run reports as "uncaught exception: <message>" with exit code 1');
     return [...theorems, `def main : IO Unit := do\n${lines.length ? lines.join('\n') : '  pure ()'}`].join('\n\n');
   }
 
@@ -663,9 +634,10 @@ class LeanEmitter {
     let partial = this.usesPartial(prop);
     for (const effect of [...before].reverse()) {
       if (partial) break;
-      if (effect.k === 'let' && reads.has(effect.name)) {
-        partial = this.usesPartial(effect.value);
-        collect(effect.value);
+      const value = effect.k === 'let' ? effect.value : effect.k === 'unwrap' ? effect.pair : null;
+      if (value && reads.has(effect.name)) {
+        partial = this.usesPartial(value);
+        collect(value);
       }
     }
     return partial;

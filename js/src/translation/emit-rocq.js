@@ -10,7 +10,7 @@ import { unsupported } from './diagnostics.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
-import { EmitState, mutualGroups, orderDeclarations } from './emit-common.js';
+import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-common.js';
 
 const KEYWORDS = new Set([
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
@@ -204,7 +204,7 @@ Definition ml_is_integer (x : float) : bool := andb (ml_is_finite x) (PrimFloat.
 Definition ml_is_safe_integer (x : float) : bool :=
   andb (ml_is_integer x) (PrimFloat.leb (PrimFloat.abs x) 9007199254740991%float).`,
   listAt: `(* The element at an index, walking the list; a read outside it, undefined
-   in JavaScript, is unreachable under the non-aborting assumption. *)
+   in JavaScript, is outside the in-bounds assumption. *)
 Fixpoint ml_list_at {A : Type} (values : list A) (index : Z) (fallback : A) : A :=
   match values with
   | nil => fallback
@@ -238,6 +238,10 @@ with ml_refute H := first
   | let A := fresh "H" in let B := fresh "H" in destruct H as [A | B]; [ml_refute A | ml_refute B]
   | apply H; ml_prove ].
 Ltac ml_decide := vm_compute; ml_prove.`,
+  emit: `(* The lines a step of main prints, before the lines the rest of main prints
+   and the message of the abort that stops it, if one does. *)
+Definition ml_emit (lines : list string) (rest : list string * option string) : list string * option string :=
+  (app lines (fst rest), snd rest).`,
 };
 
 function ident(name) {
@@ -301,7 +305,7 @@ class RocqEmitter {
     }
     moveTo([]);
     const mainText = this.program.main ? this.main(this.program.main) : null;
-    const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'jsNumber', 'jsConsole', 'floatSame', 'floatRem', 'math', 'listAt', 'floatIndex', 'fix', 'tactics', 'decide']
+    const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'jsNumber', 'jsConsole', 'floatSame', 'floatRem', 'math', 'listAt', 'floatIndex', 'fix', 'tactics', 'decide', 'emit']
       .filter((name) => this.helpers.has(name) || (name === 'digits' && (this.helpers.has('zToString') || this.helpers.has('jsNumber'))))
       .map((name) => HELPERS[name]);
     const text = [
@@ -330,7 +334,7 @@ class RocqEmitter {
       case 'int':
         return 'Z';
       case 'fixed':
-        this.state.fixedToUnbounded(type);
+        this.state.machineInteger(type, type.signed ? 'Z' : 'N');
         return type.signed ? 'Z' : 'N';
       case 'float':
         this.floats();
@@ -371,7 +375,10 @@ class RocqEmitter {
     const { params, body } = renameFunction(entry, ident, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
-    this.current = { entry, name, general };
+    // A threaded function calling itself more than once matches on one call's pair around the next, whose equation Function cannot generate.
+    const fuel = !general && entry.recursive && !entry.mutual && params[entry.decreasing]?.type.kind !== 'data'
+      && this.program.declarations.get(entry.ret.name)?.output === true && selfCalls(body, entry.fullName) > 1;
+    this.current = { entry, name, general, fuel };
     const binders = params.map((param) => ` (${param.name} : ${this.type(param.type)})`).join('');
     const result = this.type(entry.ret);
     const text = this.expr(body);
@@ -382,9 +389,22 @@ class RocqEmitter {
     if (decreasing.type.kind === 'data') {
       return `Fixpoint ${name}${binders} {struct ${decreasing.name}} : ${result} :=\n  ${text}.`;
     }
+    if (fuel) return this.fuelRecursion(name, params, binders, result, text, decreasing.name, entry.ret);
     this.natFunctions.set(entry.fullName, { index: entry.decreasing, arity: params.length });
     this.state.encode('nat-recursion', 'recursion that decreases a natural is a Rocq Function with measure N.to_nat; lia discharges the decrease obligations');
     return `Function ${name}${binders} {measure N.to_nat ${decreasing.name}} : ${result} :=\n  ${text}.\nProof. all: ml_obligation. Defined.`;
+  }
+
+  /**
+   * Recursion that decreases a natural by one each call, in a function whose
+   * output or abort is threaded, is a structural fixpoint over a fuel one more
+   * than the natural: every call spends one fuel and decreases the natural, so
+   * the fuel never runs out before the natural reaches zero.
+   */
+  fuelRecursion(name, params, binders, result, text, decreasing, ret) {
+    this.state.encode('nat-fuel-recursion', 'a threaded function that decreases a natural through more than one call is a fixpoint over a fuel of one more than the natural, which every call spends as it decreases the natural, so the fuel outlasts every run');
+    const args = params.map((param) => param.name).join(' ');
+    return `Definition ${name}${binders} : ${result} :=\n  (fix ml_go (ml_fuel : nat)${binders} {struct ml_fuel} : ${result} :=\n    match ml_fuel with\n    | O => ${this.inhabitant(ret)}\n    | S ml_fuel => ${text}\n    end) (S (N.to_nat ${decreasing})) ${args}.`;
   }
 
   /**
@@ -570,7 +590,7 @@ class RocqEmitter {
     if (type.kind === 'nat') return 'N';
     if (type.kind === 'int') return 'Z';
     if (type.kind === 'fixed') {
-      this.state.fixedToUnbounded(type);
+      this.state.machineInteger(type, type.signed ? 'Z' : 'N');
       return type.signed ? 'Z' : 'N';
     }
     if (type.kind === 'float') {
@@ -601,6 +621,7 @@ class RocqEmitter {
           return `(match ml_rec ${inject(tuple)} with ${inject('ml_r')} => ml_r | _ => ${this.current.mutual.members[member].inhabitant} end)`;
         }
         const self = this.current && e.fn === this.current.entry.fullName && this.current.entry.recursive;
+        if (self && this.current.fuel) return `(ml_go ml_fuel ${e.args.map((arg) => this.expr(arg)).join(' ')})`;
         if (self && this.current.general) {
           const args = e.args.map((arg) => this.expr(arg));
           return `(ml_rec ${args.length === 1 ? args[0] : args.length ? `(${args.join(', ')})` : 'tt'})`;
@@ -614,7 +635,7 @@ class RocqEmitter {
       }
       case 'unary':
         if (e.op === 'not') return `(negb ${this.expr(e.arg)})`;
-        if (e.semantics === 'checked') this.state.checkedToTotal('negation');
+        if (e.semantics === 'checked') throw unthreaded('a machine-integer negation');
         if (e.type.kind === 'float') return `(PrimFloat.opp ${this.expr(e.arg)})`;
         return `(Z.opp ${this.expr(e.arg)})`;
       case 'binary':
@@ -630,15 +651,13 @@ class RocqEmitter {
       case 'cast':
         return this.cast(e);
       case 'abort':
-        this.state.abortToTotal(e.message);
-        return `(* unreachable under the non-aborting assumption: ${e.message.replace(/\*\)/gu, '* )')} *) ${this.inhabitant(e.type)}`;
+        throw unthreaded('an abort');
       case 'array':
         return `(${[...e.items.map((item) => this.expr(item)), `@nil ${this.type(e.type.element)}`].join(' :: ')})`;
       case 'append':
         return `(List.app ${this.expr(e.left)} ${this.expr(e.right)})`;
       case 'index': {
         this.state.arrayRead();
-        this.state.abortToTotal('array index out of range');
         this.helpers.add('listAt');
         let index = this.expr(e.index);
         if (e.index.type.kind === 'float') {
@@ -687,7 +706,7 @@ class RocqEmitter {
       case 'int':
         return e.value.startsWith('-') ? `(${e.value})%Z` : `${e.value}%Z`;
       case 'fixed':
-        this.state.fixedToUnbounded(e.type);
+        this.state.machineInteger(e.type, e.type.signed ? 'Z' : 'N');
         if (!e.type.signed) return `${e.value}%N`;
         return e.value.startsWith('-') ? `(${e.value})%Z` : `${e.value}%Z`;
       case 'bool':
@@ -779,8 +798,8 @@ class RocqEmitter {
 
   arithmetic(e, left, right) {
     const module = this.numericModule(e.domain);
-    if (e.semantics === 'checked') this.state.checkedToTotal(e.op);
-    if (e.byZero === 'abort') this.state.abortToTotal('division by zero');
+    // A machine-integer operation, one that may abort, reaches here as its abort test and its value computed on the representation (output.js).
+    if (e.semantics === 'checked' || e.byZero === 'abort' || e.type.kind === 'fixed') throw unthreaded(`a machine-integer ${e.op}`);
     if (e.semantics === 'ieee') {
       if (e.op !== 'rem') return `(PrimFloat.${e.op} ${left} ${right})`;
       this.helpers.add('floatRem');
@@ -792,8 +811,7 @@ class RocqEmitter {
       case 'mul':
         return `(${module}.mul ${left} ${right})`;
       case 'sub':
-        // N.sub truncates at zero, which is exactly natural subtraction; a
-        // checked unsigned subtraction agrees with it on non-aborting runs.
+        // N.sub truncates at zero, which is exactly natural subtraction.
         return `(${module}.sub ${left} ${right})`;
       case 'div':
       case 'rem': {
@@ -855,7 +873,7 @@ class RocqEmitter {
         this.helpers.add('zToString');
         return `(ml_Z_to_string ${text})`;
       case 'fixed':
-        this.state.fixedToUnbounded(arg.type);
+        this.state.machineInteger(arg.type, arg.type.signed ? 'Z' : 'N');
         this.helpers.add(arg.type.signed ? 'zToString' : 'digits');
         return arg.type.signed ? `(ml_Z_to_string ${text})` : `(ml_N_to_string ${text})`;
       case 'float':
@@ -871,7 +889,7 @@ class RocqEmitter {
     const arg = this.expr(e.arg);
     const from = e.from.kind === 'fixed' ? (e.from.signed ? 'Z' : 'N') : (e.from.kind === 'nat' ? 'N' : 'Z');
     const to = e.to.kind === 'fixed' ? (e.to.signed ? 'Z' : 'N') : (e.to.kind === 'nat' ? 'N' : 'Z');
-    if (e.flavor === 'checked') this.state.checkedToTotal('conversion to a natural');
+    if (e.flavor === 'checked') throw unthreaded('a checked conversion to a natural');
     if (from === to) return arg;
     if (from === 'N') return `(Z.of_N ${arg})`;
     return `(Z.to_N ${arg})`;
@@ -881,17 +899,33 @@ class RocqEmitter {
     const { effects } = renameMain(main, ident, this.state.localReserved());
     let assertion = 0;
     const theorems = [];
+    // A program that may abort is the lines it prints and the message of the abort that stops it, if one does.
+    const aborts = this.program.abortsThreaded;
+    if (aborts) this.helpers.add('emit');
+    const arms = (effect, made, aborted) => {
+      const [mk, abort] = effect.ctors.map((ctor) => this.state.ctorRef(effect.data, ctor));
+      return `match ${this.expr(effect.pair)} with ${mk} _ ${effect.name} => ${made} | ${abort} _ ${aborted.bind} => ${aborted.body} end`;
+    };
     const build = (index) => {
-      if (index >= effects.length) return 'nil';
+      if (index >= effects.length) return aborts ? '(nil, None)' : 'nil';
       const effect = effects[index];
-      if (effect.k === 'print') return `${this.expr(effect.expr)} ::\n  ${build(index + 1)}`;
-      if (effect.k === 'output') return `app (List.rev ${this.expr(effect.expr)})\n  (${build(index + 1)})`;
+      if (effect.k === 'print') {
+        return aborts ? `ml_emit (${this.expr(effect.expr)} :: nil)\n  (${build(index + 1)})` : `${this.expr(effect.expr)} ::\n  ${build(index + 1)}`;
+      }
+      if (effect.k === 'output') {
+        return `${aborts ? 'ml_emit' : 'app'} (List.rev ${this.expr(effect.expr)})\n  (${build(index + 1)})`;
+      }
       if (effect.k === 'let') return `let ${effect.name} := ${this.expr(effect.value)} in\n  ${build(index + 1)}`;
+      if (effect.k === 'unwrap') return `(${arms(effect, build(index + 1), { bind: 'ml_m', body: '(nil, Some ml_m)' })})`;
       assertion += 1;
-      const lets = effects.slice(0, index).filter((item) => item.k === 'let')
-        .map((item) => `let ${item.name} := ${this.expr(item.value)} in `).join('');
+      // The assertion is stated of the values main computes before it; a run that aborts before it never reaches it.
+      const statement = effects.slice(0, index).reduceRight((rest, item) => {
+        if (item.k === 'let') return `let ${item.name} := ${this.expr(item.value)} in ${rest}`;
+        if (item.k === 'unwrap') return `(${arms(item, rest, { bind: '_', body: 'True' })})`;
+        return rest;
+      }, this.prop(effect.prop));
       const name = `ml_assertion_${assertion}`;
-      theorems.push(`Theorem ${name} : ${lets}${this.prop(effect.prop)}.\nProof. ml_decide. Qed.`);
+      theorems.push(`Theorem ${name} : ${statement}.\nProof. ml_decide. Qed.`);
       this.helpers.add('decide');
       this.state.assertionTheorem(name, effect);
       return build(index + 1);
@@ -900,7 +934,8 @@ class RocqEmitter {
     if (main.sequentialAsync) this.state.encode('sequential-async', 'an async function is the function its body computes and await is its call: every call of one is awaited where it is made, so nothing runs concurrently and the output is the same, in the same order');
     this.state.encode('program-output', 'main is the list of lines the source program prints, in order; evaluating it with vm_compute runs the program');
     if (this.program.outputThreaded) this.state.encode('output-threading', 'a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main lists the lines of each step in the order they were printed');
-    return [...theorems, `Definition main : list string :=\n  ${body}.`].join('\n\n');
+    if (aborts) this.state.encode('abort-threading', 'a function that may abort, directly or through a function it calls, returns the source\'s abort message with the lines printed before it in the generated ml_io data type; main is the pair of the lines printed and Some message when the program aborts, None when it does not');
+    return [...theorems, `Definition main : ${aborts ? 'list string * option string' : 'list string'} :=\n  ${body}.`].join('\n\n');
   }
 }
 
@@ -909,3 +944,10 @@ function collectHintFunctions(plan) {
   return plan.cases.flatMap((kase) => collectHintFunctions(kase.plan));
 }
 
+/** How many times a function body calls the function itself. */
+function selfCalls(node, name) {
+  if (Array.isArray(node)) return node.reduce((count, item) => count + selfCalls(item, name), 0);
+  if (node === null || typeof node !== 'object') return 0;
+  const own = node.k === 'call' && node.fn === name ? 1 : 0;
+  return Object.entries(node).reduce((count, [key, value]) => (key === 'type' ? count : count + selfCalls(value, name)), own);
+}
