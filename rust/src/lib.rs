@@ -94,6 +94,11 @@ pub use foundation_models::{
     check_foundation_models, foundation_correspondences, foundation_model, foundation_register,
     language_foundation_models,
 };
+pub use grammar::feature_runtime::{
+    Ambiguity, FeatureGrammarParser, FeatureParseOptions, GrammarParseError, GrammarResolver,
+    GrammarRuntimeError, LeafText, OperationValue, ParseOutcome, ParseRejection, SyntaxAttributes,
+    SyntaxTree, compile_feature_grammar,
+};
 pub use grammar::interchange::{
     GRAMMAR_LOWERING_FORMATS, GrammarLowering, GrammarLoweringEncoding, GrammarLoweringError,
     GrammarLoweringFailure, GrammarLoweringFailureKind, GrammarLoweringMetadata,
