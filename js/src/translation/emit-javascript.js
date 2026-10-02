@@ -6,6 +6,7 @@
 // property, checked over a bounded domain by `--ml-check-theorems`, while the
 // proof obligation stays discharged by the source language's kernel.
 
+import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -25,14 +26,16 @@ const HELPERS = {
   natSub: `function ml_natSub(a, b) {
   return a > b ? a - b : 0n;
 }`,
-  fixed: `function ml_fixed(value, min, max, what) {
-  if (value < min || value > max) throw new RangeError(\`\${what} overflowed\`);
+  fixed: `function ml_fixed(value, min, max, message) {
+  if (value < min || value > max) throw new RangeError(message);
   return value;
 }`,
-  divide: `// Integer division with the source's rounding; by zero it either aborts or is total (x / 0 = 0, x % 0 = x).
-function ml_divide(a, b, rounding, byZero, remainder) {
+  divide: `// Integer division with the source's rounding; by zero it aborts with the message \`zero\`
+// or, when that is null, is total (x / 0 = 0, x % 0 = x); a machine-integer quotient
+// out of [min, max] aborts with \`overflow\`, the remainder too.
+function ml_divide(a, b, rounding, zero, remainder, bounds) {
   if (b === 0n) {
-    if (byZero === 'abort') throw new RangeError('division by zero');
+    if (zero !== null) throw new RangeError(zero);
     return remainder ? a : 0n;
   }
   let q = a / b;
@@ -41,10 +44,11 @@ function ml_divide(a, b, rounding, byZero, remainder) {
     if (rounding === 'floor' && (r < 0n) !== (b < 0n)) q -= 1n;
     if (rounding === 'euclid' && r < 0n) q = b > 0n ? q - 1n : q + 1n;
   }
+  if (bounds && (q < bounds[0] || q > bounds[1])) throw new RangeError(bounds[2]);
   return remainder ? a - q * b : q;
 }`,
-  toNatChecked: `function ml_toNatChecked(value) {
-  if (value < 0n) throw new RangeError(\`\${value} is not a natural number\`);
+  toNatChecked: `function ml_toNatChecked(value, message) {
+  if (value < 0n) throw new RangeError(message);
   return value;
 }`,
   abort: `function ml_abort(message) {
@@ -192,7 +196,7 @@ class JavaScriptEmitter {
     if (param.type.kind !== 'fixed') return [];
     this.helpers.add('fixed');
     const { min, max } = fixedBounds(param.type);
-    return [`ml_fixed(${param.name}, ${min}n, ${max}n, '${typeKey(param.type)} argument ${param.name}');`];
+    return [`ml_fixed(${param.name}, ${min}n, ${max}n, ${JSON.stringify(`${typeKey(param.type)} argument ${param.name} out of range`)});`];
   }
 
   theorem(entry) {
@@ -381,7 +385,7 @@ class JavaScriptEmitter {
       }
       case 'unary':
         if (e.op === 'not') return `!${this.expr(e.arg)}`;
-        return this.checked(negate(this.expr(e.arg)), e.type, 'negation');
+        return this.checked(negate(this.expr(e.arg)), e.type, 'neg');
       case 'binary':
         return this.binary(e);
       case 'if':
@@ -452,11 +456,12 @@ class JavaScriptEmitter {
     return `String(${this.expr(arg)})`;
   }
 
-  checked(text, type, what) {
+  /** A machine-integer result out of range panics as Rust does. */
+  checked(text, type, op) {
     if (type.kind !== 'fixed') return text;
     this.helpers.add('fixed');
     const { min, max } = fixedBounds(type);
-    return `ml_fixed(${text}, ${min}n, ${max}n, '${typeKey(type)} ${what}')`;
+    return `ml_fixed(${text}, ${min}n, ${max}n, ${JSON.stringify(overflowMessage(op))})`;
   }
 
   binary(e) {
@@ -482,21 +487,23 @@ class JavaScriptEmitter {
       case 'ge':
         return `(${left} >= ${right})`;
       case 'add':
-        return this.checked(`(${left} + ${right})`, e.type, 'addition');
+        return this.checked(`(${left} + ${right})`, e.type, 'add');
       case 'mul':
-        return this.checked(`(${left} * ${right})`, e.type, 'multiplication');
+        return this.checked(`(${left} * ${right})`, e.type, 'mul');
       case 'sub':
         if (e.semantics === 'truncated') {
           this.helpers.add('natSub');
           return `ml_natSub(${left}, ${right})`;
         }
-        return this.checked(`(${left} - ${right})`, e.type, 'subtraction');
+        return this.checked(`(${left} - ${right})`, e.type, 'sub');
       case 'div':
       case 'rem': {
         if (e.semantics === 'ieee') return `(${left} ${e.op === 'div' ? '/' : '%'} ${right})`;
         this.helpers.add('divide');
-        const call = `ml_divide(${left}, ${right}, '${e.rounding}', '${e.byZero}', ${e.op === 'rem'})`;
-        return this.checked(call, e.type, e.op === 'div' ? 'division' : 'remainder');
+        const zero = e.byZero === 'abort' ? JSON.stringify(zeroDivisorMessage(e.op, e.type)) : 'null';
+        if (e.type.kind !== 'fixed') return `ml_divide(${left}, ${right}, '${e.rounding}', ${zero}, ${e.op === 'rem'})`;
+        const { min, max } = fixedBounds(e.type);
+        return `ml_divide(${left}, ${right}, '${e.rounding}', ${zero}, ${e.op === 'rem'}, [${min}n, ${max}n, ${JSON.stringify(overflowMessage(e.op))}])`;
       }
       default:
         throw new Error(`no JavaScript operator ${e.op}`);
@@ -508,7 +515,7 @@ class JavaScriptEmitter {
     if (e.flavor === 'exact') return arg;
     if (e.flavor === 'clamp') return `((value) => (value < 0n ? 0n : value))(${arg})`;
     this.helpers.add('toNatChecked');
-    return `ml_toNatChecked(${arg})`;
+    return `ml_toNatChecked(${arg}, ${JSON.stringify(castMessage(e))})`;
   }
 
   main(main) {

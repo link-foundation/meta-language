@@ -447,7 +447,9 @@ class JavaScriptParser {
       const param = guardedParameter(statements[index], params);
       if (!param || assigned.has(param.name)) break;
       param.type = NAT;
-      param.guard = true;
+      // A negative argument aborts with the guard's message, the guards in their order.
+      const [thrown] = statements[index].then.filter((inner) => inner.s !== 'empty');
+      param.guard = { message: thrown.message, order: index };
     }
     const where = span(nameToken, c.peek());
     const rest = statements.slice(index);

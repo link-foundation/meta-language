@@ -6,6 +6,7 @@
 // made of `println!`, `let` and `assert!`/`assert_eq!` statements.
 // Everything else is rejected with a precise obligation.
 
+import { rustMacroMessage } from './aborts.js';
 import { TranslationError, unsupported } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, STRING, UNIT, rustFixedType } from './types.js';
@@ -709,7 +710,7 @@ class RustParser {
       case 'todo': {
         if (args.length > 1) throw unsupported(`${token.value}! arguments`, 'only a literal message is portable', range);
         if (args.length && args[0].k !== 'str') throw unsupported(`${token.value}! message`, 'the message must be a literal', range);
-        return { k: 'abort', message: args[0]?.value ?? token.value, span: range };
+        return { k: 'abort', message: rustMacroMessage(token.value, args.length ? panicText(args[0]) : undefined), span: range };
       }
       default:
         throw unsupported(`${token.value}!`, 'outside the portable core', range);
@@ -846,4 +847,18 @@ function joined(left, right, token) {
 
 function span(from, to) {
   return { start: from.start, end: Math.max(from.end, to && to.kind !== 'eof' ? to.start : from.end) };
+}
+
+/** The text a `panic!` message literal prints: `{{` and `}}` are braces; a lone brace captures a variable. */
+function panicText(template) {
+  let text = '';
+  for (let index = 0; index < template.value.length; index += 1) {
+    const char = template.value[index];
+    if (char === '{' || char === '}') {
+      if (template.value[index + 1] !== char) throw unsupported('formatted panic message', 'only a literal message is portable', template.span);
+      index += 1;
+    }
+    text += char;
+  }
+  return text;
 }

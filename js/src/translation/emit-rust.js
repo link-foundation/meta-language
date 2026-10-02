@@ -8,6 +8,7 @@
 // executable property, checked over a bounded domain by
 // `--ml-check-theorems`, while the proof stays discharged by the source kernel.
 
+import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
@@ -271,11 +272,12 @@ pub mod ml {
     }
 
     /// Integer division with the source's rounding ("trunc", "floor" or
-    /// "euclid"); by zero it aborts or is total (x / 0 = 0, x % 0 = x).
-    pub fn divide(a: &Big, b: &Big, rounding: &str, abort_on_zero: bool, remainder: bool) -> Big {
+    /// "euclid"); by zero it aborts with the source's message or is total
+    /// (x / 0 = 0, x % 0 = x).
+    pub fn divide(a: &Big, b: &Big, rounding: &str, by_zero: Option<&str>, remainder: bool) -> Big {
         if b.is_zero() {
-            if abort_on_zero {
-                panic!("division by zero");
+            if let Some(message) = by_zero {
+                panic!("{message}");
             }
             return if remainder { a.clone() } else { Big::zero() };
         }
@@ -292,9 +294,9 @@ pub mod ml {
         if remainder { a.sub(&quotient.mul(b)) } else { quotient }
     }
 
-    pub fn to_nat_checked(value: Big) -> Big {
+    pub fn to_nat_checked(value: Big, message: &str) -> Big {
         if value.is_negative() {
-            panic!("{value} is not a natural number");
+            panic!("{message}");
         }
         value
     }
@@ -840,7 +842,7 @@ class RustEmitter {
       }
       case 'unary':
         if (e.op === 'not') return `!${this.receiver(e.arg)}`;
-        if (e.type.kind === 'fixed') return this.checked(`${this.receiver(e.arg)}.checked_neg()`, e.type, 'negation');
+        if (e.type.kind === 'fixed') return this.checked(`${this.receiver(e.arg)}.checked_neg()`, e.type, 'neg');
         if (e.type.kind === 'float') return `(-${this.receiver(e.arg)})`;
         return `${this.receiver(e.arg)}.neg()`;
       case 'binary':
@@ -950,9 +952,14 @@ class RustEmitter {
     }
   }
 
-  checked(text, type, what) {
-    this.state.encode(`machine-integer:${typeKey(type)}`, `${typeKey(type)} stays a Rust ${typeKey(type)}; its arithmetic is checked and panics where the source aborts`);
-    return `${text}.expect("${typeKey(type)} ${what} overflowed")`;
+  /** A machine-integer result out of range panics, with Rust's own message. */
+  checked(text, type, op) {
+    this.machineInteger(type);
+    return `${text}.expect(${rustString(overflowMessage(op))})`;
+  }
+
+  machineInteger(type) {
+    this.state.encode(`machine-integer:${typeKey(type)}`, `${typeKey(type)} stays a Rust ${typeKey(type)}; its arithmetic is checked and panics where the source aborts, with the source's message`);
   }
 
   binary(e) {
@@ -991,14 +998,16 @@ class RustEmitter {
   fixedArithmetic(e) {
     const left = this.receiver(e.left);
     const right = this.expr(e.right);
-    const names = { add: ['checked_add', 'addition'], sub: ['checked_sub', 'subtraction'], mul: ['checked_mul', 'multiplication'], div: ['checked_div', 'division'], rem: ['checked_rem', 'remainder'] };
-    let [method, what] = names[e.op];
-    if ((e.op === 'div' || e.op === 'rem') && e.rounding === 'euclid') method = `${method}_euclid`;
-    else if ((e.op === 'div' || e.op === 'rem') && e.rounding !== 'trunc' && e.type.signed) {
-      throw unsupported(`${e.rounding} division on ${typeKey(e.type)}`, 'Rust machine integers divide with truncating or Euclidean rounding only', e.span);
+    if (e.op === 'div' || e.op === 'rem') {
+      if (e.rounding !== 'trunc' && e.rounding !== 'euclid' && e.type.signed) {
+        throw unsupported(`${e.rounding} division on ${typeKey(e.type)}`, 'Rust machine integers divide with truncating or Euclidean rounding only', e.span);
+      }
+      // Rust integer division always panics by zero and on overflow, with the source's messages.
+      this.machineInteger(e.type);
+      if (e.rounding === 'euclid') return `${left}.${e.op}_euclid(${right})`;
+      return `(${left} ${e.op === 'div' ? '/' : '%'} ${right})`;
     }
-    if (e.op === 'div' || e.op === 'rem') this.state.abortToTotal('division by zero');
-    return this.checked(`${left}.${method}(${right})`, e.type, what);
+    return this.checked(`${left}.checked_${e.op}(${right})`, e.type, e.op);
   }
 
   bigArithmetic(e) {
@@ -1014,8 +1023,8 @@ class RustEmitter {
         return `${left}.sub(${right})`;
       case 'div':
       case 'rem': {
-        if (e.byZero === 'abort') this.state.abortToTotal('division by zero');
-        return `crate::ml::divide(${this.borrow(e.left)}, ${right}, "${e.rounding}", ${e.byZero === 'abort'}, ${e.op === 'rem'})`;
+        const zero = e.byZero === 'abort' ? `Some(${rustString(zeroDivisorMessage(e.op, e.type))})` : 'None';
+        return `crate::ml::divide(${this.borrow(e.left)}, ${right}, "${e.rounding}", ${zero}, ${e.op === 'rem'})`;
       }
       default:
         throw new Error(`no Rust operator ${e.op}`);
@@ -1077,8 +1086,7 @@ class RustEmitter {
     if (e.from.kind === 'fixed' && e.to.kind === 'fixed') return `${typeKey(e.to)}::from(${arg})`;
     if (e.flavor === 'exact') return arg;
     if (e.flavor === 'clamp') return `crate::ml::clamp_nat(${arg})`;
-    this.state.checkedToTotal('conversion to a natural');
-    return `crate::ml::to_nat_checked(${arg})`;
+    return `crate::ml::to_nat_checked(${arg}, ${rustString(castMessage(e))})`;
   }
 
   main(main) {

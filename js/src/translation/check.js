@@ -639,10 +639,42 @@ class Checker {
     }
     const checkedArgs = args.map((arg, index) => {
       const param = entry.params[index];
-      const value = this.expr(arg, env, path, param.type);
-      return coerce(value, param.type, this.language, arg.span ?? span, param.guard ? 'checked' : undefined);
+      // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
+      const value = this.expr(arg, env, path, param.guard && arg.k !== 'num' ? INT : param.type);
+      const checked = coerce(value, param.type, this.language, arg.span ?? span, param.guard ? 'checked' : undefined);
+      return checked.k === 'cast' && checked.flavor === 'checked' ? { ...checked, message: param.guard.message, order: param.guard.order } : checked;
     });
-    return { k: 'call', fn: entry.fullName, args: checkedArgs, type: entry.ret };
+    return this.guardOrder({ k: 'call', fn: entry.fullName, args: checkedArgs, type: entry.ret });
+  }
+
+  /**
+   * A JavaScript call evaluates every argument, then the callee's guards run
+   * in their order. Checking each argument where it is passed is the same
+   * unless a later argument could print or abort, or the guards run in
+   * another order; then the arguments are bound first and checked after.
+   */
+  guardOrder(call) {
+    const guarded = call.args.map((arg, index) => ({ arg, index })).filter(({ arg }) => arg.k === 'cast' && arg.order !== undefined);
+    if (!guarded.length) return call;
+    const simple = (e) => e.k === 'var' || e.k === 'lit' || (e.k === 'cast' && e.flavor === 'exact' && simple(e.arg));
+    const first = guarded[0].index;
+    const inOrder = guarded.every(({ arg }, at) => !at || guarded[at - 1].arg.order < arg.order);
+    const later = call.args.slice(first + 1).every((arg) => simple(arg.order === undefined ? arg : arg.arg));
+    if (inOrder && later) return call;
+    const bound = call.args.map((arg) => {
+      const value = arg.order === undefined ? arg : arg.arg;
+      return { name: this.freshName('ml_a'), value };
+    });
+    const checks = guarded
+      .toSorted((left, right) => left.arg.order - right.arg.order)
+      .map(({ arg, index }) => ({ index, name: this.freshName('ml_a'), value: { ...arg, arg: { k: 'var', name: bound[index].name, type: arg.arg.type } } }));
+    const args = call.args.map((arg, index) => {
+      const check = checks.find((candidate) => candidate.index === index);
+      return check ? { k: 'var', name: check.name, type: arg.type } : { k: 'var', name: bound[index].name, type: arg.type };
+    });
+    let body = { ...call, args };
+    for (const binding of [...bound, ...checks].reverse()) body = { k: 'let', name: binding.name, value: binding.value, body, type: body.type };
+    return body;
   }
 
   construct(dataEntry, ctor, args, env, path, span) {
