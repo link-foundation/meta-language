@@ -67,6 +67,25 @@ console.log(network.reconstructText());
 // const newName = call(newName);
 ```
 
+## Command line
+
+The package installs a `meta-language` command whose `grammar` subcommand
+imports, validates, converts, merges, renames, exports and round-trips grammars.
+It prints the same output and exits with the same status as the Rust
+`meta-language grammar` command:
+
+```bash
+npx meta-language grammar formats
+npx meta-language grammar convert --from pest --to ebnf message.pest
+npx meta-language grammar merge --source bnf:message.bnf --source ebnf:message.ebnf
+npx meta-language grammar round-trip --from abnf --accept "1+2" --reject "1+x" sum.abnf
+```
+
+The same commands are available as a library through `runGrammarCommand(args,
+{ readFile })`, and the steps behind them as `grammarImporter`,
+`grammarEmitter`, `validateGrammar`, `renderNativeGrammar` and
+`parseNativeGrammar`. `meta-language grammar help` lists every command.
+
 ## Parity
 
 Every feature in [`../parity/language-features.json`](../parity/language-features.json)

@@ -535,6 +535,28 @@
       }
     },
     {
+      "id": "grammar-interchange-cli",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/grammar/interchange/mod.rs",
+          "rust/src/main.rs",
+          "rust/tests/unit/issue_195_interchange_api_cli.rs",
+          "parity/fixtures/grammar-importers.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/grammar-interchange.js",
+          "js/src/cli.js",
+          "js/tests/issue-195-interchange-api-cli.test.js",
+          "parity/fixtures/grammar-importers.json"
+        ]
+      }
+    },
+    {
       "id": "javascript-parser-codegen",
       "required": true,
       "rust": {

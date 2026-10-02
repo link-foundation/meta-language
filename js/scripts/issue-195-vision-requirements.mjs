@@ -308,8 +308,8 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'Both packages expose public APIs and command-line tools that import, validate, convert, merge, rename, export and round-trip grammars in every catalog format, with the same observable results in both runtimes.',
     assertions: ['importCommand', 'validateCommand', 'convertCommand', 'mergeCommand', 'renameCommand', 'exportCommand', 'roundTripCommand'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/src/grammar-interchange.js', 'js/src/cli.js'],
+    rust: ['rust/src/grammar/interchange/mod.rs', 'rust/src/main.rs'],
   },
   {
     id: 'I195-INTERCHANGE-FORMAT-FEATURES',

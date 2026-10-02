@@ -359,6 +359,29 @@ formats report a clear non-zero CLI error. `translate-grammar` rewrites
 concept-aligned rule names and documentation to the requested target language
 while preserving grammar structure.
 
+The `grammar` subcommand is the grammar interchange tool shared with the
+JavaScript package (`npx meta-language grammar ...`). It prints the same output
+and exits with the same status in both runtimes:
+
+```bash
+cargo run -- grammar formats
+cargo run -- grammar import --from abnf message.abnf
+cargo run -- grammar validate --from native grammar.grammar
+cargo run -- grammar convert --from pest --to ebnf message.pest
+cargo run -- grammar export --to abnf grammar.grammar
+cargo run -- grammar merge --source bnf:message.bnf --source ebnf:message.ebnf
+cargo run -- grammar rename --from ebnf --rule word --name name message.ebnf
+cargo run -- grammar round-trip --from abnf --accept "1+2" --reject "1+x" sum.abnf
+```
+
+It reads and writes `abnf`, `antlr`, `bnf`, `ebnf`, `gbnf`, `lark`, `pest`,
+`tree-sitter-json` and `native`, a line-per-rule listing of the grammar model
+that `import` prints and `export` reads. Lossy conversion steps, merge decisions
+and rename aliases go to standard error. The exit status is 0 on success, 1 when
+a problem was found (a validation error, an unresolved required merge
+equivalence or a broken round trip) and 2 on a usage or input error.
+`grammar help` lists every option.
+
 ## Grammar subsystem
 
 The grammar layer stores authored, imported, inferred, translated, and generated
