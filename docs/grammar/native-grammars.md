@@ -14,10 +14,11 @@ grammar is checked against the tree-sitter grammar that still backs its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: four catalog languages, JSON, INI, Diff and CSV, have a native merged
-grammar. Their default parses still run tree-sitter-json, tree-sitter-ini,
-tree-sitter-diff and tree-sitter-csv until the grammars have recovery rules for
-invalid input; see [current limits](#current-limits).
+Status: five catalog languages, JSON, INI, Diff, CSV and JSON5, have a native
+merged grammar. Their default parses still run tree-sitter-json,
+tree-sitter-ini, tree-sitter-diff, tree-sitter-csv and
+tree-sitter-json5-orchard until the grammars have recovery rules for invalid
+input; see [current limits](#current-limits).
 
 ## Format
 
@@ -109,6 +110,28 @@ applies ([`NOTICE.md`](../../rust/vendor/tree-sitter-csv/NOTICE.md)):
 - A run of line breaks is one `newline` leaf, and the spaces after a closing
   quote are a `blank_space` leaf, so the tree keeps every byte.
 
+For JSON5 the sources are the [JSON5 1.0.0 specification](https://spec.json5.org/)
+and
+[tree-sitter-json5-orchard 0.1.0](https://docs.rs/crate/tree-sitter-json5-orchard/0.1.0/source/grammar.js):
+
+- From tree-sitter-json5-orchard: the tree shape. A `file` holds one value; an
+  `object` holds `member`s with a `name` field (a `string` or an
+  `identifier`) and a `value` field; strings, numbers, `null`, `true` and
+  `false` are leaves; comments are extras. Both quote styles, trailing commas,
+  hexadecimal, signed, `Infinity` and `NaN` numbers, and a raw line break in a
+  string, which the specification does not allow, are accepted. A number may
+  be `.` or `.e5`, as in the oracle.
+- From JSON5 section 8 (White Space): NBSP, LS, PS, a byte order mark anywhere
+  and every Zs space are whitespace. tree-sitter-json5-orchard 0.1.0 skips
+  only the ASCII spaces, and a leading byte order mark.
+- From JSON5 section 3 (Objects): a member name is an ECMAScript 5.1
+  IdentifierName, so it may hold `\u` escapes, Nl letters, and Mn, Mc, Nd,
+  Pc, ZWNJ and ZWJ characters after its first one.
+- From JSON5 section 5.1 (Escapes): `\0` before a non-digit, a backslash
+  before any character other than a digit, `x` or `u`, and a line
+  continuation after a lone CR, LS or PS.
+- Whitespace and comments are trivia leaves, so the tree keeps every byte.
+
 ## Checking against the oracle
 
 [`js/scripts/generate-native-grammar-fixtures.mjs`](../../js/scripts/generate-native-grammar-fixtures.mjs)
@@ -157,6 +180,7 @@ rows, and a Rust suite. Both record evidence for the language's ledger row:
 | INI | [`issue-195-grammar-native-ini.test.js`](../../js/tests/issue-195-grammar-native-ini.test.js) | [`issue_195_grammar_native_ini.rs`](../../rust/tests/unit/issue_195_grammar_native_ini.rs) | `I195-GRAMMAR-NATIVE-INI` |
 | Diff | [`issue-195-grammar-native-diff.test.js`](../../js/tests/issue-195-grammar-native-diff.test.js) | [`issue_195_grammar_native_diff.rs`](../../rust/tests/unit/issue_195_grammar_native_diff.rs) | `I195-GRAMMAR-NATIVE-DIFF` |
 | CSV | [`issue-195-grammar-native-csv.test.js`](../../js/tests/issue-195-grammar-native-csv.test.js) | [`issue_195_grammar_native_csv.rs`](../../rust/tests/unit/issue_195_grammar_native_csv.rs) | `I195-GRAMMAR-NATIVE-CSV` |
+| JSON5 | [`issue-195-grammar-native-json5.test.js`](../../js/tests/issue-195-grammar-native-json5.test.js) | [`issue_195_grammar_native_json5.rs`](../../rust/tests/unit/issue_195_grammar_native_json5.rs) | `I195-GRAMMAR-NATIVE-JSON5` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -170,10 +194,10 @@ when a fixture is stale, and CI runs it.
 
 ## Current limits
 
-- Invalid input is rejected instead of recovered. The default JSON, INI, Diff
-  and CSV parses still use tree-sitter-json, tree-sitter-ini, tree-sitter-diff
-  and tree-sitter-csv, which stay production dependencies until the native
-  grammars have recovery rules.
+- Invalid input is rejected instead of recovered. The default JSON, INI, Diff,
+  CSV and JSON5 parses still use tree-sitter-json, tree-sitter-ini,
+  tree-sitter-diff, tree-sitter-csv and tree-sitter-json5-orchard, which stay
+  production dependencies until the native grammars have recovery rules.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
   tree-sitter-diff recovers from and the native grammar accepts as context; a
@@ -185,6 +209,11 @@ when a fixture is stale, and CI runs it.
   oracle reads it as a `boolean` whose keyword spans the spaces too, which the
   native grammar's tree cannot show, and the native grammar reads it as text,
   as RFC 4180 section 2.4 counts spaces as part of a field.
+- A JSON5 line comment ends only at a line feed, as in
+  tree-sitter-json5-orchard 0.1.0; a lone CR, LS or PS stays in the comment.
+  JSON5 section 7 ends it at any ECMAScript 5.1 LineTerminator, which would
+  split the oracle's comment rows, so inputs that differ there are outside
+  the corpus.
 - No other catalog language has a native merged grammar yet. The open rows are
   `I195-GRAMMAR-NATIVE-MERGED`, `I195-GRAMMAR-LANGUAGE-CATALOG` and
   `I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED` in the

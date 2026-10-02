@@ -309,6 +309,24 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-JSON5',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/json5.json',
+    construct: 'native merged JSON5 grammar checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/json5.lino is a canonical native Links Notation grammar merged from tree-sitter-json5-orchard 0.1.0 and the JSON5 1.0.0 specification. Both executors build, for every corpus source, exactly the concrete syntax tree rows of the tree-sitter-json5-orchard oracle with no ambiguity, unquoted and quoted member names, single-quoted and multi-line strings, hexadecimal, signed, Infinity and NaN numbers, trailing commas and line and block comments as extra rows included; they accept the JSON5 white space, identifier names and string escapes the oracle recovers from, reject invalid input, and keep every source byte, comments and white space included, in the tree.',
+    assertions: [
+      'nativeJson5GrammarIsCanonicalLinks',
+      'nativeJson5TreesMatchOracle',
+      'nativeJson5AcceptsMergedSourceExtensions',
+      'nativeJson5RejectsInvalidInput',
+      'nativeJson5TreesLossless',
+    ],
+    javascript: ['js/src/grammar-links.js', 'js/src/grammar-runtime.js', 'js/src/grammar-runtime/text.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-FEATURE-UNION',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

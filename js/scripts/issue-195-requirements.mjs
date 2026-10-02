@@ -892,6 +892,7 @@ export async function buildIssue195Manifest(root) {
         'I195-GRAMMAR-NATIVE-INI': ISSUE_195_SOURCES.resourceAudit,
         'I195-GRAMMAR-NATIVE-DIFF': ISSUE_195_SOURCES.resourceAudit,
         'I195-GRAMMAR-NATIVE-CSV': ISSUE_195_SOURCES.resourceAudit,
+        'I195-GRAMMAR-NATIVE-JSON5': ISSUE_195_SOURCES.resourceAudit,
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'resource-limits')
           .map(({ id }) => [id, ISSUE_195_SOURCES.resourceAudit])),
       },

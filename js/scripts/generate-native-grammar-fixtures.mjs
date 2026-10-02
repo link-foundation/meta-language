@@ -26,6 +26,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 // The empty last field the RFC 4180 ABNF allows and the oracle recovers from.
 const EMPTY_LAST_FIELD = 'RFC 4180 section 2 reads an empty last field (non-escaped = *TEXTDATA) at the end of the input; tree-sitter-csv f6bf6e3 recovers from it.';
 
+// The JSON5 1.0.0 extensions tree-sitter-json5-orchard 0.1.0 recovers from.
+const JSON5_WHITESPACE = 'JSON5 1.0.0 section 8 (White Space) skips NBSP, LS, PS, the byte order mark and every Zs space; tree-sitter-json5-orchard 0.1.0 skips only the ASCII spaces of /\\s/ and recovers from them.';
+const JSON5_IDENTIFIER = 'JSON5 1.0.0 section 3 (Objects) reads a member name as an ECMAScript 5.1 IdentifierName, with Nl letters, \\u escapes and Mn, Mc, Nd, Pc, ZWNJ and ZWJ parts; tree-sitter-json5-orchard 0.1.0 reads only [$_\\p{L}][$_\\p{L}0-9]* and recovers from them.';
+const JSON5_ESCAPE = 'JSON5 1.0.0 section 5.1 (Escapes) reads \\0 before a non-digit, any other character that is not a digit, x or u as itself (NonEscapeCharacter), and a CR, LS or PS line continuation; tree-sitter-json5-orchard 0.1.0 recovers from them.';
+
 export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'json',
@@ -290,6 +295,74 @@ export const NATIVE_GRAMMARS = Object.freeze([
     rejections: [
       '"a"b', 'a"b', '"a', '"a" "b"', '"a""', 'a,"b', '"\n', 'x\n"y', '"a"x,b', 'a,b"c\n', '"""', '"a"\n"b', 'a\n"b',
       'x,"', '"a"""b"',
+    ],
+  },
+  {
+    id: 'json5',
+    language: 'JSON5',
+    grammar: 'parity/grammars/native/json5.lino',
+    oracle: 'tree-sitter-json5-orchard 0.1.0',
+    sources: [
+      'https://spec.json5.org/',
+      'https://docs.rs/crate/tree-sitter-json5-orchard/0.1.0/source/grammar.js',
+    ],
+    // Comments are extras both trees keep; whitespace is invisible trivia.
+    hidden: [],
+    anonymous: [],
+    extras: [],
+    matches: [
+      '{a: 1}', '{a:1,}', '[1,]//c\n', '1', 'null', 'true', 'false', '"a"', '\'a\'', '[]', '{}', '[ ]', '{ }',
+      '\ufeff1', '\t1\v\f', ' [ 1 , 2 ] ', '{true:1}', '{null:1, Infinity:2}', '{$_é9:1}', '[.]',
+      '[.e5]', '[+.]', '[-Infinity, +NaN, +0x1f, -.5e-3, 5.e+2]', '"\\x41\\u0041\\/\\v"', '"a\nb"', '"a\\\nb"',
+      '"a\\\r\nb"', '\'it\\\'s\'', '[1//c\r\n,2]', '[1/**/]', '[1/***/]', '[1/*a**b*/]',
+      '{"a": [1, {b: null}], c: \'x\'}', '[0, 0.0, 0e0, 0E+1, 1.5, 123, 9e-9, 0X0, 0xABCdef]', '// head\n{a:1}',
+      '/* head */ 1', '1 // tail', '1 /* tail */', '[1 /* in */ , /* between */ 2]', '{a /* k */ : /* v */ 1}',
+      '{\n  // comment\n  a: 1,\n  b: 2,\n}\n', '[[[]]]', '[{}, [], "", \'\']', '"\\"\\\\\\b\\f\\n\\r\\t"', '\'"\'',
+      '"\'"', '{_:1}', '{$:1}', '{ä:1}', '{日本:1}', '{a1b2:1}', '[Infinity, NaN, -NaN]', '[+1, -1, +0, -0]', '[1.]',
+      '[.5]', '[-.5]', '[1e10, 1E-10, 1e+10]', '{"key": "value"}', '{\'key\': \'value\'}', '[true, false, null]',
+      '[\n1,\n2,\n]', '\r\n1\r\n', '"\\u00e9"', '"é"', '"日本"', '"\\x00"', '[0x0, 0xf, 0XF]', '{a:{b:{c:{}}}}', '/**/1',
+      '1/**/', '//x\n1', '1//x', '1\n//x', '[1,//x\n2]', '{a:1//x\n}', '{a:1,//x\n}', '"tab\there"',
+      '\'multi\\\nline\'', '{"a":1,"b":2,"c":3}', '[1,2,3,4,5,6,7,8,9,10]',
+      '{ name: "JSON5", version: 1.0, private: true }',
+      '{\n  unquoted: \'and you can quote me on that\',\n  singleQuotes: \'I can use "double quotes" here\',\n  lineBreaks: "Look, Mom! \\\nNo \\\\n\'s!",\n  hexadecimal: 0xdecaf,\n  leadingDecimalPoint: .8675309, andTrailing: 8675309.,\n  positiveSign: +1,\n  trailingComma: \'in objects\', andIn: [\'arrays\',],\n  "backwardsCompatible": "with JSON",\n}\n',
+      '"\\\\"', '\'\\\\\'', '""', '\'\'', '{"":1}', '{\'\':1}', '[[1,2],[3,4]]', '[{a:1},{b:2}]', '1e5', '-1e-5',
+      '+Infinity', '-0x10', 'NaN', '.0', '0.', '"/"', '"\\/"', '{a:[],b:{}}', '[ /*a*/ ]', '{ /*a*/ }', '[\t]', '{\n}',
+      '[\n\n]', '"x\\ty"', '\t\t"a"\t\t', '{A:1,B:2}', '{aB$_c:1}', '[1,\n// c\n2]', '/* multi\n line */ null',
+      '{"a":true,"b":false,"c":null}', '-Infinity', '+NaN', '[ "a" , \'b\' ]', '{a : 1 , b : 2 ,}', '[-1.5e+3]',
+      '[0.0e-0]', '9', '[99999999999999999999]',
+    ],
+    divergences: [
+      { source: '{\\u0061:1}', reason: JSON5_IDENTIFIER },
+      { source: '{a\\u0062:1}', reason: JSON5_IDENTIFIER },
+      { source: '{Ⅻ:1}', reason: JSON5_IDENTIFIER },
+      { source: '{a\u0301:1}', reason: JSON5_IDENTIFIER },
+      { source: '{a‿b:1}', reason: JSON5_IDENTIFIER },
+      { source: '{a\u200cb:1}', reason: JSON5_IDENTIFIER },
+      { source: '{a\u200db:1}', reason: JSON5_IDENTIFIER },
+      { source: '{a٣:1}', reason: JSON5_IDENTIFIER },
+      { source: '{aः:1}', reason: JSON5_IDENTIFIER },
+      { source: '1\u00a0', reason: JSON5_WHITESPACE },
+      { source: '\u00a01', reason: JSON5_WHITESPACE },
+      { source: '[1,\u2028 2]', reason: JSON5_WHITESPACE },
+      { source: '[1,\u2029 2]', reason: JSON5_WHITESPACE },
+      { source: '[1,\ufeff2]', reason: JSON5_WHITESPACE },
+      { source: '\u16801', reason: JSON5_WHITESPACE },
+      { source: '\u30001', reason: JSON5_WHITESPACE },
+      { source: '[1\u2003]', reason: JSON5_WHITESPACE },
+      { source: '"\\0"', reason: JSON5_ESCAPE },
+      { source: '\'\\0\'', reason: JSON5_ESCAPE },
+      { source: '"\\0a"', reason: JSON5_ESCAPE },
+      { source: '"\\a"', reason: JSON5_ESCAPE },
+      { source: '"\\q"', reason: JSON5_ESCAPE },
+      { source: '"\\é"', reason: JSON5_ESCAPE },
+      { source: '"\\\rb"', reason: JSON5_ESCAPE },
+      { source: '"\\\u2028"', reason: JSON5_ESCAPE },
+      { source: '"\\\u2029"', reason: JSON5_ESCAPE },
+    ],
+    rejections: [
+      '', '1 2', '[,]', '{,}', '[1,,]', '{a:1,,}', '[0x]', '[01]', '[1e]', '"\\01"', '"\\x4"', '"\\u12"', '{9a:1}',
+      '[nullx]', '[Infinityx]', '"\\1"', '{a}', '{a:}', '[', ']', '{', '"a', '\'a', '/* x', '{a:1 b:2}', '[1 2]',
+      'undefined', '[1,]]', '{"a" 1}', '{1:1}', '[.e]', '[--1]', '[0x.1]', '//c', '/**/', '\u0085 1',
     ],
   },
 ]);
