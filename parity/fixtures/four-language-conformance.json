@@ -2110,7 +2110,7 @@
     }
   ],
   "translationCorpus": {
-    "description": "Project programs in the portable core that every directed pair translates; the oracle is the source toolchain run on the source, the expected printed lines, the source theorems and assertions, and a fault-injected source whose translation the target toolchain must reject or observe differently.",
+    "description": "Project programs in the portable core that every directed pair translates; the oracle is the source toolchain run on the source, the expected printed lines, the source theorems and assertions, and a fault-injected source whose translation the target toolchain must reject or observe differently; every Lean and Rocq theorem also has a false restatement that the source kernel, every target kernel and every bounded check must reject, and a restatement that holds on the bounded domain of --ml-check-theorems but not in general, which only the kernels reject.",
     "directory": "parity/fixtures/translation-corpus",
     "expectedOutput": {
       "file": "expected-output.txt",
@@ -2214,6 +2214,33 @@
         "mutation": {
           "find": "  | 0 => 1\n  | n + 1 => (n + 1) * fact n",
           "replace": "  | 0 => 2\n  | n + 1 => (n + 1) * fact n"
+        },
+        "theoremMutations": [
+          {
+            "theorem": "fact_five",
+            "find": "Arith.fact 5 = 120 :=",
+            "replace": "Arith.fact 5 = 121 :="
+          },
+          {
+            "theorem": "sumTo_formula",
+            "find": "2 * Arith.sumTo n = n * (n + 1) :=",
+            "replace": "2 * Arith.sumTo n = n * (n + 2) :="
+          },
+          {
+            "theorem": "mirror_mirror",
+            "find": "Tree.mirror (Tree.mirror t) = t :=",
+            "replace": "Tree.mirror t = t :="
+          },
+          {
+            "theorem": "size_mirror",
+            "find": "Tree.size (Tree.mirror t) = Tree.size t :=",
+            "replace": "Tree.size (Tree.mirror t) = Tree.size t + 1 :="
+          }
+        ],
+        "boundedOnlyMutation": {
+          "theorem": "sumTo_formula",
+          "find": "2 * Arith.sumTo n = n * (n + 1) :=",
+          "replace": "Arith.sumTo n - 21 = 0 :="
         }
       },
       "Rocq": {
@@ -2253,6 +2280,33 @@
         "mutation": {
           "find": "then 1%N else (n * fact",
           "replace": "then 2%N else (n * fact"
+        },
+        "theoremMutations": [
+          {
+            "theorem": "fact_five",
+            "find": "Arith.fact 5 = 120%N.",
+            "replace": "Arith.fact 5 = 121%N."
+          },
+          {
+            "theorem": "sumTo_formula",
+            "find": "2 * Arith.sumTo n = n * (n + 1).",
+            "replace": "2 * Arith.sumTo n = n * (n + 2)."
+          },
+          {
+            "theorem": "mirror_mirror",
+            "find": "Tree.mirror (Tree.mirror t) = t.",
+            "replace": "Tree.mirror t = t."
+          },
+          {
+            "theorem": "size_mirror",
+            "find": "Tree.size (Tree.mirror t) = Tree.size t.",
+            "replace": "Tree.size (Tree.mirror t) = Tree.size t + 1."
+          }
+        ],
+        "boundedOnlyMutation": {
+          "theorem": "sumTo_formula",
+          "find": "2 * Arith.sumTo n = n * (n + 1).",
+          "replace": "Arith.sumTo n - 21 = 0."
         }
       }
     },
