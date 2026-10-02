@@ -200,7 +200,7 @@ they are.
 | `itoa` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.18` | transitive |  | 1.0.18 (crates.io, itoa) | version | current |  |
 | `js-sys` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.106` | transitive |  | 0.3.106 (crates.io, js-sys) | version | current |  |
 | `leak_slice` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.0` | transitive |  | 0.2.0 (crates.io, leak_slice) | version | current |  |
-| `libc` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.189` | transitive |  | 0.2.189 (crates.io, libc) | version | current |  |
+| `libc` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.190` | transitive |  | 0.2.190 (crates.io, libc) | version | current |  |
 | `lindera-dictionary` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.2.0` | transitive |  | 6.2.0 (crates.io, lindera-dictionary) | version | current |  |
 | `lindera-jieba` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.2.0` | transitive |  | 6.2.0 (crates.io, lindera-jieba) | version | current |  |
 | `lindera` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `6.2.0` | direct, runtime (optional) | `6.2.0` | 6.2.0 (crates.io, lindera) | version | current |  |

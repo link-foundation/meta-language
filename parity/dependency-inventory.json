@@ -2072,21 +2072,21 @@
       "evidence": "crates.io, leak_slice"
     },
     {
-      "id": "crate rust/Cargo.lock libc@0.2.189",
+      "id": "crate rust/Cargo.lock libc@0.2.190",
       "category": "crate",
       "scope": "rust/Cargo.lock",
       "name": "libc",
       "declaredIn": [
         "rust/Cargo.lock"
       ],
-      "pinned": "0.2.189",
+      "pinned": "0.2.190",
       "compare": "version",
       "source": {
         "type": "crate",
         "crate": "libc"
       },
       "role": "transitive",
-      "current": "0.2.189",
+      "current": "0.2.190",
       "evidence": "crates.io, libc"
     },
     {
