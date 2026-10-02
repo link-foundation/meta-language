@@ -361,8 +361,12 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'Exporting to a less expressive notation produces a faithful lowering or runtime encoding with explicit reconstruction metadata. An executable target grammar is distinguished from a lossless interchange package, and no feature is silently dropped or hidden in an opaque sidecar.',
     assertions: ['loweringExecutable', 'reconstructionMetadataExplicit', 'noSilentlyDroppedFeature'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/src/grammar-lowering.js'],
+    rust: [
+      'rust/src/grammar/interchange/lowering/mod.rs',
+      'rust/src/grammar/interchange/lowering/encoding.rs',
+      'rust/src/grammar/interchange/lowering/metadata.rs',
+    ],
   },
   {
     id: 'I195-INTERCHANGE-MUTATION-GUARDS',
