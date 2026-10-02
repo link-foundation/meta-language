@@ -7876,6 +7876,22 @@
       ]
     },
     {
+      "id": "generator js/scripts/generate-native-grammar-fixtures.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/generate-native-grammar-fixtures.mjs",
+      "declaredIn": [
+        "js/scripts/generate-native-grammar-fixtures.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": [
+        "npm js/package-lock.json web-tree-sitter@0.27.0"
+      ]
+    },
+    {
       "id": "generator js/scripts/generate-pdf-grammar-cases.mjs@script",
       "category": "generator",
       "name": "js/scripts/generate-pdf-grammar-cases.mjs",

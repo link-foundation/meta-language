@@ -237,6 +237,24 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: null,
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-JSON',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/json.json',
+    construct: 'native merged JSON grammar checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/json.lino is a canonical native Links Notation grammar merged from RFC 8259, ECMA-404 and tree-sitter-json 0.24.8. Both executors build, for every corpus source, exactly the concrete syntax tree rows of the tree-sitter-json oracle; they accept what a merged source accepts and the oracle recovers from (an exponent plus sign), reject invalid JSON, and keep every source byte, a leading byte order mark included, in the tree.',
+    assertions: [
+      'nativeJsonGrammarIsCanonicalLinks',
+      'nativeJsonTreesMatchOracle',
+      'nativeJsonAcceptsMergedSourceExtensions',
+      'nativeJsonRejectsInvalidInput',
+      'nativeJsonTreesLossless',
+    ],
+    javascript: ['js/src/grammar-links.js', 'js/src/grammar-runtime.js', 'js/src/grammar-runtime/text.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-FEATURE-UNION',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

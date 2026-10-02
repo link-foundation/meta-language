@@ -650,7 +650,11 @@ gaps against the target above:
 - **External parsers in production.** Default parsing of most catalog languages
   still runs vendored tree-sitter grammars: `web-tree-sitter` with WebAssembly
   binaries in JavaScript, and the `tree-sitter-*` crates in Rust. Native merged
-  Links Notation grammars exist only for built-in formats such as LiNo and PDF.
+  Links Notation grammars exist for built-in formats such as LiNo and PDF, and
+  for JSON
+  ([`parity/grammars/native/json.lino`](../parity/grammars/native/json.lino)),
+  which is checked against tree-sitter-json but rejects invalid input instead
+  of recovering. The default JSON parse still runs tree-sitter-json.
 - **Incomplete grammar expression model.** The model in
   [`rust/src/grammar/mod.rs`](../rust/src/grammar/mod.rs) covers:
   - terminals and non-terminals;

@@ -887,6 +887,8 @@ export async function buildIssue195Manifest(root) {
         'I195-DOWNSTREAM-RML-PR184-AUDIT': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-ACCEPTANCE-REQUIRED-MERGE-CHECK': ISSUE_195_SOURCES.consolidatedChecklist,
+        // The resource audit asks for the native grammars one language at a time.
+        'I195-GRAMMAR-NATIVE-JSON': ISSUE_195_SOURCES.resourceAudit,
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'resource-limits')
           .map(({ id }) => [id, ISSUE_195_SOURCES.resourceAudit])),
       },

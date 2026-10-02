@@ -64,7 +64,7 @@ they are.
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 16 | 15 | 1 | 0 |
+| Generators | 17 | 16 | 1 | 0 |
 | Toolchains and tools | 16 | 14 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -531,6 +531,7 @@ they are.
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-lino-grammar-cases.mjs` | `js/scripts/generate-lino-grammar-cases.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-grammar-fixtures.mjs` | `js/scripts/generate-native-grammar-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
 

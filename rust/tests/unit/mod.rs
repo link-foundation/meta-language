@@ -65,6 +65,7 @@ mod issue_195_generative;
 mod issue_195_grammar_feature_union;
 mod issue_195_grammar_feature_union_interchange;
 mod issue_195_grammar_importers;
+mod issue_195_grammar_native_json;
 mod issue_195_interchange_api_cli;
 mod issue_195_interchange_faithful_lowering;
 mod issue_195_interchange_mutation_guards;
