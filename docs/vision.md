@@ -463,6 +463,16 @@ upgrade. Delivery evidence separately checks that retained dependencies,
 transitive resolutions, tools, actions, images and version-coupled artifacts are
 current at the audit date.
 
+An item may stay behind its current stable release only at its newest compatible
+release: the newest stable release that every requirement holding it admits.
+The audit derives that release and its holders from the registries, the
+lockfile resolve graphs and the coupled sources, such as the emscripten version
+that a tree-sitter release pins. Every holder must itself be delivered, and an
+external holder must be at its newest release. A pin behind its newest
+compatible release is stale, as is anything built from it. In CI the delivery
+gate also queries the registries again, and it fails when the recorded audit no
+longer matches them or when they cannot be reached.
+
 ## Acceptance and evidence
 
 The atomic ledger and the required CI cover every obligation in this document,

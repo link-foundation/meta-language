@@ -88,6 +88,15 @@ The delivery check also needs the `package-lock.json` of a clean installed
 candidate, supplied with `-- --consumer-lock /path/to/consumer/package-lock.json`.
 It checks the dependency versions that the installed package resolves,
 including nested copies; repository overrides alone do not establish delivery.
+An item behind its current stable release passes only at its newest compatible
+release, with the holders recorded by `npm run dependencies:refresh`. Each
+holder must itself be delivered, and an external holder must be at its newest
+release.
+`-- --live` also refreshes the audit from the registries in memory, using `gh`
+and `cargo`. It fails when the recorded audit is outdated or the registries
+cannot be reached. Live mode is the default when `CI` or `ACCEPTANCE_CHECKPOINT`
+is set, and `-- --offline` turns it off. The clean-consumer acceptance job runs
+the live check against the lockfile of the installed npm artifact.
 
 [`js/tests/issue-195-acceptance-gate-mutations.test.js`](js/tests/issue-195-acceptance-gate-mutations.test.js)
 mutates the artifact behind each gate the vision lists under gate-mutation

@@ -501,7 +501,14 @@
       "role": "transitive",
       "current": "0.4.0",
       "evidence": "crates.io, allocator-api2",
-      "reason": "Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.",
+      "compatible": "0.2.21",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock hashbrown@0.15.5",
+          "requirement": "^0.2.9"
+        }
+      ],
+      "reason": "Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -830,6 +837,13 @@
       "kind": "build",
       "current": "1.5.1",
       "evidence": "crates.io, cc",
+      "compatible": "1.2.67",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock tree-sitter-sequel@0.3.11",
+          "requirement": "~1.2.1"
+        }
+      ],
       "reason": "Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -1435,6 +1449,13 @@
       "role": "transitive",
       "current": "0.2.0",
       "evidence": "crates.io, foldhash",
+      "compatible": "0.1.5",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock hashbrown@0.15.5",
+          "requirement": "^0.1.2"
+        }
+      ],
       "reason": "Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -1545,7 +1566,14 @@
       "role": "transitive",
       "current": "0.4.3",
       "evidence": "crates.io, getrandom",
-      "reason": "Held by the requirement of `ring` 0.17.14 (`^0.2.10`), `serde-wasm-bindgen` 0.6.5 (`^0.2`), which does not admit 0.4.3; it moves when that dependent does.",
+      "compatible": "0.2.17",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock ring@0.17.14",
+          "requirement": "^0.2.10"
+        }
+      ],
+      "reason": "Held by the requirement of `ring` 0.17.14 (`^0.2.10`), which does not admit 0.4.3; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -1601,7 +1629,14 @@
       "role": "transitive",
       "current": "0.17.1",
       "evidence": "crates.io, hashbrown",
-      "reason": "Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), `foldhash` 0.1.5 (`^0.14`), `rkyv` 0.8.18 (`^0.14`), which does not admit 0.17.1; it moves when that dependent does.",
+      "compatible": "0.14.5",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock dashmap@6.2.1",
+          "requirement": "^0.14.5"
+        }
+      ],
+      "reason": "Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.1; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -1621,7 +1656,14 @@
       "role": "transitive",
       "current": "0.17.1",
       "evidence": "crates.io, hashbrown",
-      "reason": "Held by the requirement of `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does.",
+      "compatible": "0.15.5",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock whatlang@0.18.0",
+          "requirement": "^0.15"
+        }
+      ],
+      "reason": "Held by the requirement of `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -1965,7 +2007,14 @@
       "role": "transitive",
       "current": "0.15.0",
       "evidence": "crates.io, itertools",
-      "reason": "Held by the requirement of `indexmap` 2.14.2 (`^0.14`), `lingua` 1.8.0 (`^0.14.0`), `zerotrie` 0.2.5 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does.",
+      "compatible": "0.14.0",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock lingua@1.8.0",
+          "requirement": "^0.14.0"
+        }
+      ],
+      "reason": "Held by the requirement of `lingua` 1.8.0 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -2924,6 +2973,13 @@
       "role": "transitive",
       "current": "7.1.0",
       "evidence": "crates.io, r-efi",
+      "compatible": "6.0.0",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock getrandom@0.4.3",
+          "requirement": "^6"
+        }
+      ],
       "reason": "Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.1.0; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -3034,6 +3090,13 @@
       "role": "transitive",
       "current": "0.9.4",
       "evidence": "crates.io, redox_syscall",
+      "compatible": "0.5.18",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock parking_lot_core@0.9.12",
+          "requirement": "^0.5"
+        }
+      ],
       "reason": "Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.9.4; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -3588,7 +3651,14 @@
       "role": "transitive",
       "current": "0.28.0",
       "evidence": "crates.io, strum_macros",
-      "reason": "Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), `strum` 0.27.2 (`^0.27`), which does not admit 0.28.0; it moves when that dependent does.",
+      "compatible": "0.27.2",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock lingua@1.8.0",
+          "requirement": "^0.27.2"
+        }
+      ],
+      "reason": "Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -3626,6 +3696,13 @@
       "role": "transitive",
       "current": "0.28.0",
       "evidence": "crates.io, strum",
+      "compatible": "0.27.2",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock lingua@1.8.0",
+          "requirement": "^0.27.2"
+        }
+      ],
       "reason": "Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -3682,6 +3759,25 @@
       "role": "transitive",
       "current": "3.0.6",
       "evidence": "crates.io, syn",
+      "compatible": "2.0.119",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock munge_macro@0.4.7",
+          "requirement": "^2"
+        },
+        {
+          "id": "crate rust/Cargo.lock pest_generator@2.9.2",
+          "requirement": "^2.0"
+        },
+        {
+          "id": "crate rust/Cargo.lock strum_macros@0.27.2",
+          "requirement": "^2.0"
+        },
+        {
+          "id": "crate rust/Cargo.lock strum_macros@0.28.0",
+          "requirement": "^2.0"
+        }
+      ],
       "reason": "Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5259,6 +5355,13 @@
       "role": "transitive",
       "current": "0.14.7+wasi-0.2.4",
       "evidence": "crates.io, wasi",
+      "compatible": "0.11.1+wasi-snapshot-preview1",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock getrandom@0.2.17",
+          "requirement": "^0.11"
+        }
+      ],
       "reason": "Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5408,6 +5511,13 @@
       "role": "transitive",
       "current": "0.53.1",
       "evidence": "crates.io, windows_aarch64_gnullvm",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-targets@0.52.6",
+          "requirement": "^0.52.6"
+        }
+      ],
       "reason": "Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5428,6 +5538,13 @@
       "role": "transitive",
       "current": "0.53.1",
       "evidence": "crates.io, windows_aarch64_msvc",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-targets@0.52.6",
+          "requirement": "^0.52.6"
+        }
+      ],
       "reason": "Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5448,6 +5565,13 @@
       "role": "transitive",
       "current": "0.53.1",
       "evidence": "crates.io, windows_i686_gnu",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-targets@0.52.6",
+          "requirement": "^0.52.6"
+        }
+      ],
       "reason": "Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5468,6 +5592,13 @@
       "role": "transitive",
       "current": "0.53.1",
       "evidence": "crates.io, windows_i686_gnullvm",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-targets@0.52.6",
+          "requirement": "^0.52.6"
+        }
+      ],
       "reason": "Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5488,6 +5619,13 @@
       "role": "transitive",
       "current": "0.53.1",
       "evidence": "crates.io, windows_i686_msvc",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-targets@0.52.6",
+          "requirement": "^0.52.6"
+        }
+      ],
       "reason": "Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5508,6 +5646,13 @@
       "role": "transitive",
       "current": "0.53.1",
       "evidence": "crates.io, windows_x86_64_gnu",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-targets@0.52.6",
+          "requirement": "^0.52.6"
+        }
+      ],
       "reason": "Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5528,6 +5673,13 @@
       "role": "transitive",
       "current": "0.53.1",
       "evidence": "crates.io, windows_x86_64_gnullvm",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-targets@0.52.6",
+          "requirement": "^0.52.6"
+        }
+      ],
       "reason": "Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5548,6 +5700,13 @@
       "role": "transitive",
       "current": "0.53.1",
       "evidence": "crates.io, windows_x86_64_msvc",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-targets@0.52.6",
+          "requirement": "^0.52.6"
+        }
+      ],
       "reason": "Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5568,6 +5727,17 @@
       "role": "transitive",
       "current": "0.100.0",
       "evidence": "crates.io, windows-link",
+      "compatible": "0.2.1",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock parking_lot_core@0.9.12",
+          "requirement": "^0.2.0"
+        },
+        {
+          "id": "crate rust/Cargo.lock windows-sys@0.61.2",
+          "requirement": "^0.2.1"
+        }
+      ],
       "reason": "Held by the requirement of `parking_lot_core` 0.9.12 (`^0.2.0`), `windows-sys` 0.61.2 (`^0.2.1`), which does not admit 0.100.0; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5588,6 +5758,13 @@
       "role": "transitive",
       "current": "0.61.2",
       "evidence": "crates.io, windows-sys",
+      "compatible": "0.52.0",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock ring@0.17.14",
+          "requirement": "^0.52"
+        }
+      ],
       "reason": "Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -5626,6 +5803,13 @@
       "role": "transitive",
       "current": "0.53.5",
       "evidence": "crates.io, windows-targets",
+      "compatible": "0.52.6",
+      "heldBy": [
+        {
+          "id": "crate rust/Cargo.lock windows-sys@0.52.0",
+          "requirement": "^0.52.0"
+        }
+      ],
       "reason": "Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does.",
       "reasonHeld": true
     },
@@ -7847,7 +8031,19 @@
       },
       "current": "5.5.1",
       "evidence": "GitHub release, ocaml/ocaml",
-      "reason": "rocq-runtime 9.2.0 needs ocamlfind 1.9.1 or later, and ocamlfind 1.9.8, its latest release in opam-repository, requires ocaml < 5.5.0~, so OCaml 5.4 is the newest compiler the Rocq acceptance job can build with; it moves when ocamlfind admits OCaml 5.5."
+      "compatible": "5.4.1",
+      "heldBy": [
+        {
+          "external": "opam ocamlfind",
+          "version": "1.9.8",
+          "newest": "1.9.8",
+          "requirement": "<5.5.0",
+          "requiredBy": "toolchain rocq-core@9.3.0",
+          "evidence": "opam-repository, rocq-runtime 9.3.0 requires ocamlfind >=1.9.1; ocamlfind 1.9.8 requires ocaml >=3.08.0 <5.5.0"
+        }
+      ],
+      "reason": "Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line.",
+      "reasonHeld": true
     },
     {
       "id": "toolchain pre-commit/pre-commit-hooks@v6.0.0",
@@ -8298,7 +8494,16 @@
       },
       "current": "6.0.10",
       "evidence": "Docker Hub, emscripten/emsdk tags",
-      "reason": "The web-tree-sitter runtime is rebuilt reproducibly with the emscripten version tree-sitter 0.27.0 pins in crates/loader/emscripten-version (4.0.15); a different emscripten produces a different tree-sitter.wasm, so the image moves with tree-sitter."
+      "compatible": "4.0.15",
+      "heldBy": [
+        {
+          "id": "npm js/package-lock.json web-tree-sitter@0.27.0",
+          "requirement": "=4.0.15",
+          "evidence": "tree-sitter/tree-sitter v0.27.0 crates/loader/emscripten-version"
+        }
+      ],
+      "reason": "Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter.",
+      "reasonHeld": true
     },
     {
       "id": "runner macos-latest@latest",

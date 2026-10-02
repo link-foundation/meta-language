@@ -5,9 +5,17 @@
 // current stable release records a compatibility reason, and
 // docs/dependency-audit.md is the inventory's rendering.
 //
+// --delivery is the delivery gate (I195-DEPENDENCY-CURRENT-STABLE-DELIVERY):
+// every retained item must be at its current stable release or at its
+// verified newest compatible release; a reason alone is stale. With --live,
+// and by default when CI or ACCEPTANCE_CHECKPOINT is set, it also refreshes
+// the inventory from the registries in memory and fails when the recorded
+// audit no longer matches them; --offline compares with the recorded audit only.
+//
 //   node js/scripts/check-dependencies.mjs            offline check (CI)
 //   node js/scripts/check-dependencies.mjs --refresh  query the registries and rewrite
 //                                                     the inventory and the audit document
+//   node js/scripts/check-dependencies.mjs --delivery [--live|--offline] --consumer-lock <package-lock.json>
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -19,6 +27,7 @@ import {
   checkDeliveredDependencies,
   checkInventory,
   collectDependencies,
+  compareAudits,
   refreshInventory,
   releaseResolvers,
   renderAuditDocument,
@@ -42,11 +51,18 @@ function github(route) {
 const metadata = new Map();
 function cargoMetadata(manifest) {
   if (!metadata.has(manifest)) {
-    const output = execFileSync('cargo', ['metadata', '--format-version', '1', '--locked', '--offline', '--manifest-path', path.join(root, manifest)], {
+    const run = (offline) => execFileSync('cargo', ['metadata', '--format-version', '1', '--locked', '--all-features', ...(offline ? ['--offline'] : []), '--manifest-path', path.join(root, manifest)], {
       encoding: 'utf8',
       maxBuffer: 256 * 1024 * 1024,
-      stdio: ['ignore', 'pipe', 'inherit'],
+      stdio: ['ignore', 'pipe', offline ? 'ignore' : 'inherit'],
     });
+    let output;
+    try {
+      output = run(true);
+    } catch {
+      // A fresh runner has no registry cache: fetch the locked crates.
+      output = run(false);
+    }
     metadata.set(manifest, JSON.parse(output));
   }
   return metadata.get(manifest);
@@ -83,9 +99,25 @@ async function main(argv) {
     throw new Error('--consumer-lock requires a clean consumer package-lock.json path');
   }
   const npmConsumerLock = consumerIndex >= 0 ? JSON.parse(readFileSync(path.resolve(argv[consumerIndex + 1]), 'utf8')) : undefined;
-  const problems = argv.includes('--delivery')
+  const delivery = argv.includes('--delivery');
+  const live = argv.includes('--live') || (delivery && !argv.includes('--offline') && Boolean(process.env.CI || process.env.ACCEPTANCE_CHECKPOINT));
+  const problems = delivery
     ? checkDeliveredDependencies(inventory, collected, { npmConsumerLock })
     : checkInventory(inventory, collected);
+  if (live) {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const current = await refreshInventory({ root, previous: inventory, collected, resolvers: releaseResolvers({ http, github, today }), cargoMetadata, today });
+      problems.push(...compareAudits(inventory, current));
+      if (delivery) {
+        for (const problem of checkDeliveredDependencies(current, collected, { npmConsumerLock })) {
+          if (problem.kind === 'stale-delivered-dependency') problems.push({ kind: 'stale-live-dependency', message: problem.message });
+        }
+      }
+    } catch (error) {
+      problems.push({ kind: 'live-registry-unavailable', message: `the live comparison needs the registries and gh: ${error.message}` });
+    }
+  }
   const documentPath = path.join(root, AUDIT_DOCUMENT);
   const rendered = renderAuditDocument(inventory);
   if (!existsSync(documentPath) || readFileSync(documentPath, 'utf8') !== rendered) {
@@ -96,7 +128,7 @@ async function main(argv) {
     console.error(`${problems.length} dependency inventory problem(s)`);
     return 1;
   }
-  console.log(`dependency inventory ok: ${inventory.items.length} items, audit date ${inventory.auditDate}`);
+  console.log(`dependency inventory ok: ${inventory.items.length} items, audit date ${inventory.auditDate}${delivery ? ', delivered current or at the newest compatible release' : ''}${live ? ', matching the live registries' : ''}`);
   return 0;
 }
 

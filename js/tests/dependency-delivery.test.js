@@ -5,12 +5,10 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { checkDeliveredDependencies, checkInventory, collectDependencies } from '../scripts/dependency-inventory.mjs';
-import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const fixture = 'parity/dependency-inventory.json';
 const inventory = JSON.parse(readFileSync(path.join(root, fixture), 'utf8'));
-const requirement = 'I195-DEPENDENCY-CURRENT-STABLE-DELIVERY';
 const collectedOf = (items) => items.map(({ current, evidence, reason, ...item }) => item);
 const current = {
   id: 'npm demo@2.0.0', category: 'npm', name: 'demo', scope: 'demo/package.json',
@@ -90,13 +88,19 @@ test('delivery inspects transitive copies and rejects prereleases, missing and u
 
 test('the actual delivered inventory cannot use compatibility reasons to certify its stale items', () => {
   const collected = collectDependencies(root);
-  const problems = checkDeliveredDependencies(inventory, collected);
-  const stale = problems.filter(({ kind }) => kind === 'stale-delivered-dependency');
   assert.match(readFileSync(path.join(root, 'docs/vision.md'), 'utf8'),
     /A recorded compatibility reason explains a stale item but does not complete its\nupgrade/);
-  // Assert against the actual committed inventory, rather than assume an
-  // expected number or turn a future upgrade into a test failure.
-  for (const item of inventory.items.filter(({ reason }) => reason)) {
+  // Without the verified newest compatible release and its holders, every
+  // item that records a reason is stale, whatever the reason says.
+  const reasonsOnly = structuredClone(inventory);
+  for (const item of reasonsOnly.items) {
+    delete item.compatible;
+    delete item.heldBy;
+  }
+  const stale = checkDeliveredDependencies(reasonsOnly, collected).filter(({ kind }) => kind === 'stale-delivered-dependency');
+  const explained = inventory.items.filter(({ reason }) => reason);
+  assert.ok(explained.length > 0, 'the inventory records reasons for held items');
+  for (const item of explained) {
     assert.ok(stale.some(({ message }) => message.startsWith(`${item.id}:`)), item.id);
   }
   const mutation = structuredClone(inventory);
@@ -106,10 +110,4 @@ test('the actual delivered inventory cannot use compatibility reasons to certify
   item.reason = 'This intentionally stale mutation must fail delivery despite its recorded compatibility explanation.';
   assert.ok(checkDeliveredDependencies(mutation, collectedOf(mutation.items)).some(({ kind, message }) =>
     kind === 'stale-delivered-dependency' && message.startsWith(`${item.id}:`)));
-  recordIssue195Observations({
-    requirementId: requirement, suffix: 'behavior', runtime: 'tooling',
-    fixtureId: `planned:repository-directive:${requirement.toLowerCase()}`,
-    fixtureFile: fixture, assertions: ['staleDeliveredItemRejected'],
-    testName: 'the actual delivered inventory cannot use compatibility reasons to certify its stale items',
-  });
 });
