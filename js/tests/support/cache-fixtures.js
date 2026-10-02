@@ -48,7 +48,12 @@ export function isolatedGitEnvironment(base, extra = {}) {
   const home = path.join(base, 'home');
   mkdirSync(home, { recursive: true });
   const globalConfig = path.join(home, '.gitconfig');
-  if (!existsSync(globalConfig)) writeFileSync(globalConfig, '[user]\n\tname = Cache Test\n\temail = cache-test@example.invalid\n');
+  // `git commit` starts `git maintenance run --auto`, which Git 2.47 and later
+  // detaches; a detached maintenance run can still write into the fixture
+  // repository while the test's teardown removes it (ENOTEMPTY).
+  if (!existsSync(globalConfig)) {
+    writeFileSync(globalConfig, '[user]\n\tname = Cache Test\n\temail = cache-test@example.invalid\n[maintenance]\n\tauto = false\n[gc]\n\tauto = 0\n');
+  }
   return {
     ...process.env,
     HOME: home,
