@@ -21,7 +21,7 @@ import {
 } from './primitives.js';
 
 const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder('utf-8', { fatal: true });
+const textDecoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 const LINK_TYPE_TOKENS = Object.freeze({
   [LinkType.Concept]: 'concept',

@@ -12,7 +12,7 @@ const LANGUAGE_FALLBACK_LANGUAGE = 'translation-rule-language-fallback';
 const TEMPLATE_DEFINITION = 'translation-rule-template';
 
 const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder('utf-8', { fatal: true });
+const textDecoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 export class TranslationTemplate {
   constructor(language, text) {

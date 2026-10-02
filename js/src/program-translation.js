@@ -33,7 +33,7 @@ const OBSERVATION_PROCEDURE = {
   Rocq: 'rocq compile checks every definition and proof; Eval vm_compute in main prints the list of output lines',
 };
 const encoder = new TextEncoder();
-const decoder = new TextDecoder('utf-8', { fatal: true });
+const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 const JS_RESERVED = new Set([
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default',
   'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for',

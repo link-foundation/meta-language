@@ -75,7 +75,7 @@ export function percentDecodeLinksText(value) {
     }
   }
   try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
+    return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(new Uint8Array(bytes));
   } catch {
     throw linksError(`${value} is not UTF-8`);
   }

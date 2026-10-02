@@ -45,7 +45,7 @@ import {
 } from './concept-records.js';
 
 const encoder = new TextEncoder();
-const decoder = new TextDecoder();
+const decoder = new TextDecoder('utf-8', { ignoreBOM: true });
 // The type-point prefix of an external concept identifier vocabulary, as in Rust.
 const EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-identifier:';
 const FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-id:';

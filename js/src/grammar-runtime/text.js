@@ -4,7 +4,7 @@
 // unit of its own with no code point, so byte classes and `any` still see it.
 
 const ENCODER = new TextEncoder();
-const STRICT_DECODER = new TextDecoder('utf-8', { fatal: true });
+const STRICT_DECODER = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 /** The bytes of `source`: a string is encoded as UTF-8, a byte array is kept. */
 export function inputBytes(source) {

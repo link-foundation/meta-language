@@ -5,7 +5,7 @@ import { parseProgrammingLanguage } from './programming-language-parser.js';
 const TXT_LANGUAGE = 'txt';
 
 const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
 /// Region detection strategy for mixed-language parsing.
 export const RegionDetectionPolicy = Object.freeze({
