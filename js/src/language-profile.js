@@ -1,3 +1,4 @@
+import { currentConceptId } from './concept-records.js';
 import { LinkMetadata, LinkType } from './primitives.js';
 
 const PROFILE_TERM = 'language-profile';
@@ -233,9 +234,10 @@ export class LanguageProfile {
     return this.withConceptFallback(concept, fallback);
   }
 
-  /// The documented lossy fallback for a concept, or undefined.
+  /// The documented lossy fallback for a concept, or undefined. A former
+  /// concept identity resolves to the concept that replaced it.
   conceptFallback(concept) {
-    return this._fallbacks.get(concept);
+    return this._fallbacks.get(concept) ?? this._fallbacks.get(currentConceptId(concept));
   }
 
   concept_fallback(concept) {
@@ -251,9 +253,10 @@ export class LanguageProfile {
     return this.supportsLinkType(linkType);
   }
 
-  /// Whether this profile supports a concept or feature term.
+  /// Whether this profile supports a concept or feature term. A former
+  /// concept identity resolves to the concept that replaced it.
   supportsConcept(concept) {
-    return this._concepts.has(concept);
+    return this._concepts.has(concept) || this._concepts.has(currentConceptId(concept));
   }
 
   supports_concept(concept) {

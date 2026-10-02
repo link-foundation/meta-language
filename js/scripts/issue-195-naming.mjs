@@ -463,7 +463,7 @@ export const NAME_INVENTORIES = Object.freeze([
   {
     inventory: 'cross-format concepts',
     files: ['rust/src/document_formatting/profile.rs'],
-    extract: (text) => captures(block(text, 'pub const CROSS_FORMAT_CONCEPTS', '\n];'), /"([^"]+)"/gu),
+    extract: (text) => captures(block(text, 'pub const CROSS_FORMAT_CONCEPT_IDS', '\n];'), /"([^"]+)"/gu),
   },
   {
     inventory: 'semantic constructs',
@@ -536,6 +536,16 @@ export const FORMER_NAME_TABLES = Object.freeze([
       ]);
     },
     recordOf: grammarLinkRecord,
+  },
+  {
+    // The published cross-format identities, position by position with the readable ones.
+    table: 'CROSS_FORMAT_CONCEPTS',
+    file: 'rust/src/document_formatting/profile.rs',
+    extract: (text) => {
+      const published = captures(block(text, 'pub const CROSS_FORMAT_CONCEPTS', '\n];'), /"([^"]+)"/gu);
+      const current = captures(block(text, 'pub const CROSS_FORMAT_CONCEPT_IDS', '\n];'), /"([^"]+)"/gu);
+      return published.map((former, index) => [former, current[index]]).filter(([former, readable]) => former !== readable);
+    },
   },
   {
     table: 'FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX',

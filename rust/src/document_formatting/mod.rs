@@ -25,7 +25,8 @@ pub use docx::{docx_profile_is_recognized, parse_docx_document, render_docx_docu
 pub use opc::{docx_package_is_recognized, parse_docx_package, render_docx_package};
 pub use pdf::{parse_pdf_document, pdf_profile_is_recognized, render_pdf_document};
 pub use profile::{
-    CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS, canonical_document_format, document_format_profile,
+    CROSS_FORMAT_CONCEPT_IDS, CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS, canonical_document_format,
+    document_format_profile,
 };
 
 use std::collections::BTreeMap;

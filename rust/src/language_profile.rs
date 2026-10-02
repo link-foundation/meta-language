@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt;
 
+use crate::concept_ontology::current_concept_id;
 use crate::{LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, TranslationRuleSet};
 
 const PROFILE_TERM: &str = "language-profile";
@@ -174,10 +175,14 @@ impl LanguageProfile {
     }
 
     /// The documented lossy fallback for a concept the target cannot represent,
-    /// or `None` when the concept is natively supported or unknown.
+    /// or `None` when the concept is natively supported or unknown. A former
+    /// concept identity resolves to the concept that replaced it.
     #[must_use]
     pub fn concept_fallback(&self, concept: &str) -> Option<&str> {
-        self.fallbacks.get(concept).map(String::as_str)
+        self.fallbacks
+            .get(concept)
+            .or_else(|| self.fallbacks.get(current_concept_id(concept)))
+            .map(String::as_str)
     }
 
     /// Whether this profile supports a link type.
@@ -186,10 +191,11 @@ impl LanguageProfile {
         self.link_types.contains(&link_type)
     }
 
-    /// Whether this profile supports a concept or feature term.
+    /// Whether this profile supports a concept or feature term. A former
+    /// concept identity resolves to the concept that replaced it.
     #[must_use]
     pub fn supports_concept(&self, concept: &str) -> bool {
-        self.concepts.contains(concept)
+        self.concepts.contains(concept) || self.concepts.contains(current_concept_id(concept))
     }
 
     /// Whether this profile supports a translation rule name.

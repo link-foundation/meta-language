@@ -11,9 +11,9 @@
 use std::collections::BTreeMap;
 
 use meta_language::{
-    BlockNode, CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS, FormattingDocument, InlineNode,
-    LinkNetwork, ParseConfiguration, canonical_document_format, document_format_profile,
-    parse_markup_document,
+    BlockNode, CROSS_FORMAT_CONCEPT_IDS, CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS,
+    FormattingDocument, InlineNode, LinkNetwork, ParseConfiguration, canonical_document_format,
+    document_format_profile, parse_markup_document,
 };
 
 /// Whether `format` represents `concept` natively (no lossy fallback).
@@ -213,6 +213,49 @@ fn every_format_profile_reports_support_or_a_fallback_for_each_concept() {
             );
         }
     }
+}
+
+// link-assistant/formal-ai lists the profile concepts by iterating
+// CROSS_FORMAT_CONCEPTS and reports them by name (its issue_425 tests), so the
+// published identities stay in that constant, position by position with the
+// readable ones, and every profile answers for both.
+#[test]
+fn published_cross_format_identities_stay_listed_and_resolve() {
+    assert_eq!(
+        CROSS_FORMAT_CONCEPTS,
+        [
+            "heading",
+            "paragraph",
+            "bullet-list",
+            "ordered-list",
+            "list-item",
+            "strong",
+            "emphasis",
+            "hyperlink",
+        ]
+    );
+    assert_eq!(CROSS_FORMAT_CONCEPTS.len(), CROSS_FORMAT_CONCEPT_IDS.len());
+    for (&published, &readable) in CROSS_FORMAT_CONCEPTS.iter().zip(CROSS_FORMAT_CONCEPT_IDS) {
+        assert_eq!(meta_language::current_concept_id(published), readable);
+        for &format in DOCUMENT_FORMATS {
+            let profile = document_format_profile(format).expect("known document format");
+            assert_eq!(
+                profile.supports_concept(published),
+                profile.supports_concept(readable)
+            );
+            assert_eq!(
+                profile.concept_fallback(published),
+                profile.concept_fallback(readable)
+            );
+        }
+    }
+    let html = document_format_profile("HTML").expect("HTML profile");
+    assert!(html.supports_concept("strong"));
+    let txt = document_format_profile("txt").expect("txt profile");
+    assert_eq!(
+        txt.concept_fallback("strong"),
+        Some("rendered as unstyled plain text")
+    );
 }
 
 #[test]

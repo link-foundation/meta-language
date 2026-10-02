@@ -17,16 +17,36 @@ use crate::link_network::LinkType;
 /// supports, used as both source and target of `reconstruct_text_as`.
 pub const DOCUMENT_FORMATS: &[&str] = &["txt", "Markdown", "HTML", "PDF", "DOCX"];
 
-/// The shared formatting concepts considered when reporting cross-format
-/// fidelity. Every format profile classifies each of these as either natively
-/// supported or carrying a documented lossy fallback.
-pub const CROSS_FORMAT_CONCEPTS: &[&str] = &[
+/// The shared cross-format formatting concepts, by readable concept identity.
+///
+/// Cross-format fidelity reports consider these concepts. Every format profile
+/// classifies each of them as either natively supported or carrying a
+/// documented lossy fallback.
+pub const CROSS_FORMAT_CONCEPT_IDS: &[&str] = &[
     "heading",
     "paragraph",
     "bullet-list",
     "ordered-list",
     "list-item",
     "strong-emphasis",
+    "emphasis",
+    "hyperlink",
+];
+
+/// [`CROSS_FORMAT_CONCEPT_IDS`] under the identities earlier releases published.
+///
+/// The order is the same, with `strong` for `strong-emphasis`, so consumers
+/// that list or match the published identities keep working. Profile lookups accept
+/// either identity: [`LanguageProfile::supports_concept`] and
+/// [`LanguageProfile::concept_fallback`] resolve a former identity through
+/// [`crate::current_concept_id`].
+pub const CROSS_FORMAT_CONCEPTS: &[&str] = &[
+    "heading",
+    "paragraph",
+    "bullet-list",
+    "ordered-list",
+    "list-item",
+    "strong",
     "emphasis",
     "hyperlink",
 ];
@@ -126,7 +146,7 @@ fn markdown_profile(profile: LanguageProfile) -> LanguageProfile {
 
 fn html_profile(profile: LanguageProfile) -> LanguageProfile {
     // HTML represents every cross-format concept natively.
-    with_supported(profile, CROSS_FORMAT_CONCEPTS.iter().copied())
+    with_supported(profile, CROSS_FORMAT_CONCEPT_IDS.iter().copied())
 }
 
 fn pdf_profile(profile: LanguageProfile) -> LanguageProfile {
