@@ -1553,7 +1553,7 @@
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
       "selector": "docs/vision.md#sources-of-truth: register of every requirement source with its revision and content hash",
-      "sha256": "801d69c223072020f18dcea32c1c23261d78b220083089417f7b7bde1e6a8f90"
+      "sha256": "ba469e0f21aef362cfd973271a8d3d61412b360bbe0a17e444c140b85b455a20"
     },
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
