@@ -1,203 +1,250 @@
-use std::collections::BTreeSet;
+//! Hand-written pest PEG importer, a port of
+//! `js/src/grammar-importers/pest.js`.
 
-use pest_meta::ast::{Expr as PestExpr, Rule as PestRule, RuleType as PestRuleType};
-use pest_meta::{
-    parser::{self, Rule as PestParserRule},
-    validator,
+use super::common::{
+    Cursor, canonical_repeat, choice, decimal, default_escapes, grammar_from_rules, is_space,
+    sequence,
 };
-
 use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 
+const FORMAT: GrammarFormat = GrammarFormat::Peg;
+
+/// The pest built-in rules a grammar may reference without defining them.
+const PEST_BUILTINS: &[&str] = &[
+    "ANY",
+    "SOI",
+    "EOI",
+    "ASCII_DIGIT",
+    "ASCII_NONZERO_DIGIT",
+    "ASCII_BIN_DIGIT",
+    "ASCII_OCT_DIGIT",
+    "ASCII_HEX_DIGIT",
+    "ASCII_ALPHA_LOWER",
+    "ASCII_ALPHA_UPPER",
+    "ASCII_ALPHA",
+    "ASCII_ALPHANUMERIC",
+    "ASCII",
+    "NEWLINE",
+    "UNICODE",
+    "LETTER",
+    "CASED_LETTER",
+    "UPPERCASE_LETTER",
+    "LOWERCASE_LETTER",
+    "TITLECASE_LETTER",
+    "MODIFIER_LETTER",
+    "OTHER_LETTER",
+    "MARK",
+    "NUMBER",
+    "PUNCTUATION",
+    "SEPARATOR",
+    "SYMBOL",
+    "CONTROL",
+    "XID_START",
+    "XID_CONTINUE",
+];
+
 /// Parses PEG `.pest` grammar text into the grammar IR.
+///
+/// Rules are `name = modifier? { expression }` with the modifiers `_`
+/// (silent), `@` (atomic), `$` (token), and `!` (normal). Expressions use
+/// ordered choice `|`, sequence `~`, the predicates `&` and `!`, the postfix
+/// operators `?`, `*`, `+`, and counted repetition `{n}`, `{n,}`, `{,m}`,
+/// `{n,m}`, over strings, `^"…"` case-insensitive strings, `'a'..'z'` ranges,
+/// and rule references, where `ANY` matches any character. `//` and `/* */`
+/// comments are skipped.
 ///
 /// # Errors
 ///
-/// Returns [`GrammarImportError`] when the pest grammar cannot be parsed or
-/// validated, when a parsed construct cannot be represented in the grammar IR,
-/// or when a non-terminal reference does not resolve to a local rule or pest
-/// built-in.
+/// Returns [`GrammarImportError`] when the pest grammar cannot be parsed, when
+/// a parsed construct (such as `PUSH(…)` or `PEEK[…]`) cannot be represented
+/// in the grammar IR, or when a non-terminal reference does not resolve to a
+/// local rule or pest built-in.
 pub fn import_pest(text: &str) -> Result<Grammar, GrammarImportError> {
-    let pairs = parser::parse(PestParserRule::grammar_rules, text)
-        .map_err(|error| parse_error(GrammarFormat::Peg, error.to_string()))?;
-    let used_builtins = validator::validate_pairs(pairs.clone())
-        .map_err(|errors| parse_error(GrammarFormat::Peg, format_errors(errors)))?;
-    let parsed = parser::consume_rules(pairs)
-        .map_err(|errors| parse_error(GrammarFormat::Peg, format_errors(errors)))?;
-    let grammar = lower_grammar(parsed)?;
-    validate_references(&grammar, &used_builtins)?;
-    Ok(grammar)
-}
-
-fn lower_grammar(parsed: Vec<PestRule>) -> Result<Grammar, GrammarImportError> {
-    let mut grammar = Grammar::new().with_source_format(GrammarFormat::Peg);
-    for rule in parsed {
-        grammar.add_rule(
-            GrammarRule::new(rule.name, lower_expr(rule.expr)?).with_kind(lower_rule_type(rule.ty)),
-        );
-    }
-    Ok(grammar)
-}
-
-const fn lower_rule_type(rule_type: PestRuleType) -> RuleKind {
-    match rule_type {
-        PestRuleType::Normal | PestRuleType::NonAtomic => RuleKind::Normal,
-        PestRuleType::Silent => RuleKind::Silent,
-        PestRuleType::Atomic => RuleKind::Atomic,
-        // The pest emitter renders `RuleKind::Token` as `$`, so compound-atomic
-        // rules keep their modifier through an import/emit round trip.
-        PestRuleType::CompoundAtomic => RuleKind::Token,
-    }
-}
-
-fn lower_expr(expr: PestExpr) -> Result<GrammarExpr, GrammarImportError> {
-    match expr {
-        PestExpr::Str(value) => Ok(GrammarExpr::Terminal(value)),
-        PestExpr::Insens(value) => Ok(GrammarExpr::TerminalInsensitive(value)),
-        PestExpr::Range(start, end) => Ok(GrammarExpr::CharRange(
-            single_char(&start, "range start")?,
-            single_char(&end, "range end")?,
-        )),
-        PestExpr::Ident(name) if name == "ANY" => Ok(GrammarExpr::AnyChar),
-        PestExpr::Ident(name) => Ok(GrammarExpr::NonTerminal(name)),
-        PestExpr::PeekSlice(_, _) => Err(unsupported_error(GrammarFormat::Peg, "PeekSlice")),
-        PestExpr::PosPred(inner) => lower_expr(*inner).map(GrammarExpr::and),
-        PestExpr::NegPred(inner) => lower_expr(*inner).map(GrammarExpr::not),
-        PestExpr::Seq(left, right) => lower_sequence([lower_expr(*left), lower_expr(*right)]),
-        PestExpr::Choice(left, right) => lower_choice([lower_expr(*left), lower_expr(*right)]),
-        PestExpr::Opt(inner) => lower_expr(*inner).map(GrammarExpr::optional),
-        PestExpr::Rep(inner) => lower_expr(*inner).map(GrammarExpr::zero_or_more),
-        PestExpr::RepOnce(inner) => lower_expr(*inner).map(GrammarExpr::one_or_more),
-        PestExpr::RepExact(inner, count) => {
-            let count = repetition_count(count)?;
-            lower_expr(*inner).map(|expr| GrammarExpr::repeat(expr, count, Some(count)))
-        }
-        PestExpr::RepMin(inner, min) => {
-            let min = repetition_count(min)?;
-            lower_expr(*inner).map(|expr| GrammarExpr::repeat(expr, min, None))
-        }
-        PestExpr::RepMax(inner, max) => {
-            let max = repetition_count(max)?;
-            lower_expr(*inner).map(|expr| GrammarExpr::repeat(expr, 0, Some(max)))
-        }
-        PestExpr::RepMinMax(inner, min, max) => {
-            let min = repetition_count(min)?;
-            let max = repetition_count(max)?;
-            lower_expr(*inner).map(|expr| GrammarExpr::repeat(expr, min, Some(max)))
-        }
-        PestExpr::Skip(_) => Err(unsupported_error(GrammarFormat::Peg, "Skip")),
-        PestExpr::Push(_) => Err(unsupported_error(GrammarFormat::Peg, "Push")),
-    }
-}
-
-fn lower_sequence<I>(items: I) -> Result<GrammarExpr, GrammarImportError>
-where
-    I: IntoIterator<Item = Result<GrammarExpr, GrammarImportError>>,
-{
-    let mut lowered = Vec::new();
-    for item in items {
-        push_sequence_item(&mut lowered, item?);
-    }
-
-    Ok(match lowered.len() {
-        0 => GrammarExpr::Empty,
-        1 => lowered.remove(0),
-        _ => GrammarExpr::Sequence(lowered),
-    })
-}
-
-fn push_sequence_item(items: &mut Vec<GrammarExpr>, item: GrammarExpr) {
-    match item {
-        GrammarExpr::Empty => {}
-        GrammarExpr::Sequence(nested) => {
-            for item in nested {
-                push_sequence_item(items, item);
-            }
-        }
-        item => items.push(item),
-    }
-}
-
-fn lower_choice<I>(alternatives: I) -> Result<GrammarExpr, GrammarImportError>
-where
-    I: IntoIterator<Item = Result<GrammarExpr, GrammarImportError>>,
-{
-    let mut lowered = Vec::new();
-    for alternative in alternatives {
-        push_choice_alternative(&mut lowered, alternative?);
-    }
-
-    Ok(match lowered.len() {
-        0 => GrammarExpr::Empty,
-        1 => lowered.remove(0),
-        _ => GrammarExpr::Choice {
-            ordered: true,
-            alternatives: lowered,
-        },
-    })
-}
-
-fn push_choice_alternative(alternatives: &mut Vec<GrammarExpr>, alternative: GrammarExpr) {
-    match alternative {
-        GrammarExpr::Choice {
-            ordered: true,
-            alternatives: nested,
-        } => alternatives.extend(nested),
-        alternative => alternatives.push(alternative),
-    }
-}
-
-fn single_char(value: &str, role: &str) -> Result<char, GrammarImportError> {
-    let mut chars = value.chars();
-    let Some(character) = chars.next() else {
-        return Err(parse_error(
-            GrammarFormat::Peg,
-            format!("{role} must contain exactly one character"),
-        ));
+    let mut parser = PestParser {
+        cursor: Cursor::with_comments(text, FORMAT),
     };
-    if chars.next().is_some() {
-        return Err(parse_error(
-            GrammarFormat::Peg,
-            format!("{role} {value:?} must contain exactly one character"),
-        ));
+    let rules = parser.rules()?;
+    grammar_from_rules(FORMAT, rules, PEST_BUILTINS)
+}
+
+struct PestParser<'source> {
+    cursor: Cursor<'source>,
+}
+
+impl PestParser<'_> {
+    fn rules(&mut self) -> Result<Vec<GrammarRule>, GrammarImportError> {
+        let mut rules: Vec<GrammarRule> = Vec::new();
+        loop {
+            self.cursor.skip_space()?;
+            if self.cursor.eof() {
+                return Ok(rules);
+            }
+            let name = self.cursor.identifier()?;
+            if rules.iter().any(|rule| rule.name == name) {
+                return Err(parse_error(FORMAT, format!("duplicate rule {name}")));
+            }
+            self.cursor.consume("=")?;
+            self.cursor.skip_space()?;
+            let kind = match self.cursor.peek() {
+                Some(modifier @ ('_' | '@' | '$' | '!')) => {
+                    self.cursor.take();
+                    match modifier {
+                        '_' => RuleKind::Silent,
+                        '@' => RuleKind::Atomic,
+                        '$' => RuleKind::Token,
+                        _ => RuleKind::Normal,
+                    }
+                }
+                _ => RuleKind::Normal,
+            };
+            self.cursor.consume("{")?;
+            let expr = self.alternation()?;
+            self.cursor.consume("}")?;
+            rules.push(GrammarRule::new(name, expr).with_kind(kind));
+        }
     }
-    Ok(character)
-}
 
-fn repetition_count(count: u32) -> Result<usize, GrammarImportError> {
-    usize::try_from(count).map_err(|_| {
-        unsupported_error(
-            GrammarFormat::Peg,
-            format!("repetition count {count} exceeds usize"),
-        )
-    })
-}
-
-fn validate_references(
-    grammar: &Grammar,
-    used_builtins: &[&str],
-) -> Result<(), GrammarImportError> {
-    let used_builtins = used_builtins.iter().copied().collect::<BTreeSet<_>>();
-    if let Some(name) = grammar
-        .undefined_nonterminals()
-        .into_iter()
-        .find(|name| !used_builtins.contains(name.as_str()))
-    {
-        return Err(parse_error(
-            GrammarFormat::Peg,
-            format!("undefined non-terminal {name}"),
-        ));
+    fn alternation(&mut self) -> Result<GrammarExpr, GrammarImportError> {
+        let mut alternatives = vec![self.sequence()?];
+        while self.cursor.try_consume("|")? {
+            alternatives.push(self.sequence()?);
+        }
+        Ok(choice(alternatives, true))
     }
-    Ok(())
+
+    fn sequence(&mut self) -> Result<GrammarExpr, GrammarImportError> {
+        let mut items = vec![self.prefix()?];
+        while self.cursor.try_consume("~")? {
+            items.push(self.prefix()?);
+        }
+        Ok(sequence(items))
+    }
+
+    fn prefix(&mut self) -> Result<GrammarExpr, GrammarImportError> {
+        if self.cursor.try_consume("&")? {
+            return self.prefix().map(GrammarExpr::and);
+        }
+        if self.cursor.try_consume("!")? {
+            return self.prefix().map(GrammarExpr::not);
+        }
+        self.postfix()
+    }
+
+    fn postfix(&mut self) -> Result<GrammarExpr, GrammarImportError> {
+        let expr = self.atom()?;
+        if self.cursor.try_consume("?")? {
+            return Ok(GrammarExpr::optional(expr));
+        }
+        if self.cursor.try_consume("*")? {
+            return Ok(GrammarExpr::zero_or_more(expr));
+        }
+        if self.cursor.try_consume("+")? {
+            return Ok(GrammarExpr::one_or_more(expr));
+        }
+        self.cursor.skip_space()?;
+        match counted_repetition(self.cursor.rest()) {
+            Some((length, min, max)) => {
+                self.cursor.advance(length);
+                canonical_repeat(FORMAT, expr, min, max)
+            }
+            None => Ok(expr),
+        }
+    }
+
+    fn atom(&mut self) -> Result<GrammarExpr, GrammarImportError> {
+        self.cursor.skip_space()?;
+        if self.cursor.try_consume("(")? {
+            let expr = self.alternation()?;
+            self.cursor.consume(")")?;
+            return Ok(expr);
+        }
+        match self.cursor.peek() {
+            Some('^') => {
+                self.cursor.advance(1);
+                if self.cursor.peek() != Some('"') {
+                    return Err(self
+                        .cursor
+                        .error("case-insensitive marker must precede a string"));
+                }
+                return Ok(GrammarExpr::TerminalInsensitive(
+                    self.cursor.quoted(Some(default_escapes))?,
+                ));
+            }
+            Some('"') => {
+                return Ok(GrammarExpr::Terminal(
+                    self.cursor.quoted(Some(default_escapes))?,
+                ));
+            }
+            Some('\'') => {
+                let start = self.cursor.quoted(Some(default_escapes))?;
+                self.cursor.consume("..")?;
+                let end = self.cursor.quoted(Some(default_escapes))?;
+                return match (single_char(&start), single_char(&end)) {
+                    (Some(start), Some(end)) => Ok(GrammarExpr::CharRange(start, end)),
+                    _ => Err(parse_error(
+                        FORMAT,
+                        "character range endpoints must be one character",
+                    )),
+                };
+            }
+            _ => {}
+        }
+        let name = self.cursor.identifier()?;
+        self.cursor.skip_space()?;
+        let next = self.cursor.peek();
+        if name == "PUSH" && next == Some('(') {
+            return Err(unsupported_error(FORMAT, "Push"));
+        }
+        if name == "PEEK" && next == Some('[') {
+            return Err(unsupported_error(FORMAT, "PeekSlice"));
+        }
+        Ok(if name == "ANY" {
+            GrammarExpr::AnyChar
+        } else {
+            GrammarExpr::NonTerminal(name)
+        })
+    }
 }
 
-fn format_errors<E>(errors: impl IntoIterator<Item = E>) -> String
-where
-    E: ToString,
-{
-    errors
-        .into_iter()
-        .map(|error| error.to_string())
-        .collect::<Vec<_>>()
-        .join("\n\n")
+fn single_char(text: &str) -> Option<char> {
+    let mut characters = text.chars();
+    let character = characters.next()?;
+    characters.next().is_none().then_some(character)
+}
+
+/// Matches `{n}`, `{n,}`, `{,m}`, or `{n,m}` at the start of `text`, as the
+/// JavaScript pattern `^\{\s*(\d*)\s*(?:,\s*(\d*)\s*)?\}` does, returning the
+/// matched length and the bounds. `{}` and `{ }` are not counted repetition.
+fn counted_repetition(text: &str) -> Option<(usize, u64, Option<u64>)> {
+    let digits = |text: &str| -> usize {
+        text.find(|character: char| !character.is_ascii_digit())
+            .unwrap_or(text.len())
+    };
+    let spaces = |text: &str, from: usize| -> usize {
+        from + text[from..]
+            .find(|character: char| !is_space(character))
+            .unwrap_or(text.len() - from)
+    };
+    let mut index = spaces(text, text.strip_prefix('{').map(|_| 1)?);
+    let low_end = index + digits(&text[index..]);
+    let low = &text[index..low_end];
+    index = spaces(text, low_end);
+    let mut high = None;
+    if text[index..].starts_with(',') {
+        index = spaces(text, index + 1);
+        let high_end = index + digits(&text[index..]);
+        high = Some(&text[index..high_end]);
+        index = spaces(text, high_end);
+    }
+    if !text[index..].starts_with('}') || (low.is_empty() && high.is_none()) {
+        return None;
+    }
+    let min = decimal(low);
+    let max = match high {
+        None => Some(min),
+        Some("") => None,
+        Some(high) => Some(decimal(high)),
+    };
+    Some((index + 1, min, max))
 }

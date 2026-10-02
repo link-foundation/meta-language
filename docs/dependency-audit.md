@@ -47,7 +47,7 @@ they are.
 | JavaScript engines | 1 | 1 | 0 | 0 |
 | npm packages | 17 | 17 | 0 | 0 |
 | Rust package settings | 6 | 6 | 0 | 0 |
-| Rust crates | 328 | 291 | 37 | 0 |
+| Rust crates | 306 | 282 | 24 | 0 |
 | Experiment manifests | 6 | 6 | 0 | 0 |
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
@@ -102,11 +102,9 @@ they are.
 
 | Item | Scope | Declared in | Pinned | Role | Requirement | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|---|---|---|
-| `abnf-core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.0` | transitive |  | 0.6.0 (crates.io, abnf-core) | version | behind | Held by the requirement of `abnf` 0.13.0 (`^0.5`), which does not admit 0.6.0; it moves when that dependent does. |
-| `abnf` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.13.0` | direct, runtime | `0.13.0` | 0.13.0 (crates.io, abnf) | version | current |  |
 | `adler2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.1` | transitive |  | 2.0.1 (crates.io, adler2) | version | current |  |
 | `aho-corasick` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.5` | transitive |  | 1.1.5 (crates.io, aho-corasick) | version | current |  |
-| `allocator-api2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.21` | transitive |  | 0.4.0 (crates.io, allocator-api2) | version | behind | Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.16.1 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. |
+| `allocator-api2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.21` | transitive |  | 0.4.0 (crates.io, allocator-api2) | version | behind | Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. |
 | `allocator-api2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.0` | transitive |  | 0.4.0 (crates.io, allocator-api2) | version | current |  |
 | `anstream` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.0` | transitive |  | 1.0.0 (crates.io, anstream) | version | current |  |
 | `anstyle-parse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.0` | transitive |  | 1.0.0 (crates.io, anstyle-parse) | version | current |  |
@@ -119,7 +117,6 @@ they are.
 | `beef` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.2` | transitive |  | 0.5.2 (crates.io, beef) | version | current |  |
 | `bitflags` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.13.2` | transitive |  | 2.13.2 (crates.io, bitflags) | version | current |  |
 | `block-buffer` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.12.1` | transitive |  | 0.12.1 (crates.io, block-buffer) | version | current |  |
-| `bnf` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.6.0` | direct, runtime | `0.6.0` | 0.6.0 (crates.io, bnf) | version | current |  |
 | `bumpalo` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.20.3` | transitive |  | 3.20.3 (crates.io, bumpalo) | version | current |  |
 | `bytecheck_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, bytecheck_derive) | version | current |  |
 | `bytecheck` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, bytecheck) | version | current |  |
@@ -149,7 +146,6 @@ they are.
 | `digest` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.3` | transitive |  | 0.11.3 (crates.io, digest) | version | current |  |
 | `displaydoc` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.7` | transitive |  | 0.2.7 (crates.io, displaydoc) | version | current |  |
 | `doublets` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.5.0` | direct, runtime (optional) | `0.5.0` | 0.5.0 (crates.io, doublets) | version | current |  |
-| `ebnf` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.4` | direct, runtime | `0.1.4` | 0.1.4 (crates.io, ebnf) | version | current |  |
 | `either` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.18.0` | transitive |  | 1.18.0 (crates.io, either) | version | current |  |
 | `encoding_rs_io` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, encoding_rs_io) | version | current |  |
 | `encoding_rs` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.42` | transitive |  | 0.8.42 (crates.io, encoding_rs) | version | current |  |
@@ -160,22 +156,18 @@ they are.
 | `find-msvc-tools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.14` | transitive |  | 0.1.14 (crates.io, find-msvc-tools) | version | current |  |
 | `flate2` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.10` | direct, build | `1` | 1.1.10 (crates.io, flate2) | version | current |  |
 | `foldhash` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.5` | transitive |  | 0.2.0 (crates.io, foldhash) | version | behind | Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. |
-| `foldhash` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.0` | transitive |  | 0.2.0 (crates.io, foldhash) | version | current |  |
 | `form_urlencoded` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.2` | transitive |  | 1.2.2 (crates.io, form_urlencoded) | version | current |  |
 | `fst` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, fst) | version | current |  |
 | `futures-core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.34` | transitive |  | 0.3.34 (crates.io, futures-core) | version | current |  |
 | `futures-task` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.34` | transitive |  | 0.3.34 (crates.io, futures-task) | version | current |  |
 | `futures-util` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.34` | transitive |  | 0.3.34 (crates.io, futures-util) | version | current |  |
 | `getrandom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.17` | transitive |  | 0.4.3 (crates.io, getrandom) | version | behind | Held by the requirement of `ring` 0.17.14 (`^0.2.10`), `serde-wasm-bindgen` 0.6.5 (`^0.2`), which does not admit 0.4.3; it moves when that dependent does. |
-| `getrandom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.4` | transitive |  | 0.4.3 (crates.io, getrandom) | version | behind | Held by the requirement of `bnf` 0.6.0 (`^0.3.4`), `rand_core` 0.9.5 (`^0.3.0`), `zerovec` 0.11.8 (`^0.3`), which does not admit 0.4.3; it moves when that dependent does. |
 | `getrandom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.3` | transitive |  | 0.4.3 (crates.io, getrandom) | version | current |  |
 | `glob` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.4` | transitive |  | 0.3.4 (crates.io, glob) | version | current |  |
 | `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), `foldhash` 0.1.5 (`^0.14`), `rkyv` 0.8.18 (`^0.14`), which does not admit 0.17.1; it moves when that dependent does. |
-| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.15.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `foldhash` 0.2.0 (`^0.15`), `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does. |
-| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.16.1` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `bnf` 0.6.0 (`^0.16.1`), `rkyv` 0.8.18 (`^0.16`), which does not admit 0.17.1; it moves when that dependent does. |
+| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.15.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does. |
 | `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.17.1` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | current |  |
 | `heck` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.0` | transitive |  | 0.5.0 (crates.io, heck) | version | current |  |
-| `html-escape` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.15` | transitive |  | 0.2.15 (crates.io, html-escape) | version | current |  |
 | `http` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.0` | transitive |  | 1.5.0 (crates.io, http) | version | current |  |
 | `httparse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.10.1` | transitive |  | 1.10.1 (crates.io, httparse) | version | current |  |
 | `hybrid-array` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.15` | transitive |  | 0.4.15 (crates.io, hybrid-array) | version | current |  |
@@ -220,22 +212,19 @@ they are.
 | `md5` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.1` | transitive |  | 0.8.1 (crates.io, md5) | version | current |  |
 | `memchr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.8.3` | transitive |  | 2.8.3 (crates.io, memchr) | version | current |  |
 | `memmap2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.11` | transitive |  | 0.9.11 (crates.io, memmap2) | version | current |  |
-| `minimal-lexical` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.1` | transitive |  | 0.2.1 (crates.io, minimal-lexical) | version | current |  |
 | `miniz_oxide` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.1` | transitive |  | 0.9.1 (crates.io, miniz_oxide) | version | current |  |
 | `multiversion_no_op` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.0` | transitive |  | 1.0.0 (crates.io, multiversion_no_op) | version | current |  |
 | `munge_macro` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, munge_macro) | version | current |  |
 | `munge` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.7` | transitive |  | 0.4.7 (crates.io, munge) | version | current |  |
-| `nom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `7.1.3` | transitive |  | 8.0.0 (crates.io, nom) | version | behind | Held by the requirement of `abnf` 0.13.0 (`^7`), `abnf-core` 0.5.0 (`^7.0.0-alpha1`), `ebnf` 0.1.4 (`^7`), `parse-hyperlinks` 0.23.4 (`^7.1.1`), which does not admit 8.0.0; it moves when that dependent does. |
 | `nom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `8.0.0` | transitive |  | 8.0.0 (crates.io, nom) | version | current |  |
 | `num-traits` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.19` | transitive |  | 0.2.19 (crates.io, num-traits) | version | current |  |
 | `once_cell_polyfill` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.70.2` | transitive |  | 1.70.2 (crates.io, once_cell_polyfill) | version | current |  |
 | `once_cell` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.21.4` | transitive |  | 1.21.4 (crates.io, once_cell) | version | current |  |
 | `parking_lot_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.12` | transitive |  | 0.9.12 (crates.io, parking_lot_core) | version | current |  |
-| `parse-hyperlinks` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.23.4` | transitive |  | 0.29.3 (crates.io, parse-hyperlinks) | version | behind | Held by the requirement of `ebnf` 0.1.4 (`^0.23.3`), which does not admit 0.29.3; it moves when that dependent does. |
 | `percent-encoding` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.3.2` | transitive |  | 2.3.2 (crates.io, percent-encoding) | version | current |  |
 | `pest_derive` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.2 (crates.io, pest_derive) | version | current |  |
 | `pest_generator` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.9.2` | transitive |  | 2.9.2 (crates.io, pest_generator) | version | current |  |
-| `pest_meta` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, runtime | `2.8.6` | 2.9.2 (crates.io, pest_meta) | version | current |  |
+| `pest_meta` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.2 (crates.io, pest_meta) | version | current |  |
 | `pest` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.9.2` | direct, development | `2.8.6` | 2.9.2 (crates.io, pest) | version | current |  |
 | `pin-project-lite` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.17` | transitive |  | 0.2.17 (crates.io, pin-project-lite) | version | current |  |
 | `platform-data` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.0` | transitive |  | 2.0.0 (crates.io, platform-data) | version | current |  |
@@ -243,19 +232,14 @@ they are.
 | `platform-num` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.0` | transitive |  | 0.8.0 (crates.io, platform-num) | version | current |  |
 | `platform-trees` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.4` | transitive |  | 0.3.4 (crates.io, platform-trees) | version | current |  |
 | `potential_utf` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.6` | transitive |  | 0.1.6 (crates.io, potential_utf) | version | current |  |
-| `ppv-lite86` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.21` | transitive |  | 0.2.21 (crates.io, ppv-lite86) | version | current |  |
 | `proc-macro2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.107` | transitive |  | 1.0.107 (crates.io, proc-macro2) | version | current |  |
 | `ptr_meta_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.2` | transitive |  | 0.3.2 (crates.io, ptr_meta_derive) | version | current |  |
 | `ptr_meta` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.2` | transitive |  | 0.3.2 (crates.io, ptr_meta) | version | current |  |
 | `quote` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.47` | transitive |  | 1.0.47 (crates.io, quote) | version | current |  |
-| `r-efi` | `rust/Cargo.lock` | `rust/Cargo.lock` | `5.3.0` | transitive |  | 7.1.0 (crates.io, r-efi) | version | behind | Held by the requirement of `getrandom` 0.3.4 (`^5.1`), which does not admit 7.1.0; it moves when that dependent does. |
 | `r-efi` | `rust/Cargo.lock` | `rust/Cargo.lock` | `6.0.0` | transitive |  | 7.1.0 (crates.io, r-efi) | version | behind | Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.1.0; it moves when that dependent does. |
 | `rancor` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.3` | transitive |  | 0.1.3 (crates.io, rancor) | version | current |  |
-| `rand_chacha` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.0` | transitive |  | 0.10.0 (crates.io, rand_chacha) | version | behind | Held by the requirement of `rand` 0.9.5 (`^0.9.0`), which does not admit 0.10.0; it moves when that dependent does. |
 | `rand_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.10.1` | transitive |  | 0.10.1 (crates.io, rand_core) | version | current |  |
-| `rand_core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.5` | transitive |  | 0.10.1 (crates.io, rand_core) | version | behind | Held by the requirement of `rand` 0.9.5 (`^0.9.0`), `rand_chacha` 0.9.0 (`^0.9.0`), `rand_chacha` 0.9.0 (`^0.9.0`), which does not admit 0.10.1; it moves when that dependent does. |
 | `rand` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.10.3` | transitive |  | 0.10.3 (crates.io, rand) | version | current |  |
-| `rand` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.9.5` | transitive |  | 0.10.3 (crates.io, rand) | version | behind | Held by the requirement of `bnf` 0.6.0 (`^0.9.2`), `counter` 0.7.1 (`^0.9.2`), `flate2` 1.1.10 (`^0.9`), `hashbrown` 0.15.5 (`^0.9.0`), `hashbrown` 0.16.1 (`^0.9.0`), `hashbrown` 0.17.1 (`^0.9.0`), `litemap` 0.8.3 (`^0.9`), `rayon` 1.12.0 (`^0.9`), `rayon-core` 1.13.0 (`^0.9`), `tinystr` 0.8.4 (`^0.9`), `writeable` 0.6.4 (`^0.9`), `zerotrie` 0.2.5 (`^0.9`), `zerovec` 0.11.8 (`^0.9`), which does not admit 0.10.3; it moves when that dependent does. |
 | `rayon-core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.13.0` | transitive |  | 1.13.0 (crates.io, rayon-core) | version | current |  |
 | `rayon` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.12.0` | transitive |  | 1.12.0 (crates.io, rayon) | version | current |  |
 | `redox_syscall` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.18` | transitive |  | 0.9.4 (crates.io, redox_syscall) | version | behind | Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.9.4; it moves when that dependent does. |
@@ -293,15 +277,13 @@ they are.
 | `strum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.27.2` | transitive |  | 0.28.0 (crates.io, strum) | version | behind | Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. |
 | `strum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.28.0` | transitive |  | 0.28.0 (crates.io, strum) | version | current |  |
 | `subtle` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.6.1` | transitive |  | 2.6.1 (crates.io, subtle) | version | current |  |
-| `syn` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.119` | transitive |  | 3.0.6 (crates.io, syn) | version | behind | Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), `thiserror-impl` 1.0.69 (`^2.0.87`), `zerocopy-derive` 0.8.59 (`^2.0.46`), `zerocopy-derive` 0.8.59 (`^2.0.46`), which does not admit 3.0.6; it moves when that dependent does. |
+| `syn` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.119` | transitive |  | 3.0.6 (crates.io, syn) | version | behind | Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does. |
 | `syn` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.0.6` | transitive |  | 3.0.6 (crates.io, syn) | version | current |  |
 | `synstructure` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.0` | transitive |  | 0.14.0 (crates.io, synstructure) | version | current |  |
 | `tap` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.1` | transitive |  | 1.0.1 (crates.io, tap) | version | current |  |
 | `tar` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.46` | transitive |  | 0.4.46 (crates.io, tar) | version | current |  |
 | `tempfile` | `rust/Cargo.lock` | `rust/Cargo.lock` | `3.27.0` | transitive |  | 3.27.0 (crates.io, tempfile) | version | current |  |
-| `thiserror-impl` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.69` | transitive |  | 2.0.21 (crates.io, thiserror-impl) | version | behind | Held by the requirement of `thiserror` 1.0.69 (`=1.0.69`), which does not admit 2.0.21; it moves when that dependent does. |
 | `thiserror-impl` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.21` | transitive |  | 2.0.21 (crates.io, thiserror-impl) | version | current |  |
-| `thiserror` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.69` | transitive |  | 2.0.21 (crates.io, thiserror) | version | behind | Held by the requirement of `displaydoc` 0.2.7 (`^1.0.24`), `parse-hyperlinks` 0.23.4 (`^1.0.31`), which does not admit 2.0.21; it moves when that dependent does. |
 | `thiserror` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.21` | transitive |  | 2.0.21 (crates.io, thiserror) | version | current |  |
 | `tinystr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.4` | transitive |  | 0.8.4 (crates.io, tinystr) | version | current |  |
 | `tinyvec` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.13.3` | transitive |  | 1.13.3 (crates.io, tinyvec) | version | current |  |
@@ -374,7 +356,6 @@ they are.
 | `uuid` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.26.1` | transitive |  | 1.26.1 (crates.io, uuid) | version | current |  |
 | `walkdir` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.5.0` | direct, development | `2` | 2.5.0 (crates.io, walkdir) | version | current |  |
 | `wasi` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.1+wasi-snapshot-preview1` | transitive |  | 0.14.7+wasi-0.2.4 (crates.io, wasi) | version | behind | Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does. |
-| `wasip2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.4+wasi-0.2.12` | transitive |  | 2.0.1+wasi-0.2.12 (crates.io, wasip2) | version | behind | Held by the requirement of `getrandom` 0.3.4 (`^1`), which does not admit 2.0.1+wasi-0.2.12; it moves when that dependent does. |
 | `wasm-bindgen-macro-support` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-macro-support) | version | current |  |
 | `wasm-bindgen-macro` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-macro) | version | current |  |
 | `wasm-bindgen-shared` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-shared) | version | current |  |
@@ -394,13 +375,10 @@ they are.
 | `windows-sys` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.52.0` | transitive |  | 0.61.2 (crates.io, windows-sys) | version | behind | Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does. |
 | `windows-sys` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.61.2` | transitive |  | 0.61.2 (crates.io, windows-sys) | version | current |  |
 | `windows-targets` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.52.6` | transitive |  | 0.53.5 (crates.io, windows-targets) | version | behind | Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. |
-| `wit-bindgen` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.57.1` | transitive |  | 0.62.0 (crates.io, wit-bindgen) | version | behind | Held by the requirement of `wasip2` 1.0.4+wasi-0.2.12 (`^0.57.1`), which does not admit 0.62.0; it moves when that dependent does. |
 | `writeable` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.4` | transitive |  | 0.6.4 (crates.io, writeable) | version | current |  |
 | `xattr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.6.1` | transitive |  | 1.6.1 (crates.io, xattr) | version | current |  |
 | `yoke-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, yoke-derive) | version | current |  |
 | `yoke` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, yoke) | version | current |  |
-| `zerocopy-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.59` | transitive |  | 0.8.59 (crates.io, zerocopy-derive) | version | current |  |
-| `zerocopy` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.59` | transitive |  | 0.8.59 (crates.io, zerocopy) | version | current |  |
 | `zerofrom-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, zerofrom-derive) | version | current |  |
 | `zerofrom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, zerofrom) | version | current |  |
 | `zeroize` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.9.0` | transitive |  | 1.9.0 (crates.io, zeroize) | version | current |  |
@@ -630,33 +608,21 @@ they are.
 
 ## Behind the current stable release
 
-40 retained items are behind their current stable release on 2026-09-30, each for the recorded reason:
+27 retained items are behind their current stable release on 2026-09-30, each for the recorded reason:
 
-- `abnf-core` `0.5.0` → `0.6.0` (`rust/Cargo.lock`): Held by the requirement of `abnf` 0.13.0 (`^0.5`), which does not admit 0.6.0; it moves when that dependent does.
-- `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.16.1 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.
+- `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.
 - `cc` `1.2.67` → `1.5.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does.
 - `foldhash` `0.1.5` → `0.2.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does.
 - `getrandom` `0.2.17` → `0.4.3` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.2.10`), `serde-wasm-bindgen` 0.6.5 (`^0.2`), which does not admit 0.4.3; it moves when that dependent does.
-- `getrandom` `0.3.4` → `0.4.3` (`rust/Cargo.lock`): Held by the requirement of `bnf` 0.6.0 (`^0.3.4`), `rand_core` 0.9.5 (`^0.3.0`), `zerovec` 0.11.8 (`^0.3`), which does not admit 0.4.3; it moves when that dependent does.
 - `hashbrown` `0.14.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), `foldhash` 0.1.5 (`^0.14`), `rkyv` 0.8.18 (`^0.14`), which does not admit 0.17.1; it moves when that dependent does.
-- `hashbrown` `0.15.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `foldhash` 0.2.0 (`^0.15`), `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does.
-- `hashbrown` `0.16.1` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `bnf` 0.6.0 (`^0.16.1`), `rkyv` 0.8.18 (`^0.16`), which does not admit 0.17.1; it moves when that dependent does.
+- `hashbrown` `0.15.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does.
 - `itertools` `0.14.0` → `0.15.0` (`rust/Cargo.lock`): Held by the requirement of `indexmap` 2.14.2 (`^0.14`), `lingua` 1.8.0 (`^0.14.0`), `zerotrie` 0.2.5 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does.
-- `nom` `7.1.3` → `8.0.0` (`rust/Cargo.lock`): Held by the requirement of `abnf` 0.13.0 (`^7`), `abnf-core` 0.5.0 (`^7.0.0-alpha1`), `ebnf` 0.1.4 (`^7`), `parse-hyperlinks` 0.23.4 (`^7.1.1`), which does not admit 8.0.0; it moves when that dependent does.
-- `parse-hyperlinks` `0.23.4` → `0.29.3` (`rust/Cargo.lock`): Held by the requirement of `ebnf` 0.1.4 (`^0.23.3`), which does not admit 0.29.3; it moves when that dependent does.
-- `r-efi` `5.3.0` → `7.1.0` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.3.4 (`^5.1`), which does not admit 7.1.0; it moves when that dependent does.
 - `r-efi` `6.0.0` → `7.1.0` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.1.0; it moves when that dependent does.
-- `rand_chacha` `0.9.0` → `0.10.0` (`rust/Cargo.lock`): Held by the requirement of `rand` 0.9.5 (`^0.9.0`), which does not admit 0.10.0; it moves when that dependent does.
-- `rand_core` `0.9.5` → `0.10.1` (`rust/Cargo.lock`): Held by the requirement of `rand` 0.9.5 (`^0.9.0`), `rand_chacha` 0.9.0 (`^0.9.0`), `rand_chacha` 0.9.0 (`^0.9.0`), which does not admit 0.10.1; it moves when that dependent does.
-- `rand` `0.9.5` → `0.10.3` (`rust/Cargo.lock`): Held by the requirement of `bnf` 0.6.0 (`^0.9.2`), `counter` 0.7.1 (`^0.9.2`), `flate2` 1.1.10 (`^0.9`), `hashbrown` 0.15.5 (`^0.9.0`), `hashbrown` 0.16.1 (`^0.9.0`), `hashbrown` 0.17.1 (`^0.9.0`), `litemap` 0.8.3 (`^0.9`), `rayon` 1.12.0 (`^0.9`), `rayon-core` 1.13.0 (`^0.9`), `tinystr` 0.8.4 (`^0.9`), `writeable` 0.6.4 (`^0.9`), `zerotrie` 0.2.5 (`^0.9`), `zerovec` 0.11.8 (`^0.9`), which does not admit 0.10.3; it moves when that dependent does.
 - `redox_syscall` `0.5.18` → `0.9.4` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.9.4; it moves when that dependent does.
 - `strum_macros` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), `strum` 0.27.2 (`^0.27`), which does not admit 0.28.0; it moves when that dependent does.
 - `strum` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does.
-- `syn` `2.0.119` → `3.0.6` (`rust/Cargo.lock`): Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), `thiserror-impl` 1.0.69 (`^2.0.87`), `zerocopy-derive` 0.8.59 (`^2.0.46`), `zerocopy-derive` 0.8.59 (`^2.0.46`), which does not admit 3.0.6; it moves when that dependent does.
-- `thiserror-impl` `1.0.69` → `2.0.21` (`rust/Cargo.lock`): Held by the requirement of `thiserror` 1.0.69 (`=1.0.69`), which does not admit 2.0.21; it moves when that dependent does.
-- `thiserror` `1.0.69` → `2.0.21` (`rust/Cargo.lock`): Held by the requirement of `displaydoc` 0.2.7 (`^1.0.24`), `parse-hyperlinks` 0.23.4 (`^1.0.31`), which does not admit 2.0.21; it moves when that dependent does.
+- `syn` `2.0.119` → `3.0.6` (`rust/Cargo.lock`): Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does.
 - `wasi` `0.11.1+wasi-snapshot-preview1` → `0.14.7+wasi-0.2.4` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does.
-- `wasip2` `1.0.4+wasi-0.2.12` → `2.0.1+wasi-0.2.12` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.3.4 (`^1`), which does not admit 2.0.1+wasi-0.2.12; it moves when that dependent does.
 - `windows_aarch64_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
 - `windows_aarch64_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
 - `windows_i686_gnu` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
@@ -668,7 +634,6 @@ they are.
 - `windows-link` `0.2.1` → `0.100.0` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.2.0`), `windows-sys` 0.61.2 (`^0.2.1`), which does not admit 0.100.0; it moves when that dependent does.
 - `windows-sys` `0.52.0` → `0.61.2` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does.
 - `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does.
-- `wit-bindgen` `0.57.1` → `0.62.0` (`rust/Cargo.lock`): Held by the requirement of `wasip2` 1.0.4+wasi-0.2.12 (`^0.57.1`), which does not admit 0.62.0; it moves when that dependent does.
 - `ocaml` `5.4` → `5.5.1` (`.github/workflows/issue-195-acceptance.yml`): rocq-runtime 9.2.0 needs ocamlfind 1.9.1 or later, and ocamlfind 1.9.8, its latest release in opam-repository, requires ocaml < 5.5.0~, so OCaml 5.4 is the newest compiler the Rocq acceptance job can build with; it moves when ocamlfind admits OCaml 5.5.
 - `rocq-core` `9.2.0` → `V9.3.0` (`.github/workflows/issue-195-acceptance.yml`): opam-repository publishes rocq-core only up to 9.2.0 (the 9.3.0 packages are still in ocaml/opam-repository pull request 30776), and the acceptance job installs Rocq from opam; it moves when rocq-core 9.3.0 is published there.
 - `emscripten/emsdk` `4.0.15` → `6.0.10` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json`): The web-tree-sitter runtime is rebuilt reproducibly with the emscripten version tree-sitter 0.27.0 pins in crates/loader/emscripten-version (4.0.15); a different emscripten produces a different tree-sitter.wasm, so the image moves with tree-sitter.

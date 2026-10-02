@@ -449,47 +449,6 @@
       "evidence": "Rust editions, the newest stable edition"
     },
     {
-      "id": "crate rust/Cargo.lock abnf-core@0.5.0",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "abnf-core",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.5.0",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "abnf-core"
-      },
-      "role": "transitive",
-      "current": "0.6.0",
-      "evidence": "crates.io, abnf-core",
-      "reason": "Held by the requirement of `abnf` 0.13.0 (`^0.5`), which does not admit 0.6.0; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
-      "id": "crate rust/Cargo.lock abnf@0.13.0",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "abnf",
-      "declaredIn": [
-        "rust/Cargo.lock",
-        "rust/Cargo.toml"
-      ],
-      "pinned": "0.13.0",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "abnf"
-      },
-      "role": "direct",
-      "requirement": "0.13.0",
-      "kind": "runtime",
-      "current": "0.13.0",
-      "evidence": "crates.io, abnf"
-    },
-    {
       "id": "crate rust/Cargo.lock adler2@2.0.1",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -542,7 +501,7 @@
       "role": "transitive",
       "current": "0.4.0",
       "evidence": "crates.io, allocator-api2",
-      "reason": "Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.16.1 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.",
+      "reason": "Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -760,27 +719,6 @@
       "role": "transitive",
       "current": "0.12.1",
       "evidence": "crates.io, block-buffer"
-    },
-    {
-      "id": "crate rust/Cargo.lock bnf@0.6.0",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "bnf",
-      "declaredIn": [
-        "rust/Cargo.lock",
-        "rust/Cargo.toml"
-      ],
-      "pinned": "0.6.0",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "bnf"
-      },
-      "role": "direct",
-      "requirement": "0.6.0",
-      "kind": "runtime",
-      "current": "0.6.0",
-      "evidence": "crates.io, bnf"
     },
     {
       "id": "crate rust/Cargo.lock bumpalo@3.20.3",
@@ -1316,27 +1254,6 @@
       "evidence": "crates.io, doublets"
     },
     {
-      "id": "crate rust/Cargo.lock ebnf@0.1.4",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "ebnf",
-      "declaredIn": [
-        "rust/Cargo.lock",
-        "rust/Cargo.toml"
-      ],
-      "pinned": "0.1.4",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "ebnf"
-      },
-      "role": "direct",
-      "requirement": "0.1.4",
-      "kind": "runtime",
-      "current": "0.1.4",
-      "evidence": "crates.io, ebnf"
-    },
-    {
       "id": "crate rust/Cargo.lock either@1.18.0",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -1522,24 +1439,6 @@
       "reasonHeld": true
     },
     {
-      "id": "crate rust/Cargo.lock foldhash@0.2.0",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "foldhash",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.2.0",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "foldhash"
-      },
-      "role": "transitive",
-      "current": "0.2.0",
-      "evidence": "crates.io, foldhash"
-    },
-    {
       "id": "crate rust/Cargo.lock form_urlencoded@1.2.2",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -1650,26 +1549,6 @@
       "reasonHeld": true
     },
     {
-      "id": "crate rust/Cargo.lock getrandom@0.3.4",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "getrandom",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.3.4",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "getrandom"
-      },
-      "role": "transitive",
-      "current": "0.4.3",
-      "evidence": "crates.io, getrandom",
-      "reason": "Held by the requirement of `bnf` 0.6.0 (`^0.3.4`), `rand_core` 0.9.5 (`^0.3.0`), `zerovec` 0.11.8 (`^0.3`), which does not admit 0.4.3; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
       "id": "crate rust/Cargo.lock getrandom@0.4.3",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -1742,27 +1621,7 @@
       "role": "transitive",
       "current": "0.17.1",
       "evidence": "crates.io, hashbrown",
-      "reason": "Held by the requirement of `foldhash` 0.2.0 (`^0.15`), `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
-      "id": "crate rust/Cargo.lock hashbrown@0.16.1",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "hashbrown",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.16.1",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "hashbrown"
-      },
-      "role": "transitive",
-      "current": "0.17.1",
-      "evidence": "crates.io, hashbrown",
-      "reason": "Held by the requirement of `bnf` 0.6.0 (`^0.16.1`), `rkyv` 0.8.18 (`^0.16`), which does not admit 0.17.1; it moves when that dependent does.",
+      "reason": "Held by the requirement of `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -1800,24 +1659,6 @@
       "role": "transitive",
       "current": "0.5.0",
       "evidence": "crates.io, heck"
-    },
-    {
-      "id": "crate rust/Cargo.lock html-escape@0.2.15",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "html-escape",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.2.15",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "html-escape"
-      },
-      "role": "transitive",
-      "current": "0.2.15",
-      "evidence": "crates.io, html-escape"
     },
     {
       "id": "crate rust/Cargo.lock http@1.5.0",
@@ -2623,24 +2464,6 @@
       "evidence": "crates.io, memmap2"
     },
     {
-      "id": "crate rust/Cargo.lock minimal-lexical@0.2.1",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "minimal-lexical",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.2.1",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "minimal-lexical"
-      },
-      "role": "transitive",
-      "current": "0.2.1",
-      "evidence": "crates.io, minimal-lexical"
-    },
-    {
       "id": "crate rust/Cargo.lock miniz_oxide@0.9.1",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -2711,26 +2534,6 @@
       "role": "transitive",
       "current": "0.4.7",
       "evidence": "crates.io, munge"
-    },
-    {
-      "id": "crate rust/Cargo.lock nom@7.1.3",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "nom",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "7.1.3",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "nom"
-      },
-      "role": "transitive",
-      "current": "8.0.0",
-      "evidence": "crates.io, nom",
-      "reason": "Held by the requirement of `abnf` 0.13.0 (`^7`), `abnf-core` 0.5.0 (`^7.0.0-alpha1`), `ebnf` 0.1.4 (`^7`), `parse-hyperlinks` 0.23.4 (`^7.1.1`), which does not admit 8.0.0; it moves when that dependent does.",
-      "reasonHeld": true
     },
     {
       "id": "crate rust/Cargo.lock nom@8.0.0",
@@ -2823,26 +2626,6 @@
       "evidence": "crates.io, parking_lot_core"
     },
     {
-      "id": "crate rust/Cargo.lock parse-hyperlinks@0.23.4",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "parse-hyperlinks",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.23.4",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "parse-hyperlinks"
-      },
-      "role": "transitive",
-      "current": "0.29.3",
-      "evidence": "crates.io, parse-hyperlinks",
-      "reason": "Held by the requirement of `ebnf` 0.1.4 (`^0.23.3`), which does not admit 0.29.3; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
       "id": "crate rust/Cargo.lock percent-encoding@2.3.2",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -2916,7 +2699,7 @@
       },
       "role": "direct",
       "requirement": "2.8.6",
-      "kind": "runtime",
+      "kind": "development",
       "current": "2.9.2",
       "evidence": "crates.io, pest_meta"
     },
@@ -3053,24 +2836,6 @@
       "evidence": "crates.io, potential_utf"
     },
     {
-      "id": "crate rust/Cargo.lock ppv-lite86@0.2.21",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "ppv-lite86",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.2.21",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "ppv-lite86"
-      },
-      "role": "transitive",
-      "current": "0.2.21",
-      "evidence": "crates.io, ppv-lite86"
-    },
-    {
       "id": "crate rust/Cargo.lock proc-macro2@1.0.107",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -3143,26 +2908,6 @@
       "evidence": "crates.io, quote"
     },
     {
-      "id": "crate rust/Cargo.lock r-efi@5.3.0",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "r-efi",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "5.3.0",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "r-efi"
-      },
-      "role": "transitive",
-      "current": "7.1.0",
-      "evidence": "crates.io, r-efi",
-      "reason": "Held by the requirement of `getrandom` 0.3.4 (`^5.1`), which does not admit 7.1.0; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
       "id": "crate rust/Cargo.lock r-efi@6.0.0",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -3201,26 +2946,6 @@
       "evidence": "crates.io, rancor"
     },
     {
-      "id": "crate rust/Cargo.lock rand_chacha@0.9.0",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "rand_chacha",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.9.0",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "rand_chacha"
-      },
-      "role": "transitive",
-      "current": "0.10.0",
-      "evidence": "crates.io, rand_chacha",
-      "reason": "Held by the requirement of `rand` 0.9.5 (`^0.9.0`), which does not admit 0.10.0; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
       "id": "crate rust/Cargo.lock rand_core@0.10.1",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -3239,26 +2964,6 @@
       "evidence": "crates.io, rand_core"
     },
     {
-      "id": "crate rust/Cargo.lock rand_core@0.9.5",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "rand_core",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.9.5",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "rand_core"
-      },
-      "role": "transitive",
-      "current": "0.10.1",
-      "evidence": "crates.io, rand_core",
-      "reason": "Held by the requirement of `rand` 0.9.5 (`^0.9.0`), `rand_chacha` 0.9.0 (`^0.9.0`), `rand_chacha` 0.9.0 (`^0.9.0`), which does not admit 0.10.1; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
       "id": "crate rust/Cargo.lock rand@0.10.3",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -3275,26 +2980,6 @@
       "role": "transitive",
       "current": "0.10.3",
       "evidence": "crates.io, rand"
-    },
-    {
-      "id": "crate rust/Cargo.lock rand@0.9.5",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "rand",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.9.5",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "rand"
-      },
-      "role": "transitive",
-      "current": "0.10.3",
-      "evidence": "crates.io, rand",
-      "reason": "Held by the requirement of `bnf` 0.6.0 (`^0.9.2`), `counter` 0.7.1 (`^0.9.2`), `flate2` 1.1.10 (`^0.9`), `hashbrown` 0.15.5 (`^0.9.0`), `hashbrown` 0.16.1 (`^0.9.0`), `hashbrown` 0.17.1 (`^0.9.0`), `litemap` 0.8.3 (`^0.9`), `rayon` 1.12.0 (`^0.9`), `rayon-core` 1.13.0 (`^0.9`), `tinystr` 0.8.4 (`^0.9`), `writeable` 0.6.4 (`^0.9`), `zerotrie` 0.2.5 (`^0.9`), `zerovec` 0.11.8 (`^0.9`), which does not admit 0.10.3; it moves when that dependent does.",
-      "reasonHeld": true
     },
     {
       "id": "crate rust/Cargo.lock rayon-core@1.13.0",
@@ -3997,7 +3682,7 @@
       "role": "transitive",
       "current": "3.0.6",
       "evidence": "crates.io, syn",
-      "reason": "Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), `thiserror-impl` 1.0.69 (`^2.0.87`), `zerocopy-derive` 0.8.59 (`^2.0.46`), `zerocopy-derive` 0.8.59 (`^2.0.46`), which does not admit 3.0.6; it moves when that dependent does.",
+      "reason": "Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -4091,26 +3776,6 @@
       "evidence": "crates.io, tempfile"
     },
     {
-      "id": "crate rust/Cargo.lock thiserror-impl@1.0.69",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "thiserror-impl",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "1.0.69",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "thiserror-impl"
-      },
-      "role": "transitive",
-      "current": "2.0.21",
-      "evidence": "crates.io, thiserror-impl",
-      "reason": "Held by the requirement of `thiserror` 1.0.69 (`=1.0.69`), which does not admit 2.0.21; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
       "id": "crate rust/Cargo.lock thiserror-impl@2.0.21",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -4127,26 +3792,6 @@
       "role": "transitive",
       "current": "2.0.21",
       "evidence": "crates.io, thiserror-impl"
-    },
-    {
-      "id": "crate rust/Cargo.lock thiserror@1.0.69",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "thiserror",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "1.0.69",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "thiserror"
-      },
-      "role": "transitive",
-      "current": "2.0.21",
-      "evidence": "crates.io, thiserror",
-      "reason": "Held by the requirement of `displaydoc` 0.2.7 (`^1.0.24`), `parse-hyperlinks` 0.23.4 (`^1.0.31`), which does not admit 2.0.21; it moves when that dependent does.",
-      "reasonHeld": true
     },
     {
       "id": "crate rust/Cargo.lock thiserror@2.0.21",
@@ -5618,26 +5263,6 @@
       "reasonHeld": true
     },
     {
-      "id": "crate rust/Cargo.lock wasip2@1.0.4+wasi-0.2.12",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "wasip2",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "1.0.4+wasi-0.2.12",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "wasip2"
-      },
-      "role": "transitive",
-      "current": "2.0.1+wasi-0.2.12",
-      "evidence": "crates.io, wasip2",
-      "reason": "Held by the requirement of `getrandom` 0.3.4 (`^1`), which does not admit 2.0.1+wasi-0.2.12; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
       "id": "crate rust/Cargo.lock wasm-bindgen-macro-support@0.2.129",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -6005,26 +5630,6 @@
       "reasonHeld": true
     },
     {
-      "id": "crate rust/Cargo.lock wit-bindgen@0.57.1",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "wit-bindgen",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.57.1",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "wit-bindgen"
-      },
-      "role": "transitive",
-      "current": "0.62.0",
-      "evidence": "crates.io, wit-bindgen",
-      "reason": "Held by the requirement of `wasip2` 1.0.4+wasi-0.2.12 (`^0.57.1`), which does not admit 0.62.0; it moves when that dependent does.",
-      "reasonHeld": true
-    },
-    {
       "id": "crate rust/Cargo.lock writeable@0.6.4",
       "category": "crate",
       "scope": "rust/Cargo.lock",
@@ -6095,42 +5700,6 @@
       "role": "transitive",
       "current": "0.8.3",
       "evidence": "crates.io, yoke"
-    },
-    {
-      "id": "crate rust/Cargo.lock zerocopy-derive@0.8.59",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "zerocopy-derive",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.8.59",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "zerocopy-derive"
-      },
-      "role": "transitive",
-      "current": "0.8.59",
-      "evidence": "crates.io, zerocopy-derive"
-    },
-    {
-      "id": "crate rust/Cargo.lock zerocopy@0.8.59",
-      "category": "crate",
-      "scope": "rust/Cargo.lock",
-      "name": "zerocopy",
-      "declaredIn": [
-        "rust/Cargo.lock"
-      ],
-      "pinned": "0.8.59",
-      "compare": "version",
-      "source": {
-        "type": "crate",
-        "crate": "zerocopy"
-      },
-      "role": "transitive",
-      "current": "0.8.59",
-      "evidence": "crates.io, zerocopy"
     },
     {
       "id": "crate rust/Cargo.lock zerofrom-derive@0.1.8",
