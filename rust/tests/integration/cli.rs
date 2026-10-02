@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
@@ -205,13 +206,18 @@ fn write_temp_file(stem: &str, extension: &str, contents: &str) -> PathBuf {
     path
 }
 
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_PATHS: AtomicU64 = AtomicU64::new(0);
+
 fn unique_temp_path(stem: &str) -> PathBuf {
+    let sequence = TEMP_PATHS.fetch_add(1, Ordering::Relaxed);
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("system clock should be after Unix epoch")
         .as_nanos();
     std::env::temp_dir().join(format!(
-        "meta-language-{stem}-{}-{nanos}",
+        "meta-language-{stem}-{}-{nanos}-{sequence}",
         std::process::id()
     ))
 }

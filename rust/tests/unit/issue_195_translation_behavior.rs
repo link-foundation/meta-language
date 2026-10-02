@@ -1,9 +1,14 @@
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use meta_language::{TranslationSupport, decode_program_translation, translate_program};
 use serde_json::Value;
+
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_DIRECTORIES: AtomicU64 = AtomicU64::new(0);
 
 fn corpus() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -26,12 +31,13 @@ fn translated_javascript_print_executes_in_rust() {
     let translated = translate_program(source_text, "JavaScript", "Rust")
         .expect("JavaScript to Rust translation");
     let directory = std::env::temp_dir().join(format!(
-        "meta-language-translation-{}-{}",
+        "meta-language-translation-{}-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .expect("time")
-            .as_nanos()
+            .as_nanos(),
+        TEMP_DIRECTORIES.fetch_add(1, Ordering::Relaxed)
     ));
     fs::create_dir(&directory).expect("temporary directory");
     let source = directory.join("translated.rs");
@@ -88,12 +94,13 @@ fn translated_rust_function_exports_javascript_behavior() {
         source_text
     );
     let directory = std::env::temp_dir().join(format!(
-        "meta-language-javascript-translation-{}-{}",
+        "meta-language-javascript-translation-{}-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .expect("time")
-            .as_nanos()
+            .as_nanos(),
+        TEMP_DIRECTORIES.fetch_add(1, Ordering::Relaxed)
     ));
     fs::create_dir(&directory).expect("temporary directory");
     fs::write(directory.join("translated.mjs"), translated.code()).expect("translated module");

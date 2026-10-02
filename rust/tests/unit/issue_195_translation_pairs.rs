@@ -175,16 +175,21 @@ struct Execution {
 
 pub struct TemporaryDirectory(pub PathBuf);
 
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMPORARY_DIRECTORIES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 impl TemporaryDirectory {
     pub fn new(name: &str) -> Self {
         let path = std::env::temp_dir().join(format!(
-            "issue-195-{}-{}-{}",
+            "issue-195-{}-{}-{}-{}",
             name.to_ascii_lowercase(),
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .expect("time")
-                .as_nanos()
+                .as_nanos(),
+            TEMPORARY_DIRECTORIES.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
         ));
         fs::create_dir_all(&path).expect("temporary directory");
         Self(path)

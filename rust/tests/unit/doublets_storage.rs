@@ -3,12 +3,17 @@
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
     AccessMode, DoubletsLinkStore, EngineLinkStore, LANGUAGE_FIXTURES, Link, LinkMetadata,
     LinkNetwork, LinkStore, LinkStoreQuery, LinkType, ParseConfiguration, StorageError,
 };
+
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_PATHS: AtomicU64 = AtomicU64::new(0);
 
 fn temp_store_path(name: &str) -> PathBuf {
     let sanitized = name
@@ -26,8 +31,9 @@ fn temp_store_path(name: &str) -> PathBuf {
         .expect("system time is after unix epoch")
         .as_nanos();
     std::env::temp_dir().join(format!(
-        "meta-language-{sanitized}-{}-{nonce}.doublets",
-        std::process::id()
+        "meta-language-{sanitized}-{}-{nonce}-{}.doublets",
+        std::process::id(),
+        TEMP_PATHS.fetch_add(1, Ordering::Relaxed)
     ))
 }
 

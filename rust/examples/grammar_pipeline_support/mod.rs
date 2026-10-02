@@ -4,6 +4,7 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
@@ -240,13 +241,18 @@ pub fn write_example_directory(stem: &str, examples: &[String]) -> PathBuf {
     dir
 }
 
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_PATHS: AtomicU64 = AtomicU64::new(0);
+
 pub fn unique_temp_path(stem: &str) -> PathBuf {
+    let sequence = TEMP_PATHS.fetch_add(1, Ordering::Relaxed);
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("system clock should be after Unix epoch")
         .as_nanos();
     std::env::temp_dir().join(format!(
-        "meta-language-{stem}-{}-{nanos}",
+        "meta-language-{stem}-{}-{nanos}-{sequence}",
         std::process::id()
     ))
 }
@@ -406,5 +412,15 @@ mod tests {
         let found = find_dependency_artifact(&deps_dir, &["libpest-"], &["rlib"]);
         fs::remove_dir_all(&deps_dir).ok();
         assert_eq!(found, Ok(current));
+    }
+
+    // Two generated-parser builds that got one directory deleted each other's
+    // object files on macOS, whose clock has microsecond resolution.
+    #[test]
+    fn temporary_paths_differ_within_one_clock_tick() {
+        let paths: std::collections::HashSet<_> = (0..1000)
+            .map(|_| unique_temp_path("generated-rust-parser"))
+            .collect();
+        assert_eq!(paths.len(), 1000);
     }
 }

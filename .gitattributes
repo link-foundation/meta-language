@@ -15,3 +15,6 @@ parity/fixtures/issue-195-evidence.json text eol=lf
 # sources and seeds, and slice byte offsets out of them; Windows checkouts must not add CRs.
 parity/fixtures/issue-195-conformance/** text eol=lf
 parity/fixtures/issue-195-generative/** text eol=lf
+# docs/vision.md is the fixture of every repository-directive row and Rust tests slice its
+# sections at blank lines; Windows checkouts must not add CRs.
+docs/vision.md text eol=lf
