@@ -84,6 +84,10 @@ export const MAX_LOWERED_CHARACTERS = 256;
 const MAX_CODE_POINT = 0x10ffff;
 const HELPER_PREFIX = 'lowered';
 const ENCODINGS = new Set(['exact', 'approximate']);
+const RULE_KIND_TAGS = new Set(['normal', 'atomic', 'silent', 'token']);
+const SOURCE_FORMAT_TAGS = new Set([
+  'meta-language', 'bnf', 'ebnf', 'abnf', 'peg', 'antlr', 'lark', 'gbnf', 'tree-sitter', 'inferred',
+]);
 
 /** A lowering or reconstruction that cannot be carried out. */
 export class GrammarLoweringError extends Error {
@@ -162,11 +166,11 @@ function mergeRanges(ranges) {
   return merged;
 }
 
-/** The ranges of every code point outside `ranges`. */
+/** The ranges of every character outside `ranges`, surrogate code points left out. */
 function complementRanges(ranges) {
   const complement = [];
   let next = 0;
-  for (const [start, end] of mergeRanges(ranges)) {
+  for (const [start, end] of mergeRanges([...ranges, [0xd800, 0xdfff]])) {
     if (start > next) complement.push([next, start - 1]);
     next = end + 1;
   }
@@ -391,9 +395,9 @@ export function lowerGrammar(grammar, format, {
   if (executableNames.size > 0) {
     const named = (name) => executableNames.get(name) ?? name;
     const renamed = (expression) => (expression.kind === 'ref' ? ref(named(expression.name)) : mapChildren(expression, renamed));
-    executable = new Grammar(named(start.name), new Map([...lowered.rules.values()].map((rule) => [
-      named(rule.name), { ...rule, expression: renamed(rule.expression) },
-    ])), lowered.sourceFormat);
+    executable = carryRuleDocs(new Grammar(named(start.name), new Map([...lowered.rules.values()].map((rule) => [
+      named(rule.name), { kind: rule.kind, expression: renamed(rule.expression) },
+    ])), lowered.sourceFormat), lowered, named);
   }
   let emitted = emitGrammar(executable);
   let imported = importGrammar(emitted.source);
@@ -504,14 +508,18 @@ export function parseLoweringMetadata(source) {
       };
     }
     if ((kind === 'rename' || kind === 'kind' || kind === 'doc') && args.length === 2) {
-      return { kind, rule: percentDecodeLinksText(word(args[0])), value: percentDecodeLinksText(word(args[1])) };
+      const value = percentDecodeLinksText(word(args[1]));
+      if (kind === 'kind' && !RULE_KIND_TAGS.has(value)) throw metadataError(`unknown rule kind ${value}`);
+      return { kind, rule: percentDecodeLinksText(word(args[0])), value };
     }
     throw metadataError(`unexpected link ${kind}`);
   });
+  const sourceFormat = sourceArgs.length === 0 ? null : percentDecodeLinksText(word(sourceArgs[0]));
+  if (sourceFormat !== null && !SOURCE_FORMAT_TAGS.has(sourceFormat)) throw metadataError(`unknown source format ${sourceFormat}`);
   return {
     format,
     status,
-    source: sourceArgs.length === 0 ? null : percentDecodeLinksText(word(sourceArgs[0])),
+    source: sourceFormat,
     start: percentDecodeLinksText(word(startArgs[0])),
     order: rulesArgs.map((value) => percentDecodeLinksText(word(value))),
     steps,

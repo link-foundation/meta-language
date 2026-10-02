@@ -42,7 +42,8 @@ for (const format of GRAMMAR_LOWERING_FORMATS) {
       const kind = process.env.KIND ?? 'normal';
       const rules = new Map([['start', { kind, expression: body }], ['other', { kind: 'normal', expression: lit('o') }]]);
       const tags = { pest: 'peg', 'tree-sitter-json': 'tree-sitter' };
-      const source = { own: tags[format] ?? format, none: null }[process.env.SOURCE] ?? process.env.SOURCE ?? 'bnf';
+      const sources = { own: tags[format] ?? format, none: null };
+      const source = process.env.SOURCE in sources ? sources[process.env.SOURCE] : process.env.SOURCE ?? 'bnf';
       const grammar = new Grammar('start', rules, source);
       if (process.env.DOC) grammar.rules.set('start', Object.freeze({ ...grammar.rule('start'), doc: process.env.DOC }));
       let verdict;
