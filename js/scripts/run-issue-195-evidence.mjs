@@ -37,6 +37,7 @@ import {
   uncitedFiles,
 } from './issue-195-evidence-stages.mjs';
 import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
+import { PARITY_ARTIFACT_FILES } from './issue-195-parity-evidence.mjs';
 import { TEST_GROUPS } from './test-groups.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -217,7 +218,11 @@ async function runRustSuite(failures) {
 function parityArtifacts() {
   return {
     commands: [],
-    artifacts: RUNTIMES.map((runtime) => relative(path.join(parityDirectory, `${runtime}.json`))),
+    artifacts: [
+      PARITY_ARTIFACT_FILES.digests,
+      PARITY_ARTIFACT_FILES.differences,
+      ...RUNTIMES.map(PARITY_ARTIFACT_FILES.translations),
+    ].map((file) => relative(path.join(parityDirectory, file))),
   };
 }
 
@@ -489,7 +494,7 @@ async function producePublishedEvidence() {
 async function validateNativeTranslations(target) {
   const observations = {};
   for (const runtime of RUNTIMES) {
-    const file = path.join(parityDirectory, `${runtime}.json`);
+    const file = path.join(parityDirectory, PARITY_ARTIFACT_FILES.translations(runtime));
     try {
       observations[runtime] = JSON.parse(await readFile(file, 'utf8'));
     } catch (error) {

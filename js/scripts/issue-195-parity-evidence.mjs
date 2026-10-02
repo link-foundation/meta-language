@@ -8,6 +8,12 @@
 // compared bindings, transformations, and translations, the language
 // distinctions left after normalization, and a mutation of the requirement's
 // own observations that changes no text yet is reported as a mismatch.
+//
+// The observations are about 100 MB per runtime, most of it the PDF grammar
+// cases' trees. The Rust probe streams them as one NDJSON record per section
+// entry, sections are compared entry by entry, and the kept evidence is one
+// digest per entry with the full entries only where the runtimes differ.
+import { createHash } from 'node:crypto';
 
 export const PARITY_SECTIONS = Object.freeze([
   'schemaVersion',
@@ -35,9 +41,100 @@ const TEXT_KEYS = new Set([
 
 const comparisons = new WeakMap();
 
-/** The compared sections whose observations differ between the runtimes. */
+/**
+ * The compared sections whose observations differ between the runtimes. A
+ * section is compared entry by entry, which equals comparing its canonical
+ * JSON without building that string for the whole section.
+ */
 export function mismatchedSections(left, right, sections = PARITY_SECTIONS) {
-  return sections.filter((section) => canonicalJson(left[section]) !== canonicalJson(right[section]));
+  return sections.filter((section) => !sameCanonical(left[section], right[section]));
+}
+
+function sameCanonical(left, right) {
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return left.length === right.length &&
+      left.every((entry, index) => canonicalJson(entry) === canonicalJson(right[index]));
+  }
+  return canonicalJson(left) === canonicalJson(right);
+}
+
+/** The probe's NDJSON records of `observation`: one per entry of a list section, one per other section. */
+export function* observationRecords(observation) {
+  for (const section of PARITY_SECTIONS) {
+    const value = observation[section];
+    if (Array.isArray(value)) {
+      for (const [index, entry] of value.entries()) yield { section, index, value: entry };
+    } else {
+      yield { section, index: null, value };
+    }
+  }
+}
+
+/** Rebuilds an observation from its NDJSON records, rejecting unknown sections, repeats and gaps. */
+export function observationFromRecords(records) {
+  const observation = {};
+  for (const { section, index, value } of records) {
+    if (!PARITY_SECTIONS.includes(section)) throw new Error(`unknown runtime-parity section ${section}`);
+    if (index === null) {
+      if (section in observation) throw new Error(`runtime-parity section ${section} is repeated`);
+      observation[section] = value;
+      continue;
+    }
+    observation[section] ??= [];
+    if (!Array.isArray(observation[section]) || index !== observation[section].length) {
+      throw new Error(`runtime-parity section ${section} entry ${index} is out of order`);
+    }
+    observation[section].push(value);
+  }
+  // A list section without entries has no records.
+  for (const section of PARITY_SECTIONS) observation[section] ??= [];
+  return observation;
+}
+
+function entryDigest(value) {
+  return createHash('sha256').update(canonicalJson(value)).digest('hex');
+}
+
+/**
+ * The kept runtime-parity evidence: one digest per section entry and runtime,
+ * and the full entries of both runtimes only where their digests differ.
+ */
+export function parityDigests(observations) {
+  const digests = [];
+  const differences = [];
+  for (const section of PARITY_SECTIONS) {
+    const values = Object.fromEntries(Object.entries(observations).map(([runtime, observation]) =>
+      [runtime, observation[section]]));
+    const list = Object.values(values).some(Array.isArray);
+    const count = list ? Math.max(...Object.values(values).map((value) => (Array.isArray(value) ? value.length : 0))) : 1;
+    for (let index = 0; index < count; index += 1) {
+      const entries = Object.fromEntries(Object.entries(values).map(([runtime, value]) =>
+        [runtime, list ? (Array.isArray(value) ? value[index] : undefined) : value]));
+      const record = {
+        section,
+        index: list ? index : null,
+        ...Object.fromEntries(Object.entries(entries).map(([runtime, entry]) =>
+          [runtime, entry === undefined ? null : entryDigest(entry)])),
+      };
+      digests.push(record);
+      if (new Set(Object.keys(entries).map((runtime) => record[runtime])).size > 1) {
+        differences.push({ section, index: record.index, ...Object.fromEntries(
+          Object.entries(entries).map(([runtime, entry]) => [runtime, entry ?? null])) });
+      }
+    }
+  }
+  return { digests, differences };
+}
+
+/** The runtime-parity artifacts: entry digests, differing entries, and each runtime's translations for the native stages. */
+export const PARITY_ARTIFACT_FILES = Object.freeze({
+  digests: 'digests.ndjson',
+  differences: 'differences.ndjson',
+  translations: (runtime) => `${runtime}-translations.json`,
+});
+
+export function ndjson(records) {
+  return records.map((record) => `${JSON.stringify(record)}\n`).join('');
 }
 
 // The full comparison of a pair of observations, computed once per pair.

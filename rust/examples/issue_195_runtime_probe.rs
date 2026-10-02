@@ -1,4 +1,5 @@
-use std::fs;
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 
 use meta_language::{
@@ -82,25 +83,63 @@ fn main() {
     let translations = translation_observations(&corpus);
     let diagnostics = diagnostic_observations(&corpus);
 
-    println!(
-        "{}",
-        serde_json::to_string(&json!({
-            "schemaVersion": 1,
-            "fixtureDigest": Sha256::digest(fs::read(corpus_path()).expect("shared corpus is readable")).iter().fold(String::with_capacity(64), |mut hex, byte| { use std::fmt::Write as _; let _ = write!(hex, "{byte:02x}"); hex }),
-            "positive": positive,
-            "negative": negative,
-            "inventory": inventory,
-            "builtins": builtins,
-            "linoGrammar": lino_grammar,
-            "pdfGrammar": pdf_grammar,
-            "semantics": semantics,
-            "diagnostics": diagnostics,
-            "bindingRenames": binding_renames,
-            "transforms": transforms,
-            "translations": translations,
-        }))
-        .expect("probe output serializes")
-    );
+    let fixture_digest =
+        Sha256::digest(fs::read(corpus_path()).expect("shared corpus is readable"))
+            .iter()
+            .fold(String::with_capacity(64), |mut hex, byte| {
+                use std::fmt::Write as _;
+                let _ = write!(hex, "{byte:02x}");
+                hex
+            });
+    let sections: [(&str, Vec<Value>); 11] = [
+        ("positive", positive),
+        ("negative", negative),
+        ("inventory", inventory),
+        ("builtins", builtins),
+        ("linoGrammar", lino_grammar),
+        ("pdfGrammar", pdf_grammar),
+        ("semantics", semantics),
+        ("diagnostics", diagnostics),
+        ("bindingRenames", binding_renames),
+        ("transforms", transforms),
+        ("translations", translations),
+    ];
+
+    // With an output path the probe writes one NDJSON record per section entry,
+    // so neither runtime holds the whole observation as one JSON string.
+    match std::env::args_os().nth(1) {
+        Some(path) => {
+            let mut out = BufWriter::new(File::create(path).expect("probe output is writable"));
+            let mut record = |section: &str, index: Value, value: &Value| {
+                serde_json::to_writer(
+                    &mut out,
+                    &json!({ "section": section, "index": index, "value": value }),
+                )
+                .expect("probe record serializes");
+                out.write_all(b"\n").expect("probe output is writable");
+            };
+            record("schemaVersion", Value::Null, &json!(1));
+            record("fixtureDigest", Value::Null, &json!(fixture_digest));
+            for (section, entries) in &sections {
+                for (index, entry) in entries.iter().enumerate() {
+                    record(section, json!(index), entry);
+                }
+            }
+            out.flush().expect("probe output is writable");
+        }
+        None => {
+            let mut observation = serde_json::Map::new();
+            observation.insert("schemaVersion".into(), json!(1));
+            observation.insert("fixtureDigest".into(), json!(fixture_digest));
+            for (section, entries) in sections {
+                observation.insert(section.into(), Value::Array(entries));
+            }
+            println!(
+                "{}",
+                serde_json::to_string(&observation).expect("probe output serializes")
+            );
+        }
+    }
 }
 
 fn corpus_path() -> PathBuf {

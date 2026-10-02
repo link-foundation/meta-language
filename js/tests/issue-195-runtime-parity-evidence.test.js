@@ -9,9 +9,16 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
 import {
+  PARITY_ARTIFACT_FILES,
   PARITY_REQUIREMENTS,
+  PARITY_SECTIONS,
+  canonicalJson,
   mismatchedSections,
+  ndjson,
+  observationFromRecords,
+  observationRecords,
   parityAssertions,
+  parityDigests,
 } from '../scripts/issue-195-parity-evidence.mjs';
 import { runtimeObservation } from '../scripts/issue-195-runtime-observation.mjs';
 import {
@@ -87,4 +94,77 @@ test('issue 195 parity evidence requires the requirement property on both runtim
   }
   const same = { javascript: collapsed, rust: structuredClone(collapsed) };
   assert.deepEqual(assertions('I195-SHARED-CONCEPTS', 'rust', same).passed, []);
+});
+
+test('issue 195 parity evidence compares sections entry by entry exactly as their canonical JSON', () => {
+  // The small sections keep this check fast; the PDF grammar trees alone are about 75 MB.
+  const sections = ['fixtureDigest', 'semantics', 'transforms', 'translations'];
+  const sameAsWhole = (left, right) => sections.filter((section) =>
+    canonicalJson(left[section]) !== canonicalJson(right[section]));
+  const longer = { ...javascript, semantics: [...javascript.semantics, javascript.semantics[0]] };
+  const reordered = { ...javascript, transforms: [...javascript.transforms].reverse() };
+  const scalar = { ...javascript, fixtureDigest: 'f'.repeat(64) };
+  const listed = { ...javascript, translations: { 0: javascript.translations[0] } };
+  const copied = { ...javascript, semantics: structuredClone(javascript.semantics) };
+  for (const other of [javascript, copied, longer, reordered, scalar, listed]) {
+    assert.deepEqual(mismatchedSections(javascript, other, sections), sameAsWhole(javascript, other));
+  }
+  assert.deepEqual(mismatchedSections(javascript, longer), ['semantics']);
+  assert.deepEqual(mismatchedSections(javascript, scalar), ['fixtureDigest']);
+});
+
+test('issue 195 parity evidence keeps entry digests and only the differing entries', () => {
+  const rust = structuredClone(javascript);
+  const same = parityDigests({ javascript, rust });
+  const entries = PARITY_SECTIONS.reduce((count, section) =>
+    count + (Array.isArray(javascript[section]) ? javascript[section].length : 1), 0);
+  assert.equal(same.digests.length, entries);
+  assert.ok(same.digests.every((record) => /^[0-9a-f]{64}$/u.test(record.javascript) && record.javascript === record.rust));
+  assert.deepEqual(same.differences, []);
+
+  rust.pdfGrammar[7].reconstruction += ' ';
+  rust.semantics.push({ extra: true });
+  const changed = parityDigests({ javascript, rust });
+  assert.deepEqual(changed.differences.map(({ section, index }) => [section, index]), [
+    ['pdfGrammar', 7], ['semantics', javascript.semantics.length],
+  ]);
+  assert.deepEqual(changed.differences[0].rust, rust.pdfGrammar[7]);
+  assert.deepEqual(changed.differences[0].javascript, javascript.pdfGrammar[7]);
+  assert.equal(changed.differences[1].javascript, null);
+  assert.equal(changed.digests.find(({ section, index }) =>
+    section === 'semantics' && index === javascript.semantics.length).javascript, null);
+  // The kept evidence is a small fraction of the observations it stands for.
+  const evidence = ndjson(changed.digests).length + ndjson(changed.differences).length;
+  assert.ok(evidence * 10 < canonicalJson(javascript).length, `${evidence} bytes of evidence`);
+});
+
+test('issue 195 parity evidence rebuilds an observation from the probe NDJSON records', () => {
+  const lines = ndjson([...observationRecords(javascript)]).trimEnd().split('\n');
+  assert.equal(lines.length, parityDigests({ javascript }).digests.length);
+  const rebuilt = observationFromRecords(lines.map((line) => JSON.parse(line)));
+  assert.deepEqual(mismatchedSections(javascript, rebuilt), []);
+  const empty = observationFromRecords([...observationRecords({ ...javascript, bindingRenames: [] })]);
+  assert.deepEqual(empty.bindingRenames, []);
+  assert.throws(() => observationFromRecords([{ section: 'trees', index: null, value: 1 }]), /unknown runtime-parity section trees/u);
+  assert.throws(() => observationFromRecords([{ section: 'semantics', index: 1, value: {} }]), /semantics entry 1 is out of order/u);
+  assert.throws(() => observationFromRecords([
+    { section: 'schemaVersion', index: null, value: 1 }, { section: 'schemaVersion', index: null, value: 1 },
+  ]), /schemaVersion is repeated/u);
+});
+
+test('issue 195 parity check streams the Rust probe to a file and keeps digests, not full trees', async () => {
+  const check = await readFile(new URL('../scripts/check-issue-195-runtime-parity.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(check, /maxBuffer|execFileSync/u);
+  assert.match(check, /'--example', 'issue_195_runtime_probe', '--', output/u);
+  assert.match(check, /observationFromRecords\(records\)/u);
+  assert.doesNotMatch(check, /'javascript\.json'|'rust\.json'|stableJson\(javascript\)|stableJson\(rust\)/u);
+  assert.deepEqual(
+    [PARITY_ARTIFACT_FILES.digests, PARITY_ARTIFACT_FILES.differences, PARITY_ARTIFACT_FILES.translations('rust')],
+    ['digests.ndjson', 'differences.ndjson', 'rust-translations.json'],
+  );
+  const probe = await readFile(new URL('../../rust/examples/issue_195_runtime_probe.rs', import.meta.url), 'utf8');
+  assert.match(probe, /BufWriter::new\(File::create\(path\)/u);
+  assert.match(probe, /json!\(\{ "section": section, "index": index, "value": value \}\)/u);
+  const runner = await readFile(new URL('../scripts/run-issue-195-evidence.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /PARITY_ARTIFACT_FILES\.translations\(runtime\)/u);
 });
