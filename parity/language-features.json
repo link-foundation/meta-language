@@ -515,6 +515,26 @@
       }
     },
     {
+      "id": "grammar-round-trip",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/grammar/round_trip.rs",
+          "rust/tests/unit/issue_195_interchange_mutation_guards.rs",
+          "parity/fixtures/grammar-importers.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/grammar-round-trip.js",
+          "js/tests/issue-195-interchange-mutation-guards.test.js",
+          "parity/fixtures/grammar-importers.json"
+        ]
+      }
+    },
+    {
       "id": "javascript-parser-codegen",
       "required": true,
       "rust": {

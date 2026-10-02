@@ -373,8 +373,8 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'Round-trip tests change the grammar before export and require the change in the exported grammar. Malformed and negative cases are rejected, so two mutually wrong importers and exporters cannot validate each other.',
     assertions: ['mutationVisibleAfterRoundTrip', 'malformedGrammarsRejected', 'mutuallyWrongPairDetected'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/src/grammar-round-trip.js'],
+    rust: ['rust/src/grammar/round_trip.rs'],
   },
   {
     id: 'I195-MERGE-AUTOMATIC-PIPELINE',
