@@ -1611,9 +1611,9 @@
       "sha256": "383eb71fb75c0b112951fd52766b54bd41e69ebda640670781fb22d35be95bf4"
     },
     "planned:repository-directive:i195-grammar-feature-union": {
-      "path": "docs/vision.md",
-      "selector": "#grammar-feature-union: grammar representation covering the union of all source grammar features",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "path": "parity/fixtures/grammar-feature-union.json",
+      "selector": "docs/vision.md#grammar-feature-union: grammar representation covering the union of all source grammar features",
+      "sha256": "2c7d0cea3d70d9d585eb28dca9563490d859c7bd862feae26390600c0d146742"
     },
     "planned:repository-directive:i195-grammar-concept-distinctions": {
       "path": "parity/fixtures/concept-distinctions.json",
@@ -1698,12 +1698,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "1020b29f671aff552a93db537c0571975cb5d780f4769f012d439e3149031d24"
+      "sha256": "ef7e97c676ad9c8285774a892d629e8ebfbba5184c0cafe22af0182c2a365541"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "1020b29f671aff552a93db537c0571975cb5d780f4769f012d439e3149031d24"
+      "sha256": "ef7e97c676ad9c8285774a892d629e8ebfbba5184c0cafe22af0182c2a365541"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -18001,8 +18001,20 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/grammar-feature-forms.js",
+          "js/src/grammar-runtime.js",
+          "js/src/grammar-runtime/executor.js",
+          "js/src/grammar-merge.js",
+          "js/src/grammar-lowering.js"
+        ],
+        "rust": [
+          "rust/src/grammar/feature.rs",
+          "rust/src/grammar/feature_runtime/mod.rs",
+          "rust/src/grammar/feature_runtime/executor.rs",
+          "rust/src/grammar/merge/declarations.rs",
+          "rust/src/grammar/interchange/lowering/metadata.rs"
+        ]
       },
       "verifications": [
         {
@@ -18041,7 +18053,7 @@
       "traceability": {
         "specification": "docs/vision.md#grammar-feature-union",
         "inventories": [
-          "docs/vision.md"
+          "parity/fixtures/grammar-feature-union.json"
         ],
         "sources": [
           "acceptanceGate",

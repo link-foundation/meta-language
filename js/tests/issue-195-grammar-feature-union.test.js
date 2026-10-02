@@ -37,7 +37,7 @@ function observe(assertions, testName) {
     requirementId: 'I195-GRAMMAR-FEATURE-UNION',
     suffix: 'behavior',
     fixtureId: 'planned:repository-directive:i195-grammar-feature-union',
-    fixtureFile: 'docs/vision.md',
+    fixtureFile: 'parity/fixtures/grammar-feature-union.json',
     assertions,
     testName,
   });
