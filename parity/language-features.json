@@ -658,8 +658,6 @@
       "rust": {
         "status": "implemented",
         "evidence": [
-          "js/scripts/run-rml-pr184-workloads.mjs",
-          "js/scripts/issue-195-rml-workload-probes.mjs",
           "rust/tests/unit/issue_195_downstream_rml_workloads.rs",
           "parity/fixtures/rml-pr184-workloads.json"
         ]

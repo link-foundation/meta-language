@@ -598,10 +598,9 @@ fn a_consumer_that_resolved_meta_language_from_the_registry_observes_nothing() {
     let mut npm = passing_report(&fixture);
     npm["npm"]["resolution"]["lockResolved"] =
         json!("https://registry.npmjs.org/meta-language/-/meta-language-0.46.0.tgz");
-    assert!(
-        validate(&npm, &fixture, Runtime::JavaScript)
-            .observed
-            .is_empty()
+    assert_eq!(
+        validate(&npm, &fixture, Runtime::JavaScript).observed,
+        Vec::<&str>::new()
     );
 
     let mut checksum = passing_report(&fixture);
@@ -659,10 +658,9 @@ fn a_missing_or_skipped_runtime_observes_nothing_for_that_runtime_only() {
         .as_object_mut()
         .expect("the synthetic report is an object")
         .remove("crate");
-    assert!(
-        validate(&report, &fixture, Runtime::Rust)
-            .observed
-            .is_empty()
+    assert_eq!(
+        validate(&report, &fixture, Runtime::Rust).observed,
+        Vec::<&str>::new()
     );
     assert_eq!(
         validate(&report, &fixture, Runtime::JavaScript).observed,

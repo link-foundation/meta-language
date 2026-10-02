@@ -114,7 +114,7 @@ fn natural_recursion_is_a_function_with_a_measure() {
             "abort-threading"
         ]
     );
-    assert!(emitted.assumptions.is_empty());
+    assert_eq!(emitted.assumptions.len(), 0);
     assert_eq!(emitted.theorems[0].target, "ml_assertion_1");
 }
 
