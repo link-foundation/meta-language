@@ -8,3 +8,4 @@ bump: patch
 
 ### Fixed
 - The native grammar fixtures count a source as recovered by the oracle when the root's has-error flag is set, not only when a row has an error or missing flag: tree-sitter can insert a missing line break at the end of the input that no row shows. `oracleRecovers` in `js/scripts/native-grammar-rows.mjs` checks both, and the JSON, INI and Diff suites use it.
+- The dependency inventory records emscripten/emsdk 6.0.11 as the newest image; the delivered image stays 4.0.15, held by tree-sitter 0.27.0.
