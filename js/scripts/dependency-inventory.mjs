@@ -801,11 +801,19 @@ export function compareAudits(recorded, live) {
 async function mapLimit(values, limit, task) {
   const results = new Array(values.length);
   let next = 0;
+  let failed = false;
+  // After the first failure no further task starts, so a failed live
+  // comparison fails closed without querying the remaining registries.
   const worker = async () => {
-    while (next < values.length) {
+    while (!failed && next < values.length) {
       const index = next;
       next += 1;
-      results[index] = await task(values[index], index);
+      try {
+        results[index] = await task(values[index], index);
+      } catch (error) {
+        failed = true;
+        throw error;
+      }
     }
   };
   await Promise.all(Array.from({ length: Math.min(limit, values.length) }, worker));
