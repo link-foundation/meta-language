@@ -8,6 +8,7 @@ import {
   buildIssue195Manifest,
 } from './issue-195-requirements.mjs';
 import { buildLanguageCatalog, formatLanguageCatalog } from './build-language-catalog.mjs';
+import { stageGateError } from './issue-195-evidence-stages.mjs';
 
 export {
   ASSERTION_PROFILES,
@@ -224,6 +225,14 @@ function resultIndex(resultDocuments) {
     if (!Array.isArray(document.results)) {
       errors.push('result document results must be an array');
       continue;
+    }
+    // The evidence aggregate reports each failed or missing stage once here,
+    // instead of only as the missing results of every cell the stage covers.
+    if (document.stageErrors !== undefined && !Array.isArray(document.stageErrors)) {
+      errors.push('result document stageErrors must be an array');
+    }
+    for (const stageError of Array.isArray(document.stageErrors) ? document.stageErrors : []) {
+      errors.push(stageGateError(stageError));
     }
     for (const result of document.results) {
       if (byTestId.has(result.testId)) errors.push(`duplicate result for ${result.testId}`);

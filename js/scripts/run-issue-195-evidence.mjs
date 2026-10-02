@@ -23,7 +23,21 @@ import {
   supportedPlatformCoverage,
 } from './issue-195-delivery.mjs';
 import { buildEvidencePlan, observedEvidenceForCell } from './issue-195-evidence-plan.mjs';
+import {
+  RUNTIMES,
+  aggregateGroups,
+  boundedEnvironment,
+  evidenceStage,
+  evidenceStages,
+  mergeStageRecords,
+  stageFiles,
+  stageGateError,
+  toolchainProblems,
+  translationGroups,
+  uncitedFiles,
+} from './issue-195-evidence-stages.mjs';
 import { verifyEvaluatedCheckout } from './issue-195-merge-enforcement.mjs';
+import { TEST_GROUPS } from './test-groups.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const commit = option('--commit', process.env.GITHUB_SHA ?? git(['rev-parse', 'HEAD']));
@@ -65,104 +79,294 @@ if (prepareCandidatesDirectory) {
   process.exit(0);
 }
 
+const stageName = option('--stage', null);
+const aggregateOnly = process.argv.includes('--aggregate');
+const stages = evidenceStages(checkpoint);
+const selectedStage = stageName ? evidenceStage(checkpoint, stageName) : null;
+if (selectedStage && aggregateOnly) throw new Error('--stage and --aggregate cannot be combined');
+
 await prepareDirectories();
 // While the run builds, a concurrent cleanup (a pre-commit hook, another
 // wrapper) keeps the outputs it uses; the run's own final cleanup ignores it.
 const lease = acquireLease({ cwd: root, label: `issue-195 ${checkpoint} evidence` });
 process.on('exit', () => lease.release());
-process.env.ISSUE_195_OBSERVATION_FILE = observationsPath;
 process.env.ISSUE_195_COMMIT = commit;
-const toolchainVersions = readToolchainVersions();
-const grammarVersions = readGrammarVersions();
 
-console.log(
-  `issue-195 evidence: executing ${plan.length} ${checkpoint} evidence groups for ${commit}`,
-);
-const evidenceGroups = checkpoint === 'release-delivery'
-  ? await producePublishedEvidence()
-  : await producePreMergeEvidence();
-verifyEvaluatedCheckout(root, commit);
-if (runnerObservations.length > 0) {
-  // One write keeps runner records whole next to the suites' own callbacks.
-  await appendFile(
-    observationsPath,
-    runnerObservations.map((record) => `${JSON.stringify(record)}\n`).join(''),
-  );
-}
-const executionRecords = await readExecutionRecords();
-
-let written = 0;
-let complete = 0;
-for (const { group, cells } of plan) {
-  const record = evidenceGroups.get(group);
-  if (!record) throw new Error(`evidence group completed without a record: ${group}`);
-  for (const { cell } of cells) {
-    const observed = observedEvidenceForCell(cell, executionRecords);
-    const output = path.join(root, cell.evidenceArtifact.split('#')[0]);
-    const fixtureDigests = Object.fromEntries(
-      cell.fixtureIds.map((fixtureId) => [fixtureId, manifest.fixtureCatalog[fixtureId].sha256]),
+if (selectedStage) {
+  // CI runs every stage as its own job; the aggregate job merges their outputs.
+  const succeeded = await runStage(selectedStage);
+  verifyEvaluatedCheckout(root, commit);
+  process.exitCode = succeeded ? 0 : 1;
+} else {
+  if (!aggregateOnly) {
+    // One stage after another: the suites and builds never share the machine.
+    console.log(
+      `issue-195 evidence: executing ${stages.length} ${checkpoint} evidence stages for ${commit}`,
     );
-    await writeFile(
-      output,
-      stableJson({
-        schemaVersion: 1,
-        issue: 195,
-        commit,
-        producer: 'js/scripts/run-issue-195-evidence.mjs',
-        generatedAt: new Date().toISOString(),
-        results: [
-          {
-            testId: cell.testId,
-            outcome: observed.complete ? 'passed' : 'missing',
-            kind: cell.kind,
-            positiveEvidence: observed.complete,
-            command: record.commands.join(' && '),
-            toolchainVersions,
-            grammarVersions,
-            evidenceArtifacts: [relative(output), ...record.artifacts],
-            failureLogs: record.failureLogs ?? [],
-            assertionsPassed: observed.assertionsPassed,
-            executionRecords: observed.executionRecords,
-            fixtureDigests,
-          },
-        ],
-      }),
-    );
-    written += 1;
-    if (observed.complete) complete += 1;
+    for (const stage of stages) await runStage(stage);
   }
+  await aggregateStages();
+  verifyEvaluatedCheckout(root, commit);
 }
-console.log(`issue-195 evidence: ${complete}/${written} cells have observed assertion callbacks`);
 
-async function readExecutionRecords() {
-  let contents;
+/**
+ * Runs one stage and writes its record and execution records. A failing
+ * command or check does not stop the stage's other evidence; the record keeps
+ * the failure, which the aggregate reports as one gate error naming the stage.
+ */
+async function runStage(stage) {
+  const files = stageFiles(stage.name);
+  const recordPath = path.join(resultsDirectory, files.record);
+  const stageObservationsPath = path.join(resultsDirectory, files.observations);
+  await rm(recordPath, { force: true });
+  await rm(stageObservationsPath, { force: true });
+  process.env.ISSUE_195_OBSERVATION_FILE = stageObservationsPath;
+  runnerObservations.length = 0;
+  console.log(`issue-195 evidence: stage ${stage.name}`);
+  const failures = [];
+  let toolchainVersions = {};
+  let groups = new Map();
   try {
-    contents = await readFile(observationsPath, 'utf8');
+    toolchainVersions = readToolchainVersions(stage.tools);
+    groups = await produceStage(stage, failures);
   } catch (error) {
-    if (error.code === 'ENOENT') return [];
-    throw error;
+    failures.push(error.message);
   }
-  const records = contents.split(/\r?\n/u).filter(Boolean).map((line, index) => {
+  const error = failures.length > 0 ? failures.join('; ') : null;
+  if (error) console.error(`issue-195 evidence: stage ${stage.name} failed: ${error}`);
+  if (runnerObservations.length > 0) {
+    // One write keeps runner records whole next to the suites' own callbacks.
+    await appendFile(
+      stageObservationsPath,
+      runnerObservations.map((record) => `${JSON.stringify(record)}\n`).join(''),
+    );
+  }
+  const record = {
+    schemaVersion: 1,
+    issue: 195,
+    stage: stage.name,
+    commit,
+    checkpoint,
+    toolchainVersions,
+    groups: Object.fromEntries(groups),
+    error,
+  };
+  await writeFile(recordPath, stableJson(record));
+  // The stage log keeps logs/ next to work/ in every stage upload, so each
+  // artifact unpacks at the results directory root.
+  await writeFile(
+    path.join(logsDirectory, `stage-${stage.name}.log`),
+    `stage: ${stage.name}\ncommit: ${commit}\ncheckpoint: ${checkpoint}\ngroups: ${[...groups.keys()].join(', ')}\nerror: ${error ?? 'none'}\n`,
+  );
+  return error === null;
+}
+
+async function produceStage(stage, failures) {
+  if (stage.name === 'javascript-suite') {
+    return new Map([['suite:javascript', await runJavaScriptSuite(failures)]]);
+  }
+  if (stage.name === 'rust-suite') return new Map([['suite:rust', await runRustSuite(failures)]]);
+  if (stage.name === 'runtime-parity') {
+    const runtimeParity = await runCommand('runtime-parity', 'node', [
+      path.join(root, 'js/scripts/check-issue-195-runtime-parity.mjs'),
+      '--artifacts-dir',
+      parityDirectory,
+    ]);
+    return new Map([['runtime-parity', bundle(runtimeParity, parityArtifacts())]]);
+  }
+  if (stage.target) return validateNativeTranslations(stage.target);
+  if (stage.name === 'delivery') {
+    return new Map(checkpoint === 'release-delivery'
+      ? await producePublishedEvidence()
+      : await produceDeliveryEvidence('candidate'));
+  }
+  if (stage.name === 'merge-enforcement') {
+    return new Map([['merge-enforcement', await produceMergeEnforcementEvidence()]]);
+  }
+  throw new Error(`evidence stage ${stage.name} has no producer`);
+}
+
+/** Runs each JavaScript test group in its own process, one group after another. */
+async function runJavaScriptSuite(failures) {
+  const records = [];
+  for (const group of Object.keys(TEST_GROUPS)) {
+    const record = await runCommand(
+      `suite-javascript-${group}`,
+      'node',
+      ['scripts/test-groups.mjs', '--run', group],
+      { cwd: path.join(root, 'js'), allowFailure: true },
+    );
+    if (!record.ok) failures.push(`JavaScript test group ${group} failed; see ${record.artifacts[0]}`);
+    records.push(record);
+  }
+  return bundle(...records);
+}
+
+/**
+ * Runs the Rust tests with the default features: the execution records come
+ * from the test binaries, and no recording test needs another feature.
+ */
+async function runRustSuite(failures) {
+  const record = await runCommand('suite-rust', 'cargo', [
+    'test', '--locked', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--tests',
+  ], { allowFailure: true });
+  if (!record.ok) failures.push(`Rust tests failed; see ${record.artifacts[0]}`);
+  return bundle(record);
+}
+
+function parityArtifacts() {
+  return {
+    commands: [],
+    artifacts: RUNTIMES.map((runtime) => relative(path.join(parityDirectory, `${runtime}.json`))),
+  };
+}
+
+/**
+ * Merges the stage outputs in the results directory, derives the translation
+ * and cache-cleanup groups, and writes every verification cell. A stage that
+ * failed or did not report writes one gate error naming it.
+ */
+async function aggregateStages() {
+  const records = new Map();
+  for (const name of (await readdir(workDirectory)).filter((file) => /^stage-.+\.json$/u.test(file)).sort()) {
+    const stage = name.slice('stage-'.length, -'.json'.length);
     try {
-      return JSON.parse(line);
+      records.set(stage, JSON.parse(await readFile(path.join(workDirectory, name), 'utf8')));
     } catch (error) {
-      throw new Error(`invalid execution record at line ${index + 1}: ${error.message}`);
+      records.set(stage, error);
     }
-  });
+  }
+  const { groups, stageErrors } = mergeStageRecords({ checkpoint, commit, records });
+  const executionRecords = await readStageExecutionRecords(records, stageErrors);
+  process.env.ISSUE_195_OBSERVATION_FILE = observationsPath;
+  for (const [group, record] of translationGroups(groups)) groups.set(group, record);
+  runnerObservations.length = 0;
+  if (aggregateGroups(checkpoint).includes('cache-cleanup:measured')) {
+    groups.set('cache-cleanup:measured', {
+      ...produceCacheCleanupEvidence(),
+      toolchainVersions: readToolchainVersions(['node']),
+    });
+  }
+  executionRecords.push(...runnerObservations);
+  await writeFile(
+    observationsPath,
+    executionRecords.map((record) => `${JSON.stringify(record)}\n`).join(''),
+  );
+  const grammarVersions = readGrammarVersions();
+
+  let written = 0;
+  let complete = 0;
+  const absentGroups = [];
+  for (const { group, cells } of plan) {
+    const record = groups.get(group);
+    if (!record) {
+      absentGroups.push(group);
+      continue;
+    }
+    for (const { cell } of cells) {
+      const observed = observedEvidenceForCell(cell, executionRecords);
+      const output = path.join(root, cell.evidenceArtifact.split('#')[0]);
+      const fixtureDigests = Object.fromEntries(
+        cell.fixtureIds.map((fixtureId) => [fixtureId, manifest.fixtureCatalog[fixtureId].sha256]),
+      );
+      await writeFile(
+        output,
+        stableJson({
+          schemaVersion: 1,
+          issue: 195,
+          commit,
+          producer: 'js/scripts/run-issue-195-evidence.mjs',
+          generatedAt: new Date().toISOString(),
+          results: [
+            {
+              testId: cell.testId,
+              outcome: observed.complete ? 'passed' : 'missing',
+              kind: cell.kind,
+              positiveEvidence: observed.complete,
+              command: record.commands.join(' && '),
+              toolchainVersions: record.toolchainVersions,
+              grammarVersions,
+              evidenceArtifacts: [relative(output), ...record.artifacts],
+              failureLogs: record.failureLogs ?? [],
+              assertionsPassed: observed.assertionsPassed,
+              executionRecords: observed.executionRecords,
+              fixtureDigests,
+            },
+          ],
+        }),
+      );
+      written += 1;
+      if (observed.complete) complete += 1;
+    }
+  }
+  await writeFile(
+    path.join(resultsDirectory, 'evidence-stages.json'),
+    stableJson({
+      schemaVersion: 1,
+      issue: 195,
+      commit,
+      producer: 'js/scripts/run-issue-195-evidence.mjs',
+      generatedAt: new Date().toISOString(),
+      results: [],
+      stages: [...records.keys()],
+      absentGroups,
+      stageErrors,
+    }),
+  );
+  for (const stageError of stageErrors) console.error(`issue-195 evidence: ${stageGateError(stageError)}`);
+  if (absentGroups.length > 0) {
+    console.error(`issue-195 evidence: no record for ${absentGroups.join(', ')}; their cells are missing`);
+  }
+  console.log(`issue-195 evidence: ${complete}/${written} cells have observed assertion callbacks`);
+}
+
+/**
+ * Reads the execution records of every stage. A record that is malformed,
+ * names an unknown cell or repeats another is dropped and reported as an
+ * error of the stage that wrote it.
+ */
+async function readStageExecutionRecords(records, stageErrors) {
   const known = new Set(plan.flatMap(({ cells }) => cells.map(({ cell }) => cell.testId)));
   const seen = new Set();
-  for (const record of records) {
-    if (!record || typeof record !== 'object') {
-      throw new Error('execution record is not an object');
+  const accepted = [];
+  for (const stage of stages) {
+    if (!records.has(stage.name)) continue;
+    let contents;
+    try {
+      contents = await readFile(path.join(resultsDirectory, stageFiles(stage.name).observations), 'utf8');
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
     }
-    if (!known.has(record.testId)) {
-      throw new Error(`execution record has unknown testId ${record.testId}`);
-    }
-    const key = `${record.testId}\u0000${record.assertionId}\u0000${record.fixtureId}`;
-    if (seen.has(key)) throw new Error(`duplicate execution record ${key}`);
-    seen.add(key);
+    const problems = [];
+    contents.split(/\r?\n/u).forEach((line, index) => {
+      if (!line) return;
+      let record;
+      try {
+        record = JSON.parse(line);
+      } catch (error) {
+        problems.push(`invalid execution record at line ${index + 1}: ${error.message}`);
+        return;
+      }
+      if (!record || typeof record !== 'object') {
+        problems.push(`execution record at line ${index + 1} is not an object`);
+        return;
+      }
+      if (!known.has(record.testId)) {
+        problems.push(`execution record has unknown testId ${record.testId}`);
+        return;
+      }
+      const key = `${record.testId}\u0000${record.assertionId}\u0000${record.fixtureId}`;
+      if (seen.has(key)) {
+        problems.push(`duplicate execution record ${key.replaceAll('\u0000', ' ')}`);
+        return;
+      }
+      seen.add(key);
+      accepted.push(record);
+    });
+    if (problems.length > 0) stageErrors.push({ stage: stage.name, error: problems.join('; ') });
   }
-  return records;
+  return accepted;
 }
 
 function option(name, fallback) {
@@ -178,15 +382,25 @@ function safeResultsDirectory(value) {
   return resolved;
 }
 
+/**
+ * A full run starts from empty outputs. A stage keeps the other stages'
+ * outputs (a native stage reads the runtime-parity stage's), and the
+ * aggregate keeps every downloaded stage output and replaces only the cells.
+ */
 async function prepareDirectories() {
   await mkdir(resultsDirectory, { recursive: true });
-  for (const name of await readdir(resultsDirectory)) {
-    if (name.endsWith('.json')) await rm(path.join(resultsDirectory, name));
+  if (!selectedStage) {
+    for (const name of await readdir(resultsDirectory)) {
+      if (name.endsWith('.json')) await rm(path.join(resultsDirectory, name));
+    }
+    await rm(observationsPath, { force: true });
   }
-  await rm(workDirectory, { recursive: true, force: true });
-  await rm(logsDirectory, { recursive: true, force: true });
-  await rm(artifactsDirectory, { recursive: true, force: true });
-  await rm(path.join(resultsDirectory, 'platform-reports'), { recursive: true, force: true });
+  if (!selectedStage && !aggregateOnly) {
+    await rm(workDirectory, { recursive: true, force: true });
+    await rm(logsDirectory, { recursive: true, force: true });
+    await rm(artifactsDirectory, { recursive: true, force: true });
+    await rm(path.join(resultsDirectory, 'platform-reports'), { recursive: true, force: true });
+  }
   await Promise.all([
     mkdir(workDirectory, { recursive: true }),
     mkdir(logsDirectory, { recursive: true }),
@@ -195,26 +409,12 @@ async function prepareDirectories() {
   ]);
 }
 
-function readToolchainVersions() {
-  const versions = {
-    node: commandOutput('node', ['--version']),
-    npm: commandOutput('npm', ['--version']),
-    rustc: commandOutput('rustc', ['--version']),
-    cargo: commandOutput('cargo', ['--version']),
-    lean: commandOutput('lean', ['--version']),
-    rocq: commandOutput('rocq', ['--version']),
-    platform: `${process.platform}-${process.arch}`,
-  };
-  const expected = [
-    ['rustc', versions.rustc, '1.99.0'],
-    ['lean', versions.lean, '4.34.1'],
-    ['rocq', versions.rocq, '9.3'],
-  ];
-  for (const [tool, actual, wanted] of expected) {
-    if (!actual.includes(wanted)) {
-      throw new Error(`${tool} version does not match declared toolchain ${wanted}: ${actual}`);
-    }
-  }
+/** The versions of the stage's tools; a declared tool must have its declared version. */
+function readToolchainVersions(tools) {
+  const versions = Object.fromEntries(tools.map((tool) => [tool, commandOutput(tool, ['--version'])]));
+  versions.platform = `${process.platform}-${process.arch}`;
+  const problems = toolchainProblems(versions);
+  if (problems.length > 0) throw new Error(problems.join('; '));
   return versions;
 }
 
@@ -227,51 +427,6 @@ function readGrammarVersions() {
     ),
     acceptanceManifest: `schema-${manifest.schemaVersion}`,
   };
-}
-
-async function producePreMergeEvidence() {
-  const [javascriptSuite, rustSuite] = await Promise.all([
-    runCommand('suite-javascript', 'npm', ['test'], { cwd: path.join(root, 'js') }),
-    runCommand(
-      'suite-rust',
-      'cargo',
-      ['test', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--all-features'],
-    ),
-  ]);
-  const runtimeParity = await runCommand(
-    'runtime-parity',
-    'node',
-    [
-      path.join(root, 'js/scripts/check-issue-195-runtime-parity.mjs'),
-      '--artifacts-dir',
-      parityDirectory,
-    ],
-  );
-  const nativeGroups = await validateNativeTranslations();
-  const delivery = await produceDeliveryEvidence('candidate');
-  const groups = new Map([
-    ['suite:javascript', bundle(javascriptSuite)],
-    ['suite:rust', bundle(rustSuite)],
-    ['runtime-parity', bundle(runtimeParity)],
-    ...delivery,
-  ]);
-  groups.set('merge-enforcement', await produceMergeEnforcementEvidence());
-  for (const [group, record] of nativeGroups) groups.set(group, record);
-  groups.set('cache-cleanup:measured', produceCacheCleanupEvidence());
-  for (const runtime of ['javascript', 'rust']) {
-    for (const target of ['JavaScript', 'Rust', 'Lean', 'Rocq']) {
-      // Native logs support the translation; the native negative control is not its failure.
-      groups.set(`translation:${target}:${runtime}`, {
-        ...bundle(
-          runtime === 'javascript' ? javascriptSuite : rustSuite,
-          runtimeParity,
-          nativeGroups.get(`native:${target}:${runtime}`),
-        ),
-        failureLogs: [],
-      });
-    }
-  }
-  return groups;
 }
 
 async function produceMergeEnforcementEvidence() {
@@ -324,91 +479,103 @@ async function producePublishedEvidence() {
 }
 
 /**
- * Validates every emitted translation with the declared native toolchain. Each
- * target records the toolchain identity, validates the artifacts, re-executes
- * the recorded reproduction script, and confirms that the same command rejects
- * a deliberately invalid artifact whose log is kept as the failure log.
- * Native acceptance checks emitted-code validity only; it is not proof authority.
+ * Validates both runtimes' emitted translations to `target` with the declared
+ * native toolchain. Each runtime records the toolchain identity, validates the
+ * artifacts, re-executes the recorded reproduction script, and confirms that
+ * the same command rejects a deliberately invalid artifact whose log is kept
+ * as the failure log. Native acceptance checks emitted-code validity only; it
+ * is not proof authority.
  */
-async function validateNativeTranslations() {
-  const observations = {
-    javascript: JSON.parse(await readFile(path.join(parityDirectory, 'javascript.json'), 'utf8')),
-    rust: JSON.parse(await readFile(path.join(parityDirectory, 'rust.json'), 'utf8')),
-  };
+async function validateNativeTranslations(target) {
+  const observations = {};
+  for (const runtime of RUNTIMES) {
+    const file = path.join(parityDirectory, `${runtime}.json`);
+    try {
+      observations[runtime] = JSON.parse(await readFile(file, 'utf8'));
+    } catch (error) {
+      throw new Error(`the runtime-parity stage output ${relative(file)} cannot be read: ${error.message}`);
+    }
+  }
   const groups = new Map();
   for (const [runtime, observation] of Object.entries(observations)) {
-    for (const target of ['JavaScript', 'Rust', 'Lean', 'Rocq']) {
-      const declaration = corpus.nativeValidation[target];
-      const directory = path.join(workDirectory, 'native', runtime, target.toLowerCase());
-      await mkdir(directory, { recursive: true });
-      const translations = observation.translations.filter(
-        ({ targetLanguage }) => targetLanguage === target,
-      );
-      if (translations.length !== 3) {
-        throw new Error(`${runtime} emitted ${translations.length} ${target} translations, expected 3`);
-      }
-      const label = `native-${runtime}-${target.toLowerCase()}`;
-      const testId = `i195-native-${target.toLowerCase()}-${runtime}-positive`;
-      const version = commandOutput(declaration.tool, ['--version']);
-      const toolchainPath = path.join(directory, 'toolchain.json');
-      await writeFile(toolchainPath, stableJson({
-        tool: declaration.tool,
-        declaredVersion: declaration.declaredVersion,
-        version,
-        platform: `${process.platform}-${process.arch}`,
-      }));
-      const artifacts = [];
-      for (const translation of translations) {
-        const sourceName = translation.sourceLanguage.toLowerCase();
-        const artifact = path.join(directory, `${sourceName}_to_${target.toLowerCase()}${declaration.extension}`);
-        await writeFile(artifact, translation.code);
-        artifacts.push(artifact);
-      }
-      const validations = [];
-      for (const artifact of artifacts) {
-        validations.push(await runCommand(
-          `${label}-${path.basename(artifact, declaration.extension)}`,
-          ...nativeCommand(target, artifact),
-          { allowFailure: true },
-        ));
-      }
-      const reproducePath = path.join(directory, 'reproduce.sh');
-      await writeFile(reproducePath, `#!/bin/sh\nset -eu\n${artifacts
-        .map((artifact) => renderCommand(...nativeCommand(target, artifact)))
-        .join('\n')}\n`);
-      const reproduction = await runCommand(`${label}-reproduce`, 'sh', [reproducePath], {
-        allowFailure: true,
-      });
-      const rejected = path.join(directory, `rejected${declaration.extension}`);
-      await writeFile(rejected, `${translations[0].code}${declaration.rejectedSuffix}`);
-      const negative = await runCommand(`${label}-rejected`, ...nativeCommand(target, rejected), {
-        allowFailure: true,
-      });
-      const record = bundle(...validations, reproduction, negative);
-      record.artifacts.push(
-        relative(toolchainPath),
-        relative(reproducePath),
-        ...artifacts.map(relative),
-        relative(rejected),
-      );
-      const toolchain = JSON.parse(await readFile(toolchainPath, 'utf8'));
-      if (version.includes(declaration.declaredVersion)) {
-        observe(testId, 'declaredToolchainPresent', `${declaration.tool} ${declaration.declaredVersion} is installed`);
-      }
-      if (validations.every(({ ok }) => ok)) {
-        observe(testId, 'artifactValidated', `${declaration.tool} accepts all ${runtime} ${target} translations`);
-      }
-      if (toolchain.version === version && toolchain.version.includes(declaration.declaredVersion)) {
-        observe(testId, 'toolchainVersionRecorded', `${target} toolchain identity recorded`);
-      }
-      if (reproduction.ok && validations.every(({ ok }) => ok)) {
-        observe(testId, 'reproducibleCommandRecorded', `${target} recorded validation script re-executes`);
-      }
-      if (!negative.ok) {
-        record.failureLogs = negative.artifacts;
-        observe(testId, 'failureLogRecorded', `${declaration.tool} rejects an invalid ${target} artifact with a log`);
-      }
-      groups.set(`native:${target}:${runtime}`, record);
+    const declaration = corpus.nativeValidation[target];
+    const directory = path.join(workDirectory, 'native', runtime, target.toLowerCase());
+    await mkdir(directory, { recursive: true });
+    const translations = observation.translations.filter(
+      ({ targetLanguage }) => targetLanguage === target,
+    );
+    if (translations.length !== 3) {
+      throw new Error(`${runtime} emitted ${translations.length} ${target} translations, expected 3`);
+    }
+    const label = `native-${runtime}-${target.toLowerCase()}`;
+    const testId = `i195-native-${target.toLowerCase()}-${runtime}-positive`;
+    const version = commandOutput(declaration.tool, ['--version']);
+    const toolchainPath = path.join(directory, 'toolchain.json');
+    await writeFile(toolchainPath, stableJson({
+      tool: declaration.tool,
+      declaredVersion: declaration.declaredVersion,
+      version,
+      platform: `${process.platform}-${process.arch}`,
+    }));
+    const artifacts = [];
+    for (const translation of translations) {
+      const sourceName = translation.sourceLanguage.toLowerCase();
+      const artifact = path.join(directory, `${sourceName}_to_${target.toLowerCase()}${declaration.extension}`);
+      await writeFile(artifact, translation.code);
+      artifacts.push(artifact);
+    }
+    const validations = [];
+    for (const artifact of artifacts) {
+      validations.push(await runCommand(
+        `${label}-${path.basename(artifact, declaration.extension)}`,
+        ...nativeCommand(target, artifact),
+        { allowFailure: true },
+      ));
+    }
+    const reproducePath = path.join(directory, 'reproduce.sh');
+    await writeFile(reproducePath, `#!/bin/sh\nset -eu\n${artifacts
+      .map((artifact) => renderCommand(...nativeCommand(target, artifact)))
+      .join('\n')}\n`);
+    const reproduction = await runCommand(`${label}-reproduce`, 'sh', [reproducePath], {
+      allowFailure: true,
+    });
+    const rejected = path.join(directory, `rejected${declaration.extension}`);
+    await writeFile(rejected, `${translations[0].code}${declaration.rejectedSuffix}`);
+    const negative = await runCommand(`${label}-rejected`, ...nativeCommand(target, rejected), {
+      allowFailure: true,
+    });
+    const record = bundle(...validations, reproduction, negative);
+    record.artifacts.push(
+      relative(toolchainPath),
+      relative(reproducePath),
+      ...artifacts.map(relative),
+      relative(rejected),
+    );
+    const toolchain = JSON.parse(await readFile(toolchainPath, 'utf8'));
+    if (version.includes(declaration.declaredVersion)) {
+      observe(testId, 'declaredToolchainPresent', `${declaration.tool} ${declaration.declaredVersion} is installed`);
+    }
+    if (validations.every(({ ok }) => ok)) {
+      observe(testId, 'artifactValidated', `${declaration.tool} accepts all ${runtime} ${target} translations`);
+    }
+    if (toolchain.version === version && toolchain.version.includes(declaration.declaredVersion)) {
+      observe(testId, 'toolchainVersionRecorded', `${target} toolchain identity recorded`);
+    }
+    if (reproduction.ok && validations.every(({ ok }) => ok)) {
+      observe(testId, 'reproducibleCommandRecorded', `${target} recorded validation script re-executes`);
+    }
+    if (!negative.ok) {
+      record.failureLogs = negative.artifacts;
+      observe(testId, 'failureLogRecorded', `${declaration.tool} rejects an invalid ${target} artifact with a log`);
+    }
+    groups.set(`native:${target}:${runtime}`, record);
+    // The cell is recorded: compiler outputs (.rmeta, .vo, .glob) are not
+    // evidence, so they leave before the next runtime builds its own.
+    const cited = new Set([...record.artifacts, ...record.failureLogs]);
+    const names = await readdir(directory);
+    const kept = names.filter((name) => cited.has(relative(path.join(directory, name))));
+    for (const name of uncitedFiles(names, kept)) {
+      await rm(path.join(directory, name), { recursive: true, force: true });
     }
   }
   return groups;
@@ -664,7 +831,7 @@ async function validateDownstreamRml(npmCandidate, crateCandidate, kind = 'candi
     '--test', corpus.downstreamRml.javascriptTest.replace(/^js\//u, ''),
   ], {
     cwd: javascriptDirectory,
-    env: { ...process.env, NO_PROXY: '*', no_proxy: '*' },
+    env: { ...boundedEnvironment(process.env), NO_PROXY: '*', no_proxy: '*' },
     allowFailure: true,
   });
 
@@ -707,7 +874,7 @@ async function runCommand(
   label,
   command,
   args,
-  { cwd = root, env = process.env, allowFailure = false } = {},
+  { cwd = root, env = boundedEnvironment(process.env), allowFailure = false } = {},
 ) {
   const logPath = path.join(logsDirectory, `${label}.log`);
   const handle = await open(logPath, 'w');

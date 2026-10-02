@@ -161,6 +161,7 @@ if (process.argv.includes('--write-ledger')) {
   await writeFile(path.join(root, 'docs', 'issue-195-requirement-ledger.md'), `${markdown}\n`);
 }
 
+reportErrors('issue-195 gate', report.gateErrors);
 console.log(
   `issue-195: ${report.summary.passed}/${report.summary.requirements} requirements passed (${report.summary.verificationCells} verification cells, ${report.summary.gateErrors} gate errors)`,
 );
