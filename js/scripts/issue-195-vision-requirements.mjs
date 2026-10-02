@@ -633,7 +633,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'The consumer audit inspects the current relative-meta-logic pull request 184 implementation, records its pinned revision and actual required workloads, and maps every workload to implementation and executable acceptance rows rather than relying only on the older default-branch audit.',
     assertions: ['currentPullRequestRevisionPinned', 'actualWorkloadsInventoried', 'eachWorkloadMappedToExecutableAcceptance'],
-    tooling: null,
+    tooling: ['docs/downstream-consumers.md', 'js/scripts/issue-195-rml-pr184.mjs', 'parity/fixtures/rml-pr184-workloads.json'],
   },
   {
     id: 'I195-DOWNSTREAM-FORMAL-AI-WORKLOADS',

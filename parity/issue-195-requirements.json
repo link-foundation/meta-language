@@ -1728,7 +1728,7 @@
     "planned:repository-directive:i195-downstream-consumer-matrix": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: consumer matrix for relative-meta-logic and formal-ai",
-      "sha256": "4e33fe76cfe81e970ea97572933eeb369038c0ffa8fa8af2a14805b55208e7e4"
+      "sha256": "2fb88931ef61ab819c5d1e813f5dca17d2ca28f1655d2992ad0e00add0b0ee78"
     },
     "planned:repository-directive:i195-downstream-rml-workloads": {
       "path": "docs/vision.md",
@@ -1738,7 +1738,7 @@
     "planned:repository-directive:i195-downstream-rml-pr184-audit": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: current relative-meta-logic pull request 184 workload inventory",
-      "sha256": "4e33fe76cfe81e970ea97572933eeb369038c0ffa8fa8af2a14805b55208e7e4"
+      "sha256": "2fb88931ef61ab819c5d1e813f5dca17d2ca28f1655d2992ad0e00add0b0ee78"
     },
     "planned:repository-directive:i195-downstream-formal-ai-workloads": {
       "path": "docs/vision.md",
@@ -1748,7 +1748,7 @@
     "planned:repository-directive:i195-downstream-typescript-translations": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: Rust, JavaScript and TypeScript semantic projection for formal-ai",
-      "sha256": "4e33fe76cfe81e970ea97572933eeb369038c0ffa8fa8af2a14805b55208e7e4"
+      "sha256": "2fb88931ef61ab819c5d1e813f5dca17d2ca28f1655d2992ad0e00add0b0ee78"
     },
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
@@ -15963,7 +15963,11 @@
         "tooling"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "tooling": [
+          "docs/downstream-consumers.md",
+          "js/scripts/issue-195-rml-pr184.mjs",
+          "parity/fixtures/rml-pr184-workloads.json"
+        ]
       },
       "verifications": [
         {
@@ -20989,7 +20993,9 @@
           "npm:meta-language",
           "crates.io:meta-language"
         ],
-        "downstream": []
+        "downstream": [
+          "link-foundation/relative-meta-logic"
+        ]
       }
     },
     {

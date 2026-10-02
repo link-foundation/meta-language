@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Checks the downstream consumer matrix (docs/downstream-consumers.md): both
 // consumers are mapped, every mapping names a known status and at least one
-// ledger row, and every mapped ledger row and test exists.
+// ledger row, and every mapped ledger row and test exists. The audit of the
+// current relative-meta-logic pull request 184 links every inventoried
+// workload at the pinned head (js/scripts/issue-195-rml-pr184.mjs).
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -9,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import { CONSUMER_MATRIX, parseConsumerMatrix, validateConsumerMatrix } from './issue-195-downstream.mjs';
 import { buildIssue195Manifest } from './issue-195-requirements.mjs';
+import { loadRmlPr184Audit, validateRmlPr184Audit } from './issue-195-rml-pr184.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const matrix = parseConsumerMatrix(await readFile(path.join(root, CONSUMER_MATRIX), 'utf8'));
@@ -17,9 +20,11 @@ const errors = validateConsumerMatrix(matrix, {
   rowIds: new Set(manifest.atomicRequirements.map(({ id }) => id)),
   fileExists: (relative) => existsSync(path.join(root, relative)),
 });
+const { fixture, audit, context } = loadRmlPr184Audit(root);
+errors.push(...Object.values(validateRmlPr184Audit(audit, fixture, context)).flat());
 if (errors.length > 0) {
   console.error(`downstream consumer matrix check failed:\n- ${errors.join('\n- ')}`);
   process.exit(1);
 }
 const counts = Object.entries(matrix.consumers).map(([name, { mappings }]) => `${mappings.length} ${name} mappings`);
-console.log(`downstream consumer matrix OK: ${counts.join(', ')}`);
+console.log(`downstream consumer matrix OK: ${counts.join(', ')}, ${fixture.workloads.length} workloads of relative-meta-logic pull request 184`);
