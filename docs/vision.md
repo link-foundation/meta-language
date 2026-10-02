@@ -654,12 +654,15 @@ gaps against the target above:
   for JSON
   ([`parity/grammars/native/json.lino`](../parity/grammars/native/json.lino)),
   INI
-  ([`parity/grammars/native/ini.lino`](../parity/grammars/native/ini.lino))
-  and unified diffs
-  ([`parity/grammars/native/diff.lino`](../parity/grammars/native/diff.lino)),
-  which are checked against tree-sitter-json, tree-sitter-ini and
-  tree-sitter-diff but reject invalid input instead of recovering. The default
-  JSON, INI and Diff parses still run those tree-sitter grammars.
+  ([`parity/grammars/native/ini.lino`](../parity/grammars/native/ini.lino)),
+  unified diffs
+  ([`parity/grammars/native/diff.lino`](../parity/grammars/native/diff.lino))
+  and CSV
+  ([`parity/grammars/native/csv.lino`](../parity/grammars/native/csv.lino)),
+  which are checked against tree-sitter-json, tree-sitter-ini,
+  tree-sitter-diff and tree-sitter-csv but reject invalid input instead of
+  recovering. The default JSON, INI, Diff and CSV parses still run those
+  tree-sitter grammars.
 - **Incomplete grammar expression model.** The model in
   [`rust/src/grammar/mod.rs`](../rust/src/grammar/mod.rs) covers:
   - terminals and non-terminals;

@@ -291,6 +291,24 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-CSV',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/csv.json',
+    construct: 'native merged CSV grammar checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/csv.lino is a canonical native Links Notation grammar merged from tree-sitter-csv (revision f6bf6e3 with the RFC 4180 quotes patch) and RFC 4180. Both executors build, for every corpus source, exactly the concrete syntax tree rows of the tree-sitter-csv oracle with no ambiguity, typed number, float and boolean fields, quoted fields with doubled quotes and line breaks, and blank lines included; they accept the empty last field RFC 4180 allows and the oracle recovers from, reject invalid quoting, and keep every source byte, line breaks and blank lines included, in the tree.',
+    assertions: [
+      'nativeCsvGrammarIsCanonicalLinks',
+      'nativeCsvTreesMatchOracle',
+      'nativeCsvAcceptsMergedSourceExtensions',
+      'nativeCsvRejectsInvalidInput',
+      'nativeCsvTreesLossless',
+    ],
+    javascript: ['js/src/grammar-links.js', 'js/src/grammar-runtime.js', 'js/src/grammar-runtime/text.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-FEATURE-UNION',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

@@ -14,10 +14,10 @@ grammar is checked against the tree-sitter grammar that still backs its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: three catalog languages, JSON, INI and Diff, have a native merged
-grammar. Their default parses still run tree-sitter-json, tree-sitter-ini and
-tree-sitter-diff until the grammars have recovery rules for invalid input; see
-[current limits](#current-limits).
+Status: four catalog languages, JSON, INI, Diff and CSV, have a native merged
+grammar. Their default parses still run tree-sitter-json, tree-sitter-ini,
+tree-sitter-diff and tree-sitter-csv until the grammars have recovery rules for
+invalid input; see [current limits](#current-limits).
 
 ## Format
 
@@ -90,6 +90,25 @@ and the git patch format
 - Line breaks and blank lines are `newline` leaves, and the rest of a line is
   an `anything` leaf, as in tree-sitter-diff, so the tree keeps every byte.
 
+For CSV the sources are [RFC 4180](https://www.rfc-editor.org/rfc/rfc4180) and
+[tree-sitter-csv](https://github.com/tree-sitter-grammars/tree-sitter-csv/blob/f6bf6e35eb0b95fbadea4bb39cb9709507fcb181/common/define-grammar.js)
+at revision `f6bf6e3`, with the RFC 4180 quotes patch the vendored parser
+applies ([`NOTICE.md`](../../rust/vendor/tree-sitter-csv/NOTICE.md)):
+
+- From tree-sitter-csv: the tree shape. A `document` holds `row`s of `field`s,
+  and a field is a `number` (decimal or `0x` hexadecimal), a `float`, a
+  `boolean` (`true` or `false`) or `text`. A typed field must end the field,
+  so `1 `, `true1` and `0x` are text, as the oracle's longest-match lexer
+  reads them. The spaces before a field belong to its token (` 1` is a
+  number), the spaces after a closing quote are skipped, and blank lines are
+  not rows.
+- From RFC 4180: a quoted field holds commas, line breaks and doubled quotes,
+  an unquoted field holds no quote, and the last record may end without a line
+  break. An empty last field at the end of the input (`a,`, `,`) is a field of
+  empty text; tree-sitter-csv recovers from it.
+- A run of line breaks is one `newline` leaf, and the spaces after a closing
+  quote are a `blank_space` leaf, so the tree keeps every byte.
+
 ## Checking against the oracle
 
 [`js/scripts/generate-native-grammar-fixtures.mjs`](../../js/scripts/generate-native-grammar-fixtures.mjs)
@@ -137,6 +156,7 @@ rows, and a Rust suite. Both record evidence for the language's ledger row:
 | JSON | [`issue-195-grammar-native-json.test.js`](../../js/tests/issue-195-grammar-native-json.test.js) | [`issue_195_grammar_native_json.rs`](../../rust/tests/unit/issue_195_grammar_native_json.rs) | `I195-GRAMMAR-NATIVE-JSON` |
 | INI | [`issue-195-grammar-native-ini.test.js`](../../js/tests/issue-195-grammar-native-ini.test.js) | [`issue_195_grammar_native_ini.rs`](../../rust/tests/unit/issue_195_grammar_native_ini.rs) | `I195-GRAMMAR-NATIVE-INI` |
 | Diff | [`issue-195-grammar-native-diff.test.js`](../../js/tests/issue-195-grammar-native-diff.test.js) | [`issue_195_grammar_native_diff.rs`](../../rust/tests/unit/issue_195_grammar_native_diff.rs) | `I195-GRAMMAR-NATIVE-DIFF` |
+| CSV | [`issue-195-grammar-native-csv.test.js`](../../js/tests/issue-195-grammar-native-csv.test.js) | [`issue_195_grammar_native_csv.rs`](../../rust/tests/unit/issue_195_grammar_native_csv.rs) | `I195-GRAMMAR-NATIVE-CSV` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -150,9 +170,9 @@ when a fixture is stale, and CI runs it.
 
 ## Current limits
 
-- Invalid input is rejected instead of recovered. The default JSON, INI and
-  Diff parses still use tree-sitter-json, tree-sitter-ini and
-  tree-sitter-diff, which stay production dependencies until the native
+- Invalid input is rejected instead of recovered. The default JSON, INI, Diff
+  and CSV parses still use tree-sitter-json, tree-sitter-ini, tree-sitter-diff
+  and tree-sitter-csv, which stay production dependencies until the native
   grammars have recovery rules.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
@@ -161,6 +181,10 @@ when a fixture is stale, and CI runs it.
   the oracle reads as a keyword line and the native grammar as context; and a
   block cut after a bare `---` or after `--- a`, where the oracle recovers and
   the native grammar reads the lines on their own.
+- A boolean after leading spaces (` true`) is outside the CSV corpus: the
+  oracle reads it as a `boolean` whose keyword spans the spaces too, which the
+  native grammar's tree cannot show, and the native grammar reads it as text,
+  as RFC 4180 section 2.4 counts spaces as part of a field.
 - No other catalog language has a native merged grammar yet. The open rows are
   `I195-GRAMMAR-NATIVE-MERGED`, `I195-GRAMMAR-LANGUAGE-CATALOG` and
   `I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED` in the

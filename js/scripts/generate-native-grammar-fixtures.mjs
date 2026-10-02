@@ -23,6 +23,9 @@ import { nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mj
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
+// The empty last field the RFC 4180 ABNF allows and the oracle recovers from.
+const EMPTY_LAST_FIELD = 'RFC 4180 section 2 reads an empty last field (non-escaped = *TEXTDATA) at the end of the input; tree-sitter-csv f6bf6e3 recovers from it.';
+
 export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'json',
@@ -244,6 +247,49 @@ export const NATIVE_GRAMMARS = Object.freeze([
     rejections: [
       'news\n', 'indexes\n', 'diff\n', '@@\n', 'Binary\n', 'x\ry\n', 'index 123..456\n', 'similarity index x%\n', '@@ -1 @@\n',
       'new file\n', 'rename x\n', 'Binary files a b differ\n', 'diff a\n', 'old mode\n',
+    ],
+  },
+  {
+    id: 'csv',
+    language: 'CSV',
+    grammar: 'parity/grammars/native/csv.lino',
+    oracle: 'tree-sitter-csv f6bf6e3',
+    sources: [
+      'https://www.rfc-editor.org/rfc/rfc4180',
+      'https://github.com/tree-sitter-grammars/tree-sitter-csv/blob/f6bf6e35eb0b95fbadea4bb39cb9709507fcb181/common/define-grammar.js',
+      'rust/vendor/tree-sitter-csv/NOTICE.md',
+    ],
+    // tree-sitter-csv skips the spaces after a closing quote as whitespace,
+    // and keeps line breaks as a regular expression token without a row.
+    hidden: ['blank_space'],
+    anonymous: ['newline'],
+    extras: [],
+    matches: [
+      '', '\n', '\r\n', '\r', 'a', 'a\n', 'a,1\n', 'a,b', 'a,b\nc,d', 'a,b\r\nc,d\r\n', '1,2,3\n4,5,6\n', '1\n2\n',
+      ' a , 1 \n', '1.5,true,0x1F\n', '"a""b",c\r\n', '""', '""\n', '"a"', '"a"\n', '" "', '" a "', '"a,b"', '"a\nb"',
+      '"a\r\nb"', '""""', '"""a"""', '"a""b""c"', '" "" "\n', 'x,""\n', 'a,,b\n', 'a,b,\n', ',a', ',\n', 'a,\n,b\n',
+      'a\n\nb\n', 'a\n\n', '\n\n', '\n\n\n', '\n\na', '\n a', ' \n', '  \n  \n', ' \n1', 'a\n ', 'a\n\n\n', 'a\n \nb',
+      'a\n\n b', 'a\n\n,b', 'a\n\n"b"', 'a\r\rb', 'a\r\n\r\nb', 'a\n\r\nb', 'a\n\rb', 'a\rb', 'a\r', 'a\r\n', '\r\na',
+      '\r\r', '\r\r\n', '\r\n\r\n', '\n\r', '\t1', '1\t', '1 ', ' 1', ' 1 ', '  12', '\t\t1.5', ' 0x1', '\v1', '\f1',
+      '12,3.4,0X1f,0x', '00', '0x', '0xG', '1.', '.5', '.5 ', '.5,5.\n', '.', '5..', '1.2.3', '1e5', '-1', '+1', '1a\n',
+      '1 2', 'true,false,TRUE', 'true\nfalse', 'false,1.0,0x0', 'True', 't', 'truex', 'true1\n', 'truefalse', ' "a"',
+      '"a" ', ' "a" ', '"a" ,b', '"a" \n', '"a"\t\n', '"a" \r\n', '"a"  ,  "b"', '"a" , "b" ', '"a"\v', '"a"\f\n',
+      '"a"\f,b', '\t"a"', '\v"a"', '"a", 1', 'a, b', 'a ,b', 'a ,\n', 'a, 1', 'a, "b"', 'a, "b,c"', '1, 2', '\f', '\v',
+      ' a', 'a ', ' 1', 'é,漢字\n',
+    ],
+    divergences: [
+      { source: 'a,', reason: EMPTY_LAST_FIELD },
+      { source: ',', reason: EMPTY_LAST_FIELD },
+      { source: ',,', reason: EMPTY_LAST_FIELD },
+      { source: '1,', reason: EMPTY_LAST_FIELD },
+      { source: '"a",', reason: EMPTY_LAST_FIELD },
+      { source: 'true,', reason: EMPTY_LAST_FIELD },
+      { source: 'a\n,', reason: EMPTY_LAST_FIELD },
+      { source: 'a,\r\n,', reason: EMPTY_LAST_FIELD },
+    ],
+    rejections: [
+      '"a"b', 'a"b', '"a', '"a" "b"', '"a""', 'a,"b', '"\n', 'x\n"y', '"a"x,b', 'a,b"c\n', '"""', '"a"\n"b', 'a\n"b',
+      'x,"', '"a"""b"',
     ],
   },
 ]);
