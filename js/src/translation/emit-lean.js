@@ -607,7 +607,8 @@ class LeanEmitter {
           return `(match ${this.expr(item.pair, 1)} with | ${made} _ ${item.name} => ${rest} | ${aborted} _ _ => True)`;
         }, this.prop(effect.prop));
         const name = `ml_assertion_${assertion}`;
-        const unreached = this.program.abortsThreaded ? '\n  try exact True.intro' : '';
+        // Evaluating the runs main makes first leaves the decidable assertion, or True where one aborts.
+        const unreached = this.program.abortsThreaded ? '\n  try exact True.intro\n  try (conv => whnf)\n  try decide\n  try exact True.intro' : '';
         theorems.push(`theorem ${name} : ${statement} := by\n  try rfl\n  try decide${unreached}`);
         this.state.assertionTheorem(name, effect);
       }

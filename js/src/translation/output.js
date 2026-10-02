@@ -484,6 +484,13 @@ class Threader {
         return { ...prop, arg: this.hoist(prop.arg, steps, where) };
       case 'and':
       case 'or':
+        // The left operand always runs, first; the right one only when the left does not decide the assertion.
+        if (!this.effects(prop.right)) return { ...prop, left: this.hoist(prop.left, steps, where) };
+        throw unsupported(
+          'output or an abort in a compound assertion',
+          'an operand that prints or aborts after the first runs only when the assertion evaluates it; assert on a value computed before',
+          where,
+        );
       case 'implies':
       case 'forall':
         throw unsupported('output or an abort in a compound assertion', 'an operand that prints or aborts runs only when the assertion evaluates it; assert on a value computed before', where);

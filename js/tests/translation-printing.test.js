@@ -57,11 +57,17 @@ assert(odd);
   assert.ok(translated.code.includes('if !odd then throw (IO.userError "assertion 1 failed")'), translated.code);
 });
 
-test('an operand that prints in a compound assertion is refused with a reason', () => {
-  const translated = translateProgram(`import assert from 'node:assert/strict';
+test('an operand that prints in a compound assertion runs first when it is the first, and is refused otherwise', () => {
+  const first = translateProgram(`import assert from 'node:assert/strict';
 function loud(x) { console.log('loud'); return x; }
 assert(loud(true) && true);
 `, 'JavaScript', 'Lean');
-  assert.equal(translated.diagnostic?.kind, 'unsupported');
-  assert.match(translated.diagnostic.message, /^output in a compound assertion: /u);
+  assert.equal(first.diagnostic, null);
+  assert.equal(first.contract.support, 'semantic-translation');
+  const later = translateProgram(`import assert from 'node:assert/strict';
+function loud(x) { console.log('loud'); return x; }
+assert(true && loud(true));
+`, 'JavaScript', 'Lean');
+  assert.equal(later.diagnostic?.kind, 'unsupported');
+  assert.match(later.diagnostic.message, /^output or an abort in a compound assertion: /u);
 });

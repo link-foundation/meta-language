@@ -708,11 +708,10 @@
     {
       "from": "overflow-model.abort",
       "to": "overflow-model.no-overflow",
-      "kind": "conditional",
-      "condition": "An unbounded target computes the exact result where the source aborts, so the two agree only on executions that do not abort unless the translation adds the bounds checks.",
+      "kind": "encoding",
+      "condition": "An unbounded target computes the exact result, so the translation tests it against the source's bounds and aborts where the source aborts, with the source's message, and otherwise keeps the result, which is the source's.",
       "translationEncodings": [
-        "machine-integer",
-        "non-aborting-executions"
+        "machine-integer"
       ]
     },
     {
@@ -725,10 +724,7 @@
       "from": "effect-model.abort",
       "to": "effect-model.panic-with-default-value",
       "kind": "conditional",
-      "condition": "The two agree on executions that do not abort; where the source aborts, Lean's panic reports the message and continues with a default value.",
-      "translationEncodings": [
-        "non-aborting-executions"
-      ]
+      "condition": "The two agree on executions that do not abort; where the source aborts, Lean's panic reports the message and continues with a default value, so a translation threads the abort as a value instead."
     },
     {
       "from": "effect-model.abort",
@@ -742,10 +738,10 @@
     {
       "from": "effect-model.abort",
       "to": "effect-model.pure-total-functions",
-      "kind": "conditional",
-      "condition": "A total target has no abort, so the two agree only on executions that do not abort; the translation records that assumption for every operation that can abort.",
+      "kind": "encoding",
+      "condition": "A total target has no abort, so an operation that can abort returns the source's abort message as a value that every caller passes on unchanged, and main stops there, after the lines printed before it, reporting the message.",
       "translationEncodings": [
-        "non-aborting-executions"
+        "abort-threading"
       ]
     },
     {

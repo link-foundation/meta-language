@@ -100,7 +100,7 @@ test('distinct models stay distinct, and every translation encoding is justified
     const sourceModels = new Set(languageFoundationModels(source).map(({ id }) => id));
     const targetModels = new Set(languageFoundationModels(target).map(({ id }) => id));
     const ids = [...semantics.encodings, ...semantics.assumptions].map(({ id }) => id.split(':')[0]);
-    for (const id of ids.filter((candidate) => ['machine-integer', 'numbers', 'non-aborting-executions', 'theorem-properties'].includes(candidate))) {
+    for (const id of ids.filter((candidate) => ['abort-threading', 'machine-integer', 'numbers', 'theorem-properties'].includes(candidate))) {
       const justified = foundationJustifications(id).some((entry) =>
         entry.models ? entry.models.some((model) => sourceModels.has(model)) : sourceModels.has(entry.from) && targetModels.has(entry.to),
       );
@@ -108,7 +108,7 @@ test('distinct models stay distinct, and every translation encoding is justified
       covered.add(id);
     }
   }
-  assert.deepEqual([...covered].sort(), ['machine-integer', 'non-aborting-executions', 'numbers', 'theorem-properties']);
+  assert.deepEqual([...covered].sort(), ['abort-threading', 'machine-integer', 'numbers', 'theorem-properties']);
   observe(['distinctModelsKeptDistinct'], 'distinct models stay distinct, and every translation encoding is justified by a recorded correspondence');
 });
 

@@ -2347,22 +2347,12 @@
       }
     },
     "assumptions": {
-      "JavaScript -> Rust": [
-        "non-aborting-executions"
-      ],
-      "JavaScript -> Lean": [
-        "non-aborting-executions"
-      ],
-      "JavaScript -> Rocq": [
-        "non-aborting-executions"
-      ],
+      "JavaScript -> Rust": [],
+      "JavaScript -> Lean": [],
+      "JavaScript -> Rocq": [],
       "Rust -> JavaScript": [],
-      "Rust -> Lean": [
-        "non-aborting-executions"
-      ],
-      "Rust -> Rocq": [
-        "non-aborting-executions"
-      ],
+      "Rust -> Lean": [],
+      "Rust -> Rocq": [],
       "Lean -> JavaScript": [],
       "Lean -> Rust": [],
       "Lean -> Rocq": [],

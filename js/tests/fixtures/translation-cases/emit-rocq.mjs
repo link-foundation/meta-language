@@ -101,7 +101,7 @@ fn h(n: i8) -> i32 { n as i32 }
 fn k(n: u16) -> u64 { u64::from(n) }
 ${rustMain}`],
 
-  // Machine integers: unbounded carriers under the non-aborting assumption.
+  // Machine integers: their representation, aborting where Rust panics.
   'emit-rocq-fixed-unsigned': ['rs', `fn f(a: u64, b: u64) -> u64 { a + b * 2 - a / b + a % b }${rustMain}`],
   'emit-rocq-fixed-signed': ['rs', `fn f(a: i32, b: i32) -> i32 { a + b * 2 - a / b + a % b }${rustMain}`],
   'emit-rocq-fixed-euclid': ['rs', `fn f(x: i64, y: i64) -> i64 { x.div_euclid(y) + x.rem_euclid(y) }
