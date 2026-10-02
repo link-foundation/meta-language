@@ -15,8 +15,9 @@ use meta_language::{
     GRAMMAR_MERGE_METHOD, Grammar, GrammarExpr, GrammarFormat, GrammarMergeDecision,
     GrammarMergeDecisionKind, GrammarMergeFailureReason, GrammarMergeOptions, GrammarMergeResult,
     GrammarMergeSource, GrammarRenameErrorKind, GrammarRule, MergedGrammarGroup, RenamedGrammar,
-    RuleAlias, RuleKind, assert_merge_complete, grammar_from_lino, grammar_to_lino, import_pest,
-    merge_grammars, normalized_rule_definition, rename_grammar_rule, restore_source_names,
+    RuleAlias, RuleKind, assert_merge_complete, grammar_from_lino, grammar_to_lino, import_bnf,
+    import_pest, merge_grammars, normalized_rule_definition, rename_grammar_rule,
+    restore_source_names,
 };
 use serde_json::{Value, json};
 
@@ -765,6 +766,29 @@ fn alternatives(expr: &GrammarExpr) -> &[GrammarExpr] {
         GrammarExpr::Choice { alternatives, .. } => alternatives,
         other => panic!("expected a choice, got {other:?}"),
     }
+}
+
+#[test]
+fn a_merged_unordered_choice_keeps_the_source_order_of_its_alternatives() {
+    // The comparison form of an unordered choice is order-free, but the
+    // merged grammar is what parsers run: a PEG-style parser commits to the
+    // first alternative that matches, so a sorted `letter | letter word`
+    // would stop after one letter.
+    let grammar = import_bnf("<word> ::= <letter> <word> | <letter>\n<letter> ::= \"b\" | \"a\"\n")
+        .expect("BNF imports");
+    let source = GrammarMergeSource::new("words", "words", grammar.clone());
+    let result = merge_grammars(&[source], &GrammarMergeOptions::default()).expect("merges");
+    let merged = &result.groups[0].grammar;
+    for name in ["word", "letter"] {
+        assert_eq!(rule(merged, name).expr, rule(&grammar, name).expr, "{name}");
+    }
+    let reversed =
+        import_bnf("<word> ::= <letter> | <letter> <word>\n<letter> ::= \"a\" | \"b\"\n")
+            .expect("BNF imports");
+    assert_eq!(
+        normalized_rule_definition(rule(&reversed, "word")).expect("normalizes"),
+        normalized_rule_definition(rule(&grammar, "word")).expect("normalizes")
+    );
 }
 
 #[test]

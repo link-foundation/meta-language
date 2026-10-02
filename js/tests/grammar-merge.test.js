@@ -18,9 +18,11 @@ import {
   GrammarRenameError,
   assertMergeComplete,
   deserializeGrammar,
+  importBnf,
   importPest,
   mergeGrammars,
   normalizedRuleDefinition,
+  parseWithGrammar,
   renameGrammarRule,
   restoreSourceNames,
   serializeGrammar,
@@ -249,6 +251,19 @@ test('an unresolved required equivalence fails the merge', () => {
   const unknown = merge(sources(), { requiredEquivalences: [['upstream-a:number', 'upstream-b:missing']] });
   assert.deepEqual(unknown.failures.map(({ reason }) => reason), ['unknown-rule']);
   observe('I195-MERGE-UNCERTAINTY-PRESERVED', ['unresolvedEquivalenceFails'], 'an unresolved required equivalence fails the merge');
+});
+
+test('a merged unordered choice keeps the source order of its alternatives', () => {
+  // The comparison form of an unordered choice is order-free, but the merged
+  // grammar is what parsers run: peggy commits to the first alternative that
+  // matches, so a sorted `letter | letter word` would stop after one letter.
+  const grammar = importBnf('<word> ::= <letter> <word> | <letter>\n<letter> ::= "b" | "a"\n');
+  const [merged] = mergeGrammars([{ id: 'words', language: 'words', precedence: 0, grammar }]).groups;
+  assert.deepEqual(merged.grammar.rule('word').expression, grammar.rule('word').expression);
+  assert.deepEqual(merged.grammar.rule('letter').expression, grammar.rule('letter').expression);
+  parseWithGrammar(merged.grammar, 'abba');
+  const reversed = importBnf('<word> ::= <letter> | <letter> <word>\n<letter> ::= "a" | "b"\n');
+  assert.equal(normalizedRuleDefinition(reversed.rule('word')), normalizedRuleDefinition(grammar.rule('word')));
 });
 
 const renameCase = fixture.rename;

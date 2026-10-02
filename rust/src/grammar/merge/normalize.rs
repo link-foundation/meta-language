@@ -277,21 +277,22 @@ fn choice_form(forms: Vec<Form>, ordered: bool) -> Form {
         .into_iter()
         .filter(|form| seen.insert(form.text.clone()))
         .collect();
-    if !ordered {
-        items.sort_by(|left, right| left.text.cmp(&right.text));
-    }
     if items.len() == 1 {
         return items.remove(0);
+    }
+    // The comparison text of an unordered choice is order-free, but the merged
+    // expression keeps the source order: a PEG-style parser commits to the
+    // first matching alternative, so `letter | letter word` would stop after
+    // one letter.
+    let mut texts: Vec<&str> = items.iter().map(|item| item.text.as_str()).collect();
+    if !ordered {
+        texts.sort_unstable();
     }
     Form {
         text: format!(
             "{}({})",
             if ordered { "first" } else { "alt" },
-            items
-                .iter()
-                .map(|item| item.text.as_str())
-                .collect::<Vec<_>>()
-                .join(",")
+            texts.join(",")
         ),
         shape: Shape::Choice { ordered, items },
     }

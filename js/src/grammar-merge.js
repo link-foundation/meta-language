@@ -610,11 +610,16 @@ function choiceForm(forms, ordered) {
   const unique = new Map();
   for (const form of flattened) if (!unique.has(form.text)) unique.set(form.text, form);
   const items = [...unique.values()];
-  if (!ordered) items.sort((left, right) => compareText(left.text, right.text));
   if (items.length === 1) return items[0];
+  // The comparison text of an unordered choice is order-free, but the merged
+  // expression keeps the source order: a PEG-style parser (peggy, which
+  // parseWithGrammar compiles to) commits to the first matching alternative,
+  // so `letter | letter word` would stop after one letter.
+  const texts = items.map(({ text }) => text);
+  if (!ordered) texts.sort(compareText);
   return {
     expr: { kind: 'choice', items: items.map(({ expr }) => expr), ordered },
-    text: `${ordered ? 'first' : 'alt'}(${items.map(({ text }) => text).join(',')})`,
+    text: `${ordered ? 'first' : 'alt'}(${texts.join(',')})`,
     items,
     ordered,
   };
