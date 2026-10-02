@@ -712,6 +712,24 @@
       ]
     },
     {
+      "id": "grammar.feature-union-form",
+      "phrase": "feature union form",
+      "role": "concept",
+      "definition": "A grammar expression written with one of the feature union forms of docs/grammar/feature-union.md, such as a precedence, predicate, mode, byte class, macro expansion, embedded language or error recovery form.",
+      "constraints": [
+        "The form keeps its own head and fields; the native executor gives it its meaning.",
+        "A grammar expression of this kind is one variant of the grammar expression tree.",
+        "The link codec carries the form as its native listing spelling."
+      ],
+      "sourceAliases": [
+        {
+          "source": "meta-language",
+          "name": "feature form"
+        }
+      ],
+      "formerNames": []
+    },
+    {
       "id": "grammar.empty-expression",
       "phrase": "empty expression",
       "role": "concept",
