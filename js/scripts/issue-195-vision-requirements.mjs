@@ -337,8 +337,8 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'For every format, source grammar -> native links -> exported grammar -> native links is structurally and semantically equivalent with the original source unavailable to the emitter, and the lossless mode reconstructs the source exactly.',
     assertions: ['exportWithoutOriginalSource', 'reimportEquivalent', 'losslessModeExact'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/src/grammar-reverse.js', 'js/src/grammar-links.js', 'js/src/grammar-lossless.js'],
+    rust: ['rust/src/grammar/reverse.rs', 'rust/src/grammar/interchange/links.rs', 'rust/src/grammar/interchange/lossless.rs'],
   },
   {
     id: 'I195-INTERCHANGE-CROSS-FORMAT-TOOLS',

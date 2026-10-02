@@ -863,27 +863,27 @@
     "planned:grammar-importer:ABNF": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "ABNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:grammar-importer:BNF": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "BNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:grammar-importer:EBNF": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "EBNF grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:grammar-importer:pest": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "pest grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:grammar-importer:tree-sitter grammar JSON": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "tree-sitter grammar JSON grammar importing, parsing, emission, and round-trip fixture",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:conformance:JavaScript": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -1633,32 +1633,32 @@
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "docs/vision.md#grammar-import-conversion-and-reverse-conversion: public API and command-line tools for grammar interchange",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:repository-directive:i195-interchange-format-features": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "docs/vision.md#grammar-import-conversion-and-reverse-conversion: every feature of every grammar format imported with its supporting definitions",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:repository-directive:i195-interchange-reverse-conversion": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "docs/vision.md#grammar-import-conversion-and-reverse-conversion: conversion back to every source grammar format",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:repository-directive:i195-interchange-cross-format-tools": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "docs/vision.md#grammar-import-conversion-and-reverse-conversion: cross-format conversion checked by the real target tools",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:repository-directive:i195-interchange-faithful-lowering": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "docs/vision.md#grammar-import-conversion-and-reverse-conversion: faithful lowering into less expressive grammar notations",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:repository-directive:i195-interchange-mutation-guards": {
       "path": "parity/fixtures/grammar-importers.json",
       "selector": "docs/vision.md#grammar-import-conversion-and-reverse-conversion: round trips that cannot pass by returning the saved input",
-      "sha256": "80625ecef3a728d42597f9d3812cefc6fc8e296a53f384c6f0096ce65bf92e07"
+      "sha256": "0295cabff85eacd2ae6a5ebc8e309acbfc2df1325356fb2a50ac82e21262120c"
     },
     "planned:repository-directive:i195-merge-automatic-pipeline": {
       "path": "parity/language-grammar-inventory.json",
@@ -19165,8 +19165,16 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/grammar-reverse.js",
+          "js/src/grammar-links.js",
+          "js/src/grammar-lossless.js"
+        ],
+        "rust": [
+          "rust/src/grammar/reverse.rs",
+          "rust/src/grammar/interchange/links.rs",
+          "rust/src/grammar/interchange/lossless.rs"
+        ]
       },
       "verifications": [
         {
