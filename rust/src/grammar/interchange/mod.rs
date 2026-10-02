@@ -4,8 +4,9 @@
 //! trip grammars. [`run_grammar_command`] is the whole command-line behavior
 //! with file reading injected, so the library and the `meta-language` binary
 //! report the same standard output, standard error and exit status. It mirrors
-//! `js/src/grammar-interchange.js`, and the native grammar listing in
-//! [`native`] mirrors the same file.
+//! `js/src/grammar-interchange.js`, and the native grammar listing read by
+//! [`parse_native_grammar`] and written by [`render_native_grammar`] mirrors
+//! the same file.
 
 use std::collections::{BTreeMap, BTreeSet};
 
