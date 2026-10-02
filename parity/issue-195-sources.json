@@ -320,6 +320,18 @@
       "updatedAt": "2026-10-01T20:38:11Z",
       "bytes": 466,
       "sha256": "c5e4451fdcd0484a8046d766d2ef381ca9a976c2ca410e2f872cf44330cbcd31"
+    },
+    {
+      "id": 5947888429,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5947888429",
+      "title": "Maintainer merge condition: nothing may fail; CI/CD must fully pass",
+      "role": "Maintainer merge condition (every CI/CD check passes); restates the existing delivery gates and carries no new product requirements",
+      "author": "konard",
+      "createdAt": "2026-10-02T08:06:34Z",
+      "updatedAt": "2026-10-02T08:06:34Z",
+      "bytes": 84,
+      "sha256": "b690444348393b63f238b4402a451fe70acd3a038ec58c6cfc72e971acf8425e"
     }
   ]
 }
