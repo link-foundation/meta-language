@@ -6,6 +6,8 @@
 import { createHash } from 'node:crypto';
 
 import { carryRuleDocs, Grammar } from './grammar.js';
+import { grammarDeclarations } from './grammar-feature-forms.js';
+import { renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from './grammar-links.js';
 
 /** How an accepted equivalence is justified. */
 export const GRAMMAR_MERGE_METHOD = 'recursive-structural-bisimulation';
@@ -154,27 +156,83 @@ export function normalizedRuleDefinition(rule) {
   return `${rule.kind ?? 'normal'}:${normalize(rule.expression, nameLabel).text}`;
 }
 
+// Renames rules and every reference to them: in rule bodies, in rule actions
+// and in the declarations (extras, conflict groups, macro bodies and scanner
+// operations). Macro names, scanner names and tokens are separate scopes.
 function renameAll(grammar, mapping) {
   const rename = (name) => mapping.get(name) ?? name;
   const rules = new Map();
-  for (const rule of grammar.rules.values()) {
-    rules.set(rename(rule.name), { kind: rule.kind, expression: mapReferences(rule.expression, rename) });
-  }
+  for (const rule of grammar.rules.values()) rules.set(rename(rule.name), renamedRule(rule, rename));
   return carryRuleDocs(
-    new Grammar(grammar.start === null ? null : rename(grammar.start), rules, grammar.sourceFormat),
+    new Grammar(
+      grammar.start === null ? null : rename(grammar.start),
+      rules,
+      grammar.sourceFormat,
+      mapDeclarations(grammarDeclarations(grammar), rename),
+    ),
     grammar,
     rename,
   );
 }
 
-function mapReferences(expression, rename) {
-  if (expression.kind === 'ref') return { ...expression, name: rename(expression.name) };
-  const copy = { ...expression };
-  if (Array.isArray(expression.items) && expression.kind !== 'charClass') {
-    copy.items = expression.items.map((item) => mapReferences(item, rename));
+// A rule with its body and action references renamed. A parameter is used
+// through its own `(parameter name)` form, never through `ref`, so renaming
+// rule references never touches it.
+function renamedRule(rule, rename) {
+  const renamed = { kind: rule.kind, expression: mapReferences(rule.expression, rename) };
+  if (rule.parameters?.length > 0) renamed.parameters = [...rule.parameters];
+  if (rule.channel !== undefined) renamed.channel = rule.channel;
+  if (rule.modes !== undefined) renamed.modes = [...rule.modes];
+  if (rule.action !== undefined) renamed.action = mapReferences(rule.action, rename);
+  return renamed;
+}
+
+function mapDeclarations(declarations, rename) {
+  return {
+    ...(declarations.matching === null ? {} : { matching: declarations.matching }),
+    imports: [...declarations.imports],
+    modes: [...declarations.modes],
+    extras: declarations.extras.map((extra) => mapReferences(extra, rename)),
+    conflicts: declarations.conflicts.map((group) => group.map(rename)),
+    macros: declarations.macros.map((macro) => ({
+      name: macro.name,
+      parameters: [...(macro.parameters ?? [])],
+      expression: mapReferences(macro.expression, rename),
+    })),
+    scanners: declarations.scanners.map((scanner) => ({
+      name: scanner.name,
+      tokens: [...scanner.tokens],
+      operations: mapReferences(scanner.operations, rename),
+    })),
+  };
+}
+
+// Renames every rule reference (`ref`, with or without arguments) in an
+// expression, a feature form or an operation list, at any depth.
+function mapReferences(value, rename) {
+  if (Array.isArray(value)) return value.map((item) => mapReferences(item, rename));
+  if (value === null || typeof value !== 'object') return value;
+  const copy = {};
+  for (const [key, field] of Object.entries(value)) copy[key] = mapReferences(field, rename);
+  if (value.kind === 'ref' && value.operation === undefined && typeof value.name === 'string') {
+    copy.name = rename(value.name);
   }
-  if (expression.item) copy.item = mapReferences(expression.item, rename);
   return copy;
+}
+
+// The rule fields (parameters, channel, modes and action) as they take part
+// in a rule's signature, with action references printed by `label`; empty for
+// a rule without them, so plain rules keep their definitions.
+function ruleFields(rule, label) {
+  const action = rule.action === undefined ? undefined : mapReferences(rule.action, label);
+  const fields = renderRuleFieldLinks({ ...rule, action });
+  return fields.length === 0 ? '' : ` ${fields.join(' ')}`;
+}
+
+// The declarations of one grammar as one line of links.
+function declarationsText(declarations) {
+  const matching = declarations.matching === null ? [] : [`(matching ${declarations.matching})`];
+  return [...matching, ...renderDeclarationLinks(declarations)].join(' ');
 }
 
 function prepareSources(sources) {
@@ -242,8 +300,10 @@ function groupFingerprint(entry, required, samples) {
     lines.push(`source ${q(source.id)} ${source.precedence} ${q(formatOf(source))} ${start === undefined ? '-' : q(start)}`);
     const label = sourceLabel(source, nameLabel);
     for (const rule of source.grammar.rules.values()) {
-      lines.push(`rule ${q(rule.name)} ${rule.kind}:${normalize(rule.expression, label).text}`);
+      lines.push(`rule ${q(rule.name)} ${rule.kind}:${normalize(rule.expression, label).text}${ruleFields(rule, label)}`);
     }
+    const declarations = declarationsText(grammarDeclarations(source.grammar));
+    if (declarations.length > 0) lines.push(`declarations ${q(source.id)} ${q(declarations)}`);
   }
   for (const [first, second] of required) lines.push(`required ${q(first)} ${q(second)}`);
   for (const [alias, values] of samples) {
@@ -270,7 +330,7 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities) {
     for (const rule of source.grammar.rules.values()) {
       const alias = `${source.id}:${rule.name}`;
       index.set(alias, nodes.length);
-      nodes.push({ alias, source, position, name: rule.name, kind: rule.kind, expression: rule.expression });
+      nodes.push({ alias, source, position, name: rule.name, kind: rule.kind, expression: rule.expression, rule });
       position += 1;
     }
     for (const name of source.grammar.referencedNonterminals()) {
@@ -322,10 +382,14 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities) {
     const rename = (name) => (representative.source.grammar.rules.has(name)
       ? names.get(classes[index.get(`${representative.source.id}:${name}`)])
       : name);
-    const form = normalize(mapReferences(representative.expression, rename), nameLabel);
-    rules.set(names.get(id), { kind: representative.kind, expression: form.expr });
-    definitions.set(id, `${representative.kind}:${form.text}`);
+    const renamed = renamedRule(representative.rule, rename);
+    const form = normalize(renamed.expression, nameLabel);
+    rules.set(names.get(id), { ...renamed, expression: form.expr });
+    definitions.set(id, `${representative.kind}:${form.text}${ruleFields(renamed, nameLabel)}`);
   }
+  const merged = mergeDeclarations(entry.sources, (source, name) => (source.grammar.rules.has(name)
+    ? names.get(classes[index.get(`${source.id}:${name}`)])
+    : name));
 
   const startClasses = [];
   for (const source of entry.sources) {
@@ -339,6 +403,7 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities) {
     startClasses.length === 0 ? null : names.get(startClasses[0]),
     rules,
     formats.size === 1 ? entry.sources[0].grammar.sourceFormat : 'meta-language',
+    merged.declarations,
   );
 
   const identities = {};
@@ -395,6 +460,10 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities) {
     decisions.push({ kind: 'uncertain', name: first, members: nomination.members, basis: nomination.basis, definition: null });
     alternatives.push({ reason: 'uncertain-match', name: nomination.basis, options: [first, second] });
   }
+  for (const conflict of merged.conflicts) {
+    decisions.push({ kind: 'declaration-conflict', name: conflict.name, members: conflict.members, basis: conflict.basis, definition: null });
+    alternatives.push({ reason: 'declaration-conflict', name: conflict.name, options: conflict.members });
+  }
 
   return {
     key: groupKey(entry.language, entry.edition),
@@ -421,13 +490,61 @@ function refine(nodes, index) {
     const current = classes;
     const keys = nodes.map((node, position) => {
       const label = sourceLabel(node.source, (name) => `#${current[index.get(`${node.source.id}:${name}`)]}`);
-      return `${count === 0 ? '' : current[position]}|${node.kind}:${normalize(node.expression, label).text}`;
+      return `${count === 0 ? '' : current[position]}|${node.kind}:${normalize(node.expression, label).text}${ruleFields(node.rule, label)}`;
     });
     const ranks = new Map([...new Set(keys)].sort(compareText).map((key, rank) => [key, rank]));
     classes = keys.map((key) => ranks.get(key));
     if (ranks.size === count) return classes;
     count = ranks.size;
   }
+}
+
+// Merges the declarations of the sources in precedence order, with each
+// source's rule names renamed to their canonical names. Imports, modes,
+// extras and conflict groups are united; the first declared matching, macro
+// or scanner of a name wins, and a later different one is a conflict.
+function mergeDeclarations(sources, canonical) {
+  const declarations = { matching: null, imports: [], modes: [], extras: [], conflicts: [], macros: [], scanners: [] };
+  const conflicts = [];
+  const seen = { extras: new Set(), conflicts: new Set(), macros: new Map(), scanners: new Map() };
+  let matchingOwner = null;
+  const line = (entry) =>
+    renderDeclarationLinks({ imports: [], modes: [], extras: [], conflicts: [], macros: [], scanners: [], ...entry })[0];
+  for (const source of sources) {
+    const own = mapDeclarations(grammarDeclarations(source.grammar), (name) => canonical(source, name));
+    if (own.matching !== undefined) {
+      if (declarations.matching === null) {
+        declarations.matching = own.matching;
+        matchingOwner = source.id;
+      } else if (declarations.matching !== own.matching) {
+        conflicts.push({ name: 'matching', basis: 'different-matching', members: [matchingOwner, source.id] });
+      }
+    }
+    for (const name of own.imports) if (!declarations.imports.includes(name)) declarations.imports.push(name);
+    for (const name of own.modes) if (!declarations.modes.includes(name)) declarations.modes.push(name);
+    for (const [field, key] of [['extras', renderLinksExpression], ['conflicts', (group) => line({ conflicts: [group] })]]) {
+      for (const entry of own[field]) {
+        const text = key(entry);
+        if (seen[field].has(text)) continue;
+        seen[field].add(text);
+        declarations[field].push(entry);
+      }
+    }
+    for (const [field, basis] of [['macros', 'different-macro'], ['scanners', 'different-scanner']]) {
+      for (const entry of own[field]) {
+        const text = line({ [field]: [entry] });
+        const first = seen[field].get(entry.name);
+        if (first === undefined) {
+          seen[field].set(entry.name, { text, owner: source.id });
+          declarations[field].push(entry);
+        } else if (first.text !== text) {
+          conflicts.push({ name: entry.name, basis, members: [first.owner, source.id] });
+        }
+      }
+    }
+  }
+  if (declarations.matching === null) delete declarations.matching;
+  return { declarations, conflicts };
 }
 
 function nominate(nodes, classes, samples) {

@@ -1208,5 +1208,224 @@
         }
       }
     }
-  ]
+  ],
+  "interchange": {
+    "description": "Merging and lowering keep the feature union declarations and rule fields. Each merge case lists native grammar listings of one language; the merge must write the recorded merged grammar (native listing), decisions and alternatives, uniting modes, extras and conflict groups, keeping the first matching, macro and scanner of a name and reporting a different later one as a declaration-conflict, and treating rules that differ only in their parameters, channel, modes or action as distinct. The lowering grammar lowered into every format must be approximate, carry the recorded declarations and attributes metadata steps, reconstruct without a failure, and report the recorded feature-dropped failures when those steps are removed from the metadata.",
+    "merge": [
+      {
+        "id": "declarations-united",
+        "sources": [
+          {
+            "id": "left",
+            "precedence": 0,
+            "listing": "start s\nmatching peg\nmode string\nextra ref(space)\nconflict s\nmacro pair(item) = seq(parameter(item), parameter(item))\nrule s = normal repeat0(choice(ref(word), ref(quoted), ref(space)))\nrule quoted = normal seq(ref(open), ref(close))\nrule open = token literal(\"\\\"\") action(pushMode(string))\nrule close = token literal(\"\\\"\") modes(string) action(popMode)\nrule word = token repeat1(range(\"a\", \"z\"))\nrule space = token literal(\" \") channel(hidden)\n"
+          },
+          {
+            "id": "right",
+            "precedence": 1,
+            "listing": "start text\nmatching generalized\nmode string\nmode comment\nextra ref(blank)\nconflict text\nmacro pair(item) = seq(parameter(item), literal(\",\"), parameter(item))\nscanner marker tokens(mark) operations(emit(mark))\nrule text = normal repeat0(choice(ref(word), ref(quoted), ref(blank)))\nrule quoted = normal seq(ref(begin), ref(close))\nrule begin = token literal(\"\\\"\") action(pushMode(string))\nrule close = token literal(\"\\\"\") modes(string) action(popMode)\nrule word = token repeat1(range(\"a\", \"z\"))\nrule blank = token literal(\" \") channel(hidden)\n"
+          }
+        ],
+        "merged": "start s\nmatching peg\nmode string\nmode comment\nextra ref(space)\nconflict s\nmacro pair(item) = seq(parameter(item), parameter(item))\nscanner marker tokens(mark) operations(emit(mark))\nrule s = normal repeat0(choice(ref(word), ref(quoted), ref(space)))\nrule quoted = normal seq(ref(open), ref(close))\nrule open = token literal(\"\\\"\") action(pushMode(string))\nrule close = token literal(\"\\\"\") modes(string) action(popMode)\nrule word = token repeat1(range(\"a\", \"z\"))\nrule space = token literal(\" \") channel(hidden)\n",
+        "decisions": [
+          {
+            "kind": "merged",
+            "name": "s",
+            "members": [
+              "left:s",
+              "right:text"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "normal:many(alt(ref(\"quoted\"),ref(\"space\"),ref(\"word\")))"
+          },
+          {
+            "kind": "merged",
+            "name": "quoted",
+            "members": [
+              "left:quoted",
+              "right:quoted"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "normal:seq(ref(\"open\"),ref(\"close\"))"
+          },
+          {
+            "kind": "merged",
+            "name": "open",
+            "members": [
+              "left:open",
+              "right:begin"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "token:lit(\"\\\"\") (action (pushMode string))"
+          },
+          {
+            "kind": "merged",
+            "name": "close",
+            "members": [
+              "left:close",
+              "right:close"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "token:lit(\"\\\"\") (modes string) (action popMode)"
+          },
+          {
+            "kind": "merged",
+            "name": "word",
+            "members": [
+              "left:word",
+              "right:word"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "token:some(range(\"a\",\"z\"))"
+          },
+          {
+            "kind": "merged",
+            "name": "space",
+            "members": [
+              "left:space",
+              "right:blank"
+            ],
+            "basis": "recursive-structural-bisimulation",
+            "definition": "token:lit(\" \") (channel hidden)"
+          },
+          {
+            "kind": "declaration-conflict",
+            "name": "matching",
+            "members": [
+              "left",
+              "right"
+            ],
+            "basis": "different-matching",
+            "definition": null
+          },
+          {
+            "kind": "declaration-conflict",
+            "name": "pair",
+            "members": [
+              "left",
+              "right"
+            ],
+            "basis": "different-macro",
+            "definition": null
+          }
+        ],
+        "alternatives": [
+          {
+            "reason": "declaration-conflict",
+            "name": "matching",
+            "options": [
+              "left",
+              "right"
+            ]
+          },
+          {
+            "reason": "declaration-conflict",
+            "name": "pair",
+            "options": [
+              "left",
+              "right"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rule-fields-distinguish",
+        "sources": [
+          {
+            "id": "left",
+            "precedence": 0,
+            "listing": "start t\nrule t = token literal(\"x\") channel(hidden)\n"
+          },
+          {
+            "id": "right",
+            "precedence": 1,
+            "listing": "start t\nrule t = token literal(\"x\")\n"
+          }
+        ],
+        "merged": "start t\nrule t = token literal(\"x\") channel(hidden)\nrule t_from_right = token literal(\"x\")\n",
+        "decisions": [
+          {
+            "kind": "kept-unique",
+            "name": "t",
+            "members": [
+              "left:t"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "token:lit(\"x\") (channel hidden)"
+          },
+          {
+            "kind": "kept-unique",
+            "name": "t_from_right",
+            "members": [
+              "right:t"
+            ],
+            "basis": "no-equivalent-rule",
+            "definition": "token:lit(\"x\")"
+          },
+          {
+            "kind": "renamed-for-collision",
+            "name": "t_from_right",
+            "members": [
+              "right:t"
+            ],
+            "basis": "precedence",
+            "definition": null
+          },
+          {
+            "kind": "homonym-kept-distinct",
+            "name": "t",
+            "members": [
+              "t",
+              "t_from_right"
+            ],
+            "basis": "different-definitions",
+            "definition": null
+          }
+        ],
+        "alternatives": [
+          {
+            "reason": "start-rule",
+            "name": "t",
+            "options": [
+              "t_from_right"
+            ]
+          },
+          {
+            "reason": "distinct-meaning",
+            "name": "t",
+            "options": [
+              "t",
+              "t_from_right"
+            ]
+          }
+        ]
+      }
+    ],
+    "lowering": {
+      "listing": "start s\nmatching peg\nmode string\nextra ref(space)\nconflict s\nmacro pair(item) = seq(parameter(item), parameter(item))\nrule s = normal repeat0(choice(ref(word), ref(quoted), ref(space)))\nrule quoted = normal seq(ref(open), ref(close))\nrule open = token literal(\"\\\"\") action(pushMode(string))\nrule close = token literal(\"\\\"\") modes(string) action(popMode)\nrule word = token repeat1(range(\"a\", \"z\"))\nrule space = token literal(\" \") channel(hidden)\n",
+      "formats": [
+        "abnf",
+        "antlr",
+        "bnf",
+        "ebnf",
+        "gbnf",
+        "lark",
+        "pest",
+        "tree-sitter-json"
+      ],
+      "status": "approximate",
+      "steps": [
+        "(declarations %28grammar%20%28matching%20peg%29%29%0A%28mode%20string%29%0A%28extra%20%28ref%20space%29%29%0A%28conflict%20s%29%0A%28macro%20pair%20%28parameters%20item%29%20%28seq%20%28parameter%20item%29%20%28parameter%20item%29%29%29%0A)",
+        "(attributes open %28action%20%28pushMode%20string%29%29)",
+        "(attributes close %28modes%20string%29%20%28action%20popMode%29)",
+        "(attributes space %28channel%20hidden%29)"
+      ],
+      "dropped": [
+        "feature-dropped: the grammar declarations changed",
+        "feature-dropped: rule open changed its parameters, channel, modes or action",
+        "feature-dropped: rule close changed its parameters, channel, modes or action",
+        "feature-dropped: rule space changed its parameters, channel, modes or action"
+      ]
+    }
+  }
 }

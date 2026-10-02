@@ -10,10 +10,14 @@ import { readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
+  checkGrammarLowering,
   compileGrammar,
   deserializeGrammar,
+  GRAMMAR_LOWERING_FORMATS,
   GrammarParseError,
   GrammarRuntimeError,
+  lowerGrammar,
+  mergeGrammars,
   parseGrammarLinks,
   parseNativeGrammar,
   renderGrammarLinks,
@@ -314,6 +318,35 @@ test('external scanners and semantic actions are executable link definitions', (
     assert.doesNotMatch(source, /\beval\s*\(|new Function\s*\(|import\s*\(/u, file);
   }
   observe(['scannersAndActionsExecutableAsLinks'], context.name);
+});
+
+test('merging and lowering keep the declarations and rule fields of the feature union', (context) => {
+  const { merge, lowering } = fixture.interchange;
+  for (const item of merge) {
+    const result = mergeGrammars(item.sources.map(({ id, precedence, listing }) => ({
+      id, language: 'quoted', precedence, grammar: parseNativeGrammar(listing),
+    })));
+    assert.equal(result.groups.length, 1, item.id);
+    const [group] = result.groups;
+    assert.equal(renderNativeGrammar(group.grammar), item.merged, `${item.id}: merged grammar`);
+    assert.deepEqual(group.decisions, item.decisions, `${item.id}: decisions`);
+    assert.deepEqual(group.alternatives, item.alternatives, `${item.id}: alternatives`);
+  }
+
+  assert.deepEqual(lowering.formats, GRAMMAR_LOWERING_FORMATS);
+  const grammar = parseNativeGrammar(lowering.listing);
+  const unhonored = (line) => /^\((declarations|attributes) /u.test(line);
+  const withoutSteps = (metadata) => metadata.split('\n').filter((line) => !unhonored(line)).join('\n');
+  for (const format of lowering.formats) {
+    const lowered = lowerGrammar(grammar, format);
+    assert.equal(lowered.status, lowering.status, `${format}: status`);
+    assert.deepEqual(lowered.metadata.split('\n').filter(unhonored), lowering.steps, `${format}: steps`);
+    assert.deepEqual(checkGrammarLowering(grammar, format).failures, [], `${format}: reconstructs`);
+    // Negative control: without the steps the declarations and fields are lost.
+    const dropped = checkGrammarLowering(grammar, format, { editMetadata: withoutSteps }).failures;
+    assert.deepEqual(dropped.map(({ kind, detail }) => `${kind}: ${detail}`), lowering.dropped, `${format}: dropped`);
+  }
+  observe(['everyUnionFeatureRepresented', 'negativeCasesRejected'], context.name);
 });
 
 test('no JavaScript source module imports peggy, which is only a development dependency', () => {

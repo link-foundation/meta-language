@@ -111,7 +111,7 @@ fn render_operations(head: &str, operations: &[Operation]) -> String {
 }
 
 /// The declaration links between the grammar link and the first rule.
-pub(super) fn render_declaration_links(declarations: &GrammarDeclarations) -> Vec<String> {
+pub fn render_declaration_links(declarations: &GrammarDeclarations) -> Vec<String> {
     let mut lines = Vec::new();
     for name in &declarations.imports {
         lines.push(format!("(import {})", percent_encode_links_text(name)));
@@ -145,7 +145,7 @@ pub(super) fn render_declaration_links(declarations: &GrammarDeclarations) -> Ve
 }
 
 /// The rule fields before the `(doc TEXT)` field.
-pub(super) fn render_rule_fields(attributes: &RuleAttributes) -> Vec<String> {
+pub fn render_rule_fields(attributes: &RuleAttributes) -> Vec<String> {
     let mut fields = Vec::new();
     if !attributes.parameters.is_empty() {
         fields.push(render_names("parameters", &attributes.parameters));

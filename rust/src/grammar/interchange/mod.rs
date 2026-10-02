@@ -31,6 +31,7 @@ mod lossless;
 mod lowering;
 mod native;
 
+pub(crate) use feature_links::{render_declaration_links, render_rule_fields};
 pub use json::{deserialize_grammar, serialize_grammar};
 pub use links::{
     parse_grammar_links, parse_links_expression, percent_decode_links_text,

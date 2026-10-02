@@ -11,7 +11,11 @@
 // lookahead written as the empty expression, an arbitrary character limited
 // to printable ASCII), a note and the original expression as native links.
 // Rule names, kinds and documentation the target does not keep
-// are metadata steps as well. The executable grammar (the emitted text) is
+// are metadata steps as well, and so are the declarations of the grammar
+// feature union (matching, imports, modes, extras, conflicts, macros and
+// scanners) and the rule parameters, channels, modes and actions: no target
+// notation writes them, so the executable does not honor them and a lowering
+// that carries them is approximate. The executable grammar (the emitted text) is
 // therefore distinct from the lossless interchange package (executable plus
 // metadata), and the check below reconstructs the original from the package
 // and reports every feature the package does not carry. It mirrors
@@ -21,8 +25,10 @@ import { carryRuleDocs, Grammar } from './grammar.js';
 import { caseVariants, ruleDoc } from './grammar-emitters/structural.js';
 import { GrammarImportError } from './grammar-importers.js';
 import { grammarEmitter, grammarImporter } from './grammar-interchange.js';
+import { grammarDeclarations } from './grammar-feature-forms.js';
 import {
-  parseLinksExpression, percentDecodeLinksText, percentEncodeLinksText, renderLinksExpression,
+  parseGrammarLinks, parseLinksExpression, percentDecodeLinksText, percentEncodeLinksText, renderDeclarationLinks,
+  renderLinksExpression, renderRuleFieldLinks,
 } from './grammar-links.js';
 import { acceptsText, canonicalRuleDefinition } from './grammar-round-trip.js';
 
@@ -424,8 +430,18 @@ export function lowerGrammar(grammar, format, {
     if (back && doc !== null && ruleDoc(imported, back) !== doc) steps.push({ kind: 'doc', rule: rule.name, value: doc });
   }
   steps.unshift(...renames);
+  // The feature union declarations and rule fields have no form in any target
+  // notation: they become steps, and the executable does not honor them.
+  const declarations = renderDeclarationsText(grammarDeclarations(grammar));
+  if (declarations !== null) steps.push({ kind: 'declarations', value: declarations });
+  for (const rule of grammar.rules.values()) {
+    const fields = renderRuleFieldLinks(rule);
+    if (fields.length > 0) steps.push({ kind: 'attributes', rule: rule.name, value: fields.join(' ') });
+  }
 
-  const status = steps.some((step) => step.encoding === 'approximate') ? 'approximate' : 'exact';
+  const status = steps.some((step) => step.encoding === 'approximate' || UNHONORED_STEPS.has(step.kind))
+    ? 'approximate'
+    : 'exact';
   const metadata = renderLoweringMetadata({
     format, status, source: grammar.sourceFormat, start: start.name, order: grammar.ruleNames(), steps,
   });
@@ -441,6 +457,30 @@ export function lowerGrammar(grammar, format, {
   };
 }
 
+// The steps whose content the executable grammar does not honor.
+const UNHONORED_STEPS = new Set(['declarations', 'attributes']);
+
+// The declarations as native links (a grammar link with the matching, then
+// one link per declaration), or null for a grammar without declarations.
+function renderDeclarationsText(declarations) {
+  const lines = renderDeclarationLinks(declarations);
+  if (declarations.matching === null && lines.length === 0) return null;
+  const header = declarations.matching === null ? '(grammar)' : `(grammar (matching ${declarations.matching}))`;
+  return [header, ...lines].map((line) => `${line}\n`).join('');
+}
+
+// Reads a declarations step back through the native links reader, which needs
+// one rule after the declarations.
+function parseDeclarationsText(text) {
+  return parseGrammarLinks(`${text}(rule _ normal empty)\n`).declarations;
+}
+
+// Reads an attributes step back as the rule fields of a placeholder rule.
+function parseRuleFields(fields) {
+  const { parameters, channel, modes, action } = parseGrammarLinks(`(grammar)\n(rule _ normal empty ${fields})\n`).rule('_');
+  return { parameters, channel, modes, action };
+}
+
 /** Renders the reconstruction metadata as links, one link per line. */
 export function renderLoweringMetadata({ format, status, source, start, order, steps }) {
   const text = percentEncodeLinksText;
@@ -453,6 +493,8 @@ export function renderLoweringMetadata({ format, status, source, start, order, s
   for (const step of steps) {
     if (step.kind === 'helper') {
       lines.push(`(helper ${text(step.helper)} ${text(step.owner)} ${step.construct} ${step.encoding} ${text(step.note)} ${renderLinksExpression(step.original)})`);
+    } else if (step.kind === 'declarations') {
+      lines.push(`(declarations ${text(step.value)})`);
     } else {
       lines.push(`(${step.kind} ${text(step.rule)} ${text(step.value)})`);
     }
@@ -507,9 +549,15 @@ export function parseLoweringMetadata(source) {
         original: parseLinksExpression(args[5]),
       };
     }
-    if ((kind === 'rename' || kind === 'kind' || kind === 'doc') && args.length === 2) {
+    if (kind === 'declarations' && args.length === 1) {
+      const value = percentDecodeLinksText(word(args[0]));
+      parseDeclarationsText(value);
+      return { kind, value };
+    }
+    if ((kind === 'rename' || kind === 'kind' || kind === 'doc' || kind === 'attributes') && args.length === 2) {
       const value = percentDecodeLinksText(word(args[1]));
       if (kind === 'kind' && !RULE_KIND_TAGS.has(value)) throw metadataError(`unknown rule kind ${value}`);
+      if (kind === 'attributes') parseRuleFields(value);
       return { kind, rule: percentDecodeLinksText(word(args[0])), value };
     }
     throw metadataError(`unexpected link ${kind}`);
@@ -552,13 +600,20 @@ export function reconstructGrammar(executable, metadataSource, {
   const executableName = (name) => renames.get(name) ?? name;
   const kinds = new Map(metadata.steps.filter((step) => step.kind === 'kind').map((step) => [step.rule, step.value]));
   const docs = new Map(metadata.steps.filter((step) => step.kind === 'doc').map((step) => [step.rule, step.value]));
+  const attributes = new Map(stepsOf('attributes').map((step) => [step.rule, parseRuleFields(step.value)]));
+  const declarations = stepsOf('declarations').at(-1);
   const rules = new Map();
   for (const name of metadata.order) {
     const rule = imported.rule(executableName(name));
     if (!rule) throw new GrammarLoweringError(`the executable grammar has no rule ${executableName(name)}`);
-    rules.set(name, { kind: kinds.get(name) ?? rule.kind, expression: restore(rule.expression) });
+    rules.set(name, { ...attributes.get(name), kind: kinds.get(name) ?? rule.kind, expression: restore(rule.expression) });
   }
-  const grammar = new Grammar(metadata.start, rules, metadata.source);
+  const grammar = new Grammar(
+    metadata.start,
+    rules,
+    metadata.source,
+    declarations === undefined ? null : parseDeclarationsText(declarations.value),
+  );
   for (const name of metadata.order) {
     const doc = docs.get(name) ?? ruleDoc(imported, imported.rule(executableName(name)));
     if (doc !== null) grammar.rules.set(name, Object.freeze({ ...grammar.rules.get(name), doc }));
@@ -634,10 +689,16 @@ export function droppedGrammarFeatures(expected, actual) {
     details.push(`rules [${expected.ruleNames().join(', ')}] became [${actual.ruleNames().join(', ')}]`);
   }
   if ((expected.startRule()?.name ?? null) !== (actual.startRule()?.name ?? null)) details.push('the start rule changed');
+  if (renderDeclarationsText(grammarDeclarations(expected)) !== renderDeclarationsText(grammarDeclarations(actual))) {
+    details.push('the grammar declarations changed');
+  }
   for (const rule of expected.rules.values()) {
     const other = actual.rule(rule.name);
     if (!other) continue;
     if (other.kind !== rule.kind) details.push(`rule ${rule.name} lost its kind ${rule.kind}`);
+    if (renderRuleFieldLinks(other).join(' ') !== renderRuleFieldLinks(rule).join(' ')) {
+      details.push(`rule ${rule.name} changed its parameters, channel, modes or action`);
+    }
     if (canonicalRuleDefinition(other) !== canonicalRuleDefinition(rule)) details.push(`rule ${rule.name} changed its definition`);
     if (ruleDoc(actual, other) !== ruleDoc(expected, rule)) details.push(`rule ${rule.name} changed its documentation`);
   }

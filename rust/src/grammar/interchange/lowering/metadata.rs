@@ -9,12 +9,14 @@ use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 use super::super::super::round_trip::rule_definition;
 use super::super::super::runtime::GrammarParser;
 use super::super::super::{
-    Grammar, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule, RuleKind,
+    Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule,
+    RuleAttributes, RuleKind,
 };
-use super::super::grammar_importer;
 use super::super::links::{
-    parse_node, percent_decode_links_text, percent_encode_links_text, render_links_expression,
+    parse_grammar_links, parse_node, percent_decode_links_text, percent_encode_links_text,
+    render_links_expression,
 };
+use super::super::{grammar_importer, render_declaration_links, render_rule_fields};
 use super::{
     GrammarImportFn, GrammarLowering, GrammarLoweringEncoding, GrammarLoweringError,
     GrammarLoweringMetadata, GrammarLoweringOptions, GrammarLoweringStatus, GrammarLoweringStep,
@@ -74,6 +76,12 @@ pub fn render_lowering_metadata(metadata: &GrammarLoweringMetadata) -> String {
             GrammarLoweringStep::Doc { rule, doc } => {
                 format!("(doc {} {})", text(rule), text(doc))
             }
+            GrammarLoweringStep::Declarations { declarations } => {
+                format!("(declarations {})", text(declarations))
+            }
+            GrammarLoweringStep::Attributes { rule, attributes } => {
+                format!("(attributes {} {})", text(rule), text(attributes))
+            }
         });
     }
     lines.iter().fold(String::new(), |mut text, line| {
@@ -81,6 +89,47 @@ pub fn render_lowering_metadata(metadata: &GrammarLoweringMetadata) -> String {
         text.push('\n');
         text
     })
+}
+
+/// The declarations as native links (a grammar link with the matching, then
+/// one link per declaration), or `None` for a grammar without declarations.
+pub(super) fn render_declarations_text(declarations: &GrammarDeclarations) -> Option<String> {
+    let lines = render_declaration_links(declarations);
+    if declarations.matching.is_none() && lines.is_empty() {
+        return None;
+    }
+    let header = declarations.matching.as_ref().map_or_else(
+        || "(grammar)".to_owned(),
+        |matching| format!("(grammar (matching {matching}))"),
+    );
+    Some(
+        std::iter::once(header)
+            .chain(lines)
+            .fold(String::new(), |mut text, line| {
+                text.push_str(&line);
+                text.push('\n');
+                text
+            }),
+    )
+}
+
+/// Reads a declarations step back through the native links reader, which
+/// needs one rule after the declarations.
+fn parse_declarations_text(text: &str) -> Result<GrammarDeclarations, GrammarLoweringError> {
+    Ok(
+        parse_grammar_links(&format!("{text}(rule _ normal empty)\n"))?
+            .declarations()
+            .clone(),
+    )
+}
+
+/// Reads an attributes step back as the rule fields of a placeholder rule.
+fn parse_rule_fields(fields: &str) -> Result<RuleAttributes, GrammarLoweringError> {
+    let grammar = parse_grammar_links(&format!("(grammar)\n(rule _ normal empty {fields})\n"))?;
+    Ok(grammar
+        .rule("_")
+        .map(|placeholder| placeholder.attributes.clone())
+        .unwrap_or_default())
 }
 
 fn metadata_error(detail: impl AsRef<str>) -> GrammarLoweringError {
@@ -142,6 +191,19 @@ fn step(kind: &str, args: &[Node]) -> Result<GrammarLoweringStep, GrammarLowerin
                 encoding,
                 note: decoded(args.get(4))?,
                 original: parse_node(&args[5])?,
+            })
+        }
+        ("declarations", 1) => {
+            let declarations = decoded(args.first())?;
+            parse_declarations_text(&declarations)?;
+            Ok(GrammarLoweringStep::Declarations { declarations })
+        }
+        ("attributes", 2) => {
+            let attributes = decoded(args.get(1))?;
+            parse_rule_fields(&attributes)?;
+            Ok(GrammarLoweringStep::Attributes {
+                rule: decoded(args.first())?,
+                attributes,
             })
         }
         ("rename" | "kind" | "doc", 2) => {
@@ -243,7 +305,8 @@ pub fn parse_lowering_metadata(
 /// The executable is imported, every renamed rule gets its
 /// original name back, every helper reference is replaced with the original
 /// expression the metadata records, the helpers are removed and the rule
-/// kinds and documentation the target did not keep are restored. `import`
+/// kinds and documentation the target did not keep, the rule fields and the
+/// grammar declarations are restored. `import`
 /// replaces the format's own importer.
 ///
 /// # Errors
@@ -264,6 +327,8 @@ pub fn reconstruct_grammar(
     let mut originals: HashMap<&str, &str> = HashMap::new();
     let mut kinds: HashMap<&str, RuleKind> = HashMap::new();
     let mut docs: HashMap<&str, &str> = HashMap::new();
+    let mut attributes: HashMap<&str, RuleAttributes> = HashMap::new();
+    let mut declarations = None;
     for step in &metadata.steps {
         match step {
             GrammarLoweringStep::Helper {
@@ -281,6 +346,13 @@ pub fn reconstruct_grammar(
             GrammarLoweringStep::Doc { rule, doc } => {
                 docs.insert(rule, doc);
             }
+            GrammarLoweringStep::Declarations { declarations: text } => declarations = Some(text),
+            GrammarLoweringStep::Attributes {
+                rule,
+                attributes: fields,
+            } => {
+                attributes.insert(rule, parse_rule_fields(fields)?);
+            }
         }
     }
     let restore = |expr: &GrammarExpr| restore(expr, &helpers, &originals);
@@ -296,14 +368,22 @@ pub fn reconstruct_grammar(
             .get(name.as_str())
             .map(|doc| (*doc).to_owned())
             .or_else(|| back.doc.clone());
-        rules.push(rule(
+        let mut restored = rule(
             name,
             kinds.get(name.as_str()).copied().unwrap_or(back.kind),
             restore(&back.expr),
             doc,
-        ));
+        );
+        if let Some(fields) = attributes.remove(name.as_str()) {
+            restored.attributes = fields;
+        }
+        rules.push(restored);
     }
-    Ok(assemble(&metadata.start, rules, metadata.source))
+    let mut grammar = assemble(&metadata.start, rules, metadata.source);
+    if let Some(text) = declarations {
+        grammar.set_declarations(parse_declarations_text(text)?);
+    }
+    Ok(grammar)
 }
 
 /// `expr` with every renamed reference given its original name back and every
@@ -537,6 +617,11 @@ pub fn dropped_grammar_features(
     if start(expected) != start(actual) {
         details.push("the start rule changed".to_owned());
     }
+    if render_declarations_text(expected.declarations())
+        != render_declarations_text(actual.declarations())
+    {
+        details.push("the grammar declarations changed".to_owned());
+    }
     for original in expected.rules() {
         let Some(other) = actual.rule(&original.name) else {
             continue;
@@ -546,6 +631,12 @@ pub fn dropped_grammar_features(
                 "rule {} lost its kind {}",
                 original.name,
                 original.kind.as_str()
+            ));
+        }
+        if render_rule_fields(&other.attributes) != render_rule_fields(&original.attributes) {
+            details.push(format!(
+                "rule {} changed its parameters, channel, modes or action",
+                original.name
             ));
         }
         if rule_definition(other)? != rule_definition(original)? {

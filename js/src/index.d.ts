@@ -1280,7 +1280,7 @@ export interface GrammarMergeSource {
   grammar: Grammar;
 }
 export interface GrammarMergeDecision {
-  kind: 'merged' | 'kept-unique' | 'renamed-for-collision' | 'homonym-kept-distinct' | 'uncertain';
+  kind: 'merged' | 'kept-unique' | 'renamed-for-collision' | 'homonym-kept-distinct' | 'uncertain' | 'declaration-conflict';
   name: string;
   members: string[];
   basis: string;
@@ -1292,7 +1292,7 @@ export interface GrammarMergeNomination {
   outcome: 'proven' | 'unproven';
 }
 export interface GrammarMergeAlternative {
-  reason: 'start-rule' | 'distinct-meaning' | 'uncertain-match' | 'edition';
+  reason: 'start-rule' | 'distinct-meaning' | 'uncertain-match' | 'edition' | 'declaration-conflict';
   name: string;
   options: string[];
 }
@@ -1369,6 +1369,8 @@ export function percentEncodeLinksText(value: string): string;
 export function percentDecodeLinksText(value: string): string;
 export function renderGrammarLinks(grammar: Grammar): string;
 export function renderRuleLink(grammar: Grammar, rule: GrammarRuleValue): string;
+export function renderRuleFieldLinks(rule: GrammarRuleValue): string[];
+export function renderDeclarationLinks(declarations: Required<Omit<GrammarDeclarations, 'matching'>>): string[];
 export function renderLinksExpression(expression: GrammarExpression): string;
 export function parseLinksExpression(value: unknown): GrammarExpression;
 export function parseGrammarLinks(source: string): Grammar;
