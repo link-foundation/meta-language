@@ -7,10 +7,15 @@
 // commented source per lossless format, the native links, the export of the
 // grammar decoded from those links, the re-imported links, the layout links
 // and the lossless emissions of the unchanged, mutated and renamed grammars.
+// The lowering section records, for every grammar of
+// issue-195-lowering-fixture-grammars.mjs and every lowering notation, the
+// status, the executable text, the reconstruction metadata and the links of
+// the grammar reconstructed from both, which the check found to drop nothing.
 import { readFileSync, writeFileSync } from 'node:fs';
 import * as ml from '../js/src/index.js';
 import { renderGrammarRule } from '../js/tests/support/render-grammar-expression.js';
 import { candidates } from './issue-195-importer-construct-cases.mjs';
+import { LOWERING_GRAMMARS } from './issue-195-lowering-fixture-grammars.mjs';
 import { SOURCES } from './issue-195-reverse-conversion-sources.mjs';
 
 const fixtureUrl = new URL('../parity/fixtures/grammar-importers.json', import.meta.url);
@@ -75,6 +80,18 @@ const reverse = Object.entries(SOURCES).map(([format, source]) => {
   };
 });
 
+const lowering = LOWERING_GRAMMARS.map(({ id, links, accepts, rejects }) => {
+  const grammar = ml.parseGrammarLinks(links);
+  if (ml.renderGrammarLinks(grammar) !== links) throw new Error(`${id}: the links are not canonical`);
+  const targets = ml.GRAMMAR_LOWERING_FORMATS.map((format) => {
+    const report = ml.checkGrammarLowering(grammar, format, { accepts, rejects });
+    if (report.status === 'broken') throw new Error(`${id} ${format}: ${JSON.stringify(report.failures)}`);
+    const { status, executable, metadata } = report.lowering;
+    return { format, status, executable, metadata, reconstructed: ml.renderGrammarLinks(report.reconstructed) };
+  });
+  return { id: `${id}:lowering`, links, accepts, rejects, targets };
+});
+
 // Two-space JSON with short string arrays kept on one line, as before.
 function format(value, indent = '') {
   const next = `${indent}  `;
@@ -91,5 +108,5 @@ function format(value, indent = '') {
   }
   return JSON.stringify(value);
 }
-writeFileSync(fixtureUrl, `${format({ schemaVersion: corpus.schemaVersion, cases, malformed: corpus.malformed ?? [], commands: corpus.commands ?? [], reverse })}\n`);
-console.log(`wrote ${cases.length} cases and ${reverse.length} reverse conversions`);
+writeFileSync(fixtureUrl, `${format({ schemaVersion: corpus.schemaVersion, cases, malformed: corpus.malformed ?? [], commands: corpus.commands ?? [], reverse, lowering })}\n`);
+console.log(`wrote ${cases.length} cases, ${reverse.length} reverse conversions and ${lowering.length} lowerings`);
