@@ -683,7 +683,16 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'weakenedOracleMappingFails',
       'boundedProofSubstituteFails',
     ],
-    tooling: null,
+    tooling: [
+      'js/scripts/issue-195-proof-obligations.mjs',
+      'js/scripts/issue-195-oracle-mapping.mjs',
+      'js/scripts/issue-195-acceptance-lib.mjs',
+      'js/scripts/issue-195-sources.mjs',
+      'js/scripts/issue-195-naming.mjs',
+      'js/scripts/dependency-inventory.mjs',
+      'js/src/grammar-lowering.js',
+      'js/src/grammar-reverse.js',
+    ],
   },
   {
     id: 'I195-ACCEPTANCE-REQUIRED-MERGE-CHECK',
