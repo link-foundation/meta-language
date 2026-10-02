@@ -541,6 +541,90 @@ export function statuses(items) {
 /** Whether an item's own pin is behind and so needs its own recorded reason (derived items inherit theirs). */
 const needsReason = (item) => ownStatus(item) === 'behind';
 
+// --- Delivery -------------------------------------------------------------
+
+const DEPTH = { major: 1, minor: 2 };
+const syntaxOf = (item) => (item.category === 'crate' ? 'cargo' : 'npm');
+
+/**
+ * Why a held item's pin is not its verified newest compatible release, or
+ * null when it is. A pin behind its current stable release is delivered only
+ * when the refresh recorded `compatible`, the newest stable release every
+ * dependent's requirement admits, and `heldBy`, the recorded requirements
+ * that exclude the current release: each names an inventoried holder that is
+ * itself delivered, or an external package at its newest release. A reason
+ * alone never satisfies this.
+ */
+function heldCause(item, verdictOf) {
+  if (typeof item.compatible !== 'string' || item.compatible === '') return 'no newest compatible release is recorded';
+  if (!Array.isArray(item.heldBy) || item.heldBy.length === 0) return 'no dependent requirement that holds it is recorded';
+  const syntax = syntaxOf(item);
+  try {
+    if (isPrerelease(item.compatible)) return `the recorded compatible release ${item.compatible} is a prerelease`;
+    if (compareVersions(item.compatible, item.current) > 0) return `the recorded compatible release ${item.compatible} is newer than the current release ${item.current}`;
+    if (compareVersions(item.pinned, item.compatible, DEPTH[item.compare]) < 0) return `the newest compatible release is ${item.compatible}`;
+    let excludesCurrent = false;
+    for (const holder of item.heldBy) {
+      const name = holder.id ?? holder.external;
+      if (typeof name !== 'string' || typeof holder.requirement !== 'string') return 'a holder records no id or requirement';
+      if (!satisfies(item.compatible, holder.requirement, syntax)) return `${name} requires ${holder.requirement}, which does not admit the recorded compatible release ${item.compatible}`;
+      if (!satisfies(item.current, holder.requirement, syntax)) excludesCurrent = true;
+      if (holder.external) {
+        if (!holder.version || !holder.newest || compareVersions(holder.version, holder.newest) < 0) {
+          return `the external holder ${holder.external} ${holder.version} is behind its newest release ${holder.newest}`;
+        }
+      }
+      for (const id of [holder.id, holder.requiredBy].filter(Boolean)) {
+        const verdict = verdictOf(id);
+        if (verdict === undefined) return `the holder ${id} is not inventoried`;
+        if (verdict === 'behind') return `the holder ${id} is itself stale`;
+      }
+    }
+    if (!excludesCurrent) return `no recorded holder excludes the current release ${item.current}`;
+  } catch (error) {
+    return error.message;
+  }
+  return null;
+}
+
+/**
+ * The delivery verdict of every item: `current`, `compatible` (behind its
+ * current stable release but at its verified newest compatible release),
+ * `behind` or `not applicable`, with the cause of every `behind`. Anything
+ * built from a behind item is behind.
+ */
+export function deliveredStatuses(items) {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const result = new Map();
+  const visiting = new Set();
+  const visit = (id) => {
+    if (result.has(id)) return result.get(id).status;
+    const item = byId.get(id);
+    if (!item) return undefined;
+    if (visiting.has(id)) return 'behind';
+    visiting.add(id);
+    let status = ownStatus(item);
+    let cause = status === 'behind' ? 'behind its current stable release' : null;
+    if (status === 'behind') {
+      cause = heldCause(item, visit);
+      if (cause === null) status = 'compatible';
+    }
+    for (const dependency of item.dependsOn ?? []) {
+      const parent = visit(dependency);
+      if (parent === 'behind') {
+        status = 'behind';
+        cause ??= `built from ${dependency}, which is stale`;
+      } else if (parent !== undefined && status === 'not applicable' && item.compare === 'derived') status = 'current';
+    }
+    if (item.compare === 'derived' && status === 'not applicable' && (item.dependsOn ?? []).length === 0) status = 'current';
+    visiting.delete(id);
+    result.set(id, { status, cause: status === 'behind' ? cause : null });
+    return status;
+  };
+  for (const item of items) visit(item.id);
+  return result;
+}
+
 // --- Check ----------------------------------------------------------------
 
 const COLLECTED_FIELDS = ['category', 'name', 'scope', 'declaredIn', 'pinned', 'compare', 'source', 'role', 'kind', 'requirement', 'patch'];
@@ -608,23 +692,27 @@ export function checkInventory(inventory, collected, { today = new Date().toISOS
 }
 
 /**
- * Delivery requires current dependencies, including transitive resolutions
- * and generated descendants. A compatibility reason explains an inventory
- * item; it cannot waive the separate delivery obligation.
+ * Delivery requires every retained item at its current stable release, or at
+ * the verified newest release its holders' requirements admit, including
+ * transitive resolutions and generated descendants. A compatibility reason
+ * explains an inventory item; it cannot waive the separate delivery
+ * obligation.
  */
 export function checkDeliveredDependencies(inventory, collected, options = {}) {
   const problems = checkInventory(inventory, collected, options);
   let effective;
   try {
-    effective = statuses(inventory.items ?? []);
+    statuses(inventory.items ?? []);
+    effective = deliveredStatuses(inventory.items ?? []);
   } catch (error) {
     problems.push({ kind: 'delivery-comparison', message: error.message });
     return problems;
   }
   for (const item of inventory.items ?? []) {
-    if (effective.get(item.id) === 'behind') problems.push({
+    const verdict = effective.get(item.id);
+    if (verdict.status === 'behind') problems.push({
       kind: 'stale-delivered-dependency',
-      message: `${item.id}: delivered pin ${item.pinned} is behind the current stable release or its generating dependency; compatibility reasons do not satisfy delivery`,
+      message: `${item.id}: delivered pin ${item.pinned} is behind the current stable release or its generating dependency (${verdict.cause}); compatibility reasons do not satisfy delivery`,
     });
   }
   const runtimePackages = (inventory.items ?? []).filter(({ category, kind }) =>
@@ -666,15 +754,42 @@ export function checkDeliveredDependencies(inventory, collected, options = {}) {
       }
       for (const item of runtimePackages) {
         const installed = versions.get(item.source.package) ?? [];
+        const target = effective.get(item.id).status === 'compatible' ? item.compatible : item.current;
         let stale = installed.length === 0;
         try {
-          stale ||= installed.some((version) => !version || isPrerelease(version) || compareVersions(version, item.current) < 0);
+          stale ||= installed.some((version) => !version || isPrerelease(version) || compareVersions(version, target) < 0);
         } catch {
           stale = true;
         }
         if (stale) {
-          problems.push({ kind: 'stale-consumer-resolution', message: `${item.source.package}: clean consumer resolves ${installed.join(', ') || 'no installed version'}, audited current release is ${item.current}` });
+          problems.push({ kind: 'stale-consumer-resolution', message: `${item.source.package}: clean consumer resolves ${installed.join(', ') || 'no installed version'}, audited current release is ${target}` });
         }
+      }
+    }
+  }
+  return problems;
+}
+
+/** The fields a live refresh must reproduce for the recorded audit to stand. */
+const AUDITED_FIELDS = ['current', 'containsCurrent', 'compatible', 'heldBy'];
+
+/**
+ * The differences between the recorded inventory and a live refresh of it:
+ * an item whose current release, compatible release or holders changed since
+ * the audit date, or that the live refresh no longer resolves.
+ */
+export function compareAudits(recorded, live) {
+  const problems = [];
+  const stored = new Map((recorded.items ?? []).map((item) => [item.id, item]));
+  for (const item of live.items ?? []) {
+    const entry = stored.get(item.id);
+    if (!entry) continue;
+    for (const field of AUDITED_FIELDS) {
+      if (JSON.stringify(entry[field]) !== JSON.stringify(item[field])) {
+        problems.push({
+          kind: 'audit-outdated',
+          message: `${item.id}: the audit of ${recorded.auditDate} records ${field} ${JSON.stringify(entry[field])}, the registries now report ${JSON.stringify(item[field])}; update the item and run node js/scripts/check-dependencies.mjs --refresh`,
+        });
       }
     }
   }
@@ -731,12 +846,14 @@ export function releaseResolvers({ http, github, today }) {
     npm: ({ package: name }) =>
       once(`npm ${name}`, async () => {
         const document = JSON.parse(await http(`https://registry.npmjs.org/${name.replace('/', '%2f')}`, { accept: 'application/vnd.npm.install-v1+json' }));
-        return { current: document['dist-tags'].latest, evidence: `npm registry, ${name} latest` };
+        const versions = Object.entries(document.versions ?? {}).filter(([, entry]) => !entry.deprecated).map(([version]) => version);
+        return { current: document['dist-tags'].latest, evidence: `npm registry, ${name} latest`, versions };
       }),
     crate: ({ crate }) =>
       once(`crate ${crate}`, async () => {
         const lines = (await http(`https://index.crates.io/${crateIndexPath(crate)}`)).trim().split('\n').map((line) => JSON.parse(line));
-        return { current: newestStable(lines.filter((line) => !line.yanked).map((line) => line.vers)), evidence: `crates.io, ${crate}` };
+        const versions = lines.filter((line) => !line.yanked).map((line) => line.vers);
+        return { current: newestStable(versions), evidence: `crates.io, ${crate}`, versions };
       }),
     'github-release': async ({ repository }) => ({ current: await githubRelease(repository), evidence: `GitHub release, ${repository}` }),
     'github-revision': async ({ repository }, item) => {
@@ -767,6 +884,80 @@ export function releaseResolvers({ http, github, today }) {
       }),
     'rust-edition': async () => ({ current: RUST_EDITIONS.at(-1), evidence: 'Rust editions, the newest stable edition' }),
     none: async () => ({}),
+    couplings: couplingResolvers({ github }),
+  };
+}
+
+const githubFile = async (github, repository, file, ref) => {
+  const document = await github(`repos/${repository}/contents/${file}${ref ? `?ref=${ref}` : ''}`);
+  return Buffer.from(document.content, document.encoding ?? 'base64').toString('utf8');
+};
+
+/**
+ * The constraint an opam file places on one package, at the top level of its
+ * filter: `"ocaml" {>= "3.08.0" & (os != "cygwin" | < "5.0") & < "5.5.0~"}`
+ * gives `>=3.08.0 <5.5.0`. Parenthesised alternatives are platform-specific
+ * and dropped; a `~` suffix only admits the bound's prereleases.
+ */
+export function opamConstraint(opam, name) {
+  const match = opam.match(new RegExp(`"${name}"\\s*\\{([^}]*)\\}`, 'u'));
+  if (!match) return opam.includes(`"${name}"`) ? '' : null;
+  let filter = match[1];
+  while (/\([^()]*\)/u.test(filter)) filter = filter.replace(/\([^()]*\)/gu, '');
+  return [...filter.matchAll(/(>=|<=|>|<|=)\s*"([^"]+)"/gu)].map(([, operator, version]) => `${operator}${version.replace(/~.*$/u, '')}`).join(' ');
+}
+
+/**
+ * The resolvers of items a coupled artifact or toolchain holds rather than a
+ * package requirement in a lockfile. Each returns the newest compatible
+ * release, the requirements that exclude the current release, and the
+ * reason, all queried live.
+ */
+export function couplingResolvers({ github }) {
+  return {
+    // The vendored web-tree-sitter runtime is built with the emscripten that
+    // its tree-sitter release pins; another emscripten changes the runtime.
+    'image emscripten/emsdk': async (item, find) => {
+      const holder = find('npm', 'web-tree-sitter');
+      if (!holder) return {};
+      const tag = `v${holder.pinned}`;
+      const pinned = (await githubFile(github, 'tree-sitter/tree-sitter', 'crates/loader/emscripten-version', tag)).trim();
+      return {
+        compatible: pinned,
+        heldBy: [{ id: holder.id, requirement: `=${pinned}`, evidence: `tree-sitter/tree-sitter ${tag} crates/loader/emscripten-version` }],
+        reason: `Held by tree-sitter ${tag}, whose \`crates/loader/emscripten-version\` pins emscripten ${pinned} for the web-tree-sitter ${holder.pinned} runtime; another emscripten produces a different runtime, so the image moves with tree-sitter.`,
+      };
+    },
+    // Rocq builds with ocamlfind, and the newest ocamlfind release bounds the
+    // OCaml compiler.
+    'toolchain ocaml': async (item, find) => {
+      const rocq = find('toolchain', 'rocq-core');
+      if (!rocq) return {};
+      const opam = (file) => githubFile(github, 'ocaml/opam-repository', `packages/${file}`);
+      const findlib = opamConstraint(await opam(`rocq-runtime/rocq-runtime.${rocq.pinned}/opam`), 'ocamlfind');
+      if (findlib === null) return {};
+      const releases = (await github('repos/ocaml/opam-repository/contents/packages/ocamlfind'))
+        .map((entry) => entry.name.replace(/^ocamlfind\./u, ''))
+        .filter((version) => versionParts(version) && !isPrerelease(version));
+      const newest = newestStable(releases);
+      const admitted = newestStable(releases.filter((version) => findlib === '' || satisfies(version, findlib, 'npm')));
+      const bound = opamConstraint(await opam(`ocamlfind/ocamlfind.${admitted}/opam`), 'ocaml');
+      const upper = (bound ?? '').split(' ').filter((part) => part.startsWith('<')).join(' ');
+      if (!upper) return {};
+      const tags = (await github('repos/ocaml/ocaml/tags?per_page=100')).map((tag) => tag.name).filter((name) => /^\d+\.\d+\.\d+$/u.test(name));
+      return {
+        compatible: newestStable(tags.filter((version) => satisfies(version, upper, 'npm'))),
+        heldBy: [{
+          external: 'opam ocamlfind',
+          version: admitted,
+          newest,
+          requirement: upper,
+          requiredBy: rocq.id,
+          evidence: `opam-repository, rocq-runtime ${rocq.pinned} requires ocamlfind ${findlib || 'any'}; ocamlfind ${admitted} requires ocaml ${bound}`,
+        }],
+        reason: `Held by ocamlfind ${admitted}, the newest ocamlfind release in opam-repository, which requires OCaml ${upper}; rocq-runtime ${rocq.pinned} needs ocamlfind (${findlib || 'any'}), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line.`,
+      };
+    },
   };
 }
 
@@ -806,8 +997,34 @@ function npmDependents(lock) {
   return dependents;
 }
 
-function cargoDependents(metadata) {
+/**
+ * The dependents of every resolved crate with their requirements, keyed by
+ * crate name; each records the `target` version it resolves to. The edges come
+ * from the resolve graph of `cargo metadata`, so a disabled optional
+ * dependency or a dependency crate's own dev-dependency does not hold
+ * anything. Metadata without a resolve graph falls back to every declared
+ * dependency.
+ */
+export function cargoDependents(metadata) {
   const dependents = new Map();
+  if (metadata.resolve?.nodes) {
+    const packages = new Map(metadata.packages.map((entry) => [entry.id, entry]));
+    for (const node of metadata.resolve.nodes) {
+      const dependent = packages.get(node.id);
+      for (const edge of node.deps ?? []) {
+        const target = packages.get(edge.pkg);
+        if (!dependent || !target) continue;
+        const kinds = new Set((edge.dep_kinds ?? [{ kind: null }]).map(({ kind }) => kind ?? 'normal'));
+        const requirements = dependent.dependencies
+          .filter((dependency) => dependency.name === target.name && kinds.has(dependency.kind ?? 'normal') && satisfies(target.version, dependency.req, 'cargo'))
+          .map(({ req }) => req);
+        const list = dependents.get(target.name) ?? [];
+        for (const requirement of new Set(requirements)) list.push({ dependent: dependent.name, version: dependent.version, requirement, target: target.version });
+        dependents.set(target.name, list);
+      }
+    }
+    return dependents;
+  }
   for (const entry of metadata.packages) {
     for (const dependency of entry.dependencies) {
       const key = dependency.name;
@@ -833,11 +1050,13 @@ export async function refreshInventory({ root, previous, collected, resolvers, c
   const collectedByName = new Map(collected.map((item) => [nameKey(item), item]));
   const followPin = (id) => (prior.has(id) ? (collectedByName.get(nameKey(prior.get(id)))?.id ?? id) : id);
   let done = 0;
+  const releases = new Map();
   const items = await mapLimit(collected, 16, async (item) => {
     const before = prior.get(item.id) ?? priorByName.get(nameKey(item));
     const resolver = resolvers[item.source.type];
     if (!resolver && item.source.type !== 'rust-required') throw new Error(`${item.id}: no resolver for ${item.source.type}`);
-    const resolved = item.source.type === 'rust-required' ? requiredRustVersion(cargoMetadata(item.source.manifest)) : await resolver(item.source, item);
+    const { versions, ...resolved } = item.source.type === 'rust-required' ? requiredRustVersion(cargoMetadata(item.source.manifest)) : await resolver(item.source, item);
+    if (versions) releases.set(item.id, versions);
     done += 1;
     onProgress(done, collected.length, item.id);
     const entry = { ...item, ...resolved };
@@ -849,21 +1068,47 @@ export async function refreshInventory({ root, previous, collected, resolvers, c
   const manifests = { 'js/package-lock.json': { syntax: 'npm', lock: readJson(root, 'js/package-lock.json') } };
   const npmHolders = npmDependents(manifests['js/package-lock.json'].lock);
   const cargoHolders = new Map();
+  const ids = new Set(items.map(({ id }) => id));
+  const find = (category, name) => items.find((entry) => entry.category === category && (entry.source?.package ?? entry.name) === name);
   for (const item of items) {
+    delete item.compatible;
+    delete item.heldBy;
     if (!needsReason(item)) {
       delete item.reason;
       delete item.reasonHeld;
       continue;
     }
     let reason = null;
+    let holders = [];
+    let syntax = 'npm';
     if (item.category === 'npm') {
-      reason = heldReason(item, npmHolders.get(item.source.package) ?? [], { syntax: 'npm', rootName: manifests['js/package-lock.json'].lock.name });
+      holders = (npmHolders.get(item.source.package) ?? []).filter(({ requirement }) => satisfies(item.pinned, requirement, 'npm'));
+      reason = heldReason(item, holders, { syntax, rootName: manifests['js/package-lock.json'].lock.name });
     } else if (item.category === 'crate') {
+      syntax = 'cargo';
       const manifest = item.scope.replace(/Cargo\.lock$/u, 'Cargo.toml');
       if (!cargoHolders.has(manifest)) cargoHolders.set(manifest, cargoDependents(cargoMetadata(manifest)));
-      const holders = (cargoHolders.get(manifest).get(item.name) ?? []).filter(({ requirement }) => satisfies(item.pinned, requirement, 'cargo'));
+      holders = (cargoHolders.get(manifest).get(item.name) ?? [])
+        .filter(({ requirement, target }) => (target ? target === item.pinned : satisfies(item.pinned, requirement, 'cargo')));
       const rootName = parseCargoManifest(readText(root, manifest)).settings.name;
-      reason = heldReason(item, holders, { syntax: 'cargo', rootName });
+      reason = heldReason(item, holders, { syntax, rootName });
+    } else if (resolvers.couplings?.[`${item.category} ${item.name}`]) {
+      const coupled = await resolvers.couplings[`${item.category} ${item.name}`](item, find);
+      if (coupled.compatible && coupled.heldBy?.length) {
+        Object.assign(item, { compatible: coupled.compatible, heldBy: coupled.heldBy });
+        reason = coupled.reason;
+      }
+    }
+    // A lockfile holder is an inventoried package of the same lockfile; the
+    // newest compatible release satisfies every dependent's requirement.
+    if (reason && holders.length > 0 && releases.has(item.id)) {
+      const admitted = releases.get(item.id).filter((version) => !isPrerelease(version) && holders.every(({ requirement }) => satisfies(version, requirement, syntax)));
+      const heldBy = holders
+        .filter(({ requirement }) => !satisfies(item.current, requirement, syntax))
+        .map(({ dependent, version, requirement }) => ({ id: itemId({ category: item.category, scope: item.scope, name: dependent, pinned: version }), requirement }))
+        .filter(({ id }) => ids.has(id));
+      const compatible = newestStable(admitted);
+      if (compatible && heldBy.length > 0) Object.assign(item, { compatible, heldBy });
     }
     if (reason) {
       item.reason = reason;
@@ -931,6 +1176,18 @@ export function renderAuditDocument(inventory) {
     'a retained item is behind its current stable release without a recorded',
     'compatibility reason.',
     '',
+    '`npm run check:dependencies:delivery` is the delivery gate. A recorded reason',
+    'does not count as an upgrade: an item behind its current stable release is',
+    'delivered only at its newest compatible release, the newest stable release',
+    'that every requirement holding it admits, which the refresh records with the',
+    'holders whose requirements exclude the current release. Each holder must be an',
+    'inventoried item that is itself delivered, or an external package at its',
+    'newest release; anything else, and anything built from it, is stale. In',
+    'acceptance and CI runs (and with `--live`) the gate refreshes the inventory',
+    'from the registries in memory and fails when a current or compatible release',
+    'differs from this audit, so a release published after the audit date fails',
+    'delivery until the item moves to it.',
+    '',
     'Comparisons: `version` means the pin must be at least the current release;',
     '`major` and `minor` mean a moving tag (`v7`, `5.4`) that must name the current',
     'release line; `floor` means a supported minimum (the `engines` floor must be a',
@@ -978,11 +1235,25 @@ export function renderAuditDocument(inventory) {
     push('');
   }
   const behind = items.filter((item) => needsReason(item));
+  const delivered = deliveredStatuses(items);
   push('## Behind the current stable release', '');
   if (behind.length === 0) push('No retained item is behind its current stable release.');
   else {
-    push(`${behind.length} retained items are behind their current stable release on ${inventory.auditDate}, each for the recorded reason:`, '');
-    for (const item of behind) push(`- ${code(item.name)} ${code(item.pinned)} → ${code(item.current)} (${item.declaredIn.map(code).join(', ')}): ${item.reason ?? 'no recorded reason'}`);
+    const held = behind.filter((item) => delivered.get(item.id).status === 'compatible').length;
+    push(
+      `${behind.length} retained items are behind their current stable release on ${inventory.auditDate}, each for the recorded reason.`,
+      `${held} of them are at their newest compatible release, verified against the requirements that hold them;`,
+      `${behind.length - held} are stale and fail the delivery check.`,
+      '',
+    );
+    for (const item of behind) {
+      const verdict = delivered.get(item.id);
+      const holders = (item.heldBy ?? []).map((holder) => `${code(holder.id ?? `${holder.external} ${holder.version}`)} (${code(holder.requirement)})`).join(', ');
+      const delivery = verdict.status === 'compatible'
+        ? `Delivered at its newest compatible release ${code(item.compatible)}, held by ${holders}.`
+        : `Stale: ${verdict.cause}.`;
+      push(`- ${code(item.name)} ${code(item.pinned)} → ${code(item.current)} (${item.declaredIn.map(code).join(', ')}): ${item.reason ?? 'no recorded reason'} ${delivery}`);
+    }
   }
   push('');
   statusCache = null;

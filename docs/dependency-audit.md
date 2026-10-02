@@ -31,6 +31,18 @@ inventory does not record; when the audit date is missing or invalid; and when
 a retained item is behind its current stable release without a recorded
 compatibility reason.
 
+`npm run check:dependencies:delivery` is the delivery gate. A recorded reason
+does not count as an upgrade: an item behind its current stable release is
+delivered only at its newest compatible release, the newest stable release
+that every requirement holding it admits, which the refresh records with the
+holders whose requirements exclude the current release. Each holder must be an
+inventoried item that is itself delivered, or an external package at its
+newest release; anything else, and anything built from it, is stale. In
+acceptance and CI runs (and with `--live`) the gate refreshes the inventory
+from the registries in memory and fails when a current or compatible release
+differs from this audit, so a release published after the audit date fails
+delivery until the item moves to it.
+
 Comparisons: `version` means the pin must be at least the current release;
 `major` and `minor` mean a moving tag (`v7`, `5.4`) that must name the current
 release line; `floor` means a supported minimum (the `engines` floor must be a
@@ -104,7 +116,7 @@ they are.
 |---|---|---|---|---|---|---|---|---|---|
 | `adler2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.0.1` | transitive |  | 2.0.1 (crates.io, adler2) | version | current |  |
 | `aho-corasick` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.5` | transitive |  | 1.1.5 (crates.io, aho-corasick) | version | current |  |
-| `allocator-api2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.21` | transitive |  | 0.4.0 (crates.io, allocator-api2) | version | behind | Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. |
+| `allocator-api2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.21` | transitive |  | 0.4.0 (crates.io, allocator-api2) | version | behind | Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. |
 | `allocator-api2` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.0` | transitive |  | 0.4.0 (crates.io, allocator-api2) | version | current |  |
 | `anstream` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.0` | transitive |  | 1.0.0 (crates.io, anstream) | version | current |  |
 | `anstyle-parse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.0` | transitive |  | 1.0.0 (crates.io, anstyle-parse) | version | current |  |
@@ -161,11 +173,11 @@ they are.
 | `futures-core` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.34` | transitive |  | 0.3.34 (crates.io, futures-core) | version | current |  |
 | `futures-task` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.34` | transitive |  | 0.3.34 (crates.io, futures-task) | version | current |  |
 | `futures-util` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.34` | transitive |  | 0.3.34 (crates.io, futures-util) | version | current |  |
-| `getrandom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.17` | transitive |  | 0.4.3 (crates.io, getrandom) | version | behind | Held by the requirement of `ring` 0.17.14 (`^0.2.10`), `serde-wasm-bindgen` 0.6.5 (`^0.2`), which does not admit 0.4.3; it moves when that dependent does. |
+| `getrandom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.17` | transitive |  | 0.4.3 (crates.io, getrandom) | version | behind | Held by the requirement of `ring` 0.17.14 (`^0.2.10`), which does not admit 0.4.3; it moves when that dependent does. |
 | `getrandom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.4.3` | transitive |  | 0.4.3 (crates.io, getrandom) | version | current |  |
 | `glob` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.4` | transitive |  | 0.3.4 (crates.io, glob) | version | current |  |
-| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), `foldhash` 0.1.5 (`^0.14`), `rkyv` 0.8.18 (`^0.14`), which does not admit 0.17.1; it moves when that dependent does. |
-| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.15.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does. |
+| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.1; it moves when that dependent does. |
+| `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.15.5` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | behind | Held by the requirement of `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does. |
 | `hashbrown` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.17.1` | transitive |  | 0.17.1 (crates.io, hashbrown) | version | current |  |
 | `heck` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.5.0` | transitive |  | 0.5.0 (crates.io, heck) | version | current |  |
 | `http` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.0` | transitive |  | 1.5.0 (crates.io, http) | version | current |  |
@@ -184,7 +196,7 @@ they are.
 | `include_dir` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.7.4` | transitive |  | 0.7.4 (crates.io, include_dir) | version | current |  |
 | `indexmap` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.14.2` | transitive |  | 2.14.2 (crates.io, indexmap) | version | current |  |
 | `is_terminal_polyfill` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.70.2` | transitive |  | 1.70.2 (crates.io, is_terminal_polyfill) | version | current |  |
-| `itertools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.0` | transitive |  | 0.15.0 (crates.io, itertools) | version | behind | Held by the requirement of `indexmap` 2.14.2 (`^0.14`), `lingua` 1.8.0 (`^0.14.0`), `zerotrie` 0.2.5 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does. |
+| `itertools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.0` | transitive |  | 0.15.0 (crates.io, itertools) | version | behind | Held by the requirement of `lingua` 1.8.0 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does. |
 | `itoa` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.18` | transitive |  | 1.0.18 (crates.io, itoa) | version | current |  |
 | `js-sys` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.3.106` | transitive |  | 0.3.106 (crates.io, js-sys) | version | current |  |
 | `leak_slice` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.0` | transitive |  | 0.2.0 (crates.io, leak_slice) | version | current |  |
@@ -272,7 +284,7 @@ they are.
 | `stable_deref_trait` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.2.1` | transitive |  | 1.2.1 (crates.io, stable_deref_trait) | version | current |  |
 | `streaming-iterator` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.9` | transitive |  | 0.1.9 (crates.io, streaming-iterator) | version | current |  |
 | `strsim` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.1` | transitive |  | 0.11.1 (crates.io, strsim) | version | current |  |
-| `strum_macros` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.27.2` | transitive |  | 0.28.0 (crates.io, strum_macros) | version | behind | Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), `strum` 0.27.2 (`^0.27`), which does not admit 0.28.0; it moves when that dependent does. |
+| `strum_macros` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.27.2` | transitive |  | 0.28.0 (crates.io, strum_macros) | version | behind | Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. |
 | `strum_macros` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.28.0` | transitive |  | 0.28.0 (crates.io, strum_macros) | version | current |  |
 | `strum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.27.2` | transitive |  | 0.28.0 (crates.io, strum) | version | behind | Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. |
 | `strum` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.28.0` | transitive |  | 0.28.0 (crates.io, strum) | version | current |  |
@@ -533,7 +545,7 @@ they are.
 | `node` | `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
 | `node` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
 | `npm` | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
-| `ocaml` | `.github/workflows/issue-195-acceptance.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | rocq-runtime 9.2.0 needs ocamlfind 1.9.1 or later, and ocamlfind 1.9.8, its latest release in opam-repository, requires ocaml < 5.5.0~, so OCaml 5.4 is the newest compiler the Rocq acceptance job can build with; it moves when ocamlfind admits OCaml 5.5. |
+| `ocaml` | `.github/workflows/issue-195-acceptance.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
 | `pre-commit/pre-commit-hooks` | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
 | `rocq-core` | `.github/workflows/issue-195-acceptance.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
 | `rocq-prover` | `.github/workflows/issue-195-acceptance.yml` | `meta.1` |  | unversioned | not applicable |  |
@@ -572,7 +584,7 @@ they are.
 
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
-| `emscripten/emsdk` | `js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json` | `4.0.15` | 6.0.10 (Docker Hub, emscripten/emsdk tags) | version | behind | The web-tree-sitter runtime is rebuilt reproducibly with the emscripten version tree-sitter 0.27.0 pins in crates/loader/emscripten-version (4.0.15); a different emscripten produces a different tree-sitter.wasm, so the image moves with tree-sitter. |
+| `emscripten/emsdk` | `js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json` | `4.0.15` | 6.0.10 (Docker Hub, emscripten/emsdk tags) | version | behind | Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. |
 
 ## Runners
 
@@ -608,31 +620,33 @@ they are.
 
 ## Behind the current stable release
 
-26 retained items are behind their current stable release on 2026-10-02, each for the recorded reason:
+26 retained items are behind their current stable release on 2026-10-02, each for the recorded reason.
+26 of them are at their newest compatible release, verified against the requirements that hold them;
+0 are stale and fail the delivery check.
 
-- `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.
-- `cc` `1.2.67` → `1.5.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does.
-- `foldhash` `0.1.5` → `0.2.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does.
-- `getrandom` `0.2.17` → `0.4.3` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.2.10`), `serde-wasm-bindgen` 0.6.5 (`^0.2`), which does not admit 0.4.3; it moves when that dependent does.
-- `hashbrown` `0.14.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), `foldhash` 0.1.5 (`^0.14`), `rkyv` 0.8.18 (`^0.14`), which does not admit 0.17.1; it moves when that dependent does.
-- `hashbrown` `0.15.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `rkyv` 0.8.18 (`^0.15`), `rustls` 0.23.45 (`^0.15`), `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does.
-- `itertools` `0.14.0` → `0.15.0` (`rust/Cargo.lock`): Held by the requirement of `indexmap` 2.14.2 (`^0.14`), `lingua` 1.8.0 (`^0.14.0`), `zerotrie` 0.2.5 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does.
-- `r-efi` `6.0.0` → `7.1.0` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.1.0; it moves when that dependent does.
-- `redox_syscall` `0.5.18` → `0.9.4` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.9.4; it moves when that dependent does.
-- `strum_macros` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), `strum` 0.27.2 (`^0.27`), which does not admit 0.28.0; it moves when that dependent does.
-- `strum` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does.
-- `syn` `2.0.119` → `3.0.6` (`rust/Cargo.lock`): Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does.
-- `wasi` `0.11.1+wasi-snapshot-preview1` → `0.14.7+wasi-0.2.4` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does.
-- `windows_aarch64_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
-- `windows_aarch64_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
-- `windows_i686_gnu` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
-- `windows_i686_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
-- `windows_i686_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
-- `windows_x86_64_gnu` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
-- `windows_x86_64_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
-- `windows_x86_64_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does.
-- `windows-link` `0.2.1` → `0.100.0` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.2.0`), `windows-sys` 0.61.2 (`^0.2.1`), which does not admit 0.100.0; it moves when that dependent does.
-- `windows-sys` `0.52.0` → `0.61.2` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does.
-- `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does.
-- `ocaml` `5.4` → `5.5.1` (`.github/workflows/issue-195-acceptance.yml`): rocq-runtime 9.2.0 needs ocamlfind 1.9.1 or later, and ocamlfind 1.9.8, its latest release in opam-repository, requires ocaml < 5.5.0~, so OCaml 5.4 is the newest compiler the Rocq acceptance job can build with; it moves when ocamlfind admits OCaml 5.5.
-- `emscripten/emsdk` `4.0.15` → `6.0.10` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json`): The web-tree-sitter runtime is rebuilt reproducibly with the emscripten version tree-sitter 0.27.0 pins in crates/loader/emscripten-version (4.0.15); a different emscripten produces a different tree-sitter.wasm, so the image moves with tree-sitter.
+- `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.21`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.2.9`).
+- `cc` `1.2.67` → `1.5.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
+- `foldhash` `0.1.5` → `0.2.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. Delivered at its newest compatible release `0.1.5`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.1.2`).
+- `getrandom` `0.2.17` → `0.4.3` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.2.10`), which does not admit 0.4.3; it moves when that dependent does. Delivered at its newest compatible release `0.2.17`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.2.10`).
+- `hashbrown` `0.14.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.1; it moves when that dependent does. Delivered at its newest compatible release `0.14.5`, held by `crate rust/Cargo.lock dashmap@6.2.1` (`^0.14.5`).
+- `hashbrown` `0.15.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `whatlang` 0.18.0 (`^0.15`), which does not admit 0.17.1; it moves when that dependent does. Delivered at its newest compatible release `0.15.5`, held by `crate rust/Cargo.lock whatlang@0.18.0` (`^0.15`).
+- `itertools` `0.14.0` → `0.15.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does. Delivered at its newest compatible release `0.14.0`, held by `crate rust/Cargo.lock lingua@1.8.0` (`^0.14.0`).
+- `r-efi` `6.0.0` → `7.1.0` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.4.3 (`^6`), which does not admit 7.1.0; it moves when that dependent does. Delivered at its newest compatible release `6.0.0`, held by `crate rust/Cargo.lock getrandom@0.4.3` (`^6`).
+- `redox_syscall` `0.5.18` → `0.9.4` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.5`), which does not admit 0.9.4; it moves when that dependent does. Delivered at its newest compatible release `0.5.18`, held by `crate rust/Cargo.lock parking_lot_core@0.9.12` (`^0.5`).
+- `strum_macros` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. Delivered at its newest compatible release `0.27.2`, held by `crate rust/Cargo.lock lingua@1.8.0` (`^0.27.2`).
+- `strum` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. Delivered at its newest compatible release `0.27.2`, held by `crate rust/Cargo.lock lingua@1.8.0` (`^0.27.2`).
+- `syn` `2.0.119` → `3.0.6` (`rust/Cargo.lock`): Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does. Delivered at its newest compatible release `2.0.119`, held by `crate rust/Cargo.lock munge_macro@0.4.7` (`^2`), `crate rust/Cargo.lock pest_generator@2.9.2` (`^2.0`), `crate rust/Cargo.lock strum_macros@0.27.2` (`^2.0`), `crate rust/Cargo.lock strum_macros@0.28.0` (`^2.0`).
+- `wasi` `0.11.1+wasi-snapshot-preview1` → `0.14.7+wasi-0.2.4` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does. Delivered at its newest compatible release `0.11.1+wasi-snapshot-preview1`, held by `crate rust/Cargo.lock getrandom@0.2.17` (`^0.11`).
+- `windows_aarch64_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
+- `windows_aarch64_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
+- `windows_i686_gnu` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
+- `windows_i686_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
+- `windows_i686_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
+- `windows_x86_64_gnu` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
+- `windows_x86_64_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
+- `windows_x86_64_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
+- `windows-link` `0.2.1` → `0.100.0` (`rust/Cargo.lock`): Held by the requirement of `parking_lot_core` 0.9.12 (`^0.2.0`), `windows-sys` 0.61.2 (`^0.2.1`), which does not admit 0.100.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.1`, held by `crate rust/Cargo.lock parking_lot_core@0.9.12` (`^0.2.0`), `crate rust/Cargo.lock windows-sys@0.61.2` (`^0.2.1`).
+- `windows-sys` `0.52.0` → `0.61.2` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does. Delivered at its newest compatible release `0.52.0`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.52`).
+- `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-sys@0.52.0` (`^0.52.0`).
+- `ocaml` `5.4` → `5.5.1` (`.github/workflows/issue-195-acceptance.yml`): Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. Delivered at its newest compatible release `5.4.1`, held by `opam ocamlfind 1.9.8` (`<5.5.0`).
+- `emscripten/emsdk` `4.0.15` → `6.0.10` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json`): Held by tree-sitter v0.27.0, whose `crates/loader/emscripten-version` pins emscripten 4.0.15 for the web-tree-sitter 0.27.0 runtime; another emscripten produces a different runtime, so the image moves with tree-sitter. Delivered at its newest compatible release `4.0.15`, held by `npm js/package-lock.json web-tree-sitter@0.27.0` (`=4.0.15`).
