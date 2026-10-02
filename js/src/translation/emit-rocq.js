@@ -37,6 +37,9 @@ const FLOAT_PRELUDE = [
   'Set Warnings "-inexact-float".',
 ];
 
+// How many times one proof step rewrites with one hypothesis or lemma.
+const REWRITE_BOUND = 8;
+
 const HELPERS = {
   digits: `Fixpoint ml_digits (fuel : nat) (n : N) (acc : string) : string :=
   match fuel with
@@ -507,8 +510,13 @@ class RocqEmitter {
     alternatives.push('ml_close');
     const rewrites = [...hints.hyps, ...hints.lemmas.map((lemma) => this.state.ref(lemma))];
     if (rewrites.length) {
-      alternatives.push(`(rewrite ${rewrites.map((rule) => `?${rule}`).join(', ')}; ml_close)`);
-      alternatives.push(`(rewrite <- ${rewrites.map((rule) => `?${rule}`).join(', ')}; ml_close)`);
+      // Each rule rewrites at most REWRITE_BOUND times: an unbounded `?ih` never
+      // stops when the rewritten side reappears in the result (`rewrite <- ih`
+      // with `ih : f l = l` turns `l` into `f l` forever), so a false obligation
+      // must fail instead of searching without end.
+      const rules = rewrites.map((rule) => `${REWRITE_BOUND}?${rule}`).join(', ');
+      alternatives.push(`(rewrite ${rules}; ml_close)`);
+      alternatives.push(`(rewrite <- ${rules}; ml_close)`);
     }
     return `${steps.join('; ')}; first [${alternatives.join(' | ')}]`;
   }

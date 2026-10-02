@@ -2,6 +2,9 @@
 
 use super::*;
 
+/// How many times one proof step rewrites with one hypothesis or lemma.
+const REWRITE_BOUND: usize = 8;
+
 impl RocqEmitter<'_> {
     pub(super) fn theorem(&mut self, entry: &Decl, theorem: &TheoremDecl) -> Result<String> {
         let (binders, prop, plan) = rename_theorem(theorem, &ident, &self.state.local_reserved());
@@ -167,9 +170,13 @@ impl RocqEmitter<'_> {
             )
             .collect();
         if !rewrites.is_empty() {
+            // Each rule rewrites at most REWRITE_BOUND times: an unbounded `?ih`
+            // never stops when the rewritten side reappears in the result
+            // (`rewrite <- ih` with `ih : f l = l` turns `l` into `f l` forever),
+            // so a false obligation must fail instead of searching without end.
             let rules = rewrites
                 .iter()
-                .map(|rule| format!("?{rule}"))
+                .map(|rule| format!("{REWRITE_BOUND}?{rule}"))
                 .collect::<Vec<_>>()
                 .join(", ");
             alternatives.push(format!("(rewrite {rules}; ml_close)"));
