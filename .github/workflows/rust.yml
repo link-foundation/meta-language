@@ -47,6 +47,13 @@ on:
 permissions:
   contents: read
 
+# A newer push to a pull request cancels the run of its older head. Push,
+# release and dispatch runs are grouped by their own run id, so they never
+# cancel each other; their write jobs queue in the release write group.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
@@ -180,8 +187,8 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-fresh-merge
       cancel-in-progress: true
-    needs: [detect-changes]
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
+    needs: [detect-changes, check]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true' && needs.check.result == 'success'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -242,6 +249,55 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: rust-script rust/scripts/check-cargo-lock.rs
 
+  # === CARGO CHECK GATE ===
+  # Type-checks the library, binaries, tests, examples and benches once. The
+  # suites, MSRV, coverage and the fresh merge wait for it, so a compile error
+  # fails here in a few minutes instead of in every test job.
+  check:
+    name: Cargo Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-check
+      cancel-in-progress: true
+    needs: [detect-changes, cargo-lock]
+    defaults:
+      run:
+        working-directory: rust
+    if: |
+      !cancelled() && needs.cargo-lock.result == 'success' && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.any-code-changed == 'true' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-check-
+
+      - name: Check every target with every feature
+        run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo check --locked --all-targets --all-features
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   # === MINIMUM SUPPORTED RUST VERSION ===
   # Builds the library, binaries and tests with the toolchain Cargo.toml declares
   # as `rust-version`, so the declared minimum stays true as dependencies update.
@@ -252,12 +308,12 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-msrv
       cancel-in-progress: true
-    needs: [detect-changes, cargo-lock]
+    needs: [detect-changes, cargo-lock, check]
     defaults:
       run:
         working-directory: rust
     if: |
-      !cancelled() && needs.cargo-lock.result != 'failure' && (
+      !cancelled() && needs.cargo-lock.result != 'failure' && needs.check.result == 'success' && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.rs-changed == 'true' ||
@@ -399,21 +455,25 @@ jobs:
         run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === TEST ===
-  # Test runs independently of changelog check
+  # The suites partition the tests by name: each later suite skips the
+  # filters of the earlier ones, and `remaining` skips all of them, so every
+  # test runs in exactly one suite. Doc tests and the example check run with
+  # `remaining`.
   test:
-    name: Test (${{ matrix.os }})
+    name: Test (${{ matrix.os }}, ${{ matrix.suite }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 15
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}
       cancel-in-progress: true
-    needs: [detect-changes, changelog, cargo-lock]
+    needs: [detect-changes, changelog, cargo-lock, check]
     defaults:
       run:
         working-directory: rust
     if: |
       !cancelled() &&
       needs.cargo-lock.result == 'success' &&
+      needs.check.result == 'success' &&
       (needs.changelog.result == 'success' || needs.changelog.result == 'skipped') && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
@@ -426,6 +486,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        suite: [grammar, inference, translation, remaining]
+        include:
+          - suite: grammar
+            filters: grammar_
+          - suite: inference
+            filters: inference_ --skip grammar_
+          - suite: translation
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_
+          - suite: remaining
+            filters: --skip grammar_ --skip inference_ --skip translation_ --skip issue_195_ --skip conformance
     steps:
       - uses: actions/checkout@v7
 
@@ -519,15 +589,20 @@ jobs:
       # only checked, not linked, so the target stays small.
       - name: Run tests
         shell: bash
-        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --tests --verbose
+        env:
+          SUITE_FILTERS: ${{ matrix.filters }}
+        # The filters are word-split on purpose: they are separate arguments.
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --tests --verbose -- $SUITE_FILTERS
 
       - name: Run doc tests
+        if: matrix.suite == 'remaining'
         shell: bash
         run: |
           node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --doc --verbose
           node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --doc --verbose
 
       - name: Check examples
+        if: matrix.suite == 'remaining'
         shell: bash
         run: cargo check --examples --all-features
 
@@ -545,14 +620,14 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-coverage
       cancel-in-progress: true
-    needs: [detect-changes, cargo-lock]
+    needs: [detect-changes, cargo-lock, check]
     defaults:
       run:
         working-directory: rust
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     if: |
-      !cancelled() && needs.cargo-lock.result == 'success' && (
+      !cancelled() && needs.cargo-lock.result == 'success' && needs.check.result == 'success' && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.rs-changed == 'true' ||
