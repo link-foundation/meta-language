@@ -1548,7 +1548,7 @@
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: one authoritative vision and architecture specification",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
@@ -1558,7 +1558,7 @@
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: traceability from each atomic requirement to its evidence chain",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
       "path": "parity/documentation/claim-fixtures.json",
@@ -1578,7 +1578,7 @@
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
       "selector": "#dependencies: external parser engines removed from the production packages",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
@@ -1613,7 +1613,7 @@
     "planned:repository-directive:i195-grammar-feature-union": {
       "path": "docs/vision.md",
       "selector": "#grammar-feature-union: grammar representation covering the union of all source grammar features",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-grammar-concept-distinctions": {
       "path": "parity/fixtures/concept-distinctions.json",
@@ -1628,7 +1628,7 @@
     "planned:repository-directive:i195-grammar-dependency-boundary": {
       "path": "docs/vision.md",
       "selector": "#native-merged-grammars: native dependency boundary of the installed packages",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -1693,7 +1693,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "docs/vision.md",
       "selector": "#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
@@ -1743,7 +1743,7 @@
     "planned:repository-directive:i195-downstream-formal-ai-workloads": {
       "path": "docs/vision.md",
       "selector": "#downstream-consumers: formal-ai workloads on clean installed artifacts",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-downstream-typescript-translations": {
       "path": "docs/downstream-consumers.md",
@@ -1753,7 +1753,7 @@
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
       "selector": "#packages-and-publication: formal-ai consuming the published packages",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-acceptance-independent-oracles": {
       "path": "parity/language-grammar-inventory.json",
@@ -1763,17 +1763,17 @@
     "planned:repository-directive:i195-acceptance-gate-mutations": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: gate-mutation tests for the directive obligations",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-acceptance-required-merge-check": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: enforced full requirements merge check on the default branch",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-acceptance-finite-claims-documented": {
       "path": "docs/vision.md",
       "selector": "#what-finite-tests-establish: documented limits of finite test evidence",
-      "sha256": "b5094ce78dc1d24567006cf59f15c0cc8d42e173801834f4da14773324d0fa67"
+      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
     },
     "planned:repository-directive:i195-cache-cleanup-grammar-caches": {
       "path": "scripts/lib/cache-classes.mjs",
