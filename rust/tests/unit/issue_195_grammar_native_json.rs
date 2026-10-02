@@ -263,7 +263,7 @@ fn native_json_grammar_accepts_merged_source_extensions() {
     let parser = parser();
     let rows = projection(&fixture);
     let divergences = cases(&fixture, "divergences");
-    assert!(!divergences.is_empty());
+    assert!(divergences.len() >= 2);
     for case in divergences {
         assert!(
             case["reason"]
