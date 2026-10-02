@@ -325,7 +325,7 @@ fn class_item(node: &Node) -> Result<CharClassItem, GrammarImportError> {
     }
 }
 
-fn parse_node(node: &Node) -> Result<GrammarExpr, GrammarImportError> {
+pub(super) fn parse_node(node: &Node) -> Result<GrammarExpr, GrammarImportError> {
     let (head, args) = parts(node)?;
     Ok(match head {
         "empty" | "any" => {

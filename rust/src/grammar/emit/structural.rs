@@ -202,7 +202,7 @@ pub(super) fn negated_lookahead_set(
 }
 
 /// Returns the case variants of `character` when it is a cased letter.
-pub(super) fn case_variants(character: char) -> Option<Vec<char>> {
+pub fn case_variants(character: char) -> Option<Vec<char>> {
     let mut lower = character.to_lowercase();
     let mut upper = character.to_uppercase();
     let (Some(lower_char), None, Some(upper_char), None) =

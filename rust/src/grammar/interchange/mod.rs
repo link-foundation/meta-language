@@ -25,6 +25,7 @@ use super::validate::{Severity, validate};
 
 mod links;
 mod lossless;
+mod lowering;
 mod native;
 
 pub use links::{
@@ -36,6 +37,13 @@ pub use lossless::{
     GrammarLosslessError, GrammarSourceDefinition, GrammarSourceSplit, capture_grammar_layout,
     emit_grammar_lossless, import_grammar_lossless, parse_grammar_layout_links,
     render_grammar_layout_links, split_grammar_source,
+};
+pub use lowering::{
+    GRAMMAR_LOWERING_FORMATS, GrammarLowering, GrammarLoweringEncoding, GrammarLoweringError,
+    GrammarLoweringFailure, GrammarLoweringFailureKind, GrammarLoweringMetadata,
+    GrammarLoweringOptions, GrammarLoweringReport, GrammarLoweringStatus, GrammarLoweringStep,
+    MAX_LOWERED_CHARACTERS, check_grammar_lowering, dropped_grammar_features, lower_grammar,
+    parse_lowering_metadata, reconstruct_grammar, render_lowering_metadata,
 };
 pub use native::{parse_native_grammar, render_native_expression, render_native_grammar};
 

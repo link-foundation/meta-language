@@ -94,6 +94,13 @@ pub use foundation_models::{
     check_foundation_models, foundation_correspondences, foundation_model, foundation_register,
     language_foundation_models,
 };
+pub use grammar::interchange::{
+    GRAMMAR_LOWERING_FORMATS, GrammarLowering, GrammarLoweringEncoding, GrammarLoweringError,
+    GrammarLoweringFailure, GrammarLoweringFailureKind, GrammarLoweringMetadata,
+    GrammarLoweringOptions, GrammarLoweringReport, GrammarLoweringStatus, GrammarLoweringStep,
+    MAX_LOWERED_CHARACTERS, check_grammar_lowering, dropped_grammar_features, lower_grammar,
+    parse_lowering_metadata, reconstruct_grammar, render_lowering_metadata,
+};
 pub use grammar::{
     ActiveLearningConfig, ActiveLearningError, ActiveLearningOracle, ActiveSymbol, AdviceDecision,
     AdviceDecisionKind, AdviceSource, BenchmarkReport, ByteSpan, CharCategory, CharClassItem,
