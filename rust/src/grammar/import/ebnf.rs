@@ -12,6 +12,8 @@ const EMPTY_SENTINEL: &str = "\u{0}meta-language-empty\u{0}";
 ///
 /// The parser accepts the ISO-style `name = expression ;` spelling used by the
 /// issue fixtures and the `::=` spelling accepted by the upstream `ebnf` crate.
+/// ISO `(* ... *)` comments outside string literals are skipped, as in the
+/// JavaScript importer.
 ///
 /// # Errors
 ///
@@ -19,6 +21,7 @@ const EMPTY_SENTINEL: &str = "\u{0}meta-language-empty\u{0}";
 /// parsed construct cannot be represented, or when a non-terminal reference does
 /// not resolve to a rule in the imported grammar.
 pub fn import_ebnf(text: &str) -> Result<Grammar, GrammarImportError> {
+    let text = &remove_comments(text)?;
     if let Some(construct) = find_special_sequence(text) {
         return Err(unsupported_error(GrammarFormat::Ebnf, construct));
     }
@@ -204,6 +207,41 @@ fn validate_references(grammar: &Grammar) -> Result<(), GrammarImportError> {
         ));
     }
     Ok(())
+}
+
+/// Replaces every `(* ... *)` comment outside a string literal with one space.
+fn remove_comments(text: &str) -> Result<String, GrammarImportError> {
+    let mut result = String::with_capacity(text.len());
+    let mut quote = None;
+    let mut rest = text;
+    while let Some(character) = rest.chars().next() {
+        let width = character.len_utf8();
+        if let Some(open) = quote {
+            if character == '\\'
+                && let Some(next) = rest[width..].chars().next()
+            {
+                result.push(character);
+                result.push(next);
+                rest = &rest[width + next.len_utf8()..];
+                continue;
+            }
+            if character == open {
+                quote = None;
+            }
+        } else if matches!(character, '"' | '\'') {
+            quote = Some(character);
+        } else if let Some(body) = rest.strip_prefix("(*") {
+            let end = body
+                .find("*)")
+                .ok_or_else(|| parse_error(GrammarFormat::Ebnf, "unterminated comment"))?;
+            result.push(' ');
+            rest = &body[end + 2..];
+            continue;
+        }
+        result.push(character);
+        rest = &rest[width..];
+    }
+    Ok(result)
 }
 
 fn find_special_sequence(text: &str) -> Option<String> {
