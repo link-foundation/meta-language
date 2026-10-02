@@ -28,6 +28,7 @@ const SOURCE_LABELS = Object.freeze({
   repositoryDirective: 'Repository-wide delivery directive',
   consolidatedChecklist: 'Consolidated acceptance and delivery checklist',
   currentHeadAudit: 'Audit of PR head 7489adfb and remaining delivery work',
+  resourceAudit: 'Audit of PR head d2407c18: green CI and bounded resource use',
 });
 
 function allKeys(value, prefix = '') {
