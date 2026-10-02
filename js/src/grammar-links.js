@@ -13,8 +13,27 @@
 // as `LinkNetwork` LiNo terms are (ASCII letters, digits and `-_.` kept, every
 // other UTF-8 byte as `%XX`, the empty text as `%`). It mirrors
 // rust/src/grammar/interchange/links.rs.
+//
+// The grammar feature union (docs/grammar/feature-union.md#links-form) adds,
+// only where a grammar uses them: `(matching peg|generalized)` in the grammar
+// link; `(import NAME)`, `(mode NAME)`, `(extra EXPRESSION)`, `(conflict
+// NAME...)`, `(macro NAME (parameters P...) EXPRESSION)` and `(scanner NAME
+// (tokens T...) (operations OPERATION...))` links between the grammar link
+// and the rules; the rule fields `(parameters P...)`, `(channel NAME)`,
+// `(modes MODE...)` and `(action OPERATION...)` before `(doc TEXT)`;
+// `(category V)` and `(script V)` class items; `(ref NAME ARGUMENT...)`; and
+// the feature expressions and operations of grammar-feature-forms.js.
 import { Parser } from 'links-notation';
 import { Grammar } from './grammar.js';
+import {
+  grammarDeclarations,
+  linksCodec,
+  MATCHING_MODES,
+  readLinksFeatureExpression,
+  readLinksOperation,
+  renderFeatureExpression,
+  renderOperation,
+} from './grammar-feature-forms.js';
 import { ruleDoc } from './grammar-emitters/structural.js';
 import { GrammarImportError } from './grammar-importers.js';
 
@@ -68,14 +87,49 @@ export function renderGrammarLinks(grammar) {
   if (grammar.sourceFormat) header.push(`(format ${grammar.sourceFormat})`);
   const start = grammar.startRule();
   if (start) header.push(`(start ${percentEncodeLinksText(start.name)})`);
+  const declarations = grammarDeclarations(grammar);
+  if (declarations.matching) header.push(`(matching ${declarations.matching})`);
   const lines = [`(${header.join(' ')})`];
+  lines.push(...renderDeclarationLinks(declarations));
   for (const rule of grammar.rules.values()) lines.push(renderRuleLink(grammar, rule));
   return lines.map((line) => `${line}\n`).join('');
+}
+
+const LINKS_CODEC = linksCodec((expression) => renderLinksExpression(expression), percentEncodeLinksText);
+
+function renderOperations(operations) {
+  return operations.map((operation) => renderOperation(operation, LINKS_CODEC));
+}
+
+function renderNames(head, names) {
+  return `(${[head, ...names.map(percentEncodeLinksText)].join(' ')})`;
+}
+
+// The declaration links of the grammar feature union, in the order the
+// native listing writes its declaration lines.
+function renderDeclarationLinks(declarations) {
+  const lines = [];
+  for (const name of declarations.imports) lines.push(`(import ${percentEncodeLinksText(name)})`);
+  for (const name of declarations.modes) lines.push(`(mode ${percentEncodeLinksText(name)})`);
+  for (const extra of declarations.extras) lines.push(`(extra ${renderLinksExpression(extra)})`);
+  for (const group of declarations.conflicts) lines.push(renderNames('conflict', group));
+  for (const macro of declarations.macros) {
+    lines.push(`(macro ${percentEncodeLinksText(macro.name)} ${renderNames('parameters', macro.parameters ?? [])} ${renderLinksExpression(macro.expression)})`);
+  }
+  for (const scanner of declarations.scanners) {
+    lines.push(`(scanner ${percentEncodeLinksText(scanner.name)} ${renderNames('tokens', scanner.tokens)} `
+      + `(${['operations', ...renderOperations(scanner.operations)].join(' ')}))`);
+  }
+  return lines;
 }
 
 /** Renders the `(rule NAME KIND EXPRESSION [(doc TEXT)])` link of one rule of `grammar`. */
 export function renderRuleLink(grammar, rule) {
   const parts = ['rule', percentEncodeLinksText(rule.name), rule.kind, renderLinksExpression(rule.expression)];
+  if (rule.parameters?.length > 0) parts.push(renderNames('parameters', rule.parameters));
+  if (rule.channel !== undefined) parts.push(`(channel ${percentEncodeLinksText(rule.channel)})`);
+  if (rule.modes !== undefined) parts.push(renderNames('modes', rule.modes));
+  if (rule.action !== undefined) parts.push(`(${['action', ...renderOperations(rule.action)].join(' ')})`);
   const doc = ruleDoc(grammar, rule);
   if (doc !== null) parts.push(`(doc ${percentEncodeLinksText(doc)})`);
   return `(${parts.join(' ')})`;
@@ -91,10 +145,12 @@ export function renderLinksExpression(expression) {
     case 'literal': case 'literalInsensitive': return link(expression.kind, text(expression.value));
     case 'charRange': return link('range', text(expression.start), text(expression.end));
     case 'charClass':
-      return link('class', expression.negated ? 'negated' : 'plain', ...expression.items.map((item) => (item.kind === 'range'
-        ? link('range', text(item.start), text(item.end))
-        : link('char', text(item.value)))));
-    case 'ref': return link('ref', text(expression.name));
+      return link('class', expression.negated ? 'negated' : 'plain', ...expression.items.map((item) => {
+        if (item.kind === 'range') return link('range', text(item.start), text(item.end));
+        if (item.kind === 'category' || item.kind === 'script') return link(item.kind, text(item.value));
+        return link('char', text(item.value));
+      }));
+    case 'ref': return link('ref', text(expression.name), ...items(expression.arguments ?? []));
     case 'choice': return link('choice', expression.ordered ? 'ordered' : 'unordered', ...items(expression.items));
     case 'seq': return link('seq', ...items(expression.items));
     case 'optional': case 'repeat0': case 'repeat1': case 'and': case 'not':
@@ -105,7 +161,11 @@ export function renderLinksExpression(expression) {
       return expression.label === null || expression.label === undefined
         ? link('capture', 'unlabeled', renderLinksExpression(expression.item))
         : link('capture', 'labeled', text(expression.label), renderLinksExpression(expression.item));
-    default: throw new TypeError(`unknown grammar expression kind ${expression.kind}`);
+    default: {
+      const rendered = renderFeatureExpression(expression, LINKS_CODEC);
+      if (rendered === null) throw new TypeError(`unknown grammar expression kind ${expression.kind}`);
+      return rendered;
+    }
   }
 }
 
@@ -180,13 +240,20 @@ export function parseLinksExpression(value) {
           arity(itemHead, itemArgs, 2);
           return { kind: 'range', start: character(itemArgs[0], 'a range start'), end: character(itemArgs[1], 'a range end') };
         }
+        if (itemHead === 'category' || itemHead === 'script') {
+          arity(itemHead, itemArgs, 1);
+          return { kind: itemHead, value: decodedWord(itemArgs[0], `a Unicode ${itemHead}`) };
+        }
         throw linksError(`unknown class item ${itemHead}`);
       });
       return { kind: 'charClass', negated, items };
     }
-    case 'ref':
-      arity(head, args, 1);
-      return { kind: 'ref', name: decodedWord(args[0], 'a rule name') };
+    case 'ref': {
+      if (args.length === 0) throw linksError('ref takes a rule name');
+      const reference = { kind: 'ref', name: decodedWord(args[0], 'a rule name') };
+      if (args.length > 1) reference.arguments = args.slice(1).map(parseLinksExpression);
+      return reference;
+    }
     case 'choice': {
       if (args.length === 0) throw linksError('choice needs ordered or unordered');
       const ordered = flag(args[0], 'ordered', 'unordered');
@@ -209,10 +276,92 @@ export function parseLinksExpression(value) {
       arity(head, args, 2);
       return { kind: 'capture', label: null, item: parseLinksExpression(args[1]) };
     }
-    default:
-      if (!UNARY.has(head)) throw linksError(`unknown expression ${head}`);
+    default: {
+      if (UNARY.has(head)) {
+        arity(head, args, 1);
+        return { kind: head, item: parseLinksExpression(args[0]) };
+      }
+      const feature = readLinksFeatureExpression(head, args, LINKS_HELPERS);
+      if (feature === null) throw linksError(`unknown expression ${head}`);
+      return feature;
+    }
+  }
+}
+
+const LINKS_HELPERS = {
+  parts,
+  word,
+  decodedWord,
+  parseLinksExpression,
+  fail: (detail) => {
+    throw linksError(detail);
+  },
+};
+
+function names(value, head) {
+  const [found, args] = parts(value);
+  if (found !== head) throw linksError(`expected (${head} ...), not ${found}`);
+  return args.map((item) => decodedWord(item, `a ${head} name`));
+}
+
+function operations(value, head) {
+  const [found, args] = parts(value);
+  if (found !== head) throw linksError(`expected (${head} ...), not ${found}`);
+  return args.map((item) => readLinksOperation(item, 'statement', LINKS_HELPERS));
+}
+
+// The optional rule fields after the expression, in their fixed order.
+const RULE_FIELDS = ['parameters', 'channel', 'modes', 'action', 'doc'];
+
+function readRuleFields(fields, rule, name, docs) {
+  let order = 0;
+  for (const field of fields) {
+    const [head, args] = parts(field);
+    const position = RULE_FIELDS.indexOf(head);
+    if (position < order) throw linksError(position < 0 ? `unexpected rule field ${head}` : `rule field ${head} is out of order`);
+    order = position + 1;
+    if (head === 'parameters') rule.parameters = names(field, 'parameters');
+    else if (head === 'modes') rule.modes = names(field, 'modes');
+    else if (head === 'action') rule.action = operations(field, 'action');
+    else {
       arity(head, args, 1);
-      return { kind: head, item: parseLinksExpression(args[0]) };
+      if (head === 'channel') rule.channel = decodedWord(args[0], 'a channel name');
+      else docs.set(name, decodedWord(args[0], 'a doc text'));
+    }
+  }
+}
+
+// Reads one declaration link into `declarations`; returns false for a rule link.
+function readDeclaration(head, args, declarations) {
+  const one = () => {
+    arity(head, args, 1);
+    return args[0];
+  };
+  switch (head) {
+    case 'import': declarations.imports.push(decodedWord(one(), 'an imported grammar')); return true;
+    case 'mode': declarations.modes.push(decodedWord(one(), 'a mode')); return true;
+    case 'extra': declarations.extras.push(parseLinksExpression(one())); return true;
+    case 'conflict':
+      if (args.length === 0) throw linksError('conflict names at least one rule');
+      declarations.conflicts.push(args.map((item) => decodedWord(item, 'a rule name')));
+      return true;
+    case 'macro':
+      arity(head, args, 3);
+      declarations.macros.push({
+        name: decodedWord(args[0], 'a macro name'),
+        parameters: names(args[1], 'parameters'),
+        expression: parseLinksExpression(args[2]),
+      });
+      return true;
+    case 'scanner':
+      arity(head, args, 3);
+      declarations.scanners.push({
+        name: decodedWord(args[0], 'a scanner name'),
+        tokens: names(args[1], 'tokens'),
+        operations: operations(args[2], 'operations'),
+      });
+      return true;
+    default: return false;
   }
 }
 
@@ -232,6 +381,9 @@ export function parseGrammarLinks(source) {
   if (headerHead !== 'grammar') throw linksError('the first link must be the grammar link');
   let sourceFormat = null;
   let start = null;
+  const declarations = {
+    matching: null, imports: [], modes: [], extras: [], conflicts: [], macros: [], scanners: [],
+  };
   for (const field of headerArgs) {
     const [key, values] = parts(field);
     arity(key, values, 1);
@@ -240,6 +392,9 @@ export function parseGrammarLinks(source) {
       if (!SOURCE_FORMATS.has(sourceFormat)) throw linksError(`unknown source format ${sourceFormat}`);
     } else if (key === 'start' && start === null) {
       start = decodedWord(values[0], 'a start rule');
+    } else if (key === 'matching' && declarations.matching === null) {
+      declarations.matching = word(values[0], 'a matching');
+      if (!MATCHING_MODES.includes(declarations.matching)) throw linksError(`unknown matching ${declarations.matching}`);
     } else {
       throw linksError(`unexpected grammar field ${key}`);
     }
@@ -248,23 +403,22 @@ export function parseGrammarLinks(source) {
   const docs = new Map();
   for (const statement of statements.slice(1)) {
     const [head, args] = parts(statement);
-    if (head !== 'rule') throw linksError(`unexpected link ${head}`);
-    if (args.length !== 3 && args.length !== 4) throw linksError('rule takes a name, a kind, an expression and an optional doc');
+    if (head !== 'rule') {
+      if (rules.size > 0 || !readDeclaration(head, args, declarations)) throw linksError(`unexpected link ${head}`);
+      continue;
+    }
+    if (args.length < 3) throw linksError('rule takes a name, a kind, an expression and optional fields');
     const name = decodedWord(args[0], 'a rule name');
     const kind = word(args[1], 'a rule kind');
     if (!RULE_KINDS.has(kind)) throw linksError(`unknown rule kind ${kind}`);
     if (rules.has(name)) throw linksError(`rule ${name} is defined twice`);
-    rules.set(name, { kind, expression: parseLinksExpression(args[2]) });
-    if (args.length === 4) {
-      const [docHead, docArgs] = parts(args[3]);
-      if (docHead !== 'doc') throw linksError(`unexpected rule field ${docHead}`);
-      arity(docHead, docArgs, 1);
-      docs.set(name, decodedWord(docArgs[0], 'a doc text'));
-    }
+    const rule = { kind, expression: parseLinksExpression(args[2]) };
+    readRuleFields(args.slice(3), rule, name, docs);
+    rules.set(name, rule);
   }
   if (rules.size === 0) throw linksError('the links define no rules');
   if (start !== null && !rules.has(start)) throw linksError(`start rule ${start} is not defined`);
-  const grammar = new Grammar(start ?? rules.keys().next().value, rules, sourceFormat);
+  const grammar = new Grammar(start ?? rules.keys().next().value, rules, sourceFormat, declarations);
   for (const [name, doc] of docs) grammar.rules.set(name, Object.freeze({ ...grammar.rules.get(name), doc }));
   return grammar;
 }

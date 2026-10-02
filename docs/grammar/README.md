@@ -51,6 +51,7 @@ description, not executable evidence.
 | [Import and export](import-export.md) | Import external notations into the IR and emit them back out. | [B1](../case-studies/issue-93/proposed-issues/B1-bnf-importer.md)-[B7](../case-studies/issue-93/proposed-issues/B7-lark-gbnf-importer.md), [C1](../case-studies/issue-93/proposed-issues/C1-bnf-ebnf-abnf-emitters.md)-[C3](../case-studies/issue-93/proposed-issues/C3-gbnf-emitter.md), [F2](../case-studies/issue-93/proposed-issues/F2-grammar-format-fidelity-matrix.md) |
 | [Fidelity](fidelity.md) | Format-by-format round-trip fidelity matrix over the grammar IR construct vocabulary. | [F2](../case-studies/issue-93/proposed-issues/F2-grammar-format-fidelity-matrix.md) |
 | [Code generation](codegen.md) | Generate Rust and JavaScript parser code from the IR. | [C4](../case-studies/issue-93/proposed-issues/C4-rust-parser-codegen.md), [C5](../case-studies/issue-93/proposed-issues/C5-javascript-parser-codegen.md), [E5](../case-studies/issue-93/proposed-issues/E5-end-to-end-integration-examples.md) |
+| [Feature union](feature-union.md) | Grammar feature union forms, the scanner and action operation language, and the native JavaScript executor and its lossless syntax tree; Rust parity is open. | [I195-GRAMMAR-FEATURE-UNION](../vision.md#grammar-feature-union) |
 | [Inference](inference.md) | Infer grammar structure from examples and evaluate candidates. | [D1](../case-studies/issue-93/proposed-issues/D1-inference-evaluation-harness.md), [D5](../case-studies/issue-93/proposed-issues/D5-blackbox-cfg-inference.md), [D6](../case-studies/issue-93/proposed-issues/D6-delimiter-structural-prior.md) |
 | [Translation](translation.md) | Translate between grammar notations through grammar concepts. | [A3](../case-studies/issue-93/proposed-issues/A3-grammar-concept-ontology.md), [C6](../case-studies/issue-93/proposed-issues/C6-concept-aligned-translation.md) |
 | [CLI and runtime](cli-and-runtime.md) | Expose grammar operations on the command line and register runtime parsers. | [E1](../case-studies/issue-93/proposed-issues/E1-cli-grammar-subcommands.md), [E2](../case-studies/issue-93/proposed-issues/E2-inferred-grammar-runtime-parser.md) |
@@ -68,6 +69,12 @@ description, not executable evidence.
   `grammar_from_lino`.
 - Align grammar constructs with concepts using
   [`src/grammar/concepts.rs`](../../rust/src/grammar/concepts.rs).
+- In JavaScript, compile and run a grammar that uses the feature union forms
+  on the native executor with `createGrammarParser` and `renderSyntaxTree` from
+  [`js/src/grammar-runtime.js`](../../js/src/grammar-runtime.js), or with
+  `compileGrammar` and `parseWithGrammar` from
+  [`js/src/grammar.js`](../../js/src/grammar.js); see
+  [feature union](feature-union.md).
 
 See [architecture](architecture.md) first when extending the subsystem, then
 follow the stage page for the boundary you are implementing.

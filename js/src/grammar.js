@@ -1,17 +1,26 @@
-import peggy from 'peggy';
+import { compactDeclarations, RULE_ATTRIBUTES } from './grammar-feature-forms.js';
+import { createGrammarParser } from './grammar-runtime.js';
 
-/** An order-preserving, serializable grammar intermediate representation. */
+/**
+ * An order-preserving, serializable grammar intermediate representation. The
+ * optional `declarations` hold the grammar-level forms of the grammar feature
+ * union (matching, imports, modes, extras, conflicts, macros and external
+ * scanners); a rule may carry `parameters` and the `channel`, `modes` and
+ * `action` attributes. docs/grammar/feature-union.md describes them.
+ */
 export class Grammar {
-  constructor(start, rules, sourceFormat = null) {
+  constructor(start, rules, sourceFormat = null, declarations = null) {
     this.start = start ?? null;
     this.sourceFormat = sourceFormat;
+    this.declarations = compactDeclarations(declarations);
     this.rules = new Map();
     for (const [name, rule] of rules ?? []) {
-      this.rules.set(name, Object.freeze({
-        name,
-        kind: rule.kind ?? 'normal',
-        expression: rule.expression,
-      }));
+      const entry = { name, kind: rule.kind ?? 'normal', expression: rule.expression };
+      if (rule.parameters?.length > 0) entry.parameters = rule.parameters;
+      for (const attribute of RULE_ATTRIBUTES) {
+        if (rule[attribute] !== undefined && rule[attribute] !== null) entry[attribute] = rule[attribute];
+      }
+      this.rules.set(name, Object.freeze(entry));
     }
   }
 
@@ -44,7 +53,14 @@ export class Grammar {
   referencedNonterminals() {
     const names = new Set();
     for (const rule of this.rules.values()) collectReferences(rule.expression, names);
+    for (const extra of this.declarations.extras ?? []) collectReferences(extra, names);
+    for (const macro of this.declarations.macros ?? []) collectReferences(macro.expression, names);
     return [...names].sort();
+  }
+
+  /** The token names the grammar's external scanners produce. */
+  externalTokens() {
+    return (this.declarations.scanners ?? []).flatMap((scanner) => scanner.tokens);
   }
 
   referenced_nonterminals() {
@@ -52,7 +68,7 @@ export class Grammar {
   }
 
   undefinedNonterminals(allowed = []) {
-    const permitted = new Set([...this.rules.keys(), ...allowed]);
+    const permitted = new Set([...this.rules.keys(), ...this.externalTokens(), ...allowed]);
     return this.referencedNonterminals().filter((name) => !permitted.has(name));
   }
 
@@ -61,16 +77,21 @@ export class Grammar {
   }
 
   normalized() {
-    return {
+    const normalized = {
       schemaVersion: 1,
       start: this.start,
       sourceFormat: this.sourceFormat,
-      rules: [...this.rules.values()].map(({ name, kind, expression }) => ({
-        name,
-        kind,
-        expression: cloneJson(expression),
-      })),
+      rules: [...this.rules.values()].map((rule) => {
+        const entry = { name: rule.name, kind: rule.kind, expression: cloneJson(rule.expression) };
+        if (rule.parameters) entry.parameters = [...rule.parameters];
+        for (const attribute of RULE_ATTRIBUTES) {
+          if (rule[attribute] !== undefined) entry[attribute] = cloneJson(rule[attribute]);
+        }
+        return entry;
+      }),
     };
+    if (Object.keys(this.declarations).length > 0) normalized.declarations = cloneJson(this.declarations);
+    return normalized;
   }
 }
 
@@ -205,23 +226,39 @@ export function emitPeggy(grammar) {
   return `${lines.join('\n')}\n`;
 }
 
+/**
+ * Compiles `grammar` for the native grammar executor (grammar-runtime.js).
+ * The parser's `parse(source, options)` returns the lossless syntax tree and
+ * throws a `GrammarParseError` when the source is not in the language; its
+ * `parseTree(source, options)` reports instead of throwing. `options` takes
+ * `resolveGrammar(name)` for imports and embedded languages and the resource
+ * limits `maxDepth`, `stepLimit` and `memoLimit`.
+ */
 export function compileGrammar(grammar, options = {}) {
-  return peggy.generate(emitPeggy(grammar), options);
+  return createGrammarParser(grammar, options);
 }
 
 export function parseWithGrammar(grammar, source, options = {}) {
-  return compileGrammar(grammar).parse(source, options);
+  return compileGrammar(grammar, options).parse(source, options);
 }
 
+/**
+ * Emits an ES module that parses with `grammar` on the native executor: the
+ * grammar travels as its serialized form and the module imports the
+ * executor from the `meta-language` package.
+ */
 export function emitJavascriptParser(grammar) {
-  const peggyGrammar = JSON.stringify(emitPeggy(grammar));
+  const serialized = JSON.stringify(JSON.stringify(grammar.normalized()));
   return [
-    "import peggy from 'peggy';",
+    "import { compileGrammar, deserializeGrammar } from 'meta-language';",
     '',
-    `const GRAMMAR = ${peggyGrammar};`,
-    'export const parser = peggy.generate(GRAMMAR);',
+    `const GRAMMAR = ${serialized};`,
+    'export const parser = compileGrammar(deserializeGrammar(GRAMMAR));',
     'export function parse(source, options = {}) {',
     '  return parser.parse(source, options);',
+    '}',
+    'export function parseTree(source, options = {}) {',
+    '  return parser.parseTree(source, options);',
     '}',
     '',
   ].join('\n');
@@ -249,7 +286,7 @@ export function deserializeGrammar(source) {
     if (rules.has(rule.name)) throw new TypeError(`duplicate serialized grammar rule ${rule.name}`);
     rules.set(rule.name, rule);
   }
-  const grammar = new Grammar(value.start, rules, value.sourceFormat ?? null);
+  const grammar = new Grammar(value.start, rules, value.sourceFormat ?? null, value.declarations ?? null);
   if (!grammar.startRule()) throw new TypeError('serialized grammar has no start rule');
   return grammar;
 }
@@ -365,7 +402,9 @@ function collectReferences(expression, names) {
   if (!expression) return;
   if (expression.kind === 'ref') names.add(expression.name);
   for (const item of expression.items ?? []) collectReferences(item, names);
+  for (const item of expression.arguments ?? []) collectReferences(item, names);
   if (expression.item) collectReferences(expression.item, names);
+  if (expression.synchronize) collectReferences(expression.synchronize, names);
 }
 
 function escapeClassChar(value) {

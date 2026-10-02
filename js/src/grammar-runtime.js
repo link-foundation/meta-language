@@ -1,0 +1,100 @@
+// The public face of the native grammar executor: compile a grammar once,
+// then parse sources into lossless concrete syntax trees. Loading
+// (grammar-runtime/load.js) resolves imports, macros and parameterized rules
+// and checks every scanner, action and predicate; the executor
+// (grammar-runtime/executor.js) runs it within explicit resource limits; the
+// tree module (grammar-runtime/syntax-tree.js) copies and renders the result.
+// docs/grammar/feature-union.md is the specification the Rust port follows.
+import { Executor, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
+import { GrammarRuntimeError, loadProgram } from './grammar-runtime/load.js';
+import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
+import { inputBytes, lineAndColumn } from './grammar-runtime/text.js';
+
+export { GrammarRuntimeError, renderSyntaxTree };
+
+/** A source the grammar rejects; `rejection` holds the reason and position. */
+export class GrammarParseError extends Error {
+  constructor(rejection) {
+    super(describeRejection(rejection));
+    this.name = 'GrammarParseError';
+    this.rejection = rejection;
+    this.reason = rejection.reason;
+    this.offset = rejection.offset ?? null;
+    this.line = rejection.line ?? null;
+    this.column = rejection.column ?? null;
+    this.expected = rejection.expected ?? [];
+  }
+}
+
+function describeRejection(rejection) {
+  const where = rejection.line ? ` at line ${rejection.line} column ${rejection.column}` : '';
+  switch (rejection.reason) {
+    case 'syntax': return `syntax error${where}: expected ${rejection.expected.join(', ') || 'nothing more'}`;
+    case 'nestingDepth': return `the input nests deeper than ${rejection.limit} rules`;
+    case 'stepLimit': return `the parse needed more than ${rejection.limit} steps`;
+    case 'recovered': return `the input needed error recovery${where}`;
+    case 'ambiguity': return `the input is ambiguous${where}`;
+    default: return `the input is rejected (${rejection.reason})`;
+  }
+}
+
+function positioned(reason, bytes, offset, extra = {}) {
+  return { reason, offset, ...lineAndColumn(bytes, offset), ...extra };
+}
+
+/**
+ * Parses `source` (a string or UTF-8 bytes) with a loaded program. Returns
+ * `{ ok, tree, ambiguities, rejection }`: `ok` is true only without a
+ * rejection; the tree is kept whenever one was built.
+ */
+function parseProgram(program, source, options) {
+  const bytes = inputBytes(source);
+  const startRule = options.startRule ?? program.start;
+  if (!program.rules.has(startRule)) throw new GrammarRuntimeError(`undefined start rule ${startRule}`, 'reference');
+  const budget = stepBudget(options, bytes.length);
+  const maxDepth = options.maxDepth ?? 1000;
+  let outcome;
+  try {
+    outcome = new Executor(program, bytes, 0, bytes.length, options, budget, maxDepth).run(startRule);
+  } catch (error) {
+    if (error instanceof StepLimitReached) {
+      return { ok: false, tree: null, ambiguities: [], rejection: { reason: 'stepLimit', limit: budget.limit } };
+    }
+    if (error instanceof NestingTooDeep || (error instanceof RangeError && /call stack/u.test(error.message))) {
+      const tree = publicTree({ type: 'error', start: 0, end: bytes.length, reason: 'nestingDepth' }, bytes);
+      return { ok: false, tree, ambiguities: [], rejection: { reason: 'nestingDepth', limit: maxDepth } };
+    }
+    throw error;
+  }
+  if (!outcome.ok) {
+    return { ok: false, tree: null, ambiguities: [], rejection: positioned('syntax', bytes, outcome.farthest, { expected: outcome.expected }) };
+  }
+  const tree = publicTree(outcome.root, bytes);
+  const ambiguities = collectAmbiguities(outcome.root, program);
+  let rejection = null;
+  const recovery = firstRecovery(tree);
+  if (recovery && options.recovery !== 'accept') rejection = positioned('recovered', bytes, recovery.start);
+  else if (ambiguities.length > 0 && options.ambiguity === 'reject') rejection = positioned('ambiguity', bytes, ambiguities[0].start);
+  return { ok: rejection === null, tree, ambiguities, rejection };
+}
+
+/**
+ * Compiles `grammar` (a Grammar or its normalized document) for the native
+ * executor. `options.resolveGrammar(name)` returns the grammar an import or
+ * an embedded language names; `maxDepth`, `stepLimit` and `memoLimit` bound
+ * a parse; `ambiguity: 'reject'` turns a reported ambiguity into a rejection
+ * and `recovery: 'accept'` accepts a tree with ERROR or MISSING nodes.
+ * Each parse may override the options and choose a `startRule`.
+ */
+export function createGrammarParser(grammar, options = {}) {
+  const program = loadProgram(grammar, options);
+  const parseTree = (source, parseOptions = {}) => parseProgram(program, source, { ...options, ...parseOptions });
+  return {
+    parseTree,
+    parse(source, parseOptions = {}) {
+      const outcome = parseTree(source, parseOptions);
+      if (!outcome.ok) throw new GrammarParseError(outcome.rejection);
+      return outcome.tree;
+    },
+  };
+}

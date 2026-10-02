@@ -64,12 +64,12 @@
   },
   "dependencies": {
     "links-notation": "0.22.0",
-    "peggy": "5.1.0",
     "web-tree-sitter": "0.27.0"
   },
   "devDependencies": {
     "franc-min": "6.2.0",
     "pdf-lib": "1.17.1",
+    "peggy": "5.1.0",
     "wordnet-db": "3.1.14"
   },
   "overrides": {

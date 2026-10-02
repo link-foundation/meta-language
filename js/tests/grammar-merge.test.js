@@ -255,8 +255,10 @@ test('an unresolved required equivalence fails the merge', () => {
 
 test('a merged unordered choice keeps the source order of its alternatives', () => {
   // The comparison form of an unordered choice is order-free, but the merged
-  // grammar is what parsers run: peggy commits to the first alternative that
-  // matches, so a sorted `letter | letter word` would stop after one letter.
+  // grammar is what parsers run: a PEG parser (an exported Peggy grammar, or
+  // the native executor under `matching peg`) commits to the first
+  // alternative that matches, so a sorted `letter | letter word` would stop
+  // after one letter.
   const grammar = importBnf('<word> ::= <letter> <word> | <letter>\n<letter> ::= "b" | "a"\n');
   const [merged] = mergeGrammars([{ id: 'words', language: 'words', precedence: 0, grammar }]).groups;
   assert.deepEqual(merged.grammar.rule('word').expression, grammar.rule('word').expression);

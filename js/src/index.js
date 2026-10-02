@@ -11,6 +11,7 @@ export * from './grammar-links.js';
 export * from './grammar-lossless.js';
 export * from './grammar-lowering.js';
 export * from './grammar-reverse.js';
+export * from './grammar-runtime.js';
 export * from './graphql-adapter.js';
 export * from './language-catalog.js';
 export * from './concept-records.js';

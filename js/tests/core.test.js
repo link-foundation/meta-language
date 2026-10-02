@@ -375,6 +375,7 @@ test('Markdown inline content is parsed with the inline grammar', () => {
 });
 
 test('grammar builders emit Peggy grammar and JavaScript parser module text', () => {
+  // The parser module runs on the native executor, not peggy.generate.
   const grammar = new GrammarBuilder('Word')
     .terminal('letter', GrammarBuilder.charRange('a', 'z'))
     .nonterminal('Word', GrammarBuilder.repeat1(GrammarBuilder.ref('letter')))
@@ -384,7 +385,8 @@ test('grammar builders emit Peggy grammar and JavaScript parser module text', ()
   const parserModule = emitJavascriptParser(grammar);
 
   assert.match(peggy, /Word/);
-  assert.match(parserModule, /peggy\.generate/);
+  assert.match(parserModule, /compileGrammar\(deserializeGrammar\(GRAMMAR\)\)/);
+  assert.doesNotMatch(parserModule, /peggy/);
 });
 
 test('semantic truth values cover many-valued and paradox cases', () => {

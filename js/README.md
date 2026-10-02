@@ -12,7 +12,9 @@ Rust crate lives in [`../rust`](../rust).
 The package mirrors the Rust operation families used by the parity registry:
 parse, query, transform, substitute, serialize, snapshot, translate, and verify.
 It is intentionally dependency-light and uses `links-notation` for LiNo and
-link-cli-style substitution text plus `peggy` for generated parser modules.
+link-cli-style substitution text. Grammars run on the package's own executor
+([grammar feature union](../docs/grammar/feature-union.md)); `peggy` is only a
+development dependency of the tests that compare against it.
 Lossless source-token links can be addressed as `LinkType.Token`, matching the
 Rust `LinkType::Token` name; `LinkType.SourceToken` remains available for
 existing JavaScript callers.

@@ -69,7 +69,7 @@
         "package": "@peggyjs/from-mem"
       },
       "role": "transitive",
-      "kind": "runtime",
+      "kind": "development",
       "current": "3.1.4",
       "evidence": "npm registry, @peggyjs/from-mem latest"
     },
@@ -107,7 +107,7 @@
         "package": "commander"
       },
       "role": "transitive",
-      "kind": "runtime",
+      "kind": "development",
       "current": "15.0.0",
       "evidence": "npm registry, commander latest"
     },
@@ -228,7 +228,7 @@
         "package": "peggy"
       },
       "role": "direct",
-      "kind": "runtime",
+      "kind": "development",
       "requirement": "5.1.0",
       "current": "5.1.0",
       "evidence": "npm registry, peggy latest"
@@ -248,7 +248,7 @@
         "package": "semver"
       },
       "role": "transitive",
-      "kind": "runtime",
+      "kind": "development",
       "current": "7.8.5",
       "evidence": "npm registry, semver latest"
     },
@@ -267,7 +267,7 @@
         "package": "source-map-generator"
       },
       "role": "transitive",
-      "kind": "runtime",
+      "kind": "development",
       "current": "2.0.7",
       "evidence": "npm registry, source-map-generator latest"
     },

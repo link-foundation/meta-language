@@ -71,17 +71,17 @@ they are.
 |---|---|---|---|---|---|---|---|---|---|
 | `@pdf-lib/standard-fonts` | `js/package-lock.json` | `js/package-lock.json` | `1.0.0` | transitive, development |  | 1.0.0 (npm registry, @pdf-lib/standard-fonts latest) | version | current |  |
 | `@pdf-lib/upng` | `js/package-lock.json` | `js/package-lock.json` | `1.0.1` | transitive, development |  | 1.0.1 (npm registry, @pdf-lib/upng latest) | version | current |  |
-| `@peggyjs/from-mem` | `js/package-lock.json` | `js/package-lock.json` | `3.1.4` | transitive, runtime |  | 3.1.4 (npm registry, @peggyjs/from-mem latest) | version | current |  |
+| `@peggyjs/from-mem` | `js/package-lock.json` | `js/package-lock.json` | `3.1.4` | transitive, development |  | 3.1.4 (npm registry, @peggyjs/from-mem latest) | version | current |  |
 | `collapse-white-space` | `js/package-lock.json` | `js/package-lock.json` | `2.1.0` | transitive, development |  | 2.1.0 (npm registry, collapse-white-space latest) | version | current |  |
-| `commander` | `js/package-lock.json` | `js/package-lock.json` | `15.0.0` | transitive, runtime |  | 15.0.0 (npm registry, commander latest) | version | current |  |
+| `commander` | `js/package-lock.json` | `js/package-lock.json` | `15.0.0` | transitive, development |  | 15.0.0 (npm registry, commander latest) | version | current |  |
 | `franc-min` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `6.2.0` | direct, development | `6.2.0` | 6.2.0 (npm registry, franc-min latest) | version | current |  |
 | `links-notation` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.22.0` | direct, runtime | `0.22.0` | 0.22.0 (npm registry, links-notation latest) | version | current |  |
 | `n-gram` | `js/package-lock.json` | `js/package-lock.json` | `2.0.2` | transitive, development |  | 2.0.2 (npm registry, n-gram latest) | version | current |  |
 | `pako` | `js/package-lock.json` | `js/package-lock.json` | `3.0.2` | transitive, development |  | 3.0.2 (npm registry, pako latest) | version | current |  |
 | `pdf-lib` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `1.17.1` | direct, development | `1.17.1` | 1.17.1 (npm registry, pdf-lib latest) | version | current |  |
-| `peggy` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `5.1.0` | direct, runtime | `5.1.0` | 5.1.0 (npm registry, peggy latest) | version | current |  |
-| `semver` | `js/package-lock.json` | `js/package-lock.json` | `7.8.5` | transitive, runtime |  | 7.8.5 (npm registry, semver latest) | version | current |  |
-| `source-map-generator` | `js/package-lock.json` | `js/package-lock.json` | `2.0.7` | transitive, runtime |  | 2.0.7 (npm registry, source-map-generator latest) | version | current |  |
+| `peggy` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `5.1.0` | direct, development | `5.1.0` | 5.1.0 (npm registry, peggy latest) | version | current |  |
+| `semver` | `js/package-lock.json` | `js/package-lock.json` | `7.8.5` | transitive, development |  | 7.8.5 (npm registry, semver latest) | version | current |  |
+| `source-map-generator` | `js/package-lock.json` | `js/package-lock.json` | `2.0.7` | transitive, development |  | 2.0.7 (npm registry, source-map-generator latest) | version | current |  |
 | `trigram-utils` | `js/package-lock.json` | `js/package-lock.json` | `2.0.1` | transitive, development |  | 2.0.1 (npm registry, trigram-utils latest) | version | current |  |
 | `tslib` | `js/package-lock.json` | `js/package-lock.json` | `2.8.1` | transitive, development |  | 2.8.1 (npm registry, tslib latest) | version | current |  |
 | `web-tree-sitter` | `js/package-lock.json` | `js/package-lock.json`, `js/package.json` | `0.27.0` | direct, runtime | `0.27.0` | 0.27.0 (npm registry, web-tree-sitter latest) | version | current |  |

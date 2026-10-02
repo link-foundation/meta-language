@@ -58,12 +58,13 @@ const ASSERTIONS = [
   'roundTripPreservesGrammar',
 ];
 
-const peggyUrl = import.meta.resolve('peggy');
+const packageEntryUrl = new URL('../src/index.js', import.meta.url).href;
 
 // Loads the emitted parser module as a file so it runs exactly as a consumer
-// would load it, with its `peggy` import pinned to this package's dependency.
+// would load it, with its `meta-language` import (the native grammar
+// executor) pinned to this checkout's package entry point.
 async function loadGeneratedParser(grammar, directory, name) {
-  const code = emitJavascriptParser(grammar).replace("from 'peggy'", `from ${JSON.stringify(peggyUrl)}`);
+  const code = emitJavascriptParser(grammar).replace("from 'meta-language'", `from ${JSON.stringify(packageEntryUrl)}`);
   const file = path.join(directory, `${name}.mjs`);
   await writeFile(file, code);
   return import(pathToFileURL(file).href);

@@ -1,0 +1,1212 @@
+{
+  "description": "The grammar feature union of docs/vision.md#grammar-feature-union as executable cases: per feature a native grammar listing, positive inputs with the expected concrete syntax tree in the notation of docs/grammar/feature-union.md#tree-notation, negative inputs with the expected rejection, and a grammar mutation that changes the outcome. Grammars named by imports and embedded languages are in languages. Written by experiments/issue-195-grammar-feature-union-fixture.mjs and reviewed by hand.",
+  "requirement": "I195-GRAMMAR-FEATURE-UNION",
+  "languages": {
+    "base": "start value\nextra class(char(\" \"))\nrule value = normal choice(ref(number), ref(word))\nrule number = token repeat1(range(\"0\", \"9\"))\nrule word = token repeat1(range(\"a\", \"z\"))\n",
+    "arithmetic": "start sum\nrule sum = normal seq(ref(digit), repeat0(seq(literal(\"+\"), ref(digit))))\nrule digit = token range(\"0\", \"9\")\n",
+    "cycleFirst": "import cycleSecond\nrule first = normal literal(\"a\")\n",
+    "cycleSecond": "import cycleFirst\nrule second = normal literal(\"b\")\n"
+  },
+  "features": [
+    {
+      "id": "alternatives",
+      "title": "ordered and unordered alternatives",
+      "listing": "start s\nrule s = normal choice(seq(literal(\"o:\"), ref(ordered)), seq(literal(\"u:\"), ref(unordered)))\nrule ordered = normal seq(orderedChoice(literal(\"a\"), literal(\"ab\")), literal(\"c\"))\nrule unordered = normal seq(choice(literal(\"a\"), literal(\"ab\")), literal(\"c\"))\n",
+      "positive": [
+        {
+          "input": "u:abc",
+          "tree": "(s \"u:\" (unordered \"ab\" \"c\"))"
+        },
+        {
+          "input": "u:ac",
+          "tree": "(s \"u:\" (unordered \"a\" \"c\"))"
+        },
+        {
+          "input": "o:ac",
+          "tree": "(s \"o:\" (ordered \"a\" \"c\"))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "o:abc",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "\"c\""
+            ]
+          }
+        },
+        {
+          "input": "u:abd",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 4,
+            "line": 1,
+            "column": 5,
+            "expected": [
+              "\"c\""
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "orderedChoice(literal(\"a\"), literal(\"ab\"))",
+        "to": "orderedChoice(literal(\"ab\"), literal(\"a\"))",
+        "input": "o:abc",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "\"c\""
+            ]
+          }
+        },
+        "after": {
+          "tree": "(s \"o:\" (ordered \"ab\" \"c\"))"
+        }
+      }
+    },
+    {
+      "id": "recursion",
+      "title": "recursion, including left recursion",
+      "listing": "start s\nrule s = normal choice(seq(literal(\"e:\"), ref(expression)), seq(literal(\"c:\"), ref(chain)))\nrule expression = normal choice(seq(ref(expression), literal(\"-\"), ref(primary)), ref(primary))\nrule primary = normal choice(ref(digit), seq(literal(\"(\"), ref(expression), literal(\")\")))\nrule digit = token range(\"0\", \"9\")\nrule chain = normal choice(seq(ref(tail), literal(\"x\")), literal(\"y\"))\nrule tail = normal ref(chain)\n",
+      "positive": [
+        {
+          "input": "e:1-2-3",
+          "tree": "(s \"e:\" (expression (expression (expression (primary (digit \"1\"))) \"-\" (primary (digit \"2\"))) \"-\" (primary (digit \"3\"))))"
+        },
+        {
+          "input": "e:(1-(2))",
+          "tree": "(s \"e:\" (expression (primary \"(\" (expression (expression (primary (digit \"1\"))) \"-\" (primary \"(\" (expression (primary (digit \"2\"))) \")\")) \")\")))"
+        },
+        {
+          "input": "c:yxx",
+          "tree": "(s \"c:\" (chain (tail (chain (tail (chain \"y\")) \"x\")) \"x\"))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "e:1-",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 4,
+            "line": 1,
+            "column": 5,
+            "expected": [
+              "\"(\"",
+              "digit"
+            ]
+          }
+        },
+        {
+          "input": "e:(1",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 4,
+            "line": 1,
+            "column": 5,
+            "expected": [
+              "\")\"",
+              "\"-\""
+            ]
+          }
+        },
+        {
+          "input": "c:xy",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 2,
+            "line": 1,
+            "column": 3,
+            "expected": [
+              "\"y\""
+            ]
+          }
+        },
+        {
+          "input": "e:((((((((1))))))))",
+          "options": {
+            "maxDepth": 12
+          },
+          "tree": "(ERROR@0..19 \"e:((((((((1))))))))\")",
+          "rejection": {
+            "reason": "nestingDepth",
+            "limit": 12
+          }
+        }
+      ],
+      "mutation": {
+        "from": "seq(ref(expression), literal(\"-\"), ref(primary))",
+        "to": "seq(ref(primary), literal(\"-\"), ref(expression))",
+        "input": "e:1-2-3",
+        "before": {
+          "tree": "(s \"e:\" (expression (expression (expression (primary (digit \"1\"))) \"-\" (primary (digit \"2\"))) \"-\" (primary (digit \"3\"))))"
+        },
+        "after": {
+          "tree": "(s \"e:\" (expression (primary (digit \"1\")) \"-\" (expression (primary (digit \"2\")) \"-\" (expression (primary (digit \"3\"))))))"
+        }
+      }
+    },
+    {
+      "id": "precedence",
+      "title": "precedence and associativity",
+      "listing": "start e\nrule e = normal choice(precedence(1, left, seq(ref(e), literal(\"+\"), ref(e))), precedence(2, left, seq(ref(e), literal(\"*\"), ref(e))), precedence(3, right, seq(ref(e), literal(\"^\"), ref(e))), precedence(0, none, seq(ref(e), literal(\"=\"), ref(e))), ref(n))\nrule n = token repeat1(range(\"0\", \"9\"))\n",
+      "options": {
+        "ambiguity": "reject"
+      },
+      "positive": [
+        {
+          "input": "1+2*3",
+          "tree": "(e (e (n \"1\")) \"+\" (e (e (n \"2\")) \"*\" (e (n \"3\"))))"
+        },
+        {
+          "input": "1*2+3",
+          "tree": "(e (e (e (n \"1\")) \"*\" (e (n \"2\"))) \"+\" (e (n \"3\")))"
+        },
+        {
+          "input": "1+2+3",
+          "tree": "(e (e (e (n \"1\")) \"+\" (e (n \"2\"))) \"+\" (e (n \"3\")))"
+        },
+        {
+          "input": "2^3^4",
+          "tree": "(e (e (n \"2\")) \"^\" (e (e (n \"3\")) \"^\" (e (n \"4\"))))"
+        },
+        {
+          "input": "1+2=3",
+          "tree": "(e (e (e (n \"1\")) \"+\" (e (n \"2\"))) \"=\" (e (n \"3\")))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "1=2=3",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 5,
+            "line": 1,
+            "column": 6,
+            "expected": [
+              "\"*\"",
+              "\"+\"",
+              "\"=\"",
+              "\"^\"",
+              "precedence"
+            ]
+          }
+        },
+        {
+          "input": "1+*2",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 2,
+            "line": 1,
+            "column": 3,
+            "expected": [
+              "n"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "precedence(1, left, seq(ref(e), literal(\"+\"), ref(e)))",
+        "to": "precedence(1, right, seq(ref(e), literal(\"+\"), ref(e)))",
+        "input": "1+2+3",
+        "before": {
+          "tree": "(e (e (e (n \"1\")) \"+\" (e (n \"2\"))) \"+\" (e (n \"3\")))"
+        },
+        "after": {
+          "tree": "(e (e (n \"1\")) \"+\" (e (e (n \"2\")) \"+\" (e (n \"3\"))))"
+        }
+      }
+    },
+    {
+      "id": "ambiguity",
+      "title": "ambiguity and conflicts",
+      "listing": "start s\nconflict declared\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\n",
+      "options": {
+        "ambiguity": "reject"
+      },
+      "positive": [
+        {
+          "input": "d:1-2-3",
+          "tree": "(s \"d:\" (declared (declared (n \"1\")) \"-\" (declared (declared (n \"2\")) \"-\" (declared (n \"3\")))))"
+        },
+        {
+          "input": "u:1-2",
+          "tree": "(s \"u:\" (undeclared (undeclared (n \"1\")) \"-\" (undeclared (n \"2\"))))"
+        },
+        {
+          "input": "r:1-2-3",
+          "tree": "(s \"r:\" (resolved (resolved (resolved (n \"1\")) \"-\" (n \"2\")) \"-\" (n \"3\")))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "u:1-2-3",
+          "tree": "(s \"u:\" (undeclared (undeclared (n \"1\")) \"-\" (undeclared (undeclared (n \"2\")) \"-\" (undeclared (n \"3\")))))",
+          "ambiguities": [
+            {
+              "rule": "undeclared",
+              "start": 2,
+              "end": 7
+            }
+          ],
+          "rejection": {
+            "reason": "ambiguity",
+            "offset": 2,
+            "line": 1,
+            "column": 3
+          }
+        },
+        {
+          "input": "d:1--2",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 4,
+            "line": 1,
+            "column": 5,
+            "expected": [
+              "n"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "conflict declared",
+        "to": "conflict undeclared",
+        "input": "u:1-2-3",
+        "before": {
+          "tree": "(s \"u:\" (undeclared (undeclared (n \"1\")) \"-\" (undeclared (undeclared (n \"2\")) \"-\" (undeclared (n \"3\")))))",
+          "ambiguities": [
+            {
+              "rule": "undeclared",
+              "start": 2,
+              "end": 7
+            }
+          ],
+          "rejection": {
+            "reason": "ambiguity",
+            "offset": 2,
+            "line": 1,
+            "column": 3
+          }
+        },
+        "after": {
+          "tree": "(s \"u:\" (undeclared (undeclared (n \"1\")) \"-\" (undeclared (undeclared (n \"2\")) \"-\" (undeclared (n \"3\")))))"
+        }
+      }
+    },
+    {
+      "id": "lexical",
+      "title": "lexical priority and longest-match rules",
+      "listing": "start s\nextra class(char(\" \"))\nrule s = normal repeat1(ref(word))\nrule word = silent longest(ref(keyword), ref(identifier), ref(number))\nrule keyword = token lexicalPrecedence(1, choice(literal(\"if\"), literal(\"else\")))\nrule identifier = token seq(range(\"a\", \"z\"), repeat0(class(range(\"a\", \"z\"), range(\"0\", \"9\"))))\nrule number = token repeat1(range(\"0\", \"9\"))\n",
+      "positive": [
+        {
+          "input": "if iffy else",
+          "tree": "(s (keyword \"if\") ~\" \" (identifier \"iffy\") ~\" \" (keyword \"else\"))"
+        },
+        {
+          "input": "42 x9",
+          "tree": "(s (number \"42\") ~\" \" (identifier \"x9\"))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "IF",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 0,
+            "line": 1,
+            "column": 1,
+            "expected": [
+              "identifier",
+              "keyword",
+              "number"
+            ]
+          }
+        },
+        {
+          "input": "if +",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "end of input",
+              "identifier",
+              "keyword",
+              "number"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "lexicalPrecedence(1,",
+        "to": "lexicalPrecedence(-1,",
+        "input": "if iffy else",
+        "before": {
+          "tree": "(s (keyword \"if\") ~\" \" (identifier \"iffy\") ~\" \" (keyword \"else\"))"
+        },
+        "after": {
+          "tree": "(s (identifier \"if\") ~\" \" (identifier \"iffy\") ~\" \" (identifier \"else\"))"
+        }
+      }
+    },
+    {
+      "id": "unicode",
+      "title": "Unicode and byte classes",
+      "listing": "start s\nrule s = normal seq(ref(name), literal(\":\"), ref(payload))\nrule name = token repeat1(class(category(\"Lu\"), category(\"Ll\"), script(\"Han\")))\nrule payload = token repeat1(byteClass(byteRange(128, 255)))\n",
+      "positive": [
+        {
+          "inputHex": "cea96dc3a9e6bca23a80ff",
+          "tree": "(s (name \"Ωmé漢\") \":\" (payload <80ff>))"
+        },
+        {
+          "inputHex": "613ac3",
+          "tree": "(s (name \"a\") \":\" (payload <c3>))"
+        }
+      ],
+      "negative": [
+        {
+          "inputHex": "61313a80",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 1,
+            "line": 1,
+            "column": 2,
+            "expected": [
+              "\":\""
+            ]
+          }
+        },
+        {
+          "input": "a:a",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 2,
+            "line": 1,
+            "column": 3,
+            "expected": [
+              "payload"
+            ]
+          }
+        },
+        {
+          "inputHex": "ff3a80",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 0,
+            "line": 1,
+            "column": 1,
+            "expected": [
+              "name"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "byteRange(128, 255)",
+        "to": "byteRange(0, 127)",
+        "input": "a:a",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 2,
+            "line": 1,
+            "column": 3,
+            "expected": [
+              "payload"
+            ]
+          }
+        },
+        "after": {
+          "tree": "(s (name \"a\") \":\" (payload \"a\"))"
+        }
+      }
+    },
+    {
+      "id": "trivia",
+      "title": "token boundaries and trivia",
+      "listing": "start s\nextra ref(space)\nextra ref(comment)\nrule s = normal repeat1(ref(call))\nrule call = normal seq(ref(name), immediateToken(literal(\"(\")), token(seq(literal(\"<\"), ref(name), literal(\">\"))), literal(\")\"))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule space = token repeat1(class(char(\" \"), char(\"\\n\")))\nrule comment = token seq(literal(\"#\"), repeat0(notClass(char(\"\\n\"))))\n",
+      "positive": [
+        {
+          "input": "f( <x> ) # done\ng(<y>)",
+          "tree": "(s (call (name \"f\") \"(\" ~(space \" \") \"<x>\" ~(space \" \") \")\") (call ~(space \" \") ~(comment \"# done\") ~(space \"\\n\") (name \"g\") \"(\" \"<y>\" \")\"))"
+        },
+        {
+          "input": "ab(<c>)",
+          "tree": "(s (call (name \"ab\") \"(\" \"<c>\" \")\"))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "f (<x>)",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 1,
+            "line": 1,
+            "column": 2,
+            "expected": [
+              "\"(\""
+            ]
+          }
+        },
+        {
+          "input": "f(< x>)",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "name"
+            ]
+          }
+        },
+        {
+          "input": "f o(<x>)",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 1,
+            "line": 1,
+            "column": 2,
+            "expected": [
+              "\"(\""
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "immediateToken(literal(\"(\"))",
+        "to": "token(literal(\"(\"))",
+        "input": "f (<x>)",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 1,
+            "line": 1,
+            "column": 2,
+            "expected": [
+              "\"(\""
+            ]
+          }
+        },
+        "after": {
+          "tree": "(s (call (name \"f\") ~(space \" \") \"(\" \"<x>\" \")\"))"
+        }
+      }
+    },
+    {
+      "id": "modes",
+      "title": "lexer modes, channels and state",
+      "listing": "start s\nmode string\nrule s = normal repeat0(choice(ref(word), ref(quoted)))\nrule quoted = normal seq(ref(open), repeat0(ref(chars)), ref(close))\nrule open = token literal(\"\\\"\") action(pushMode(string))\nrule close = token literal(\"\\\"\") modes(string) action(popMode)\nrule chars = token repeat1(notClass(char(\"\\\"\"))) modes(string)\nrule word = token repeat1(range(\"a\", \"z\")) modes(default)\nrule space = token repeat1(literal(\" \")) channel(hidden) modes(default)\n",
+      "positive": [
+        {
+          "input": "ab \"c d\" e",
+          "tree": "(s (word \"ab\") (quoted ~(space \" \") (open \"\\\"\") (chars \"c d\") (close \"\\\"\")) ~(space \" \") (word \"e\"))"
+        },
+        {
+          "input": "\"\"",
+          "tree": "(s (quoted (open \"\\\"\") (close \"\\\"\")))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "a \"b",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 4,
+            "line": 1,
+            "column": 5,
+            "expected": [
+              "chars",
+              "close"
+            ]
+          }
+        },
+        {
+          "input": "a \" b",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 5,
+            "line": 1,
+            "column": 6,
+            "expected": [
+              "chars",
+              "close"
+            ]
+          }
+        },
+        {
+          "input": "\"a\"b\"",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 5,
+            "line": 1,
+            "column": 6,
+            "expected": [
+              "chars",
+              "close"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "rule space = token repeat1(literal(\" \")) channel(hidden) modes(default)",
+        "to": "rule space = token repeat1(literal(\" \")) channel(hidden)",
+        "input": "\" b\"",
+        "before": {
+          "tree": "(s (quoted (open \"\\\"\") (chars \" b\") (close \"\\\"\")))"
+        },
+        "after": {
+          "tree": "(s (quoted (open \"\\\"\") ~(space \" \") (chars \"b\") (close \"\\\"\")))"
+        }
+      }
+    },
+    {
+      "id": "layout",
+      "title": "indentation and layout",
+      "listing": "start block\nscanner layout tokens(newline, indent, dedent) operations(if(valid(newline), then(consume(literal(\"\\n\")), while(next(literal(\" \")), do(advance)), set(pending, column), emit(newline))), if(valid(indent), then(if(greater(variable(pending), top(indents)), then(push(indents, variable(pending)), emit(indent))))), if(valid(dedent), then(if(less(variable(pending), top(indents)), then(pop(indents), emit(dedent))))), fail)\nrule block = normal repeat1(ref(statement))\nrule statement = normal predicate(choice(seq(ref(name), literal(\":\"), ref(newline), ref(indent), ref(block), ref(dedent)), seq(ref(name), ref(newline))), equal(column, top(indents)))\nrule name = token repeat1(range(\"a\", \"z\"))\n",
+      "positive": [
+        {
+          "input": "a\nb:\n  c\n  d\ne\n",
+          "tree": "(block (statement (name \"a\") (newline \"\\n\")) (statement (name \"b\") \":\" (newline \"\\n  \") (indent \"\") (block (statement (name \"c\") (newline \"\\n  \")) (statement (name \"d\") (newline \"\\n\"))) (dedent \"\")) (statement (name \"e\") (newline \"\\n\")))"
+        },
+        {
+          "input": "a:\n  b:\n    c\nd\n",
+          "tree": "(block (statement (name \"a\") \":\" (newline \"\\n  \") (indent \"\") (block (statement (name \"b\") \":\" (newline \"\\n    \") (indent \"\") (block (statement (name \"c\") (newline \"\\n\"))) (dedent \"\"))) (dedent \"\")) (statement (name \"d\") (newline \"\\n\")))"
+        },
+        {
+          "input": "a:\n  b:\n    c\n",
+          "tree": "(block (statement (name \"a\") \":\" (newline \"\\n  \") (indent \"\") (block (statement (name \"b\") \":\" (newline \"\\n    \") (indent \"\") (block (statement (name \"c\") (newline \"\\n\"))) (dedent \"\"))) (dedent \"\")))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "a:\n  b\n c\n",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 9,
+            "line": 3,
+            "column": 3,
+            "expected": [
+              "\":\""
+            ]
+          }
+        },
+        {
+          "input": "a\n  b\n",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 5,
+            "line": 2,
+            "column": 4,
+            "expected": [
+              "\":\""
+            ]
+          }
+        },
+        {
+          "input": "a:\nb\n",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 2,
+            "column": 1,
+            "expected": [
+              "indent"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "equal(column, top(indents))",
+        "to": "not(less(column, integer(0)))",
+        "input": "a:\n  b\n c\n",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 9,
+            "line": 3,
+            "column": 3,
+            "expected": [
+              "\":\""
+            ]
+          }
+        },
+        "after": {
+          "tree": "(block (statement (name \"a\") \":\" (newline \"\\n  \") (indent \"\") (block (statement (name \"b\") (newline \"\\n \")) (statement (name \"c\") (newline \"\\n\"))) (dedent \"\")))",
+          "ambiguities": [
+            {
+              "rule": "block",
+              "start": 0,
+              "end": 10
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "predicates",
+      "title": "context-sensitive predicates",
+      "listing": "start heredoc\nrule heredoc = normal seq(ref(open), literal(\"\\n\"), repeat0(ref(line)), ref(close))\nrule open = normal seq(literal(\"<<\"), capture(\"label\", ref(label))) action(set(delimiter, fieldText(label)))\nrule label = token repeat1(range(\"A\", \"Z\"))\nrule close = normal predicate(ref(label), equal(matched, variable(delimiter)))\nrule line = token seq(not(seq(ref(close), literal(\"\\n\"))), not(seq(ref(close), not(any))), repeat0(notClass(char(\"\\n\"))), literal(\"\\n\"))\n",
+      "positive": [
+        {
+          "input": "<<END\nhi\nEND",
+          "tree": "(heredoc (open \"<<\" label:(label \"END\")) \"\\n\" (line \"hi\\n\") (close (label \"END\")))"
+        },
+        {
+          "input": "<<EOF\nEND\nEOF",
+          "tree": "(heredoc (open \"<<\" label:(label \"EOF\")) \"\\n\" (line \"END\\n\") (close (label \"EOF\")))"
+        },
+        {
+          "input": "<<A\nA",
+          "tree": "(heredoc (open \"<<\" label:(label \"A\")) \"\\n\" (close (label \"A\")))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "<<END\nhi\nEOF",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 9,
+            "line": 3,
+            "column": 1,
+            "expected": [
+              "line",
+              "predicate"
+            ]
+          }
+        },
+        {
+          "input": "<<END\nhi",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 6,
+            "line": 2,
+            "column": 1,
+            "expected": [
+              "label",
+              "line",
+              "predicate"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "equal(matched, variable(delimiter))",
+        "to": "not(equal(matched, variable(delimiter)))",
+        "input": "<<END\nhi\nEOF",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 9,
+            "line": 3,
+            "column": 1,
+            "expected": [
+              "line",
+              "predicate"
+            ]
+          }
+        },
+        "after": {
+          "tree": "(heredoc (open \"<<\" label:(label \"END\")) \"\\n\" (line \"hi\\n\") (close (label \"EOF\")))"
+        }
+      }
+    },
+    {
+      "id": "actions",
+      "title": "semantic actions and attributes",
+      "listing": "start sum\nextra class(char(\" \"))\nrule sum = normal seq(capture(\"terms\", ref(number)), repeat0(seq(literal(\"+\"), capture(\"terms\", ref(number))))) action(setAttribute(value, sumOf(terms, value)), if(greater(sumOf(terms, value), integer(100)), then(fail)))\nrule number = token repeat1(range(\"0\", \"9\")) action(setAttribute(value, number(matched)), if(equal(number(matched), integer(0)), then(buildNode(zero))))\n",
+      "positive": [
+        {
+          "input": "1 + 2 + 3",
+          "tree": "(sum {value=6} terms:(number {value=1} \"1\") ~\" \" \"+\" ~\" \" terms:(number {value=2} \"2\") ~\" \" \"+\" ~\" \" terms:(number {value=3} \"3\"))"
+        },
+        {
+          "input": "0 + 40",
+          "tree": "(sum {value=40} terms:(zero {value=0} \"0\") ~\" \" \"+\" ~\" \" terms:(number {value=40} \"40\"))"
+        },
+        {
+          "input": "007",
+          "tree": "(sum {value=7} terms:(number {value=7} \"007\"))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "60 + 50",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 7,
+            "line": 1,
+            "column": 8,
+            "expected": [
+              "\"+\""
+            ]
+          }
+        },
+        {
+          "input": "1 +",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "number"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "integer(100)",
+        "to": "integer(1000)",
+        "input": "60 + 50",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 7,
+            "line": 1,
+            "column": 8,
+            "expected": [
+              "\"+\""
+            ]
+          }
+        },
+        "after": {
+          "tree": "(sum {value=110} terms:(number {value=60} \"60\") ~\" \" \"+\" ~\" \" terms:(number {value=50} \"50\"))"
+        }
+      }
+    },
+    {
+      "id": "fields",
+      "title": "captures, fields and aliases",
+      "listing": "start s\nextra class(char(\" \"))\nrule s = normal seq(capture(\"target\", ref(name)), literal(\"=\"), capture(\"value\", choice(alias(variable, ref(name)), alias(pair, seq(ref(name), literal(\",\"), ref(name))))))\nrule name = token repeat1(range(\"a\", \"z\"))\n",
+      "positive": [
+        {
+          "input": "x = y",
+          "tree": "(s target:(name \"x\") ~\" \" \"=\" ~\" \" value:(variable \"y\"))"
+        },
+        {
+          "input": "x=a,b",
+          "tree": "(s target:(name \"x\") \"=\" value:(pair (name \"a\") \",\" (name \"b\")))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "x =",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "name"
+            ]
+          }
+        },
+        {
+          "input": "= y",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 0,
+            "line": 1,
+            "column": 1,
+            "expected": [
+              "name"
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "alias(variable, ref(name))",
+        "to": "alias(reference, ref(name))",
+        "input": "x = y",
+        "before": {
+          "tree": "(s target:(name \"x\") ~\" \" \"=\" ~\" \" value:(variable \"y\"))"
+        },
+        "after": {
+          "tree": "(s target:(name \"x\") ~\" \" \"=\" ~\" \" value:(reference \"y\"))"
+        }
+      }
+    },
+    {
+      "id": "parameterization",
+      "title": "parameterization",
+      "listing": "start s\nrule s = normal seq(ref(list, ref(digit), literal(\",\")), literal(\";\"), ref(list, ref(letter), literal(\"|\")))\nrule list(item, separator) = normal seq(parameter(item), repeat0(seq(parameter(separator), parameter(item))))\nrule digit = token range(\"0\", \"9\")\nrule letter = token range(\"a\", \"z\")\n",
+      "positive": [
+        {
+          "input": "1,2;a|b|c",
+          "tree": "(s (list (digit \"1\") \",\" (digit \"2\")) \";\" (list (letter \"a\") \"|\" (letter \"b\") \"|\" (letter \"c\")))"
+        },
+        {
+          "input": "7;z",
+          "tree": "(s (list (digit \"7\")) \";\" (list (letter \"z\")))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "1|2;a",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 1,
+            "line": 1,
+            "column": 2,
+            "expected": [
+              "\",\"",
+              "\";\""
+            ]
+          }
+        },
+        {
+          "input": "a;1",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 0,
+            "line": 1,
+            "column": 1,
+            "expected": [
+              "digit"
+            ]
+          }
+        },
+        {
+          "listing": "start s\nrule s = normal ref(list, ref(digit))\nrule list(item, separator) = normal seq(parameter(item), parameter(separator))\nrule digit = token range(\"0\", \"9\")\n",
+          "loadError": {
+            "reason": "parameter"
+          }
+        },
+        {
+          "listing": "start s\nrule s = normal parameter(item)\n",
+          "loadError": {
+            "reason": "parameter"
+          }
+        }
+      ],
+      "mutation": {
+        "from": "literal(\"|\")))",
+        "to": "literal(\",\")))",
+        "input": "1,2;a,b",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 5,
+            "line": 1,
+            "column": 6,
+            "expected": [
+              "\"|\"",
+              "end of input"
+            ]
+          }
+        },
+        "after": {
+          "tree": "(s (list (digit \"1\") \",\" (digit \"2\")) \";\" (list (letter \"a\") \",\" (letter \"b\")))"
+        }
+      }
+    },
+    {
+      "id": "imports",
+      "title": "imports and inheritance",
+      "listing": "start list\nimport base\nrule list = normal seq(literal(\"[\"), ref(value), repeat0(seq(literal(\",\"), ref(value))), literal(\"]\"))\nrule word = token repeat1(range(\"A\", \"Z\"))\n",
+      "positive": [
+        {
+          "input": "[1, ABC]",
+          "tree": "(list \"[\" (value (number \"1\")) \",\" (value ~\" \" (word \"ABC\")) \"]\")"
+        },
+        {
+          "input": "[ 42 ]",
+          "tree": "(list \"[\" (value ~\" \" (number \"42\")) ~\" \" \"]\")"
+        }
+      ],
+      "negative": [
+        {
+          "input": "[abc]",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 1,
+            "line": 1,
+            "column": 2,
+            "expected": [
+              "number",
+              "word"
+            ]
+          }
+        },
+        {
+          "input": "[1,]",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "number",
+              "word"
+            ]
+          }
+        },
+        {
+          "listing": "start s\nimport missingGrammar\nrule s = normal literal(\"a\")\n",
+          "loadError": {
+            "reason": "import"
+          }
+        },
+        {
+          "listing": "start s\nimport cycleFirst\nrule s = normal literal(\"a\")\n",
+          "loadError": {
+            "reason": "import"
+          }
+        }
+      ],
+      "mutation": {
+        "from": "rule word = token repeat1(range(\"A\", \"Z\"))\n",
+        "to": "",
+        "input": "[abc]",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 1,
+            "line": 1,
+            "column": 2,
+            "expected": [
+              "number",
+              "word"
+            ]
+          }
+        },
+        "after": {
+          "tree": "(list \"[\" (value (word \"abc\")) \"]\")"
+        }
+      }
+    },
+    {
+      "id": "macros",
+      "title": "macros and notation",
+      "listing": "start s\nmacro commaList(item) = seq(parameter(item), repeat0(seq(literal(\",\"), parameter(item))))\nmacro parenthesized(inner) = seq(literal(\"(\"), parameter(inner), literal(\")\"))\nrule s = normal expand(parenthesized, expand(commaList, ref(digit)))\nrule digit = token range(\"0\", \"9\")\n",
+      "positive": [
+        {
+          "input": "(1,2,3)",
+          "tree": "(s \"(\" (digit \"1\") \",\" (digit \"2\") \",\" (digit \"3\") \")\")"
+        },
+        {
+          "input": "(4)",
+          "tree": "(s \"(\" (digit \"4\") \")\")"
+        }
+      ],
+      "negative": [
+        {
+          "input": "(1,)",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "digit"
+            ]
+          }
+        },
+        {
+          "input": "1,2",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 0,
+            "line": 1,
+            "column": 1,
+            "expected": [
+              "\"(\""
+            ]
+          }
+        },
+        {
+          "listing": "start s\nmacro loop(x) = expand(loop, parameter(x))\nrule s = normal expand(loop, literal(\"a\"))\n",
+          "loadError": {
+            "reason": "macro"
+          }
+        },
+        {
+          "listing": "start s\nrule s = normal expand(undefinedMacro)\n",
+          "loadError": {
+            "reason": "macro"
+          }
+        }
+      ],
+      "mutation": {
+        "from": "repeat0(seq(literal(\",\"), parameter(item)))",
+        "to": "repeat0(seq(literal(\";\"), parameter(item)))",
+        "input": "(1;2)",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 2,
+            "line": 1,
+            "column": 3,
+            "expected": [
+              "\")\"",
+              "\",\""
+            ]
+          }
+        },
+        "after": {
+          "tree": "(s \"(\" (digit \"1\") \";\" (digit \"2\") \")\")"
+        }
+      }
+    },
+    {
+      "id": "embedded",
+      "title": "embedded languages",
+      "listing": "start template\nrule template = normal repeat0(choice(ref(text), ref(interpolation)))\nrule text = token repeat1(notClass(char(\"{\")))\nrule interpolation = normal seq(literal(\"{\"), embed(arithmetic, repeat0(notClass(char(\"}\")))), literal(\"}\"))\n",
+      "positive": [
+        {
+          "input": "a{1+2}b",
+          "tree": "(template (text \"a\") (interpolation \"{\" (EMBED arithmetic@2..5 (sum (digit \"1\") \"+\" (digit \"2\"))) \"}\") (text \"b\"))"
+        },
+        {
+          "input": "{3}",
+          "tree": "(template (interpolation \"{\" (EMBED arithmetic@1..2 (sum (digit \"3\"))) \"}\"))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "a{1+}b",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 4,
+            "line": 1,
+            "column": 5,
+            "expected": [
+              "character class",
+              "digit"
+            ]
+          }
+        },
+        {
+          "input": "a{1",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "\"}\"",
+              "character class"
+            ]
+          }
+        },
+        {
+          "listing": "start s\nrule s = normal embed(unknownLanguage, any)\n",
+          "loadError": {
+            "reason": "embed"
+          }
+        }
+      ],
+      "mutation": {
+        "from": "embed(arithmetic, repeat0(notClass(char(\"}\"))))",
+        "to": "repeat0(notClass(char(\"}\")))",
+        "input": "a{1+}b",
+        "before": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 4,
+            "line": 1,
+            "column": 5,
+            "expected": [
+              "character class",
+              "digit"
+            ]
+          }
+        },
+        "after": {
+          "tree": "(template (text \"a\") (interpolation \"{\" \"1\" \"+\" \"}\") (text \"b\"))"
+        }
+      }
+    },
+    {
+      "id": "recovery",
+      "title": "error and missing nodes, and recovery",
+      "listing": "start program\nextra class(char(\" \"), char(\"\\n\"))\nrule program = normal repeat0(ref(statement))\nrule statement = normal seq(recover(seq(ref(name), literal(\"=\"), ref(number)), literal(\";\")), missing(literal(\";\")))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule number = token repeat1(range(\"0\", \"9\"))\n",
+      "options": {
+        "recovery": "accept"
+      },
+      "positive": [
+        {
+          "input": "x = 1; y = 2;",
+          "tree": "(program (statement (name \"x\") ~\" \" \"=\" ~\" \" (number \"1\") \";\") (statement ~\" \" (name \"y\") ~\" \" \"=\" ~\" \" (number \"2\") \";\"))"
+        },
+        {
+          "input": "x = ; y = 2;",
+          "tree": "(program (statement (ERROR@0..3 \"x =\") ~\" \" \";\") (statement ~\" \" (name \"y\") ~\" \" \"=\" ~\" \" (number \"2\") \";\"))"
+        },
+        {
+          "input": "x = 1 y = 2;",
+          "tree": "(program (statement (name \"x\") ~\" \" \"=\" ~\" \" (number \"1\") (MISSING@5 \";\")) (statement ~\" \" (name \"y\") ~\" \" \"=\" ~\" \" (number \"2\") \";\"))"
+        }
+      ],
+      "negative": [
+        {
+          "input": "x = ; y = 2;",
+          "options": {
+            "recovery": "reject"
+          },
+          "tree": "(program (statement (ERROR@0..3 \"x =\") ~\" \" \";\") (statement ~\" \" (name \"y\") ~\" \" \"=\" ~\" \" (number \"2\") \";\"))",
+          "rejection": {
+            "reason": "recovered",
+            "offset": 0,
+            "line": 1,
+            "column": 1
+          }
+        },
+        {
+          "input": "x = 1 y = 2;",
+          "options": {
+            "recovery": "reject"
+          },
+          "tree": "(program (statement (name \"x\") ~\" \" \"=\" ~\" \" (number \"1\") (MISSING@5 \";\")) (statement ~\" \" (name \"y\") ~\" \" \"=\" ~\" \" (number \"2\") \";\"))",
+          "rejection": {
+            "reason": "recovered",
+            "offset": 5,
+            "line": 1,
+            "column": 6
+          }
+        },
+        {
+          "input": "x = 1; y",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 8,
+            "line": 1,
+            "column": 9,
+            "expected": [
+              "\"=\""
+            ]
+          }
+        }
+      ],
+      "mutation": {
+        "from": "missing(literal(\";\"))",
+        "to": "literal(\";\")",
+        "input": "x = 1 y = 2;",
+        "before": {
+          "tree": "(program (statement (name \"x\") ~\" \" \"=\" ~\" \" (number \"1\") (MISSING@5 \";\")) (statement ~\" \" (name \"y\") ~\" \" \"=\" ~\" \" (number \"2\") \";\"))"
+        },
+        "after": {
+          "rejection": {
+            "reason": "syntax",
+            "offset": 6,
+            "line": 1,
+            "column": 7,
+            "expected": [
+              "\";\""
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1003,7 +1003,7 @@ export type GrammarRuleKind = 'normal' | 'atomic' | 'silent' | 'token' | 'termin
 export type GrammarExpression =
   | { kind: 'empty' | 'any' }
   | { kind: 'literal' | 'literalInsensitive' | 'regex'; value: string }
-  | { kind: 'ref'; name: string }
+  | { kind: 'ref'; name: string; arguments?: GrammarExpression[] }
   | { kind: 'seq'; items: GrammarExpression[] }
   | { kind: 'choice'; items: GrammarExpression[]; ordered: boolean }
   | { kind: 'repeat0' | 'repeat1' | 'optional' | 'and' | 'not'; item: GrammarExpression }
@@ -1014,20 +1014,62 @@ export type GrammarExpression =
       kind: 'charClass';
       value?: string;
       items?: Array<
-        { kind: 'char'; value: string } | { kind: 'range'; start: string; end: string }
+        | { kind: 'char'; value: string }
+        | { kind: 'range'; start: string; end: string }
+        | { kind: 'category' | 'script'; value: string }
       >;
       negated?: boolean;
-    };
+    }
+  | {
+      kind: 'byteClass';
+      negated: boolean;
+      items: Array<{ kind: 'byte'; value: number } | { kind: 'byteRange'; start: number; end: number }>;
+    }
+  | { kind: 'precedence'; level: number; associativity: 'left' | 'right' | 'none'; item: GrammarExpression }
+  | { kind: 'dynamicPrecedence' | 'lexicalPrecedence'; level: number; item: GrammarExpression }
+  | { kind: 'longest'; items: GrammarExpression[] }
+  | { kind: 'token' | 'immediateToken' | 'missing'; item: GrammarExpression }
+  | { kind: 'alias'; name: string; item: GrammarExpression }
+  | { kind: 'parameter'; name: string }
+  | { kind: 'predicate'; item: GrammarExpression; condition: GrammarOperation }
+  | { kind: 'recover'; item: GrammarExpression; synchronize: GrammarExpression }
+  | { kind: 'embed'; language: string; item: GrammarExpression }
+  | { kind: 'expand'; name: string; arguments: GrammarExpression[] };
+
+/**
+ * One operation of the scanner, action and predicate language of
+ * docs/grammar/feature-union.md#operation-language: `operation` names the form
+ * and the remaining fields are its operands.
+ */
+export interface GrammarOperation {
+  operation: string;
+  [field: string]: unknown;
+}
+
+export interface GrammarDeclarations {
+  matching?: 'generalized' | 'peg';
+  imports?: string[];
+  modes?: string[];
+  extras?: GrammarExpression[];
+  conflicts?: string[][];
+  macros?: Array<{ name: string; parameters: string[]; expression: GrammarExpression }>;
+  scanners?: Array<{ name: string; tokens: string[]; operations: GrammarOperation[] }>;
+}
 export interface GrammarRuleValue {
   name: string;
   kind: GrammarRuleKind;
   expression: GrammarExpression;
+  parameters?: string[];
+  channel?: string;
+  modes?: string[];
+  action?: GrammarOperation[];
 }
 export interface NormalizedGrammar {
   schemaVersion: 1;
   start: string | null;
   sourceFormat: string | null;
   rules: GrammarRuleValue[];
+  declarations?: GrammarDeclarations;
 }
 
 export class Grammar {
@@ -1035,9 +1077,11 @@ export class Grammar {
     start: string | null,
     rules: Map<string, Omit<GrammarRuleValue, 'name'> | GrammarRuleValue>,
     sourceFormat?: string | null,
+    declarations?: GrammarDeclarations | null,
   );
   start: string | null;
   sourceFormat: string | null;
+  declarations: GrammarDeclarations;
   rules: Map<string, GrammarRuleValue>;
   rule(name: string): GrammarRuleValue | undefined;
   ruleNames(): string[];
@@ -1086,12 +1130,92 @@ export class GrammarBuilder {
 
 export const ExprBuilder: typeof GrammarBuilder;
 export function emitPeggy(grammar: Grammar): string;
-export function compileGrammar(grammar: Grammar, options?: Record<string, unknown>): unknown;
+export interface GrammarParserOptions {
+  /** Returns the grammar an import or an embedded language names. */
+  resolveGrammar?: (name: string) => Grammar | NormalizedGrammar | null | undefined;
+  startRule?: string;
+  maxDepth?: number;
+  stepLimit?: number;
+  memoLimit?: number;
+  ambiguity?: 'report' | 'reject';
+  recovery?: 'reject' | 'accept';
+  [option: string]: unknown;
+}
+
+export type SyntaxTreeNode =
+  | {
+      type: 'node';
+      kind: string;
+      field?: string;
+      start: number;
+      end: number;
+      children: SyntaxTreeNode[];
+      attributes?: Record<string, string | number>;
+    }
+  | {
+      type: 'token';
+      kind: string | null;
+      field?: string;
+      trivia?: true;
+      start: number;
+      end: number;
+      attributes?: Record<string, string | number>;
+      text: string | null;
+      hex?: string;
+    }
+  | { type: 'error'; start: number; end: number; text: string | null; hex?: string; reason?: string }
+  | { type: 'missing'; kind: string | null; start: number; end: number; literal?: true }
+  | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode };
+
+export interface GrammarRejection {
+  reason: 'syntax' | 'stepLimit' | 'nestingDepth' | 'recovered' | 'ambiguity';
+  offset?: number;
+  line?: number;
+  column?: number;
+  expected?: string[];
+  limit?: number;
+}
+
+export interface GrammarParseOutcome {
+  ok: boolean;
+  tree: SyntaxTreeNode | null;
+  ambiguities: Array<{ rule: string; start: number; end: number }>;
+  rejection: GrammarRejection | null;
+}
+
+export interface GrammarParser {
+  parse(source: string | Uint8Array, options?: GrammarParserOptions): SyntaxTreeNode;
+  parseTree(source: string | Uint8Array, options?: GrammarParserOptions): GrammarParseOutcome;
+}
+
+export class GrammarParseError extends Error {
+  constructor(rejection: GrammarRejection);
+  rejection: GrammarRejection;
+  reason: GrammarRejection['reason'];
+  offset: number | null;
+  line: number | null;
+  column: number | null;
+  expected: string[];
+}
+
+export class GrammarRuntimeError extends Error {
+  reason: 'import' | 'embed' | 'macro' | 'parameter' | 'reference' | 'declaration' | 'operation' | 'pattern';
+}
+
+export function createGrammarParser(
+  grammar: Grammar | NormalizedGrammar,
+  options?: GrammarParserOptions,
+): GrammarParser;
+export function renderSyntaxTree(node: SyntaxTreeNode): string;
+export function compileGrammar(
+  grammar: Grammar | NormalizedGrammar,
+  options?: GrammarParserOptions,
+): GrammarParser;
 export function parseWithGrammar(
-  grammar: Grammar,
-  source: string,
-  options?: Record<string, unknown>,
-): unknown;
+  grammar: Grammar | NormalizedGrammar,
+  source: string | Uint8Array,
+  options?: GrammarParserOptions,
+): SyntaxTreeNode;
 export function emitJavascriptParser(grammar: Grammar): string;
 export function serializeGrammar(grammar: Grammar): string;
 export function deserializeGrammar(source: string | NormalizedGrammar): Grammar;

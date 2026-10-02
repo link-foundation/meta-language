@@ -616,9 +616,10 @@ function choiceForm(forms, ordered) {
   const items = [...unique.values()];
   if (items.length === 1) return items[0];
   // The comparison text of an unordered choice is order-free, but the merged
-  // expression keeps the source order: a PEG-style parser (peggy, which
-  // parseWithGrammar compiles to) commits to the first matching alternative,
-  // so `letter | letter word` would stop after one letter.
+  // expression keeps the source order: a PEG-style parser (the native
+  // executor under `matching peg`, or an exported Peggy grammar) commits to
+  // the first matching alternative, so `letter | letter word` would stop
+  // after one letter.
   const texts = items.map(({ text }) => text);
   if (!ordered) texts.sort(compareText);
   return {

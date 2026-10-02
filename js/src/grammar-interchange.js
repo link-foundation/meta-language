@@ -30,6 +30,16 @@ import {
 import { GrammarMergeError, GrammarRenameError, mergeGrammars, renameGrammarRule } from './grammar-merge.js';
 import { checkGrammarRoundTrip } from './grammar-round-trip.js';
 import { validateGrammar } from './grammar-validate.js';
+import {
+  grammarDeclarations,
+  lineCodec,
+  MATCHING_MODES,
+  readLineFeatureExpression,
+  readLineInteger,
+  readLineOperation,
+  renderFeatureExpression,
+  renderOperation,
+} from './grammar-feature-forms.js';
 
 const IMPORTERS = {
   abnf: importAbnf,
@@ -80,17 +90,42 @@ function nativeError(line, detail) {
 
 /**
  * Renders the native grammar listing: an optional `format TAG` line, a
- * `start NAME` line for the start rule, then one `rule NAME = KIND EXPRESSION`
+ * `start NAME` line for the start rule, the grammar feature union
+ * declarations (`matching`, `import`, `mode`, `extra`, `conflict`, `macro`
+ * and `scanner` lines, in that order), then one `rule NAME = KIND EXPRESSION`
  * line per rule in grammar order, spelling expressions as the shared grammar
- * parity fixtures do (`seq(ref(a), literal("b"))`).
+ * parity fixtures do (`seq(ref(a), literal("b"))`). A parameterized rule is
+ * `rule NAME(PARAMETER, ...) = ...` and the rule attributes follow the
+ * expression as `channel(NAME)`, `modes(MODE, ...)` and `action(OPERATION, ...)`.
  */
 export function renderNativeGrammar(grammar) {
   const lines = [];
   if (grammar.sourceFormat) lines.push(`format ${grammar.sourceFormat}`);
   const start = grammar.startRule();
   if (start) lines.push(`start ${renderName(start.name)}`);
+  const declarations = grammarDeclarations(grammar);
+  const codec = lineCodec(renderNativeExpression, renderName);
+  const parameters = (names) => (names?.length > 0 ? `(${names.map(renderName).join(', ')})` : '');
+  if (declarations.matching) lines.push(`matching ${declarations.matching}`);
+  for (const name of declarations.imports) lines.push(`import ${renderName(name)}`);
+  for (const name of declarations.modes) lines.push(`mode ${renderName(name)}`);
+  for (const extra of declarations.extras) lines.push(`extra ${renderNativeExpression(extra)}`);
+  for (const group of declarations.conflicts) lines.push(`conflict ${group.map(renderName).join(' ')}`);
+  for (const macro of declarations.macros) {
+    lines.push(`macro ${renderName(macro.name)}${parameters(macro.parameters)} = ${renderNativeExpression(macro.expression)}`);
+  }
+  for (const scanner of declarations.scanners) {
+    lines.push(`scanner ${renderName(scanner.name)} tokens(${scanner.tokens.map(renderName).join(', ')}) `
+      + `operations(${scanner.operations.map((operation) => renderOperation(operation, codec)).join(', ')})`);
+  }
   for (const rule of grammar.rules.values()) {
-    lines.push(`rule ${renderName(rule.name)} = ${rule.kind} ${renderNativeExpression(rule.expression)}`);
+    let line = `rule ${renderName(rule.name)}${parameters(rule.parameters)} = ${rule.kind} ${renderNativeExpression(rule.expression)}`;
+    if (rule.channel !== undefined) line += ` channel(${renderName(rule.channel)})`;
+    if (rule.modes !== undefined) line += ` modes(${rule.modes.map(renderName).join(', ')})`;
+    if (rule.action !== undefined) {
+      line += ` action(${rule.action.map((operation) => renderOperation(operation, codec)).join(', ')})`;
+    }
+    lines.push(line);
   }
   return `${lines.map((line) => `${line}\n`).join('')}`;
 }
@@ -107,10 +142,15 @@ export function renderNativeExpression(expression) {
     case 'literalInsensitive': return `literalInsensitive(${quote(expression.value)})`;
     case 'charRange': return `range(${quote(expression.start)}, ${quote(expression.end)})`;
     case 'charClass':
-      return `${expression.negated ? 'notClass' : 'class'}(${expression.items.map((item) => (item.kind === 'range'
-        ? `range(${quote(item.start)}, ${quote(item.end)})`
-        : `char(${quote(item.value)})`)).join(', ')})`;
-    case 'ref': return `ref(${renderName(expression.name)})`;
+      return `${expression.negated ? 'notClass' : 'class'}(${expression.items.map((item) => {
+        if (item.kind === 'range') return `range(${quote(item.start)}, ${quote(item.end)})`;
+        if (item.kind === 'category' || item.kind === 'script') return `${item.kind}(${quote(item.value)})`;
+        return `char(${quote(item.value)})`;
+      }).join(', ')})`;
+    case 'ref':
+      return expression.arguments?.length > 0
+        ? `ref(${renderName(expression.name)}, ${list(expression.arguments)})`
+        : `ref(${renderName(expression.name)})`;
     case 'choice': return `${expression.ordered ? 'orderedChoice' : 'choice'}(${list(expression.items)})`;
     case 'seq': return `seq(${list(expression.items)})`;
     case 'optional': case 'repeat0': case 'repeat1': case 'and': case 'not':
@@ -118,7 +158,11 @@ export function renderNativeExpression(expression) {
     case 'repeat': return `repeat(${inner(expression.item)}, ${expression.min}, ${expression.max ?? 'unbounded'})`;
     case 'capture':
       return `capture(${expression.label === null ? 'null' : quote(expression.label)}, ${inner(expression.item)})`;
-    default: throw new TypeError(`unknown grammar expression kind ${expression.kind}`);
+    default: {
+      const rendered = renderFeatureExpression(expression, lineCodec(inner, renderName));
+      if (rendered === null) throw new TypeError(`unknown grammar expression kind ${expression.kind}`);
+      return rendered;
+    }
   }
 }
 
@@ -141,6 +185,9 @@ export function parseNativeGrammar(source) {
   let start = null;
   let startLine = 0;
   let sourceFormat = null;
+  const declarations = {
+    matching: null, imports: [], modes: [], extras: [], conflicts: [], macros: [], scanners: [],
+  };
   for (const [index, text] of source.split('\n').entries()) {
     const line = index + 1;
     const cursor = new Cursor([...text.replace(/\r$/u, '')], line);
@@ -158,6 +205,7 @@ export function parseNativeGrammar(source) {
       startLine = line;
     } else if (directive === 'rule') {
       const name = cursor.name();
+      const parameters = cursor.parameters();
       cursor.skipSpaces();
       cursor.expect('=');
       cursor.skipSpaces();
@@ -166,7 +214,40 @@ export function parseNativeGrammar(source) {
       cursor.requireSpace();
       const expression = cursor.expression();
       if (rules.has(name)) cursor.fail(`rule ${name} is defined twice`);
-      rules.set(name, { kind, expression });
+      const rule = { kind, expression };
+      if (parameters.length > 0) rule.parameters = parameters;
+      cursor.ruleAttributes(rule);
+      rules.set(name, rule);
+    } else if (directive === 'matching') {
+      if (declarations.matching !== null) cursor.fail('the matching is given twice');
+      declarations.matching = cursor.word();
+      if (!MATCHING_MODES.includes(declarations.matching)) cursor.fail(`unknown matching ${declarations.matching}`);
+    } else if (directive === 'import') {
+      declarations.imports.push(cursor.name());
+    } else if (directive === 'mode') {
+      declarations.modes.push(cursor.name());
+    } else if (directive === 'extra') {
+      declarations.extras.push(cursor.expression());
+    } else if (directive === 'conflict') {
+      const group = [cursor.name()];
+      for (cursor.skipSpaces(); !cursor.done(); cursor.skipSpaces()) group.push(cursor.name());
+      declarations.conflicts.push(group);
+    } else if (directive === 'macro') {
+      const name = cursor.name();
+      const parameters = cursor.parameters();
+      cursor.skipSpaces();
+      cursor.expect('=');
+      cursor.skipSpaces();
+      declarations.macros.push({ name, parameters, expression: cursor.expression() });
+    } else if (directive === 'scanner') {
+      const name = cursor.name();
+      cursor.requireSpace();
+      if (cursor.word() !== 'tokens') cursor.fail('expected tokens(...)');
+      const tokens = cursor.list(() => cursor.name());
+      cursor.requireSpace();
+      if (cursor.word() !== 'operations') cursor.fail('expected operations(...)');
+      const operations = cursor.list(() => readLineOperation(cursor, 'statement'));
+      declarations.scanners.push({ name, tokens, operations });
     } else {
       cursor.fail(`unknown directive ${directive}`);
     }
@@ -175,7 +256,7 @@ export function parseNativeGrammar(source) {
   }
   if (rules.size === 0) throw nativeError(null, 'the listing defines no rules');
   if (start !== null && !rules.has(start)) throw nativeError(startLine, `start rule ${start} is not defined`);
-  return new Grammar(start ?? rules.keys().next().value, rules, sourceFormat);
+  return new Grammar(start ?? rules.keys().next().value, rules, sourceFormat, declarations);
 }
 
 class Cursor {
@@ -251,6 +332,48 @@ class Cursor {
     return value;
   }
 
+  integer() {
+    return readLineInteger(this);
+  }
+
+  /** The optional `(NAME, ...)` parameter list after a rule or macro name. */
+  parameters() {
+    if (this.peek() !== '(') return [];
+    const names = this.list(() => this.name());
+    if (names.length === 0) this.fail('a parameter list names at least one parameter');
+    if (new Set(names).size !== names.length) this.fail('a parameter is named twice');
+    return names;
+  }
+
+  /** The `channel(NAME)`, `modes(MODE, ...)` and `action(OPERATION, ...)` attributes after a rule expression. */
+  ruleAttributes(rule) {
+    const order = ['channel', 'modes', 'action'];
+    let next = 0;
+    for (this.skipSpaces(); !this.done(); this.skipSpaces()) {
+      // Text that is not `channel(`, `modes(` or `action(` is trailing text,
+      // reported as it was before rule attributes existed.
+      const begin = this.position;
+      while (!this.done() && /[A-Za-z]/u.test(this.peek())) this.position += 1;
+      const attribute = this.chars.slice(begin, this.position).join('');
+      const position = order.indexOf(attribute);
+      if (position < 0 || this.peek() !== '(') {
+        this.position = begin;
+        this.fail('unexpected text at the end of the line');
+      }
+      if (position < next) this.fail(`rule attribute ${attribute} is out of order`);
+      next = position + 1;
+      if (attribute === 'channel') {
+        this.open();
+        rule.channel = this.name();
+        this.close();
+      } else if (attribute === 'modes') {
+        rule.modes = this.list(() => this.name());
+      } else {
+        rule.action = this.list(() => readLineOperation(this, 'statement'));
+      }
+    }
+  }
+
   bound(allowUnbounded) {
     if (allowUnbounded && this.peek() === 'u') {
       if (this.word() !== 'unbounded') this.fail('expected a repetition bound');
@@ -318,8 +441,13 @@ class Cursor {
       case 'ref': {
         this.open();
         const name = this.name();
+        const args = [];
+        for (this.skipSpaces(); this.peek() === ','; this.skipSpaces()) {
+          this.separator();
+          args.push(this.expression());
+        }
         this.close();
-        return { kind: 'ref', name };
+        return args.length > 0 ? { kind: 'ref', name, arguments: args } : { kind: 'ref', name };
       }
       case 'choice': case 'orderedChoice':
         return { kind: 'choice', items: this.list(() => this.expression()), ordered: kind === 'orderedChoice' };
@@ -346,6 +474,8 @@ class Cursor {
         return { kind, label, item };
       }
       default: {
+        const feature = readLineFeatureExpression(kind, this);
+        if (feature !== null) return feature;
         if (!UNARY.has(kind)) this.fail(`unknown expression ${kind}`);
         this.open();
         const item = this.expression();
@@ -365,6 +495,8 @@ class Cursor {
       const start = this.character();
       this.separator();
       item = { kind: 'range', start, end: this.character() };
+    } else if (kind === 'category' || kind === 'script') {
+      item = { kind, value: this.string() };
     } else {
       this.fail(`unknown class item ${kind}`);
     }

@@ -29,11 +29,11 @@ export function mutateGrammarStartRule(grammar, marker = GRAMMAR_ROUND_TRIP_MARK
     }
     const alternatives = [rule.expression, { kind: 'literal', value: marker }];
     rules.set(rule.name, {
-      kind: rule.kind,
+      ...rule,
       expression: { kind: 'choice', items: alternatives, ordered: grammar.sourceFormat === 'peg' },
     });
   }
-  return carryRuleDocs(new Grammar(grammar.start, rules, grammar.sourceFormat), grammar);
+  return carryRuleDocs(new Grammar(grammar.start, rules, grammar.sourceFormat, grammar.declarations), grammar);
 }
 
 /**
