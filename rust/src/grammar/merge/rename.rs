@@ -146,6 +146,7 @@ fn rename_all(grammar: &Grammar, mapping: &BTreeMap<String, String>) -> Grammar 
             kind: rule.kind,
             concept: rule.concept.clone(),
             doc: rule.doc.clone(),
+            attributes: rule.attributes.clone(),
         });
     }
     if let Some(start) = grammar.start() {

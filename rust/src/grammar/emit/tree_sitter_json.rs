@@ -150,6 +150,9 @@ fn emit_node(expr: &GrammarExpr, report: &mut EmitReport) -> Result<Json, Gramma
             return Err(unsupported_error(FORMAT, "predicate"));
         }
         GrammarExpr::Capture { label, expr } => emit_capture(label.as_deref(), expr, report)?,
+        GrammarExpr::Feature(feature) => {
+            return Err(unsupported_error(GrammarFormat::TreeSitter, feature.head()));
+        }
     })
 }
 

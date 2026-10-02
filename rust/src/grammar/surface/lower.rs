@@ -126,6 +126,7 @@ fn collect_nonterminals(expr: &GrammarExpr, references: &mut BTreeSet<String>) {
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar => {}
     }
 }

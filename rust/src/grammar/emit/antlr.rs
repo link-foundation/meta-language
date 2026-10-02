@@ -299,6 +299,9 @@ impl<'grammar> AntlrEmitter<'grammar> {
             }
             GrammarExpr::Not(inner) => self.render_not(inner)?,
             GrammarExpr::Capture { label, expr } => self.render_capture(label.as_deref(), expr)?,
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Antlr, feature.head()));
+            }
         })
     }
 
@@ -526,7 +529,10 @@ fn uses_character_constructs(expr: &GrammarExpr) -> bool {
         | GrammarExpr::Not(inner)
         | GrammarExpr::Repeat { expr: inner, .. }
         | GrammarExpr::Capture { expr: inner, .. } => uses_character_constructs(inner),
-        GrammarExpr::Empty | GrammarExpr::Terminal(_) | GrammarExpr::NonTerminal(_) => false,
+        GrammarExpr::Empty
+        | GrammarExpr::Terminal(_)
+        | GrammarExpr::NonTerminal(_)
+        | GrammarExpr::Feature(_) => false,
     }
 }
 

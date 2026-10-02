@@ -23,8 +23,11 @@
 //! assert_eq!(Grammar::from_links(&mut decoder, root).expect("grammar decodes"), grammar);
 //! ```
 
+mod builder;
 pub mod concepts;
 pub mod emit;
+pub mod feature;
+pub mod feature_runtime;
 pub mod fidelity;
 pub mod import;
 pub mod inference;
@@ -38,6 +41,7 @@ pub mod surface;
 pub mod translate;
 pub mod validate;
 
+pub use builder::ExprBuilder;
 pub use concepts::{
     GRAMMAR_CONCEPTS, GrammarConcept, annotate_grammar_concepts, grammar_expr_concept_id,
     rule_concept_id,
@@ -47,6 +51,11 @@ pub use emit::{
     emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser, emit_lark, emit_peggy, emit_pest,
     emit_rust_parser, emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report,
     emit_tree_sitter_json, render_rust_type,
+};
+pub use feature::{
+    ByteClassItem, FEATURE_EXPRESSION_FORMS, FeatureExpr, FeatureForm, FieldType, FieldValue,
+    GrammarDeclarations, GrammarMacro, GrammarScanner, MATCHING_MODES, OPERATION_FORMS, Operation,
+    OperationCategory, RuleAttributes, UnicodeClassItem,
 };
 pub use fidelity::{
     FORMER_GRAMMAR_CONSTRUCTS, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS, GrammarFidelityLevel,
@@ -101,11 +110,13 @@ pub use interchange::{
     GRAMMAR_LOSSLESS_FORMATS, GrammarCommandOutput, GrammarEmitter, GrammarFileReader,
     GrammarImporter, GrammarLayout, GrammarLayoutDefinition, GrammarLayoutImplicit,
     GrammarLosslessError, GrammarSourceDefinition, GrammarSourceSplit, capture_grammar_layout,
-    emit_grammar_lossless, grammar_emitter, grammar_importer, import_grammar_lossless,
-    parse_grammar_layout_links, parse_grammar_links, parse_links_expression, parse_native_grammar,
-    percent_decode_links_text, percent_encode_links_text, render_grammar_layout_links,
-    render_grammar_links, render_links_expression, render_native_expression, render_native_grammar,
-    render_rule_link, run_grammar_command, split_grammar_source,
+    deserialize_grammar, emit_grammar_lossless, grammar_emitter, grammar_importer,
+    import_grammar_lossless, parse_grammar_layout_links, parse_grammar_links,
+    parse_links_expression, parse_native_grammar, percent_decode_links_text,
+    percent_encode_links_text, render_grammar_layout_links, render_grammar_links,
+    render_links_expression, render_native_expression, render_native_feature,
+    render_native_grammar, render_rule_link, run_grammar_command, serialize_grammar,
+    split_grammar_source,
 };
 pub use merge::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
@@ -197,6 +208,8 @@ pub enum GrammarExpr {
         /// Captured expression.
         expr: Box<Self>,
     },
+    /// A form of the grammar feature union (`docs/grammar/feature-union.md`).
+    Feature(Box<FeatureExpr>),
 }
 
 impl GrammarExpr {
@@ -328,8 +341,50 @@ impl GrammarExpr {
         }
     }
 
-    fn collect_nonterminals(&self, names: &mut BTreeSet<String>) {
+    /// Builds a feature union expression.
+    #[must_use]
+    pub fn feature(feature: FeatureExpr) -> Self {
+        Self::Feature(Box::new(feature))
+    }
+
+    /// Copies a feature form with every nested expression rewritten by `map`.
+    pub(crate) fn rewrite_feature(
+        feature: &FeatureExpr,
+        mut map: impl FnMut(&Self) -> Self,
+    ) -> Self {
+        let mut copy = feature.clone();
+        copy.map_expressions(&mut |expr| *expr = map(expr));
+        Self::Feature(Box::new(copy))
+    }
+
+    /// The first feature union form in this expression, in source order.
+    #[must_use]
+    pub fn first_feature(&self) -> Option<&FeatureExpr> {
         match self {
+            Self::Feature(feature) => Some(feature),
+            Self::Choice { alternatives, .. } | Self::Sequence(alternatives) => {
+                alternatives.iter().find_map(Self::first_feature)
+            }
+            Self::Optional(inner)
+            | Self::ZeroOrMore(inner)
+            | Self::OneOrMore(inner)
+            | Self::And(inner)
+            | Self::Not(inner)
+            | Self::Repeat { expr: inner, .. }
+            | Self::Capture { expr: inner, .. } => inner.first_feature(),
+            Self::Empty
+            | Self::Terminal(_)
+            | Self::TerminalInsensitive(_)
+            | Self::CharRange(_, _)
+            | Self::CharClass { .. }
+            | Self::AnyChar
+            | Self::NonTerminal(_) => None,
+        }
+    }
+
+    pub(crate) fn collect_nonterminals(&self, names: &mut BTreeSet<String>) {
+        match self {
+            Self::Feature(feature) => feature.collect_references(names),
             Self::NonTerminal(name) => {
                 names.insert(name.clone());
             }
@@ -398,6 +453,9 @@ impl fmt::Display for GrammarExpr {
                 Some(label) => write!(formatter, "{label}:({expr})"),
                 None => write!(formatter, "capture({expr})"),
             },
+            Self::Feature(feature) => {
+                formatter.write_str(&interchange::render_native_feature(feature))
+            }
         }
     }
 }
@@ -496,6 +554,8 @@ pub struct GrammarRule {
     pub concept: Option<String>,
     /// Optional free-text documentation or comment.
     pub doc: Option<String>,
+    /// Parameters, channel, modes and action of the feature union.
+    pub attributes: RuleAttributes,
 }
 
 impl GrammarRule {
@@ -508,7 +568,15 @@ impl GrammarRule {
             kind: RuleKind::Normal,
             concept: None,
             doc: None,
+            attributes: RuleAttributes::default(),
         }
+    }
+
+    /// Returns this rule with feature union attributes.
+    #[must_use]
+    pub fn with_attributes(mut self, attributes: RuleAttributes) -> Self {
+        self.attributes = attributes;
+        self
     }
 
     /// Returns this rule with a different rule kind.
@@ -635,6 +703,7 @@ pub struct Grammar {
     rules: Vec<GrammarRule>,
     start: Option<String>,
     source_format: Option<GrammarFormat>,
+    declarations: GrammarDeclarations,
 }
 
 impl Grammar {
@@ -645,6 +714,15 @@ impl Grammar {
             rules: Vec::new(),
             start: None,
             source_format: None,
+            declarations: GrammarDeclarations {
+                matching: None,
+                imports: Vec::new(),
+                modes: Vec::new(),
+                extras: Vec::new(),
+                conflicts: Vec::new(),
+                macros: Vec::new(),
+                scanners: Vec::new(),
+            },
         }
     }
 
@@ -679,6 +757,24 @@ impl Grammar {
     pub const fn with_source_format(mut self, source_format: GrammarFormat) -> Self {
         self.source_format = Some(source_format);
         self
+    }
+
+    /// Returns this grammar with feature union declarations.
+    #[must_use]
+    pub fn with_declarations(mut self, declarations: GrammarDeclarations) -> Self {
+        self.declarations = declarations;
+        self
+    }
+
+    /// The feature union declarations.
+    #[must_use]
+    pub const fn declarations(&self) -> &GrammarDeclarations {
+        &self.declarations
+    }
+
+    /// Replaces the feature union declarations.
+    pub fn set_declarations(&mut self, declarations: GrammarDeclarations) {
+        self.declarations = declarations;
     }
 
     /// Adds a rule to the grammar.
@@ -746,6 +842,12 @@ impl Grammar {
         for rule in &self.rules {
             rule.expr.collect_nonterminals(&mut names);
         }
+        for extra in &self.declarations.extras {
+            extra.collect_nonterminals(&mut names);
+        }
+        for declared in &self.declarations.macros {
+            declared.expression.collect_nonterminals(&mut names);
+        }
         names
     }
 
@@ -756,6 +858,12 @@ impl Grammar {
             .rules
             .iter()
             .map(|rule| rule.name.clone())
+            .chain(
+                self.declarations
+                    .external_tokens()
+                    .into_iter()
+                    .map(str::to_owned),
+            )
             .collect::<BTreeSet<_>>();
         self.referenced_nonterminals()
             .difference(&defined)
@@ -825,162 +933,6 @@ impl GrammarBuilder {
     #[must_use]
     pub fn build(self) -> Grammar {
         self.grammar
-    }
-}
-
-/// Ergonomic constructor for grammar expressions.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct ExprBuilder;
-
-impl ExprBuilder {
-    /// Builds an empty-string expression.
-    #[must_use]
-    pub const fn empty(self) -> GrammarExpr {
-        GrammarExpr::Empty
-    }
-
-    /// Builds a literal terminal.
-    #[must_use]
-    pub fn term(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::terminal(value)
-    }
-
-    /// Builds a literal terminal.
-    #[must_use]
-    pub fn terminal(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::terminal(value)
-    }
-
-    /// Builds a case-insensitive literal terminal.
-    #[must_use]
-    pub fn terminal_insensitive(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::terminal_insensitive(value)
-    }
-
-    /// Builds a single-character range expression.
-    #[must_use]
-    pub const fn char(self, value: char) -> GrammarExpr {
-        GrammarExpr::CharRange(value, value)
-    }
-
-    /// Builds an inclusive character range expression.
-    #[must_use]
-    pub const fn char_range(self, start: char, end: char) -> GrammarExpr {
-        GrammarExpr::CharRange(start, end)
-    }
-
-    /// Builds a character class.
-    #[must_use]
-    pub fn char_class<I>(self, negated: bool, items: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = CharClassItem>,
-    {
-        GrammarExpr::char_class(negated, items)
-    }
-
-    /// Builds an any-character wildcard.
-    #[must_use]
-    pub const fn any(self) -> GrammarExpr {
-        GrammarExpr::AnyChar
-    }
-
-    /// Builds a non-terminal reference.
-    #[must_use]
-    pub fn nt(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::non_terminal(value)
-    }
-
-    /// Builds a non-terminal reference.
-    #[must_use]
-    pub fn non_terminal(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::non_terminal(value)
-    }
-
-    /// Builds a choice expression.
-    #[must_use]
-    pub fn choice<I>(self, ordered: bool, alternatives: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = GrammarExpr>,
-    {
-        GrammarExpr::choice(ordered, alternatives)
-    }
-
-    /// Builds an ordered choice expression.
-    #[must_use]
-    pub fn choice_ordered<I>(self, alternatives: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = GrammarExpr>,
-    {
-        GrammarExpr::choice(true, alternatives)
-    }
-
-    /// Builds an unordered choice expression.
-    #[must_use]
-    pub fn choice_unordered<I>(self, alternatives: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = GrammarExpr>,
-    {
-        GrammarExpr::choice(false, alternatives)
-    }
-
-    /// Builds a sequence expression.
-    #[must_use]
-    pub fn seq<I>(self, items: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = GrammarExpr>,
-    {
-        GrammarExpr::sequence(items)
-    }
-
-    /// Builds an optional expression.
-    #[must_use]
-    pub fn opt(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::optional(expr)
-    }
-
-    /// Builds a zero-or-more repetition expression.
-    #[must_use]
-    pub fn rep0(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::zero_or_more(expr)
-    }
-
-    /// Builds a one-or-more repetition expression.
-    #[must_use]
-    pub fn rep1(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::one_or_more(expr)
-    }
-
-    /// Builds a counted repetition expression.
-    #[must_use]
-    pub fn repeat(self, expr: GrammarExpr, min: usize, max: Option<usize>) -> GrammarExpr {
-        GrammarExpr::repeat(expr, min, max)
-    }
-
-    /// Builds a positive lookahead expression.
-    #[must_use]
-    pub fn and(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::and(expr)
-    }
-
-    /// Builds a negative lookahead expression.
-    #[must_use]
-    pub fn not(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::not(expr)
-    }
-
-    /// Builds a labelled capture expression.
-    #[must_use]
-    pub fn capture(self, label: Option<impl Into<String>>, expr: GrammarExpr) -> GrammarExpr {
-        match label {
-            Some(label) => GrammarExpr::capture(label, expr),
-            None => GrammarExpr::capture_unlabeled(expr),
-        }
-    }
-
-    /// Builds an anonymous capture expression.
-    #[must_use]
-    pub fn capture_unlabeled(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::capture_unlabeled(expr)
     }
 }
 

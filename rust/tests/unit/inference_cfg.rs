@@ -134,6 +134,7 @@ fn contains_terminal(expr: &GrammarExpr, expected: &str) -> bool {
         GrammarExpr::Empty
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar
         | GrammarExpr::NonTerminal(_) => false,
     }
@@ -155,6 +156,7 @@ fn contains_non_terminal(expr: &GrammarExpr) -> bool {
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
+        | GrammarExpr::Feature(_)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar => false,
     }
@@ -176,6 +178,7 @@ fn references_rule(expr: &GrammarExpr, expected: &str) -> bool {
         | GrammarExpr::Capture { expr: inner, .. } => references_rule(inner, expected),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
+        | GrammarExpr::Feature(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }

@@ -312,6 +312,7 @@ pub(super) fn merge_group(
             kind: representative.rule.kind,
             concept: representative.rule.concept.clone(),
             doc: representative.rule.doc.clone(),
+            attributes: representative.rule.attributes.clone(),
         });
     }
 

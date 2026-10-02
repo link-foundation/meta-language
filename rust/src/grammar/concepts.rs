@@ -202,6 +202,8 @@ pub const fn grammar_expr_concept_id(expr: &GrammarExpr) -> &'static str {
         GrammarExpr::And(_) => "grammar.positive-predicate",
         GrammarExpr::Not(_) => "grammar.negative-predicate",
         GrammarExpr::Capture { .. } => "grammar.capture",
+        // The feature union forms have no concept record yet; they share one id.
+        GrammarExpr::Feature(_) => "grammar.feature-union-form",
     }
 }
 

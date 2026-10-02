@@ -65,6 +65,8 @@ impl<'g, 't> Recognizer<'g, 't> {
 
         match expr {
             GrammarExpr::Empty => singleton(position),
+            // The executor in `feature_runtime` runs feature union forms; the recognizer does not.
+            GrammarExpr::Feature(_) => BTreeSet::new(),
             GrammarExpr::Terminal(value) => {
                 if self.text[position..].starts_with(value) {
                     singleton(position + value.len())

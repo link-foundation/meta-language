@@ -137,11 +137,13 @@ pub use grammar::{
     GRAMMAR_LOSSLESS_FORMATS, GrammarCommandOutput, GrammarEmitter, GrammarFileReader,
     GrammarImporter, GrammarLayout, GrammarLayoutDefinition, GrammarLayoutImplicit,
     GrammarLosslessError, GrammarSourceDefinition, GrammarSourceSplit, capture_grammar_layout,
-    emit_grammar_lossless, grammar_emitter, grammar_importer, import_grammar_lossless,
-    parse_grammar_layout_links, parse_grammar_links, parse_links_expression, parse_native_grammar,
-    percent_decode_links_text, percent_encode_links_text, render_grammar_layout_links,
-    render_grammar_links, render_links_expression, render_native_expression, render_native_grammar,
-    render_rule_link, run_grammar_command, split_grammar_source,
+    deserialize_grammar, emit_grammar_lossless, grammar_emitter, grammar_importer,
+    import_grammar_lossless, parse_grammar_layout_links, parse_grammar_links,
+    parse_links_expression, parse_native_grammar, percent_decode_links_text,
+    percent_encode_links_text, render_grammar_layout_links, render_grammar_links,
+    render_links_expression, render_native_expression, render_native_feature,
+    render_native_grammar, render_rule_link, run_grammar_command, serialize_grammar,
+    split_grammar_source,
 };
 pub use grammar::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,

@@ -270,6 +270,7 @@ fn rename_nonterminals(expr: &GrammarExpr, names: &BTreeMap<String, String>) -> 
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
+        | GrammarExpr::Feature(_)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar => expr.clone(),
     }

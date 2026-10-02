@@ -84,6 +84,9 @@ impl AbnfEmitter {
             }
             GrammarExpr::And(_) => return Err(unsupported_error(GrammarFormat::Abnf, "And")),
             GrammarExpr::Not(_) => return Err(unsupported_error(GrammarFormat::Abnf, "Not")),
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Abnf, feature.head()));
+            }
             GrammarExpr::Capture { label, expr } => {
                 report_capture_loss(&mut self.report, GrammarFormat::Abnf, label.as_ref());
                 return self.emit_expr(expr, parent);

@@ -132,6 +132,9 @@ fn canonicalize_expr_references(expr: &mut GrammarExpr, names: &[String]) {
         GrammarExpr::Repeat { expr, .. } | GrammarExpr::Capture { expr, .. } => {
             canonicalize_expr_references(expr, names);
         }
+        GrammarExpr::Feature(feature) => {
+            feature.map_expressions(&mut |inner| canonicalize_expr_references(inner, names));
+        }
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
@@ -344,6 +347,7 @@ fn collect_references(expr: &GrammarExpr, names: &mut Vec<String>) {
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
+        | GrammarExpr::Feature(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar => {}

@@ -1,5 +1,6 @@
 use std::char;
 
+use crate::grammar::interchange::{parse_native_expression, render_native_expression};
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::rust_codec::{FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, ToLinks};
@@ -23,6 +24,8 @@ const EXPR_REPEAT: &str = "grammar::expression::counted-repetition";
 const EXPR_AND: &str = "grammar::expression::positive-predicate";
 const EXPR_NOT: &str = "grammar::expression::negative-predicate";
 const EXPR_CAPTURE: &str = "grammar::expression::capture";
+/// A grammar feature-union expression, held as its native listing spelling.
+const EXPR_FEATURE: &str = "grammar::expression::feature-union-form";
 
 const CHAR_CLASS_CHAR: &str = "grammar::character-class-item::character";
 const CHAR_CLASS_RANGE: &str = "grammar::character-class-item::character-range";
@@ -237,6 +240,13 @@ fn encode_expr(network: &mut LinkNetwork, expr: &GrammarExpr) -> LinkId {
             ];
             insert_grammar_node(network, EXPR_CAPTURE, &references)
         }
+        GrammarExpr::Feature(_) => {
+            let references = [encode_string_value(
+                network,
+                &render_native_expression(expr),
+            )];
+            insert_grammar_node(network, EXPR_FEATURE, &references)
+        }
     }
 }
 
@@ -345,6 +355,13 @@ fn decode_expr(network: &LinkNetwork, link: LinkId) -> Result<GrammarExpr, Links
                 label: decode_option_string(network, *label)?,
                 expr: Box::new(decode_expr(network, *expr)?),
             })
+        }
+        EXPR_FEATURE => {
+            let [text] = references else {
+                return Err(expected_count(link, 1, references.len()));
+            };
+            parse_native_expression(&decode_string_value(network, *text)?)
+                .map_err(|error| malformed(link, error.to_string()))
         }
         _ => Err(malformed(
             link,

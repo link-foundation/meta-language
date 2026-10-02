@@ -308,6 +308,9 @@ impl<'grammar> LarkEmitter<'grammar> {
                 (String::new(), Precedence::Sequence)
             }
             GrammarExpr::Capture { label, expr } => self.render_capture(label.as_deref(), expr)?,
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Lark, feature.head()));
+            }
         })
     }
 

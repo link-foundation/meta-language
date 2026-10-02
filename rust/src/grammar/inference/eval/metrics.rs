@@ -30,6 +30,7 @@ fn expr_symbol_count(expr: &GrammarExpr) -> usize {
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::AnyChar
+        | GrammarExpr::Feature(_)
         | GrammarExpr::NonTerminal(_) => 1,
         GrammarExpr::CharClass { items, .. } => 1usize.saturating_add(items.len()),
         GrammarExpr::Choice { alternatives, .. } => {
@@ -129,6 +130,10 @@ fn collect_expr_symbols(expr: &GrammarExpr, symbols: &mut BTreeSet<String>) {
         | GrammarExpr::Not(expr)
         | GrammarExpr::Capture { expr, .. }
         | GrammarExpr::Repeat { expr, .. } => collect_expr_symbols(expr, symbols),
+        GrammarExpr::Feature(feature) => {
+            symbols.insert(format!("feature:{}", feature.head()));
+            feature.for_each_expression(&mut |inner| collect_expr_symbols(inner, symbols));
+        }
     }
 }
 

@@ -151,6 +151,9 @@ impl PeggyEmitter {
                 let inner = self.emit_expr(inner, Precedence::Prefix)?;
                 (format!("!{inner}"), Precedence::Prefix)
             }
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Peg, feature.head()));
+            }
             GrammarExpr::Capture { label, expr } => {
                 let Some(label) = label else {
                     return self.emit_expr(expr, parent);
@@ -535,6 +538,7 @@ fn contains_unordered_choice(expr: &GrammarExpr) -> bool {
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar
         | GrammarExpr::NonTerminal(_) => false,
     }

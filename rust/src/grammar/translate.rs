@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt;
 
-use super::{GRAMMAR_CONCEPTS, Grammar, GrammarExpr, GrammarRule};
+use super::{FeatureExpr, GRAMMAR_CONCEPTS, Grammar, GrammarExpr, GrammarRule};
 use crate::{
     LinkMetadata, LinkNetwork, LinkQuery, LinkType, ParseConfiguration, TranslationRule,
     TranslationRuleSet, TranslationTemplate, current_concept_id,
@@ -330,6 +330,16 @@ fn rename_expr(expr: &GrammarExpr, rename_map: &BTreeMap<String, String>) -> Gra
             label: label.clone(),
             expr: Box::new(rename_expr(expr, rename_map)),
         },
+        GrammarExpr::Feature(feature) => {
+            let mut copy =
+                GrammarExpr::rewrite_feature(feature, |inner| rename_expr(inner, rename_map));
+            if let GrammarExpr::Feature(renamed) = &mut copy
+                && let FeatureExpr::Call { name, .. } = renamed.as_mut()
+            {
+                *name = renamed_name(name, rename_map);
+            }
+            copy
+        }
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)

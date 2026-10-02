@@ -160,6 +160,9 @@ impl GbnfEmitter {
             GrammarExpr::Not(_) => {
                 return Err(unsupported_error(GrammarFormat::Gbnf, "negative-predicate"));
             }
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Gbnf, feature.head()));
+            }
             GrammarExpr::Capture { label, expr } => {
                 report_capture_loss(&mut self.report, label.as_ref());
                 return self.emit_expr(expr, parent);

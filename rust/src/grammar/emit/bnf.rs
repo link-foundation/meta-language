@@ -88,6 +88,9 @@ impl BnfEmitter {
             GrammarExpr::Repeat { expr, min, max } => self.emit_repeat(expr, *min, *max),
             GrammarExpr::And(_) => Err(unsupported_error(GrammarFormat::Bnf, "And")),
             GrammarExpr::Not(_) => Err(unsupported_error(GrammarFormat::Bnf, "Not")),
+            GrammarExpr::Feature(feature) => {
+                Err(unsupported_error(GrammarFormat::Bnf, feature.head()))
+            }
             GrammarExpr::Capture { label, expr } => {
                 report_capture_loss(&mut self.report, GrammarFormat::Bnf, label.as_ref());
                 self.emit_expr(expr, context)

@@ -25,7 +25,7 @@ use std::fmt;
 use super::super::emit::{EmitReport, GrammarEmitError};
 use super::super::import::GrammarImportError;
 use super::super::round_trip::{GrammarEmitFn, GrammarImportFn, GrammarRoundTripError};
-use super::super::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
+use super::super::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind};
 use super::links::render_links_expression;
 use super::{grammar_emitter, grammar_importer};
 
@@ -323,6 +323,7 @@ fn rule(name: &str, kind: RuleKind, expr: GrammarExpr, doc: Option<String>) -> G
         kind,
         concept: None,
         doc,
+        attributes: RuleAttributes::default(),
     }
 }
 

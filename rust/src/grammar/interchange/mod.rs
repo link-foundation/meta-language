@@ -23,11 +23,15 @@ use super::merge::{GrammarMergeOptions, GrammarMergeSource, merge_grammars, rena
 use super::round_trip::{GrammarRoundTrip, GrammarRoundTripError, check_grammar_round_trip};
 use super::validate::{Severity, validate};
 
+mod feature_forms;
+mod feature_links;
+mod json;
 mod links;
 mod lossless;
 mod lowering;
 mod native;
 
+pub use json::{deserialize_grammar, serialize_grammar};
 pub use links::{
     parse_grammar_links, parse_links_expression, percent_decode_links_text,
     percent_encode_links_text, render_grammar_links, render_links_expression, render_rule_link,
@@ -45,7 +49,10 @@ pub use lowering::{
     MAX_LOWERED_CHARACTERS, check_grammar_lowering, dropped_grammar_features, lower_grammar,
     parse_lowering_metadata, reconstruct_grammar, render_lowering_metadata,
 };
-pub use native::{parse_native_grammar, render_native_expression, render_native_grammar};
+pub use native::{
+    parse_native_expression, parse_native_grammar, render_native_expression, render_native_feature,
+    render_native_grammar,
+};
 
 /// Imports a grammar from one notation.
 pub type GrammarImporter = fn(&str) -> Result<Grammar, GrammarImportError>;
