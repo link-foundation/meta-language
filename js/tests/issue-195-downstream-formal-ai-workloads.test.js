@@ -17,6 +17,7 @@ import {
   FORMAL_AI_WORKLOAD_REPORT_VARIABLE,
   FORMAL_AI_WORKLOAD_REQUIREMENT,
   FORMAL_AI_WORKLOAD_SCHEMA_VERSION,
+  compareSelfAstCensus,
   countOutcomes,
   loadFormalAiWorkloadFixture,
   validateFormalAiWorkloadReport,
@@ -243,4 +244,43 @@ test('the CI workload report holds every assertion for the installed npm package
     testName: 'the CI workload report holds every assertion for the installed npm package',
     runtime: 'javascript',
   });
+});
+
+// formal-ai's committed self-AST census (data/meta/self-ast/src/agentic_coding/
+// code_task.lino at d209aac) as meta-language 0.58.2 rendered it, trimmed to
+// its ast section. This checkout adds the grammar provenance link and splits
+// the text of 12 plain line comments into whitespace and hidden-text tokens,
+// so the lossless total grows by 13 while the abstract syntax is unchanged.
+const CENSUS = [
+  '  ast',
+  '    engine meta_language',
+  '    projection abstract_syntax',
+  '    text_preserved true',
+  '    clean true',
+  '    total_link_count 10494',
+  '    named_node_count 2088',
+  '    distinct_node_kinds 81',
+  '    node_kinds',
+  '      abstract_type 1',
+  '',
+].join('\n');
+
+test('the self-AST census refresh may change only the lossless link totals', () => {
+  const file = 'src/agentic_coding/code_task.lino';
+  const refreshed = CENSUS.replace('total_link_count 10494', 'total_link_count 10507');
+  assert.deepEqual(compareSelfAstCensus(new Map([[file, CENSUS]]), new Map([[file, refreshed]])), {
+    documents: 1,
+    linkTotals: [{ file, before: 10494, after: 10507 }],
+    otherChanges: [],
+  });
+  assert.deepEqual(compareSelfAstCensus(new Map([[file, CENSUS]]), new Map([[file, CENSUS]])).linkTotals, []);
+
+  const regressed = refreshed.replace('named_node_count 2088', 'named_node_count 2087').replace('abstract_type 1', 'abstract_type 0');
+  assert.deepEqual(compareSelfAstCensus(new Map([[file, CENSUS]]), new Map([[file, regressed]])).otherChanges, [
+    { file, line: 7, before: '    named_node_count 2088', after: '    named_node_count 2087' },
+    { file, line: 10, before: '      abstract_type 1', after: '      abstract_type 0' },
+  ]);
+  assert.deepEqual(compareSelfAstCensus(new Map([[file, CENSUS]]), new Map()).otherChanges, [
+    { file, line: null, before: 'present', after: 'absent' },
+  ]);
 });

@@ -55,6 +55,50 @@ export function countOutcomes(tests) {
   return { passed: count('passed'), failed: count('failed'), skipped: count('skipped'), total: tests.length };
 }
 
+/** formal-ai's committed census of its own sources as meta-language parses them. */
+export const SELF_AST_CENSUS_DIRECTORY = 'data/meta/self-ast';
+/** formal-ai's example that rewrites the census documents whose rendering changed. */
+export const SELF_AST_CENSUS_EXAMPLE = 'regenerate_self_ast_census';
+// The census line that counts every link of the lossless network. It is the
+// only census field outside the abstract-syntax projection, the symbol scan
+// and the source itself.
+const LINK_TOTAL_LINE = /^ {4}total_link_count (\d+)$/u;
+
+/**
+ * Compares formal-ai's census documents before and after its own regeneration
+ * with a candidate meta-language (two maps of relative path to document text).
+ *
+ * A candidate that adds links to the lossless network, such as a grammar
+ * provenance link or hidden-text tokens, changes `total_link_count` and nothing
+ * else. `linkTotals` lists those changes; `otherChanges` lists every other
+ * changed line and every added or removed document, so a candidate that
+ * changes a named node, a node kind, the text preservation or the clean
+ * verification of any formal-ai source is reported.
+ */
+export function compareSelfAstCensus(before, after) {
+  const linkTotals = [];
+  const otherChanges = [];
+  for (const file of [...new Set([...before.keys(), ...after.keys()])].sort()) {
+    if (!before.has(file) || !after.has(file)) {
+      otherChanges.push({ file, line: null, before: before.has(file) ? 'present' : 'absent', after: after.has(file) ? 'present' : 'absent' });
+      continue;
+    }
+    const previous = before.get(file).split('\n');
+    const current = after.get(file).split('\n');
+    for (let index = 0; index < Math.max(previous.length, current.length); index += 1) {
+      if (previous[index] === current[index]) continue;
+      const previousTotal = LINK_TOTAL_LINE.exec(previous[index] ?? '');
+      const currentTotal = LINK_TOTAL_LINE.exec(current[index] ?? '');
+      if (previousTotal && currentTotal) {
+        linkTotals.push({ file, before: Number(previousTotal[1]), after: Number(currentTotal[1]) });
+      } else {
+        otherChanges.push({ file, line: index + 1, before: previous[index] ?? null, after: current[index] ?? null });
+      }
+    }
+  }
+  return { documents: after.size, linkTotals, otherChanges };
+}
+
 function sameCounts(left, right) {
   return ['passed', 'failed', 'skipped', 'total'].every((key) => left?.[key] === right?.[key]);
 }

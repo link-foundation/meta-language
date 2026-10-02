@@ -33,7 +33,7 @@ import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -62,6 +62,9 @@ import {
   FORMAL_AI_WORKLOAD_FIXTURE,
   FORMAL_AI_WORKLOAD_REQUIREMENT,
   FORMAL_AI_WORKLOAD_SCHEMA_VERSION,
+  SELF_AST_CENSUS_DIRECTORY,
+  SELF_AST_CENSUS_EXAMPLE,
+  compareSelfAstCensus,
   countOutcomes,
   loadFormalAiWorkloadFixture,
   validateFormalAiWorkloadReport,
@@ -349,6 +352,7 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   ], { cwd: directory, env: environment })).stdout);
   const metaLanguagePackages = metadata.packages.filter(({ name }) => name === 'meta-language');
   const metaLanguage = metaLanguagePackages[0] ?? {};
+  const selfAstCensus = await refreshSelfAstCensus(formalAiDirectory, directory, configuration, environment);
   const workloads = fixture.workloads.filter(({ kind, file }) => kind === 'test' && file.startsWith('rust/'));
   const filters = [...new Set([...workloads.map(({ filter }) => filter), 'issue_195_probe_'])];
   // formal-ai's own test groups, filtered to the inventoried modules, and the probe, in one patched build.
@@ -415,7 +419,13 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
     distinctionsPreserved: {
       test: RUST_PROBE_TESTS.distinctionsPreserved,
       outcome: outcome(RUST_PROBE_TESTS.distinctionsPreserved),
-      checks: distinctionChecks,
+      checks: [
+        ...distinctionChecks,
+        check("formal-ai's self-AST census keeps every named node, node kind and symbol with the candidate", {
+          holds: selfAstCensus.exit === 0 && selfAstCensus.otherChanges.length === 0,
+          detail: { exit: selfAstCensus.exit, log: selfAstCensus.log, otherChanges: selfAstCensus.otherChanges },
+        }),
+      ],
     },
   };
   for (const assertion of FORMAL_AI_PROBE_ASSERTIONS) {
@@ -426,6 +436,7 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
     version,
     checksum,
     resolution,
+    selfAstCensus,
     filters,
     workloadFiles: workloadFiles(fixture, 'rust'),
     tests,
@@ -435,6 +446,40 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
     probeTests,
     probe,
   };
+}
+
+// formal-ai commits a census of its own sources as meta-language parses them
+// (data/meta/self-ast), and a test compares it with a fresh rendering. Its
+// total_link_count counts every link of the lossless network, so a candidate
+// that adds links (the grammar provenance link, hidden-text tokens) leaves the
+// counts that the published crate rendered stale. formal-ai refreshes the
+// documents on every meta-language upgrade with its own example; the runner
+// does the same before the tests and reports every changed line. Only link
+// totals may change: anything else is a regression of the candidate's parse.
+async function refreshSelfAstCensus(formalAiDirectory, directory, configuration, environment) {
+  const censusDirectory = path.join(formalAiDirectory, SELF_AST_CENSUS_DIRECTORY);
+  const before = await readCensus(censusDirectory);
+  const refresh = await run('rust-self-ast-census-refresh', 'cargo', [
+    ...configuration, 'run', '--quiet', '--example', SELF_AST_CENSUS_EXAMPLE,
+  ], { cwd: directory, env: environment, allowFailure: true });
+  const comparison = compareSelfAstCensus(before, await readCensus(censusDirectory));
+  return {
+    command: ['cargo', 'run', '--example', SELF_AST_CENSUS_EXAMPLE].join(' '),
+    exit: refresh.code,
+    log: refresh.log,
+    ...comparison,
+  };
+}
+
+async function readCensus(directory) {
+  const documents = new Map();
+  if (!existsSync(directory)) return documents;
+  for (const entry of await readdir(directory, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.lino')) continue;
+    const file = path.join(entry.parentPath ?? entry.path, entry.name);
+    documents.set(path.relative(directory, file).split(path.sep).join('/'), await readFile(file, 'utf8'));
+  }
+  return documents;
 }
 
 function check(name, { holds, detail }) {
