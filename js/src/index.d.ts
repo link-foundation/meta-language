@@ -1204,6 +1204,36 @@ export class GrammarMergeError extends Error {
 export function mergeGrammars(sources: readonly GrammarMergeSource[], options?: GrammarMergeOptions): GrammarMergeResult;
 export function assertMergeComplete(result: GrammarMergeResult): GrammarMergeResult;
 export function normalizedRuleDefinition(rule: GrammarRuleValue): string;
+export const GRAMMAR_ROUND_TRIP_MARKER: string;
+export interface GrammarRoundTripFailure {
+  kind:
+    | 'sample-rejected'
+    | 'sample-accepted'
+    | 'marker-already-accepted'
+    | 'lossy-export'
+    | 'mutation-not-exported'
+    | 'rules-changed'
+    | 'mutation-not-visible'
+    | 'export-not-stable';
+  stage: 'imported' | 'exported' | 'reimported';
+  detail: string;
+}
+export interface GrammarRoundTripReport {
+  status: 'preserved' | 'broken';
+  failures: GrammarRoundTripFailure[];
+  mutated: Grammar;
+  exported: string;
+  reimported: Grammar;
+}
+export interface GrammarRoundTripOptions {
+  importGrammar: (source: string) => Grammar;
+  emitGrammar: (grammar: Grammar) => GrammarEmitResult;
+  marker?: string;
+  accepts?: readonly string[];
+  rejects?: readonly string[];
+}
+export function mutateGrammarStartRule(grammar: Grammar, marker?: string): Grammar;
+export function checkGrammarRoundTrip(source: string, options: GrammarRoundTripOptions): GrammarRoundTripReport;
 export interface RuleAlias {
   canonical: string;
   original: string;

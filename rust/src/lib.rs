@@ -134,6 +134,12 @@ pub use grammar::{
     MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
     normalized_rule_definition, rename_grammar_rule, restore_source_names,
 };
+pub use grammar::{
+    GRAMMAR_ROUND_TRIP_MARKER, GrammarEmitFn, GrammarImportFn, GrammarRoundTrip,
+    GrammarRoundTripError, GrammarRoundTripFailure, GrammarRoundTripFailureKind,
+    GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus,
+    check_grammar_round_trip, mutate_grammar_start_rule,
+};
 #[cfg(feature = "llm-assist")]
 pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
 pub use graphql_adapter::{

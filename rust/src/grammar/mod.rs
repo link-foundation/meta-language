@@ -30,6 +30,7 @@ pub mod import;
 pub mod inference;
 mod links;
 pub mod merge;
+pub mod round_trip;
 pub mod runtime;
 pub mod surface;
 pub mod translate;
@@ -101,6 +102,12 @@ pub use merge::{
     GrammarMergeResult, GrammarMergeSource, GrammarRenameError, GrammarRenameErrorKind,
     MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
     normalized_rule_definition, rename_grammar_rule, restore_source_names,
+};
+pub use round_trip::{
+    GRAMMAR_ROUND_TRIP_MARKER, GrammarEmitFn, GrammarImportFn, GrammarRoundTrip,
+    GrammarRoundTripError, GrammarRoundTripFailure, GrammarRoundTripFailureKind,
+    GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus,
+    check_grammar_round_trip, mutate_grammar_start_rule,
 };
 pub use runtime::{GrammarParser, register_grammar, with_grammar};
 pub use surface::{
