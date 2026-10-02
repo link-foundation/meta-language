@@ -99,6 +99,13 @@ fn references_rule(expr: &GrammarExpr, expected: &str) -> bool {
         | GrammarExpr::Not(inner)
         | GrammarExpr::Repeat { expr: inner, .. }
         | GrammarExpr::Capture { expr: inner, .. } => references_rule(inner, expected),
+        GrammarExpr::Feature(feature) => {
+            let mut found = false;
+            feature.for_each_expression(&mut |inner| {
+                found |= references_rule(inner, expected);
+            });
+            found
+        }
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
