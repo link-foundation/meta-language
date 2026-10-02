@@ -273,6 +273,24 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-DIFF',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/diff.json',
+    construct: 'native merged unified diff grammar checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/diff.lino is a canonical native Links Notation grammar merged from tree-sitter-diff 0.1.0, the GNU diffutils unified format and the git patch format. Both executors build, for every corpus source, exactly the concrete syntax tree rows of the tree-sitter-diff oracle with no ambiguity, git blocks, hunks and changes included; they accept what GNU diff and git write and the oracle recovers from (abbreviated object names, context and changed lines that start like a keyword or a file header, a block cut at the end of the input), reject invalid diffs, and keep every source byte, line breaks and blank lines included, in the tree.',
+    assertions: [
+      'nativeDiffGrammarIsCanonicalLinks',
+      'nativeDiffTreesMatchOracle',
+      'nativeDiffAcceptsMergedSourceExtensions',
+      'nativeDiffRejectsInvalidInput',
+      'nativeDiffTreesLossless',
+    ],
+    javascript: ['js/src/grammar-links.js', 'js/src/grammar-runtime.js', 'js/src/grammar-runtime/text.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-FEATURE-UNION',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

@@ -15,7 +15,7 @@ import {
   fixturePath,
   renderFixture,
 } from '../scripts/generate-native-grammar-fixtures.mjs';
-import { hasRecovery, nativeRows, oracleRows } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
@@ -73,7 +73,7 @@ test('the merged INI grammar accepts a last comment line without a line break', 
   assert.ok(fixture.divergences.length > 0);
   for (const { source, reason, rows } of fixture.divergences) {
     assert.match(reason, /configparser/u);
-    assert.ok(hasRecovery(oracleRows(source, 'INI')), `the oracle recovers from ${JSON.stringify(source)}`);
+    assert.ok(oracleRecovers(source, 'INI'), `the oracle recovers from ${JSON.stringify(source)}`);
     const outcome = parser.parseTree(source);
     assert.ok(outcome.ok, source);
     assert.deepEqual(nativeRows(outcome.tree, source, fixture), rows, source);
@@ -87,7 +87,7 @@ test('the merged INI grammar accepts a last comment line without a line break', 
 test('the native INI grammar rejects invalid INI the oracle recovers from', (context) => {
   assert.deepEqual(fixture.rejections.map(({ source }) => source), entry.rejections);
   for (const { source } of fixture.rejections) {
-    assert.ok(hasRecovery(oracleRows(source, 'INI')), JSON.stringify(source));
+    assert.ok(oracleRecovers(source, 'INI'), JSON.stringify(source));
     const outcome = parser.parseTree(source);
     assert.equal(outcome.ok, false, JSON.stringify(source));
     assert.ok(outcome.rejection, JSON.stringify(source));

@@ -20,7 +20,7 @@ import {
   fixturePath,
   renderFixture,
 } from '../scripts/generate-native-grammar-fixtures.mjs';
-import { hasRecovery, nativeRows, oracleRows } from '../scripts/native-grammar-rows.mjs';
+import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
@@ -73,7 +73,7 @@ test('the merged JSON grammar accepts what RFC 8259 accepts and the oracle recov
   assert.ok(fixture.divergences.length > 0);
   for (const { source, reason, rows } of fixture.divergences) {
     assert.match(reason, /RFC 8259/u);
-    assert.ok(hasRecovery(oracleRows(source, 'JSON')), `the oracle recovers from ${JSON.stringify(source)}`);
+    assert.ok(oracleRecovers(source, 'JSON'), `the oracle recovers from ${JSON.stringify(source)}`);
     const outcome = parser.parseTree(source);
     assert.ok(outcome.ok, source);
     assert.deepEqual(nativeRows(outcome.tree, source, fixture), rows, source);
@@ -85,7 +85,7 @@ test('the merged JSON grammar accepts what RFC 8259 accepts and the oracle recov
 test('the native JSON grammar rejects invalid JSON the oracle recovers from', (context) => {
   assert.deepEqual(fixture.rejections.map(({ source }) => source), entry.rejections);
   for (const { source } of fixture.rejections) {
-    assert.ok(hasRecovery(oracleRows(source, 'JSON')), JSON.stringify(source));
+    assert.ok(oracleRecovers(source, 'JSON'), JSON.stringify(source));
     const outcome = parser.parseTree(source);
     assert.equal(outcome.ok, false, JSON.stringify(source));
     assert.ok(outcome.rejection, JSON.stringify(source));

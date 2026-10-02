@@ -1,0 +1,1979 @@
+{
+  "schemaVersion": 1,
+  "id": "diff",
+  "language": "Diff",
+  "grammar": "parity/grammars/native/diff.lino",
+  "oracle": "tree-sitter-diff 0.1.0",
+  "sources": [
+    "https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html",
+    "https://git-scm.com/docs/git-diff#_generating_patch_text_with_p",
+    "https://git-scm.com/docs/git-config#Documentation/git-config.txt-coreabbrev",
+    "https://github.com/tree-sitter-grammars/tree-sitter-diff/blob/v0.1.0/grammar.js"
+  ],
+  "hidden": [],
+  "anonymous": [
+    "newline",
+    "anything",
+    "word"
+  ],
+  "extras": [],
+  "matches": [
+    {
+      "source": "diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -1,2 +1,2 @@ f\n a\n-b\n+c\n",
+      "rows": [
+        [0,null,"source",1,0,92,""],
+        [1,null,"block",1,0,92,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"index",1,19,48,""],
+        [3,null,"index",0,19,24,""],
+        [3,null,"commit",1,25,32,""],
+        [3,null,"..",0,32,34,""],
+        [3,null,"commit",1,34,41,""],
+        [3,null,"mode",1,42,48,""],
+        [2,null,"old_file",1,49,56,""],
+        [3,null,"---",0,49,52,""],
+        [3,null,"filename",1,53,56,""],
+        [2,null,"new_file",1,57,64,""],
+        [3,null,"+++",0,57,60,""],
+        [3,null,"filename",1,61,64,""],
+        [2,null,"hunks",1,65,92,""],
+        [3,null,"hunk",1,65,92,""],
+        [4,"location","location",1,65,82,""],
+        [5,null,"@@",0,65,67,""],
+        [5,null,"linerange",1,68,72,""],
+        [5,null,"linerange",1,73,77,""],
+        [5,null,"@@",0,78,80,""],
+        [4,"changes","changes",1,83,92,""],
+        [5,null,"context",1,83,85,""],
+        [5,null,"deletion",1,86,88,""],
+        [6,null,"-",0,86,87,""],
+        [5,null,"addition",1,89,91,""],
+        [6,null,"+",0,89,90,""]
+      ]
+    },
+    {
+      "source": "+a\n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"addition",1,0,2,""],
+        [2,null,"+",0,0,1,""]
+      ]
+    },
+    {
+      "source": "-a\n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"deletion",1,0,2,""],
+        [2,null,"-",0,0,1,""]
+      ]
+    },
+    {
+      "source": " a\n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"context",1,0,2,""]
+      ]
+    },
+    {
+      "source": "# c\n",
+      "rows": [
+        [0,null,"source",1,0,4,""],
+        [1,null,"comment",1,0,3,""],
+        [2,null,"#",0,0,1,""]
+      ]
+    },
+    {
+      "source": "x",
+      "rows": [
+        [0,null,"source",1,0,1,""],
+        [1,null,"context",1,0,1,""]
+      ]
+    },
+    {
+      "source": "\n",
+      "rows": [
+        [0,null,"source",1,0,1,""]
+      ]
+    },
+    {
+      "source": "--- a\n+++ b\n",
+      "rows": [
+        [0,null,"source",1,0,12,""],
+        [1,null,"old_file",1,0,5,""],
+        [2,null,"---",0,0,3,""],
+        [2,null,"filename",1,4,5,""],
+        [1,null,"new_file",1,6,11,""],
+        [2,null,"+++",0,6,9,""],
+        [2,null,"filename",1,10,11,""]
+      ]
+    },
+    {
+      "source": "",
+      "rows": [
+        [0,null,"source",1,0,0,""]
+      ]
+    },
+    {
+      "source": " ",
+      "rows": [
+        [0,null,"source",1,0,1,""],
+        [1,null,"context",1,0,1,""]
+      ]
+    },
+    {
+      "source": "a\n ",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"context",1,0,1,""],
+        [1,null,"context",1,2,3,""]
+      ]
+    },
+    {
+      "source": " \n",
+      "rows": [
+        [0,null,"source",1,0,2,""]
+      ]
+    },
+    {
+      "source": "\n\n",
+      "rows": [
+        [0,null,"source",1,0,2,""]
+      ]
+    },
+    {
+      "source": "x\r\n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"context",1,0,1,""]
+      ]
+    },
+    {
+      "source": "x \n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"context",1,0,2,""]
+      ]
+    },
+    {
+      "source": "+ \n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"addition",1,0,2,""],
+        [2,null,"+",0,0,1,""]
+      ]
+    },
+    {
+      "source": "-  \n",
+      "rows": [
+        [0,null,"source",1,0,4,""],
+        [1,null,"deletion",1,0,3,""],
+        [2,null,"-",0,0,1,""]
+      ]
+    },
+    {
+      "source": "--- \n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"deletion",1,0,3,""],
+        [2,null,"---",0,0,3,""]
+      ]
+    },
+    {
+      "source": "+++ \n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"addition",1,0,3,""],
+        [2,null,"+++",0,0,3,""]
+      ]
+    },
+    {
+      "source": "+++x\n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"new_file",1,0,4,""],
+        [2,null,"+++",0,0,3,""],
+        [2,null,"filename",1,3,4,""]
+      ]
+    },
+    {
+      "source": "+++++\n",
+      "rows": [
+        [0,null,"source",1,0,6,""],
+        [1,null,"addition",1,0,5,""],
+        [2,null,"++++",0,0,4,""]
+      ]
+    },
+    {
+      "source": "+++ b\n",
+      "rows": [
+        [0,null,"source",1,0,6,""],
+        [1,null,"new_file",1,0,5,""],
+        [2,null,"+++",0,0,3,""],
+        [2,null,"filename",1,4,5,""]
+      ]
+    },
+    {
+      "source": "-- x\n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"deletion",1,0,4,""],
+        [2,null,"--",0,0,2,""]
+      ]
+    },
+    {
+      "source": "++ x\n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"addition",1,0,4,""],
+        [2,null,"++",0,0,2,""]
+      ]
+    },
+    {
+      "source": "----\n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"deletion",1,0,4,""],
+        [2,null,"----",0,0,4,""]
+      ]
+    },
+    {
+      "source": "----x\n",
+      "rows": [
+        [0,null,"source",1,0,6,""],
+        [1,null,"deletion",1,0,5,""],
+        [2,null,"----",0,0,4,""]
+      ]
+    },
+    {
+      "source": "+++\n",
+      "rows": [
+        [0,null,"source",1,0,4,""],
+        [1,null,"addition",1,0,3,""],
+        [2,null,"+++",0,0,3,""]
+      ]
+    },
+    {
+      "source": "---\n",
+      "rows": [
+        [0,null,"source",1,0,4,""],
+        [1,null,"deletion",1,0,3,""],
+        [2,null,"---",0,0,3,""]
+      ]
+    },
+    {
+      "source": "@@ -1 +1 @@\n",
+      "rows": [
+        [0,null,"source",1,0,12,""],
+        [1,null,"location",1,0,11,""],
+        [2,null,"@@",0,0,2,""],
+        [2,null,"linerange",1,3,5,""],
+        [2,null,"linerange",1,6,8,""],
+        [2,null,"@@",0,9,11,""]
+      ]
+    },
+    {
+      "source": "@@ -1,3 +1,4 @@ fn main() {\n",
+      "rows": [
+        [0,null,"source",1,0,28,""],
+        [1,null,"location",1,0,27,""],
+        [2,null,"@@",0,0,2,""],
+        [2,null,"linerange",1,3,7,""],
+        [2,null,"linerange",1,8,12,""],
+        [2,null,"@@",0,13,15,""]
+      ]
+    },
+    {
+      "source": "@@ -1 +1 @@  \n",
+      "rows": [
+        [0,null,"source",1,0,14,""],
+        [1,null,"location",1,0,13,""],
+        [2,null,"@@",0,0,2,""],
+        [2,null,"linerange",1,3,5,""],
+        [2,null,"linerange",1,6,8,""],
+        [2,null,"@@",0,9,11,""]
+      ]
+    },
+    {
+      "source": "@@-1 +1@@\n",
+      "rows": [
+        [0,null,"source",1,0,10,""],
+        [1,null,"location",1,0,9,""],
+        [2,null,"@@",0,0,2,""],
+        [2,null,"linerange",1,2,4,""],
+        [2,null,"linerange",1,5,7,""],
+        [2,null,"@@",0,7,9,""]
+      ]
+    },
+    {
+      "source": "#\n",
+      "rows": [
+        [0,null,"source",1,0,2,""],
+        [1,null,"comment",1,0,1,""],
+        [2,null,"#",0,0,1,""]
+      ]
+    },
+    {
+      "source": "#!/bin/sh\n",
+      "rows": [
+        [0,null,"source",1,0,10,""],
+        [1,null,"comment",1,0,9,""],
+        [2,null,"#",0,0,1,""]
+      ]
+    },
+    {
+      "source": "mode\n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"context",1,0,4,""]
+      ]
+    },
+    {
+      "source": "de x\n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"context",1,0,4,""]
+      ]
+    },
+    {
+      "source": "ne x\n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"context",1,0,4,""]
+      ]
+    },
+    {
+      "source": "files a\n",
+      "rows": [
+        [0,null,"source",1,0,8,""],
+        [1,null,"context",1,0,7,""]
+      ]
+    },
+    {
+      "source": "and\n",
+      "rows": [
+        [0,null,"source",1,0,4,""],
+        [1,null,"context",1,0,3,""]
+      ]
+    },
+    {
+      "source": "Bin\n",
+      "rows": [
+        [0,null,"source",1,0,4,""],
+        [1,null,"context",1,0,3,""]
+      ]
+    },
+    {
+      "source": "simil x\n",
+      "rows": [
+        [0,null,"source",1,0,8,""],
+        [1,null,"context",1,0,7,""]
+      ]
+    },
+    {
+      "source": "@x\n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"context",1,0,2,""]
+      ]
+    },
+    {
+      "source": "\\ No newline at end of file\n",
+      "rows": [
+        [0,null,"source",1,0,28,""],
+        [1,null,"context",1,0,27,""]
+      ]
+    },
+    {
+      "source": "new file mode 100644\n",
+      "rows": [
+        [0,null,"source",1,0,21,""],
+        [1,null,"file_change",1,0,20,""],
+        [2,null,"new",0,0,3,""],
+        [2,null,"file",0,4,8,""],
+        [2,null,"mode",0,9,13,""],
+        [2,null,"mode",1,14,20,""]
+      ]
+    },
+    {
+      "source": "deleted file mode 100644\n",
+      "rows": [
+        [0,null,"source",1,0,25,""],
+        [1,null,"file_change",1,0,24,""],
+        [2,null,"deleted",0,0,7,""],
+        [2,null,"file",0,8,12,""],
+        [2,null,"mode",0,13,17,""],
+        [2,null,"mode",1,18,24,""]
+      ]
+    },
+    {
+      "source": "new mode 100755\n",
+      "rows": [
+        [0,null,"source",1,0,16,""],
+        [1,null,"file_change",1,0,15,""],
+        [2,null,"new",0,0,3,""],
+        [2,null,"mode",0,4,8,""],
+        [2,null,"mode",1,9,15,""]
+      ]
+    },
+    {
+      "source": "old mode 100644\n",
+      "rows": [
+        [0,null,"source",1,0,16,""],
+        [1,null,"file_change",1,0,15,""],
+        [2,null,"old",0,0,3,""],
+        [2,null,"mode",0,4,8,""],
+        [2,null,"mode",1,9,15,""]
+      ]
+    },
+    {
+      "source": "rename from a/x\n",
+      "rows": [
+        [0,null,"source",1,0,16,""],
+        [1,null,"file_change",1,0,15,""],
+        [2,null,"rename",0,0,6,""],
+        [2,null,"from",0,7,11,""],
+        [2,null,"filename",1,12,15,""]
+      ]
+    },
+    {
+      "source": "rename to b/y z\n",
+      "rows": [
+        [0,null,"source",1,0,16,""],
+        [1,null,"file_change",1,0,15,""],
+        [2,null,"rename",0,0,6,""],
+        [2,null,"to",0,7,9,""],
+        [2,null,"filename",1,10,15,""]
+      ]
+    },
+    {
+      "source": "index 1234567..89abcde\n",
+      "rows": [
+        [0,null,"source",1,0,23,""],
+        [1,null,"index",1,0,22,""],
+        [2,null,"index",0,0,5,""],
+        [2,null,"commit",1,6,13,""],
+        [2,null,"..",0,13,15,""],
+        [2,null,"commit",1,15,22,""]
+      ]
+    },
+    {
+      "source": "index 1234567..89abcde 100644\n",
+      "rows": [
+        [0,null,"source",1,0,30,""],
+        [1,null,"index",1,0,29,""],
+        [2,null,"index",0,0,5,""],
+        [2,null,"commit",1,6,13,""],
+        [2,null,"..",0,13,15,""],
+        [2,null,"commit",1,15,22,""],
+        [2,null,"mode",1,23,29,""]
+      ]
+    },
+    {
+      "source": "index 0000000000000000000000000000000000000000..1234567890abcdef1234567890abcdef12345678\n",
+      "rows": [
+        [0,null,"source",1,0,89,""],
+        [1,null,"index",1,0,88,""],
+        [2,null,"index",0,0,5,""],
+        [2,null,"commit",1,6,46,""],
+        [2,null,"..",0,46,48,""],
+        [2,null,"commit",1,48,88,""]
+      ]
+    },
+    {
+      "source": "similarity index 90%\n",
+      "rows": [
+        [0,null,"source",1,0,21,""],
+        [1,null,"similarity",1,0,20,""],
+        [2,null,"similarity",0,0,10,""],
+        [2,null,"index",0,11,16,""],
+        [2,null,"score",1,17,19,""],
+        [2,null,"%",0,19,20,""]
+      ]
+    },
+    {
+      "source": "similarity index 100 %\n",
+      "rows": [
+        [0,null,"source",1,0,23,""],
+        [1,null,"similarity",1,0,22,""],
+        [2,null,"similarity",0,0,10,""],
+        [2,null,"index",0,11,16,""],
+        [2,null,"score",1,17,20,""],
+        [2,null,"%",0,21,22,""]
+      ]
+    },
+    {
+      "source": "Binary files a/x and b/x differ\n",
+      "rows": [
+        [0,null,"source",1,0,32,""],
+        [1,null,"binary_change",1,0,31,""],
+        [2,null,"Binary",0,0,6,""],
+        [2,null,"files",0,7,12,""],
+        [2,null,"filename",1,13,16,""],
+        [2,null,"and",0,17,20,""],
+        [2,null,"filename",1,21,24,""],
+        [2,null,"differ",0,25,31,""]
+      ]
+    },
+    {
+      "source": "Binary files android and b and c differ\n",
+      "rows": [
+        [0,null,"source",1,0,40,""],
+        [1,null,"binary_change",1,0,39,""],
+        [2,null,"Binary",0,0,6,""],
+        [2,null,"files",0,7,12,""],
+        [2,null,"filename",1,13,20,""],
+        [2,null,"and",0,21,24,""],
+        [2,null,"filename",1,25,32,""],
+        [2,null,"differ",0,33,39,""]
+      ]
+    },
+    {
+      "source": "Binary files x differ and y differ\n",
+      "rows": [
+        [0,null,"source",1,0,35,""],
+        [1,null,"binary_change",1,0,34,""],
+        [2,null,"Binary",0,0,6,""],
+        [2,null,"files",0,7,12,""],
+        [2,null,"filename",1,13,21,""],
+        [2,null,"and",0,22,25,""],
+        [2,null,"filename",1,26,27,""],
+        [2,null,"differ",0,28,34,""]
+      ]
+    },
+    {
+      "source": "diff -u a b\n",
+      "rows": [
+        [0,null,"source",1,0,12,""],
+        [1,null,"block",1,0,12,""],
+        [2,null,"command",1,0,11,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,7,""],
+        [3,null,"filename",1,8,11,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/x\n",
+      "rows": [
+        [0,null,"source",1,0,19,""],
+        [1,null,"block",1,0,19,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""]
+      ]
+    },
+    {
+      "source": "diff a b c\n",
+      "rows": [
+        [0,null,"source",1,0,11,""],
+        [1,null,"block",1,0,11,""],
+        [2,null,"command",1,0,10,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,10,""]
+      ]
+    },
+    {
+      "source": "different a b\n",
+      "rows": [
+        [0,null,"source",1,0,14,""],
+        [1,null,"block",1,0,14,""],
+        [2,null,"command",1,0,13,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,4,9,""],
+        [3,null,"filename",1,10,13,""]
+      ]
+    },
+    {
+      "source": "diff a b  \n",
+      "rows": [
+        [0,null,"source",1,0,11,""],
+        [1,null,"block",1,0,11,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/x\nnew file mode 100644\nindex 0000000..e69de29\n",
+      "rows": [
+        [0,null,"source",1,0,63,""],
+        [1,null,"block",1,0,63,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"file_change",1,19,39,""],
+        [3,null,"new",0,19,22,""],
+        [3,null,"file",0,23,27,""],
+        [3,null,"mode",0,28,32,""],
+        [3,null,"mode",1,33,39,""],
+        [2,null,"index",1,40,62,""],
+        [3,null,"index",0,40,45,""],
+        [3,null,"commit",1,46,53,""],
+        [3,null,"..",0,53,55,""],
+        [3,null,"commit",1,55,62,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/y\nsimilarity index 100%\nrename from x\nrename to y\n",
+      "rows": [
+        [0,null,"source",1,0,67,""],
+        [1,null,"block",1,0,67,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"similarity",1,19,40,""],
+        [3,null,"similarity",0,19,29,""],
+        [3,null,"index",0,30,35,""],
+        [3,null,"score",1,36,39,""],
+        [3,null,"%",0,39,40,""],
+        [2,null,"file_change",1,41,54,""],
+        [3,null,"rename",0,41,47,""],
+        [3,null,"from",0,48,52,""],
+        [3,null,"filename",1,53,54,""],
+        [2,null,"file_change",1,55,66,""],
+        [3,null,"rename",0,55,61,""],
+        [3,null,"to",0,62,64,""],
+        [3,null,"filename",1,65,66,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/x\nold mode 100644\nnew mode 100755\n",
+      "rows": [
+        [0,null,"source",1,0,51,""],
+        [1,null,"block",1,0,51,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"file_change",1,19,34,""],
+        [3,null,"old",0,19,22,""],
+        [3,null,"mode",0,23,27,""],
+        [3,null,"mode",1,28,34,""],
+        [2,null,"file_change",1,35,50,""],
+        [3,null,"new",0,35,38,""],
+        [3,null,"mode",0,39,43,""],
+        [3,null,"mode",1,44,50,""]
+      ]
+    },
+    {
+      "source": "diff --git a/p.png b/p.png\nindex 1234567..89abcde 100644\nBinary files a/p.png and b/p.png differ\n",
+      "rows": [
+        [0,null,"source",1,0,97,""],
+        [1,null,"block",1,0,97,""],
+        [2,null,"command",1,0,26,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,26,""],
+        [2,null,"index",1,27,56,""],
+        [3,null,"index",0,27,32,""],
+        [3,null,"commit",1,33,40,""],
+        [3,null,"..",0,40,42,""],
+        [3,null,"commit",1,42,49,""],
+        [3,null,"mode",1,50,56,""],
+        [2,null,"binary_change",1,57,96,""],
+        [3,null,"Binary",0,57,63,""],
+        [3,null,"files",0,64,69,""],
+        [3,null,"filename",1,70,77,""],
+        [3,null,"and",0,78,81,""],
+        [3,null,"filename",1,82,89,""],
+        [3,null,"differ",0,90,96,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\n@@ -5 +5 @@\n+b\ndiff c d\n",
+      "rows": [
+        [0,null,"source",1,0,60,""],
+        [1,null,"block",1,0,51,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,51,""],
+        [3,null,"hunk",1,21,36,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,36,""],
+        [5,null,"deletion",1,33,35,""],
+        [6,null,"-",0,33,34,""],
+        [3,null,"hunk",1,36,51,""],
+        [4,"location","location",1,36,47,""],
+        [5,null,"@@",0,36,38,""],
+        [5,null,"linerange",1,39,41,""],
+        [5,null,"linerange",1,42,44,""],
+        [5,null,"@@",0,45,47,""],
+        [4,"changes","changes",1,48,51,""],
+        [5,null,"addition",1,48,50,""],
+        [6,null,"+",0,48,49,""],
+        [1,null,"block",1,51,60,""],
+        [2,null,"command",1,51,59,""],
+        [3,null,"diff",0,51,55,""],
+        [3,null,"argument",1,56,57,""],
+        [3,null,"filename",1,58,59,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n#x\n",
+      "rows": [
+        [0,null,"source",1,0,36,""],
+        [1,null,"block",1,0,33,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,33,""],
+        [3,null,"hunk",1,21,33,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [1,null,"comment",1,33,35,""],
+        [2,null,"#",0,33,34,""]
+      ]
+    },
+    {
+      "source": "diff a b\n+++ b\n",
+      "rows": [
+        [0,null,"source",1,0,15,""],
+        [1,null,"block",1,0,9,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [1,null,"new_file",1,9,14,""],
+        [2,null,"+++",0,9,12,""],
+        [2,null,"filename",1,13,14,""]
+      ]
+    },
+    {
+      "source": "diff a b\n-x\n",
+      "rows": [
+        [0,null,"source",1,0,12,""],
+        [1,null,"block",1,0,9,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [1,null,"deletion",1,9,11,""],
+        [2,null,"-",0,9,10,""]
+      ]
+    },
+    {
+      "source": "diff a b\n\nindex 1234567..89abcde\n",
+      "rows": [
+        [0,null,"source",1,0,33,""],
+        [1,null,"block",1,0,9,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [1,null,"index",1,10,32,""],
+        [2,null,"index",0,10,15,""],
+        [2,null,"commit",1,16,23,""],
+        [2,null,"..",0,23,25,""],
+        [2,null,"commit",1,25,32,""]
+      ]
+    },
+    {
+      "source": "diff a b\n@@ -1 +1 @@\n a\n",
+      "rows": [
+        [0,null,"source",1,0,24,""],
+        [1,null,"block",1,0,9,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [1,null,"location",1,9,20,""],
+        [2,null,"@@",0,9,11,""],
+        [2,null,"linerange",1,12,14,""],
+        [2,null,"linerange",1,15,17,""],
+        [2,null,"@@",0,18,20,""],
+        [1,null,"context",1,21,23,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n\n a\n",
+      "rows": [
+        [0,null,"source",1,0,37,""],
+        [1,null,"block",1,0,33,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,33,""],
+        [3,null,"hunk",1,21,33,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [1,null,"context",1,34,36,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1,3 +1,3 @@\n a\n\n-b\n+c\n\n\n",
+      "rows": [
+        [0,null,"source",1,0,49,""],
+        [1,null,"block",1,0,49,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,49,""],
+        [3,null,"hunk",1,21,49,""],
+        [4,"location","location",1,21,36,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,28,""],
+        [5,null,"linerange",1,29,33,""],
+        [5,null,"@@",0,34,36,""],
+        [4,"changes","changes",1,37,49,""],
+        [5,null,"context",1,37,39,""],
+        [5,null,"deletion",1,41,43,""],
+        [6,null,"-",0,41,42,""],
+        [5,null,"addition",1,44,46,""],
+        [6,null,"+",0,44,45,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\n\\ No newline at end of file\n+a\n",
+      "rows": [
+        [0,null,"source",1,0,67,""],
+        [1,null,"block",1,0,67,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,67,""],
+        [3,null,"hunk",1,21,67,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,67,""],
+        [5,null,"deletion",1,33,35,""],
+        [6,null,"-",0,33,34,""],
+        [5,null,"context",1,36,63,""],
+        [5,null,"addition",1,64,66,""],
+        [6,null,"+",0,64,65,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n+++\n---\n",
+      "rows": [
+        [0,null,"source",1,0,41,""],
+        [1,null,"block",1,0,41,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,41,""],
+        [3,null,"hunk",1,21,41,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,41,""],
+        [5,null,"addition",1,33,36,""],
+        [6,null,"+++",0,33,36,""],
+        [5,null,"deletion",1,37,40,""],
+        [6,null,"---",0,37,40,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n++++x\n----y\n",
+      "rows": [
+        [0,null,"source",1,0,45,""],
+        [1,null,"block",1,0,45,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,45,""],
+        [3,null,"hunk",1,21,45,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,45,""],
+        [5,null,"addition",1,33,38,""],
+        [6,null,"++++",0,33,37,""],
+        [5,null,"deletion",1,39,44,""],
+        [6,null,"----",0,39,43,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n x \n",
+      "rows": [
+        [0,null,"source",1,0,37,""],
+        [1,null,"block",1,0,37,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,37,""],
+        [3,null,"hunk",1,21,37,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,37,""],
+        [5,null,"context",1,33,36,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\r\n-a\r\n+b\r\n",
+      "rows": [
+        [0,null,"source",1,0,42,""],
+        [1,null,"block",1,0,42,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,42,""],
+        [3,null,"hunk",1,21,42,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,34,42,""],
+        [5,null,"deletion",1,34,36,""],
+        [6,null,"-",0,34,35,""],
+        [5,null,"addition",1,38,40,""],
+        [6,null,"+",0,38,39,""]
+      ]
+    },
+    {
+      "source": "--- a\n+++ b\n@@ -1 +1 @@\n-a\n+b\n--- c\n+++ d\n@@ -2 +2 @@\n-c\n+d\n",
+      "rows": [
+        [0,null,"source",1,0,60,""],
+        [1,null,"old_file",1,0,5,""],
+        [2,null,"---",0,0,3,""],
+        [2,null,"filename",1,4,5,""],
+        [1,null,"new_file",1,6,11,""],
+        [2,null,"+++",0,6,9,""],
+        [2,null,"filename",1,10,11,""],
+        [1,null,"location",1,12,23,""],
+        [2,null,"@@",0,12,14,""],
+        [2,null,"linerange",1,15,17,""],
+        [2,null,"linerange",1,18,20,""],
+        [2,null,"@@",0,21,23,""],
+        [1,null,"deletion",1,24,26,""],
+        [2,null,"-",0,24,25,""],
+        [1,null,"addition",1,27,29,""],
+        [2,null,"+",0,27,28,""],
+        [1,null,"old_file",1,30,35,""],
+        [2,null,"---",0,30,33,""],
+        [2,null,"filename",1,34,35,""],
+        [1,null,"new_file",1,36,41,""],
+        [2,null,"+++",0,36,39,""],
+        [2,null,"filename",1,40,41,""],
+        [1,null,"location",1,42,53,""],
+        [2,null,"@@",0,42,44,""],
+        [2,null,"linerange",1,45,47,""],
+        [2,null,"linerange",1,48,50,""],
+        [2,null,"@@",0,51,53,""],
+        [1,null,"deletion",1,54,56,""],
+        [2,null,"-",0,54,55,""],
+        [1,null,"addition",1,57,59,""],
+        [2,null,"+",0,57,58,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\ndiff c d\n--- c\n+++ d\n@@ -1 +1 @@\n+e\n",
+      "rows": [
+        [0,null,"source",1,0,72,""],
+        [1,null,"block",1,0,36,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,36,""],
+        [3,null,"hunk",1,21,36,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,36,""],
+        [5,null,"deletion",1,33,35,""],
+        [6,null,"-",0,33,34,""],
+        [1,null,"block",1,36,72,""],
+        [2,null,"command",1,36,44,""],
+        [3,null,"diff",0,36,40,""],
+        [3,null,"argument",1,41,42,""],
+        [3,null,"filename",1,43,44,""],
+        [2,null,"old_file",1,45,50,""],
+        [3,null,"---",0,45,48,""],
+        [3,null,"filename",1,49,50,""],
+        [2,null,"new_file",1,51,56,""],
+        [3,null,"+++",0,51,54,""],
+        [3,null,"filename",1,55,56,""],
+        [2,null,"hunks",1,57,72,""],
+        [3,null,"hunk",1,57,72,""],
+        [4,"location","location",1,57,68,""],
+        [5,null,"@@",0,57,59,""],
+        [5,null,"linerange",1,60,62,""],
+        [5,null,"linerange",1,63,65,""],
+        [5,null,"@@",0,66,68,""],
+        [4,"changes","changes",1,69,72,""],
+        [5,null,"addition",1,69,71,""],
+        [6,null,"+",0,69,70,""]
+      ]
+    },
+    {
+      "source": "From 1234567 Mon Sep 17 00:00:00 2001\nSubject: x\n---\n a | 2 +-\n\ndiff --git a/a b/a\n",
+      "rows": [
+        [0,null,"source",1,0,83,""],
+        [1,null,"context",1,0,37,""],
+        [1,null,"context",1,38,48,""],
+        [1,null,"deletion",1,49,52,""],
+        [2,null,"---",0,49,52,""],
+        [1,null,"context",1,53,62,""],
+        [1,null,"block",1,64,83,""],
+        [2,null,"command",1,64,82,""],
+        [3,null,"diff",0,64,68,""],
+        [3,null,"argument",1,69,74,""],
+        [3,null,"filename",1,75,82,""]
+      ]
+    },
+    {
+      "source": "diff --git a/src/main.rs b/src/main.rs\nindex 3b18e51..a4c2f9d 100644\n--- a/src/main.rs\n+++ b/src/main.rs\n@@ -1,5 +1,6 @@\n+use std::io;\n fn main() {\n-    println!(\"hi\");\n+    let x = 1;\n+    println!(\"{x}\");\n }\n",
+      "rows": [
+        [0,null,"source",1,0,210,""],
+        [1,null,"block",1,0,210,""],
+        [2,null,"command",1,0,38,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,38,""],
+        [2,null,"index",1,39,68,""],
+        [3,null,"index",0,39,44,""],
+        [3,null,"commit",1,45,52,""],
+        [3,null,"..",0,52,54,""],
+        [3,null,"commit",1,54,61,""],
+        [3,null,"mode",1,62,68,""],
+        [2,null,"old_file",1,69,86,""],
+        [3,null,"---",0,69,72,""],
+        [3,null,"filename",1,73,86,""],
+        [2,null,"new_file",1,87,104,""],
+        [3,null,"+++",0,87,90,""],
+        [3,null,"filename",1,91,104,""],
+        [2,null,"hunks",1,105,210,""],
+        [3,null,"hunk",1,105,210,""],
+        [4,"location","location",1,105,120,""],
+        [5,null,"@@",0,105,107,""],
+        [5,null,"linerange",1,108,112,""],
+        [5,null,"linerange",1,113,117,""],
+        [5,null,"@@",0,118,120,""],
+        [4,"changes","changes",1,121,210,""],
+        [5,null,"addition",1,121,134,""],
+        [6,null,"+",0,121,122,""],
+        [5,null,"context",1,135,147,""],
+        [5,null,"deletion",1,148,168,""],
+        [6,null,"-",0,148,149,""],
+        [5,null,"addition",1,169,184,""],
+        [6,null,"+",0,169,170,""],
+        [5,null,"addition",1,185,206,""],
+        [6,null,"+",0,185,186,""],
+        [5,null,"context",1,207,209,""]
+      ]
+    },
+    {
+      "source": "--- a/x\t2024-01-01 10:00:00.000000000 +0100\n+++ b/x\t2024-01-02 11:00:00.000000000 +0100\n@@ -1 +1 @@\n-a\n+b\n",
+      "rows": [
+        [0,null,"source",1,0,106,""],
+        [1,null,"old_file",1,0,43,""],
+        [2,null,"---",0,0,3,""],
+        [2,null,"filename",1,4,43,""],
+        [1,null,"new_file",1,44,87,""],
+        [2,null,"+++",0,44,47,""],
+        [2,null,"filename",1,48,87,""],
+        [1,null,"location",1,88,99,""],
+        [2,null,"@@",0,88,90,""],
+        [2,null,"linerange",1,91,93,""],
+        [2,null,"linerange",1,94,96,""],
+        [2,null,"@@",0,97,99,""],
+        [1,null,"deletion",1,100,102,""],
+        [2,null,"-",0,100,101,""],
+        [1,null,"addition",1,103,105,""],
+        [2,null,"+",0,103,104,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/x\ndeleted file mode 100644\nindex 1234567..0000000\n--- a/x\n+++ /dev/null\n@@ -1,2 +0,0 @@\n-a\n-b\n",
+      "rows": [
+        [0,null,"source",1,0,111,""],
+        [1,null,"block",1,0,111,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"file_change",1,19,43,""],
+        [3,null,"deleted",0,19,26,""],
+        [3,null,"file",0,27,31,""],
+        [3,null,"mode",0,32,36,""],
+        [3,null,"mode",1,37,43,""],
+        [2,null,"index",1,44,66,""],
+        [3,null,"index",0,44,49,""],
+        [3,null,"commit",1,50,57,""],
+        [3,null,"..",0,57,59,""],
+        [3,null,"commit",1,59,66,""],
+        [2,null,"old_file",1,67,74,""],
+        [3,null,"---",0,67,70,""],
+        [3,null,"filename",1,71,74,""],
+        [2,null,"new_file",1,75,88,""],
+        [3,null,"+++",0,75,78,""],
+        [3,null,"filename",1,79,88,""],
+        [2,null,"hunks",1,89,111,""],
+        [3,null,"hunk",1,89,111,""],
+        [4,"location","location",1,89,104,""],
+        [5,null,"@@",0,89,91,""],
+        [5,null,"linerange",1,92,96,""],
+        [5,null,"linerange",1,97,101,""],
+        [5,null,"@@",0,102,104,""],
+        [4,"changes","changes",1,105,111,""],
+        [5,null,"deletion",1,105,107,""],
+        [6,null,"-",0,105,106,""],
+        [5,null,"deletion",1,108,110,""],
+        [6,null,"-",0,108,109,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/x\nnew file mode 100644\nindex 0000000..1234567\n--- /dev/null\n+++ b/x\n@@ -0,0 +1 @@\n+a\n",
+      "rows": [
+        [0,null,"source",1,0,102,""],
+        [1,null,"block",1,0,102,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"file_change",1,19,39,""],
+        [3,null,"new",0,19,22,""],
+        [3,null,"file",0,23,27,""],
+        [3,null,"mode",0,28,32,""],
+        [3,null,"mode",1,33,39,""],
+        [2,null,"index",1,40,62,""],
+        [3,null,"index",0,40,45,""],
+        [3,null,"commit",1,46,53,""],
+        [3,null,"..",0,53,55,""],
+        [3,null,"commit",1,55,62,""],
+        [2,null,"old_file",1,63,76,""],
+        [3,null,"---",0,63,66,""],
+        [3,null,"filename",1,67,76,""],
+        [2,null,"new_file",1,77,84,""],
+        [3,null,"+++",0,77,80,""],
+        [3,null,"filename",1,81,84,""],
+        [2,null,"hunks",1,85,102,""],
+        [3,null,"hunk",1,85,102,""],
+        [4,"location","location",1,85,98,""],
+        [5,null,"@@",0,85,87,""],
+        [5,null,"linerange",1,88,92,""],
+        [5,null,"linerange",1,93,95,""],
+        [5,null,"@@",0,96,98,""],
+        [4,"changes","changes",1,99,102,""],
+        [5,null,"addition",1,99,101,""],
+        [6,null,"+",0,99,100,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/y\nsimilarity index 90%\nrename from x\nrename to y\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/y\n@@ -1 +1 @@\n-a\n+b\n",
+      "rows": [
+        [0,null,"source",1,0,130,""],
+        [1,null,"block",1,0,130,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"similarity",1,19,39,""],
+        [3,null,"similarity",0,19,29,""],
+        [3,null,"index",0,30,35,""],
+        [3,null,"score",1,36,38,""],
+        [3,null,"%",0,38,39,""],
+        [2,null,"file_change",1,40,53,""],
+        [3,null,"rename",0,40,46,""],
+        [3,null,"from",0,47,51,""],
+        [3,null,"filename",1,52,53,""],
+        [2,null,"file_change",1,54,65,""],
+        [3,null,"rename",0,54,60,""],
+        [3,null,"to",0,61,63,""],
+        [3,null,"filename",1,64,65,""],
+        [2,null,"index",1,66,95,""],
+        [3,null,"index",0,66,71,""],
+        [3,null,"commit",1,72,79,""],
+        [3,null,"..",0,79,81,""],
+        [3,null,"commit",1,81,88,""],
+        [3,null,"mode",1,89,95,""],
+        [2,null,"old_file",1,96,103,""],
+        [3,null,"---",0,96,99,""],
+        [3,null,"filename",1,100,103,""],
+        [2,null,"new_file",1,104,111,""],
+        [3,null,"+++",0,104,107,""],
+        [3,null,"filename",1,108,111,""],
+        [2,null,"hunks",1,112,130,""],
+        [3,null,"hunk",1,112,130,""],
+        [4,"location","location",1,112,123,""],
+        [5,null,"@@",0,112,114,""],
+        [5,null,"linerange",1,115,117,""],
+        [5,null,"linerange",1,118,120,""],
+        [5,null,"@@",0,121,123,""],
+        [4,"changes","changes",1,124,130,""],
+        [5,null,"deletion",1,124,126,""],
+        [6,null,"-",0,124,125,""],
+        [5,null,"addition",1,127,129,""],
+        [6,null,"+",0,127,128,""]
+      ]
+    },
+    {
+      "source": "diff --git a/s b/s\nold mode 100644\nnew mode 100755\nindex 1234567..89abcde\n--- a/s\n+++ b/s\n@@ -1 +1,2 @@\n #!/bin/sh\n+echo hi\n",
+      "rows": [
+        [0,null,"source",1,0,124,""],
+        [1,null,"block",1,0,124,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"file_change",1,19,34,""],
+        [3,null,"old",0,19,22,""],
+        [3,null,"mode",0,23,27,""],
+        [3,null,"mode",1,28,34,""],
+        [2,null,"file_change",1,35,50,""],
+        [3,null,"new",0,35,38,""],
+        [3,null,"mode",0,39,43,""],
+        [3,null,"mode",1,44,50,""],
+        [2,null,"index",1,51,73,""],
+        [3,null,"index",0,51,56,""],
+        [3,null,"commit",1,57,64,""],
+        [3,null,"..",0,64,66,""],
+        [3,null,"commit",1,66,73,""],
+        [2,null,"old_file",1,74,81,""],
+        [3,null,"---",0,74,77,""],
+        [3,null,"filename",1,78,81,""],
+        [2,null,"new_file",1,82,89,""],
+        [3,null,"+++",0,82,85,""],
+        [3,null,"filename",1,86,89,""],
+        [2,null,"hunks",1,90,124,""],
+        [3,null,"hunk",1,90,124,""],
+        [4,"location","location",1,90,103,""],
+        [5,null,"@@",0,90,92,""],
+        [5,null,"linerange",1,93,95,""],
+        [5,null,"linerange",1,96,100,""],
+        [5,null,"@@",0,101,103,""],
+        [4,"changes","changes",1,104,124,""],
+        [5,null,"context",1,104,114,""],
+        [5,null,"addition",1,115,123,""],
+        [6,null,"+",0,115,116,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n\\ No newline at end of file\n+a\n\\ No newline at end of file\n",
+      "rows": [
+        [0,null,"source",1,0,139,""],
+        [1,null,"block",1,0,139,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"index",1,19,48,""],
+        [3,null,"index",0,19,24,""],
+        [3,null,"commit",1,25,32,""],
+        [3,null,"..",0,32,34,""],
+        [3,null,"commit",1,34,41,""],
+        [3,null,"mode",1,42,48,""],
+        [2,null,"old_file",1,49,56,""],
+        [3,null,"---",0,49,52,""],
+        [3,null,"filename",1,53,56,""],
+        [2,null,"new_file",1,57,64,""],
+        [3,null,"+++",0,57,60,""],
+        [3,null,"filename",1,61,64,""],
+        [2,null,"hunks",1,65,139,""],
+        [3,null,"hunk",1,65,139,""],
+        [4,"location","location",1,65,76,""],
+        [5,null,"@@",0,65,67,""],
+        [5,null,"linerange",1,68,70,""],
+        [5,null,"linerange",1,71,73,""],
+        [5,null,"@@",0,74,76,""],
+        [4,"changes","changes",1,77,139,""],
+        [5,null,"deletion",1,77,79,""],
+        [6,null,"-",0,77,78,""],
+        [5,null,"context",1,80,107,""],
+        [5,null,"addition",1,108,110,""],
+        [6,null,"+",0,108,109,""],
+        [5,null,"context",1,111,138,""]
+      ]
+    },
+    {
+      "source": "diff --git a/a b/a\nindex 1234567..89abcde 100644\n--- a/a\n+++ b/a\n@@ -1 +1 @@\n-x\n+y\ndiff --git a/b b/b\nindex 1234567..89abcde 100644\n--- a/b\n+++ b/b\n@@ -2,0 +3 @@ ctx\n+z\n",
+      "rows": [
+        [0,null,"source",1,0,169,""],
+        [1,null,"block",1,0,83,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"index",1,19,48,""],
+        [3,null,"index",0,19,24,""],
+        [3,null,"commit",1,25,32,""],
+        [3,null,"..",0,32,34,""],
+        [3,null,"commit",1,34,41,""],
+        [3,null,"mode",1,42,48,""],
+        [2,null,"old_file",1,49,56,""],
+        [3,null,"---",0,49,52,""],
+        [3,null,"filename",1,53,56,""],
+        [2,null,"new_file",1,57,64,""],
+        [3,null,"+++",0,57,60,""],
+        [3,null,"filename",1,61,64,""],
+        [2,null,"hunks",1,65,83,""],
+        [3,null,"hunk",1,65,83,""],
+        [4,"location","location",1,65,76,""],
+        [5,null,"@@",0,65,67,""],
+        [5,null,"linerange",1,68,70,""],
+        [5,null,"linerange",1,71,73,""],
+        [5,null,"@@",0,74,76,""],
+        [4,"changes","changes",1,77,83,""],
+        [5,null,"deletion",1,77,79,""],
+        [6,null,"-",0,77,78,""],
+        [5,null,"addition",1,80,82,""],
+        [6,null,"+",0,80,81,""],
+        [1,null,"block",1,83,169,""],
+        [2,null,"command",1,83,101,""],
+        [3,null,"diff",0,83,87,""],
+        [3,null,"argument",1,88,93,""],
+        [3,null,"filename",1,94,101,""],
+        [2,null,"index",1,102,131,""],
+        [3,null,"index",0,102,107,""],
+        [3,null,"commit",1,108,115,""],
+        [3,null,"..",0,115,117,""],
+        [3,null,"commit",1,117,124,""],
+        [3,null,"mode",1,125,131,""],
+        [2,null,"old_file",1,132,139,""],
+        [3,null,"---",0,132,135,""],
+        [3,null,"filename",1,136,139,""],
+        [2,null,"new_file",1,140,147,""],
+        [3,null,"+++",0,140,143,""],
+        [3,null,"filename",1,144,147,""],
+        [2,null,"hunks",1,148,169,""],
+        [3,null,"hunk",1,148,169,""],
+        [4,"location","location",1,148,165,""],
+        [5,null,"@@",0,148,150,""],
+        [5,null,"linerange",1,151,155,""],
+        [5,null,"linerange",1,156,158,""],
+        [5,null,"@@",0,159,161,""],
+        [4,"changes","changes",1,166,169,""],
+        [5,null,"addition",1,166,168,""],
+        [6,null,"+",0,166,167,""]
+      ]
+    },
+    {
+      "source": "diff -ru a/dir b/dir\n--- a/dir/f\n+++ b/dir/f\n@@ -1,2 +1,2 @@\n line\n-old\n+new\n",
+      "rows": [
+        [0,null,"source",1,0,77,""],
+        [1,null,"block",1,0,77,""],
+        [2,null,"command",1,0,20,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,8,""],
+        [3,null,"filename",1,9,20,""],
+        [2,null,"old_file",1,21,32,""],
+        [3,null,"---",0,21,24,""],
+        [3,null,"filename",1,25,32,""],
+        [2,null,"new_file",1,33,44,""],
+        [3,null,"+++",0,33,36,""],
+        [3,null,"filename",1,37,44,""],
+        [2,null,"hunks",1,45,77,""],
+        [3,null,"hunk",1,45,77,""],
+        [4,"location","location",1,45,60,""],
+        [5,null,"@@",0,45,47,""],
+        [5,null,"linerange",1,48,52,""],
+        [5,null,"linerange",1,53,57,""],
+        [5,null,"@@",0,58,60,""],
+        [4,"changes","changes",1,61,77,""],
+        [5,null,"context",1,61,66,""],
+        [5,null,"deletion",1,67,71,""],
+        [6,null,"-",0,67,68,""],
+        [5,null,"addition",1,72,76,""],
+        [6,null,"+",0,72,73,""]
+      ]
+    },
+    {
+      "source": "diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -10,7 +10,7 @@ class A:\n     def f(self):\n-        return 1\n+        return 2\n \n     def g(self):\n",
+      "rows": [
+        [0,null,"source",1,0,166,""],
+        [1,null,"block",1,0,166,""],
+        [2,null,"command",1,0,18,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,18,""],
+        [2,null,"index",1,19,48,""],
+        [3,null,"index",0,19,24,""],
+        [3,null,"commit",1,25,32,""],
+        [3,null,"..",0,32,34,""],
+        [3,null,"commit",1,34,41,""],
+        [3,null,"mode",1,42,48,""],
+        [2,null,"old_file",1,49,56,""],
+        [3,null,"---",0,49,52,""],
+        [3,null,"filename",1,53,56,""],
+        [2,null,"new_file",1,57,64,""],
+        [3,null,"+++",0,57,60,""],
+        [3,null,"filename",1,61,64,""],
+        [2,null,"hunks",1,65,166,""],
+        [3,null,"hunk",1,65,166,""],
+        [4,"location","location",1,65,91,""],
+        [5,null,"@@",0,65,67,""],
+        [5,null,"linerange",1,68,73,""],
+        [5,null,"linerange",1,74,79,""],
+        [5,null,"@@",0,80,82,""],
+        [4,"changes","changes",1,92,166,""],
+        [5,null,"context",1,92,109,""],
+        [5,null,"deletion",1,110,127,""],
+        [6,null,"-",0,110,111,""],
+        [5,null,"addition",1,128,145,""],
+        [6,null,"+",0,128,129,""],
+        [5,null,"context",1,148,165,""]
+      ]
+    },
+    {
+      "source": "Binary files /dev/null and b/x differ\n",
+      "rows": [
+        [0,null,"source",1,0,38,""],
+        [1,null,"binary_change",1,0,37,""],
+        [2,null,"Binary",0,0,6,""],
+        [2,null,"files",0,7,12,""],
+        [2,null,"filename",1,13,22,""],
+        [2,null,"and",0,23,26,""],
+        [2,null,"filename",1,27,30,""],
+        [2,null,"differ",0,31,37,""]
+      ]
+    },
+    {
+      "source": "# HG changeset patch\n# User a\ndiff -r 1234567 -r 89abcde x\n--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n+b\n",
+      "rows": [
+        [0,null,"source",1,0,93,""],
+        [1,null,"comment",1,0,20,""],
+        [2,null,"#",0,0,1,""],
+        [1,null,"comment",1,21,29,""],
+        [2,null,"#",0,21,22,""],
+        [1,null,"block",1,30,93,""],
+        [2,null,"command",1,30,58,""],
+        [3,null,"diff",0,30,34,""],
+        [3,null,"argument",1,35,37,""],
+        [3,null,"filename",1,38,58,""],
+        [2,null,"old_file",1,59,66,""],
+        [3,null,"---",0,59,62,""],
+        [3,null,"filename",1,63,66,""],
+        [2,null,"new_file",1,67,74,""],
+        [3,null,"+++",0,67,70,""],
+        [3,null,"filename",1,71,74,""],
+        [2,null,"hunks",1,75,93,""],
+        [3,null,"hunk",1,75,93,""],
+        [4,"location","location",1,75,86,""],
+        [5,null,"@@",0,75,77,""],
+        [5,null,"linerange",1,78,80,""],
+        [5,null,"linerange",1,81,83,""],
+        [5,null,"@@",0,84,86,""],
+        [4,"changes","changes",1,87,93,""],
+        [5,null,"deletion",1,87,89,""],
+        [6,null,"-",0,87,88,""],
+        [5,null,"addition",1,90,92,""],
+        [6,null,"+",0,90,91,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\n+b\n\n\ndiff c d\n",
+      "rows": [
+        [0,null,"source",1,0,50,""],
+        [1,null,"block",1,0,41,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,41,""],
+        [3,null,"hunk",1,21,41,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,41,""],
+        [5,null,"deletion",1,33,35,""],
+        [6,null,"-",0,33,34,""],
+        [5,null,"addition",1,36,38,""],
+        [6,null,"+",0,36,37,""],
+        [1,null,"block",1,41,50,""],
+        [2,null,"command",1,41,49,""],
+        [3,null,"diff",0,41,45,""],
+        [3,null,"argument",1,46,47,""],
+        [3,null,"filename",1,48,49,""]
+      ]
+    },
+    {
+      "source": "+\n",
+      "rows": [
+        [0,null,"source",1,0,2,""],
+        [1,null,"addition",1,0,1,""],
+        [2,null,"+",0,0,1,""]
+      ]
+    },
+    {
+      "source": "-\n",
+      "rows": [
+        [0,null,"source",1,0,2,""],
+        [1,null,"deletion",1,0,1,""],
+        [2,null,"-",0,0,1,""]
+      ]
+    },
+    {
+      "source": "++\n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"addition",1,0,2,""],
+        [2,null,"++",0,0,2,""]
+      ]
+    },
+    {
+      "source": "--\n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"deletion",1,0,2,""],
+        [2,null,"--",0,0,2,""]
+      ]
+    },
+    {
+      "source": "++++\n",
+      "rows": [
+        [0,null,"source",1,0,5,""],
+        [1,null,"addition",1,0,4,""],
+        [2,null,"++++",0,0,4,""]
+      ]
+    },
+    {
+      "source": "----  \n",
+      "rows": [
+        [0,null,"source",1,0,7,""],
+        [1,null,"deletion",1,0,6,""],
+        [2,null,"----",0,0,4,""]
+      ]
+    },
+    {
+      "source": "# \n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"comment",1,0,2,""],
+        [2,null,"#",0,0,1,""]
+      ]
+    },
+    {
+      "source": "@@ -1 +1 @@ x @@\n",
+      "rows": [
+        [0,null,"source",1,0,17,""],
+        [1,null,"location",1,0,16,""],
+        [2,null,"@@",0,0,2,""],
+        [2,null,"linerange",1,3,5,""],
+        [2,null,"linerange",1,6,8,""],
+        [2,null,"@@",0,9,11,""]
+      ]
+    },
+    {
+      "source": "@@ -1,0 +1,0 @@\n",
+      "rows": [
+        [0,null,"source",1,0,16,""],
+        [1,null,"location",1,0,15,""],
+        [2,null,"@@",0,0,2,""],
+        [2,null,"linerange",1,3,7,""],
+        [2,null,"linerange",1,8,12,""],
+        [2,null,"@@",0,13,15,""]
+      ]
+    },
+    {
+      "source": "similarity index 0%\n",
+      "rows": [
+        [0,null,"source",1,0,20,""],
+        [1,null,"similarity",1,0,19,""],
+        [2,null,"similarity",0,0,10,""],
+        [2,null,"index",0,11,16,""],
+        [2,null,"score",1,17,18,""],
+        [2,null,"%",0,18,19,""]
+      ]
+    },
+    {
+      "source": "index 1234567890abcdef1234567890abcdef12345678..1234567890abcdef1234567890abcdef12345678 100644\n",
+      "rows": [
+        [0,null,"source",1,0,96,""],
+        [1,null,"index",1,0,95,""],
+        [2,null,"index",0,0,5,""],
+        [2,null,"commit",1,6,46,""],
+        [2,null,"..",0,46,48,""],
+        [2,null,"commit",1,48,88,""],
+        [2,null,"mode",1,89,95,""]
+      ]
+    },
+    {
+      "source": "diff --stat a b\n",
+      "rows": [
+        [0,null,"source",1,0,16,""],
+        [1,null,"block",1,0,16,""],
+        [2,null,"command",1,0,15,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,11,""],
+        [3,null,"filename",1,12,15,""]
+      ]
+    },
+    {
+      "source": "diff a  b\n",
+      "rows": [
+        [0,null,"source",1,0,10,""],
+        [1,null,"block",1,0,10,""],
+        [2,null,"command",1,0,9,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,8,9,""]
+      ]
+    },
+    {
+      "source": "diff\ta\tb\n",
+      "rows": [
+        [0,null,"source",1,0,9,""],
+        [1,null,"block",1,0,9,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""]
+      ]
+    },
+    {
+      "source": "rename from a b c\n",
+      "rows": [
+        [0,null,"source",1,0,18,""],
+        [1,null,"file_change",1,0,17,""],
+        [2,null,"rename",0,0,6,""],
+        [2,null,"from",0,7,11,""],
+        [2,null,"filename",1,12,17,""]
+      ]
+    },
+    {
+      "source": "new file mode 100644  \n",
+      "rows": [
+        [0,null,"source",1,0,23,""],
+        [1,null,"file_change",1,0,20,""],
+        [2,null,"new",0,0,3,""],
+        [2,null,"file",0,4,8,""],
+        [2,null,"mode",0,9,13,""],
+        [2,null,"mode",1,14,20,""]
+      ]
+    },
+    {
+      "source": " a\n\n b\n",
+      "rows": [
+        [0,null,"source",1,0,7,""],
+        [1,null,"context",1,0,2,""],
+        [1,null,"context",1,4,6,""]
+      ]
+    },
+    {
+      "source": "\ta\n",
+      "rows": [
+        [0,null,"source",1,0,3,""],
+        [1,null,"context",1,0,2,""]
+      ]
+    },
+    {
+      "source": "  \n x\n",
+      "rows": [
+        [0,null,"source",1,0,6,""],
+        [1,null,"context",1,3,5,""]
+      ]
+    },
+    {
+      "source": "x\n\n\n",
+      "rows": [
+        [0,null,"source",1,0,4,""],
+        [1,null,"context",1,0,1,""]
+      ]
+    }
+  ],
+  "divergences": [
+    {
+      "source": "index abcd..ef01 100644\n",
+      "reason": "git abbreviates the object names of an index line to core.abbrev hexadecimal digits, at least 4 (git-config); tree-sitter-diff 0.1.0 requires 7 to 40.",
+      "rows": [
+        [0,null,"source",1,0,24,""],
+        [1,null,"index",1,0,23,""],
+        [2,null,"index",0,0,5,""],
+        [2,null,"commit",1,6,10,""],
+        [2,null,"..",0,10,12,""],
+        [2,null,"commit",1,12,16,""],
+        [2,null,"mode",1,17,23,""]
+      ]
+    },
+    {
+      "source": " new x\n",
+      "reason": "GNU diffutils reads a unified diff line that starts with a space as a context line; tree-sitter-diff 0.1.0 lexes new, old, deleted and rename after the space as file header keywords.",
+      "rows": [
+        [0,null,"source",1,0,7,""],
+        [1,null,"context",1,0,6,""]
+      ]
+    },
+    {
+      "source": " rename z\n",
+      "reason": "GNU diffutils reads a unified diff line that starts with a space as a context line; tree-sitter-diff 0.1.0 lexes new, old, deleted and rename after the space as file header keywords.",
+      "rows": [
+        [0,null,"source",1,0,10,""],
+        [1,null,"context",1,0,9,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n new x\n",
+      "reason": "GNU diffutils reads a unified diff line that starts with a space as a context line; tree-sitter-diff 0.1.0 lexes new, old, deleted and rename after the space as file header keywords.",
+      "rows": [
+        [0,null,"source",1,0,40,""],
+        [1,null,"block",1,0,40,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,40,""],
+        [3,null,"hunk",1,21,40,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,40,""],
+        [5,null,"context",1,33,39,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n--- c\n+++ d\n",
+      "reason": "GNU diffutils reads a hunk line that starts with a minus or plus sign as a deleted or added line whatever follows the sign, so --- c deletes the line -- c; tree-sitter-diff 0.1.0 lexes --- and +++ there as file header markers.",
+      "rows": [
+        [0,null,"source",1,0,45,""],
+        [1,null,"block",1,0,45,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,45,""],
+        [3,null,"hunk",1,21,45,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,45,""],
+        [5,null,"deletion",1,33,38,""],
+        [6,null,"---",0,33,36,""],
+        [5,null,"addition",1,39,44,""],
+        [6,null,"+++",0,39,42,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n+++i;\n",
+      "reason": "GNU diffutils reads a hunk line that starts with a plus sign as an added line, so +++i; adds the line ++i;; tree-sitter-diff 0.1.0 lexes +++ there as a file header marker.",
+      "rows": [
+        [0,null,"source",1,0,39,""],
+        [1,null,"block",1,0,39,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,39,""],
+        [3,null,"hunk",1,21,39,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,39,""],
+        [5,null,"addition",1,33,38,""],
+        [6,null,"+++",0,33,36,""]
+      ]
+    },
+    {
+      "source": "diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\n+c",
+      "reason": "The source rule of tree-sitter-diff 0.1.0 reads a last line without a line break and the merged grammar reads one inside a block too; tree-sitter-diff 0.1.0 inserts a missing line break there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"source",1,0,38,""],
+        [1,null,"block",1,0,38,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"old_file",1,9,14,""],
+        [3,null,"---",0,9,12,""],
+        [3,null,"filename",1,13,14,""],
+        [2,null,"new_file",1,15,20,""],
+        [3,null,"+++",0,15,18,""],
+        [3,null,"filename",1,19,20,""],
+        [2,null,"hunks",1,21,38,""],
+        [3,null,"hunk",1,21,38,""],
+        [4,"location","location",1,21,32,""],
+        [5,null,"@@",0,21,23,""],
+        [5,null,"linerange",1,24,26,""],
+        [5,null,"linerange",1,27,29,""],
+        [5,null,"@@",0,30,32,""],
+        [4,"changes","changes",1,33,38,""],
+        [5,null,"deletion",1,33,35,""],
+        [6,null,"-",0,33,34,""],
+        [5,null,"addition",1,36,38,""],
+        [6,null,"+",0,36,37,""]
+      ]
+    },
+    {
+      "source": "diff a b\nindex 1234567..abcdef0",
+      "reason": "The source rule of tree-sitter-diff 0.1.0 reads a last line without a line break and the merged grammar reads one inside a block too; tree-sitter-diff 0.1.0 inserts a missing line break there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"source",1,0,31,""],
+        [1,null,"block",1,0,31,""],
+        [2,null,"command",1,0,8,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,6,""],
+        [3,null,"filename",1,7,8,""],
+        [2,null,"index",1,9,31,""],
+        [3,null,"index",0,9,14,""],
+        [3,null,"commit",1,15,22,""],
+        [3,null,"..",0,22,24,""],
+        [3,null,"commit",1,24,31,""]
+      ]
+    }
+  ],
+  "rejections": [
+    {
+      "source": "news\n"
+    },
+    {
+      "source": "indexes\n"
+    },
+    {
+      "source": "diff\n"
+    },
+    {
+      "source": "@@\n"
+    },
+    {
+      "source": "Binary\n"
+    },
+    {
+      "source": "x\ry\n"
+    },
+    {
+      "source": "index 123..456\n"
+    },
+    {
+      "source": "similarity index x%\n"
+    },
+    {
+      "source": "@@ -1 @@\n"
+    },
+    {
+      "source": "new file\n"
+    },
+    {
+      "source": "rename x\n"
+    },
+    {
+      "source": "Binary files a b differ\n"
+    },
+    {
+      "source": "diff a\n"
+    },
+    {
+      "source": "old mode\n"
+    }
+  ]
+}

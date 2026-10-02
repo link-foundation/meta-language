@@ -652,12 +652,14 @@ gaps against the target above:
   binaries in JavaScript, and the `tree-sitter-*` crates in Rust. Native merged
   Links Notation grammars exist for built-in formats such as LiNo and PDF, and
   for JSON
-  ([`parity/grammars/native/json.lino`](../parity/grammars/native/json.lino))
-  and INI
-  ([`parity/grammars/native/ini.lino`](../parity/grammars/native/ini.lino)),
-  which are checked against tree-sitter-json and tree-sitter-ini but reject
-  invalid input instead of recovering. The default JSON and INI parses still
-  run tree-sitter-json and tree-sitter-ini.
+  ([`parity/grammars/native/json.lino`](../parity/grammars/native/json.lino)),
+  INI
+  ([`parity/grammars/native/ini.lino`](../parity/grammars/native/ini.lino))
+  and unified diffs
+  ([`parity/grammars/native/diff.lino`](../parity/grammars/native/diff.lino)),
+  which are checked against tree-sitter-json, tree-sitter-ini and
+  tree-sitter-diff but reject invalid input instead of recovering. The default
+  JSON, INI and Diff parses still run those tree-sitter grammars.
 - **Incomplete grammar expression model.** The model in
   [`rust/src/grammar/mod.rs`](../rust/src/grammar/mod.rs) covers:
   - terminals and non-terminals;

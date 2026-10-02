@@ -30,38 +30,6 @@
       ]
     },
     {
-      "source": "a=1",
-      "rows": [
-        [0,null,"document",1,0,3,""],
-        [1,null,"setting",1,0,3,""],
-        [2,null,"setting_name",1,0,1,""],
-        [2,null,"=",0,1,2,""],
-        [2,null,"setting_value",1,2,3,""]
-      ]
-    },
-    {
-      "source": "[s]",
-      "rows": [
-        [0,null,"document",1,0,3,""],
-        [1,null,"section",1,0,3,""],
-        [2,null,"section_name",1,0,3,""],
-        [3,null,"[",0,0,1,""],
-        [3,null,"text",1,1,2,""],
-        [3,null,"]",0,2,3,""]
-      ]
-    },
-    {
-      "source": "[s]  ",
-      "rows": [
-        [0,null,"document",1,0,5,""],
-        [1,null,"section",1,0,3,""],
-        [2,null,"section_name",1,0,3,""],
-        [3,null,"[",0,0,1,""],
-        [3,null,"text",1,1,2,""],
-        [3,null,"]",0,2,3,""]
-      ]
-    },
-    {
       "source": "",
       "rows": [
         [0,null,"document",1,0,0,""]
@@ -86,45 +54,6 @@
       ]
     },
     {
-      "source": "k=",
-      "rows": [
-        [0,null,"document",1,0,2,""],
-        [1,null,"setting",1,0,2,""],
-        [2,null,"setting_name",1,0,1,""],
-        [2,null,"=",0,1,2,""]
-      ]
-    },
-    {
-      "source": "k= ",
-      "rows": [
-        [0,null,"document",1,0,3,""],
-        [1,null,"setting",1,0,3,""],
-        [2,null,"setting_name",1,0,1,""],
-        [2,null,"=",0,1,2,""],
-        [2,null,"setting_value",1,2,3,""]
-      ]
-    },
-    {
-      "source": "k=v\t",
-      "rows": [
-        [0,null,"document",1,0,4,""],
-        [1,null,"setting",1,0,4,""],
-        [2,null,"setting_name",1,0,1,""],
-        [2,null,"=",0,1,2,""],
-        [2,null,"setting_value",1,2,4,""]
-      ]
-    },
-    {
-      "source": "k=v\r",
-      "rows": [
-        [0,null,"document",1,0,4,""],
-        [1,null,"setting",1,0,4,""],
-        [2,null,"setting_name",1,0,1,""],
-        [2,null,"=",0,1,2,""],
-        [2,null,"setting_value",1,2,4,""]
-      ]
-    },
-    {
       "source": "k = \n",
       "rows": [
         [0,null,"document",1,0,5,""],
@@ -142,6 +71,149 @@
         [2,null,"setting_name",1,0,1,""],
         [2,null,"=",0,1,2,""],
         [2,null,"setting_value",1,2,4,""]
+      ]
+    },
+    {
+      "source": "k=v\n",
+      "rows": [
+        [0,null,"document",1,0,4,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""]
+      ]
+    },
+    {
+      "source": "a = b\nc = d\n",
+      "rows": [
+        [0,null,"document",1,0,12,""],
+        [1,null,"setting",1,0,6,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,5,""],
+        [1,null,"setting",1,6,12,""],
+        [2,null,"setting_name",1,6,7,""],
+        [2,null,"=",0,8,9,""],
+        [2,null,"setting_value",1,9,11,""]
+      ]
+    },
+    {
+      "source": "[x]\n# c\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"section",1,0,4,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [1,null,"comment",1,4,8,"X"],
+        [2,null,"text",1,5,7,""]
+      ]
+    },
+    {
+      "source": "[a]\n[b]\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"section",1,0,4,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [1,null,"section",1,4,8,""],
+        [2,null,"section_name",1,4,8,""],
+        [3,null,"[",0,4,5,""],
+        [3,null,"text",1,5,6,""],
+        [3,null,"]",0,6,7,""]
+      ]
+    },
+    {
+      "source": "k = v=w\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"setting",1,0,8,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,7,""]
+      ]
+    },
+    {
+      "source": "[s]\n\tk = v\n",
+      "rows": [
+        [0,null,"document",1,0,11,""],
+        [1,null,"section",1,0,11,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"setting",1,5,11,""],
+        [3,null,"setting_name",1,5,6,""],
+        [3,null,"=",0,7,8,""],
+        [3,null,"setting_value",1,8,10,""]
+      ]
+    },
+    {
+      "source": "k = \t v\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"setting",1,0,8,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,7,""]
+      ]
+    },
+    {
+      "source": "[s.t]\nk=v\n",
+      "rows": [
+        [0,null,"document",1,0,10,""],
+        [1,null,"section",1,0,10,""],
+        [2,null,"section_name",1,0,6,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,4,""],
+        [3,null,"]",0,4,5,""],
+        [2,null,"setting",1,6,10,""],
+        [3,null,"setting_name",1,6,7,""],
+        [3,null,"=",0,7,8,""],
+        [3,null,"setting_value",1,8,9,""]
+      ]
+    },
+    {
+      "source": "[s]\r\n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"section",1,0,5,""],
+        [2,null,"section_name",1,0,5,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "k=v\t\n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"setting",1,0,5,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,4,""]
+      ]
+    },
+    {
+      "source": "[s]\n# a\n# b\nk=v\n",
+      "rows": [
+        [0,null,"document",1,0,16,""],
+        [1,null,"section",1,0,16,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"comment",1,4,8,"X"],
+        [3,null,"text",1,5,7,""],
+        [2,null,"comment",1,8,12,"X"],
+        [3,null,"text",1,9,11,""],
+        [2,null,"setting",1,12,16,""],
+        [3,null,"setting_name",1,12,13,""],
+        [3,null,"=",0,13,14,""],
+        [3,null,"setting_value",1,14,15,""]
       ]
     },
     {
@@ -693,6 +765,84 @@
         [3,null,"setting_value",1,6,7,""],
         [1,null,"comment",1,8,13,"X"],
         [2,null,"text",1,9,13,""]
+      ]
+    },
+    {
+      "source": "a=1",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,3,""],
+        [1,null,"setting",1,0,3,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""]
+      ]
+    },
+    {
+      "source": "[s]",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,3,""],
+        [1,null,"section",1,0,3,""],
+        [2,null,"section_name",1,0,3,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "[s]  ",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"section",1,0,3,""],
+        [2,null,"section_name",1,0,3,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "k=",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,2,""],
+        [1,null,"setting",1,0,2,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""]
+      ]
+    },
+    {
+      "source": "k= ",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,3,""],
+        [1,null,"setting",1,0,3,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""]
+      ]
+    },
+    {
+      "source": "k=v\t",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,4,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,4,""]
+      ]
+    },
+    {
+      "source": "k=v\r",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,4,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,4,""]
       ]
     }
   ],

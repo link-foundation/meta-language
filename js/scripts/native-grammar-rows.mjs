@@ -89,3 +89,15 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
 
 /** Whether any row carries an error or missing flag. */
 export const hasRecovery = (rows) => rows.some((row) => /[EM]/u.test(row[6]));
+
+/**
+ * Whether the default parse of `source` as `language` recovers from an
+ * error: a row with an error or missing flag, or a missing token the rows do
+ * not show, such as a line break tree-sitter inserts at the end of the input,
+ * which only the root's has-error flag records.
+ */
+export function oracleRecovers(source, language) {
+  if (hasRecovery(oracleRows(source, language))) return true;
+  const network = LinkNetwork.parse(source, language);
+  return network.links().some((link) => link.metadata().linkType === LinkType.Syntax && link.metadata().flags.hasError);
+}

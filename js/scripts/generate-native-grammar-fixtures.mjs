@@ -19,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
-import { hasRecovery, nativeRows, oracleRows } from './native-grammar-rows.mjs';
+import { nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -90,7 +90,8 @@ export const NATIVE_GRAMMARS = Object.freeze([
     anonymous: ['newline', 'comment_marker'],
     extras: ['comment'],
     matches: [
-      'a=1\n', 'a=1', '[s]', '[s]  ', '', '\n', '\n\n', '   ', 'k=', 'k= ', 'k=v\t', 'k=v\r', 'k = \n', 'k==v\n',
+      'a=1\n', '', '\n', '\n\n', '   ', 'k = \n', 'k==v\n', 'k=v\n', 'a = b\nc = d\n', '[x]\n# c\n', '[a]\n[b]\n',
+      'k = v=w\n', '[s]\n\tk = v\n', 'k = \t v\n', '[s.t]\nk=v\n', '[s]\r\n', 'k=v\t\n', '[s]\n# a\n# b\nk=v\n',
       '[s]\nk = v\n', '; c\n[s]\n', '# c\nk=\n', '#\n', '#\r\n', '\n; c\n', '[a b]\r\nk=v\r\n', '\r\n[s]\r\n',
       'k = v ; not comment\n', 'a b = c = d\n', 'k v = w\n', 'k  v = w\n', '  k=v\n', '\tk\t=\tv\t\n', 'k\n=v\n',
       '\n\n[x]\n\nk=v w \n', ' \n[x]\n', '[ s ]\n', '[a\nb]\n', '[s]  \n', '[s]\n\n', '[s]\nk=v\n\n', 'k=v\r\n\r\n',
@@ -121,10 +122,128 @@ export const NATIVE_GRAMMARS = Object.freeze([
         source: '[s]\nk=v\n; c  ',
         reason: 'Python configparser reads a comment on the last line without a line break; tree-sitter-ini 1.4.0 requires one after a comment.',
       },
+      {
+        source: 'a=1',
+        reason: 'Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.',
+      },
+      {
+        source: '[s]',
+        reason: 'Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.',
+      },
+      {
+        source: '[s]  ',
+        reason: 'Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.',
+      },
+      {
+        source: 'k=',
+        reason: 'Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.',
+      },
+      {
+        source: 'k= ',
+        reason: 'Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.',
+      },
+      {
+        source: 'k=v\t',
+        reason: 'Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.',
+      },
+      {
+        source: 'k=v\r',
+        reason: 'Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.',
+      },
     ],
     rejections: [
       '[s] ; c\nk=v\n', '[s] k=v\n', '[s]\tx\n', '[a]b\n', '[]\n', '[s\n', '[s]]\n', '[[s]\n', 'k=v\n[', 'k\n', '=v\n',
       'k=v\n=x\n', 'k;=v\n', 'k#x=v\n', 'k\tv=w\n',
+    ],
+  },
+  {
+    id: 'diff',
+    language: 'Diff',
+    grammar: 'parity/grammars/native/diff.lino',
+    oracle: 'tree-sitter-diff 0.1.0',
+    sources: [
+      'https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html',
+      'https://git-scm.com/docs/git-diff#_generating_patch_text_with_p',
+      'https://git-scm.com/docs/git-config#Documentation/git-config.txt-coreabbrev',
+      'https://github.com/tree-sitter-grammars/tree-sitter-diff/blob/v0.1.0/grammar.js',
+    ],
+    // tree-sitter-diff keeps line breaks, the rest of a changed, comment or
+    // hunk header line and the words of a file name as regular expression
+    // tokens without rows of their own.
+    hidden: [],
+    anonymous: ['newline', 'anything', 'word'],
+    extras: [],
+    matches: [
+      'diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -1,2 +1,2 @@ f\n a\n-b\n+c\n', '+a\n',
+      '-a\n', ' a\n', '# c\n', 'x', '\n', '--- a\n+++ b\n', '', ' ', 'a\n ', ' \n', '\n\n', 'x\r\n', 'x \n', '+ \n',
+      '-  \n', '--- \n', '+++ \n', '+++x\n', '+++++\n', '+++ b\n', '-- x\n', '++ x\n', '----\n', '----x\n', '+++\n',
+      '---\n', '@@ -1 +1 @@\n', '@@ -1,3 +1,4 @@ fn main() {\n', '@@ -1 +1 @@  \n', '@@-1 +1@@\n', '#\n', '#!/bin/sh\n',
+      'mode\n', 'de x\n', 'ne x\n', 'files a\n', 'and\n', 'Bin\n', 'simil x\n', '@x\n', '\\ No newline at end of file\n',
+      'new file mode 100644\n', 'deleted file mode 100644\n', 'new mode 100755\n', 'old mode 100644\n',
+      'rename from a/x\n', 'rename to b/y z\n', 'index 1234567..89abcde\n', 'index 1234567..89abcde 100644\n',
+      'index 0000000000000000000000000000000000000000..1234567890abcdef1234567890abcdef12345678\n',
+      'similarity index 90%\n', 'similarity index 100 %\n', 'Binary files a/x and b/x differ\n',
+      'Binary files android and b and c differ\n', 'Binary files x differ and y differ\n', 'diff -u a b\n',
+      'diff --git a/x b/x\n', 'diff a b c\n', 'different a b\n', 'diff a b  \n',
+      'diff --git a/x b/x\nnew file mode 100644\nindex 0000000..e69de29\n',
+      'diff --git a/x b/y\nsimilarity index 100%\nrename from x\nrename to y\n',
+      'diff --git a/x b/x\nold mode 100644\nnew mode 100755\n',
+      'diff --git a/p.png b/p.png\nindex 1234567..89abcde 100644\nBinary files a/p.png and b/p.png differ\n',
+      'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\n@@ -5 +5 @@\n+b\ndiff c d\n', 'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n#x\n',
+      'diff a b\n+++ b\n', 'diff a b\n-x\n', 'diff a b\n\nindex 1234567..89abcde\n', 'diff a b\n@@ -1 +1 @@\n a\n',
+      'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n\n a\n', 'diff a b\n--- a\n+++ b\n@@ -1,3 +1,3 @@\n a\n\n-b\n+c\n\n\n',
+      'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\n\\ No newline at end of file\n+a\n',
+      'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n+++\n---\n', 'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n++++x\n----y\n',
+      'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n x \n', 'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\r\n-a\r\n+b\r\n',
+      '--- a\n+++ b\n@@ -1 +1 @@\n-a\n+b\n--- c\n+++ d\n@@ -2 +2 @@\n-c\n+d\n',
+      'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\ndiff c d\n--- c\n+++ d\n@@ -1 +1 @@\n+e\n',
+      'From 1234567 Mon Sep 17 00:00:00 2001\nSubject: x\n---\n a | 2 +-\n\ndiff --git a/a b/a\n',
+      'diff --git a/src/main.rs b/src/main.rs\nindex 3b18e51..a4c2f9d 100644\n--- a/src/main.rs\n+++ b/src/main.rs\n@@ -1,5 +1,6 @@\n+use std::io;\n fn main() {\n-    println!("hi");\n+    let x = 1;\n+    println!("{x}");\n }\n',
+      '--- a/x\t2024-01-01 10:00:00.000000000 +0100\n+++ b/x\t2024-01-02 11:00:00.000000000 +0100\n@@ -1 +1 @@\n-a\n+b\n',
+      'diff --git a/x b/x\ndeleted file mode 100644\nindex 1234567..0000000\n--- a/x\n+++ /dev/null\n@@ -1,2 +0,0 @@\n-a\n-b\n',
+      'diff --git a/x b/x\nnew file mode 100644\nindex 0000000..1234567\n--- /dev/null\n+++ b/x\n@@ -0,0 +1 @@\n+a\n',
+      'diff --git a/x b/y\nsimilarity index 90%\nrename from x\nrename to y\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/y\n@@ -1 +1 @@\n-a\n+b\n',
+      'diff --git a/s b/s\nold mode 100644\nnew mode 100755\nindex 1234567..89abcde\n--- a/s\n+++ b/s\n@@ -1 +1,2 @@\n #!/bin/sh\n+echo hi\n',
+      'diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n\\ No newline at end of file\n+a\n\\ No newline at end of file\n',
+      'diff --git a/a b/a\nindex 1234567..89abcde 100644\n--- a/a\n+++ b/a\n@@ -1 +1 @@\n-x\n+y\ndiff --git a/b b/b\nindex 1234567..89abcde 100644\n--- a/b\n+++ b/b\n@@ -2,0 +3 @@ ctx\n+z\n',
+      'diff -ru a/dir b/dir\n--- a/dir/f\n+++ b/dir/f\n@@ -1,2 +1,2 @@\n line\n-old\n+new\n',
+      'diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -10,7 +10,7 @@ class A:\n     def f(self):\n-        return 1\n+        return 2\n \n     def g(self):\n',
+      'Binary files /dev/null and b/x differ\n',
+      '# HG changeset patch\n# User a\ndiff -r 1234567 -r 89abcde x\n--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n+b\n',
+      'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\n+b\n\n\ndiff c d\n', '+\n', '-\n', '++\n', '--\n', '++++\n', '----  \n',
+      '# \n', '@@ -1 +1 @@ x @@\n', '@@ -1,0 +1,0 @@\n', 'similarity index 0%\n',
+      'index 1234567890abcdef1234567890abcdef12345678..1234567890abcdef1234567890abcdef12345678 100644\n',
+      'diff --stat a b\n', 'diff a  b\n', 'diff\ta\tb\n', 'rename from a b c\n', 'new file mode 100644  \n', ' a\n\n b\n',
+      '\ta\n', '  \n x\n', 'x\n\n\n',
+    ],
+    divergences: [
+      {
+        source: 'index abcd..ef01 100644\n',
+        reason: 'git abbreviates the object names of an index line to core.abbrev hexadecimal digits, at least 4 (git-config); tree-sitter-diff 0.1.0 requires 7 to 40.',
+      },
+      { source: ' new x\n', reason: 'GNU diffutils reads a unified diff line that starts with a space as a context line; tree-sitter-diff 0.1.0 lexes new, old, deleted and rename after the space as file header keywords.' },
+      { source: ' rename z\n', reason: 'GNU diffutils reads a unified diff line that starts with a space as a context line; tree-sitter-diff 0.1.0 lexes new, old, deleted and rename after the space as file header keywords.' },
+      { source: 'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n new x\n', reason: 'GNU diffutils reads a unified diff line that starts with a space as a context line; tree-sitter-diff 0.1.0 lexes new, old, deleted and rename after the space as file header keywords.' },
+      {
+        source: 'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n--- c\n+++ d\n',
+        reason: 'GNU diffutils reads a hunk line that starts with a minus or plus sign as a deleted or added line whatever follows the sign, so --- c deletes the line -- c; tree-sitter-diff 0.1.0 lexes --- and +++ there as file header markers.',
+      },
+      {
+        source: 'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n+++i;\n',
+        reason: 'GNU diffutils reads a hunk line that starts with a plus sign as an added line, so +++i; adds the line ++i;; tree-sitter-diff 0.1.0 lexes +++ there as a file header marker.',
+      },
+      {
+        source: 'diff a b\n--- a\n+++ b\n@@ -1 +1 @@\n-a\n+c',
+        reason: 'The source rule of tree-sitter-diff 0.1.0 reads a last line without a line break and the merged grammar reads one inside a block too; tree-sitter-diff 0.1.0 inserts a missing line break there, which only the has-error flag of its root shows.',
+      },
+      {
+        source: 'diff a b\nindex 1234567..abcdef0',
+        reason: 'The source rule of tree-sitter-diff 0.1.0 reads a last line without a line break and the merged grammar reads one inside a block too; tree-sitter-diff 0.1.0 inserts a missing line break there, which only the has-error flag of its root shows.',
+      },
+    ],
+    rejections: [
+      'news\n', 'indexes\n', 'diff\n', '@@\n', 'Binary\n', 'x\ry\n', 'index 123..456\n', 'similarity index x%\n', '@@ -1 @@\n',
+      'new file\n', 'rename x\n', 'Binary files a b differ\n', 'diff a\n', 'old mode\n',
     ],
   },
 ]);
@@ -143,20 +262,20 @@ export function buildNativeGrammarFixture(entry) {
   };
   const matches = entry.matches.map((source) => {
     const rows = oracleRows(source, entry.language);
-    if (hasRecovery(rows)) throw new Error(`the ${entry.oracle} oracle recovers from ${JSON.stringify(source)}`);
+    if (oracleRecovers(source, entry.language)) throw new Error(`the ${entry.oracle} oracle recovers from ${JSON.stringify(source)}`);
     if (JSON.stringify(native(source)) !== JSON.stringify(rows)) {
       throw new Error(`${entry.grammar} and ${entry.oracle} disagree on ${JSON.stringify(source)}`);
     }
     return { source, rows };
   });
   const divergences = entry.divergences.map(({ source, reason }) => {
-    if (!hasRecovery(oracleRows(source, entry.language))) {
+    if (!oracleRecovers(source, entry.language)) {
       throw new Error(`the ${entry.oracle} oracle accepts the divergence ${JSON.stringify(source)}`);
     }
     return { source, reason, rows: native(source) };
   });
   const rejections = entry.rejections.map((source) => {
-    if (!hasRecovery(oracleRows(source, entry.language))) {
+    if (!oracleRecovers(source, entry.language)) {
       throw new Error(`the ${entry.oracle} oracle accepts the rejection ${JSON.stringify(source)}`);
     }
     if (parser.parseTree(source).ok) throw new Error(`${entry.grammar} accepts ${JSON.stringify(source)}`);
