@@ -392,6 +392,19 @@ comments and spacing) that `render_grammar_layout_links` writes as links.
 `emit_grammar_lossless` then rebuilds the source byte for byte and writes only
 changed or new rules fresh.
 
+`lower_grammar` writes a grammar in a notation that cannot express all of it
+(abnf, antlr, bnf, ebnf, gbnf, lark, pest or tree-sitter-json). Each construct
+the target cannot write moves into a helper rule encoded in constructs it can
+write. For example, an optional item becomes a choice with the empty expression
+and a repetition becomes a recursive rule. The result has two parts: the
+executable text, which the target's own importer reads back, and reconstruction
+metadata as links. The metadata names every helper, its construct, whether its
+encoding is exact or approximate and the original expression, plus every
+rename, kind and documentation the target does not keep. `reconstruct_grammar`
+rebuilds the original from both parts. `check_grammar_lowering` reports every
+emission note, every executable that does not read back, every feature the
+reconstruction lost and every sample an exact lowering disagrees on.
+
 ## Grammar subsystem
 
 The grammar layer stores authored, imported, inferred, translated, and generated

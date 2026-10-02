@@ -581,6 +581,28 @@
       }
     },
     {
+      "id": "grammar-faithful-lowering",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/grammar/interchange/lowering/mod.rs",
+          "rust/src/grammar/interchange/lowering/encoding.rs",
+          "rust/src/grammar/interchange/lowering/metadata.rs",
+          "rust/tests/unit/issue_195_interchange_faithful_lowering.rs",
+          "parity/fixtures/grammar-importers.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/grammar-lowering.js",
+          "js/tests/issue-195-interchange-faithful-lowering.test.js",
+          "parity/fixtures/grammar-importers.json"
+        ]
+      }
+    },
+    {
       "id": "javascript-parser-codegen",
       "required": true,
       "rust": {

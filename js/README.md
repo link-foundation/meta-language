@@ -97,6 +97,21 @@ format)` also returns a layout (definition texts, comments and spacing) that
 layout)` then rebuilds the source byte for byte and writes only changed or new
 rules fresh.
 
+`lowerGrammar(grammar, format)` writes a grammar in a notation that cannot
+express all of it (abnf, antlr, bnf, ebnf, gbnf, lark, pest or
+tree-sitter-json). Each construct the target cannot write moves into a helper
+rule encoded in constructs it can write. For example, an optional item becomes a
+choice with the empty expression and a repetition becomes a recursive rule. The
+result has two parts: the executable text, which the target's own importer
+reads back, and reconstruction metadata as links. The metadata names every
+helper, its construct, whether its encoding is exact or approximate and the
+original expression, plus every rename, kind and documentation the target does
+not keep. `reconstructGrammar(executable, metadata)` rebuilds the original from
+both parts. `checkGrammarLowering(grammar, format, { accepts, rejects })`
+reports every emission note, every executable that does not read back, every
+feature the reconstruction lost and every sample an exact lowering disagrees
+on.
+
 ## Parity
 
 Every feature in [`../parity/language-features.json`](../parity/language-features.json)
