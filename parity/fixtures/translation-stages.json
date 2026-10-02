@@ -177,6 +177,31 @@
       }
     },
     {
+      "name": "corpus/faithful-bignum.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/faithful-bignum.mjs",
+      "parse": {
+        "sha256": "3261fb297f76abcb4cee41e6571b2cf8b91443c7d9da396ab5379914db206865"
+      },
+      "check": {
+        "sha256": "603f57b0d2068e73f48d2bacec92b27bae369896e3c61149081f6ac470a2549c"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "fbb077138ea71c2ae9dd16ec1e5e13bbae9126ac25afa904e16bc154b060a8d6"
+        },
+        "rust": {
+          "sha256": "e7245f0fec03e29aa0e9af77e62a6e54d6d1e9a5ed1a3535b9b4a25871a020f9"
+        },
+        "lean": {
+          "sha256": "8bff1eb0b5050f52ebd2e88e625292d5ce7dbf4756bc2b59a80012b79bcb2aca"
+        },
+        "rocq": {
+          "sha256": "1bc4ffd4edf3721bba75d60ecd473f24e0f229c96fb9a3ca71f5966bfc0f1e4a"
+        }
+      }
+    },
+    {
       "name": "corpus/faithful-bigzero.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/faithful-bigzero.mjs",
