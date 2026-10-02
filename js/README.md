@@ -112,6 +112,20 @@ reports every emission note, every executable that does not read back, every
 feature the reconstruction lost and every sample an exact lowering disagrees
 on.
 
+`translateProgram(source, from, to)` carries every Lean and Rocq theorem as a
+proof obligation in `semantics.obligations`. The obligation names the source
+theorem and the target declaration that states it, so a false restatement is
+rejected by the source kernel and by every target. Into Lean and Rocq the
+obligation is discharged by the target kernel itself (`discharge:
+'target-kernel'`). The emitted proof has no `sorry`, `admit` or axiom, and
+`#print axioms` or `Print Assumptions` shows it closed without an axiom of the
+translation or of another kernel. Into JavaScript and Rust a theorem is a
+bounded check (`discharge: 'source-kernel'`, `check: 'bounded'`), not a proof.
+Run with `--ml-check-theorems`, the program prints `theorem <name>: holds on the
+bounded domain` or fails, and the proof stays with the source kernel. A
+statement that holds on the bounded domain but not in general therefore passes
+the check while every kernel rejects it.
+
 ## Parity
 
 Every feature in [`../parity/language-features.json`](../parity/language-features.json)

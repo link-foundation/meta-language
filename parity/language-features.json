@@ -603,6 +603,30 @@
       }
     },
     {
+      "id": "semantics-proof-preservation",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/semantic_translation.rs",
+          "rust/src/translation/emit_lean.rs",
+          "rust/src/translation/emit_rocq/proofs.rs",
+          "rust/tests/unit/issue_195_semantics_proof_preservation.rs",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/program-translation.js",
+          "js/src/translation/emit-lean.js",
+          "js/src/translation/emit-rocq.js",
+          "js/tests/issue-195-semantics-proof-preservation.test.js",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      }
+    },
+    {
       "id": "javascript-parser-codegen",
       "required": true,
       "rust": {
