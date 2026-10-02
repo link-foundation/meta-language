@@ -138,7 +138,7 @@ fn merging_and_lowering_keep_the_feature_union_declarations_and_rule_fields() {
     let fixture: Value = serde_json::from_str(FIXTURE).expect("the feature union fixture is JSON");
     let interchange = &fixture["interchange"];
     let merge = interchange["merge"].as_array().expect("merge cases");
-    assert!(!merge.is_empty());
+    assert_ne!(merge.as_slice(), &[] as &[Value]);
     for item in merge {
         check_merge(item);
     }

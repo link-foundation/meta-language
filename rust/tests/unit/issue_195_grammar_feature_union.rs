@@ -602,7 +602,7 @@ fn every_union_feature_rejects_its_negative_cases() {
                 .parse(&input_of(item), &options_of(item.get("options")))
                 .expect_err("parse rejects");
             assert_eq!(error.rejection.reason, text(&item["rejection"], "reason"));
-            assert!(!error.to_string().is_empty());
+            assert_ne!(error.to_string(), "");
         }
     }
     // The step budget bounds a parse as the depth limit does.
