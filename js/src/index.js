@@ -9,6 +9,7 @@ export * from './grammar-validate.js';
 export * from './grammar-interchange.js';
 export * from './grammar-links.js';
 export * from './grammar-lossless.js';
+export * from './grammar-lowering.js';
 export * from './grammar-reverse.js';
 export * from './graphql-adapter.js';
 export * from './language-catalog.js';
