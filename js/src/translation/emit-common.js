@@ -136,6 +136,8 @@ export class EmitState {
   }
 
   map(entry, target) {
+    // A generated ml_io pair (output.js) has no source declaration to map.
+    if (entry.output) return;
     this.mappings.push({
       kind: entry.k === 'fn' ? 'function' : entry.k,
       source: entry.fullName,

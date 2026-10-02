@@ -591,7 +591,7 @@ class LeanEmitter {
       else if (effect.k === 'unwrap') {
         // The value of a step, or the source's abort: its message, uncaught, ends main.
         const [made, aborted] = effect.ctors.map((ctor) => this.state.ctorRef(effect.data, ctor));
-        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with | ${made} _ ml_v => pure ml_v | ${aborted} _ ml_m => throw (IO.userError ml_m))`);
+        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with\n    | ${made} _ ml_v => pure ml_v\n    | ${aborted} _ ml_m => throw (IO.userError ml_m))`);
       } else if (this.usesNumber(effect.prop) || this.onPartial(effect.prop, effects.slice(0, index))) {
         // The kernel cannot evaluate Float or unfold a partial def, so the assertion runs where the source's does.
         assertion += 1;
@@ -600,16 +600,17 @@ class LeanEmitter {
       } else {
         assertion += 1;
         // The assertion is stated of the values main computes before it; a run that aborts before it never reaches it.
-        const statement = effects.slice(0, index).reduceRight((rest, item) => {
+        // Where a run may abort, the statement is a Bool the kernel evaluates: the decided assertion, or true where one aborts.
+        const threaded = this.program.abortsThreaded;
+        const body = effects.slice(0, index).reduceRight((rest, item) => {
           if (item.k === 'let') return `let ${item.name} := ${this.expr(item.value, 1)}; ${rest}`;
           if (item.k !== 'unwrap') return rest;
           const [made, aborted] = item.ctors.map((ctor) => this.state.ctorRef(item.data, ctor));
-          return `(match ${this.expr(item.pair, 1)} with | ${made} _ ${item.name} => ${rest} | ${aborted} _ _ => True)`;
-        }, this.prop(effect.prop));
+          return `(match ${this.expr(item.pair, 1)} with | ${made} _ ${item.name} => ${rest} | ${aborted} _ _ => ${threaded ? 'true' : 'True'})`;
+        }, threaded ? `decide (${this.prop(effect.prop)})` : this.prop(effect.prop));
+        const statement = threaded ? `(${body}) = true` : body;
         const name = `ml_assertion_${assertion}`;
-        // Evaluating the runs main makes first leaves the decidable assertion, or True where one aborts.
-        const unreached = this.program.abortsThreaded ? '\n  try exact True.intro\n  try (conv => whnf)\n  try decide\n  try exact True.intro' : '';
-        theorems.push(`theorem ${name} : ${statement} := by\n  try rfl\n  try decide${unreached}`);
+        theorems.push(`theorem ${name} : ${statement} := by\n  try rfl\n  try decide`);
         this.state.assertionTheorem(name, effect);
       }
     });
