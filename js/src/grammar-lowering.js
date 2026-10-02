@@ -15,7 +15,7 @@
 // therefore distinct from the lossless interchange package (executable plus
 // metadata), and the check below reconstructs the original from the package
 // and reports every feature the package does not carry. It mirrors
-// rust/src/grammar/interchange/lowering.rs.
+// rust/src/grammar/interchange/lowering/.
 import { Parser } from 'links-notation';
 import { carryRuleDocs, Grammar } from './grammar.js';
 import { caseVariants, ruleDoc } from './grammar-emitters/structural.js';
@@ -609,7 +609,7 @@ export function checkGrammarLowering(grammar, format, {
     failures.push({ kind: 'feature-dropped', detail: error.message });
   }
   if (reconstructed !== null) {
-    failures.push(...droppedFeatures(grammar, reconstructed).map((detail) => ({ kind: 'feature-dropped', detail })));
+    failures.push(...droppedGrammarFeatures(grammar, reconstructed).map((detail) => ({ kind: 'feature-dropped', detail })));
   }
   if (lowering.status === 'exact') {
     for (const text of accepts) {
@@ -628,7 +628,7 @@ export function checkGrammarLowering(grammar, format, {
 }
 
 /** The features of `expected` that `actual` does not carry, as readable details. */
-export function droppedFeatures(expected, actual) {
+export function droppedGrammarFeatures(expected, actual) {
   const details = [];
   if (expected.ruleNames().join('\n') !== actual.ruleNames().join('\n')) {
     details.push(`rules [${expected.ruleNames().join(', ')}] became [${actual.ruleNames().join(', ')}]`);
