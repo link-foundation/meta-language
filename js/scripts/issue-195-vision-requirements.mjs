@@ -649,12 +649,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-DOWNSTREAM-FORMAL-AI-WORKLOADS',
     area: 'downstream-consumers',
     specification: 'downstream-consumers',
+    fixture: 'parity/fixtures/formal-ai-workloads.json',
     construct: 'formal-ai workloads on clean installed artifacts',
     expectedBehavior:
       'The link-assistant/formal-ai workloads identified by the consumer matrix run against clean installed artifacts of both packages through the common links representation.',
     assertions: ['workloadsRunOnInstalledArtifacts', 'sharedConceptsReused', 'distinctionsPreserved'],
-    javascript: null,
-    rust: null,
+    javascript: [
+      'js/scripts/run-formal-ai-workloads.mjs',
+      'js/scripts/issue-195-formal-ai-workloads.mjs',
+      'js/scripts/issue-195-formal-ai-workload-probes.mjs',
+      'js/scripts/issue-195-formal-ai-consumer.mjs',
+      'js/tests/issue-195-downstream-formal-ai-workloads.test.js',
+    ],
+    rust: [
+      'js/scripts/run-formal-ai-workloads.mjs',
+      'js/scripts/issue-195-formal-ai-rust-probe.mjs',
+      'rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs',
+    ],
   },
   {
     id: 'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS',

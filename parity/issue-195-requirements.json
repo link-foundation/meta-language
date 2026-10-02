@@ -1728,7 +1728,7 @@
     "planned:repository-directive:i195-downstream-consumer-matrix": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: consumer matrix for relative-meta-logic and formal-ai",
-      "sha256": "a82823c9ff450eb19d14d9f5a52e8f455fc0b2d573d8bb0f4fe7eb3d41bbe5f1"
+      "sha256": "08aee26b4991fe7d506a8bc576351fac3b58090b3de42e5d621b660e51a0f7f7"
     },
     "planned:repository-directive:i195-downstream-rml-workloads": {
       "path": "parity/fixtures/rml-pr184-workloads.json",
@@ -1738,17 +1738,17 @@
     "planned:repository-directive:i195-downstream-rml-pr184-audit": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: current relative-meta-logic pull request 184 workload inventory",
-      "sha256": "a82823c9ff450eb19d14d9f5a52e8f455fc0b2d573d8bb0f4fe7eb3d41bbe5f1"
+      "sha256": "08aee26b4991fe7d506a8bc576351fac3b58090b3de42e5d621b660e51a0f7f7"
     },
     "planned:repository-directive:i195-downstream-formal-ai-workloads": {
-      "path": "docs/vision.md",
-      "selector": "#downstream-consumers: formal-ai workloads on clean installed artifacts",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "path": "parity/fixtures/formal-ai-workloads.json",
+      "selector": "docs/vision.md#downstream-consumers: formal-ai workloads on clean installed artifacts",
+      "sha256": "47f291ee16b87d8f51d6abf98b6efb85993e260e6002bdfd329ded65d6c73e2b"
     },
     "planned:repository-directive:i195-downstream-typescript-translations": {
       "path": "docs/downstream-consumers.md",
       "selector": "docs/vision.md#downstream-consumers: Rust, JavaScript and TypeScript semantic projection for formal-ai",
-      "sha256": "a82823c9ff450eb19d14d9f5a52e8f455fc0b2d573d8bb0f4fe7eb3d41bbe5f1"
+      "sha256": "08aee26b4991fe7d506a8bc576351fac3b58090b3de42e5d621b660e51a0f7f7"
     },
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
@@ -15884,8 +15884,18 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/scripts/run-formal-ai-workloads.mjs",
+          "js/scripts/issue-195-formal-ai-workloads.mjs",
+          "js/scripts/issue-195-formal-ai-workload-probes.mjs",
+          "js/scripts/issue-195-formal-ai-consumer.mjs",
+          "js/tests/issue-195-downstream-formal-ai-workloads.test.js"
+        ],
+        "rust": [
+          "js/scripts/run-formal-ai-workloads.mjs",
+          "js/scripts/issue-195-formal-ai-rust-probe.mjs",
+          "rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs"
+        ]
       },
       "verifications": [
         {
@@ -15922,7 +15932,7 @@
       "traceability": {
         "specification": "docs/vision.md#downstream-consumers",
         "inventories": [
-          "docs/vision.md"
+          "parity/fixtures/formal-ai-workloads.json"
         ],
         "sources": [
           "acceptanceGate",

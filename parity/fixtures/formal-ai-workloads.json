@@ -1,0 +1,286 @@
+{
+  "description": "The link-assistant/formal-ai files at the pinned revision that reach meta-language: the Rust manifest that requires the crate, the library sources that name meta_language (and the source-test mirrors the source target compiles), the test groups that exercise them with their cargo target and libtest name filter, and the LiNo data both runtimes run through the installed artifacts. Blobs are git blob ids at the revision.",
+  "repository": "link-assistant/formal-ai",
+  "revision": "d209aac6461b355f1a527831202af3423135f7e6",
+  "dependencies": {
+    "rust": "0.58.2",
+    "javascript": null
+  },
+  "workloads": [
+    {
+      "file": "rust/Cargo.toml",
+      "kind": "manifest",
+      "blob": "92cd9a40befdce9bc59211a133fbebcfde21ca6c"
+    },
+    {
+      "file": "rust/src/agentic_coding/link_edit_rules.rs",
+      "kind": "source",
+      "blob": "5784500d9f75b81c3c82661adf662b1d6bfd5e41"
+    },
+    {
+      "file": "rust/src/agentic_coding/self_ast.rs",
+      "kind": "source",
+      "blob": "119b144fbecbe5e0bba5e6b811e5d95cd92ab768"
+    },
+    {
+      "file": "rust/src/agentic_coding/source_links.rs",
+      "kind": "source",
+      "blob": "bc46688b461e28d1c5e5b2752db6bf1e6aeb5eff"
+    },
+    {
+      "file": "rust/src/coding/cst.rs",
+      "kind": "source",
+      "blob": "6eb615e6c188305a4926a6c54db897fef6dd4f2f"
+    },
+    {
+      "file": "rust/src/document_formats.rs",
+      "kind": "source",
+      "blob": "b06f53cc4db111767b644db6bd6ef65a86c6b2ef"
+    },
+    {
+      "file": "rust/src/grammar_kinds.rs",
+      "kind": "source",
+      "blob": "363973de1f87c47fa805b73ea956337d64b64e2b"
+    },
+    {
+      "file": "rust/src/learning_ledger.rs",
+      "kind": "source",
+      "blob": "a642686eae6cbf318eb56d6ea79adaf631c52971"
+    },
+    {
+      "file": "rust/src/memory_query_language/mod.rs",
+      "kind": "source",
+      "blob": "9d310324855118a3b5209c6831a46b8b840d228a"
+    },
+    {
+      "file": "rust/src/orchestration/analysis.rs",
+      "kind": "source",
+      "blob": "30ff08f0d9ae56464d22cb5df853bb26ba38fde7"
+    },
+    {
+      "file": "rust/src/rust_projection.rs",
+      "kind": "source",
+      "blob": "35d929a9d65f10f82a9458cf086d73519a5ffc84"
+    },
+    {
+      "file": "rust/src/self_ast_census.rs",
+      "kind": "source",
+      "blob": "076f38ee54e1767e745795019a7c01e37cee7863"
+    },
+    {
+      "file": "rust/src/self_explanation.rs",
+      "kind": "source",
+      "blob": "51631ef6cf90203025a6978860814bde0a6cc0bc"
+    },
+    {
+      "file": "rust/src/self_source_links.rs",
+      "kind": "source",
+      "blob": "c9a7c923080e5f60e9a8d69f1a5c965057326007"
+    },
+    {
+      "file": "rust/src/solver_handlers/meta_explanation.rs",
+      "kind": "source",
+      "blob": "f4e04bc36ee48033081b3cf23dab719502d82f27"
+    },
+    {
+      "file": "rust/src/solver_handlers/numeric_list/mod.rs",
+      "kind": "source",
+      "blob": "b9fd4a7fefdd77d5eeee1c988ef3a2a5f4fca7ae"
+    },
+    {
+      "file": "rust/src/summarization/file.rs",
+      "kind": "source",
+      "blob": "8ffa32e525315bc2c7d312a478772bf32fc02898"
+    },
+    {
+      "file": "rust/src/summarization/validation/criteria.rs",
+      "kind": "source",
+      "blob": "845d165e8317681fe02720b6a8855fac727a9b89"
+    },
+    {
+      "file": "rust/src/summarization/validation/mod.rs",
+      "kind": "source",
+      "blob": "0b7451e6532c53ba8f1a6fe6f5ec042ae1276896"
+    },
+    {
+      "file": "rust/tests/source/coding/cst.rs",
+      "kind": "source",
+      "blob": "516d8539d1c6e9dee51cc31c5277164bb6a64765"
+    },
+    {
+      "file": "rust/tests/source/summarization/file.rs",
+      "kind": "source",
+      "blob": "028aa0f60d6a689cd8f1ad1531ed37d9a4edac1b"
+    },
+    {
+      "file": "rust/tests/source/summarization/mod.rs",
+      "kind": "source",
+      "blob": "1bd5c5978418dcb7dfd444bfa78249456716a8a5"
+    },
+    {
+      "file": "rust/tests/unit/issue_1085_link_edit_rules.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "issue_1085_link_edit_rules::",
+      "blob": "0058ec2aba9b6439e6a54275c80d29dfdc9085b9"
+    },
+    {
+      "file": "rust/tests/unit/issue_1138_rust_projection.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "issue_1138_rust_projection::",
+      "blob": "69c66c33de822dcff270571a5c226943ad4d7f30"
+    },
+    {
+      "file": "rust/tests/unit/issue_1138_translation_tool.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "issue_1138_translation_tool::",
+      "blob": "d83a30b703d4910823256778a8e8ca4132febbd6"
+    },
+    {
+      "file": "rust/tests/unit/issue_425.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "issue_425::",
+      "blob": "c26a46a7dc0b9394b5bf93a2ec29be13ce7925c0"
+    },
+    {
+      "file": "rust/tests/unit/issue_558_source_links.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "issue_558_source_links::",
+      "blob": "0a65cc505c42b237086e043bf2a046bdc51716ae"
+    },
+    {
+      "file": "rust/tests/unit/issue_673_self_ast_census.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "issue_673_self_ast_census::",
+      "blob": "37ad09bb8422c1c5cbf0959a72a1a57bf70ed535"
+    },
+    {
+      "file": "rust/tests/unit/issue_708_memory_query_language_execution.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "issue_708_memory_query_language_execution::",
+      "blob": "05e77547f48a07ba6299758456603e665e2605a8"
+    },
+    {
+      "file": "rust/tests/unit/issue_708_memory_query_languages.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "issue_708_memory_query_languages::",
+      "blob": "e83297f20d12127ebad9a04a363cdf757dba166b"
+    },
+    {
+      "file": "rust/tests/unit/specification/issue_893_summarization_validation.rs",
+      "kind": "test",
+      "target": "unit",
+      "filter": "specification::issue_893_summarization_validation::",
+      "blob": "f1b77ca7bd17d59e8bcb8a24a867460e52020d19"
+    },
+    {
+      "file": "rust/tests/source/source_tests/coding/cst/tests.rs",
+      "kind": "test",
+      "target": "source",
+      "filter": "coding::cst::tests::",
+      "blob": "521f9ea52e31d02e8201af87f1f1c895eef3db7c"
+    },
+    {
+      "file": "rust/tests/source/source_tests/summarization/mod/tests.rs",
+      "kind": "test",
+      "target": "source",
+      "filter": "summarization::tests::",
+      "blob": "f928dcd8358b24b323615fb9adf9adf96ce1f751"
+    },
+    {
+      "file": "data/seed/grammar-projection-rules.lino",
+      "kind": "data",
+      "blob": "5b54494e13a632e1d218e65895ebbc81861e2991"
+    },
+    {
+      "file": "rust/embedded/data/seed/grammar-projection-rules.lino",
+      "kind": "data",
+      "blob": "5b54494e13a632e1d218e65895ebbc81861e2991"
+    },
+    {
+      "file": "data/seed/program-cst-grammars.lino",
+      "kind": "data",
+      "blob": "8ac52d6274f852027e99043a7eb503772e4002d1"
+    },
+    {
+      "file": "rust/embedded/data/seed/program-cst-grammars.lino",
+      "kind": "data",
+      "blob": "8ac52d6274f852027e99043a7eb503772e4002d1"
+    },
+    {
+      "file": "data/seed/hello-world-programs.lino",
+      "kind": "data",
+      "blob": "c4f927853ca963af00691c805121d5a8ae1d7330"
+    },
+    {
+      "file": "rust/embedded/data/seed/hello-world-programs.lino",
+      "kind": "data",
+      "blob": "c4f927853ca963af00691c805121d5a8ae1d7330"
+    },
+    {
+      "file": "data/meta/link-edit-rules.lino",
+      "kind": "data",
+      "blob": "2b4b30a47f87d857de093334252ab7bd64f13125"
+    },
+    {
+      "file": "rust/embedded/data/meta/link-edit-rules.lino",
+      "kind": "data",
+      "blob": "2b4b30a47f87d857de093334252ab7bd64f13125"
+    },
+    {
+      "file": "data/benchmarks/coding-modification-suite.lino",
+      "kind": "data",
+      "blob": "9f43afd890cad5b32cee5e25e29c3cf4d7b4aa3d"
+    },
+    {
+      "file": "rust/embedded/data/benchmarks/coding-modification-suite.lino",
+      "kind": "data",
+      "blob": "9f43afd890cad5b32cee5e25e29c3cf4d7b4aa3d"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "rust/tests/unit/specification/translation_round_trip.rs",
+      "reason": "exercises the natural-language translation pipeline (formal_ai::translation and the seed lexicon), which reaches no meta_language item"
+    },
+    {
+      "file": "rust/tests/unit/specification/translation_via_links/extended.rs",
+      "reason": "exercises the natural-language translation pipeline (formal_ai::translation and the seed lexicon), which reaches no meta_language item"
+    },
+    {
+      "file": "rust/tests/source/source_tests/solver_handlers/numeric_list/tests.rs",
+      "reason": "asserts the engine name string \"meta_language\" recorded by the handler; the parse it reports is covered by coding::cst::tests"
+    },
+    {
+      "file": "rust/tests/source/source_tests/solver_handlers/program_synthesis/tests.rs",
+      "reason": "asserts the engine name string \"synthesis:cst_engine meta_language\" only"
+    },
+    {
+      "file": "rust/tests/unit/issue_842.rs",
+      "reason": "asserts the snapshot text \"engine meta_language\" only"
+    },
+    {
+      "file": "rust/tests/unit/ci-cd/issue_742.rs",
+      "reason": "reads the meta-language entry of Cargo.toml; it runs no meta-language code"
+    },
+    {
+      "file": "rust/tests/unit/docs_requirements/issue_526.rs",
+      "reason": "checks documentation text that names meta-language tests; it runs no meta-language code"
+    },
+    {
+      "file": "rust/tests/unit/docs_requirements/issue_563.rs",
+      "reason": "checks documentation text that names meta_language::LinkNetwork; it runs no meta-language code"
+    },
+    {
+      "file": "js/",
+      "reason": "the formal-ai npm package declares no meta-language dependency; the JavaScript side runs the formal-ai data above through the installed npm package instead"
+    }
+  ]
+}

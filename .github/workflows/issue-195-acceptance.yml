@@ -220,6 +220,68 @@ jobs:
         shell: bash
         run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-rml-workloads/rml-target"
 
+  formal-ai-workloads:
+    name: Formal AI Workloads
+    needs: candidates
+    runs-on: ubuntu-latest
+    # The Rust workloads build formal-ai and its dependencies from scratch.
+    timeout-minutes: 120
+    concurrency:
+      group: issue-195-formal-ai-workloads-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: .issue-195-work/candidates
+
+      - name: Run the link-assistant/formal-ai workloads on the exact artifacts
+        shell: bash
+        run: >-
+          node js/scripts/run-formal-ai-workloads.mjs
+          --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
+          --crate "$(ls .issue-195-work/candidates/*.crate)"
+          --work-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
+          --out issue-195-artifacts/formal-ai-workloads/report.json
+
+      # The report is uploaded even when a workload fails: the aggregate validates it and
+      # records nothing for the assertions it does not support.
+      - name: Upload the workload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-formal-ai-workloads-${{ github.sha }}
+          path: issue-195-artifacts/formal-ai-workloads/report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload workload logs and runtime outputs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-formal-ai-workload-logs-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*.log
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads/formal-ai-target"
+
   acceptance:
     name: Full Requirements Aggregate
     permissions:
@@ -227,7 +289,7 @@ jobs:
       pull-requests: read
       checks: read
       actions: read
-    needs: [candidates, consumers, rml-workloads]
+    needs: [candidates, consumers, rml-workloads, formal-ai-workloads]
     # GitHub reports a skipped job as a successful required check. This job
     # always runs and fails itself when there are no candidates to evaluate.
     if: ${{ always() }}
@@ -319,9 +381,18 @@ jobs:
           name: issue-195-rml-workloads-${{ github.sha }}
           path: issue-195-artifacts/rml-workloads
 
+      - name: Download the formal-ai workload report
+        # A missing report leaves I195-DOWNSTREAM-FORMAL-AI-WORKLOADS unobserved instead of stopping the aggregate.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-formal-ai-workloads-${{ github.sha }}
+          path: issue-195-artifacts/formal-ai-workloads
+
       - name: Produce checkpoint evidence
         env:
           ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
           GH_TOKEN: ${{ github.token }}
           # Optional: repository Administration read exposes ruleset bypass actors.
           ISSUE_195_RULESET_TOKEN: ${{ secrets.ISSUE_195_RULESET_TOKEN }}

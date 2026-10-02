@@ -57,6 +57,7 @@ mod issue_195_acceptance;
 mod issue_195_binding_rename;
 mod issue_195_binding_rename_corpus;
 mod issue_195_conformance;
+mod issue_195_downstream_formal_ai_workloads;
 mod issue_195_downstream_rml_workloads;
 mod issue_195_evidence;
 mod issue_195_faithful_behavior;

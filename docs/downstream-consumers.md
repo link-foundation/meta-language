@@ -165,14 +165,14 @@ a new consuming file fails the audit until this section is updated.
 | Edit Rust and JavaScript through links: `apply_link_edit` in [rust/src/agentic_coding/link_edit_rules.rs][fai-edit] (L180) with InsertMember, ReplaceLiteral and RenameIdentifier rules, tested by formal-ai's [rust/tests/unit/issue_1085_link_edit_rules.rs][fai-edit-test] | `apply_edit` over a `ByteRange` followed by `verify_full_match` | `I195-XFORM-rust-insert`, `I195-XFORM-rust-replace`, `I195-XFORM-javascript-insert`, `I195-XFORM-javascript-replace` | `rust/tests/unit/link_network.rs`, `rust/tests/unit/issue_195_structured_transformations.rs` | covered by tests |
 | RenameIdentifier made binding-safe (formal-ai's rule renames whole tokens, not bindings) | Scope-aware binding rename | `I195-RENAME-rust`, `I195-RENAME-javascript` | `rust/tests/unit/issue_195_binding_rename.rs`, `rust/tests/unit/issue_195_binding_rename_corpus.rs` | not yet implemented |
 | Project programs between Rust, JavaScript and TypeScript with rule sets written in Links Notation: `project` in [rust/src/rust_projection.rs][fai-proj] (L65) using `TranslationRuleSet::from_lino`, `LinkNetwork::from_lino` and `query_matches`, tested by formal-ai's [issue_1138_rust_projection.rs][fai-proj-test] | Rule sets and networks serialized to and from Links Notation; query matching | `I195-PARITY-TRANSLATIONS` | `rust/tests/unit/translation_rules.rs` (`translation_rule_sets_round_trip_through_lino`), `rust/tests/unit/lino_serialization.rs`, `rust/tests/unit/query_matching.rs` | covered by tests |
-| formal-ai's own projection rule sets run against the current crate | Same API as the previous row | `I195-PARITY-TRANSLATIONS` | none | not yet verified |
+| formal-ai's own projection rule sets run against the current crate | Same API as the previous row | `I195-PARITY-TRANSLATIONS`, `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS` | `rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs` (validates the report of the CI job that runs formal-ai's `issue_1138_*` tests on the patched candidate crate) | not yet verified |
 | Translation between Rust and JavaScript in both directions, required by [the three-roots architect note][fai-three-roots] | Rust to JavaScript and JavaScript to Rust translation; formal-ai does not call it at the inspected commit | `I195-TRANSLATE-rust-to-javascript`, `I195-TRANSLATE-javascript-to-rust`, `I195-SEMANTICS-FAITHFUL-BEHAVIOR` | `rust/tests/unit/issue_195_translation_pairs.rs`, `rust/tests/unit/issue_195_translation_behavior.rs`, `rust/tests/unit/translation_emit_javascript.rs`, `rust/tests/unit/translation_emit_rust.rs` | not yet verified |
 | Translation to and from TypeScript, required by the same [architect note][fai-three-roots] (L10) | TypeScript has a CST but is not a translation pair in meta-language | `I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS`, `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS` | none | not yet implemented |
 | Census and serialization of formal-ai's own Rust syntax: `ast_census` and `network_lino` in [rust/src/agentic_coding/self_ast.rs][fai-self-ast] (L148, L270) and `parse_network` in [rust/src/grammar_kinds.rs][fai-kinds] (L167) | `to_lino` / `from_lino` and grammar node kinds over the Rust CST | `I195-CST-rust`, `I195-GRAMMAR-CONCEPT-DISTINCTIONS` | `rust/tests/unit/lino_serialization.rs`, `rust/tests/unit/default_cst_expectations.rs` | covered by tests |
 | formal-ai's Links Notation seed and benchmark data parse and reconstruct losslessly | LiNo CST; formal-ai fixtures from `data/seed/` and `data/benchmarks/` in the parity corpora | `I195-CST-lino` | `rust/tests/unit/parity_corpora.rs` (Rust only) | covered by tests |
-| A JavaScript use of meta-language inside formal-ai | None exists at the inspected commit; formal-ai's [package.json][fai-pkg] has no meta-language dependency | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS`, `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` | none | not yet implemented |
+| A JavaScript use of meta-language inside formal-ai | None exists at the inspected commit; formal-ai's [package.json][fai-pkg] has no meta-language dependency. The acceptance job instead runs formal-ai's Links Notation data (seed grammars, projection rules, link-edit rules, hello-world programs, benchmark suite) through the npm candidate's public API in a clean consumer and compares the outputs with formal-ai's Rust functions | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS`, `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` | `js/tests/issue-195-downstream-formal-ai-workloads.test.js` (validates the npm part of that report) | not yet implemented |
 | formal-ai built against the current crate: it declares 0.58.2 | Crate 0.58.2 on crates.io | `I195-DELIVERY-CRATE-CANDIDATE`, `I195-DELIVERY-CRATE-PUBLISHED` | `js/tests/issue-195-delivery.test.js` (checks this repository's packaging, not formal-ai) | not yet verified |
-| formal-ai workloads run against clean installed meta-language artifacts, candidate and published | Candidate and published crate consumed by formal-ai's own test suites | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS`, `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` | none | not yet verified |
+| formal-ai workloads run against clean installed meta-language artifacts, candidate and published | Candidate and published crate consumed by formal-ai's own test suites, pinned with their blobs in `parity/fixtures/formal-ai-workloads.json` | `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS`, `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` | `js/tests/issue-195-downstream-formal-ai-workloads.test.js`, `rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs` (validate the report of the CI job "Formal AI Workloads" in `.github/workflows/issue-195-acceptance.yml`) | not yet verified |
 
 [fai-cargo]: https://github.com/link-assistant/formal-ai/blob/d209aac6461b355f1a527831202af3423135f7e6/rust/Cargo.toml
 [fai-pkg]: https://github.com/link-assistant/formal-ai/blob/d209aac6461b355f1a527831202af3423135f7e6/package.json
@@ -242,6 +242,21 @@ a new consuming file fails the audit until this section is updated.
   `I195-DOWNSTREAM-RML-WORKLOADS`,
   `I195-DOWNSTREAM-FORMAL-AI-WORKLOADS` and
   `I195-DOWNSTREAM-FORMAL-AI-PUBLISHED` remain unverified.
+- The formal-ai workloads job (`js/scripts/run-formal-ai-workloads.mjs`) has
+  not yet produced a report that holds. A local run of its JavaScript side on a
+  packed 0.58.2 candidate passed 137 of 147 tests over formal-ai's data: all
+  133 documents parse, round-trip and fully match, and the link edits and the
+  rust, javascript and typescript kind distinctions hold. Ten tests fail. In
+  JavaScript, `LinkNetwork.toLino` writes only the link structure, without
+  link types, kinds or spans, so `fromLino` gives back no syntax links.
+  `TranslationRuleSet.fromLino` and `LinkNetwork.fromLino` do not load
+  `data/seed/grammar-projection-rules.lino`, so the refused and no-form
+  kinds and the projections of formal-ai's issue 1138 samples cannot be shown
+  from JavaScript. The JavaScript query parser rejects 58 of the 121 match
+  s-expressions in that file as written. The Rust side was not built locally.
+  formal-ai's `Cargo.lock` pins `tree-sitter-language` 0.1.7, which is older
+  than the candidate's `^0.1.8`, so the runner refreshes the lock for
+  meta-language alone before the patched build resolves.
 - `I195-DELIVERY-RML-CANDIDATE`, `I195-DELIVERY-RML-PUBLISHED`,
   `I195-DELIVERY-NPM-PUBLISHED` and `I195-DELIVERY-CRATE-PUBLISHED` are not
   shown by this document.

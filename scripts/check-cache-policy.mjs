@@ -40,7 +40,7 @@ export const REQUIRED_CATEGORIES = Object.freeze([
  */
 export const CACHE_PRODUCING_COMMAND = /\b(?:cargo\s+(?:\+\S+\s+)?(?:test|build|bench|llvm-cov|package)\b|npm\s+(?:test|pack)\b|wasm-pack\s+build\b)/u;
 /** Any command that writes a Cargo or npm cache, which obliges the job to tear down. */
-const CACHE_TOUCHING_COMMAND = /\b(?:cargo|npm|npx|wasm-pack)\s|run-issue-195-(?:evidence|consumer)\.mjs|run-rml-pr184-workloads\.mjs/u;
+const CACHE_TOUCHING_COMMAND = /\b(?:cargo|npm|npx|wasm-pack)\s|run-issue-195-(?:evidence|consumer)\.mjs|run-rml-pr184-workloads\.mjs|run-formal-ai-workloads\.mjs/u;
 const WRAPPER = /scripts\/with-cache-cleanup\.mjs\s+--event\s+\S+.*\s--\s/u;
 const TEARDOWN = /scripts\/clean-caches\.mjs\b.*--event\s+ci-teardown/u;
 

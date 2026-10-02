@@ -674,6 +674,28 @@
       }
     },
     {
+      "id": "downstream-formal-ai-workloads",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs",
+          "parity/fixtures/formal-ai-workloads.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/scripts/run-formal-ai-workloads.mjs",
+          "js/scripts/issue-195-formal-ai-workloads.mjs",
+          "js/scripts/issue-195-formal-ai-workload-probes.mjs",
+          "js/scripts/issue-195-formal-ai-consumer.mjs",
+          "js/tests/issue-195-downstream-formal-ai-workloads.test.js",
+          "parity/fixtures/formal-ai-workloads.json"
+        ]
+      }
+    },
+    {
       "id": "javascript-parser-codegen",
       "required": true,
       "rust": {
