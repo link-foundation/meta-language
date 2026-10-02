@@ -1082,5 +1082,191 @@
       "stdout": "",
       "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unexpected text at the end of the line\n"
     }
+  ],
+  "reverse": [
+    {
+      "id": "abnf:reverse",
+      "format": "abnf",
+      "source": "; a greeting: a word, one space and a number\nmessage   =  word SP number   ; the start rule\n\nword = 1*ALPHA\n; digits only\nnumber=1*DIGIT\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format abnf) (start message))\n(rule message normal (seq (ref word) (ref SP) (ref number)))\n(rule word normal (repeat1 (ref ALPHA)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule SP normal (literal %20))\n(rule ALPHA normal (class plain (range A Z) (range a z)))\n(rule DIGIT normal (range 0 9))\n",
+      "exported": "message = word SP number\nword = 1*( ALPHA )\nnumber = 1*( DIGIT )\nSP = %s\" \"\nALPHA = ( %x41-5A / %x61-7A )\nDIGIT = %x30-39\n",
+      "reimportedLinks": "(grammar (format abnf) (start message))\n(rule message normal (seq (ref word) (ref SP) (ref number)))\n(rule word normal (repeat1 (ref ALPHA)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule SP normal (literal %20))\n(rule ALPHA normal (choice unordered (range A Z) (range a z)))\n(rule DIGIT normal (range 0 9))\n",
+      "layout": "(layout abnf %3B%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%0A)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28ref%20SP%29%20%28ref%20number%29%29%29 message%20%20%20%3D%20%20word%20SP%20number%20%20%20%3B%20the%20start%20rule %0A%0A)\n(define word %28rule%20word%20normal%20%28repeat1%20%28ref%20ALPHA%29%29%29 word%20%3D%201%2AALPHA %0A%3B%20digits%20only%0A)\n(define number %28rule%20number%20normal%20%28repeat1%20%28ref%20DIGIT%29%29%29 number%3D1%2ADIGIT %0A)\n(implicit SP %28rule%20SP%20normal%20%28literal%20%2520%29%29)\n(implicit ALPHA %28rule%20ALPHA%20normal%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29)\n(implicit DIGIT %28rule%20DIGIT%20normal%20%28range%200%209%29%29)\n",
+      "mutated": {
+        "links": "(grammar (format abnf) (start message))\n(rule message normal (choice unordered (seq (ref word) (ref SP) (ref number)) (literal round-trip-mutation)))\n(rule word normal (repeat1 (ref ALPHA)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule SP normal (literal %20))\n(rule ALPHA normal (class plain (range A Z) (range a z)))\n(rule DIGIT normal (range 0 9))\n",
+        "source": "; a greeting: a word, one space and a number\nmessage = word SP number / %s\"round-trip-mutation\"\n\nword = 1*ALPHA\n; digits only\nnumber=1*DIGIT\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format abnf) (start message))\n(rule message normal (seq (ref term) (ref SP) (ref number)))\n(rule term normal (repeat1 (ref ALPHA)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule SP normal (literal %20))\n(rule ALPHA normal (class plain (range A Z) (range a z)))\n(rule DIGIT normal (range 0 9))\n",
+        "source": "; a greeting: a word, one space and a number\nmessage = term SP number\n\nterm = 1*( ALPHA )\n; digits only\nnumber=1*DIGIT\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "antlr:reverse",
+      "format": "antlr",
+      "source": "// a greeting grammar\ngrammar Message;\n\n/* the start rule */\nmessage : word ' ' number ;\n\nword   : LETTER+ ;\nnumber : DIGIT+ ;   // one or more digits\n\nLETTER : [A-Za-z] ;\nDIGIT  : [0-9] ;\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format antlr) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)) (doc %2F%2A%20the%20start%20rule%20%2A%2F))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)) (doc %2F%2F%20one%20or%20more%20digits))\n(rule DIGIT token (class plain (range 0 9)))\n",
+      "exported": "grammar Message;\n\n/* the start rule */\nmessage : word ' ' number ;\nword : LETTER+ ;\nnumber : DIGIT+ ;\n// one or more digits\nLETTER : [A-Za-z] ;\nDIGIT : [0-9] ;\n",
+      "reimportedLinks": "(grammar (format antlr) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)) (doc %2F%2A%20the%20start%20rule%20%2A%2F))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)) (doc %2F%2F%20one%20or%20more%20digits))\n(rule DIGIT token (class plain (range 0 9)))\n",
+      "layout": "(layout antlr %2F%2F%20a%20greeting%20grammar%0Agrammar%20Message%3B%0A%0A)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%20%28doc%20%252F%252A%2520the%2520start%2520rule%2520%252A%252F%29%29 %2F%2A%20the%20start%20rule%20%2A%2F%0Amessage%20%3A%20word%20%27%20%27%20number%20%3B %0A%0A)\n(define word %28rule%20word%20normal%20%28repeat1%20%28ref%20LETTER%29%29%29 word%20%20%20%3A%20LETTER%2B%20%3B %0A)\n(define number %28rule%20number%20normal%20%28repeat1%20%28ref%20DIGIT%29%29%29 number%20%3A%20DIGIT%2B%20%3B%20%20%20%2F%2F%20one%20or%20more%20digits %0A%0A)\n(define LETTER %28rule%20LETTER%20token%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%20%28doc%20%252F%252F%2520one%2520or%2520more%2520digits%29%29 LETTER%20%3A%20%5BA-Za-z%5D%20%3B %0A)\n(define DIGIT %28rule%20DIGIT%20token%20%28class%20plain%20%28range%200%209%29%29%29 DIGIT%20%20%3A%20%5B0-9%5D%20%3B %0A)\n",
+      "mutated": {
+        "links": "(grammar (format antlr) (start message))\n(rule message normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)) (doc %2F%2A%20the%20start%20rule%20%2A%2F))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)) (doc %2F%2F%20one%20or%20more%20digits))\n(rule DIGIT token (class plain (range 0 9)))\n",
+        "source": "// a greeting grammar\ngrammar Message;\n\n/* the start rule */\nmessage : word ' ' number | 'round-trip-mutation' ;\n\nword   : LETTER+ ;\nnumber : DIGIT+ ;   // one or more digits\n\nLETTER : [A-Za-z] ;\nDIGIT  : [0-9] ;\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format antlr) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)) (doc %2F%2A%20the%20start%20rule%20%2A%2F))\n(rule term normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)) (doc %2F%2F%20one%20or%20more%20digits))\n(rule DIGIT token (class plain (range 0 9)))\n",
+        "source": "// a greeting grammar\ngrammar Message;\n\n/* the start rule */\nmessage : term ' ' number ;\n\nterm : LETTER+ ;\nnumber : DIGIT+ ;   // one or more digits\n\nLETTER : [A-Za-z] ;\nDIGIT  : [0-9] ;\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "bnf:reverse",
+      "format": "bnf",
+      "source": "<message> ::= <word> \" \" <number>\n\n<word>   ::=   <letter> <word>|<letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit>  ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format bnf) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (choice unordered (seq (ref letter) (ref word)) (ref letter)))\n(rule number normal (choice unordered (seq (ref digit) (ref number)) (ref digit)))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+      "exported": "<message> ::= <word> \" \" <number>\n<word> ::= <letter> <word> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit> ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+      "reimportedLinks": "(grammar (format bnf) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (choice unordered (seq (ref letter) (ref word)) (ref letter)))\n(rule number normal (choice unordered (seq (ref digit) (ref number)) (ref digit)))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+      "layout": "(layout bnf %)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%29 %3Cmessage%3E%20%3A%3A%3D%20%3Cword%3E%20%22%20%22%20%3Cnumber%3E %0A%0A)\n(define word %28rule%20word%20normal%20%28choice%20unordered%20%28seq%20%28ref%20letter%29%20%28ref%20word%29%29%20%28ref%20letter%29%29%29 %3Cword%3E%20%20%20%3A%3A%3D%20%20%20%3Cletter%3E%20%3Cword%3E%7C%3Cletter%3E %0A)\n(define number %28rule%20number%20normal%20%28choice%20unordered%20%28seq%20%28ref%20digit%29%20%28ref%20number%29%29%20%28ref%20digit%29%29%29 %3Cnumber%3E%20%3A%3A%3D%20%3Cdigit%3E%20%3Cnumber%3E%20%7C%20%3Cdigit%3E %0A)\n(define letter %28rule%20letter%20normal%20%28choice%20unordered%20%28literal%20M%29%20%28literal%20e%29%20%28literal%20t%29%20%28literal%20a%29%20%28literal%20A%29%29%29 %3Cletter%3E%20%3A%3A%3D%20%22M%22%20%7C%20%22e%22%20%7C%20%22t%22%20%7C%20%22a%22%20%7C%20%22A%22 %0A)\n(define digit %28rule%20digit%20normal%20%28choice%20unordered%20%28literal%200%29%20%28literal%201%29%20%28literal%202%29%20%28literal%203%29%20%28literal%204%29%20%28literal%205%29%20%28literal%206%29%20%28literal%207%29%20%28literal%208%29%20%28literal%209%29%29%29 %3Cdigit%3E%20%20%3A%3A%3D%20%220%22%20%7C%20%221%22%20%7C%20%222%22%20%7C%20%223%22%20%7C%20%224%22%20%7C%20%225%22%20%7C%20%226%22%20%7C%20%227%22%20%7C%20%228%22%20%7C%20%229%22 %0A)\n",
+      "mutated": {
+        "links": "(grammar (format bnf) (start message))\n(rule message normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)))\n(rule word normal (choice unordered (seq (ref letter) (ref word)) (ref letter)))\n(rule number normal (choice unordered (seq (ref digit) (ref number)) (ref digit)))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+        "source": "<message> ::= <word> \" \" <number> | \"round-trip-mutation\"\n\n<word>   ::=   <letter> <word>|<letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit>  ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format bnf) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)))\n(rule term normal (choice unordered (seq (ref letter) (ref term)) (ref letter)))\n(rule number normal (choice unordered (seq (ref digit) (ref number)) (ref digit)))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+        "source": "<message> ::= <term> \" \" <number>\n\n<term> ::= <letter> <term> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit>  ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "ebnf:reverse",
+      "format": "ebnf",
+      "source": "(* a greeting: a word, one space and a number *)\nmessage = word , \" \" , number ;\n\n(* letters and digits *)\nword   = letter , { letter } ;\nnumber = digit, {digit};\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit  = \"0\" | \"1\" | \"2\" | \"3\" | \"4\"\n       | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format ebnf) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (seq (ref letter) (repeat0 (ref letter))))\n(rule number normal (seq (ref digit) (repeat0 (ref digit))))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+      "exported": "message = word , \" \" , number ;\nword = letter , { letter } ;\nnumber = digit , { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "reimportedLinks": "(grammar (format ebnf) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (seq (ref letter) (repeat0 (ref letter))))\n(rule number normal (seq (ref digit) (repeat0 (ref digit))))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+      "layout": "(layout ebnf %28%2A%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%20%2A%29%0A)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%29 message%20%3D%20word%20%2C%20%22%20%22%20%2C%20number%20%3B %0A%0A%28%2A%20letters%20and%20digits%20%2A%29%0A)\n(define word %28rule%20word%20normal%20%28seq%20%28ref%20letter%29%20%28repeat0%20%28ref%20letter%29%29%29%29 word%20%20%20%3D%20letter%20%2C%20%7B%20letter%20%7D%20%3B %0A)\n(define number %28rule%20number%20normal%20%28seq%20%28ref%20digit%29%20%28repeat0%20%28ref%20digit%29%29%29%29 number%20%3D%20digit%2C%20%7Bdigit%7D%3B %0A)\n(define letter %28rule%20letter%20normal%20%28choice%20unordered%20%28literal%20M%29%20%28literal%20e%29%20%28literal%20t%29%20%28literal%20a%29%20%28literal%20A%29%29%29 letter%20%3D%20%22M%22%20%7C%20%22e%22%20%7C%20%22t%22%20%7C%20%22a%22%20%7C%20%22A%22%20%3B %0A)\n(define digit %28rule%20digit%20normal%20%28choice%20unordered%20%28literal%200%29%20%28literal%201%29%20%28literal%202%29%20%28literal%203%29%20%28literal%204%29%20%28literal%205%29%20%28literal%206%29%20%28literal%207%29%20%28literal%208%29%20%28literal%209%29%29%29 digit%20%20%3D%20%220%22%20%7C%20%221%22%20%7C%20%222%22%20%7C%20%223%22%20%7C%20%224%22%0A%20%20%20%20%20%20%20%7C%20%225%22%20%7C%20%226%22%20%7C%20%227%22%20%7C%20%228%22%20%7C%20%229%22%20%3B %0A)\n",
+      "mutated": {
+        "links": "(grammar (format ebnf) (start message))\n(rule message normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)))\n(rule word normal (seq (ref letter) (repeat0 (ref letter))))\n(rule number normal (seq (ref digit) (repeat0 (ref digit))))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+        "source": "(* a greeting: a word, one space and a number *)\nmessage = word , \" \" , number | \"round-trip-mutation\" ;\n\n(* letters and digits *)\nword   = letter , { letter } ;\nnumber = digit, {digit};\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit  = \"0\" | \"1\" | \"2\" | \"3\" | \"4\"\n       | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format ebnf) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)))\n(rule term normal (seq (ref letter) (repeat0 (ref letter))))\n(rule number normal (seq (ref digit) (repeat0 (ref digit))))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+        "source": "(* a greeting: a word, one space and a number *)\nmessage = term , \" \" , number ;\n\n(* letters and digits *)\nterm = letter , { letter } ;\nnumber = digit, {digit};\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit  = \"0\" | \"1\" | \"2\" | \"3\" | \"4\"\n       | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "gbnf:reverse",
+      "format": "gbnf",
+      "source": "# a greeting: a word, one space and a number\nroot   ::= word \" \" number\n\nword   ::= [A-Za-z]+   # letters\nnumber ::= [0-9]+\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format gbnf) (start root))\n(rule root normal (seq (ref word) (literal %20) (ref number)) (doc %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number normal (repeat1 (class plain (range 0 9))))\n",
+      "exported": "# a greeting: a word, one space and a number\nroot ::= word \" \" number\nword ::= ([A-Za-z])+\nnumber ::= ([0-9])+\n",
+      "reimportedLinks": "(grammar (format gbnf) (start root))\n(rule root normal (seq (ref word) (literal %20) (ref number)) (doc %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number normal (repeat1 (class plain (range 0 9))))\n",
+      "layout": "(layout gbnf %)\n(define root %28rule%20root%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%20%28doc%20%2523%2520a%2520greeting%253A%2520a%2520word%252C%2520one%2520space%2520and%2520a%2520number%29%29 %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%0Aroot%20%20%20%3A%3A%3D%20word%20%22%20%22%20number %0A%0A)\n(define word %28rule%20word%20normal%20%28repeat1%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29%29 word%20%20%20%3A%3A%3D%20%5BA-Za-z%5D%2B%20%20%20%23%20letters %0A)\n(define number %28rule%20number%20normal%20%28repeat1%20%28class%20plain%20%28range%200%209%29%29%29%29 number%20%3A%3A%3D%20%5B0-9%5D%2B %0A)\n",
+      "mutated": {
+        "links": "(grammar (format gbnf) (start root))\n(rule root normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)) (doc %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number normal (repeat1 (class plain (range 0 9))))\n",
+        "source": "# a greeting: a word, one space and a number\nroot ::= word \" \" number | \"round-trip-mutation\"\n\nword   ::= [A-Za-z]+   # letters\nnumber ::= [0-9]+\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format gbnf) (start root))\n(rule root normal (seq (ref term) (literal %20) (ref number)) (doc %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule term normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number normal (repeat1 (class plain (range 0 9))))\n",
+        "source": "# a greeting: a word, one space and a number\nroot ::= term \" \" number\n\nterm ::= ([A-Za-z])+\nnumber ::= [0-9]+\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "lark:reverse",
+      "format": "lark",
+      "source": "// a greeting: a word, one space and a number\nstart: word \" \" number\n\nword: LETTER+\nnumber : DIGIT+   // digits\n\nLETTER: /[A-Za-z]/\nDIGIT: /[0-9]/\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format lark) (start start))\n(rule start normal (seq (ref word) (literal %20) (ref number)) (doc %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)))\n(rule DIGIT token (class plain (range 0 9)))\n",
+      "exported": "// a greeting: a word, one space and a number\nstart: word \" \" number\nword: LETTER+\nnumber: DIGIT+\nLETTER: /[A-Za-z]/\nDIGIT: /[0-9]/\n",
+      "reimportedLinks": "(grammar (format lark) (start start))\n(rule start normal (seq (ref word) (literal %20) (ref number)) (doc %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)))\n(rule DIGIT token (class plain (range 0 9)))\n",
+      "layout": "(layout lark %)\n(define start %28rule%20start%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%20%28doc%20%252F%252F%2520a%2520greeting%253A%2520a%2520word%252C%2520one%2520space%2520and%2520a%2520number%29%29 %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%0Astart%3A%20word%20%22%20%22%20number %0A%0A)\n(define word %28rule%20word%20normal%20%28repeat1%20%28ref%20LETTER%29%29%29 word%3A%20LETTER%2B %0A)\n(define number %28rule%20number%20normal%20%28repeat1%20%28ref%20DIGIT%29%29%29 number%20%3A%20DIGIT%2B%20%20%20%2F%2F%20digits %0A%0A)\n(define LETTER %28rule%20LETTER%20token%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29 LETTER%3A%20%2F%5BA-Za-z%5D%2F %0A)\n(define DIGIT %28rule%20DIGIT%20token%20%28class%20plain%20%28range%200%209%29%29%29 DIGIT%3A%20%2F%5B0-9%5D%2F %0A)\n",
+      "mutated": {
+        "links": "(grammar (format lark) (start start))\n(rule start normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)) (doc %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)))\n(rule DIGIT token (class plain (range 0 9)))\n",
+        "source": "// a greeting: a word, one space and a number\nstart: word \" \" number | \"round-trip-mutation\"\n\nword: LETTER+\nnumber : DIGIT+   // digits\n\nLETTER: /[A-Za-z]/\nDIGIT: /[0-9]/\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format lark) (start start))\n(rule start normal (seq (ref term) (literal %20) (ref number)) (doc %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule term normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)))\n(rule DIGIT token (class plain (range 0 9)))\n",
+        "source": "// a greeting: a word, one space and a number\nstart: term \" \" number\n\nterm: LETTER+\nnumber : DIGIT+   // digits\n\nLETTER: /[A-Za-z]/\nDIGIT: /[0-9]/\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "pest:reverse",
+      "format": "pest",
+      "source": "// a greeting: a word, one space and a number\nmessage = { word ~ \" \" ~ number }\n\nword   = @{ letter+ }   // letters\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit  = _{ '0'..'9' }\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format peg) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word atomic (repeat1 (ref letter)))\n(rule number atomic (repeat1 (ref digit)))\n(rule letter silent (choice ordered (range A Z) (range a z)))\n(rule digit silent (range 0 9))\n",
+      "exported": "message = { word ~ \" \" ~ number }\nword = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit = _{ '0'..'9' }\n",
+      "reimportedLinks": "(grammar (format peg) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word atomic (repeat1 (ref letter)))\n(rule number atomic (repeat1 (ref digit)))\n(rule letter silent (choice ordered (range A Z) (range a z)))\n(rule digit silent (range 0 9))\n",
+      "layout": "(layout pest %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%0A)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%29 message%20%3D%20%7B%20word%20%7E%20%22%20%22%20%7E%20number%20%7D %0A%0A)\n(define word %28rule%20word%20atomic%20%28repeat1%20%28ref%20letter%29%29%29 word%20%20%20%3D%20%40%7B%20letter%2B%20%7D%20%20%20%2F%2F%20letters %0A)\n(define number %28rule%20number%20atomic%20%28repeat1%20%28ref%20digit%29%29%29 number%20%3D%20%40%7B%20digit%2B%20%7D %0A)\n(define letter %28rule%20letter%20silent%20%28choice%20ordered%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29 letter%20%3D%20_%7B%20%27A%27..%27Z%27%20%7C%20%27a%27..%27z%27%20%7D %0A)\n(define digit %28rule%20digit%20silent%20%28range%200%209%29%29 digit%20%20%3D%20_%7B%20%270%27..%279%27%20%7D %0A)\n",
+      "mutated": {
+        "links": "(grammar (format peg) (start message))\n(rule message normal (choice ordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)))\n(rule word atomic (repeat1 (ref letter)))\n(rule number atomic (repeat1 (ref digit)))\n(rule letter silent (choice ordered (range A Z) (range a z)))\n(rule digit silent (range 0 9))\n",
+        "source": "// a greeting: a word, one space and a number\nmessage = { word ~ \" \" ~ number | \"round-trip-mutation\" }\n\nword   = @{ letter+ }   // letters\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit  = _{ '0'..'9' }\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format peg) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)))\n(rule term atomic (repeat1 (ref letter)))\n(rule number atomic (repeat1 (ref digit)))\n(rule letter silent (choice ordered (range A Z) (range a z)))\n(rule digit silent (range 0 9))\n",
+        "source": "// a greeting: a word, one space and a number\nmessage = { term ~ \" \" ~ number }\n\nterm = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit  = _{ '0'..'9' }\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "tree-sitter-json:reverse",
+      "format": "tree-sitter-json",
+      "source": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\"type\": \"SEQ\", \"members\": [\n      {\"type\": \"SYMBOL\", \"name\": \"word\"},\n      {\"type\": \"STRING\", \"value\": \" \"},\n      {\"type\": \"SYMBOL\", \"name\": \"number\"}\n    ]},\n    \"word\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[A-Za-z]\"}},\n    \"number\": {\"type\": \"TOKEN\", \"content\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[0-9]\"}}}\n  },\n  \"extras\": []\n}\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format tree-sitter) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number token (repeat1 (class plain (range 0 9))))\n",
+      "exported": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"word\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \" \"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"number\"\n        }\n      ]\n    },\n    \"word\": {\n      \"type\": \"REPEAT1\",\n      \"content\": {\n        \"type\": \"PATTERN\",\n        \"value\": \"[A-Za-z]\"\n      }\n    },\n    \"number\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"REPEAT1\",\n        \"content\": {\n          \"type\": \"PATTERN\",\n          \"value\": \"[0-9]\"\n        }\n      }\n    }\n  }\n}\n",
+      "reimportedLinks": "(grammar (format tree-sitter) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number token (repeat1 (class plain (range 0 9))))\n",
+      "layout": "(layout tree-sitter-json %7B%0A%20%20%22name%22%3A%20%22message%22%2C%0A%20%20%22rules%22%3A%20%7B%0A%20%20%20%20)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%29 %22message%22%3A%20%7B%22type%22%3A%20%22SEQ%22%2C%20%22members%22%3A%20%5B%0A%20%20%20%20%20%20%7B%22type%22%3A%20%22SYMBOL%22%2C%20%22name%22%3A%20%22word%22%7D%2C%0A%20%20%20%20%20%20%7B%22type%22%3A%20%22STRING%22%2C%20%22value%22%3A%20%22%20%22%7D%2C%0A%20%20%20%20%20%20%7B%22type%22%3A%20%22SYMBOL%22%2C%20%22name%22%3A%20%22number%22%7D%0A%20%20%20%20%5D%7D %2C%0A%20%20%20%20)\n(define word %28rule%20word%20normal%20%28repeat1%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29%29 %22word%22%3A%20%7B%22type%22%3A%20%22REPEAT1%22%2C%20%22content%22%3A%20%7B%22type%22%3A%20%22PATTERN%22%2C%20%22value%22%3A%20%22%5BA-Za-z%5D%22%7D%7D %2C%0A%20%20%20%20)\n(define number %28rule%20number%20token%20%28repeat1%20%28class%20plain%20%28range%200%209%29%29%29%29 %22number%22%3A%20%7B%22type%22%3A%20%22TOKEN%22%2C%20%22content%22%3A%20%7B%22type%22%3A%20%22REPEAT1%22%2C%20%22content%22%3A%20%7B%22type%22%3A%20%22PATTERN%22%2C%20%22value%22%3A%20%22%5B0-9%5D%22%7D%7D%7D %0A%20%20%7D%2C%0A%20%20%22extras%22%3A%20%5B%5D%0A%7D%0A)\n",
+      "mutated": {
+        "links": "(grammar (format tree-sitter) (start message))\n(rule message normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number token (repeat1 (class plain (range 0 9))))\n",
+        "source": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"SEQ\",\n          \"members\": [\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"word\"\n            },\n            {\n              \"type\": \"STRING\",\n              \"value\": \" \"\n            },\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"number\"\n            }\n          ]\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"round-trip-mutation\"\n        }\n      ]\n    },\n    \"word\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[A-Za-z]\"}},\n    \"number\": {\"type\": \"TOKEN\", \"content\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[0-9]\"}}}\n  },\n  \"extras\": []\n}\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format tree-sitter) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)))\n(rule term normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number token (repeat1 (class plain (range 0 9))))\n",
+        "source": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"term\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \" \"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"number\"\n        }\n      ]\n    },\n    \"term\": {\n      \"type\": \"REPEAT1\",\n      \"content\": {\n        \"type\": \"PATTERN\",\n        \"value\": \"[A-Za-z]\"\n      }\n    },\n    \"number\": {\"type\": \"TOKEN\", \"content\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[0-9]\"}}}\n  },\n  \"extras\": []\n}\n",
+        "lossy": []
+      }
+    }
   ]
 }
