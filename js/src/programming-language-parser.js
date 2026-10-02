@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
-import { Language as WebTreeSitterLanguage, Parser as WebTreeSitterParser } from 'web-tree-sitter';
+import { Parser as WebTreeSitterParser } from 'web-tree-sitter';
 
 import { isToken } from './builtin-grammar.js';
 import { canonicalLanguageName, languageEntry } from './language-catalog.js';
@@ -9,6 +10,8 @@ import { parsePdfCst } from './pdf-grammar.js';
 import { parseNaturalLanguageCst, parsePlainTextCst } from './text-grammar.js';
 import { treeSitterNodeKind } from './tree-sitter-node-kind.js';
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
+import { loadGrammarLanguage } from './grammar-tiering.js';
+import { sourceBoundaries } from './source-boundaries.js';
 
 const encoder = new TextEncoder();
 const GRAMMAR_DIRECTORY = new URL('./vendor/grammars/', import.meta.url);
@@ -29,16 +32,28 @@ export const GRAMMAR_LOCK = Object.freeze(
 await WebTreeSitterParser.init({
   wasmBinary: gunzipSync(await readFile(new URL('./vendor/web-tree-sitter/web-tree-sitter.wasm.gz', import.meta.url))),
 });
-const GRAMMARS = new Map(
-  await Promise.all(
-    Object.keys(GRAMMAR_LOCK.grammars).map(async (id) => [
-      id,
-      await WebTreeSitterLanguage.load(
-        gunzipSync(await readFile(new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY))),
-      ),
-    ]),
-  ),
-);
+
+// Each grammar is compiled on its first use and kept for the process: every
+// loaded grammar stays in the runtime's WebAssembly memory, so loading all of
+// them up front cost every importer the memory of every grammar. See
+// grammar-tiering.js for how grammar code is compiled.
+const GRAMMARS = new Map();
+
+function grammarLanguage(id) {
+  if (!Object.hasOwn(GRAMMAR_LOCK.grammars, id)) return undefined;
+  let language = GRAMMARS.get(id);
+  if (!language) {
+    const binary = gunzipSync(readFileSync(new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY)));
+    language = loadGrammarLanguage(binary);
+    GRAMMARS.set(id, language);
+  }
+  return language;
+}
+
+/** Ids of the grammars this process has loaded so far, in load order. */
+export function loadedGrammarIds() {
+  return [...GRAMMARS.keys()];
+}
 
 /**
  * Returns the node kind and field names of a default grammar by its
@@ -46,7 +61,7 @@ const GRAMMARS = new Map(
  * undefined for an unknown id. They equal the names the Rust runtime compiles.
  */
 export function grammarNames(id) {
-  const language = GRAMMARS.get(id);
+  const language = grammarLanguage(id);
   if (!language) return undefined;
   return {
     nodeKinds: Array.from({ length: language.nodeTypeCount }, (_, symbol) => language.nodeTypeForId(symbol) ?? ''),
@@ -155,7 +170,6 @@ function clipTreeNode(node, tokenIndexes, byteEnd, endCoordinate) {
  */
 function utf8Input(text, boundaries) {
   const bytes = encoder.encode(text);
-  const offsets = new Map([...boundaries].map(([offset, { byte }]) => [byte, offset]));
   // The bytes as char codes, built once: each Markdown inline parse reads a
   // chunk again, and slicing a string is cheaper than spreading its bytes.
   const pieces = [];
@@ -169,7 +183,7 @@ function utf8Input(text, boundaries) {
       while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end -= 1;
       return byteString.slice(index, end);
     },
-    offsetOf: (byte) => offsets.get(byte),
+    offsetOf: (byte) => boundaries.offsetOf(byte),
   };
 }
 
@@ -182,7 +196,8 @@ function parseGrammarCst(text, canonical) {
     const tree = builtinGrammarNode(builtin(text), text, boundaries, tokens);
     return { canonical, rootTerm: tree.term, tokens, tree };
   }
-  const grammar = GRAMMARS.get(languageEntry(canonical).grammars[0]?.id);
+  const id = languageEntry(canonical).grammars[0]?.id;
+  const grammar = id === undefined ? undefined : grammarLanguage(id);
   if (!grammar) {
     throw new Error(`no tree-sitter grammar is registered for ${canonical}`);
   }
@@ -338,6 +353,19 @@ function markdownInlineExcludedChildren(node) {
   return node.children.slice(1).filter((child) => child.isNamed);
 }
 
+// One inline parser serves every inline region: a parser per region allocated
+// and freed parser state for each paragraph, table cell and heading. Each
+// region's tree is still deleted once it is converted.
+let MARKDOWN_INLINE_PARSER;
+
+function markdownInlineParser() {
+  if (!MARKDOWN_INLINE_PARSER) {
+    MARKDOWN_INLINE_PARSER = new WebTreeSitterParser();
+    MARKDOWN_INLINE_PARSER.setLanguage(grammarLanguage('markdown_inline'));
+  }
+  return MARKDOWN_INLINE_PARSER;
+}
+
 function parseMarkdownInline(node, input) {
   const includedRanges = [];
   let start = { index: node.startIndex, position: node.startPosition };
@@ -356,10 +384,7 @@ function parseMarkdownInline(node, input) {
     endIndex: node.endIndex,
     endPosition: node.endPosition,
   });
-  const parser = new WebTreeSitterParser();
-  parser.setLanguage(GRAMMARS.get('markdown_inline'));
-  const tree = parser.parse(input.read, null, { includedRanges });
-  parser.delete();
+  const tree = markdownInlineParser().parse(input.read, null, { includedRanges });
   if (!tree) throw new Error('tree-sitter parser returned no Markdown inline syntax tree');
   return tree;
 }
@@ -464,27 +489,6 @@ const treeSitterAdapter = (input) => Object.freeze({
   })),
 });
 
-function sourceBoundaries(text) {
-  const result = new Map([[0, { byte: 0, row: 0, column: 0 }]]);
-  let byte = 0;
-  let row = 0;
-  let column = 0;
-  for (let offset = 0; offset < text.length;) {
-    const character = codePointAt(text, offset);
-    const byteLength = encoder.encode(character).length;
-    byte += byteLength;
-    if (character === '\n') {
-      row += 1;
-      column = 0;
-    } else {
-      column += byteLength;
-    }
-    offset += character.length;
-    result.set(offset, { byte, row, column });
-  }
-  return result;
-}
-
 function spanFor(boundaries, start, end) {
   const from = boundaries.get(start);
   const to = boundaries.get(end);
@@ -493,8 +497,4 @@ function spanFor(boundaries, start, end) {
     new Point(from.row, from.column),
     new Point(to.row, to.column),
   );
-}
-
-function codePointAt(text, offset) {
-  return String.fromCodePoint(text.codePointAt(offset));
 }

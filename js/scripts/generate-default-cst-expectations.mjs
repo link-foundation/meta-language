@@ -23,7 +23,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { gunzipSync } from 'node:zlib';
-import { Language, Parser } from 'web-tree-sitter';
+import { Parser } from 'web-tree-sitter';
 
 import {
   GRAMMAR_SOURCES,
@@ -33,6 +33,7 @@ import {
 } from './build-vendored-grammars.mjs';
 
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
+import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
 
 const run = promisify(execFile);
@@ -66,7 +67,7 @@ await Parser.init({
 const languages = new Map();
 async function loadGrammar(id) {
   if (!languages.has(id)) {
-    languages.set(id, await Language.load(gunzipSync(await readFile(join(grammarDir, `${id}.wasm.gz`)))));
+    languages.set(id, loadGrammarLanguage(gunzipSync(await readFile(join(grammarDir, `${id}.wasm.gz`)))));
   }
   return languages.get(id);
 }
