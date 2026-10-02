@@ -3,7 +3,8 @@
 // pinned fixtures and reject disagreeing ones, a different fixture revision,
 // and observations that no longer show the requirement's property. The parity
 // check (scripts/check-issue-195-runtime-parity.mjs) records the evidence
-// against the Rust probe's output; this test records nothing.
+// against the Rust probe's output; this test records only the resource row
+// for how the check streams and keeps that evidence.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
@@ -24,6 +25,7 @@ import { runtimeObservation } from '../scripts/issue-195-runtime-observation.mjs
 import {
   ISSUE_195_FIXTURE_FILES,
   issue195FixtureDigest,
+  recordIssue195DirectiveObservation as observe,
 } from './support/issue-195-observations.js';
 
 const manifest = JSON.parse(
@@ -111,6 +113,8 @@ test('issue 195 parity evidence compares sections entry by entry exactly as thei
   }
   assert.deepEqual(mismatchedSections(javascript, longer), ['semantics']);
   assert.deepEqual(mismatchedSections(javascript, scalar), ['fixtureDigest']);
+  observe('I195-RESOURCE-PARITY-DIGESTS', ['entriesComparedOneAtATime'],
+    'issue 195 parity evidence compares sections entry by entry exactly as their canonical JSON');
 });
 
 test('issue 195 parity evidence keeps entry digests and only the differing entries', () => {
@@ -136,6 +140,8 @@ test('issue 195 parity evidence keeps entry digests and only the differing entri
   // The kept evidence is a small fraction of the observations it stands for.
   const evidence = ndjson(changed.digests).length + ndjson(changed.differences).length;
   assert.ok(evidence * 10 < canonicalJson(javascript).length, `${evidence} bytes of evidence`);
+  observe('I195-RESOURCE-PARITY-DIGESTS', ['fullEntriesOnlyWhereDifferent'],
+    'issue 195 parity evidence keeps entry digests and only the differing entries');
 });
 
 test('issue 195 parity evidence rebuilds an observation from the probe NDJSON records', () => {
@@ -167,4 +173,6 @@ test('issue 195 parity check streams the Rust probe to a file and keeps digests,
   assert.match(probe, /json!\(\{ "section": section, "index": index, "value": value \}\)/u);
   const runner = await readFile(new URL('../scripts/run-issue-195-evidence.mjs', import.meta.url), 'utf8');
   assert.match(runner, /PARITY_ARTIFACT_FILES\.translations\(runtime\)/u);
+  observe('I195-RESOURCE-PARITY-DIGESTS', ['probeStreamsNdjson', 'noLargeOutputBuffer'],
+    'issue 195 parity check streams the Rust probe to a file and keeps digests, not full trees');
 });

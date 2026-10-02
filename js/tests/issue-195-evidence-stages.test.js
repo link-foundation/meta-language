@@ -25,6 +25,7 @@ import {
   translationGroups,
   uncitedFiles,
 } from '../scripts/issue-195-evidence-stages.mjs';
+import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (relative) => readFileSync(path.join(root, relative), 'utf8');
@@ -117,6 +118,8 @@ test('a missing, failed, foreign or mismatched stage becomes one error naming th
   assert.equal(groups.has('merge-enforcement'), true);
   // The foreign report does not replace the group of the stage that owns it.
   assert.equal(groups.get('suite:javascript').toolchainVersions.stage, 'javascript-suite');
+  observe('I195-RESOURCE-CI-EVIDENCE-STAGES', ['failedStageIsOneGateError'],
+    'a missing, failed, foreign or mismatched stage becomes one error naming the stage');
 });
 
 test('a translation group needs its runtime suite, the parity observation and its native validation', () => {
@@ -164,6 +167,9 @@ test('the evidence commands run with bounded build parallelism unless the caller
   // The Rust suite builds only the default features, and each JavaScript test group is its own process.
   assert.doesNotMatch(runner, /--all-features/u);
   assert.match(runner, /'scripts\/test-groups\.mjs', '--run', group\]/u);
+  observe('I195-RESOURCE-BOUNDED-SEQUENTIAL-EVIDENCE',
+    ['stagesRunSequentially', 'boundedBuildEnvironment', 'defaultFeaturesOnly', 'testGroupsRunSeparately'],
+    'the evidence commands run with bounded build parallelism unless the caller set it');
 });
 
 test('declared toolchains must match exactly; tools a stage does not use are not required', () => {
@@ -181,6 +187,8 @@ test('a native stage deletes the compiler outputs no cell cites', () => {
   );
   const runner = read('js/scripts/run-issue-195-evidence.mjs');
   assert.match(runner, /uncitedFiles\(/u);
+  observe('I195-RESOURCE-NATIVE-OUTPUT-CLEANUP', ['uncitedOutputsDeleted', 'citedEvidenceKept'],
+    'a native stage deletes the compiler outputs no cell cites');
 });
 
 test('CI runs each stage as its own job and the aggregate only merges and evaluates', () => {
@@ -208,4 +216,7 @@ test('CI runs each stage as its own job and the aggregate only merges and evalua
   assert.match(aggregate, /--aggregate/u);
   // The aggregate builds and tests nothing itself.
   assert.doesNotMatch(aggregate, /rust-toolchain|setup-ocaml|elan-init|--stage/u);
+  observe('I195-RESOURCE-CI-EVIDENCE-STAGES',
+    ['stagesRunAsSeparateJobs', 'nativeTranslationsMatrixByTarget', 'eachStageUploadsItsEvidence', 'aggregateOnlyMergesAndEvaluates'],
+    'CI runs each stage as its own job and the aggregate only merges and evaluates');
 });

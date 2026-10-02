@@ -5,7 +5,7 @@ import path from 'node:path';
 import { buildCacheCleanupRequirements } from './issue-195-cache-requirements.mjs';
 import { CONSUMER_MATRIX, downstreamByRow, parseConsumerMatrix } from './issue-195-downstream.mjs';
 import { evidenceGroupFor } from './issue-195-evidence-plan.mjs';
-import { buildVisionRequirements, traceabilityFor } from './issue-195-vision-requirements.mjs';
+import { VISION_REQUIREMENTS, buildVisionRequirements, traceabilityFor } from './issue-195-vision-requirements.mjs';
 
 export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
@@ -887,6 +887,8 @@ export async function buildIssue195Manifest(root) {
         'I195-DOWNSTREAM-RML-PR184-AUDIT': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-ACCEPTANCE-REQUIRED-MERGE-CHECK': ISSUE_195_SOURCES.consolidatedChecklist,
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'resource-limits')
+          .map(({ id }) => [id, ISSUE_195_SOURCES.resourceAudit])),
       },
     }),
   ];

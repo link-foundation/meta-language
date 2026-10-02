@@ -582,6 +582,41 @@ It never deletes:
 Cleaning regenerable caches is separate from removing obsolete production
 architecture.
 
+## Resource limits
+
+Local sandboxes and CI runners have a few gigabytes of memory. The tooling
+keeps every run within that bound instead of relying on a larger machine:
+
+- CI runs a fast `cargo check` of all targets and features first; the jobs that
+  compile and test need it, so a compile error fails once.
+- CI splits the Rust tests by test target and filter, and the JavaScript tests
+  by file group, into matrix jobs with their own timeouts. Every JavaScript test
+  file belongs to exactly one group.
+- The issue #195 evidence runs as separate stage jobs: the JavaScript suite,
+  the Rust suite, runtime parity, each native translation target, delivery and
+  merge enforcement. Each stage uploads its own evidence. The Full Requirements
+  Aggregate only merges and evaluates the stage outputs, and a failed or
+  missing stage is one gate error naming it.
+- Every workflow cancels the runs a newer push supersedes.
+- A local evidence run executes the stages one after another, with
+  `CARGO_BUILD_JOBS=2`, `RUST_TEST_THREADS=2` and `CARGO_INCREMENTAL=0` unless
+  the caller set them, and builds only the default Rust features.
+- The JavaScript package loads each WebAssembly grammar on first use, compiles
+  grammar code with a tiering budget so an idle process does not keep
+  recompiling it, reuses one Markdown inline parser for every inline region,
+  and maps source offsets through interval checkpoints instead of an entry per
+  character.
+- The runtime parity check streams the Rust observation as NDJSON, compares
+  the runtimes entry by entry, and keeps one digest per entry plus the full
+  entries only where the runtimes differ.
+- A native validation stage deletes the compiler outputs no verification cell
+  cites.
+- `AGENTS.md` and `CONTRIBUTING.md` tell agents and contributors to run only
+  the targeted checks that cover a change, through the cleanup wrapper, to
+  leave the full acceptance pipeline, the native toolchain matrix,
+  clean-consumer installs, workload clones, coverage and whole-registry
+  experiments to CI, and to clean up after each batch.
+
 ## Packages and publication
 
 The delivered capabilities reach users through matching, usable npm and

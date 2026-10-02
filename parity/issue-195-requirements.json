@@ -1549,7 +1549,7 @@
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: one authoritative vision and architecture specification",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
@@ -1559,7 +1559,7 @@
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: traceability from each atomic requirement to its evidence chain",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
       "path": "parity/documentation/claim-fixtures.json",
@@ -1579,7 +1579,7 @@
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
       "selector": "#dependencies: external parser engines removed from the production packages",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
@@ -1629,7 +1629,7 @@
     "planned:repository-directive:i195-grammar-dependency-boundary": {
       "path": "docs/vision.md",
       "selector": "#native-merged-grammars: native dependency boundary of the installed packages",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -1694,7 +1694,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "docs/vision.md",
       "selector": "#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
@@ -1754,7 +1754,7 @@
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
       "selector": "#packages-and-publication: formal-ai consuming the published packages",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-acceptance-independent-oracles": {
       "path": "parity/language-grammar-inventory.json",
@@ -1764,17 +1764,82 @@
     "planned:repository-directive:i195-acceptance-gate-mutations": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: gate-mutation tests for the directive obligations",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-acceptance-required-merge-check": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: enforced full requirements merge check on the default branch",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-acceptance-finite-claims-documented": {
       "path": "docs/vision.md",
       "selector": "#what-finite-tests-establish: documented limits of finite test evidence",
-      "sha256": "4a527dddea2b1dba92bc062d8244cdffb41ab0046dda2651f8421a4599630def"
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-ci-compile-gate": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: fast compile gate ahead of every compiling CI job",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-ci-test-matrix": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: test execution split into bounded matrix jobs",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-ci-evidence-stages": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: checkpoint evidence produced by separate stage jobs",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-ci-concurrency": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: superseded workflow runs cancelled",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-agent-rules": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: targeted local checks and resource rules for agents and contributors",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-bounded-sequential-evidence": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: evidence suites run one at a time with bounded build parallelism",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-lazy-grammars": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: WebAssembly grammars loaded on first use",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-grammar-tiering-budget": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: grammar code kept off the optimizing compiler",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-inline-parser-reuse": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: one Markdown inline parser for every inline region",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-source-boundaries": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: source offset index with interval checkpoints",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-parity-digests": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: runtime parity evidence as entry digests",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-cache-cleanup-wrapper": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: cache cleanup wrapper as the documented way to run long local commands",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
+    },
+    "planned:repository-directive:i195-resource-native-output-cleanup": {
+      "path": "docs/vision.md",
+      "selector": "#resource-limits: native compiler outputs deleted once each cell is recorded",
+      "sha256": "613d305cddfd004d3792e5b6bb5451050e663ce92e28816f98e982555df4a87d"
     },
     "planned:repository-directive:i195-cache-cleanup-grammar-caches": {
       "path": "scripts/lib/cache-classes.mjs",
@@ -21789,6 +21854,809 @@
         "downstream": [
           "link-assistant/formal-ai"
         ]
+      }
+    },
+    {
+      "id": "I195-RESOURCE-AGENT-RULES",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "targeted local checks and resource rules for agents and contributors",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "AGENTS.md and CONTRIBUTING.md tell agents and contributors to run only the checks that cover a change, with bounded build parallelism, to never run the full acceptance pipeline, the native toolchain matrix, clean-consumer installs, workload clones, coverage or whole-registry experiments locally, to work in batches, and to clean up after each one; the CI workflows run the full verification.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "AGENTS.md",
+          "CONTRIBUTING.md"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-agent-rules-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-agent-rules"
+          ],
+          "assertions": [
+            "targetedChecksDocumented",
+            "boundedParallelismDocumented",
+            "forbiddenLocalRunsListed",
+            "batchingAndCleanupDocumented",
+            "fullVerificationDelegatedToCi"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-agent-rules-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-BOUNDED-SEQUENTIAL-EVIDENCE",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "evidence suites run one at a time with bounded build parallelism",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The evidence runner runs its stages one after another, gives every child process CARGO_BUILD_JOBS=2, RUST_TEST_THREADS=2 and CARGO_INCREMENTAL=0 unless the caller set them, builds only the default Rust features, and runs each JavaScript test group as its own process.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/scripts/run-issue-195-evidence.mjs",
+          "js/scripts/issue-195-evidence-stages.mjs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-bounded-sequential-evidence-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-bounded-sequential-evidence"
+          ],
+          "assertions": [
+            "stagesRunSequentially",
+            "boundedBuildEnvironment",
+            "defaultFeaturesOnly",
+            "testGroupsRunSeparately"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-bounded-sequential-evidence-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-CACHE-CLEANUP-WRAPPER",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "cache cleanup wrapper as the documented way to run long local commands",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "AGENTS.md and docs/cache-cleanup.md document scripts/with-cache-cleanup.mjs as the way to run local cargo and npm build and test commands and tell sessions to run the cleanup between batches; the wrapper bounds build parallelism and cleans up even when the command fails.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "scripts/with-cache-cleanup.mjs",
+          "AGENTS.md",
+          "docs/cache-cleanup.md"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-cache-cleanup-wrapper-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-cache-cleanup-wrapper"
+          ],
+          "assertions": [
+            "wrapperDocumentedForLocalRuns",
+            "cleanupBetweenBatchesDocumented",
+            "wrapperBoundsParallelism"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-cache-cleanup-wrapper-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-CI-COMPILE-GATE",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "fast compile gate ahead of every compiling CI job",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "A cargo check of all targets and features runs first in the Rust workflow, and the test, minimum-version, coverage, fresh-merge and build jobs need it, so a compile error fails once, within minutes, instead of in every job.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          ".github/workflows/rust.yml"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-ci-compile-gate-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-ci-compile-gate"
+          ],
+          "assertions": [
+            "compileGateRunsAllTargetsAndFeatures",
+            "compilingJobsNeedTheCompileGate"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-ci-compile-gate-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-CI-CONCURRENCY",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "superseded workflow runs cancelled",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Every workflow declares a concurrency group per workflow and ref, so a new push cancels the runs it supersedes instead of running them all.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          ".github/workflows/"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-ci-concurrency-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-ci-concurrency"
+          ],
+          "assertions": [
+            "everyWorkflowHasConcurrencyGroup",
+            "supersededRunsCancelled"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-ci-concurrency-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-CI-EVIDENCE-STAGES",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "checkpoint evidence produced by separate stage jobs",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The JavaScript suite, the Rust suite, the runtime parity check, the native translations (a matrix by target language), delivery and merge enforcement each run as their own CI job and upload their own evidence. The Full Requirements Aggregate only merges and evaluates the stage outputs, and a stage that fails or never reports is one gate error naming it, not a failure of every row it feeds.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          ".github/workflows/issue-195-acceptance.yml",
+          "js/scripts/issue-195-evidence-stages.mjs",
+          "js/scripts/run-issue-195-evidence.mjs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-ci-evidence-stages-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-ci-evidence-stages"
+          ],
+          "assertions": [
+            "stagesRunAsSeparateJobs",
+            "nativeTranslationsMatrixByTarget",
+            "eachStageUploadsItsEvidence",
+            "aggregateOnlyMergesAndEvaluates",
+            "failedStageIsOneGateError"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-ci-evidence-stages-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-CI-TEST-MATRIX",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "test execution split into bounded matrix jobs",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The Rust tests run as matrix jobs by test target and integration filter, and the JavaScript tests as matrix jobs by file group, each with its own timeout. Every JavaScript test file belongs to exactly one group, and the required check names stay valid.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          ".github/workflows/rust.yml",
+          ".github/workflows/js.yml",
+          "js/scripts/test-groups.mjs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-ci-test-matrix-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-ci-test-matrix"
+          ],
+          "assertions": [
+            "rustTestsSplitBySuite",
+            "javascriptTestsSplitByGroup",
+            "everyTestFileInExactlyOneGroup",
+            "matrixJobsHaveTimeouts"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-ci-test-matrix-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-GRAMMAR-TIERING-BUDGET",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "grammar code kept off the optimizing compiler",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Grammar modules are compiled with a tiering budget no parse exhausts, so V8 does not recompile their generated lexers with TurboFan after parsing ends, and an idle process does not grow by gigabytes.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/src/grammar-tiering.js"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-grammar-tiering-budget-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-grammar-tiering-budget"
+          ],
+          "assertions": [
+            "idleGrowthBoundedAfterParsing"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-grammar-tiering-budget-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-INLINE-PARSER-REUSE",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "one Markdown inline parser for every inline region",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Markdown inline and table-cell regions are parsed with one reused inline parser instead of a parser per region, and each region tree is still deleted once it is converted.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/src/programming-language-parser.js"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-inline-parser-reuse-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-inline-parser-reuse"
+          ],
+          "assertions": [
+            "oneInlineParserReused",
+            "inlineTreesDeleted"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-inline-parser-reuse-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-LAZY-GRAMMARS",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "WebAssembly grammars loaded on first use",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Importing the JavaScript package loads no grammar; each WebAssembly grammar is decompressed and compiled when a language first needs it and cached by its identifier.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/src/programming-language-parser.js"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-lazy-grammars-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-lazy-grammars"
+          ],
+          "assertions": [
+            "noGrammarLoadedOnImport",
+            "grammarLoadedOnFirstUseAndCached"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-lazy-grammars-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-NATIVE-OUTPUT-CLEANUP",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "native compiler outputs deleted once each cell is recorded",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "After a native validation stage records a target cell it deletes the compiler outputs no cell cites (.rmeta, .olean, .vo and similar) and keeps only the cited translations, reproduction scripts and logs.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/scripts/run-issue-195-evidence.mjs",
+          "js/scripts/issue-195-evidence-stages.mjs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-native-output-cleanup-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-native-output-cleanup"
+          ],
+          "assertions": [
+            "uncitedOutputsDeleted",
+            "citedEvidenceKept"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-native-output-cleanup-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-PARITY-DIGESTS",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "runtime parity evidence as entry digests",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The Rust runtime probe streams its observation as NDJSON to a file, read without a large output buffer; the runtimes are compared entry by entry; and the kept evidence is one digest per section entry and runtime plus the full entries only where the runtimes differ.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/scripts/check-issue-195-runtime-parity.mjs",
+          "js/scripts/issue-195-parity-evidence.mjs",
+          "rust/examples/issue_195_runtime_probe.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-parity-digests-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-parity-digests"
+          ],
+          "assertions": [
+            "probeStreamsNdjson",
+            "noLargeOutputBuffer",
+            "entriesComparedOneAtATime",
+            "fullEntriesOnlyWhereDifferent"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-parity-digests-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-RESOURCE-SOURCE-BOUNDARIES",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+      "area": "resource-limits",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "source offset index with interval checkpoints",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The map from string offsets to UTF-8 bytes and points keeps one checkpoint per fixed interval of characters and searches it, instead of an entry per character, and agrees with the per-character map at every offset and byte.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/src/source-boundaries.js"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-resource-source-boundaries-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-resource-source-boundaries"
+          ],
+          "assertions": [
+            "checkpointIndexMatchesPerCharacterMap",
+            "oneCheckpointPerInterval"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-resource-source-boundaries-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#resource-limits",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
       }
     },
     {

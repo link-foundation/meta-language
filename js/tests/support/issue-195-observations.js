@@ -66,3 +66,17 @@ export function recordIssue195Observations({
   // interleave within a line.
   if (lines.length > 0) appendFileSync(path, `${lines.join('\n')}\n`);
 }
+
+// Records a tooling cell of a repository-directive row, whose fixture is the
+// specification section the row cites.
+export function recordIssue195DirectiveObservation(requirementId, assertions, testName) {
+  recordIssue195Observations({
+    requirementId,
+    suffix: 'behavior',
+    fixtureId: `planned:repository-directive:${requirementId.toLowerCase()}`,
+    fixtureFile: 'docs/vision.md',
+    assertions,
+    testName,
+    runtime: 'tooling',
+  });
+}

@@ -3,13 +3,15 @@
 // every parse built an object per source character to map string offsets to
 // UTF-8 bytes and points, which together pushed whole-suite runs past a few
 // gigabytes. Grammars now load on first use, and the offset index keeps one
-// typed-array checkpoint per CHECKPOINT_INTERVAL characters.
+// typed-array checkpoint per CHECKPOINT_INTERVAL characters, and Markdown
+// inline regions share one inline parser.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { CHECKPOINT_INTERVAL, sourceBoundaries } from '../src/source-boundaries.js';
+import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
 const encoder = new TextEncoder();
 
@@ -50,6 +52,8 @@ test('the source boundary index agrees with a per-character map at every offset 
   }
   assert.deepEqual(sourceBoundaries('').get(0), { byte: 0, row: 0, column: 0 });
   assert.equal(sourceBoundaries('').offsetOf(0), 0);
+  observe('I195-RESOURCE-SOURCE-BOUNDARIES', ['checkpointIndexMatchesPerCharacterMap'],
+    'the source boundary index agrees with a per-character map at every offset and byte');
 });
 
 test('the source boundary index stores one checkpoint per interval, not one per character', () => {
@@ -57,6 +61,8 @@ test('the source boundary index stores one checkpoint per interval, not one per 
   const boundaries = sourceBoundaries(text);
   assert.equal(boundaries.checkpointCount, 1000 + 2);
   assert.deepEqual(boundaries.get(text.length), { byte: text.length, row: 0, column: text.length });
+  observe('I195-RESOURCE-SOURCE-BOUNDARIES', ['oneCheckpointPerInterval'],
+    'the source boundary index stores one checkpoint per interval, not one per character');
 });
 
 test('grammars load on first use, not when the package is imported', () => {
@@ -76,6 +82,22 @@ test('grammars load on first use, not when the package is imported', () => {
     encoding: 'utf8',
   });
   assert.deepEqual(JSON.parse(output), { imported: [], parsed: ['markdown', 'markdown_inline', 'rust'] });
+  observe('I195-RESOURCE-LAZY-GRAMMARS', ['noGrammarLoadedOnImport', 'grammarLoadedOnFirstUseAndCached'],
+    'grammars load on first use, not when the package is imported');
+});
+
+// A parser per inline region allocated a WebAssembly parser for every
+// paragraph, heading and table cell of a Markdown document.
+test('Markdown inline regions share one inline parser and delete their trees', () => {
+  const output = execFileSync(process.execPath, [fileURLToPath(new URL('../experiments/inline-parser-reuse.mjs', import.meta.url))], {
+    encoding: 'utf8',
+  });
+  // The first parse sets up the block parser and the one inline parser, and
+  // deletes the block tree and all 200 inline trees; the second sets up only
+  // a new block parser.
+  assert.deepEqual(JSON.parse(output), { first: { setups: 2, deleted: 201 }, second: { setups: 3, deleted: 402 } });
+  observe('I195-RESOURCE-INLINE-PARSER-REUSE', ['oneInlineParserReused', 'inlineTreesDeleted'],
+    'Markdown inline regions share one inline parser and delete their trees');
 });
 
 // PowerShell's generated lexer is one function of about 360 KB. Tiered up by
@@ -98,4 +120,6 @@ test('grammar code is not tiered up after parsing ends', () => {
     execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' }),
   );
   assert.ok(idle - parsed < 100 * 1024 * 1024, `grew ${Math.round((idle - parsed) / 1048576)} MB while idle`);
+  observe('I195-RESOURCE-GRAMMAR-TIERING-BUDGET', ['idleGrowthBoundedAfterParsing'],
+    'grammar code is not tiered up after parsing ends');
 });

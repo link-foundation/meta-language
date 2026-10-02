@@ -57,6 +57,8 @@ const DIRECTIVE_SECTIONS = [
   'acceptance-and-evidence',
   'what-finite-tests-establish',
   'cache-cleanup',
+  // Required by the resource audit (comment 5956284229).
+  'resource-limits',
   'packages-and-publication',
   'documentation-consistency',
   'current-state',

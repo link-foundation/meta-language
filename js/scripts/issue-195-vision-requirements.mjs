@@ -768,6 +768,156 @@ export const VISION_REQUIREMENTS = Object.freeze([
     tooling: ['docs/vision.md', 'js/scripts/issue-195-acceptance-lib.mjs'],
   },
   {
+    id: 'I195-RESOURCE-CI-COMPILE-GATE',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'fast compile gate ahead of every compiling CI job',
+    expectedBehavior:
+      'A cargo check of all targets and features runs first in the Rust workflow, and the test, minimum-version, coverage, fresh-merge and build jobs need it, so a compile error fails once, within minutes, instead of in every job.',
+    assertions: ['compileGateRunsAllTargetsAndFeatures', 'compilingJobsNeedTheCompileGate'],
+    tooling: ['.github/workflows/rust.yml'],
+  },
+  {
+    id: 'I195-RESOURCE-CI-TEST-MATRIX',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'test execution split into bounded matrix jobs',
+    expectedBehavior:
+      'The Rust tests run as matrix jobs by test target and integration filter, and the JavaScript tests as matrix jobs by file group, each with its own timeout. Every JavaScript test file belongs to exactly one group, and the required check names stay valid.',
+    assertions: ['rustTestsSplitBySuite', 'javascriptTestsSplitByGroup', 'everyTestFileInExactlyOneGroup', 'matrixJobsHaveTimeouts'],
+    tooling: ['.github/workflows/rust.yml', '.github/workflows/js.yml', 'js/scripts/test-groups.mjs'],
+  },
+  {
+    id: 'I195-RESOURCE-CI-EVIDENCE-STAGES',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'checkpoint evidence produced by separate stage jobs',
+    expectedBehavior:
+      'The JavaScript suite, the Rust suite, the runtime parity check, the native translations (a matrix by target language), delivery and merge enforcement each run as their own CI job and upload their own evidence. The Full Requirements Aggregate only merges and evaluates the stage outputs, and a stage that fails or never reports is one gate error naming it, not a failure of every row it feeds.',
+    assertions: [
+      'stagesRunAsSeparateJobs',
+      'nativeTranslationsMatrixByTarget',
+      'eachStageUploadsItsEvidence',
+      'aggregateOnlyMergesAndEvaluates',
+      'failedStageIsOneGateError',
+    ],
+    tooling: [
+      '.github/workflows/issue-195-acceptance.yml',
+      'js/scripts/issue-195-evidence-stages.mjs',
+      'js/scripts/run-issue-195-evidence.mjs',
+    ],
+  },
+  {
+    id: 'I195-RESOURCE-CI-CONCURRENCY',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'superseded workflow runs cancelled',
+    expectedBehavior:
+      'Every workflow declares a concurrency group per workflow and ref, so a new push cancels the runs it supersedes instead of running them all.',
+    assertions: ['everyWorkflowHasConcurrencyGroup', 'supersededRunsCancelled'],
+    tooling: ['.github/workflows/'],
+  },
+  {
+    id: 'I195-RESOURCE-AGENT-RULES',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'targeted local checks and resource rules for agents and contributors',
+    expectedBehavior:
+      'AGENTS.md and CONTRIBUTING.md tell agents and contributors to run only the checks that cover a change, with bounded build parallelism, to never run the full acceptance pipeline, the native toolchain matrix, clean-consumer installs, workload clones, coverage or whole-registry experiments locally, to work in batches, and to clean up after each one; the CI workflows run the full verification.',
+    assertions: [
+      'targetedChecksDocumented',
+      'boundedParallelismDocumented',
+      'forbiddenLocalRunsListed',
+      'batchingAndCleanupDocumented',
+      'fullVerificationDelegatedToCi',
+    ],
+    tooling: ['AGENTS.md', 'CONTRIBUTING.md'],
+  },
+  {
+    id: 'I195-RESOURCE-BOUNDED-SEQUENTIAL-EVIDENCE',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'evidence suites run one at a time with bounded build parallelism',
+    expectedBehavior:
+      'The evidence runner runs its stages one after another, gives every child process CARGO_BUILD_JOBS=2, RUST_TEST_THREADS=2 and CARGO_INCREMENTAL=0 unless the caller set them, builds only the default Rust features, and runs each JavaScript test group as its own process.',
+    assertions: ['stagesRunSequentially', 'boundedBuildEnvironment', 'defaultFeaturesOnly', 'testGroupsRunSeparately'],
+    tooling: ['js/scripts/run-issue-195-evidence.mjs', 'js/scripts/issue-195-evidence-stages.mjs'],
+  },
+  {
+    id: 'I195-RESOURCE-LAZY-GRAMMARS',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'WebAssembly grammars loaded on first use',
+    expectedBehavior:
+      'Importing the JavaScript package loads no grammar; each WebAssembly grammar is decompressed and compiled when a language first needs it and cached by its identifier.',
+    assertions: ['noGrammarLoadedOnImport', 'grammarLoadedOnFirstUseAndCached'],
+    tooling: ['js/src/programming-language-parser.js'],
+  },
+  {
+    id: 'I195-RESOURCE-GRAMMAR-TIERING-BUDGET',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'grammar code kept off the optimizing compiler',
+    expectedBehavior:
+      'Grammar modules are compiled with a tiering budget no parse exhausts, so V8 does not recompile their generated lexers with TurboFan after parsing ends, and an idle process does not grow by gigabytes.',
+    assertions: ['idleGrowthBoundedAfterParsing'],
+    tooling: ['js/src/grammar-tiering.js'],
+  },
+  {
+    id: 'I195-RESOURCE-INLINE-PARSER-REUSE',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'one Markdown inline parser for every inline region',
+    expectedBehavior:
+      'Markdown inline and table-cell regions are parsed with one reused inline parser instead of a parser per region, and each region tree is still deleted once it is converted.',
+    assertions: ['oneInlineParserReused', 'inlineTreesDeleted'],
+    tooling: ['js/src/programming-language-parser.js'],
+  },
+  {
+    id: 'I195-RESOURCE-SOURCE-BOUNDARIES',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'source offset index with interval checkpoints',
+    expectedBehavior:
+      'The map from string offsets to UTF-8 bytes and points keeps one checkpoint per fixed interval of characters and searches it, instead of an entry per character, and agrees with the per-character map at every offset and byte.',
+    assertions: ['checkpointIndexMatchesPerCharacterMap', 'oneCheckpointPerInterval'],
+    tooling: ['js/src/source-boundaries.js'],
+  },
+  {
+    id: 'I195-RESOURCE-PARITY-DIGESTS',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'runtime parity evidence as entry digests',
+    expectedBehavior:
+      'The Rust runtime probe streams its observation as NDJSON to a file, read without a large output buffer; the runtimes are compared entry by entry; and the kept evidence is one digest per section entry and runtime plus the full entries only where the runtimes differ.',
+    assertions: ['probeStreamsNdjson', 'noLargeOutputBuffer', 'entriesComparedOneAtATime', 'fullEntriesOnlyWhereDifferent'],
+    tooling: [
+      'js/scripts/check-issue-195-runtime-parity.mjs',
+      'js/scripts/issue-195-parity-evidence.mjs',
+      'rust/examples/issue_195_runtime_probe.rs',
+    ],
+  },
+  {
+    id: 'I195-RESOURCE-CACHE-CLEANUP-WRAPPER',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'cache cleanup wrapper as the documented way to run long local commands',
+    expectedBehavior:
+      'AGENTS.md and docs/cache-cleanup.md document scripts/with-cache-cleanup.mjs as the way to run local cargo and npm build and test commands and tell sessions to run the cleanup between batches; the wrapper bounds build parallelism and cleans up even when the command fails.',
+    assertions: ['wrapperDocumentedForLocalRuns', 'cleanupBetweenBatchesDocumented', 'wrapperBoundsParallelism'],
+    tooling: ['scripts/with-cache-cleanup.mjs', 'AGENTS.md', 'docs/cache-cleanup.md'],
+  },
+  {
+    id: 'I195-RESOURCE-NATIVE-OUTPUT-CLEANUP',
+    area: 'resource-limits',
+    specification: 'resource-limits',
+    construct: 'native compiler outputs deleted once each cell is recorded',
+    expectedBehavior:
+      'After a native validation stage records a target cell it deletes the compiler outputs no cell cites (.rmeta, .olean, .vo and similar) and keeps only the cited translations, reproduction scripts and logs.',
+    assertions: ['uncitedOutputsDeleted', 'citedEvidenceKept'],
+    tooling: ['js/scripts/run-issue-195-evidence.mjs', 'js/scripts/issue-195-evidence-stages.mjs'],
+  },
+  {
     id: 'I195-CACHE-CLEANUP-GRAMMAR-CACHES',
     area: 'cache-cleanup',
     specification: 'cache-cleanup',
