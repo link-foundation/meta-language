@@ -255,6 +255,24 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-INI',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/ini.json',
+    construct: 'native merged INI grammar checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/ini.lino is a canonical native Links Notation grammar merged from tree-sitter-ini 1.4.0 and the Python configparser INI file structure. Both executors build, for every corpus source, exactly the concrete syntax tree rows of the tree-sitter-ini oracle with no ambiguity, comments included as extras; they accept what configparser accepts and the oracle recovers from (a last comment line without a line break), reject invalid INI, and keep every source byte, blank lines, line breaks and comment markers included, in the tree.',
+    assertions: [
+      'nativeIniGrammarIsCanonicalLinks',
+      'nativeIniTreesMatchOracle',
+      'nativeIniAcceptsMergedSourceExtensions',
+      'nativeIniRejectsInvalidInput',
+      'nativeIniTreesLossless',
+    ],
+    javascript: ['js/src/grammar-links.js', 'js/src/grammar-runtime.js', 'js/src/grammar-runtime/text.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-FEATURE-UNION',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

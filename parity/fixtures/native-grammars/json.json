@@ -12,6 +12,8 @@
   "hidden": [
     "byte_order_mark"
   ],
+  "anonymous": [],
+  "extras": [],
   "matches": [
     {
       "source": "{\"name\": \"meta\", \"tags\": [1, 2.5, true, null], \"nested\": {\"ok\": false}}\n",

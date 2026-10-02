@@ -14,9 +14,10 @@ grammar is checked against the tree-sitter grammar that still backs its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: one catalog language, JSON, has a native merged grammar. Its default
-parse still runs tree-sitter-json until the grammar has recovery rules for
-invalid input; see [current limits](#current-limits).
+Status: two catalog languages, JSON and INI, have a native merged grammar.
+Their default parses still run tree-sitter-json and tree-sitter-ini until the
+grammars have recovery rules for invalid input; see
+[current limits](#current-limits).
 
 ## Format
 
@@ -49,6 +50,19 @@ and [tree-sitter-json 0.24.8](https://github.com/tree-sitter/tree-sitter-json/bl
   keeps every byte. tree-sitter-json skips it as whitespace; RFC 8259
   section 8.1 lets a parser ignore it.
 
+For INI the sources are
+[tree-sitter-ini 1.4.0](https://github.com/justinmk/tree-sitter-ini/blob/v1.4.0/grammar.js)
+and the
+[Python configparser file structure](https://docs.python.org/3/library/configparser.html#supported-ini-file-structure):
+
+- From tree-sitter-ini: the tree shape. A setting value is everything after
+  `=` up to the line feed, leading spaces and a carriage return included, and
+  a comment is an extra with a `text` child.
+- From configparser: a last comment line without a line break (`; c`), which
+  tree-sitter-ini 1.4.0 rejects.
+- Blank lines, line breaks and comment markers are named leaves
+  (`blank_space`, `newline`, `comment_marker`), so the tree keeps every byte.
+
 ## Checking against the oracle
 
 [`js/scripts/generate-native-grammar-fixtures.mjs`](../../js/scripts/generate-native-grammar-fixtures.mjs)
@@ -73,16 +87,23 @@ Rows have the shape of
 projects a native tree the way tree-sitter places nodes:
 
 - Whitespace trivia and the fixture's `hidden` kinds are not rows.
-- A comment is an extra row with flag `X`.
+- The fixture's `anonymous` kinds are not rows but count in the spans, as
+  tree-sitter keeps a regular expression token such as a line break.
+- A comment is an extra row with flag `X`, and so is a node of the fixture's
+  `extras` kinds.
 - Leading trivia belongs before the node it precedes.
 - A node spans its first to last non-trivia leaf.
 - The root starts at its first visible leaf and ends at the end of the input.
 
-[`rust/tests/unit/issue_195_grammar_native_json.rs`](../../rust/tests/unit/issue_195_grammar_native_json.rs)
-projects the Rust trees the same way.
-[`js/tests/issue-195-grammar-native-json.test.js`](../../js/tests/issue-195-grammar-native-json.test.js)
-checks the JavaScript trees and that the oracle still gives the fixture rows.
-Both suites record evidence for the `I195-GRAMMAR-NATIVE-JSON` ledger row.
+[`rust/tests/unit/issue_195_native_grammar_rows.rs`](../../rust/tests/unit/issue_195_native_grammar_rows.rs)
+projects the Rust trees the same way. Each language has a JavaScript suite,
+which checks the JavaScript trees and that the oracle still gives the fixture
+rows, and a Rust suite. Both record evidence for the language's ledger row:
+
+| Language | JavaScript suite | Rust suite | Ledger row |
+| --- | --- | --- | --- |
+| JSON | [`issue-195-grammar-native-json.test.js`](../../js/tests/issue-195-grammar-native-json.test.js) | [`issue_195_grammar_native_json.rs`](../../rust/tests/unit/issue_195_grammar_native_json.rs) | `I195-GRAMMAR-NATIVE-JSON` |
+| INI | [`issue-195-grammar-native-ini.test.js`](../../js/tests/issue-195-grammar-native-ini.test.js) | [`issue_195_grammar_native_ini.rs`](../../rust/tests/unit/issue_195_grammar_native_ini.rs) | `I195-GRAMMAR-NATIVE-INI` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -96,9 +117,9 @@ when a fixture is stale, and CI runs it.
 
 ## Current limits
 
-- Invalid input is rejected instead of recovered. The default JSON parse still
-  uses tree-sitter-json, and `tree-sitter-json` stays a production dependency
-  until the native grammar has recovery rules.
+- Invalid input is rejected instead of recovered. The default JSON and INI
+  parses still use tree-sitter-json and tree-sitter-ini, which stay production
+  dependencies until the native grammars have recovery rules.
 - No other catalog language has a native merged grammar yet. The open rows are
   `I195-GRAMMAR-NATIVE-MERGED`, `I195-GRAMMAR-LANGUAGE-CATALOG` and
   `I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED` in the

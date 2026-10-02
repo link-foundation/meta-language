@@ -2,7 +2,7 @@
 // parity/fixtures/default-cst-expected.json, `[depth, field, kind, named,
 // startByte, endByte, flags]`, so a native grammar's trees can be compared
 // with the tree-sitter oracle that still backs the default parse of its
-// language. rust/tests/unit/issue_195_grammar_native_json.rs projects the
+// language. rust/tests/unit/issue_195_native_grammar_rows.rs projects the
 // Rust trees the same way.
 //
 // The native tree is projected as tree-sitter places nodes: whitespace trivia
@@ -11,7 +11,11 @@
 // non-trivia leaf, and the root starts at its first leaf that is not
 // whitespace and ends at the end of the input. Kinds in `hidden` are leaves
 // the native tree keeps and the oracle drops, such as a byte order mark; they
-// are projected like whitespace.
+// are projected like whitespace. Kinds in `anonymous` are leaves the oracle
+// keeps inside a node without a row of their own, as tree-sitter keeps a
+// regular expression token such as a line break; they are not rows but count
+// in the spans. Node kinds in `extras` are rows with flag X, as the oracle
+// marks a comment node it parses as an extra.
 import { LinkNetwork, LinkType } from '../src/index.js';
 
 /** The rows of the default parse of `source` as `language`. */
@@ -44,8 +48,10 @@ export function oracleRows(source, language) {
 }
 
 /** The rows of a native `SyntaxTree` of `source`. */
-export function nativeRows(tree, source, { hidden = [] } = {}) {
+export function nativeRows(tree, source, { hidden = [], anonymous = [], extras = [] } = {}) {
   const hiddenKinds = new Set(hidden);
+  const anonymousKinds = new Set(anonymous);
+  const extraKinds = new Set(extras);
   const invisible = (node) => node.type === 'token' && ((node.trivia && node.kind === null) || hiddenKinds.has(node.kind));
   const trivia = (node) => invisible(node) || (node.type === 'token' && node.trivia);
   const hoist = (node) => {
@@ -62,10 +68,10 @@ export function nativeRows(tree, source, { hidden = [] } = {}) {
   };
   const rows = [];
   const visit = (node, depth) => {
-    if (invisible(node)) return;
+    if (invisible(node) || (node.type === 'token' && anonymousKinds.has(node.kind))) return;
     const [start, end] = span(node);
     if (node.type === 'node') {
-      rows.push([depth, node.field ?? null, node.kind, 1, start, end, '']);
+      rows.push([depth, node.field ?? null, node.kind, 1, start, end, extraKinds.has(node.kind) ? 'X' : '']);
       for (const child of node.children.flatMap(hoist)) visit(child, depth + 1);
     } else {
       rows.push([depth, node.field ?? null, node.kind ?? node.text, node.kind ? 1 : 0, start, end, node.trivia ? 'X' : '']);

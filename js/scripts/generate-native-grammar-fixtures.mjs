@@ -11,7 +11,9 @@
 // are sources one merged source accepts and the oracle does not; the native
 // grammar accepts them and the fixture keeps its rows. `rejections` are
 // invalid sources: the oracle recovers with error nodes, the native grammar
-// rejects them until its recovery rules land.
+// rejects them until its recovery rules land. `hidden`, `anonymous` and
+// `extras` tell js/scripts/native-grammar-rows.mjs how the oracle shows the
+// native leaves and nodes of those kinds.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,6 +38,8 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // native grammar keeps it as a named leaf (RFC 8259 section 8.1 lets a
     // parser ignore it).
     hidden: ['byte_order_mark'],
+    anonymous: [],
+    extras: [],
     matches: [
       '{"name": "meta", "tags": [1, 2.5, true, null], "nested": {"ok": false}}\n',
       '[]', '{}', '""', '0', '-0', '1.', '1.5e10', '-2E-3', '12e3', '1e-7', '"\\u00e9\\n\\"\\\\\\/"', '"\\u12"',
@@ -69,6 +73,59 @@ export const NATIVE_GRAMMARS = Object.freeze([
       },
     ],
     rejections: ['{"a" 1}', '[1,]', 'tru', '"a\nb"', '+1', '.5', '{"a": 1', ' \ufeff[]', '[1,\ufeff2]', '\u00a0[]'],
+  },
+  {
+    id: 'ini',
+    language: 'INI',
+    grammar: 'parity/grammars/native/ini.lino',
+    oracle: 'tree-sitter-ini 1.4.0',
+    sources: [
+      'https://github.com/justinmk/tree-sitter-ini/blob/v1.4.0/grammar.js',
+      'https://docs.python.org/3/library/configparser.html#supported-ini-file-structure',
+    ],
+    // tree-sitter-ini starts the document at a leading blank line but skips
+    // the spaces before it, keeps line breaks and comment markers as hidden
+    // tokens inside their node, and parses a comment as an extra.
+    hidden: ['blank_space'],
+    anonymous: ['newline', 'comment_marker'],
+    extras: ['comment'],
+    matches: [
+      'a=1\n', 'a=1', '[s]', '[s]  ', '', '\n', '\n\n', '   ', 'k=', 'k= ', 'k=v\t', 'k=v\r', 'k = \n', 'k==v\n',
+      '[s]\nk = v\n', '; c\n[s]\n', '# c\nk=\n', '#\n', '#\r\n', '\n; c\n', '[a b]\r\nk=v\r\n', '\r\n[s]\r\n',
+      'k = v ; not comment\n', 'a b = c = d\n', 'k v = w\n', 'k  v = w\n', '  k=v\n', '\tk\t=\tv\t\n', 'k\n=v\n',
+      '\n\n[x]\n\nk=v w \n', ' \n[x]\n', '[ s ]\n', '[a\nb]\n', '[s]  \n', '[s]\n\n', '[s]\nk=v\n\n', 'k=v\r\n\r\n',
+      'k = v\n\n\n', 'k = v\n  j = w\n', '[s]\n\nk=v\n\n\nj=w\n', 'k=v\n[s]\n[t]\nx=1\n', 'k=v\n  ; c\n',
+      '[s]\n; c\nk=v\n', '[s]\n  ; c\n  k=v\n', '[a]\nk=v\n; c\n[b]\n', '[s]\n; c\n[t]\n', 'k=v\n; c\nj=w\n[s]\n',
+      'k=v\n\n; c\n\nj=w\n', 'ключ=значение\n', 'a=1\n[b]\nc=2\n; d\n\n[e]\n; f\n',
+      [
+        '; meta-language settings',
+        'root = true',
+        '',
+        '[core]',
+        'editor = vim',
+        '  # indented comment',
+        'path = C:\\Program Files\\meta',
+        '',
+        '[remote "origin"]',
+        'url = https://example.com/repo.git?a=1&b=2',
+        'fetch = +refs/heads/*:refs/remotes/origin/*',
+        '',
+      ].join('\n'),
+    ],
+    divergences: [
+      {
+        source: '; c',
+        reason: 'Python configparser reads a last line without a line break, and tree-sitter-ini 1.4.0 accepts a setting or a section header there but not a comment.',
+      },
+      {
+        source: '[s]\nk=v\n; c  ',
+        reason: 'Python configparser reads a comment on the last line without a line break; tree-sitter-ini 1.4.0 requires one after a comment.',
+      },
+    ],
+    rejections: [
+      '[s] ; c\nk=v\n', '[s] k=v\n', '[s]\tx\n', '[a]b\n', '[]\n', '[s\n', '[s]]\n', '[[s]\n', 'k=v\n[', 'k\n', '=v\n',
+      'k=v\n=x\n', 'k;=v\n', 'k#x=v\n', 'k\tv=w\n',
+    ],
   },
 ]);
 
@@ -105,8 +162,8 @@ export function buildNativeGrammarFixture(entry) {
     if (parser.parseTree(source).ok) throw new Error(`${entry.grammar} accepts ${JSON.stringify(source)}`);
     return { source };
   });
-  const { id, language, grammar, oracle, sources, hidden } = entry;
-  return { schemaVersion: 1, id, language, grammar, oracle, sources, hidden, matches, divergences, rejections };
+  const { id, language, grammar, oracle, sources, hidden, anonymous, extras } = entry;
+  return { schemaVersion: 1, id, language, grammar, oracle, sources, hidden, anonymous, extras, matches, divergences, rejections };
 }
 
 export const fixturePath = (entry) => `parity/fixtures/native-grammars/${entry.id}.json`;
