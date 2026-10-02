@@ -58,19 +58,33 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request cancels that pull request's older runs. Push,
+# release and dispatch runs each get their own group, so a release is never
+# cancelled; the write jobs also share the release queue below.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   GIT_CONFIG_COUNT: '1'
   GIT_CONFIG_KEY_0: init.defaultBranch
   GIT_CONFIG_VALUE_0: main
 
 jobs:
-  test:
-    name: JavaScript Package
+  # The test files run in groups, one job each, so no job holds the whole
+  # suite in one process. scripts/test-groups.mjs fails when a test file is in
+  # no group or in more than one.
+  tests:
+    name: JavaScript Tests (${{ matrix.group }})
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     concurrency:
-      group: check-${{ github.workflow }}-${{ github.ref }}-javascript-test
+      group: check-${{ github.workflow }}-${{ github.ref }}-javascript-tests-${{ matrix.group }}
       cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [grammar, translation, conformance, downstream, tooling]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -93,8 +107,59 @@ jobs:
         run: npm ci
         working-directory: js
 
-      - name: Run tests
-        run: node ../scripts/with-cache-cleanup.mjs --event test -- npm test
+      - name: Run the test group
+        env:
+          TEST_GROUP: ${{ matrix.group }}
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
+        working-directory: js
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  test:
+    name: JavaScript Package
+    needs: tests
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-javascript-test
+      cancel-in-progress: true
+    steps:
+      - name: Require every JavaScript test group
+        env:
+          TESTS_RESULT: ${{ needs.tests.result }}
+        run: |
+          if [ "$TESTS_RESULT" != "success" ]; then
+            echo "::error::JavaScript test groups finished with '$TESTS_RESULT'; see the JavaScript Tests jobs."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Simulate fresh merge with base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash js/scripts/simulate-fresh-merge.sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Check that every test file is in exactly one test group
+        run: node scripts/test-groups.mjs --check
         working-directory: js
 
       - name: Check the cache cleanup policy

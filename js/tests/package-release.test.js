@@ -104,7 +104,15 @@ test('JavaScript workflow publishes to npm with trusted publishing provenance', 
   assert.equal(workflow.match(/^\s*NODE_AUTH_TOKEN:/gm).length, 1);
   assert.match(workflow, /NODE_AUTH_TOKEN:\s+\$\{\{\s*secrets\.NPM_TOKEN\s*\}\}/);
   assert.match(workflow, /permissions:\s*\n\s+contents:\s+read/);
-  assert.doesNotMatch(workflow.split('\njobs:\n')[0], /\nconcurrency:\n/);
+  // The workflow-level group cancels superseded pull request runs only; every
+  // other event gets its own group, so a release run is never cancelled.
+  const header = workflow.split('\njobs:\n')[0];
+  assert.equal(header.match(/\nconcurrency:\n/g).length, 1);
+  assert.ok(
+    header.includes(
+      "concurrency:\n  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}\n  cancel-in-progress: true\n",
+    ),
+  );
 
   const publishJob = workflow.slice(workflow.indexOf('  publish:\n'));
   assert.match(publishJob, /group:\s+release-\$\{\{ github\.repository \}\}-main-write/);
