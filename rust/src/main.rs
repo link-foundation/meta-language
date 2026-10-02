@@ -11,7 +11,7 @@ use meta_language::{
     emit_lark, emit_pest, emit_tree_sitter_grammar_js, evaluate, grammar_concept_translation_rules,
     grammar_from_lino, grammar_to_lino, import_abnf, import_antlr, import_bnf, import_ebnf,
     import_gbnf, import_lark, import_pest, import_tree_sitter_json, infer_cfg,
-    parse_grammar_surface, translate_grammar_surface, write_grammar_surface,
+    parse_grammar_surface, run_grammar_command, translate_grammar_surface, write_grammar_surface,
 };
 
 #[derive(Parser, Debug)]
@@ -28,6 +28,14 @@ struct Cli {
 enum Command {
     /// Print the built-in self-description roots.
     Describe,
+    /// Import, validate, convert, merge, rename, export and round-trip
+    /// grammars; run `meta-language grammar help` for the commands.
+    #[command(disable_help_flag = true)]
+    Grammar {
+        /// The grammar command and its arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Parse text into a lossless token network and verify it is clean.
     Verify {
         /// Language label for the parsed region.
@@ -206,6 +214,7 @@ fn main() {
 
     match cli.command {
         Command::Describe => describe(),
+        Command::Grammar { args } => grammar(&args),
         Command::Verify { language, text } => verify(&language, &text),
         Command::Infer {
             examples,
@@ -230,6 +239,13 @@ fn main() {
             out,
         } => translate_grammar(&input, &from_language, &to_language, out.as_deref()),
     }
+}
+
+fn grammar(args: &[String]) {
+    let output = run_grammar_command(args, &|file| fs::read_to_string(file));
+    print!("{}", output.stdout);
+    eprint!("{}", output.stderr);
+    std::process::exit(output.exit_code);
 }
 
 fn describe() {

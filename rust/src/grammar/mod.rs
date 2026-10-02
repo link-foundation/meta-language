@@ -28,6 +28,7 @@ pub mod emit;
 pub mod fidelity;
 pub mod import;
 pub mod inference;
+pub mod interchange;
 mod links;
 pub mod merge;
 pub mod round_trip;
@@ -94,6 +95,11 @@ pub use inference::semantic::{
 };
 pub use inference::sequitur::{Symbol, run_sequitur};
 pub use inference::state_merging::{InferredAutomaton, MergeStrategy, Sample, infer_dfa};
+pub use interchange::{
+    GRAMMAR_COMMAND_USAGE, GRAMMAR_EXPORT_FORMATS, GRAMMAR_IMPORT_FORMATS, GrammarCommandOutput,
+    GrammarEmitter, GrammarFileReader, GrammarImporter, grammar_emitter, grammar_importer,
+    parse_native_grammar, render_native_expression, render_native_grammar, run_grammar_command,
+};
 pub use merge::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
     GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,

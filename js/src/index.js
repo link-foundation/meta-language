@@ -5,6 +5,8 @@ export * from './grammar-importers.js';
 export * from './grammar-emitters.js';
 export * from './grammar-merge.js';
 export * from './grammar-round-trip.js';
+export * from './grammar-validate.js';
+export * from './grammar-interchange.js';
 export * from './graphql-adapter.js';
 export * from './language-catalog.js';
 export * from './concept-records.js';

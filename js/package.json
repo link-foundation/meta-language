@@ -5,6 +5,9 @@
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
+  "bin": {
+    "meta-language": "./src/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./src/index.d.ts",

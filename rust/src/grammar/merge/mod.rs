@@ -100,6 +100,20 @@ pub enum GrammarMergeDecisionKind {
     Uncertain,
 }
 
+impl GrammarMergeDecisionKind {
+    /// Returns the stable textual form.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Merged => "merged",
+            Self::KeptUnique => "kept-unique",
+            Self::RenamedForCollision => "renamed-for-collision",
+            Self::HomonymKeptDistinct => "homonym-kept-distinct",
+            Self::Uncertain => "uncertain",
+        }
+    }
+}
+
 /// One merge decision with its justification.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct GrammarMergeDecision {
@@ -169,6 +183,19 @@ pub enum GrammarMergeAlternativeReason {
     UncertainMatch,
     /// A language has several editions.
     Edition,
+}
+
+impl GrammarMergeAlternativeReason {
+    /// Returns the stable textual form.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::StartRule => "start-rule",
+            Self::DistinctMeaning => "distinct-meaning",
+            Self::UncertainMatch => "uncertain-match",
+            Self::Edition => "edition",
+        }
+    }
 }
 
 /// An explicit alternative kept by the merge.

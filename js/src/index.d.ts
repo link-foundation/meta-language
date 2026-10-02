@@ -1132,12 +1132,16 @@ export interface GrammarEmitResult {
 }
 export function emitAbnf(grammar: Grammar): GrammarEmitResult;
 export const emit_abnf: typeof emitAbnf;
+export function emitAntlr(grammar: Grammar): GrammarEmitResult;
+export const emit_antlr: typeof emitAntlr;
 export function emitBnf(grammar: Grammar): GrammarEmitResult;
 export const emit_bnf: typeof emitBnf;
 export function emitEbnf(grammar: Grammar): GrammarEmitResult;
 export const emit_ebnf: typeof emitEbnf;
 export function emitGbnf(grammar: Grammar): GrammarEmitResult;
 export const emit_gbnf: typeof emitGbnf;
+export function emitLark(grammar: Grammar): GrammarEmitResult;
+export const emit_lark: typeof emitLark;
 export function emitPest(grammar: Grammar): GrammarEmitResult;
 export const emit_pest: typeof emitPest;
 export function emitTreeSitterJson(grammar: Grammar): GrammarEmitResult;
@@ -1234,6 +1238,50 @@ export interface GrammarRoundTripOptions {
 }
 export function mutateGrammarStartRule(grammar: Grammar, marker?: string): Grammar;
 export function checkGrammarRoundTrip(source: string, options: GrammarRoundTripOptions): GrammarRoundTripReport;
+export type GrammarDiagnosticKind =
+  | 'duplicate-rule'
+  | 'undefined-non-terminal'
+  | 'left-recursion'
+  | 'unreachable-rule'
+  | 'nullable-repetition'
+  | 'unused-capture';
+export const GRAMMAR_DIAGNOSTIC_KINDS: readonly GrammarDiagnosticKind[];
+export interface GrammarDiagnostic {
+  kind: GrammarDiagnosticKind;
+  severity: 'error' | 'warning';
+  rule: string;
+  message: string;
+  [detail: string]: unknown;
+}
+export function validateGrammar(grammar: Grammar): GrammarDiagnostic[];
+export function displayGrammarExpression(expression: GrammarExpression): string;
+export type GrammarInterchangeFormat =
+  | 'abnf'
+  | 'antlr'
+  | 'bnf'
+  | 'ebnf'
+  | 'gbnf'
+  | 'lark'
+  | 'native'
+  | 'pest'
+  | 'tree-sitter-json';
+export const GRAMMAR_IMPORT_FORMATS: readonly GrammarInterchangeFormat[];
+export const GRAMMAR_EXPORT_FORMATS: readonly GrammarInterchangeFormat[];
+export function grammarImporter(format: string): ((source: string) => Grammar) | null;
+export function grammarEmitter(format: string): ((grammar: Grammar) => GrammarEmitResult) | null;
+export function renderNativeGrammar(grammar: Grammar): string;
+export function renderNativeExpression(expression: GrammarExpression): string;
+export function parseNativeGrammar(source: string): Grammar;
+export const GRAMMAR_COMMAND_USAGE: string;
+export interface GrammarCommandOutput {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+}
+export function runGrammarCommand(
+  args: readonly string[],
+  options: { readFile: (path: string) => string },
+): GrammarCommandOutput;
 export interface RuleAlias {
   canonical: string;
   original: string;

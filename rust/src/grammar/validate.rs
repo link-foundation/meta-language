@@ -66,6 +66,32 @@ pub enum DiagnosticKind {
     },
 }
 
+impl DiagnosticKind {
+    /// Returns the stable textual form of the class, such as `left-recursion`.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::UndefinedNonTerminal { .. } => "undefined-non-terminal",
+            Self::LeftRecursion { .. } => "left-recursion",
+            Self::UnreachableRule { .. } => "unreachable-rule",
+            Self::NullableRepetition { .. } => "nullable-repetition",
+            Self::DuplicateRule { .. } => "duplicate-rule",
+            Self::UnusedCapture { .. } => "unused-capture",
+        }
+    }
+}
+
+impl Severity {
+    /// Returns the stable textual form, `error` or `warning`.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Error => "error",
+            Self::Warning => "warning",
+        }
+    }
+}
+
 /// One grammar validation finding.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GrammarDiagnostic {

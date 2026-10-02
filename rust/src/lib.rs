@@ -126,6 +126,11 @@ pub use grammar::{
 };
 pub use grammar::{FORMER_GRAMMAR_CONSTRUCTS, current_grammar_construct};
 pub use grammar::{
+    GRAMMAR_COMMAND_USAGE, GRAMMAR_EXPORT_FORMATS, GRAMMAR_IMPORT_FORMATS, GrammarCommandOutput,
+    GrammarEmitter, GrammarFileReader, GrammarImporter, grammar_emitter, grammar_importer,
+    parse_native_grammar, render_native_expression, render_native_grammar, run_grammar_command,
+};
+pub use grammar::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
     GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,
     GrammarMergeFailureKind, GrammarMergeFailureReason, GrammarMergeNomination,
