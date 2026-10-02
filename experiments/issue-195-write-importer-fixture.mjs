@@ -2,7 +2,8 @@
 // coverage cases and records, per case, the runtime-neutral rendering of every
 // declared rule plus the same-format emitted text and fidelity notes. Both the
 // JavaScript and Rust evidence tests compare against these recorded values.
-// The malformed sources every importer must reject are carried over as is.
+// The malformed sources every importer must reject and the shared command
+// expectations are carried over as is.
 import { readFileSync, writeFileSync } from 'node:fs';
 import * as ml from '../js/src/index.js';
 import { renderGrammarRule } from '../js/tests/support/render-grammar-expression.js';
@@ -49,5 +50,5 @@ function format(value, indent = '') {
   }
   return JSON.stringify(value);
 }
-writeFileSync(fixtureUrl, `${format({ schemaVersion: corpus.schemaVersion, cases, malformed: corpus.malformed ?? [] })}\n`);
+writeFileSync(fixtureUrl, `${format({ schemaVersion: corpus.schemaVersion, cases, malformed: corpus.malformed ?? [], commands: corpus.commands ?? [] })}\n`);
 console.log(`wrote ${cases.length} cases`);

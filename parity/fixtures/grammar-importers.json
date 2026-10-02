@@ -257,5 +257,830 @@
       "reason": "unknown rule type",
       "source": "{\"name\": \"message\", \"rules\": {\"document\": {\"type\": \"UNKNOWN\"}}}"
     }
+  ],
+  "commands": [
+    {
+      "id": "help",
+      "args": ["help"],
+      "files": {},
+      "exitCode": 0,
+      "stdout": "usage: meta-language grammar <command> [options]\n\ncommands:\n  formats\n      list the import and export formats\n  import --from FORMAT FILE\n      print the grammar as a native listing\n  validate --from FORMAT FILE\n      report grammar diagnostics; exit 1 when one is an error\n  convert --from FORMAT --to FORMAT FILE\n      translate a grammar to another format; lossy steps go to standard error\n  export --to FORMAT FILE\n      export a native listing to another format\n  merge --source FORMAT:FILE... [--language NAME] [--require A=B]... [--to FORMAT]\n      merge grammars of one language; earlier sources take precedence\n  rename --from FORMAT --rule OLD --name NEW [--namespace NS] [--to FORMAT] FILE\n      rename a rule and every reference to it\n  round-trip --from FORMAT [--accept TEXT]... [--reject TEXT]... FILE\n      export and re-import a mutated grammar; exit 1 when it is not preserved\n  help\n      print this help\n\nexit status: 0 success, 1 a problem was found, 2 a usage or input error\n",
+      "stderr": ""
+    },
+    {
+      "id": "usage-without-command",
+      "args": [],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "usage: meta-language grammar <command> [options]\n\ncommands:\n  formats\n      list the import and export formats\n  import --from FORMAT FILE\n      print the grammar as a native listing\n  validate --from FORMAT FILE\n      report grammar diagnostics; exit 1 when one is an error\n  convert --from FORMAT --to FORMAT FILE\n      translate a grammar to another format; lossy steps go to standard error\n  export --to FORMAT FILE\n      export a native listing to another format\n  merge --source FORMAT:FILE... [--language NAME] [--require A=B]... [--to FORMAT]\n      merge grammars of one language; earlier sources take precedence\n  rename --from FORMAT --rule OLD --name NEW [--namespace NS] [--to FORMAT] FILE\n      rename a rule and every reference to it\n  round-trip --from FORMAT [--accept TEXT]... [--reject TEXT]... FILE\n      export and re-import a mutated grammar; exit 1 when it is not preserved\n  help\n      print this help\n\nexit status: 0 success, 1 a problem was found, 2 a usage or input error\n"
+    },
+    {
+      "id": "formats",
+      "args": ["formats"],
+      "files": {},
+      "exitCode": 0,
+      "stdout": "import: abnf antlr bnf ebnf gbnf lark native pest tree-sitter-json\nexport: abnf antlr bnf ebnf gbnf lark native pest tree-sitter-json\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:abnf:message",
+      "args": ["import", "--from", "abnf", "message.abnf"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format abnf\nstart message\nrule message = normal seq(ref(word), ref(SP), ref(number))\nrule word = normal repeat1(ref(ALPHA))\nrule number = normal repeat1(ref(DIGIT))\nrule SP = normal literal(\" \")\nrule ALPHA = normal class(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule DIGIT = normal range(\"0\", \"9\")\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:bnf:message",
+      "args": ["import", "--from", "bnf", "message.bnf"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format bnf\nstart message\nrule message = normal seq(ref(word), literal(\" \"), ref(number))\nrule word = normal choice(seq(ref(letter), ref(word)), ref(letter))\nrule number = normal choice(seq(ref(digit), ref(number)), ref(digit))\nrule letter = normal choice(literal(\"M\"), literal(\"e\"), literal(\"t\"), literal(\"a\"), literal(\"A\"))\nrule digit = normal choice(literal(\"0\"), literal(\"1\"), literal(\"2\"), literal(\"3\"), literal(\"4\"), literal(\"5\"), literal(\"6\"), literal(\"7\"), literal(\"8\"), literal(\"9\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:ebnf:message",
+      "args": ["import", "--from", "ebnf", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format ebnf\nstart message\nrule message = normal seq(ref(word), literal(\" \"), ref(number))\nrule word = normal seq(ref(letter), repeat0(ref(letter)))\nrule number = normal seq(ref(digit), repeat0(ref(digit)))\nrule letter = normal choice(literal(\"M\"), literal(\"e\"), literal(\"t\"), literal(\"a\"), literal(\"A\"))\nrule digit = normal choice(literal(\"0\"), literal(\"1\"), literal(\"2\"), literal(\"3\"), literal(\"4\"), literal(\"5\"), literal(\"6\"), literal(\"7\"), literal(\"8\"), literal(\"9\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:pest:message",
+      "args": ["import", "--from", "pest", "message.pest"],
+      "files": {
+        "message.pest": {
+          "case": "pest:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format peg\nstart message\nrule message = normal seq(ref(word), literal(\" \"), ref(number))\nrule word = atomic repeat1(ref(letter))\nrule number = atomic repeat1(ref(digit))\nrule letter = silent orderedChoice(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule digit = silent range(\"0\", \"9\")\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:tree-sitter-json:message",
+      "args": ["import", "--from", "tree-sitter-json", "message.json"],
+      "files": {
+        "message.json": {
+          "case": "tree-sitter-json:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format tree-sitter\nstart document\nrule document = normal seq(ref(word), literal(\" \"), ref(number))\nrule word = normal repeat1(class(range(\"A\", \"Z\"), range(\"a\", \"z\")))\nrule number = token repeat1(class(range(\"0\", \"9\")))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:abnf:constructs",
+      "args": ["import", "--from", "abnf", "constructs.abnf"],
+      "files": {
+        "constructs.abnf": {
+          "case": "abnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format abnf\nstart assignment\nrule assignment = normal seq(literalInsensitive(\"let\"), repeat1(ref(SP)), ref(name), repeat0(ref(SP)), literal(\"=\"), repeat0(ref(SP)), ref(value), optional(literal(\";\")))\nrule name = normal seq(ref(ALPHA), repeat(choice(ref(ALPHA), ref(DIGIT), literal(\"_\")), 0, 7))\nrule value = normal choice(repeat(ref(DIGIT), 1, 3), seq(ref(DQUOTE), repeat0(choice(range(\" \", \"!\"), range(\"#\", \"~\"))), ref(DQUOTE)))\nrule SP = normal literal(\" \")\nrule ALPHA = normal class(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule DIGIT = normal range(\"0\", \"9\")\nrule DQUOTE = normal literal(\"\\\"\")\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:bnf:constructs",
+      "args": ["import", "--from", "bnf", "constructs.bnf"],
+      "files": {
+        "constructs.bnf": {
+          "case": "bnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format bnf\nstart assignment\nrule assignment = normal seq(literal(\"let \"), ref(name), ref(spaces), literal(\"=\"), ref(spaces), ref(value), ref(end))\nrule name = normal choice(seq(ref(letter), ref(name)), ref(letter))\nrule spaces = normal choice(seq(literal(\" \"), ref(spaces)), empty)\nrule value = normal choice(seq(ref(digit), ref(value)), ref(digit), seq(literal(\"\\\"\"), ref(letters), literal(\"\\\"\")))\nrule letters = normal choice(seq(ref(letter), ref(letters)), empty)\nrule end = normal choice(literal(\";\"), empty)\nrule letter = normal choice(literal(\"a\"), literal(\"b\"), literal(\"x\"), literal(\"q\"))\nrule digit = normal choice(literal(\"1\"), literal(\"2\"), literal(\"7\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:ebnf:constructs",
+      "args": ["import", "--from", "ebnf", "constructs.ebnf"],
+      "files": {
+        "constructs.ebnf": {
+          "case": "ebnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format ebnf\nstart assignment\nrule assignment = normal seq(literal(\"let\"), literal(\" \"), ref(name), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), ref(value), optional(literal(\";\")))\nrule name = normal seq(ref(letter), repeat0(choice(ref(letter), ref(digit), literal(\"_\"))))\nrule value = normal choice(seq(ref(digit), optional(seq(ref(digit), optional(ref(digit))))), seq(literal(\"\\\"\"), repeat0(ref(letter)), literal(\"\\\"\")))\nrule letter = normal choice(literal(\"a\"), literal(\"b\"), literal(\"x\"), literal(\"q\"))\nrule digit = normal choice(literal(\"1\"), literal(\"2\"), literal(\"7\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:pest:constructs",
+      "args": ["import", "--from", "pest", "constructs.pest"],
+      "files": {
+        "constructs.pest": {
+          "case": "pest:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format peg\nstart assignment\nrule assignment = normal seq(literalInsensitive(\"let\"), repeat1(literal(\" \")), not(ref(keyword)), ref(name), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), ref(value), optional(literal(\";\")))\nrule keyword = normal seq(literal(\"let\"), not(ref(alnum)))\nrule name = atomic seq(ref(alpha), repeat(orderedChoice(ref(alnum), literal(\"_\")), 0, 7))\nrule value = token orderedChoice(seq(repeat(ref(digit), 1, 3), not(ref(digit))), seq(literal(\"\\\"\"), repeat0(seq(not(literal(\"\\\"\")), any)), literal(\"\\\"\")))\nrule alnum = silent orderedChoice(ref(alpha), ref(digit))\nrule alpha = silent orderedChoice(range(\"a\", \"z\"), range(\"A\", \"Z\"))\nrule digit = silent range(\"0\", \"9\")\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:tree-sitter-json:constructs",
+      "args": ["import", "--from", "tree-sitter-json", "constructs.json"],
+      "files": {
+        "constructs.json": {
+          "case": "tree-sitter-json:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format tree-sitter\nstart assignment\nrule assignment = normal seq(literal(\"let\"), repeat1(literal(\" \")), capture(\"name\", ref(identifier)), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), capture(\"value\", ref(value)), optional(literal(\";\")))\nrule identifier = token seq(class(range(\"a\", \"z\"), char(\"_\")), repeat0(class(range(\"a\", \"z\"), range(\"0\", \"9\"), char(\"_\"))))\nrule value = normal choice(capture(\"prec=1\", capture(\"alias:integer\", ref(number))), ref(string))\nrule number = token repeat1(class(range(\"0\", \"9\")))\nrule string = normal seq(literal(\"\\\"\"), repeat0(notClass(char(\"\\\"\"), char(\"\\\\\"))), capture(\"immediate_token\", literal(\"\\\"\")))\n",
+      "stderr": ""
+    },
+    {
+      "id": "validate:abnf:message",
+      "args": ["validate", "--from", "abnf", "message.abnf"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "0 error(s), 0 warning(s)\n",
+      "stderr": ""
+    },
+    {
+      "id": "validate:problems",
+      "args": ["validate", "--from", "native", "problems.grammar"],
+      "files": {
+        "problems.grammar": "start expr\nrule expr = normal choice(seq(ref(expr), literal(\"+\"), ref(term)), ref(term))\nrule term = normal seq(ref(missing), repeat0(optional(literal(\"x\"))), capture(\"lbl\", literal(\"y\")))\nrule orphan = normal literal(\"z\")\nrule a = normal seq(ref(b), literal(\"1\"))\nrule b = normal choice(ref(a), empty)\n"
+      },
+      "exitCode": 1,
+      "stdout": "error left-recursion expr: rule `expr` is left-recursive (`expr -> expr`); a recursive-descent/PEG parser may not terminate. Rewrite using repetition or factor the common prefix.\nerror undefined-non-terminal term: rule `term` references undefined non-terminal `missing`; define it or fix the spelling.\nwarning nullable-repetition term: rule `term` uses a zero-or-more repetition has nullable inner expression `(\"x\")?`; make the repeated expression consume input or move the optional part outside the repetition.\nwarning unused-capture term: capture label `lbl` in rule `term` is not used by grammar semantics; remove the label or wire it to a consumer.\nwarning unreachable-rule orphan: rule `orphan` is not reachable from start rule `expr`; remove it or reference it from a reachable rule.\nerror left-recursion a: rule `a` is left-recursive (`a -> b -> a`); a recursive-descent/PEG parser may not terminate. Rewrite using repetition or factor the common prefix.\nwarning unreachable-rule a: rule `a` is not reachable from start rule `expr`; remove it or reference it from a reachable rule.\nwarning unreachable-rule b: rule `b` is not reachable from start rule `expr`; remove it or reference it from a reachable rule.\nwarning nullable-repetition b: rule `b` can match empty; add a required terminal/non-terminal or document the rule as intentional.\n3 error(s), 6 warning(s)\n",
+      "stderr": ""
+    },
+    {
+      "id": "convert:abnf-to-pest",
+      "args": ["convert", "--from", "abnf", "--to", "pest", "message.abnf"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "message = { word ~ SP ~ number }\nword = { ALPHA+ }\nnumber = { DIGIT+ }\nSP = { \" \" }\nALPHA = { ('A'..'Z' | 'a'..'z') }\nDIGIT = { '0'..'9' }\n",
+      "stderr": ""
+    },
+    {
+      "id": "convert:bnf-to-tree-sitter-json",
+      "args": ["convert", "--from", "bnf", "--to", "tree-sitter-json", "message.bnf"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"word\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \" \"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"number\"\n        }\n      ]\n    },\n    \"word\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"SEQ\",\n          \"members\": [\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"letter\"\n            },\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"word\"\n            }\n          ]\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"letter\"\n        }\n      ]\n    },\n    \"number\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"SEQ\",\n          \"members\": [\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"digit\"\n            },\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"number\"\n            }\n          ]\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"digit\"\n        }\n      ]\n    },\n    \"letter\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"M\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"e\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"t\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"a\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"A\"\n        }\n      ]\n    },\n    \"digit\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"0\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"1\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"2\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"3\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"4\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"5\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"6\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"7\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"8\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"9\"\n        }\n      ]\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "convert:pest-to-ebnf",
+      "args": ["convert", "--from", "pest", "--to", "ebnf", "message.pest"],
+      "files": {
+        "message.pest": {
+          "case": "pest:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "message = word , \" \" , number ;\nword = letter , { letter } ;\nnumber = digit , { digit } ;\nletter = mlrange0 | mlrange1 ;\ndigit = mlrange2 ;\nmlrange0 = \"A\" | \"B\" | \"C\" | \"D\" | \"E\" | \"F\" | \"G\" | \"H\" | \"I\" | \"J\" | \"K\" | \"L\" | \"M\" | \"N\" | \"O\" | \"P\" | \"Q\" | \"R\" | \"S\" | \"T\" | \"U\" | \"V\" | \"W\" | \"X\" | \"Y\" | \"Z\" ;\nmlrange1 = \"a\" | \"b\" | \"c\" | \"d\" | \"e\" | \"f\" | \"g\" | \"h\" | \"i\" | \"j\" | \"k\" | \"l\" | \"m\" | \"n\" | \"o\" | \"p\" | \"q\" | \"r\" | \"s\" | \"t\" | \"u\" | \"v\" | \"w\" | \"x\" | \"y\" | \"z\" ;\nmlrange2 = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "stderr": "lossy: EBNF treats ordered choice as unordered choice\n"
+    },
+    {
+      "id": "convert:abnf-constructs-to-gbnf",
+      "args": ["convert", "--from", "abnf", "--to", "gbnf", "constructs.abnf"],
+      "files": {
+        "constructs.abnf": {
+          "case": "abnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "root ::= [Ll][Ee][Tt] (SP)+ name (SP)* \"=\" (SP)* value (\";\")?\nname ::= ALPHA (ALPHA | DIGIT | \"_\"){0,7}\nvalue ::= (DIGIT){1,3} | DQUOTE ([ -!] | [#-~])* DQUOTE\nSP ::= \" \"\nALPHA ::= [A-Za-z]\nDIGIT ::= [0-9]\nDQUOTE ::= \"\\\"\"\n",
+      "stderr": "lossy: GBNF expands case-insensitive terminal \"let\" to character classes\n"
+    },
+    {
+      "id": "convert:tree-sitter-json-constructs-to-bnf-unsupported",
+      "args": ["convert", "--from", "tree-sitter-json", "--to", "bnf", "constructs.json"],
+      "files": {
+        "constructs.json": {
+          "case": "tree-sitter-json:constructs"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot export as bnf\nbnf emit unsupported construct: negated CharClass\n"
+    },
+    {
+      "id": "convert:pest-constructs-to-abnf-unsupported",
+      "args": ["convert", "--from", "pest", "--to", "abnf", "constructs.pest"],
+      "files": {
+        "constructs.pest": {
+          "case": "pest:constructs"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot export as abnf\nabnf emit unsupported construct: Not\n"
+    },
+    {
+      "id": "convert:ebnf-to-antlr",
+      "args": ["convert", "--from", "ebnf", "--to", "antlr", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "grammar Message;\n\nmessage : word ' ' number ;\nword : letter letter* ;\nnumber : digit digit* ;\nletter : 'M' | 'e' | 't' | 'a' | 'A' ;\ndigit : '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;\n",
+      "stderr": ""
+    },
+    {
+      "id": "convert:ebnf-constructs-to-lark",
+      "args": ["convert", "--from", "ebnf", "--to", "lark", "constructs.ebnf"],
+      "files": {
+        "constructs.ebnf": {
+          "case": "ebnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "assignment: \"let\" \" \" name \" \"* \"=\" \" \"* value [\";\"]\nname: letter (letter | digit | \"_\")*\nvalue: digit [digit [digit]] | \"\\\"\" letter* \"\\\"\"\nletter: \"a\" | \"b\" | \"x\" | \"q\"\ndigit: \"1\" | \"2\" | \"7\"\n",
+      "stderr": ""
+    },
+    {
+      "id": "export:native-to-abnf",
+      "args": ["export", "--to", "abnf", "sum.grammar"],
+      "files": {
+        "sum.grammar": "# a native listing\nformat abnf\nstart sum\nrule sum = normal seq(ref(digit), repeat(seq(literal(\"+\"), ref(digit)), 0, unbounded))\nrule digit = token class(range(\"0\", \"9\"))\n"
+      },
+      "exitCode": 0,
+      "stdout": "sum = digit *( %s\"+\" digit )\ndigit = ( %x30-39 )\n",
+      "stderr": ""
+    },
+    {
+      "id": "export:native-to-native",
+      "args": ["export", "--to", "native", "sum.grammar"],
+      "files": {
+        "sum.grammar": "# a native listing\nformat abnf\nstart sum\nrule sum = normal seq(ref(digit), repeat(seq(literal(\"+\"), ref(digit)), 0, unbounded))\nrule digit = token class(range(\"0\", \"9\"))\n"
+      },
+      "exitCode": 0,
+      "stdout": "format abnf\nstart sum\nrule sum = normal seq(ref(digit), repeat(seq(literal(\"+\"), ref(digit)), 0, unbounded))\nrule digit = token class(range(\"0\", \"9\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "merge:bnf-and-ebnf",
+      "args": ["merge", "--language", "message", "--source", "bnf:message.bnf", "--source", "ebnf:message.ebnf", "--to", "ebnf"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        },
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "message = word , \" \" , number ;\nword = letter , word | letter ;\nnumber = digit , number | digit ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\nmessage_from_message_ebnf = word_from_message_ebnf , \" \" , number_from_message_ebnf ;\nword_from_message_ebnf = letter , { letter } ;\nnumber_from_message_ebnf = digit , { digit } ;\n",
+      "stderr": "kept-unique message: message.bnf:message (no-equivalent-rule)\nkept-unique word: message.bnf:word (no-equivalent-rule)\nkept-unique number: message.bnf:number (no-equivalent-rule)\nmerged letter: message.bnf:letter message.ebnf:letter (recursive-structural-bisimulation)\nmerged digit: message.bnf:digit message.ebnf:digit (recursive-structural-bisimulation)\nkept-unique message_from_message_ebnf: message.ebnf:message (no-equivalent-rule)\nrenamed-for-collision message_from_message_ebnf: message.ebnf:message (precedence)\nkept-unique word_from_message_ebnf: message.ebnf:word (no-equivalent-rule)\nrenamed-for-collision word_from_message_ebnf: message.ebnf:word (precedence)\nkept-unique number_from_message_ebnf: message.ebnf:number (no-equivalent-rule)\nrenamed-for-collision number_from_message_ebnf: message.ebnf:number (precedence)\nhomonym-kept-distinct message: message message_from_message_ebnf (different-definitions)\nhomonym-kept-distinct number: number number_from_message_ebnf (different-definitions)\nhomonym-kept-distinct word: word word_from_message_ebnf (different-definitions)\nalternative start-rule message: message_from_message_ebnf\nalternative distinct-meaning message: message message_from_message_ebnf\nalternative distinct-meaning number: number number_from_message_ebnf\nalternative distinct-meaning word: word word_from_message_ebnf\n"
+    },
+    {
+      "id": "merge:required-equivalence-unresolved",
+      "args": ["merge", "--source", "abnf:message.abnf", "--source", "pest:message.pest", "--require", "message.abnf:message=message.pest:word"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        },
+        "message.pest": {
+          "case": "pest:message"
+        }
+      },
+      "exitCode": 1,
+      "stdout": "format meta-language\nstart message\nrule message = normal seq(ref(word), ref(SP), ref(number))\nrule word = normal repeat1(ref(ALPHA))\nrule number = normal repeat1(ref(DIGIT))\nrule SP = normal literal(\" \")\nrule ALPHA = normal class(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule DIGIT = normal range(\"0\", \"9\")\nrule message_from_message_pest = normal seq(ref(word_from_message_pest), literal(\" \"), ref(number_from_message_pest))\nrule word_from_message_pest = atomic repeat1(ref(letter))\nrule number_from_message_pest = atomic repeat1(ref(digit))\nrule letter = silent orderedChoice(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule digit = silent range(\"0\", \"9\")\n",
+      "stderr": "kept-unique message: message.abnf:message (no-equivalent-rule)\nkept-unique word: message.abnf:word (no-equivalent-rule)\nkept-unique number: message.abnf:number (no-equivalent-rule)\nkept-unique SP: message.abnf:SP (no-equivalent-rule)\nkept-unique ALPHA: message.abnf:ALPHA (no-equivalent-rule)\nkept-unique DIGIT: message.abnf:DIGIT (no-equivalent-rule)\nkept-unique message_from_message_pest: message.pest:message (no-equivalent-rule)\nrenamed-for-collision message_from_message_pest: message.pest:message (precedence)\nkept-unique word_from_message_pest: message.pest:word (no-equivalent-rule)\nrenamed-for-collision word_from_message_pest: message.pest:word (precedence)\nkept-unique number_from_message_pest: message.pest:number (no-equivalent-rule)\nrenamed-for-collision number_from_message_pest: message.pest:number (precedence)\nkept-unique letter: message.pest:letter (no-equivalent-rule)\nkept-unique digit: message.pest:digit (no-equivalent-rule)\nhomonym-kept-distinct message: message message_from_message_pest (different-definitions)\nhomonym-kept-distinct number: number number_from_message_pest (different-definitions)\nhomonym-kept-distinct word: word word_from_message_pest (different-definitions)\nuncertain DIGIT: message.abnf:DIGIT message.pest:digit (name-similarity)\nalternative start-rule message: message_from_message_pest\nalternative distinct-meaning message: message message_from_message_pest\nalternative distinct-meaning number: number number_from_message_pest\nalternative distinct-meaning word: word word_from_message_pest\nalternative uncertain-match name-similarity: DIGIT digit\nunresolved message.abnf:message = message.pest:word: not-proven\n"
+    },
+    {
+      "id": "rename:referenced-rule",
+      "args": ["rename", "--from", "ebnf", "--rule", "word", "--name", "name", "--to", "ebnf", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "message = name , \" \" , number ;\nname = letter , { letter } ;\nnumber = digit , { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "stderr": "alias name = word\n"
+    },
+    {
+      "id": "rename:unknown-rule",
+      "args": ["rename", "--from", "ebnf", "--rule", "nothing", "--name", "name", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: grammar has no rule nothing\n"
+    },
+    {
+      "id": "round-trip:abnf:message",
+      "args": ["round-trip", "--from", "abnf", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.abnf"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:bnf:message",
+      "args": ["round-trip", "--from", "bnf", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.bnf"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:ebnf:message",
+      "args": ["round-trip", "--from", "ebnf", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:pest:message",
+      "args": ["round-trip", "--from", "pest", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.pest"],
+      "files": {
+        "message.pest": {
+          "case": "pest:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:tree-sitter-json:message",
+      "args": ["round-trip", "--from", "tree-sitter-json", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.json"],
+      "files": {
+        "message.json": {
+          "case": "tree-sitter-json:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:abnf:constructs",
+      "args": ["round-trip", "--from", "abnf", "--accept", "let x = 12;", "--accept", "LET ab_1=\"hi\"", "--accept", "Let  q=7", "--reject", "let 1x = 2;", "--reject", "let x = 1234;", "--reject", "letx = 1", "--reject", "let abcdefghi = 1", "constructs.abnf"],
+      "files": {
+        "constructs.abnf": {
+          "case": "abnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:bnf:constructs",
+      "args": ["round-trip", "--from", "bnf", "--accept", "let x = 12;", "--accept", "let ab=\"ab\"", "--accept", "let q=7", "--reject", "let 1x = 2;", "--reject", "letx = 1", "--reject", "let x = \"a", "constructs.bnf"],
+      "files": {
+        "constructs.bnf": {
+          "case": "bnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:ebnf:constructs",
+      "args": ["round-trip", "--from", "ebnf", "--accept", "let x = 12;", "--accept", "let ab_1=\"ab\"", "--accept", "let q=777", "--reject", "let 1x = 2;", "--reject", "letx = 1", "--reject", "let x = 1212", "constructs.ebnf"],
+      "files": {
+        "constructs.ebnf": {
+          "case": "ebnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:pest:constructs",
+      "args": ["round-trip", "--from", "pest", "--accept", "let x = 12;", "--accept", "LET ab_1=\"hi\"", "--accept", "Let  q=7", "--reject", "let let = 1", "--reject", "let x = 1234;", "--reject", "letx = 1", "--reject", "let x = \"a", "constructs.pest"],
+      "files": {
+        "constructs.pest": {
+          "case": "pest:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:tree-sitter-json:constructs",
+      "args": ["round-trip", "--from", "tree-sitter-json", "--accept", "let x = 12;", "--accept", "let ab_1=\"hi\"", "--accept", "let  q=7", "--reject", "let 1x = 2;", "--reject", "letx = 1", "--reject", "let x = \"a", "constructs.json"],
+      "files": {
+        "constructs.json": {
+          "case": "tree-sitter-json:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:native-wrong-samples",
+      "args": ["round-trip", "--from", "native", "--accept", "1+x", "--reject", "1+2", "sum.grammar"],
+      "files": {
+        "sum.grammar": "# a native listing\nformat abnf\nstart sum\nrule sum = normal seq(ref(digit), repeat(seq(literal(\"+\"), ref(digit)), 0, unbounded))\nrule digit = token class(range(\"0\", \"9\"))\n"
+      },
+      "exitCode": 1,
+      "stdout": "broken\nsample-rejected imported: 1+x\nsample-accepted imported: 1+2\nsample-rejected reimported: 1+x\nsample-accepted reimported: 1+2\n",
+      "stderr": ""
+    },
+    {
+      "id": "error:unknown-command",
+      "args": ["compile"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unknown command compile; run meta-language grammar help\n"
+    },
+    {
+      "id": "error:unknown-option",
+      "args": ["import", "--form", "bnf", "a.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unknown option --form for grammar import\n"
+    },
+    {
+      "id": "error:option-needs-value",
+      "args": ["import", "a.bnf", "--from"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: option --from needs a value\n"
+    },
+    {
+      "id": "error:option-given-twice",
+      "args": ["convert", "--from", "bnf", "--from", "ebnf", "--to", "pest", "a.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: option --from is given twice\n"
+    },
+    {
+      "id": "error:missing-option",
+      "args": ["convert", "--from", "bnf", "a.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: grammar convert needs --to\n"
+    },
+    {
+      "id": "error:missing-file",
+      "args": ["validate", "--from", "bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: grammar validate needs a grammar file\n"
+    },
+    {
+      "id": "error:unexpected-argument",
+      "args": ["import", "--from", "bnf", "a.bnf", "b.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unexpected argument b.bnf\n"
+    },
+    {
+      "id": "error:unknown-import-format",
+      "args": ["import", "--from", "yacc", "a.y"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unknown import format yacc (expected one of: abnf, antlr, bnf, ebnf, gbnf, lark, native, pest, tree-sitter-json)\n"
+    },
+    {
+      "id": "error:unknown-export-format",
+      "args": ["convert", "--from", "bnf", "--to", "yacc", "a.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unknown export format yacc (expected one of: abnf, antlr, bnf, ebnf, gbnf, lark, native, pest, tree-sitter-json)\n"
+    },
+    {
+      "id": "error:cannot-read",
+      "args": ["import", "--from", "bnf", "absent.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot read absent.bnf\n"
+    },
+    {
+      "id": "error:merge-source-without-format",
+      "args": ["merge", "--source", "message.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: a merge source is FORMAT:FILE, not message.bnf\n"
+    },
+    {
+      "id": "error:merge-duplicate-file-names",
+      "args": ["merge", "--source", "bnf:a/message.bnf", "--source", "bnf:b/message.bnf"],
+      "files": {
+        "a/message.bnf": {
+          "case": "bnf:message"
+        },
+        "b/message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: merge sources need distinct file names, message.bnf is given twice\n"
+    },
+    {
+      "id": "error:merge-required-equivalence-without-equals",
+      "args": ["merge", "--source", "bnf:message.bnf", "--require", "message.bnf:word"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: a required equivalence is SOURCE:RULE=SOURCE:RULE, not message.bnf:word\n"
+    },
+    {
+      "id": "error:malformed:abnf:unterminated-literal",
+      "args": ["import", "--from", "abnf", "malformed.abnf"],
+      "files": {
+        "malformed.abnf": {
+          "malformed": 0
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.abnf as abnf (parse error)"
+    },
+    {
+      "id": "error:malformed:abnf:undefined-reference",
+      "args": ["import", "--from", "abnf", "malformed.abnf"],
+      "files": {
+        "malformed.abnf": {
+          "malformed": 1
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import malformed.abnf as abnf (parse error)\nabnf import parse error: undefined non-terminal word\n"
+    },
+    {
+      "id": "error:malformed:bnf:unterminated-literal",
+      "args": ["import", "--from", "bnf", "malformed.bnf"],
+      "files": {
+        "malformed.bnf": {
+          "malformed": 2
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.bnf as bnf (parse error)"
+    },
+    {
+      "id": "error:malformed:bnf:undefined-reference",
+      "args": ["import", "--from", "bnf", "malformed.bnf"],
+      "files": {
+        "malformed.bnf": {
+          "malformed": 3
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.bnf as bnf (parse error)"
+    },
+    {
+      "id": "error:malformed:ebnf:unterminated-literal",
+      "args": ["import", "--from", "ebnf", "malformed.ebnf"],
+      "files": {
+        "malformed.ebnf": {
+          "malformed": 4
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.ebnf as ebnf (parse error)"
+    },
+    {
+      "id": "error:malformed:ebnf:undefined-reference",
+      "args": ["import", "--from", "ebnf", "malformed.ebnf"],
+      "files": {
+        "malformed.ebnf": {
+          "malformed": 5
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import malformed.ebnf as ebnf (parse error)\nebnf import parse error: undefined non-terminal word\n"
+    },
+    {
+      "id": "error:malformed:pest:unterminated-literal",
+      "args": ["import", "--from", "pest", "malformed.pest"],
+      "files": {
+        "malformed.pest": {
+          "malformed": 6
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.pest as pest (parse error)"
+    },
+    {
+      "id": "error:malformed:pest:undefined-reference",
+      "args": ["import", "--from", "pest", "malformed.pest"],
+      "files": {
+        "malformed.pest": {
+          "malformed": 7
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.pest as pest (parse error)"
+    },
+    {
+      "id": "error:malformed:tree-sitter-json:truncated-JSON",
+      "args": ["import", "--from", "tree-sitter-json", "malformed.json"],
+      "files": {
+        "malformed.json": {
+          "malformed": 8
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.json as tree-sitter-json (parse error)"
+    },
+    {
+      "id": "error:malformed:tree-sitter-json:missing-rules",
+      "args": ["import", "--from", "tree-sitter-json", "malformed.json"],
+      "files": {
+        "malformed.json": {
+          "malformed": 9
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import malformed.json as tree-sitter-json (parse error)\ntree-sitter import parse error: grammar.json must contain object rules\n"
+    },
+    {
+      "id": "error:malformed:tree-sitter-json:unknown-rule-type",
+      "args": ["import", "--from", "tree-sitter-json", "malformed.json"],
+      "files": {
+        "malformed.json": {
+          "malformed": 10
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import malformed.json as tree-sitter-json (unsupported construct)\ntree-sitter import unsupported construct: UNKNOWN\n"
+    },
+    {
+      "id": "error:native:no-rules",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "# nothing\n\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: the listing defines no rules\n"
+    },
+    {
+      "id": "error:native:unknown-directive",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rules a = normal empty\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unknown directive rules\n"
+    },
+    {
+      "id": "error:native:unknown-expression",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal lit(\"x\")\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unknown expression lit\n"
+    },
+    {
+      "id": "error:native:unterminated-string",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal literal(\"x)\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unterminated string\n"
+    },
+    {
+      "id": "error:native:reversed-bounds",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal repeat(any, 3, 2)\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: repetition bounds 3, 2 are reversed\n"
+    },
+    {
+      "id": "error:native:bound-too-large",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal repeat(any, 1234567890, unbounded)\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: repetition bound 1234567890 is too large\n"
+    },
+    {
+      "id": "error:native:wide-character",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal class(char(\"ab\"))\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: a character must be one code point\n"
+    },
+    {
+      "id": "error:native:unknown-kind",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = loud empty\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unknown rule kind loud\n"
+    },
+    {
+      "id": "error:native:duplicate-rule",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal empty\nrule a = normal any\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 2: rule a is defined twice\n"
+    },
+    {
+      "id": "error:native:undefined-start",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "start b\nrule a = normal empty\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: start rule b is not defined\n"
+    },
+    {
+      "id": "error:native:trailing-text",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal empty empty\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unexpected text at the end of the line\n"
+    }
   ]
 }
