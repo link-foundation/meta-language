@@ -89,6 +89,14 @@ candidate, supplied with `-- --consumer-lock /path/to/consumer/package-lock.json
 It checks the dependency versions that the installed package resolves,
 including nested copies; repository overrides alone do not establish delivery.
 
+[`js/tests/issue-195-acceptance-gate-mutations.test.js`](js/tests/issue-195-acceptance-gate-mutations.test.js)
+mutates the artifact behind each gate the vision lists under gate-mutation
+tests and observes that gate fail, while the unmutated artifact passes it. A
+change that weakens one of those gates fails that test. The proof obligation
+and conformance oracle gates are
+[`js/scripts/issue-195-proof-obligations.mjs`](js/scripts/issue-195-proof-obligations.mjs)
+and [`js/scripts/issue-195-oracle-mapping.mjs`](js/scripts/issue-195-oracle-mapping.mjs).
+
 ## Changelog
 
 User-facing changes need a fragment in `changelog.d/`:
