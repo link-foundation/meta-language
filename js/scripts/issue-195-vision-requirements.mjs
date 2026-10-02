@@ -567,8 +567,22 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'A theorem is carried into Lean and Rocq as a faithful proof obligation and discharged by the target kernel. Bounded property checks are reported separately and never counted as general proofs, and no external kernel authority is imported into RML.',
     assertions: ['theoremsCarriedAsObligations', 'obligationsDischargedByTarget', 'boundedChecksReportedSeparately'],
-    javascript: null,
-    rust: null,
+    javascript: [
+      'js/src/program-translation.js',
+      'js/src/translation/emit-common.js',
+      'js/src/translation/emit-lean.js',
+      'js/src/translation/emit-rocq.js',
+      'js/src/translation/emit-javascript.js',
+      'js/src/translation/emit-rust.js',
+    ],
+    rust: [
+      'rust/src/semantic_translation.rs',
+      'rust/src/translation/emit_common.rs',
+      'rust/src/translation/emit_lean.rs',
+      'rust/src/translation/emit_rocq.rs',
+      'rust/src/translation/emit_javascript.rs',
+      'rust/src/translation/emit_rust/declarations.rs',
+    ],
   },
   {
     id: 'I195-DOWNSTREAM-CONSUMER-MATRIX',
