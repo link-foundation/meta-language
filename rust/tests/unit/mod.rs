@@ -60,6 +60,7 @@ mod issue_195_conformance;
 mod issue_195_evidence;
 mod issue_195_generative;
 mod issue_195_grammar_importers;
+mod issue_195_interchange_mutation_guards;
 mod issue_195_observations;
 mod issue_195_project_semantics;
 mod issue_195_structured_transformations;

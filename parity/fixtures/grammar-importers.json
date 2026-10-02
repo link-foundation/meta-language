@@ -200,5 +200,62 @@
       "accepts": ["let x = 12;", "let ab_1=\"hi\"", "let  q=7"],
       "rejects": ["let 1x = 2;", "letx = 1", "let x = \"a"]
     }
+  ],
+  "malformed": [
+    {
+      "format": "abnf",
+      "reason": "unterminated literal",
+      "source": "message = \"unterminated\n"
+    },
+    {
+      "format": "abnf",
+      "reason": "undefined reference",
+      "source": "message = word\n"
+    },
+    {
+      "format": "bnf",
+      "reason": "unterminated literal",
+      "source": "<message> ::= \"unterminated"
+    },
+    {
+      "format": "bnf",
+      "reason": "undefined reference",
+      "source": "<message> ::= <word>"
+    },
+    {
+      "format": "ebnf",
+      "reason": "unterminated literal",
+      "source": "message = \"unterminated ;"
+    },
+    {
+      "format": "ebnf",
+      "reason": "undefined reference",
+      "source": "message = word ;"
+    },
+    {
+      "format": "pest",
+      "reason": "unterminated literal",
+      "source": "message = { \"unterminated }"
+    },
+    {
+      "format": "pest",
+      "reason": "undefined reference",
+      "source": "message = { word }"
+    },
+    {
+      "format": "tree-sitter-json",
+      "reason": "truncated JSON",
+      "source": "{\"rules\": {"
+    },
+    {
+      "format": "tree-sitter-json",
+      "reason": "missing rules",
+      "source": "{\"name\": \"message\"}"
+    },
+    {
+      "format": "tree-sitter-json",
+      "reason": "unknown rule type",
+      "source": "{\"name\": \"message\", \"rules\": {\"document\": {\"type\": \"UNKNOWN\"}}}"
+    }
   ]
 }
