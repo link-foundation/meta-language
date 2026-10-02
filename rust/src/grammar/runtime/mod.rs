@@ -165,6 +165,16 @@ fn validate_grammar(grammar: &Grammar) -> Vec<String> {
             .into_iter()
             .map(|rule| format!("undefined non-terminal `{rule}`")),
     );
+    // The feature union forms run in `feature_runtime::compile_grammar`.
+    for rule in grammar.rules() {
+        if let Some(feature) = rule.expr().first_feature() {
+            diagnostics.push(format!(
+                "rule `{}` uses the feature union form `{}`; the grammar executor runs it",
+                rule.name(),
+                feature.head()
+            ));
+        }
+    }
     diagnostics
 }
 
@@ -233,6 +243,7 @@ impl<'grammar, 'text> RuntimeMatcher<'grammar, 'text> {
         }
 
         match expr {
+            GrammarExpr::Feature(_) => Ok(None),
             GrammarExpr::Empty => Ok(Some(ParseNode::structural(
                 EXPR_EMPTY,
                 position,

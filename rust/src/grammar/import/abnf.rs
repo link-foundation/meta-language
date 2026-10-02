@@ -299,6 +299,9 @@ fn for_each_reference(expr: &mut GrammarExpr, visit: &mut impl FnMut(&mut String
         | GrammarExpr::Not(expr)
         | GrammarExpr::Capture { expr, .. }
         | GrammarExpr::Repeat { expr, .. } => for_each_reference(expr, visit),
+        GrammarExpr::Feature(feature) => {
+            feature.map_expressions(&mut |inner| for_each_reference(inner, visit));
+        }
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)

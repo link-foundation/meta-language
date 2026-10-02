@@ -1,0 +1,337 @@
+//! The grammar feature union in the native links form: the declaration links
+//! `(import NAME)`, `(mode NAME)`, `(extra EXPRESSION)`, `(conflict NAME...)`,
+//! `(macro NAME (parameters P...) EXPRESSION)` and `(scanner NAME (tokens
+//! T...) (operations OPERATION...))` between the grammar link and the first
+//! rule, the rule fields `(parameters P...)`, `(channel NAME)`, `(modes
+//! M...)` and `(action OPERATION...)` before `(doc TEXT)`, and the feature
+//! expressions. It mirrors `js/src/grammar-links.js`.
+
+use super::super::feature::class_expression;
+use super::super::{
+    FeatureExpr, GrammarDeclarations, GrammarExpr, GrammarImportError, GrammarMacro,
+    GrammarScanner, Operation, OperationCategory, RuleAttributes, UnicodeClassItem,
+};
+use super::feature_forms::{
+    FormCodec, LinksReader, read_links_feature, read_links_operation, render_feature_form,
+    render_operation,
+};
+use super::links::{
+    Node, arity, char_text, decoded_word, link, links_error, parse_node, parts,
+    percent_encode_links_text, render_links_expression, word,
+};
+
+/// The links spelling of the feature union forms.
+struct LinksCodec;
+
+impl FormCodec for LinksCodec {
+    fn name(&self, value: &str) -> String {
+        percent_encode_links_text(value)
+    }
+
+    fn text(&self, value: &str) -> String {
+        percent_encode_links_text(value)
+    }
+
+    fn expression(&self, expr: &GrammarExpr) -> String {
+        render_links_expression(expr)
+    }
+
+    fn call(&self, head: &str, parts: Vec<String>) -> String {
+        if parts.is_empty() {
+            return head.to_owned();
+        }
+        let mut all = vec![head.to_owned()];
+        all.extend(parts);
+        link(&all)
+    }
+
+    fn block(&self, word: &str, parts: Vec<String>) -> String {
+        let mut all = vec![word.to_owned()];
+        all.extend(parts);
+        link(&all)
+    }
+
+    fn byte_class(&self, negated: bool, items: Vec<String>) -> String {
+        let mut all = vec![
+            "byteClass".to_owned(),
+            if negated { "negated" } else { "plain" }.to_owned(),
+        ];
+        all.extend(items);
+        link(&all)
+    }
+}
+
+/// Renders one feature union expression of the native links form.
+pub(super) fn render_links_feature(feature: &FeatureExpr) -> String {
+    match feature {
+        FeatureExpr::UnicodeClass { negated, items } => {
+            let mut parts = vec![
+                "class".to_owned(),
+                if *negated { "negated" } else { "plain" }.to_owned(),
+            ];
+            parts.extend(items.iter().map(|item| match item {
+                UnicodeClassItem::Char(value) => link(&["char".to_owned(), char_text(*value)]),
+                UnicodeClassItem::Range(start, end) => {
+                    link(&["range".to_owned(), char_text(*start), char_text(*end)])
+                }
+                UnicodeClassItem::Category(value) => {
+                    link(&["category".to_owned(), percent_encode_links_text(value)])
+                }
+                UnicodeClassItem::Script(value) => {
+                    link(&["script".to_owned(), percent_encode_links_text(value)])
+                }
+            }));
+            link(&parts)
+        }
+        FeatureExpr::Call { name, arguments } => {
+            let mut parts = vec!["ref".to_owned(), percent_encode_links_text(name)];
+            parts.extend(arguments.iter().map(render_links_expression));
+            link(&parts)
+        }
+        FeatureExpr::Form(_) | FeatureExpr::ByteClass { .. } => {
+            render_feature_form(feature, &LinksCodec).unwrap_or_default()
+        }
+    }
+}
+
+fn render_names(head: &str, names: &[String]) -> String {
+    let mut parts = vec![head.to_owned()];
+    parts.extend(names.iter().map(|name| percent_encode_links_text(name)));
+    link(&parts)
+}
+
+fn render_operations(head: &str, operations: &[Operation]) -> String {
+    let mut parts = vec![head.to_owned()];
+    parts.extend(
+        operations
+            .iter()
+            .map(|operation| render_operation(operation, &LinksCodec)),
+    );
+    link(&parts)
+}
+
+/// The declaration links between the grammar link and the first rule.
+pub fn render_declaration_links(declarations: &GrammarDeclarations) -> Vec<String> {
+    let mut lines = Vec::new();
+    for name in &declarations.imports {
+        lines.push(format!("(import {})", percent_encode_links_text(name)));
+    }
+    for name in &declarations.modes {
+        lines.push(format!("(mode {})", percent_encode_links_text(name)));
+    }
+    for extra in &declarations.extras {
+        lines.push(format!("(extra {})", render_links_expression(extra)));
+    }
+    for group in &declarations.conflicts {
+        lines.push(render_names("conflict", group));
+    }
+    for declared in &declarations.macros {
+        lines.push(format!(
+            "(macro {} {} {})",
+            percent_encode_links_text(&declared.name),
+            render_names("parameters", &declared.parameters),
+            render_links_expression(&declared.expression)
+        ));
+    }
+    for scanner in &declarations.scanners {
+        lines.push(format!(
+            "(scanner {} {} {})",
+            percent_encode_links_text(&scanner.name),
+            render_names("tokens", &scanner.tokens),
+            render_operations("operations", &scanner.operations)
+        ));
+    }
+    lines
+}
+
+/// The rule fields before the `(doc TEXT)` field.
+pub fn render_rule_fields(attributes: &RuleAttributes) -> Vec<String> {
+    let mut fields = Vec::new();
+    if !attributes.parameters.is_empty() {
+        fields.push(render_names("parameters", &attributes.parameters));
+    }
+    if let Some(channel) = &attributes.channel {
+        fields.push(format!("(channel {})", percent_encode_links_text(channel)));
+    }
+    if let Some(modes) = &attributes.modes {
+        fields.push(render_names("modes", modes));
+    }
+    if let Some(action) = &attributes.action {
+        fields.push(render_operations("action", action));
+    }
+    fields
+}
+
+/// The links reader of the shared feature form tables.
+struct Helpers;
+
+impl LinksReader for Helpers {
+    type Node = Node;
+
+    fn parts<'a>(&self, node: &'a Node) -> Result<(&'a str, &'a [Node]), GrammarImportError> {
+        parts(node)
+    }
+
+    fn word<'a>(&self, node: &'a Node, what: &str) -> Result<&'a str, GrammarImportError> {
+        word(Some(node), what)
+    }
+
+    fn decoded_word(&self, node: &Node, what: &str) -> Result<String, GrammarImportError> {
+        decoded_word(Some(node), what)
+    }
+
+    fn expression(&self, node: &Node) -> Result<GrammarExpr, GrammarImportError> {
+        parse_node(node)
+    }
+
+    fn fail(&self, detail: String) -> GrammarImportError {
+        links_error(detail)
+    }
+}
+
+/// Reads a feature union expression headed by `head`, or `None`.
+pub(super) fn read_feature(
+    head: &str,
+    args: &[Node],
+) -> Result<Option<GrammarExpr>, GrammarImportError> {
+    read_links_feature(&Helpers, head, args)
+}
+
+/// Reads a `(class plain|negated ITEM...)` link's items.
+pub(super) fn read_class(negated: bool, items: &[Node]) -> Result<GrammarExpr, GrammarImportError> {
+    let items = items
+        .iter()
+        .map(|item| {
+            let (head, args) = parts(item)?;
+            match head {
+                "char" => {
+                    arity(head, args, 1)?;
+                    Ok(UnicodeClassItem::Char(super::links::character(
+                        args.first(),
+                        "a class character",
+                    )?))
+                }
+                "range" => {
+                    arity(head, args, 2)?;
+                    Ok(UnicodeClassItem::Range(
+                        super::links::character(args.first(), "a range start")?,
+                        super::links::character(args.get(1), "a range end")?,
+                    ))
+                }
+                "category" | "script" => {
+                    arity(head, args, 1)?;
+                    let value = decoded_word(args.first(), &format!("a Unicode {head}"))?;
+                    Ok(if head == "category" {
+                        UnicodeClassItem::Category(value)
+                    } else {
+                        UnicodeClassItem::Script(value)
+                    })
+                }
+                other => Err(links_error(format!("unknown class item {other}"))),
+            }
+        })
+        .collect::<Result<_, _>>()?;
+    Ok(class_expression(negated, items))
+}
+
+fn names(node: &Node, head: &str) -> Result<Vec<String>, GrammarImportError> {
+    let (found, args) = parts(node)?;
+    if found != head {
+        return Err(links_error(format!("expected ({head} ...), not {found}")));
+    }
+    args.iter()
+        .map(|item| decoded_word(Some(item), &format!("a {head} name")))
+        .collect()
+}
+
+fn operations(node: &Node, head: &str) -> Result<Vec<Operation>, GrammarImportError> {
+    let (found, args) = parts(node)?;
+    if found != head {
+        return Err(links_error(format!("expected ({head} ...), not {found}")));
+    }
+    args.iter()
+        .map(|item| read_links_operation(&Helpers, item, OperationCategory::Statement))
+        .collect()
+}
+
+/// Reads one declaration link into `declarations`; `false` when `head` names none.
+pub(super) fn read_declaration(
+    head: &str,
+    args: &[Node],
+    declarations: &mut GrammarDeclarations,
+) -> Result<bool, GrammarImportError> {
+    let one = || arity(head, args, 1).map(|()| &args[0]);
+    match head {
+        "import" => declarations
+            .imports
+            .push(decoded_word(Some(one()?), "an imported grammar")?),
+        "mode" => declarations
+            .modes
+            .push(decoded_word(Some(one()?), "a mode")?),
+        "extra" => declarations.extras.push(parse_node(one()?)?),
+        "conflict" => {
+            if args.is_empty() {
+                return Err(links_error("conflict names at least one rule"));
+            }
+            declarations.conflicts.push(
+                args.iter()
+                    .map(|item| decoded_word(Some(item), "a rule name"))
+                    .collect::<Result<_, _>>()?,
+            );
+        }
+        "macro" => {
+            arity(head, args, 3)?;
+            declarations.macros.push(GrammarMacro {
+                name: decoded_word(args.first(), "a macro name")?,
+                parameters: names(&args[1], "parameters")?,
+                expression: parse_node(&args[2])?,
+            });
+        }
+        "scanner" => {
+            arity(head, args, 3)?;
+            declarations.scanners.push(GrammarScanner {
+                name: decoded_word(args.first(), "a scanner name")?,
+                tokens: names(&args[1], "tokens")?,
+                operations: operations(&args[2], "operations")?,
+            });
+        }
+        _ => return Ok(false),
+    }
+    Ok(true)
+}
+
+/// The rule fields in order, before and including `(doc TEXT)`.
+const RULE_FIELDS: [&str; 5] = ["parameters", "channel", "modes", "action", "doc"];
+
+/// Reads the optional fields of a rule link: its attributes and its doc.
+pub(super) fn read_rule_fields(
+    fields: &[Node],
+) -> Result<(RuleAttributes, Option<String>), GrammarImportError> {
+    let mut attributes = RuleAttributes::default();
+    let mut doc = None;
+    let mut order = 0;
+    for field in fields {
+        let (head, args) = parts(field)?;
+        let Some(position) = RULE_FIELDS.iter().position(|name| *name == head) else {
+            return Err(links_error(format!("unexpected rule field {head}")));
+        };
+        if position < order {
+            return Err(links_error(format!("rule field {head} is out of order")));
+        }
+        order = position + 1;
+        match head {
+            "parameters" => attributes.parameters = names(field, "parameters")?,
+            "modes" => attributes.modes = Some(names(field, "modes")?),
+            "action" => attributes.action = Some(operations(field, "action")?),
+            "channel" => {
+                arity(head, args, 1)?;
+                attributes.channel = Some(decoded_word(args.first(), "a channel name")?);
+            }
+            _ => {
+                arity(head, args, 1)?;
+                doc = Some(decoded_word(args.first(), "a doc text")?);
+            }
+        }
+    }
+    Ok((attributes, doc))
+}

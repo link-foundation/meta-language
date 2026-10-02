@@ -240,6 +240,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-GRAMMAR-FEATURE-UNION',
     area: 'native-grammar',
     specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/grammar-feature-union.json',
     construct: 'grammar representation covering the union of all source grammar features',
     expectedBehavior:
       'The native grammar representation and its executor cover every feature listed in the grammar feature union, from ordered and unordered alternatives, left recursion and precedence to lexer modes, external scanners, semantic actions, embedded languages and error recovery. External scanners and actions are executable link definitions, and each feature has positive and negative executable tests.',
@@ -249,8 +250,20 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'scannersAndActionsExecutableAsLinks',
       'negativeCasesRejected',
     ],
-    javascript: null,
-    rust: null,
+    javascript: [
+      'js/src/grammar-feature-forms.js',
+      'js/src/grammar-runtime.js',
+      'js/src/grammar-runtime/executor.js',
+      'js/src/grammar-merge.js',
+      'js/src/grammar-lowering.js',
+    ],
+    rust: [
+      'rust/src/grammar/feature.rs',
+      'rust/src/grammar/feature_runtime/mod.rs',
+      'rust/src/grammar/feature_runtime/executor.rs',
+      'rust/src/grammar/merge/declarations.rs',
+      'rust/src/grammar/interchange/lowering/metadata.rs',
+    ],
   },
   {
     id: 'I195-GRAMMAR-CONCEPT-DISTINCTIONS',

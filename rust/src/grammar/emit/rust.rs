@@ -124,6 +124,7 @@ fn variant_name(expr: &GrammarExpr, index: usize) -> String {
             format!("Repeated{}", index + 1)
         }
         GrammarExpr::And(_) | GrammarExpr::Not(_) => format!("Predicate{}", index + 1),
+        GrammarExpr::Feature(_) => format!("Feature{}", index + 1),
     }
 }
 
@@ -204,6 +205,7 @@ fn collect_fields(expr: &GrammarExpr, quantifier: Quantifier, fields: &mut Vec<A
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar => {}
     }
 }
@@ -294,7 +296,7 @@ fn is_terminal_only(expr: &GrammarExpr) -> bool {
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar => true,
-        GrammarExpr::NonTerminal(_) => false,
+        GrammarExpr::NonTerminal(_) | GrammarExpr::Feature(_) => false,
         GrammarExpr::Choice { alternatives, .. } | GrammarExpr::Sequence(alternatives) => {
             alternatives.iter().all(is_terminal_only)
         }

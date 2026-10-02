@@ -106,6 +106,7 @@ impl TreeSitterEmitter {
                 Err(unsupported_error(FORMAT, "predicate"))
             }
             GrammarExpr::Capture { label, expr } => self.emit_capture(label.as_deref(), expr),
+            GrammarExpr::Feature(feature) => Err(unsupported_error(FORMAT, feature.head())),
         }
     }
 

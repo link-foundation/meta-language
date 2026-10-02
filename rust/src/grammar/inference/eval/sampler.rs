@@ -70,6 +70,9 @@ fn expand_expr(
 ) -> Result<String, EvalError> {
     match expr {
         GrammarExpr::Empty | GrammarExpr::And(_) | GrammarExpr::Not(_) => Ok(String::new()),
+        GrammarExpr::Feature(feature) => Err(EvalError::UnsupportedExpression {
+            construct: feature.head().to_owned(),
+        }),
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => Ok(value.clone()),
         GrammarExpr::CharRange(start, end) => pick_char_range(*start, *end, rng).map(String::from),
         GrammarExpr::CharClass { negated, items } => {
@@ -314,6 +317,7 @@ fn shortest_expr(
             Some(output)
         }
         GrammarExpr::Capture { expr, .. } => shortest_expr(grammar, expr, plan, visiting),
+        GrammarExpr::Feature(_) => None,
     }
 }
 
@@ -397,6 +401,7 @@ fn expr_min_length(expr: &GrammarExpr, lengths: &HashMap<String, usize>) -> Opti
             first_char_in_class(*negated, items).map(|_| 1)
         }
         GrammarExpr::AnyChar => Some(1),
+        GrammarExpr::Feature(_) => None,
     }
 }
 
@@ -441,6 +446,7 @@ fn expr_min_length_with_options(
             first_char_in_class(*negated, items).map(|_| 1)
         }
         GrammarExpr::AnyChar => Some(1),
+        GrammarExpr::Feature(_) => None,
     }
 }
 
@@ -495,6 +501,7 @@ fn collect_nonterminals(expr: &GrammarExpr, names: &mut BTreeSet<String>) {
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar => {}
     }
 }

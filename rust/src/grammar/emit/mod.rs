@@ -201,6 +201,7 @@ fn expr_required_width(expr: &GrammarExpr) -> usize {
         | GrammarExpr::And(_)
         | GrammarExpr::Not(_)
         | GrammarExpr::Optional(_)
+        | GrammarExpr::Feature(_)
         | GrammarExpr::ZeroOrMore(_) => 0,
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => value.len(),
         GrammarExpr::CharRange(_, _)
@@ -266,6 +267,7 @@ fn literal_yield(expr: &GrammarExpr) -> Option<String> {
         | GrammarExpr::ZeroOrMore(_)
         | GrammarExpr::OneOrMore(_)
         | GrammarExpr::Repeat { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::And(_)
         | GrammarExpr::Not(_) => None,
     }

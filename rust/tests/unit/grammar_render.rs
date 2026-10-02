@@ -19,6 +19,7 @@ pub fn render_rule(rule: &GrammarRule) -> String {
 /// Renders one expression with the same spelling as the JavaScript renderer.
 pub fn render_expr(expr: &GrammarExpr) -> String {
     match expr {
+        GrammarExpr::Feature(_) => meta_language::render_native_expression(expr),
         GrammarExpr::Empty => "empty".to_string(),
         GrammarExpr::AnyChar => "any".to_string(),
         GrammarExpr::Terminal(value) => format!("literal({})", quote(value)),

@@ -105,9 +105,11 @@ function renderNames(head, names) {
   return `(${[head, ...names.map(percentEncodeLinksText)].join(' ')})`;
 }
 
-// The declaration links of the grammar feature union, in the order the
-// native listing writes its declaration lines.
-function renderDeclarationLinks(declarations) {
+/**
+ * Renders the declaration links of the grammar feature union (the
+ * `grammarDeclarations` shape), in the order the native listing writes them.
+ */
+export function renderDeclarationLinks(declarations) {
   const lines = [];
   for (const name of declarations.imports) lines.push(`(import ${percentEncodeLinksText(name)})`);
   for (const name of declarations.modes) lines.push(`(mode ${percentEncodeLinksText(name)})`);
@@ -126,13 +128,23 @@ function renderDeclarationLinks(declarations) {
 /** Renders the `(rule NAME KIND EXPRESSION [(doc TEXT)])` link of one rule of `grammar`. */
 export function renderRuleLink(grammar, rule) {
   const parts = ['rule', percentEncodeLinksText(rule.name), rule.kind, renderLinksExpression(rule.expression)];
+  parts.push(...renderRuleFieldLinks(rule));
+  const doc = ruleDoc(grammar, rule);
+  if (doc !== null) parts.push(`(doc ${percentEncodeLinksText(doc)})`);
+  return `(${parts.join(' ')})`;
+}
+
+/**
+ * Renders the feature-union fields of one rule (parameters, channel, modes and
+ * action) as the links `renderRuleLink` writes between the expression and the doc.
+ */
+export function renderRuleFieldLinks(rule) {
+  const parts = [];
   if (rule.parameters?.length > 0) parts.push(renderNames('parameters', rule.parameters));
   if (rule.channel !== undefined) parts.push(`(channel ${percentEncodeLinksText(rule.channel)})`);
   if (rule.modes !== undefined) parts.push(renderNames('modes', rule.modes));
   if (rule.action !== undefined) parts.push(`(${['action', ...renderOperations(rule.action)].join(' ')})`);
-  const doc = ruleDoc(grammar, rule);
-  if (doc !== null) parts.push(`(doc ${percentEncodeLinksText(doc)})`);
-  return `(${parts.join(' ')})`;
+  return parts;
 }
 
 /** Renders one expression of the native links form. */

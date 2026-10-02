@@ -152,6 +152,12 @@ pub(super) fn normalize(
                 },
             }
         }
+        GrammarExpr::Feature(feature) => {
+            return Err(GrammarMergeError::new(format!(
+                "unsupported grammar expression kind: {}",
+                feature.head()
+            )));
+        }
     })
 }
 

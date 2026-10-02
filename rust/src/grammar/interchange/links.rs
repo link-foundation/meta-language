@@ -11,7 +11,10 @@
 //! `(choice ordered|unordered ITEM...)`, `(seq ITEM...)`, `(optional ITEM)`,
 //! `(repeat0 ITEM)`, `(repeat1 ITEM)`, `(repeat MIN MAX|unbounded ITEM)`,
 //! `(and ITEM)`, `(not ITEM)` and `(capture labeled LABEL ITEM)` or
-//! `(capture unlabeled ITEM)`. Names, texts and characters are percent-encoded
+//! `(capture unlabeled ITEM)`. The grammar feature union adds an optional
+//! `(matching MODE)` header field, declaration links before the first rule,
+//! rule fields before the doc and feature expressions (see the
+//! `feature_links` module). Names, texts and characters are percent-encoded
 //! as [`LinkNetwork`](crate::LinkNetwork) `LiNo` terms are (ASCII letters,
 //! digits and `-_.` kept, every other UTF-8 byte as `%XX`, the empty text as
 //! `%`). It mirrors `js/src/grammar-links.js`.
@@ -21,15 +24,20 @@ use std::fmt::Write as _;
 use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 
 use super::super::{
-    CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule, RuleKind,
+    CharClassItem, FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat,
+    GrammarImportError, GrammarRule, MATCHING_MODES, RuleKind,
+};
+use super::feature_links::{
+    read_class, read_declaration, read_feature, read_rule_fields, render_declaration_links,
+    render_links_feature, render_rule_fields,
 };
 
 /// The longest repetition bound the links may spell, in decimal digits.
 const MAX_BOUND_DIGITS: usize = 9;
 
-type Node = LiNo<String>;
+pub(super) type Node = LiNo<String>;
 
-fn links_error(detail: impl AsRef<str>) -> GrammarImportError {
+pub(super) fn links_error(detail: impl AsRef<str>) -> GrammarImportError {
     GrammarImportError::Parse {
         format: GrammarFormat::MetaLanguage,
         message: format!("links: {}", detail.as_ref()),
@@ -106,7 +114,12 @@ pub fn render_grammar_links(grammar: &Grammar) -> String {
             percent_encode_links_text(start.name())
         ));
     }
+    let declarations = grammar.declarations();
+    if let Some(matching) = &declarations.matching {
+        header.push(format!("(matching {matching})"));
+    }
     let mut lines = vec![format!("({})", header.join(" "))];
+    lines.extend(render_declaration_links(declarations));
     lines.extend(grammar.rules().iter().map(render_rule_link));
     lines.iter().fold(String::new(), |mut text, line| {
         text.push_str(line);
@@ -124,17 +137,18 @@ pub fn render_rule_link(rule: &GrammarRule) -> String {
         rule.kind().as_str().to_owned(),
         render_links_expression(rule.expr()),
     ];
+    parts.extend(render_rule_fields(&rule.attributes));
     if let Some(doc) = rule.doc() {
         parts.push(format!("(doc {})", percent_encode_links_text(doc)));
     }
     link(&parts)
 }
 
-fn link(parts: &[String]) -> String {
+pub(super) fn link(parts: &[String]) -> String {
     format!("({})", parts.join(" "))
 }
 
-fn char_text(value: char) -> String {
+pub(super) fn char_text(value: char) -> String {
     percent_encode_links_text(value.encode_utf8(&mut [0; 4]))
 }
 
@@ -213,6 +227,7 @@ pub fn render_links_expression(expr: &GrammarExpr) -> String {
                 ])
             },
         ),
+        GrammarExpr::Feature(feature) => render_links_feature(feature),
     }
 }
 
@@ -230,7 +245,7 @@ fn as_word(node: &Node) -> Option<&str> {
 
 /// A parsed value as a head and its arguments: a word is a head without
 /// arguments.
-fn parts(node: &Node) -> Result<(&str, &[Node]), GrammarImportError> {
+pub(super) fn parts(node: &Node) -> Result<(&str, &[Node]), GrammarImportError> {
     if let Some(word) = as_word(node) {
         return Ok((word, &[]));
     }
@@ -248,16 +263,16 @@ fn parts(node: &Node) -> Result<(&str, &[Node]), GrammarImportError> {
     }
 }
 
-fn word<'a>(node: Option<&'a Node>, what: &str) -> Result<&'a str, GrammarImportError> {
+pub(super) fn word<'a>(node: Option<&'a Node>, what: &str) -> Result<&'a str, GrammarImportError> {
     node.and_then(as_word)
         .ok_or_else(|| links_error(format!("expected {what}")))
 }
 
-fn decoded_word(node: Option<&Node>, what: &str) -> Result<String, GrammarImportError> {
+pub(super) fn decoded_word(node: Option<&Node>, what: &str) -> Result<String, GrammarImportError> {
     percent_decode_links_text(word(node, what)?)
 }
 
-fn character(node: Option<&Node>, what: &str) -> Result<char, GrammarImportError> {
+pub(super) fn character(node: Option<&Node>, what: &str) -> Result<char, GrammarImportError> {
     let decoded = decoded_word(node, what)?;
     let mut chars = decoded.chars();
     match (chars.next(), chars.next()) {
@@ -266,7 +281,7 @@ fn character(node: Option<&Node>, what: &str) -> Result<char, GrammarImportError
     }
 }
 
-fn arity(head: &str, args: &[Node], count: usize) -> Result<(), GrammarImportError> {
+pub(super) fn arity(head: &str, args: &[Node], count: usize) -> Result<(), GrammarImportError> {
     if args.len() == count {
         Ok(())
     } else {
@@ -304,27 +319,6 @@ fn inner(head: &str, args: &[Node]) -> Result<Box<GrammarExpr>, GrammarImportErr
     Ok(Box::new(parse_node(&args[0])?))
 }
 
-fn class_item(node: &Node) -> Result<CharClassItem, GrammarImportError> {
-    let (head, args) = parts(node)?;
-    match head {
-        "char" => {
-            arity(head, args, 1)?;
-            Ok(CharClassItem::Char(character(
-                args.first(),
-                "a class character",
-            )?))
-        }
-        "range" => {
-            arity(head, args, 2)?;
-            Ok(CharClassItem::Range(
-                character(args.first(), "a range start")?,
-                character(args.get(1), "a range end")?,
-            ))
-        }
-        other => Err(links_error(format!("unknown class item {other}"))),
-    }
-}
-
 pub(super) fn parse_node(node: &Node) -> Result<GrammarExpr, GrammarImportError> {
     let (head, args) = parts(node)?;
     Ok(match head {
@@ -355,14 +349,21 @@ pub(super) fn parse_node(node: &Node) -> Result<GrammarExpr, GrammarImportError>
             let Some((first, items)) = args.split_first() else {
                 return Err(links_error("class needs plain or negated"));
             };
-            GrammarExpr::CharClass {
-                negated: flag(first, "negated", "plain")?,
-                items: items.iter().map(class_item).collect::<Result<_, _>>()?,
-            }
+            read_class(flag(first, "negated", "plain")?, items)?
         }
         "ref" => {
-            arity(head, args, 1)?;
-            GrammarExpr::NonTerminal(decoded_word(args.first(), "a rule name")?)
+            let Some((name, arguments)) = args.split_first() else {
+                return Err(links_error("ref takes a rule name"));
+            };
+            let name = decoded_word(Some(name), "a rule name")?;
+            if arguments.is_empty() {
+                GrammarExpr::NonTerminal(name)
+            } else {
+                GrammarExpr::feature(FeatureExpr::Call {
+                    name,
+                    arguments: arguments.iter().map(parse_node).collect::<Result<_, _>>()?,
+                })
+            }
         }
         "choice" => {
             let Some((first, items)) = args.split_first() else {
@@ -414,7 +415,10 @@ pub(super) fn parse_node(node: &Node) -> Result<GrammarExpr, GrammarImportError>
         "repeat1" => GrammarExpr::OneOrMore(inner(head, args)?),
         "and" => GrammarExpr::And(inner(head, args)?),
         "not" => GrammarExpr::Not(inner(head, args)?),
-        other => return Err(links_error(format!("unknown expression {other}"))),
+        other => {
+            return read_feature(other, args)?
+                .ok_or_else(|| links_error(format!("unknown expression {other}")));
+        }
     })
 }
 
@@ -455,6 +459,7 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
     }
     let mut source_format = None;
     let mut start = None;
+    let mut declarations = GrammarDeclarations::default();
     for field in header_args {
         let (key, values) = parts(field)?;
         arity(key, values, 1)?;
@@ -466,6 +471,12 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
             );
         } else if key == "start" && start.is_none() {
             start = Some(decoded_word(values.first(), "a start rule")?);
+        } else if key == "matching" && declarations.matching.is_none() {
+            let matching = word(values.first(), "a matching")?;
+            if !MATCHING_MODES.contains(&matching) {
+                return Err(links_error(format!("unknown matching {matching}")));
+            }
+            declarations.matching = Some(matching.to_owned());
         } else {
             return Err(links_error(format!("unexpected grammar field {key}")));
         }
@@ -474,11 +485,14 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
     for statement in statements {
         let (head, args) = parts(statement)?;
         if head != "rule" {
-            return Err(links_error(format!("unexpected link {head}")));
+            if !rules.is_empty() || !read_declaration(head, args, &mut declarations)? {
+                return Err(links_error(format!("unexpected link {head}")));
+            }
+            continue;
         }
-        if args.len() != 3 && args.len() != 4 {
+        if args.len() < 3 {
             return Err(links_error(
-                "rule takes a name, a kind, an expression and an optional doc",
+                "rule takes a name, a kind, an expression and optional fields",
             ));
         }
         let name = decoded_word(args.first(), "a rule name")?;
@@ -488,14 +502,13 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
         if rules.iter().any(|rule| rule.name == name) {
             return Err(links_error(format!("rule {name} is defined twice")));
         }
-        let mut rule = GrammarRule::new(name, parse_node(&args[2])?).with_kind(kind);
-        if let Some(doc) = args.get(3) {
-            let (doc_head, doc_args) = parts(doc)?;
-            if doc_head != "doc" {
-                return Err(links_error(format!("unexpected rule field {doc_head}")));
-            }
-            arity(doc_head, doc_args, 1)?;
-            rule = rule.with_doc(decoded_word(doc_args.first(), "a doc text")?);
+        let expr = parse_node(&args[2])?;
+        let (attributes, doc) = read_rule_fields(&args[3..])?;
+        let mut rule = GrammarRule::new(name, expr)
+            .with_kind(kind)
+            .with_attributes(attributes);
+        if let Some(doc) = doc {
+            rule = rule.with_doc(doc);
         }
         rules.push(rule);
     }
@@ -515,5 +528,6 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
     if let Some(format) = source_format {
         grammar.set_source_format(format);
     }
+    grammar.set_declarations(declarations);
     Ok(grammar)
 }

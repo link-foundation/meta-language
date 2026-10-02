@@ -107,6 +107,9 @@ impl EbnfEmitter {
             ),
             GrammarExpr::And(_) => return Err(unsupported_error(GrammarFormat::Ebnf, "And")),
             GrammarExpr::Not(_) => return Err(unsupported_error(GrammarFormat::Ebnf, "Not")),
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Ebnf, feature.head()));
+            }
             GrammarExpr::Capture { label, expr } => {
                 report_capture_loss(&mut self.report, GrammarFormat::Ebnf, label.as_ref());
                 return self.emit_expr(expr, parent);

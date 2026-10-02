@@ -12,7 +12,11 @@
 //! lookahead written as the empty expression, an arbitrary character limited
 //! to printable ASCII), a note and the original expression as native links.
 //! Rule names, kinds and documentation the target does not keep are metadata
-//! steps as well. The executable grammar (the emitted text) is therefore
+//! steps as well, and so are the declarations of the grammar feature union
+//! (matching, imports, modes, extras, conflicts, macros and scanners) and the
+//! rule parameters, channels, modes and actions: no target notation writes
+//! them, so the executable does not honor them and a lowering that carries
+//! them is approximate. The executable grammar (the emitted text) is therefore
 //! distinct from the lossless interchange package (executable plus metadata),
 //! and [`check_grammar_lowering`] reconstructs the original from the package
 //! and reports every feature the package does not carry. It mirrors
@@ -25,14 +29,15 @@ use std::fmt;
 use super::super::emit::{EmitReport, GrammarEmitError};
 use super::super::import::GrammarImportError;
 use super::super::round_trip::{GrammarEmitFn, GrammarImportFn, GrammarRoundTripError};
-use super::super::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
+use super::super::{Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind};
 use super::links::render_links_expression;
-use super::{grammar_emitter, grammar_importer};
+use super::{grammar_emitter, grammar_importer, render_rule_fields};
 
 mod encoding;
 mod metadata;
 
 use encoding::{Construct, constructs_of, encode, kept_kinds, unsupported};
+use metadata::render_declarations_text;
 
 pub use encoding::MAX_LOWERED_CHARACTERS;
 
@@ -137,6 +142,21 @@ pub enum GrammarLoweringStep {
         rule: String,
         /// The original documentation.
         doc: String,
+    },
+    /// The feature union declarations of the grammar, which no target writes
+    /// and the executable does not honor.
+    Declarations {
+        /// The declarations as native links: a grammar link with the
+        /// matching, then one link per declaration, each on its own line.
+        declarations: String,
+    },
+    /// The parameters, channel, modes and action of `rule`, which no target
+    /// writes and the executable does not honor.
+    Attributes {
+        /// The original rule name.
+        rule: String,
+        /// The rule fields as native links, separated by spaces.
+        attributes: String,
     },
 }
 
@@ -323,6 +343,7 @@ fn rule(name: &str, kind: RuleKind, expr: GrammarExpr, doc: Option<String>) -> G
         kind,
         concept: None,
         doc,
+        attributes: RuleAttributes::default(),
     }
 }
 
@@ -548,13 +569,30 @@ pub fn lower_grammar(
         }
     }
 
+    // The feature union declarations and rule fields have no form in any
+    // target notation: they become steps, and the executable does not honor
+    // them.
+    if let Some(declarations) = render_declarations_text(grammar.declarations()) {
+        steps.push(GrammarLoweringStep::Declarations { declarations });
+    }
+    for original in grammar.rules() {
+        let fields = render_rule_fields(&original.attributes);
+        if !fields.is_empty() {
+            steps.push(GrammarLoweringStep::Attributes {
+                rule: original.name.clone(),
+                attributes: fields.join(" "),
+            });
+        }
+    }
+
     let approximate = steps.iter().any(|step| {
         matches!(
             step,
             GrammarLoweringStep::Helper {
                 encoding: GrammarLoweringEncoding::Approximate,
                 ..
-            }
+            } | GrammarLoweringStep::Declarations { .. }
+                | GrammarLoweringStep::Attributes { .. }
         )
     });
     let status = if approximate {

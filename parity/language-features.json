@@ -603,6 +603,30 @@
       }
     },
     {
+      "id": "grammar-feature-union",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/grammar/feature.rs",
+          "rust/src/grammar/feature_runtime/mod.rs",
+          "rust/src/grammar/merge/declarations.rs",
+          "rust/tests/unit/issue_195_grammar_feature_union.rs",
+          "rust/tests/unit/issue_195_grammar_feature_union_interchange.rs",
+          "parity/fixtures/grammar-feature-union.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/grammar-feature-forms.js",
+          "js/src/grammar-runtime.js",
+          "js/tests/issue-195-grammar-feature-union.test.js",
+          "parity/fixtures/grammar-feature-union.json"
+        ]
+      }
+    },
+    {
       "id": "semantics-proof-preservation",
       "required": true,
       "rust": {

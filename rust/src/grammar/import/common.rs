@@ -230,6 +230,9 @@ pub(super) fn collect_references(expr: &GrammarExpr, names: &mut Vec<String>) {
         | GrammarExpr::Not(expr)
         | GrammarExpr::Capture { expr, .. }
         | GrammarExpr::Repeat { expr, .. } => collect_references(expr, names),
+        GrammarExpr::Feature(feature) => {
+            feature.for_each_expression(&mut |inner| collect_references(inner, names));
+        }
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)

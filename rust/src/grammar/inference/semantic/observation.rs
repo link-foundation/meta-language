@@ -126,6 +126,7 @@ fn collect_terminals(expr: &GrammarExpr, terminals: &mut Vec<String>) {
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar
+        | GrammarExpr::Feature(_)
         | GrammarExpr::NonTerminal(_) => {}
     }
 }
@@ -152,6 +153,7 @@ fn expr_contains_digit_range(expr: &GrammarExpr) -> bool {
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::AnyChar
+        | GrammarExpr::Feature(_)
         | GrammarExpr::NonTerminal(_) => false,
     }
 }
@@ -175,6 +177,7 @@ fn expr_contains_alpha_range(expr: &GrammarExpr) -> bool {
         | GrammarExpr::Repeat { expr: inner, .. }
         | GrammarExpr::Capture { expr: inner, .. } => expr_contains_alpha_range(inner),
         GrammarExpr::Empty
+        | GrammarExpr::Feature(_)
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::AnyChar

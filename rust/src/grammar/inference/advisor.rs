@@ -391,6 +391,7 @@ fn structural_name(expr: &GrammarExpr) -> String {
             || format!("{}_capture", structural_stem(expr)),
             sanitize_identifier,
         ),
+        GrammarExpr::Feature(feature) => sanitize_identifier(feature.head()),
     }
 }
 
@@ -747,6 +748,9 @@ fn rewrite_nonterminal_refs(
                 )
             },
         ),
+        GrammarExpr::Feature(feature) => GrammarExpr::rewrite_feature(feature, |inner| {
+            rewrite_nonterminal_refs(inner, loser_name, replacement)
+        }),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)

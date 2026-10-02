@@ -250,6 +250,7 @@ pub(super) fn collect_references<'expr>(expr: &'expr GrammarExpr, names: &mut Ve
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar => {}
     }
 }

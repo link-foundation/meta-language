@@ -7,15 +7,34 @@
 > [concrete and abstract syntax trees](../vision.md#concrete-and-abstract-syntax-trees)).
 > Where the two disagree, the vision is the contract and this page is a defect to fix.
 
-Status: the JavaScript package implements this page in
+Status: both packages implement this page. The JavaScript package does so in
 [`js/src/grammar-feature-forms.js`](../../js/src/grammar-feature-forms.js),
 [`js/src/grammar-runtime.js`](../../js/src/grammar-runtime.js) and
-[`js/src/grammar-runtime/`](../../js/src/grammar-runtime/). The Rust port has
-not reached parity yet: it still parses with pest, has no executor for these
-forms, and does not read the forms below. This page is written so that a Rust
-port can reproduce the JavaScript behavior byte for byte; the shared fixture
+[`js/src/grammar-runtime/`](../../js/src/grammar-runtime/); the Rust crate in
+[`rust/src/grammar/feature.rs`](../../rust/src/grammar/feature.rs),
+[`rust/src/grammar/interchange/`](../../rust/src/grammar/interchange/) and the
+native executor [`rust/src/grammar/feature_runtime/`](../../rust/src/grammar/feature_runtime/)
+(`compile_feature_grammar`, `FeatureGrammarParser`), which uses no parser
+generator. The shared fixture
 [`parity/fixtures/grammar-feature-union.json`](../../parity/fixtures/grammar-feature-union.json)
-is the executable check both ports must pass.
+is the executable check both ports pass byte for byte
+([`js/tests/issue-195-grammar-feature-union.test.js`](../../js/tests/issue-195-grammar-feature-union.test.js),
+[`rust/tests/unit/issue_195_grammar_feature_union.rs`](../../rust/tests/unit/issue_195_grammar_feature_union.rs)
+and
+[`rust/tests/unit/issue_195_grammar_feature_union_interchange.rs`](../../rust/tests/unit/issue_195_grammar_feature_union_interchange.rs)).
+Its `interchange` section covers grammar merging and lowering: a merge keeps
+the declarations and rule fields (it unites imports, modes, extras and
+conflict groups, keeps the first matching, macro and scanner of a name and
+reports a different later one as a `declaration-conflict`), and a lowering
+carries them as `declarations` and `attributes` metadata steps, which makes it
+`approximate` because no lowered executable honors them.
+
+Known gaps: the merge of both packages refuses rule bodies that use the
+feature forms (`unsupported grammar expression kind`). In the Rust crate,
+grammar inference, sampling and recognition do not evaluate the feature forms,
+the link-network codec does not carry rule fields or declarations, and the
+older pest-based `GrammarParser` only diagnoses the feature forms instead of
+running them.
 
 ## Contents
 

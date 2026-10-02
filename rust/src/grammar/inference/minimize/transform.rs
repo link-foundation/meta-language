@@ -300,6 +300,7 @@ fn canonicalize_expr(expr: &GrammarExpr) -> GrammarExpr {
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar
+        | GrammarExpr::Feature(_)
         | GrammarExpr::NonTerminal(_) => expr.clone(),
     }
 }
@@ -514,6 +515,9 @@ fn rewrite_nonterminal_refs(
             label.as_deref(),
             rewrite_nonterminal_refs(expr, target, replacement),
         ),
+        GrammarExpr::Feature(feature) => GrammarExpr::rewrite_feature(feature, |inner| {
+            rewrite_nonterminal_refs(inner, target, replacement)
+        }),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
@@ -676,6 +680,11 @@ fn expr_references(expr: &GrammarExpr, expected: &str) -> bool {
         | GrammarExpr::Not(inner)
         | GrammarExpr::Repeat { expr: inner, .. }
         | GrammarExpr::Capture { expr: inner, .. } => expr_references(inner, expected),
+        GrammarExpr::Feature(feature) => {
+            let mut names = BTreeSet::new();
+            feature.collect_references(&mut names);
+            names.contains(expected)
+        }
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
@@ -713,6 +722,7 @@ fn collect_nonterminals(expr: &GrammarExpr, names: &mut BTreeSet<String>) {
         | GrammarExpr::Not(inner)
         | GrammarExpr::Repeat { expr: inner, .. }
         | GrammarExpr::Capture { expr: inner, .. } => collect_nonterminals(inner, names),
+        GrammarExpr::Feature(feature) => feature.collect_references(names),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
@@ -752,6 +762,13 @@ fn count_references(expr: &GrammarExpr, counts: &mut BTreeMap<String, usize>) {
         | GrammarExpr::Not(inner)
         | GrammarExpr::Repeat { expr: inner, .. }
         | GrammarExpr::Capture { expr: inner, .. } => count_references(inner, counts),
+        GrammarExpr::Feature(feature) => {
+            let mut names = BTreeSet::new();
+            feature.collect_references(&mut names);
+            for name in names {
+                *counts.entry(name).or_default() += 1;
+            }
+        }
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)

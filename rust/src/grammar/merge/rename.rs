@@ -4,7 +4,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::normalize::quote;
 use super::{GrammarRenameError, GrammarRenameErrorKind, RenamedGrammar, RuleAlias};
-use crate::grammar::{Grammar, GrammarExpr, GrammarRule};
+use crate::grammar::{
+    FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarMacro, GrammarRule,
+    GrammarScanner, Operation,
+};
 
 /// Renames one rule and every reference to it.
 ///
@@ -131,6 +134,11 @@ pub fn restore_source_names(
     Ok(rename_all(grammar, &mapping))
 }
 
+/// Renames rules and every reference to them: in rule bodies, in rule
+/// actions and in the declarations (extras, conflict groups, macro bodies and
+/// scanner operations). Macro names, scanner names and tokens are separate
+/// scopes. A parameter is used through its own `(parameter name)` form,
+/// never through a reference, so renaming never touches it.
 fn rename_all(grammar: &Grammar, mapping: &BTreeMap<String, String>) -> Grammar {
     let rename = |name: &str| {
         mapping
@@ -142,17 +150,86 @@ fn rename_all(grammar: &Grammar, mapping: &BTreeMap<String, String>) -> Grammar 
     for rule in grammar.rules() {
         renamed.add_rule(GrammarRule {
             name: rename(&rule.name),
-            expr: map_references(&rule.expr, &rename),
-            kind: rule.kind,
-            concept: rule.concept.clone(),
-            doc: rule.doc.clone(),
+            ..renamed_rule(rule, &rename)
         });
     }
     if let Some(start) = grammar.start() {
         renamed.set_start(rename(start));
     }
     renamed.source_format = grammar.source_format();
+    renamed.set_declarations(map_declarations(grammar.declarations(), &rename));
     renamed
+}
+
+/// A rule with its body and action references renamed; its own name is kept.
+pub(super) fn renamed_rule(rule: &GrammarRule, rename: &dyn Fn(&str) -> String) -> GrammarRule {
+    let mut attributes = rule.attributes.clone();
+    if let Some(action) = &rule.attributes.action {
+        attributes.action = Some(map_operations(action, rename));
+    }
+    GrammarRule {
+        name: rule.name.clone(),
+        expr: map_references(&rule.expr, rename),
+        kind: rule.kind,
+        concept: rule.concept.clone(),
+        doc: rule.doc.clone(),
+        attributes,
+    }
+}
+
+/// The declarations with every rule reference renamed.
+pub(super) fn map_declarations(
+    declarations: &GrammarDeclarations,
+    rename: &dyn Fn(&str) -> String,
+) -> GrammarDeclarations {
+    GrammarDeclarations {
+        matching: declarations.matching.clone(),
+        imports: declarations.imports.clone(),
+        modes: declarations.modes.clone(),
+        extras: declarations
+            .extras
+            .iter()
+            .map(|extra| map_references(extra, rename))
+            .collect(),
+        conflicts: declarations
+            .conflicts
+            .iter()
+            .map(|group| group.iter().map(|name| rename(name)).collect())
+            .collect(),
+        macros: declarations
+            .macros
+            .iter()
+            .map(|declared| GrammarMacro {
+                name: declared.name.clone(),
+                parameters: declared.parameters.clone(),
+                expression: map_references(&declared.expression, rename),
+            })
+            .collect(),
+        scanners: declarations
+            .scanners
+            .iter()
+            .map(|scanner| GrammarScanner {
+                name: scanner.name.clone(),
+                tokens: scanner.tokens.clone(),
+                operations: map_operations(&scanner.operations, rename),
+            })
+            .collect(),
+    }
+}
+
+/// Operations with every rule reference in their expressions renamed.
+pub(super) fn map_operations(
+    operations: &[Operation],
+    rename: &dyn Fn(&str) -> String,
+) -> Vec<Operation> {
+    operations
+        .iter()
+        .map(|operation| {
+            let mut copy = operation.clone();
+            copy.map_expressions(&mut |expr| *expr = map_references(expr, rename));
+            copy
+        })
+        .collect()
 }
 
 pub(super) fn map_references(expr: &GrammarExpr, rename: &dyn Fn(&str) -> String) -> GrammarExpr {
@@ -189,6 +266,16 @@ pub(super) fn map_references(expr: &GrammarExpr, rename: &dyn Fn(&str) -> String
             label: label.clone(),
             expr: map(expr),
         },
+        GrammarExpr::Feature(feature) => {
+            let mut copy =
+                GrammarExpr::rewrite_feature(feature, |inner| map_references(inner, rename));
+            if let GrammarExpr::Feature(renamed) = &mut copy
+                && let FeatureExpr::Call { name, .. } = renamed.as_mut()
+            {
+                *name = rename(name);
+            }
+            copy
+        }
         other => other.clone(),
     }
 }

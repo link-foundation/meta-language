@@ -4,8 +4,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use sha2::{Digest, Sha256};
 
+use super::declarations::{declarations_text, merge_declarations, rule_fields};
 use super::normalize::{normalize, quote};
-use super::rename::map_references;
+use super::rename::renamed_rule;
 use super::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
     GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,
@@ -137,10 +138,11 @@ pub(super) fn group_fingerprint(
         let label = source_label(source, &name_label);
         for rule in source.grammar.rules() {
             lines.push(format!(
-                "rule {} {}:{}",
+                "rule {} {}:{}{}",
                 quote(&rule.name),
                 rule.kind.as_str(),
-                normalize(&rule.expr, &label)?.text
+                normalize(&rule.expr, &label)?.text,
+                rule_fields(rule, &label)
             ));
             // Concept and documentation annotations exist only in the Rust IR;
             // they are fingerprinted so that changing them re-merges the group.
@@ -150,6 +152,14 @@ pub(super) fn group_fingerprint(
             if let Some(doc) = &rule.doc {
                 lines.push(format!("doc {} {}", quote(&rule.name), quote(doc)));
             }
+        }
+        let declarations = declarations_text(source.grammar.declarations());
+        if !declarations.is_empty() {
+            lines.push(format!(
+                "declarations {} {}",
+                quote(source.id),
+                quote(&declarations)
+            ));
         }
     }
     for (first, second) in required {
@@ -298,22 +308,31 @@ pub(super) fn merge_group(
                 name.to_owned()
             }
         };
-        let form = normalize(
-            &map_references(&representative.rule.expr, &rename),
-            &name_label,
-        )?;
+        let renamed = renamed_rule(representative.rule, &rename);
+        let form = normalize(&renamed.expr, &name_label)?;
         definitions.insert(
             *class,
-            format!("{}:{}", representative.rule.kind.as_str(), form.text),
+            format!(
+                "{}:{}{}",
+                renamed.kind.as_str(),
+                form.text,
+                rule_fields(&renamed, &name_label)
+            ),
         );
         grammar.add_rule(GrammarRule {
             name: names[class].clone(),
             expr: form.expr(),
-            kind: representative.rule.kind,
-            concept: representative.rule.concept.clone(),
-            doc: representative.rule.doc.clone(),
+            ..renamed
         });
     }
+    let (declarations, declaration_conflicts) = merge_declarations(entry, &|source, name| {
+        if source.has_rule(name) {
+            canonical(source.id, name).clone()
+        } else {
+            name.to_owned()
+        }
+    });
+    grammar.set_declarations(declarations);
 
     let mut start_classes = Vec::new();
     for source in entry {
@@ -438,6 +457,20 @@ pub(super) fn merge_group(
             options: vec![first, second],
         });
     }
+    for conflict in declaration_conflicts {
+        decisions.push(GrammarMergeDecision {
+            kind: GrammarMergeDecisionKind::DeclarationConflict,
+            name: conflict.name.clone(),
+            members: conflict.members.clone(),
+            basis: conflict.basis.to_owned(),
+            definition: None,
+        });
+        alternatives.push(GrammarMergeAlternative {
+            reason: GrammarMergeAlternativeReason::DeclarationConflict,
+            name: conflict.name,
+            options: conflict.members,
+        });
+    }
 
     Ok(MergedGrammarGroup {
         key: group_key(language, edition),
@@ -476,9 +509,10 @@ fn refine(
                 classes[position].to_string()
             };
             keys.push(format!(
-                "{prefix}|{}:{}",
+                "{prefix}|{}:{}{}",
                 node.rule.kind.as_str(),
-                normalize(&node.rule.expr, &label)?.text
+                normalize(&node.rule.expr, &label)?.text,
+                rule_fields(node.rule, &label)
             ));
         }
         let ranks: BTreeMap<&String, usize> = keys

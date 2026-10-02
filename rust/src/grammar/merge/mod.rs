@@ -6,6 +6,7 @@
 //! bisimulation and print the same canonical definitions, so their decisions
 //! agree.
 
+mod declarations;
 mod group;
 mod normalize;
 mod rename;
@@ -98,6 +99,9 @@ pub enum GrammarMergeDecisionKind {
     HomonymKeptDistinct,
     /// A nominated match could not be proven and was not merged.
     Uncertain,
+    /// Sources declare a different matching, macro or scanner of one name;
+    /// the declaration of the first source in precedence order is kept.
+    DeclarationConflict,
 }
 
 impl GrammarMergeDecisionKind {
@@ -110,6 +114,7 @@ impl GrammarMergeDecisionKind {
             Self::RenamedForCollision => "renamed-for-collision",
             Self::HomonymKeptDistinct => "homonym-kept-distinct",
             Self::Uncertain => "uncertain",
+            Self::DeclarationConflict => "declaration-conflict",
         }
     }
 }
@@ -183,6 +188,8 @@ pub enum GrammarMergeAlternativeReason {
     UncertainMatch,
     /// A language has several editions.
     Edition,
+    /// Sources declare a different matching, macro or scanner of one name.
+    DeclarationConflict,
 }
 
 impl GrammarMergeAlternativeReason {
@@ -194,6 +201,7 @@ impl GrammarMergeAlternativeReason {
             Self::DistinctMeaning => "distinct-meaning",
             Self::UncertainMatch => "uncertain-match",
             Self::Edition => "edition",
+            Self::DeclarationConflict => "declaration-conflict",
         }
     }
 }
