@@ -77,15 +77,19 @@ fn natural_recursion_is_a_function_with_a_measure() {
         .replace("U64", U64);
     let emitted = emit_rocq(&program(&ir)).unwrap();
     assert!(emitted.text.contains(
-        "Function sum_to (n : N) {measure N.to_nat n} : N :=\n  \
-         (if N.eqb n 0%N then 0%N else (let ml_p1 := N.pred n in (N.add n (sum_to ml_p1)))).\n\
+        "Function sum_to (n : N) (ml_out : list string) {measure N.to_nat n} : ml_io1 :=\n  \
+         (if N.eqb n 0%N then (ml_io1_mk ml_out 0%N) else (let ml_p1 := N.pred n in \
+         (let ml_scrutinee := (sum_to ml_p1 ml_out) in (match ml_scrutinee with \
+         | ml_io1_mk ml_o1 ml_v2 => (let ml_w3 := (N.add n ml_v2) in \
+         (if (N.ltb 18446744073709551615%N ml_w3) then (ml_io1_abort ml_o1 \"attempt to add with overflow\"%string) \
+         else (ml_io1_mk ml_o1 ml_w3))) | ml_io1_abort ml_o4 ml_m5 => (ml_io1_abort ml_o4 ml_m5) end)))).\n\
          Proof. all: ml_obligation. Defined.\n"
     ));
-    assert!(
-        emitted
-            .text
-            .contains("Theorem ml_assertion_1 : ((sum_to 3%N) = 6%N).\nProof. ml_decide. Qed.\n")
-    );
+    assert!(emitted.text.contains(
+        "Theorem ml_assertion_1 : let ml_run6 := (sum_to 3%N (@nil string)) in \
+         (match ml_run6 with ml_io1_mk _ ml_val11 => (ml_val11 = 6%N) | ml_io1_abort _ _ => True end).\n\
+         Proof. ml_decide. Qed.\n"
+    ));
     assert!(
         emitted
             .text
@@ -94,19 +98,23 @@ fn natural_recursion_is_a_function_with_a_measure() {
     assert!(
         emitted
             .text
-            .contains("Definition main : list string :=\n  nil.\n")
+            .contains("Definition main : list string * option string :=\n")
     );
+    assert!(emitted.text.contains(
+        "((match ml_run6 with ml_io1_mk _ ml_val11 => (nil, None) | ml_io1_abort _ ml_m => (nil, Some ml_m) end)).\n"
+    ));
     let encodings: Vec<_> = emitted.encodings.iter().map(|e| e.id.as_str()).collect();
     assert_eq!(
         encodings,
-        ["machine-integer:u64", "nat-recursion", "program-output"]
+        [
+            "machine-integer:u64",
+            "nat-recursion",
+            "program-output",
+            "output-threading",
+            "abort-threading"
+        ]
     );
-    assert_eq!(emitted.assumptions.len(), 1);
-    assert_eq!(emitted.assumptions[0].id, "non-aborting-executions");
-    assert_eq!(
-        emitted.assumptions[0].details,
-        ["u64 arithmetic stays in range", "checked add does not fail"]
-    );
+    assert!(emitted.assumptions.is_empty());
     assert_eq!(emitted.theorems[0].target, "ml_assertion_1");
 }
 

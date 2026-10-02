@@ -12,6 +12,7 @@
 
 use std::collections::HashMap;
 
+use super::aborts::rust_macro_message;
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::lexer::{Token, TokenCursor, TokenKind, describe, tokenize};
 use super::surface::{

@@ -5,7 +5,7 @@
 //! translation prints the lines the source prints and stops with the message
 //! the source aborts with, or does not abort where the source does not: Rust's
 //! overflow and division panics, `panic!` and `unreachable!`, JavaScript's
-//! thrown errors and BigInt division by zero, the output printed inside a
+//! thrown errors and `BigInt` division by zero, the output printed inside a
 //! function or an assertion before an abort, and Lean's and Rocq's total
 //! arithmetic with unbounded numbers. A translation is the target's own
 //! program: it carries no source envelope, no assumption and no escape hatch
@@ -66,7 +66,9 @@ fn extension(language: &str) -> &'static str {
 }
 
 fn source_text(case: &Value) -> String {
-    let directory = faithful()["directory"].as_str().expect("faithful directory");
+    let directory = faithful()["directory"]
+        .as_str()
+        .expect("faithful directory");
     let file = case["file"].as_str().expect("case file");
     fs::read_to_string(root().join(directory).join(file)).expect("faithful source is readable")
 }
@@ -181,7 +183,10 @@ fn observe(language: &str, code: &str, directory: &Path, name: &str) -> Observed
                 return rejected(built.stderr);
             }
             // A panic ends the program with status 101 and its message on the line after `panicked at`.
-            ended(&exit(&mut Command::new(&binary)), r"panicked at [^\n]*\n([^\n]*)")
+            ended(
+                &exit(&mut Command::new(&binary)),
+                r"panicked at [^\n]*\n([^\n]*)",
+            )
         }
         "Lean" => {
             let result = exit(Command::new("lean").arg("--run").arg(&file));
@@ -221,7 +226,9 @@ fn observe(language: &str, code: &str, directory: &Path, name: &str) -> Observed
                 },
                 Some(captures) => Outcome {
                     lines: quoted(&result.stdout[..captures.get(0).expect("match").start()]),
-                    abort: captures.get(2).map(|found| found.as_str().replace("\"\"", "\"")),
+                    abort: captures
+                        .get(2)
+                        .map(|found| found.as_str().replace("\"\"", "\"")),
                 },
             };
             Observed {
@@ -309,9 +316,18 @@ fn issue_195_the_faithful_corpus_covers_every_source_language_and_behavior() {
             "{file}"
         );
     }
-    assert!(cases().iter().filter(|case| !case["abort"].is_null()).count() >= 8);
-    assert!(cases().iter().any(|case| !case["abort"].is_null()
-        && !strings(&case["lines"]).is_empty()));
+    assert!(
+        cases()
+            .iter()
+            .filter(|case| !case["abort"].is_null())
+            .count()
+            >= 8
+    );
+    assert!(
+        cases()
+            .iter()
+            .any(|case| !case["abort"].is_null() && !strings(&case["lines"]).is_empty())
+    );
 }
 
 #[test]

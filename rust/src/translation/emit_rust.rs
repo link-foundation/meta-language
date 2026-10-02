@@ -381,11 +381,12 @@ pub mod ml {
     }
 
     /// Integer division with the source's rounding ("trunc", "floor" or
-    /// "euclid"); by zero it aborts or is total (x / 0 = 0, x % 0 = x).
-    pub fn divide(a: &Big, b: &Big, rounding: &str, abort_on_zero: bool, remainder: bool) -> Big {
+    /// "euclid"); by zero it aborts with the source's message or is total
+    /// (x / 0 = 0, x % 0 = x).
+    pub fn divide(a: &Big, b: &Big, rounding: &str, by_zero: Option<&str>, remainder: bool) -> Big {
         if b.is_zero() {
-            if abort_on_zero {
-                panic!("division by zero");
+            if let Some(message) = by_zero {
+                panic!("{message}");
             }
             return if remainder { a.clone() } else { Big::zero() };
         }
@@ -402,9 +403,9 @@ pub mod ml {
         if remainder { a.sub(&quotient.mul(b)) } else { quotient }
     }
 
-    pub fn to_nat_checked(value: Big) -> Big {
+    pub fn to_nat_checked(value: Big, message: &str) -> Big {
         if value.is_negative() {
-            panic!("{value} is not a natural number");
+            panic!("{message}");
         }
         value
     }

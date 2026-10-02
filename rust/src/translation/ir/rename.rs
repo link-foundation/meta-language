@@ -308,6 +308,26 @@ pub fn rename_main(
                     span: *span,
                 }
             }
+            Effect::Unwrap {
+                name,
+                pair,
+                data,
+                ctors,
+                ty,
+                span,
+            } => {
+                let pair = rename_expr(pair, &env, &mut scope);
+                let fresh = scope.fresh(name);
+                env.insert(name.clone(), fresh.clone());
+                Effect::Unwrap {
+                    name: fresh,
+                    pair,
+                    data: data.clone(),
+                    ctors: ctors.clone(),
+                    ty: ty.clone(),
+                    span: *span,
+                }
+            }
             Effect::Print { expr, span } => Effect::Print {
                 expr: rename_expr(expr, &env, &mut scope),
                 span: *span,

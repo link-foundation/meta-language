@@ -1,6 +1,10 @@
 //! Expressions, literals, matches, casts and `main`.
 
-use super::*;
+use super::{
+    BinaryOp, ByZero, Case, Effect, Expr, Flavor, Helper, LitValue, Main, Node, Pattern, Rc,
+    Result, RocqEmitter, Rounding, Semantics, Type, UnaryOp, ident, internal, op_name, rename_main,
+    unsupported, unthreaded,
+};
 
 impl RocqEmitter<'_> {
     pub(super) fn expr(&mut self, e: &Expr) -> Result<String> {
@@ -27,6 +31,15 @@ impl RocqEmitter<'_> {
                     return Ok(mutual.call(index, &parts));
                 }
                 let head = match &self.current {
+                    Some(current)
+                        if current.full_name == *func && current.recursive && current.fuel =>
+                    {
+                        let mut parts = Vec::new();
+                        for arg in args {
+                            parts.push(self.expr(arg)?);
+                        }
+                        return Ok(format!("(ml_go ml_fuel {})", parts.join(" ")));
+                    }
                     Some(current) if current.full_name == *func && current.general => {
                         let mut parts = Vec::new();
                         for arg in args {
@@ -54,7 +67,7 @@ impl RocqEmitter<'_> {
                     return Ok(format!("(negb {})", self.expr(arg)?));
                 }
                 if *semantics == Some(Semantics::Checked) {
-                    self.state.checked_to_total("negation");
+                    unthreaded("a machine-integer negation");
                 }
                 if e.ty.is_float() {
                     return Ok(format!("(PrimFloat.opp {})", self.expr(arg)?));
@@ -85,15 +98,9 @@ impl RocqEmitter<'_> {
                 from,
                 to,
                 flavor,
+                ..
             } => self.cast(arg, from, to, *flavor),
-            Node::Abort { message } => {
-                self.state.abort_to_total(message);
-                Ok(format!(
-                    "(* unreachable under the non-aborting assumption: {} *) {}",
-                    message.replace("*)", "* )"),
-                    self.inhabitant(&e.ty)?
-                ))
-            }
+            Node::Abort { .. } => unthreaded("an abort"),
             Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
                 self.array_expr(e)
             }
@@ -125,7 +132,8 @@ impl RocqEmitter<'_> {
             Type::Nat => format!("{text}%N"),
             Type::Int => integer(text),
             Type::Fixed { signed, .. } => {
-                self.state.fixed_to_unbounded(ty);
+                self.state
+                    .machine_integer(ty, if *signed { "Z" } else { "N" });
                 if *signed {
                     integer(text)
                 } else {
@@ -227,11 +235,12 @@ impl RocqEmitter<'_> {
                 let domain =
                     domain.ok_or_else(|| internal("arithmetic without a domain".to_owned()))?;
                 let module = self.numeric_module(domain)?;
-                if *semantics == Some(Semantics::Checked) {
-                    self.state.checked_to_total(op_name(*op));
-                }
-                if *by_zero == Some(ByZero::Abort) {
-                    self.state.abort_to_total("division by zero");
+                // A machine-integer operation, one that may abort, reaches here as its abort test and its value computed on the representation (output.rs).
+                if *semantics == Some(Semantics::Checked)
+                    || *by_zero == Some(ByZero::Abort)
+                    || matches!(e.ty, Type::Fixed { .. })
+                {
+                    unthreaded(&format!("a machine-integer {}", op_name(*op)));
                 }
                 if *semantics == Some(Semantics::Ieee) {
                     if *op == BinaryOp::Rem {
@@ -243,8 +252,7 @@ impl RocqEmitter<'_> {
                 match op {
                     BinaryOp::Add => Ok(format!("({module}.add {left} {right})")),
                     BinaryOp::Mul => Ok(format!("({module}.mul {left} {right})")),
-                    // N.sub truncates at zero, which is exactly natural subtraction; a
-                    // checked unsigned subtraction agrees with it on non-aborting runs.
+                    // N.sub truncates at zero, which is exactly natural subtraction.
                     BinaryOp::Sub => Ok(format!("({module}.sub {left} {right})")),
                     BinaryOp::Div | BinaryOp::Rem => {
                         let division = *op == BinaryOp::Div;
@@ -401,7 +409,8 @@ impl RocqEmitter<'_> {
                 Ok(format!("(ml_Z_to_string {text})"))
             }
             Type::Fixed { signed, .. } => {
-                self.state.fixed_to_unbounded(&arg.ty);
+                self.state
+                    .machine_integer(&arg.ty, if *signed { "Z" } else { "N" });
                 if *signed {
                     self.helpers.insert(Helper::ZToString);
                     Ok(format!("(ml_Z_to_string {text})"))
@@ -439,7 +448,7 @@ impl RocqEmitter<'_> {
         };
         let (from, to) = (module(from), module(to));
         if flavor == Flavor::Checked {
-            self.state.checked_to_total("conversion to a natural");
+            unthreaded("a checked conversion to a natural");
         }
         if from == to {
             return Ok(arg);
@@ -454,44 +463,12 @@ impl RocqEmitter<'_> {
         let effects = rename_main(main, &ident, &self.state.local_reserved());
         let mut assertion = 0;
         let mut theorems: Vec<String> = Vec::new();
-        let mut body = String::new();
-        let mut open = 0;
-        for (index, effect) in effects.iter().enumerate() {
-            match effect {
-                Effect::Print { expr, .. } => {
-                    body.push_str(&self.expr(expr)?);
-                    body.push_str(" ::\n  ");
-                }
-                Effect::Output { expr, .. } => {
-                    let expr = self.expr(expr)?;
-                    let _ = write!(body, "app (List.rev {expr})\n  (");
-                    open += 1;
-                }
-                Effect::Let { name, value, .. } => {
-                    let value = self.expr(value)?;
-                    let _ = write!(body, "let {name} := {value} in\n  ");
-                }
-                Effect::Assert { prop, .. } => {
-                    assertion += 1;
-                    let mut lets = String::new();
-                    for earlier in &effects[..index] {
-                        if let Effect::Let { name, value, .. } = earlier {
-                            let value = self.expr(value)?;
-                            let _ = write!(lets, "let {name} := {value} in ");
-                        }
-                    }
-                    let name = format!("ml_assertion_{assertion}");
-                    let prop = self.prop(prop)?;
-                    theorems.push(format!(
-                        "Theorem {name} : {lets}{prop}.\nProof. ml_decide. Qed."
-                    ));
-                    self.helpers.insert(Helper::Decide);
-                    self.state.assertion_theorem(&name, effect);
-                }
-            }
+        // A program that may abort is the lines it prints and the message of the abort that stops it, if one does.
+        let aborts = self.program.aborts_threaded;
+        if aborts {
+            self.helpers.insert(Helper::Emit);
         }
-        body.push_str("nil");
-        body.push_str(&")".repeat(open));
+        let body = self.build(&effects, 0, &mut assertion, &mut theorems)?;
         if main.sequential_async {
             self.state.encode(
                 "sequential-async",
@@ -508,7 +485,105 @@ impl RocqEmitter<'_> {
                 "a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main lists the lines of each step in the order they were printed",
             );
         }
-        theorems.push(format!("Definition main : list string :=\n  {body}."));
+        if aborts {
+            self.state.encode(
+                "abort-threading",
+                "a function that may abort, directly or through a function it calls, returns the source's abort message with the lines printed before it in the generated ml_io data type; main is the pair of the lines printed and Some message when the program aborts, None when it does not",
+            );
+        }
+        let result = if aborts {
+            "list string * option string"
+        } else {
+            "list string"
+        };
+        theorems.push(format!("Definition main : {result} :=\n  {body}."));
         Ok(theorems.join("\n\n"))
+    }
+
+    /// The match on a step's pair: its value bound to the step's name, or the abort's message.
+    fn arms(&mut self, effect: &Effect, made: &str, bind: &str, body: &str) -> Result<String> {
+        let Effect::Unwrap {
+            name,
+            pair,
+            data,
+            ctors,
+            ..
+        } = effect
+        else {
+            unreachable!("unwrap effects only");
+        };
+        let mk = self.state.ctor_ref(data, &ctors[0], ".");
+        let abort = self.state.ctor_ref(data, &ctors[1], ".");
+        Ok(format!(
+            "match {} with {mk} _ {name} => {made} | {abort} _ {bind} => {body} end",
+            self.expr(pair)?
+        ))
+    }
+
+    /// Main's value from the effect at `index` on.
+    fn build(
+        &mut self,
+        effects: &[Effect],
+        index: usize,
+        assertion: &mut usize,
+        theorems: &mut Vec<String>,
+    ) -> Result<String> {
+        let aborts = self.program.aborts_threaded;
+        let Some(effect) = effects.get(index) else {
+            return Ok(if aborts { "(nil, None)" } else { "nil" }.to_owned());
+        };
+        match effect {
+            Effect::Print { expr, .. } => {
+                let expr = self.expr(expr)?;
+                let rest = self.build(effects, index + 1, assertion, theorems)?;
+                Ok(if aborts {
+                    format!("ml_emit ({expr} :: nil)\n  ({rest})")
+                } else {
+                    format!("{expr} ::\n  {rest}")
+                })
+            }
+            Effect::Output { expr, .. } => {
+                let head = if aborts { "ml_emit" } else { "app" };
+                let expr = self.expr(expr)?;
+                let rest = self.build(effects, index + 1, assertion, theorems)?;
+                Ok(format!("{head} (List.rev {expr})\n  ({rest})"))
+            }
+            Effect::Let { name, value, .. } => {
+                let value = self.expr(value)?;
+                let rest = self.build(effects, index + 1, assertion, theorems)?;
+                Ok(format!("let {name} := {value} in\n  {rest}"))
+            }
+            Effect::Unwrap { .. } => {
+                let rest = self.build(effects, index + 1, assertion, theorems)?;
+                Ok(format!(
+                    "({})",
+                    self.arms(effect, &rest, "ml_m", "(nil, Some ml_m)")?
+                ))
+            }
+            Effect::Assert { prop, .. } => {
+                *assertion += 1;
+                // The assertion is stated of the values main computes before it; a run that aborts before it never reaches it.
+                let mut statement = self.prop(prop)?;
+                for item in effects[..index].iter().rev() {
+                    match item {
+                        Effect::Let { name, value, .. } => {
+                            statement =
+                                format!("let {name} := {} in {statement}", self.expr(value)?);
+                        }
+                        Effect::Unwrap { .. } => {
+                            statement = format!("({})", self.arms(item, &statement, "_", "True")?);
+                        }
+                        _ => {}
+                    }
+                }
+                let name = format!("ml_assertion_{assertion}");
+                theorems.push(format!(
+                    "Theorem {name} : {statement}.\nProof. ml_decide. Qed."
+                ));
+                self.helpers.insert(Helper::Decide);
+                self.state.assertion_theorem(&name, effect);
+                self.build(effects, index + 1, assertion, theorems)
+            }
+        }
     }
 }

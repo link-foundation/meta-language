@@ -3,7 +3,7 @@
 use super::{Expr, Helper, Node, Result, RocqEmitter};
 
 pub(super) const LIST_AT: &str = r"(* The element at an index, walking the list; a read outside it, undefined
-   in JavaScript, is unreachable under the non-aborting assumption. *)
+   in JavaScript, is outside the in-bounds assumption. *)
 Fixpoint ml_list_at {A : Type} (values : list A) (index : Z) (fallback : A) : A :=
   match values with
   | nil => fallback
@@ -40,7 +40,6 @@ impl RocqEmitter<'_> {
             )),
             Node::Index { array, index } => {
                 self.state.array_read();
-                self.state.abort_to_total("array index out of range");
                 self.helpers.insert(Helper::ListAt);
                 let mut text = self.expr(index)?;
                 if index.ty.is_float() {

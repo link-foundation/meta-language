@@ -170,7 +170,7 @@ impl Checker {
                 params.push(Param {
                     name: param.name.clone(),
                     ty: self.resolve_type(param.ty.as_ref(), path, item.span)?,
-                    guard: param.guard,
+                    guard: param.guard.clone(),
                 });
             }
             let ret = self.resolve_type(item.ret.as_ref(), path, item.span)?;

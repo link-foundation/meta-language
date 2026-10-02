@@ -17,6 +17,7 @@ use super::Language;
 use super::diagnostics::{Result, type_error, unsupported};
 use super::emit_common::{
     CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations,
+    unthreaded,
 };
 use super::ir::{
     ByZero, Case, DataDecl, Decl, Expr, FnDecl, Hints, LitValue, Node, Pattern, Plan, Program,
@@ -26,7 +27,7 @@ use super::lean_root_names::LEAN_ROOT_NAMES;
 use super::output::thread_output;
 use super::proof::prop_functions;
 use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
-use super::types::{Type, fixed_bounds};
+use super::types::Type;
 
 mod arrays;
 mod helpers;
@@ -292,12 +293,8 @@ impl LeanEmitter<'_> {
             Type::Nat => "Nat".to_owned(),
             Type::Int => "Int".to_owned(),
             Type::Fixed { signed, .. } => {
-                let key = ty.key();
                 let represented = if *signed { "Int" } else { "Nat" };
-                self.state.encode(
-                    &format!("machine-integer:{key}"),
-                    &format!("{key} values are {represented} values; every operation checks the {key} range and panics outside it, where Rust panics"),
-                );
+                self.state.machine_integer(ty, represented);
                 represented.to_owned()
             }
             Type::Float => {
@@ -571,12 +568,14 @@ impl LeanEmitter<'_> {
                 let head = self.state.ctor_ref(data, ctor, ".");
                 self.application(head, args, depth)?
             }
-            Node::Unary { op, arg, .. } => {
-                let arg = self.expr(arg, depth)?;
+            Node::Unary { op, arg, semantics } => {
                 if *op == UnaryOp::Not {
-                    format!("(!{arg})")
+                    format!("(!{})", self.expr(arg, depth)?)
                 } else {
-                    self.checked(format!("(-{arg})"), &e.ty, "negation")
+                    if *semantics == Some(Semantics::Checked) {
+                        unthreaded("a machine-integer negation");
+                    }
+                    format!("(-{})", self.expr(arg, depth)?)
                 }
             }
             Node::Binary { .. } => self.binary(e, depth)?,
@@ -613,11 +612,9 @@ impl LeanEmitter<'_> {
                 from,
                 to,
                 flavor,
+                ..
             } => self.cast(arg, from, to, *flavor, depth)?,
-            Node::Abort { message } => {
-                self.state.abort_to_total(message);
-                format!("(panic! {} : {})", json_string(message), self.ty(&e.ty)?)
-            }
+            Node::Abort { .. } => unthreaded("an abort"),
             Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
                 self.array_expr(e, depth)?
             }
@@ -667,22 +664,6 @@ impl LeanEmitter<'_> {
         Ok(format!("(toString {})", self.expr(arg, depth)?))
     }
 
-    /// Range-checks a machine-integer result computed in Int.
-    fn checked(&mut self, text: String, ty: &Type, what: &str) -> String {
-        let Type::Fixed { bits, signed } = *ty else {
-            return text;
-        };
-        let key = ty.key();
-        self.state.abort_to_total(&format!("{key} {what} overflow"));
-        let (min, max) = fixed_bounds(bits, signed);
-        if signed {
-            self.helpers.insert("fixed");
-            return format!("(ml_fixed {text} ({min}) {max} \"{key} {what}\")");
-        }
-        self.helpers.insert("fixedNat");
-        format!("(ml_fixed_nat {text} {max} \"{key} {what}\")")
-    }
-
     fn binary(&mut self, e: &Expr, depth: usize) -> Result<String> {
         let Node::Binary {
             op, left, right, ..
@@ -702,20 +683,19 @@ impl LeanEmitter<'_> {
             BinaryOp::Le => "≤",
             BinaryOp::Gt => ">",
             BinaryOp::Ge => "≥",
-            _ => return self.arithmetic(e, left_text, right_text),
+            _ => return self.arithmetic(e, &left_text, &right_text),
         };
         Ok(format!("(decide ({left_text} {comparison} {right_text}))"))
     }
 
-    fn arithmetic(&mut self, e: &Expr, left_text: String, right_text: String) -> Result<String> {
+    fn arithmetic(&mut self, e: &Expr, left_text: &str, right_text: &str) -> Result<String> {
         let Node::Binary {
             op,
-            left,
-            right,
             domain,
             rounding,
             by_zero,
             semantics,
+            ..
         } = &e.node
         else {
             unreachable!("binary expressions only");
@@ -733,56 +713,41 @@ impl LeanEmitter<'_> {
             };
             return Ok(format!("({left_text} {operator} {right_text})"));
         }
-        let fixed = matches!(e.ty, Type::Fixed { .. });
-        // Machine-integer operations run in Int and are range-checked afterwards.
-        let wide = |text: String, operand: &Expr| {
-            if matches!(operand.ty, Type::Fixed { signed: false, .. }) {
-                format!("(Int.ofNat {text})")
-            } else {
-                text
-            }
-        };
-        let (a, b) = if fixed {
-            (wide(left_text, left), wide(right_text, right))
-        } else {
-            (left_text, right_text)
-        };
+        // A machine-integer operation, one that may abort, reaches here as its abort test and its value computed on the representation (output.rs).
+        if *semantics == Some(Semantics::Checked)
+            || *by_zero == Some(ByZero::Abort)
+            || matches!(e.ty, Type::Fixed { .. })
+        {
+            unthreaded(&format!("a machine-integer {}", op.name()));
+        }
         match op {
-            BinaryOp::Add => Ok(self.checked(format!("({a} + {b})"), &e.ty, "addition")),
-            BinaryOp::Mul => Ok(self.checked(format!("({a} * {b})"), &e.ty, "multiplication")),
-            BinaryOp::Sub => Ok(self.checked(format!("({a} - {b})"), &e.ty, "subtraction")),
+            BinaryOp::Add => Ok(format!("({left_text} + {right_text})")),
+            BinaryOp::Mul => Ok(format!("({left_text} * {right_text})")),
+            BinaryOp::Sub => Ok(format!("({left_text} - {right_text})")),
             BinaryOp::Div | BinaryOp::Rem => {
                 let division = *op == BinaryOp::Div;
-                let natural = !fixed && matches!(domain, Some(Type::Nat));
-                let mut divisor = b;
-                if *by_zero == Some(ByZero::Abort) {
-                    self.state.abort_to_total("division by zero");
-                    self.helpers
-                        .insert(if natural { "divideNat" } else { "divide" });
-                    let guard = if natural {
-                        "ml_nonzero_nat"
-                    } else {
-                        "ml_nonzero"
-                    };
-                    divisor = format!("({guard} {divisor})");
+                if matches!(domain, Some(Type::Nat)) {
+                    return Ok(format!(
+                        "({left_text} {} {right_text})",
+                        if division { "/" } else { "%" }
+                    ));
                 }
-                let text = if natural {
-                    format!("({a} {} {divisor})", if division { "/" } else { "%" })
-                } else if *rounding == Some(Rounding::Trunc) {
-                    format!(
-                        "(Int.{} {a} {divisor})",
+                if *rounding == Some(Rounding::Trunc) {
+                    return Ok(format!(
+                        "(Int.{} {left_text} {right_text})",
                         if division { "tdiv" } else { "tmod" }
-                    )
-                } else if *rounding == Some(Rounding::Floor) {
-                    format!(
-                        "(Int.{} {a} {divisor})",
+                    ));
+                }
+                if *rounding == Some(Rounding::Floor) {
+                    return Ok(format!(
+                        "(Int.{} {left_text} {right_text})",
                         if division { "fdiv" } else { "fmod" }
-                    )
-                } else {
-                    format!("({a} {} {divisor})", if division { "/" } else { "%" })
-                };
-                let what = if division { "division" } else { "remainder" };
-                Ok(self.checked(text, &e.ty, what))
+                    ));
+                }
+                Ok(format!(
+                    "({left_text} {} {right_text})",
+                    if division { "/" } else { "%" }
+                ))
             }
             other => Err(type_error(
                 format!("no Lean operator {}", operator_name(*other)),
@@ -841,12 +806,10 @@ impl LeanEmitter<'_> {
         if natural_from {
             return Ok(format!("(Int.ofNat {arg})"));
         }
-        if flavor == Flavor::Clamp {
-            return Ok(format!("(Int.toNat {arg})"));
+        if flavor == Flavor::Checked {
+            unthreaded("a checked conversion to a natural");
         }
-        self.state.checked_to_total("conversion to a natural");
-        self.helpers.insert("toNatChecked");
-        Ok(format!("(ml_to_nat_checked {arg})"))
+        Ok(format!("(Int.toNat {arg})"))
     }
 }
 

@@ -11,6 +11,7 @@
 
 use serde::{Deserialize, Serialize};
 
+pub mod aborts;
 pub mod check;
 pub mod decimal;
 pub mod diagnostics;

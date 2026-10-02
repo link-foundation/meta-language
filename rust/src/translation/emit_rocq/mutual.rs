@@ -120,6 +120,7 @@ impl RocqEmitter<'_> {
                 name: member.name.clone(),
                 recursive: false,
                 general: false,
+                fuel: false,
                 mutual: Some(Rc::clone(&mutual)),
             });
             let text = self.expr(&member.body)?;

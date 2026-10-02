@@ -114,6 +114,30 @@ pub enum BinaryOp {
     Plus,
 }
 
+impl BinaryOp {
+    /// The operator's name in the checked program's JSON, such as `add`.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Add => "add",
+            Self::Sub => "sub",
+            Self::Mul => "mul",
+            Self::Div => "div",
+            Self::Rem => "rem",
+            Self::Eq => "eq",
+            Self::Ne => "ne",
+            Self::Lt => "lt",
+            Self::Le => "le",
+            Self::Gt => "gt",
+            Self::Ge => "ge",
+            Self::And => "and",
+            Self::Or => "or",
+            Self::Concat => "concat",
+            Self::Plus => "plus",
+        }
+    }
+}
+
 /// Division rounding a source operator asks for.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -636,6 +660,14 @@ pub struct SCtor {
     pub fields: Vec<SField>,
 }
 
+/// The leading `if (n < 0n) throw …` of a JavaScript parameter: a negative
+/// argument aborts with its message, the guards in their order.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Guard {
+    pub message: String,
+    pub order: usize,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SParam {
@@ -646,7 +678,7 @@ pub struct SParam {
     pub span: Option<Span>,
     /// A JavaScript parameter restricted to the naturals by a leading guard.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub guard: Option<bool>,
+    pub guard: Option<Guard>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rocq_type: Option<String>,
 }

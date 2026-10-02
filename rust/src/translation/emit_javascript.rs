@@ -14,6 +14,7 @@
 use std::collections::BTreeSet;
 
 use super::Language;
+use super::aborts::{cast_message, overflow_message, zero_divisor_message};
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
 use super::emit_common::{EmitOptions, EmitState, Emitted};
 use super::ir::{
@@ -390,9 +391,13 @@ impl<'p> JavaScriptEmitter<'p> {
         self.helpers.insert(Helper::Fixed);
         let (min, max) = fixed_bounds(bits, signed);
         Some(format!(
-            "ml_fixed({name}, {min}n, {max}n, '{key} argument {name}');",
+            "ml_fixed({name}, {min}n, {max}n, {message});",
             name = param.name,
-            key = param.ty.key()
+            message = json_string(&format!(
+                "{} argument {} out of range",
+                param.ty.key(),
+                param.name
+            ))
         ))
     }
 
@@ -762,7 +767,7 @@ impl<'p> JavaScriptEmitter<'p> {
                 let arg = self.expr(arg)?;
                 Ok(match op {
                     UnaryOp::Not => format!("!{arg}"),
-                    UnaryOp::Neg => self.checked(negate(&arg), &e.ty, "negation"),
+                    UnaryOp::Neg => self.checked(negate(&arg), &e.ty, "neg"),
                 })
             }
             Node::Binary { .. } => self.binary(e),
@@ -790,7 +795,12 @@ impl<'p> JavaScriptEmitter<'p> {
                     self.text_of(arg)
                 }
             }
-            Node::Cast { arg, flavor, .. } => self.cast(arg, *flavor),
+            Node::Cast {
+                arg,
+                flavor,
+                message,
+                ..
+            } => self.cast(arg, *flavor, message.as_deref()),
             Node::Abort { message } => {
                 self.helpers.insert(Helper::Abort);
                 Ok(format!("ml_abort({})", json_string(message)))
@@ -817,13 +827,17 @@ impl<'p> JavaScriptEmitter<'p> {
         Ok(format!("String({})", self.expr(arg)?))
     }
 
-    fn checked(&mut self, text: String, ty: &Type, what: &str) -> String {
+    /// A machine-integer result out of range panics as Rust does.
+    fn checked(&mut self, text: String, ty: &Type, op: &str) -> String {
         let Type::Fixed { bits, signed } = *ty else {
             return text;
         };
         self.helpers.insert(Helper::Fixed);
         let (min, max) = fixed_bounds(bits, signed);
-        format!("ml_fixed({text}, {min}n, {max}n, '{} {what}')", ty.key())
+        format!(
+            "ml_fixed({text}, {min}n, {max}n, {})",
+            json_string(overflow_message(op))
+        )
     }
 
     fn binary(&mut self, e: &Expr) -> Result<String> {
@@ -852,14 +866,14 @@ impl<'p> JavaScriptEmitter<'p> {
             BinaryOp::Le => comparison("<="),
             BinaryOp::Gt => comparison(">"),
             BinaryOp::Ge => comparison(">="),
-            BinaryOp::Add => self.checked(comparison("+"), &e.ty, "addition"),
-            BinaryOp::Mul => self.checked(comparison("*"), &e.ty, "multiplication"),
+            BinaryOp::Add => self.checked(comparison("+"), &e.ty, "add"),
+            BinaryOp::Mul => self.checked(comparison("*"), &e.ty, "mul"),
             BinaryOp::Sub => {
                 if *semantics == Some(Semantics::Truncated) {
                     self.helpers.insert(Helper::NatSub);
                     format!("ml_natSub({left}, {right})")
                 } else {
-                    self.checked(comparison("-"), &e.ty, "subtraction")
+                    self.checked(comparison("-"), &e.ty, "sub")
                 }
             }
             BinaryOp::Div | BinaryOp::Rem if *semantics == Some(Semantics::Ieee) => {
@@ -873,29 +887,38 @@ impl<'p> JavaScriptEmitter<'p> {
                     Some(Rounding::Floor) => "floor",
                     None => "undefined",
                 };
-                let by_zero = match by_zero {
-                    Some(ByZero::Abort) => "abort",
-                    Some(ByZero::Total) => "total",
-                    None => "undefined",
+                let zero = if *by_zero == Some(ByZero::Abort) {
+                    json_string(zero_divisor_message(op.name(), &e.ty))
+                } else {
+                    "null".to_owned()
                 };
                 let remainder = *op == BinaryOp::Rem;
-                let call =
-                    format!("ml_divide({left}, {right}, '{rounding}', '{by_zero}', {remainder})");
-                let what = if remainder { "remainder" } else { "division" };
-                self.checked(call, &e.ty, what)
+                let Type::Fixed { bits, signed } = e.ty else {
+                    return Ok(format!(
+                        "ml_divide({left}, {right}, '{rounding}', {zero}, {remainder})"
+                    ));
+                };
+                let (min, max) = fixed_bounds(bits, signed);
+                format!(
+                    "ml_divide({left}, {right}, '{rounding}', {zero}, {remainder}, [{min}n, {max}n, {}])",
+                    json_string(overflow_message(op.name()))
+                )
             }
             BinaryOp::Plus => return Err(malformed("no JavaScript operator plus".to_owned())),
         })
     }
 
-    fn cast(&mut self, arg: &Expr, flavor: Flavor) -> Result<String> {
+    fn cast(&mut self, arg: &Expr, flavor: Flavor, message: Option<&str>) -> Result<String> {
         let arg = self.expr(arg)?;
         Ok(match flavor {
             Flavor::Exact => arg,
             Flavor::Clamp => format!("((value) => (value < 0n ? 0n : value))({arg})"),
             Flavor::Checked => {
                 self.helpers.insert(Helper::ToNatChecked);
-                format!("ml_toNatChecked({arg})")
+                format!(
+                    "ml_toNatChecked({arg}, {})",
+                    json_string(cast_message(message))
+                )
             }
         })
     }
@@ -923,7 +946,7 @@ impl<'p> JavaScriptEmitter<'p> {
                     ));
                     self.state.assertion_theorem(&label, effect);
                 }
-                Effect::Output { .. } => {
+                Effect::Output { .. } | Effect::Unwrap { .. } => {
                     unreachable!("only the Lean and Rocq emitters thread output")
                 }
             }

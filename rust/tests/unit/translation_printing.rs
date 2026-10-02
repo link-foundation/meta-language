@@ -100,19 +100,37 @@ assert(odd);
 }
 
 #[test]
-fn an_operand_that_prints_in_a_compound_assertion_is_refused_with_a_reason() {
-    let source = "import assert from 'node:assert/strict';
+fn an_operand_that_prints_in_a_compound_assertion_runs_first_when_it_is_the_first_and_is_refused_otherwise()
+ {
+    let first = translate_program(
+        "import assert from 'node:assert/strict';
 function loud(x) { console.log('loud'); return x; }
 assert(loud(true) && true);
-";
-    let translated =
-        translate_program(source, "JavaScript", "Lean").expect("translation descriptor");
-    let diagnostic = translated.diagnostic().expect("a diagnostic");
+",
+        "JavaScript",
+        "Lean",
+    )
+    .expect("translation descriptor");
+    assert!(first.diagnostic().is_none(), "{:?}", first.diagnostic());
+    assert_eq!(
+        first.contract().support,
+        TranslationSupport::SemanticTranslation
+    );
+    let later = translate_program(
+        "import assert from 'node:assert/strict';
+function loud(x) { console.log('loud'); return x; }
+assert(true && loud(true));
+",
+        "JavaScript",
+        "Lean",
+    )
+    .expect("translation descriptor");
+    let diagnostic = later.diagnostic().expect("a diagnostic");
     assert_eq!(diagnostic.kind, "unsupported");
     assert!(
         diagnostic
             .message
-            .starts_with("output in a compound assertion: "),
+            .starts_with("output or an abort in a compound assertion: "),
         "{}",
         diagnostic.message
     );

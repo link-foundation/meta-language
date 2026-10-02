@@ -39,7 +39,8 @@ fn functions_read_their_types_from_jsdoc_and_guards_make_naturals() {
     };
     assert_eq!(function.name, "f");
     assert_eq!(function.params[0].ty, Some(NAT));
-    assert_eq!(function.params[0].guard, Some(true));
+    let guard = function.params[0].guard.as_ref().expect("a guard");
+    assert_eq!(guard.message, "negative");
     assert!(matches!(function.body.node, SNode::If { .. }));
     let main = program.main.expect("a main");
     assert_eq!(main.span, Some(Span::new(0, 184)));

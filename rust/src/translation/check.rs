@@ -89,6 +89,8 @@ fn cast_to(arg: Expr, to: &Type, flavor: Flavor, span: Option<Span>) -> Result<E
                 from: from.clone(),
                 to: to.clone(),
                 flavor,
+                message: None,
+                order: None,
             },
             to.clone(),
         )
@@ -360,6 +362,7 @@ impl Checker {
             main,
             declarations,
             output_threaded: false,
+            aborts_threaded: false,
         })
     }
 

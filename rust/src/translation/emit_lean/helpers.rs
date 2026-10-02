@@ -1,34 +1,7 @@
 //! The Lean helper definitions a translation may use.
 
 /// Helper definitions by name, in the order the file lists the ones it uses.
-pub(super) const HELPERS: [(&str, &str); 12] = [
-    (
-        "fixed",
-        r#"/-- Machine-integer results: out of range is where Rust panics. -/
-def ml_fixed (value lo hi : Int) (what : String) : Int :=
-  if value < lo || value > hi then panic! s!"{what} overflowed" else value"#,
-    ),
-    (
-        "fixedNat",
-        r#"def ml_fixed_nat (value : Int) (hi : Nat) (what : String) : Nat :=
-  if value < 0 || value > Int.ofNat hi then panic! s!"{what} overflowed" else value.toNat"#,
-    ),
-    (
-        "toNatChecked",
-        r#"def ml_to_nat_checked (value : Int) : Nat :=
-  if value < 0 then panic! s!"{value} is not a natural number" else value.toNat"#,
-    ),
-    (
-        "divide",
-        r#"/-- Division that aborts on a zero divisor, as JavaScript and Rust do. -/
-def ml_nonzero (divisor : Int) : Int :=
-  if divisor == 0 then panic! "division by zero" else divisor"#,
-    ),
-    (
-        "divideNat",
-        r#"def ml_nonzero_nat (divisor : Nat) : Nat :=
-  if divisor == 0 then panic! "division by zero" else divisor"#,
-    ),
+pub(super) const HELPERS: [(&str, &str); 7] = [
     (
         "jsNumber",
         r#"/-- ECMAScript Number::toString: the shortest decimal that reads back as the

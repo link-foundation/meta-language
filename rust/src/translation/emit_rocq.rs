@@ -17,7 +17,7 @@ use std::rc::Rc;
 use super::Language;
 use super::diagnostics::{ErrorKind, Result, TranslationError, unsupported};
 use super::emit_common::{
-    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations,
+    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations, unthreaded,
 };
 use super::ir::{
     ByZero, Case, DataDecl, Decl, Effect, Expr, FnDecl, Hints, LitValue, Main, Node, Param,
@@ -209,6 +209,11 @@ Fixpoint ml_fix {A B : Type} (k : nat) (F : (A -> B) -> A -> B) (fallback : A ->
   | S k => fun a => ml_fix k F (ml_fix k F fallback) a
   end.";
 
+const EMIT: &str = "(* The lines a step of main prints, before the lines the rest of main prints
+   and the message of the abort that stops it, if one does. *)
+Definition ml_emit (lines : list string) (rest : list string * option string) : list string * option string :=
+  (app lines (fst rest), snd rest).";
+
 /// A helper definition the emitted program may need, in the order they are written out.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Helper {
@@ -226,10 +231,11 @@ enum Helper {
     Fix,
     Tactics,
     Decide,
+    Emit,
 }
 
 impl Helper {
-    const ALL: [Self; 14] = [
+    const ALL: [Self; 15] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -244,6 +250,7 @@ impl Helper {
         Self::Fix,
         Self::Tactics,
         Self::Decide,
+        Self::Emit,
     ];
 
     const fn text(self) -> &'static str {
@@ -262,6 +269,7 @@ impl Helper {
             Self::Fix => FIX,
             Self::Tactics => TACTICS,
             Self::Decide => DECIDE,
+            Self::Emit => EMIT,
         }
     }
 }
@@ -349,6 +357,8 @@ struct Current {
     recursive: bool,
     /// Recursive with no termination argument: self-calls go through `ml_fix`.
     general: bool,
+    /// Recursive on a natural through more than one threaded self-call: self-calls spend `ml_fuel`.
+    fuel: bool,
     /// A member of a mutually recursive group: calls of the group go through `ml_rec`.
     mutual: Option<Rc<Mutual>>,
 }
@@ -446,7 +456,8 @@ impl RocqEmitter<'_> {
             Type::Nat => "N".to_owned(),
             Type::Int => "Z".to_owned(),
             Type::Fixed { signed, .. } => {
-                self.state.fixed_to_unbounded(ty);
+                self.state
+                    .machine_integer(ty, if *signed { "Z" } else { "N" });
                 if *signed { "Z" } else { "N" }.to_owned()
             }
             Type::Float => {
@@ -497,6 +508,33 @@ impl RocqEmitter<'_> {
         Ok(lines.join("\n") + ".")
     }
 
+    /// Recursion that decreases a natural by one each call, in a function whose
+    /// output or abort is threaded, is a structural fixpoint over a fuel one more
+    /// than the natural: every call spends one fuel and decreases the natural, so
+    /// the fuel never runs out before the natural reaches zero.
+    #[allow(clippy::too_many_arguments)]
+    fn fuel_recursion(
+        &mut self,
+        name: &str,
+        params: &[Param],
+        binders: &str,
+        result: &str,
+        text: &str,
+        decreasing: &str,
+        ret: &Type,
+    ) -> Result<String> {
+        self.state.encode(
+            "nat-fuel-recursion",
+            "a threaded function that decreases a natural through more than one call is a fixpoint over a fuel of one more than the natural, which every call spends as it decreases the natural, so the fuel outlasts every run",
+        );
+        let args: Vec<&str> = params.iter().map(|param| param.name.as_str()).collect();
+        Ok(format!(
+            "Definition {name}{binders} : {result} :=\n  (fix ml_go (ml_fuel : nat){binders} {{struct ml_fuel}} : {result} :=\n    match ml_fuel with\n    | O => {}\n    | S ml_fuel => {text}\n    end) (S (N.to_nat {decreasing})) {}.",
+            self.inhabitant(ret)?,
+            args.join(" ")
+        ))
+    }
+
     /// Recursion with no termination argument Rocq could check is `ml_fix`
     /// applied to the function's one-step unfolding: the parameters travel as
     /// one tuple, a self-call is a call of `ml_rec`, and a run nested deeper
@@ -545,11 +583,23 @@ impl RocqEmitter<'_> {
         let (params, body) = rename_function(function, &ident, &self.state.local_reserved());
         let name = self.state.local_name(&function.full_name).to_owned();
         self.state.map(entry, &name);
+        let general = function.recursive && function.decreasing.is_none() && !function.mutual;
+        // A threaded function calling itself more than once matches on one call's pair around the next, whose equation Function cannot generate.
+        let fuel = !general
+            && function.recursive
+            && !function.mutual
+            && !function
+                .decreasing
+                .and_then(|index| params.get(index))
+                .is_some_and(|param| matches!(param.ty, Type::Data { .. }))
+            && matches!(&function.ret, Type::Data { name: ret } if matches!(self.program.declaration(ret), Some(Decl::Data(data)) if data.output))
+            && self_calls(&body, &function.full_name) > 1;
         self.current = Some(Current {
             full_name: function.full_name.clone(),
             name: name.clone(),
             recursive: function.recursive,
-            general: function.recursive && function.decreasing.is_none() && !function.mutual,
+            general,
+            fuel,
             mutual: None,
         });
         let mut binders = String::new();
@@ -574,6 +624,17 @@ impl RocqEmitter<'_> {
                 "Fixpoint {name}{binders} {{struct {}}} : {result} :=\n  {text}.",
                 decreasing.name
             ));
+        }
+        if fuel {
+            return self.fuel_recursion(
+                &name,
+                &params,
+                &binders,
+                &result,
+                &text,
+                &decreasing.name,
+                &function.ret,
+            );
         }
         self.nat_functions
             .insert(function.full_name.clone(), (index, params.len()));
@@ -607,6 +668,16 @@ const fn op_name(op: BinaryOp) -> &'static str {
         BinaryOp::Concat => "concat",
         BinaryOp::Plus => "plus",
     }
+}
+
+/// How many times a function body calls the function itself.
+fn self_calls(node: &Expr, name: &str) -> usize {
+    let own = usize::from(matches!(&node.node, Node::Call { func, .. } if func == name));
+    own + node
+        .children()
+        .into_iter()
+        .map(|child| self_calls(child, name))
+        .sum::<usize>()
 }
 
 fn collect_hint_functions(plan: &Plan) -> Vec<&String> {

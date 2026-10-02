@@ -272,7 +272,8 @@ impl RocqEmitter<'_> {
             Type::Nat => Ok("N"),
             Type::Int => Ok("Z"),
             Type::Fixed { signed, .. } => {
-                self.state.fixed_to_unbounded(ty);
+                self.state
+                    .machine_integer(ty, if *signed { "Z" } else { "N" });
                 Ok(if *signed { "Z" } else { "N" })
             }
             Type::Float => {

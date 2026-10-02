@@ -4,9 +4,9 @@ use super::infer::infer_javascript_types;
 use super::loops::reserved;
 use super::math::global;
 use super::{
-    Assertion, BOOL, FLOAT, HashSet, INT, JavaScriptParser, JsDoc, Language, NAT, ROOT, Result,
-    SCtor, SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram, STRING, ScanEnd, Scope,
-    Span, Stmt, Token, TokenCursor, TokenKind, TranslationError, Type, array, describe,
+    Assertion, BOOL, FLOAT, Guard, HashSet, INT, JavaScriptParser, JsDoc, Language, NAT, ROOT,
+    Result, SCtor, SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram, STRING, ScanEnd,
+    Scope, Span, Stmt, Token, TokenCursor, TokenKind, TranslationError, Type, array, describe,
     guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
@@ -661,7 +661,18 @@ impl JavaScriptParser {
                 break;
             }
             params[param].ty = Some(NAT);
-            params[param].guard = Some(true);
+            // A negative argument aborts with the guard's message, the guards in their order.
+            let Stmt::If { then, .. } = &statements[index] else {
+                unreachable!("a guard is an if statement")
+            };
+            let message = then.iter().find_map(|inner| match inner {
+                Stmt::Throw { message, .. } => Some(message.clone()),
+                _ => None,
+            });
+            params[param].guard = Some(Guard {
+                message: message.expect("a guard throws"),
+                order: index,
+            });
             index += 1;
         }
         let place = self.to_here(name_token);

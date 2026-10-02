@@ -23,11 +23,6 @@ pub struct AssumptionText {
     pub statement: &'static str,
 }
 
-pub const NON_ABORTING: AssumptionText = AssumptionText {
-    id: "non-aborting-executions",
-    statement: "the translation agrees with the source on executions that do not abort; the source aborts on machine-integer overflow, checked conversion failure, division by zero or an explicit panic, and the target computes an unspecified value there instead",
-};
-
 pub const IN_BOUNDS_READS: AssumptionText = AssumptionText {
     id: "in-bounds-array-reads",
     statement: "the translation agrees with the source on executions whose array reads are in bounds; JavaScript reads undefined at an index outside an array, where the target aborts",
@@ -326,6 +321,10 @@ impl<'p> EmitState<'p> {
 
     /// Records where a declaration (and a data type's constructors) went.
     pub fn map(&mut self, entry: &Decl, target: &str) {
+        // A generated ml_io pair (output.rs) has no source declaration to map.
+        if matches!(entry, Decl::Data(data) if data.output) {
+            return;
+        }
         let source_span = entry.span();
         let mut path = self.module_path(entry.full_name()).to_vec();
         path.push(target.to_owned());
@@ -374,32 +373,13 @@ impl<'p> EmitState<'p> {
         }
     }
 
-    pub fn fixed_to_unbounded(&mut self, ty: &Type) {
+    /// A machine integer of a pure target: its unbounded representation, with Rust's aborts threaded as values (`output`).
+    pub fn machine_integer(&mut self, ty: &Type, representation: &str) {
         let key = ty.key();
-        let unbounded = if matches!(ty, Type::Fixed { signed: true, .. }) {
-            "integers"
-        } else {
-            "naturals"
-        };
         self.encode(
             &format!("machine-integer:{key}"),
-            &format!("{key} values are represented by the target's unbounded {unbounded}; they agree while no operation overflows"),
+            &format!("{key} values are {representation} values; every {key} operation tests where Rust panics, overflow or a zero divisor, and aborts there with Rust's panic message, and otherwise computes the in-range result exactly"),
         );
-        self.assume(
-            NON_ABORTING,
-            Some(&format!("{key} arithmetic stays in range")),
-        );
-    }
-
-    pub fn checked_to_total(&mut self, operation: &str) {
-        self.assume(
-            NON_ABORTING,
-            Some(&format!("checked {operation} does not fail")),
-        );
-    }
-
-    pub fn abort_to_total(&mut self, message: &str) {
-        self.assume(NON_ABORTING, Some(&format!("no abort: {message}")));
     }
 
     /// An array read: in bounds it is the element, outside it JavaScript's undefined, which the targets do not model.
@@ -441,7 +421,8 @@ impl<'p> EmitState<'p> {
             Effect::Print { span, .. }
             | Effect::Let { span, .. }
             | Effect::Assert { span, .. }
-            | Effect::Output { span, .. } => *span,
+            | Effect::Output { span, .. }
+            | Effect::Unwrap { span, .. } => *span,
         };
         self.theorems.push(TheoremRecord {
             source: format!(
@@ -544,6 +525,14 @@ fn prop_dependencies(prop: &Prop, found: &mut HashSet<String>) {
             }
         }
     }
+}
+
+/// An operation that may abort, which `output` threads as a value before a pure target sees it.
+///
+/// # Panics
+/// Always: the emitter met a node the threading should have rewritten.
+pub fn unthreaded(what: &str) -> ! {
+    panic!("{what} reaches a pure target's emitter without its abort threaded")
 }
 
 /// Declarations every declaration refers to (types, functions, constructors, lemmas).

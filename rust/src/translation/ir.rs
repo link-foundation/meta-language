@@ -9,7 +9,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
-use super::surface::{BinaryOp, Flavor, Rounding, UnaryOp};
+use super::surface::{BinaryOp, Flavor, Guard, Rounding, UnaryOp};
 use super::types::Type;
 use super::{Language, Span};
 
@@ -214,11 +214,15 @@ impl Expr {
                 from,
                 to,
                 flavor,
+                message,
+                order,
             } => Node::Cast {
                 arg: Box::new(visit(arg)),
                 from: from.clone(),
                 to: to.clone(),
                 flavor: *flavor,
+                message: message.clone(),
+                order: *order,
             },
             Node::Binary {
                 op,
@@ -350,6 +354,12 @@ pub enum Node {
         from: Type,
         to: Type,
         flavor: Flavor,
+        /// The message of the guard a checked conversion to a parameter is.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        message: Option<String>,
+        /// The place of that guard among the callee's guards.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        order: Option<usize>,
     },
     Abort {
         message: String,
@@ -606,7 +616,7 @@ pub struct Param {
     pub ty: Type,
     /// A JavaScript parameter guarded to the naturals.
     #[serde(default)]
-    pub guard: Option<bool>,
+    pub guard: Option<Guard>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -758,6 +768,18 @@ pub enum Effect {
         #[serde(default)]
         span: Option<Span>,
     },
+    /// Binds `name` to the value of `pair`, made by the first of `ctors`, or
+    /// stops main with the message of its abort, made by the second (see `output`).
+    Unwrap {
+        name: String,
+        pair: Expr,
+        data: String,
+        ctors: Vec<String>,
+        #[serde(rename = "type")]
+        ty: Type,
+        #[serde(default)]
+        span: Option<Span>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -783,6 +805,9 @@ pub struct Program {
     /// Functions that print take and return the lines printed (see `output`).
     #[serde(default, skip_serializing_if = "is_false")]
     pub output_threaded: bool,
+    /// Functions that may abort return the abort's message instead of a value (see `output`).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub aborts_threaded: bool,
 }
 
 impl Program {

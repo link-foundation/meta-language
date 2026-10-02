@@ -19,9 +19,9 @@ use super::issue_195_observations::{Observation, record};
 const REGISTER: &str = "parity/foundation-models.json";
 const LANGUAGES: [&str; 4] = ["JavaScript", "Rust", "Lean", "Rocq"];
 const FOUNDATION_ENCODINGS: [&str; 4] = [
+    "abort-threading",
     "machine-integer",
     "numbers",
-    "non-aborting-executions",
     "theorem-properties",
 ];
 /// The files that record which foundation each downstream consumer brings.

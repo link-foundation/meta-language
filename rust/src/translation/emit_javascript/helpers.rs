@@ -25,16 +25,18 @@ impl Helper {
 }"
             }
             Self::Fixed => {
-                "function ml_fixed(value, min, max, what) {
-  if (value < min || value > max) throw new RangeError(`${what} overflowed`);
+                "function ml_fixed(value, min, max, message) {
+  if (value < min || value > max) throw new RangeError(message);
   return value;
 }"
             }
             Self::Divide => {
-                "// Integer division with the source's rounding; by zero it either aborts or is total (x / 0 = 0, x % 0 = x).
-function ml_divide(a, b, rounding, byZero, remainder) {
+                "// Integer division with the source's rounding; by zero it aborts with the message `zero`
+// or, when that is null, is total (x / 0 = 0, x % 0 = x); a machine-integer quotient
+// out of [min, max] aborts with `overflow`, the remainder too.
+function ml_divide(a, b, rounding, zero, remainder, bounds) {
   if (b === 0n) {
-    if (byZero === 'abort') throw new RangeError('division by zero');
+    if (zero !== null) throw new RangeError(zero);
     return remainder ? a : 0n;
   }
   let q = a / b;
@@ -43,12 +45,13 @@ function ml_divide(a, b, rounding, byZero, remainder) {
     if (rounding === 'floor' && (r < 0n) !== (b < 0n)) q -= 1n;
     if (rounding === 'euclid' && r < 0n) q = b > 0n ? q - 1n : q + 1n;
   }
+  if (bounds && (q < bounds[0] || q > bounds[1])) throw new RangeError(bounds[2]);
   return remainder ? a - q * b : q;
 }"
             }
             Self::ToNatChecked => {
-                "function ml_toNatChecked(value) {
-  if (value < 0n) throw new RangeError(`${value} is not a natural number`);
+                "function ml_toNatChecked(value, message) {
+  if (value < 0n) throw new RangeError(message);
   return value;
 }"
             }

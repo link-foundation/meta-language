@@ -148,7 +148,10 @@ fn recursion_rocq_cannot_check_terminates_is_a_definition_over_ml_fix() {
         translated.contract().support,
         TranslationSupport::SemanticTranslation
     );
-    assert!(translated.code().contains(
-        "Definition gcd (a : Z) (b : Z) : Z :=\n  ml_fix 64 (fun (ml_rec : Z * Z -> Z) (ml_args : Z * Z) =>\n    let '(a, b) := ml_args in "
-    ));
+    // `a % b` throws where b is 0n, so gcd threads that abort and the output before it as a value.
+    let gcd = regex::Regex::new(
+        r#"Definition gcd \(a : Z\) \(b : Z\) \(ml_out : list string\) : ml_io1 :=\n {2}ml_fix 64 \(fun \(ml_rec : Z \* Z \* list string -> ml_io1\) \(ml_args : Z \* Z \* list string\) =>\n {4}let '\(a, b, ml_out\) := ml_args in .*\(ml_io1_abort ml_out "Division by zero"%string\) else \(ml_io1_mk ml_out \(Z\.rem a b\)\).*\(ml_rec \(b, ml_v2, ml_o1\)\).*\n {4}\(fun _ => \(ml_io1_mk \(@nil string\) 0%Z\)\) \(a, b, ml_out\)\."#,
+    )
+    .expect("a valid pattern");
+    assert!(gcd.is_match(translated.code()), "{}", translated.code());
 }

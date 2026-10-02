@@ -2,9 +2,9 @@
 
 use super::{
     Alias, BinaryOp, Flavor, Options, Result, RustParser, SExpr, SNode, SPattern, SPatternNode,
-    SRow, Token, TokenKind, UnaryOp, additive_op, binary, comparison_op, describe, format,
+    SRow, Span, Token, TokenKind, UnaryOp, additive_op, binary, comparison_op, describe, format,
     is_if_or_match, joined, method_call, multiplicative_op, operator, pattern_value,
-    rust_fixed_type, span, type_error, unsupported,
+    rust_fixed_type, rust_macro_message, span, type_error, unsupported,
 };
 
 impl RustParser {
@@ -426,12 +426,13 @@ impl RustParser {
                         range,
                     ));
                 }
-                let message = match args.into_iter().next() {
-                    None => token.value.clone(),
+                let text = match args.into_iter().next() {
+                    None => None,
                     Some(SExpr {
                         node: SNode::Str { value },
+                        span,
                         ..
-                    }) => value,
+                    }) => Some(panic_text(&value, span)?),
                     Some(_) => {
                         return Err(unsupported(
                             &format!("{}! message", token.value),
@@ -440,6 +441,7 @@ impl RustParser {
                         ));
                     }
                 };
+                let message = rust_macro_message(&token.value, text.as_deref());
                 Ok(SExpr::new(SNode::Abort { message }, range))
             }
             _ => Err(unsupported(
@@ -716,4 +718,21 @@ impl RustParser {
             span: span(&token, &token),
         })
     }
+}
+
+/// The text a `panic!` message literal prints: `{{` and `}}` are braces; a lone brace captures a variable.
+fn panic_text(template: &str, span: Option<Span>) -> Result<String> {
+    let mut text = String::new();
+    let mut chars = template.chars().peekable();
+    while let Some(char) = chars.next() {
+        if (char == '{' || char == '}') && chars.next_if_eq(&char).is_none() {
+            return Err(unsupported(
+                "formatted panic message",
+                "only a literal message is portable",
+                span,
+            ));
+        }
+        text.push(char);
+    }
+    Ok(text)
 }

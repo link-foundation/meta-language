@@ -24,7 +24,6 @@ impl LeanEmitter<'_> {
             }
             Node::Index { array, index } => {
                 self.state.array_read();
-                self.state.abort_to_total("array index out of range");
                 self.helpers.insert("arrayAt");
                 let values = self.expr(array, depth)?;
                 let text = self.expr(index, depth)?;

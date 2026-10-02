@@ -5,6 +5,7 @@ use super::{
     Rounding, RustEmitter, Semantics, Type, UnaryOp, block, comparison_operator, indent, own,
     rename_main, rounding_text, rust_string, snake, unsupported,
 };
+use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_message};
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
@@ -88,7 +89,7 @@ impl RustEmitter<'_> {
                 }
                 if matches!(expr.ty, Type::Fixed { .. }) {
                     let text = format!("{}.checked_neg()", self.receiver(arg)?);
-                    return Ok(self.checked(&text, &expr.ty, "negation"));
+                    return Ok(self.checked(&text, &expr.ty, "neg"));
                 }
                 if expr.ty.is_float() {
                     return Ok(format!("(-{})", self.receiver(arg)?));
@@ -176,13 +177,18 @@ impl RustEmitter<'_> {
         }
     }
 
-    pub(super) fn checked(&mut self, text: &str, ty: &Type, what: &str) -> String {
+    /// A machine-integer result out of range panics, with Rust's own message.
+    pub(super) fn checked(&mut self, text: &str, ty: &Type, op: &str) -> String {
+        self.machine_integer(ty);
+        format!("{text}.expect({})", rust_string(overflow_message(op)))
+    }
+
+    fn machine_integer(&mut self, ty: &Type) {
         let key = ty.key();
         self.state.encode(
             &format!("machine-integer:{key}"),
-            &format!("{key} stays a Rust {key}; its arithmetic is checked and panics where the source aborts"),
+            &format!("{key} stays a Rust {key}; its arithmetic is checked and panics where the source aborts, with the source's message"),
         );
-        format!("{text}.expect(\"{key} {what} overflowed\")")
     }
 
     pub(super) fn binary(&mut self, expr: &Expr) -> Result<String> {
@@ -258,30 +264,28 @@ impl RustEmitter<'_> {
         };
         let left = self.receiver(left)?;
         let right = self.expr(right)?;
-        let (method, what) = match op {
-            BinaryOp::Add => ("checked_add", "addition"),
-            BinaryOp::Sub => ("checked_sub", "subtraction"),
-            BinaryOp::Mul => ("checked_mul", "multiplication"),
-            BinaryOp::Div => ("checked_div", "division"),
-            BinaryOp::Rem => ("checked_rem", "remainder"),
-            other => unreachable!("no Rust machine-integer operator {other:?}"),
-        };
-        let division = matches!(op, BinaryOp::Div | BinaryOp::Rem);
-        let signed = matches!(expr.ty, Type::Fixed { signed: true, .. });
-        let mut method = method.to_owned();
-        if division && *rounding == Some(Rounding::Euclid) {
-            method.push_str("_euclid");
-        } else if division && *rounding != Some(Rounding::Trunc) && signed {
-            return Err(unsupported(
-                &format!("{} division on {}", rounding_text(*rounding), expr.ty.key()),
-                "Rust machine integers divide with truncating or Euclidean rounding only",
-                expr.span,
-            ));
+        if matches!(op, BinaryOp::Div | BinaryOp::Rem) {
+            let signed = matches!(expr.ty, Type::Fixed { signed: true, .. });
+            if !matches!(rounding, Some(Rounding::Trunc | Rounding::Euclid)) && signed {
+                return Err(unsupported(
+                    &format!("{} division on {}", rounding_text(*rounding), expr.ty.key()),
+                    "Rust machine integers divide with truncating or Euclidean rounding only",
+                    expr.span,
+                ));
+            }
+            // Rust integer division always panics by zero and on overflow, with the source's messages.
+            self.machine_integer(&expr.ty);
+            if *rounding == Some(Rounding::Euclid) {
+                return Ok(format!("{left}.{}_euclid({right})", op.name()));
+            }
+            let operator = if *op == BinaryOp::Div { "/" } else { "%" };
+            return Ok(format!("({left} {operator} {right})"));
         }
-        if division {
-            self.state.abort_to_total("division by zero");
-        }
-        Ok(self.checked(&format!("{left}.{method}({right})"), &expr.ty, what))
+        Ok(self.checked(
+            &format!("{left}.checked_{}({right})", op.name()),
+            &expr.ty,
+            op.name(),
+        ))
     }
 
     pub(super) fn big_arithmetic(&mut self, expr: &Expr) -> Result<String> {
@@ -312,12 +316,16 @@ impl RustEmitter<'_> {
                 Ok(format!("{left}.sub({right})"))
             }
             BinaryOp::Div | BinaryOp::Rem => {
-                let abort = *by_zero == Some(ByZero::Abort);
-                if abort {
-                    self.state.abort_to_total("division by zero");
-                }
+                let zero = if *by_zero == Some(ByZero::Abort) {
+                    format!(
+                        "Some({})",
+                        rust_string(zero_divisor_message(op.name(), &expr.ty))
+                    )
+                } else {
+                    "None".to_owned()
+                };
                 Ok(format!(
-                    "crate::ml::divide({}, {right}, \"{}\", {abort}, {})",
+                    "crate::ml::divide({}, {right}, \"{}\", {zero}, {})",
                     self.borrow(left_expr)?,
                     rounding_text(*rounding),
                     *op == BinaryOp::Rem
@@ -469,6 +477,8 @@ impl RustEmitter<'_> {
             from,
             to,
             flavor,
+            message,
+            ..
         } = &expr.node
         else {
             unreachable!("a cast")
@@ -480,10 +490,10 @@ impl RustEmitter<'_> {
         match flavor {
             Flavor::Exact => Ok(arg),
             Flavor::Clamp => Ok(format!("crate::ml::clamp_nat({arg})")),
-            Flavor::Checked => {
-                self.state.checked_to_total("conversion to a natural");
-                Ok(format!("crate::ml::to_nat_checked({arg})"))
-            }
+            Flavor::Checked => Ok(format!(
+                "crate::ml::to_nat_checked({arg}, {})",
+                rust_string(cast_message(message.as_deref()))
+            )),
         }
     }
 
@@ -508,7 +518,7 @@ impl RustEmitter<'_> {
                     self.state
                         .assertion_theorem(&format!("assertion {assertion}"), effect);
                 }
-                Effect::Output { .. } => {
+                Effect::Output { .. } | Effect::Unwrap { .. } => {
                     unreachable!("only the Lean and Rocq emitters thread output")
                 }
             }

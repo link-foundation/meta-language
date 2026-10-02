@@ -690,23 +690,105 @@ impl Checker {
         }
         let mut checked = Vec::new();
         for (arg, param) in args.iter().zip(&params) {
-            let value = self.expr(arg, env, path, Some(&param.ty), false)?;
-            let flavor = (param.guard == Some(true)).then_some(Flavor::Checked);
-            checked.push(coerce(
-                value,
-                &param.ty,
-                self.language,
-                arg.span.or(span),
-                flavor,
-            )?);
+            // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
+            let expected = if param.guard.is_some() && !matches!(arg.node, SNode::Num { .. }) {
+                &INT
+            } else {
+                &param.ty
+            };
+            let value = self.expr(arg, env, path, Some(expected), false)?;
+            let flavor = param.guard.is_some().then_some(Flavor::Checked);
+            let mut value = coerce(value, &param.ty, self.language, arg.span.or(span), flavor)?;
+            if let (
+                Node::Cast {
+                    flavor: Flavor::Checked,
+                    message,
+                    order,
+                    ..
+                },
+                Some(guard),
+            ) = (&mut value.node, &param.guard)
+            {
+                *message = Some(guard.message.clone());
+                *order = Some(guard.order);
+            }
+            checked.push(value);
         }
-        Ok(Expr::new(
+        Ok(self.guard_order(full_name, checked, ret))
+    }
+
+    /// A JavaScript call evaluates every argument, then the callee's guards run
+    /// in their order. Checking each argument where it is passed is the same
+    /// unless a later argument could print or abort, or the guards run in
+    /// another order; then the arguments are bound first and checked after.
+    fn guard_order(&mut self, func: String, args: Vec<Expr>, ret: Type) -> Expr {
+        let guarded: Vec<(usize, usize)> = args
+            .iter()
+            .enumerate()
+            .filter_map(|(index, arg)| guard_of(arg).map(|(order, _)| (index, order)))
+            .collect();
+        let Some(&(first, _)) = guarded.first() else {
+            return Expr::new(Node::Call { func, args }, ret);
+        };
+        let in_order = guarded.windows(2).all(|pair| pair[0].1 < pair[1].1);
+        let later = args[first + 1..]
+            .iter()
+            .all(|arg| simple(guard_of(arg).map_or(arg, |(_, inner)| inner)));
+        if in_order && later {
+            return Expr::new(Node::Call { func, args }, ret);
+        }
+        let bound: Vec<(String, Expr)> = args
+            .iter()
+            .map(|arg| {
+                let value = guard_of(arg).map_or(arg, |(_, inner)| inner).clone();
+                (self.fresh_name("ml_a"), value)
+            })
+            .collect();
+        let mut sorted = guarded;
+        sorted.sort_by_key(|&(_, order)| order);
+        let checks: Vec<(usize, String, Expr)> = sorted
+            .into_iter()
+            .map(|(index, _)| {
+                let mut value = args[index].clone();
+                if let Node::Cast { arg, .. } = &mut value.node {
+                    let ty = arg.ty.clone();
+                    **arg = Expr::var(bound[index].0.clone(), ty);
+                }
+                (index, self.fresh_name("ml_a"), value)
+            })
+            .collect();
+        let call_args = args
+            .iter()
+            .enumerate()
+            .map(|(index, arg)| {
+                let name = checks
+                    .iter()
+                    .find(|(candidate, ..)| *candidate == index)
+                    .map_or(&bound[index].0, |(_, name, _)| name);
+                Expr::var(name.clone(), arg.ty.clone())
+            })
+            .collect();
+        let call = Expr::new(
             Node::Call {
-                func: full_name,
-                args: checked,
+                func,
+                args: call_args,
             },
             ret,
-        ))
+        );
+        let bindings = bound
+            .into_iter()
+            .chain(checks.into_iter().map(|(_, name, value)| (name, value)));
+        bindings.rev().fold(call, |body, (name, value)| {
+            let ty = body.ty.clone();
+            Expr::new(
+                Node::Let {
+                    name,
+                    value: Box::new(value),
+                    body: Box::new(body),
+                },
+                ty,
+            )
+        })
     }
 
     pub(super) fn construct(
@@ -804,5 +886,30 @@ impl Checker {
             })
             .collect();
         self.construct(&data_name, &ctor, &args, env, path, span)
+    }
+}
+
+/// The order of the guard a checked argument is, and the argument it checks.
+fn guard_of(arg: &Expr) -> Option<(usize, &Expr)> {
+    match &arg.node {
+        Node::Cast {
+            arg: inner,
+            order: Some(order),
+            ..
+        } => Some((*order, inner)),
+        _ => None,
+    }
+}
+
+/// A value whose evaluation neither prints nor aborts.
+fn simple(e: &Expr) -> bool {
+    match &e.node {
+        Node::Var { .. } | Node::Lit { .. } => true,
+        Node::Cast {
+            flavor: Flavor::Exact,
+            arg,
+            ..
+        } => simple(arg),
+        _ => false,
     }
 }

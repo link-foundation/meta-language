@@ -80,13 +80,11 @@ fn error_message(value: Value) -> String {
 }
 
 #[test]
-fn truncating_division_emits_checked_div_with_its_contract() {
+fn truncating_division_emits_rust_division_with_its_contract() {
     let emitted = emit_rust(&program(division_program(Some("trunc"), true))).unwrap();
     assert_eq!(
         emitted.text,
-        format!(
-            "{HEADER}pub fn q(a: i32, b: i32) -> i32 {{\n    a.checked_div(b).expect(\"i32 division overflowed\")\n}}\n{HARNESS}"
-        )
+        format!("{HEADER}pub fn q(a: i32, b: i32) -> i32 {{\n    (a / b)\n}}\n{HARNESS}")
     );
     let mut contract = serde_json::to_value(&emitted).unwrap();
     contract.as_object_mut().unwrap().remove("text");
@@ -95,13 +93,9 @@ fn truncating_division_emits_checked_div_with_its_contract() {
         json!({
             "language": "Rust",
             "mappings": [{ "kind": "function", "source": "q", "target": "q", "sourceSpan": { "start": 0, "end": 38 } }],
-            "assumptions": [{
-                "id": "non-aborting-executions",
-                "statement": "the translation agrees with the source on executions that do not abort; the source aborts on machine-integer overflow, checked conversion failure, division by zero or an explicit panic, and the target computes an unspecified value there instead",
-                "details": ["no abort: division by zero"]
-            }],
+            "assumptions": [],
             "encodings": [
-                { "id": "machine-integer:i32", "statement": "i32 stays a Rust i32; its arithmetic is checked and panics where the source aborts" },
+                { "id": "machine-integer:i32", "statement": "i32 stays a Rust i32; its arithmetic is checked and panics where the source aborts, with the source's message" },
                 { "id": "program-output", "statement": "main prints the lines the source program prints, in order, with println!" }
             ],
             "theorems": [],
@@ -111,13 +105,11 @@ fn truncating_division_emits_checked_div_with_its_contract() {
 }
 
 #[test]
-fn euclidean_division_emits_checked_div_euclid() {
+fn euclidean_division_emits_div_euclid() {
     let emitted = emit_rust(&program(division_program(Some("euclid"), true))).unwrap();
     assert_eq!(
         emitted.text,
-        format!(
-            "{HEADER}pub fn q(a: i32, b: i32) -> i32 {{\n    a.checked_div_euclid(b).expect(\"i32 division overflowed\")\n}}\n{HARNESS}"
-        )
+        format!("{HEADER}pub fn q(a: i32, b: i32) -> i32 {{\n    a.div_euclid(b)\n}}\n{HARNESS}")
     );
 }
 

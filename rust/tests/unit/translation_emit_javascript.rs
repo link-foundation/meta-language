@@ -118,14 +118,14 @@ fn range_checks_machine_integer_parameters_and_results() {
     );
     let emitted = emit_javascript(&program(&[add], &Value::Null)).expect("emits");
     assert!(emitted.text.contains(
-        "function add(a, new_) {\n  ml_fixed(a, 0n, 255n, 'u8 argument a');\n  \
-         ml_fixed(new_, 0n, 255n, 'u8 argument new_');\n  \
-         return ml_fixed((a + new_), 0n, 255n, 'u8 addition');\n}"
+        "function add(a, new_) {\n  ml_fixed(a, 0n, 255n, \"u8 argument a out of range\");\n  \
+         ml_fixed(new_, 0n, 255n, \"u8 argument new_ out of range\");\n  \
+         return ml_fixed((a + new_), 0n, 255n, \"attempt to add with overflow\");\n}"
     ));
     assert!(
         emitted
             .text
-            .contains("function ml_fixed(value, min, max, what) {")
+            .contains("function ml_fixed(value, min, max, message) {")
     );
     assert!(!emitted.text.contains("main();"));
     assert_eq!(emitted.entry, None);

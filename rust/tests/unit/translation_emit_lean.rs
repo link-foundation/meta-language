@@ -95,7 +95,7 @@ fn emits_a_function_and_main_with_their_contract() {
 }
 
 #[test]
-fn aborting_natural_division_uses_the_natural_divisor_check() {
+fn aborting_natural_division_threads_the_abort_through_the_result() {
     let mut value = monus();
     let body = &mut value["declarations"][0]["body"];
     body["op"] = json!("div");
@@ -104,14 +104,26 @@ fn aborting_natural_division_uses_the_natural_divisor_check() {
     body["byZero"] = json!("abort");
     let emitted = emit_lean(&program(value)).expect("the program emits");
     assert!(emitted.text.contains(
-        "def ml_nonzero_nat (divisor : Nat) : Nat :=\n  if divisor == 0 then panic! \"division by zero\" else divisor\n\ndef monus"
+        "inductive ml_io1 where\n  | ml_io1_mk (output : List String) (value : Nat) : ml_io1\n  \
+         | ml_io1_abort (output : List String) (message : String) : ml_io1\n"
     ));
-    assert!(emitted.text.contains("  (a / (ml_nonzero_nat b))\n"));
+    assert!(emitted.text.contains(
+        "def monus (a : Nat) (b : Nat) (ml_out : List String) : ml_io1 :=\n  \
+         (if (b == (0 : Nat)) then (ml_io1.ml_io1_abort ml_out \"Division by zero\") \
+         else (ml_io1.ml_io1_mk ml_out (a / b)))\n"
+    ));
+    assert!(
+        emitted
+            .text
+            .contains("| ml_io2.ml_io2_abort _ ml_m => throw (IO.userError ml_m))\n")
+    );
+    assert!(!emitted.text.contains("ml_nonzero_nat"));
     let contract = serde_json::to_value(&emitted).expect("the result serialises");
-    assert_eq!(contract["assumptions"][0]["id"], "non-aborting-executions");
+    assert_eq!(contract["assumptions"], json!([]));
+    let encodings: Vec<_> = emitted.encodings.iter().map(|e| e.id.as_str()).collect();
     assert_eq!(
-        contract["assumptions"][0]["details"],
-        json!(["no abort: division by zero"])
+        encodings,
+        ["program-output", "output-threading", "abort-threading"]
     );
 }
 
