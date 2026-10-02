@@ -49,11 +49,8 @@ path = "benches/competitor_bench.rs"
 harness = false
 
 [dependencies]
-abnf = "0.13.0"
-bnf = { version = "0.6.0", default-features = false }
 clap = { version = "4.4", features = ["derive", "env"] }
 doublets = { version = "0.5.0", optional = true }
-ebnf = "0.1.4"
 lindera = { version = "6.2.0", default-features = false, features = ["embed-jieba"], optional = true }
 lingua = { version = "1.8.0", default-features = false, features = [
     "arabic",
@@ -68,7 +65,6 @@ lingua = { version = "1.8.0", default-features = false, features = [
     "urdu",
 ] }
 links-notation = { version = "0.22.0", default-features = false }
-pest_meta = "2.8.6"
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 platform-mem = { version = "0.3.0", optional = true }
@@ -145,6 +141,7 @@ no-default-features = true
 links-notation = { version = "0.22.0", default-features = false }
 pest = "2.8.6"
 pest_derive = "2.8.6"
+pest_meta = "2.8.6"
 regex = "1"
 serde_json = { version = "1", features = ["unbounded_depth"] }
 walkdir = "2"
