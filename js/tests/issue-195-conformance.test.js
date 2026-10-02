@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
+import { conformanceOracleProblems } from '../scripts/issue-195-oracle-mapping.mjs';
 import { LinkNetwork } from '../src/index.js';
 import {
   cstLinesToSexp,
@@ -90,25 +91,8 @@ function regionProblems(language, entry, host) {
 }
 
 test('the conformance fixtures record their provenance and match their pinned inputs', () => {
-  assert.equal(manifest.oracle.tool, lock.treeSitterCli);
-  assert.equal(manifest.inputs['cases.json'], sha256(read('cases.json')));
-  assert.equal(manifest.inputs['error-recovery.json'], sha256(read('error-recovery.json')));
-  for (const [language, details] of Object.entries(manifest.languages)) {
-    assert.equal(details.grammar.parserSha256, lock.grammars[details.grammar.id].parserSha256, language);
-    assert.match(details.grammar.revision, /^[0-9a-f]{40}$/u, language);
-    assert.ok(readFileSync(new URL(details.grammar.license, repositoryRoot)).length > 0, `${language} grammar license`);
-    assert.equal(sha256(read(details.oracle)), details.oracleSha256, `${language} oracle`);
-    for (const [file, digest] of Object.entries(details.corpus.files)) {
-      assert.equal(sha256(read(`${details.corpus.directory}/${file}`)), digest, `${language} ${file}`);
-    }
-    assert.ok(details.projects.length > 0, `${language} has real projects`);
-    for (const project of details.projects) {
-      assert.match(project.commit, /^[0-9a-f]{40}$/u);
-      assert.ok(project.url.includes(project.commit), project.url);
-      assert.equal(sha256(read(project.file)), project.sha256, project.file);
-      assert.ok(read(project.licenseFile).length > 0, project.licenseFile);
-    }
-  }
+  const readRepository = (path) => readFileSync(new URL(path, repositoryRoot));
+  assert.deepEqual(conformanceOracleProblems(manifest, { lock, read, readRepository }), []);
 });
 
 test('the comparison rejects a tree that differs from the oracle', () => {

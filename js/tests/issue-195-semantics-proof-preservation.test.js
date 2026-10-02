@@ -17,6 +17,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 
+import { proofObligationProblems } from '../scripts/issue-195-proof-obligations.mjs';
 import { translateProgram } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
 
@@ -28,7 +29,6 @@ const PROOF_SOURCES = LANGUAGES.filter((language) => corpus.sources[language].th
 const TOOLS = { JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' };
 // The axioms of Lean's own foundations; any other axiom would be an outside authority.
 const LEAN_STANDARD_AXIOMS = new Set(['propext', 'Quot.sound', 'Classical.choice']);
-const OBLIGATION_FIELDS = ['check', 'closedGoal', 'discharge', 'kind', 'source', 'target'];
 // Acceptance runs must use every toolchain; other runs skip when one is absent.
 const toolchainRequired = Boolean(process.env.ISSUE_195_OBSERVATION_FILE);
 const REQUIREMENT_ID = 'I195-SEMANTICS-PROOF-PRESERVATION';
@@ -198,13 +198,9 @@ test('issue 195 proof obligations into Lean and Rocq are discharged by the targe
         const { obligations } = translation.semantics;
         assert.equal(obligations.filter(({ kind }) => kind === 'assertion').length, from.assertions);
         assert.equal(obligations.length, from.theorems.length + from.assertions, `${source} -> ${target}`);
-        for (const obligation of obligations) {
-          // The record names the obligation and its discharger; it carries no
-          // verdict, which only the kernel run below gives.
-          assert.deepEqual(Object.keys(obligation).sort(), OBLIGATION_FIELDS);
-          assert.equal(obligation.discharge, 'target-kernel', `${source} -> ${target} ${obligation.source}`);
-          assert.equal(obligation.check, null, `${source} -> ${target} ${obligation.source}`);
-        }
+        // The record names the obligation and its discharger; it carries no
+        // verdict, which only the kernel run below gives.
+        assert.deepEqual(proofObligationProblems(translation, { proofTarget: true }), []);
         assert.deepEqual(forbiddenMarkers(target, translation.code), [], `${source} -> ${target} admits nothing`);
         const names = obligations.map(({ target: name }) => name);
         const result = await check(target, translation.code, directory, `from_${source}`.toLowerCase(), names);
@@ -237,16 +233,8 @@ test('issue 195 bounded theorem checks are reported separately from proofs', { t
       await Promise.all(programs.filter((target) => target !== source).map(async (target) => {
         const translation = translateProgram(text, source, target);
         const { obligations } = translation.semantics;
-        for (const obligation of obligations) {
-          assert.notEqual(obligation.discharge, 'target-kernel', `${source} -> ${target} ${obligation.source}`);
-          if (obligation.kind === 'theorem') {
-            assert.equal(obligation.discharge, 'source-kernel');
-            assert.equal(obligation.check, 'bounded');
-          } else {
-            assert.equal(obligation.discharge, 'runtime-assertion');
-            assert.equal(obligation.check, null);
-          }
-        }
+        assert.deepEqual(proofObligationProblems(translation, { proofTarget: false }), []);
+        assert.equal(obligations.filter(({ kind }) => kind === 'theorem').length, from.theorems.length, `${source} -> ${target}`);
         const encoding = translation.semantics.encodings.find(({ id }) => id === 'theorem-properties');
         assert.equal(encoding !== undefined, from.theorems.length > 0, `${source} -> ${target}`);
         if (encoding) assert.match(encoding.statement, /bounded domain, and its proof remains checked by the source kernel$/u);
