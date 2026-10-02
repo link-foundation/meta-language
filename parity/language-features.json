@@ -627,6 +627,32 @@
       }
     },
     {
+      "id": "semantics-faithful-behavior",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/translation/aborts.rs",
+          "rust/src/translation/output.rs",
+          "rust/src/translation/emit_lean.rs",
+          "rust/src/translation/emit_rocq.rs",
+          "rust/tests/unit/issue_195_faithful_behavior.rs",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/translation/aborts.js",
+          "js/src/translation/output.js",
+          "js/src/translation/emit-lean.js",
+          "js/src/translation/emit-rocq.js",
+          "js/tests/issue-195-faithful-behavior.test.js",
+          "parity/fixtures/four-language-conformance.json"
+        ]
+      }
+    },
+    {
       "id": "javascript-parser-codegen",
       "required": true,
       "rust": {

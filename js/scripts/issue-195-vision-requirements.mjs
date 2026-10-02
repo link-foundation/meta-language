@@ -555,8 +555,26 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'All 12 directed translations preserve errors, aborts, overflow and effects, using a faithful operational encoding and runtime where the target has no native concept. An unsupported-construct diagnostic, source pass-through or a non-aborting-only claim does not count.',
     assertions: ['errorsPreserved', 'abortsPreserved', 'overflowPreserved', 'effectsPreserved', 'noPassThrough'],
-    javascript: null,
-    rust: null,
+    javascript: [
+      'js/src/program-translation.js',
+      'js/src/translation/aborts.js',
+      'js/src/translation/output.js',
+      'js/src/translation/emit-common.js',
+      'js/src/translation/emit-lean.js',
+      'js/src/translation/emit-rocq.js',
+      'js/src/translation/emit-javascript.js',
+      'js/src/translation/emit-rust.js',
+    ],
+    rust: [
+      'rust/src/semantic_translation.rs',
+      'rust/src/translation/aborts.rs',
+      'rust/src/translation/output.rs',
+      'rust/src/translation/emit_common.rs',
+      'rust/src/translation/emit_lean.rs',
+      'rust/src/translation/emit_rocq.rs',
+      'rust/src/translation/emit_javascript.rs',
+      'rust/src/translation/emit_rust/declarations.rs',
+    ],
   },
   {
     id: 'I195-SEMANTICS-PROOF-PRESERVATION',
