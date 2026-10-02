@@ -5,7 +5,8 @@
 // reports against the requirement ledger:
 // - no text presents future emitters, approximate round trips, external
 //   production parsers or an incomplete scope as the finished contract while
-//   the ledger rows that would deliver it are unimplemented or failing;
+//   the ledger rows that would deliver it are unimplemented, failing or not
+//   yet recorded passing by an acceptance report;
 // - no text states or implies that issue #195 is complete, or reports every
 //   requirement as passing, before every requirement is verified and delivered;
 // - no text carries an issue-closing directive for #195 before then;
@@ -124,9 +125,11 @@ const LEDGER_RESULT = /Acceptance result:\s*\*\*PASS\*\*/u;
 
 /**
  * The completion state of the ledger: the rows with no implementation entry
- * point, and, when an acceptance report is given, the rows it failed. The
- * work is complete only when an acceptance report over every checkpoint
- * passed every row of this manifest.
+ * point, and, when an acceptance report is given, the rows it failed. A row
+ * stays open until an acceptance report records it passing: a declared entry
+ * point does not stand in for the observed behavior. The work is complete only
+ * when an acceptance report over every checkpoint passed every row of this
+ * manifest.
  */
 export function completionState(manifest, report = null) {
   const rows = manifest.atomicRequirements;
@@ -134,13 +137,15 @@ export function completionState(manifest, report = null) {
     .filter((row) => Object.values(row.implementationEntryPoints ?? {}).some((entry) => entry === null))
     .map(({ id }) => id);
   const failing = report ? (report.requirements ?? []).filter((entry) => !entry.passed).map(({ id }) => id) : [];
+  const passed = new Set((report?.requirements ?? []).filter((entry) => entry.passed).map(({ id }) => id));
+  const unverified = rows.filter(({ id }) => !passed.has(id)).map(({ id }) => id);
   const verified = Boolean(
     report?.passed && report.checkpoint === 'all' && report.summary?.requirements === rows.length,
   );
   return {
     requirements: rows.length,
     ids: new Set(rows.map(({ id }) => id)),
-    open: new Set([...unimplemented, ...failing]),
+    open: new Set([...unimplemented, ...failing, ...unverified]),
     unimplemented,
     failing,
     verified,

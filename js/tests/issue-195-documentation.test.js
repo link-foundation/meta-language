@@ -85,6 +85,12 @@ test('the ledger is open, so completion claims are contradictions today', () => 
   const failing = completionState(manifest, { checkpoint: 'all', passed: false, summary: { requirements: current.requirements }, requirements: [{ id: 'I195-X', passed: false }] });
   assert.deepEqual(failing.failing, ['I195-X']);
   assert.ok(failing.open.has('I195-X'));
+  // A declared entry point does not stand in for observed behavior: an
+  // implemented row stays open until an acceptance report records it passing.
+  const implemented = manifest.atomicRequirements.find(({ id }) => !current.unimplemented.includes(id)).id;
+  assert.ok(current.open.has(implemented), `${implemented} is open without an acceptance report`);
+  const observed = completionState(manifest, { checkpoint: 'push', passed: false, summary: { requirements: 1 }, requirements: [{ id: implemented, passed: true }] });
+  assert.equal(observed.open.has(implemented), false, `${implemented} closes once a report records it passing`);
   assert.equal(deliveredState().complete, true);
 });
 
