@@ -158,13 +158,13 @@ test('issue 195 acceptance workflow produces exact-checkpoint evidence with pinn
   );
 
   assert.match(workflow, /node-version:\s*24/);
-  assert.match(workflow, /dtolnay\/rust-toolchain@1\.98\.1/);
+  assert.match(workflow, /dtolnay\/rust-toolchain@1\.99\.0/);
   assert.match(workflow, /ocaml\/setup-ocaml@v3/);
   assert.match(
     workflow,
     /opam repository add rocq-released https:\/\/rocq-prover\.org\/opam\/released/,
   );
-  assert.match(workflow, /opam install[^\n]*rocq-core=9\.2\.0[^\n]*rocq-stdlib=9\.2\.0/);
+  assert.match(workflow, /opam install[^\n]*rocq-core=9\.3\.0[^\n]*rocq-stdlib=9\.2\.0/);
   assert.match(workflow, /opam var bin >> "\$GITHUB_PATH"/);
   assert.doesNotMatch(workflow, /leanprover\/lean-action/);
   assert.match(workflow, /elan-x86_64-unknown-linux-gnu\.tar\.gz/);
