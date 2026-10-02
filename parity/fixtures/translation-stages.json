@@ -127,6 +127,356 @@
       }
     },
     {
+      "name": "corpus/faithful-assert-abort.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/faithful-assert-abort.rs",
+      "parse": {
+        "sha256": "e3c6c1de043a18cfacb06adfd939d1b08444f183ef121ae14ef0892dbb5b1e09"
+      },
+      "check": {
+        "sha256": "87a136172c0f4456c69f829df046e843c91052004aa8564bc3231adb6b0e98e2"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "6bcbeab08c5631328218b685c0c6bacfa685ce8aedcc3f67fa96f554ed84590d"
+        },
+        "rust": {
+          "sha256": "c47ee08fbe5881c887cc0dfe8d44b960c8a94f5502ea38b0db80989e40a513e6"
+        },
+        "lean": {
+          "sha256": "5bafc0bbd02054174068a932e99487037d842061df499d4d79a1a7c3b76098ba"
+        },
+        "rocq": {
+          "sha256": "2d1a197f3ac886a8724177d91a1deebc3b47ae0c66b48a09f350a64283d466da"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-assert-output.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/faithful-assert-output.mjs",
+      "parse": {
+        "sha256": "893c76a62711106fc405ab16ed9d25243b2658a962bc477dd7a867390da2c668"
+      },
+      "check": {
+        "sha256": "0ffac1d3271ebd9128127461b5d3e3e90855417d68effb97176dc9d7ac31e7f2"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "847ea9513055bb5655579b314c1b96611bf705aea9dda6ee0bc20de3eb60e724"
+        },
+        "rust": {
+          "sha256": "866561df7814907c4856c403ca86741c574e467042b0923498c8b562210ff48d"
+        },
+        "lean": {
+          "sha256": "ef7dd0bf62b965496242d2fb6d7fd7f0b603fddc45ab55ab491502162f407e1a"
+        },
+        "rocq": {
+          "sha256": "c14748aa41c8d0d6b7399cbb74d121a9d72fe8fafd80194288cd905c2e9aa8b0"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-bigzero.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/faithful-bigzero.mjs",
+      "parse": {
+        "sha256": "86c787a9e02f5fa23fd62a02ecfcca526cd5dfeadc89a3e11a1ae77026a126cd"
+      },
+      "check": {
+        "sha256": "d1a995811f5e28e28c8380a67b8b5a16d65d9b1ee1b113ef9d9ff0c3831fa6ba"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "8e3af55607020491dd1129f79fa3d9450195017c97114e73efabf7e2ecedefe3"
+        },
+        "rust": {
+          "sha256": "86f3302a766e6d59de46ae2a1a99ab92654fea7a5c5df970a1194322f9d8c099"
+        },
+        "lean": {
+          "sha256": "35e209ed04d104576a99d4d8d4a2478d4349e5db7a060c919002a6cb8fb05820"
+        },
+        "rocq": {
+          "sha256": "170a97c0298e1b4dd6579bf002d8dca53fb815cd7f0767b35bea69062147ab45"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-divzero.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/faithful-divzero.rs",
+      "parse": {
+        "sha256": "f9c3c0f60a7d5959b454e0f658a59c62183b8d4969eb09af54656aec8c7b1658"
+      },
+      "check": {
+        "sha256": "d2a3b6cdf12c0ffc378982807d71649a44308daa7622d7f8ee661ce26cd7a2b1"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "3b2cd76c7e80c38ffbbbd34adb72639619860002204d14e95e170606e831b4f0"
+        },
+        "rust": {
+          "sha256": "419562f2db8121849589ffb361a9187b0477902a9cb46944dd1085671730bd1e"
+        },
+        "lean": {
+          "sha256": "e7706c27dbf28e7b8116f0e9e12ff391caff67262c183532b40b6f20486a9a35"
+        },
+        "rocq": {
+          "sha256": "ea9296352dc3ebc3e3c35f16de49c29c5aa007e936103062b8413e5fc7808191"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-guard.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/faithful-guard.mjs",
+      "parse": {
+        "sha256": "d4543ac563ecb4f1dbb52a123470158f9bae2c0f198c7e6ea7e6544fb2093b6a"
+      },
+      "check": {
+        "sha256": "a7d0c2c8b02beb25b91f3fab742a0dc6e7d3820490b862bb0a3d02fbf9a4b952"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "e15674175f94f8e0df4d3af6fb29e773723127b31707d7aa4f64476030ddbddc"
+        },
+        "rust": {
+          "sha256": "1e43f1234c5106d099b6ef0bc7a5d48632b934e89fbdd37130560ccc50744899"
+        },
+        "lean": {
+          "sha256": "88c6a5d733cb78ab7c32c423e80a36569f073c1d6426bb3304ce6e465d7f7494"
+        },
+        "rocq": {
+          "sha256": "2ce3653adfc90a24ad7b7786dd977c67dd4678ec9337555fb637f0933cf7a5f2"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-minus.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/faithful-minus.rs",
+      "parse": {
+        "sha256": "cf683d22ac023550ccb42df57c7c1bc842797701595a2cf18437b7e2b3ddc6aa"
+      },
+      "check": {
+        "sha256": "6fdd6d25bc20c15c0b93fd4aad665e6915aa7100af4a39c1c82393d3ca9abfbc"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "6d30d85ec74d1f1b018f62b1b1e9498dea76423f32e381763ae00d2eb398c0db"
+        },
+        "rust": {
+          "sha256": "7657d3a1dff7b31535f36f0ffc7cc8aa469085c40624813980ec9f7014d70483"
+        },
+        "lean": {
+          "sha256": "bca62c61ada97d662d92cfb54c983ee7fefe663142aa0a4eb61a49d5e13a6bb2"
+        },
+        "rocq": {
+          "sha256": "de2fa4a7c77fbacb873d4c05e9e4344c0972a333b1a2b554e36d0ba124c0d3ca"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-neg.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/faithful-neg.rs",
+      "parse": {
+        "sha256": "5593083bede9ac027de9f31d2d5d552529ac309efdb745aff6dc174681607b0a"
+      },
+      "check": {
+        "sha256": "211e8497bbe33c9db32a2489f1ec4286966b2e7af9a49c87716b5250854dcb5d"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "729f5263ff3056ae9e6d401afd0b95d7f28a70ad552c42e83bace52c7b8710ff"
+        },
+        "rust": {
+          "sha256": "de566832862a24a8edb84f436e755eebbacc5345616ec5d13ae12d78259eecca"
+        },
+        "lean": {
+          "sha256": "eac0d39338443cae38f2a831c76de725b94eb82660e7b2cbd07a74a55d047e35"
+        },
+        "rocq": {
+          "sha256": "7aae0f81d5b67b5f0ac7d526a399c407c14de6d81a604d0f5834f76a9592ef8f"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-overflow.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/faithful-overflow.rs",
+      "parse": {
+        "sha256": "3d5e2f3aa07807b1b2a50f52c923aaea20d330311348999a2789aa59c8a16ddb"
+      },
+      "check": {
+        "sha256": "d7aabb791213d9178490ffd39c26acf683c0f7f7fff2b2eb37060c4b2ed4d6be"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "e04e10fb94b15f06a1c5c4fa43f4a542be7b4f3b8d9a846296fbe6f05e063ee7"
+        },
+        "rust": {
+          "sha256": "a3d427fc87edbccf07a97f79903d54b5b9245b04864faaf97be69a92f92e5da3"
+        },
+        "lean": {
+          "sha256": "75c88acdb5d48dd3472c95794afe84fd4e3f995a43211a335d2c512cef0be245"
+        },
+        "rocq": {
+          "sha256": "46996e99efcfbaee5617b06f45072d8af414ab027231a448451627e37fbb0ffb"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-panic.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/faithful-panic.rs",
+      "parse": {
+        "sha256": "6895b28106b0501d1b20f5f1f2ac38b7645b19935e79ada9302803359858d468"
+      },
+      "check": {
+        "sha256": "ed91fae92ee143dc7b5244d25f7eb6cfa3ddc4dbd67a99f47f041c596b5c1298"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "f295c47794d3837105d4d3d7088b43f9fc7faa3b0207b28e9504e60f0cacd00a"
+        },
+        "rust": {
+          "sha256": "356a5947d02b98d6718b8e85d7a91d34fb7d11de667a7e97512445abd175efcc"
+        },
+        "lean": {
+          "sha256": "f25f66be00ab0f62044cf42716b6a7d4d656e24e8dc00a5be0f87b7125171111"
+        },
+        "rocq": {
+          "sha256": "ad65eeadf703f7241862096aaf09697f9977f9c3585ab85c2ccf0881f4369666"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-sub.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/faithful-sub.rs",
+      "parse": {
+        "sha256": "edfc34b349d5591e6dc9da274fad4854f062c9ffc21a136199c0d613344f3008"
+      },
+      "check": {
+        "sha256": "b0630d2b82d31e8efe1a194b8bc29d0e78e8b50286ea36e9eeeeab149382765f"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "8cb649883212fa30eb0fbca80906e00a4925ab5f523d45e7c1267da1a9180d61"
+        },
+        "rust": {
+          "sha256": "ceef6d22cc17978a09973244b1b621a77424fe8e406646f0de9e830d75a5e6bc"
+        },
+        "lean": {
+          "sha256": "d3f2cffd7b6602979dec8c68bf57158b720a298eaf41b41be96e52cb397e4ec1"
+        },
+        "rocq": {
+          "sha256": "ce47358d735a4edcbd46661f9da2823d33286c44611643560cda4e386c23eda3"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-throw.mjs",
+      "extension": "mjs",
+      "path": "parity/fixtures/translation-corpus/faithful-throw.mjs",
+      "parse": {
+        "sha256": "5e09f87f5cec9383f1fa70b634cf9722b1dacbfa574959113229fd010075b4b8"
+      },
+      "check": {
+        "sha256": "4fb7df99f7213fa506699ed433b2be10750376fc42c292d76fbfc01fc3d69386"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "b191892aa7a0b88def557c1f1b921f6fc474e4ebe8d8c753870cf1b42d16b5ea"
+        },
+        "rust": {
+          "sha256": "62bb5c0b684ca560978e799d1b48ff1aa8ce0cfff93f497358dd382c396469d5"
+        },
+        "lean": {
+          "sha256": "30b81528dfb96a44216181380ea0096ec6c615d72394e1a709d685891eecf411"
+        },
+        "rocq": {
+          "sha256": "158c8df643fd4d67f9e9293eb5500885608c8bed6535f87ed8dab2fb4222081b"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-total.lean",
+      "extension": "lean",
+      "path": "parity/fixtures/translation-corpus/faithful-total.lean",
+      "parse": {
+        "sha256": "85a260c8c1692317e9d243554e9dc281b5a18a88b21d3e543c62f3c2e0573e41"
+      },
+      "check": {
+        "sha256": "8966fa9541fce87ffb4a44239e0a075642cb0dc4317d4b95bf52be2797bf4fc9"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "320e79d1d3f98340154ba156ca6a3cdac4a315a3fefa845417ec912aa59cb061"
+        },
+        "rust": {
+          "sha256": "7d486b43e1a1bb27ee5017984bad93430faa0ccc57846ac354023cbcc3d9d96f"
+        },
+        "lean": {
+          "sha256": "de7d79024dc2e725228bdcb69ddd5c0b8a0ee9de8ca63b98f74ecb5f07c5c24d"
+        },
+        "rocq": {
+          "sha256": "9c67264be005e96fb4d768bc95c8cd261c165a8db9afbc506dcb78a1e3432933"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-total.v",
+      "extension": "v",
+      "path": "parity/fixtures/translation-corpus/faithful-total.v",
+      "parse": {
+        "sha256": "3f26637b10b7e8490db26ae0d4c71ab7ce28ff4c6410c4c75583640a9fa17898"
+      },
+      "check": {
+        "sha256": "0dc0ccfd40da2d959363f87a21e91875aa688529b6995c7475447a7657a80bf0"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "c90559bd5a56471c9b8405c769aad2d8bd401d01d78fbbbb39a4249fed861b45"
+        },
+        "rust": {
+          "sha256": "cc359cf848f8ebc90274e4cb920ea0045b89fd4268c211ac07943b7f6ecea685"
+        },
+        "lean": {
+          "sha256": "bb74503ae2e863bc8287ffbbe375d0151b5cfd9a550502ddfe342bb0b81d8ff3"
+        },
+        "rocq": {
+          "sha256": "82259b6b363bd745711d17872289841f9fc10cca60abe2e285ec7d2ff951f573"
+        }
+      }
+    },
+    {
+      "name": "corpus/faithful-unreachable.rs",
+      "extension": "rs",
+      "path": "parity/fixtures/translation-corpus/faithful-unreachable.rs",
+      "parse": {
+        "sha256": "3dd35fe6a178849f4297c6d4efffebd3f1b7c24af88393aa235fb9287d847b4d"
+      },
+      "check": {
+        "sha256": "e1cb1d8b13a54f5e5aaca63baae59872595f3db021888c325e1ca3b389fc7860"
+      },
+      "emit": {
+        "javascript": {
+          "sha256": "3366e0fc4b25c5543a989619dc731f561f4afcf4111a7c7f3a4566dd41a11d7f"
+        },
+        "rust": {
+          "sha256": "13c6b8bc2894226c8a6d3dc47d743e7e515d82f7dabf7e5f093595fe699c80eb"
+        },
+        "lean": {
+          "sha256": "ef27ac2fa996dc6e706a0ef99b00b3a69407d52168e2ae110e243dfc26e05978"
+        },
+        "rocq": {
+          "sha256": "ecdacb6c0fd837f3af85fbdda2f1377867e88401e33fce9fe179c032ab3139fd"
+        }
+      }
+    },
+    {
       "name": "corpus/general-recursion.mjs",
       "extension": "mjs",
       "path": "parity/fixtures/translation-corpus/general-recursion.mjs",
