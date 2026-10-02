@@ -6,7 +6,7 @@
 
 # Dependency audit
 
-Audit date: 2026-09-30
+Audit date: 2026-10-02
 
 This inventory lists every runtime, development, build and optional dependency
 of the two published packages and the website crate, every lockfile
@@ -53,7 +53,7 @@ they are.
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
 | Generators | 16 | 15 | 1 | 0 |
-| Toolchains and tools | 16 | 13 | 2 | 1 |
+| Toolchains and tools | 16 | 14 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
@@ -95,7 +95,7 @@ they are.
 | `edition` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `experiments/issue-195-projects/rust/Cargo.toml` | `experiments/issue-195-projects/rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 | `edition` | `rust/Cargo.toml` | `rust/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
-| `rust-version` | `rust/Cargo.toml` | `rust/Cargo.toml` | `1.90` | 1.90 (cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-language 0.1.8)) | floor | current |  |
+| `rust-version` | `rust/Cargo.toml` | `rust/Cargo.toml` | `1.90` | 1.90 (cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-graphql 0.3.0)) | floor | current |  |
 | `edition` | `rust/web/Cargo.toml` | `rust/web/Cargo.toml` | `2024` | 2024 (Rust editions, the newest stable edition) | version | current |  |
 
 ## Rust crates
@@ -299,9 +299,9 @@ they are.
 | `tree-sitter-elm` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `5.9.4` | direct, runtime | `=5.9.4` | 5.9.4 (crates.io, tree-sitter-elm) | version | current |  |
 | `tree-sitter-erlang` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.20.0` | direct, runtime | `=0.20.0` | 0.20.0 (crates.io, tree-sitter-erlang) | version | current |  |
 | `tree-sitter-go` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.25.0` | direct, runtime | `=0.25.0` | 0.25.0 (crates.io, tree-sitter-go) | version | current |  |
-| `tree-sitter-graphql` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.2.1` | direct, runtime | `=0.2.1` | 0.2.1 (crates.io, tree-sitter-graphql) | version | current |  |
+| `tree-sitter-graphql` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.0` | direct, runtime | `=0.3.0` | 0.3.0 (crates.io, tree-sitter-graphql) | version | current |  |
 | `tree-sitter-groovy` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.2` | direct, runtime | `=0.1.2` | 0.1.2 (crates.io, tree-sitter-groovy) | version | current |  |
-| `tree-sitter-haskell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.1` | direct, runtime | `=0.23.1` | 0.23.1 (crates.io, tree-sitter-haskell) | version | current |  |
+| `tree-sitter-haskell` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.1` | direct, runtime | `=0.24.1` | 0.24.1 (crates.io, tree-sitter-haskell) | version | current |  |
 | `tree-sitter-hcl` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.1.0` | direct, runtime | `=1.1.0` | 1.1.0 (crates.io, tree-sitter-hcl) | version | current |  |
 | `tree-sitter-html` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, runtime | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-html) | version | current |  |
 | `tree-sitter-ini` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.4.0` | direct, runtime | `=1.4.0` | 1.4.0 (crates.io, tree-sitter-ini) | version | current |  |
@@ -377,7 +377,7 @@ they are.
 | `windows-targets` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.52.6` | transitive |  | 0.53.5 (crates.io, windows-targets) | version | behind | Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does. |
 | `writeable` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.6.4` | transitive |  | 0.6.4 (crates.io, writeable) | version | current |  |
 | `xattr` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.6.1` | transitive |  | 1.6.1 (crates.io, xattr) | version | current |  |
-| `yoke-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, yoke-derive) | version | current |  |
+| `yoke-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.4` | transitive |  | 0.8.4 (crates.io, yoke-derive) | version | current |  |
 | `yoke` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, yoke) | version | current |  |
 | `zerofrom-derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, zerofrom-derive) | version | current |  |
 | `zerofrom` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.1.8` | transitive |  | 0.1.8 (crates.io, zerofrom) | version | current |  |
@@ -455,9 +455,9 @@ they are.
 | `js/src/vendor/grammars/elm.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `5.9.4` |  | derived | current |  |
 | `js/src/vendor/grammars/erlang.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.20.0` |  | derived | current |  |
 | `js/src/vendor/grammars/go.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
-| `js/src/vendor/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.2.1` |  | derived | current |  |
+| `js/src/vendor/grammars/graphql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.0` |  | derived | current |  |
 | `js/src/vendor/grammars/groovy.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.2` |  | derived | current |  |
-| `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.1` |  | derived | current |  |
+| `js/src/vendor/grammars/haskell.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.1` |  | derived | current |  |
 | `js/src/vendor/grammars/hcl.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.1.0` |  | derived | current |  |
 | `js/src/vendor/grammars/html.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.2` |  | derived | current |  |
 | `js/src/vendor/grammars/ini.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.4.0` |  | derived | current |  |
@@ -532,10 +532,10 @@ they are.
 | `lean` | `.github/workflows/issue-195-acceptance.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
 | `node` | `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
 | `node` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
-| `npm` | `.github/workflows/js.yml` | `12` | 12.1.0 (npm registry, npm latest) | major | current |  |
+| `npm` | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
 | `ocaml` | `.github/workflows/issue-195-acceptance.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | rocq-runtime 9.2.0 needs ocamlfind 1.9.1 or later, and ocamlfind 1.9.8, its latest release in opam-repository, requires ocaml < 5.5.0~, so OCaml 5.4 is the newest compiler the Rocq acceptance job can build with; it moves when ocamlfind admits OCaml 5.5. |
 | `pre-commit/pre-commit-hooks` | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
-| `rocq-core` | `.github/workflows/issue-195-acceptance.yml` | `9.2.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | behind | opam-repository publishes rocq-core only up to 9.2.0 (the 9.3.0 packages are still in ocaml/opam-repository pull request 30776), and the acceptance job installs Rocq from opam; it moves when rocq-core 9.3.0 is published there. |
+| `rocq-core` | `.github/workflows/issue-195-acceptance.yml` | `9.3.0` | V9.3.0 (GitHub release, rocq-prover/rocq) | version | current |  |
 | `rocq-prover` | `.github/workflows/issue-195-acceptance.yml` | `meta.1` |  | unversioned | not applicable |  |
 | `rocq-stdlib` | `.github/workflows/issue-195-acceptance.yml` | `9.2.0` | V9.2.0 (GitHub release, rocq-prover/stdlib) | version | current |  |
 | `rust-script` | `rust/scripts/install-rust-script.sh` | `latest` |  | floating | current |  |
@@ -560,7 +560,7 @@ they are.
 | `docker/login-action` | `.github/workflows/rust.yml` | `v4` | v4.6.0 (GitHub release, docker/login-action) | major | current |  |
 | `docker/metadata-action` | `.github/workflows/rust.yml` | `v6` | v6.2.0 (GitHub release, docker/metadata-action) | major | current |  |
 | `docker/setup-buildx-action` | `.github/workflows/rust.yml` | `v4` | v4.4.1 (GitHub release, docker/setup-buildx-action) | major | current |  |
-| `dtolnay/rust-toolchain` | `.github/workflows/issue-195-acceptance.yml` | `1.98.1` | 1.98.1 (GitHub release, rust-lang/rust) | version | current |  |
+| `dtolnay/rust-toolchain` | `.github/workflows/issue-195-acceptance.yml` | `1.99.0` | 1.99.0 (GitHub release, rust-lang/rust) | version | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/rust.yml` | `master` |  | floating | current |  |
 | `dtolnay/rust-toolchain` | `.github/workflows/rust.yml` | `stable` |  | floating | current |  |
 | `ocaml/setup-ocaml` | `.github/workflows/issue-195-acceptance.yml` | `v3` | v3.9.0 (GitHub release, ocaml/setup-ocaml) | major | current |  |
@@ -608,7 +608,7 @@ they are.
 
 ## Behind the current stable release
 
-27 retained items are behind their current stable release on 2026-09-30, each for the recorded reason:
+26 retained items are behind their current stable release on 2026-10-02, each for the recorded reason:
 
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `bumpalo` 3.20.3 (`^0.2.8`), `hashbrown` 0.14.5 (`^0.2.9`), `hashbrown` 0.15.5 (`^0.2.9`), `hashbrown` 0.17.1 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does.
 - `cc` `1.2.67` → `1.5.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does.
@@ -635,5 +635,4 @@ they are.
 - `windows-sys` `0.52.0` → `0.61.2` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.52`), which does not admit 0.61.2; it moves when that dependent does.
 - `windows-targets` `0.52.6` → `0.53.5` (`rust/Cargo.lock`): Held by the requirement of `windows-sys` 0.52.0 (`^0.52.0`), which does not admit 0.53.5; it moves when that dependent does.
 - `ocaml` `5.4` → `5.5.1` (`.github/workflows/issue-195-acceptance.yml`): rocq-runtime 9.2.0 needs ocamlfind 1.9.1 or later, and ocamlfind 1.9.8, its latest release in opam-repository, requires ocaml < 5.5.0~, so OCaml 5.4 is the newest compiler the Rocq acceptance job can build with; it moves when ocamlfind admits OCaml 5.5.
-- `rocq-core` `9.2.0` → `V9.3.0` (`.github/workflows/issue-195-acceptance.yml`): opam-repository publishes rocq-core only up to 9.2.0 (the 9.3.0 packages are still in ocaml/opam-repository pull request 30776), and the acceptance job installs Rocq from opam; it moves when rocq-core 9.3.0 is published there.
 - `emscripten/emsdk` `4.0.15` → `6.0.10` (`js/scripts/build-web-tree-sitter-runtime.mjs`, `js/src/vendor/web-tree-sitter/runtime-lock.json`): The web-tree-sitter runtime is rebuilt reproducibly with the emscripten version tree-sitter 0.27.0 pins in crates/loader/emscripten-version (4.0.15); a different emscripten produces a different tree-sitter.wasm, so the image moves with tree-sitter.

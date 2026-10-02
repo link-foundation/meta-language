@@ -12,7 +12,7 @@ transform or translation.
 | Canonical name | Parser aliases | Declared release | Edition/surface | Extensions |
 | --- | --- | --- | --- | --- |
 | JavaScript | `javascript`, `js`, `ecmascript` | ECMAScript 2026 | ECMA-262, 17th edition | `.js`, `.mjs`, `.cjs` |
-| Rust | `rust`, `rs` | Rust 1.98.1 | 2024 | `.rs` |
+| Rust | `rust`, `rs` | Rust 1.99.0 | 2024 | `.rs` |
 | Lean | `lean`, `lean4` | Lean 4.34.1 | Lean 4 | `.lean` |
 | Rocq | `rocq`, `coq` | Rocq 9.3 | Vernacular | `.v` |
 
@@ -88,7 +88,7 @@ other form or directed pair is claimed to preserve behavior.
 | Target | Required validator/runtime |
 | --- | --- |
 | JavaScript | ECMAScript 2026 host |
-| Rust | Rust 1.98.1, edition 2024 |
+| Rust | Rust 1.99.0, edition 2024 |
 | Lean | Lean 4.34.1 kernel and project environment |
 | Rocq | Rocq 9.3 kernel and project environment |
 

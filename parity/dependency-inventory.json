@@ -1,5 +1,5 @@
 {
-  "auditDate": "2026-09-30",
+  "auditDate": "2026-10-02",
   "items": [
     {
       "id": "engine node@>=22",
@@ -430,7 +430,7 @@
         "manifest": "rust/Cargo.toml"
       },
       "current": "1.90",
-      "evidence": "cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-language 0.1.8)"
+      "evidence": "cargo metadata, the highest rust-version of the resolved crates (meta-language 0.58.2, tree-sitter 0.27.0, tree-sitter-graphql 0.3.0)"
     },
     {
       "id": "setting rust/web/Cargo.toml edition@2024",
@@ -4100,7 +4100,7 @@
       "evidence": "crates.io, tree-sitter-go"
     },
     {
-      "id": "crate rust/Cargo.lock tree-sitter-graphql@0.2.1",
+      "id": "crate rust/Cargo.lock tree-sitter-graphql@0.3.0",
       "category": "crate",
       "scope": "rust/Cargo.lock",
       "name": "tree-sitter-graphql",
@@ -4108,16 +4108,16 @@
         "rust/Cargo.lock",
         "rust/Cargo.toml"
       ],
-      "pinned": "0.2.1",
+      "pinned": "0.3.0",
       "compare": "version",
       "source": {
         "type": "crate",
         "crate": "tree-sitter-graphql"
       },
       "role": "direct",
-      "requirement": "=0.2.1",
+      "requirement": "=0.3.0",
       "kind": "runtime",
-      "current": "0.2.1",
+      "current": "0.3.0",
       "evidence": "crates.io, tree-sitter-graphql"
     },
     {
@@ -4142,7 +4142,7 @@
       "evidence": "crates.io, tree-sitter-groovy"
     },
     {
-      "id": "crate rust/Cargo.lock tree-sitter-haskell@0.23.1",
+      "id": "crate rust/Cargo.lock tree-sitter-haskell@0.24.1",
       "category": "crate",
       "scope": "rust/Cargo.lock",
       "name": "tree-sitter-haskell",
@@ -4150,16 +4150,16 @@
         "rust/Cargo.lock",
         "rust/Cargo.toml"
       ],
-      "pinned": "0.23.1",
+      "pinned": "0.24.1",
       "compare": "version",
       "source": {
         "type": "crate",
         "crate": "tree-sitter-haskell"
       },
       "role": "direct",
-      "requirement": "=0.23.1",
+      "requirement": "=0.24.1",
       "kind": "runtime",
-      "current": "0.23.1",
+      "current": "0.24.1",
       "evidence": "crates.io, tree-sitter-haskell"
     },
     {
@@ -5666,21 +5666,21 @@
       "evidence": "crates.io, xattr"
     },
     {
-      "id": "crate rust/Cargo.lock yoke-derive@0.8.3",
+      "id": "crate rust/Cargo.lock yoke-derive@0.8.4",
       "category": "crate",
       "scope": "rust/Cargo.lock",
       "name": "yoke-derive",
       "declaredIn": [
         "rust/Cargo.lock"
       ],
-      "pinned": "0.8.3",
+      "pinned": "0.8.4",
       "compare": "version",
       "source": {
         "type": "crate",
         "crate": "yoke-derive"
       },
       "role": "transitive",
-      "current": "0.8.3",
+      "current": "0.8.4",
       "evidence": "crates.io, yoke-derive"
     },
     {
@@ -6710,19 +6710,19 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/graphql.wasm.gz@0.2.1",
+      "id": "vendored-grammar js/src/vendor/grammars/graphql.wasm.gz@0.3.0",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/graphql.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
-      "pinned": "0.2.1",
+      "pinned": "0.3.0",
       "compare": "derived",
       "source": {
         "type": "none"
       },
       "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-graphql@0.2.1",
+        "crate rust/Cargo.lock tree-sitter-graphql@0.3.0",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -6744,19 +6744,19 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/haskell.wasm.gz@0.23.1",
+      "id": "vendored-grammar js/src/vendor/grammars/haskell.wasm.gz@0.24.1",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/haskell.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
-      "pinned": "0.23.1",
+      "pinned": "0.24.1",
       "compare": "derived",
       "source": {
         "type": "none"
       },
       "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-haskell@0.23.1",
+        "crate rust/Cargo.lock tree-sitter-haskell@0.24.1",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },
@@ -7829,7 +7829,7 @@
         "type": "npm",
         "package": "npm"
       },
-      "current": "12.1.0",
+      "current": "12.2.0",
       "evidence": "npm registry, npm latest"
     },
     {
@@ -7866,21 +7866,20 @@
       "evidence": "GitHub release, pre-commit/pre-commit-hooks"
     },
     {
-      "id": "toolchain rocq-core@9.2.0",
+      "id": "toolchain rocq-core@9.3.0",
       "category": "toolchain",
       "name": "rocq-core",
       "declaredIn": [
         ".github/workflows/issue-195-acceptance.yml"
       ],
-      "pinned": "9.2.0",
+      "pinned": "9.3.0",
       "compare": "version",
       "source": {
         "type": "github-release",
         "repository": "rocq-prover/rocq"
       },
       "current": "V9.3.0",
-      "evidence": "GitHub release, rocq-prover/rocq",
-      "reason": "opam-repository publishes rocq-core only up to 9.2.0 (the 9.3.0 packages are still in ocaml/opam-repository pull request 30776), and the acceptance job installs Rocq from opam; it moves when rocq-core 9.3.0 is published there."
+      "evidence": "GitHub release, rocq-prover/rocq"
     },
     {
       "id": "toolchain rocq-prover@meta.1",
@@ -8181,19 +8180,19 @@
       "evidence": "GitHub release, docker/setup-buildx-action"
     },
     {
-      "id": "action dtolnay/rust-toolchain@1.98.1",
+      "id": "action dtolnay/rust-toolchain@1.99.0",
       "category": "action",
       "name": "dtolnay/rust-toolchain",
       "declaredIn": [
         ".github/workflows/issue-195-acceptance.yml"
       ],
-      "pinned": "1.98.1",
+      "pinned": "1.99.0",
       "compare": "version",
       "source": {
         "type": "github-release",
         "repository": "rust-lang/rust"
       },
-      "current": "1.98.1",
+      "current": "1.99.0",
       "evidence": "GitHub release, rust-lang/rust"
     },
     {

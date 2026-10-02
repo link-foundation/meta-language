@@ -248,7 +248,7 @@
       "command": "rustc --crate-type lib --edition 2024",
       "extension": ".rs",
       "tool": "rustc",
-      "declaredVersion": "1.98.1",
+      "declaredVersion": "1.99.0",
       "rejectedSuffix": "\npub fn rejected() -> u32 { \"text\" }\n"
     },
     "Lean": {

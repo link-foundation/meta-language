@@ -206,7 +206,7 @@ function readToolchainVersions() {
     platform: `${process.platform}-${process.arch}`,
   };
   const expected = [
-    ['rustc', versions.rustc, '1.98.1'],
+    ['rustc', versions.rustc, '1.99.0'],
     ['lean', versions.lean, '4.34.1'],
     ['rocq', versions.rocq, '9.3'],
   ];

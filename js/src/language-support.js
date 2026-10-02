@@ -30,7 +30,7 @@ const SUPPORT = Object.freeze([
   language({
     name: 'Rust',
     aliases: ['rust', 'rs'],
-    version: 'Rust 1.98.1',
+    version: 'Rust 1.99.0',
     edition: '2024',
     extensions: ['.rs'],
     proofSyntax: RepresentationLevel.NotApplicable,
@@ -130,7 +130,7 @@ function runtimeFor(languageName) {
     return 'Rocq 9.3 kernel and project environment';
   }
   if (languageName === 'Rust') {
-    return 'Rust 1.98.1, edition 2024';
+    return 'Rust 1.99.0, edition 2024';
   }
   return 'ECMAScript 2026 host';
 }

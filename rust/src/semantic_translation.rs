@@ -240,7 +240,7 @@ fn runtime_dependencies(target_language: &str, code: &str) -> Vec<String> {
             }
         }
         "Rust" => {
-            dependencies.push("Rust 1.98.1 standard library".to_owned());
+            dependencies.push("Rust 1.99.0 standard library".to_owned());
             if code.contains("\npub mod ml {") {
                 dependencies.push(
                     "ml::Big arbitrary-precision integers, defined inside the artifact".to_owned(),

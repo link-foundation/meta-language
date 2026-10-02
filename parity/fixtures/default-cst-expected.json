@@ -2196,9 +2196,9 @@
     "Haskell": {
       "grammars": {
         "haskell": {
-          "version": "0.23.1",
-          "parserSha256": "f05f34d3cabb3c4a0397a2ac29d4cf4212f814dec98199042228d1850055db93",
-          "symbolNamesSha256": "9357dd394961ca7d50a44407b4e2917eb9c5a75200772d5d3baa5c4af80ecf16"
+          "version": "0.24.1",
+          "parserSha256": "a136b31118c6767f3a9fbbb245adc559370eabd914b72b90438395542327a089",
+          "symbolNamesSha256": "1d1e25b608caa516601393f5e63404b847a79bd50cd004a151e9d526e6092037"
         }
       },
       "sourceSha256": "c6008748831f344748ca545751a51ba4a6bfd9292d974089c841604de4346807",
@@ -5411,8 +5411,8 @@
     "GraphQL": {
       "grammars": {
         "graphql": {
-          "version": "0.2.1",
-          "parserSha256": "d41ba0018a0ae351422f4dcb8352bb7dc41289b060bdfd43ab2fa7ad4c6554fd",
+          "version": "0.3.0",
+          "parserSha256": "8b7ebff40dc5b802df9ec03b1570fd53d234300ac4705899643ae61dda77dc57",
           "symbolNamesSha256": "0d49cd680dc880ffbe1dfdf7a8570e395bd82ac8cc4978c98ce221aad18b8a1f"
         }
       },

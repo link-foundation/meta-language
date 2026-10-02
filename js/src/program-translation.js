@@ -156,7 +156,7 @@ function runtimeDependencies(targetLanguage, code) {
   }
   if (targetLanguage === 'Rust') {
     return [
-      'Rust 1.98.1 standard library',
+      'Rust 1.99.0 standard library',
       ...(code.includes('\npub mod ml {') ? ['ml::Big arbitrary-precision integers, defined inside the artifact'] : []),
       ...(code.includes('\npub mod ml_number {')
         ? ['ml_number JavaScript Number formatting and SameValue, defined inside the artifact']

@@ -93,7 +93,7 @@ pub const FOUR_LANGUAGE_SUPPORT: [LanguageSupport; 4] = [
     support(
         "Rust",
         &["rust", "rs"],
-        "Rust 1.98.1",
+        "Rust 1.99.0",
         "2024",
         &[".rs"],
         RepresentationLevel::NotApplicable,
@@ -206,7 +206,7 @@ fn runtime_for(language: &str) -> &'static str {
     match language {
         "Lean" => "Lean 4.34.1 kernel and project environment",
         "Rocq" => "Rocq 9.3 kernel and project environment",
-        "Rust" => "Rust 1.98.1, edition 2024",
+        "Rust" => "Rust 1.99.0, edition 2024",
         _ => "ECMAScript 2026 host",
     }
 }

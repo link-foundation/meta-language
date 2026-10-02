@@ -35,7 +35,7 @@ export const ISSUE_195_SOURCES = Object.freeze({
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({
   JavaScript: { version: 'ECMAScript 2026', edition: 'ECMA-262, 17th edition' },
-  Rust: { version: '1.98.1', edition: '2024' },
+  Rust: { version: '1.99.0', edition: '2024' },
   Lean: { version: '4.34.1', edition: 'Lean 4' },
   Rocq: { version: '9.3', edition: 'Vernacular' },
 });

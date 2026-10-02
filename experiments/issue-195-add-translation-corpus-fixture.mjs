@@ -46,9 +46,9 @@ const section = {
   },
   targets: {
     JavaScript: { runtime: 'ECMAScript 2026 host with BigInt', proof: false },
-    Rust: { runtime: 'Rust 1.98.1 standard library', proof: false },
+    Rust: { runtime: 'Rust 1.99.0 standard library', proof: false },
     Lean: { runtime: 'Lean 4.34.1 core library', proof: true, forbidden: ['sorry', 'admit', 'axiom', 'unsafe', 'implemented_by', 'extern'] },
-    Rocq: { runtime: 'Rocq 9.2', proof: true, forbidden: ['Admitted', 'admit', 'Axiom', 'Parameter', 'Conjecture', 'Hypothesis', 'Variable', 'Abort'] },
+    Rocq: { runtime: 'Rocq 9.3', proof: true, forbidden: ['Admitted', 'admit', 'Axiom', 'Parameter', 'Conjecture', 'Hypothesis', 'Variable', 'Abort'] },
   },
   assumptions: {
     'JavaScript -> Rust': [],

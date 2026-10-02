@@ -147,9 +147,9 @@
       "id": "graphql",
       "crate": "tree-sitter-graphql",
       "directory": ".",
-      "version": "0.2.1",
-      "parserSha256": "d41ba0018a0ae351422f4dcb8352bb7dc41289b060bdfd43ab2fa7ad4c6554fd",
-      "wasmSha256": "cd31229d62a387903e456fade513321b9db8855094c79a092ad8a4d4a511a57a",
+      "version": "0.3.0",
+      "parserSha256": "8b7ebff40dc5b802df9ec03b1570fd53d234300ac4705899643ae61dda77dc57",
+      "wasmSha256": "a9239652fcc467ec3bf9dbe7d5271ff3511c40c7dc9bba440667599dcfb608bc",
       "license": "graphql.LICENSE"
     },
     "groovy": {
@@ -165,9 +165,9 @@
       "id": "haskell",
       "crate": "tree-sitter-haskell",
       "directory": ".",
-      "version": "0.23.1",
-      "parserSha256": "f05f34d3cabb3c4a0397a2ac29d4cf4212f814dec98199042228d1850055db93",
-      "wasmSha256": "2ec313cca08aa64f8175ebc9334304b2a128eff0d7b2de687c0d7757a19ab99f",
+      "version": "0.24.1",
+      "parserSha256": "a136b31118c6767f3a9fbbb245adc559370eabd914b72b90438395542327a089",
+      "wasmSha256": "ea89cb1199b1ca2102e273b27239e795baff17248128a9bcd3c3825ac17d8cc0",
       "license": "haskell.LICENSE"
     },
     "hcl": {
