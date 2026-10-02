@@ -365,7 +365,7 @@ they are.
 | `utf8_iter` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.4` | transitive |  | 1.0.4 (crates.io, utf8_iter) | version | current |  |
 | `utf8-zero` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.1` | transitive |  | 0.8.1 (crates.io, utf8-zero) | version | current |  |
 | `utf8parse` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.2` | transitive |  | 0.2.2 (crates.io, utf8parse) | version | current |  |
-| `uuid` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.26.1` | transitive |  | 1.26.1 (crates.io, uuid) | version | current |  |
+| `uuid` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.27.0` | transitive |  | 1.27.0 (crates.io, uuid) | version | current |  |
 | `walkdir` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.5.0` | direct, development | `2` | 2.5.0 (crates.io, walkdir) | version | current |  |
 | `wasi` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.11.1+wasi-snapshot-preview1` | transitive |  | 0.14.7+wasi-0.2.4 (crates.io, wasi) | version | behind | Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does. |
 | `wasm-bindgen-macro-support` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.2.129` | transitive |  | 0.2.129 (crates.io, wasm-bindgen-macro-support) | version | current |  |

@@ -5300,21 +5300,21 @@
       "evidence": "crates.io, utf8parse"
     },
     {
-      "id": "crate rust/Cargo.lock uuid@1.26.1",
+      "id": "crate rust/Cargo.lock uuid@1.27.0",
       "category": "crate",
       "scope": "rust/Cargo.lock",
       "name": "uuid",
       "declaredIn": [
         "rust/Cargo.lock"
       ],
-      "pinned": "1.26.1",
+      "pinned": "1.27.0",
       "compare": "version",
       "source": {
         "type": "crate",
         "crate": "uuid"
       },
       "role": "transitive",
-      "current": "1.26.1",
+      "current": "1.27.0",
       "evidence": "crates.io, uuid"
     },
     {
