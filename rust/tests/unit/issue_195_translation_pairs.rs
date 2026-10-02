@@ -24,7 +24,7 @@ use sha2::{Digest, Sha256};
 
 use super::issue_195_observations as observations;
 
-const LANGUAGES: [&str; 4] = ["JavaScript", "Rust", "Lean", "Rocq"];
+pub const LANGUAGES: [&str; 4] = ["JavaScript", "Rust", "Lean", "Rocq"];
 const ASSERTIONS: [&str; 15] = [
     "publicTranslatorUsed",
     "realTargetArtifact",
@@ -43,7 +43,7 @@ const ASSERTIONS: [&str; 15] = [
     "noSilentWeakening",
 ];
 
-fn tool(language: &str) -> &'static str {
+pub fn tool(language: &str) -> &'static str {
     match language {
         "JavaScript" => "node",
         "Rust" => "rustc",
@@ -56,7 +56,7 @@ fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
 }
 
-fn corpus() -> &'static Value {
+pub fn corpus() -> &'static Value {
     static CORPUS: OnceLock<Value> = OnceLock::new();
     CORPUS.get_or_init(|| {
         let path = root().join(observations::FOUR_LANGUAGE_FIXTURE);
@@ -97,7 +97,7 @@ fn sha256(bytes: &[u8]) -> String {
         })
 }
 
-fn strings(value: &Value) -> Vec<&str> {
+pub fn strings(value: &Value) -> Vec<&str> {
     value
         .as_array()
         .map(|items| items.iter().filter_map(Value::as_str).collect())
@@ -105,11 +105,11 @@ fn strings(value: &Value) -> Vec<&str> {
 }
 
 /// Acceptance runs must execute every pair; other runs skip pairs whose toolchain is absent.
-fn toolchain_required() -> bool {
+pub fn toolchain_required() -> bool {
     std::env::var_os("ISSUE_195_OBSERVATION_FILE").is_some()
 }
 
-fn tool_available(language: &str) -> bool {
+pub fn tool_available(language: &str) -> bool {
     static AVAILABLE: OnceLock<Vec<bool>> = OnceLock::new();
     let available = AVAILABLE.get_or_init(|| {
         LANGUAGES
@@ -128,13 +128,13 @@ fn tool_available(language: &str) -> bool {
         .expect("corpus language")]
 }
 
-struct Run {
-    ok: bool,
-    stdout: String,
-    stderr: String,
+pub struct Run {
+    pub ok: bool,
+    pub stdout: String,
+    pub stderr: String,
 }
 
-fn run(command: &mut Command) -> Run {
+pub fn run(command: &mut Command) -> Run {
     command.output().map_or_else(
         |error| Run {
             ok: false,
@@ -173,10 +173,10 @@ struct Execution {
     theorems: Option<Run>,
 }
 
-struct TemporaryDirectory(PathBuf);
+pub struct TemporaryDirectory(pub PathBuf);
 
 impl TemporaryDirectory {
-    fn new(name: &str) -> Self {
+    pub fn new(name: &str) -> Self {
         let path = std::env::temp_dir().join(format!(
             "issue-195-{}-{}-{}",
             name.to_ascii_lowercase(),
@@ -271,7 +271,7 @@ fn execute(language: &str, code: &str, directory: &Path, name: &str) -> Executio
     }
 }
 
-fn source_text(language: &str) -> (Vec<u8>, String) {
+pub fn source_text(language: &str) -> (Vec<u8>, String) {
     let bytes = corpus_file(
         corpus()["sources"][language]["file"]
             .as_str()
@@ -298,7 +298,7 @@ fn source_run(language: &str) -> &'static Execution {
     })
 }
 
-fn mutate(text: &str, mutation: &Value) -> String {
+pub fn mutate(text: &str, mutation: &Value) -> String {
     let find = mutation["find"].as_str().expect("mutation site");
     let replace = mutation["replace"].as_str().expect("mutation replacement");
     assert_eq!(

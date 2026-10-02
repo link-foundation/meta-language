@@ -66,6 +66,7 @@ mod issue_195_interchange_mutation_guards;
 mod issue_195_interchange_reverse_conversion;
 mod issue_195_observations;
 mod issue_195_project_semantics;
+mod issue_195_semantics_proof_preservation;
 mod issue_195_structured_transformations;
 mod issue_195_translation_behavior;
 mod issue_195_translation_pairs;
