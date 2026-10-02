@@ -126,6 +126,18 @@ jobs:
           --work-dir "$RUNNER_TEMP/issue-195-consumer"
           --out issue-195-artifacts/platform/report.json
 
+      # The delivery gate: every retained item is current or at its verified
+      # newest compatible release, the clean consumer resolves the audited
+      # npm releases, and the recorded audit still matches the live registries.
+      - name: Check delivered dependencies against the live registries
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node js/scripts/check-dependencies.mjs --delivery --live
+          --consumer-lock "$RUNNER_TEMP/issue-195-consumer/npm-consumer/package-lock.json"
+
       - uses: actions/upload-artifact@v7
         with:
           name: issue-195-platform-${{ matrix.os }}-${{ github.sha }}
