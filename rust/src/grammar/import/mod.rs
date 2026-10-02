@@ -8,6 +8,7 @@ use crate::grammar::GrammarFormat;
 mod abnf;
 mod antlr;
 mod bnf;
+mod common;
 mod ebnf;
 mod gbnf;
 mod lark;

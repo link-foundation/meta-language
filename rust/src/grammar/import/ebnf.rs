@@ -1,17 +1,18 @@
-use ::ebnf::{
-    Grammar as EbnfGrammar, Node as EbnfNode, RegexExtKind as EbnfRegexExtKind,
-    SymbolKind as EbnfSymbolKind,
-};
+//! Hand-written ISO-style EBNF importer, a port of `importEbnf` in
+//! `js/src/grammar-importers/bnf-ebnf.js`.
 
+use super::common::{Cursor, alternatives_choice, grammar_from_rules, sequence, terminal_or_empty};
 use super::{GrammarImportError, parse_error, unsupported_error};
 use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 
-const EMPTY_SENTINEL: &str = "\u{0}meta-language-empty\u{0}";
+const FORMAT: GrammarFormat = GrammarFormat::Ebnf;
 
 /// Parses Extended Backus-Naur Form text into the grammar IR.
 ///
 /// The parser accepts the ISO-style `name = expression ;` spelling used by the
-/// issue fixtures and the `::=` spelling accepted by the upstream `ebnf` crate.
+/// issue fixtures and the `::=` spelling. Concatenation (`,` or juxtaposition)
+/// binds tighter than alternation (`|`); `( )`, `[ ]`, and `{ }` group,
+/// make optional, and repeat; a postfix `?`, `*`, or `+` follows an element.
 /// ISO `(* ... *)` comments outside string literals are skipped, as in the
 /// JavaScript importer.
 ///
@@ -21,384 +22,146 @@ const EMPTY_SENTINEL: &str = "\u{0}meta-language-empty\u{0}";
 /// parsed construct cannot be represented, or when a non-terminal reference does
 /// not resolve to a rule in the imported grammar.
 pub fn import_ebnf(text: &str) -> Result<Grammar, GrammarImportError> {
-    let text = &remove_comments(text)?;
-    if let Some(construct) = find_special_sequence(text) {
-        return Err(unsupported_error(GrammarFormat::Ebnf, construct));
-    }
-
-    let normalized = normalize_empty_alternatives(text);
-    let parsed = ::ebnf::get_grammar(&normalized)
-        .map_err(|error| parse_error(GrammarFormat::Ebnf, format!("{error:?}")))?;
-    let grammar = lower_grammar(&parsed)?;
-    validate_references(&grammar)?;
-    Ok(grammar)
-}
-
-fn lower_grammar(parsed: &EbnfGrammar) -> Result<Grammar, GrammarImportError> {
-    let mut grammar = Grammar::new().with_source_format(GrammarFormat::Ebnf);
-    for expression in &parsed.expressions {
-        grammar.add_rule(GrammarRule::new(
-            expression.lhs.clone(),
-            lower_node(&expression.rhs)?,
-        ));
-    }
-    Ok(grammar)
-}
-
-/// The `ebnf` crate validates `\t \b \n \r \f \/ \\` and quote escapes
-/// but returns the raw slice, so the terminal text is decoded here.
-fn decode_escapes(value: &str) -> String {
-    let mut output = String::with_capacity(value.len());
-    let mut characters = value.chars();
-    while let Some(character) = characters.next() {
-        if character != '\\' {
-            output.push(character);
-            continue;
+    let source = remove_comments(text)?;
+    let mut cursor = Cursor::new(&source, FORMAT);
+    let mut rules: Vec<GrammarRule> = Vec::new();
+    loop {
+        cursor.skip_space()?;
+        if cursor.eof() {
+            break;
         }
-        match characters.next() {
-            Some('t') => output.push('\t'),
-            Some('b') => output.push('\u{8}'),
-            Some('n') => output.push('\n'),
-            Some('r') => output.push('\r'),
-            Some('f') => output.push('\u{c}'),
-            Some(other) => output.push(other),
-            None => output.push('\\'),
+        let name = cursor.identifier()?;
+        if rules.iter().any(|rule| rule.name == name) {
+            return Err(parse_error(FORMAT, format!("duplicate rule {name}")));
+        }
+        if !cursor.try_consume("::=")? {
+            cursor.consume("=")?;
+        }
+        let expr = alternation(&mut cursor, ';')?;
+        cursor.consume(";")?;
+        rules.push(GrammarRule::new(name, expr));
+    }
+    grammar_from_rules(FORMAT, rules, &[])
+}
+
+fn alternation(cursor: &mut Cursor<'_>, close: char) -> Result<GrammarExpr, GrammarImportError> {
+    let mut alternatives = vec![concatenation(cursor, close)?];
+    while cursor.try_consume("|")? {
+        alternatives.push(concatenation(cursor, close)?);
+    }
+    Ok(alternatives_choice(alternatives))
+}
+
+fn concatenation(cursor: &mut Cursor<'_>, close: char) -> Result<GrammarExpr, GrammarImportError> {
+    let mut items = Vec::new();
+    loop {
+        cursor.skip_space()?;
+        match cursor.peek() {
+            None | Some('|' | ')' | ']' | '}') => break,
+            Some(character) if character == close => break,
+            Some(',') => cursor.advance(1),
+            Some(_) => items.push(postfix(cursor)?),
         }
     }
-    output
+    Ok(sequence(items))
 }
 
-fn lower_node(node: &EbnfNode) -> Result<GrammarExpr, GrammarImportError> {
-    match node {
-        EbnfNode::String(value) if value.is_empty() || value == EMPTY_SENTINEL => {
-            Ok(GrammarExpr::Empty)
-        }
-        EbnfNode::String(value) => Ok(GrammarExpr::Terminal(decode_escapes(value))),
-        EbnfNode::RegexString(value) => Err(unsupported_error(
-            GrammarFormat::Ebnf,
-            format!("inline regex {value:?}"),
-        )),
-        EbnfNode::Terminal(name) => Ok(GrammarExpr::NonTerminal(name.clone())),
-        EbnfNode::Multiple(_) | EbnfNode::Symbol(..) => lower_operator_chain(node),
-        EbnfNode::RegexExt(inner, kind) => lower_regex_extension(inner, kind),
-        EbnfNode::Group(inner) => lower_node(inner),
-        EbnfNode::Optional(inner) => lower_node(inner).map(GrammarExpr::optional),
-        EbnfNode::Repeat(inner) => lower_node(inner).map(GrammarExpr::zero_or_more),
-        EbnfNode::Unknown => Err(unsupported_error(GrammarFormat::Ebnf, "unknown node")),
-    }
-}
-
-/// The `ebnf` crate nests `,` and `|` right-associatively without precedence,
-/// so `a , b | c` arrives as `a , (b | c)`. Flattening the chain restores ISO
-/// 14977 precedence, where concatenation binds tighter than alternation;
-/// juxtaposed operands (`Multiple`) concatenate.
-fn lower_operator_chain(node: &EbnfNode) -> Result<GrammarExpr, GrammarImportError> {
-    let mut alternatives = vec![Vec::new()];
-    collect_operator_chain(node, &mut alternatives);
-    lower_choice(
-        alternatives
-            .into_iter()
-            .map(|operands| lower_sequence(operands.into_iter().map(lower_node))),
-    )
-}
-
-fn collect_operator_chain<'node>(
-    node: &'node EbnfNode,
-    alternatives: &mut Vec<Vec<&'node EbnfNode>>,
-) {
-    match node {
-        EbnfNode::Multiple(nodes) => {
-            for node in nodes {
-                collect_operator_chain(node, alternatives);
-            }
-        }
-        EbnfNode::Symbol(left, kind, right) => {
-            collect_operator_chain(left, alternatives);
-            if matches!(kind, EbnfSymbolKind::Alternation) {
-                alternatives.push(Vec::new());
-            }
-            collect_operator_chain(right, alternatives);
-        }
-        operand => alternatives
-            .last_mut()
-            .expect("an alternative is always open")
-            .push(operand),
-    }
-}
-
-fn lower_regex_extension(
-    inner: &EbnfNode,
-    kind: &EbnfRegexExtKind,
-) -> Result<GrammarExpr, GrammarImportError> {
-    let expr = lower_node(inner)?;
-    Ok(match kind {
-        EbnfRegexExtKind::Repeat0 => GrammarExpr::zero_or_more(expr),
-        EbnfRegexExtKind::Repeat1 => GrammarExpr::one_or_more(expr),
-        EbnfRegexExtKind::Optional => GrammarExpr::optional(expr),
+fn postfix(cursor: &mut Cursor<'_>) -> Result<GrammarExpr, GrammarImportError> {
+    let expr = atom(cursor)?;
+    Ok(if cursor.try_consume("?")? {
+        GrammarExpr::optional(expr)
+    } else if cursor.try_consume("*")? {
+        GrammarExpr::zero_or_more(expr)
+    } else if cursor.try_consume("+")? {
+        GrammarExpr::one_or_more(expr)
+    } else {
+        expr
     })
 }
 
-fn lower_sequence<I>(items: I) -> Result<GrammarExpr, GrammarImportError>
-where
-    I: IntoIterator<Item = Result<GrammarExpr, GrammarImportError>>,
-{
-    let mut lowered = Vec::new();
-    for item in items {
-        push_sequence_item(&mut lowered, item?);
+fn atom(cursor: &mut Cursor<'_>) -> Result<GrammarExpr, GrammarImportError> {
+    cursor.skip_space()?;
+    if matches!(cursor.peek(), Some('"' | '\'')) {
+        return cursor.quoted(Some(decode_escape)).map(terminal_or_empty);
     }
-
-    Ok(match lowered.len() {
-        0 => GrammarExpr::Empty,
-        1 => lowered.remove(0),
-        _ => GrammarExpr::Sequence(lowered),
-    })
-}
-
-fn push_sequence_item(items: &mut Vec<GrammarExpr>, item: GrammarExpr) {
-    match item {
-        GrammarExpr::Empty => {}
-        GrammarExpr::Sequence(nested) => {
-            for item in nested {
-                push_sequence_item(items, item);
-            }
+    for (open, close) in [("(", ')'), ("[", ']'), ("{", '}')] {
+        if cursor.try_consume(open)? {
+            let expr = alternation(cursor, close)?;
+            cursor.consume(&close.to_string())?;
+            return Ok(match close {
+                ']' => GrammarExpr::optional(expr),
+                '}' => GrammarExpr::zero_or_more(expr),
+                _ => expr,
+            });
         }
-        item => items.push(item),
+    }
+    match cursor.peek() {
+        Some('?') => Err(unsupported_error(FORMAT, "special sequence")),
+        Some('#') => Err(unsupported_error(FORMAT, "inline regex")),
+        _ => Ok(GrammarExpr::NonTerminal(cursor.identifier()?)),
     }
 }
 
-fn lower_choice<I>(alternatives: I) -> Result<GrammarExpr, GrammarImportError>
-where
-    I: IntoIterator<Item = Result<GrammarExpr, GrammarImportError>>,
-{
-    let mut lowered = Vec::new();
-    for alternative in alternatives {
-        push_choice_alternative(&mut lowered, alternative?);
-    }
-
-    if lowered.iter().all(|expr| expr == &GrammarExpr::Empty) {
-        return Ok(GrammarExpr::Empty);
-    }
-
-    Ok(match lowered.len() {
-        0 => GrammarExpr::Empty,
-        1 => lowered.remove(0),
-        _ => GrammarExpr::Choice {
-            ordered: false,
-            alternatives: lowered,
-        },
-    })
-}
-
-fn push_choice_alternative(alternatives: &mut Vec<GrammarExpr>, alternative: GrammarExpr) {
-    match alternative {
-        GrammarExpr::Choice {
-            ordered: false,
-            alternatives: nested,
-        } => alternatives.extend(nested),
-        alternative => alternatives.push(alternative),
-    }
-}
-
-fn validate_references(grammar: &Grammar) -> Result<(), GrammarImportError> {
-    if let Some(name) = grammar.undefined_nonterminals().into_iter().next() {
-        return Err(parse_error(
-            GrammarFormat::Ebnf,
-            format!("undefined non-terminal {name}"),
-        ));
-    }
-    Ok(())
+/// Decodes the escapes `\t \b \n \r \f \/ \\` and an escaped quote inside a
+/// quoted terminal, rejecting any other escape.
+fn decode_escape(
+    escaped: char,
+    quote: char,
+    format: GrammarFormat,
+) -> Result<String, GrammarImportError> {
+    let decoded = match escaped {
+        _ if escaped == quote => quote,
+        't' => '\t',
+        'b' => '\u{8}',
+        'n' => '\n',
+        'r' => '\r',
+        'f' => '\u{c}',
+        '/' => '/',
+        '\\' => '\\',
+        _ => {
+            return Err(parse_error(
+                format,
+                format!("unsupported string escape \\{escaped}"),
+            ));
+        }
+    };
+    Ok(decoded.to_string())
 }
 
 /// Replaces every `(* ... *)` comment outside a string literal with one space.
-fn remove_comments(text: &str) -> Result<String, GrammarImportError> {
-    let mut result = String::with_capacity(text.len());
+fn remove_comments(source: &str) -> Result<String, GrammarImportError> {
+    let mut result = String::with_capacity(source.len());
     let mut quote = None;
-    let mut rest = text;
-    while let Some(character) = rest.chars().next() {
-        let width = character.len_utf8();
+    let mut index = 0;
+    while let Some(character) = source[index..].chars().next() {
         if let Some(open) = quote {
+            result.push(character);
+            index += character.len_utf8();
             if character == '\\'
-                && let Some(next) = rest[width..].chars().next()
+                && let Some(next) = source[index..].chars().next()
             {
-                result.push(character);
                 result.push(next);
-                rest = &rest[width + next.len_utf8()..];
-                continue;
-            }
-            if character == open {
+                index += next.len_utf8();
+            } else if character == open {
                 quote = None;
             }
-        } else if matches!(character, '"' | '\'') {
+            continue;
+        }
+        if matches!(character, '"' | '\'') {
             quote = Some(character);
-        } else if let Some(body) = rest.strip_prefix("(*") {
-            let end = body
-                .find("*)")
-                .ok_or_else(|| parse_error(GrammarFormat::Ebnf, "unterminated comment"))?;
+        } else if source[index..].starts_with("(*") {
+            let Some(end) = source[index + 2..].find("*)") else {
+                return Err(parse_error(FORMAT, "unterminated comment"));
+            };
             result.push(' ');
-            rest = &body[end + 2..];
+            index += 2 + end + 2;
             continue;
         }
         result.push(character);
-        rest = &rest[width..];
+        index += character.len_utf8();
+    }
+    if quote.is_some() {
+        return Err(parse_error(FORMAT, "unterminated string literal"));
     }
     Ok(result)
-}
-
-fn find_special_sequence(text: &str) -> Option<String> {
-    let mut scanner = Scanner::new(text);
-    while let Some((index, character, is_code, _)) = scanner.next() {
-        if is_code && character == '?' && is_special_sequence_start(text, index) {
-            let end = text[index + character.len_utf8()..]
-                .find('?')
-                .map_or(text.len(), |relative| {
-                    index + character.len_utf8() + relative + 1
-                });
-            let construct = text[index..end].trim();
-            return Some(format!("special sequence {construct:?}"));
-        }
-    }
-    None
-}
-
-fn is_special_sequence_start(text: &str, index: usize) -> bool {
-    text[..index]
-        .chars()
-        .rev()
-        .find(|character| !character.is_whitespace())
-        .is_none_or(|character| matches!(character, '=' | '|' | ',' | '(' | '[' | '{' | ';'))
-}
-
-fn normalize_empty_alternatives(text: &str) -> String {
-    let mut normalized = String::with_capacity(text.len());
-    let mut scanner = Scanner::new(text);
-    let mut in_rhs = false;
-    let mut empty_alternative_pending = false;
-    let mut skip_closing_quote = false;
-
-    while let Some((index, character, is_code, depth)) = scanner.next() {
-        if skip_closing_quote {
-            skip_closing_quote = false;
-            continue;
-        }
-        // The `ebnf` crate cannot parse an empty literal, so `""` and `''`
-        // become the empty sentinel.
-        if is_code
-            && in_rhs
-            && matches!(character, '"' | '\'')
-            && text[index + 1..].starts_with(character)
-        {
-            push_empty_sentinel(&mut normalized);
-            empty_alternative_pending = false;
-            skip_closing_quote = true;
-            continue;
-        }
-        if is_code {
-            if in_rhs {
-                match character {
-                    '|' => {
-                        if empty_alternative_pending {
-                            push_empty_sentinel(&mut normalized);
-                        }
-                        empty_alternative_pending = true;
-                    }
-                    ';' if depth == 0 => {
-                        if empty_alternative_pending {
-                            push_empty_sentinel(&mut normalized);
-                        }
-                        in_rhs = false;
-                        empty_alternative_pending = false;
-                    }
-                    ')' | ']' | '}' => {
-                        if empty_alternative_pending {
-                            push_empty_sentinel(&mut normalized);
-                        }
-                        empty_alternative_pending = false;
-                    }
-                    '(' | '[' | '{' => {
-                        empty_alternative_pending = true;
-                    }
-                    ',' => {
-                        empty_alternative_pending = false;
-                    }
-                    _ if character.is_whitespace() => {}
-                    _ => {
-                        empty_alternative_pending = false;
-                    }
-                }
-            } else if depth == 0 && character == '=' {
-                in_rhs = true;
-                empty_alternative_pending = true;
-            }
-        }
-        normalized.push_str(&text[index..index + character.len_utf8()]);
-    }
-    normalized
-}
-
-fn push_empty_sentinel(text: &mut String) {
-    text.push('"');
-    text.push_str(EMPTY_SENTINEL);
-    text.push('"');
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ScanState {
-    Code,
-    SingleQuote,
-    DoubleQuote,
-}
-
-#[derive(Clone, Debug)]
-struct Scanner<'text> {
-    text: &'text str,
-    cursor: usize,
-    state: ScanState,
-    escaped: bool,
-    depth: usize,
-}
-
-impl<'text> Scanner<'text> {
-    const fn new(text: &'text str) -> Self {
-        Self {
-            text,
-            cursor: 0,
-            state: ScanState::Code,
-            escaped: false,
-            depth: 0,
-        }
-    }
-
-    fn next(&mut self) -> Option<(usize, char, bool, usize)> {
-        let rest = self.text.get(self.cursor..)?;
-        let mut chars = rest.char_indices();
-        let (_, character) = chars.next()?;
-        let index = self.cursor;
-        let was_code = matches!(self.state, ScanState::Code);
-        let previous_depth = self.depth;
-        self.cursor += character.len_utf8();
-
-        match self.state {
-            ScanState::Code => match character {
-                '\'' => self.state = ScanState::SingleQuote,
-                '"' => self.state = ScanState::DoubleQuote,
-                '(' | '[' | '{' => self.depth += 1,
-                ')' | ']' | '}' => self.depth = self.depth.saturating_sub(1),
-                _ => {}
-            },
-            ScanState::SingleQuote => self.scan_quoted(character, '\''),
-            ScanState::DoubleQuote => self.scan_quoted(character, '"'),
-        }
-
-        Some((index, character, was_code, previous_depth))
-    }
-
-    const fn scan_quoted(&mut self, character: char, quote: char) {
-        if self.escaped {
-            self.escaped = false;
-        } else if character == '\\' {
-            self.escaped = true;
-        } else if character == quote {
-            self.state = ScanState::Code;
-        }
-    }
 }
