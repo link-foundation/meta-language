@@ -48,7 +48,7 @@ class BnfExpressionParser extends Cursor {
 
   atom() {
     this.skipSpace();
-    // Classic BNF terminals have no escape sequences, matching the Rust `bnf` crate.
+    // Classic BNF terminals have no escape sequences, as in the Rust BNF importer.
     if (this.peek() === '"' || this.peek() === "'") return terminal(this.quoted(null));
     if (this.tryConsume('<')) {
       const end = this.source.indexOf('>', this.offset);
@@ -140,13 +140,14 @@ class EbnfGrammarParser extends Cursor {
       return GrammarBuilder.repeat0(expression);
     }
     if (this.peek() === '?') throw unsupportedError('ebnf', 'special sequence');
+    if (this.peek() === '#') throw unsupportedError('ebnf', 'inline regex');
     return GrammarBuilder.ref(this.identifier());
   }
 }
 
 const EBNF_ESCAPES = { t: '\t', b: '\b', n: '\n', r: '\r', f: '\f', '/': '/', '\\': '\\' };
 
-/** Decodes the escape set the Rust `ebnf` crate accepts inside a quoted terminal. */
+/** Decodes the escape set the EBNF importers (JS and Rust) accept inside a quoted terminal. */
 function decodeEbnfEscape(escaped, quote) {
   if (escaped === quote) return quote;
   if (Object.hasOwn(EBNF_ESCAPES, escaped)) return EBNF_ESCAPES[escaped];

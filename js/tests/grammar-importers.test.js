@@ -126,6 +126,8 @@ test('BNF and EBNF preserve empty alternatives and reject missing references', (
   });
   assert.throws(() => importBnf('<start> ::= <missing>'), GrammarImportError);
   assert.throws(() => importEbnf('start = missing ;'), GrammarImportError);
+  assert.throws(() => importEbnf("digit = #'[0-9]' ;"), /unsupported.*inline regex/i);
+  assert.throws(() => importEbnf('token = ? special ? ;'), /unsupported.*special sequence/i);
 });
 
 test('pest preserves predicates, counted repetition, modifiers, and unsupported constructs', () => {
