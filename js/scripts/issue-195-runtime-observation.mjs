@@ -71,12 +71,10 @@ function networkObservation(language, source) {
       return parent ? [`${nodeSignature(parent)} -> ${nodeSignature(child)}`] : [];
     })
     .sort(compareUtf8);
-  const fields = links
-    .filter((link) => link.metadata().linkType === LinkType.Field)
-    .flatMap((field) => {
-      const [parent, child] = field.references().map((reference) => network.link(reference));
-      return [`${field.metadata().term}: ${nodeSignature(parent)} -> ${nodeSignature(child)}`];
-    })
+  const fields = network.fieldRelations()
+    .map(({ parent, label, child }) => (
+      `${label}: ${nodeSignature(network.link(parent))} -> ${nodeSignature(network.link(child))}`
+    ))
     .sort(compareUtf8);
   // Trivia links attach extra tokens to the Syntax link directly above them.
   const trivia = links

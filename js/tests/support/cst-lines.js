@@ -124,8 +124,8 @@ function networkIndex(network) {
   for (const link of links) {
     const { linkType, term } = link.metadata();
     if (linkType === LinkType.Field) {
-      const [parent, child] = link.references();
-      fields.set(`${parent.value}:${child.value}`, term);
+      const [parent, label, child] = link.references();
+      if (child) fields.set(`${parent.value}:${child.value}`, network.link(label).metadata().term);
     } else if (linkType === LinkType.Region) {
       for (const reference of link.references().slice(2)) regionRoots.add(reference.value);
     } else if (linkType === LinkType.Syntax) {

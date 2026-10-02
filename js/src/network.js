@@ -1,4 +1,3 @@
-import { Parser } from 'links-notation';
 
 import {
   parseEmbeddedProgrammingLanguage,
@@ -17,12 +16,24 @@ import {
   TriviaAttachmentPolicy,
   idKey,
 } from './primitives.js';
-import { LinkQuery, QueryCaptures, QueryMatch } from './query.js';
+import {
+  LinkQuery,
+  QueryIndex,
+  QueryMatch,
+  rejectPredicateHost,
+  sourceTextPredicateHost,
+} from './query.js';
 import { LinkCliSubstitution, SubstitutionReport } from './substitution.js';
 import { ReplacementReport, ReplacementRule, TextReplacement } from './transform.js';
 import { EmbeddedRegion, detectEmbeddedRegions, detectEmbeddedRegionsInTree } from './regions.js';
 import { annotateNaturalLanguage } from './natural-language.js';
 import { formatLinoReadings, insertLinoSemantics, linoReading } from './lino-semantics.js';
+import {
+  decodeCanonicalStatements,
+  encodeNetworkLino,
+  hasMetaSublinks,
+  parseLinoStatements,
+} from './lino-serialization.js';
 import { grammarProvenance } from './language-catalog.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 import {
@@ -38,6 +49,7 @@ const decoder = new TextDecoder();
 // The type-point prefix of an external concept identifier vocabulary, as in Rust.
 const EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-identifier:';
 const FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-id:';
+const FIELD_LABEL_DEFINITION = 'A field label names a relation between links.';
 
 function externalVocabularyFromTerm(term) {
   for (const prefix of [EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX, FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX]) {
@@ -127,7 +139,18 @@ export class LinkNetwork {
     if (network._insertCanonicalLino(source)) {
       return network;
     }
-    for (const parsed of new Parser({ comments: false }).parse(source)) {
+    const statements = parseLinoStatements(source);
+    if (hasMetaSublinks(statements)) {
+      // The lossless form written by `toLino` (and Rust's `to_lino`).
+      for (const { id, references, metadata, registered } of decodeCanonicalStatements(statements)) {
+        const linkId = network.insertLinkWithOptionalId(id, references, metadata);
+        if (registered && metadata.term !== undefined) {
+          network._terms.set(metadata.term, linkId);
+        }
+      }
+      return network;
+    }
+    for (const parsed of statements) {
       network._insertParsedLinoLink(parsed);
     }
     return network;
@@ -195,6 +218,33 @@ export class LinkNetwork {
 
   insertField(term) {
     return this.insertTypedPoint(LinkType.Field, term);
+  }
+
+  /**
+   * Inserts a labeled field relation `[parent, label, child]` whose label is
+   * the shared Field point of `label`, as `insert_field` in
+   * rust/src/link_network.rs.
+   */
+  insertFieldRelation(parent, label, child) {
+    const labelLink = this.insertTypedPoint(LinkType.Field, label, FIELD_LABEL_DEFINITION);
+    return this.insertLink([parent, labelLink, child], LinkMetadata.new().withLinkType(LinkType.Field));
+  }
+
+  /**
+   * The labeled field relations of the network as `{ link, parent, label, child }`,
+   * reading the label from the term of the label link.
+   */
+  fieldRelations() {
+    const relations = [];
+    for (const link of this.links()) {
+      if (link.metadata().linkType !== LinkType.Field) continue;
+      const references = link.references();
+      if (references.length !== 3) continue;
+      const label = this.link(references[1])?.metadata().term;
+      if (label === undefined) continue;
+      relations.push({ link, parent: references[0], label, child: references[2] });
+    }
+    return relations;
   }
 
   insertRelation(references = [], term = undefined) {
@@ -464,20 +514,39 @@ export class LinkNetwork {
     return this.links().filter((link) => normalized.matchesMetadata(link.metadata()));
   }
 
+  /**
+   * Finds query matches, evaluating `#eq?`/`#not-eq?` against captured source
+   * text like Rust's `LinkNetwork::find`. A query without an S-expression
+   * pattern binds each matching link to the `match` capture.
+   */
   find(query) {
     const normalized = query instanceof LinkQuery ? query : new LinkQuery(query);
-    const matches = [];
-    for (const link of this.queryLinks(normalized)) {
-      const captures = new QueryCaptures();
-      if (normalized.sexpression) {
-        captures.set(normalized.sexpression.capture, link.id());
-        if (!this._predicatesMatch(normalized.sexpression.predicates, captures)) {
-          continue;
-        }
-      } else {
-        captures.set('match', link.id());
+    const matches = this.queryMatchesWith(
+      normalized,
+      sourceTextPredicateHost((network, linkId) => network.capturedText(linkId)),
+    );
+    if (!normalized.pattern) {
+      for (const match of matches) {
+        match.captures.set('match', match.linkId);
       }
-      matches.push(new QueryMatch(link.id(), captures));
+    }
+    return matches;
+  }
+
+  /** Structural matches with every predicate rejected, like Rust's `query_matches`. */
+  queryMatches(query) {
+    return this.queryMatchesWith(query, rejectPredicateHost);
+  }
+
+  /** Structural matches with host-evaluated predicates, like Rust's `query_matches_with`. */
+  queryMatchesWith(query, predicateHost) {
+    const normalized = query instanceof LinkQuery ? query : new LinkQuery(query);
+    const index = new QueryIndex(this);
+    const matches = [];
+    for (const link of this.links()) {
+      for (const captures of normalized.matchesInNetwork(this, link, predicateHost, index)) {
+        matches.push(new QueryMatch(link.id(), captures));
+      }
     }
     return matches;
   }
@@ -517,16 +586,13 @@ export class LinkNetwork {
     return LinkCliSubstitution.parse(source).apply(this);
   }
 
+  /**
+   * Serializes every link with its metadata, one statement per line, in the
+   * byte-identical form Rust's `LinkNetwork::to_lino` writes.
+   */
   toLino() {
-    return this.links()
-      .map((link) => {
-        const references = link.references();
-        if (references.length === 0) {
-          return `(${link.id().asU64()})`;
-        }
-        return `(${link.id().asU64()}: ${references.map((id) => id.asU64()).join(' ')})`;
-      })
-      .join('\n');
+    const registered = new Set([...this._terms.values()].map((id) => LinkId.from(id).asU64()));
+    return encodeNetworkLino(this.links(), registered);
   }
 
   snapshot(version, provenance) {
@@ -822,14 +888,7 @@ export class LinkNetwork {
         this._attachExtraTrivia(syntax, child, context);
       }
       if (child.field) {
-        this.insertLink(
-          [syntax, children[index]],
-          LinkMetadata.new()
-            .withLinkType(LinkType.Field)
-            .withLanguage(language)
-            .withTerm(child.field)
-            .withNamed(true),
-        );
+        this.insertFieldRelation(syntax, child.field, children[index]);
       }
     }
     return syntax;
@@ -923,19 +982,6 @@ export class LinkNetwork {
     return this.links().filter((link) => link.metadata().linkType === LinkType.SourceToken);
   }
 
-  _predicatesMatch(predicates, captures) {
-    for (const predicate of predicates) {
-      const captured = captures.get(predicate.capture);
-      const text = this.capturedText(captured);
-      if (predicate.operator === 'eq?' && text !== predicate.value) {
-        return false;
-      }
-      if (predicate.operator === 'not-eq?' && text === predicate.value) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   _replaceCapturedText(id, replacementText) {
     const tokenLinks = this._capturedTokenLinks(id);

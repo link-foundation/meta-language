@@ -13,9 +13,9 @@ function syntaxTree(network) {
   const fields = new Map();
   const referenced = new Set();
   for (const link of network.links()) {
-    if (link.metadata().linkType === LinkType.Field) {
-      const [parent, child] = link.references();
-      fields.set(`${parent.asU64()}:${child.asU64()}`, link.metadata().term);
+    if (link.metadata().linkType === LinkType.Field && link.references().length === 3) {
+      const [parent, label, child] = link.references();
+      fields.set(`${parent.asU64()}:${child.asU64()}`, network.link(label).metadata().term);
     }
     if (link.metadata().linkType === LinkType.Syntax) {
       for (const id of link.references()) referenced.add(id.asU64());

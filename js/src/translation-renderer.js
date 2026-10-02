@@ -28,7 +28,7 @@ class TranslationRenderer {
     this.matchesByLink = new Map();
 
     for (const rule of ruleSet.rules) {
-      for (const match of network.find(rule.query)) {
+      for (const match of network.queryMatches(rule.query)) {
         const key = idKey(match.linkId);
         if (!this.matchesByLink.has(key)) {
           this.matchesByLink.set(key, { match, rule });

@@ -580,6 +580,7 @@ export function formalAiHelpers(api) {
     const declared = (map, kind, target) => (map.get(kind) ?? []).some((value) => value === target || value === 'any');
     return {
       ruleSet,
+      rootKinds,
       ruleCount: ruleSet.rules.length,
       refusalCount: [...refusedKinds.values()].reduce((sum, targets) => sum + targets.length, 0),
       noformCount: [...noformKinds.values()].reduce((sum, targets) => sum + targets.length, 0),
@@ -601,13 +602,175 @@ export function formalAiHelpers(api) {
     const uncovered = kinds.filter((kind) => !projection.value.isRuled(kind, target) &&
       !projection.value.isRefused(kind, target) && !projection.value.isNoform(kind, target));
     if (uncovered.length > 0) return { outcome: 'refused', refusals: uncovered };
-    const referenced = new Set(named.flatMap((link) => link.references().map((id) => id.value)));
-    const root = named.find((link) => !referenced.has(link.id().value));
     try {
-      return { outcome: 'rendered', source: projection.value.ruleSet.render(target, network, root?.id()) };
+      return { outcome: 'rendered', source: renderProjection(projection.value, network, source, target) };
     } catch (error) {
+      if (error instanceof ProjectionRefusal) return { outcome: 'refused', refusals: [error.construct] };
       return { outcome: 'error', error: message(error) };
     }
+  }
+
+  class ProjectionRefusal extends Error {
+    constructor(construct, detail) {
+      super(`${construct}: ${detail}`);
+      this.construct = construct;
+    }
+  }
+
+  const MAX_WALK_DEPTH = 1024;
+  const isNamedSyntax = (link) => link?.metadata().linkType === 'Syntax' && link.metadata().named;
+
+  // GrammarProjection::render: the leaf-up walk formal-ai owns over the package's
+  // query_matches, from every syntax root of the parse. The JavaScript parse keeps
+  // no Document link, so its roots are the Syntax links no Syntax link references.
+  function renderProjection(projection, network, source, target) {
+    const sourceBytes = Buffer.from(source, 'utf8');
+    const walk = { network, sourceBytes, target, claims: claimMap(projection, network, target) };
+    const syntax = syntaxLinks(network);
+    const referenced = new Set(syntax.flatMap((link) => link.references().map((id) => id.value)));
+    const roots = syntax.filter((link) => !referenced.has(link.id().value)).map((link) => link.id());
+    if (roots.length === 0) throw new ProjectionRefusal('document', 'the parse has no syntax root under the document');
+    return roots.map((root) => expandLink(projection, walk, root, 0)).join('\n');
+  }
+
+  // GrammarProjection::claim_map: first rule in seed order wins a link, and among
+  // its own matches the one binding the most named content, then the most captures.
+  function claimMap(projection, network, target) {
+    const present = new Set(syntaxLinks(network).map((link) => link.metadata().term).filter(Boolean));
+    const claims = new Map();
+    projection.ruleSet.rules.forEach((rule, ruleIndex) => {
+      if (!rule.templateFor(target)) return;
+      const rootKind = projection.rootKinds[ruleIndex];
+      if (rootKind && !present.has(rootKind)) return;
+      for (const match of network.queryMatches(rule.query)) {
+        const captures = boundCaptures(network, rule, match);
+        const content = captures.filter(([, id]) => isNamedSyntax(network.link(id))).length;
+        if (captures.length > 0 && content === 0) continue;
+        const key = match.linkId.value;
+        const existing = claims.get(key);
+        const better = !existing || (existing.ruleIndex === ruleIndex
+          && (existing.content < content || (existing.content === content && existing.captures.length < captures.length)));
+        if (better) claims.set(key, { ruleIndex, content, captures });
+      }
+    });
+    return claims;
+  }
+
+  function boundCaptures(network, rule, match) {
+    const captures = [...match.captures].map(([name, id]) => [name, id]);
+    for (const [name, referenceIndex] of Object.entries(rule.referenceCaptures)) {
+      if (captures.some(([bound]) => bound === name)) continue;
+      const reference = network.link(match.linkId)?.references()[referenceIndex];
+      if (reference !== undefined) captures.push([name, reference]);
+    }
+    return captures;
+  }
+
+  function spanText(walk, span) {
+    if (!span) return '';
+    return walk.sourceBytes.subarray(span.byteRange.start, span.byteRange.end).toString('utf8');
+  }
+
+  function spanOf(walk, id) {
+    const metadata = walk.network.link(id)?.metadata();
+    if (!metadata) return '';
+    if (metadata.span) return spanText(walk, metadata.span);
+    return metadata.term ?? '';
+  }
+
+  // GrammarProjection::expand_link.
+  function expandLink(projection, walk, id, depth) {
+    if (depth > MAX_WALK_DEPTH) throw new ProjectionRefusal('walk', `the walk is deeper than ${MAX_WALK_DEPTH}`);
+    const link = walk.network.link(id);
+    if (!link) throw new ProjectionRefusal('walk', `dangling capture ${id.value}`);
+    const metadata = link.metadata();
+    const { target } = walk;
+    if (metadata.linkType === 'SourceToken') return metadata.term ?? '';
+    if (metadata.linkType === 'Trivia') return '';
+    if (metadata.linkType !== 'Syntax') return spanText(walk, metadata.span);
+    const kind = metadata.term ?? '?';
+    const claim = walk.claims.get(id.value);
+    if (claim) {
+      const rule = projection.ruleSet.rules[claim.ruleIndex];
+      const template = rule.templateFor(target);
+      if (template) return expandTemplate(projection, walk, id, kind, template.text, depth);
+      if (projection.isNoform(kind, target)) throw new ProjectionRefusal(kind, `no form in ${target}`);
+      if (projection.isRefused(kind, target)) return spanText(walk, metadata.span);
+      throw new ProjectionRefusal(kind, `${rule.name} has no ${target} template`);
+    }
+    if (projection.isNoform(kind, target)) throw new ProjectionRefusal(kind, `no form in ${target}`);
+    if (projection.isRefused(kind, target)) return spanText(walk, metadata.span);
+    throw new ProjectionRefusal(kind, `unruled for ${target}`);
+  }
+
+  // GrammarProjection::expand_template: `{{` and `}}` escape braces, an unclosed
+  // `{` stays literal.
+  function expandTemplate(projection, walk, matched, kind, template, depth) {
+    let out = '';
+    let index = 0;
+    while (index < template.length) {
+      if (template.startsWith('{{', index)) {
+        out += '{';
+        index += 2;
+      } else if (template.startsWith('}}', index)) {
+        out += '}';
+        index += 2;
+      } else if (template[index] === '{') {
+        const close = template.indexOf('}', index + 1);
+        if (close < 0) {
+          out += '{';
+          index += 1;
+          continue;
+        }
+        out += expandPlaceholder(projection, walk, matched, kind, template.slice(index + 1, close), depth);
+        index = close + 1;
+      } else {
+        out += template[index];
+        index += 1;
+      }
+    }
+    return out;
+  }
+
+  // GrammarProjection::expand_placeholder.
+  function expandPlaceholder(projection, walk, matched, kind, inner, depth) {
+    if (inner === '.:text') return spanOf(walk, matched);
+    const claim = walk.claims.get(matched.value);
+    const binding = (name) => claim?.captures.find(([bound]) => bound === name)?.[1];
+    if (inner.startsWith('*')) {
+      const bar = inner.indexOf('|');
+      if (bar < 0) throw new ProjectionRefusal(kind, `unknown placeholder ${inner}`);
+      const nameMode = inner.slice(1, bar);
+      const separator = inner.slice(bar + 1);
+      const colon = nameMode.indexOf(':');
+      const name = colon < 0 ? nameMode : nameMode.slice(0, colon);
+      const mode = colon < 0 ? undefined : nameMode.slice(colon + 1);
+      if (mode !== undefined && mode !== 'text' && mode !== 'source') {
+        throw new ProjectionRefusal(kind, `unknown variadic mode ${mode}`);
+      }
+      const pieces = (claim?.captures ?? [])
+        .filter(([bound, id]) => bound === name && isNamedSyntax(walk.network.link(id)))
+        .map(([, id]) => (mode ? spanOf(walk, id) : expandLink(projection, walk, id, depth + 1)))
+        .filter((piece) => piece !== '');
+      return pieces.join(separator.replaceAll('\\n', '\n').replaceAll('\\s', ' ').replaceAll('\\t', '\t'));
+    }
+    const colon = inner.indexOf(':');
+    if (colon >= 0) {
+      const name = inner.slice(0, colon);
+      const mode = inner.slice(colon + 1);
+      if (mode === 'text' || mode === 'source') {
+        const id = binding(name);
+        return id === undefined ? '' : spanOf(walk, id);
+      }
+      if (mode === 'term') {
+        const id = binding(name);
+        return (id === undefined ? undefined : walk.network.link(id)?.metadata().term) ?? '';
+      }
+      throw new ProjectionRefusal(kind, `unknown placeholder mode ${mode}`);
+    }
+    if (!claim) return '';
+    const id = binding(inner);
+    return id === undefined ? '' : expandLink(projection, walk, id, depth + 1);
   }
 
   function loadedProjection(text) {
@@ -765,7 +928,7 @@ export function formalAiHelpers(api) {
   };
 }
 
-function canonical(value) {
+export function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   if (value && typeof value === 'object') {
     return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;

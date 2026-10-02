@@ -44,9 +44,8 @@ export function renderNetwork(network, language) {
   const referenced = new Set();
   for (const link of syntax) for (const reference of link.references()) referenced.add(reference.value);
   const fields = new Map();
-  for (const link of links.filter((item) => item.metadata().linkType === LinkType.Field)) {
-    const [parent, child] = link.references();
-    fields.set(`${parent.value}:${child.value}`, link.metadata().term);
+  for (const { parent, label, child } of network.fieldRelations()) {
+    fields.set(`${parent.value}:${child.value}`, label);
   }
   const roots = syntax.filter((link) => !referenced.has(link.id().value));
   const syntaxChildren = (link) => link.references()

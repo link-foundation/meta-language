@@ -38,9 +38,9 @@ const decoder = new TextDecoder();
 function syntaxRows(network, root, base = 0) {
   const fields = new Map();
   for (const link of network.links()) {
-    if (link.metadata().linkType === LinkType.Field) {
-      const [parent, child] = link.references();
-      fields.set(`${parent.asU64()}:${child.asU64()}`, link.metadata().term);
+    if (link.metadata().linkType === LinkType.Field && link.references().length === 3) {
+      const [parent, label, child] = link.references();
+      fields.set(`${parent.asU64()}:${child.asU64()}`, network.link(label).metadata().term);
     }
   }
   const rows = [];
