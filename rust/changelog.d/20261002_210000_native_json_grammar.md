@@ -9,3 +9,4 @@ bump: patch
 
 ### Fixed
 - The JavaScript UTF-8 decoders keep a leading byte order mark (`ignoreBOM: true`). Before, a Links Notation grammar with the literal `%EF%BB%BF` lost it on reading, and the text of a leaf starting at byte 0 dropped it.
+- `rust/src/translation/output.rs` is back under the 1000-line limit the Rust lint enforces. Its totalization of machine-integer operations and checked conversions moved, unchanged, to `rust/src/translation/output/settle.rs`.
