@@ -39,9 +39,9 @@ see [AGENTS.md](AGENTS.md) for the rules that automated contributors follow.
 
    ```bash
    cd rust
-   cargo build
-   cargo test
-   node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features
+   export CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 CARGO_INCREMENTAL=0
+   node ../scripts/with-cache-cleanup.mjs --event test -- cargo check --all-targets --all-features
+   node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --test unit <filter>
    ```
 
    `node scripts/clean-caches.mjs` prunes the caches to the disk budget at any
@@ -62,12 +62,16 @@ see [AGENTS.md](AGENTS.md) for the rules that automated contributors follow.
 
 ## Local Checks
 
-Run these before pushing code:
+Run the targeted checks for the change before pushing (see
+[AGENTS.md](AGENTS.md#local-checks-and-resources) for what not to run
+locally); CI runs the full suites:
 
 ```bash
 cargo fmt --check
-cargo clippy --all-targets --all-features
-cargo test --all-features
+CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 cargo check --all-targets --all-features
+RUST_TEST_THREADS=2 cargo test --test unit <filter>
+RUST_TEST_THREADS=2 cargo test --test integration <filter>
+(cd ../js && node --test tests/<area>*.test.js)
 rust-script scripts/check-no-src-tests.rs
 rust-script scripts/check-file-size.rs
 rust-script scripts/check-crate-size.rs

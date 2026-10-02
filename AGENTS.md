@@ -53,7 +53,31 @@ changes this repository. Human contributors follow them too; see
   positive and negative fixtures in
   [`parity/naming/naming-fixtures.json`](parity/naming/naming-fixtures.json).
 - Keep experiments in `experiments/` and runnable demonstrations in `examples/`.
-- Run the JavaScript checks (`cd js && npm test && npm run check`) and the Rust
-  checks (`cargo fmt --check`, `cargo clippy --all-targets --all-features` and
-  `cargo test --all-features` in `rust/`) before pushing. Add a changelog
-  fragment under `rust/changelog.d/` for user-visible changes.
+- Add a changelog fragment under `rust/changelog.d/` for user-visible changes.
+
+## Local checks and resources
+
+Local sandboxes have a few gigabytes of memory, and the full suites do not fit
+in them. Run only the checks that cover the change, and let CI run the full
+suites:
+
+- JavaScript: `cd js && node --test tests/<area>*.test.js`, plus the
+  `npm run check:<name>` scripts that cover the change.
+- Rust: in `rust/`, run `cargo fmt --check`, then
+  `cargo check --all-targets --all-features`, then
+  `cargo test --test unit <filter>` or `cargo test --test integration <filter>`.
+  Set `CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 CARGO_INCREMENTAL=0`.
+- Wrap long runs in `node scripts/with-cache-cleanup.mjs --event test -- <command>`,
+  which bounds their parallelism and cleans up even when they fail.
+- Never run locally: the full `npm run acceptance:issue-195`,
+  `js/scripts/run-issue-195-evidence.mjs`, the native Lean, Rocq and Rust
+  translation matrix, clean-consumer installs, the Relative Meta Logic and
+  formal-ai workload clones, `cargo llvm-cov`, or experiments over upstream
+  corpora or the whole grammar registry. The `Rust`, `JavaScript` and
+  `Issue 195 Full Acceptance` workflows in `.github/workflows/` run them on
+  every push; read their logs and artifacts instead.
+- Work in batches: commit each step, re-read the diff and push once per batch.
+  After a batch, run `node scripts/clean-caches.mjs`, remove
+  `.issue-195-work/`, `issue-195-results/`, `issue-195-artifacts/` and any
+  workload clones, and stop leftover `cargo`, `rustc`, `node`, `lean`, `lake`,
+  `coqc` and `rocq` processes after a failure.
