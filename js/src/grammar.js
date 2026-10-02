@@ -74,6 +74,21 @@ export class Grammar {
   }
 }
 
+/**
+ * Copies the rule documentation of `source` onto the rules of `target` that
+ * `rename` maps them to, as a rebuilt grammar would otherwise drop it.
+ */
+export function carryRuleDocs(target, source, rename = (name) => name) {
+  for (const rule of source.rules.values()) {
+    const doc = rule.doc ?? source.ruleDocs?.get(rule.name) ?? null;
+    const name = rename(rule.name);
+    if (doc !== null && target.rules.has(name)) {
+      target.rules.set(name, Object.freeze({ ...target.rules.get(name), doc }));
+    }
+  }
+  return target;
+}
+
 export class GrammarBuilder {
   constructor(start = null) {
     this.start = start;

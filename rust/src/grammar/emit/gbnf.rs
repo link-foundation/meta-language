@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
-use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat};
+use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 
 use super::{
     EmitReport, GBNF_RULE_TEMPLATE, GrammarEmitError, finish_lines, render_rule_line,
@@ -23,6 +23,10 @@ const ANY_CHAR_CLASS: &str = r"[\x00-\U0010FFFF]";
 /// cannot faithfully represent, such as general PEG lookahead predicates, empty
 /// character classes, descending ranges, invalid repeat bounds, or a configured
 /// start rule that is not present in the grammar.
+///
+/// Rule documentation is written as `#` comment lines above the rule, as the
+/// GBNF importer reads it, with a lossy note when it would not read back
+/// verbatim.
 pub fn emit_gbnf(grammar: &Grammar) -> Result<(String, EmitReport), GrammarEmitError> {
     if grammar.rules().is_empty() {
         return Ok((String::new(), EmitReport::default()));
@@ -41,19 +45,53 @@ pub fn emit_gbnf(grammar: &Grammar) -> Result<(String, EmitReport), GrammarEmitE
     let mut emitter = GbnfEmitter { report, names };
     let mut lines = Vec::new();
 
-    let start_body = emitter.emit_expr(grammar.rules()[start_index].expr(), Precedence::Choice)?;
+    let start_rule = &grammar.rules()[start_index];
+    lines.extend(doc_comments(start_rule, &mut emitter.report));
+    let start_body = emitter.emit_expr(start_rule.expr(), Precedence::Choice)?;
     lines.push(render_rule_line(GBNF_RULE_TEMPLATE, "root", &start_body));
 
     for (index, rule) in grammar.rules().iter().enumerate() {
         if index == start_index {
             continue;
         }
+        lines.extend(doc_comments(rule, &mut emitter.report));
         let name = emitter.names.name_for(rule.name());
         let body = emitter.emit_expr(rule.expr(), Precedence::Choice)?;
         lines.push(render_rule_line(GBNF_RULE_TEMPLATE, &name, &body));
     }
 
     Ok((finish_lines(&lines), emitter.report))
+}
+
+/// The `#` comment lines the GBNF importer reads back as the rule's
+/// documentation: each documentation line, prefixed with `# ` unless it already
+/// is a comment.
+fn doc_comments(rule: &GrammarRule, report: &mut EmitReport) -> Vec<String> {
+    let Some(doc) = rule.doc() else {
+        return Vec::new();
+    };
+    let lines: Vec<String> = doc
+        .split('\n')
+        .map(|line| {
+            if line.starts_with('#') {
+                line.to_string()
+            } else {
+                format!("# {line}")
+            }
+        })
+        .collect();
+    let reimported = lines
+        .iter()
+        .map(|line| line.trim())
+        .collect::<Vec<_>>()
+        .join("\n");
+    if lines.iter().any(|line| line.contains('\r')) || reimported != doc {
+        report.add_lossy(format!(
+            "GBNF re-imports the documentation of rule {:?} as {reimported:?}",
+            rule.name()
+        ));
+    }
+    lines
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]

@@ -5,7 +5,7 @@
 // print the same canonical definitions, so their decisions agree.
 import { createHash } from 'node:crypto';
 
-import { Grammar } from './grammar.js';
+import { carryRuleDocs, Grammar } from './grammar.js';
 
 /** How an accepted equivalence is justified. */
 export const GRAMMAR_MERGE_METHOD = 'recursive-structural-bisimulation';
@@ -160,7 +160,11 @@ function renameAll(grammar, mapping) {
   for (const rule of grammar.rules.values()) {
     rules.set(rename(rule.name), { kind: rule.kind, expression: mapReferences(rule.expression, rename) });
   }
-  return new Grammar(grammar.start === null ? null : rename(grammar.start), rules, grammar.sourceFormat);
+  return carryRuleDocs(
+    new Grammar(grammar.start === null ? null : rename(grammar.start), rules, grammar.sourceFormat),
+    grammar,
+    rename,
+  );
 }
 
 function mapReferences(expression, rename) {

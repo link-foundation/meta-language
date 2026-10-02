@@ -7,6 +7,7 @@ import {
   renderRuleLine,
   unsupportedError,
 } from './common.js';
+import { ruleDoc } from './structural.js';
 
 const FORMAT = 'gbnf';
 const GBNF_RULE_TEMPLATE = '{name} ::= {body}';
@@ -26,7 +27,9 @@ const ATOM = 3;
  * class. Rule and reference names are sanitized to GBNF identifiers, with
  * renames recorded in the report. Throws `GrammarEmitError` for lookahead
  * predicates, empty choices or classes, descending ranges, invalid repeat
- * bounds, or a configured start rule that is not in the grammar.
+ * bounds, or a configured start rule that is not in the grammar. Rule
+ * documentation is written as `#` comment lines above the rule, as
+ * `importGbnf` reads it, with a note when it would not read back verbatim.
  */
 export function emitGbnf(grammar) {
   const report = emitReport();
@@ -41,13 +44,17 @@ export function emitGbnf(grammar) {
   }
 
   const emitter = new GbnfEmitter(report, namePlan(grammar, rules[startIndex].name, report));
-  const lines = [renderRuleLine(
-    GBNF_RULE_TEMPLATE,
-    'root',
-    emitter.emitExpression(rules[startIndex].expression, CHOICE),
-  )];
+  const lines = [
+    ...docComments(grammar, rules[startIndex], report),
+    renderRuleLine(
+      GBNF_RULE_TEMPLATE,
+      'root',
+      emitter.emitExpression(rules[startIndex].expression, CHOICE),
+    ),
+  ];
   rules.forEach((rule, index) => {
     if (index === startIndex) return;
+    lines.push(...docComments(grammar, rule, report));
     lines.push(renderRuleLine(
       GBNF_RULE_TEMPLATE,
       emitter.nameFor(rule.name),
@@ -55,6 +62,22 @@ export function emitGbnf(grammar) {
     ));
   });
   return { source: finishLines(lines), report };
+}
+
+/**
+ * The `#` comment lines that `importGbnf` reads back as the rule's
+ * documentation: each documentation line, prefixed with `# ` unless it
+ * already is a comment.
+ */
+function docComments(grammar, rule, report) {
+  const doc = ruleDoc(grammar, rule);
+  if (doc === null) return [];
+  const lines = doc.split('\n').map((line) => (line.startsWith('#') ? line : `# ${line}`));
+  const reimported = lines.map((line) => line.trim()).join('\n');
+  if (lines.some((line) => /[\r\n]/u.test(line)) || reimported !== doc) {
+    report.lossy.push(`GBNF re-imports the documentation of rule ${rustStringDebug(rule.name)} as ${rustStringDebug(reimported)}`);
+  }
+  return lines;
 }
 
 class GbnfEmitter {
