@@ -90,16 +90,25 @@ export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, acc
     candidate?.parents?.some(({ sha }) => sha === pull.base.sha);
   if (!current) errors.push('PR head, base and merge candidate must match the evaluated revision');
 
-  const activeRules = (snapshot.effectiveRules ?? []).filter((rule) => {
+  // The effective rules (GET /repos/{owner}/{repo}/rules/branches/{branch})
+  // and the ruleset's enforcement, target and rules are readable with the
+  // workflow token; only the bypass-actor list needs repository
+  // Administration read. Each assertion therefore fails only on its own
+  // missing evidence: hidden bypass actors leave the non-bypassable rule
+  // unobserved, not the strict required check or the blocked merge.
+  const enforcedRules = (snapshot.effectiveRules ?? []).filter((rule) => {
     const ruleset = (snapshot.rulesets ?? []).find(({ id }) => id === rule.ruleset_id);
     return typeof branch === 'string' && ruleset?.enforcement === 'active' &&
-      ruleset.target === 'branch' && Array.isArray(ruleset.bypass_actors) &&
-      ruleset.current_user_can_bypass === 'never' &&
-      ruleset.bypass_actors.length === 0 && targetsDefaultBranch(ruleset, branch) &&
+      ruleset.target === 'branch' && targetsDefaultBranch(ruleset, branch) &&
       ruleset.rules?.some((backing) => backing.type === rule.type &&
         isDeepStrictEqual(backing.parameters, rule.parameters));
   });
-  const activeRuleTargetsDefaultBranch = activeRules.length > 0;
+  const nonBypassable = (rule) => {
+    const ruleset = snapshot.rulesets.find(({ id }) => id === rule.ruleset_id);
+    return ruleset.current_user_can_bypass === 'never' &&
+      Array.isArray(ruleset.bypass_actors) && ruleset.bypass_actors.length === 0;
+  };
+  const activeRuleTargetsDefaultBranch = enforcedRules.some(nonBypassable);
   if (!activeRuleTargetsDefaultBranch) errors.push('no active, non-bypassable rule targets the default branch');
   for (const ruleset of snapshot.rulesets ?? []) {
     if (!Array.isArray(ruleset.bypass_actors)) {
@@ -107,7 +116,7 @@ export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, acc
         'provide a token with repository Administration read permission as ISSUE_195_RULESET_TOKEN');
     }
   }
-  const requiredChecks = activeRules.flatMap((rule) => {
+  const requiredChecks = enforcedRules.flatMap((rule) => {
     const parameters = rule.parameters;
     return rule.type === 'required_status_checks' &&
       parameters?.strict_required_status_checks_policy === true &&
@@ -172,9 +181,20 @@ export async function inspectMergeEnforcement({ repository, pullRequest, query =
   const [candidate, checkPages, ...rulesets] = await Promise.all([
     query(['api', `${prefix}/commits/${pull.merge_commit_sha}`]),
     query(['api', `${prefix}/commits/${pull.head.sha}/check-runs?filter=all`, '--paginate', '--slurp']),
-    ...[...new Set(effectiveRules.map(({ ruleset_id: id }) => id))].map((id) =>
+    ...[...new Set(effectiveRules.map(({ ruleset_id: id }) => id))].map(async (id) => {
+      const args = ['api', `${prefix}/rulesets/${id}`];
+      const ruleset = await query(args);
+      if (rulesetQuery === query || Array.isArray(ruleset.bypass_actors)) return ruleset;
       // Bypass actors are only visible with repository Administration read.
-      rulesetQuery(['api', `${prefix}/rulesets/${id}`])),
+      // A failing ruleset token leaves them hidden instead of failing the
+      // evidence the workflow token already read.
+      try {
+        const bypassActors = (await rulesetQuery(args)).bypass_actors;
+        return bypassActors === undefined ? ruleset : { ...ruleset, bypass_actors: bypassActors };
+      } catch (error) {
+        return { ...ruleset, bypassActorsError: error.message };
+      }
+    }),
   ]);
   const checkRuns = checkPages.flatMap((page) => page.check_runs);
   const workflowRuns = await Promise.all(checkRuns.filter(({ name }) => name === FULL_REQUIREMENTS_CHECK)

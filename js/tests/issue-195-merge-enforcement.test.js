@@ -72,8 +72,6 @@ test('a workflow name without an effective rule cannot establish merge enforceme
 
 for (const [name, mutate] of [
   ['disabled rule', (live) => { live.rulesets[0].enforcement = 'evaluate'; }],
-  ['bypass actor', (live) => { live.rulesets[0].bypass_actors = [{ actor_id: 1, bypass_mode: 'always' }]; }],
-  ['current user bypass', (live) => { live.rulesets[0].current_user_can_bypass = 'always'; }],
   ['different branch', (live) => { live.rulesets[0].conditions.ref_name.include = ['refs/heads/develop']; }],
   ['excluded default branch', (live) => { live.rulesets[0].conditions.ref_name.exclude = ['~DEFAULT_BRANCH']; }],
   ['optional aggregate', (live) => { live.effectiveRules[0].parameters.required_status_checks = []; }],
@@ -87,6 +85,25 @@ for (const [name, mutate] of [
     const result = evaluateMergeEnforcement(live, options);
     assert.equal(result.checks.failingCheckBlocksMerge, false);
     assert.notEqual(result.errors.length, 0);
+  });
+}
+
+// A bypassable rule is its own missing evidence: the strict required check
+// and the blocked merge candidate are still observed.
+for (const [name, mutate] of [
+  ['bypass actor', (live) => { live.rulesets[0].bypass_actors = [{ actor_id: 1, bypass_mode: 'always' }]; }],
+  ['current user bypass', (live) => { live.rulesets[0].current_user_can_bypass = 'always'; }],
+  ['hidden bypass actors', (live) => { delete live.rulesets[0].bypass_actors; }],
+]) {
+  test(`merge enforcement rejects ${name} as a non-bypassable rule only`, () => {
+    const live = snapshot();
+    mutate(live);
+    const result = evaluateMergeEnforcement(live, options);
+    assert.equal(result.checks.activeRuleTargetsDefaultBranch, false);
+    assert.equal(result.checks.fullAggregateRequired, true);
+    assert.equal(result.checks.failingCheckBlocksMerge, true);
+    assert.equal(result.checks.publishedDeliverySeparatelyVerified, true);
+    assert.match(result.errors.join('\n'), /non-bypassable/);
   });
 }
 
@@ -154,12 +171,16 @@ test('a missing live response fails closed', () => {
   assert.equal(result.checks.failingCheckBlocksMerge, false);
 });
 
-test('a rule response without permission to inspect bypass actors fails closed', () => {
+// The workflow token reads the strict policy from the effective rules but not
+// the bypass actors. Only the non-bypassable rule depends on them.
+test('a rule response without permission to inspect bypass actors fails closed for that assertion only', () => {
   const live = snapshot();
   delete live.rulesets[0].bypass_actors;
   const result = evaluateMergeEnforcement(live, options);
   assert.equal(result.checks.activeRuleTargetsDefaultBranch, false);
-  assert.equal(result.checks.fullAggregateRequired, false);
+  assert.equal(result.checks.fullAggregateRequired, true);
+  assert.equal(result.checks.failingCheckBlocksMerge, true);
+  assert.doesNotMatch(result.errors.join('\n'), /not a strict required check/);
 });
 
 test('hidden bypass actors name the missing permission instead of a non-strict rule', () => {
@@ -229,6 +250,7 @@ test('live inspection retrieves all check attempts and verifies the revision aga
 
 test('live inspection reads rulesets with the separate ruleset query when one is configured', async () => {
   const live = snapshot();
+  live.checkRuns[0].details_url = 'https://github.com/link-foundation/meta-language/actions/runs/97/job/123';
   const prefix = 'repos/link-foundation/meta-language';
   const query = async (args) => {
     if (args[0] === 'pr') return live.mergeState;
@@ -239,6 +261,7 @@ test('live inspection reads rulesets with the separate ruleset query when one is
     if (endpoint === `${prefix}/rulesets/42`) return { ...live.rulesets[0], bypass_actors: undefined };
     if (endpoint === `${prefix}/commits/${candidate}`) return live.candidate;
     if (endpoint === `${prefix}/commits/${head}/check-runs?filter=all`) return [{ check_runs: live.checkRuns }];
+    if (endpoint === `${prefix}/actions/runs/97`) return live.workflowRuns[0];
     throw new Error(`unexpected GitHub request: ${endpoint}`);
   };
   const rulesetRequests = [];
@@ -251,10 +274,24 @@ test('live inspection reads rulesets with the separate ruleset query when one is
   });
   assert.deepEqual(rulesetRequests, [`${prefix}/rulesets/42`]);
   assert.deepEqual(result.rulesets[0].bypass_actors, []);
+  assert.deepEqual(evaluateMergeEnforcement(result, options).errors, []);
   const withoutSeparateQuery = await inspectMergeEnforcement({
     repository: 'link-foundation/meta-language', pullRequest: 196, query,
   });
   assert.equal(withoutSeparateQuery.rulesets[0].bypass_actors, undefined);
+  const workflowTokenOnly = evaluateMergeEnforcement(withoutSeparateQuery, options);
+  assert.deepEqual(workflowTokenOnly.checks, {
+    activeRuleTargetsDefaultBranch: false, fullAggregateRequired: true,
+    failingCheckBlocksMerge: true, publishedDeliverySeparatelyVerified: true,
+  });
+  // A rejected ruleset token keeps the workflow token's ruleset and records why.
+  const rejectedToken = await inspectMergeEnforcement({
+    repository: 'link-foundation/meta-language', pullRequest: 196, query,
+    rulesetQuery: async () => { throw new Error('HTTP 403'); },
+  });
+  assert.equal(rejectedToken.rulesets[0].enforcement, 'active');
+  assert.equal(rejectedToken.rulesets[0].bypassActorsError, 'HTTP 403');
+  assert.equal(evaluateMergeEnforcement(rejectedToken, options).checks.fullAggregateRequired, true);
 });
 
 test('GitHub JSON subprocess can authenticate with a separate token', async () => {

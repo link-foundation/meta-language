@@ -24,12 +24,13 @@ await mkdir(path.dirname(output), { recursive: true });
 let report;
 try {
   verifyEvaluatedCheckout(root, commit);
-  // The workflow token cannot read ruleset bypass actors; an optional token
-  // with repository Administration read permission can.
+  // The workflow token reads the effective rules and the rulesets' strict
+  // policy. It cannot read ruleset bypass actors; an optional token with
+  // repository Administration read permission adds only those.
   const rulesetToken = process.env.ISSUE_195_RULESET_TOKEN || null;
   const snapshot = await inspectMergeEnforcement({
     repository: 'link-foundation/meta-language', pullRequest: 196,
-    rulesetQuery: (args) => githubQuery(args, { token: rulesetToken }),
+    ...(rulesetToken ? { rulesetQuery: (args) => githubQuery(args, { token: rulesetToken }) } : {}),
   });
   snapshot.rulesetCredential = rulesetToken ? 'ISSUE_195_RULESET_TOKEN' : 'GH_TOKEN';
   const acceptanceWorkflow = await readFile(path.join(root, '.github/workflows/issue-195-acceptance.yml'), 'utf8');
