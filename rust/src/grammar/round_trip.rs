@@ -399,7 +399,7 @@ fn definitions(grammar: &Grammar) -> Result<Vec<String>, GrammarRoundTripError> 
 /// The meaning-aware definition of a rule, after spelling every set of single
 /// characters as one unordered choice: a character class, a choice of its
 /// ranges and an ordered choice of them all consume the same one character.
-fn rule_definition(rule: &GrammarRule) -> Result<String, GrammarRoundTripError> {
+pub(crate) fn rule_definition(rule: &GrammarRule) -> Result<String, GrammarRoundTripError> {
     let canonical = GrammarRule {
         expr: canonical_characters(&rule.expr),
         ..rule.clone()

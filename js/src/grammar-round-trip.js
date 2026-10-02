@@ -7,7 +7,7 @@
 // both the imported and the re-imported grammar against independent accept
 // and reject samples that do not come from the pair under test. It mirrors
 // rust/src/grammar/round_trip.rs.
-import { Grammar, parseWithGrammar } from './grammar.js';
+import { carryRuleDocs, Grammar, parseWithGrammar } from './grammar.js';
 import { normalizedRuleDefinition } from './grammar-merge.js';
 
 /** The literal alternative the guard adds to the start rule by default. */
@@ -33,7 +33,7 @@ export function mutateGrammarStartRule(grammar, marker = GRAMMAR_ROUND_TRIP_MARK
       expression: { kind: 'choice', items: alternatives, ordered: grammar.sourceFormat === 'peg' },
     });
   }
-  return new Grammar(grammar.start, rules, grammar.sourceFormat);
+  return carryRuleDocs(new Grammar(grammar.start, rules, grammar.sourceFormat), grammar);
 }
 
 /**
@@ -107,14 +107,14 @@ function compareRules(failures, expected, actual) {
   }
   for (const name of expectedNames) {
     const rule = actual.rule(name);
-    if (rule && ruleDefinition(rule) !== ruleDefinition(expected.rule(name))) {
+    if (rule && canonicalRuleDefinition(rule) !== canonicalRuleDefinition(expected.rule(name))) {
       failures.push({ kind: 'rules-changed', stage: 'reimported', detail: `rule ${name} changed its definition` });
     }
   }
 }
 
 function sameDefinitions(expected, actual) {
-  const definitions = (grammar) => grammar.ruleNames().map((name) => `${name}=${ruleDefinition(grammar.rule(name))}`);
+  const definitions = (grammar) => grammar.ruleNames().map((name) => `${name}=${canonicalRuleDefinition(grammar.rule(name))}`);
   return definitions(expected).join('\n') === definitions(actual).join('\n');
 }
 
@@ -123,7 +123,7 @@ function sameDefinitions(expected, actual) {
  * characters as one unordered choice: a character class, a choice of its
  * ranges and an ordered choice of them all consume the same one character.
  */
-function ruleDefinition(rule) {
+export function canonicalRuleDefinition(rule) {
   return normalizedRuleDefinition({ ...rule, expression: canonicalCharacters(rule.expression) });
 }
 
@@ -164,7 +164,8 @@ function checkSamples(failures, stage, grammar, accepts, rejects) {
   }
 }
 
-function acceptsText(grammar, text) {
+/** Whether `grammar` parses all of `text`. */
+export function acceptsText(grammar, text) {
   try {
     parseWithGrammar(grammar, text);
     return true;

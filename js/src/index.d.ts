@@ -1238,6 +1238,58 @@ export interface GrammarRoundTripOptions {
 }
 export function mutateGrammarStartRule(grammar: Grammar, marker?: string): Grammar;
 export function checkGrammarRoundTrip(source: string, options: GrammarRoundTripOptions): GrammarRoundTripReport;
+export function canonicalRuleDefinition(rule: GrammarRuleValue): string;
+export function acceptsText(grammar: Grammar, text: string): boolean;
+export function carryRuleDocs(target: Grammar, source: Grammar, rename?: (name: string) => string): Grammar;
+export function percentEncodeLinksText(value: string): string;
+export function percentDecodeLinksText(value: string): string;
+export function renderGrammarLinks(grammar: Grammar): string;
+export function renderRuleLink(grammar: Grammar, rule: GrammarRuleValue): string;
+export function renderLinksExpression(expression: GrammarExpression): string;
+export function parseLinksExpression(value: unknown): GrammarExpression;
+export function parseGrammarLinks(source: string): Grammar;
+export interface GrammarReverseFailure {
+  kind: 'links-not-faithful' | 'lossy-export' | 'rules-changed' | 'doc-changed' | 'sample-rejected' | 'sample-accepted';
+  stage: 'imported' | 'links' | 'exported' | 'reimported';
+  detail: string;
+}
+export interface GrammarReverseReport {
+  status: 'equivalent' | 'different';
+  failures: GrammarReverseFailure[];
+  links: string;
+  exported: string;
+  reimportedLinks: string;
+}
+export function checkGrammarReverseConversion(
+  source: string,
+  options: Omit<GrammarRoundTripOptions, 'marker'>,
+): GrammarReverseReport;
+export type GrammarLosslessFormat = 'abnf' | 'antlr' | 'bnf' | 'ebnf' | 'gbnf' | 'lark' | 'pest' | 'tree-sitter-json';
+export const GRAMMAR_LOSSLESS_FORMATS: readonly GrammarLosslessFormat[];
+export interface GrammarSourceDefinition {
+  name: string;
+  text: string;
+  gap: string;
+}
+export interface GrammarLayoutDefinition extends GrammarSourceDefinition {
+  fingerprint: string;
+}
+export interface GrammarLayout {
+  format: GrammarLosslessFormat;
+  prefix: string;
+  members: GrammarLayoutDefinition[];
+  implicit: Array<{ name: string; fingerprint: string }>;
+}
+export function splitGrammarSource(
+  source: string,
+  format: GrammarLosslessFormat,
+  names: readonly string[],
+): { prefix: string; members: GrammarSourceDefinition[] };
+export function captureGrammarLayout(source: string, format: GrammarLosslessFormat, grammar: Grammar): GrammarLayout;
+export function importGrammarLossless(source: string, format: GrammarLosslessFormat): { grammar: Grammar; layout: GrammarLayout };
+export function emitGrammarLossless(grammar: Grammar, layout: GrammarLayout): GrammarEmitResult;
+export function renderGrammarLayoutLinks(layout: GrammarLayout): string;
+export function parseGrammarLayoutLinks(source: string): GrammarLayout;
 export type GrammarDiagnosticKind =
   | 'duplicate-rule'
   | 'undefined-non-terminal'

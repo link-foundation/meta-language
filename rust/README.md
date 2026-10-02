@@ -382,6 +382,16 @@ a problem was found (a validation error, an unresolved required merge
 equivalence or a broken round trip) and 2 on a usage or input error.
 `grammar help` lists every option.
 
+`check_grammar_reverse_conversion` checks the cycle source grammar -> native
+links -> exported grammar -> native links. The emitter only sees the grammar
+read back from `render_grammar_links`, and the re-imported export must keep
+every rule, kind, definition and documentation comment and give the same answers
+on the accept and reject samples. For an exact copy of the source,
+`import_grammar_lossless` also returns a `GrammarLayout` (definition texts,
+comments and spacing) that `render_grammar_layout_links` writes as links.
+`emit_grammar_lossless` then rebuilds the source byte for byte and writes only
+changed or new rules fresh.
+
 ## Grammar subsystem
 
 The grammar layer stores authored, imported, inferred, translated, and generated

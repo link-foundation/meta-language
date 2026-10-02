@@ -22,8 +22,20 @@ use super::merge::{GrammarMergeOptions, GrammarMergeSource, merge_grammars, rena
 use super::round_trip::{GrammarRoundTrip, GrammarRoundTripError, check_grammar_round_trip};
 use super::validate::{Severity, validate};
 
+mod links;
+mod lossless;
 mod native;
 
+pub use links::{
+    parse_grammar_links, parse_links_expression, percent_decode_links_text,
+    percent_encode_links_text, render_grammar_links, render_links_expression, render_rule_link,
+};
+pub use lossless::{
+    GRAMMAR_LOSSLESS_FORMATS, GrammarLayout, GrammarLayoutDefinition, GrammarLayoutImplicit,
+    GrammarLosslessError, GrammarSourceDefinition, GrammarSourceSplit, capture_grammar_layout,
+    emit_grammar_lossless, import_grammar_lossless, parse_grammar_layout_links,
+    render_grammar_layout_links, split_grammar_source,
+};
 pub use native::{parse_native_grammar, render_native_expression, render_native_grammar};
 
 /// Imports a grammar from one notation.

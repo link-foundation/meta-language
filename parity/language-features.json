@@ -557,6 +557,30 @@
       }
     },
     {
+      "id": "grammar-reverse-conversion",
+      "required": true,
+      "rust": {
+        "status": "implemented",
+        "evidence": [
+          "rust/src/grammar/reverse.rs",
+          "rust/src/grammar/interchange/links.rs",
+          "rust/src/grammar/interchange/lossless.rs",
+          "rust/tests/unit/issue_195_interchange_reverse_conversion.rs",
+          "parity/fixtures/grammar-importers.json"
+        ]
+      },
+      "javascript": {
+        "status": "implemented",
+        "evidence": [
+          "js/src/grammar-reverse.js",
+          "js/src/grammar-links.js",
+          "js/src/grammar-lossless.js",
+          "js/tests/issue-195-interchange-reverse-conversion.test.js",
+          "parity/fixtures/grammar-importers.json"
+        ]
+      }
+    },
+    {
       "id": "javascript-parser-codegen",
       "required": true,
       "rust": {

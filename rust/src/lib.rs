@@ -126,9 +126,15 @@ pub use grammar::{
 };
 pub use grammar::{FORMER_GRAMMAR_CONSTRUCTS, current_grammar_construct};
 pub use grammar::{
-    GRAMMAR_COMMAND_USAGE, GRAMMAR_EXPORT_FORMATS, GRAMMAR_IMPORT_FORMATS, GrammarCommandOutput,
-    GrammarEmitter, GrammarFileReader, GrammarImporter, grammar_emitter, grammar_importer,
-    parse_native_grammar, render_native_expression, render_native_grammar, run_grammar_command,
+    GRAMMAR_COMMAND_USAGE, GRAMMAR_EXPORT_FORMATS, GRAMMAR_IMPORT_FORMATS,
+    GRAMMAR_LOSSLESS_FORMATS, GrammarCommandOutput, GrammarEmitter, GrammarFileReader,
+    GrammarImporter, GrammarLayout, GrammarLayoutDefinition, GrammarLayoutImplicit,
+    GrammarLosslessError, GrammarSourceDefinition, GrammarSourceSplit, capture_grammar_layout,
+    emit_grammar_lossless, grammar_emitter, grammar_importer, import_grammar_lossless,
+    parse_grammar_layout_links, parse_grammar_links, parse_links_expression, parse_native_grammar,
+    percent_decode_links_text, percent_encode_links_text, render_grammar_layout_links,
+    render_grammar_links, render_links_expression, render_native_expression, render_native_grammar,
+    render_rule_link, run_grammar_command, split_grammar_source,
 };
 pub use grammar::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
@@ -144,6 +150,11 @@ pub use grammar::{
     GrammarRoundTripError, GrammarRoundTripFailure, GrammarRoundTripFailureKind,
     GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus,
     check_grammar_round_trip, mutate_grammar_start_rule,
+};
+pub use grammar::{
+    GrammarReverseConversion, GrammarReverseFailure, GrammarReverseFailureKind,
+    GrammarReverseReport, GrammarReverseStage, GrammarReverseStatus,
+    check_grammar_reverse_conversion,
 };
 #[cfg(feature = "llm-assist")]
 pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};

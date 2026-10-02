@@ -86,6 +86,17 @@ The same commands are available as a library through `runGrammarCommand(args,
 `grammarEmitter`, `validateGrammar`, `renderNativeGrammar` and
 `parseNativeGrammar`. `meta-language grammar help` lists every command.
 
+`checkGrammarReverseConversion(source, { importGrammar, emitGrammar, accepts,
+rejects })` checks the cycle source grammar -> native links -> exported grammar
+-> native links. The emitter only sees the grammar read back from
+`renderGrammarLinks`, and the re-imported export must keep every rule, kind,
+definition and documentation comment and give the same answers on the accept
+and reject samples. For an exact copy of the source, `importGrammarLossless(source,
+format)` also returns a layout (definition texts, comments and spacing) that
+`renderGrammarLayoutLinks` writes as links. `emitGrammarLossless(grammar,
+layout)` then rebuilds the source byte for byte and writes only changed or new
+rules fresh.
+
 ## Parity
 
 Every feature in [`../parity/language-features.json`](../parity/language-features.json)

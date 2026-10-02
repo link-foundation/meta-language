@@ -31,6 +31,7 @@ pub mod inference;
 pub mod interchange;
 mod links;
 pub mod merge;
+pub mod reverse;
 pub mod round_trip;
 pub mod runtime;
 pub mod surface;
@@ -96,9 +97,15 @@ pub use inference::semantic::{
 pub use inference::sequitur::{Symbol, run_sequitur};
 pub use inference::state_merging::{InferredAutomaton, MergeStrategy, Sample, infer_dfa};
 pub use interchange::{
-    GRAMMAR_COMMAND_USAGE, GRAMMAR_EXPORT_FORMATS, GRAMMAR_IMPORT_FORMATS, GrammarCommandOutput,
-    GrammarEmitter, GrammarFileReader, GrammarImporter, grammar_emitter, grammar_importer,
-    parse_native_grammar, render_native_expression, render_native_grammar, run_grammar_command,
+    GRAMMAR_COMMAND_USAGE, GRAMMAR_EXPORT_FORMATS, GRAMMAR_IMPORT_FORMATS,
+    GRAMMAR_LOSSLESS_FORMATS, GrammarCommandOutput, GrammarEmitter, GrammarFileReader,
+    GrammarImporter, GrammarLayout, GrammarLayoutDefinition, GrammarLayoutImplicit,
+    GrammarLosslessError, GrammarSourceDefinition, GrammarSourceSplit, capture_grammar_layout,
+    emit_grammar_lossless, grammar_emitter, grammar_importer, import_grammar_lossless,
+    parse_grammar_layout_links, parse_grammar_links, parse_links_expression, parse_native_grammar,
+    percent_decode_links_text, percent_encode_links_text, render_grammar_layout_links,
+    render_grammar_links, render_links_expression, render_native_expression, render_native_grammar,
+    render_rule_link, run_grammar_command, split_grammar_source,
 };
 pub use merge::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
@@ -108,6 +115,11 @@ pub use merge::{
     GrammarMergeResult, GrammarMergeSource, GrammarRenameError, GrammarRenameErrorKind,
     MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
     normalized_rule_definition, rename_grammar_rule, restore_source_names,
+};
+pub use reverse::{
+    GrammarReverseConversion, GrammarReverseFailure, GrammarReverseFailureKind,
+    GrammarReverseReport, GrammarReverseStage, GrammarReverseStatus,
+    check_grammar_reverse_conversion,
 };
 pub use round_trip::{
     GRAMMAR_ROUND_TRIP_MARKER, GrammarEmitFn, GrammarImportFn, GrammarRoundTrip,
