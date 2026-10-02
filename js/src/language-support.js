@@ -46,7 +46,7 @@ const SUPPORT = Object.freeze([
   language({
     name: 'Rocq',
     aliases: ['rocq', 'coq'],
-    version: 'Rocq 9.2',
+    version: 'Rocq 9.3',
     edition: 'Vernacular',
     extensions: ['.v'],
     proofSyntax: RepresentationLevel.Parsed,
@@ -127,7 +127,7 @@ function runtimeFor(languageName) {
     return 'Lean 4.34.1 kernel and project environment';
   }
   if (languageName === 'Rocq') {
-    return 'Rocq 9.2 kernel and project environment';
+    return 'Rocq 9.3 kernel and project environment';
   }
   if (languageName === 'Rust') {
     return 'Rust 1.98.1, edition 2024';

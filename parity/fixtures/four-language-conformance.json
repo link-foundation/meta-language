@@ -52,7 +52,7 @@
     {
       "name": "Rocq",
       "aliases": ["rocq", "coq"],
-      "version": "Rocq 9.2",
+      "version": "Rocq 9.3",
       "edition": "Vernacular",
       "extensions": [".v"],
       "capabilities": { "bindingResolution": "parsed", "typeElaboration": "unavailable", "dynamicExtensions": "parsed", "proofSyntax": "parsed" },
@@ -2332,7 +2332,7 @@
         ]
       },
       "Rocq": {
-        "runtime": "Rocq 9.2",
+        "runtime": "Rocq 9.3",
         "proof": true,
         "forbidden": [
           "Admitted",

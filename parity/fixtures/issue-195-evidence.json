@@ -262,7 +262,7 @@
       "command": "rocq compile",
       "extension": ".v",
       "tool": "rocq",
-      "declaredVersion": "9.2",
+      "declaredVersion": "9.3",
       "rejectedSuffix": "\nLemma rejected : 1 = 2. Proof. reflexivity. Qed.\n"
     }
   },

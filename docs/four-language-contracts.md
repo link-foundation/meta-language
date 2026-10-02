@@ -14,7 +14,7 @@ transform or translation.
 | JavaScript | `javascript`, `js`, `ecmascript` | ECMAScript 2026 | ECMA-262, 17th edition | `.js`, `.mjs`, `.cjs` |
 | Rust | `rust`, `rs` | Rust 1.98.1 | 2024 | `.rs` |
 | Lean | `lean`, `lean4` | Lean 4.34.1 | Lean 4 | `.lean` |
-| Rocq | `rocq`, `coq` | Rocq 9.2 | Vernacular | `.v` |
+| Rocq | `rocq`, `coq` | Rocq 9.3 | Vernacular | `.v` |
 
 Extensions are declared metadata. Parsing is selected by canonical name or
 alias, or through `ParserRegistry`; it is not inferred from a filename.
@@ -90,7 +90,7 @@ other form or directed pair is claimed to preserve behavior.
 | JavaScript | ECMAScript 2026 host |
 | Rust | Rust 1.98.1, edition 2024 |
 | Lean | Lean 4.34.1 kernel and project environment |
-| Rocq | Rocq 9.2 kernel and project environment |
+| Rocq | Rocq 9.3 kernel and project environment |
 
 For the default `portable-encoding` result, the observation is exact source
 bytes after decoding. It does not preserve target behavior. The encoding is

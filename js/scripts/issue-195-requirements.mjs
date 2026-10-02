@@ -37,7 +37,7 @@ const FOUR_LANGUAGE_DETAILS = Object.freeze({
   JavaScript: { version: 'ECMAScript 2026', edition: 'ECMA-262, 17th edition' },
   Rust: { version: '1.98.1', edition: '2024' },
   Lean: { version: '4.34.1', edition: 'Lean 4' },
-  Rocq: { version: '9.2', edition: 'Vernacular' },
+  Rocq: { version: '9.3', edition: 'Vernacular' },
 });
 
 export const ASSERTION_PROFILES = Object.freeze({

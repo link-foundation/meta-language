@@ -169,7 +169,7 @@ function runtimeDependencies(targetLanguage, code) {
   }
   const libraries = [...code.matchAll(/^From ([A-Za-z]+) Require Import ([^.\n]+)\.$/gmu)]
     .flatMap((match) => match[2].trim().split(/\s+/u).map((module) => `${match[1]}.${module}`));
-  return ['Rocq 9.2', ...libraries];
+  return ['Rocq 9.3', ...libraries];
 }
 
 function envelopeTranslation(text, sourceSupport, targetSupport, contract, diagnostic) {

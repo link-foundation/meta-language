@@ -262,7 +262,7 @@ fn runtime_dependencies(target_language: &str, code: &str) -> Vec<String> {
             );
         }
         _ => {
-            dependencies.push("Rocq 9.2".to_owned());
+            dependencies.push("Rocq 9.3".to_owned());
             for line in code.lines() {
                 let Some(rest) = line.strip_prefix("From ") else {
                     continue;
