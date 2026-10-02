@@ -617,12 +617,22 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-DOWNSTREAM-RML-WORKLOADS',
     area: 'downstream-consumers',
     specification: 'downstream-consumers',
+    fixture: 'parity/fixtures/rml-pr184-workloads.json',
     construct: 'relative-meta-logic workloads on clean installed artifacts',
     expectedBehavior:
       'The relative-meta-logic workloads (parse -> common links -> semantic transformation or translation -> emission) run against clean installed artifacts of both packages, reuse shared concepts and preserve language-specific distinctions, without meta-language taking over RML foundations or proof authority.',
     assertions: ['workloadsRunOnInstalledArtifacts', 'sharedConceptsReused', 'distinctionsPreserved', 'foundationAuthorityStaysInRml'],
-    javascript: null,
-    rust: null,
+    javascript: [
+      'js/scripts/run-rml-pr184-workloads.mjs',
+      'js/scripts/issue-195-rml-workloads.mjs',
+      'js/scripts/issue-195-rml-workload-probes.mjs',
+      'js/tests/issue-195-downstream-rml-workloads.test.js',
+    ],
+    rust: [
+      'js/scripts/run-rml-pr184-workloads.mjs',
+      'js/scripts/issue-195-rml-workload-probes.mjs',
+      'rust/tests/unit/issue_195_downstream_rml_workloads.rs',
+    ],
   },
   {
     id: 'I195-DOWNSTREAM-RML-PR184-AUDIT',
