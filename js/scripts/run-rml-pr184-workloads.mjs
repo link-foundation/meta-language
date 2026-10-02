@@ -267,6 +267,8 @@ async function rustWorkloads(rmlDirectory) {
   const environment = {
     ...childEnvironment(),
     CARGO_TARGET_DIR: target,
+    // CI exports CARGO_TERM_COLOR=always; plain output keeps the libtest transcript parseable.
+    CARGO_TERM_COLOR: 'never',
     ISSUE_195_RML_PROBE_DIRECTORY: probeDirectory,
   };
 
@@ -377,9 +379,11 @@ function dependencyDirection(metadata, metaLanguageId) {
   });
 }
 
+// An RML item is reached through a Rust path or an extern crate; the upstream name in provenance strings
+// and comments (the parity corpus credits relative-meta-logic examples) names no item.
 async function crateNamesNoRmlItem(crateSource) {
   const files = (await rustSources(path.join(crateSource, 'src')))
-    .filter(({ text }) => /\brml::|relative[-_]meta[-_]logic/u.test(text))
+    .filter(({ text }) => /\b(?:rml|relative_meta_logic)\s*::|\bextern\s+crate\s+(?:rml|relative_meta_logic)\b/u.test(text))
     .map(({ file }) => path.relative(crateSource, file).split(path.sep).join('/'));
   return check('the unpacked crate names no RML item', { holds: files.length === 0, detail: { files } });
 }
@@ -402,7 +406,8 @@ async function onlyBridgesNameMetaLanguage(rmlDirectory) {
 function libtestOutcomes(text) {
   const outcomes = [];
   let file = null;
-  for (const line of text.split(/\r?\n/u)) {
+  // Strip ANSI styling in case a caller's environment forces coloured cargo output.
+  for (const line of text.replace(/\u001b\[[0-9;]*m/gu, '').split(/\r?\n/u)) {
     const running = /^\s*Running (?:unittests )?(\S+\.rs)\b/u.exec(line);
     if (running) {
       file = `rust/${running[1].split('\\').join('/')}`;
