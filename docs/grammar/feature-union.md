@@ -483,6 +483,14 @@ a repair point, a failing element yields two results:
   matches, behind an ERROR leaf over the skipped bytes, at a cost of one per
   skipped byte.
 
+A sequence continues after a MISSING leaf at a repair point with the
+elements and rules that follow, which may repair the same offset. A second
+continuation after a MISSING leaf at that offset, inside the first, is matched
+quietly. So `(MISSING@4 argument) (filename (MISSING@4 word))` stands, but
+chains of zero-width MISSING leaves, which would make every rule
+left-recursive at the offset, are never built. Calls inside the first
+continuation are memoized apart from the same calls made in the open.
+
 Trailing input that a result leaves unmatched becomes an ERROR leaf. The
 result counts as complete when that input starts at a repair point. Otherwise
 it costs one per byte and is kept as the partial tree. The cheapest complete

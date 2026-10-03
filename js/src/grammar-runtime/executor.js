@@ -241,6 +241,8 @@ export class Executor {
     this.callStack = [];
     this.triviaMemo = new Map();
     this.operandMemo = new Map();
+    // The repair points where a continuation after a MISSING leaf is open.
+    this.chained = new Set();
     this.scannerMemo = new Map();
     this.embedMemo = new Map();
     this.farthest = begin;
@@ -431,6 +433,25 @@ export class Executor {
     }
   }
 
+  // The results of `item` after `left`. While repairing, a sequence may
+  // continue after a MISSING leaf at a repair point, repairing what follows,
+  // but what follows may not do so again at that offset: a second
+  // continuation there is matched quietly. Chains of zero-width MISSING
+  // leaves, which would make every rule left-recursive at that offset, are so
+  // never built.
+  continuation(item, left, inToken) {
+    if (!this.repairPoints?.has(left.end)) return this.evaluate(item, left.end, left.state, inToken);
+    const last = left.children[left.children.length - 1];
+    if (last?.type !== 'missing' || last.start !== left.end) return this.evaluate(item, left.end, left.state, inToken);
+    if (this.chained.has(left.end)) return this.quietly(() => this.evaluate(item, left.end, left.state, inToken));
+    this.chained.add(left.end);
+    try {
+      return this.evaluate(item, left.end, left.state, inToken);
+    } finally {
+      this.chained.delete(left.end);
+    }
+  }
+
   // `keep`, when given, filters the complete sequences before they are
   // deduplicated, so a precedence filter never loses a valid parse to an
   // invalid one that reached the same end first.
@@ -440,7 +461,7 @@ export class Executor {
       const next = new Map();
       const last = index === items.length - 1;
       for (const left of current) {
-        for (const right of this.evaluate(item, left.end, left.state, inToken)) {
+        for (const right of this.continuation(item, left, inToken)) {
           const joined = joinResults(left, right, inToken);
           if (last && keep && !keep(joined)) continue;
           addResult(next, joined, this.longestTokens);
@@ -518,7 +539,7 @@ export class Executor {
       if (max !== null && count >= max) break;
       const next = new Map();
       for (const left of frontier) {
-        for (const right of this.evaluate(item, left.end, left.state, inToken)) {
+        for (const right of this.continuation(item, left, inToken)) {
           if (zeroWidth(left, right)) {
             // Zero-width iterations can pad up to the minimum once.
             if (count < min) addResult(results, join(left, right), this.longestTokens);
@@ -747,9 +768,10 @@ export class Executor {
       this.fail(position, rule.nodeKind);
       return [];
     }
-    // While repairing, a call made quietly (where nothing is repaired) is
-    // memoized apart from the same call made in the open.
-    const quiet = this.repairPoints && this.suppressed > 0 ? '|quiet' : '';
+    // While repairing, a call made quietly (where nothing is repaired) or
+    // after a MISSING leaf at its offset is memoized apart from the same call
+    // made in the open.
+    const quiet = !this.repairPoints ? '' : this.suppressed > 0 ? '|quiet' : this.chained.has(position) ? '|chained' : '';
     const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}${quiet}`;
     const known = this.memo.get(key);
     if (known) {

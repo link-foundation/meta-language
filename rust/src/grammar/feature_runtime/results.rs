@@ -446,5 +446,14 @@ pub(super) struct Scanned {
 }
 
 /// A rule call: rule index, offset, state, in a token, and, while
-/// repairing, made quietly (where nothing is repaired).
-pub(super) type MemoKey = (usize, usize, State, bool, bool);
+/// repairing, how it is made.
+pub(super) type MemoKey = (usize, usize, State, bool, Repair);
+
+/// How a rule call is made while repairing: in the open, quietly (where
+/// nothing is repaired), or after a MISSING leaf at its offset.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub(super) enum Repair {
+    Open,
+    Quiet,
+    Chained,
+}

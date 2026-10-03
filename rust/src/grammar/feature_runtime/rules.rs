@@ -39,14 +39,15 @@ impl Executor<'_> {
             self.fail(position, &rule.node_kind);
             return Ok(Vec::new());
         }
-        // While repairing, a call made quietly (where nothing is repaired) is
-        // memoized apart from the same call made in the open.
+        // While repairing, a call made quietly (where nothing is repaired) or
+        // after a MISSING leaf at its offset is memoized apart from the same
+        // call made in the open.
         let key = (
             index,
             position,
             state.clone(),
             in_token,
-            self.quiet_repair(),
+            self.repair_mode(position),
         );
         if let Some(known) = self.memo.get(&key).cloned() {
             let seed = {

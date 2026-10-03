@@ -17,8 +17,8 @@ use std::rc::Rc;
 use super::operations::{Abort, Machine, OpError, OpResult, State, Working, evaluate_condition};
 use super::program::{Associativity, Compiled, Expr, Matcher, Name, Program, Target};
 use super::results::{
-    Children, Entry, MemoKey, Outcome, Res, ResultSet, Scanned, Shared, Skipped, Tree, TreeType,
-    children_of, concat, content_start, longest_result, no_children, with_leaf,
+    Children, Entry, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared, Skipped, Tree,
+    TreeType, children_of, concat, content_start, longest_result, no_children, with_leaf,
 };
 use super::text::{column_of, decode_at, text_of};
 use crate::grammar::RuleKind;
@@ -93,6 +93,8 @@ pub(super) struct Executor<'c> {
     /// and the farthest offset where an element failed without a repair.
     pub(super) repair_points: Option<HashSet<usize>>,
     pub(super) element_farthest: Option<usize>,
+    /// The repair points where a continuation after a MISSING leaf is open.
+    chained: HashSet<usize>,
 }
 
 impl<'c> Executor<'c> {
@@ -129,6 +131,7 @@ impl<'c> Executor<'c> {
             suppressed: 0,
             repair_points: None,
             element_farthest: None,
+            chained: HashSet::new(),
         }
     }
 
@@ -163,10 +166,19 @@ impl<'c> Executor<'c> {
         result
     }
 
-    /// Whether a rule call is made quietly while repairing, so it is
-    /// memoized apart from the same call made in the open.
-    pub(super) const fn quiet_repair(&self) -> bool {
-        self.repair_points.is_some() && self.suppressed > 0
+    /// How a rule call at `position` is made while repairing, so a call made
+    /// quietly or after a MISSING leaf is memoized apart from the same call
+    /// made in the open.
+    pub(super) fn repair_mode(&self, position: usize) -> Repair {
+        if self.repair_points.is_none() {
+            Repair::Open
+        } else if self.suppressed > 0 {
+            Repair::Quiet
+        } else if self.chained.contains(&position) {
+            Repair::Chained
+        } else {
+            Repair::Open
+        }
     }
 
     /// Automatic recovery. An element (a terminal, a token, a token or atomic
@@ -518,6 +530,34 @@ impl<'c> Executor<'c> {
         }
     }
 
+    // The results of `item` after `left`. While repairing, a sequence may
+    // continue after a MISSING leaf at a repair point, repairing what follows,
+    // but what follows may not do so again at that offset: a second
+    // continuation there is matched quietly. Chains of zero-width MISSING
+    // leaves, which would make every rule left-recursive at that offset, are
+    // so never built.
+    fn continuation(&mut self, item: &Expr, left: &Res, in_token: bool) -> Run<Vec<Res>> {
+        let repaired = self
+            .repair_points
+            .as_ref()
+            .is_some_and(|points| points.contains(&left.end))
+            && left
+                .children
+                .last()
+                .is_some_and(|last| last.ty == TreeType::Missing && last.start == left.end);
+        if !repaired {
+            return self.evaluate(item, left.end, &left.state, in_token);
+        }
+        if self.chained.contains(&left.end) {
+            return self
+                .quietly(|executor| executor.evaluate(item, left.end, &left.state, in_token));
+        }
+        self.chained.insert(left.end);
+        let results = self.evaluate(item, left.end, &left.state, in_token);
+        self.chained.remove(&left.end);
+        results
+    }
+
     // `keep`, when given, filters the complete sequences before they are
     // deduplicated, so a precedence filter never loses a valid parse to an
     // invalid one that reached the same end first.
@@ -534,7 +574,7 @@ impl<'c> Executor<'c> {
             let mut next = ResultSet::new(self.longest_tokens);
             let last = index == items.len() - 1;
             for left in &current {
-                for right in self.evaluate(item, left.end, &left.state, in_token)? {
+                for right in self.continuation(item, left, in_token)? {
                     let joined = Res::join(left, right, in_token);
                     if last
                         && let Some(keep) = keep
@@ -660,7 +700,7 @@ impl<'c> Executor<'c> {
             }
             let mut next = ResultSet::new(self.longest_tokens);
             for left in &frontier {
-                for right in self.evaluate(item, left.end, &left.state, in_token)? {
+                for right in self.continuation(item, left, in_token)? {
                     if zero_width(left, &right) {
                         // Zero-width iterations can pad up to the minimum once.
                         if count < min {

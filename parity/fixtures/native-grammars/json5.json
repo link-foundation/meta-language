@@ -1831,7 +1831,7 @@
     },
     {
       "source": "{\"a\" 1}",
-      "recovered": "(file (object \"{\" (member name:(string \"\\\"a\\\"\") ~\" \" (MISSING@5 \":\") value:(object (MISSING@5 \"{\") (MISSING@5 \"}\"))) (ERROR@5..6 \"1\") \"}\"))"
+      "recovered": "(file (object \"{\" (member name:(string \"\\\"a\\\"\") ~\" \" (MISSING@5 \":\") value:(number \"1\")) \"}\"))"
     },
     {
       "source": "{1:1}",
