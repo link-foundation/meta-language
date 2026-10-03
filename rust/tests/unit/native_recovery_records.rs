@@ -234,7 +234,7 @@ fn native_recovery_records_have_justified_categories_that_follow_from_their_site
         );
     }
     let cases = file["cases"].as_array().expect("cases");
-    assert!(!cases.is_empty());
+    assert_ne!(cases.len(), 0);
     for record in cases {
         let category = record["category"].as_str().expect("category");
         assert!(categories.contains_key(category), "{record}");
