@@ -577,6 +577,8 @@ export class Executor {
     // and the farthest offset where an element failed without a repair.
     this.repairPoints = null;
     this.elementFarthest = -1;
+    // The scan past each failing element at a repair point (see elementFailed).
+    this.repairMemo = new Map();
     // Under `(matching longest)`, the keyword lexing of the parse (see
     // `KeywordLexing`), or none.
     this.keywords = null;
@@ -616,23 +618,34 @@ export class Executor {
   // offset after trivia, is noted; at a repair point it yields instead a
   // zero-width MISSING leaf and, when `retry` matches the element at a later
   // code point boundary, a result that skips the bytes up to the first such
-  // offset as an ERROR leaf.
-  elementFailed(start, leaves, state, missing, retry) {
+  // offset as an ERROR leaf. The scan for that offset depends only on the
+  // element, `start` and the state, so it is made once per `element` (the
+  // expression, rule or scanner token that failed) there.
+  elementFailed(start, leaves, state, missing, element, retry) {
     if (this.suppressed > 0) return [];
     if (!this.repairPoints?.has(start)) {
       if (start > this.elementFarthest) this.elementFarthest = start;
       return [];
     }
     const results = [makeResult(start, state, [...leaves, { type: 'missing', start, end: start, ...missing }], 0, MISSING_COST)];
-    for (let cursor = start; cursor < this.end;) {
-      cursor += decodeAt(this.bytes, cursor, this.end).length;
-      const found = this.quietly(() => retry(cursor));
-      if (found.length === 0) continue;
-      const error = { type: 'error', start, end: cursor };
-      for (const result of found) {
-        results.push(copyResult(result, { children: [...leaves, error, ...result.children], cost: result.cost + cursor - start }));
+    let scans = this.repairMemo.get(element);
+    if (!scans) this.repairMemo.set(element, scans = new Map());
+    const key = `${start}|${state.key}|${this.inExtra}`;
+    let scan = scans.get(key);
+    if (!scan) {
+      scan = { end: -1, found: [] };
+      for (let cursor = start; cursor < this.end;) {
+        cursor += decodeAt(this.bytes, cursor, this.end).length;
+        const found = this.quietly(() => retry(cursor));
+        if (found.length === 0) continue;
+        scan = { end: cursor, found };
+        break;
       }
-      break;
+      scans.set(key, scan);
+    }
+    const error = { type: 'error', start, end: scan.end };
+    for (const result of scan.found) {
+      results.push(copyResult(result, { children: [...leaves, error, ...result.children], cost: result.cost + scan.end - start }));
     }
     return results;
   }
@@ -762,7 +775,7 @@ export class Executor {
     if (end < 0) {
       this.fail(start, expectationOf(expression));
       if (inToken) return [];
-      return this.elementFailed(start, leaves, state, missingOf(expression), (cursor) => this.terminal(expression, cursor, state, false));
+      return this.elementFailed(start, leaves, state, missingOf(expression), expression, (cursor) => this.terminal(expression, cursor, state, false));
     }
     const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind: separatorRunKind(expression, start, end), start, end }];
     return [makeResult(end, state, children)];
@@ -830,7 +843,7 @@ export class Executor {
         const results = [...found.values()];
         const { end: start, leaves } = starts[0];
         if (results.length > 0 || inToken) return results;
-        return this.elementFailed(start, leaves, state, missingOf(expression.item), (cursor) => this.evaluate(expression, cursor, state, false));
+        return this.elementFailed(start, leaves, state, missingOf(expression.item), expression, (cursor) => this.evaluate(expression, cursor, state, false));
       }
       case 'predicate': return this.predicate(expression, position, state, inToken);
       case 'recover': return this.recover(expression, position, state, inToken);
@@ -1219,7 +1232,7 @@ export class Executor {
     }
     if (!best) {
       if (inToken) return [];
-      return this.elementFailed(start, leaves, state, { kind: null }, (cursor) => this.longest(expression, cursor, state, false));
+      return this.elementFailed(start, leaves, state, { kind: null }, expression, (cursor) => this.longest(expression, cursor, state, false));
     }
     const kind = best.item.kind === 'ref' ? (this.program.rules.get(best.item.name)?.nodeKind ?? best.item.name) : null;
     const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind, start, end: best.result.end }];
@@ -1407,7 +1420,7 @@ export class Executor {
       if (built.length > 0) return built;
       this.fail(start, rule.nodeKind);
       if (inToken) return built;
-      return this.elementFailed(start, leaves, state, { kind: rule.nodeKind }, (cursor) => this.ruleBody(rule, cursor, state, false));
+      return this.elementFailed(start, leaves, state, { kind: rule.nodeKind }, rule, (cursor) => this.ruleBody(rule, cursor, state, false));
     }
     const results = this.evaluate(rule.expression, position, state, inToken);
     const built = [];
@@ -1509,7 +1522,7 @@ export class Executor {
     if (!scanned) {
       this.fail(start, name);
       if (inToken) return [];
-      return this.elementFailed(start, leaves, state, { kind: name }, (cursor) => this.scannerToken(name, cursor, state, false));
+      return this.elementFailed(start, leaves, state, { kind: name }, name, (cursor) => this.scannerToken(name, cursor, state, false));
     }
     const children = inToken ? NO_CHILDREN : [
       ...leaves,

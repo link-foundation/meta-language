@@ -4,7 +4,7 @@
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-use super::executor::{Executor, Run};
+use super::executor::{Element, Executor, Run};
 use super::operations::State;
 use super::program::{Expr, Matcher, Name, Target};
 use super::results::{
@@ -243,9 +243,15 @@ impl Executor<'_> {
                 }
                 _ => (None, false),
             };
-            return self.element_failed(start, leaves, state, kind, literal, |this, cursor| {
-                this.terminal(matcher, expectation, cursor, state, false)
-            });
+            return self.element_failed(
+                start,
+                leaves,
+                state,
+                kind,
+                literal,
+                Element::of(matcher),
+                |this, cursor| this.terminal(matcher, expectation, cursor, state, false),
+            );
         };
         let children = if in_token {
             no_children()

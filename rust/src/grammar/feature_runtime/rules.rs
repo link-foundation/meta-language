@@ -7,7 +7,7 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use super::executor::{Executor, Run};
+use super::executor::{Element, Executor, Run};
 use super::operations::{
     Abort, Machine, OpError, OpResult, OperationValue, State, Working, run_statements,
 };
@@ -230,6 +230,7 @@ impl Executor<'_> {
                 state,
                 Some(rule.node_kind.clone()),
                 false,
+                Element::of(rule),
                 |this, cursor| this.rule_body(rule, cursor, state, false),
             );
         }
@@ -375,6 +376,7 @@ impl Executor<'_> {
                 state,
                 Some(name.clone()),
                 false,
+                Element::Scanner(name.clone()),
                 |this, cursor| this.scanner_token(name, cursor, state, false),
             );
         };

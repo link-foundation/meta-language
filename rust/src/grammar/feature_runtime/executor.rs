@@ -30,6 +30,11 @@ use crate::grammar::RuleKind;
 /// The outcome of a step that a resource limit may end.
 pub(super) type Run<T> = Result<T, Abort>;
 
+/// The scans a repair point keeps, by the failing element, its offset, the
+/// state and whether it is inside an extra: the offset of the first later
+/// match and the results there.
+type RepairMemo = HashMap<(Element, usize, State, bool), Rc<(usize, Vec<Res>)>>;
+
 /// The evaluation frames a parse may nest before it is refused as too deep;
 /// the parse thread's stack holds this many with room to spare.
 const FRAME_LIMIT: usize = 20_000;
@@ -83,11 +88,28 @@ pub(super) struct Executor<'c> {
     /// and the farthest offset where an element failed without a repair.
     pub(super) repair_points: Option<HashSet<usize>>,
     pub(super) element_farthest: Option<usize>,
+    /// The scan past each failing element at a repair point: the offset of
+    /// its first later match and the results there (see `element_failed`).
+    pub(super) repair_memo: RepairMemo,
     /// The repair points where a continuation after a MISSING leaf is open.
     pub(super) chained: HashSet<usize>,
     /// Under `(matching longest)`, the keyword lexing of the parse (see
     /// `KeywordLexing`), or none.
     pub(super) keywords: Option<&'c RefCell<KeywordLexing>>,
+}
+
+/// An element whose scan a repair point keeps (see `element_failed`): an
+/// expression or a rule, by its address, or a scanner token, by its name.
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub(super) enum Element {
+    At(usize),
+    Scanner(Name),
+}
+
+impl Element {
+    pub(super) fn of<T: ?Sized>(element: &T) -> Self {
+        Self::At(std::ptr::from_ref(element).cast::<()>().addr())
+    }
 }
 
 impl<'c> Executor<'c> {
@@ -131,6 +153,7 @@ impl<'c> Executor<'c> {
             suppressed: 0,
             repair_points: None,
             element_farthest: None,
+            repair_memo: HashMap::new(),
             chained: HashSet::new(),
             keywords: None,
         }
@@ -187,7 +210,9 @@ impl<'c> Executor<'c> {
     /// offset after trivia, is noted; at a repair point it yields instead a
     /// zero-width MISSING leaf and, when `retry` matches the element at a
     /// later code point boundary, a result that skips the bytes up to the
-    /// first such offset as an ERROR leaf.
+    /// first such offset as an ERROR leaf. The scan for that offset depends
+    /// only on the element, `start` and the state, so it is made once per
+    /// `element` (the expression, rule or scanner token that failed) there.
     #[allow(clippy::too_many_arguments)]
     pub(super) fn element_failed(
         &mut self,
@@ -196,6 +221,7 @@ impl<'c> Executor<'c> {
         state: &State,
         kind: Option<Name>,
         literal: bool,
+        element: Element,
         mut retry: impl FnMut(&mut Self, usize) -> Run<Vec<Res>>,
     ) -> Run<Vec<Res>> {
         if self.suppressed > 0 {
@@ -219,23 +245,31 @@ impl<'c> Executor<'c> {
         let mut repaired = Res::new(start, state.clone(), with_leaf(leaves, missing), 0);
         repaired.cost = MISSING_COST;
         let mut results = vec![repaired];
-        let mut cursor = start;
-        while cursor < self.end {
-            cursor += decode_at(self.bytes, cursor, self.end).1;
-            let found = self.quietly(|this| retry(this, cursor))?;
-            if found.is_empty() {
-                continue;
+        let key = (element, start, state.clone(), self.in_extra);
+        let scan = if let Some(scan) = self.repair_memo.get(&key) {
+            scan.clone()
+        } else {
+            let mut scan = Rc::new((start, Vec::new()));
+            let mut cursor = start;
+            while cursor < self.end {
+                cursor += decode_at(self.bytes, cursor, self.end).1;
+                let found = self.quietly(|this| retry(this, cursor))?;
+                if !found.is_empty() {
+                    scan = Rc::new((cursor, found));
+                    break;
+                }
             }
-            let error: Children =
-                with_leaf(leaves, Tree::new(TreeType::Error, None, start, cursor));
-            for result in found {
-                results.push(Res {
-                    children: concat(&error, &result.children),
-                    cost: result.cost + cursor - start,
-                    ..result
-                });
-            }
-            break;
+            self.repair_memo.insert(key, scan.clone());
+            scan
+        };
+        let (end, found) = &*scan;
+        let error: Children = with_leaf(leaves, Tree::new(TreeType::Error, None, start, *end));
+        for result in found {
+            results.push(Res {
+                children: concat(&error, &result.children),
+                cost: result.cost + end - start,
+                ..result.clone()
+            });
         }
         Ok(results)
     }
@@ -363,6 +397,7 @@ impl<'c> Executor<'c> {
                     state,
                     kind,
                     literal,
+                    Element::of(expr),
                     |this, cursor| this.evaluate(expr, cursor, state, false),
                 )
             }
@@ -680,6 +715,7 @@ impl<'c> Executor<'c> {
                 state,
                 None,
                 false,
+                Element::of(items),
                 |this, cursor| this.longest(items, cursor, state, false),
             );
         };
