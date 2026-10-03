@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-10-02",
+  "reconciledAt": "2026-10-03",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -348,6 +348,18 @@
       "updatedAt": "2026-10-02T08:06:34Z",
       "bytes": 84,
       "sha256": "b690444348393b63f238b4402a451fe70acd3a038ec58c6cfc72e971acf8425e"
+    },
+    {
+      "id": 5963540961,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5963540961",
+      "title": "Clean Consumer uuid staleness diagnosis and CI status at 3ccbc41",
+      "role": "Solver status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-10-03T00:19:34Z",
+      "updatedAt": "2026-10-03T00:19:34Z",
+      "bytes": 1381,
+      "sha256": "22f888206680d84e926a8bec415989544ab14f4a434161919e0c8c1a33d11ac4"
     }
   ]
 }
