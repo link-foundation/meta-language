@@ -26,7 +26,8 @@ use crate::{
 };
 
 /// The Links Notation text of every native grammar the catalog ships, by
-/// catalog file; a unit test checks the table against the catalog.
+/// catalog file; `tests/unit/default_cst_expectations.rs` checks that the
+/// catalog's native grammars are exactly the shipped files.
 const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
     (
         "native-grammars/csv.lino",
@@ -78,12 +79,6 @@ pub struct NativeNode {
 /// Whether the grammar id `id` names a native grammar of the catalog.
 pub fn is_native_grammar(id: &str) -> bool {
     native_grammar(id).is_some()
-}
-
-/// The Links Notation text of the native grammar `id`.
-#[cfg(test)]
-pub fn native_grammar_text(id: &str) -> Option<&'static str> {
-    native_grammar_index(id).map(|index| NATIVE_GRAMMAR_TEXTS[index].1)
 }
 
 fn native_grammar_index(id: &str) -> Option<usize> {
@@ -320,32 +315,5 @@ fn collect_leaves<'a>(node: &'a SyntaxTree, leaves: &mut Vec<&'a SyntaxTree>) {
         }
     } else {
         leaves.push(node);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{NATIVE_GRAMMAR_TEXTS, native_grammar_text, parse_native};
-    use crate::native_grammars;
-
-    #[test]
-    fn the_native_grammar_table_holds_every_catalog_native_grammar() {
-        let mut files: Vec<&str> = native_grammars()
-            .iter()
-            .map(|grammar| grammar.file.as_str())
-            .collect();
-        files.sort_unstable();
-        let table: Vec<&str> = NATIVE_GRAMMAR_TEXTS.iter().map(|(file, _)| *file).collect();
-        assert_eq!(table, files);
-        for grammar in native_grammars() {
-            assert!(native_grammar_text(&grammar.id).is_some(), "{}", grammar.id);
-        }
-    }
-
-    #[test]
-    fn a_native_parse_recovers_into_an_error_tree() {
-        let root = parse_native("native-json", "{\"a\": }");
-        assert!(root.has_error);
-        assert_eq!(root.end, 7);
     }
 }

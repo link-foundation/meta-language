@@ -11,11 +11,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -23,6 +22,14 @@ jobs:
     name: Refresh Dependencies
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    # Only this job pushes the refresh branch and opens its pull request, and
+    # refreshes queue instead of cancelling one another mid-push.
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: dependency-refresh-${{ github.repository }}-write
+      cancel-in-progress: false
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7

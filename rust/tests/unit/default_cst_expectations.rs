@@ -43,6 +43,25 @@ fn expected_languages() -> serde_json::Map<String, Value> {
 }
 
 #[test]
+fn the_catalog_native_grammars_are_the_shipped_grammar_files() {
+    let directory = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/data");
+    let mut shipped: Vec<String> = std::fs::read_dir(directory.join("native-grammars"))
+        .expect("the native grammar directory")
+        .map(|entry| {
+            let name = entry.expect("an entry").file_name();
+            format!("native-grammars/{}", name.to_string_lossy())
+        })
+        .collect();
+    shipped.sort_unstable();
+    let mut files: Vec<&str> = meta_language::native_grammars()
+        .iter()
+        .map(|grammar| grammar.file.as_str())
+        .collect();
+    files.sort_unstable();
+    assert_eq!(files, shipped);
+}
+
+#[test]
 fn a_native_default_grammar_builds_the_trees_of_its_pinned_tree_sitter_oracle() {
     let oracle = parity_json("fixtures/default-cst-expected.json");
     let native = parity_json("fixtures/native-default-cst-expected.json");
