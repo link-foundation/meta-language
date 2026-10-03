@@ -67,7 +67,8 @@ const features = [
     title: 'precedence and associativity',
     listing: lines(
       'start e',
-      'rule e = normal choice(precedence(1, left, seq(ref(e), literal("+"), ref(e))), precedence(2, left, seq(ref(e), literal("*"), ref(e))), precedence(3, right, seq(ref(e), literal("^"), ref(e))), precedence(0, none, seq(ref(e), literal("="), ref(e))), precedence(4, left, seq(ref(e), literal("("), literal(")"))), precedence(5, left, seq(ref(e), literal("."), ref(n))), precedence(0, none, seq(literal("?"), ref(n), optional(ref(otherwise)))), precedence(0, none, seq(literal("#"), repeat0(ref(item)))), ref(n))',
+      'precedences name(and) name(or)',
+      'rule e = normal choice(precedence(1, left, seq(ref(e), literal("+"), ref(e))), precedence(2, left, seq(ref(e), literal("*"), ref(e))), precedence(3, right, seq(ref(e), literal("^"), ref(e))), precedence(0, none, seq(ref(e), literal("="), ref(e))), precedence(4, left, seq(ref(e), literal("("), literal(")"))), precedence(5, left, seq(ref(e), literal("."), ref(n))), precedence(0, none, seq(literal("?"), ref(n), optional(ref(otherwise)))), precedence(0, none, seq(literal("#"), repeat0(ref(item)))), namedPrecedence(and, left, seq(ref(e), literal("&"), ref(e))), namedPrecedence(or, left, seq(ref(e), literal("|"), ref(e))), ref(n))',
       'rule otherwise = normal precedence(0, none, seq(literal(":"), ref(n)))',
       'rule item = silent choice(ref(otherwise), seq(ref(n), literal(";")))',
       'rule n = token repeat1(range("0", "9"))',
@@ -78,13 +79,15 @@ const features = [
     // The child at the edge of an optional is one of its item: `:2` is an
     // `otherwise`, which `:` cannot be, so `?1:2` stands. A sequence a silent
     // rule inlines faces the operator with its first item, here an `n`, so
-    // `#1;:2` stands too.
-    positive: ['1+2*3', '1*2+3', '1+2+3', '2^3^4', '1+2=3', '1().2', '1+2.3', '?1:2', '#1;:2'],
+    // `#1;:2` stands too. Named precedences rank by the declared order, the
+    // earlier name the higher: `and` binds tighter than `or` either way round.
+    positive: ['1+2*3', '1*2+3', '1+2+3', '2^3^4', '1+2=3', '1().2', '1+2.3', '?1:2', '#1;:2', '1&2|3', '1|2&3'],
     negative: [{ input: '1=2=3' }, { input: '1+*2' }],
     mutation: {
       replace: ['precedence(1, left, seq(ref(e), literal("+"), ref(e)))', 'precedence(1, right, seq(ref(e), literal("+"), ref(e)))'],
       input: '1+2+3',
     },
+    mutations: [{ replace: ['precedences name(and) name(or)', 'precedences name(or) name(and)'], input: '1|2&3' }],
   },
   {
     id: 'ambiguity',

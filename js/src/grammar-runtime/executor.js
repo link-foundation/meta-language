@@ -32,6 +32,49 @@ const NO_CHILDREN = Object.freeze([]);
 // `lonePending`).
 const LONE = Symbol('lone operand');
 
+/**
+ * What a scanner's `(expected ITEM)` answers: whether the parse requested the
+ * item, a literal or a rule, at the scanner's context offset, as a tree-sitter
+ * scanner asks whether a token is valid in the parse state. The context of a
+ * token is the offset before the trivia its terminal skips, and of an extra
+ * the offset its trivia starts at. A request is recorded where the parse
+ * makes it, so one the scanner asks about before the parse made it was
+ * answered wrong: the parse is then `stale` and runs again, seeded with the
+ * requests so far. The requests only grow, so the runs end. One parse, its
+ * rounds and its embedded languages share one record; each item has a
+ * distinct id per program.
+ */
+export class Expectations {
+  constructor() {
+    this.requested = new Map();
+    this.consulted = new Map();
+    this.stale = false;
+  }
+
+  /** Starts a run of the parse, keeping the requests. */
+  restart() {
+    this.consulted = new Map();
+    this.stale = false;
+    return this;
+  }
+
+  request(position, id) {
+    let ids = this.requested.get(position);
+    if (!ids) this.requested.set(position, ids = new Set());
+    if (ids.has(id)) return;
+    ids.add(id);
+    if (this.consulted.get(position)?.has(id)) this.stale = true;
+  }
+
+  holds(position, id) {
+    if (this.requested.get(position)?.has(id)) return true;
+    let ids = this.consulted.get(position);
+    if (!ids) this.consulted.set(position, ids = new Set());
+    ids.add(id);
+    return false;
+  }
+}
+
 /** The step budget of one parse, shared with every embedded-language executor. */
 export function stepBudget(options, length) {
   return { steps: 0, limit: options.stepLimit ?? 100_000 + 1000 * length };
@@ -50,7 +93,8 @@ function resultKey(result) {
 
 // Adds a result to a deduplicating map: of two results with the same end
 // and state, the lower repair cost wins, then, under `(matching longest)`
-// (when `tokens` holds the token ranks and the input bytes), the tokens a
+// (when `tokens` holds the token ranks, the input bytes and the precedence
+// orders), the tokens a
 // lexer prefers (a lexer decides them before any parse does), then the
 // shift or reduction an LR parser keeps by precedence, then the higher
 // dynamic precedence; on a tie the first stays and,
@@ -64,7 +108,7 @@ function addResult(results, result, tokens = null) {
     return;
   }
   if (result.cost > existing.cost) return;
-  const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing) : 0;
+  const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing, tokens.orders) : 0;
   // A trace, off unless a probe sets the array (see
   // experiments/native-order-trace.mjs): every decided pair and its order.
   globalThis.__orderTrace?.push([result, existing, order]);
@@ -224,7 +268,32 @@ function sameRank(a, b) {
 // Whether two precedences are the same, or both none.
 function samePrecedence(a, b) {
   if (!a || !b) return !a && !b;
-  return a.level === b.level && a.associativity === b.associativity;
+  return a.level === b.level && a.name === b.name && a.associativity === b.associativity;
+}
+
+// The precedence of a production reduced or shifted under none: level 0,
+// ranked only by its rule's entries in the precedence orders.
+function unranked(rule = null) {
+  return { level: 0, name: null, associativity: 'none', rule };
+}
+
+// How precedence `a` compares with `b` (1 higher, -1 lower, 0 neither), as
+// tree-sitter's compare_precedence: two levels compare when either is
+// nonzero; otherwise the first of the `orders` with an entry for each
+// decides, the earlier entry higher. A `name` entry stands for a named
+// precedence, a `rule` entry for any precedence of the rule's productions.
+function comparePrecedence(a, b, orders) {
+  if (!a.name && !b.name && (a.level !== 0 || b.level !== 0)) return Math.sign(a.level - b.level);
+  const matches = (entry, tag) => (entry.kind === 'name' ? entry.value === tag.name : entry.value === tag.rule);
+  for (const order of orders ?? []) {
+    let [left, right] = [-1, -1];
+    for (const [position, entry] of order.entries()) {
+      if (matches(entry, a)) left = position;
+      if (matches(entry, b)) right = position;
+      if (left >= 0 && right >= 0) return Math.sign(right - left);
+    }
+  }
+  return 0;
 }
 
 // Which of two results over the same text an LR parser keeps when it decides
@@ -236,7 +305,7 @@ function samePrecedence(a, b) {
 // higher level wins and, on equal levels, the associativity of the reduced
 // node, right to shift and left to reduce. 1 when `result` is kept, -1 when
 // `existing` is, 0 when neither.
-function shiftOrder(result, existing) {
+function shiftOrder(result, existing, orders) {
   const left = [[result.children, 0, null]];
   const right = [[existing.children, 0, null]];
   const peek = (stack) => {
@@ -270,7 +339,7 @@ function shiftOrder(result, existing) {
       const pair = chainPair(a, b);
       if (pair && pair[0].end !== pair[1].end) {
         const [long, short, sign] = pair[0].end > pair[1].end ? [...pair, 1] : [pair[1], pair[0], -1];
-        return sign * shiftPreferred(long, short);
+        return sign * shiftPreferred(long, short, orders);
       }
       // The same node reduced on in two ways (Rust's `m!(x);` in a block, a
       // macro invocation that `_expression_except_range` reduces under
@@ -278,17 +347,16 @@ function shiftOrder(result, existing) {
       // `_declaration_statement` of level 0) conflicts at its end: the higher
       // level it was reduced with wins.
       if (pair) {
-        const first = pair[0].reduced?.level ?? 0;
-        const second = pair[1].reduced?.level ?? 0;
-        if (first !== second) return first > second ? 1 : -1;
+        const order = comparePrecedence(pair[0].reduced ?? unranked(), pair[1].reduced ?? unranked(), orders);
+        if (order !== 0) return order;
       }
     }
-    const lone = loneReduction(a, b) || -loneReduction(b, a);
+    const lone = loneReduction(a, b, orders) || -loneReduction(b, a, orders);
     if (lone !== 0) return lone;
-    const reduced = extraReduction(a, b, right) || -extraReduction(b, a, left);
+    const reduced = extraReduction(a, b, right, orders) || -extraReduction(b, a, left, orders);
     if (reduced !== 0) return reduced;
     if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
-      const parted = chainConflict(a, b);
+      const parted = chainConflict(a, b, orders);
       if (parted !== 0) return parted;
     }
     if (a.type !== 'node' && b.type !== 'node') return 0;
@@ -306,7 +374,7 @@ function shiftOrder(result, existing) {
 // reduced under a precedence (Rust's `_let_chain`, `let ... && c` of level 3
 // left before the `&&` of `c && d`) is reduced with that rule's precedence.
 // 1 when `a`'s result is kept, -1 when `b`'s is, 0 when neither.
-function loneReduction(a, b) {
+function loneReduction(a, b, orders) {
   if (a.type !== 'node' || b.type !== 'token') return 0;
   let progress = a;
   for (;;) {
@@ -318,10 +386,10 @@ function loneReduction(a, b) {
     }
     progress = first;
   }
-  const none = { level: 0, associativity: 'none' };
-  const shifted = progress.precedence ?? none;
-  const reduced = b.reduced ?? b.precedence ?? none;
-  if (shifted.level !== reduced.level) return shifted.level > reduced.level ? 1 : -1;
+  const shifted = progress.precedence ?? unranked(progress.rule);
+  const reduced = b.reduced ?? b.precedence ?? unranked();
+  const order = comparePrecedence(shifted, reduced, orders);
+  if (order !== 0) return order;
   if (reduced.associativity === 'right') return 1;
   if (reduced.associativity === 'left') return -1;
   return 0;
@@ -337,7 +405,7 @@ function loneReduction(a, b) {
 // higher precedence level wins and, on equal levels where the other node
 // goes on, the associativity of the reduced node. 1 when `a`'s result is
 // kept, -1 when the other is, 0 when neither.
-function extraReduction(a, b, stack) {
+function extraReduction(a, b, stack, orders) {
   if (a.type !== 'node') return 0;
   let parent = a;
   for (;;) {
@@ -351,11 +419,11 @@ function extraReduction(a, b, stack) {
   const next = siblings.slice(index).filter((child) => !isTrivia(child));
   const own = parent.children.filter((child) => !isTrivia(child));
   if (own.length > next.length || own.some((child, at) => !sameTree(child, next[at]))) return 0;
-  const none = { level: 0, associativity: 'none' };
   const mine = reduction(parent);
-  const other = container?.precedence ?? none;
-  if (mine.level !== other.level) return mine.level > other.level ? 1 : -1;
-  if (container && container.end > parent.end) {
+  const other = container?.precedence ?? unranked(container?.rule ?? null);
+  const order = comparePrecedence(mine, other, orders);
+  if (order !== 0) return order;
+  if (!container || container.end > parent.end) {
     if (mine.associativity === 'left') return 1;
     if (mine.associativity === 'right') return -1;
   }
@@ -409,7 +477,7 @@ function chainPair(a, b) {
 // `shiftPreferred`, when the reduced node's children begin the other node's,
 // so the two parses agree up to that end. 1 when `a`'s result is kept, -1 when
 // `b`'s is, 0 when neither.
-function chainConflict(a, b) {
+function chainConflict(a, b, orders) {
   const first = leftmostChain(a);
   const second = leftmostChain(b);
   const ends = (chain) => new Set(chain.map((node) => node.end));
@@ -424,7 +492,7 @@ function chainConflict(a, b) {
   const own = short.children.filter((child) => !isTrivia(child));
   const next = long.children.filter((child) => !isTrivia(child));
   if (own.length >= next.length || own.some((child, at) => !sameTree(child, next[at]))) return 0;
-  return sign * shiftPreferred(long, short);
+  return sign * shiftPreferred(long, short, orders);
 }
 
 // 1 when the shift that built `long` is preferred to the reduction that
@@ -435,22 +503,21 @@ function chainConflict(a, b) {
 // expression a statement is of, the long result reduced that operand to a
 // silent rule where the short one reduced its node: the two reductions
 // conflict instead, and a silent rule's reduction is of level 0.
-function shiftPreferred(long, short) {
-  const none = { level: 0, associativity: 'none' };
+function shiftPreferred(long, short, orders) {
   const begin = firstLeafStart(short);
   let progress = long;
   for (;;) {
     const inner = progress.children.find((child) => child.type === 'node' && child.start < short.end && child.end > short.end);
     if (!inner) break;
     if (firstLeafStart(inner) === begin) {
-      const reduced = reduction(short);
-      return reduced.level === 0 ? 0 : -Math.sign(reduced.level);
+      return -comparePrecedence(reduction(short), unranked(), orders);
     }
     progress = inner;
   }
-  const shifted = progress.precedence ?? none;
+  const shifted = progress.precedence ?? unranked(progress.rule);
   const reduced = reducedBefore(short, progress);
-  if (shifted.level !== reduced.level) return shifted.level > reduced.level ? 1 : -1;
+  const order = comparePrecedence(shifted, reduced, orders);
+  if (order !== 0) return order;
   if (reduced.associativity === 'right') return 1;
   if (reduced.associativity === 'left') return -1;
   return 0;
@@ -462,7 +529,7 @@ function shiftPreferred(long, short) {
 // expression))`, reduces before the `&&` of a binary expression of level 3),
 // else none of level 0.
 function reduction(node) {
-  return node.tail ?? node.precedence ?? { level: 0, associativity: 'none' };
+  return node.tail ?? node.precedence ?? unranked(node.rule);
 }
 
 // The precedence `short` was reduced with where the shift in `progress` went
@@ -599,7 +666,7 @@ function nullable(expression) {
     case 'repeat': return expression.min === 0 || nullable(expression.item);
     case 'seq': return expression.items.every(nullable);
     case 'choice': return expression.items.some(nullable);
-    case 'capture': case 'precedence': case 'dynamicPrecedence': case 'alias': case 'repeat1': return nullable(expression.item);
+    case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'repeat1': return nullable(expression.item);
     default: return false;
   }
 }
@@ -664,7 +731,7 @@ export class Executor {
     this.peg = program.matching === 'peg';
     // `(matching longest)`: the token ranks and the input, by which addResult
     // orders two parses that differ in their tokens.
-    this.longestTokens = program.tokenRanks ? { ...program.tokenRanks, bytes } : null;
+    this.longestTokens = program.tokenRanks ? { ...program.tokenRanks, bytes, orders: program.precedenceOrders ?? [] } : null;
     this.depth = 0;
     this.memo = new Map();
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
@@ -678,6 +745,10 @@ export class Executor {
     // The repair points where a continuation after a MISSING leaf is open.
     this.chained = new Set();
     this.scannerMemo = new Map();
+    // The requests a scanner's `expected` asks about, and the offset a
+    // scanner run in token context answers for (see `Expectations`).
+    this.expectations = new Expectations();
+    this.scanContext = null;
     this.embedMemo = new Map();
     this.farthest = begin;
     this.expected = new Set();
@@ -785,6 +856,9 @@ export class Executor {
     const mode = state.modes[state.modes.length - 1];
     const leaves = [];
     let cursor = position;
+    const context = this.scanContext;
+    this.scanContext = position;
+    try {
     for (;;) {
       let best = cursor;
       let bestKind = null;
@@ -801,6 +875,9 @@ export class Executor {
       const extra = this.extraNode(bestKind, cursor, best, state);
       leaves.push(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
       cursor = extra?.end ?? best;
+    }
+    } finally {
+      this.scanContext = context;
     }
     const skipped = { end: cursor, leaves };
     this.triviaMemo.set(key, skipped);
@@ -890,6 +967,10 @@ export class Executor {
   }
 
   terminal(expression, position, state, inToken) {
+    if (!inToken && this.program.expectedTerminals.size > 0) {
+      const id = this.program.expectedTerminals.get(expression);
+      if (id !== undefined) this.expectations.request(position, id);
+    }
     let { end: start, leaves } = this.terminalStart(position, state, inToken);
     let end = -1;
     if (this.longestTokens && leaves.length > 0) ({ start, end, leaves } = this.beforeSeparator(expression, start, leaves));
@@ -944,7 +1025,7 @@ export class Executor {
           children: result.children.map((child) => (isTrivia(child) ? child : { ...child, field: expression.label })),
         })));
       case 'alias': return this.alias(expression, position, state, inToken);
-      case 'precedence': return this.precedence(expression, position, state, inToken);
+      case 'precedence': case 'namedPrecedence': return this.precedence(expression, position, state, inToken);
       case 'dynamicPrecedence':
         return this.evaluate(expression.item, position, state, inToken)
           .map((result) => copyResult(result, { dynamic: result.dynamic + expression.level }));
@@ -956,16 +1037,26 @@ export class Executor {
           : this.immediateStarts(position, state, inToken);
         const found = new Map();
         const keyword = this.keywords !== null && !inToken && isKeyword(expression.item);
-        for (const { end, leaves } of starts) {
-          for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
-            if (keyword) this.keywords.matched.add(`${end}|${result.end}`);
-            addResult(found, result, this.longestTokens);
+        // A scanner token is lexed at the first start where its scanner
+        // succeeds, as a lexer runs the external scanner before it lexes an
+        // extra: after a comment only where it fails before it.
+        const scanned = expression.item.kind === 'ref' && this.program.externalTokens.has(expression.item.name);
+        const context = this.scanContext;
+        if (!inToken) this.scanContext = position;
+        try {
+          for (const { end, leaves } of starts) {
+            for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
+              if (keyword) this.keywords.matched.add(`${end}|${result.end}`);
+              addResult(found, result, this.longestTokens);
+            }
+            if (scanned && found.size > 0) break;
           }
+        } finally {
+          this.scanContext = context;
         }
         const results = [...found.values()];
         const { end: start, leaves } = starts[0];
         if (results.length > 0 || inToken) return results;
-        const scanned = expression.item.kind === 'ref' && this.program.externalTokens.has(expression.item.name);
         return this.elementFailed(start, leaves, state, missingOf(expression.item), expression, scanned ? null : (cursor) => this.evaluate(expression, cursor, state, false));
       }
       case 'predicate': return this.predicate(expression, position, state, inToken);
@@ -1119,8 +1210,10 @@ export class Executor {
   // when it conflicts, that is when its own child facing the operator could
   // have been the operand instead (`-a->t` but not `f(a)->t`).
   precedence(expression, position, state, inToken) {
-    const { level, associativity } = expression;
-    const tag = { level, associativity };
+    const { associativity } = expression;
+    // The rule a precedence ranks is the one whose body holds it.
+    const tag = { level: expression.level ?? 0, name: expression.name ?? null, associativity, rule: this.ownerOf(expression) };
+    const orders = this.program.precedenceOrders;
     // A result whose right operand is of one part waits for the others: it
     // stands only when no result of the expression ends before that operand.
     const pending = [];
@@ -1133,8 +1226,8 @@ export class Executor {
     };
     const conflicts = (child, side) => {
       if (child.type !== 'node' || !child.precedence) return false;
-      const inner = child.precedence.level;
-      if (inner > level || (inner === level && associativity === side)) return false;
+      const order = comparePrecedence(child.precedence, tag, orders);
+      if (order > 0 || (order === 0 && associativity === side)) return false;
       if (side === 'right' && this.lexedShift(child.rule)) return false;
       if (!this.reachesOwner(expression, child.rule, side)) return false;
       // A child of one part (Rust's bare range `..` in `a ..= ..`) has no
@@ -1207,7 +1300,7 @@ export class Executor {
     shifts = false;
     const rule = this.program.rules.get(kind);
     let body = rule?.nodeKind === kind ? rule.expression : null;
-    while (body && ['precedence', 'dynamicPrecedence', 'capture'].includes(body.kind)) body = body.item;
+    while (body && ['precedence', 'namedPrecedence', 'dynamicPrecedence', 'capture'].includes(body.kind)) body = body.item;
     if (body?.kind === 'seq' && body.items.length > 1 && !nullable(body.items[0])) {
       shifts = (this.leadPriority({ kind: 'seq', items: body.items.slice(1) }, new Set()) ?? 0) > 0;
     }
@@ -1242,7 +1335,7 @@ export class Executor {
         const leads = expression.items.map((item) => this.leadPriority(item, visiting)).filter((lead) => lead !== null);
         return leads.length > 0 ? Math.min(...leads) : null;
       }
-      case 'capture': case 'precedence': case 'dynamicPrecedence': case 'alias':
+      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.leadPriority(expression.item, visiting);
       case 'empty': case 'and': case 'not': return null;
       default: return 0;
@@ -1256,19 +1349,9 @@ export class Executor {
   // Rust's `a.0.1` is never a field expression, so `a.0` is no operand of
   // lower precedence there. True when either rule is unknown.
   reachesOwner(expression, kind, side) {
-    if (!this.owners) {
-      this.owners = new Map();
-      const walk = (item, name) => {
-        if (!item || typeof item !== 'object') return;
-        if (item.kind === 'precedence' && !this.owners.has(item)) this.owners.set(item, name);
-        walk(item.item, name);
-        if (Array.isArray(item.items)) for (const child of item.items) walk(child, name);
-      };
-      for (const [name, rule] of this.program.rules) walk(rule.expression, name);
-    }
-    const owner = this.owners.get(expression);
+    const owner = this.ownerOf(expression);
     const rule = this.program.rules.get(kind);
-    if (owner === undefined || rule?.nodeKind !== kind) return true;
+    if (owner === null || rule?.nodeKind !== kind) return true;
     const key = `${kind}|${side}`;
     let names = this.edgeMemo.get(key);
     if (!names) {
@@ -1277,6 +1360,21 @@ export class Executor {
       this.edgeMemo.set(key, names);
     }
     return names.has(owner);
+  }
+
+  // The rule whose body holds the precedence `expression`, or null.
+  ownerOf(expression) {
+    if (!this.owners) {
+      this.owners = new Map();
+      const walk = (item, name) => {
+        if (!item || typeof item !== 'object') return;
+        if ((item.kind === 'precedence' || item.kind === 'namedPrecedence') && !this.owners.has(item)) this.owners.set(item, name);
+        walk(item.item, name);
+        if (Array.isArray(item.items)) for (const child of item.items) walk(child, name);
+      };
+      for (const [name, rule] of this.program.rules) walk(rule.expression, name);
+    }
+    return this.owners.get(expression) ?? null;
   }
 
   // Adds to `names` the rules `expression` may match at its edge facing the
@@ -1299,7 +1397,7 @@ export class Executor {
         return;
       }
       case 'choice': for (const item of expression.items) this.edgeRules(item, side, names); return;
-      case 'capture': case 'precedence': case 'dynamicPrecedence': case 'alias':
+      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': this.edgeRules(expression.item, side, names);
     }
   }
@@ -1347,7 +1445,7 @@ export class Executor {
         return kinds.length > 0 ? union(kinds) : null;
       }
       case 'choice': return union(expression.items.map((item) => this.unitKinds(item, visiting, side)));
-      case 'capture': case 'precedence': case 'dynamicPrecedence':
+      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.unitKinds(expression.item, visiting, side);
       case 'alias': return new Set([expression.name]);
       default: return null;
@@ -1464,6 +1562,7 @@ export class Executor {
       let outcome = this.embedMemo.get(key);
       if (!outcome) {
         const nested = new Executor(language, this.bytes, start, region.end, this.options, this.budget, this.maxDepth - this.depth);
+        nested.expectations = this.expectations;
         outcome = nested.run(language.start);
         this.embedMemo.set(key, outcome);
       }
@@ -1479,6 +1578,10 @@ export class Executor {
 
   /** A rule call or an external token, memoized with left-recursion growth. */
   reference(name, position, state, inToken) {
+    if (!inToken && this.program.expectedReferences.size > 0) {
+      const id = this.program.expectedReferences.get(name);
+      if (id !== undefined) this.expectations.request(position, id);
+    }
     if (this.program.externalTokens.has(name)) return this.scannerToken(name, position, state, inToken);
     const rule = this.program.rules.get(name);
     const mode = state.modes[state.modes.length - 1];
@@ -1695,10 +1798,12 @@ export class Executor {
   // input, a token start that `skip` moves, and an optional end `mark`.
   scannerToken(name, position, state, inToken) {
     const { end: start, leaves } = this.terminalStart(position, state, inToken);
-    const key = `${name}|${start}|${state.key}`;
+    const scanner = this.program.scanners.get(name);
+    const context = inToken ? (this.scanContext ?? start) : position;
+    const key = scanner.consults ? `${name}|${start}|${context}|${state.key}` : `${name}|${start}|${state.key}`;
     let scanned = this.scannerMemo.get(key);
     if (scanned === undefined) {
-      scanned = this.runScanner(name, start, state);
+      scanned = this.runScanner(name, start, state, context);
       this.scannerMemo.set(key, scanned);
     }
     if (!scanned) {
@@ -1714,7 +1819,7 @@ export class Executor {
     return [makeResult(scanned.end, scanned.state, children)];
   }
 
-  runScanner(name, start, state) {
+  runScanner(name, start, state, context) {
     const scanner = this.program.scanners.get(name);
     const working = workingState(state);
     const skipped = [];
@@ -1728,6 +1833,7 @@ export class Executor {
       step: () => this.step(),
       column: () => columnOf(this.bytes, cursor, this.begin),
       atEnd: () => cursor >= this.end,
+      expected: (item) => this.expectations.holds(context, this.program.expectedItems.get(item)),
       lookahead: (expression) => match(expression) >= 0,
       advance: () => {
         if (cursor >= this.end) throw new OperationFailed();
@@ -1842,7 +1948,7 @@ export class Executor {
   completeOrder(a, b) {
     if (a.result.cost !== b.result.cost) return a.result.cost < b.result.cost ? 1 : -1;
     const whole = ({ result, trailing }) => ({ children: [...result.children, ...trailing] });
-    const order = this.longestTokens ? preferredTokens(whole(a), whole(b), this.longestTokens) || shiftOrder(whole(a), whole(b)) : 0;
+    const order = this.longestTokens ? preferredTokens(whole(a), whole(b), this.longestTokens) || shiftOrder(whole(a), whole(b), this.longestTokens.orders) : 0;
     if (order !== 0) return order;
     return Math.sign(a.result.dynamic - b.result.dynamic);
   }

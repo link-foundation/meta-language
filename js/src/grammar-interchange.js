@@ -91,7 +91,7 @@ function nativeError(line, detail) {
 /**
  * Renders the native grammar listing: an optional `format TAG` line, a
  * `start NAME` line for the start rule, the grammar feature union
- * declarations (`matching`, `import`, `mode`, `extra`, `conflict`, `macro`
+ * declarations (`matching`, `import`, `mode`, `extra`, `conflict`, `precedences`, `macro`
  * and `scanner` lines, in that order), then one `rule NAME = KIND EXPRESSION`
  * line per rule in grammar order, spelling expressions as the shared grammar
  * parity fixtures do (`seq(ref(a), literal("b"))`). A parameterized rule is
@@ -111,6 +111,7 @@ export function renderNativeGrammar(grammar) {
   for (const name of declarations.modes) lines.push(`mode ${renderName(name)}`);
   for (const extra of declarations.extras) lines.push(`extra ${renderNativeExpression(extra)}`);
   for (const group of declarations.conflicts) lines.push(`conflict ${group.map(renderName).join(' ')}`);
+  for (const order of declarations.precedences) lines.push(`precedences ${order.map((entry) => `${entry.kind}(${renderName(entry.value)})`).join(' ')}`);
   for (const macro of declarations.macros) {
     lines.push(`macro ${renderName(macro.name)}${parameters(macro.parameters)} = ${renderNativeExpression(macro.expression)}`);
   }
@@ -186,7 +187,7 @@ export function parseNativeGrammar(source) {
   let startLine = 0;
   let sourceFormat = null;
   const declarations = {
-    matching: null, imports: [], modes: [], extras: [], conflicts: [], macros: [], scanners: [],
+    matching: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [],
   };
   for (const [index, text] of source.split('\n').entries()) {
     const line = index + 1;
@@ -232,6 +233,17 @@ export function parseNativeGrammar(source) {
       const group = [cursor.name()];
       for (cursor.skipSpaces(); !cursor.done(); cursor.skipSpaces()) group.push(cursor.name());
       declarations.conflicts.push(group);
+    } else if (directive === 'precedences') {
+      const order = [];
+      for (; !cursor.done(); cursor.skipSpaces()) {
+        const kind = cursor.word();
+        if (kind !== 'name' && kind !== 'rule') cursor.fail(`a precedence entry is name(NAME) or rule(NAME), not ${kind}`);
+        const [value, ...rest] = cursor.list(() => cursor.name());
+        if (value === undefined || rest.length > 0) cursor.fail(`${kind}(...) names one entry`);
+        order.push({ kind, value });
+      }
+      if (order.length < 2) cursor.fail('precedences orders at least two entries');
+      declarations.precedences.push(order);
     } else if (directive === 'macro') {
       const name = cursor.name();
       const parameters = cursor.parameters();

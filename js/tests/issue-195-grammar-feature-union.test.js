@@ -160,7 +160,7 @@ function leftRecursive(rules) {
 const FEATURE_FORMS = {
   alternatives: ['choice:ordered', 'choice:unordered'],
   recursion: ['left-recursion'],
-  precedence: ['precedence'],
+  precedence: ['precedence', 'namedPrecedence', 'declaration:precedences'],
   ambiguity: ['declaration:conflicts', 'declaration:matching', 'dynamicPrecedence'],
   lexical: ['longest', 'lexicalPrecedence'],
   unicode: ['charClass:category', 'charClass:script', 'byteClass', 'byteClass:byteRange'],

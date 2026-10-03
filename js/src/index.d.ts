@@ -1099,6 +1099,7 @@ export type GrammarExpression =
       items: Array<{ kind: 'byte'; value: number } | { kind: 'byteRange'; start: number; end: number }>;
     }
   | { kind: 'precedence'; level: number; associativity: 'left' | 'right' | 'none'; item: GrammarExpression }
+  | { kind: 'namedPrecedence'; name: string; associativity: 'left' | 'right' | 'none'; item: GrammarExpression }
   | { kind: 'dynamicPrecedence' | 'lexicalPrecedence'; level: number; item: GrammarExpression }
   | { kind: 'longest'; items: GrammarExpression[] }
   | { kind: 'token' | 'immediateToken' | 'missing'; item: GrammarExpression }
@@ -1125,6 +1126,7 @@ export interface GrammarDeclarations {
   modes?: string[];
   extras?: GrammarExpression[];
   conflicts?: string[][];
+  precedences?: Array<Array<{ kind: 'name' | 'rule'; value: string }>>;
   macros?: Array<{ name: string; parameters: string[]; expression: GrammarExpression }>;
   scanners?: Array<{ name: string; tokens: string[]; operations: GrammarOperation[] }>;
 }

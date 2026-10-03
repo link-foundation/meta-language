@@ -51,7 +51,7 @@ function grammarParts(value) {
 function resolveImports(value, context, chain) {
   const parts = grammarParts(value);
   const rules = new Map();
-  const declarations = { modes: [], extras: [], conflicts: [], macros: new Map(), scanners: [] };
+  const declarations = { modes: [], extras: [], conflicts: [], precedences: [], macros: new Map(), scanners: [] };
   for (const name of parts.declarations.imports ?? []) {
     if (chain.includes(name)) loadError('import', `import cycle ${[...chain, name].join(' -> ')}`);
     const imported = context.resolve(name, 'import');
@@ -60,6 +60,7 @@ function resolveImports(value, context, chain) {
     declarations.modes.push(...resolved.declarations.modes);
     declarations.extras.push(...resolved.declarations.extras);
     declarations.conflicts.push(...resolved.declarations.conflicts);
+    declarations.precedences.push(...resolved.declarations.precedences);
     for (const [macroName, macro] of resolved.declarations.macros) declarations.macros.set(macroName, macro);
     declarations.scanners.push(...resolved.declarations.scanners);
   }
@@ -68,6 +69,7 @@ function resolveImports(value, context, chain) {
   declarations.modes.push(...(local.modes ?? []));
   declarations.extras.push(...(local.extras ?? []));
   declarations.conflicts.push(...(local.conflicts ?? []));
+  declarations.precedences.push(...(local.precedences ?? []));
   for (const macro of local.macros ?? []) declarations.macros.set(macro.name, macro);
   declarations.scanners.push(...(local.scanners ?? []));
   return { parts, rules, declarations };
@@ -96,6 +98,9 @@ export function mapChildren(expression, map) {
   if (expression.condition) copy.condition = mapOperation(expression.condition, map);
   return copy;
 }
+
+// The key of an item a scanner's `expected` asks about.
+const expectationKey = (item) => (item.kind === 'literal' ? `literal ${item.value}` : `ref ${item.name}`);
 
 /** Visits an expression and everything below it, operations included. */
 export function visitExpression(expression, visit) {
@@ -250,6 +255,12 @@ function loadInContext(grammar, context) {
       conflicts.add(name);
     }
   }
+  // The orders of named precedences (see `comparePrecedence` in executor.js).
+  for (const order of declarations.precedences) {
+    for (const entry of order) {
+      if (entry.kind === 'rule' && !ruleSources.has(entry.value)) loadError('declaration', `precedences names undefined rule ${entry.value}`);
+    }
+  }
 
   const matching = parts.declarations.matching ?? (parts.sourceFormat === 'peg' ? 'peg' : 'generalized');
   const program = {
@@ -259,8 +270,17 @@ function loadInContext(grammar, context) {
     externalTokens,
     scanners,
     conflicts,
+    precedenceOrders: declarations.precedences,
     modes,
     trivia: [],
+    // The items a scanner's `expected` asks about: a key per item, its id, and
+    // the ids of the literals and the rules or external tokens the parse
+    // requests; each `expected` item by its id (see `Expectations` in
+    // executor.js).
+    expectations: new Map(),
+    expectedItems: new Map(),
+    expectedTerminals: new Map(),
+    expectedReferences: new Map(),
     matchers: new WeakMap(),
     language: (name) => context.languages.get(name),
   };
@@ -277,6 +297,17 @@ function loadInContext(grammar, context) {
     if (item.kind === 'predicate') checkOperations([item.condition], 'predicate', owner);
     if (item.kind === 'recover' && item.synchronize === undefined) loadError('declaration', `recover in ${owner} has no synchronization`);
   });
+  const expectation = (item, owner) => {
+    if (item.kind === 'ref' && !rules.has(item.name) && !externalTokens.has(item.name)) loadError('reference', `expected names undefined rule ${item.name} in ${owner}`);
+    if (item.kind !== 'literal' && item.kind !== 'ref') loadError('operation', `expected asks about a ${item.kind}, not a literal or a rule, in ${owner}`);
+    const key = expectationKey(item);
+    if (!program.expectations.has(key)) {
+      const id = Symbol(key);
+      program.expectations.set(key, id);
+      if (item.kind === 'ref') program.expectedReferences.set(item.name, id);
+    }
+    program.expectedItems.set(item, program.expectations.get(key));
+  };
   const checkOperations = (operations, operationContext, owner, tokens = null) => {
     const allowed = OPERATION_CONTEXTS[operationContext];
     const walk = (operation) => {
@@ -285,6 +316,7 @@ function loadInContext(grammar, context) {
       if ((operation.operation === 'emit' || operation.operation === 'valid') && tokens && !tokens.includes(operation.token)) {
         loadError('operation', `${operation.operation} names ${operation.token}, which ${owner} does not produce`);
       }
+      if (operation.operation === 'expected') expectation(operation.item, owner);
       for (const [key, value] of Object.entries(operation)) {
         if (key === 'item') checkExpression(value, owner);
         else if (Array.isArray(value)) value.forEach(walk);
@@ -317,7 +349,20 @@ function loadInContext(grammar, context) {
     }
   }
   for (const scanner of new Set(scanners.values())) {
+    const known = program.expectedItems.size;
     checkOperations(scanner.operations, 'scanner', `scanner ${scanner.name}`, scanner.tokens);
+    // A scanner that asks what the parse expects answers per context offset.
+    scanner.consults = program.expectedItems.size > known;
+  }
+  // The terminals and references of the rules a scanner's `expected` asks
+  // about, each by the id of its item.
+  if (program.expectations.size > 0) {
+    for (const rule of rules.values()) {
+      visitExpression(rule.expression, (item) => {
+        const id = item.kind === 'literal' ? program.expectations.get(expectationKey(item)) : undefined;
+        if (id !== undefined) program.expectedTerminals.set(item, id);
+      });
+    }
   }
   if (matching === 'longest') program.tokenRanks = tokenRanks(rules);
 

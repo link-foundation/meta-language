@@ -108,11 +108,15 @@ export function evaluateValue(value, machine) {
   }
 }
 
-/** Evaluates a condition operation to a boolean; `machine` adds `requested`, `lookahead(expression)` and `atEnd()`. */
+/**
+ * Evaluates a condition operation to a boolean; `machine` adds `requested`,
+ * `expected(expression)`, `lookahead(expression)` and `atEnd()`.
+ */
 export function evaluateCondition(condition, machine) {
   machine.step();
   switch (condition.operation) {
     case 'valid': return machine.requested === condition.token;
+    case 'expected': return machine.expected(condition.item);
     case 'next': return machine.lookahead(condition.item);
     case 'atEnd': return machine.atEnd();
     case 'equal': {
@@ -190,7 +194,7 @@ export function runStatements(statements, machine) {
 export const OPERATION_CONTEXTS = Object.freeze({
   scanner: new Set([
     'advance', 'consume', 'skip', 'mark', 'emit', 'fail', 'if', 'while', 'push', 'pop', 'set', 'pushMode', 'popMode',
-    'setMode', 'valid', 'next', 'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable',
+    'setMode', 'valid', 'expected', 'next', 'atEnd', 'equal', 'less', 'greater', 'all', 'some', 'not', 'integer', 'text', 'variable',
     'top', 'depth', 'column', 'mode', 'length', 'number', 'add', 'subtract', 'multiply',
   ]),
   action: new Set([

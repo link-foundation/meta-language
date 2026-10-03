@@ -5,7 +5,7 @@
 // (grammar-runtime/executor.js) runs it within explicit resource limits; the
 // tree module (grammar-runtime/syntax-tree.js) copies and renders the result.
 // docs/grammar/feature-union.md is the specification the Rust port follows.
-import { Executor, KeywordLexing, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
+import { Executor, Expectations, KeywordLexing, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
 import { GrammarRuntimeError, loadProgram } from './grammar-runtime/load.js';
 import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
 import { inputBytes, lineAndColumn } from './grammar-runtime/text.js';
@@ -43,13 +43,30 @@ function positioned(reason, bytes, offset, extra = {}) {
 }
 
 /**
+ * Parses the whole input with a fresh executor that `prepare` sets up. While
+ * a scanner's `expected` was answered before the parse made the request it
+ * asks about, the parse runs again with the requests so far (see
+ * `Expectations` in grammar-runtime/executor.js). Each run has its own step
+ * budget.
+ */
+function runParse(program, bytes, startRule, options, maxDepth, expectations, prepare) {
+  for (;;) {
+    const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length), maxDepth);
+    executor.expectations = expectations.restart();
+    prepare(executor);
+    const outcome = executor.run(startRule);
+    if (!expectations.stale) return outcome;
+  }
+}
+
+/**
  * Automatic error recovery after a failed parse: each round reparses with
  * one more repair point, the farthest offset where an element failed without
  * a repair, until a parse completes. After `maxRepairs` rounds (default 32),
  * or when no new point appears, the last round's partial tree stands, the
  * rest of the input an ERROR leaf. Each round has its own step budget.
  */
-function repairParse(program, bytes, startRule, options, maxDepth, failed, keywords) {
+function repairParse(program, bytes, startRule, options, maxDepth, failed, keywords, expectations) {
   const points = new Set();
   const maxRepairs = options.maxRepairs ?? 32;
   let outcome = failed;
@@ -57,10 +74,10 @@ function repairParse(program, bytes, startRule, options, maxDepth, failed, keywo
     const point = outcome.elementFarthest >= 0 ? outcome.elementFarthest : outcome.farthest;
     if (points.has(point)) break;
     points.add(point);
-    const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length), maxDepth);
-    executor.repairPoints = points;
-    executor.keywords = keywords;
-    outcome = executor.run(startRule);
+    outcome = runParse(program, bytes, startRule, options, maxDepth, expectations, (executor) => {
+      executor.repairPoints = points;
+      executor.keywords = keywords;
+    });
     if (outcome.ok) return outcome;
   }
   return { ok: true, root: outcome.partial };
@@ -81,15 +98,15 @@ function parseProgram(program, source, options) {
   // Under `(matching longest)` the input is parsed again while the tree takes
   // a token rule's leaf where a keyword a lexer prefers matched.
   const keywords = program.tokenRanks ? new KeywordLexing({ ...program.tokenRanks, bytes }) : null;
+  const expectations = new Expectations();
   try {
     do {
-      // Each parse has its own step budget.
-      const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length), maxDepth);
-      executor.keywords = keywords;
-      // With no repair point yet, recovery only notes where elements fail.
-      if (options.errorRecovery) executor.repairPoints = new Set();
-      outcome = executor.run(startRule);
-      if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome, keywords);
+      outcome = runParse(program, bytes, startRule, options, maxDepth, expectations, (executor) => {
+        executor.keywords = keywords;
+        // With no repair point yet, recovery only notes where elements fail.
+        if (options.errorRecovery) executor.repairPoints = new Set();
+      });
+      if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome, keywords, expectations);
     } while (keywords && outcome.ok && keywords.conflicts(outcome.root));
   } catch (error) {
     if (error instanceof StepLimitReached) {

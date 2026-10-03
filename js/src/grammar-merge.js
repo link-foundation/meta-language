@@ -196,6 +196,7 @@ function mapDeclarations(declarations, rename) {
     modes: [...declarations.modes],
     extras: declarations.extras.map((extra) => mapReferences(extra, rename)),
     conflicts: declarations.conflicts.map((group) => group.map(rename)),
+    precedences: declarations.precedences.map((order) => order.map((entry) => (entry.kind === 'rule' ? { kind: 'rule', value: rename(entry.value) } : { ...entry }))),
     macros: declarations.macros.map((macro) => ({
       name: macro.name,
       parameters: [...(macro.parameters ?? [])],
@@ -503,15 +504,15 @@ function refine(nodes, index) {
 
 // Merges the declarations of the sources in precedence order, with each
 // source's rule names renamed to their canonical names. Imports, modes,
-// extras and conflict groups are united; the first declared matching, macro
+// extras, conflict groups and precedence orders are united; the first declared matching, macro
 // or scanner of a name wins, and a later different one is a conflict.
 function mergeDeclarations(sources, canonical) {
-  const declarations = { matching: null, imports: [], modes: [], extras: [], conflicts: [], macros: [], scanners: [] };
+  const declarations = { matching: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [] };
   const conflicts = [];
-  const seen = { extras: new Set(), conflicts: new Set(), macros: new Map(), scanners: new Map() };
+  const seen = { extras: new Set(), conflicts: new Set(), precedences: new Set(), macros: new Map(), scanners: new Map() };
   let matchingOwner = null;
   const line = (entry) =>
-    renderDeclarationLinks({ imports: [], modes: [], extras: [], conflicts: [], macros: [], scanners: [], ...entry })[0];
+    renderDeclarationLinks({ imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [], ...entry })[0];
   for (const source of sources) {
     const own = mapDeclarations(grammarDeclarations(source.grammar), (name) => canonical(source, name));
     if (own.matching !== undefined) {
@@ -524,7 +525,7 @@ function mergeDeclarations(sources, canonical) {
     }
     for (const name of own.imports) if (!declarations.imports.includes(name)) declarations.imports.push(name);
     for (const name of own.modes) if (!declarations.modes.includes(name)) declarations.modes.push(name);
-    for (const [field, key] of [['extras', renderLinksExpression], ['conflicts', (group) => line({ conflicts: [group] })]]) {
+    for (const [field, key] of [['extras', renderLinksExpression], ['conflicts', (group) => line({ conflicts: [group] })], ['precedences', (order) => line({ precedences: [order] })]]) {
       for (const entry of own[field]) {
         const text = key(entry);
         if (seen[field].has(text)) continue;

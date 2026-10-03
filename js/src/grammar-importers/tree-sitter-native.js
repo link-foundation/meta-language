@@ -11,8 +11,9 @@
 // PATTERN        the compiled pattern: classes, sequences, choices, repeats
 // SEQ/CHOICE     (seq ...) / (choice unordered ...); BLANK makes (optional ...)
 // REPEAT(1)      (repeat0 ...) / (repeat1 ...)
-// PREC*          (precedence LEVEL none|left|right ...); in a token
-//                (lexicalPrecedence LEVEL ...)
+// PREC*          (precedence LEVEL none|left|right ...), of a named
+//                precedence (namedPrecedence NAME none|left|right ...); in a
+//                token (lexicalPrecedence LEVEL ...)
 // PREC_DYNAMIC   (dynamicPrecedence LEVEL ...)
 // TOKEN          (token ...); IMMEDIATE_TOKEN (immediateToken ...)
 // FIELD          (capture labeled NAME ...)
@@ -21,12 +22,14 @@
 //                (kind NAME (source-names (tree-sitter SOURCE)))
 // a token tree-sitter leaves unnamed, any but a single STRING outside a
 //                lexical rule, (alias unnamed_token ...): tree-sitter hides it
-// extras         (extra ...); conflicts (conflict ...)
+// extras         (extra ...); conflicts (conflict ...); precedences
+//                (precedences (name NAME) (rule NAME) ...)
 // externals      a token of a native scanner, (scanner NAME (tokens ...)
 //                (operations ...)), the reviewed port of the upstream C
 //                scanner: (ref TOKEN), under (immediateToken ...) where the C
 //                scanner reads from the current byte without skipping extras,
-//                and (alias unnamed_token ...) for a hidden token
+//                and (alias unnamed_token ...) for a hidden token; a STRING
+//                external is its literal
 // word           keyword extraction: a keyword is closed by the word rule,
 //                which takes no keyword's text where the keyword matched, as
 //                the lexer below prefers the keyword (a literal); see Keyword
@@ -406,7 +409,7 @@ function countTokens(node, counts, around = []) {
  * the `(scanner ...)` declarations whose tokens, named `nameOf(name)`, scan
  * the externals, and `immediate` lists the externals the upstream scanner
  * reads without skipping extras; `wordRule` names the helper rule keyword
- * extraction adds. Returns `{ start, extras, conflicts, scanners, rules,
+ * extraction adds. Returns `{ start, extras, conflicts, precedences, scanners, rules,
  * keywords, report }`: `scanners` lists the declaration lines and `rules`
  * lists `{ name, sourceName, kind, body }` in
  * source order, followed by the helper rules; `report` lists the
@@ -434,7 +437,9 @@ export function importTreeSitterNative(source, options = {}) {
   // Supertypes and inlined rules never appear in tree-sitter's trees.
   const hiddenRules = new Set([...(grammar.supertypes ?? []), ...(grammar.inline ?? [])].map(memberName));
   const syntacticKind = (name) => (name.startsWith('_') || hiddenRules.has(name) ? 'silent' : 'normal');
-  const externals = (grammar.externals ?? []).map(memberName);
+  // A STRING external, which the C scanner only asks about (JavaScript's
+  // `||`), is the literal the rules match; only a SYMBOL is a scanner token.
+  const externals = (grammar.externals ?? []).filter((member) => member.type !== 'STRING').map(memberName);
   const scannerLines = (options.scanners ?? '').split('\n').filter((line) => line !== '');
   const scannerTokens = new Set();
   if (scannerLines.length > 0) {
@@ -446,17 +451,14 @@ export function importTreeSitterNative(source, options = {}) {
   for (const name of immediate) {
     if (!scanned(name)) throw parseError(FORMAT, `the immediate external ${name} is no scanner token`);
   }
-  const namedLevels = new Map();
-  for (const list of grammar.precedences ?? []) {
-    list.forEach((entry, position) => {
-      const name = entry.type === 'STRING' ? entry.value : (entry.type === 'SYMBOL' ? entry.name : null);
-      if (name !== null && !namedLevels.has(name)) namedLevels.set(name, 1000 * (list.length - position));
-    });
-  }
+  // A named precedence keeps its name; the grammar's `precedences` order the
+  // names and rules, as (precedences (name NAME) (rule NAME) ...).
+  const precedences = (grammar.precedences ?? []).map((list) => list.map((entry) => (entry.type === 'STRING'
+    ? { kind: 'name', value: entry.value }
+    : { kind: 'rule', value: nameOf(memberName(entry)) })));
   const level = (value) => {
     if (typeof value === 'number') return value;
-    if (namedLevels.has(value)) return namedLevels.get(value);
-    report.approximations.push(`named precedence ${value} has no order; level 0`);
+    report.approximations.push(`named precedence ${value} outside a syntax rule; level 0`);
     return 0;
   };
   const ref = (name) => `(ref ${enc(nameOf(name))})`;
@@ -501,7 +503,8 @@ export function importTreeSitterNative(source, options = {}) {
         const inner = expr(node.content, inToken, keywords, aliased);
         if (inToken) return `(lexicalPrecedence ${level(node.value)} ${inner})`;
         const associativity = { PREC: 'none', PREC_LEFT: 'left', PREC_RIGHT: 'right' }[node.type];
-        return `(precedence ${level(node.value)} ${associativity} ${inner})`;
+        if (typeof node.value === 'string') return `(namedPrecedence ${enc(node.value)} ${associativity} ${inner})`;
+        return `(precedence ${node.value} ${associativity} ${inner})`;
       }
       case 'PREC_DYNAMIC': return `(dynamicPrecedence ${level(node.value)} ${expr(node.content, inToken, keywords, aliased)})`;
       case 'TOKEN': case 'IMMEDIATE_TOKEN': {
@@ -659,6 +662,7 @@ export function importTreeSitterNative(source, options = {}) {
     start: nameOf(ruleNames[0]),
     extras,
     conflicts,
+    precedences,
     scanners: scannerLines,
     kinds,
     rules,
@@ -679,6 +683,7 @@ export function renderTreeSitterNative(imported, { annotate } = {}) {
   const lines = [`(grammar (start ${enc(imported.start)}) (matching longest))`];
   for (const extra of imported.extras) lines.push(`(extra ${extra})`);
   for (const group of imported.conflicts) lines.push(`(conflict ${group.map(enc).join(' ')})`);
+  for (const order of imported.precedences ?? []) lines.push(`(precedences ${order.map((entry) => `(${entry.kind} ${enc(entry.value)})`).join(' ')})`);
   lines.push(...(imported.scanners ?? []));
   for (const kind of imported.kinds ?? []) {
     lines.push(`(kind ${enc(kind.name)} (source-names (tree-sitter ${enc(kind.sourceName)})))`);

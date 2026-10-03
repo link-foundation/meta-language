@@ -9,6 +9,7 @@
 /** The expression kinds the feature union adds, with their fields in listing order. */
 export const FEATURE_EXPRESSION_FORMS = Object.freeze({
   precedence: [['level', 'integer'], ['associativity', ['left', 'right', 'none']], ['item', 'expression']],
+  namedPrecedence: [['name', 'name'], ['associativity', ['left', 'right', 'none']], ['item', 'expression']],
   dynamicPrecedence: [['level', 'integer'], ['item', 'expression']],
   lexicalPrecedence: [['level', 'integer'], ['item', 'expression']],
   longest: [['items', 'expressions']],
@@ -47,6 +48,7 @@ export const OPERATION_FORMS = Object.freeze({
   setAttribute: ['statement', [['attribute', 'name'], ['value', 'value']]],
   buildNode: ['statement', [['kind', 'name']]],
   valid: ['condition', [['token', 'name']]],
+  expected: ['condition', [['item', 'expression']]],
   next: ['condition', [['item', 'expression']]],
   atEnd: ['condition', []],
   equal: ['condition', [['left', 'value'], ['right', 'value']]],
@@ -93,6 +95,7 @@ export function grammarDeclarations(grammar) {
     modes: declarations.modes ?? [],
     extras: declarations.extras ?? [],
     conflicts: declarations.conflicts ?? [],
+    precedences: declarations.precedences ?? [],
     macros: declarations.macros ?? [],
     scanners: declarations.scanners ?? [],
   };

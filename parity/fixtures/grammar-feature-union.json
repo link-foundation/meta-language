@@ -156,7 +156,7 @@
     {
       "id": "precedence",
       "title": "precedence and associativity",
-      "listing": "start e\nrule e = normal choice(precedence(1, left, seq(ref(e), literal(\"+\"), ref(e))), precedence(2, left, seq(ref(e), literal(\"*\"), ref(e))), precedence(3, right, seq(ref(e), literal(\"^\"), ref(e))), precedence(0, none, seq(ref(e), literal(\"=\"), ref(e))), precedence(4, left, seq(ref(e), literal(\"(\"), literal(\")\"))), precedence(5, left, seq(ref(e), literal(\".\"), ref(n))), precedence(0, none, seq(literal(\"?\"), ref(n), optional(ref(otherwise)))), precedence(0, none, seq(literal(\"#\"), repeat0(ref(item)))), ref(n))\nrule otherwise = normal precedence(0, none, seq(literal(\":\"), ref(n)))\nrule item = silent choice(ref(otherwise), seq(ref(n), literal(\";\")))\nrule n = token repeat1(range(\"0\", \"9\"))\n",
+      "listing": "start e\nprecedences name(and) name(or)\nrule e = normal choice(precedence(1, left, seq(ref(e), literal(\"+\"), ref(e))), precedence(2, left, seq(ref(e), literal(\"*\"), ref(e))), precedence(3, right, seq(ref(e), literal(\"^\"), ref(e))), precedence(0, none, seq(ref(e), literal(\"=\"), ref(e))), precedence(4, left, seq(ref(e), literal(\"(\"), literal(\")\"))), precedence(5, left, seq(ref(e), literal(\".\"), ref(n))), precedence(0, none, seq(literal(\"?\"), ref(n), optional(ref(otherwise)))), precedence(0, none, seq(literal(\"#\"), repeat0(ref(item)))), namedPrecedence(and, left, seq(ref(e), literal(\"&\"), ref(e))), namedPrecedence(or, left, seq(ref(e), literal(\"|\"), ref(e))), ref(n))\nrule otherwise = normal precedence(0, none, seq(literal(\":\"), ref(n)))\nrule item = silent choice(ref(otherwise), seq(ref(n), literal(\";\")))\nrule n = token repeat1(range(\"0\", \"9\"))\n",
       "options": {
         "ambiguity": "reject"
       },
@@ -196,6 +196,14 @@
         {
           "input": "#1;:2",
           "tree": "(e \"#\" (n \"1\") \";\" (otherwise \":\" (n \"2\")))"
+        },
+        {
+          "input": "1&2|3",
+          "tree": "(e (e (e (n \"1\")) \"&\" (e (n \"2\"))) \"|\" (e (n \"3\")))"
+        },
+        {
+          "input": "1|2&3",
+          "tree": "(e (e (n \"1\")) \"|\" (e (e (n \"2\")) \"&\" (e (n \"3\"))))"
         }
       ],
       "negative": [
@@ -207,12 +215,14 @@
             "line": 1,
             "column": 6,
             "expected": [
+              "\"&\"",
               "\"(\"",
               "\"*\"",
               "\"+\"",
               "\".\"",
               "\"=\"",
               "\"^\"",
+              "\"|\"",
               "precedence"
             ]
           }
@@ -242,7 +252,20 @@
         "after": {
           "tree": "(e (e (n \"1\")) \"+\" (e (e (n \"2\")) \"+\" (e (n \"3\"))))"
         }
-      }
+      },
+      "mutations": [
+        {
+          "from": "precedences name(and) name(or)",
+          "to": "precedences name(or) name(and)",
+          "input": "1|2&3",
+          "before": {
+            "tree": "(e (e (n \"1\")) \"|\" (e (e (n \"2\")) \"&\" (e (n \"3\"))))"
+          },
+          "after": {
+            "tree": "(e (e (e (n \"1\")) \"|\" (e (n \"2\"))) \"&\" (e (n \"3\")))"
+          }
+        }
+      ]
     },
     {
       "id": "ambiguity",

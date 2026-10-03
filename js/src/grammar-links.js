@@ -131,6 +131,9 @@ export function renderDeclarationLinks(declarations) {
   for (const name of declarations.modes) lines.push(`(mode ${percentEncodeLinksText(name)})`);
   for (const extra of declarations.extras) lines.push(`(extra ${renderLinksExpression(extra)})`);
   for (const group of declarations.conflicts) lines.push(renderNames('conflict', group));
+  for (const order of declarations.precedences ?? []) {
+    lines.push(`(${['precedences', ...order.map((entry) => `(${entry.kind} ${percentEncodeLinksText(entry.value)})`)].join(' ')})`);
+  }
   for (const macro of declarations.macros) {
     lines.push(`(macro ${percentEncodeLinksText(macro.name)} ${renderNames('parameters', macro.parameters ?? [])} ${renderLinksExpression(macro.expression)})`);
   }
@@ -387,6 +390,15 @@ function readDeclaration(head, args, declarations) {
       if (args.length === 0) throw linksError('conflict names at least one rule');
       declarations.conflicts.push(args.map((item) => decodedWord(item, 'a rule name')));
       return true;
+    case 'precedences':
+      if (args.length < 2) throw linksError('precedences orders at least two entries');
+      declarations.precedences.push(args.map((item) => {
+        const [kind, values] = parts(item);
+        if (kind !== 'name' && kind !== 'rule') throw linksError(`a precedence entry is (name NAME) or (rule NAME), not ${kind}`);
+        arity(kind, values, 1);
+        return { kind, value: decodedWord(values[0], kind === 'name' ? 'a precedence name' : 'a rule name') };
+      }));
+      return true;
     case 'macro':
       arity(head, args, 3);
       declarations.macros.push({
@@ -424,7 +436,7 @@ export function parseGrammarLinks(source) {
   let sourceFormat = null;
   let start = null;
   const declarations = {
-    matching: null, imports: [], modes: [], extras: [], conflicts: [], macros: [], scanners: [],
+    matching: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [],
   };
   for (const field of headerArgs) {
     const [key, values] = parts(field);
