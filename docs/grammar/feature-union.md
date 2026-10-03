@@ -470,7 +470,9 @@ points (default 32). The last round's partial tree, the result that reaches
 farthest, then stands. When the start rule matches nothing, the root holds one
 ERROR leaf over the whole input. Every round has its own step budget. A
 repaired tree holds an ERROR or MISSING leaf, so it is reported as
-`recovered`.
+`recovered`. The Rust executor takes the same options as
+`FeatureParseOptions::error_recovery` and `max_repairs` and builds the same
+trees.
 
 ## Syntax tree
 

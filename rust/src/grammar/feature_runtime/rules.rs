@@ -12,8 +12,8 @@ use super::operations::{
 };
 use super::program::{Expr, Name, Rule, Target};
 use super::results::{
-    Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, concat, content_start, longest_result,
-    no_children, with_leaf,
+    Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, concat, content_start,
+    longest_result, no_children, with_leaf,
 };
 use super::text::{column_of, decode_at};
 use crate::grammar::RuleKind;
@@ -39,7 +39,15 @@ impl Executor<'_> {
             self.fail(position, &rule.node_kind);
             return Ok(Vec::new());
         }
-        let key = (index, position, state.clone(), in_token);
+        // While repairing, a call made quietly (where nothing is repaired) is
+        // memoized apart from the same call made in the open.
+        let key = (
+            index,
+            position,
+            state.clone(),
+            in_token,
+            self.quiet_repair(),
+        );
         if let Some(known) = self.memo.get(&key).cloned() {
             let seed = {
                 let mut entry = known.borrow_mut();
@@ -174,10 +182,21 @@ impl Executor<'_> {
                     ..acted
                 });
             }
-            if built.is_empty() {
-                self.fail(start, &rule.node_kind);
+            if !built.is_empty() {
+                return Ok(built);
             }
-            return Ok(built);
+            self.fail(start, &rule.node_kind);
+            if in_token {
+                return Ok(built);
+            }
+            return self.element_failed(
+                start,
+                &skipped.leaves,
+                state,
+                Some(rule.node_kind.clone()),
+                false,
+                |this, cursor| this.rule_body(rule, cursor, state, false),
+            );
         }
         for result in self.evaluate(&rule.expression, position, state, in_token)? {
             if matches!(rule.kind, RuleKind::Silent) || in_token {
@@ -268,7 +287,17 @@ impl Executor<'_> {
         };
         let Some(scanned) = scanned else {
             self.fail(start, name);
-            return Ok(Vec::new());
+            if in_token {
+                return Ok(Vec::new());
+            }
+            return self.element_failed(
+                start,
+                &skipped.leaves,
+                state,
+                Some(name.clone()),
+                false,
+                |this, cursor| this.scanner_token(name, cursor, state, false),
+            );
         };
         let children = if in_token {
             no_children()
@@ -323,7 +352,9 @@ impl Executor<'_> {
     }
 
     /// Parses the whole range from `start_rule`: the tree, or the farthest
-    /// failure with its sorted expectations. Resource limits abort.
+    /// failure with its sorted expectations. Resource limits abort. While
+    /// repairing, a failure carries the root of the result that reaches
+    /// farthest, with the rest of the input as an ERROR leaf.
     pub(super) fn run(&mut self, start_rule: usize) -> Run<Outcome> {
         let results = self.reference(
             &Target::Rule(start_rule),
@@ -331,41 +362,93 @@ impl Executor<'_> {
             &State::initial(),
             false,
         )?;
-        let mut complete = Vec::new();
+        let mut complete: Vec<(Res, Children)> = Vec::new();
+        let mut partial: Option<(usize, Res, Children)> = None;
         for result in results {
             let trailing = self.skip_trivia(result.end, &result.state)?;
             if trailing.end == self.end {
                 complete.push((result, trailing.leaves.clone()));
-            } else {
-                self.fail(trailing.end, &Name::from("end of input"));
+                continue;
+            }
+            self.fail(trailing.end, &Name::from("end of input"));
+            let Some(points) = &self.repair_points else {
+                continue;
+            };
+            let rest = with_leaf(
+                &trailing.leaves,
+                Tree::new(TreeType::Error, None, trailing.end, self.end),
+            );
+            let cost = result.cost + self.end - trailing.end;
+            let repaired = Res { cost, ..result };
+            if points.contains(&trailing.end) {
+                complete.push((repaired, rest));
+                continue;
+            }
+            if self
+                .element_farthest
+                .is_none_or(|farthest| trailing.end > farthest)
+            {
+                self.element_farthest = Some(trailing.end);
+            }
+            if partial.as_ref().is_none_or(|(end, best, _)| {
+                trailing.end > *end || (trailing.end == *end && cost < best.cost)
+            }) {
+                partial = Some((trailing.end, repaired, rest));
             }
         }
-        let count = complete.len();
-        let Some((result, trailing)) = complete.into_iter().next() else {
+        if complete.is_empty() {
             let mut expected: Vec<String> = self.expected.iter().map(ToString::to_string).collect();
             expected.sort();
+            let partial = self.repair_points.is_some().then(|| {
+                Rc::new(partial.map_or_else(
+                    || self.error_root(start_rule),
+                    |(_, result, trailing)| self.root(start_rule, &result, &trailing, false),
+                ))
+            });
             return Ok(Outcome::Failed {
                 farthest: self.farthest,
                 expected,
+                element_farthest: self.element_farthest,
+                partial,
             });
-        };
-        let ambiguous = count > 1 || result.ambiguous;
-        let root = match result.children.as_slice() {
+        }
+        let several = complete.len() > 1;
+        let mut chosen = &complete[0];
+        for candidate in &complete {
+            if candidate.0.cost < chosen.0.cost {
+                chosen = candidate;
+            }
+        }
+        // Repaired results of equal cost are not ambiguities.
+        let several = several && chosen.0.cost == 0;
+        let root = self.root(start_rule, &chosen.0, &chosen.1, several);
+        Ok(Outcome::Parsed(Rc::new(root)))
+    }
+
+    fn root(&self, start_rule: usize, result: &Res, trailing: &[Rc<Tree>], several: bool) -> Tree {
+        let ambiguous = several || result.ambiguous;
+        match result.children.as_slice() {
             [only] if only.ty == TreeType::Node => {
                 let mut root = (**only).clone();
                 root.end = self.end;
-                root.children = concat(&only.children, &trailing);
+                root.children = concat(&only.children, trailing);
                 root.ambiguous = only.ambiguous || ambiguous;
                 root
             }
             children => {
                 let kind = &self.program.rules[start_rule].node_kind;
-                let mut root = Tree::node(kind, self.begin, self.end, concat(children, &trailing));
+                let mut root = Tree::node(kind, self.begin, self.end, concat(children, trailing));
                 root.ambiguous = ambiguous;
                 root
             }
-        };
-        Ok(Outcome::Parsed(Rc::new(root)))
+        }
+    }
+
+    // The root when the start rule matches nothing even with repairs.
+    fn error_root(&self, start_rule: usize) -> Tree {
+        let kind = &self.program.rules[start_rule].node_kind;
+        let error = Tree::new(TreeType::Error, None, self.begin, self.end);
+        Tree::node(kind, self.begin, self.end, Rc::new(vec![Rc::new(error)]))
     }
 }
 

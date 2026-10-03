@@ -104,6 +104,8 @@ pub(super) struct Res {
     pub(super) dynamic: i64,
     pub(super) precedence: Option<(i64, Associativity)>,
     pub(super) ambiguous: bool,
+    /// The repair cost: 2 per MISSING leaf, the skipped bytes per ERROR leaf.
+    pub(super) cost: usize,
 }
 
 impl Res {
@@ -115,6 +117,7 @@ impl Res {
             dynamic,
             precedence: None,
             ambiguous: false,
+            cost: 0,
         }
     }
 
@@ -130,6 +133,7 @@ impl Res {
             dynamic: left.dynamic + right.dynamic,
             precedence: None,
             ambiguous: left.ambiguous || right.ambiguous,
+            cost: left.cost + right.cost,
         }
     }
 
@@ -146,16 +150,20 @@ pub(super) struct ResultSet {
 }
 
 impl ResultSet {
-    /// Of two results with the same end and state, the higher dynamic
-    /// precedence wins; on a tie the first stays and is marked ambiguous.
+    /// Of two results with the same end and state, the lower repair cost
+    /// wins, then the higher dynamic precedence; on a tie the first stays
+    /// and, without repairs, is marked ambiguous.
     pub(super) fn add(&mut self, result: Res) {
         match self.index.get(&result.key()) {
             None => self.push(result),
             Some(&position) => {
                 let existing = &mut self.items[position];
-                if result.dynamic > existing.dynamic {
+                if result.cost < existing.cost {
                     *existing = result;
-                } else if result.dynamic == existing.dynamic {
+                } else if result.cost > existing.cost {
+                } else if result.dynamic > existing.dynamic {
+                    *existing = result;
+                } else if result.dynamic == existing.dynamic && existing.cost == 0 {
                     existing.ambiguous = true;
                 }
             }
@@ -218,6 +226,11 @@ pub(super) enum Outcome {
     Failed {
         farthest: usize,
         expected: Vec<String>,
+        /// The farthest offset where an element failed without a repair.
+        element_farthest: Option<usize>,
+        /// While repairing, the root of the result that reaches farthest,
+        /// the rest of the input an ERROR leaf.
+        partial: Option<Rc<Tree>>,
     },
 }
 
@@ -247,4 +260,6 @@ pub(super) struct Scanned {
     pub(super) state: State,
 }
 
-pub(super) type MemoKey = (usize, usize, State, bool);
+/// A rule call: rule index, offset, state, in a token, and, while
+/// repairing, made quietly (where nothing is repaired).
+pub(super) type MemoKey = (usize, usize, State, bool, bool);

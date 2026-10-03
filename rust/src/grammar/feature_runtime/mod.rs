@@ -20,6 +20,7 @@ mod text;
 mod tree;
 
 use std::cell::Cell;
+use std::collections::HashSet;
 use std::fmt;
 
 pub use load::GrammarRuntimeError;
@@ -56,6 +57,11 @@ pub struct FeatureParseOptions {
     pub reject_ambiguity: Option<bool>,
     /// Whether a tree with ERROR or MISSING nodes is accepted (default false).
     pub accept_recovery: Option<bool>,
+    /// Whether a failed parse is repaired into a tree with ERROR or MISSING
+    /// nodes instead of rejected without a tree (default false).
+    pub error_recovery: Option<bool>,
+    /// The bound on repair points of automatic recovery (default 32).
+    pub max_repairs: Option<usize>,
 }
 
 impl FeatureParseOptions {
@@ -67,6 +73,8 @@ impl FeatureParseOptions {
             memo_limit: self.memo_limit.or(base.memo_limit),
             reject_ambiguity: self.reject_ambiguity.or(base.reject_ambiguity),
             accept_recovery: self.accept_recovery.or(base.accept_recovery),
+            error_recovery: self.error_recovery.or(base.error_recovery),
+            max_repairs: self.max_repairs.or(base.max_repairs),
         }
     }
 }
@@ -268,6 +276,47 @@ impl FeatureGrammarParser {
     }
 }
 
+/// The default bound on repair points of automatic recovery.
+const DEFAULT_MAX_REPAIRS: usize = 32;
+
+/// Automatic error recovery after a failed parse: each round reparses with
+/// one more repair point, the farthest offset where an element failed without
+/// a repair, until a parse completes. After `max_repairs` rounds, or when no
+/// new point appears, the last round's partial tree stands, the rest of the
+/// input an ERROR leaf. Each round has its own step budget.
+fn repair_parse(
+    failed: Outcome,
+    max_repairs: usize,
+    attempt: impl Fn(Option<&HashSet<usize>>) -> Result<Outcome, Abort>,
+) -> Result<Outcome, Abort> {
+    let mut points = HashSet::new();
+    let mut outcome = failed;
+    while points.len() < max_repairs {
+        let Outcome::Failed {
+            farthest,
+            element_farthest,
+            ..
+        } = &outcome
+        else {
+            break;
+        };
+        if !points.insert(element_farthest.unwrap_or(*farthest)) {
+            break;
+        }
+        outcome = attempt(Some(&points))?;
+        if matches!(outcome, Outcome::Parsed(_)) {
+            return Ok(outcome);
+        }
+    }
+    Ok(match outcome {
+        Outcome::Failed {
+            partial: Some(partial),
+            ..
+        } => Outcome::Parsed(partial),
+        outcome => outcome,
+    })
+}
+
 fn parse_program(
     compiled: &Compiled,
     start_rule: usize,
@@ -275,32 +324,47 @@ fn parse_program(
     options: &FeatureParseOptions,
 ) -> ParseOutcome {
     let max_depth = options.max_depth.unwrap_or(DEFAULT_MAX_DEPTH);
-    let shared = Shared {
-        steps: Cell::new(0),
-        limit: options
-            .step_limit
-            .unwrap_or_else(|| 100_000 + 1000 * bytes.len()),
-        frames: Cell::new(0),
-        memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
-    };
+    let limit = options
+        .step_limit
+        .unwrap_or_else(|| 100_000 + 1000 * bytes.len());
     let refused = |rejection, tree| ParseOutcome {
         ok: false,
         tree,
         ambiguities: Vec::new(),
         rejection: Some(rejection),
     };
-    let mut executor = Executor::new(
-        compiled,
-        compiled.main,
-        bytes,
-        0,
-        bytes.len(),
-        &shared,
-        max_depth,
-    );
-    let root = match executor.run(start_rule) {
+    let attempt = |points: Option<&HashSet<usize>>| {
+        let shared = Shared {
+            steps: Cell::new(0),
+            limit,
+            frames: Cell::new(0),
+            memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
+        };
+        let mut executor = Executor::new(
+            compiled,
+            compiled.main,
+            bytes,
+            0,
+            bytes.len(),
+            &shared,
+            max_depth,
+        );
+        executor.repair_points = points.cloned();
+        executor.run(start_rule)
+    };
+    let recovery = options.error_recovery == Some(true);
+    // With no repair point yet, recovery only notes where elements fail.
+    let outcome = attempt(recovery.then(HashSet::new).as_ref()).and_then(|outcome| match outcome {
+        Outcome::Failed { .. } if recovery => repair_parse(
+            outcome,
+            options.max_repairs.unwrap_or(DEFAULT_MAX_REPAIRS),
+            attempt,
+        ),
+        outcome => Ok(outcome),
+    });
+    let root = match outcome {
         Err(Abort::StepLimit) => {
-            return refused(ParseRejection::limited("stepLimit", shared.limit), None);
+            return refused(ParseRejection::limited("stepLimit", limit), None);
         }
         Err(Abort::NestingTooDeep) => {
             let tree = tree::error_tree(bytes, 0, bytes.len(), Some("nestingDepth"));
@@ -309,14 +373,15 @@ fn parse_program(
                 Some(tree),
             );
         }
-        Ok(Outcome::Failed { farthest, expected }) => {
+        Ok(Outcome::Failed {
+            farthest, expected, ..
+        }) => {
             let mut rejection = ParseRejection::positioned("syntax", bytes, farthest);
             rejection.expected = Some(expected);
             return refused(rejection, None);
         }
         Ok(Outcome::Parsed(root)) => root,
     };
-    drop(executor);
     let tree = tree::public_tree(&root, bytes);
     let mut ambiguities = Vec::new();
     tree::collect_ambiguities(&root, compiled, compiled.main, &mut ambiguities);

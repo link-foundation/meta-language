@@ -71,6 +71,7 @@ mod issue_195_grammar_native_ini;
 mod issue_195_grammar_native_json;
 mod issue_195_grammar_native_json5;
 mod issue_195_grammar_native_racket;
+mod issue_195_grammar_native_recovery;
 mod issue_195_grammar_native_scheme;
 mod issue_195_interchange_api_cli;
 mod issue_195_interchange_faithful_lowering;

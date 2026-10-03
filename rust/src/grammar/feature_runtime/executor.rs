@@ -5,8 +5,10 @@
 //! matching keeps at most one. Rule calls are memoized, left recursion grows a
 //! seed to a fixpoint, and the nesting depth, the step count and the memo size
 //! are bounded, so a hostile input ends in a rejection instead of a stack
-//! overflow or a runaway parse. `rules.rs` holds rule calls, actions and
-//! external scanners.
+//! overflow or a runaway parse. Automatic recovery reruns a failed parse with
+//! repair points, where a failing element becomes a MISSING leaf or skips to
+//! its next match behind an ERROR leaf. `rules.rs` holds rule calls, actions
+//! and external scanners.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -15,8 +17,8 @@ use std::rc::Rc;
 use super::operations::{Abort, Machine, OpError, OpResult, State, Working, evaluate_condition};
 use super::program::{Associativity, Compiled, Expr, Matcher, Name, Program, Target};
 use super::results::{
-    Entry, MemoKey, Outcome, Res, ResultSet, Scanned, Shared, Skipped, Tree, TreeType,
-    content_start, longest_result, no_children, with_leaf,
+    Children, Entry, MemoKey, Outcome, Res, ResultSet, Scanned, Shared, Skipped, Tree, TreeType,
+    concat, content_start, longest_result, no_children, with_leaf,
 };
 use super::text::{column_of, decode_at, text_of};
 
@@ -26,6 +28,21 @@ pub(super) type Run<T> = Result<T, Abort>;
 /// The evaluation frames a parse may nest before it is refused as too deep;
 /// the parse thread's stack holds this many with room to spare.
 const FRAME_LIMIT: usize = 20_000;
+
+/// The repair cost of a MISSING leaf; an ERROR leaf costs the bytes it skips.
+const MISSING_COST: usize = 2;
+
+// The kind of the MISSING leaf of a failed terminal or token: the literal
+// text for a literal, else none.
+fn missing_of(expr: &Expr) -> (Option<Name>, bool) {
+    match expr {
+        Expr::Terminal {
+            matcher: Matcher::Literal(literal),
+            ..
+        } => (Some(Name::from(String::from_utf8_lossy(literal))), true),
+        _ => (None, false),
+    }
+}
 
 /// Interprets one program over `bytes[begin, end)`.
 pub(super) struct Executor<'c> {
@@ -46,6 +63,10 @@ pub(super) struct Executor<'c> {
     pub(super) farthest: usize,
     pub(super) expected: HashSet<Name>,
     suppressed: usize,
+    /// Automatic recovery: the offsets where a failing element is repaired,
+    /// and the farthest offset where an element failed without a repair.
+    pub(super) repair_points: Option<HashSet<usize>>,
+    pub(super) element_farthest: Option<usize>,
 }
 
 impl<'c> Executor<'c> {
@@ -78,6 +99,8 @@ impl<'c> Executor<'c> {
             farthest: begin,
             expected: HashSet::new(),
             suppressed: 0,
+            repair_points: None,
+            element_farthest: None,
         }
     }
 
@@ -110,6 +133,70 @@ impl<'c> Executor<'c> {
         let result = run(self);
         self.suppressed -= 1;
         result
+    }
+
+    /// Whether a rule call is made quietly while repairing, so it is
+    /// memoized apart from the same call made in the open.
+    pub(super) const fn quiet_repair(&self) -> bool {
+        self.repair_points.is_some() && self.suppressed > 0
+    }
+
+    /// Automatic recovery. An element (a terminal, a token, a token or atomic
+    /// rule, a scanner token) that fails in syntactic context at `start`, its
+    /// offset after trivia, is noted; at a repair point it yields instead a
+    /// zero-width MISSING leaf and, when `retry` matches the element at a
+    /// later code point boundary, a result that skips the bytes up to the
+    /// first such offset as an ERROR leaf.
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn element_failed(
+        &mut self,
+        start: usize,
+        leaves: &[Rc<Tree>],
+        state: &State,
+        kind: Option<Name>,
+        literal: bool,
+        mut retry: impl FnMut(&mut Self, usize) -> Run<Vec<Res>>,
+    ) -> Run<Vec<Res>> {
+        if self.suppressed > 0 {
+            return Ok(Vec::new());
+        }
+        if !self
+            .repair_points
+            .as_ref()
+            .is_some_and(|points| points.contains(&start))
+        {
+            if self
+                .element_farthest
+                .is_none_or(|farthest| start > farthest)
+            {
+                self.element_farthest = Some(start);
+            }
+            return Ok(Vec::new());
+        }
+        let mut missing = Tree::new(TreeType::Missing, kind, start, start);
+        missing.literal = literal;
+        let mut repaired = Res::new(start, state.clone(), with_leaf(leaves, missing), 0);
+        repaired.cost = MISSING_COST;
+        let mut results = vec![repaired];
+        let mut cursor = start;
+        while cursor < self.end {
+            cursor += decode_at(self.bytes, cursor, self.end).1;
+            let found = self.quietly(|this| retry(this, cursor))?;
+            if found.is_empty() {
+                continue;
+            }
+            let error: Children =
+                with_leaf(leaves, Tree::new(TreeType::Error, None, start, cursor));
+            for result in found {
+                results.push(Res {
+                    children: concat(&error, &result.children),
+                    cost: result.cost + cursor - start,
+                    ..result
+                });
+            }
+            break;
+        }
+        Ok(results)
     }
 
     pub(super) fn text(&self, start: usize, end: usize) -> String {
@@ -197,7 +284,23 @@ impl<'c> Executor<'c> {
         let start = skipped.end;
         let Some(end) = matcher.matches(self.bytes, start, self.end) else {
             self.fail(start, expectation);
-            return Ok(Vec::new());
+            if in_token {
+                return Ok(Vec::new());
+            }
+            let (kind, literal) = match matcher {
+                Matcher::Literal(literal) => {
+                    (Some(Name::from(String::from_utf8_lossy(literal))), true)
+                }
+                _ => (None, false),
+            };
+            return self.element_failed(
+                start,
+                &skipped.leaves,
+                state,
+                kind,
+                literal,
+                |this, cursor| this.terminal(matcher, expectation, cursor, state, false),
+            );
         };
         let children = if in_token {
             no_children()
@@ -322,16 +425,28 @@ impl<'c> Executor<'c> {
             }
             Expr::LexicalPrecedence { item, .. } => self.evaluate(item, position, state, in_token),
             Expr::Longest(items) => self.longest(items, position, state, in_token),
-            Expr::Token(item) => {
-                let skipped = self.terminal_start(position, state, in_token)?;
-                self.token_leaf(item, &skipped, state, in_token)
-            }
-            Expr::ImmediateToken(item) => {
-                let skipped = Skipped {
-                    end: position,
-                    leaves: no_children(),
+            Expr::Token(item) | Expr::ImmediateToken(item) => {
+                let skipped = if matches!(expr, Expr::Token(_)) {
+                    self.terminal_start(position, state, in_token)?
+                } else {
+                    Rc::new(Skipped {
+                        end: position,
+                        leaves: no_children(),
+                    })
                 };
-                self.token_leaf(item, &skipped, state, in_token)
+                let results = self.token_leaf(item, &skipped, state, in_token)?;
+                if !results.is_empty() || in_token {
+                    return Ok(results);
+                }
+                let (kind, literal) = missing_of(item);
+                self.element_failed(
+                    skipped.end,
+                    &skipped.leaves,
+                    state,
+                    kind,
+                    literal,
+                    |this, cursor| this.evaluate(expr, cursor, state, false),
+                )
             }
             Expr::Predicate { item, condition } => {
                 let results = self.evaluate(item, position, state, in_token)?;
@@ -558,8 +673,12 @@ impl<'c> Executor<'c> {
                             if child.trivia {
                                 child.clone()
                             } else {
+                                // A MISSING literal named by an alias is no longer a literal.
                                 let mut copy = (**child).clone();
                                 copy.kind = Some(name.clone());
+                                if copy.ty == TreeType::Missing {
+                                    copy.literal = false;
+                                }
                                 Rc::new(copy)
                             }
                         })
@@ -694,7 +813,17 @@ impl<'c> Executor<'c> {
             }
         }
         let Some((result, _, item)) = best else {
-            return Ok(Vec::new());
+            if in_token {
+                return Ok(Vec::new());
+            }
+            return self.element_failed(
+                start,
+                &skipped.leaves,
+                state,
+                None,
+                false,
+                |this, cursor| this.longest(items, cursor, state, false),
+            );
         };
         let kind = match item {
             Expr::Ref(Target::Rule(index)) => Some(self.program.rules[*index].node_kind.clone()),
@@ -795,7 +924,9 @@ impl<'c> Executor<'c> {
                 outcome
             };
             match &*outcome {
-                Outcome::Failed { farthest, expected } => {
+                Outcome::Failed {
+                    farthest, expected, ..
+                } => {
                     for expectation in expected {
                         self.fail(*farthest, &Name::from(expectation.as_str()));
                     }
