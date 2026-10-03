@@ -40,6 +40,6 @@ test('the crate package includes every file the Rust sources embed', () => {
   );
   assert.ok(embedded.includes('src/data/foundation-models.json'));
   assert.deepEqual(embedded.filter((file) => !include.some((pattern) => pattern.test(file))), []);
-  assert.ok(include.some((pattern) => pattern.test('src/lib.rs')) && include.some((pattern) => pattern.test('vendor/tree-sitter-rust/src/parser.c')));
+  assert.ok(include.some((pattern) => pattern.test('src/lib.rs')) && include.some((pattern) => pattern.test('vendor/tree-sitter-rocq/src/parser.c.gz')));
   assert.ok(!include.some((pattern) => pattern.test('docs/vision.md')), 'the include list stays tight');
 });

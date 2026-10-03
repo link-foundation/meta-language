@@ -73,15 +73,15 @@ test('grammars load on first use, not when the package is imported', () => {
     const { LinkNetwork } = await import(${JSON.stringify(index)});
     const imported = loadedGrammarIds();
     LinkNetwork.parse('# Title\\n\\nSome *text*.\\n', 'Markdown');
-    LinkNetwork.parse('fn main() {}\\n', 'Rust');
-    LinkNetwork.parse('fn other() {}\\n', 'Rust');
+    LinkNetwork.parse('def main(): pass\\n', 'Python');
+    LinkNetwork.parse('def other(): pass\\n', 'Python');
     console.log(JSON.stringify({ imported, parsed: loadedGrammarIds() }));
   `;
   const output = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
     cwd: fileURLToPath(new URL('..', import.meta.url)),
     encoding: 'utf8',
   });
-  assert.deepEqual(JSON.parse(output), { imported: [], parsed: ['markdown', 'markdown_inline', 'rust'] });
+  assert.deepEqual(JSON.parse(output), { imported: [], parsed: ['markdown', 'markdown_inline', 'python'] });
   observe('I195-RESOURCE-LAZY-GRAMMARS', ['noGrammarLoadedOnImport', 'grammarLoadedOnFirstUseAndCached'],
     'grammars load on first use, not when the package is imported');
 });
