@@ -17,9 +17,17 @@
 // TOKEN          (token ...); IMMEDIATE_TOKEN (immediateToken ...)
 // FIELD          (capture labeled NAME ...)
 // ALIAS          (alias NAME ...); an anonymous alias is named 'TEXT
+// a token tree-sitter leaves unnamed, any but a single STRING outside a
+//                lexical rule, (alias unnamed_token ...): tree-sitter hides it
 // extras         (extra ...); conflicts (conflict ...)
-// word           keyword extraction: the word rule does not take a keyword's
-//                text unless no keyword parse exists (dynamic precedence -1)
+// word           keyword extraction: a keyword is closed by the word rule,
+//                which takes no keyword's text where the keyword matched, as
+//                the lexer below prefers the keyword (a literal); see Keyword
+//                lexing in docs/grammar/feature-union.md
+// lexer          (matching longest): of two parses alike in precedence the
+//                one with the token tree-sitter's lexer prefers first wins:
+//                the higher lexical precedence, the longer, a literal over a
+//                pattern, the earlier
 import { compileGrammar } from '../grammar.js';
 import { parseGrammarLinks } from '../grammar-links.js';
 import { parseError } from './common.js';
@@ -344,6 +352,42 @@ function lexicalUnits(node, out) {
   return out;
 }
 
+const isMetadata = (node) => node.type.startsWith('PREC') || node.type === 'FIELD' || node.type === 'ALIAS';
+
+// The key under which tree-sitter's token extraction merges equal tokens: a
+// STRING or a PATTERN by itself, a token by its content and the metadata
+// (precedences, fields, aliases) merged into it around or inside, so that a
+// token of nothing but a string is that string.
+function tokenKey(node, around = []) {
+  if (node.type === 'STRING' || node.type === 'PATTERN') return JSON.stringify(node);
+  const merged = around.map(({ content, ...metadata }) => metadata);
+  let content = node.content;
+  while (isMetadata(content)) {
+    const { content: inner, ...metadata } = content;
+    merged.push(metadata);
+    content = inner;
+  }
+  if (node.type === 'TOKEN' && merged.length === 0) return JSON.stringify(content);
+  return JSON.stringify({ type: node.type, merged, content });
+}
+
+// How often each token occurs in the rules and the externals of the
+// grammar, counted as tree-sitter's token extraction counts them: each
+// STRING and PATTERN outside a token, and each token once.
+function countTokens(node, counts, around = []) {
+  if (!node || typeof node !== 'object') return counts;
+  if (Array.isArray(node)) {
+    node.forEach((item) => countTokens(item, counts));
+    return counts;
+  }
+  const add = (key) => counts.set(key, (counts.get(key) ?? 0) + 1);
+  if (node.type === 'STRING' || node.type === 'PATTERN') add(tokenKey(node));
+  else if (node.type === 'TOKEN' || node.type === 'IMMEDIATE_TOKEN') add(tokenKey(node, around));
+  else if (typeof node.type === 'string' && isMetadata(node)) countTokens(node.content, counts, [...around, node]);
+  else for (const value of Object.values(node)) if (value && typeof value === 'object') countTokens(value, counts);
+  return counts;
+}
+
 /**
  * Imports the parsed or textual grammar.json `source` as native rules.
  *
@@ -366,9 +410,14 @@ export function importTreeSitterNative(source, options = {}) {
   const nameOf = options.nameOf ?? ((name) => name);
   const externalBodies = options.externals ?? {};
   const wordRule = options.wordRule ?? 'word_characters';
+  const unnamedToken = options.unnamedToken ?? 'unnamed_token';
   const report = { approximations: [], unsupported: [] };
   const ruleNames = Object.keys(grammar.rules);
-  if (ruleNames.includes(wordRule)) throw parseError(FORMAT, `the helper rule name ${wordRule} is a rule of the grammar`);
+  for (const helper of [wordRule, unnamedToken]) {
+    if (ruleNames.some((name) => name === helper || nameOf(name) === helper)) throw parseError(FORMAT, `the helper name ${helper} is a rule of the grammar`);
+  }
+  // The native kind each alias names, with the upstream names it stands for.
+  const aliasSources = new Map();
   // Supertypes and inlined rules never appear in tree-sitter's trees.
   const hiddenRules = new Set([...(grammar.supertypes ?? []), ...(grammar.inline ?? [])].map(memberName));
   const syntacticKind = (name) => (name.startsWith('_') || hiddenRules.has(name) ? 'silent' : 'normal');
@@ -388,7 +437,9 @@ export function importTreeSitterNative(source, options = {}) {
   };
   const ref = (name) => `(ref ${enc(nameOf(name))})`;
 
-  const expr = (node, inToken, keywords) => {
+  // A token tree-sitter names nothing: every token but a single string.
+  const unnamed = (node, aliased) => (aliased ? node : `(alias ${enc(unnamedToken)} ${node})`);
+  const expr = (node, inToken, keywords, aliased = false) => {
     switch (node.type) {
       case 'SYMBOL':
         if (externals.includes(node.name) && externalBodies[node.name] === undefined && !ruleNames.includes(node.name)) {
@@ -400,7 +451,7 @@ export function importTreeSitterNative(source, options = {}) {
         return `(literal ${enc(node.value)})`;
       case 'PATTERN': {
         const text = renderTreeSitterPattern(parseTreeSitterPattern(node.value, node.flags ?? ''));
-        return inToken ? text : `(token ${text})`;
+        return inToken ? text : unnamed(`(token ${text})`, aliased);
       }
       case 'BLANK': return 'empty';
       case 'SEQ': {
@@ -418,24 +469,27 @@ export function importTreeSitterNative(source, options = {}) {
       case 'REPEAT': return `(repeat0 ${expr(node.content, inToken, keywords)})`;
       case 'REPEAT1': return `(repeat1 ${expr(node.content, inToken, keywords)})`;
       case 'PREC': case 'PREC_LEFT': case 'PREC_RIGHT': {
-        const inner = expr(node.content, inToken, keywords);
+        const inner = expr(node.content, inToken, keywords, aliased);
         if (inToken) return `(lexicalPrecedence ${level(node.value)} ${inner})`;
         const associativity = { PREC: 'none', PREC_LEFT: 'left', PREC_RIGHT: 'right' }[node.type];
         return `(precedence ${level(node.value)} ${associativity} ${inner})`;
       }
-      case 'PREC_DYNAMIC': return `(dynamicPrecedence ${level(node.value)} ${expr(node.content, inToken, keywords)})`;
+      case 'PREC_DYNAMIC': return `(dynamicPrecedence ${level(node.value)} ${expr(node.content, inToken, keywords, aliased)})`;
       case 'TOKEN': case 'IMMEDIATE_TOKEN': {
         if (inToken) return expr(node.content, true, keywords);
         const inner = expr(node.content, true, keywords);
         const guarded = keywordUnits.has(node) ? `(seq ${inner} (not (ref ${wordRule})))` : inner;
-        return `(${node.type === 'TOKEN' ? 'token' : 'immediateToken'} ${guarded})`;
+        const token = `(${node.type === 'TOKEN' ? 'token' : 'immediateToken'} ${guarded})`;
+        return unwrapPrecedence(node.content).type === 'STRING' ? token : unnamed(token, aliased);
       }
       case 'FIELD': return `(capture labeled ${enc(node.name)} ${expr(node.content, inToken, keywords)})`;
       case 'ALIAS': {
-        const inner = expr(node.content, inToken, keywords);
+        const inner = expr(node.content, inToken, keywords, true);
         // An anonymous alias is a leaf whose kind is its text.
         if (!node.named) return `(alias ${enc(`'${node.value}`)} ${inner})`;
-        return `(alias ${enc(nameOf(node.value))} ${inner})`;
+        const name = nameOf(node.value);
+        aliasSources.set(name, new Set([...(aliasSources.get(name) ?? []), node.value]));
+        return `(alias ${enc(name)} ${inner})`;
       }
       case 'RESERVED': return expr(node.content, inToken, keywords);
       default: throw new UnsupportedTreeSitterPattern(`node type ${node.type}`);
@@ -494,13 +548,35 @@ export function importTreeSitterNative(source, options = {}) {
   }
   const conflicts = (grammar.conflicts ?? []).map((group) => group.map((member) => nameOf(memberName(member))));
 
+  // tree-sitter makes a rule a token named after the rule when its whole
+  // body (under precedences only) is one token that occurs nowhere else in
+  // the grammar, unless the rule is the start rule, or a hidden rule of a
+  // single string: a string under a precedence is no whole token, and a
+  // token used again stays a child of the rule.
+  const usage = countTokens([Object.values(grammar.rules), grammar.externals ?? []], new Map());
+  const lexicalRule = (name, index) => {
+    if (index === 0) return false;
+    const around = [];
+    let node = grammar.rules[name];
+    while (node.type.startsWith('PREC')) {
+      around.push(node);
+      node = node.content;
+    }
+    if (!['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(node.type)) return false;
+    if ((node.type === 'STRING' || node.type === 'PATTERN') && around.length > 0) return false;
+    const key = tokenKey(node, around);
+    if (usage.get(key) !== 1) return false;
+    const string = JSON.parse(key).type === 'STRING';
+    return !(string && name.startsWith('_'));
+  };
+
   const rules = [];
-  for (const name of ruleNames) {
+  for (const [index, name] of ruleNames.entries()) {
     const node = grammar.rules[name];
     let body;
     let kind;
     try {
-      if (isLexicalBody(node)) {
+      if (lexicalRule(name, index)) {
         const bare = unwrapPrecedence(node);
         const wrapped = node !== bare && node.type.startsWith('PREC') ? node.value : null;
         if (bare.type === 'IMMEDIATE_TOKEN') {
@@ -512,11 +588,6 @@ export function importTreeSitterNative(source, options = {}) {
           // A keyword rule is closed like a keyword.
           if (keywordUnits.has(node)) body = `(seq ${body} (not (ref ${wordRule})))`;
           if (wrapped !== null) body = `(lexicalPrecedence ${level(wrapped)} ${body})`;
-        }
-        if (name === word && keywords.size > 0) {
-          const keywordSet = `(choice unordered ${[...keywords].map((text) => `(literal ${enc(text)})`).join(' ')})`;
-          const exact = `(seq ${keywordSet} (not (ref ${wordRule})))`;
-          body = `(choice unordered (seq (not ${exact}) (ref ${wordRule})) (dynamicPrecedence -1 (ref ${wordRule})))`;
         }
       } else {
         kind = syntacticKind(name);
@@ -537,6 +608,17 @@ export function importTreeSitterNative(source, options = {}) {
     if (body === undefined) report.unsupported.push(`external ${name} has no native scanner`);
     rules.push({ name: nameOf(name), sourceName: name, kind: name.startsWith('_') ? 'silent' : 'token', body: body ?? '(not empty)', external: true });
   }
+  // Two upstream names that read the same natively would merge two kinds,
+  // such as tree-sitter's hidden _type_identifier and the type_identifier it
+  // aliases: the importer asks for a name for one of them instead.
+  const clashes = [];
+  const sourcesOf = new Map();
+  for (const { name, sourceName } of rules) sourcesOf.set(name, [...(sourcesOf.get(name) ?? []), sourceName]);
+  for (const [name, sources] of aliasSources) {
+    if (sourcesOf.has(name)) sourcesOf.set(name, [...new Set([...sourcesOf.get(name), ...sources])]);
+  }
+  for (const [name, sources] of sourcesOf) if (sources.length > 1) clashes.push(`${name} (${sources.join(', ')})`);
+  if (clashes.length > 0) throw parseError(FORMAT, `upstream names read the same natively: ${clashes.join('; ')}`);
   return {
     start: nameOf(ruleNames[0]),
     extras,
@@ -556,7 +638,7 @@ export function importTreeSitterNative(source, options = {}) {
 export function renderTreeSitterNative(imported, { annotate } = {}) {
   const fields = annotate ?? ((rule) => (rule.sourceName !== null && rule.sourceName !== rule.name
     ? [`(source-names (tree-sitter ${enc(rule.sourceName)}))`] : []));
-  const lines = [`(grammar (start ${enc(imported.start)}))`];
+  const lines = [`(grammar (start ${enc(imported.start)}) (matching longest))`];
   for (const extra of imported.extras) lines.push(`(extra ${extra})`);
   for (const group of imported.conflicts) lines.push(`(conflict ${group.map(enc).join(' ')})`);
   for (const rule of imported.rules) {

@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 
 import { compileGrammar, languageEntry, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { nativeOracleKinds } from './build-language-catalog.mjs';
+import { corpusCases, grammarSourceOf } from './import-native-grammars.mjs';
 import { hasRecovery, nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -55,6 +56,9 @@ const SCHEME_DATUM_LABEL = 'R7RS small section 2.4 (Datum labels) reads #<n>=<da
 // The Racket Reference reader syntax tree-sitter-racket 0.25.0 recovers from.
 const RACKET_CHARACTER_NEWLINE = 'Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.';
 const RACKET_SYMBOL_NEWLINE = 'Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.';
+
+// The cases of the upstream test corpus pinned with a native grammar's source.
+const upstreamCorpus = (native) => corpusCases(grammarSourceOf(native)).map(({ source }) => source);
 
 export const NATIVE_GRAMMARS = Object.freeze([
   {
@@ -523,6 +527,34 @@ export const NATIVE_GRAMMARS = Object.freeze([
       '#\\', '#e', '#q', '#;', '\'', '`', ',', ',@', '#\'', '#`', '#,', '#,@', '#(', '#fl', '#flz', '#fx', '#s', '#sa',
       '#hash', '#hashe()', '#0=', '#<<', '#<<EOF', '#<<EOF\n', '#<<EOF\nabc', '|a', 'a\\', '#lang', '#lang  racket',
       '#lang /a', '#!', '#!(a)', '#reader', '#&', '#rx', '#rx a', '#123456789#', '#u8(1)', '#x', '#b', '#<a', '#%(',
+    ],
+  },
+  {
+    id: 'c',
+    language: 'C',
+    grammar: 'parity/grammars/native/c.lino',
+    oracle: 'tree-sitter-c 0.24.2',
+    sources: [
+      `${grammarSourceOf('native-c').repository}/blob/${grammarSourceOf('native-c').revision}/src/grammar.json`,
+      `${grammarSourceOf('native-c').repository}/tree/${grammarSourceOf('native-c').revision}/test/corpus`,
+    ],
+    // The grammar is the import of the pinned tree-sitter-c grammar.json
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision and a few sources more. A
+    // keyword is lexed where a statement or declaration may start, so the
+    // identifier `typedef` stands only where no keyword may come.
+    ...nativeGrammar('native-c'),
+    matches: [
+      ...upstreamCorpus('native-c'),
+      '', 'int x;', 'x = typedef;', 'int typedef;', 'int main(void) { return 0; }', 'struct s { int a; } v;',
+      '#include <stdio.h>\n', '#define N 1\nint a[N];\n', '/* c */ int x; // d\n', 'char *s = "a\\n" L"b";',
+      'int f(int a, ...);', 'x = a ? b : c;', 'if (a) b; else c;', 'for (;;) {}', 'do x++; while (x < 3);',
+    ],
+    divergences: [],
+    rejections: [
+      'int x', 'int x = ;', '{', '}', 'int f() {', ')', '(', '"abc', "'a", '/* abc', 'int x = 1 +;', 'if (x',
+      'struct {', '#include', '#define', 'int [;', 'x = = 1;', 'return', 'int f(int a,) {}', 'a[;', '#if X', '#endif',
+      'for (;;', 'int main() { return 0 }', 'x->;', 'L"a', 'typedef;', 'if;', 'struct;', 'while;',
     ],
   },
 ]);

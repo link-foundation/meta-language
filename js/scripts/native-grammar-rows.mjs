@@ -18,7 +18,8 @@
 // regular expression token such as a line break; they are not rows but count
 // in the spans. Node kinds in `extras` are rows with flag X, as the oracle
 // marks a comment node it parses as an extra. A rule renamed from its
-// tree-sitter name is a row of that name (`oracleKinds`). An ERROR leaf is a named
+// tree-sitter name is a row of that name (`oracleKinds`). A kind `'TEXT`, an
+// imported anonymous alias, is an anonymous row TEXT. An ERROR leaf is a named
 // `ERROR` row with flag E and a MISSING leaf an empty row with flag M, named
 // unless it stands for a literal.
 import { readFileSync } from 'node:fs';
@@ -84,6 +85,8 @@ export function oracleRows(source, language) {
 export function nativeRows(tree, source, { hidden = [], anonymous = [], extras = [], oracleKinds = {} } = {}) {
   const oracleNames = new Map(Object.entries(oracleKinds));
   const oracleKind = (kind) => oracleNames.get(kind) ?? kind;
+  const anonymousAlias = (kind) => typeof kind === 'string' && kind.startsWith("'");
+  const term = (kind) => (anonymousAlias(kind) ? kind.slice(1) : oracleKind(kind));
   const hiddenKinds = new Set(hidden);
   const anonymousKinds = new Set(anonymous);
   const extraKinds = new Set(extras);
@@ -106,14 +109,15 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
     if (invisible(node) || (node.type === 'token' && anonymousKinds.has(node.kind))) return;
     const [start, end] = span(node);
     if (node.type === 'node') {
-      rows.push([depth, node.field ?? null, oracleKind(node.kind), 1, start, end, extraKinds.has(node.kind) ? 'X' : '']);
+      rows.push([depth, node.field ?? null, term(node.kind), anonymousAlias(node.kind) ? 0 : 1, start, end, extraKinds.has(node.kind) ? 'X' : '']);
       for (const child of node.children.flatMap(hoist)) visit(child, depth + 1);
     } else if (node.type === 'error') {
       rows.push([depth, null, 'ERROR', 1, start, end, 'E']);
     } else if (node.type === 'missing') {
-      rows.push([depth, null, oracleKind(node.kind), node.literal ? 0 : 1, start, end, 'M']);
+      rows.push([depth, null, term(node.kind), node.literal || anonymousAlias(node.kind) ? 0 : 1, start, end, 'M']);
     } else {
-      rows.push([depth, node.field ?? null, node.kind ? oracleKind(node.kind) : node.text, node.kind ? 1 : 0, start, end, node.trivia ? 'X' : '']);
+      const named = Boolean(node.kind) && !anonymousAlias(node.kind);
+      rows.push([depth, node.field ?? null, node.kind ? term(node.kind) : node.text, named ? 1 : 0, start, end, node.trivia ? 'X' : '']);
     }
   };
   const length = Buffer.byteLength(source);

@@ -2,7 +2,7 @@
   "description": "Words a canonical name may use besides the WordNet 3.1 lemmas: the function words that join the words of a phrase, and technical terms WordNet does not list, each with the reference that defines it and its parts of speech.",
   "functionWords": {
     "description": "Conjunctions, prepositions and articles; a phrase may use them between its words but never as the head of a concept.",
-    "words": ["a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "of", "on", "or", "the", "to", "with"]
+    "words": ["a", "an", "and", "as", "at", "by", "for", "from", "if", "in", "into", "of", "on", "or", "the", "to", "with"]
   },
   "terms": [
     {
@@ -112,6 +112,60 @@
       "partsOfSpeech": ["noun"],
       "definition": "Characters such as spaces, tabs and line breaks that separate tokens and print as blank space.",
       "source": "R7RS small (2013), section 2.1 Identifiers and section 7.1.1 Lexical structure"
+    },
+    {
+      "word": "declarator",
+      "partsOfSpeech": ["noun"],
+      "definition": "The part of a declaration that names what it declares and gives its pointer, array and function structure.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.6 Declarators"
+    },
+    {
+      "word": "designator",
+      "partsOfSpeech": ["noun"],
+      "definition": "The part of an initializer that names the member or element it initializes.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.9 Initialization"
+    },
+    {
+      "word": "initializer",
+      "partsOfSpeech": ["noun"],
+      "definition": "The expression or brace-enclosed list that gives an object its initial value.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.9 Initialization"
+    },
+    {
+      "word": "preprocessor",
+      "partsOfSpeech": ["noun"],
+      "definition": "The translation phase that runs directives and expands macros before a program is parsed.",
+      "source": "ISO/IEC 9899:2018 (C17), section 5.1.1.2 Translation phases and section 6.10 Preprocessing directives"
+    },
+    {
+      "word": "parenthesized",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Enclosed in parentheses.",
+      "source": "Merriam-Webster Dictionary, parenthesize (verb)"
+    },
+    {
+      "word": "variadic",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Taking a variable number of arguments.",
+      "source": "ISO/IEC 14882:2020 (C++20), section 13.7.4 Variadic templates [temp.variadic]"
+    },
+    {
+      "word": "unaligned",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Not guaranteed to sit at the alignment its type requires.",
+      "source": "Microsoft C/C++ language reference, __unaligned"
+    },
+    {
+      "word": "microsoft",
+      "partsOfSpeech": ["noun"],
+      "definition": "The company whose compilers define the Microsoft-specific C and C++ syntax.",
+      "source": "Microsoft C/C++ language reference, Microsoft-specific modifiers"
+    },
+    {
+      "word": "else",
+      "partsOfSpeech": ["adverb"],
+      "definition": "Otherwise; the branch taken when a condition fails.",
+      "source": "Merriam-Webster Dictionary, else (adverb); ISO/IEC 9899:2018 (C17), section 6.8.4.1 The if statement"
     }
   ]
 }

@@ -186,6 +186,10 @@ jobs:
         run: npm run check:pdf-grammar
         working-directory: js
 
+      - name: Check the native grammars imported from their pinned sources
+        run: npm run check:native-imports
+        working-directory: js
+
       - name: Check the native merged grammar fixtures against their oracles
         run: npm run check:native-grammars
         working-directory: js

@@ -449,6 +449,98 @@
         [2,null,")",0,35,35,"M"]
       ],
       "embedded": []
+    },
+    "C": {
+      "grammars": {
+        "native-c": {
+          "version": "1.0.0",
+          "parserSha256": "f7c768bd04550979828c73c605f40b84fc36d6a9fdf20e0395c55c6365d469c6"
+        }
+      },
+      "oracleGrammars": {
+        "c": {
+          "version": "0.24.2",
+          "parserSha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2"
+        }
+      },
+      "sourceSha256": "a49f672e959e9de3bb2ad7b8938c0dfc08af53da899eb939bcd5a6a871853f99",
+      "recoverySourceSha256": "d364f5978c4b4dc73e347513c4d3d0e24d9ff389460803b233a9b4f94360c7a6",
+      "positive": [
+        [0,null,"translation_unit",1,0,134,""],
+        [1,null,"comment",1,0,18,"X"],
+        [1,null,"preproc_include",1,19,38,""],
+        [2,null,"#include",0,19,27,""],
+        [2,"path","system_lib_string",1,28,37,""],
+        [1,null,"comment",1,38,46,"X"],
+        [1,null,"struct_specifier",1,47,77,""],
+        [2,null,"struct",0,47,53,""],
+        [2,"name","type_identifier",1,54,59,""],
+        [2,"body","field_declaration_list",1,60,77,""],
+        [3,null,"{",0,60,61,""],
+        [3,null,"field_declaration",1,62,68,""],
+        [4,"type","primitive_type",1,62,65,""],
+        [4,"declarator","field_identifier",1,66,67,""],
+        [4,null,";",0,67,68,""],
+        [3,null,"field_declaration",1,69,75,""],
+        [4,"type","primitive_type",1,69,72,""],
+        [4,"declarator","field_identifier",1,73,74,""],
+        [4,null,";",0,74,75,""],
+        [3,null,"}",0,76,77,""],
+        [1,null,";",0,77,78,""],
+        [1,null,"function_definition",1,79,133,""],
+        [2,"type","primitive_type",1,79,82,""],
+        [2,"declarator","function_declarator",1,83,93,""],
+        [3,"declarator","identifier",1,83,87,""],
+        [3,"parameters","parameter_list",1,87,93,""],
+        [4,null,"(",0,87,88,""],
+        [4,null,"parameter_declaration",1,88,92,""],
+        [5,"type","primitive_type",1,88,92,""],
+        [4,null,")",0,92,93,""],
+        [2,"body","compound_statement",1,94,133,""],
+        [3,null,"{",0,94,95,""],
+        [3,null,"expression_statement",1,96,121,""],
+        [4,null,"call_expression",1,96,120,""],
+        [5,"function","identifier",1,96,102,""],
+        [5,"arguments","argument_list",1,102,120,""],
+        [6,null,"(",0,102,103,""],
+        [6,null,"string_literal",1,103,112,""],
+        [7,null,"\"",0,103,104,""],
+        [7,null,"string_content",1,104,109,""],
+        [7,null,"escape_sequence",1,109,111,""],
+        [7,null,"\"",0,111,112,""],
+        [6,null,",",0,112,113,""],
+        [6,null,"binary_expression",1,114,119,""],
+        [7,"left","number_literal",1,114,115,""],
+        [7,"operator","+",0,116,117,""],
+        [7,"right","number_literal",1,118,119,""],
+        [6,null,")",0,119,120,""],
+        [4,null,";",0,120,121,""],
+        [3,null,"return_statement",1,122,131,""],
+        [4,null,"return",0,122,128,""],
+        [4,null,"number_literal",1,129,130,""],
+        [4,null,";",0,130,131,""],
+        [3,null,"}",0,132,133,""]
+      ],
+      "recovery": [
+        [0,null,"translation_unit",1,0,26,""],
+        [1,null,"function_definition",1,0,26,""],
+        [2,"type","primitive_type",1,0,3,""],
+        [2,"declarator","function_declarator",1,4,14,""],
+        [3,"declarator","identifier",1,4,8,""],
+        [3,"parameters","parameter_list",1,8,14,""],
+        [4,null,"(",0,8,9,""],
+        [4,null,"parameter_declaration",1,9,13,""],
+        [5,"type","primitive_type",1,9,13,""],
+        [4,null,")",0,13,14,""],
+        [2,"body","compound_statement",1,15,26,""],
+        [3,null,"{",0,15,16,""],
+        [3,null,"return_statement",1,17,26,""],
+        [4,null,"return",0,17,23,""],
+        [4,null,"number_literal",1,24,25,""],
+        [4,null,";",0,26,26,"M"],
+        [3,null,"}",0,26,26,"M"]
+      ],
+      "embedded": []
     }
   }
 }

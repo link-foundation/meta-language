@@ -17,6 +17,7 @@
 // `extras` are extra nodes, as the oracle marks a comment node it parses as an
 // extra. A rule renamed from its tree-sitter name keeps that name as its node
 // kind (`oracleKinds`, from the rule's `(source-names (tree-sitter NAME))`).
+// A kind `'TEXT`, an imported anonymous alias, is an anonymous node TEXT.
 // An ERROR leaf is a named `ERROR` node and a MISSING leaf an empty
 // MISSING node, named unless it stands for a literal.
 import { readFileSync } from 'node:fs';
@@ -67,6 +68,8 @@ export function parseNative(id, source) {
 function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKinds }) {
   const oracleNames = new Map(Object.entries(oracleKinds));
   const oracleKind = (kind) => oracleNames.get(kind) ?? kind;
+  const anonymousAlias = (kind) => typeof kind === 'string' && kind.startsWith("'");
+  const term = (kind) => (anonymousAlias(kind) ? kind.slice(1) : oracleKind(kind));
   const hiddenKinds = new Set(hidden);
   const anonymousKinds = new Set(anonymous);
   const extraKinds = new Set(extras);
@@ -93,7 +96,7 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKind
     if (node.type === 'node') {
       const children = project(node.children);
       return {
-        term: oracleKind(node.kind), named: true, start, end, isError: false, isMissing: false,
+        term: term(node.kind), named: !anonymousAlias(node.kind), start, end, isError: false, isMissing: false,
         isExtra: extraKinds.has(node.kind), hasError: children.some(({ node: child }) => child.hasError), children,
       };
     }
@@ -101,10 +104,10 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKind
       return { term: 'ERROR', named: true, start, end, isError: true, isMissing: false, isExtra: false, hasError: true, children: [] };
     }
     if (node.type === 'missing') {
-      return { term: oracleKind(node.kind), named: !node.literal, start, end, isError: false, isMissing: true, isExtra: false, hasError: true, children: [] };
+      return { term: term(node.kind), named: !node.literal && !anonymousAlias(node.kind), start, end, isError: false, isMissing: true, isExtra: false, hasError: true, children: [] };
     }
     return {
-      term: node.kind ? oracleKind(node.kind) : node.text, named: Boolean(node.kind), start, end, isError: false, isMissing: false,
+      term: node.kind ? term(node.kind) : node.text, named: Boolean(node.kind) && !anonymousAlias(node.kind), start, end, isError: false, isMissing: false,
       isExtra: Boolean(node.trivia), hasError: false, children: [],
     };
   };

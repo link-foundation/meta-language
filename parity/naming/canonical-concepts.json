@@ -1125,6 +1125,7 @@
       "role": "concept",
       "definition": "A rule for a complete expression of a grammar.",
       "constraints": [
+        "Only the native C grammar defines this construct.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
         "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
@@ -1136,6 +1137,10 @@
         {
           "source": "Russian grammar surface",
           "name": "выражение"
+        },
+        {
+          "source": "native:c",
+          "name": "expression"
         }
       ],
       "formerNames": []
@@ -1268,6 +1273,7 @@
       "role": "concept",
       "definition": "A rule for a name made of letters, digits and underscores that starts with a letter.",
       "constraints": [
+        "Only the native C grammar defines this construct.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
         "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
@@ -1279,6 +1285,10 @@
         {
           "source": "Russian grammar surface",
           "name": "идентификатор"
+        },
+        {
+          "source": "native:c",
+          "name": "identifier"
         }
       ],
       "formerNames": []
@@ -1289,6 +1299,7 @@
       "role": "concept",
       "definition": "A rule for one statement of a program grammar.",
       "constraints": [
+        "Only the native C grammar defines this construct.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
         "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
@@ -1300,6 +1311,10 @@
         {
           "source": "Russian grammar surface",
           "name": "оператор"
+        },
+        {
+          "source": "native:c",
+          "name": "statement"
         }
       ],
       "formerNames": []
@@ -1480,9 +1495,9 @@
       "role": "concept",
       "definition": "A rule for a quoted text literal.",
       "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept.",
-        "Native grammars share this concept only where the construct means the same in each language."
+        "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
       "sourceAliases": [
         {
@@ -1492,6 +1507,10 @@
         {
           "source": "Russian grammar surface",
           "name": "строка"
+        },
+        {
+          "source": "native:c",
+          "name": "string"
         },
         {
           "source": "native:csv",
@@ -1558,9 +1577,9 @@
       "role": "concept",
       "definition": "A rule for the literal that denotes no value.",
       "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept.",
-        "Native grammars share this concept only where the construct means the same in each language."
+        "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
       "sourceAliases": [
         {
@@ -1570,6 +1589,10 @@
         {
           "source": "Russian grammar surface",
           "name": "нуль"
+        },
+        {
+          "source": "native:c",
+          "name": "null"
         },
         {
           "source": "native:json",
@@ -1632,6 +1655,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:c",
+          "name": "character_literal"
+        },
+        {
           "source": "native:racket",
           "name": "character"
         },
@@ -1651,6 +1678,10 @@
         "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "comment"
+        },
         {
           "source": "native:diff",
           "name": "comment"
@@ -2140,6 +2171,10 @@
       ],
       "sourceAliases": [
         {
+          "source": "native:c",
+          "name": "escape_sequence"
+        },
+        {
           "source": "native:racket",
           "name": "escape_sequence"
         },
@@ -2159,6 +2194,10 @@
         "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "false"
+        },
         {
           "source": "native:json",
           "name": "false"
@@ -2759,6 +2798,10 @@
         "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "true"
+        },
         {
           "source": "native:json",
           "name": "true"
@@ -3982,6 +4025,7 @@
       "role": "concept",
       "definition": "The annotations attached to declarations of a program.",
       "constraints": [
+        "Only the native C grammar defines this construct.",
         "Each language frontend reports evidence for this construct or states why it is unavailable."
       ],
       "sourceAliases": [
@@ -3992,6 +4036,10 @@
         {
           "source": "Lean",
           "name": "@[attribute]"
+        },
+        {
+          "source": "native:c",
+          "name": "attribute"
         }
       ],
       "formerNames": []
@@ -4207,6 +4255,2942 @@
         "Each target language has its own digest."
       ],
       "sourceAliases": [],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.translation-unit",
+      "phrase": "translation unit",
+      "role": "concept",
+      "definition": "A rule for a translation unit, the construct the upstream grammar names translation_unit.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "translation_unit"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.top-level-item",
+      "phrase": "top level item",
+      "role": "concept",
+      "definition": "A rule for a top level item, the construct the upstream grammar names _top_level_item.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "top_level_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block-item",
+      "phrase": "block item",
+      "role": "concept",
+      "definition": "A rule for a block item, the construct the upstream grammar names _block_item.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "block_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-include-directive",
+      "phrase": "preprocessor include directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor include directive, the construct the upstream grammar names preproc_include.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_include"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-definition",
+      "phrase": "preprocessor definition",
+      "role": "concept",
+      "definition": "A rule for a preprocessor definition, the construct the upstream grammar names preproc_def.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-function-definition",
+      "phrase": "preprocessor function definition",
+      "role": "concept",
+      "definition": "A rule for a preprocessor function definition, the construct the upstream grammar names preproc_function_def.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_function_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-parameters",
+      "phrase": "preprocessor parameters",
+      "role": "concept",
+      "definition": "A rule for a preprocessor parameters, the construct the upstream grammar names preproc_params.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_parameters"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-call",
+      "phrase": "preprocessor call",
+      "role": "concept",
+      "definition": "A rule for a preprocessor call, the construct the upstream grammar names preproc_call.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_call"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-directive",
+      "phrase": "preprocessor if directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if directive, the construct the upstream grammar names preproc_if.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_if"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-defined-directive",
+      "phrase": "preprocessor if defined directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if defined directive, the construct the upstream grammar names preproc_ifdef.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_if_defined"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-branch",
+      "phrase": "preprocessor else branch",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else branch, the construct the upstream grammar names preproc_else.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-branch",
+      "phrase": "preprocessor else if branch",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if branch, the construct the upstream grammar names preproc_elif.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_if"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-defined-branch",
+      "phrase": "preprocessor else if defined branch",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if defined branch, the construct the upstream grammar names preproc_elifdef.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_if_defined"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-in-field-declaration-list",
+      "phrase": "preprocessor if in field declaration list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if in field declaration list, the construct the upstream grammar names preproc_if_in_field_declaration_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_if_in_field_declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-defined-in-field-declaration-list",
+      "phrase": "preprocessor if defined in field declaration list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if defined in field declaration list, the construct the upstream grammar names preproc_ifdef_in_field_declaration_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_if_defined_in_field_declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-in-field-declaration-list",
+      "phrase": "preprocessor else in field declaration list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else in field declaration list, the construct the upstream grammar names preproc_else_in_field_declaration_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_in_field_declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-in-field-declaration-list",
+      "phrase": "preprocessor else if in field declaration list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if in field declaration list, the construct the upstream grammar names preproc_elif_in_field_declaration_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_if_in_field_declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-defined-in-field-declaration-list",
+      "phrase": "preprocessor else if defined in field declaration list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if defined in field declaration list, the construct the upstream grammar names preproc_elifdef_in_field_declaration_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_if_defined_in_field_declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-in-enumerator-list",
+      "phrase": "preprocessor if in enumerator list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if in enumerator list, the construct the upstream grammar names preproc_if_in_enumerator_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_if_in_enumerator_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-defined-in-enumerator-list",
+      "phrase": "preprocessor if defined in enumerator list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if defined in enumerator list, the construct the upstream grammar names preproc_ifdef_in_enumerator_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_if_defined_in_enumerator_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-in-enumerator-list",
+      "phrase": "preprocessor else in enumerator list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else in enumerator list, the construct the upstream grammar names preproc_else_in_enumerator_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_in_enumerator_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-in-enumerator-list",
+      "phrase": "preprocessor else if in enumerator list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if in enumerator list, the construct the upstream grammar names preproc_elif_in_enumerator_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_if_in_enumerator_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-defined-in-enumerator-list",
+      "phrase": "preprocessor else if defined in enumerator list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if defined in enumerator list, the construct the upstream grammar names preproc_elifdef_in_enumerator_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_if_defined_in_enumerator_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-in-enumerator-list-no-comma",
+      "phrase": "preprocessor if in enumerator list no comma",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if in enumerator list no comma, the construct the upstream grammar names preproc_if_in_enumerator_list_no_comma.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_if_in_enumerator_list_no_comma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-if-defined-in-enumerator-list-no-comma",
+      "phrase": "preprocessor if defined in enumerator list no comma",
+      "role": "concept",
+      "definition": "A rule for a preprocessor if defined in enumerator list no comma, the construct the upstream grammar names preproc_ifdef_in_enumerator_list_no_comma.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_if_defined_in_enumerator_list_no_comma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-in-enumerator-list-no-comma",
+      "phrase": "preprocessor else in enumerator list no comma",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else in enumerator list no comma, the construct the upstream grammar names preproc_else_in_enumerator_list_no_comma.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_in_enumerator_list_no_comma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-in-enumerator-list-no-comma",
+      "phrase": "preprocessor else if in enumerator list no comma",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if in enumerator list no comma, the construct the upstream grammar names preproc_elif_in_enumerator_list_no_comma.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_if_in_enumerator_list_no_comma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-else-if-defined-in-enumerator-list-no-comma",
+      "phrase": "preprocessor else if defined in enumerator list no comma",
+      "role": "concept",
+      "definition": "A rule for a preprocessor else if defined in enumerator list no comma, the construct the upstream grammar names preproc_elifdef_in_enumerator_list_no_comma.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_else_if_defined_in_enumerator_list_no_comma"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-argument",
+      "phrase": "preprocessor argument",
+      "role": "concept",
+      "definition": "A rule for a preprocessor argument, the construct the upstream grammar names preproc_arg.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_argument"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.preprocessor-parameters",
+          "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares."
+        }
+      ]
+    },
+    {
+      "id": "grammar.preprocessor-directive",
+      "phrase": "preprocessor directive",
+      "role": "concept",
+      "definition": "A rule for a preprocessor directive, the construct the upstream grammar names preproc_directive.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-expression",
+      "phrase": "preprocessor expression",
+      "role": "concept",
+      "definition": "A rule for a preprocessor expression, the construct the upstream grammar names _preproc_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-parenthesized-expression",
+      "phrase": "preprocessor parenthesized expression",
+      "role": "concept",
+      "definition": "A rule for a preprocessor parenthesized expression, the construct the upstream grammar names preproc_parenthesized_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_parenthesized_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-defined-operator",
+      "phrase": "preprocessor defined operator",
+      "role": "concept",
+      "definition": "A rule for a preprocessor defined operator, the construct the upstream grammar names preproc_defined.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_defined"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-unary-expression",
+      "phrase": "preprocessor unary expression",
+      "role": "concept",
+      "definition": "A rule for a preprocessor unary expression, the construct the upstream grammar names preproc_unary_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_unary_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-call-expression",
+      "phrase": "preprocessor call expression",
+      "role": "concept",
+      "definition": "A rule for a preprocessor call expression, the construct the upstream grammar names preproc_call_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_call_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-argument-list",
+      "phrase": "preprocessor argument list",
+      "role": "concept",
+      "definition": "A rule for a preprocessor argument list, the construct the upstream grammar names preproc_argument_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_argument_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.preprocessor-binary-expression",
+      "phrase": "preprocessor binary expression",
+      "role": "concept",
+      "definition": "A rule for a preprocessor binary expression, the construct the upstream grammar names preproc_binary_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "preprocessor_binary_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-definition",
+      "phrase": "function definition",
+      "role": "concept",
+      "definition": "A rule for a function definition, the construct the upstream grammar names function_definition.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "function_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.old-style-function-definition",
+      "phrase": "old style function definition",
+      "role": "concept",
+      "definition": "A rule for an old style function definition, the construct the upstream grammar names _old_style_function_definition.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "old_style_function_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration",
+      "phrase": "declaration",
+      "role": "concept",
+      "definition": "A rule for a declaration, the construct the upstream grammar names declaration.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-definition",
+      "phrase": "type definition",
+      "role": "concept",
+      "definition": "A rule for a type definition, the construct the upstream grammar names type_definition.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "type_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-definition-type",
+      "phrase": "type definition type",
+      "role": "concept",
+      "definition": "A rule for a type definition type, the construct the upstream grammar names _type_definition_type.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "type_definition_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-definition-declarator-list",
+      "phrase": "type definition declarator list",
+      "role": "concept",
+      "definition": "A rule for a type definition declarator list, the construct the upstream grammar names _type_definition_declarators.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "type_definition_declarator_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-modifiers",
+      "phrase": "declaration modifiers",
+      "role": "concept",
+      "definition": "A rule for a declaration modifiers, the construct the upstream grammar names _declaration_modifiers.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "declaration_modifiers"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-specifiers",
+      "phrase": "declaration specifiers",
+      "role": "concept",
+      "definition": "A rule for a declaration specifiers, the construct the upstream grammar names _declaration_specifiers.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "declaration_specifiers"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.linkage-specification",
+      "phrase": "linkage specification",
+      "role": "concept",
+      "definition": "A rule for a linkage specification, the construct the upstream grammar names linkage_specification.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "linkage_specification"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-specifier",
+      "phrase": "attribute specifier",
+      "role": "concept",
+      "definition": "A rule for an attribute specifier, the construct the upstream grammar names attribute_specifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "attribute_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-declaration",
+      "phrase": "attribute declaration",
+      "role": "concept",
+      "definition": "A rule for an attribute declaration, the construct the upstream grammar names attribute_declaration.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "attribute_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.microsoft-declaration-specifier-modifier",
+      "phrase": "microsoft declaration specifier modifier",
+      "role": "concept",
+      "definition": "A rule for a microsoft declaration specifier modifier, the construct the upstream grammar names ms_declspec_modifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "microsoft_declaration_specifier_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.microsoft-based-modifier",
+      "phrase": "microsoft based modifier",
+      "role": "concept",
+      "definition": "A rule for a microsoft based modifier, the construct the upstream grammar names ms_based_modifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "microsoft_based_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.microsoft-call-modifier",
+      "phrase": "microsoft call modifier",
+      "role": "concept",
+      "definition": "A rule for a microsoft call modifier, the construct the upstream grammar names ms_call_modifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "microsoft_call_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.microsoft-restrict-modifier",
+      "phrase": "microsoft restrict modifier",
+      "role": "concept",
+      "definition": "A rule for a microsoft restrict modifier, the construct the upstream grammar names ms_restrict_modifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "microsoft_restrict_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.microsoft-unsigned-pointer-modifier",
+      "phrase": "microsoft unsigned pointer modifier",
+      "role": "concept",
+      "definition": "A rule for a microsoft unsigned pointer modifier, the construct the upstream grammar names ms_unsigned_ptr_modifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "microsoft_unsigned_pointer_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.microsoft-signed-pointer-modifier",
+      "phrase": "microsoft signed pointer modifier",
+      "role": "concept",
+      "definition": "A rule for a microsoft signed pointer modifier, the construct the upstream grammar names ms_signed_ptr_modifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "microsoft_signed_pointer_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.microsoft-unaligned-pointer-modifier",
+      "phrase": "microsoft unaligned pointer modifier",
+      "role": "concept",
+      "definition": "A rule for a microsoft unaligned pointer modifier, the construct the upstream grammar names ms_unaligned_ptr_modifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "microsoft_unaligned_pointer_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.microsoft-pointer-modifier",
+      "phrase": "microsoft pointer modifier",
+      "role": "concept",
+      "definition": "A rule for a microsoft pointer modifier, the construct the upstream grammar names ms_pointer_modifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "microsoft_pointer_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-list",
+      "phrase": "declaration list",
+      "role": "concept",
+      "definition": "A rule for a declaration list, the construct the upstream grammar names declaration_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declarator",
+      "phrase": "declarator",
+      "role": "concept",
+      "definition": "A rule for a declarator, the construct the upstream grammar names _declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-declarator",
+      "phrase": "declaration declarator",
+      "role": "concept",
+      "definition": "A rule for a declaration declarator, the construct the upstream grammar names _declaration_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "declaration_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-declarator",
+      "phrase": "field declarator",
+      "role": "concept",
+      "definition": "A rule for a field declarator, the construct the upstream grammar names _field_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "field_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-declarator",
+      "phrase": "type declarator",
+      "role": "concept",
+      "definition": "A rule for a type declarator, the construct the upstream grammar names _type_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "type_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.abstract-declarator",
+      "phrase": "abstract declarator",
+      "role": "concept",
+      "definition": "A rule for an abstract declarator, the construct the upstream grammar names _abstract_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "abstract_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parenthesized-declarator",
+      "phrase": "parenthesized declarator",
+      "role": "concept",
+      "definition": "A rule for a parenthesized declarator, the construct the upstream grammar names parenthesized_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "parenthesized_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parenthesized-field-declarator",
+      "phrase": "parenthesized field declarator",
+      "role": "concept",
+      "definition": "A rule for a parenthesized field declarator, the construct the upstream grammar names parenthesized_field_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "parenthesized_field_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parenthesized-type-declarator",
+      "phrase": "parenthesized type declarator",
+      "role": "concept",
+      "definition": "A rule for a parenthesized type declarator, the construct the upstream grammar names parenthesized_type_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "parenthesized_type_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.abstract-parenthesized-declarator",
+      "phrase": "abstract parenthesized declarator",
+      "role": "concept",
+      "definition": "A rule for an abstract parenthesized declarator, the construct the upstream grammar names abstract_parenthesized_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "abstract_parenthesized_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attributed-declarator",
+      "phrase": "attributed declarator",
+      "role": "concept",
+      "definition": "A rule for an attributed declarator, the construct the upstream grammar names attributed_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "attributed_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attributed-field-declarator",
+      "phrase": "attributed field declarator",
+      "role": "concept",
+      "definition": "A rule for an attributed field declarator, the construct the upstream grammar names attributed_field_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "attributed_field_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attributed-type-declarator",
+      "phrase": "attributed type declarator",
+      "role": "concept",
+      "definition": "A rule for an attributed type declarator, the construct the upstream grammar names attributed_type_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "attributed_type_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pointer-declarator",
+      "phrase": "pointer declarator",
+      "role": "concept",
+      "definition": "A rule for a pointer declarator, the construct the upstream grammar names pointer_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "pointer_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pointer-field-declarator",
+      "phrase": "pointer field declarator",
+      "role": "concept",
+      "definition": "A rule for a pointer field declarator, the construct the upstream grammar names pointer_field_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "pointer_field_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pointer-type-declarator",
+      "phrase": "pointer type declarator",
+      "role": "concept",
+      "definition": "A rule for a pointer type declarator, the construct the upstream grammar names pointer_type_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "pointer_type_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.abstract-pointer-declarator",
+      "phrase": "abstract pointer declarator",
+      "role": "concept",
+      "definition": "A rule for an abstract pointer declarator, the construct the upstream grammar names abstract_pointer_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "abstract_pointer_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-declarator",
+      "phrase": "function declarator",
+      "role": "concept",
+      "definition": "A rule for a function declarator, the construct the upstream grammar names function_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "function_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-declaration-declarator",
+      "phrase": "function declaration declarator",
+      "role": "concept",
+      "definition": "A rule for a function declaration declarator, the construct the upstream grammar names _function_declaration_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "function_declaration_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-field-declarator",
+      "phrase": "function field declarator",
+      "role": "concept",
+      "definition": "A rule for a function field declarator, the construct the upstream grammar names function_field_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "function_field_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-type-declarator",
+      "phrase": "function type declarator",
+      "role": "concept",
+      "definition": "A rule for a function type declarator, the construct the upstream grammar names function_type_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "function_type_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.abstract-function-declarator",
+      "phrase": "abstract function declarator",
+      "role": "concept",
+      "definition": "A rule for an abstract function declarator, the construct the upstream grammar names abstract_function_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "abstract_function_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.old-style-function-declarator",
+      "phrase": "old style function declarator",
+      "role": "concept",
+      "definition": "A rule for an old style function declarator, the construct the upstream grammar names _old_style_function_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "old_style_function_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.array-declarator",
+      "phrase": "array declarator",
+      "role": "concept",
+      "definition": "A rule for an array declarator, the construct the upstream grammar names array_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "array_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.array-field-declarator",
+      "phrase": "array field declarator",
+      "role": "concept",
+      "definition": "A rule for an array field declarator, the construct the upstream grammar names array_field_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "array_field_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.array-type-declarator",
+      "phrase": "array type declarator",
+      "role": "concept",
+      "definition": "A rule for an array type declarator, the construct the upstream grammar names array_type_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "array_type_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.abstract-array-declarator",
+      "phrase": "abstract array declarator",
+      "role": "concept",
+      "definition": "A rule for an abstract array declarator, the construct the upstream grammar names abstract_array_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "abstract_array_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.initialized-declarator",
+      "phrase": "initialized declarator",
+      "role": "concept",
+      "definition": "A rule for an initialized declarator, the construct the upstream grammar names init_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "initialized_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.compound-statement",
+      "phrase": "compound statement",
+      "role": "concept",
+      "definition": "A rule for a compound statement, the construct the upstream grammar names compound_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "compound_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.storage-class-specifier",
+      "phrase": "storage class specifier",
+      "role": "concept",
+      "definition": "A rule for a storage class specifier, the construct the upstream grammar names storage_class_specifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "storage_class_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-qualifier",
+      "phrase": "type qualifier",
+      "role": "concept",
+      "definition": "A rule for a type qualifier, the construct the upstream grammar names type_qualifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "type_qualifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.align-as-qualifier",
+      "phrase": "align as qualifier",
+      "role": "concept",
+      "definition": "A rule for an align as qualifier, the construct the upstream grammar names alignas_qualifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "align_as_qualifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-specifier",
+      "phrase": "type specifier",
+      "role": "concept",
+      "definition": "A rule for a type specifier, the construct the upstream grammar names type_specifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "type_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.sized-type-specifier",
+      "phrase": "sized type specifier",
+      "role": "concept",
+      "definition": "A rule for a sized type specifier, the construct the upstream grammar names sized_type_specifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "sized_type_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.primitive-type",
+      "phrase": "primitive type",
+      "role": "concept",
+      "definition": "A rule for a primitive type, the construct the upstream grammar names primitive_type.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "primitive_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-specifier",
+      "phrase": "enumeration specifier",
+      "role": "concept",
+      "definition": "A rule for an enumeration specifier, the construct the upstream grammar names enum_specifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "enumeration_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumerator-list",
+      "phrase": "enumerator list",
+      "role": "concept",
+      "definition": "A rule for an enumerator list, the construct the upstream grammar names enumerator_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "enumerator_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structure-specifier",
+      "phrase": "structure specifier",
+      "role": "concept",
+      "definition": "A rule for a structure specifier, the construct the upstream grammar names struct_specifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "structure_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.union-specifier",
+      "phrase": "union specifier",
+      "role": "concept",
+      "definition": "A rule for an union specifier, the construct the upstream grammar names union_specifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "union_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-declaration-list",
+      "phrase": "field declaration list",
+      "role": "concept",
+      "definition": "A rule for a field declaration list, the construct the upstream grammar names field_declaration_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "field_declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-declaration-list-item",
+      "phrase": "field declaration list item",
+      "role": "concept",
+      "definition": "A rule for a field declaration list item, the construct the upstream grammar names _field_declaration_list_item.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "field_declaration_list_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-declaration",
+      "phrase": "field declaration",
+      "role": "concept",
+      "definition": "A rule for a field declaration, the construct the upstream grammar names field_declaration.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "field_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-declaration-declarator",
+      "phrase": "field declaration declarator",
+      "role": "concept",
+      "definition": "A rule for a field declaration declarator, the construct the upstream grammar names _field_declaration_declarator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "field_declaration_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bit-field-clause",
+      "phrase": "bit field clause",
+      "role": "concept",
+      "definition": "A rule for a bit field clause, the construct the upstream grammar names bitfield_clause.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "bit_field_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumerator",
+      "phrase": "enumerator",
+      "role": "concept",
+      "definition": "A rule for an enumerator, the construct the upstream grammar names enumerator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "enumerator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variadic-parameter",
+      "phrase": "variadic parameter",
+      "role": "concept",
+      "definition": "A rule for a variadic parameter, the construct the upstream grammar names variadic_parameter.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "variadic_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-list",
+      "phrase": "parameter list",
+      "role": "concept",
+      "definition": "A rule for a parameter list, the construct the upstream grammar names parameter_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "parameter_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.old-style-parameter-list",
+      "phrase": "old style parameter list",
+      "role": "concept",
+      "definition": "A rule for an old style parameter list, the construct the upstream grammar names _old_style_parameter_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "old_style_parameter_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parameter-declaration",
+      "phrase": "parameter declaration",
+      "role": "concept",
+      "definition": "A rule for a parameter declaration, the construct the upstream grammar names parameter_declaration.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "parameter_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attributed-statement",
+      "phrase": "attributed statement",
+      "role": "concept",
+      "definition": "A rule for an attributed statement, the construct the upstream grammar names attributed_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "attributed_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.non-case-statement",
+      "phrase": "non case statement",
+      "role": "concept",
+      "definition": "A rule for a non case statement, the construct the upstream grammar names _non_case_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "non_case_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.top-level-statement",
+      "phrase": "top level statement",
+      "role": "concept",
+      "definition": "A rule for a top level statement, the construct the upstream grammar names _top_level_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "top_level_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.labeled-statement",
+      "phrase": "labeled statement",
+      "role": "concept",
+      "definition": "A rule for a labeled statement, the construct the upstream grammar names labeled_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "labeled_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.top-level-expression-statement",
+      "phrase": "top level expression statement",
+      "role": "concept",
+      "definition": "A rule for a top level expression statement, the construct the upstream grammar names _top_level_expression_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "top_level_expression_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-statement",
+      "phrase": "expression statement",
+      "role": "concept",
+      "definition": "A rule for an expression statement, the construct the upstream grammar names expression_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "expression_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.if-statement",
+      "phrase": "if statement",
+      "role": "concept",
+      "definition": "A rule for an if statement, the construct the upstream grammar names if_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "if_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.else-clause",
+      "phrase": "else clause",
+      "role": "concept",
+      "definition": "A rule for an else clause, the construct the upstream grammar names else_clause.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "else_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.switch-statement",
+      "phrase": "switch statement",
+      "role": "concept",
+      "definition": "A rule for a switch statement, the construct the upstream grammar names switch_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "switch_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.case-statement",
+      "phrase": "case statement",
+      "role": "concept",
+      "definition": "A rule for a case statement, the construct the upstream grammar names case_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "case_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.while-statement",
+      "phrase": "while statement",
+      "role": "concept",
+      "definition": "A rule for a while statement, the construct the upstream grammar names while_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "while_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.do-statement",
+      "phrase": "do statement",
+      "role": "concept",
+      "definition": "A rule for a do statement, the construct the upstream grammar names do_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "do_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-statement",
+      "phrase": "for statement",
+      "role": "concept",
+      "definition": "A rule for a for statement, the construct the upstream grammar names for_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "for_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-statement-body",
+      "phrase": "for statement body",
+      "role": "concept",
+      "definition": "A rule for a for statement body, the construct the upstream grammar names _for_statement_body.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "for_statement_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.return-statement",
+      "phrase": "return statement",
+      "role": "concept",
+      "definition": "A rule for a return statement, the construct the upstream grammar names return_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "return_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.break-statement",
+      "phrase": "break statement",
+      "role": "concept",
+      "definition": "A rule for a break statement, the construct the upstream grammar names break_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "break_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.continue-statement",
+      "phrase": "continue statement",
+      "role": "concept",
+      "definition": "A rule for a continue statement, the construct the upstream grammar names continue_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "continue_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.go-to-statement",
+      "phrase": "go to statement",
+      "role": "concept",
+      "definition": "A rule for a go to statement, the construct the upstream grammar names goto_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "go_to_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structured-exception-handling-try-statement",
+      "phrase": "structured exception handling try statement",
+      "role": "concept",
+      "definition": "A rule for a structured exception handling try statement, the construct the upstream grammar names seh_try_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "structured_exception_handling_try_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structured-exception-handling-except-clause",
+      "phrase": "structured exception handling except clause",
+      "role": "concept",
+      "definition": "A rule for a structured exception handling except clause, the construct the upstream grammar names seh_except_clause.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "structured_exception_handling_except_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structured-exception-handling-finally-clause",
+      "phrase": "structured exception handling finally clause",
+      "role": "concept",
+      "definition": "A rule for a structured exception handling finally clause, the construct the upstream grammar names seh_finally_clause.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "structured_exception_handling_finally_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structured-exception-handling-leave-statement",
+      "phrase": "structured exception handling leave statement",
+      "role": "concept",
+      "definition": "A rule for a structured exception handling leave statement, the construct the upstream grammar names seh_leave_statement.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "structured_exception_handling_leave_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-not-binary",
+      "phrase": "expression not binary",
+      "role": "concept",
+      "definition": "A rule for an expression not binary, the construct the upstream grammar names _expression_not_binary.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "expression_not_binary"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.comma-expression",
+      "phrase": "comma expression",
+      "role": "concept",
+      "definition": "A rule for a comma expression, the construct the upstream grammar names comma_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "comma_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.conditional-expression",
+      "phrase": "conditional expression",
+      "role": "concept",
+      "definition": "A rule for a conditional expression, the construct the upstream grammar names conditional_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "conditional_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.assignment-left-expression",
+      "phrase": "assignment left expression",
+      "role": "concept",
+      "definition": "A rule for an assignment left expression, the construct the upstream grammar names _assignment_left_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "assignment_left_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.assignment-expression",
+      "phrase": "assignment expression",
+      "role": "concept",
+      "definition": "A rule for an assignment expression, the construct the upstream grammar names assignment_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "assignment_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pointer-expression",
+      "phrase": "pointer expression",
+      "role": "concept",
+      "definition": "A rule for a pointer expression, the construct the upstream grammar names pointer_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "pointer_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unary-expression",
+      "phrase": "unary expression",
+      "role": "concept",
+      "definition": "A rule for an unary expression, the construct the upstream grammar names unary_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "unary_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.binary-expression",
+      "phrase": "binary expression",
+      "role": "concept",
+      "definition": "A rule for a binary expression, the construct the upstream grammar names binary_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "binary_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.update-expression",
+      "phrase": "update expression",
+      "role": "concept",
+      "definition": "A rule for an update expression, the construct the upstream grammar names update_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "update_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.cast-expression",
+      "phrase": "cast expression",
+      "role": "concept",
+      "definition": "A rule for a cast expression, the construct the upstream grammar names cast_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "cast_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-descriptor",
+      "phrase": "type descriptor",
+      "role": "concept",
+      "definition": "A rule for a type descriptor, the construct the upstream grammar names type_descriptor.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "type_descriptor"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.size-of-expression",
+      "phrase": "size of expression",
+      "role": "concept",
+      "definition": "A rule for a size of expression, the construct the upstream grammar names sizeof_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "size_of_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.alignment-of-expression",
+      "phrase": "alignment of expression",
+      "role": "concept",
+      "definition": "A rule for an alignment of expression, the construct the upstream grammar names alignof_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "alignment_of_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.offset-of-expression",
+      "phrase": "offset of expression",
+      "role": "concept",
+      "definition": "A rule for an offset of expression, the construct the upstream grammar names offsetof_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "offset_of_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generic-expression",
+      "phrase": "generic expression",
+      "role": "concept",
+      "definition": "A rule for a generic expression, the construct the upstream grammar names generic_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "generic_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.subscript-expression",
+      "phrase": "subscript expression",
+      "role": "concept",
+      "definition": "A rule for a subscript expression, the construct the upstream grammar names subscript_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "subscript_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.call-expression",
+      "phrase": "call expression",
+      "role": "concept",
+      "definition": "A rule for a call expression, the construct the upstream grammar names call_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "call_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.gnu-assembly-expression",
+      "phrase": "gnu assembly expression",
+      "role": "concept",
+      "definition": "A rule for a gnu assembly expression, the construct the upstream grammar names gnu_asm_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "gnu_assembly_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.gnu-assembly-qualifier",
+      "phrase": "gnu assembly qualifier",
+      "role": "concept",
+      "definition": "A rule for a gnu assembly qualifier, the construct the upstream grammar names gnu_asm_qualifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "gnu_assembly_qualifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.gnu-assembly-output-operand-list",
+      "phrase": "gnu assembly output operand list",
+      "role": "concept",
+      "definition": "A rule for a gnu assembly output operand list, the construct the upstream grammar names gnu_asm_output_operand_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "gnu_assembly_output_operand_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.gnu-assembly-output-operand",
+      "phrase": "gnu assembly output operand",
+      "role": "concept",
+      "definition": "A rule for a gnu assembly output operand, the construct the upstream grammar names gnu_asm_output_operand.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "gnu_assembly_output_operand"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.gnu-assembly-input-operand-list",
+      "phrase": "gnu assembly input operand list",
+      "role": "concept",
+      "definition": "A rule for a gnu assembly input operand list, the construct the upstream grammar names gnu_asm_input_operand_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "gnu_assembly_input_operand_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.gnu-assembly-input-operand",
+      "phrase": "gnu assembly input operand",
+      "role": "concept",
+      "definition": "A rule for a gnu assembly input operand, the construct the upstream grammar names gnu_asm_input_operand.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "gnu_assembly_input_operand"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.gnu-assembly-clobber-list",
+      "phrase": "gnu assembly clobber list",
+      "role": "concept",
+      "definition": "A rule for a gnu assembly clobber list, the construct the upstream grammar names gnu_asm_clobber_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "gnu_assembly_clobber_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.gnu-assembly-go-to-list",
+      "phrase": "gnu assembly go to list",
+      "role": "concept",
+      "definition": "A rule for a gnu assembly go to list, the construct the upstream grammar names gnu_asm_goto_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "gnu_assembly_go_to_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.extension-expression",
+      "phrase": "extension expression",
+      "role": "concept",
+      "definition": "A rule for an extension expression, the construct the upstream grammar names extension_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "extension_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.argument-list",
+      "phrase": "argument list",
+      "role": "concept",
+      "definition": "A rule for an argument list, the construct the upstream grammar names argument_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "argument_list"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.parameter-list",
+          "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes."
+        }
+      ]
+    },
+    {
+      "id": "grammar.field-expression",
+      "phrase": "field expression",
+      "role": "concept",
+      "definition": "A rule for a field expression, the construct the upstream grammar names field_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "field_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.compound-literal-expression",
+      "phrase": "compound literal expression",
+      "role": "concept",
+      "definition": "A rule for a compound literal expression, the construct the upstream grammar names compound_literal_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "compound_literal_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.parenthesized-expression",
+      "phrase": "parenthesized expression",
+      "role": "concept",
+      "definition": "A rule for a parenthesized expression, the construct the upstream grammar names parenthesized_expression.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "parenthesized_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.initializer-list",
+      "phrase": "initializer list",
+      "role": "concept",
+      "definition": "A rule for an initializer list, the construct the upstream grammar names initializer_list.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "initializer_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.initializer-pair",
+      "phrase": "initializer pair",
+      "role": "concept",
+      "definition": "A rule for an initializer pair, the construct the upstream grammar names initializer_pair.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "initializer_pair"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.subscript-designator",
+      "phrase": "subscript designator",
+      "role": "concept",
+      "definition": "A rule for a subscript designator, the construct the upstream grammar names subscript_designator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "subscript_designator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.subscript-range-designator",
+      "phrase": "subscript range designator",
+      "role": "concept",
+      "definition": "A rule for a subscript range designator, the construct the upstream grammar names subscript_range_designator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "subscript_range_designator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-designator",
+      "phrase": "field designator",
+      "role": "concept",
+      "definition": "A rule for a field designator, the construct the upstream grammar names field_designator.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "field_designator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.number-literal",
+      "phrase": "number literal",
+      "role": "concept",
+      "definition": "A rule for a number literal, the construct the upstream grammar names number_literal.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "number_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.concatenated-string",
+      "phrase": "concatenated string",
+      "role": "concept",
+      "definition": "A rule for a concatenated string, the construct the upstream grammar names concatenated_string.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "concatenated_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.string-literal",
+      "phrase": "string literal",
+      "role": "concept",
+      "definition": "A rule for a string literal, the construct the upstream grammar names string_literal.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "string_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.system-library-string",
+      "phrase": "system library string",
+      "role": "concept",
+      "definition": "A rule for a system library string, the construct the upstream grammar names system_lib_string.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "system_library_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-identifier-alias",
+      "phrase": "type identifier alias",
+      "role": "concept",
+      "definition": "A rule for a type identifier alias, the construct the upstream grammar names _type_identifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "type_identifier_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-identifier-alias",
+      "phrase": "field identifier alias",
+      "role": "concept",
+      "definition": "A rule for a field identifier alias, the construct the upstream grammar names _field_identifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "field_identifier_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.statement-identifier-alias",
+      "phrase": "statement identifier alias",
+      "role": "concept",
+      "definition": "A rule for a statement identifier alias, the construct the upstream grammar names _statement_identifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "statement_identifier_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.empty-declaration",
+      "phrase": "empty declaration",
+      "role": "concept",
+      "definition": "A rule for an empty declaration, the construct the upstream grammar names _empty_declaration.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "empty_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.macro-type-specifier",
+      "phrase": "macro type specifier",
+      "role": "concept",
+      "definition": "A rule for a macro type specifier, the construct the upstream grammar names macro_type_specifier.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "macro_type_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.word-characters",
+      "phrase": "word characters",
+      "role": "concept",
+      "definition": "A rule for a word characters, the construct the upstream grammar names word_characters.",
+      "constraints": [
+        "Only the native C grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:c",
+          "name": "word_characters"
+        }
+      ],
       "formerNames": []
     }
   ]

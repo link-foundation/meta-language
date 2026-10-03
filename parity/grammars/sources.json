@@ -1,0 +1,25 @@
+{
+  "description": "The pinned grammar sources the native grammars import. Each entry is one upstream grammar at one release: the vendored bytes (gzipped, hashed before compression), the repository and revision they come from, the license, the native grammar the import pipeline (js/scripts/import-native-grammars.mjs) produces from it, and the upstream test corpus at the same revision (gzipped JSON of each corpus file, hashed before compression) the native grammar is checked on against the oracle.",
+  "sources": [
+    {
+      "id": "tree-sitter-c",
+      "language": "c",
+      "native": "native-c",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-c 0.24.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-c",
+      "revision": "b780e47fc780ddc8da13afa35a3f4ed5c157823d",
+      "path": "src/grammar.json",
+      "file": "parity/grammars/sources/tree-sitter-c-0.24.2.grammar.json.gz",
+      "sha256": "d0bc53bfd8e9eff4d5e0c3ca2c8049bec2caa8a15f119807de68fd527f172368",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-c-0.24.2.LICENSE",
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-c-0.24.2.corpus.json.gz",
+        "sha256": "38ca24af15ccc0f1c586b82b64917e977109cdedb28276e8f0cb78822f6a66e0"
+      },
+      "oracle": "c"
+    }
+  ]
+}

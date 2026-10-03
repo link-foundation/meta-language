@@ -1,0 +1,58 @@
+{
+  "description": "How the import pipeline (js/scripts/import-native-grammars.mjs) turns the rule names of an upstream grammar into readable English native rule names and concept records: the abbreviations and run-together keywords upstream names use with the words that replace them, and per grammar the names and concepts a reviewer decided by hand. Every entry is a reviewed merge decision; the merge report of each language lists where it applied.",
+  "words": [
+    { "word": "alignas", "replacement": "align_as", "reason": "The C keyword _Alignas (ISO/IEC 9899:2018 section 6.7.5) run together." },
+    { "word": "alignof", "replacement": "alignment_of", "reason": "The C operator _Alignof (ISO/IEC 9899:2018 section 6.5.3.4) gives the alignment of a type." },
+    { "word": "arg", "replacement": "argument", "reason": "An abbreviation of argument." },
+    { "word": "args", "replacement": "arguments", "reason": "An abbreviation of arguments." },
+    { "word": "asm", "replacement": "assembly", "reason": "The asm keyword introduces inline assembly." },
+    { "word": "bitfield", "replacement": "bit_field", "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)." },
+    { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
+    { "word": "declarators", "replacement": "declarator_list", "reason": "A comma-separated list of declarators." },
+    { "word": "declspec", "replacement": "declaration_specifier", "reason": "The Microsoft __declspec keyword run together." },
+    { "word": "def", "replacement": "definition", "reason": "An abbreviation of definition." },
+    { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
+    { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
+    { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
+    { "word": "goto", "replacement": "go_to", "reason": "The goto keyword run together." },
+    { "word": "ifdef", "replacement": "if_defined", "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined." },
+    { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
+    { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
+    { "word": "ms", "replacement": "microsoft", "reason": "Microsoft-specific syntax." },
+    { "word": "offsetof", "replacement": "offset_of", "reason": "The offsetof macro (ISO/IEC 9899:2018 section 7.19) run together." },
+    { "word": "params", "replacement": "parameters", "reason": "An abbreviation of parameters." },
+    { "word": "preproc", "replacement": "preprocessor", "reason": "An abbreviation of preprocessor." },
+    { "word": "ptr", "replacement": "pointer", "reason": "An abbreviation of pointer." },
+    { "word": "seh", "replacement": "structured_exception_handling", "reason": "Microsoft structured exception handling." },
+    { "word": "sizeof", "replacement": "size_of", "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together." },
+    { "word": "struct", "replacement": "structure", "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)." }
+  ],
+  "grammars": {
+    "c": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_statement_identifier": "statement_identifier_alias"
+      },
+      "concepts": {
+        "preproc_include": "grammar.preprocessor-include-directive",
+        "preproc_if": "grammar.preprocessor-if-directive",
+        "preproc_ifdef": "grammar.preprocessor-if-defined-directive",
+        "preproc_else": "grammar.preprocessor-else-branch",
+        "preproc_elif": "grammar.preprocessor-else-if-branch",
+        "preproc_elifdef": "grammar.preprocessor-else-if-defined-branch",
+        "preproc_defined": "grammar.preprocessor-defined-operator",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "attribute": "program.attributes"
+      }
+    }
+  },
+  "concepts": {
+    "definitions": {},
+    "distinctFrom": {
+      "grammar.preprocessor-argument": [{ "id": "grammar.preprocessor-parameters", "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares." }],
+      "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }]
+    }
+  }
+}

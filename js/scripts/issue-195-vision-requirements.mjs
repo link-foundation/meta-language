@@ -363,6 +363,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-C',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/c.json',
+    construct: 'native merged C grammar imported from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/c.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-c 0.24.2, with every rule renamed to its English name and every hand decision recorded in parity/grammars/merge-reports/c.json. Both executors build, for every source of the upstream test/corpus and the added cases, exactly the concrete syntax tree rows of the tree-sitter-c oracle: declarations, function definitions, structures, unions, enumerations, type definitions, preprocessor directives, statements, expressions, string and character literals, attributes, GNU and Microsoft extensions and comments included. A keyword is lexed as the oracle lexes it, an identifier only where the keyword cannot stand; both executors reject invalid input the oracle recovers from, repair it into the recorded tree, and keep every source byte, comments and white space included, in the tree.',
+    assertions: [
+      'nativeCGrammarIsCanonicalLinks',
+      'nativeCTreesMatchOracle',
+      'nativeCRejectsInvalidInput',
+      'nativeCTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime.js', 'js/src/grammar-runtime/executor.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/executor.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "test": "node --test --test-concurrency=1 tests/*.test.js",
-    "check": "npm run check:parity && npm run check:default-cst && npm run check:lino-grammar && npm run check:pdf-grammar && npm run check:native-grammars && npm run check:builtin-cst && npm run check:language-catalog && npm run check:concept-records && npm run check:concept-reuse && npm run check:foundations && npm run check:issue-195 && npm run check:issue-195:sources && npm run check:downstream-consumers && npm run check:dependencies && npm run check:naming && npm run check:documentation",
+    "check": "npm run check:parity && npm run check:default-cst && npm run check:lino-grammar && npm run check:pdf-grammar && npm run check:native-imports && npm run check:native-grammars && npm run check:builtin-cst && npm run check:language-catalog && npm run check:concept-records && npm run check:concept-reuse && npm run check:foundations && npm run check:issue-195 && npm run check:issue-195:sources && npm run check:downstream-consumers && npm run check:dependencies && npm run check:naming && npm run check:documentation",
     "check:parity": "node scripts/check-js-rust-parity.mjs",
     "check:parity:manifest": "node scripts/check-js-rust-parity.mjs --manifest-only",
     "check:issue-195": "node scripts/check-issue-195-acceptance.mjs",
@@ -35,6 +35,7 @@
     "check:default-cst": "node scripts/generate-default-cst-expectations.mjs --check",
     "check:lino-grammar": "node scripts/generate-lino-grammar-cases.mjs --check",
     "check:pdf-grammar": "node scripts/generate-pdf-grammar-cases.mjs --check",
+    "check:native-imports": "node scripts/import-native-grammars.mjs --check",
     "check:native-grammars": "node scripts/generate-native-grammar-fixtures.mjs --check",
     "check:builtin-cst": "node scripts/generate-builtin-cst-expectations.mjs --check",
     "check:language-catalog": "node scripts/build-language-catalog.mjs --check",

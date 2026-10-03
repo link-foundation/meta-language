@@ -16,8 +16,9 @@
 //! `extras` are extra nodes, as the oracle marks a comment node it parses as an
 //! extra. A rule renamed from its tree-sitter name keeps that name as its
 //! node kind (`oracle_kinds`, from the rule's `(source-names (tree-sitter
-//! NAME))`). An ERROR leaf is a named `ERROR` node and a MISSING leaf an empty
-//! MISSING node, named unless it stands for a literal.
+//! NAME))`). A kind `'TEXT`, an imported anonymous alias, is an anonymous
+//! node TEXT. An ERROR leaf is a named `ERROR` node and a MISSING leaf an
+//! empty MISSING node, named unless it stands for a literal.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
@@ -31,6 +32,10 @@ use crate::{
 /// catalog file; `tests/unit/default_cst_expectations.rs` checks that the
 /// catalog's native grammars are exactly the shipped files.
 const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
+    (
+        "native-grammars/c.lino",
+        include_str!("data/native-grammars/c.lino"),
+    ),
     (
         "native-grammars/csv.lino",
         include_str!("data/native-grammars/csv.lino"),
@@ -156,11 +161,16 @@ struct Projection<'a> {
 
 impl Projection<'_> {
     /// The tree-sitter kind of a native kind: the kind itself unless its rule
-    /// was renamed from it.
+    /// was renamed from it, and the text of an anonymous alias `'TEXT`.
     fn oracle_kind(&self, kind: &str) -> String {
-        self.oracle_kinds
-            .get(kind)
-            .map_or_else(|| kind.to_owned(), Clone::clone)
+        kind.strip_prefix('\'').map_or_else(
+            || {
+                self.oracle_kinds
+                    .get(kind)
+                    .map_or_else(|| kind.to_owned(), Clone::clone)
+            },
+            str::to_owned,
+        )
     }
 
     fn invisible(&self, node: &SyntaxTree) -> bool {
@@ -269,7 +279,7 @@ impl Projection<'_> {
                     has_error: children.iter().any(|(child, _)| child.has_error),
                     is_extra: self.extras.contains(kind.as_str()),
                     children,
-                    ..leaf(self.oracle_kind(kind), true)
+                    ..leaf(self.oracle_kind(kind), !anonymous_alias(kind))
                 }
             }
             SyntaxTree::Error { .. } => NativeNode {
@@ -283,7 +293,7 @@ impl Projection<'_> {
                 ..leaf(
                     kind.as_deref()
                         .map_or_else(|| "MISSING".to_owned(), |kind| self.oracle_kind(kind)),
-                    !literal,
+                    !literal && !kind.as_deref().is_some_and(anonymous_alias),
                 )
             },
             SyntaxTree::Token {
@@ -297,7 +307,7 @@ impl Projection<'_> {
                         },
                         |kind| self.oracle_kind(kind),
                     ),
-                    kind.is_some(),
+                    kind.as_deref().is_some_and(|kind| !anonymous_alias(kind)),
                 )
             },
             SyntaxTree::Embed { language, .. } => leaf(language.clone(), true),
@@ -327,6 +337,11 @@ impl Projection<'_> {
             children,
         }
     }
+}
+
+/// Whether a kind is an imported anonymous alias `'TEXT`.
+fn anonymous_alias(kind: &str) -> bool {
+    kind.starts_with('\'')
 }
 
 fn collect_leaves<'a>(node: &'a SyntaxTree, leaves: &mut Vec<&'a SyntaxTree>) {

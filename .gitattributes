@@ -7,6 +7,8 @@ docs/case-studies/issue-177/ci-logs/*.log -whitespace
 # Built-in grammar specifications are hashed into grammar provenance, and the translation
 # corpus into the translation stage fixtures; keep their bytes identical on every platform.
 parity/grammars/** text eol=lf
+# The pinned grammar sources the native grammars import are gzipped bytes.
+parity/grammars/sources/*.gz binary
 parity/fixtures/translation-corpus/** text eol=lf
 # The issue #195 evidence corpus is hashed into every platform consumer report and must
 # hash identically on Windows checkouts, or the supported-platform join rejects them.

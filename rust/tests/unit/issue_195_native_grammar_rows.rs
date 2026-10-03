@@ -2,7 +2,8 @@
 //! (`issue_195_grammar_native_json.rs`, `issue_195_grammar_native_ini.rs`,
 //! `issue_195_grammar_native_diff.rs`, `issue_195_grammar_native_csv.rs`,
 //! `issue_195_grammar_native_json5.rs`, `issue_195_grammar_native_racket.rs`,
-//! `issue_195_grammar_native_scheme.rs`): they read a fixture of
+//! `issue_195_grammar_native_scheme.rs`, `issue_195_grammar_native_c.rs`):
+//! they read a fixture of
 //! parity/fixtures/native-grammars/, parse with the Rust
 //! executor and project its trees to the rows of the tree-sitter oracle the
 //! way js/scripts/native-grammar-rows.mjs projects the JavaScript ones.
@@ -103,8 +104,10 @@ impl<'a> Rows<'a> {
         }
     }
 
+    /// The oracle kind of a native kind; an anonymous alias `'TEXT` is TEXT.
     fn oracle_kind<'b>(&'b self, kind: &'b str) -> &'b str {
-        self.oracle_kinds.get(kind).copied().unwrap_or(kind)
+        kind.strip_prefix('\'')
+            .unwrap_or_else(|| self.oracle_kinds.get(kind).copied().unwrap_or(kind))
     }
 
     /// Whitespace and hidden leaves, which are not rows.
@@ -200,7 +203,7 @@ impl<'a> Rows<'a> {
                     depth,
                     field,
                     self.oracle_kind(kind),
-                    1,
+                    u8::from(!kind.starts_with('\'')),
                     start,
                     end,
                     flags
@@ -216,9 +219,10 @@ impl<'a> Rows<'a> {
                 text: leaf,
                 ..
             } => {
-                let (kind, named) = kind
-                    .as_deref()
-                    .map_or_else(|| (text(leaf), 0), |kind| (self.oracle_kind(kind), 1));
+                let (kind, named) = kind.as_deref().map_or_else(
+                    || (text(leaf), 0),
+                    |kind| (self.oracle_kind(kind), u8::from(!kind.starts_with('\''))),
+                );
                 rows.push(json!([
                     depth,
                     field,

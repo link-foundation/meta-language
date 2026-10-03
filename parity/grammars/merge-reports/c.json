@@ -1,0 +1,577 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "c",
+  "native": "native-c",
+  "sources": [
+    {
+      "id": "tree-sitter-c",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-c 0.24.2",
+      "repository": "https://github.com/tree-sitter/tree-sitter-c",
+      "revision": "b780e47fc780ddc8da13afa35a3f4ed5c157823d",
+      "path": "src/grammar.json",
+      "sha256": "d0bc53bfd8e9eff4d5e0c3ca2c8049bec2caa8a15f119807de68fd527f172368",
+      "license": "MIT"
+    }
+  ],
+  "rules": 183,
+  "keywords": [
+    "FALSE",
+    "NULL",
+    "TRUE",
+    "_Alignas",
+    "_Alignof",
+    "_Atomic",
+    "_Generic",
+    "_Nonnull",
+    "_Noreturn",
+    "__alignof",
+    "__alignof__",
+    "__asm",
+    "__asm__",
+    "__attribute",
+    "__attribute__",
+    "__based",
+    "__cdecl",
+    "__clrcall",
+    "__declspec",
+    "__except",
+    "__extension__",
+    "__fastcall",
+    "__finally",
+    "__forceinline",
+    "__inline",
+    "__inline__",
+    "__leave",
+    "__restrict",
+    "__restrict__",
+    "__sptr",
+    "__stdcall",
+    "__thiscall",
+    "__thread",
+    "__try",
+    "__unaligned",
+    "__uptr",
+    "__vectorcall",
+    "__volatile__",
+    "_alignof",
+    "_unaligned",
+    "alignas",
+    "alignof",
+    "asm",
+    "auto",
+    "bool",
+    "break",
+    "case",
+    "char",
+    "char16_t",
+    "char32_t",
+    "char64_t",
+    "char8_t",
+    "charptr_t",
+    "const",
+    "constexpr",
+    "continue",
+    "default",
+    "defined",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "false",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "int16_t",
+    "int32_t",
+    "int64_t",
+    "int8_t",
+    "intptr_t",
+    "long",
+    "max_align_t",
+    "noreturn",
+    "nullptr",
+    "nullptr_t",
+    "offsetof",
+    "ptrdiff_t",
+    "register",
+    "restrict",
+    "return",
+    "short",
+    "signed",
+    "size_t",
+    "sizeof",
+    "ssize_t",
+    "static",
+    "struct",
+    "switch",
+    "thread_local",
+    "true",
+    "typedef",
+    "uint16_t",
+    "uint32_t",
+    "uint64_t",
+    "uint8_t",
+    "uintptr_t",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while"
+  ],
+  "renamed": [
+    {
+      "source": "_top_level_item",
+      "native": "top_level_item"
+    },
+    {
+      "source": "_block_item",
+      "native": "block_item"
+    },
+    {
+      "source": "preproc_include",
+      "native": "preprocessor_include"
+    },
+    {
+      "source": "preproc_def",
+      "native": "preprocessor_definition"
+    },
+    {
+      "source": "preproc_function_def",
+      "native": "preprocessor_function_definition"
+    },
+    {
+      "source": "preproc_params",
+      "native": "preprocessor_parameters"
+    },
+    {
+      "source": "preproc_call",
+      "native": "preprocessor_call"
+    },
+    {
+      "source": "preproc_if",
+      "native": "preprocessor_if"
+    },
+    {
+      "source": "preproc_ifdef",
+      "native": "preprocessor_if_defined"
+    },
+    {
+      "source": "preproc_else",
+      "native": "preprocessor_else"
+    },
+    {
+      "source": "preproc_elif",
+      "native": "preprocessor_else_if"
+    },
+    {
+      "source": "preproc_elifdef",
+      "native": "preprocessor_else_if_defined"
+    },
+    {
+      "source": "preproc_if_in_field_declaration_list",
+      "native": "preprocessor_if_in_field_declaration_list"
+    },
+    {
+      "source": "preproc_ifdef_in_field_declaration_list",
+      "native": "preprocessor_if_defined_in_field_declaration_list"
+    },
+    {
+      "source": "preproc_else_in_field_declaration_list",
+      "native": "preprocessor_else_in_field_declaration_list"
+    },
+    {
+      "source": "preproc_elif_in_field_declaration_list",
+      "native": "preprocessor_else_if_in_field_declaration_list"
+    },
+    {
+      "source": "preproc_elifdef_in_field_declaration_list",
+      "native": "preprocessor_else_if_defined_in_field_declaration_list"
+    },
+    {
+      "source": "preproc_if_in_enumerator_list",
+      "native": "preprocessor_if_in_enumerator_list"
+    },
+    {
+      "source": "preproc_ifdef_in_enumerator_list",
+      "native": "preprocessor_if_defined_in_enumerator_list"
+    },
+    {
+      "source": "preproc_else_in_enumerator_list",
+      "native": "preprocessor_else_in_enumerator_list"
+    },
+    {
+      "source": "preproc_elif_in_enumerator_list",
+      "native": "preprocessor_else_if_in_enumerator_list"
+    },
+    {
+      "source": "preproc_elifdef_in_enumerator_list",
+      "native": "preprocessor_else_if_defined_in_enumerator_list"
+    },
+    {
+      "source": "preproc_if_in_enumerator_list_no_comma",
+      "native": "preprocessor_if_in_enumerator_list_no_comma"
+    },
+    {
+      "source": "preproc_ifdef_in_enumerator_list_no_comma",
+      "native": "preprocessor_if_defined_in_enumerator_list_no_comma"
+    },
+    {
+      "source": "preproc_else_in_enumerator_list_no_comma",
+      "native": "preprocessor_else_in_enumerator_list_no_comma"
+    },
+    {
+      "source": "preproc_elif_in_enumerator_list_no_comma",
+      "native": "preprocessor_else_if_in_enumerator_list_no_comma"
+    },
+    {
+      "source": "preproc_elifdef_in_enumerator_list_no_comma",
+      "native": "preprocessor_else_if_defined_in_enumerator_list_no_comma"
+    },
+    {
+      "source": "preproc_arg",
+      "native": "preprocessor_argument"
+    },
+    {
+      "source": "preproc_directive",
+      "native": "preprocessor_directive"
+    },
+    {
+      "source": "_preproc_expression",
+      "native": "preprocessor_expression"
+    },
+    {
+      "source": "preproc_parenthesized_expression",
+      "native": "preprocessor_parenthesized_expression"
+    },
+    {
+      "source": "preproc_defined",
+      "native": "preprocessor_defined"
+    },
+    {
+      "source": "preproc_unary_expression",
+      "native": "preprocessor_unary_expression"
+    },
+    {
+      "source": "preproc_call_expression",
+      "native": "preprocessor_call_expression"
+    },
+    {
+      "source": "preproc_argument_list",
+      "native": "preprocessor_argument_list"
+    },
+    {
+      "source": "preproc_binary_expression",
+      "native": "preprocessor_binary_expression"
+    },
+    {
+      "source": "_old_style_function_definition",
+      "native": "old_style_function_definition"
+    },
+    {
+      "source": "_type_definition_type",
+      "native": "type_definition_type"
+    },
+    {
+      "source": "_type_definition_declarators",
+      "native": "type_definition_declarator_list"
+    },
+    {
+      "source": "_declaration_modifiers",
+      "native": "declaration_modifiers"
+    },
+    {
+      "source": "_declaration_specifiers",
+      "native": "declaration_specifiers"
+    },
+    {
+      "source": "ms_declspec_modifier",
+      "native": "microsoft_declaration_specifier_modifier"
+    },
+    {
+      "source": "ms_based_modifier",
+      "native": "microsoft_based_modifier"
+    },
+    {
+      "source": "ms_call_modifier",
+      "native": "microsoft_call_modifier"
+    },
+    {
+      "source": "ms_restrict_modifier",
+      "native": "microsoft_restrict_modifier"
+    },
+    {
+      "source": "ms_unsigned_ptr_modifier",
+      "native": "microsoft_unsigned_pointer_modifier"
+    },
+    {
+      "source": "ms_signed_ptr_modifier",
+      "native": "microsoft_signed_pointer_modifier"
+    },
+    {
+      "source": "ms_unaligned_ptr_modifier",
+      "native": "microsoft_unaligned_pointer_modifier"
+    },
+    {
+      "source": "ms_pointer_modifier",
+      "native": "microsoft_pointer_modifier"
+    },
+    {
+      "source": "_declarator",
+      "native": "declarator"
+    },
+    {
+      "source": "_declaration_declarator",
+      "native": "declaration_declarator"
+    },
+    {
+      "source": "_field_declarator",
+      "native": "field_declarator"
+    },
+    {
+      "source": "_type_declarator",
+      "native": "type_declarator"
+    },
+    {
+      "source": "_abstract_declarator",
+      "native": "abstract_declarator"
+    },
+    {
+      "source": "_function_declaration_declarator",
+      "native": "function_declaration_declarator"
+    },
+    {
+      "source": "_old_style_function_declarator",
+      "native": "old_style_function_declarator"
+    },
+    {
+      "source": "init_declarator",
+      "native": "initialized_declarator"
+    },
+    {
+      "source": "alignas_qualifier",
+      "native": "align_as_qualifier"
+    },
+    {
+      "source": "enum_specifier",
+      "native": "enumeration_specifier"
+    },
+    {
+      "source": "struct_specifier",
+      "native": "structure_specifier"
+    },
+    {
+      "source": "_field_declaration_list_item",
+      "native": "field_declaration_list_item"
+    },
+    {
+      "source": "_field_declaration_declarator",
+      "native": "field_declaration_declarator"
+    },
+    {
+      "source": "bitfield_clause",
+      "native": "bit_field_clause"
+    },
+    {
+      "source": "_old_style_parameter_list",
+      "native": "old_style_parameter_list"
+    },
+    {
+      "source": "_non_case_statement",
+      "native": "non_case_statement"
+    },
+    {
+      "source": "_top_level_statement",
+      "native": "top_level_statement"
+    },
+    {
+      "source": "_top_level_expression_statement",
+      "native": "top_level_expression_statement"
+    },
+    {
+      "source": "_for_statement_body",
+      "native": "for_statement_body"
+    },
+    {
+      "source": "goto_statement",
+      "native": "go_to_statement"
+    },
+    {
+      "source": "seh_try_statement",
+      "native": "structured_exception_handling_try_statement"
+    },
+    {
+      "source": "seh_except_clause",
+      "native": "structured_exception_handling_except_clause"
+    },
+    {
+      "source": "seh_finally_clause",
+      "native": "structured_exception_handling_finally_clause"
+    },
+    {
+      "source": "seh_leave_statement",
+      "native": "structured_exception_handling_leave_statement"
+    },
+    {
+      "source": "_expression_not_binary",
+      "native": "expression_not_binary"
+    },
+    {
+      "source": "_string",
+      "native": "string"
+    },
+    {
+      "source": "_assignment_left_expression",
+      "native": "assignment_left_expression"
+    },
+    {
+      "source": "sizeof_expression",
+      "native": "size_of_expression"
+    },
+    {
+      "source": "alignof_expression",
+      "native": "alignment_of_expression"
+    },
+    {
+      "source": "offsetof_expression",
+      "native": "offset_of_expression"
+    },
+    {
+      "source": "gnu_asm_expression",
+      "native": "gnu_assembly_expression"
+    },
+    {
+      "source": "gnu_asm_qualifier",
+      "native": "gnu_assembly_qualifier"
+    },
+    {
+      "source": "gnu_asm_output_operand_list",
+      "native": "gnu_assembly_output_operand_list"
+    },
+    {
+      "source": "gnu_asm_output_operand",
+      "native": "gnu_assembly_output_operand"
+    },
+    {
+      "source": "gnu_asm_input_operand_list",
+      "native": "gnu_assembly_input_operand_list"
+    },
+    {
+      "source": "gnu_asm_input_operand",
+      "native": "gnu_assembly_input_operand"
+    },
+    {
+      "source": "gnu_asm_clobber_list",
+      "native": "gnu_assembly_clobber_list"
+    },
+    {
+      "source": "gnu_asm_goto_list",
+      "native": "gnu_assembly_go_to_list"
+    },
+    {
+      "source": "char_literal",
+      "native": "character_literal"
+    },
+    {
+      "source": "system_lib_string",
+      "native": "system_library_string"
+    },
+    {
+      "source": "_type_identifier",
+      "native": "type_identifier_alias"
+    },
+    {
+      "source": "_field_identifier",
+      "native": "field_identifier_alias"
+    },
+    {
+      "source": "_statement_identifier",
+      "native": "statement_identifier_alias"
+    },
+    {
+      "source": "_empty_declaration",
+      "native": "empty_declaration"
+    }
+  ],
+  "expandedWords": [
+    "alignas",
+    "alignof",
+    "arg",
+    "asm",
+    "bitfield",
+    "char",
+    "declarators",
+    "declspec",
+    "def",
+    "elif",
+    "elifdef",
+    "enum",
+    "goto",
+    "ifdef",
+    "init",
+    "lib",
+    "ms",
+    "offsetof",
+    "params",
+    "preproc",
+    "ptr",
+    "seh",
+    "sizeof",
+    "struct"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "attribute",
+        "concept": "program.attributes"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "character_literal",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "true",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "false",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "null",
+        "concept": "grammar.null"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 172
+  },
+  "approximations": [],
+  "unsupported": []
+}
