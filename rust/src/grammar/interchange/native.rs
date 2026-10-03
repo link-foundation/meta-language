@@ -11,7 +11,7 @@ use super::super::feature::class_expression;
 use super::super::{
     CharClassItem, FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat,
     GrammarImportError, GrammarMacro, GrammarRule, GrammarScanner, MATCHING_MODES, Operation,
-    RuleAttributes, RuleKind, UnicodeClassItem,
+    PrecedenceEntry, RuleAttributes, RuleKind, UnicodeClassItem,
 };
 use super::feature_forms::{FormCodec, render_feature_form, render_operation};
 
@@ -77,6 +77,13 @@ pub fn render_native_grammar(grammar: &Grammar) -> String {
     }
     for group in &declarations.conflicts {
         lines.push(format!("conflict {}", names(group, " ")));
+    }
+    for order in &declarations.precedences {
+        let entries = order
+            .iter()
+            .map(|entry| format!("{}({})", entry.kind(), render_name(entry.value())))
+            .collect::<Vec<_>>();
+        lines.push(format!("precedences {}", entries.join(" ")));
     }
     for declared in &declarations.macros {
         lines.push(format!(
@@ -359,6 +366,30 @@ pub fn parse_native_grammar(source: &str) -> Result<Grammar, GrammarImportError>
                     cursor.skip_spaces();
                 }
                 declarations.conflicts.push(group);
+            }
+            "precedences" => {
+                let mut order = Vec::new();
+                while !cursor.done() {
+                    let kind = cursor.word()?;
+                    let mut values = cursor.list(Cursor::name)?;
+                    let Some(entry) = (values.len() == 1)
+                        .then(|| values.pop())
+                        .flatten()
+                        .and_then(|value| PrecedenceEntry::from_kind(&kind, value))
+                    else {
+                        return Err(cursor.fail(if kind == "name" || kind == "rule" {
+                            format!("{kind}(...) names one entry")
+                        } else {
+                            format!("a precedence entry is name(NAME) or rule(NAME), not {kind}")
+                        }));
+                    };
+                    order.push(entry);
+                    cursor.skip_spaces();
+                }
+                if order.len() < 2 {
+                    return Err(cursor.fail("precedences orders at least two entries"));
+                }
+                declarations.precedences.push(order);
             }
             "macro" => {
                 let name = cursor.name()?;

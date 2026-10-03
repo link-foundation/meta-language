@@ -52,6 +52,17 @@ pub const FEATURE_EXPRESSION_FORMS: &[(&str, FormFields)] = &[
         ],
     ),
     (
+        "namedPrecedence",
+        &[
+            ("name", FieldType::Name),
+            (
+                "associativity",
+                FieldType::Choice(&["left", "right", "none"]),
+            ),
+            ("item", FieldType::Expression),
+        ],
+    ),
+    (
         "dynamicPrecedence",
         &[
             ("level", FieldType::Integer),
@@ -179,6 +190,7 @@ pub const OPERATION_FORMS: &[(&str, OperationCategory, FormFields)] = &[
     ),
     ("buildNode", STATEMENT, &[("kind", FieldType::Name)]),
     ("valid", CONDITION, &[("token", FieldType::Name)]),
+    ("expected", CONDITION, &[("item", FieldType::Expression)]),
     ("next", CONDITION, &[("item", FieldType::Expression)]),
     ("atEnd", CONDITION, &[]),
     ("equal", CONDITION, TWO_VALUES),
@@ -577,6 +589,45 @@ pub struct GrammarScanner {
     pub operations: Vec<Operation>,
 }
 
+/// One entry of a precedence order: a named precedence or a rule, whose
+/// productions it ranks.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum PrecedenceEntry {
+    /// The precedence `namedPrecedence` gives this name.
+    Name(String),
+    /// Every precedence of this rule's productions.
+    Rule(String),
+}
+
+impl PrecedenceEntry {
+    /// Builds an entry from its kind word, `name` or `rule`, and its value.
+    #[must_use]
+    pub fn from_kind(kind: &str, value: String) -> Option<Self> {
+        match kind {
+            "name" => Some(Self::Name(value)),
+            "rule" => Some(Self::Rule(value)),
+            _ => None,
+        }
+    }
+
+    /// The entry's kind word, `name` or `rule`.
+    #[must_use]
+    pub const fn kind(&self) -> &'static str {
+        match self {
+            Self::Name(_) => "name",
+            Self::Rule(_) => "rule",
+        }
+    }
+
+    /// The precedence or rule name.
+    #[must_use]
+    pub fn value(&self) -> &str {
+        match self {
+            Self::Name(value) | Self::Rule(value) => value,
+        }
+    }
+}
+
 /// The grammar-level declarations of the feature union.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct GrammarDeclarations {
@@ -590,6 +641,8 @@ pub struct GrammarDeclarations {
     pub extras: Vec<GrammarExpr>,
     /// Groups of rule names whose ambiguity is expected.
     pub conflicts: Vec<Vec<String>>,
+    /// Orders of named precedences and rules, the earlier entry higher.
+    pub precedences: Vec<Vec<PrecedenceEntry>>,
     /// Macro declarations.
     pub macros: Vec<GrammarMacro>,
     /// External scanner declarations.
@@ -624,6 +677,7 @@ impl GrammarDeclarations {
             ("modes", self.modes.is_empty()),
             ("extras", self.extras.is_empty()),
             ("conflicts", self.conflicts.is_empty()),
+            ("precedences", self.precedences.is_empty()),
             ("macros", self.macros.is_empty()),
             ("scanners", self.scanners.is_empty()),
         ] {

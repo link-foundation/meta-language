@@ -6,7 +6,7 @@ use super::normalize::quote;
 use super::{GrammarRenameError, GrammarRenameErrorKind, RenamedGrammar, RuleAlias};
 use crate::grammar::{
     FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarMacro, GrammarRule,
-    GrammarScanner, Operation,
+    GrammarScanner, Operation, PrecedenceEntry,
 };
 
 /// Renames one rule and every reference to it.
@@ -196,6 +196,19 @@ pub(super) fn map_declarations(
             .conflicts
             .iter()
             .map(|group| group.iter().map(|name| rename(name)).collect())
+            .collect(),
+        precedences: declarations
+            .precedences
+            .iter()
+            .map(|order| {
+                order
+                    .iter()
+                    .map(|entry| match entry {
+                        PrecedenceEntry::Rule(name) => PrecedenceEntry::Rule(rename(name)),
+                        PrecedenceEntry::Name(_) => entry.clone(),
+                    })
+                    .collect()
+            })
             .collect(),
         macros: declarations
             .macros

@@ -1,6 +1,6 @@
 //! The grammar feature union in the native links form: the declaration links
 //! `(import NAME)`, `(mode NAME)`, `(extra EXPRESSION)`, `(conflict NAME...)`,
-//! `(macro NAME (parameters P...) EXPRESSION)` and `(scanner NAME (tokens
+//! `(precedences (name|rule NAME)...)`, `(macro NAME (parameters P...) EXPRESSION)` and `(scanner NAME (tokens
 //! T...) (operations OPERATION...))` between the grammar link and the first
 //! rule, the rule fields `(parameters P...)`, `(channel NAME)`, `(modes
 //! M...)` and `(action OPERATION...)` and the rule metadata `(concept ID)` and
@@ -10,8 +10,8 @@
 use super::super::feature::class_expression;
 use super::super::{
     FeatureExpr, GrammarDeclarations, GrammarExpr, GrammarImportError, GrammarMacro,
-    GrammarScanner, GrammarSourceName, Operation, OperationCategory, RuleAttributes,
-    UnicodeClassItem,
+    GrammarScanner, GrammarSourceName, Operation, OperationCategory, PrecedenceEntry,
+    RuleAttributes, UnicodeClassItem,
 };
 use super::feature_forms::{
     FormCodec, LinksReader, read_links_feature, read_links_operation, render_feature_form,
@@ -126,6 +126,19 @@ pub fn render_declaration_links(declarations: &GrammarDeclarations) -> Vec<Strin
     }
     for group in &declarations.conflicts {
         lines.push(render_names("conflict", group));
+    }
+    for order in &declarations.precedences {
+        let entries = order.iter().map(|entry| {
+            format!(
+                "({} {})",
+                entry.kind(),
+                percent_encode_links_text(entry.value())
+            )
+        });
+        lines.push(format!(
+            "(precedences {})",
+            entries.collect::<Vec<_>>().join(" ")
+        ));
     }
     for declared in &declarations.macros {
         lines.push(format!(
@@ -280,6 +293,28 @@ pub(super) fn read_declaration(
                     .map(|item| decoded_word(Some(item), "a rule name"))
                     .collect::<Result<_, _>>()?,
             );
+        }
+        "precedences" => {
+            if args.len() < 2 {
+                return Err(links_error("precedences orders at least two entries"));
+            }
+            let mut order = Vec::new();
+            for item in args {
+                let (kind, values) = parts(item)?;
+                let what = match kind {
+                    "name" => "a precedence name",
+                    "rule" => "a rule name",
+                    other => {
+                        return Err(links_error(format!(
+                            "a precedence entry is (name NAME) or (rule NAME), not {other}"
+                        )));
+                    }
+                };
+                arity(kind, values, 1)?;
+                let value = decoded_word(values.first(), what)?;
+                order.extend(PrecedenceEntry::from_kind(kind, value));
+            }
+            declarations.precedences.push(order);
         }
         "macro" => {
             arity(head, args, 3)?;

@@ -10,7 +10,8 @@ use super::super::feature::{class_expression, feature_expression_fields, operati
 use super::super::{
     ByteClassItem, CharClassItem, FeatureExpr, FeatureForm, FieldType, FieldValue, Grammar,
     GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarImportError, GrammarMacro, GrammarRule,
-    GrammarScanner, Operation, OperationCategory, RuleAttributes, RuleKind, UnicodeClassItem,
+    GrammarScanner, Operation, OperationCategory, PrecedenceEntry, RuleAttributes, RuleKind,
+    UnicodeClassItem,
 };
 
 /// A JSON value whose objects keep their key order.
@@ -296,6 +297,22 @@ fn declarations_json(declarations: &GrammarDeclarations) -> Json {
             .iter()
             .map(|group| Json::strings(group));
         entries.push(("conflicts", Json::Array(groups.collect())));
+    }
+    if !declarations.precedences.is_empty() {
+        let orders = declarations.precedences.iter().map(|order| {
+            Json::Array(
+                order
+                    .iter()
+                    .map(|entry| {
+                        Json::Object(vec![
+                            ("kind", Json::str(entry.kind())),
+                            ("value", Json::str(entry.value())),
+                        ])
+                    })
+                    .collect(),
+            )
+        });
+        entries.push(("precedences", Json::Array(orders.collect())));
     }
     if !declarations.macros.is_empty() {
         let macros = declarations.macros.iter().map(|declared| {
@@ -628,6 +645,23 @@ fn read_declarations(value: &Value) -> Result<GrammarDeclarations, GrammarImport
             .iter()
             .map(|group| strings(Some(group), what))
             .collect::<Result<_, _>>()?;
+    }
+    if let Some(Value::Array(orders)) = value.get("precedences") {
+        for order in orders {
+            let Value::Array(entries) = order else {
+                return Err(invalid(what));
+            };
+            let mut read = Vec::new();
+            for entry in entries {
+                let kind = string(entry, "kind", what)?;
+                let value = string(entry, "value", what)?;
+                let Some(entry) = PrecedenceEntry::from_kind(&kind, value) else {
+                    return Err(invalid(what));
+                };
+                read.push(entry);
+            }
+            declarations.precedences.push(read);
+        }
     }
     if let Some(Value::Array(macros)) = value.get("macros") {
         for declared in macros {

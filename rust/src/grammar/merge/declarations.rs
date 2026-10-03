@@ -56,9 +56,10 @@ fn single_line(declarations: &GrammarDeclarations) -> String {
 }
 
 /// Merges the declarations of the sources in precedence order, with each
-/// source's rule names renamed by `canonical`. Imports, modes, extras and
-/// conflict groups are united; the first declared matching, macro or scanner
-/// of a name wins, and a later different one is a conflict.
+/// source's rule names renamed by `canonical`. Imports, modes, extras,
+/// conflict groups and precedence orders are united; the first declared
+/// matching, macro or scanner of a name wins, and a later different one is a
+/// conflict.
 pub(super) fn merge_declarations(
     entry: &[&Prepared<'_>],
     canonical: &dyn Fn(&Prepared<'_>, &str) -> String,
@@ -68,6 +69,7 @@ pub(super) fn merge_declarations(
     let mut matching_owner = "";
     let mut seen_extras = BTreeSet::new();
     let mut seen_conflicts = BTreeSet::new();
+    let mut seen_precedences = BTreeSet::new();
     let mut seen_macros: BTreeMap<String, (String, &str)> = BTreeMap::new();
     let mut seen_scanners: BTreeMap<String, (String, &str)> = BTreeMap::new();
     for source in entry {
@@ -110,6 +112,15 @@ pub(super) fn merge_declarations(
             });
             if seen_conflicts.insert(line) {
                 merged.conflicts.push(group);
+            }
+        }
+        for order in own.precedences {
+            let line = single_line(&GrammarDeclarations {
+                precedences: vec![order.clone()],
+                ..GrammarDeclarations::default()
+            });
+            if seen_precedences.insert(line) {
+                merged.precedences.push(order);
             }
         }
         for declared in own.macros {
