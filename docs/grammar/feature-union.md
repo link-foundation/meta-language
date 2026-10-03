@@ -621,7 +621,12 @@ a repair point, a failing element yields two results:
   where the key ends;
 - the element's match at the first later code point boundary where it
   matches, behind an ERROR leaf over the skipped bytes, at a cost of one per
-  skipped byte.
+  skipped byte. A scanner token, and a `token` or `immediateToken` of one,
+  has no such skip: as in tree-sitter, whose recovery lexes the skipped input
+  in its error state, where a scanner refuses to run (tree-sitter-rust's error
+  sentinel), no skip ends at it, and a scanner that reads to the end of the
+  input before it fails, as the content of a string does, would make the scan
+  quadratic in the rest of the input.
 
 A sequence continues after a MISSING leaf at a repair point with the
 elements and rules that follow, which may repair the same offset. A second

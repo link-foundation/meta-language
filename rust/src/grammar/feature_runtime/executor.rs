@@ -35,6 +35,11 @@ pub(super) type Run<T> = Result<T, Abort>;
 /// match and the results there.
 type RepairMemo = HashMap<(Element, usize, State, bool), Rc<(usize, Vec<Res>)>>;
 
+/// The match of a failing element from a later offset, which a repair point
+/// scans for a skip; none for a scanner token, at which no skip ends.
+pub(super) type Retry<'r, 'c> =
+    Option<&'r mut dyn FnMut(&mut Executor<'c>, usize) -> Run<Vec<Res>>>;
+
 /// The evaluation frames a parse may nest before it is refused as too deep;
 /// the parse thread's stack holds this many with room to spare.
 const FRAME_LIMIT: usize = 20_000;
@@ -213,6 +218,11 @@ impl<'c> Executor<'c> {
     /// first such offset as an ERROR leaf. The scan for that offset depends
     /// only on the element, `start` and the state, so it is made once per
     /// `element` (the expression, rule or scanner token that failed) there.
+    /// A token of an external scanner has no `retry`: as in tree-sitter,
+    /// whose recovery lexes the skipped input in its error state, where a
+    /// scanner refuses to run (tree-sitter-rust's error sentinel), no skip
+    /// ends at such a token, and a scanner that reads to the end of the input
+    /// before it fails would make the scan quadratic.
     #[allow(clippy::too_many_arguments)]
     pub(super) fn element_failed(
         &mut self,
@@ -222,7 +232,7 @@ impl<'c> Executor<'c> {
         kind: Option<Name>,
         literal: bool,
         element: Element,
-        mut retry: impl FnMut(&mut Self, usize) -> Run<Vec<Res>>,
+        mut retry: Retry<'_, 'c>,
     ) -> Run<Vec<Res>> {
         if self.suppressed > 0 {
             return Ok(Vec::new());
@@ -265,7 +275,7 @@ impl<'c> Executor<'c> {
         } else {
             let mut scan = Rc::new((start, Vec::new()));
             let mut cursor = start;
-            while cursor < self.end {
+            while let Some(retry) = retry.as_mut().filter(|_| cursor < self.end) {
                 cursor += decode_at(self.bytes, cursor, self.end).1;
                 let found = self.quietly(|this| retry(this, cursor))?;
                 if !found.is_empty() {
@@ -405,6 +415,7 @@ impl<'c> Executor<'c> {
                 }
                 let skipped = &starts[0];
                 let (kind, literal) = missing_of(item);
+                let scanned = matches!(**item, Expr::Ref(Target::External(_)));
                 self.element_failed(
                     skipped.end,
                     &skipped.leaves,
@@ -412,7 +423,9 @@ impl<'c> Executor<'c> {
                     kind,
                     literal,
                     Element::of(expr),
-                    |this, cursor| this.evaluate(expr, cursor, state, false),
+                    (!scanned).then_some(&mut |this: &mut Self, cursor| {
+                        this.evaluate(expr, cursor, state, false)
+                    }),
                 )
             }
             Expr::Predicate { item, condition } => {
@@ -732,7 +745,7 @@ impl<'c> Executor<'c> {
                 None,
                 false,
                 Element::of(items),
-                |this, cursor| this.longest(items, cursor, state, false),
+                Some(&mut |this, cursor| this.longest(items, cursor, state, false)),
             );
         };
         let kind = match item {

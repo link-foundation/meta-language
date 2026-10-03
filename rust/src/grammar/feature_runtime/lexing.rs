@@ -250,7 +250,7 @@ impl Executor<'_> {
                 kind,
                 literal,
                 Element::of(matcher),
-                |this, cursor| this.terminal(matcher, expectation, cursor, state, false),
+                Some(&mut |this, cursor| this.terminal(matcher, expectation, cursor, state, false)),
             );
         };
         let children = if in_token {

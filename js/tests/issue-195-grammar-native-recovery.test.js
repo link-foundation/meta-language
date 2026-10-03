@@ -97,6 +97,22 @@ test('a repair inserts a MISSING leaf or skips input as an ERROR leaf, whichever
   assert.equal(json.parseTree('[1, 2 3]').tree, null);
 });
 
+test('a skip never ends at an external scanner token, so a repair stays within the step budget', () => {
+  // A string's content is a scanner token that reads to the next quote and
+  // fails at the end of the input; a scan for a skip that ended at it would
+  // run the scanner from every later offset, quadratic in the rest of the
+  // input. As in tree-sitter, whose scanners refuse to run in error recovery,
+  // no skip ends at such a token, and the stray no-break space is one ERROR.
+  const rust = grammars.find(({ entry }) => entry.id === 'rust').parser;
+  const source = `let x;\n\u00a0\n${'pub fn a() {}\n'.repeat(64)}`;
+  const outcome = rust.parseTree(source, RECOVER);
+  assert.equal(outcome.rejection.reason, 'recovered');
+  const rendered = renderSyntaxTree(outcome.tree);
+  assert.deepEqual(rendered.match(/ERROR@\d+\.\.\d+|MISSING@\d+/gu), ['ERROR@7..9']);
+  assert.equal(rendered.match(/\(function_item /gu).length, 64);
+  assert.equal(leafText(outcome.tree, source), source);
+});
+
 test('a long repetition, repaired near its end, keeps every item in order', () => {
   // A join links its parts instead of copying the children before it, so a
   // repetition of n items costs O(n) and not O(n²); the tree is unchanged.

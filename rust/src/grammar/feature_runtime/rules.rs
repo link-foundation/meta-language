@@ -291,7 +291,7 @@ impl Executor<'_> {
                 Some(rule.node_kind.clone()),
                 false,
                 Element::of(rule),
-                |this, cursor| this.rule_body(rule, cursor, state, false),
+                Some(&mut |this, cursor| this.rule_body(rule, cursor, state, false)),
             );
         }
         // A silent rule builds no node to carry an ambiguity, so one inside a
@@ -437,7 +437,7 @@ impl Executor<'_> {
                 Some(name.clone()),
                 false,
                 Element::Scanner(name.clone()),
-                |this, cursor| this.scanner_token(name, cursor, state, false),
+                None,
             );
         };
         let children = if in_token {

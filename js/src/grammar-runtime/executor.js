@@ -724,7 +724,12 @@ export class Executor {
   // code point boundary, a result that skips the bytes up to the first such
   // offset as an ERROR leaf. The scan for that offset depends only on the
   // element, `start` and the state, so it is made once per `element` (the
-  // expression, rule or scanner token that failed) there.
+  // expression, rule or scanner token that failed) there. A token of an
+  // external scanner has no `retry`: as in tree-sitter, whose recovery lexes
+  // the skipped input in its error state, where a scanner refuses to run
+  // (tree-sitter-rust's error sentinel), no skip ends at such a token, and a
+  // scanner that reads to the end of the input before it fails would make
+  // the scan quadratic.
   elementFailed(start, leaves, state, missing, element, retry) {
     if (this.suppressed > 0) return [];
     if (!this.repairPoints?.has(start)) {
@@ -745,7 +750,7 @@ export class Executor {
     let scan = scans.get(key);
     if (!scan) {
       scan = { end: -1, found: [] };
-      for (let cursor = start; cursor < this.end;) {
+      for (let cursor = start; retry && cursor < this.end;) {
         cursor += decodeAt(this.bytes, cursor, this.end).length;
         const found = this.quietly(() => retry(cursor));
         if (found.length === 0) continue;
@@ -954,7 +959,8 @@ export class Executor {
         const results = [...found.values()];
         const { end: start, leaves } = starts[0];
         if (results.length > 0 || inToken) return results;
-        return this.elementFailed(start, leaves, state, missingOf(expression.item), expression, (cursor) => this.evaluate(expression, cursor, state, false));
+        const scanned = expression.item.kind === 'ref' && this.program.externalTokens.has(expression.item.name);
+        return this.elementFailed(start, leaves, state, missingOf(expression.item), expression, scanned ? null : (cursor) => this.evaluate(expression, cursor, state, false));
       }
       case 'predicate': return this.predicate(expression, position, state, inToken);
       case 'recover': return this.recover(expression, position, state, inToken);
@@ -1692,7 +1698,7 @@ export class Executor {
     if (!scanned) {
       this.fail(start, name);
       if (inToken) return [];
-      return this.elementFailed(start, leaves, state, { kind: name }, name, (cursor) => this.scannerToken(name, cursor, state, false));
+      return this.elementFailed(start, leaves, state, { kind: name }, name, null);
     }
     const children = inToken ? NO_CHILDREN : [
       ...leaves,

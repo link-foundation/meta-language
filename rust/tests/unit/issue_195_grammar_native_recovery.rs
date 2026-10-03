@@ -230,6 +230,38 @@ fn a_repair_inserts_a_missing_leaf_or_skips_input_as_an_error_leaf() {
 }
 
 #[test]
+fn a_skip_never_ends_at_an_external_scanner_token() {
+    // A string's content is a scanner token that reads to the next quote and
+    // fails at the end of the input; a scan for a skip that ended at it would
+    // run the scanner from every later offset, quadratic in the rest of the
+    // input. As in tree-sitter, whose scanners refuse to run in error
+    // recovery, no skip ends at such a token, so the repair stays within the
+    // step budget and the stray no-break space is one ERROR.
+    let rust = parser(GRAMMARS[8].1);
+    let source = format!("let x;\n\u{a0}\n{}", "pub fn a() {}\n".repeat(64));
+    let outcome = parse(&rust, &source, &recover());
+    assert_eq!(
+        outcome.rejection.as_ref().map(|rejection| rejection.reason),
+        Some("recovered")
+    );
+    let tree = rendered(&outcome);
+    let repairs: Vec<&str> = tree
+        .match_indices("ERROR@")
+        .chain(tree.match_indices("MISSING@"))
+        .map(|(at, _)| tree[at..].split(' ').next().unwrap_or_default())
+        .collect();
+    assert_eq!(repairs, ["ERROR@7..9"]);
+    assert_eq!(tree.matches("(function_item ").count(), 64);
+    let mut bytes = Vec::new();
+    leaf_bytes(
+        outcome.tree.as_ref().expect("a tree"),
+        source.as_bytes(),
+        &mut bytes,
+    );
+    assert_eq!(bytes, source.as_bytes());
+}
+
+#[test]
 fn a_long_repetition_repaired_near_its_end_keeps_every_item_in_order() {
     // A join links its parts instead of copying the children before it, so a
     // repetition of n items costs O(n) and not O(n²); the tree is unchanged.
