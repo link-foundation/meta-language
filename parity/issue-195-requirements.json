@@ -896,7 +896,7 @@
     "planned:generative:JavaScript": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "JavaScript property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "d4541b5371d0e887265d31968836c45cfe6fd38a0a9d51b20d026542b4b93fa2"
+      "sha256": "9ef40ee61eedd12b617ef4997fe26d45198fdb4c8267c67ed930956da3cb63d0"
     },
     "planned:conformance:Rust": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -906,7 +906,7 @@
     "planned:generative:Rust": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Rust property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "d4541b5371d0e887265d31968836c45cfe6fd38a0a9d51b20d026542b4b93fa2"
+      "sha256": "9ef40ee61eedd12b617ef4997fe26d45198fdb4c8267c67ed930956da3cb63d0"
     },
     "planned:conformance:Lean": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -916,7 +916,7 @@
     "planned:generative:Lean": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Lean property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "d4541b5371d0e887265d31968836c45cfe6fd38a0a9d51b20d026542b4b93fa2"
+      "sha256": "9ef40ee61eedd12b617ef4997fe26d45198fdb4c8267c67ed930956da3cb63d0"
     },
     "planned:conformance:Rocq": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -926,7 +926,7 @@
     "planned:generative:Rocq": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Rocq property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "d4541b5371d0e887265d31968836c45cfe6fd38a0a9d51b20d026542b4b93fa2"
+      "sha256": "9ef40ee61eedd12b617ef4997fe26d45198fdb4c8267c67ed930956da3cb63d0"
     },
     "planned:semantic:JavaScript:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",
@@ -1616,17 +1616,17 @@
     "planned:repository-directive:i195-grammar-native-json": {
       "path": "parity/fixtures/native-grammars/json.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged JSON grammar checked against its tree-sitter oracle",
-      "sha256": "9201f4f7e9c4915eafb9fdef769a41153c3a2cb06693ccf961de33dec878d7df"
+      "sha256": "960eab5cd2a195680d454533c6d018109b757180744b626235c9389c021a5537"
     },
     "planned:repository-directive:i195-grammar-native-ini": {
       "path": "parity/fixtures/native-grammars/ini.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged INI grammar checked against its tree-sitter oracle",
-      "sha256": "b954b03de9113c3a330656103c99e9cbb80acf092a60e721a28d8ed5463ffd3f"
+      "sha256": "d2417efb3aff9fbcf0d3fbbc0c6038c33c9276e854384dcefc0eaef87e53bfab"
     },
     "planned:repository-directive:i195-grammar-native-diff": {
       "path": "parity/fixtures/native-grammars/diff.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged unified diff grammar checked against its tree-sitter oracle",
-      "sha256": "61f0aeda41d9164344d414f1711dd0ce4a0caf37c4408af90dbebb94ef72c528"
+      "sha256": "9c35ff9cf714f7ba386b5776b4e38ec763a23df25abe38aad25ad5b38714dab6"
     },
     "planned:repository-directive:i195-grammar-native-csv": {
       "path": "parity/fixtures/native-grammars/csv.json",
@@ -1636,7 +1636,7 @@
     "planned:repository-directive:i195-grammar-native-json5": {
       "path": "parity/fixtures/native-grammars/json5.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged JSON5 grammar checked against its tree-sitter oracle",
-      "sha256": "82d1945fe5065a7ff3d70bf9ba59e595e3da73036816bcfacc08a2de335d433d"
+      "sha256": "4f9010bdb4fe5ad0a55f4efd268484a42c680837bc65d1291f683a55f65146e0"
     },
     "planned:repository-directive:i195-grammar-native-scheme": {
       "path": "parity/fixtures/native-grammars/scheme.json",
@@ -1646,22 +1646,22 @@
     "planned:repository-directive:i195-grammar-native-racket": {
       "path": "parity/fixtures/native-grammars/racket.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Racket grammar checked against its tree-sitter oracle",
-      "sha256": "ba557401c982f92e7e299515a8d36f74030206ffc3cbfe23fac4c61f472dd265"
+      "sha256": "f22294c23e980010a64c24f5e90b25aea53b4d609d1ff00b078d8050920795de"
     },
     "planned:repository-directive:i195-grammar-native-c": {
       "path": "parity/fixtures/native-grammars/c.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged C grammar imported from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "f1747acb2fe19cd69bf8250573fb535736cc594b3e3f19370548c2458361bc35"
+      "sha256": "3e5d9ffeeb08dd410e1ec6eaac0c2f1618e9627584786fdd4e0df94b65ab85e9"
     },
     "planned:repository-directive:i195-grammar-native-rust": {
       "path": "parity/fixtures/native-grammars/rust.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Rust grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "264de33c4f8baecd27eb2bea017940db131750d1cc190eda4de0b0b68c9500fc"
+      "sha256": "c17fca4d37f759f4059f37a79da9bc9d26f8de5d26bf0472acf503a30e3c29f3"
     },
     "planned:repository-directive:i195-grammar-native-recovery": {
       "path": "parity/fixtures/native-grammars/json.json",
       "selector": "docs/vision.md#grammar-feature-union: automatic error recovery of the native executor for every native grammar",
-      "sha256": "9201f4f7e9c4915eafb9fdef769a41153c3a2cb06693ccf961de33dec878d7df"
+      "sha256": "960eab5cd2a195680d454533c6d018109b757180744b626235c9389c021a5537"
     },
     "planned:repository-directive:i195-grammar-feature-union": {
       "path": "parity/fixtures/grammar-feature-union.json",
