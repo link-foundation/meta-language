@@ -121,9 +121,9 @@ test('a later error is repaired where it is, not by skipping the input after an 
   const rust = grammars.find(({ entry }) => entry.id === 'rust').parser;
   const source = 'struct S { a: u8,, }\nimpl S { fn f(&self) -> u8 { self.a } } ]\n';
   const repairs = (options) => renderSyntaxTree(rust.parseTree(source, options).tree).match(/ERROR@\d+\.\.\d+|MISSING@\d+/gu);
-  assert.deepEqual(repairs(RECOVER), ['ERROR@17..18', 'ERROR@61..63']);
+  assert.deepEqual(repairs(RECOVER), ['ERROR@17..18', 'ERROR@61..62']);
   // When the rounds end first, the complete result stands.
-  assert.deepEqual(repairs({ ...RECOVER, maxRepairs: 1 }), ['MISSING@17', 'ERROR@17..63']);
+  assert.deepEqual(repairs({ ...RECOVER, maxRepairs: 1 }), ['MISSING@17', 'ERROR@17..62']);
 });
 
 test('a long repetition, repaired near its end, keeps every item in order', () => {

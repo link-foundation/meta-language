@@ -610,6 +610,10 @@ function union(sets) {
   return new Set(sets.flatMap((set) => [...set]));
 }
 
+// The bytes of ASCII white space: tab, line feed, vertical tab, form feed,
+// carriage return and space.
+const ASCII_WHITE_SPACE = new Set([9, 10, 11, 12, 13, 32]);
+
 // A trivia leaf of no kind: white space, which a lexer skips as padding.
 function isSeparator(child) {
   return child.type === 'token' && child.trivia === true && child.kind === null;
@@ -1775,7 +1779,7 @@ export class Executor {
       }
       this.fail(trailing.end, 'end of input');
       if (!this.repairPoints) continue;
-      const rest = [...trailing.leaves, { type: 'error', start: trailing.end, end: this.end }];
+      const rest = [...trailing.leaves, ...this.restLeaves(trailing.end, result.state)];
       const repaired = { result: copyResult(result, { cost: result.cost + this.end - trailing.end }), trailing: rest, rest: trailing.end };
       if (this.repairPoints.has(trailing.end)) complete.push(repaired);
       else {
@@ -1817,6 +1821,19 @@ export class Executor {
       return { ok: false, farthest: this.farthest, expected: [...this.expected].sort(), elementFarthest: partial.end, partial: root };
     }
     return { ok: true, root };
+  }
+
+  // The rest of the input from `start` as an ERROR leaf. As tree-sitter keeps
+  // the white space at the end of the input out of an ERROR node, the
+  // separators that end the input follow the leaf; the rest costs the same.
+  restLeaves(start, state) {
+    let at = this.end;
+    while (at > start && ASCII_WHITE_SPACE.has(this.bytes[at - 1])) at -= 1;
+    if (at > start && at < this.end) {
+      const tail = this.skipTrivia(at, state);
+      if (tail.end === this.end && tail.leaves.every(isSeparator)) return [{ type: 'error', start, end: at }, ...tail.leaves];
+    }
+    return [{ type: 'error', start, end: this.end }];
   }
 
   // 1 when the complete result `a` is preferred to `b`, -1 when `b` is, 0 on a tie.

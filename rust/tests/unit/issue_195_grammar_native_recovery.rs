@@ -276,13 +276,13 @@ fn a_later_error_is_repaired_where_it_is_not_by_skipping_the_input_after_an_earl
             .map(ToString::to_string)
             .collect()
     };
-    assert_eq!(repairs(&recover()), ["ERROR@17..18", "ERROR@61..63"]);
+    assert_eq!(repairs(&recover()), ["ERROR@17..18", "ERROR@61..62"]);
     // When the rounds end first, the complete result stands.
     let one = FeatureParseOptions {
         max_repairs: Some(1),
         ..recover()
     };
-    assert_eq!(repairs(&one), ["MISSING@17", "ERROR@17..63"]);
+    assert_eq!(repairs(&one), ["MISSING@17", "ERROR@17..62"]);
 }
 
 #[test]

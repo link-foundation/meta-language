@@ -636,7 +636,10 @@ chains of zero-width MISSING leaves, which would make every rule
 left-recursive at the offset, are never built. Calls inside the first
 continuation are memoized apart from the same calls made in the open.
 
-Trailing input that a result leaves unmatched becomes an ERROR leaf. The
+Trailing input that a result leaves unmatched becomes an ERROR leaf; as
+tree-sitter keeps the white space at the end of the input out of an ERROR
+node, the ASCII white space that ends the input follows the leaf as
+separators when the trivia rules match it, at no change in cost. The
 result counts as complete when that input starts at a repair point. Otherwise
 it costs one per byte and is kept as the partial tree. The cheapest complete
 result is the tree; on a tie the first one. But when that result takes the
