@@ -1,4 +1,4 @@
-// Converts a tree-sitter grammar.json with tree-sitter-native-convert.mjs,
+// Imports a tree-sitter grammar.json with importTreeSitterNative,
 // parses sample files with the native executor and with the grammar's
 // tree-sitter oracle, and compares the two s-expressions.
 //   node experiments/tree-sitter-native-compare.mjs ID GRAMMAR.json SAMPLE...
@@ -10,11 +10,13 @@ import { Language, Parser } from 'web-tree-sitter';
 
 import { compileGrammar } from '../src/grammar.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
-import { convertTreeSitterGrammar } from './tree-sitter-native-convert.mjs';
+import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 
 const [id, grammarPath, ...samples] = process.argv.slice(2);
 const grammar = JSON.parse(readFileSync(grammarPath, 'utf8'));
-const { text, report, keywords } = convertTreeSitterGrammar(grammar);
+const imported = importTreeSitterNative(grammar);
+const { report, keywords } = imported;
+const text = renderTreeSitterNative(imported);
 writeFileSync(`/tmp/${id}-native.lino`, text);
 console.log(`converted ${Object.keys(grammar.rules).length} rules, ${keywords.length} keywords; approximations ${report.approximations.length}, unsupported ${report.unsupported.length}`);
 for (const line of report.unsupported) console.log(`  unsupported: ${line}`);
@@ -55,9 +57,11 @@ function sexp(node) {
 }
 
 let agreed = 0;
+const oracleLines = [];
 for (const sample of samples) {
   const source = readFileSync(sample, 'utf8');
   const oracle = parser.parse(source).rootNode.toString();
+  oracleLines.push(oracle);
   started = performance.now();
   let native;
   try {
@@ -79,3 +83,5 @@ for (const sample of samples) {
   }
 }
 console.log(`${agreed}/${samples.length} agree`);
+// One oracle s-expression per line, for comparing another runtime's output.
+writeFileSync(`/tmp/${id}-oracle.txt`, `${oracleLines.join('\n')}\n`);
