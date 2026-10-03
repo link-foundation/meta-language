@@ -138,6 +138,9 @@ pub(super) struct Tree {
     /// The precedence a node ending a silent rule was reduced with (see
     /// `lone_reduction`).
     pub(super) closes: Option<PrecedenceTag>,
+    /// The outermost silent rule the precedence orders name that reduced
+    /// the item alone (see `child_parting`).
+    pub(super) reduced_to: Option<Name>,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
     /// A token of an external scanner, whatever an alias names it (see
@@ -168,6 +171,7 @@ impl Tree {
             priority: None,
             reduced: None,
             closes: None,
+            reduced_to: None,
             ambiguous: false,
             literal: false,
             scanned: false,
@@ -549,6 +553,30 @@ impl TreeReach {
 fn outranks_at(leaf: &Tree, tokens: TokenOrder<'_>) -> bool {
     let keyword = Tree::new(TreeType::Token, None, leaf.start, leaf.end);
     token_conflict(&keyword, leaf, tokens) == Ordering::Greater
+}
+
+/// `result` with its one meaningful item recording that it was reduced alone
+/// to the silent rule `name`; any other result as it is. It mirrors
+/// reducedAlone in js/src/grammar-runtime/executor.js.
+pub(super) fn reduced_alone(result: Res, name: &Name) -> Res {
+    let mut children = result.children.to_vec();
+    let mut meaningful = children
+        .iter()
+        .enumerate()
+        .filter(|(_, child)| !child.trivia);
+    let (Some((at, only)), None) = (meaningful.next(), meaningful.next()) else {
+        return result;
+    };
+    if only.reduced_to.as_ref() == Some(name) {
+        return result;
+    }
+    let mut tagged = (**only).clone();
+    tagged.reduced_to = Some(name.clone());
+    children[at] = Rc::new(tagged);
+    Res {
+        children: children_of(children),
+        ..result
+    }
 }
 
 pub(super) fn longest_result(results: Vec<Res>) -> Option<Res> {

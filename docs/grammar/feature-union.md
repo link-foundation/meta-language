@@ -401,7 +401,18 @@ the left operand of both the range `a + b..` and the binary expression
 `a + b..*c`). When the pair ends apart, the innermost pair of one kind from
 one offset below it, along its leftmost chains, that ends apart too is where
 the two parses part, and is compared instead (Rust's `g(|| a, |p| p)`, whose
-closures `||` and `|| a, |p|` part at the parameters `||`). There the shorter
+closures `||` and `|| a, |p|` part at the parameters `||`). The two nodes
+may part before either ends, where their children first differ by end: the
+parse whose child ends first shifts on in its node where the other reduced
+that child alone to a silent rule a `rule` entry of the precedence orders
+names, and took it as the first part of the longer child (JavaScript's
+`new f()` before a template, whose `new_expression` shifts `(` as its
+arguments where the call `f()` reduced `f` to an `expression`, which
+`(precedences (name member) ... (name new) (name call) (rule expression))`
+ranks below `new`). An item such a silent rule reduces alone records the
+outermost such rule, and the node's precedence against that reduction's
+(the item's own reduction precedence if a token, else the silent rule's
+level 0) decides, as below. Otherwise the shorter
 one was reduced where
 the longer one shifted on, and the precedence of the two nodes decides, as
 the item in progress is the node's own rule (a node without one counts as

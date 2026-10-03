@@ -353,6 +353,8 @@ function shiftOrder(result, existing, orders) {
       const parting = split && split[0].end !== split[1].end ? split : pair;
       if (parting && parting[0].end !== parting[1].end) {
         const [first, second] = partedPair(parting[0], parting[1]);
+        const inner = childParting(first, second, orders);
+        if (inner !== 0) return inner;
         const [long, short, sign] = first.end > second.end ? [first, second, 1] : [second, first, -1];
         return sign * shiftPreferred(long, short, orders);
       }
@@ -440,6 +442,57 @@ function extraReduction(a, b, stack, orders) {
   if (!container || container.end > parent.end) {
     if (mine.associativity === 'left') return 1;
     if (mine.associativity === 'right') return -1;
+  }
+  return 0;
+}
+
+// A result whose one meaningful item records that it was reduced alone to the
+// silent rule `name`; any other result as it is.
+function reducedAlone(result, name) {
+  const meaningful = result.children.filter((child) => !isTrivia(child));
+  if (meaningful.length !== 1 || meaningful[0].reducedTo === name) return result;
+  const only = meaningful[0];
+  const tagged = only.type === 'node' ? copyNode(only, { reducedTo: name }) : { ...only, reducedTo: name };
+  return copyResult(result, { children: result.children.map((child) => (child === only ? tagged : child)) });
+}
+
+// Which of two results an LR parser keeps when two nodes of one kind from one
+// offset, which end apart, part before either ends, where their children
+// first differ by end: the parse whose child ends first shifts on in its node,
+// where the other reduced that child alone to the silent rule the longer
+// child's node in progress takes it as (JavaScript's `new f()` before a
+// template, whose `new_expression` shifts `(` as its arguments under `new`,
+// where the call `f()` reduced `f` to an `expression`, which the order
+// ranks below `new`). The precedence of the node that shifts against that
+// reduction's decides, as in `shiftPreferred`. 1 when `a`'s result is kept,
+// -1 when `b`'s is, 0 when neither.
+function childParting(a, b, orders) {
+  const first = a.children.filter((child) => !isTrivia(child));
+  const second = b.children.filter((child) => !isTrivia(child));
+  for (let index = 0; index < Math.min(first.length, second.length); index += 1) {
+    const [x, y] = [first[index], second[index]];
+    if (sameTree(x, y)) continue;
+    if (firstLeafStart(x) !== firstLeafStart(y) || x.end === y.end) return 0;
+    const [short, long, node, own, sign] = x.end < y.end ? [x, y, a, first, 1] : [y, x, b, second, -1];
+    if (index === own.length - 1) return 0;
+    let progress = long;
+    let head = null;
+    for (;;) {
+      if (progress.type !== 'node') return 0;
+      head = progress.children.find((child) => !isTrivia(child));
+      if (!head) return 0;
+      if (sameTree(head, short)) break;
+      progress = head;
+    }
+    if (progress.end === short.end || !head.reducedTo || head.reducedTo === short.reducedTo) return 0;
+    const shifted = node.precedence ?? unranked(node.rule);
+    // A node's own precedence is its rule's, not the one it was reduced with.
+    const reduced = head.reduced ?? (head.type === 'token' ? head.precedence : null) ?? unranked(head.reducedTo);
+    const order = comparePrecedence(shifted, reduced, orders);
+    if (order !== 0) return sign * order;
+    if (reduced.associativity === 'right') return sign;
+    if (reduced.associativity === 'left') return -sign;
+    return 0;
   }
   return 0;
 }
@@ -1758,8 +1811,12 @@ export class Executor {
     for (const result of results) {
       if (rule.kind === 'silent' || inToken) {
         const scratch = { type: 'node', kind: rule.nodeKind, start: position, end: result.end, children: result.children };
-        const acted = this.runAction(rule, result, scratch, position);
+        let acted = this.runAction(rule, result, scratch, position);
         if (!acted) continue;
+        // An item a silent rule the precedence orders name reduces alone
+        // records that rule, the outermost such one, for the conflict with a
+        // shift where the item is not reduced to it (see `childParting`).
+        if (!inToken && this.program.rankedSilent?.has(rule.nodeKind)) acted = reducedAlone(acted, rule.nodeKind);
         if (!(expected && acted.ambiguous) && !acted.tail) {
           built.push(acted);
           continue;

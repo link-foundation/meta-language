@@ -343,6 +343,9 @@ pub(super) struct Program {
     pub(super) conflicts: HashSet<String>,
     /// The orders of named precedences (see `compare_precedence`).
     pub(super) precedence_orders: Vec<Vec<PrecedenceEntry>>,
+    /// The silent rules a `rule` entry of the orders names, whose reduction
+    /// of one item alone the item records (see `child_parting`).
+    pub(super) ranked_silent: HashSet<String>,
     pub(super) trivia: Vec<Trivia>,
     /// The rules and external tokens a scanner's `expected` asks about, each
     /// by the id of its item, which the parse requests where it calls them

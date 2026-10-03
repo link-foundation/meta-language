@@ -773,6 +773,21 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
 
     let index = context.programs.len();
     let token_ranks = longest.then(|| token_ranks(&rules));
+    let ranked_silent = resolved
+        .precedences
+        .iter()
+        .flatten()
+        .filter_map(|entry| match entry {
+            PrecedenceEntry::Rule(name)
+                if rule_index
+                    .get(name)
+                    .is_some_and(|&at| matches!(rules[at].kind, RuleKind::Silent)) =>
+            {
+                Some(name.clone())
+            }
+            _ => None,
+        })
+        .collect();
     context.programs.push(Program {
         peg,
         token_ranks,
@@ -783,6 +798,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         scanners,
         conflicts,
         precedence_orders: resolved.precedences.clone(),
+        ranked_silent,
         trivia,
         expected_references,
     });

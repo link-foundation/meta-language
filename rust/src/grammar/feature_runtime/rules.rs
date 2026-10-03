@@ -15,7 +15,8 @@ use super::operations::{
 use super::program::{Expr, Name, PrecedenceTag, Rule, Target};
 use super::results::{
     Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, complete_order,
-    concat, content_start, is_separator, longest_result, no_children, same_children, with_leaf,
+    concat, content_start, is_separator, longest_result, no_children, reduced_alone, same_children,
+    with_leaf,
 };
 use super::text::{column_of, decode_at};
 use crate::grammar::RuleKind;
@@ -335,9 +336,16 @@ impl Executor<'_> {
                     result.end,
                 );
                 scratch.children = result.children.clone();
-                let Some(acted) = self.run_action(rule, result, &mut scratch, position)? else {
+                let Some(mut acted) = self.run_action(rule, result, &mut scratch, position)? else {
                     continue;
                 };
+                // An item a silent rule the precedence orders name reduces
+                // alone records that rule, the outermost such one, for the
+                // conflict with a shift where the item is not reduced to it
+                // (see `child_parting`).
+                if !in_token && self.program.ranked_silent.contains(&*rule.node_kind) {
+                    acted = reduced_alone(acted, &rule.node_kind);
+                }
                 let Some(tail) = acted.tail.clone() else {
                     built.push(Res {
                         ambiguous: acted.ambiguous && !expected,

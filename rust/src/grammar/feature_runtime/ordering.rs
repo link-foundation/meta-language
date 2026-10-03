@@ -270,6 +270,10 @@ pub(super) fn shift_order(
                         && x.end != y.end
                     {
                         let (x, y) = parted_pair(x, y);
+                        let inner = child_parting(&x, &y, orders);
+                        if inner != Ordering::Equal {
+                            return inner;
+                        }
                         return if x.end > y.end {
                             shift_preferred(&x, &y, orders)
                         } else {
@@ -654,6 +658,81 @@ fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -
     } else {
         order.reverse()
     }
+}
+
+/// Which of two results an LR parser keeps when two nodes of one kind from
+/// one offset, which end apart, part before either ends, where their
+/// children first differ by end: the parse whose child ends first shifts on
+/// in its node, where the other reduced that child alone to the silent rule
+/// the longer child's node in progress takes it as (JavaScript's `new f()`
+/// before a template, whose `new_expression` shifts `(` as its arguments
+/// under `new`, where the call `f()` reduced `f` to an `expression`, which
+/// the order ranks below `new`). The precedence of the node that shifts
+/// against that reduction's decides, as in `shift_preferred`. Greater when
+/// `a`'s result is kept, Less when `b`'s is, Equal when neither. It mirrors
+/// childParting in js/src/grammar-runtime/executor.js.
+fn child_parting(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -> Ordering {
+    let (first, second) = (meaningful(&a.children), meaningful(&b.children));
+    for (index, (x, y)) in first.iter().zip(&second).enumerate() {
+        if same_tree(x, y) {
+            continue;
+        }
+        if first_leaf_start(x) != first_leaf_start(y) || x.end == y.end {
+            return Ordering::Equal;
+        }
+        let (short, long, node, own, kept) = if x.end < y.end {
+            (x, y, a, &first, Ordering::Greater)
+        } else {
+            (y, x, b, &second, Ordering::Less)
+        };
+        if index + 1 == own.len() {
+            return Ordering::Equal;
+        }
+        let mut progress = long.clone();
+        let head = loop {
+            if progress.ty != TreeType::Node {
+                return Ordering::Equal;
+            }
+            let Some(head) = first_meaningful(&progress.children) else {
+                return Ordering::Equal;
+            };
+            if same_tree(&head, short) {
+                break head;
+            }
+            progress = head;
+        };
+        if progress.end == short.end
+            || head.reduced_to.is_none()
+            || head.reduced_to == short.reduced_to
+        {
+            return Ordering::Equal;
+        }
+        let shifted = node
+            .precedence
+            .clone()
+            .unwrap_or_else(|| PrecedenceTag::unranked(node.rule.clone()));
+        // A node's own precedence is its rule's, not the one it was reduced
+        // with.
+        let reduced = head
+            .reduced
+            .clone()
+            .or_else(|| {
+                if head.ty == TreeType::Token {
+                    head.precedence.clone()
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_else(|| PrecedenceTag::unranked(head.reduced_to.clone()));
+        let order = compare_precedence(&shifted, &reduced, orders)
+            .then_with(|| by_associativity(reduced.associativity));
+        return if kept == Ordering::Greater {
+            order
+        } else {
+            order.reverse()
+        };
+    }
+    Ordering::Equal
 }
 
 /// Greater when the shift that built `long` is preferred to the reduction

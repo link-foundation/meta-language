@@ -271,6 +271,11 @@ function loadInContext(grammar, context) {
     scanners,
     conflicts,
     precedenceOrders: declarations.precedences,
+    // The silent rules a `rule` entry of the orders names, whose reduction
+    // of one item alone the item records (see `childParting` in executor.js).
+    rankedSilent: new Set(declarations.precedences.flat()
+      .filter((entry) => entry.kind === 'rule' && rules.get(entry.value)?.kind === 'silent')
+      .map((entry) => entry.value)),
     modes,
     trivia: [],
     // The items a scanner's `expected` asks about: a key per item, its id, and
