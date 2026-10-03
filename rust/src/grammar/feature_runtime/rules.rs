@@ -166,6 +166,11 @@ impl Executor<'_> {
         // transitive. A pass grows only the results the pass before added or
         // changed: the trees grown from the others are already merged, so a
         // chain of n operators takes n passes of one seed each, not n of n.
+        // A first pass without results was made with the empty seed a pass
+        // would grow from: there is nothing to grow.
+        if first.is_empty() {
+            return Ok(first);
+        }
         let mut current = ResultSet::new(self.longest_tokens);
         for result in first {
             current.set(result);

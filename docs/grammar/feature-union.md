@@ -622,7 +622,10 @@ A failed region forwards its expectations.
 is memoized by rule, position, state key and context. Left recursion is
 handled by seed growing: a call that meets itself in progress answers with the
 current seed, and the calls in between are not memoized; the outer call then
-grows the seed. Under `peg` it repeats while the end increases; under
+grows the seed, unless its first pass, made with the empty seed, has no
+result, as a pass with that seed would repeat it (JavaScript's
+`primary_expression` and the member, subscript and call expressions that
+begin with it, at an offset where no expression starts). Under `peg` it repeats while the end increases; under
 `generalized` it merges results until no new end and state appears and no
 pass settles an end on another tree: a left operand ranked anew (Rust's `impl
 A + B + C`, where `bounded_type` over `impl A + B` outranks `impl` over `A +

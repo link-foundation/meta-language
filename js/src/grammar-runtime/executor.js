@@ -1798,6 +1798,9 @@ export class Executor {
     // transitive. A pass grows only the results the pass before added or
     // changed: the trees grown from the others are already merged, so a
     // chain of n operators takes n passes of one seed each, not n of n.
+    // A first pass without results was made with the empty seed a pass
+    // would grow from: there is nothing to grow.
+    if (first.length === 0) return first;
     let current = new Map(first.map((result) => [resultKey(result), result]));
     let seed = [...current.values()];
     for (let settled = 0; ;) {
