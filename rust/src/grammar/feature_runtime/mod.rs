@@ -20,6 +20,7 @@ mod program;
 mod results;
 mod rules;
 mod text;
+mod token_ranks;
 mod tree;
 
 use std::cell::{Cell, RefCell};
