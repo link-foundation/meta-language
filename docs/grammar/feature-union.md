@@ -442,6 +442,36 @@ its children; trailing trivia is appended to it. A failed parse reports the
 farthest offset any expectation was recorded at and the expectations recorded
 there, sorted by UTF-16 code units.
 
+**Automatic recovery.** With `errorRecovery: true` a failed parse is repaired
+without recovery rules in the grammar. An *element* is a terminal, a `token`
+or `immediateToken`, a `longest` choice, a token or atomic rule, or a scanner
+token, matched outside a token. Each result carries a repair cost, the sum of
+its repairs; of two results with the same end and state the cheaper one
+stays, and only results without repairs are marked ambiguous. The parse runs
+in rounds. Each round notes the farthest offset after trivia at which an
+element failed (outside `not`, `and` and other quiet matches, which never
+repair), and when no element failed, the farthest offset of the failed whole
+parse. That offset becomes a *repair point* and the input is parsed again. At
+a repair point, a failing element yields two results:
+
+- a zero-width MISSING leaf, at cost 2. Its kind is the literal for a literal
+  (marked `literal`), the node kind for a token or atomic rule, the scanner
+  token's name for a scanner token, and none otherwise;
+- the element's match at the first later code point boundary where it
+  matches, behind an ERROR leaf over the skipped bytes, at a cost of one per
+  skipped byte.
+
+Trailing input that a result leaves unmatched becomes an ERROR leaf. The
+result counts as complete when that input starts at a repair point. Otherwise
+it costs one per byte and is kept as the partial tree. The cheapest complete
+result is the tree; on a tie the first one. Rounds stop when a parse
+completes, when a round notes no new offset, or after `maxRepairs` repair
+points (default 32). The last round's partial tree, the result that reaches
+farthest, then stands. When the start rule matches nothing, the root holds one
+ERROR leaf over the whole input. Every round has its own step budget. A
+repaired tree holds an ERROR or MISSING leaf, so it is reported as
+`recovered`.
+
 ## Syntax tree
 
 The public tree (`SyntaxTreeNode` in
@@ -495,8 +525,8 @@ Options, given to the parser and overridable per parse: `resolveGrammar`,
 `startRule`, `maxDepth` (default 1000), `stepLimit` (default
 100000 + 1000 per input byte, one step per expression evaluation and per
 operation, shared with embedded parses), `memoLimit` (default 1000000 memo
-entries; past it new entries are dropped rather than kept), `ambiguity` and
-`recovery`. `compileGrammar` and `parseWithGrammar` run on this executor, and
+entries; past it new entries are dropped rather than kept), `ambiguity`,
+`recovery`, `errorRecovery` (default off) and `maxRepairs` (default 32). `compileGrammar` and `parseWithGrammar` run on this executor, and
 `emitJavascriptParser` emits a module that calls
 `compileGrammar(deserializeGrammar(GRAMMAR))`; the package no longer runs
 Peggy, which is only a development dependency of tests that compare against it.

@@ -1934,46 +1934,60 @@
   ],
   "rejections": [
     {
-      "source": "news\n"
+      "source": "news\n",
+      "recovered": "(source (file_change \"new\" (MISSING@3 \"file\") (MISSING@3 \"mode\") (MISSING@3 mode)) (newline (ERROR@3..4 \"s\") \"\\n\"))"
     },
     {
-      "source": "indexes\n"
+      "source": "indexes\n",
+      "recovered": "(source (index \"index\" (MISSING@5 commit) (MISSING@5 \"..\") (MISSING@5 commit) (MISSING@5 mode)) (newline (ERROR@5..7 \"es\") \"\\n\"))"
     },
     {
-      "source": "diff\n"
+      "source": "diff\n",
+      "recovered": "(source (block (command \"diff\" (MISSING@4 argument) (filename (MISSING@4 word))) (newline \"\\n\")))"
     },
     {
-      "source": "@@\n"
+      "source": "@@\n",
+      "recovered": "(source (location \"@@\" (MISSING@2 linerange) (MISSING@2 linerange) (MISSING@2 \"@@\") (MISSING@2 anything)) (newline \"\\n\"))"
     },
     {
-      "source": "Binary\n"
+      "source": "Binary\n",
+      "recovered": "(source (binary_change \"Binary\" (MISSING@6 \"files\") (MISSING@6 filename) (MISSING@6 \"and\") (MISSING@6 filename) (MISSING@6 \"differ\")) (newline \"\\n\"))"
     },
     {
-      "source": "x\ry\n"
+      "source": "x\ry\n",
+      "recovered": "(source (context \"x\") (newline (ERROR@1..3 \"\\ry\") \"\\n\"))"
     },
     {
-      "source": "index 123..456\n"
+      "source": "index 123..456\n",
+      "recovered": "(source (index \"index\" ~\" \" (MISSING@6 commit) (ERROR@6..9 \"123\") \"..\" (MISSING@11 commit) (mode \"456\")) (newline \"\\n\"))"
     },
     {
-      "source": "similarity index x%\n"
+      "source": "similarity index x%\n",
+      "recovered": "(source (similarity \"similarity\" ~\" \" \"index\" ~\" \" (MISSING@17 score) (ERROR@17..18 \"x\") \"%\") (newline \"\\n\"))"
     },
     {
-      "source": "@@ -1 @@\n"
+      "source": "@@ -1 @@\n",
+      "recovered": "(source (location \"@@\" ~\" \" (linerange \"-1\") ~\" \" (MISSING@6 linerange) \"@@\") (newline \"\\n\"))"
     },
     {
-      "source": "new file\n"
+      "source": "new file\n",
+      "recovered": "(source (file_change \"new\" ~\" \" \"file\" (MISSING@8 \"mode\") (MISSING@8 mode)) (newline \"\\n\"))"
     },
     {
-      "source": "rename x\n"
+      "source": "rename x\n",
+      "recovered": "(source (file_change \"rename\" ~\" \" (MISSING@7 \"from\") (filename (word \"x\"))) (newline \"\\n\"))"
     },
     {
-      "source": "Binary files a b differ\n"
+      "source": "Binary files a b differ\n",
+      "recovered": "(source (binary_change \"Binary\" ~\" \" \"files\" (filename ~\" \" (word \"a\") ~\" \" (word \"b\") ~\" \" (word \"differ\")) (MISSING@23 \"and\") (MISSING@23 filename) (MISSING@23 \"differ\")) (newline \"\\n\"))"
     },
     {
-      "source": "diff a\n"
+      "source": "diff a\n",
+      "recovered": "(source (block (command \"diff\" ~\" \" (argument \"a\") (filename (MISSING@6 word))) (newline \"\\n\")))"
     },
     {
-      "source": "old mode\n"
+      "source": "old mode\n",
+      "recovered": "(source (file_change \"old\" ~\" \" \"mode\" (MISSING@8 mode)) (newline \"\\n\"))"
     }
   ]
 }

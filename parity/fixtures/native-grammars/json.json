@@ -625,34 +625,44 @@
   ],
   "rejections": [
     {
-      "source": "{\"a\" 1}"
+      "source": "{\"a\" 1}",
+      "recovered": "(document (object \"{\" (pair key:(string \"\\\"\" (string_content \"a\") \"\\\"\") ~\" \" (MISSING@5 \":\") value:(number \"1\")) \"}\"))"
     },
     {
-      "source": "[1,]"
+      "source": "[1,]",
+      "recovered": "(document (array \"[\" (number \"1\") \",\" (MISSING@3 number) \"]\"))"
     },
     {
-      "source": "tru"
+      "source": "tru",
+      "recovered": "(document (ERROR@0..3 \"tru\"))"
     },
     {
-      "source": "\"a\nb\""
+      "source": "\"a\nb\"",
+      "recovered": "(document (string \"\\\"\" (string_content \"a\") (string_content (ERROR@2..3 \"\\n\") \"b\") \"\\\"\"))"
     },
     {
-      "source": "+1"
+      "source": "+1",
+      "recovered": "(document (ERROR@0..1 \"+\") (number \"1\"))"
     },
     {
-      "source": ".5"
+      "source": ".5",
+      "recovered": "(document (ERROR@0..1 \".\") (number \"5\"))"
     },
     {
-      "source": "{\"a\": 1"
+      "source": "{\"a\": 1",
+      "recovered": "(document (object \"{\" (pair key:(string \"\\\"\" (string_content \"a\") \"\\\"\") \":\" ~\" \" value:(number \"1\")) (MISSING@7 \"}\")))"
     },
     {
-      "source": " \ufeff[]"
+      "source": " \ufeff[]",
+      "recovered": "(document (array ~\" \" (ERROR@1..4 \"\ufeff\") \"[\" \"]\"))"
     },
     {
-      "source": "[1,\ufeff2]"
+      "source": "[1,\ufeff2]",
+      "recovered": "(document (array \"[\" (number \"1\") \",\" (ERROR@3..6 \"\ufeff\") (number \"2\") \"]\"))"
     },
     {
-      "source": "\u00a0[]"
+      "source": "\u00a0[]",
+      "recovered": "(document (array (ERROR@0..2 \"\u00a0\") \"[\" \"]\"))"
     }
   ]
 }

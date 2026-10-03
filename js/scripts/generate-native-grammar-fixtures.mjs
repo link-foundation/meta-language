@@ -11,14 +11,15 @@
 // are sources one merged source accepts and the oracle does not; the native
 // grammar accepts them and the fixture keeps its rows. `rejections` are
 // invalid sources: the oracle recovers with error nodes, the native grammar
-// rejects them until its recovery rules land. `hidden`, `anonymous` and
+// rejects them by default, and with `errorRecovery` repairs each into the
+// lossless `recovered` tree of ERROR and MISSING leaves. `hidden`, `anonymous` and
 // `extras` tell js/scripts/native-grammar-rows.mjs how the oracle shows the
 // native leaves and nodes of those kinds.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { compileGrammar, parseGrammarLinks } from '../src/index.js';
+import { compileGrammar, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
 import { nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -558,7 +559,9 @@ export function buildNativeGrammarFixture(entry) {
       throw new Error(`the ${entry.oracle} oracle accepts the rejection ${JSON.stringify(source)}`);
     }
     if (parser.parseTree(source).ok) throw new Error(`${entry.grammar} accepts ${JSON.stringify(source)}`);
-    return { source };
+    const repaired = parser.parseTree(source, { errorRecovery: true });
+    if (repaired.rejection?.reason !== 'recovered') throw new Error(`${entry.grammar} does not recover from ${JSON.stringify(source)}`);
+    return { source, recovered: renderSyntaxTree(repaired.tree) };
   });
   const { id, language, grammar, oracle, sources, hidden, anonymous, extras } = entry;
   return { schemaVersion: 1, id, language, grammar, oracle, sources, hidden, anonymous, extras, matches, divergences, rejections };

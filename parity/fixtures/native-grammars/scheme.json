@@ -2525,154 +2525,204 @@
   ],
   "rejections": [
     {
-      "source": ")"
+      "source": ")",
+      "recovered": "(program (ERROR@0..1 \")\"))"
     },
     {
-      "source": "("
+      "source": "(",
+      "recovered": "(program (list \"(\" (MISSING@1 \")\")))"
     },
     {
-      "source": "]"
+      "source": "]",
+      "recovered": "(program (ERROR@0..1 \"]\"))"
     },
     {
-      "source": "}"
+      "source": "}",
+      "recovered": "(program (ERROR@0..1 \"}\"))"
     },
     {
-      "source": "(]"
+      "source": "(]",
+      "recovered": "(program (list \"(\" (MISSING@1 \")\")) (ERROR@1..2 \"]\"))"
     },
     {
-      "source": "[)"
+      "source": "[)",
+      "recovered": "(program (list \"[\" (MISSING@1 \"]\")) (ERROR@1..2 \")\"))"
     },
     {
-      "source": "{)"
+      "source": "{)",
+      "recovered": "(program (list \"{\" (MISSING@1 \"}\")) (ERROR@1..2 \")\"))"
     },
     {
-      "source": "(a"
+      "source": "(a",
+      "recovered": "(program (list \"(\" (symbol \"a\") (MISSING@2 \")\")))"
     },
     {
-      "source": "a)"
+      "source": "a)",
+      "recovered": "(program (symbol \"a\") (ERROR@1..2 \")\"))"
     },
     {
-      "source": "\"a"
+      "source": "\"a",
+      "recovered": "(program (string \"\\\"\" (string_text \"a\") (MISSING@2 \"\\\"\")))"
     },
     {
-      "source": "\""
+      "source": "\"",
+      "recovered": "(program (string \"\\\"\" (MISSING@1 \"\\\"\")))"
     },
     {
-      "source": "\"\\"
+      "source": "\"\\",
+      "recovered": "(program (string \"\\\"\" (MISSING@1 \"\\\"\")) (ERROR@1..2 \"\\\\\"))"
     },
     {
-      "source": "#|"
+      "source": "#|",
+      "recovered": "(program (block_comment \"#|\" (MISSING@2 \"|#\")))"
     },
     {
-      "source": "#| a"
+      "source": "#| a",
+      "recovered": "(program (block_comment \"#|\" (comment_text \" a\") (MISSING@4 \"|#\")))"
     },
     {
-      "source": "#|#|a|#"
+      "source": "#|#|a|#",
+      "recovered": "(program (block_comment \"#|\" (block_comment \"#|\" (comment_text \"a\") \"|#\") (MISSING@7 \"|#\")))"
     },
     {
-      "source": "|#"
+      "source": "|#",
+      "recovered": "(program (ERROR@0..2 \"|#\"))"
     },
     {
-      "source": "#"
+      "source": "#",
+      "recovered": "(program (ERROR@0..1 \"#\"))"
     },
     {
-      "source": "#\\"
+      "source": "#\\",
+      "recovered": "(program (ERROR@0..2 \"#\\\\\"))"
     },
     {
-      "source": "#e"
+      "source": "#e",
+      "recovered": "(program (ERROR@0..2 \"#e\"))"
     },
     {
-      "source": "#q"
+      "source": "#q",
+      "recovered": "(program (ERROR@0..2 \"#q\"))"
     },
     {
-      "source": "#:"
+      "source": "#:",
+      "recovered": "(program (ERROR@0..2 \"#:\"))"
     },
     {
-      "source": "#;"
+      "source": "#;",
+      "recovered": "(program (comment \"#;\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#!"
+      "source": "#!",
+      "recovered": "(program (directive \"#!\" (MISSING@2 directive_name)))"
     },
     {
-      "source": "'"
+      "source": "'",
+      "recovered": "(program (quote \"'\" (MISSING@1 boolean)))"
     },
     {
-      "source": "`"
+      "source": "`",
+      "recovered": "(program (quasiquote \"`\" (MISSING@1 boolean)))"
     },
     {
-      "source": ","
+      "source": ",",
+      "recovered": "(program (unquote \",\" (MISSING@1 boolean)))"
     },
     {
-      "source": ",@"
+      "source": ",@",
+      "recovered": "(program (unquote_splicing \",@\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#'"
+      "source": "#'",
+      "recovered": "(program (syntax \"#'\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#`"
+      "source": "#`",
+      "recovered": "(program (quasisyntax \"#`\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#,"
+      "source": "#,",
+      "recovered": "(program (unsyntax \"#,\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#,@"
+      "source": "#,@",
+      "recovered": "(program (unsyntax_splicing \"#,@\" (MISSING@3 boolean)))"
     },
     {
-      "source": "#("
+      "source": "#(",
+      "recovered": "(program (vector \"#(\" (MISSING@2 \")\")))"
     },
     {
-      "source": "#vu8("
+      "source": "#vu8(",
+      "recovered": "(program (byte_vector \"#vu8(\" (MISSING@5 \")\")))"
     },
     {
-      "source": "#vu8"
+      "source": "#vu8",
+      "recovered": "(program (ERROR@0..4 \"#vu8\"))"
     },
     {
-      "source": "#U8(1)"
+      "source": "#U8(1)",
+      "recovered": "(program (ERROR@0..6 \"#U8(1)\"))"
     },
     {
-      "source": "#0="
+      "source": "#0=",
+      "recovered": "(program (datum_label (label \"#0=\") (MISSING@3 boolean)))"
     },
     {
-      "source": "#0"
+      "source": "#0",
+      "recovered": "(program (ERROR@0..2 \"#0\"))"
     },
     {
-      "source": "#u8"
+      "source": "#u8",
+      "recovered": "(program (ERROR@0..3 \"#u8\"))"
     },
     {
-      "source": "|a"
+      "source": "|a",
+      "recovered": "(program (ERROR@0..2 \"|a\"))"
     },
     {
-      "source": "a|b"
+      "source": "a|b",
+      "recovered": "(program (symbol \"a\") (ERROR@1..3 \"|b\"))"
     },
     {
-      "source": "#;)"
+      "source": "#;)",
+      "recovered": "(program (comment \"#;\" (MISSING@2 boolean)) (ERROR@2..3 \")\"))"
     },
     {
-      "source": "' )"
+      "source": "' )",
+      "recovered": "(program (quote \"'\" (whitespace \" \") (MISSING@2 boolean)) (ERROR@2..3 \")\"))"
     },
     {
-      "source": "#u8 (1)"
+      "source": "#u8 (1)",
+      "recovered": "(program (whitespace (ERROR@0..3 \"#u8\") \" \") (list \"(\" (number \"1\") \")\"))"
     },
     {
-      "source": "#vu8 (1)"
+      "source": "#vu8 (1)",
+      "recovered": "(program (whitespace (ERROR@0..4 \"#vu8\") \" \") (list \"(\" (number \"1\") \")\"))"
     },
     {
-      "source": "#t#"
+      "source": "#t#",
+      "recovered": "(program (boolean \"#t\") (ERROR@2..3 \"#\"))"
     },
     {
-      "source": "(a))"
+      "source": "(a))",
+      "recovered": "(program (list \"(\" (symbol \"a\") \")\") (ERROR@3..4 \")\"))"
     },
     {
-      "source": "((a)"
+      "source": "((a)",
+      "recovered": "(program (list \"(\" (list \"(\" (symbol \"a\") \")\") (MISSING@4 \")\")))"
     },
     {
-      "source": "#|#|#||#|#"
+      "source": "#|#|#||#|#",
+      "recovered": "(program (block_comment \"#|\" (block_comment \"#|\" (block_comment \"#|\" \"|#\") \"|#\") (MISSING@10 \"|#\")))"
     },
     {
-      "source": "#\\x41 )"
+      "source": "#\\x41 )",
+      "recovered": "(program (character \"#\\\\x41\") (whitespace \" \") (ERROR@6..7 \")\"))"
     },
     {
-      "source": "#e#"
+      "source": "#e#",
+      "recovered": "(program (ERROR@0..3 \"#e#\"))"
     }
   ]
 }

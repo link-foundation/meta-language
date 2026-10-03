@@ -363,6 +363,23 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-RECOVERY',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/native-grammars/json.json',
+    construct: 'automatic error recovery of the native executor for every native grammar',
+    expectedBehavior:
+      'With errorRecovery (error_recovery in Rust) both executors repair a parse the grammar rejects, without recovery rules in the grammar: at the farthest failing element they insert a zero-width MISSING leaf or skip to the next match of the element behind an ERROR leaf, choose the repair of least cost, and cover input no repair reaches with an ERROR leaf. For every rejection of the seven native grammar fixtures (JSON, INI, diff, CSV, JSON5, Scheme, Racket) both executors build the same recorded tree, which keeps every source byte and is reported as a recovered rejection; without the option the parse is still rejected, and inputs the grammar accepts parse to the same tree with and without it.',
+    assertions: [
+      'nativeRecoveryTreesMatchFixtures',
+      'nativeRecoveryTreesLossless',
+      'nativeRecoveryReportedAsRecovered',
+      'nativeRecoveryKeepsAcceptedTrees',
+    ],
+    javascript: ['js/src/grammar-runtime.js', 'js/src/grammar-runtime/executor.js'],
+    rust: ['rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/executor.rs', 'rust/src/grammar/feature_runtime/results.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-FEATURE-UNION',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

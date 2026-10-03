@@ -1616,37 +1616,42 @@
     "planned:repository-directive:i195-grammar-native-json": {
       "path": "parity/fixtures/native-grammars/json.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged JSON grammar checked against its tree-sitter oracle",
-      "sha256": "43132cfb734884ddc3168e114b9ceeb75051dbe2ea966d1f00b51d7acdf96582"
+      "sha256": "568f0cccfa192d5f6090c17fb7fffda50aebc56f5f961f9d78730160ce419323"
     },
     "planned:repository-directive:i195-grammar-native-ini": {
       "path": "parity/fixtures/native-grammars/ini.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged INI grammar checked against its tree-sitter oracle",
-      "sha256": "8fc314a39b1c228facfaef81d6d7148295e0d4285c422a42d1d490cd32faf761"
+      "sha256": "712d27d4bc105092fe9562e5c2c3eb38d4ec58463730166d83af3a64211c0bbc"
     },
     "planned:repository-directive:i195-grammar-native-diff": {
       "path": "parity/fixtures/native-grammars/diff.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged unified diff grammar checked against its tree-sitter oracle",
-      "sha256": "5c15899c49adf5962c09ddcb14683aebf7a7d31e61b7babfda677670716fea08"
+      "sha256": "e7c6733060b63742d0b66bbe164015cee75c64538b10fccb71c048e4964d68c3"
     },
     "planned:repository-directive:i195-grammar-native-csv": {
       "path": "parity/fixtures/native-grammars/csv.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged CSV grammar checked against its tree-sitter oracle",
-      "sha256": "30a714daae8e227d9f0d19a688a6b636d155412d7d840035aff8555cfb40425d"
+      "sha256": "fa6796e8626f7e967dbfdda9db8db462e0b12b0ce58eda876e49d7966d9192cc"
     },
     "planned:repository-directive:i195-grammar-native-json5": {
       "path": "parity/fixtures/native-grammars/json5.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged JSON5 grammar checked against its tree-sitter oracle",
-      "sha256": "63a23e636904e8f4c365a531b64b4ab55afd5e483b0247591964410d077cb5bf"
+      "sha256": "9ce8df6a69e7e14bd7125abc195dcf2ac9a6ef35290c87e90d262d096bcd9f38"
     },
     "planned:repository-directive:i195-grammar-native-scheme": {
       "path": "parity/fixtures/native-grammars/scheme.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Scheme grammar checked against its tree-sitter oracle",
-      "sha256": "b61ce57b7382b1f3e89d8cf4d4faa018e308f9028649fc30d13884ea9f53636d"
+      "sha256": "d75b82c9211f0689c7cccbf7baa3ef7ccf2956d24cacb309d62b2ca4c2d95646"
     },
     "planned:repository-directive:i195-grammar-native-racket": {
       "path": "parity/fixtures/native-grammars/racket.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Racket grammar checked against its tree-sitter oracle",
-      "sha256": "66182076cdd3053df58986dc160408dd5671faf2bac3efa4a2725535610fc1fe"
+      "sha256": "9bf155226486bebcfb6f345639b9634fb28de1b8ee23d7d281e72eb2806e3687"
+    },
+    "planned:repository-directive:i195-grammar-native-recovery": {
+      "path": "parity/fixtures/native-grammars/json.json",
+      "selector": "docs/vision.md#grammar-feature-union: automatic error recovery of the native executor for every native grammar",
+      "sha256": "568f0cccfa192d5f6090c17fb7fffda50aebc56f5f961f9d78730160ce419323"
     },
     "planned:repository-directive:i195-grammar-feature-union": {
       "path": "parity/fixtures/grammar-feature-union.json",
@@ -19316,6 +19321,95 @@
         "specification": "docs/vision.md#native-merged-grammars",
         "inventories": [
           "parity/fixtures/native-grammars/racket.json"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "repositoryDirective",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-GRAMMAR-NATIVE-RECOVERY",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606",
+      "area": "native-grammar",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "automatic error recovery of the native executor for every native grammar",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "With errorRecovery (error_recovery in Rust) both executors repair a parse the grammar rejects, without recovery rules in the grammar: at the farthest failing element they insert a zero-width MISSING leaf or skip to the next match of the element behind an ERROR leaf, choose the repair of least cost, and cover input no repair reaches with an ERROR leaf. For every rejection of the seven native grammar fixtures (JSON, INI, diff, CSV, JSON5, Scheme, Racket) both executors build the same recorded tree, which keeps every source byte and is reported as a recovered rejection; without the option the parse is still rejected, and inputs the grammar accepts parse to the same tree with and without it.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": [
+          "js/src/grammar-runtime.js",
+          "js/src/grammar-runtime/executor.js"
+        ],
+        "rust": [
+          "rust/src/grammar/feature_runtime/mod.rs",
+          "rust/src/grammar/feature_runtime/executor.rs",
+          "rust/src/grammar/feature_runtime/results.rs"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-grammar-native-recovery-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-native-recovery"
+          ],
+          "assertions": [
+            "nativeRecoveryTreesMatchFixtures",
+            "nativeRecoveryTreesLossless",
+            "nativeRecoveryReportedAsRecovered",
+            "nativeRecoveryKeepsAcceptedTrees"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-native-recovery-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-grammar-native-recovery-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-native-recovery"
+          ],
+          "assertions": [
+            "nativeRecoveryTreesMatchFixtures",
+            "nativeRecoveryTreesLossless",
+            "nativeRecoveryReportedAsRecovered",
+            "nativeRecoveryKeepsAcceptedTrees"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-native-recovery-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#grammar-feature-union",
+        "inventories": [
+          "parity/fixtures/native-grammars/json.json"
         ],
         "sources": [
           "acceptanceGate",

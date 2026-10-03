@@ -848,49 +848,64 @@
   ],
   "rejections": [
     {
-      "source": "[s] ; c\nk=v\n"
+      "source": "[s] ; c\nk=v\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\") \"]\" (MISSING@3 newline)) (comment ~\" \" (comment_marker \";\") (text \" c\") (newline \"\\n\")) (setting (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\"))))"
     },
     {
-      "source": "[s] k=v\n"
+      "source": "[s] k=v\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\") \"]\" (MISSING@3 newline)) (setting ~\" \" (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\"))))"
     },
     {
-      "source": "[s]\tx\n"
+      "source": "[s]\tx\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\") \"]\" (newline (ERROR@3..5 \"\\tx\") \"\\n\"))))"
     },
     {
-      "source": "[a]b\n"
+      "source": "[a]b\n",
+      "recovered": "(document (section (section_name \"[\" (text \"a\") \"]\" (newline (ERROR@3..4 \"b\") \"\\n\"))))"
     },
     {
-      "source": "[]\n"
+      "source": "[]\n",
+      "recovered": "(document (section (section_name \"[\" (MISSING@1 text) \"]\" (newline \"\\n\"))))"
     },
     {
-      "source": "[s\n"
+      "source": "[s\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\\n\") (MISSING@3 \"]\") (MISSING@3 newline))))"
     },
     {
-      "source": "[s]]\n"
+      "source": "[s]]\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\") \"]\" (newline (ERROR@3..4 \"]\") \"\\n\"))))"
     },
     {
-      "source": "[[s]\n"
+      "source": "[[s]\n",
+      "recovered": "(document (section (section_name \"[\" (text (ERROR@1..2 \"[\") \"s\") \"]\" (newline \"\\n\"))))"
     },
     {
-      "source": "k=v\n["
+      "source": "k=v\n[",
+      "recovered": "(document (setting (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\")) (section (section_name \"[\" (MISSING@5 text) (MISSING@5 \"]\") (MISSING@5 newline))))"
     },
     {
-      "source": "k\n"
+      "source": "k\n",
+      "recovered": "(document (setting (setting_name \"k\") ~\"\\n\" (MISSING@2 \"=\") (MISSING@2 newline)))"
     },
     {
-      "source": "=v\n"
+      "source": "=v\n",
+      "recovered": "(document (setting (MISSING@0 setting_name) \"=\" (setting_value \"v\") (newline \"\\n\")))"
     },
     {
-      "source": "k=v\n=x\n"
+      "source": "k=v\n=x\n",
+      "recovered": "(document (setting (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\")) (setting (MISSING@4 setting_name) \"=\" (setting_value \"x\") (newline \"\\n\")))"
     },
     {
-      "source": "k;=v\n"
+      "source": "k;=v\n",
+      "recovered": "(document (setting (setting_name \"k\") (ERROR@1..2 \";\") \"=\" (setting_value \"v\") (newline \"\\n\")))"
     },
     {
-      "source": "k#x=v\n"
+      "source": "k#x=v\n",
+      "recovered": "(document (setting (setting_name \"k\") (MISSING@1 \"=\") (setting_value \"#x=v\") (newline \"\\n\")))"
     },
     {
-      "source": "k\tv=w\n"
+      "source": "k\tv=w\n",
+      "recovered": "(document (setting (setting_name \"k\") ~\"\\t\" (ERROR@2..3 \"v\") \"=\" (setting_value \"w\") (newline \"\\n\")))"
     }
   ]
 }

@@ -1715,112 +1715,148 @@
   ],
   "rejections": [
     {
-      "source": ""
+      "source": "",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")))"
     },
     {
-      "source": "1 2"
+      "source": "1 2",
+      "recovered": "(file (number \"1\") ~\" \" (ERROR@2..3 \"2\"))"
     },
     {
-      "source": "[,]"
+      "source": "[,]",
+      "recovered": "(file (array \"[\" (ERROR@1..2 \",\") \"]\"))"
     },
     {
-      "source": "{,}"
+      "source": "{,}",
+      "recovered": "(file (object \"{\" (ERROR@1..2 \",\") \"}\"))"
     },
     {
-      "source": "[1,,]"
+      "source": "[1,,]",
+      "recovered": "(file (array \"[\" (number \"1\") \",\" (ERROR@3..4 \",\") \"]\"))"
     },
     {
-      "source": "{a:1,,}"
+      "source": "{a:1,,}",
+      "recovered": "(file (object \"{\" (member name:(identifier \"a\") \":\" value:(number \"1\")) \",\" (ERROR@5..6 \",\") \"}\"))"
     },
     {
-      "source": "[0x]"
+      "source": "[0x]",
+      "recovered": "(file (array \"[\" (number \"0\") (ERROR@2..3 \"x\") \"]\"))"
     },
     {
-      "source": "[01]"
+      "source": "[01]",
+      "recovered": "(file (array \"[\" (number \"0\") (ERROR@2..3 \"1\") \"]\"))"
     },
     {
-      "source": "[1e]"
+      "source": "[1e]",
+      "recovered": "(file (array \"[\" (number \"1\") (ERROR@2..3 \"e\") \"]\"))"
     },
     {
-      "source": "\"\\01\""
+      "source": "\"\\01\"",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..5 \"\\\"\\\\01\\\"\"))"
     },
     {
-      "source": "\"\\x4\""
+      "source": "\"\\x4\"",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..5 \"\\\"\\\\x4\\\"\"))"
     },
     {
-      "source": "\"\\u12\""
+      "source": "\"\\u12\"",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..6 \"\\\"\\\\u12\\\"\"))"
     },
     {
-      "source": "{9a:1}"
+      "source": "{9a:1}",
+      "recovered": "(file (object \"{\" (ERROR@1..5 \"9a:1\") \"}\"))"
     },
     {
-      "source": "[nullx]"
+      "source": "[nullx]",
+      "recovered": "(file (array \"[\" (null \"null\") (ERROR@5..6 \"x\") \"]\"))"
     },
     {
-      "source": "[Infinityx]"
+      "source": "[Infinityx]",
+      "recovered": "(file (array \"[\" (number \"Infinity\") (ERROR@9..10 \"x\") \"]\"))"
     },
     {
-      "source": "\"\\1\""
+      "source": "\"\\1\"",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..4 \"\\\"\\\\1\\\"\"))"
     },
     {
-      "source": "{a}"
+      "source": "{a}",
+      "recovered": "(file (object \"{\" (member name:(identifier \"a\") (MISSING@2 \":\") value:(object (MISSING@2 \"{\") \"}\")) (MISSING@3 \"}\")))"
     },
     {
-      "source": "{a:}"
+      "source": "{a:}",
+      "recovered": "(file (object \"{\" (member name:(identifier \"a\") \":\" value:(object (MISSING@3 \"{\") \"}\")) (MISSING@4 \"}\")))"
     },
     {
-      "source": "["
+      "source": "[",
+      "recovered": "(file (array \"[\" (MISSING@1 \"]\")))"
     },
     {
-      "source": "]"
+      "source": "]",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..1 \"]\"))"
     },
     {
-      "source": "{"
+      "source": "{",
+      "recovered": "(file (object \"{\" (MISSING@1 \"}\")))"
     },
     {
-      "source": "\"a"
+      "source": "\"a",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..2 \"\\\"a\"))"
     },
     {
-      "source": "'a"
+      "source": "'a",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..2 \"'a\"))"
     },
     {
-      "source": "/* x"
+      "source": "/* x",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..4 \"/* x\"))"
     },
     {
-      "source": "{a:1 b:2}"
+      "source": "{a:1 b:2}",
+      "recovered": "(file (object \"{\" (member name:(identifier \"a\") \":\" value:(number \"1\")) ~\" \" (ERROR@5..8 \"b:2\") \"}\"))"
     },
     {
-      "source": "[1 2]"
+      "source": "[1 2]",
+      "recovered": "(file (array \"[\" (number \"1\") ~\" \" (ERROR@3..4 \"2\") \"]\"))"
     },
     {
-      "source": "undefined"
+      "source": "undefined",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..9 \"undefined\"))"
     },
     {
-      "source": "[1,]]"
+      "source": "[1,]]",
+      "recovered": "(file (array \"[\" (number \"1\") \",\" \"]\") (ERROR@4..5 \"]\"))"
     },
     {
-      "source": "{\"a\" 1}"
+      "source": "{\"a\" 1}",
+      "recovered": "(file (object \"{\" (member name:(string \"\\\"a\\\"\") ~\" \" (MISSING@5 \":\") value:(object (MISSING@5 \"{\") (MISSING@5 \"}\"))) (ERROR@5..6 \"1\") \"}\"))"
     },
     {
-      "source": "{1:1}"
+      "source": "{1:1}",
+      "recovered": "(file (object \"{\" (ERROR@1..4 \"1:1\") \"}\"))"
     },
     {
-      "source": "[.e]"
+      "source": "[.e]",
+      "recovered": "(file (array \"[\" (number \".\") (ERROR@2..3 \"e\") \"]\"))"
     },
     {
-      "source": "[--1]"
+      "source": "[--1]",
+      "recovered": "(file (array \"[\" (ERROR@1..4 \"--1\") \"]\"))"
     },
     {
-      "source": "[0x.1]"
+      "source": "[0x.1]",
+      "recovered": "(file (array \"[\" (number \"0\") (ERROR@2..5 \"x.1\") \"]\"))"
     },
     {
-      "source": "//c"
+      "source": "//c",
+      "recovered": "(file (object ~(comment \"//c\") (MISSING@3 \"{\") (MISSING@3 \"}\")))"
     },
     {
-      "source": "/**/"
+      "source": "/**/",
+      "recovered": "(file (object ~(comment \"/**/\") (MISSING@4 \"{\") (MISSING@4 \"}\")))"
     },
     {
-      "source": " 1"
+      "source": " 1",
+      "recovered": "(file (object (MISSING@0 \"{\") (MISSING@0 \"}\")) (ERROR@0..4 \" 1\"))"
     }
   ]
 }

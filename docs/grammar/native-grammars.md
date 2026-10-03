@@ -199,14 +199,14 @@ The corpus has three parts:
 | --- | --- |
 | `matches` | Sources whose native rows equal the oracle rows. |
 | `divergences` | Sources one merged source accepts and the oracle does not. The native grammar accepts them, and the fixture keeps their rows and the reason. |
-| `rejections` | Invalid sources. The oracle recovers with error nodes; the native grammar rejects them. |
+| `rejections` | Invalid sources. The oracle recovers with error nodes; the native grammar rejects them, and with `errorRecovery` repairs each into its `recovered` tree. |
 
 The generator fails when a match differs from the oracle or the oracle
 recovers from it, when the oracle accepts a divergence or a rejection, or when
-the native grammar accepts a rejection. The oracle recovers when a row has an
-error or missing flag, or when the root has its has-error flag: tree-sitter
-can insert a missing anonymous token, such as a line break at the end of the
-input, that no row shows. `oracleRecovers` in
+the native grammar accepts a rejection or does not recover from it. The
+oracle recovers when a row has an error or missing flag, or when the root has
+its has-error flag: tree-sitter can insert a missing anonymous token, such as
+a line break at the end of the input, that no row shows. `oracleRecovers` in
 [`js/scripts/native-grammar-rows.mjs`](../../js/scripts/native-grammar-rows.mjs)
 checks both.
 
@@ -252,11 +252,18 @@ when a fixture is stale, and CI runs it.
 
 ## Current limits
 
-- Invalid input is rejected instead of recovered. The default JSON, INI, Diff,
-  CSV, JSON5, Scheme and Racket parses still use tree-sitter-json,
-  tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
-  tree-sitter-json5-orchard, tree-sitter-scheme and tree-sitter-racket, which
-  stay production dependencies until the native grammars have recovery rules.
+- Invalid input is rejected by default. With `errorRecovery` the executor
+  repairs it ([automatic recovery](feature-union.md#executor)), and every
+  rejection in a fixture records its `recovered` tree, which
+  [`issue-195-grammar-native-recovery.test.js`](../../js/tests/issue-195-grammar-native-recovery.test.js)
+  and
+  [`issue_195_grammar_native_recovery.rs`](../../rust/tests/unit/issue_195_grammar_native_recovery.rs)
+  check. Those trees are not yet compared with the oracle's ERROR and MISSING
+  nodes. The default JSON, INI, Diff, CSV, JSON5, Scheme and Racket parses
+  still use tree-sitter-json, tree-sitter-ini, tree-sitter-diff,
+  tree-sitter-csv, tree-sitter-json5-orchard, tree-sitter-scheme and
+  tree-sitter-racket. They stay production dependencies until the native
+  grammars back the default parse.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
   tree-sitter-diff recovers from and the native grammar accepts as context; a

@@ -2937,184 +2937,244 @@
   ],
   "rejections": [
     {
-      "source": "#b2"
+      "source": "#b2",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..3 \"b2\"))"
     },
     {
-      "source": "#o8"
+      "source": "#o8",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..3 \"o8\"))"
     },
     {
-      "source": ")"
+      "source": ")",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..1 \")\"))"
     },
     {
-      "source": "("
+      "source": "(",
+      "recovered": "(program (list \"(\" (MISSING@1 \")\")))"
     },
     {
-      "source": "]"
+      "source": "]",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..1 \"]\"))"
     },
     {
-      "source": "}"
+      "source": "}",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..1 \"}\"))"
     },
     {
-      "source": "(]"
+      "source": "(]",
+      "recovered": "(program (list \"(\" (MISSING@1 \")\")) (ERROR@1..2 \"]\"))"
     },
     {
-      "source": "[)"
+      "source": "[)",
+      "recovered": "(program (list \"[\" (MISSING@1 \"]\")) (ERROR@1..2 \")\"))"
     },
     {
-      "source": "(a"
+      "source": "(a",
+      "recovered": "(program (list \"(\" (symbol \"a\") (MISSING@2 \")\")))"
     },
     {
-      "source": "a)"
+      "source": "a)",
+      "recovered": "(program (symbol \"a\") (ERROR@1..2 \")\"))"
     },
     {
-      "source": "\"a"
+      "source": "\"a",
+      "recovered": "(program (string \"\\\"\" (string_text \"a\") (MISSING@2 \"\\\"\")))"
     },
     {
-      "source": "\""
+      "source": "\"",
+      "recovered": "(program (string \"\\\"\" (MISSING@1 \"\\\"\")))"
     },
     {
-      "source": "\"\\"
+      "source": "\"\\",
+      "recovered": "(program (string \"\\\"\" (MISSING@1 \"\\\"\")) (ERROR@1..2 \"\\\\\"))"
     },
     {
-      "source": "\"\\q\""
+      "source": "\"\\q\"",
+      "recovered": "(program (string \"\\\"\" (ERROR@1..3 \"\\\\q\") \"\\\"\"))"
     },
     {
-      "source": "#|"
+      "source": "#|",
+      "recovered": "(program (block_comment \"#|\" (MISSING@2 \"|#\")))"
     },
     {
-      "source": "#| a"
+      "source": "#| a",
+      "recovered": "(program (block_comment \"#|\" (comment_text \" a\") (MISSING@4 \"|#\")))"
     },
     {
-      "source": "|#"
+      "source": "|#",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..2 \"|#\"))"
     },
     {
-      "source": "#"
+      "source": "#",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")))"
     },
     {
-      "source": "#\\"
+      "source": "#\\",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"\\\\\"))"
     },
     {
-      "source": "#e"
+      "source": "#e",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"e\"))"
     },
     {
-      "source": "#q"
+      "source": "#q",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"q\"))"
     },
     {
-      "source": "#;"
+      "source": "#;",
+      "recovered": "(program (sexp_comment \"#;\" (MISSING@2 boolean)))"
     },
     {
-      "source": "'"
+      "source": "'",
+      "recovered": "(program (quote \"'\" (MISSING@1 boolean)))"
     },
     {
-      "source": "`"
+      "source": "`",
+      "recovered": "(program (quasiquote \"`\" (MISSING@1 boolean)))"
     },
     {
-      "source": ","
+      "source": ",",
+      "recovered": "(program (unquote \",\" (MISSING@1 boolean)))"
     },
     {
-      "source": ",@"
+      "source": ",@",
+      "recovered": "(program (unquote_splicing \",@\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#'"
+      "source": "#'",
+      "recovered": "(program (syntax \"#'\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#`"
+      "source": "#`",
+      "recovered": "(program (quasisyntax \"#`\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#,"
+      "source": "#,",
+      "recovered": "(program (unsyntax \"#,\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#,@"
+      "source": "#,@",
+      "recovered": "(program (unsyntax_splicing \"#,@\" (MISSING@3 boolean)))"
     },
     {
-      "source": "#("
+      "source": "#(",
+      "recovered": "(program (vector \"#\" (list \"(\" (MISSING@2 \")\"))))"
     },
     {
-      "source": "#fl"
+      "source": "#fl",
+      "recovered": "(program (vector \"#fl\" (list (MISSING@3 \"(\") (MISSING@3 \")\"))))"
     },
     {
-      "source": "#flz"
+      "source": "#flz",
+      "recovered": "(program (vector \"#fl\" (list (MISSING@3 \"(\") (MISSING@3 \")\"))) (ERROR@3..4 \"z\"))"
     },
     {
-      "source": "#fx"
+      "source": "#fx",
+      "recovered": "(program (vector \"#fx\" (list (MISSING@3 \"(\") (MISSING@3 \")\"))))"
     },
     {
-      "source": "#s"
+      "source": "#s",
+      "recovered": "(program (structure \"#s\" (list (MISSING@2 \"(\") (MISSING@2 \")\"))))"
     },
     {
-      "source": "#sa"
+      "source": "#sa",
+      "recovered": "(program (structure \"#s\" (list (MISSING@2 \"(\") (MISSING@2 \")\"))) (ERROR@2..3 \"a\"))"
     },
     {
-      "source": "#hash"
+      "source": "#hash",
+      "recovered": "(program (hash (hash_prefix \"#hash\") (list (MISSING@5 \"(\") (MISSING@5 \")\"))))"
     },
     {
-      "source": "#hashe()"
+      "source": "#hashe()",
+      "recovered": "(program (hash (hash_prefix \"#hash\") (list (ERROR@5..6 \"e\") \"(\" \")\")))"
     },
     {
-      "source": "#0="
+      "source": "#0=",
+      "recovered": "(program (graph (graph_mark \"#0=\") (MISSING@3 boolean)))"
     },
     {
-      "source": "#<<"
+      "source": "#<<",
+      "recovered": "(program (here_string \"#<<\" (here_terminator \"\") (MISSING@3 here_newline) (here_end \"\")))"
     },
     {
-      "source": "#<<EOF"
+      "source": "#<<EOF",
+      "recovered": "(program (here_string \"#<<\" (here_terminator \"EOF\") (MISSING@6 here_newline) (MISSING@6 here_end)))"
     },
     {
-      "source": "#<<EOF\n"
+      "source": "#<<EOF\n",
+      "recovered": "(program (here_string \"#<<\" (here_terminator \"EOF\") (here_newline \"\\n\") (MISSING@7 here_end)))"
     },
     {
-      "source": "#<<EOF\nabc"
+      "source": "#<<EOF\nabc",
+      "recovered": "(program (here_string \"#<<\" (here_terminator \"EOF\") (here_newline \"\\n\") (here_line \"abc\") (MISSING@10 here_newline) (MISSING@10 here_end)))"
     },
     {
-      "source": "|a"
+      "source": "|a",
+      "recovered": "(program (MISSING@0 byte_order_mark) (ERROR@0..2 \"|a\"))"
     },
     {
-      "source": "a\\"
+      "source": "a\\",
+      "recovered": "(program (symbol \"a\") (ERROR@1..2 \"\\\\\"))"
     },
     {
-      "source": "#lang"
+      "source": "#lang",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..5 \"lang\"))"
     },
     {
-      "source": "#lang  racket"
+      "source": "#lang  racket",
+      "recovered": "(program (extension \"#lang \" (ERROR@6..7 \" \") (lang_name \"racket\")))"
     },
     {
-      "source": "#lang /a"
+      "source": "#lang /a",
+      "recovered": "(program (extension \"#lang \" (ERROR@6..7 \"/\") (lang_name \"a\")))"
     },
     {
-      "source": "#!"
+      "source": "#!",
+      "recovered": "(program (extension \"#!\" (MISSING@2 lang_name)))"
     },
     {
-      "source": "#!(a)"
+      "source": "#!(a)",
+      "recovered": "(program (extension \"#!\" (MISSING@2 lang_name)) (ERROR@2..5 \"(a)\"))"
     },
     {
-      "source": "#reader"
+      "source": "#reader",
+      "recovered": "(program (extension \"#reader\" (MISSING@7 boolean)))"
     },
     {
-      "source": "#&"
+      "source": "#&",
+      "recovered": "(program (box \"#&\" (MISSING@2 boolean)))"
     },
     {
-      "source": "#rx"
+      "source": "#rx",
+      "recovered": "(program (regex (regex_prefix \"#rx\") (MISSING@3 \"\\\"\") (MISSING@3 \"\\\"\")))"
     },
     {
-      "source": "#rx a"
+      "source": "#rx a",
+      "recovered": "(program (regex (regex_prefix \"#rx\") (MISSING@3 \"\\\"\") (MISSING@3 \"\\\"\")) (whitespace \" \") (symbol \"a\"))"
     },
     {
-      "source": "#123456789#"
+      "source": "#123456789#",
+      "recovered": "(program (vector \"#\" (decimal \"123456789\") (list (MISSING@10 \"(\") (MISSING@10 \")\"))) (ERROR@10..11 \"#\"))"
     },
     {
-      "source": "#u8(1)"
+      "source": "#u8(1)",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..6 \"u8(1)\"))"
     },
     {
-      "source": "#x"
+      "source": "#x",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"x\"))"
     },
     {
-      "source": "#b"
+      "source": "#b",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..2 \"b\"))"
     },
     {
-      "source": "#<a"
+      "source": "#<a",
+      "recovered": "(program (byte_string \"#\" (MISSING@1 \"\\\"\") (MISSING@1 \"\\\"\")) (ERROR@1..3 \"<a\"))"
     },
     {
-      "source": "#%("
+      "source": "#%(",
+      "recovered": "(program (symbol \"#%\") (list \"(\" (MISSING@3 \")\")))"
     }
   ]
 }

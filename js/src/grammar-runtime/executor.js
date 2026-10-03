@@ -4,7 +4,9 @@
 // offset and parser state; PEG matching keeps at most one. Rule calls are
 // memoized, left recursion grows a seed to a fixpoint, and the nesting depth,
 // the step count and the memo size are bounded, so a hostile input ends in a
-// rejection instead of a stack overflow or a runaway parse.
+// rejection instead of a stack overflow or a runaway parse. Automatic
+// recovery reruns a failed parse with repair points, where a failing element
+// becomes a MISSING leaf or skips to its next match behind an ERROR leaf.
 // docs/grammar/feature-union.md#executor specifies every case below.
 import {
   evaluateCondition,
@@ -31,8 +33,11 @@ export function stepBudget(options, length) {
   return { steps: 0, limit: options.stepLimit ?? 100_000 + 1000 * length };
 }
 
-function makeResult(end, state, children = NO_CHILDREN, dynamic = 0) {
-  return { end, state, children, dynamic, precedence: null, ambiguous: false };
+// The repair cost of a MISSING leaf; an ERROR leaf costs the bytes it skips.
+const MISSING_COST = 2;
+
+function makeResult(end, state, children = NO_CHILDREN, dynamic = 0, cost = 0) {
+  return { end, state, children, dynamic, precedence: null, ambiguous: false, cost };
 }
 
 function resultKey(result) {
@@ -40,14 +45,28 @@ function resultKey(result) {
 }
 
 // Adds a result to a deduplicating map: of two results with the same end
-// and state, the higher dynamic precedence wins; on a tie the first stays and
-// is marked ambiguous (as a copy, since results are shared through the memo).
+// and state, the lower repair cost wins, then the higher dynamic precedence;
+// on a tie the first stays and, without repairs, is marked ambiguous (as a
+// copy, since results are shared through the memo).
 function addResult(results, result) {
   const key = resultKey(result);
   const existing = results.get(key);
-  if (!existing) results.set(key, result);
+  if (!existing || result.cost < existing.cost) results.set(key, result);
+  else if (result.cost > existing.cost) return;
   else if (result.dynamic > existing.dynamic) results.set(key, result);
-  else if (result.dynamic === existing.dynamic && !existing.ambiguous) results.set(key, { ...existing, ambiguous: true });
+  else if (result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous) results.set(key, { ...existing, ambiguous: true });
+}
+
+function joinResults(left, right, inToken) {
+  return {
+    end: right.end,
+    state: right.state,
+    children: inToken ? NO_CHILDREN : left.children.concat(right.children),
+    dynamic: left.dynamic + right.dynamic,
+    precedence: null,
+    ambiguous: left.ambiguous || right.ambiguous,
+    cost: left.cost + right.cost,
+  };
 }
 
 function longestResult(results) {
@@ -63,6 +82,19 @@ function isTrivia(child) {
 function contentStart(children, fallback) {
   for (const child of children) if (!isTrivia(child)) return child.start;
   return fallback;
+}
+
+// An aliased leaf; a MISSING literal named by an alias is no longer a literal.
+function renamed(child, kind) {
+  if (child.type !== 'missing' || !child.literal) return { ...child, kind };
+  const { literal, ...rest } = child;
+  return { ...rest, kind };
+}
+
+// The kind of the MISSING leaf of a failed terminal or token: the literal
+// text for a literal, else none.
+function missingOf(expression) {
+  return expression.kind === 'literal' ? { kind: expression.value, literal: true } : { kind: null };
 }
 
 /** Interprets `program` over `bytes[begin, end)`. */
@@ -87,6 +119,10 @@ export class Executor {
     this.expected = new Set();
     this.suppressed = 0;
     this.view = null;
+    // Automatic recovery: the offsets where a failing element is repaired,
+    // and the farthest offset where an element failed without a repair.
+    this.repairPoints = null;
+    this.elementFarthest = -1;
   }
 
   step() {
@@ -116,6 +152,32 @@ export class Executor {
 
   text(start, end) {
     return textOf(this.bytes, start, end) ?? '';
+  }
+
+  // Automatic recovery. An element (a terminal, a token, a token or atomic
+  // rule, a scanner token) that fails in syntactic context at `start`, its
+  // offset after trivia, is noted; at a repair point it yields instead a
+  // zero-width MISSING leaf and, when `retry` matches the element at a later
+  // code point boundary, a result that skips the bytes up to the first such
+  // offset as an ERROR leaf.
+  elementFailed(start, leaves, state, missing, retry) {
+    if (this.suppressed > 0) return [];
+    if (!this.repairPoints?.has(start)) {
+      if (start > this.elementFarthest) this.elementFarthest = start;
+      return [];
+    }
+    const results = [makeResult(start, state, [...leaves, { type: 'missing', start, end: start, ...missing }], 0, MISSING_COST)];
+    for (let cursor = start; cursor < this.end;) {
+      cursor += decodeAt(this.bytes, cursor, this.end).length;
+      const found = this.quietly(() => retry(cursor));
+      if (found.length === 0) continue;
+      const error = { type: 'error', start, end: cursor };
+      for (const result of found) {
+        results.push({ ...result, children: [...leaves, error, ...result.children], cost: result.cost + cursor - start });
+      }
+      break;
+    }
+    return results;
   }
 
   // Skips trivia: repeatedly the longest match of any trivia expression
@@ -176,7 +238,8 @@ export class Executor {
     const end = this.matchTerminal(expression, start);
     if (end < 0) {
       this.fail(start, expectationOf(expression));
-      return [];
+      if (inToken) return [];
+      return this.elementFailed(start, leaves, state, missingOf(expression), (cursor) => this.terminal(expression, cursor, state, false));
     }
     const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind: null, start, end }];
     return [makeResult(end, state, children)];
@@ -229,7 +292,9 @@ export class Executor {
         const { end: start, leaves } = expression.kind === 'token'
           ? this.terminalStart(position, state, inToken)
           : { end: position, leaves: NO_CHILDREN };
-        return this.tokenLeaf(expression.item, start, leaves, state, inToken, null);
+        const results = this.tokenLeaf(expression.item, start, leaves, state, inToken, null);
+        if (results.length > 0 || inToken) return results;
+        return this.elementFailed(start, leaves, state, missingOf(expression.item), (cursor) => this.evaluate(expression, cursor, state, false));
       }
       case 'predicate': return this.predicate(expression, position, state, inToken);
       case 'recover': return this.recover(expression, position, state, inToken);
@@ -249,14 +314,7 @@ export class Executor {
       const last = index === items.length - 1;
       for (const left of current) {
         for (const right of this.evaluate(item, left.end, left.state, inToken)) {
-          const joined = {
-            end: right.end,
-            state: right.state,
-            children: inToken ? NO_CHILDREN : left.children.concat(right.children),
-            dynamic: left.dynamic + right.dynamic,
-            precedence: null,
-            ambiguous: left.ambiguous || right.ambiguous,
-          };
+          const joined = joinResults(left, right, inToken);
           if (last && keep && !keep(joined)) continue;
           addResult(next, joined);
         }
@@ -293,14 +351,7 @@ export class Executor {
   }
 
   repetition(item, min, max, position, state, inToken) {
-    const join = (left, right) => ({
-      end: right.end,
-      state: right.state,
-      children: inToken ? NO_CHILDREN : left.children.concat(right.children),
-      dynamic: left.dynamic + right.dynamic,
-      precedence: null,
-      ambiguous: left.ambiguous || right.ambiguous,
-    });
+    const join = (left, right) => joinResults(left, right, inToken);
     const zeroWidth = (left, right) => right.end === left.end && right.state.key === left.state.key;
     if (this.peg) {
       // Greedy and possessive: as many iterations as match, never fewer.
@@ -359,7 +410,7 @@ export class Executor {
       if (inToken) return result;
       const meaningful = result.children.filter((child) => !isTrivia(child));
       if (meaningful.length === 1) {
-        return { ...result, children: result.children.map((child) => (child === meaningful[0] ? { ...child, kind: expression.name } : child)) };
+        return { ...result, children: result.children.map((child) => (child === meaningful[0] ? renamed(child, expression.name) : child)) };
       }
       const node = {
         type: 'node', kind: expression.name, rule: expression.name, start: position, end: result.end,
@@ -435,7 +486,10 @@ export class Executor {
         best = { result, priority, item };
       }
     }
-    if (!best) return [];
+    if (!best) {
+      if (inToken) return [];
+      return this.elementFailed(start, leaves, state, { kind: null }, (cursor) => this.longest(expression, cursor, state, false));
+    }
     const kind = best.item.kind === 'ref' ? (this.program.rules.get(best.item.name)?.nodeKind ?? best.item.name) : null;
     const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind, start, end: best.result.end }];
     return [makeResult(best.result.end, best.result.state, children, best.result.dynamic)];
@@ -530,7 +584,10 @@ export class Executor {
       this.fail(position, rule.nodeKind);
       return [];
     }
-    const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}`;
+    // While repairing, a call made quietly (where nothing is repaired) is
+    // memoized apart from the same call made in the open.
+    const quiet = this.repairPoints && this.suppressed > 0 ? '|quiet' : '';
+    const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}${quiet}`;
     const known = this.memo.get(key);
     if (known) {
       if (!known.evaluating) return known.results;
@@ -595,8 +652,10 @@ export class Executor {
         if (!acted) continue;
         built.push({ ...acted, children: inToken ? NO_CHILDREN : [...leaves, leaf], precedence: null, ambiguous: false });
       }
-      if (built.length === 0) this.fail(start, rule.nodeKind);
-      return built;
+      if (built.length > 0) return built;
+      this.fail(start, rule.nodeKind);
+      if (inToken) return built;
+      return this.elementFailed(start, leaves, state, { kind: rule.nodeKind }, (cursor) => this.ruleBody(rule, cursor, state, false));
     }
     const results = this.evaluate(rule.expression, position, state, inToken);
     const built = [];
@@ -679,7 +738,8 @@ export class Executor {
     }
     if (!scanned) {
       this.fail(start, name);
-      return [];
+      if (inToken) return [];
+      return this.elementFailed(start, leaves, state, { kind: name }, (cursor) => this.scannerToken(name, cursor, state, false));
     }
     const children = inToken ? NO_CHILDREN : [
       ...leaves,
@@ -739,31 +799,63 @@ export class Executor {
 
   /**
    * Parses the whole range from `startRule`. Returns `{ ok, root }` or
-   * `{ ok: false, farthest, expected }`; resource limits throw.
+   * `{ ok: false, farthest, expected, elementFarthest, partial }`; resource
+   * limits throw. While repairing, `partial` is the root of the result that
+   * reaches farthest, with the rest of the input as an ERROR leaf.
    */
   run(startRule) {
     const results = this.reference(startRule, this.begin, INITIAL_STATE, false);
     const complete = [];
+    let partial = null;
     for (const result of results) {
       const trailing = this.skipTrivia(result.end, result.state);
-      if (trailing.end === this.end) complete.push({ result, trailing: trailing.leaves });
-      else this.fail(trailing.end, 'end of input');
+      if (trailing.end === this.end) {
+        complete.push({ result, trailing: trailing.leaves });
+        continue;
+      }
+      this.fail(trailing.end, 'end of input');
+      if (!this.repairPoints) continue;
+      const rest = [...trailing.leaves, { type: 'error', start: trailing.end, end: this.end }];
+      const repaired = { result: { ...result, cost: result.cost + this.end - trailing.end }, trailing: rest };
+      if (this.repairPoints.has(trailing.end)) complete.push(repaired);
+      else {
+        if (trailing.end > this.elementFarthest) this.elementFarthest = trailing.end;
+        if (!partial || trailing.end > partial.end || (trailing.end === partial.end && repaired.result.cost < partial.repaired.result.cost)) {
+          partial = { end: trailing.end, repaired };
+        }
+      }
     }
-    if (complete.length === 0) return { ok: false, farthest: this.farthest, expected: [...this.expected].sort() };
-    const [{ result, trailing }] = complete;
-    const ambiguous = complete.length > 1 || result.ambiguous;
+    if (complete.length === 0) {
+      const failed = { ok: false, farthest: this.farthest, expected: [...this.expected].sort(), elementFarthest: this.elementFarthest };
+      if (this.repairPoints) failed.partial = partial ? this.root(startRule, partial.repaired, false) : this.errorRoot(startRule);
+      return failed;
+    }
+    let chosen = complete[0];
+    for (const candidate of complete) if (candidate.result.cost < chosen.result.cost) chosen = candidate;
+    // Repaired results of equal cost are not ambiguities.
+    return { ok: true, root: this.root(startRule, chosen, chosen.result.cost === 0 && complete.length > 1) };
+  }
+
+  root(startRule, { result, trailing }, several) {
+    const ambiguous = several || result.ambiguous;
     const [only] = result.children;
-    let root;
     if (result.children.length === 1 && only.type === 'node') {
-      root = { ...only, end: this.end, children: [...only.children, ...trailing], ambiguous: only.ambiguous || ambiguous };
-    } else {
-      const kind = this.program.rules.get(startRule).nodeKind;
-      root = {
-        type: 'node', kind, rule: kind, start: this.begin, end: this.end,
-        children: [...result.children, ...trailing], ambiguous,
-      };
+      return { ...only, end: this.end, children: [...only.children, ...trailing], ambiguous: only.ambiguous || ambiguous };
     }
-    return { ok: true, root };
+    const kind = this.program.rules.get(startRule).nodeKind;
+    return {
+      type: 'node', kind, rule: kind, start: this.begin, end: this.end,
+      children: [...result.children, ...trailing], ambiguous,
+    };
+  }
+
+  // The root when the start rule matches nothing even with repairs.
+  errorRoot(startRule) {
+    const kind = this.program.rules.get(startRule).nodeKind;
+    return {
+      type: 'node', kind, rule: kind, start: this.begin, end: this.end,
+      children: [{ type: 'error', start: this.begin, end: this.end }], ambiguous: false,
+    };
   }
 }
 

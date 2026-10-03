@@ -1139,6 +1139,10 @@ export interface GrammarParserOptions {
   memoLimit?: number;
   ambiguity?: 'report' | 'reject';
   recovery?: 'reject' | 'accept';
+  /** Repairs a failed parse into a tree with ERROR and MISSING leaves. */
+  errorRecovery?: boolean;
+  /** The repair points automatic recovery may add (default 32). */
+  maxRepairs?: number;
   [option: string]: unknown;
 }
 

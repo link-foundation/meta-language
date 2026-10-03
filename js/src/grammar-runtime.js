@@ -43,6 +43,29 @@ function positioned(reason, bytes, offset, extra = {}) {
 }
 
 /**
+ * Automatic error recovery after a failed parse: each round reparses with
+ * one more repair point, the farthest offset where an element failed without
+ * a repair, until a parse completes. After `maxRepairs` rounds (default 32),
+ * or when no new point appears, the last round's partial tree stands, the
+ * rest of the input an ERROR leaf. Each round has its own step budget.
+ */
+function repairParse(program, bytes, startRule, options, maxDepth, failed) {
+  const points = new Set();
+  const maxRepairs = options.maxRepairs ?? 32;
+  let outcome = failed;
+  while (points.size < maxRepairs) {
+    const point = outcome.elementFarthest >= 0 ? outcome.elementFarthest : outcome.farthest;
+    if (points.has(point)) break;
+    points.add(point);
+    const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length), maxDepth);
+    executor.repairPoints = points;
+    outcome = executor.run(startRule);
+    if (outcome.ok) return outcome;
+  }
+  return { ok: true, root: outcome.partial };
+}
+
+/**
  * Parses `source` (a string or UTF-8 bytes) with a loaded program. Returns
  * `{ ok, tree, ambiguities, rejection }`: `ok` is true only without a
  * rejection; the tree is kept whenever one was built.
@@ -55,7 +78,11 @@ function parseProgram(program, source, options) {
   const maxDepth = options.maxDepth ?? 1000;
   let outcome;
   try {
-    outcome = new Executor(program, bytes, 0, bytes.length, options, budget, maxDepth).run(startRule);
+    const executor = new Executor(program, bytes, 0, bytes.length, options, budget, maxDepth);
+    // With no repair point yet, recovery only notes where elements fail.
+    if (options.errorRecovery) executor.repairPoints = new Set();
+    outcome = executor.run(startRule);
+    if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome);
   } catch (error) {
     if (error instanceof StepLimitReached) {
       return { ok: false, tree: null, ambiguities: [], rejection: { reason: 'stepLimit', limit: budget.limit } };
@@ -83,7 +110,9 @@ function parseProgram(program, source, options) {
  * executor. `options.resolveGrammar(name)` returns the grammar an import or
  * an embedded language names; `maxDepth`, `stepLimit` and `memoLimit` bound
  * a parse; `ambiguity: 'reject'` turns a reported ambiguity into a rejection
- * and `recovery: 'accept'` accepts a tree with ERROR or MISSING nodes.
+ * and `recovery: 'accept'` accepts a tree with ERROR or MISSING nodes;
+ * `errorRecovery: true` repairs a failed parse into such a tree (at most
+ * `maxRepairs` repair points) instead of rejecting it without one.
  * Each parse may override the options and choose a `startRule`.
  */
 export function createGrammarParser(grammar, options = {}) {
