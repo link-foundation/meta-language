@@ -27,6 +27,10 @@ export class StepLimitReached extends Error {}
 const DEFAULT_MAX_DEPTH = 1000;
 const DEFAULT_MEMO_LIMIT = 1_000_000;
 const NO_CHILDREN = Object.freeze([]);
+// The verdict of the precedence filter on a result whose right operand is a
+// node of one part: valid unless a result ends before the operand (see
+// `lonePending`).
+const LONE = Symbol('lone operand');
 
 /** The step budget of one parse, shared with every embedded-language executor. */
 export function stepBudget(options, length) {
@@ -1093,9 +1097,14 @@ export class Executor {
   precedence(expression, position, state, inToken) {
     const { level, associativity } = expression;
     const tag = { level, associativity };
+    // A result whose right operand is of one part waits for the others: it
+    // stands only when no result of the expression ends before that operand.
+    const pending = [];
     const valid = (result) => {
-      if (allowed(result)) return true;
-      this.fail(result.end, 'precedence');
+      const verdict = allowed(result);
+      if (verdict === LONE) pending.push(result);
+      if (verdict === true) return true;
+      if (verdict === false) this.fail(result.end, 'precedence');
       return false;
     };
     const conflicts = (child, side) => {
@@ -1105,9 +1114,10 @@ export class Executor {
       if (side === 'right' && this.lexedShift(child.rule)) return false;
       if (!this.reachesOwner(expression, child.rule, side)) return false;
       // A child of one part (Rust's bare range `..` in `a ..= ..`) has no
-      // operand of its own the operator could have taken instead.
+      // operand of its own the operator could have taken instead; on the
+      // right, the parse before it could still have been reduced first.
       const facing = child.children.filter((grandchild) => !isTrivia(grandchild));
-      if (facing.length < 2) return false;
+      if (facing.length < 2) return side === 'right' ? LONE : false;
       const kinds = this.operandKinds(expression)[side];
       if (kinds === null) return true;
       const edge = side === 'left' ? facing[facing.length - 1] : facing[0];
@@ -1115,12 +1125,14 @@ export class Executor {
     };
     const allowed = (result) => {
       const meaningful = result.children.filter((child) => !isTrivia(child));
-      if (meaningful.length < 2) return true;
-      return !conflicts(meaningful[0], 'left') && !conflicts(meaningful[meaningful.length - 1], 'right');
+      if (meaningful.length < 2 || conflicts(meaningful[0], 'left')) return meaningful.length < 2;
+      const right = conflicts(meaningful[meaningful.length - 1], 'right');
+      return right === LONE ? LONE : !right;
     };
-    const results = inToken
+    let results = inToken
       ? this.evaluate(expression.item, position, state, inToken)
       : this.filtered(expression.item, position, state, valid);
+    if (pending.length > 0) results = this.lonePending(results, pending);
     return results.map((result) => {
       if (inToken) return copyResult(result, { precedence: tag });
       // The innermost precedence over the last part of a result is the one
@@ -1138,6 +1150,25 @@ export class Executor {
       const children = result.children.map((child) => (child === only ? tagged : child));
       return copyResult(result, { precedence: tag, tail, children });
     });
+  }
+
+  // The `results` of a precedence expression with the `pending` ones whose
+  // right operand is a node of one part (Rust's bare range `..`) that an LR
+  // parser shifts: where a result of the expression ends before that operand
+  // (`..` in `.. ..`, `a..` in `a .. ..`), the parser reduces it there first,
+  // as the operand's level is not above the operator's (`a ..= ..` stands).
+  lonePending(results, pending) {
+    const ends = new Set(results.map((result) => result.end));
+    const found = new Map(results.map((result) => [resultKey(result), result]));
+    for (const result of pending) {
+      const meaningful = result.children.filter((child) => !isTrivia(child));
+      if (ends.has(meaningful[meaningful.length - 2].end)) {
+        this.fail(result.end, 'precedence');
+        continue;
+      }
+      addResult(found, result, this.longestTokens);
+    }
+    return [...found.values()];
   }
 
   // Whether a node of `kind` goes on after its first child only with tokens
