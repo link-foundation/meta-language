@@ -3,13 +3,15 @@
 //! `(macro NAME (parameters P...) EXPRESSION)` and `(scanner NAME (tokens
 //! T...) (operations OPERATION...))` between the grammar link and the first
 //! rule, the rule fields `(parameters P...)`, `(channel NAME)`, `(modes
-//! M...)` and `(action OPERATION...)` before `(doc TEXT)`, and the feature
+//! M...)` and `(action OPERATION...)` and the rule metadata `(concept ID)` and
+//! `(source-names (SOURCE NAME)...)` before `(doc TEXT)`, and the feature
 //! expressions. It mirrors `js/src/grammar-links.js`.
 
 use super::super::feature::class_expression;
 use super::super::{
     FeatureExpr, GrammarDeclarations, GrammarExpr, GrammarImportError, GrammarMacro,
-    GrammarScanner, Operation, OperationCategory, RuleAttributes, UnicodeClassItem,
+    GrammarScanner, GrammarSourceName, Operation, OperationCategory, RuleAttributes,
+    UnicodeClassItem,
 };
 use super::feature_forms::{
     FormCodec, LinksReader, read_links_feature, read_links_operation, render_feature_form,
@@ -17,7 +19,7 @@ use super::feature_forms::{
 };
 use super::links::{
     Node, arity, char_text, decoded_word, link, links_error, parse_node, parts,
-    percent_encode_links_text, render_links_expression, word,
+    percent_decode_links_text, percent_encode_links_text, render_links_expression, word,
 };
 
 /// The links spelling of the feature union forms.
@@ -300,15 +302,50 @@ pub(super) fn read_declaration(
     Ok(true)
 }
 
-/// The rule fields in order, before and including `(doc TEXT)`.
-const RULE_FIELDS: [&str; 5] = ["parameters", "channel", "modes", "action", "doc"];
+/// The rule fields in order: the attributes, the metadata `(concept ID)` and
+/// `(source-names (SOURCE NAME)...)`, and `(doc TEXT)`.
+const RULE_FIELDS: [&str; 7] = [
+    "parameters",
+    "channel",
+    "modes",
+    "action",
+    "concept",
+    "source-names",
+    "doc",
+];
 
-/// Reads the optional fields of a rule link: its attributes and its doc.
-pub(super) fn read_rule_fields(
-    fields: &[Node],
-) -> Result<(RuleAttributes, Option<String>), GrammarImportError> {
-    let mut attributes = RuleAttributes::default();
-    let mut doc = None;
+/// The optional fields of a rule link.
+#[derive(Default)]
+pub(super) struct RuleFields {
+    pub attributes: RuleAttributes,
+    pub concept: Option<String>,
+    pub source_names: Vec<GrammarSourceName>,
+    pub doc: Option<String>,
+}
+
+/// Reads `(source-names (SOURCE NAME)...)`.
+fn source_names(args: &[Node]) -> Result<Vec<GrammarSourceName>, GrammarImportError> {
+    if args.is_empty() {
+        return Err(links_error("source-names lists at least one source name"));
+    }
+    args.iter()
+        .map(|item| {
+            let (source, name) = parts(item)?;
+            if name.len() != 1 {
+                return Err(links_error("a source name is (SOURCE NAME)"));
+            }
+            Ok(GrammarSourceName {
+                source: percent_decode_links_text(source)?,
+                name: decoded_word(name.first(), "a source name")?,
+            })
+        })
+        .collect()
+}
+
+/// Reads the optional fields of a rule link: its attributes, its metadata and
+/// its doc.
+pub(super) fn read_rule_fields(fields: &[Node]) -> Result<RuleFields, GrammarImportError> {
+    let mut read = RuleFields::default();
     let mut order = 0;
     for field in fields {
         let (head, args) = parts(field)?;
@@ -320,18 +357,23 @@ pub(super) fn read_rule_fields(
         }
         order = position + 1;
         match head {
-            "parameters" => attributes.parameters = names(field, "parameters")?,
-            "modes" => attributes.modes = Some(names(field, "modes")?),
-            "action" => attributes.action = Some(operations(field, "action")?),
+            "parameters" => read.attributes.parameters = names(field, "parameters")?,
+            "modes" => read.attributes.modes = Some(names(field, "modes")?),
+            "action" => read.attributes.action = Some(operations(field, "action")?),
+            "source-names" => read.source_names = source_names(args)?,
             "channel" => {
                 arity(head, args, 1)?;
-                attributes.channel = Some(decoded_word(args.first(), "a channel name")?);
+                read.attributes.channel = Some(decoded_word(args.first(), "a channel name")?);
+            }
+            "concept" => {
+                arity(head, args, 1)?;
+                read.concept = Some(decoded_word(args.first(), "a concept id")?);
             }
             _ => {
                 arity(head, args, 1)?;
-                doc = Some(decoded_word(args.first(), "a doc text")?);
+                read.doc = Some(decoded_word(args.first(), "a doc text")?);
             }
         }
     }
-    Ok((attributes, doc))
+    Ok(read)
 }

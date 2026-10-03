@@ -1063,6 +1063,15 @@ export interface GrammarRuleValue {
   channel?: string;
   modes?: string[];
   action?: GrammarOperation[];
+  /** The id of the concept record the rule means. */
+  concept?: string;
+  /** The names the rule has in the grammars it was merged from. */
+  sourceNames?: GrammarSourceName[];
+  doc?: string;
+}
+export interface GrammarSourceName {
+  source: string;
+  name: string;
 }
 export interface NormalizedGrammar {
   schemaVersion: 1;

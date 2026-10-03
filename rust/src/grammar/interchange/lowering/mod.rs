@@ -342,6 +342,7 @@ fn rule(name: &str, kind: RuleKind, expr: GrammarExpr, doc: Option<String>) -> G
         expr,
         kind,
         concept: None,
+        source_names: Vec::new(),
         doc,
         attributes: RuleAttributes::default(),
     }

@@ -21,6 +21,10 @@
 // (tokens T...) (operations OPERATION...))` links between the grammar link
 // and the rules; the rule fields `(parameters P...)`, `(channel NAME)`,
 // `(modes MODE...)` and `(action OPERATION...)` before `(doc TEXT)`;
+// the rule metadata `(concept ID)`, the canonical concept record the rule
+// means (parity/naming/canonical-concepts.json), and `(source-names (SOURCE
+// NAME)...)`, the names the rule has in the grammars it was merged from, for
+// reverse conversion, between the action and the doc;
 // `(category V)` and `(script V)` class items; `(ref NAME ARGUMENT...)`; and
 // the feature expressions and operations of grammar-feature-forms.js.
 import { Parser } from 'links-notation';
@@ -129,6 +133,11 @@ export function renderDeclarationLinks(declarations) {
 export function renderRuleLink(grammar, rule) {
   const parts = ['rule', percentEncodeLinksText(rule.name), rule.kind, renderLinksExpression(rule.expression)];
   parts.push(...renderRuleFieldLinks(rule));
+  if (rule.concept !== undefined) parts.push(`(concept ${percentEncodeLinksText(rule.concept)})`);
+  if (rule.sourceNames?.length > 0) {
+    const names = rule.sourceNames.map(({ source, name }) => `(${percentEncodeLinksText(source)} ${percentEncodeLinksText(name)})`);
+    parts.push(`(${['source-names', ...names].join(' ')})`);
+  }
   const doc = ruleDoc(grammar, rule);
   if (doc !== null) parts.push(`(doc ${percentEncodeLinksText(doc)})`);
   return `(${parts.join(' ')})`;
@@ -323,7 +332,17 @@ function operations(value, head) {
 }
 
 // The optional rule fields after the expression, in their fixed order.
-const RULE_FIELDS = ['parameters', 'channel', 'modes', 'action', 'doc'];
+const RULE_FIELDS = ['parameters', 'channel', 'modes', 'action', 'concept', 'source-names', 'doc'];
+
+// The `(SOURCE NAME)` pairs of a `(source-names ...)` field.
+function sourceNames(args) {
+  if (args.length === 0) throw linksError('source-names lists at least one source name');
+  return args.map((item) => {
+    const [source, name] = parts(item);
+    if (name.length !== 1) throw linksError('a source name is (SOURCE NAME)');
+    return { source: percentDecodeLinksText(source), name: decodedWord(name[0], 'a source name') };
+  });
+}
 
 function readRuleFields(fields, rule, name, docs) {
   let order = 0;
@@ -335,9 +354,11 @@ function readRuleFields(fields, rule, name, docs) {
     if (head === 'parameters') rule.parameters = names(field, 'parameters');
     else if (head === 'modes') rule.modes = names(field, 'modes');
     else if (head === 'action') rule.action = operations(field, 'action');
+    else if (head === 'source-names') rule.sourceNames = sourceNames(args);
     else {
       arity(head, args, 1);
       if (head === 'channel') rule.channel = decodedWord(args[0], 'a channel name');
+      else if (head === 'concept') rule.concept = decodedWord(args[0], 'a concept id');
       else docs.set(name, decodedWord(args[0], 'a doc text'));
     }
   }

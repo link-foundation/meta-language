@@ -541,6 +541,16 @@ impl fmt::Display for RuleKind {
     }
 }
 
+/// A name a rule has in a grammar it was merged from, such as its tree-sitter
+/// or ANTLR name, kept for the reverse conversion.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GrammarSourceName {
+    /// The grammar source, such as `tree-sitter` or `antlr`.
+    pub source: String,
+    /// The rule name in that source.
+    pub name: String,
+}
+
 /// A named grammar rule.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GrammarRule {
@@ -552,6 +562,8 @@ pub struct GrammarRule {
     pub kind: RuleKind,
     /// Optional concept-ontology alignment.
     pub concept: Option<String>,
+    /// The names the rule has in the grammars it was merged from.
+    pub source_names: Vec<GrammarSourceName>,
     /// Optional free-text documentation or comment.
     pub doc: Option<String>,
     /// Parameters, channel, modes and action of the feature union.
@@ -567,6 +579,7 @@ impl GrammarRule {
             expr,
             kind: RuleKind::Normal,
             concept: None,
+            source_names: Vec::new(),
             doc: None,
             attributes: RuleAttributes::default(),
         }
@@ -590,6 +603,14 @@ impl GrammarRule {
     #[must_use]
     pub fn with_concept(mut self, concept: impl Into<String>) -> Self {
         self.concept = Some(concept.into());
+        self
+    }
+
+    /// Returns this rule with the names it has in the grammars it was merged
+    /// from.
+    #[must_use]
+    pub fn with_source_names(mut self, source_names: Vec<GrammarSourceName>) -> Self {
+        self.source_names = source_names;
         self
     }
 
@@ -622,6 +643,12 @@ impl GrammarRule {
     #[must_use]
     pub fn concept(&self) -> Option<&str> {
         self.concept.as_deref()
+    }
+
+    /// The names the rule has in the grammars it was merged from.
+    #[must_use]
+    pub fn source_names(&self) -> &[GrammarSourceName] {
+        &self.source_names
     }
 
     /// Rule documentation, when present.

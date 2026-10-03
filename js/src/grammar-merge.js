@@ -184,6 +184,8 @@ function renamedRule(rule, rename) {
   if (rule.channel !== undefined) renamed.channel = rule.channel;
   if (rule.modes !== undefined) renamed.modes = [...rule.modes];
   if (rule.action !== undefined) renamed.action = mapReferences(rule.action, rename);
+  if (rule.concept !== undefined) renamed.concept = rule.concept;
+  if (rule.sourceNames !== undefined) renamed.sourceNames = rule.sourceNames;
   return renamed;
 }
 

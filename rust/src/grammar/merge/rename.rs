@@ -172,6 +172,7 @@ pub(super) fn renamed_rule(rule: &GrammarRule, rename: &dyn Fn(&str) -> String) 
         expr: map_references(&rule.expr, rename),
         kind: rule.kind,
         concept: rule.concept.clone(),
+        source_names: rule.source_names.clone(),
         doc: rule.doc.clone(),
         attributes,
     }

@@ -128,7 +128,8 @@ pub fn render_grammar_links(grammar: &Grammar) -> String {
     })
 }
 
-/// Renders the `(rule NAME KIND EXPRESSION [(doc TEXT)])` link of one rule.
+/// Renders the `(rule NAME KIND EXPRESSION [FIELDS...] [(concept ID)]
+/// [(source-names (SOURCE NAME)...)] [(doc TEXT)])` link of one rule.
 #[must_use]
 pub fn render_rule_link(rule: &GrammarRule) -> String {
     let mut parts = vec![
@@ -138,6 +139,20 @@ pub fn render_rule_link(rule: &GrammarRule) -> String {
         render_links_expression(rule.expr()),
     ];
     parts.extend(render_rule_fields(&rule.attributes));
+    if let Some(concept) = rule.concept() {
+        parts.push(format!("(concept {})", percent_encode_links_text(concept)));
+    }
+    if !rule.source_names().is_empty() {
+        let mut names = vec!["source-names".to_owned()];
+        names.extend(rule.source_names().iter().map(|source_name| {
+            format!(
+                "({} {})",
+                percent_encode_links_text(&source_name.source),
+                percent_encode_links_text(&source_name.name)
+            )
+        }));
+        parts.push(link(&names));
+    }
     if let Some(doc) = rule.doc() {
         parts.push(format!("(doc {})", percent_encode_links_text(doc)));
     }
@@ -503,11 +518,15 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
             return Err(links_error(format!("rule {name} is defined twice")));
         }
         let expr = parse_node(&args[2])?;
-        let (attributes, doc) = read_rule_fields(&args[3..])?;
+        let fields = read_rule_fields(&args[3..])?;
         let mut rule = GrammarRule::new(name, expr)
             .with_kind(kind)
-            .with_attributes(attributes);
-        if let Some(doc) = doc {
+            .with_attributes(fields.attributes)
+            .with_source_names(fields.source_names);
+        if let Some(concept) = fields.concept {
+            rule = rule.with_concept(concept);
+        }
+        if let Some(doc) = fields.doc {
             rule = rule.with_doc(doc);
         }
         rules.push(rule);

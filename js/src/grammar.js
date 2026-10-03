@@ -6,7 +6,10 @@ import { createGrammarParser } from './grammar-runtime.js';
  * optional `declarations` hold the grammar-level forms of the grammar feature
  * union (matching, imports, modes, extras, conflicts, macros and external
  * scanners); a rule may carry `parameters` and the `channel`, `modes` and
- * `action` attributes. docs/grammar/feature-union.md describes them.
+ * `action` attributes. docs/grammar/feature-union.md describes them. A rule
+ * may also carry the metadata `concept`, the id of the concept record it
+ * means, and `sourceNames`, `[{ source, name }]`, the names it has in the
+ * grammars it was merged from (docs/grammar/native-grammars.md).
  */
 export class Grammar {
   constructor(start, rules, sourceFormat = null, declarations = null) {
@@ -20,6 +23,8 @@ export class Grammar {
       for (const attribute of RULE_ATTRIBUTES) {
         if (rule[attribute] !== undefined && rule[attribute] !== null) entry[attribute] = rule[attribute];
       }
+      if (rule.concept !== undefined && rule.concept !== null) entry.concept = rule.concept;
+      if (rule.sourceNames?.length > 0) entry.sourceNames = rule.sourceNames.map((sourceName) => ({ ...sourceName }));
       this.rules.set(name, Object.freeze(entry));
     }
   }
