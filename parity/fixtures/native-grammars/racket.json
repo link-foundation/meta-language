@@ -15,7 +15,7 @@
     "whitespace",
     "comment_text",
     "string_text",
-    "regex_prefix",
+    "regular_expression_prefix",
     "hash_prefix",
     "graph_mark",
     "here_terminator",
@@ -24,7 +24,14 @@
     "here_end"
   ],
   "extras": [],
-  "oracleKinds": {},
+  "oracleKinds": {
+    "program_element": "_token",
+    "atmosphere": "_skip",
+    "datum_comment": "sexp_comment",
+    "datum": "_datum",
+    "regular_expression": "regex",
+    "language_name": "lang_name"
+  },
   "matches": [
     {
       "source": "",
@@ -3023,7 +3030,7 @@
     },
     {
       "source": "#;",
-      "recovered": "(program (sexp_comment \"#;\" (MISSING@2 boolean)))"
+      "recovered": "(program (datum_comment \"#;\" (MISSING@2 boolean)))"
     },
     {
       "source": "'",
@@ -3123,19 +3130,19 @@
     },
     {
       "source": "#lang  racket",
-      "recovered": "(program (extension \"#lang \" (ERROR@6..7 \" \") (lang_name \"racket\")))"
+      "recovered": "(program (extension \"#lang \" (ERROR@6..7 \" \") (language_name \"racket\")))"
     },
     {
       "source": "#lang /a",
-      "recovered": "(program (extension \"#lang \" (ERROR@6..7 \"/\") (lang_name \"a\")))"
+      "recovered": "(program (extension \"#lang \" (ERROR@6..7 \"/\") (language_name \"a\")))"
     },
     {
       "source": "#!",
-      "recovered": "(program (extension \"#!\" (MISSING@2 lang_name)))"
+      "recovered": "(program (extension \"#!\" (MISSING@2 language_name)))"
     },
     {
       "source": "#!(a)",
-      "recovered": "(program (extension \"#!\" (MISSING@2 lang_name)) (ERROR@2..5 \"(a)\"))"
+      "recovered": "(program (extension \"#!\" (MISSING@2 language_name)) (ERROR@2..5 \"(a)\"))"
     },
     {
       "source": "#reader",
@@ -3147,11 +3154,11 @@
     },
     {
       "source": "#rx",
-      "recovered": "(program (regex (regex_prefix \"#rx\") (MISSING@3 \"\\\"\") (MISSING@3 \"\\\"\")))"
+      "recovered": "(program (regular_expression (regular_expression_prefix \"#rx\") (MISSING@3 \"\\\"\") (MISSING@3 \"\\\"\")))"
     },
     {
       "source": "#rx a",
-      "recovered": "(program (regex (regex_prefix \"#rx\") (MISSING@3 \"\\\"\") (MISSING@3 \"\\\"\")) (whitespace \" \") (symbol \"a\"))"
+      "recovered": "(program (regular_expression (regular_expression_prefix \"#rx\") (MISSING@3 \"\\\"\") (MISSING@3 \"\\\"\")) (whitespace \" \") (symbol \"a\"))"
     },
     {
       "source": "#123456789#",

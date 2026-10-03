@@ -8,7 +8,7 @@
       "grammars": {
         "native-json": {
           "version": "1.0.0",
-          "parserSha256": "29b1ed5d75f545d8a07f358c9eb8a0962347f26216277d79264e657c3524e04d"
+          "parserSha256": "76f719035d2b507a1dbbddc86388eb03a7a4bb52bdc2be56354d39b014a59c71"
         }
       },
       "oracleGrammars": {
@@ -95,7 +95,7 @@
       "grammars": {
         "native-ini": {
           "version": "1.0.0",
-          "parserSha256": "ea2b2f371e776b77fe0adb46d6ac3cf3efc21de18e761659f08eff90acaeabe4"
+          "parserSha256": "82fc3b1768069dbebbab486ed2fe89955daac6c9df56baf1bbab92344756ec00"
         }
       },
       "oracleGrammars": {
@@ -135,7 +135,7 @@
       "grammars": {
         "native-diff": {
           "version": "1.0.0",
-          "parserSha256": "08348d9f3400ceb3bad8b06c192ca71efae8b6c7c212c2be2c1134538f28a2f2"
+          "parserSha256": "172ac3b6c6eb5d91ab1d343d2c5bb3b11ef9547ae117071782028c684a43dde7"
         }
       },
       "oracleGrammars": {
@@ -196,7 +196,7 @@
       "grammars": {
         "native-csv": {
           "version": "1.0.0",
-          "parserSha256": "3ef4faabdccab35b8ac3cc4578069793254bd066224d02f0f4a528a01b790621"
+          "parserSha256": "16c5828535c024d166af69c67a64f8b7a4215a278f2341935d35321be96f7912"
         }
       },
       "oracleGrammars": {
@@ -248,7 +248,7 @@
       "grammars": {
         "native-json5": {
           "version": "1.0.0",
-          "parserSha256": "6d6572f1da5a5090760c39504a09f88cb5bcf48bb19a2fbb3f4d520d2dbeb4f3"
+          "parserSha256": "d733ca1db7708114c21d1ea12a31f18d3ceb1cc7d245a750d36eebc996acafaa"
         }
       },
       "oracleGrammars": {
@@ -300,7 +300,7 @@
       "grammars": {
         "native-scheme": {
           "version": "1.0.0",
-          "parserSha256": "13f1c7caac4cc7cb7511b64f0c13316d37675b173bc46c3cea56b8a9e0947872"
+          "parserSha256": "d9ebf24ecf0262933df12f4af4721e1f6a1137f413cb0f88f12dc4710d2ea2ad"
         }
       },
       "oracleGrammars": {
@@ -374,7 +374,7 @@
       "grammars": {
         "native-racket": {
           "version": "1.0.0",
-          "parserSha256": "b9a5df8aac0af932330a4ec0480741cf91137e96fd8908cbc336cb4d7804f238"
+          "parserSha256": "88d1c0cbfda09e27794e9ca60ec086111b687fa40e2346843e6c20c2329ef658"
         }
       },
       "oracleGrammars": {

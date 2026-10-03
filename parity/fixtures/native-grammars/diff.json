@@ -17,7 +17,9 @@
     "word"
   ],
   "extras": [],
-  "oracleKinds": {},
+  "oracleKinds": {
+    "line_range": "linerange"
+  },
   "matches": [
     {
       "source": "diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -1,2 +1,2 @@ f\n a\n-b\n+c\n",
@@ -1948,7 +1950,7 @@
     },
     {
       "source": "@@\n",
-      "recovered": "(source (location \"@@\" (MISSING@2 linerange) (MISSING@2 linerange) (MISSING@2 \"@@\") (MISSING@2 anything)) (newline \"\\n\"))"
+      "recovered": "(source (location \"@@\" (MISSING@2 line_range) (MISSING@2 line_range) (MISSING@2 \"@@\") (MISSING@2 anything)) (newline \"\\n\"))"
     },
     {
       "source": "Binary\n",
@@ -1968,7 +1970,7 @@
     },
     {
       "source": "@@ -1 @@\n",
-      "recovered": "(source (location \"@@\" ~\" \" (linerange \"-1\") ~\" \" (MISSING@6 linerange) \"@@\") (newline \"\\n\"))"
+      "recovered": "(source (location \"@@\" ~\" \" (line_range \"-1\") ~\" \" (MISSING@6 line_range) \"@@\") (newline \"\\n\"))"
     },
     {
       "source": "new file\n",

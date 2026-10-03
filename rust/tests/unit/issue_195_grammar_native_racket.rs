@@ -63,7 +63,7 @@ fn native_racket_grammar_is_canonical_links_notation() {
         "dot",
         "comment",
         "block_comment",
-        "sexp_comment",
+        "datum_comment",
         "boolean",
         "string",
         "byte_string",
@@ -71,7 +71,7 @@ fn native_racket_grammar_is_canonical_links_notation() {
         "here_terminator",
         "here_line",
         "here_end",
-        "regex",
+        "regular_expression",
         "escape_sequence",
         "number",
         "character",
@@ -92,7 +92,7 @@ fn native_racket_grammar_is_canonical_links_notation() {
         "unsyntax",
         "unsyntax_splicing",
         "extension",
-        "lang_name",
+        "language_name",
     ] {
         assert!(grammar.rule(rule).is_some(), "{rule}");
     }
@@ -101,7 +101,12 @@ fn native_racket_grammar_is_canonical_links_notation() {
             .iter()
             .any(|prefix| line.starts_with(prefix))
     }));
-    assert!(!GRAMMAR.contains("tree-sitter") && !GRAMMAR.contains("grammar.js"));
+    // A renamed rule keeps its tree-sitter name only as a source-name alias.
+    let foreign = regex::Regex::new(r" \(source-names(?: \([^()]*\))+\)")
+        .expect("the source-names pattern compiles")
+        .replace_all(GRAMMAR, "");
+    let generator = regex::Regex::new(r"\bgrammar\.js\b").expect("the generator pattern compiles");
+    assert!(!foreign.contains("tree-sitter") && !generator.is_match(&foreign));
     observe(
         &["nativeRacketGrammarIsCanonicalLinks"],
         "native Racket grammar is canonical Links Notation",
@@ -243,7 +248,7 @@ fn native_racket_trees_keep_every_byte() {
         kinds,
         [
             (None, "#lang "),
-            (Some("lang_name"), "racket"),
+            (Some("language_name"), "racket"),
             (Some("whitespace"), " "),
             (Some("comment"), "; c"),
             (Some("whitespace"), "\n"),

@@ -14,7 +14,9 @@
   ],
   "anonymous": [],
   "extras": [],
-  "oracleKinds": {},
+  "oracleKinds": {
+    "value": "_value"
+  },
   "matches": [
     {
       "source": "{\"name\": \"meta\", \"tags\": [1, 2.5, true, null], \"nested\": {\"ok\": false}}\n",

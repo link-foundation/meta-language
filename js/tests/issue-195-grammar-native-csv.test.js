@@ -48,7 +48,8 @@ test('the native CSV grammar is a canonical Links Notation grammar', (context) =
   }
   // Every line is one link; no foreign grammar is embedded as a string.
   for (const line of links.trimEnd().split('\n')) assert.match(line, /^\((?:grammar|extra|rule) /u);
-  assert.doesNotMatch(links, /tree-sitter|grammar\.js|module\.exports|\(regex /u);
+  // A renamed rule keeps its tree-sitter name only as a source-name alias.
+  assert.doesNotMatch(links.replaceAll(/ \(source-names(?: \([^()]*\))+\)/gu, ''), /tree-sitter|grammar\.js\b|module\.exports|\(regex /u);
   observe(['nativeCsvGrammarIsCanonicalLinks'], context.name);
 });
 

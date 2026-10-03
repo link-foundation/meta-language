@@ -11,7 +11,9 @@
   "hidden": [],
   "anonymous": [],
   "extras": [],
-  "oracleKinds": {},
+  "oracleKinds": {
+    "value": "_value"
+  },
   "matches": [
     {
       "source": "{a: 1}",

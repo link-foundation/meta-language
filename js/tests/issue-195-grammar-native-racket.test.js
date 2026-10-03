@@ -44,16 +44,17 @@ test('the native Racket grammar is a canonical Links Notation grammar', (context
   assert.equal(renderGrammarLinks(grammar), links);
   assert.equal(grammar.start, 'program');
   for (const rule of [
-    'program', 'dot', 'comment', 'block_comment', 'sexp_comment', 'boolean', 'string', 'byte_string', 'here_string',
-    'here_terminator', 'here_line', 'here_end', 'regex', 'escape_sequence', 'number', 'character', 'symbol', 'keyword',
+    'program', 'dot', 'comment', 'block_comment', 'datum_comment', 'boolean', 'string', 'byte_string', 'here_string',
+    'here_terminator', 'here_line', 'here_end', 'regular_expression', 'escape_sequence', 'number', 'character', 'symbol', 'keyword',
     'box', 'list', 'vector', 'structure', 'hash', 'graph', 'quote', 'quasiquote', 'syntax', 'quasisyntax', 'unquote',
-    'unquote_splicing', 'unsyntax', 'unsyntax_splicing', 'extension', 'lang_name',
+    'unquote_splicing', 'unsyntax', 'unsyntax_splicing', 'extension', 'language_name',
   ]) {
     assert.ok(grammar.rules.has(rule), rule);
   }
   // Every line is one link; no foreign grammar is embedded as a string.
   for (const line of links.trimEnd().split('\n')) assert.match(line, /^\((?:grammar|extra|rule) /u);
-  assert.doesNotMatch(links, /tree-sitter|grammar\.js|module\.exports|\(regex /u);
+  // A renamed rule keeps its tree-sitter name only as a source-name alias.
+  assert.doesNotMatch(links.replaceAll(/ \(source-names(?: \([^()]*\))+\)/gu, ''), /tree-sitter|grammar\.js\b|module\.exports|\(regex /u);
   observe(['nativeRacketGrammarIsCanonicalLinks'], context.name);
 });
 
@@ -129,7 +130,7 @@ test('native Racket trees keep every byte of the source, comments and white spac
   const kinds = leaves(parser.parseTree('#lang racket ; c\n(define x #hash((a . "b\\n")) #| b |# #<<E\nx\nE\n1.5t3)').tree)
     .map(({ kind, text }) => [kind, text]);
   assert.deepEqual(kinds, [
-    [null, '#lang '], ['lang_name', 'racket'], ['whitespace', ' '], ['comment', '; c'], ['whitespace', '\n'],
+    [null, '#lang '], ['language_name', 'racket'], ['whitespace', ' '], ['comment', '; c'], ['whitespace', '\n'],
     [null, '('], ['symbol', 'define'], ['whitespace', ' '], ['symbol', 'x'], ['whitespace', ' '],
     ['hash_prefix', '#hash'], [null, '('], [null, '('], ['symbol', 'a'], ['whitespace', ' '], ['dot', '.'],
     ['whitespace', ' '], [null, '"'], ['string_text', 'b'], ['escape_sequence', '\\n'], [null, '"'], [null, ')'],

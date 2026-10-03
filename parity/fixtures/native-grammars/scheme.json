@@ -16,7 +16,11 @@
     "directive_name"
   ],
   "extras": [],
-  "oracleKinds": {},
+  "oracleKinds": {
+    "program_element": "_token",
+    "atmosphere": "_intertoken",
+    "datum": "_datum"
+  },
   "matches": [
     {
       "source": "",

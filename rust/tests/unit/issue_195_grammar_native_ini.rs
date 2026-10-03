@@ -54,7 +54,12 @@ fn native_ini_grammar_is_canonical_links_notation() {
             .iter()
             .any(|prefix| line.starts_with(prefix))
     }));
-    assert!(!GRAMMAR.contains("tree-sitter") && !GRAMMAR.contains("grammar.js"));
+    // A renamed rule keeps its tree-sitter name only as a source-name alias.
+    let foreign = regex::Regex::new(r" \(source-names(?: \([^()]*\))+\)")
+        .expect("the source-names pattern compiles")
+        .replace_all(GRAMMAR, "");
+    let generator = regex::Regex::new(r"\bgrammar\.js\b").expect("the generator pattern compiles");
+    assert!(!foreign.contains("tree-sitter") && !generator.is_match(&foreign));
     observe(
         &["nativeIniGrammarIsCanonicalLinks"],
         "native INI grammar is canonical Links Notation",

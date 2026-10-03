@@ -48,7 +48,8 @@ test('the native diff grammar is a canonical Links Notation grammar', (context) 
   }
   // Every line is one link; no foreign grammar is embedded as a string.
   for (const line of links.trimEnd().split('\n')) assert.match(line, /^\((?:grammar|extra|rule) /u);
-  assert.doesNotMatch(links, /tree-sitter|grammar\.js|module\.exports|\(regex /u);
+  // A renamed rule keeps its tree-sitter name only as a source-name alias.
+  assert.doesNotMatch(links.replaceAll(/ \(source-names(?: \([^()]*\))+\)/gu, ''), /tree-sitter|grammar\.js\b|module\.exports|\(regex /u);
   observe(['nativeDiffGrammarIsCanonicalLinks'], context.name);
 });
 
@@ -111,7 +112,7 @@ test('native diff trees keep every byte of the source, line breaks and blank lin
   const kinds = leaves(parser.parseTree(' \n--- a b\n@@ -1 +1 @@ f\n-x \r\n').tree).map(({ kind, text }) => [kind, text]);
   assert.deepEqual(kinds, [
     ['newline', ' \n'], [null, '---'], [null, ' '], ['word', 'a'], [null, ' '], ['word', 'b'], ['newline', '\n'],
-    [null, '@@'], [null, ' '], ['linerange', '-1'], [null, ' '], ['linerange', '+1'], [null, ' '], [null, '@@'],
+    [null, '@@'], [null, ' '], ['line_range', '-1'], [null, ' '], ['line_range', '+1'], [null, ' '], [null, '@@'],
     ['anything', ' f'], ['newline', '\n'], [null, '-'], ['anything', 'x '], ['newline', '\r\n'],
   ]);
   observe(['nativeDiffTreesLossless'], context.name);

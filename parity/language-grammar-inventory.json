@@ -104,7 +104,7 @@
     "native-csv": { "version": "1.0.0", "grammar": "parity/grammars/native/csv.lino", "hidden": ["blank_space"], "anonymous": ["newline"], "extras": [] },
     "native-json5": { "version": "1.0.0", "grammar": "parity/grammars/native/json5.lino", "hidden": [], "anonymous": [], "extras": [] },
     "native-scheme": { "version": "1.0.0", "grammar": "parity/grammars/native/scheme.lino", "hidden": [], "anonymous": ["whitespace","comment_text","string_text","directive_name"], "extras": [] },
-    "native-racket": { "version": "1.0.0", "grammar": "parity/grammars/native/racket.lino", "hidden": ["byte_order_mark"], "anonymous": ["whitespace","comment_text","string_text","regex_prefix","hash_prefix","graph_mark","here_terminator","here_newline","here_line","here_end"], "extras": [] }
+    "native-racket": { "version": "1.0.0", "grammar": "parity/grammars/native/racket.lino", "hidden": ["byte_order_mark"], "anonymous": ["whitespace","comment_text","string_text","regular_expression_prefix","hash_prefix","graph_mark","here_terminator","here_newline","here_line","here_end"], "extras": [] }
   },
   "languages": [
     { "name": "LiNo", "aliases": ["lino"], "family": "meta", "builtinGrammar": "links-notation", "source": "papa (lovesMama: loves mama)\n  child: \"quoted value\"\n(1 2)\n", "recoverySource": "(unclosed\n", "javascript": { "status": "grammar-cst", "backend": "built-in links-notation grammar + links-notation semantics" }, "rust": { "status": "grammar-cst", "backend": "built-in links-notation grammar + links-notation semantics" } },
