@@ -8,7 +8,7 @@ import {
   buildIssue195Manifest,
 } from './issue-195-requirements.mjs';
 import { buildLanguageCatalog, formatLanguageCatalog } from './build-language-catalog.mjs';
-import { stageGateError } from './issue-195-evidence-stages.mjs';
+import { CHECKPOINTS, stageGateError } from './issue-195-evidence-stages.mjs';
 
 export {
   ASSERTION_PROFILES,
@@ -30,6 +30,7 @@ const SOURCE_LABELS = Object.freeze({
   consolidatedChecklist: 'Consolidated acceptance and delivery checklist',
   currentHeadAudit: 'Audit of PR head 7489adfb and remaining delivery work',
   resourceAudit: 'Audit of PR head d2407c18: green CI and bounded resource use',
+  greenPathAudit: 'Path to a green PR and a release: post-merge checks, native grammars and shared concepts',
 });
 
 function allKeys(value, prefix = '') {
@@ -104,7 +105,7 @@ export async function validateIssue195Manifest(manifest, root) {
       if (!['positive', 'negative', 'fault-injection'].includes(cell.kind)) {
         errors.push(`${cell.testId} has invalid kind ${cell.kind}`);
       }
-      if (!['pre-merge', 'release-delivery'].includes(cell.checkpoint)) {
+      if (!CHECKPOINTS.includes(cell.checkpoint)) {
         errors.push(`${cell.testId} has invalid checkpoint ${cell.checkpoint}`);
       }
       if (!Array.isArray(cell.fixtureIds) || cell.fixtureIds.length === 0) {

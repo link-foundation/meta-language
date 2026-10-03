@@ -94,7 +94,9 @@ async function main(argv) {
   }
   const npmConsumerLock = consumerIndex >= 0 ? JSON.parse(readFileSync(path.resolve(argv[consumerIndex + 1]), 'utf8')) : undefined;
   const delivery = argv.includes('--delivery');
-  const live = argv.includes('--live') || (delivery && !argv.includes('--offline') && Boolean(process.env.CI || process.env.ACCEPTANCE_CHECKPOINT));
+  // The live comparison runs only when asked for: pull request checks compare
+  // against the committed audit, and the scheduled refresh on main goes live.
+  const live = argv.includes('--live') && !argv.includes('--offline');
   const problems = delivery
     ? checkDeliveredDependencies(inventory, collected, { npmConsumerLock })
     : checkInventory(inventory, collected);

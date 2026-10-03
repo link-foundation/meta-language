@@ -102,7 +102,7 @@ test('every retained item the repository delivers is current or at its verified 
   observe(['allRetainedItemsCurrent'], 'every retained item the repository delivers is current or at its verified newest compatible release');
 });
 
-test('the gate accepts the committed delivery offline and, in CI, goes live and fails closed without the registries', () => {
+test('the gate accepts the committed delivery offline in CI and goes live, failing closed without the registries, only with --live', () => {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'dependency-delivery-'));
   try {
     const lock = path.join(directory, 'package-lock.json');
@@ -116,10 +116,15 @@ test('the gate accepts the committed delivery offline and, in CI, goes live and 
     assert.equal(offline.status, 0, offline.stderr);
     assert.match(offline.stdout, /delivered current or at the newest compatible release/u);
     assert.doesNotMatch(offline.stdout, /live registries/u);
-    // In CI the delivery gate compares the audit with the live registries;
-    // without gh and cargo it cannot, and it fails rather than trusting the
-    // recorded audit.
-    const unreachable = run(['--delivery', '--consumer-lock', lock], { CI: 'true', PATH: '' });
+    // A pull request check never goes live implicitly: CI alone keeps the
+    // offline comparison against the committed audit.
+    const implicit = run(['--delivery', '--consumer-lock', lock], { CI: 'true', ACCEPTANCE_CHECKPOINT: 'pre-merge', PATH: '' });
+    assert.equal(implicit.status, 0, implicit.stderr);
+    assert.doesNotMatch(implicit.stdout, /live registries/u);
+    // With --live (main only) the gate compares the audit with the live
+    // registries; without gh and cargo it cannot, and it fails rather than
+    // trusting the recorded audit.
+    const unreachable = run(['--delivery', '--live', '--consumer-lock', lock], { CI: 'true', PATH: '' });
     assert.equal(unreachable.status, 1);
     assert.match(unreachable.stderr, /^live-registry-unavailable: /mu);
     assert.doesNotMatch(unreachable.stderr, /stale-delivered-dependency/u);
@@ -127,7 +132,7 @@ test('the gate accepts the committed delivery offline and, in CI, goes live and 
     rmSync(directory, { recursive: true, force: true });
   }
   observe(['allRetainedItemsCurrent', 'staleDeliveredItemRejected'],
-    'the gate accepts the committed delivery offline and, in CI, goes live and fails closed without the registries');
+    'the gate accepts the committed delivery offline in CI and goes live, failing closed without the registries, only with --live');
 });
 
 test('transitive npm and Cargo resolutions are current or held by a delivered dependent that excludes the current release', () => {

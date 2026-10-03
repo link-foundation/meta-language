@@ -15,9 +15,8 @@ const acceptanceWorkflow = await readFile(
   new URL('../../.github/workflows/issue-195-acceptance.yml', import.meta.url), 'utf8',
 );
 const head = 'a'.repeat(40);
-const base = 'b'.repeat(40);
-const candidate = 'c'.repeat(40);
-const options = { head, commit: candidate, manifest, acceptanceWorkflow };
+const merged = 'c'.repeat(40);
+const options = { commit: merged, manifest, acceptanceWorkflow };
 
 function snapshot() {
   const parameters = {
@@ -27,12 +26,7 @@ function snapshot() {
   };
   return {
     repository: { full_name: 'link-foundation/meta-language', default_branch: 'main' },
-    pullRequest: {
-      number: 196, state: 'open', head: { sha: head },
-      base: { sha: base, ref: 'main' }, merge_commit_sha: candidate,
-    },
-    mergeState: { headRefOid: head, baseRefOid: base, mergeStateStatus: 'BLOCKED' },
-    candidate: { sha: candidate, parents: [{ sha: base }, { sha: head }] },
+    branchHead: merged,
     effectiveRules: [{ type: 'required_status_checks', parameters, ruleset_id: 42 }],
     rulesets: [{
       id: 42, target: 'branch', enforcement: 'active', bypass_actors: [],
@@ -40,23 +34,23 @@ function snapshot() {
       conditions: { ref_name: { include: ['~DEFAULT_BRANCH'], exclude: [] } },
       rules: [{ type: 'required_status_checks', parameters }],
     }],
-    checkRuns: [{
-      id: 7, name: 'Full Requirements Aggregate', head_sha: head,
-      status: 'completed', conclusion: 'failure',
-      app: { id: 15368, slug: 'github-actions' },
-    }],
-    workflowRuns: [{
-      checkId: 7, event: 'pull_request', head_sha: head,
-      path: '.github/workflows/issue-195-acceptance.yml',
-      pull_requests: [{ number: 196, head: { sha: head }, base: { sha: base, ref: 'main' } }],
+    pullRequests: [{
+      number: 200, headRefOid: head, baseRefName: 'main', mergeStateStatus: 'BLOCKED',
+      checkRuns: [{
+        id: 7, name: 'Full Requirements Aggregate', head_sha: head,
+        status: 'completed', conclusion: 'failure',
+        app: { id: 15368, slug: 'github-actions' },
+      }],
     }],
   };
 }
 
-test('live rule evaluation needs an active strict rule and a failed current merge candidate', () => {
+test('the post-merge report needs an active strict rule and an open pull request blocked by a failed aggregate', () => {
   const result = evaluateMergeEnforcement(snapshot(), options);
   assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.notes, []);
   assert.equal(Object.values(result.checks).every(Boolean), true);
+  assert.equal(result.blockedPullRequest, 200);
   assert.equal(result.delivery.releaseRequirements.length, 4);
   assert.equal(result.delivery.releaseEvidencePassed, false);
 });
@@ -89,11 +83,10 @@ for (const [name, mutate] of [
 }
 
 // A bypassable rule is its own missing evidence: the strict required check
-// and the blocked merge candidate are still observed.
+// and the blocked pull request are still observed.
 for (const [name, mutate] of [
   ['bypass actor', (live) => { live.rulesets[0].bypass_actors = [{ actor_id: 1, bypass_mode: 'always' }]; }],
   ['current user bypass', (live) => { live.rulesets[0].current_user_can_bypass = 'always'; }],
-  ['hidden bypass actors', (live) => { delete live.rulesets[0].bypass_actors; }],
 ]) {
   test(`merge enforcement rejects ${name} as a non-bypassable rule only`, () => {
     const live = snapshot();
@@ -107,30 +100,55 @@ for (const [name, mutate] of [
   });
 }
 
+// The report uses the workflow token only. A ruleset that hides its bypass
+// actors from it is reported as a note, never as a request for a credential.
+test('hidden bypass actors are a note of the workflow-token report, not a missing credential', () => {
+  const live = snapshot();
+  delete live.rulesets[0].bypass_actors;
+  const result = evaluateMergeEnforcement(live, options);
+  assert.deepEqual(result.errors, []);
+  assert.equal(Object.values(result.checks).every(Boolean), true);
+  assert.match(result.notes.join('\n'), /ruleset 42 does not show its bypass actors.*current_user_can_bypass/);
+  assert.doesNotMatch(JSON.stringify(result), /RULESET_TOKEN|Administration/);
+});
+
 for (const [name, mutate] of [
-  ['stale PR head', (live) => { live.pullRequest.head.sha = 'd'.repeat(40); }],
-  ['stale merge-state query', (live) => { live.mergeState.headRefOid = 'd'.repeat(40); }],
-  ['stale base', (live) => { live.mergeState.baseRefOid = 'd'.repeat(40); }],
-  ['different candidate', (live) => { live.pullRequest.merge_commit_sha = 'd'.repeat(40); }],
-  ['unrelated candidate parents', (live) => { live.candidate.parents = [{ sha: base }]; }],
-  ['old check SHA', (live) => { live.checkRuns[0].head_sha = 'd'.repeat(40); }],
-  ['old workflow base', (live) => { live.workflowRuns[0].pull_requests[0].base.sha = 'd'.repeat(40); }],
-  ['unrelated workflow', (live) => { live.workflowRuns[0].path = '.github/workflows/other.yml'; }],
-  ['passing check', (live) => { live.checkRuns[0].conclusion = 'success'; }],
-  ['pending check', (live) => { live.checkRuns[0].status = 'in_progress'; }],
-  ['merge permitted', (live) => { live.mergeState.mergeStateStatus = 'CLEAN'; }],
-  ['newer pending rerun', (live) => {
-    live.checkRuns.push({ ...live.checkRuns[0], id: 8, status: 'in_progress', conclusion: null });
+  ['no open pull request', (live) => { live.pullRequests = []; }],
+  ['a pull request into another branch', (live) => { live.pullRequests[0].baseRefName = 'develop'; }],
+  ['an old check SHA', (live) => { live.pullRequests[0].checkRuns[0].head_sha = 'd'.repeat(40); }],
+  ['a passing check', (live) => { live.pullRequests[0].checkRuns[0].conclusion = 'success'; }],
+  ['a pending check', (live) => { live.pullRequests[0].checkRuns[0].status = 'in_progress'; }],
+  ['a permitted merge', (live) => { live.pullRequests[0].mergeStateStatus = 'CLEAN'; }],
+  ['a draft pull request', (live) => { live.pullRequests[0].mergeStateStatus = 'DRAFT'; }],
+  ['a newer pending rerun', (live) => {
+    live.pullRequests[0].checkRuns.push({ ...live.pullRequests[0].checkRuns[0], id: 8, status: 'in_progress', conclusion: null });
   }],
 ]) {
-  test(`a failed-check probe rejects ${name}`, () => {
+  test(`the failed-check probe rejects ${name}`, () => {
     const live = snapshot();
     mutate(live);
     const result = evaluateMergeEnforcement(live, options);
     assert.equal(result.checks.failingCheckBlocksMerge, false);
-    assert.notEqual(result.errors.length, 0);
+    assert.equal(result.blockedPullRequest, null);
+    assert.match(result.errors.join('\n'), /no open pull request/);
   });
 }
+
+test('the probe uses any blocked open pull request, never the pull request that is being evaluated', () => {
+  const live = snapshot();
+  live.pullRequests.unshift({ number: 199, headRefOid: 'e'.repeat(40), baseRefName: 'main', mergeStateStatus: 'CLEAN', checkRuns: [] });
+  const result = evaluateMergeEnforcement(live, options);
+  assert.equal(result.checks.failingCheckBlocksMerge, true);
+  assert.equal(result.blockedPullRequest, 200);
+});
+
+test('a newer push to the default branch is a note, not a failure', () => {
+  const live = snapshot();
+  live.branchHead = 'f'.repeat(40);
+  const result = evaluateMergeEnforcement(live, options);
+  assert.deepEqual(result.errors, []);
+  assert.match(result.notes.join('\n'), /newer push supersedes/);
+});
 
 test('release evidence cannot be replaced by pre-merge evidence', () => {
   const weakened = structuredClone(manifest);
@@ -141,53 +159,10 @@ test('release evidence cannot be replaced by pre-merge evidence', () => {
   assert.match(result.errors.join('\n'), /release-delivery/);
 });
 
-test('a producing rerun uses a completed failure of the same candidate without trusting its own pending result', () => {
-  const live = snapshot();
-  live.checkRuns.push({ ...live.checkRuns[0], id: 8, status: 'in_progress', conclusion: null });
-  live.workflowRuns.push({ ...live.workflowRuns[0], checkId: 8, id: 97 });
-  const result = evaluateMergeEnforcement(live, { ...options, runningWorkflowId: '97' });
-  assert.equal(result.checks.failingCheckBlocksMerge, true);
-  assert.equal(result.check.id, 7);
-  assert.equal(result.producingCheck.id, 8);
-  assert.equal(evaluateMergeEnforcement(live, { ...options, runningWorkflowId: '98' })
-    .checks.failingCheckBlocksMerge, false);
-  live.workflowRuns[1].pull_requests[0].base.sha = 'd'.repeat(40);
-  assert.equal(evaluateMergeEnforcement(live, { ...options, runningWorkflowId: '97' })
-    .checks.failingCheckBlocksMerge, false);
-});
-
-test('the first producing run cannot replace a missing failed-check probe', () => {
-  const live = snapshot();
-  live.checkRuns[0].status = 'in_progress';
-  live.checkRuns[0].conclusion = null;
-  live.workflowRuns[0].id = 97;
-  const result = evaluateMergeEnforcement(live, { ...options, runningWorkflowId: '97' });
-  assert.equal(result.checks.failingCheckBlocksMerge, false);
-});
-
 test('a missing live response fails closed', () => {
   const result = evaluateMergeEnforcement({}, options);
   assert.equal(result.checks.activeRuleTargetsDefaultBranch, false);
   assert.equal(result.checks.failingCheckBlocksMerge, false);
-});
-
-// The workflow token reads the strict policy from the effective rules but not
-// the bypass actors. Only the non-bypassable rule depends on them.
-test('a rule response without permission to inspect bypass actors fails closed for that assertion only', () => {
-  const live = snapshot();
-  delete live.rulesets[0].bypass_actors;
-  const result = evaluateMergeEnforcement(live, options);
-  assert.equal(result.checks.activeRuleTargetsDefaultBranch, false);
-  assert.equal(result.checks.fullAggregateRequired, true);
-  assert.equal(result.checks.failingCheckBlocksMerge, true);
-  assert.doesNotMatch(result.errors.join('\n'), /not a strict required check/);
-});
-
-test('hidden bypass actors name the missing permission instead of a non-strict rule', () => {
-  const live = snapshot();
-  delete live.rulesets[0].bypass_actors;
-  const { errors } = evaluateMergeEnforcement(live, options);
-  assert.match(errors.join('\n'), /ruleset 42 hides its bypass actors.*Administration.*ISSUE_195_RULESET_TOKEN/);
 });
 
 // GitHub reports a skipped job as a successful required check, so a skipped
@@ -213,100 +188,42 @@ test('a missing workflow cannot establish a required aggregate', () => {
   assert.equal(result.checks.fullAggregateRequired, false);
 });
 
-test('live inspection retrieves all check attempts and verifies the revision again', async () => {
+test('live inspection reads the default branch, its rules and the open pull requests with one token', async () => {
   const live = snapshot();
-  live.checkRuns[0].details_url = 'https://github.com/link-foundation/meta-language/actions/runs/97/job/123';
   const calls = [];
   const prefix = 'repos/link-foundation/meta-language';
   const query = async (args) => {
     calls.push(args);
-    if (args[0] === 'pr') return live.mergeState;
+    if (args[0] === 'pr') {
+      assert.deepEqual(args.slice(0, 8), ['pr', 'list', '--repo', 'link-foundation/meta-language', '--state', 'open', '--base', 'main']);
+      return live.pullRequests.map(({ checkRuns, ...pull }) => pull);
+    }
     const endpoint = args[1];
     if (endpoint === prefix) return live.repository;
-    if (endpoint === `${prefix}/pulls/196`) return live.pullRequest;
+    if (endpoint === `${prefix}/branches/main`) return { commit: { sha: merged } };
     if (endpoint === `${prefix}/rules/branches/main`) return live.effectiveRules;
     if (endpoint === `${prefix}/rulesets/42`) return live.rulesets[0];
-    if (endpoint === `${prefix}/commits/${candidate}`) return live.candidate;
-    if (endpoint === `${prefix}/commits/${head}/check-runs?filter=all`) {
+    if (endpoint === `${prefix}/commits/${head}/check-runs?check_name=Full%20Requirements%20Aggregate&filter=all`) {
       assert.ok(args.includes('--paginate'));
       assert.ok(args.includes('--slurp'));
-      return [{ check_runs: [live.checkRuns[0]] }, { check_runs: [] }];
+      return [{ check_runs: live.pullRequests[0].checkRuns }, { check_runs: [] }];
     }
-    if (endpoint === `${prefix}/actions/runs/97`) return live.workflowRuns[0];
     throw new Error(`unexpected GitHub request: ${endpoint}`);
   };
-  const result = await inspectMergeEnforcement({ repository: 'link-foundation/meta-language', pullRequest: 196, query });
-  assert.equal(result.checkRuns.length, 1);
-  assert.equal(result.workflowRuns[0].checkId, 7);
-  assert.equal(calls.filter(([command]) => command === 'pr').length, 2);
+  const result = await inspectMergeEnforcement({ repository: 'link-foundation/meta-language', query });
+  assert.equal(result.branchHead, merged);
+  assert.equal(result.pullRequests[0].checkRuns.length, 1);
+  assert.equal(calls.filter(([command]) => command === 'pr').length, 1);
   assert.deepEqual(evaluateMergeEnforcement(result, options).errors, []);
-  let revisionQueries = 0;
-  await assert.rejects(inspectMergeEnforcement({
-    repository: 'link-foundation/meta-language', pullRequest: 196,
-    query: async (args) => args[0] === 'pr' && ++revisionQueries === 2
-      ? { ...live.mergeState, baseRefOid: 'd'.repeat(40) } : query(args),
-  }), /revision changed/);
 });
 
-test('live inspection reads rulesets with the separate ruleset query when one is configured', async () => {
-  const live = snapshot();
-  live.checkRuns[0].details_url = 'https://github.com/link-foundation/meta-language/actions/runs/97/job/123';
-  const prefix = 'repos/link-foundation/meta-language';
-  const query = async (args) => {
-    if (args[0] === 'pr') return live.mergeState;
-    const endpoint = args[1];
-    if (endpoint === prefix) return live.repository;
-    if (endpoint === `${prefix}/pulls/196`) return live.pullRequest;
-    if (endpoint === `${prefix}/rules/branches/main`) return live.effectiveRules;
-    if (endpoint === `${prefix}/rulesets/42`) return { ...live.rulesets[0], bypass_actors: undefined };
-    if (endpoint === `${prefix}/commits/${candidate}`) return live.candidate;
-    if (endpoint === `${prefix}/commits/${head}/check-runs?filter=all`) return [{ check_runs: live.checkRuns }];
-    if (endpoint === `${prefix}/actions/runs/97`) return live.workflowRuns[0];
-    throw new Error(`unexpected GitHub request: ${endpoint}`);
-  };
-  const rulesetRequests = [];
-  const rulesetQuery = async (args) => {
-    rulesetRequests.push(args[1]);
-    return live.rulesets[0];
-  };
-  const result = await inspectMergeEnforcement({
-    repository: 'link-foundation/meta-language', pullRequest: 196, query, rulesetQuery,
-  });
-  assert.deepEqual(rulesetRequests, [`${prefix}/rulesets/42`]);
-  assert.deepEqual(result.rulesets[0].bypass_actors, []);
-  assert.deepEqual(evaluateMergeEnforcement(result, options).errors, []);
-  const withoutSeparateQuery = await inspectMergeEnforcement({
-    repository: 'link-foundation/meta-language', pullRequest: 196, query,
-  });
-  assert.equal(withoutSeparateQuery.rulesets[0].bypass_actors, undefined);
-  const workflowTokenOnly = evaluateMergeEnforcement(withoutSeparateQuery, options);
-  assert.deepEqual(workflowTokenOnly.checks, {
-    activeRuleTargetsDefaultBranch: false, fullAggregateRequired: true,
-    failingCheckBlocksMerge: true, publishedDeliverySeparatelyVerified: true,
-  });
-  // A rejected ruleset token keeps the workflow token's ruleset and records why.
-  const rejectedToken = await inspectMergeEnforcement({
-    repository: 'link-foundation/meta-language', pullRequest: 196, query,
-    rulesetQuery: async () => { throw new Error('HTTP 403'); },
-  });
-  assert.equal(rejectedToken.rulesets[0].enforcement, 'active');
-  assert.equal(rejectedToken.rulesets[0].bypassActorsError, 'HTTP 403');
-  assert.equal(evaluateMergeEnforcement(rejectedToken, options).checks.fullAggregateRequired, true);
-});
-
-test('GitHub JSON subprocess can authenticate with a separate token', async () => {
-  const environment = { GH_TOKEN: 'workflow-token', PATH: process.env.PATH };
-  let observed;
-  await githubQuery(['api', 'repos/link-foundation/meta-language/rulesets/42'], {
-    environment, token: 'administration-read-token',
-    execute: (command, args, settings) => {
-      observed = settings.env;
-      return '{}';
-    },
-  });
-  assert.equal(observed.GH_TOKEN, 'administration-read-token');
-  assert.equal(observed.GITHUB_TOKEN, undefined);
-  assert.equal(environment.GH_TOKEN, 'workflow-token');
+test('the merge-enforcement tooling and workflows need no ruleset credential', async () => {
+  for (const file of [
+    '../scripts/issue-195-merge-enforcement.mjs', '../scripts/check-issue-195-merge-enforcement.mjs',
+    '../../.github/workflows/issue-195-acceptance.yml',
+  ]) {
+    assert.doesNotMatch(await readFile(new URL(file, import.meta.url), 'utf8'), /ISSUE_195_RULESET_TOKEN/, file);
+  }
 });
 
 for (const forcedColors of [{ CLICOLOR_FORCE: '1' }, { GH_FORCE_TTY: '1' }, { CLICOLOR_FORCE: '1', GH_FORCE_TTY: '1' }]) {

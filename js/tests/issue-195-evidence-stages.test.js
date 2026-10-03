@@ -14,6 +14,7 @@ import {
   BOUNDED_BUILD_ENVIRONMENT,
   NATIVE_TARGETS,
   RUNTIMES,
+  CHECKPOINTS,
   aggregateGroups,
   boundedEnvironment,
   evidenceStage,
@@ -30,7 +31,6 @@ import { recordIssue195DirectiveObservation as observe } from './support/issue-1
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (relative) => readFileSync(path.join(root, relative), 'utf8');
 const commit = 'a'.repeat(40);
-const CHECKPOINTS = ['pre-merge', 'release-delivery'];
 
 function stageRecord(stage, overrides = {}) {
   return {
@@ -62,10 +62,13 @@ test('the stages and the aggregate together produce exactly the evidence plan gr
   assert.deepEqual(
     evidenceStages('pre-merge').map(({ name }) => name),
     ['javascript-suite', 'rust-suite', 'runtime-parity', 'native-javascript', 'native-rust', 'native-lean',
-      'native-rocq', 'delivery', 'merge-enforcement'],
+      'native-rocq', 'delivery'],
   );
+  // Live default-branch rules exist only after merge: no pull request stage inspects them.
+  assert.deepEqual(evidenceStages('post-merge').map(({ name }) => name), ['merge-enforcement']);
   assert.deepEqual(evidenceStages('release-delivery').map(({ name }) => name), ['delivery']);
-  assert.throws(() => evidenceStages('post-merge'), /unknown issue-195 evidence checkpoint/);
+  assert.deepEqual(CHECKPOINTS, ['pre-merge', 'post-merge', 'release-delivery']);
+  assert.throws(() => evidenceStages('pull-request'), /unknown issue-195 evidence checkpoint/);
   assert.throws(() => evidenceStage('pre-merge', 'everything'), /unknown pre-merge evidence stage everything/);
   assert.deepEqual(stageFiles('rust-suite'), {
     record: 'work/stage-rust-suite.json', observations: 'work/stage-rust-suite.jsonl',
@@ -96,8 +99,8 @@ test('a missing, failed, foreign or mismatched stage becomes one error naming th
   records.delete('native-rocq');
   records.set('rust-suite', stageRecord(stages['rust-suite'], { groups: {}, error: 'Rust tests failed; see logs/suite-rust.log' }));
   records.set('delivery', stageRecord(stages.delivery, { commit: 'b'.repeat(40) }));
-  records.set('merge-enforcement', stageRecord(stages['merge-enforcement'], {
-    groups: { 'merge-enforcement': {}, 'suite:javascript': {} },
+  records.set('native-javascript', stageRecord(stages['native-javascript'], {
+    groups: { 'native:JavaScript:javascript': {}, 'native:JavaScript:rust': {}, 'suite:javascript': {} },
   }));
   records.set('runtime-parity', stageRecord(stages['runtime-parity'], { groups: {} }));
   records.set('native-lean', new SyntaxError('Unexpected end of JSON input'));
@@ -106,16 +109,16 @@ test('a missing, failed, foreign or mismatched stage becomes one error naming th
   assert.deepEqual(stageErrors.map(stageGateError), [
     'evidence stage rust-suite failed: Rust tests failed; see logs/suite-rust.log',
     'evidence stage runtime-parity failed: the stage reported no record for runtime-parity',
+    'evidence stage native-javascript failed: the stage reported group suite:javascript, which belongs to another stage',
     'evidence stage native-lean failed: the stage record cannot be read: Unexpected end of JSON input',
     'evidence stage native-rocq failed: the stage produced no record; see its job log',
     `evidence stage delivery failed: the stage record has commit ${'b'.repeat(40)}, expected ${commit}`,
-    'evidence stage merge-enforcement failed: the stage reported group suite:javascript, which belongs to another stage',
     'evidence stage linting failed: linting is not a pre-merge evidence stage',
   ]);
   for (const group of ['suite:rust', 'runtime-parity', 'native:Lean:rust', 'native:Rocq:rust', 'delivery:npm']) {
     assert.equal(groups.has(group), false, group);
   }
-  assert.equal(groups.has('merge-enforcement'), true);
+  assert.equal(groups.has('native:JavaScript:javascript'), true);
   // The foreign report does not replace the group of the stage that owns it.
   assert.equal(groups.get('suite:javascript').toolchainVersions.stage, 'javascript-suite');
   observe('I195-RESOURCE-CI-EVIDENCE-STAGES', ['failedStageIsOneGateError'],
@@ -202,7 +205,14 @@ test('CI runs each stage as its own job and the aggregate only merges and evalua
   assert.match(job('runtime-parity'), /--stage runtime-parity/u);
   assert.match(job('native-translations'), /target: \[javascript, rust, lean, rocq\]/u);
   assert.match(job('native-translations'), /--stage "\$TARGET"/u);
-  assert.match(job('evidence-stages'), /\["javascript-suite","rust-suite","delivery","merge-enforcement"\]/u);
+  assert.match(job('evidence-stages'), /\["javascript-suite","rust-suite","delivery"\]/u);
+  assert.doesNotMatch(job('evidence-stages'), /merge-enforcement|RULESET_TOKEN|pull-requests: read/u);
+  // The post-merge report runs on main only and never blocks.
+  const postMerge = job('post-merge');
+  assert.match(postMerge, /if: \$\{\{ github\.event_name == 'push' \}\}/u);
+  assert.match(postMerge, /continue-on-error: true/u);
+  assert.match(postMerge, /--checkpoint post-merge/u);
+  assert.doesNotMatch(job('acceptance'), /post-merge/u);
   assert.match(job('evidence-stages'), /'\["delivery"\]'/u);
   for (const id of ['runtime-parity', 'native-translations', 'evidence-stages']) {
     assert.match(job(id), /name: issue-195-stage-[^\n]*-\$\{\{ github\.sha \}\}/u, id);

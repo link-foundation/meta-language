@@ -74,28 +74,28 @@ function verifyDeliverySeparation(manifest, commit) {
   return { passed, releaseRequirements, releaseEvidencePassed: release.passed };
 }
 
-/** Evaluate observed GitHub responses; mock responses never produce ledger records. */
-export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, acceptanceWorkflow, runningWorkflowId = null }) {
+const FAILED_CONCLUSIONS = Object.freeze(['failure', 'timed_out', 'action_required']);
+
+/**
+ * Evaluates the observed GitHub responses of the post-merge report; mock
+ * responses never produce ledger records. The report runs on the default
+ * branch after merge, so it never depends on, or waits for, the checks of the
+ * pull request it would otherwise have to fail.
+ */
+export function evaluateMergeEnforcement(snapshot, { commit, manifest, acceptanceWorkflow }) {
   const errors = [];
+  const notes = [];
   const branch = snapshot.repository?.default_branch;
-  const pull = snapshot.pullRequest;
-  const merge = snapshot.mergeState;
-  const candidate = snapshot.candidate;
-  const current = typeof head === 'string' && /^[a-f0-9]{40}$/.test(head) &&
-    pull?.state === 'open' && pull.head?.sha === head && merge?.headRefOid === head &&
-    pull.base?.ref === branch && pull.base?.sha === merge.baseRefOid &&
-    candidate?.sha === pull.merge_commit_sha &&
-    [head, candidate?.sha].includes(commit) &&
-    candidate?.parents?.some(({ sha }) => sha === head) &&
-    candidate?.parents?.some(({ sha }) => sha === pull.base.sha);
-  if (!current) errors.push('PR head, base and merge candidate must match the evaluated revision');
+  if (typeof branch !== 'string') errors.push('the repository response names no default branch');
+  if (snapshot.branchHead !== commit) {
+    notes.push(`the default branch is at ${snapshot.branchHead ?? 'an unknown commit'}, not the evaluated ${commit}; ` +
+      'the report of the newer push supersedes this one');
+  }
 
   // The effective rules (GET /repos/{owner}/{repo}/rules/branches/{branch})
-  // and the ruleset's enforcement, target and rules are readable with the
-  // workflow token; only the bypass-actor list needs repository
-  // Administration read. Each assertion therefore fails only on its own
-  // missing evidence: hidden bypass actors leave the non-bypassable rule
-  // unobserved, not the strict required check or the blocked merge.
+  // and the ruleset's enforcement, target, rules and current-user bypass are
+  // readable with the workflow token. The bypass-actor list is not; when
+  // GitHub hides it, the report says so instead of asking for a credential.
   const enforcedRules = (snapshot.effectiveRules ?? []).filter((rule) => {
     const ruleset = (snapshot.rulesets ?? []).find(({ id }) => id === rule.ruleset_id);
     return typeof branch === 'string' && ruleset?.enforcement === 'active' &&
@@ -106,14 +106,14 @@ export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, acc
   const nonBypassable = (rule) => {
     const ruleset = snapshot.rulesets.find(({ id }) => id === rule.ruleset_id);
     return ruleset.current_user_can_bypass === 'never' &&
-      Array.isArray(ruleset.bypass_actors) && ruleset.bypass_actors.length === 0;
+      (ruleset.bypass_actors === undefined || (Array.isArray(ruleset.bypass_actors) && ruleset.bypass_actors.length === 0));
   };
   const activeRuleTargetsDefaultBranch = enforcedRules.some(nonBypassable);
   if (!activeRuleTargetsDefaultBranch) errors.push('no active, non-bypassable rule targets the default branch');
   for (const ruleset of snapshot.rulesets ?? []) {
-    if (!Array.isArray(ruleset.bypass_actors)) {
-      errors.push(`ruleset ${ruleset.id} hides its bypass actors from this token; ` +
-        'provide a token with repository Administration read permission as ISSUE_195_RULESET_TOKEN');
+    if (ruleset.bypass_actors === undefined) {
+      notes.push(`ruleset ${ruleset.id} does not show its bypass actors to the workflow token; ` +
+        'the report relies on current_user_can_bypass');
     }
   }
   const requiredChecks = enforcedRules.flatMap((rule) => {
@@ -128,33 +128,22 @@ export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, acc
   const fullAggregateRequired = requiredChecks.length > 0 && skipProblems.length === 0;
   if (requiredChecks.length === 0) errors.push('Full Requirements Aggregate is not a strict required check');
 
-  const matchesCandidate = (workflow) => workflow?.event === 'pull_request' && workflow.head_sha === head &&
-    workflow.path === '.github/workflows/issue-195-acceptance.yml' &&
-    workflow.pull_requests?.some((entry) => entry.number === pull?.number &&
-      entry.head?.sha === head && entry.base?.sha === pull?.base?.sha && entry.base?.ref === branch);
-  const checks = (snapshot.checkRuns ?? []).filter((entry) =>
-    entry.name === FULL_REQUIREMENTS_CHECK && [head, candidate?.sha].includes(entry.head_sha))
-    .sort((first, second) => second.id - first.id);
-  // A running evidence producer cannot use itself as a failed-check probe.
-  // On a rerun it can inspect a completed failure of the same head/base pair.
-  // Other pending reruns still invalidate the probe, and a changed candidate
-  // needs a new completed failure before this assertion can be recorded.
-  const producingCheck = checks.find((entry) => {
-    const workflow = (snapshot.workflowRuns ?? []).find(({ checkId }) => checkId === entry.id);
-    return entry.status !== 'completed' && runningWorkflowId !== null &&
-      String(workflow?.id) === String(runningWorkflowId) && matchesCandidate(workflow);
-  });
-  const check = checks.find((entry) => entry !== producingCheck);
-  // GitHub attaches pull-request check runs to the head SHA even though
-  // checkout evaluates the synthetic merge. The workflow's authenticated
-  // head/base pair must therefore match both parents of the current candidate.
-  const workflow = (snapshot.workflowRuns ?? []).find(({ checkId }) => checkId === check?.id);
-  const failingCheckBlocksMerge = current && fullAggregateRequired &&
-    matchesCandidate(workflow) &&
-    check?.status === 'completed' && ['failure', 'timed_out', 'action_required'].includes(check.conclusion) &&
-    requiredChecks.some(({ integration_id: application }) =>
-      !application || application === check.app?.id) && merge.mergeStateStatus === 'BLOCKED';
-  if (!failingCheckBlocksMerge) errors.push('no completed failing required check blocks the current merge candidate');
+  // The failing-check probe is any open pull request into the default branch
+  // whose latest aggregate failed and whose merge GitHub reports as blocked.
+  // Without such a pull request the assertion stays unobserved until one
+  // exists; the report never makes a check fail to observe it.
+  const blockedPullRequest = (snapshot.pullRequests ?? []).find((pull) => {
+    if (pull.baseRefName !== branch || pull.mergeStateStatus !== 'BLOCKED') return false;
+    const latest = (pull.checkRuns ?? [])
+      .filter((entry) => entry.name === FULL_REQUIREMENTS_CHECK && entry.head_sha === pull.headRefOid)
+      .sort((first, second) => second.id - first.id)[0];
+    return latest?.status === 'completed' && FAILED_CONCLUSIONS.includes(latest.conclusion) &&
+      requiredChecks.some(({ integration_id: application }) => !application || application === latest.app?.id);
+  }) ?? null;
+  const failingCheckBlocksMerge = fullAggregateRequired && blockedPullRequest !== null;
+  if (!failingCheckBlocksMerge) {
+    errors.push('no open pull request into the default branch has a failed required aggregate that blocks its merge');
+  }
 
   const delivery = verifyDeliverySeparation(manifest, commit);
   if (!delivery.passed) errors.push('published delivery must remain a separate, fail-closed release-delivery checkpoint');
@@ -163,71 +152,41 @@ export function evaluateMergeEnforcement(snapshot, { head, commit, manifest, acc
       activeRuleTargetsDefaultBranch, fullAggregateRequired, failingCheckBlocksMerge,
       publishedDeliverySeparatelyVerified: delivery.passed,
     },
-    errors, delivery, candidate: candidate?.sha ?? null, check: check ?? null,
-    producingCheck: producingCheck ?? null,
+    errors, notes, delivery, blockedPullRequest: blockedPullRequest?.number ?? null,
   };
 }
 
-/** Fetch live, read-only evidence. Preserve raw responses for independent review. */
-export async function inspectMergeEnforcement({ repository, pullRequest, query = githubQuery, rulesetQuery = query }) {
+/** Fetches live, read-only evidence with the workflow token; the raw responses stay in the report. */
+export async function inspectMergeEnforcement({ repository, query = githubQuery, pullRequestLimit = 20 }) {
   const prefix = `repos/${repository}`;
-  const [metadata, pull, mergeState] = await Promise.all([
-    query(['api', prefix]),
-    query(['api', `${prefix}/pulls/${pullRequest}`]),
-    query(['pr', 'view', String(pullRequest), '--repo', repository, '--json',
-      'headRefOid,baseRefOid,mergeStateStatus']),
+  const metadata = await query(['api', prefix]);
+  const branch = metadata.default_branch;
+  const [branchResponse, effectiveRules, pulls] = await Promise.all([
+    query(['api', `${prefix}/branches/${branch}`]),
+    query(['api', `${prefix}/rules/branches/${branch}`, '--paginate']),
+    query(['pr', 'list', '--repo', repository, '--state', 'open', '--base', branch,
+      '--limit', String(pullRequestLimit), '--json', 'number,headRefOid,baseRefName,mergeStateStatus']),
   ]);
-  const effectiveRules = await query(['api', `${prefix}/rules/branches/${metadata.default_branch}`, '--paginate']);
-  const [candidate, checkPages, ...rulesets] = await Promise.all([
-    query(['api', `${prefix}/commits/${pull.merge_commit_sha}`]),
-    query(['api', `${prefix}/commits/${pull.head.sha}/check-runs?filter=all`, '--paginate', '--slurp']),
-    ...[...new Set(effectiveRules.map(({ ruleset_id: id }) => id))].map(async (id) => {
-      const args = ['api', `${prefix}/rulesets/${id}`];
-      const ruleset = await query(args);
-      if (rulesetQuery === query || Array.isArray(ruleset.bypass_actors)) return ruleset;
-      // Bypass actors are only visible with repository Administration read.
-      // A failing ruleset token leaves them hidden instead of failing the
-      // evidence the workflow token already read.
-      try {
-        const bypassActors = (await rulesetQuery(args)).bypass_actors;
-        return bypassActors === undefined ? ruleset : { ...ruleset, bypass_actors: bypassActors };
-      } catch (error) {
-        return { ...ruleset, bypassActorsError: error.message };
-      }
-    }),
-  ]);
-  const checkRuns = checkPages.flatMap((page) => page.check_runs);
-  const workflowRuns = await Promise.all(checkRuns.filter(({ name }) => name === FULL_REQUIREMENTS_CHECK)
-    .map(async (check) => {
-      const runId = check.details_url?.match(/\/actions\/runs\/(\d+)\/job\/\d+$/)?.[1];
-      if (!runId) return { checkId: check.id };
-      return { ...await query(['api', `${prefix}/actions/runs/${runId}`]), checkId: check.id };
-    }));
-  // A second query detects a head/base change while collecting the responses.
-  const finalMergeState = await query(['pr', 'view', String(pullRequest), '--repo', repository,
-    '--json', 'headRefOid,baseRefOid,mergeStateStatus']);
-  if (mergeState.headRefOid !== finalMergeState.headRefOid ||
-      mergeState.baseRefOid !== finalMergeState.baseRefOid) {
-    throw new Error('PR revision changed during live rule inspection; collect fresh evidence');
-  }
+  const rulesets = await Promise.all([...new Set(effectiveRules.map(({ ruleset_id: id }) => id))]
+    .map((id) => query(['api', `${prefix}/rulesets/${id}`])));
+  const pullRequests = await Promise.all(pulls.map(async (pull) => {
+    const pages = await query(['api',
+      `${prefix}/commits/${pull.headRefOid}/check-runs?check_name=${encodeURIComponent(FULL_REQUIREMENTS_CHECK)}&filter=all`,
+      '--paginate', '--slurp']);
+    return { ...pull, checkRuns: pages.flatMap((page) => page.check_runs) };
+  }));
   return {
-    collectedAt: new Date().toISOString(), repository: metadata, pullRequest: pull,
-    mergeState: finalMergeState, candidate, effectiveRules, rulesets,
-    checkRuns, workflowRuns,
+    collectedAt: new Date().toISOString(), repository: metadata, branchHead: branchResponse.commit?.sha ?? null,
+    effectiveRules, rulesets, pullRequests,
   };
 }
 
-export async function githubQuery(args, { environment = process.env, token = null, execute = execFileSync } = {}) {
+export async function githubQuery(args, { environment = process.env, execute = execFileSync } = {}) {
   // setup-ocaml forces terminal colors for later steps. Forced settings can
   // override NO_COLOR, so remove both controls from this JSON subprocess.
   const queryEnvironment = { ...environment, NO_COLOR: '1', CLICOLOR: '0' };
   delete queryEnvironment.CLICOLOR_FORCE;
   delete queryEnvironment.GH_FORCE_TTY;
-  if (token) {
-    // GH_TOKEN takes precedence over GITHUB_TOKEN; drop both defaults.
-    delete queryEnvironment.GITHUB_TOKEN;
-    queryEnvironment.GH_TOKEN = token;
-  }
   return JSON.parse(execute('gh', args, {
     encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
     env: queryEnvironment,

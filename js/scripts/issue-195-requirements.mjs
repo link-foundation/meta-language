@@ -33,6 +33,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5906611497',
   resourceAudit:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229',
+  greenPathAudit:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606',
 });
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({
@@ -886,7 +888,9 @@ export async function buildIssue195Manifest(root) {
         'I195-DEPENDENCY-CURRENT-STABLE-DELIVERY': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-DOWNSTREAM-RML-PR184-AUDIT': ISSUE_195_SOURCES.consolidatedChecklist,
         'I195-DOWNSTREAM-TYPESCRIPT-TRANSLATIONS': ISSUE_195_SOURCES.consolidatedChecklist,
-        'I195-ACCEPTANCE-REQUIRED-MERGE-CHECK': ISSUE_195_SOURCES.consolidatedChecklist,
+        // Re-classified to the post-merge checkpoint by the maintainer's CI decision.
+        'I195-ACCEPTANCE-REQUIRED-MERGE-CHECK': ISSUE_195_SOURCES.greenPathAudit,
+        'I195-ACCEPTANCE-PR-CHECKS-PASSABLE': ISSUE_195_SOURCES.greenPathAudit,
         // The resource audit asks for the native grammars one language at a time.
         'I195-GRAMMAR-NATIVE-JSON': ISSUE_195_SOURCES.resourceAudit,
         'I195-GRAMMAR-NATIVE-INI': ISSUE_195_SOURCES.resourceAudit,
@@ -928,7 +932,9 @@ export async function buildIssue195Manifest(root) {
     sources: ISSUE_195_SOURCES,
     checkpoints: {
       'pre-merge':
-        'All implementation and candidate-artifact requirements must pass on the exact merge candidate.',
+        'All implementation and candidate-artifact requirements must pass on the exact merge candidate. Every PR check must pass. A red check is a defect to fix now; unfinished requirements are work to implement, not a reason for red CI.',
+      'post-merge':
+        'Verification of state that only exists after merge (live default-branch rules) runs on main as a non-blocking report; a failure is fixed in a follow-up commit and never blocks a pull request.',
       'release-delivery':
         'Only verification that inherently requires published artifacts may run here; delivery remains incomplete until it passes.',
     },

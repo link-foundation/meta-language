@@ -131,10 +131,21 @@ jobs:
           --out issue-195-artifacts/platform/report.json
 
       # The delivery gate: every retained item is current or at its verified
-      # newest compatible release, the clean consumer resolves the audited
-      # npm releases, and the recorded audit still matches the live registries.
-      - name: Check delivered dependencies against the live registries
+      # newest compatible release, and the clean consumer resolves the audited
+      # npm releases. A pull request compares offline against the committed
+      # audit; the live registries change outside the pull request.
+      - name: Check delivered dependencies against the committed audit
         if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: >-
+          node js/scripts/check-dependencies.mjs --delivery --offline
+          --consumer-lock "$RUNNER_TEMP/issue-195-consumer/npm-consumer/package-lock.json"
+
+      # Post-merge report: a release published after the audit date is moved to
+      # by the scheduled dependency refresh, never by failing a check.
+      - name: Compare the delivered dependencies with the live registries
+        if: ${{ matrix.os == 'ubuntu-latest' && github.event_name != 'pull_request' }}
+        continue-on-error: true
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -450,11 +461,6 @@ jobs:
 
   evidence-stages:
     name: Evidence Stage (${{ matrix.stage }})
-    permissions:
-      contents: read
-      pull-requests: read
-      checks: read
-      actions: read
     needs: [candidates, consumers, rml-workloads, formal-ai-workloads]
     if: ${{ !cancelled() && needs.candidates.result == 'success' }}
     runs-on: ubuntu-latest
@@ -465,7 +471,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        stage: ${{ fromJSON(github.event_name == 'release' && '["delivery"]' || '["javascript-suite","rust-suite","delivery","merge-enforcement"]') }}
+        stage: ${{ fromJSON(github.event_name == 'release' && '["delivery"]' || '["javascript-suite","rust-suite","delivery"]') }}
     steps:
       - uses: actions/checkout@v7
 
@@ -552,9 +558,6 @@ jobs:
           ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
           ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
           GH_TOKEN: ${{ github.token }}
-          # Optional: repository Administration read exposes ruleset bypass actors.
-          ISSUE_195_RULESET_TOKEN: ${{ secrets.ISSUE_195_RULESET_TOKEN }}
-          ISSUE_195_PULL_REQUEST_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           GITHUB_SHA: ${{ github.sha }}
           ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
           STAGE: ${{ matrix.stage }}
@@ -587,6 +590,68 @@ jobs:
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
+
+  # Post-merge checks run on main only, as a non-blocking report: the live
+  # default-branch rules exist outside any pull request, so no pull request
+  # check depends on them, and a failure here is fixed in a follow-up commit.
+  post-merge:
+    name: Post-merge Report
+    if: ${{ github.event_name == 'push' }}
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-post-merge-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Inspect the default-branch rules with the workflow token
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint post-merge
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+
+      - name: Evaluate the post-merge cells
+        if: ${{ !cancelled() }}
+        run: >-
+          node js/scripts/check-issue-195-acceptance.mjs
+          --evaluate
+          --checkpoint post-merge
+          --results-dir issue-195-results
+          --json-report issue-195-artifacts/post-merge-report.json
+          --markdown-report issue-195-artifacts/post-merge-report.md
+
+      - name: Publish the post-merge report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-post-merge-report-${{ github.sha }}
+          path: |
+            issue-195-artifacts/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+          if-no-files-found: warn
+          retention-days: 30
 
   acceptance:
     name: Full Requirements Aggregate

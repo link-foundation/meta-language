@@ -41,6 +41,9 @@ function nativeStage(target) {
   };
 }
 
+/** The checkpoints, in delivery order; only pre-merge runs on pull requests. */
+export const CHECKPOINTS = Object.freeze(['pre-merge', 'post-merge', 'release-delivery']);
+
 /** The stages of each checkpoint, in the order a local run executes them. */
 export const EVIDENCE_STAGES = Object.freeze({
   'pre-merge': Object.freeze([
@@ -50,6 +53,10 @@ export const EVIDENCE_STAGES = Object.freeze({
     // The native stages validate the runtime-parity stage's emitted translations.
     ...NATIVE_TARGETS.map(nativeStage),
     { name: 'delivery', groups: ['delivery:npm', 'delivery:crate', 'delivery:rml'], tools: CARGO_TOOLS },
+  ]),
+  // Live default-branch rule inspection runs on main after merge, as a
+  // non-blocking report: no pull request check may depend on it.
+  'post-merge': Object.freeze([
     { name: 'merge-enforcement', groups: ['merge-enforcement'], tools: ['node'] },
   ]),
   'release-delivery': Object.freeze([

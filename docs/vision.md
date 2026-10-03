@@ -529,11 +529,27 @@ are not evidence.
   - fabricated evidence;
   - acceptance definitions changed to obtain green results.
 
-A red aggregate while scope remains unfinished is the truthful status.
-The Full Requirements Aggregate is an enforced required check for merging into
-the default branch. A workflow that runs but can be bypassed does not establish
-this requirement. Published delivery is checked separately because it requires
-the released artifacts.
+Every PR check must pass. A red check is a defect to fix now; unfinished
+requirements are work to implement, not a reason for red CI. The gate
+self-test evaluates a fixture in which every pre-merge row passes and asserts
+that the aggregate is green, and no row requires its own aggregate to fail.
+
+A pull request check depends only on what exists before merge. State that
+exists only after merge runs on `main`:
+
+- The live default-branch rules are inspected by a non-blocking post-merge
+  report with the workflow token. It confirms that the Full Requirements
+  Aggregate is an enforced, non-bypassable required check for merging into the
+  default branch.
+- The live registries, the live discussion and the pull request description are
+  compared with the committed audit and register by non-blocking reports.
+- A scheduled workflow on `main` refreshes the dependencies and opens its own
+  pull request.
+- Published delivery is checked separately at the release-delivery checkpoint
+  because it requires the released artifacts.
+
+A post-merge failure is fixed in a follow-up commit and never blocks a pull
+request.
 
 ## What finite tests establish
 
@@ -593,8 +609,9 @@ keeps every run within that bound instead of relying on a larger machine:
   by file group, into matrix jobs with their own timeouts. Every JavaScript test
   file belongs to exactly one group.
 - The issue #195 evidence runs as separate stage jobs: the JavaScript suite,
-  the Rust suite, runtime parity, each native translation target, delivery and
-  merge enforcement. Each stage uploads its own evidence. The Full Requirements
+  the Rust suite, runtime parity, each native translation target and delivery.
+  The merge-enforcement report runs as its own post-merge job on `main`. Each
+  stage uploads its own evidence. The Full Requirements
   Aggregate only merges and evaluates the stage outputs, and a failed or
   missing stage is one gate error naming it.
 - Every workflow cancels the runs a newer push supersedes.

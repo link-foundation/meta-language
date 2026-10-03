@@ -878,10 +878,33 @@ export const VISION_REQUIREMENTS = Object.freeze([
     specification: 'acceptance-and-evidence',
     construct: 'enforced full requirements merge check on the default branch',
     expectedBehavior:
-      'The default branch has an active repository or organization rule that requires the Full Requirements Aggregate check to pass on the current merge candidate before a pull request can merge. Live GitHub rule inspection and a failing-check probe verify enforcement; a workflow file or a red optional check alone does not count.',
+      'The default branch has an active repository or organization rule that requires the Full Requirements Aggregate check to pass before a pull request can merge. The rule is live state that exists only outside the pull request, so a non-blocking report on main inspects it after merge with the workflow token: the active non-bypassable rule, the strict required aggregate, an open pull request whose failed aggregate blocks its merge, and the separate release-delivery checkpoint. No pull request check depends on it, and no row requires its own aggregate to fail.',
     assertions: ['activeRuleTargetsDefaultBranch', 'fullAggregateRequired', 'failingCheckBlocksMerge', 'publishedDeliverySeparatelyVerified'],
     tooling: ['js/scripts/issue-195-merge-enforcement.mjs', 'js/scripts/check-issue-195-merge-enforcement.mjs'],
     group: 'merge-enforcement',
+    checkpoint: 'post-merge',
+  },
+  {
+    id: 'I195-ACCEPTANCE-PR-CHECKS-PASSABLE',
+    area: 'independent-acceptance',
+    specification: 'acceptance-and-evidence',
+    construct: 'pull request checks that can all pass before merge',
+    expectedBehavior:
+      'Every PR check must pass. A red check is a defect to fix now; unfinished requirements are work to implement, not a reason for red CI. The pre-merge aggregate is green on a fixture in which every pre-merge row passes, and no pre-merge row needs its own aggregate to fail. No pull request step depends on post-merge state (live rulesets, live registries, live comment edits or published packages): those run on main as non-blocking reports, and a scheduled workflow on main refreshes the dependencies and opens its own pull request.',
+    assertions: [
+      'everyPreMergeRowPassingGivesGreenAggregate',
+      'noPreMergeRowNeedsItsOwnAggregateToFail',
+      'pullRequestChecksUseNoPostMergeState',
+      'postMergeReportsAreNonBlocking',
+      'dependencyRefreshScheduledOnMain',
+    ],
+    tooling: [
+      'js/scripts/issue-195-acceptance-lib.mjs',
+      'js/scripts/issue-195-evidence-stages.mjs',
+      '.github/workflows/issue-195-acceptance.yml',
+      '.github/workflows/js.yml',
+      '.github/workflows/dependency-refresh.yml',
+    ],
   },
   {
     id: 'I195-ACCEPTANCE-FINITE-CLAIMS-DOCUMENTED',
@@ -919,7 +942,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     specification: 'resource-limits',
     construct: 'checkpoint evidence produced by separate stage jobs',
     expectedBehavior:
-      'The JavaScript suite, the Rust suite, the runtime parity check, the native translations (a matrix by target language), delivery and merge enforcement each run as their own CI job and upload their own evidence. The Full Requirements Aggregate only merges and evaluates the stage outputs, and a stage that fails or never reports is one gate error naming it, not a failure of every row it feeds.',
+      'The JavaScript suite, the Rust suite, the runtime parity check, the native translations (a matrix by target language) and delivery each run as their own CI job and upload their own evidence, and the post-merge merge-enforcement report runs as its own job on main. The Full Requirements Aggregate only merges and evaluates the stage outputs, and a stage that fails or never reports is one gate error naming it, not a failure of every row it feeds.',
     assertions: [
       'stagesRunAsSeparateJobs',
       'nativeTranslationsMatrixByTarget',

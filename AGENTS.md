@@ -31,8 +31,13 @@ changes this repository. Human contributors follow them too; see
 - Do not add status, complete or completed fields, skipped cells, planned
   fixtures presented as evidence, or capability declarations presented as
   support.
-- A red aggregate while work remains is the truthful status. Never weaken a gate,
-  an oracle mapping or an acceptance definition to turn it green.
+- Every PR check must pass. A red check is a defect to fix now; unfinished
+  requirements are work to implement, not a reason for red CI. Never weaken a
+  gate, an oracle mapping or an acceptance definition to turn it green.
+- A pull request check depends only on what exists before merge. Live rules,
+  live registries, live comment edits and published packages are checked on
+  `main` as non-blocking post-merge reports; a failure there is fixed in a
+  follow-up.
 - Do not claim completion in documentation, changelogs, pull request
   descriptions or releases while any ledger row fails. Do not add an
   issue-closing directive until every requirement is verified and delivered.

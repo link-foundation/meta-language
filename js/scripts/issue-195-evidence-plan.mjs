@@ -1,3 +1,4 @@
+import { CHECKPOINTS } from './issue-195-evidence-stages.mjs';
 import { visionEvidenceGroup } from './issue-195-vision-requirements.mjs';
 
 /**
@@ -38,7 +39,7 @@ export function evidenceGroupFor(requirement, cell) {
 }
 
 export function buildEvidencePlan(manifest, checkpoint = 'pre-merge') {
-  if (!['pre-merge', 'release-delivery'].includes(checkpoint)) {
+  if (!CHECKPOINTS.includes(checkpoint)) {
     throw new Error(`unknown evidence checkpoint: ${checkpoint}`);
   }
   const groups = new Map();

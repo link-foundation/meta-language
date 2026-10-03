@@ -210,7 +210,16 @@ jobs:
         run: npm run check:issue-195
         working-directory: js
 
-      - name: Check issue 195 source register against the ledger and the live discussion
+      # A pull request checks only what exists before merge: the committed
+      # register. Live comment edits are compared on main as a non-blocking
+      # report and registered in a follow-up commit.
+      - name: Check issue 195 source register against the ledger
+        run: npm run check:issue-195:sources
+        working-directory: js
+
+      - name: Compare the issue 195 source register with the live discussion (post-merge report)
+        if: ${{ github.event_name != 'pull_request' }}
+        continue-on-error: true
         run: npm run check:issue-195:sources -- --online
         working-directory: js
         env:
@@ -228,7 +237,15 @@ jobs:
         run: npm run check:naming
         working-directory: js
 
-      - name: Check that the documentation, the pull request description and the release reports agree with the requirement ledger
+      - name: Check that the documentation agrees with the requirement ledger
+        run: npm run check:documentation
+        working-directory: js
+
+      # The pull request description and the release reports are live texts
+      # outside the commit; they are compared on main as a non-blocking report.
+      - name: Compare the pull request description and the release reports with the requirement ledger (post-merge report)
+        if: ${{ github.event_name != 'pull_request' }}
+        continue-on-error: true
         run: npm run check:documentation -- --online
         working-directory: js
         env:

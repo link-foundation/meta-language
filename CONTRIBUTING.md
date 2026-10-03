@@ -78,7 +78,9 @@ rust-script scripts/check-crate-size.rs
 ```
 
 The issue #195 delivery diagnostics can also inspect live merge enforcement
-and reject stale delivered dependencies:
+and reject stale delivered dependencies. Pull request CI runs only the offline
+checks; the live merge-enforcement report and `--live` registry comparison run
+on `main` as non-blocking post-merge reports:
 
 ```bash
 cd js

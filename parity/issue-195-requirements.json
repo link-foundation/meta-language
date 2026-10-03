@@ -14,10 +14,12 @@
     "repositoryDirective": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090",
     "consolidatedChecklist": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5895896874",
     "currentHeadAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5906611497",
-    "resourceAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229"
+    "resourceAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
+    "greenPathAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606"
   },
   "checkpoints": {
-    "pre-merge": "All implementation and candidate-artifact requirements must pass on the exact merge candidate.",
+    "pre-merge": "All implementation and candidate-artifact requirements must pass on the exact merge candidate. Every PR check must pass. A red check is a defect to fix now; unfinished requirements are work to implement, not a reason for red CI.",
+    "post-merge": "Verification of state that only exists after merge (live default-branch rules) runs on main as a non-blocking report; a failure is fixed in a follow-up commit and never blocks a pull request.",
     "release-delivery": "Only verification that inherently requires published artifacts may run here; delivery remains incomplete until it passes."
   },
   "resultPolicy": {
@@ -1549,17 +1551,17 @@
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: one authoritative vision and architecture specification",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
       "selector": "docs/vision.md#sources-of-truth: register of every requirement source with its revision and content hash",
-      "sha256": "b1c73ed1e8fd077f1ca4958e22c2619a357f1b54d4928913707e5ae145eb4dd1"
+      "sha256": "b8381f1249b83f5948d51395d80956aac2de86792cfb7a9fe2f273781dfc7646"
     },
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: traceability from each atomic requirement to its evidence chain",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
       "path": "parity/documentation/claim-fixtures.json",
@@ -1574,17 +1576,17 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "ba094bac9016dd335f820a15ea7e48a0d1bb5eb007939d9e9378472a3d7ca536"
+      "sha256": "79d334f4263f2f3000a2bc1359b92e4fae1b6f569ddc47361536f9598b6b75f5"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
       "selector": "#dependencies: external parser engines removed from the production packages",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "ba094bac9016dd335f820a15ea7e48a0d1bb5eb007939d9e9378472a3d7ca536"
+      "sha256": "79d334f4263f2f3000a2bc1359b92e4fae1b6f569ddc47361536f9598b6b75f5"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1664,7 +1666,7 @@
     "planned:repository-directive:i195-grammar-dependency-boundary": {
       "path": "docs/vision.md",
       "selector": "#native-merged-grammars: native dependency boundary of the installed packages",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -1729,7 +1731,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "docs/vision.md",
       "selector": "#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
@@ -1789,7 +1791,7 @@
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
       "selector": "#packages-and-publication: formal-ai consuming the published packages",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-acceptance-independent-oracles": {
       "path": "parity/language-grammar-inventory.json",
@@ -1799,82 +1801,87 @@
     "planned:repository-directive:i195-acceptance-gate-mutations": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: gate-mutation tests for the directive obligations",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-acceptance-required-merge-check": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: enforced full requirements merge check on the default branch",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
+    },
+    "planned:repository-directive:i195-acceptance-pr-checks-passable": {
+      "path": "docs/vision.md",
+      "selector": "#acceptance-and-evidence: pull request checks that can all pass before merge",
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-acceptance-finite-claims-documented": {
       "path": "docs/vision.md",
       "selector": "#what-finite-tests-establish: documented limits of finite test evidence",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-ci-compile-gate": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: fast compile gate ahead of every compiling CI job",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-ci-test-matrix": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: test execution split into bounded matrix jobs",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-ci-evidence-stages": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: checkpoint evidence produced by separate stage jobs",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-ci-concurrency": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: superseded workflow runs cancelled",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-agent-rules": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: targeted local checks and resource rules for agents and contributors",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-bounded-sequential-evidence": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: evidence suites run one at a time with bounded build parallelism",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-lazy-grammars": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: WebAssembly grammars loaded on first use",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-grammar-tiering-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: grammar code kept off the optimizing compiler",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-inline-parser-reuse": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: one Markdown inline parser for every inline region",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-source-boundaries": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: source offset index with interval checkpoints",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-parity-digests": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: runtime parity evidence as entry digests",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-cache-cleanup-wrapper": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: cache cleanup wrapper as the documented way to run long local commands",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-resource-native-output-cleanup": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: native compiler outputs deleted once each cell is recorded",
-      "sha256": "4cf5fe2293457d21da868a02727c876376cadff623691c109a53661e2b7fc395"
+      "sha256": "aa9abbb02ef263b2fe20e6646fd59aeadf015460ab965751ce5f3cdb0a2eaf0f"
     },
     "planned:repository-directive:i195-cache-cleanup-grammar-caches": {
       "path": "scripts/lib/cache-classes.mjs",
@@ -1938,7 +1945,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2013,7 +2021,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2092,7 +2101,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2107,8 +2117,77 @@
       }
     },
     {
+      "id": "I195-ACCEPTANCE-PR-CHECKS-PASSABLE",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606",
+      "area": "independent-acceptance",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "pull request checks that can all pass before merge",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Every PR check must pass. A red check is a defect to fix now; unfinished requirements are work to implement, not a reason for red CI. The pre-merge aggregate is green on a fixture in which every pre-merge row passes, and no pre-merge row needs its own aggregate to fail. No pull request step depends on post-merge state (live rulesets, live registries, live comment edits or published packages): those run on main as non-blocking reports, and a scheduled workflow on main refreshes the dependencies and opens its own pull request.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "js/scripts/issue-195-acceptance-lib.mjs",
+          "js/scripts/issue-195-evidence-stages.mjs",
+          ".github/workflows/issue-195-acceptance.yml",
+          ".github/workflows/js.yml",
+          ".github/workflows/dependency-refresh.yml"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-acceptance-pr-checks-passable-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-acceptance-pr-checks-passable"
+          ],
+          "assertions": [
+            "everyPreMergeRowPassingGivesGreenAggregate",
+            "noPreMergeRowNeedsItsOwnAggregateToFail",
+            "pullRequestChecksUseNoPostMergeState",
+            "postMergeReportsAreNonBlocking",
+            "dependencyRefreshScheduledOnMain"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-acceptance-pr-checks-passable-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#acceptance-and-evidence",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "repositoryDirective",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
       "id": "I195-ACCEPTANCE-REQUIRED-MERGE-CHECK",
-      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5895896874",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606",
       "area": "independent-acceptance",
       "scope": {
         "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
@@ -2118,7 +2197,7 @@
         "aliases": [],
         "extensions": []
       },
-      "expectedBehavior": "The default branch has an active repository or organization rule that requires the Full Requirements Aggregate check to pass on the current merge candidate before a pull request can merge. Live GitHub rule inspection and a failing-check probe verify enforcement; a workflow file or a red optional check alone does not count.",
+      "expectedBehavior": "The default branch has an active repository or organization rule that requires the Full Requirements Aggregate check to pass before a pull request can merge. The rule is live state that exists only outside the pull request, so a non-blocking report on main inspects it after merge with the workflow token: the active non-bypassable rule, the strict required aggregate, an open pull request whose failed aggregate blocks its merge, and the separate release-delivery checkpoint. No pull request check depends on it, and no row requires its own aggregate to fail.",
       "requiredRuntimes": [
         "tooling"
       ],
@@ -2133,7 +2212,7 @@
           "testId": "i195-acceptance-required-merge-check-tooling-behavior",
           "runtime": "tooling",
           "kind": "positive",
-          "checkpoint": "pre-merge",
+          "checkpoint": "post-merge",
           "fixtureIds": [
             "planned:repository-directive:i195-acceptance-required-merge-check"
           ],
@@ -2158,7 +2237,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2229,7 +2309,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2301,7 +2382,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2374,7 +2456,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2440,7 +2523,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2511,7 +2595,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2582,7 +2667,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2655,7 +2741,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2733,7 +2820,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2829,7 +2917,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -2925,7 +3014,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3021,7 +3111,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3117,7 +3208,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3265,7 +3357,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3416,7 +3509,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3563,7 +3657,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3712,7 +3807,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -3866,7 +3962,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4017,7 +4114,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4168,7 +4266,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4316,7 +4415,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4466,7 +4566,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4614,7 +4715,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4766,7 +4868,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -4916,7 +5019,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5064,7 +5168,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5214,7 +5319,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5365,7 +5471,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5513,7 +5620,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5660,7 +5768,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5810,7 +5919,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -5957,7 +6067,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6106,7 +6217,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6258,7 +6370,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6410,7 +6523,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6559,7 +6673,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6710,7 +6825,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -6857,7 +6973,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7006,7 +7123,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7156,7 +7274,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7306,7 +7425,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7460,7 +7580,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7611,7 +7732,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7761,7 +7883,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -7911,7 +8034,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8060,7 +8184,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8210,7 +8335,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8361,7 +8487,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8511,7 +8638,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8659,7 +8787,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8809,7 +8938,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -8959,7 +9089,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9107,7 +9238,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9255,7 +9387,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9404,7 +9537,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9554,7 +9688,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9702,7 +9837,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -9850,7 +9986,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10002,7 +10139,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10150,7 +10288,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10299,7 +10438,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10451,7 +10591,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10601,7 +10742,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10750,7 +10892,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -10900,7 +11043,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11049,7 +11193,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11196,7 +11341,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11345,7 +11491,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11496,7 +11643,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11645,7 +11793,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11794,7 +11943,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -11945,7 +12095,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12095,7 +12246,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12244,7 +12396,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12391,7 +12544,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12540,7 +12694,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12692,7 +12847,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12842,7 +12998,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -12994,7 +13151,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13145,7 +13303,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13296,7 +13455,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13446,7 +13606,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13596,7 +13757,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13744,7 +13906,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -13892,7 +14055,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14042,7 +14206,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14193,7 +14358,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14344,7 +14510,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14493,7 +14660,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14644,7 +14812,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14792,7 +14961,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -14944,7 +15114,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15094,7 +15265,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15188,7 +15360,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15284,7 +15457,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15380,7 +15554,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15475,7 +15650,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15570,7 +15746,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15665,7 +15842,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15733,7 +15911,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15797,7 +15976,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15857,7 +16037,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15921,7 +16102,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15985,7 +16167,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16060,7 +16243,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16150,7 +16334,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16218,7 +16403,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16308,7 +16494,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16391,7 +16578,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16504,7 +16692,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16615,7 +16804,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16726,7 +16916,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16837,7 +17028,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -16948,7 +17140,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17016,7 +17209,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17080,7 +17274,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17144,7 +17339,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17208,7 +17404,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17272,7 +17469,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17336,7 +17534,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17400,7 +17599,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17464,7 +17664,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17528,7 +17729,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17592,7 +17794,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17656,7 +17859,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17753,7 +17957,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17850,7 +18055,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -17947,7 +18153,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18044,7 +18251,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18131,7 +18339,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18214,7 +18423,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18307,7 +18517,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18390,7 +18601,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18475,7 +18687,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18569,7 +18782,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18660,7 +18874,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18751,7 +18966,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18842,7 +19058,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18933,7 +19150,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19014,7 +19232,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19105,7 +19324,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19196,7 +19416,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19286,7 +19507,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19376,7 +19598,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19466,7 +19689,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19556,7 +19780,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19646,7 +19871,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19739,7 +19965,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19820,7 +20047,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19905,7 +20133,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -19986,7 +20215,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20069,7 +20299,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20156,7 +20387,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20245,7 +20477,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20334,7 +20567,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20421,7 +20655,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20506,7 +20741,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20595,7 +20831,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20684,7 +20921,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20769,7 +21007,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20852,7 +21091,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -20933,7 +21173,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21016,7 +21257,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21090,7 +21332,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21179,7 +21422,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21266,7 +21510,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21358,7 +21603,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21448,7 +21694,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21538,7 +21785,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21628,7 +21876,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21725,7 +21974,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21823,7 +22073,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -21921,7 +22172,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22019,7 +22271,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22117,7 +22370,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22218,7 +22472,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22318,7 +22573,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22415,7 +22671,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22512,7 +22769,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22580,7 +22838,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22643,7 +22902,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22706,7 +22966,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22766,7 +23027,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22826,7 +23088,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22850,7 +23113,7 @@
         "aliases": [],
         "extensions": []
       },
-      "expectedBehavior": "The JavaScript suite, the Rust suite, the runtime parity check, the native translations (a matrix by target language), delivery and merge enforcement each run as their own CI job and upload their own evidence. The Full Requirements Aggregate only merges and evaluates the stage outputs, and a stage that fails or never reports is one gate error naming it, not a failure of every row it feeds.",
+      "expectedBehavior": "The JavaScript suite, the Rust suite, the runtime parity check, the native translations (a matrix by target language) and delivery each run as their own CI job and upload their own evidence, and the post-merge merge-enforcement report runs as its own job on main. The Full Requirements Aggregate only merges and evaluates the stage outputs, and a stage that fails or never reports is one gate error naming it, not a failure of every row it feeds.",
       "requiredRuntimes": [
         "tooling"
       ],
@@ -22891,7 +23154,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -22955,7 +23219,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23014,7 +23279,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23074,7 +23340,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23134,7 +23401,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23195,7 +23463,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23259,7 +23528,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23319,7 +23589,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23413,7 +23684,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23509,7 +23781,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23605,7 +23878,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23701,7 +23975,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23797,7 +24072,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23893,7 +24169,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23989,7 +24266,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24085,7 +24363,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24181,7 +24460,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24277,7 +24557,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24371,7 +24652,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24465,7 +24747,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24559,7 +24842,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24653,7 +24937,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24747,7 +25032,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24841,7 +25127,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -24935,7 +25222,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25029,7 +25317,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25123,7 +25412,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25217,7 +25507,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25311,7 +25602,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25405,7 +25697,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25499,7 +25792,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25593,7 +25887,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25687,7 +25982,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25781,7 +26077,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25875,7 +26172,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -25969,7 +26267,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26063,7 +26362,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26157,7 +26457,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26251,7 +26552,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26345,7 +26647,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26439,7 +26742,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26533,7 +26837,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26627,7 +26932,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26721,7 +27027,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26815,7 +27122,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -26909,7 +27217,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27003,7 +27312,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27097,7 +27407,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27180,7 +27491,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27283,7 +27595,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27380,7 +27693,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27479,7 +27793,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27575,7 +27890,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27671,7 +27987,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27784,7 +28101,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -27900,7 +28218,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28016,7 +28335,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28134,7 +28454,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28248,7 +28569,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28362,7 +28684,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28478,7 +28801,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28592,7 +28916,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28706,7 +29031,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28822,7 +29148,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -28938,7 +29265,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29052,7 +29380,8 @@
           "remainingAudit",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29118,7 +29447,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29202,7 +29532,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29271,7 +29602,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29339,7 +29671,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29407,7 +29740,8 @@
           "repositoryDirective",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29513,7 +29847,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29621,7 +29956,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29729,7 +30065,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29837,7 +30174,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -29945,7 +30283,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30055,7 +30394,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30163,7 +30503,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30273,7 +30614,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30382,7 +30724,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30488,7 +30831,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30594,7 +30938,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30700,7 +31045,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30806,7 +31152,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -30912,7 +31259,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31018,7 +31366,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31124,7 +31473,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31230,7 +31580,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31336,7 +31687,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31442,7 +31794,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31548,7 +31901,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31654,7 +32008,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31760,7 +32115,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31866,7 +32222,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -31972,7 +32329,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -32078,7 +32436,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -32184,7 +32543,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -32290,7 +32650,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -32396,7 +32757,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -32502,7 +32864,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -32610,7 +32973,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -32716,7 +33080,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -32822,7 +33187,8 @@
           "fullDelivery",
           "consolidatedChecklist",
           "currentHeadAudit",
-          "resourceAudit"
+          "resourceAudit",
+          "greenPathAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [

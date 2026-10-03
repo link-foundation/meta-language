@@ -13,6 +13,7 @@ import {
   universalClaimProblems,
   validateIssue195Manifest,
 } from './issue-195-acceptance-lib.mjs';
+import { CHECKPOINTS } from './issue-195-evidence-stages.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const manifestPath = path.join(root, 'parity', 'issue-195-requirements.json');
@@ -135,7 +136,7 @@ if (!process.argv.includes('--evaluate') && !process.argv.includes('--write-ledg
 const resultsDirectory = path.resolve(root, option('--results-dir', 'issue-195-results'));
 const resultDocuments = await readResults(resultsDirectory);
 const checkpoint = option('--checkpoint', 'all');
-if (!['all', 'pre-merge', 'release-delivery'].includes(checkpoint)) {
+if (!['all', ...CHECKPOINTS].includes(checkpoint)) {
   console.error(`issue-195: invalid checkpoint ${checkpoint}`);
   process.exit(2);
 }

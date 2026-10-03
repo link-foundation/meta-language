@@ -238,6 +238,22 @@
       "updatedAt": "2026-10-02T16:05:27Z",
       "bytes": 16783,
       "sha256": "7bb9b9a0c0271188eb0bd97b8374498197f6f370c6f6fdb7c9218dd1b5524654"
+    },
+    {
+      "key": "greenPathAudit",
+      "id": 5965533606,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606",
+      "title": "Path to a green PR and a release — every remaining requirement (audit of 6f727a4d, 2026-10-03)",
+      "role": "Binding CI decisions (every PR check must pass; post-merge, release and live-registry checks run on main), native default grammars with executor recovery, shared concept records for every grammar rule, interchange, semantics and downstream rows; preserves all earlier scope",
+      "ledgerCoverage": [
+        "I195-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-03T04:29:30Z",
+      "updatedAt": "2026-10-03T04:39:36Z",
+      "bytes": 20498,
+      "sha256": "a49ceecd4156069e9fbcdabcf8c6de55f60236c4525dd35dfbbc378ac4021633"
     }
   ],
   "statusReports": [

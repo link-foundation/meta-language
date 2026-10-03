@@ -8004,6 +8004,7 @@
       "category": "toolchain",
       "name": "node",
       "declaredIn": [
+        ".github/workflows/dependency-refresh.yml",
         ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
@@ -8200,6 +8201,7 @@
       "category": "action",
       "name": "actions/checkout",
       "declaredIn": [
+        ".github/workflows/dependency-refresh.yml",
         ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
@@ -8266,6 +8268,7 @@
       "category": "action",
       "name": "actions/setup-node",
       "declaredIn": [
+        ".github/workflows/dependency-refresh.yml",
         ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
@@ -8396,6 +8399,7 @@
       "category": "action",
       "name": "dtolnay/rust-toolchain",
       "declaredIn": [
+        ".github/workflows/dependency-refresh.yml",
         ".github/workflows/issue-195-acceptance.yml"
       ],
       "pinned": "1.99.0",
@@ -8540,6 +8544,7 @@
       "category": "runner",
       "name": "ubuntu-latest",
       "declaredIn": [
+        ".github/workflows/dependency-refresh.yml",
         ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
         ".github/workflows/rust.yml"
