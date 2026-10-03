@@ -58,7 +58,8 @@ const RACKET_CHARACTER_NEWLINE = 'Racket Reference section 1.3.14 (Reading Chara
 const RACKET_SYMBOL_NEWLINE = 'Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.';
 
 // The cases of the upstream test corpus pinned with a native grammar's source.
-const upstreamCorpus = (native) => corpusCases(grammarSourceOf(native)).map(({ source }) => source);
+const upstreamCorpus = (native, keep = () => true) =>
+  corpusCases(grammarSourceOf(native)).filter(({ file }) => keep(file)).map(({ source }) => source);
 
 export const NATIVE_GRAMMARS = Object.freeze([
   {
@@ -557,6 +558,36 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'for (;;', 'int main() { return 0 }', 'x->;', 'L"a', 'typedef;', 'if;', 'struct;', 'while;',
     ],
   },
+  {
+    id: 'rust',
+    language: 'Rust',
+    grammar: 'parity/grammars/native/rust.lino',
+    oracle: 'tree-sitter-rust 0.24.2',
+    sources: [
+      `${grammarSourceOf('native-rust').repository}/blob/${grammarSourceOf('native-rust').revision}/src/grammar.json`,
+      `${grammarSourceOf('native-rust').repository}/tree/${grammarSourceOf('native-rust').revision}/test/corpus`,
+    ],
+    // The grammar is the import of the pinned tree-sitter-rust grammar.json
+    // with its native scanner (js/scripts/import-native-grammars.mjs); the
+    // matches are every case of its upstream corpus at the same revision but
+    // those of error.txt, which the oracle recovers from and the native
+    // grammar rejects, and a few sources more.
+    ...nativeGrammar('native-rust'),
+    matches: [
+      ...upstreamCorpus('native-rust', (file) => file !== 'error.txt'),
+      '', 'fn main() {}', 'let x = 1;', 'struct S { a: i32 }', '// c\nfn f() {}\n', '/* a /* b */ c */ fn f() {}',
+      'fn f() -> i32 { 1 + 2 * 3 }', 'const R: &str = r#"a"#;', 'x.await?;', '//! i\n/// d\nfn f() {}\n',
+      'fn f() { m!(x); }', 'm!(a +.);',
+    ],
+    divergences: [],
+    rejections: [
+      ...upstreamCorpus('native-rust', (file) => file === 'error.txt'),
+      'fn', 'fn f(', 'fn f() {', '}', '{', 'let x = ;', 'struct S {', '"abc', "'a", '/* abc', 'fn f() { 1 + }', 'if x {',
+      'impl {', 'use ;', 'mod', 'x = = 1;', 'fn f(a,,) {}', 'a[;', 'match x {', 'enum E { A,, }', 'fn main() { let }',
+      'trait T {', 'r#"abc', 'b"abc', 'x.;', 'let x: = 1;', 'pub', '#[derive(', 'macro_rules! m {', 'where',
+      'fn f() -> {}', '1 +',
+    ],
+  },
 ]);
 
 function grammarParser(entry) {
@@ -648,10 +679,54 @@ export function buildNativeDefaultCstExpected() {
   }
   return {
     description:
-      'Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
+      'Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default, and of the embedded regions in those languages of the shared embedded-language fixtures. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
     generator: { script: 'js/scripts/generate-native-grammar-fixtures.mjs' },
     languages,
+    embeddedFixtures: nativeEmbeddedFixtures(),
   };
+}
+
+/**
+ * The embedded regions of the shared embedded-language fixtures of
+ * parity/fixtures/default-cst-expected.json, where a region in a language a
+ * native grammar parses by default has the native rows: the oracle's rows of
+ * a positive region, which the native grammar builds, and the native repair of
+ * a recovery region. The host grammar places the regions, so their bounds are
+ * the oracle's. Only fixtures with such a region are listed.
+ */
+function nativeEmbeddedFixtures() {
+  const oracle = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/default-cst-expected.json'), 'utf8')).embeddedFixtures;
+  const evidence = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/issue-195-evidence.json'), 'utf8')).embedded;
+  const fixtures = {};
+  for (const fixture of evidence) {
+    const label = `${fixture.host} -> ${fixture.target}`;
+    let native = false;
+    const regions = (text, embedded, recovery) => embedded.map((region) => {
+      const entry = NATIVE_GRAMMARS.find(({ language }) => language === region.language);
+      if (!entry) return region;
+      native = true;
+      const regionText = Buffer.from(text, 'utf8').subarray(region.startByte, region.endByte).toString('utf8');
+      const parser = grammarParser(entry);
+      if (!recovery) {
+        const positive = parser.parseTree(regionText);
+        if (!positive.ok || JSON.stringify(nativeRows(positive.tree, regionText, entry)) !== JSON.stringify(region.rows)) {
+          throw new Error(`${entry.grammar} and ${entry.oracle} disagree on the ${region.path} region of ${label}`);
+        }
+        return region;
+      }
+      const rows = nativeRows(parser.parseTree(regionText, { errorRecovery: true, recovery: 'accept' }).tree, regionText, entry);
+      if (!hasRecovery(rows)) throw new Error(`${entry.grammar} repairs the ${region.path} region of ${label} without an ERROR or MISSING node`);
+      return { ...region, rows };
+    });
+    const trees = (text, want, recovery = false) => ({ sourceSha256: sha256(text), embedded: regions(text, want.embedded, recovery) });
+    const entry = {
+      positive: trees(fixture.source, oracle[label].positive),
+      recovery: trees(fixture.recoverySource, oracle[label].recovery, true),
+      spellings: fixture.spellings.map((spelling, index) => trees(spelling, oracle[label].spellings[index])),
+    };
+    if (native) fixtures[label] = entry;
+  }
+  return fixtures;
 }
 
 const ROW_KEYS = new Set(['rows', 'positive', 'recovery']);

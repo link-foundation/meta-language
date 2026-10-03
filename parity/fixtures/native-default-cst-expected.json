@@ -1,5 +1,5 @@
 {
-  "description": "Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.",
+  "description": "Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default, and of the embedded regions in those languages of the shared embedded-language fixtures. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.",
   "generator": {
     "script": "js/scripts/generate-native-grammar-fixtures.mjs"
   },
@@ -541,6 +541,294 @@
         [3,null,"}",0,26,26,"M"]
       ],
       "embedded": []
+    },
+    "Rust": {
+      "grammars": {
+        "native-rust": {
+          "version": "1.0.0",
+          "parserSha256": "1abfd19363cd5ce641276dccd5e5d763fcdac67780ac9c15415c6185fdda8d69"
+        }
+      },
+      "oracleGrammars": {
+        "rust": {
+          "version": "v0.24.2",
+          "parserSha256": "555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3"
+        }
+      },
+      "sourceSha256": "a06eaced682e65f5b3c30d9e8fe7fe0cb1051f1dd73023ecc70a02f554a62c0b",
+      "recoverySourceSha256": "2d094562d4904e0dfaeb70228bc05f7b6bdcf2db9c5dfceaf378b494adf179ff",
+      "positive": [
+        [0,null,"source_file",1,0,180,""],
+        [1,null,"line_comment",1,0,25,"X"],
+        [2,null,"//",0,0,2,""],
+        [2,"inner","inner_doc_comment_marker",1,2,3,""],
+        [3,null,"!",0,2,3,""],
+        [2,"doc","doc_comment",1,3,25,""],
+        [1,null,"line_comment",1,25,38,"X"],
+        [2,null,"//",0,25,27,""],
+        [2,"outer","outer_doc_comment_marker",1,27,28,""],
+        [3,null,"/",0,27,28,""],
+        [2,"doc","doc_comment",1,28,38,""],
+        [1,null,"attribute_item",1,38,54,""],
+        [2,null,"#",0,38,39,""],
+        [2,null,"[",0,39,40,""],
+        [2,null,"attribute",1,40,53,""],
+        [3,null,"identifier",1,40,46,""],
+        [3,"arguments","token_tree",1,46,53,""],
+        [4,null,"(",0,46,47,""],
+        [4,null,"identifier",1,47,52,""],
+        [4,null,")",0,52,53,""],
+        [2,null,"]",0,53,54,""],
+        [1,null,"struct_item",1,55,86,""],
+        [2,null,"struct",0,55,61,""],
+        [2,"name","type_identifier",1,62,67,""],
+        [2,"body","field_declaration_list",1,68,86,""],
+        [3,null,"{",0,68,69,""],
+        [3,null,"field_declaration",1,70,76,""],
+        [4,"name","field_identifier",1,70,71,""],
+        [4,null,":",0,71,72,""],
+        [4,"type","primitive_type",1,73,76,""],
+        [3,null,",",0,76,77,""],
+        [3,null,"field_declaration",1,78,84,""],
+        [4,"name","field_identifier",1,78,79,""],
+        [4,null,":",0,79,80,""],
+        [4,"type","primitive_type",1,81,84,""],
+        [3,null,"}",0,85,86,""],
+        [1,null,"function_item",1,87,179,""],
+        [2,null,"fn",0,87,89,""],
+        [2,"name","identifier",1,90,94,""],
+        [2,"parameters","parameters",1,94,96,""],
+        [3,null,"(",0,94,95,""],
+        [3,null,")",0,95,96,""],
+        [2,"body","block",1,97,179,""],
+        [3,null,"{",0,97,98,""],
+        [3,null,"let_declaration",1,103,132,""],
+        [4,null,"let",0,103,106,""],
+        [4,"pattern","identifier",1,107,108,""],
+        [4,null,"=",0,109,110,""],
+        [4,"value","struct_expression",1,111,131,""],
+        [5,"name","type_identifier",1,111,116,""],
+        [5,"body","field_initializer_list",1,117,131,""],
+        [6,null,"{",0,117,118,""],
+        [6,null,"field_initializer",1,119,123,""],
+        [7,"field","field_identifier",1,119,120,""],
+        [7,null,":",0,120,121,""],
+        [7,"value","integer_literal",1,122,123,""],
+        [6,null,",",0,123,124,""],
+        [6,null,"field_initializer",1,125,129,""],
+        [7,"field","field_identifier",1,125,126,""],
+        [7,null,":",0,126,127,""],
+        [7,"value","integer_literal",1,128,129,""],
+        [6,null,"}",0,130,131,""],
+        [4,null,";",0,131,132,""],
+        [3,null,"block_comment",1,133,143,"X"],
+        [4,null,"/*",0,133,135,""],
+        [4,null,"*/",0,141,143,""],
+        [3,null,"expression_statement",1,148,177,""],
+        [4,null,"macro_invocation",1,148,176,""],
+        [5,"macro","identifier",1,148,155,""],
+        [5,null,"!",0,155,156,""],
+        [5,null,"token_tree",1,156,176,""],
+        [6,null,"(",0,156,157,""],
+        [6,null,"string_literal",1,157,164,""],
+        [7,null,"\"",0,157,158,""],
+        [7,null,"string_content",1,158,163,""],
+        [7,null,"\"",0,163,164,""],
+        [6,null,",",0,164,165,""],
+        [6,null,"identifier",1,166,167,""],
+        [6,null,".",0,167,168,""],
+        [6,null,"identifier",1,168,169,""],
+        [6,null,"+",0,170,171,""],
+        [6,null,"identifier",1,172,173,""],
+        [6,null,".",0,173,174,""],
+        [6,null,"identifier",1,174,175,""],
+        [6,null,")",0,175,176,""],
+        [4,null,";",0,176,177,""],
+        [3,null,"}",0,178,179,""]
+      ],
+      "recovery": [
+        [0,null,"source_file",1,0,27,""],
+        [1,null,"function_signature_item",1,0,9,""],
+        [2,null,"fn",0,0,2,""],
+        [2,"name","identifier",1,3,7,""],
+        [2,"parameters","parameters",1,7,9,""],
+        [3,null,"(",0,7,8,""],
+        [3,null,")",0,9,9,"M"],
+        [2,null,";",0,9,9,"M"],
+        [1,null,"macro_invocation",1,9,26,""],
+        [2,null,"identifier",1,9,9,"M"],
+        [2,null,"!",0,9,9,"M"],
+        [2,null,"token_tree",1,9,26,""],
+        [3,null,"{",0,9,10,""],
+        [3,null,"let",0,15,18,""],
+        [3,null,"identifier",1,19,20,""],
+        [3,null,"=",0,21,22,""],
+        [3,null,";",0,23,24,""],
+        [3,null,"}",0,25,26,""]
+      ],
+      "embedded": []
+    }
+  },
+  "embeddedFixtures": {
+    "Markdown -> language-selected fenced code": {
+      "positive": {
+        "sourceSha256": "2cff7e24e8865307acf3a0197053b5e60212285242394b87703973e94031fdf8",
+        "embedded": [
+          {
+            "path": "Markdown fenced code",
+            "language": "Rust",
+            "startByte": 15,
+            "endByte": 41,
+            "rows": [
+              [0,null,"source_file",1,0,26,""],
+              [1,null,"function_item",1,0,25,""],
+              [2,null,"fn",0,0,2,""],
+              [2,"name","identifier",1,3,9,""],
+              [2,"parameters","parameters",1,9,11,""],
+              [3,null,"(",0,9,10,""],
+              [3,null,")",0,10,11,""],
+              [2,null,"->",0,12,14,""],
+              [2,"return_type","primitive_type",1,15,18,""],
+              [2,"body","block",1,19,25,""],
+              [3,null,"{",0,19,20,""],
+              [3,null,"integer_literal",1,21,23,""],
+              [3,null,"}",0,24,25,""]
+            ]
+          }
+        ]
+      },
+      "recovery": {
+        "sourceSha256": "6fed96901b8003a8c55c7d6ed7924d983bffa6ecd53598a2689880e450816180",
+        "embedded": [
+          {
+            "path": "Markdown fenced code",
+            "language": "Rust",
+            "startByte": 15,
+            "endByte": 39,
+            "rows": [
+              [0,null,"source_file",1,0,24,""],
+              [1,null,"function_item",1,0,24,""],
+              [2,null,"fn",0,0,2,""],
+              [2,"name","identifier",1,3,9,""],
+              [2,"parameters","parameters",1,9,11,""],
+              [3,null,"(",0,9,10,""],
+              [3,null,")",0,10,11,""],
+              [2,null,"->",0,12,14,""],
+              [2,"return_type","primitive_type",1,15,18,""],
+              [2,"body","block",1,19,24,""],
+              [3,null,"{",0,19,20,""],
+              [3,null,"integer_literal",1,21,23,""],
+              [3,null,"}",0,24,24,"M"]
+            ]
+          }
+        ]
+      },
+      "spellings": [
+        {
+          "sourceSha256": "f33738bfab8780c08333caee020c93577d5d4043b3e743563185929f1272551e",
+          "embedded": [
+            {
+              "path": "Markdown fenced code",
+              "language": "Rust",
+              "startByte": 15,
+              "endByte": 41,
+              "rows": [
+                [0,null,"source_file",1,0,26,""],
+                [1,null,"function_item",1,0,25,""],
+                [2,null,"fn",0,0,2,""],
+                [2,"name","identifier",1,3,9,""],
+                [2,"parameters","parameters",1,9,11,""],
+                [3,null,"(",0,9,10,""],
+                [3,null,")",0,10,11,""],
+                [2,null,"->",0,12,14,""],
+                [2,"return_type","primitive_type",1,15,18,""],
+                [2,"body","block",1,19,25,""],
+                [3,null,"{",0,19,20,""],
+                [3,null,"integer_literal",1,21,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "01cbaf5e110914dbc89a4eedbb06a47a477db035817f6fab111bcd3ba481b27d",
+          "embedded": [
+            {
+              "path": "Markdown fenced code",
+              "language": "Rust",
+              "startByte": 13,
+              "endByte": 39,
+              "rows": [
+                [0,null,"source_file",1,0,26,""],
+                [1,null,"function_item",1,0,25,""],
+                [2,null,"fn",0,0,2,""],
+                [2,"name","identifier",1,3,9,""],
+                [2,"parameters","parameters",1,9,11,""],
+                [3,null,"(",0,9,10,""],
+                [3,null,")",0,10,11,""],
+                [2,null,"->",0,12,14,""],
+                [2,"return_type","primitive_type",1,15,18,""],
+                [2,"body","block",1,19,25,""],
+                [3,null,"{",0,19,20,""],
+                [3,null,"integer_literal",1,21,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "357ea4f79b30a7c4f61b22950755efa0289fd6c7d6614c621dd7b50121fbdb73",
+          "embedded": [
+            {
+              "path": "Markdown fenced code",
+              "language": "Rust",
+              "startByte": 15,
+              "endByte": 41,
+              "rows": [
+                [0,null,"source_file",1,0,26,""],
+                [1,null,"function_item",1,0,25,""],
+                [2,null,"fn",0,0,2,""],
+                [2,"name","identifier",1,3,9,""],
+                [2,"parameters","parameters",1,9,11,""],
+                [3,null,"(",0,9,10,""],
+                [3,null,")",0,10,11,""],
+                [2,null,"->",0,12,14,""],
+                [2,"return_type","primitive_type",1,15,18,""],
+                [2,"body","block",1,19,25,""],
+                [3,null,"{",0,19,20,""],
+                [3,null,"integer_literal",1,21,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        },
+        {
+          "sourceSha256": "e30516ef4eb643315b9cf960b9322bae059d93250c5e865a3f3b60e2ccb432b7",
+          "embedded": [
+            {
+              "path": "Markdown fenced code",
+              "language": "Rust",
+              "startByte": 15,
+              "endByte": 41,
+              "rows": [
+                [0,null,"source_file",1,0,26,""],
+                [1,null,"function_item",1,0,25,""],
+                [2,null,"fn",0,0,2,""],
+                [2,"name","identifier",1,3,9,""],
+                [2,"parameters","parameters",1,9,11,""],
+                [3,null,"(",0,9,10,""],
+                [3,null,")",0,10,11,""],
+                [2,null,"->",0,12,14,""],
+                [2,"return_type","primitive_type",1,15,18,""],
+                [2,"body","block",1,19,25,""],
+                [3,null,"{",0,19,20,""],
+                [3,null,"integer_literal",1,21,23,""],
+                [3,null,"}",0,24,25,""]
+              ]
+            }
+          ]
+        }
+      ]
     }
   }
 }

@@ -14,13 +14,14 @@ grammar is checked against the pinned tree-sitter grammar it replaced as its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: eight catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme, Racket
-and C, have a native merged grammar, and it is their default parser in both
-runtimes; see [default parse](#default-parse). The C grammar is the first that
-the [automatic import pipeline](#imported-grammars) writes. tree-sitter-json,
+Status: nine catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme, Racket,
+C and Rust, have a native merged grammar, and it is their default parser in
+both runtimes; see [default parse](#default-parse). The C grammar is the first
+that the [automatic import pipeline](#imported-grammars) writes, and the Rust
+grammar the first with a ported native scanner. tree-sitter-json,
 tree-sitter-ini, tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard,
-tree-sitter-scheme, tree-sitter-racket and tree-sitter-c remain as pinned
-oracles; see [current limits](#current-limits).
+tree-sitter-scheme, tree-sitter-racket, tree-sitter-c and tree-sitter-rust
+remain as pinned oracles; see [current limits](#current-limits).
 
 ## Format
 
@@ -339,6 +340,7 @@ rows, and a Rust suite. Both record evidence for the language's ledger row:
 | Scheme | [`issue-195-grammar-native-scheme.test.js`](../../js/tests/issue-195-grammar-native-scheme.test.js) | [`issue_195_grammar_native_scheme.rs`](../../rust/tests/unit/issue_195_grammar_native_scheme.rs) | `I195-GRAMMAR-NATIVE-SCHEME` |
 | Racket | [`issue-195-grammar-native-racket.test.js`](../../js/tests/issue-195-grammar-native-racket.test.js) | [`issue_195_grammar_native_racket.rs`](../../rust/tests/unit/issue_195_grammar_native_racket.rs) | `I195-GRAMMAR-NATIVE-RACKET` |
 | C | [`issue-195-grammar-native-c.test.js`](../../js/tests/issue-195-grammar-native-c.test.js) | [`issue_195_grammar_native_c.rs`](../../rust/tests/unit/issue_195_grammar_native_c.rs) | `I195-GRAMMAR-NATIVE-C` |
+| Rust | [`issue-195-grammar-native-rust.test.js`](../../js/tests/issue-195-grammar-native-rust.test.js) | [`issue_195_grammar_native_rust.rs`](../../rust/tests/unit/issue_195_grammar_native_rust.rs) | `I195-GRAMMAR-NATIVE-RUST` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -377,7 +379,13 @@ for invalid input they hold the native repair, which
 and
 [`default_cst_expectations.rs`](../../rust/tests/unit/default_cst_expectations.rs)
 check in both runtimes. `node scripts/generate-native-grammar-fixtures.mjs`
-writes the file with the per-grammar fixtures.
+writes the file with the per-grammar fixtures. Its `embeddedFixtures` give
+the rows of the regions in a native language of the shared embedded-language
+fixtures of
+[`parity/fixtures/default-cst-expected.json`](../../parity/fixtures/default-cst-expected.json):
+the oracle's rows for valid input and the native repair for invalid input, at
+the bounds the host grammar places. The Markdown fenced Rust region of the
+recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
 
 ## Current limits
 
@@ -400,6 +408,11 @@ writes the file with the per-grammar fixtures.
   package, where the fixture generator and the oracle checks load them. Their
   lock entries carry `"oracle": true`, and `grammarNames`/`grammar_names` and
   `grammar_by_id` return nothing for their ids.
+- tree-sitter-rust 0.24.2, patched for the oracle and vendored under
+  `rust/vendor/tree-sitter-rust`, is still compiled into the Rust crate, and
+  its WebAssembly build is still in the npm package, so it is not yet a
+  development file like the oracles above; the Rust suite checks the
+  executor against the fixture rows, not against the loaded oracle.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
   tree-sitter-diff recovers from and the native grammar accepts as context; a

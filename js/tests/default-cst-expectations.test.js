@@ -368,7 +368,18 @@ test(TEST_NAME, async () => {
 
 const evidenceBytes = await readFile(new URL('../../parity/fixtures/issue-195-evidence.json', import.meta.url));
 const evidenceDigest = createHash('sha256').update(evidenceBytes).digest('hex');
-const embeddedExpectations = (await parityJson('fixtures/default-cst-expected.json')).embeddedFixtures;
+// A region in a language a native grammar parses by default takes the native
+// expectation, whose recovery region is the native repair.
+const embeddedExpectations = Object.fromEntries(Object.entries(oracleExpected.embeddedFixtures).map(([label, want]) => {
+  const native = nativeExpected.embeddedFixtures[label];
+  if (!native) return [label, want];
+  const trees = (oracle, region) => ({ ...oracle, embedded: region.embedded });
+  return [label, {
+    positive: trees(want.positive, native.positive),
+    recovery: trees(want.recovery, native.recovery),
+    spellings: want.spellings.map((spelling, index) => trees(spelling, native.spellings[index])),
+  }];
+}));
 const EMBEDDED_TEST_NAME = 'every JavaScript embedded-language path parses to its complete lossless default CST';
 
 test(EMBEDDED_TEST_NAME, async () => {

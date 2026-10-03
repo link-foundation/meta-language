@@ -42,6 +42,31 @@ fn expected_languages() -> serde_json::Map<String, Value> {
     languages
 }
 
+/// The shared embedded-language fixtures of `default-cst-expected.json`,
+/// where a region in a language a native grammar parses by default takes its
+/// rows from `native-default-cst-expected.json`, whose recovery region is the
+/// native repair.
+fn embedded_expectations() -> Value {
+    let mut fixtures =
+        parity_json("fixtures/default-cst-expected.json")["embeddedFixtures"].clone();
+    let native =
+        parity_json("fixtures/native-default-cst-expected.json")["embeddedFixtures"].clone();
+    for (label, regions) in native.as_object().expect("native embedded fixtures") {
+        let want = &mut fixtures[label.as_str()];
+        for part in ["positive", "recovery"] {
+            want[part]["embedded"] = regions[part]["embedded"].clone();
+        }
+        let spellings = want["spellings"].as_array_mut().expect("spellings");
+        for (spelling, native) in spellings
+            .iter_mut()
+            .zip(regions["spellings"].as_array().expect("native spellings"))
+        {
+            spelling["embedded"] = native["embedded"].clone();
+        }
+    }
+    fixtures
+}
+
 #[test]
 fn the_catalog_native_grammars_are_the_shipped_grammar_files() {
     let directory = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/data");
@@ -781,8 +806,7 @@ fn every_rust_embedded_language_path_parses_to_its_complete_lossless_default_cst
                 let _ = write!(hex, "{byte:02x}");
                 hex
             });
-    let expectations =
-        parity_json("fixtures/default-cst-expected.json")["embeddedFixtures"].clone();
+    let expectations = embedded_expectations();
     let expected = expected_languages();
     let mut failures = Vec::new();
     for fixture in evidence["embedded"].as_array().expect("embedded fixtures") {

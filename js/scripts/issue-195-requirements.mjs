@@ -902,6 +902,7 @@ export async function buildIssue195Manifest(root) {
         // The green-path audit asks for recovery once, in the executor.
         'I195-GRAMMAR-NATIVE-RECOVERY': ISSUE_195_SOURCES.greenPathAudit,
         'I195-GRAMMAR-NATIVE-C': ISSUE_195_SOURCES.greenPathAudit,
+        'I195-GRAMMAR-NATIVE-RUST': ISSUE_195_SOURCES.greenPathAudit,
         'I195-GRAMMAR-SHARED-CONCEPTS': ISSUE_195_SOURCES.greenPathAudit,
         'I195-GRAMMAR-CONCEPT-REUSE-REPORT': ISSUE_195_SOURCES.greenPathAudit,
         'I195-GRAMMAR-CONCEPT-TRANSLATION': ISSUE_195_SOURCES.greenPathAudit,
