@@ -463,7 +463,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
     Some(match id {
         "agda" => tree_sitter_agda::LANGUAGE.into(),
         "bash" => tree_sitter_bash::LANGUAGE.into(),
-        "c" => tree_sitter_c::LANGUAGE.into(),
         "cmake" => cmake_grammar::LANGUAGE.into(),
         "cpp" => tree_sitter_cpp::LANGUAGE.into(),
         "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),

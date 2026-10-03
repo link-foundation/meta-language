@@ -17,7 +17,6 @@ repository).
 | --- | --- | --- | --- | --- |
 | `agda.wasm.gz` | crate `tree-sitter-agda` 1.3.3 | `ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980` | `9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a` | [`agda.LICENSE`](agda.LICENSE) |
 | `bash.wasm.gz` | crate `tree-sitter-bash` 0.25.1 | `5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f` | `f0270796c32f9acfc180e6068d6bef6614b983107b679a247fb63b200c6346e7` | [`bash.LICENSE`](bash.LICENSE) |
-| `c.wasm.gz` | crate `tree-sitter-c` 0.24.2 | `f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2` | `2030a766fa6c6fe18039524008e52fd4a4995bdd9ed07fc4a73ec892450d2f4a` | [`c.LICENSE`](c.LICENSE) |
 | `cmake.wasm.gz` | `uyha/tree-sitter-cmake` v0.7.5 with [`scanner-state.patch`](../../../../rust/vendor/tree-sitter-cmake/scanner-state.patch) (vendored in `rust/vendor/tree-sitter-cmake`) | `ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2` | `5925d5f08a726ebb9024ccae1e12165a56c35630c53d9dd7fc3eeb87434849c2` | [`cmake.LICENSE`](cmake.LICENSE) |
 | `cpp.wasm.gz` | crate `tree-sitter-cpp` 0.23.4 | `2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814` | `f5ff3ba7af054af846f37dfd2525bdfede95530d5747a8fe30df87d070ece607` | [`cpp.LICENSE`](cpp.LICENSE) |
 | `csharp.wasm.gz` | crate `tree-sitter-c-sharp` 0.23.5 | `0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427` | `a4b053f6fdedfc9c94876b415441ea953c0046ef83d45e0cbc4d9b8938ae6cbc` | [`csharp.LICENSE`](csharp.LICENSE) |

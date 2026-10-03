@@ -40,7 +40,7 @@ const rustLockPath = join(root, 'rust/src/data/grammar-lock.json');
 export const GRAMMAR_SOURCES = Object.freeze({
   agda: { crate: 'tree-sitter-agda', dir: '.' },
   bash: { crate: 'tree-sitter-bash', dir: '.' },
-  c: { crate: 'tree-sitter-c', dir: '.' },
+  c: { crate: 'tree-sitter-c', dir: '.', oracle: true },
   cmake: {
     vendored: 'rust/vendor/tree-sitter-cmake',
     upstream: 'uyha/tree-sitter-cmake',

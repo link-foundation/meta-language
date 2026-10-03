@@ -1576,7 +1576,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "96870bf6ef2aafeecc0d0d1ad2f153bbd36bb59deb47e3f5fee5d22c4fd452e7"
+      "sha256": "f2622efa05799ddf8c5dbfef1ba58fa6db833cf3bcef384fb79238c52ef82655"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1586,7 +1586,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "96870bf6ef2aafeecc0d0d1ad2f153bbd36bb59deb47e3f5fee5d22c4fd452e7"
+      "sha256": "f2622efa05799ddf8c5dbfef1ba58fa6db833cf3bcef384fb79238c52ef82655"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",

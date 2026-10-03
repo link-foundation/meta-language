@@ -26,6 +26,7 @@
     },
     "c": {
       "id": "c",
+      "oracle": true,
       "crate": "tree-sitter-c",
       "directory": ".",
       "version": "0.24.2",

@@ -15,6 +15,7 @@ listed patch, if any).
 
 | File | Source | parser.c SHA-256 | wasm SHA-256 | License |
 | --- | --- | --- | --- | --- |
+| `c.wasm.gz` | crate `tree-sitter-c` 0.24.2 | `f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2` | `2030a766fa6c6fe18039524008e52fd4a4995bdd9ed07fc4a73ec892450d2f4a` | [`c.LICENSE`](c.LICENSE) |
 | `csv.wasm.gz` | `tree-sitter-grammars/tree-sitter-csv` f6bf6e35eb0b95fbadea4bb39cb9709507fcb181 with [`rfc4180-quotes.patch`](../../../rust/vendor/tree-sitter-csv/rfc4180-quotes.patch) (vendored in `rust/vendor/tree-sitter-csv`) | `6a7ede804cb8ced3f9466cecf38872d175e6179e8ea951956a195b2d55add8bc` | `926e300e68fca1881734251e2b0b3a51cc56625c1afd3471f3102ce5274a1cd9` | [`csv.LICENSE`](csv.LICENSE) |
 | `diff.wasm.gz` | crate `tree-sitter-diff` 0.1.0 | `4c9e3e545073a7d93088f7d90b0ee89e56fb43ca751f25fa440c4a1906ecb3e6` | `8c32b60b7900e18ad10e2223e6311f4f1aff29b4d12226862a2a889a99596f29` | [`diff.LICENSE`](diff.LICENSE) |
 | `ini.wasm.gz` | crate `tree-sitter-ini` 1.4.0 | `3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123` | `49e4442e41b44226268a89d810a4a3d2b3dde810b539579c2acd4a55223d8548` | [`ini.LICENSE`](ini.LICENSE) |
