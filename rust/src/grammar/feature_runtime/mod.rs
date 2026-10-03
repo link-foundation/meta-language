@@ -11,8 +11,11 @@
 
 mod compile;
 mod executor;
+mod lexing;
 mod load;
 mod operations;
+mod ordering;
+mod precedence;
 mod program;
 mod results;
 mod rules;
