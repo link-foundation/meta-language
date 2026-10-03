@@ -208,6 +208,42 @@
       "partsOfSpeech": ["adverb"],
       "definition": "Under which conditions; a where clause states the bounds a generic item requires.",
       "source": "Merriam-Webster Dictionary, where (adverb); The Rust Reference, Generic parameters, Where clauses"
+    },
+    {
+      "word": "destructuring",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "Binding the parts of an array or object value to the names of a pattern.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.15.5 Destructuring Assignment"
+    },
+    {
+      "word": "jsx",
+      "partsOfSpeech": ["noun"],
+      "definition": "An XML-like syntax extension of ECMAScript whose elements and attributes describe a tree of components.",
+      "source": "JSX specification (facebook.github.io/jsx), Draft: JSX Specification"
+    },
+    {
+      "word": "meta",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Describing the running program itself rather than a value it computes, as new.target and import.meta do.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.3.12 Meta Properties"
+    },
+    {
+      "word": "namespace",
+      "partsOfSpeech": ["noun"],
+      "definition": "The object a module namespace import or export binds, whose properties are the exports of a module.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 16.2.2 Imports (NameSpaceImport) and section 10.4.6 Module Namespace Exotic Objects"
+    },
+    {
+      "word": "this",
+      "partsOfSpeech": ["noun"],
+      "definition": "The keyword that evaluates to the receiver of the current function call.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.2.1 The this Keyword"
+    },
+    {
+      "word": "unescaped",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Written without an escape sequence, as the plain characters of a string literal are.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 12.9.4 String Literals"
     }
   ]
 }

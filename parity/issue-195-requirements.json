@@ -1766,12 +1766,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "5edd27e0cddc455500aa466f01fdf12a4f6ac9ade8535574952bba177515e5bb"
+      "sha256": "fc5906f8523a4ed511c1dfb1888fe5c715e4e7637d28bbe72abe07dfde5e4e89"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "5edd27e0cddc455500aa466f01fdf12a4f6ac9ade8535574952bba177515e5bb"
+      "sha256": "fc5906f8523a4ed511c1dfb1888fe5c715e4e7637d28bbe72abe07dfde5e4e89"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -1781,7 +1781,7 @@
     "planned:repository-directive:i195-naming-native-grammars": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: readable English rule names in the native grammars",
-      "sha256": "5edd27e0cddc455500aa466f01fdf12a4f6ac9ade8535574952bba177515e5bb"
+      "sha256": "fc5906f8523a4ed511c1dfb1888fe5c715e4e7637d28bbe72abe07dfde5e4e89"
     },
     "planned:repository-directive:i195-semantics-construct-inventory": {
       "path": "parity/fixtures/four-language-conformance.json",

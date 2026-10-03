@@ -9,6 +9,7 @@
     { "word": "async", "replacement": "asynchronous", "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)." },
     { "word": "bitfield", "replacement": "bit_field", "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)." },
     { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
+    { "word": "chars", "replacement": "characters", "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string." },
     { "word": "const", "replacement": "constant", "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)." },
     { "word": "declarators", "replacement": "declarator_list", "reason": "A comma-separated list of declarators." },
     { "word": "declspec", "replacement": "declaration_specifier", "reason": "The Microsoft __declspec keyword run together." },
@@ -24,6 +25,7 @@
     { "word": "ifdef", "replacement": "if_defined", "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined." },
     { "word": "impl", "replacement": "implementation", "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)." },
     { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
+    { "word": "lhs", "replacement": "left_hand_side", "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head." },
     { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
     { "word": "mod", "replacement": "module", "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)." },
     { "word": "ms", "replacement": "microsoft", "reason": "Microsoft-specific syntax." },
@@ -32,6 +34,8 @@
     { "word": "params", "replacement": "parameters", "reason": "An abbreviation of parameters." },
     { "word": "preproc", "replacement": "preprocessor", "reason": "An abbreviation of preprocessor." },
     { "word": "ptr", "replacement": "pointer", "reason": "An abbreviation of pointer." },
+    { "word": "qmark", "replacement": "question_mark", "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression." },
+    { "word": "regex", "replacement": "regular_expression", "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags." },
     { "word": "seh", "replacement": "structured_exception_handling", "reason": "Microsoft structured exception handling." },
     { "word": "sizeof", "replacement": "size_of", "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together." },
     { "word": "struct", "replacement": "structure", "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)." }
@@ -71,11 +75,28 @@
         "type_parameters": "grammar.type-parameter-list",
         "attribute": "program.attributes"
       }
+    },
+    "javascript": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value"
+      }
     }
   },
   "concepts": {
     "definitions": {},
     "distinctFrom": {
+      "grammar.function-declaration": [{ "id": "grammar.use-declaration", "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope." }],
       "grammar.preprocessor-argument": [{ "id": "grammar.preprocessor-parameters", "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares." }],
       "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }],
       "grammar.condition": [{ "id": "grammar.term", "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction." }],

@@ -1143,6 +1143,10 @@
           "name": "expression"
         },
         {
+          "source": "native:javascript",
+          "name": "expression"
+        },
+        {
           "source": "native:rust",
           "name": "expression"
         }
@@ -1197,9 +1201,9 @@
       "role": "concept",
       "definition": "A rule for a numeric literal.",
       "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept.",
-        "Native grammars share this concept only where the construct means the same in each language."
+        "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
       "sourceAliases": [
         {
@@ -1209,6 +1213,10 @@
         {
           "source": "Russian grammar surface",
           "name": "число"
+        },
+        {
+          "source": "native:javascript",
+          "name": "number"
         },
         {
           "source": "native:json",
@@ -1295,6 +1303,10 @@
           "name": "identifier"
         },
         {
+          "source": "native:javascript",
+          "name": "identifier"
+        },
+        {
           "source": "native:rust",
           "name": "identifier"
         }
@@ -1322,6 +1334,10 @@
         },
         {
           "source": "native:c",
+          "name": "statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "statement"
         },
         {
@@ -1447,9 +1463,9 @@
       "role": "concept",
       "definition": "A rule for a delimited set of named members.",
       "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept.",
-        "Native grammars share this concept only where the construct means the same in each language."
+        "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
       "sourceAliases": [
         {
@@ -1459,6 +1475,10 @@
         {
           "source": "Russian grammar surface",
           "name": "объект"
+        },
+        {
+          "source": "native:javascript",
+          "name": "object"
         },
         {
           "source": "native:json",
@@ -1527,6 +1547,10 @@
         {
           "source": "native:csv",
           "name": "quoted"
+        },
+        {
+          "source": "native:javascript",
+          "name": "string"
         },
         {
           "source": "native:json",
@@ -1604,6 +1628,10 @@
         },
         {
           "source": "native:c",
+          "name": "null"
+        },
+        {
+          "source": "native:javascript",
           "name": "null"
         },
         {
@@ -1708,6 +1736,10 @@
         },
         {
           "source": "native:ini",
+          "name": "comment"
+        },
+        {
+          "source": "native:javascript",
           "name": "comment"
         },
         {
@@ -2199,6 +2231,10 @@
           "name": "escape_sequence"
         },
         {
+          "source": "native:javascript",
+          "name": "escape_sequence"
+        },
+        {
           "source": "native:racket",
           "name": "escape_sequence"
         },
@@ -2224,6 +2260,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "false"
+        },
+        {
+          "source": "native:javascript",
           "name": "false"
         },
         {
@@ -2350,6 +2390,10 @@
         "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "program"
+        },
         {
           "source": "native:racket",
           "name": "program"
@@ -2828,6 +2872,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "true"
+        },
+        {
+          "source": "native:javascript",
           "name": "true"
         },
         {
@@ -4969,12 +5017,16 @@
       "role": "concept",
       "definition": "A rule for a declaration, the construct the upstream grammar names declaration.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "declaration"
+        },
+        {
+          "source": "native:javascript",
           "name": "declaration"
         }
       ],
@@ -6162,12 +6214,16 @@
       "role": "concept",
       "definition": "A rule for a labeled statement, the construct the upstream grammar names labeled_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "labeled_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "labeled_statement"
         }
       ],
@@ -6205,6 +6261,10 @@
           "name": "expression_statement"
         },
         {
+          "source": "native:javascript",
+          "name": "expression_statement"
+        },
+        {
           "source": "native:rust",
           "name": "expression_statement"
         }
@@ -6217,12 +6277,16 @@
       "role": "concept",
       "definition": "A rule for an if statement, the construct the upstream grammar names if_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "if_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "if_statement"
         }
       ],
@@ -6243,6 +6307,10 @@
           "name": "else_clause"
         },
         {
+          "source": "native:javascript",
+          "name": "else_clause"
+        },
+        {
           "source": "native:rust",
           "name": "else_clause"
         }
@@ -6255,12 +6323,16 @@
       "role": "concept",
       "definition": "A rule for a switch statement, the construct the upstream grammar names switch_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "switch_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "switch_statement"
         }
       ],
@@ -6289,12 +6361,16 @@
       "role": "concept",
       "definition": "A rule for a while statement, the construct the upstream grammar names while_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "while_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "while_statement"
         }
       ],
@@ -6306,12 +6382,16 @@
       "role": "concept",
       "definition": "A rule for a do statement, the construct the upstream grammar names do_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "do_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "do_statement"
         }
       ],
@@ -6323,12 +6403,16 @@
       "role": "concept",
       "definition": "A rule for a for statement, the construct the upstream grammar names for_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "for_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "for_statement"
         }
       ],
@@ -6357,12 +6441,16 @@
       "role": "concept",
       "definition": "A rule for a return statement, the construct the upstream grammar names return_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "return_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "return_statement"
         }
       ],
@@ -6374,12 +6462,16 @@
       "role": "concept",
       "definition": "A rule for a break statement, the construct the upstream grammar names break_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "break_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "break_statement"
         }
       ],
@@ -6391,12 +6483,16 @@
       "role": "concept",
       "definition": "A rule for a continue statement, the construct the upstream grammar names continue_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "continue_statement"
+        },
+        {
+          "source": "native:javascript",
           "name": "continue_statement"
         }
       ],
@@ -6570,6 +6666,10 @@
           "name": "assignment_expression"
         },
         {
+          "source": "native:javascript",
+          "name": "assignment_expression"
+        },
+        {
           "source": "native:rust",
           "name": "assignment_expression"
         }
@@ -6608,6 +6708,10 @@
           "name": "unary_expression"
         },
         {
+          "source": "native:javascript",
+          "name": "unary_expression"
+        },
+        {
           "source": "native:rust",
           "name": "unary_expression"
         }
@@ -6629,6 +6733,10 @@
           "name": "binary_expression"
         },
         {
+          "source": "native:javascript",
+          "name": "binary_expression"
+        },
+        {
           "source": "native:rust",
           "name": "binary_expression"
         }
@@ -6641,12 +6749,16 @@
       "role": "concept",
       "definition": "A rule for an update expression, the construct the upstream grammar names update_expression.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "update_expression"
+        },
+        {
+          "source": "native:javascript",
           "name": "update_expression"
         }
       ],
@@ -6760,12 +6872,16 @@
       "role": "concept",
       "definition": "A rule for a subscript expression, the construct the upstream grammar names subscript_expression.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "subscript_expression"
+        },
+        {
+          "source": "native:javascript",
           "name": "subscript_expression"
         }
       ],
@@ -6783,6 +6899,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "call_expression"
+        },
+        {
+          "source": "native:javascript",
           "name": "call_expression"
         },
         {
@@ -6960,6 +7080,10 @@
           "name": "argument_list"
         },
         {
+          "source": "native:javascript",
+          "name": "arguments"
+        },
+        {
           "source": "native:rust",
           "name": "arguments"
         }
@@ -7022,6 +7146,10 @@
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "parenthesized_expression"
+        },
+        {
+          "source": "native:javascript",
           "name": "parenthesized_expression"
         },
         {
@@ -7296,6 +7424,10 @@
           "name": "word_characters"
         },
         {
+          "source": "native:javascript",
+          "name": "word_characters"
+        },
+        {
           "source": "native:rust",
           "name": "word_characters"
         }
@@ -7325,10 +7457,14 @@
       "role": "concept",
       "definition": "A rule for an empty statement, the construct the upstream grammar names empty_statement.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "empty_statement"
+        },
         {
           "source": "native:rust",
           "name": "empty_statement"
@@ -8868,10 +9004,14 @@
       "role": "concept",
       "definition": "A rule for a yield expression, the construct the upstream grammar names yield_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "yield_expression"
+        },
         {
           "source": "native:rust",
           "name": "yield_expression"
@@ -9356,10 +9496,14 @@
       "role": "concept",
       "definition": "A rule for an await expression, the construct the upstream grammar names await_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "await_expression"
+        },
         {
           "source": "native:rust",
           "name": "await_expression"
@@ -9458,10 +9602,14 @@
       "role": "concept",
       "definition": "A rule for a pattern, the construct the upstream grammar names _pattern.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "pattern"
+        },
         {
           "source": "native:rust",
           "name": "pattern"
@@ -9940,10 +10088,14 @@
       "role": "concept",
       "definition": "A rule for a reserved identifier, the construct the upstream grammar names _reserved_identifier.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "reserved_identifier"
+        },
         {
           "source": "native:rust",
           "name": "reserved_identifier"
@@ -9974,10 +10126,14 @@
       "role": "concept",
       "definition": "A rule for a super, the construct the upstream grammar names super.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "super"
+        },
         {
           "source": "native:rust",
           "name": "super"
@@ -10015,6 +10171,1780 @@
         {
           "source": "native:rust",
           "name": "metavariable"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.hash-bang-line",
+      "phrase": "hash bang line",
+      "role": "concept",
+      "definition": "A rule for a hash bang line, the construct the upstream grammar names hash_bang_line.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "hash_bang_line"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.export-statement",
+      "phrase": "export statement",
+      "role": "concept",
+      "definition": "A rule for an export statement, the construct the upstream grammar names export_statement.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "export_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.namespace-export",
+      "phrase": "namespace export",
+      "role": "concept",
+      "definition": "A rule for a namespace export, the construct the upstream grammar names namespace_export.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "namespace_export"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.export-clause",
+      "phrase": "export clause",
+      "role": "concept",
+      "definition": "A rule for an export clause, the construct the upstream grammar names export_clause.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "export_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.export-specifier",
+      "phrase": "export specifier",
+      "role": "concept",
+      "definition": "A rule for an export specifier, the construct the upstream grammar names export_specifier.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "export_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.module-export-name",
+      "phrase": "module export name",
+      "role": "concept",
+      "definition": "A rule for a module export name, the construct the upstream grammar names _module_export_name.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "module_export_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import",
+      "phrase": "import",
+      "role": "concept",
+      "definition": "A rule for an import, the construct the upstream grammar names import.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "import"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-statement",
+      "phrase": "import statement",
+      "role": "concept",
+      "definition": "A rule for an import statement, the construct the upstream grammar names import_statement.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "import_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-clause",
+      "phrase": "import clause",
+      "role": "concept",
+      "definition": "A rule for an import clause, the construct the upstream grammar names import_clause.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "import_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.from-clause",
+      "phrase": "from clause",
+      "role": "concept",
+      "definition": "A rule for a from clause, the construct the upstream grammar names _from_clause.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "from_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.namespace-import",
+      "phrase": "namespace import",
+      "role": "concept",
+      "definition": "A rule for a namespace import, the construct the upstream grammar names namespace_import.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "namespace_import"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.named-imports",
+      "phrase": "named imports",
+      "role": "concept",
+      "definition": "A rule for a named imports, the construct the upstream grammar names named_imports.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "named_imports"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-specifier",
+      "phrase": "import specifier",
+      "role": "concept",
+      "definition": "A rule for an import specifier, the construct the upstream grammar names import_specifier.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "import_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.import-attribute",
+      "phrase": "import attribute",
+      "role": "concept",
+      "definition": "A rule for an import attribute, the construct the upstream grammar names import_attribute.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "import_attribute"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-declaration",
+      "phrase": "variable declaration",
+      "role": "concept",
+      "definition": "A rule for a variable declaration, the construct the upstream grammar names variable_declaration.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "variable_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lexical-declaration",
+      "phrase": "lexical declaration",
+      "role": "concept",
+      "definition": "A rule for a lexical declaration, the construct the upstream grammar names lexical_declaration.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "lexical_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.using-declaration",
+      "phrase": "using declaration",
+      "role": "concept",
+      "definition": "A rule for an using declaration, the construct the upstream grammar names using_declaration.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "using_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.variable-declarator",
+      "phrase": "variable declarator",
+      "role": "concept",
+      "definition": "A rule for a variable declarator, the construct the upstream grammar names variable_declarator.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "variable_declarator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.statement-block",
+      "phrase": "statement block",
+      "role": "concept",
+      "definition": "A rule for a statement block, the construct the upstream grammar names statement_block.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "statement_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-in-statement",
+      "phrase": "for in statement",
+      "role": "concept",
+      "definition": "A rule for a for in statement, the construct the upstream grammar names for_in_statement.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "for_in_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-header",
+      "phrase": "for header",
+      "role": "concept",
+      "definition": "A rule for a for header, the construct the upstream grammar names _for_header.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "for_header"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.try-statement",
+      "phrase": "try statement",
+      "role": "concept",
+      "definition": "A rule for a try statement, the construct the upstream grammar names try_statement.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "try_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.with-statement",
+      "phrase": "with statement",
+      "role": "concept",
+      "definition": "A rule for a with statement, the construct the upstream grammar names with_statement.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "with_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.debugger-statement",
+      "phrase": "debugger statement",
+      "role": "concept",
+      "definition": "A rule for a debugger statement, the construct the upstream grammar names debugger_statement.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "debugger_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.throw-statement",
+      "phrase": "throw statement",
+      "role": "concept",
+      "definition": "A rule for a throw statement, the construct the upstream grammar names throw_statement.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "throw_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.switch-body",
+      "phrase": "switch body",
+      "role": "concept",
+      "definition": "A rule for a switch body, the construct the upstream grammar names switch_body.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "switch_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.switch-case",
+      "phrase": "switch case",
+      "role": "concept",
+      "definition": "A rule for a switch case, the construct the upstream grammar names switch_case.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "switch_case"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.switch-default",
+      "phrase": "switch default",
+      "role": "concept",
+      "definition": "A rule for a switch default, the construct the upstream grammar names switch_default.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "switch_default"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.catch-clause",
+      "phrase": "catch clause",
+      "role": "concept",
+      "definition": "A rule for a catch clause, the construct the upstream grammar names catch_clause.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "catch_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.finally-clause",
+      "phrase": "finally clause",
+      "role": "concept",
+      "definition": "A rule for a finally clause, the construct the upstream grammar names finally_clause.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "finally_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-or-sequence",
+      "phrase": "expression or sequence",
+      "role": "concept",
+      "definition": "A rule for an expression or sequence, the construct the upstream grammar names _expressions.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "expressions"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.primary-expression",
+      "phrase": "primary expression",
+      "role": "concept",
+      "definition": "A rule for a primary expression, the construct the upstream grammar names primary_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "primary_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-pattern",
+      "phrase": "object pattern",
+      "role": "concept",
+      "definition": "A rule for an object pattern, the construct the upstream grammar names object_pattern.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "object_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.assignment-pattern",
+      "phrase": "assignment pattern",
+      "role": "concept",
+      "definition": "A rule for an assignment pattern, the construct the upstream grammar names assignment_pattern.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "assignment_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.object-assignment-pattern",
+      "phrase": "object assignment pattern",
+      "role": "concept",
+      "definition": "A rule for an object assignment pattern, the construct the upstream grammar names object_assignment_pattern.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "object_assignment_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.array",
+      "phrase": "array",
+      "role": "concept",
+      "definition": "A rule for an array, the construct the upstream grammar names array.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "array"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.array-pattern",
+      "phrase": "array pattern",
+      "role": "concept",
+      "definition": "A rule for an array pattern, the construct the upstream grammar names array_pattern.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "array_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-element-choice",
+      "phrase": "jsx element choice",
+      "role": "concept",
+      "definition": "A rule for a jsx element choice, the construct the upstream grammar names _jsx_element.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_element_choice"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-element",
+      "phrase": "jsx element",
+      "role": "concept",
+      "definition": "A rule for a jsx element, the construct the upstream grammar names jsx_element.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.html-character-reference",
+      "phrase": "html character reference",
+      "role": "concept",
+      "definition": "A rule for a html character reference, the construct the upstream grammar names html_character_reference.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "html_character_reference"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-expression",
+      "phrase": "jsx expression",
+      "role": "concept",
+      "definition": "A rule for a jsx expression, the construct the upstream grammar names jsx_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-child",
+      "phrase": "jsx child",
+      "role": "concept",
+      "definition": "A rule for a jsx child, the construct the upstream grammar names _jsx_child.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_child"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-opening-element",
+      "phrase": "jsx opening element",
+      "role": "concept",
+      "definition": "A rule for a jsx opening element, the construct the upstream grammar names jsx_opening_element.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_opening_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-identifier",
+      "phrase": "jsx identifier",
+      "role": "concept",
+      "definition": "A rule for a jsx identifier, the construct the upstream grammar names jsx_identifier.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-identifier-choice",
+      "phrase": "jsx identifier choice",
+      "role": "concept",
+      "definition": "A rule for a jsx identifier choice, the construct the upstream grammar names _jsx_identifier.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_identifier_choice"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.nested-identifier",
+      "phrase": "nested identifier",
+      "role": "concept",
+      "definition": "A rule for a nested identifier, the construct the upstream grammar names nested_identifier.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "nested_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-namespace-name",
+      "phrase": "jsx namespace name",
+      "role": "concept",
+      "definition": "A rule for a jsx namespace name, the construct the upstream grammar names jsx_namespace_name.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_namespace_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-element-name",
+      "phrase": "jsx element name",
+      "role": "concept",
+      "definition": "A rule for a jsx element name, the construct the upstream grammar names _jsx_element_name.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_element_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-closing-element",
+      "phrase": "jsx closing element",
+      "role": "concept",
+      "definition": "A rule for a jsx closing element, the construct the upstream grammar names jsx_closing_element.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_closing_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-self-closing-element",
+      "phrase": "jsx self closing element",
+      "role": "concept",
+      "definition": "A rule for a jsx self closing element, the construct the upstream grammar names jsx_self_closing_element.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_self_closing_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-attribute-choice",
+      "phrase": "jsx attribute choice",
+      "role": "concept",
+      "definition": "A rule for a jsx attribute choice, the construct the upstream grammar names _jsx_attribute.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_attribute_choice"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-attribute-name",
+      "phrase": "jsx attribute name",
+      "role": "concept",
+      "definition": "A rule for a jsx attribute name, the construct the upstream grammar names _jsx_attribute_name.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_attribute_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-attribute",
+      "phrase": "jsx attribute",
+      "role": "concept",
+      "definition": "A rule for a jsx attribute, the construct the upstream grammar names jsx_attribute.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_attribute"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-string",
+      "phrase": "jsx string",
+      "role": "concept",
+      "definition": "A rule for a jsx string, the construct the upstream grammar names _jsx_string.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unescaped-double-jsx-string-fragment",
+      "phrase": "unescaped double jsx string fragment",
+      "role": "concept",
+      "definition": "A rule for an unescaped double jsx string fragment, the construct the upstream grammar names unescaped_double_jsx_string_fragment.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "unescaped_double_jsx_string_fragment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unescaped-single-jsx-string-fragment",
+      "phrase": "unescaped single jsx string fragment",
+      "role": "concept",
+      "definition": "A rule for an unescaped single jsx string fragment, the construct the upstream grammar names unescaped_single_jsx_string_fragment.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "unescaped_single_jsx_string_fragment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.jsx-attribute-value",
+      "phrase": "jsx attribute value",
+      "role": "concept",
+      "definition": "A rule for a jsx attribute value, the construct the upstream grammar names _jsx_attribute_value.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "jsx_attribute_value"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.class",
+      "phrase": "class",
+      "role": "concept",
+      "definition": "A rule for a class, the construct the upstream grammar names class.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "class"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.class-declaration",
+      "phrase": "class declaration",
+      "role": "concept",
+      "definition": "A rule for a class declaration, the construct the upstream grammar names class_declaration.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "class_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.class-heritage",
+      "phrase": "class heritage",
+      "role": "concept",
+      "definition": "A rule for a class heritage, the construct the upstream grammar names class_heritage.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "class_heritage"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-expression",
+      "phrase": "function expression",
+      "role": "concept",
+      "definition": "A rule for a function expression, the construct the upstream grammar names function_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "function_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-declaration",
+      "phrase": "function declaration",
+      "role": "concept",
+      "definition": "A rule for a function declaration, the construct the upstream grammar names function_declaration.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "function_declaration"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.use-declaration",
+          "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope."
+        }
+      ]
+    },
+    {
+      "id": "grammar.generator-function",
+      "phrase": "generator function",
+      "role": "concept",
+      "definition": "A rule for a generator function, the construct the upstream grammar names generator_function.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "generator_function"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generator-function-declaration",
+      "phrase": "generator function declaration",
+      "role": "concept",
+      "definition": "A rule for a generator function declaration, the construct the upstream grammar names generator_function_declaration.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "generator_function_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.arrow-function",
+      "phrase": "arrow function",
+      "role": "concept",
+      "definition": "A rule for an arrow function, the construct the upstream grammar names arrow_function.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "arrow_function"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.call-signature",
+      "phrase": "call signature",
+      "role": "concept",
+      "definition": "A rule for a call signature, the construct the upstream grammar names _call_signature.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "call_signature"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.formal-parameter",
+      "phrase": "formal parameter",
+      "role": "concept",
+      "definition": "A rule for a formal parameter, the construct the upstream grammar names _formal_parameter.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "formal_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.optional-chain",
+      "phrase": "optional chain",
+      "role": "concept",
+      "definition": "A rule for an optional chain, the construct the upstream grammar names optional_chain.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "optional_chain"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.new-expression",
+      "phrase": "new expression",
+      "role": "concept",
+      "definition": "A rule for a new expression, the construct the upstream grammar names new_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "new_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.member-expression",
+      "phrase": "member expression",
+      "role": "concept",
+      "definition": "A rule for a member expression, the construct the upstream grammar names member_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "member_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.left-hand-side-expression",
+      "phrase": "left hand side expression",
+      "role": "concept",
+      "definition": "A rule for a left hand side expression, the construct the upstream grammar names _lhs_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "left_hand_side_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.augmented-assignment-left-hand-side",
+      "phrase": "augmented assignment left hand side",
+      "role": "concept",
+      "definition": "A rule for an augmented assignment left hand side, the construct the upstream grammar names _augmented_assignment_lhs.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "augmented_assignment_left_hand_side"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.augmented-assignment-expression",
+      "phrase": "augmented assignment expression",
+      "role": "concept",
+      "definition": "A rule for an augmented assignment expression, the construct the upstream grammar names augmented_assignment_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "augmented_assignment_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.initializer",
+      "phrase": "initializer",
+      "role": "concept",
+      "definition": "A rule for an initializer, the construct the upstream grammar names _initializer.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.destructuring-pattern",
+      "phrase": "destructuring pattern",
+      "role": "concept",
+      "definition": "A rule for a destructuring pattern, the construct the upstream grammar names _destructuring_pattern.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "destructuring_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.spread-element",
+      "phrase": "spread element",
+      "role": "concept",
+      "definition": "A rule for a spread element, the construct the upstream grammar names spread_element.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "spread_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.ternary-expression",
+      "phrase": "ternary expression",
+      "role": "concept",
+      "definition": "A rule for a ternary expression, the construct the upstream grammar names ternary_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "ternary_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.sequence-expression",
+      "phrase": "sequence expression",
+      "role": "concept",
+      "definition": "A rule for a sequence expression, the construct the upstream grammar names sequence_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "sequence_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unescaped-double-string-fragment",
+      "phrase": "unescaped double string fragment",
+      "role": "concept",
+      "definition": "A rule for an unescaped double string fragment, the construct the upstream grammar names unescaped_double_string_fragment.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "unescaped_double_string_fragment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unescaped-single-string-fragment",
+      "phrase": "unescaped single string fragment",
+      "role": "concept",
+      "definition": "A rule for an unescaped single string fragment, the construct the upstream grammar names unescaped_single_string_fragment.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "unescaped_single_string_fragment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-string",
+      "phrase": "template string",
+      "role": "concept",
+      "definition": "A rule for a template string, the construct the upstream grammar names template_string.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "template_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.template-substitution",
+      "phrase": "template substitution",
+      "role": "concept",
+      "definition": "A rule for a template substitution, the construct the upstream grammar names template_substitution.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "template_substitution"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.regular-expression",
+      "phrase": "regular expression",
+      "role": "concept",
+      "definition": "A rule for a regular expression, the construct the upstream grammar names regex.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "regular_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.regular-expression-pattern",
+      "phrase": "regular expression pattern",
+      "role": "concept",
+      "definition": "A rule for a regular expression pattern, the construct the upstream grammar names regex_pattern.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "regular_expression_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.regular-expression-flags",
+      "phrase": "regular expression flags",
+      "role": "concept",
+      "definition": "A rule for a regular expression flags, the construct the upstream grammar names regex_flags.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "regular_expression_flags"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.identifier-choice",
+      "phrase": "identifier choice",
+      "role": "concept",
+      "definition": "A rule for an identifier choice, the construct the upstream grammar names _identifier.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "identifier_choice"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.private-property-identifier",
+      "phrase": "private property identifier",
+      "role": "concept",
+      "definition": "A rule for a private property identifier, the construct the upstream grammar names private_property_identifier.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "private_property_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.meta-property",
+      "phrase": "meta property",
+      "role": "concept",
+      "definition": "A rule for a meta property, the construct the upstream grammar names meta_property.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "meta_property"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.this",
+      "phrase": "this",
+      "role": "concept",
+      "definition": "A rule for a this, the construct the upstream grammar names this.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "this"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.undefined-value",
+      "phrase": "undefined value",
+      "role": "concept",
+      "definition": "A rule for an undefined value, the construct the upstream grammar names undefined.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "undefined"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.decorator",
+      "phrase": "decorator",
+      "role": "concept",
+      "definition": "A rule for a decorator, the construct the upstream grammar names decorator.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "decorator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.decorator-member-expression",
+      "phrase": "decorator member expression",
+      "role": "concept",
+      "definition": "A rule for a decorator member expression, the construct the upstream grammar names decorator_member_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "decorator_member_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.decorator-call-expression",
+      "phrase": "decorator call expression",
+      "role": "concept",
+      "definition": "A rule for a decorator call expression, the construct the upstream grammar names decorator_call_expression.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "decorator_call_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.class-body",
+      "phrase": "class body",
+      "role": "concept",
+      "definition": "A rule for a class body, the construct the upstream grammar names class_body.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "class_body"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-definition",
+      "phrase": "field definition",
+      "role": "concept",
+      "definition": "A rule for a field definition, the construct the upstream grammar names field_definition.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "field_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.formal-parameter-list",
+      "phrase": "formal parameter list",
+      "role": "concept",
+      "definition": "A rule for a formal parameter list, the construct the upstream grammar names formal_parameters.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "formal_parameters"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.class-static-block",
+      "phrase": "class static block",
+      "role": "concept",
+      "definition": "A rule for a class static block, the construct the upstream grammar names class_static_block.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "class_static_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.rest-pattern",
+      "phrase": "rest pattern",
+      "role": "concept",
+      "definition": "A rule for a rest pattern, the construct the upstream grammar names rest_pattern.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "rest_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.method-definition",
+      "phrase": "method definition",
+      "role": "concept",
+      "definition": "A rule for a method definition, the construct the upstream grammar names method_definition.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "method_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pair",
+      "phrase": "pair",
+      "role": "concept",
+      "definition": "A rule for a pair, the construct the upstream grammar names pair.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "pair"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pair-pattern",
+      "phrase": "pair pattern",
+      "role": "concept",
+      "definition": "A rule for a pair pattern, the construct the upstream grammar names pair_pattern.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "pair_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.property-name",
+      "phrase": "property name",
+      "role": "concept",
+      "definition": "A rule for a property name, the construct the upstream grammar names _property_name.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "property_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.computed-property-name",
+      "phrase": "computed property name",
+      "role": "concept",
+      "definition": "A rule for a computed property name, the construct the upstream grammar names computed_property_name.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "computed_property_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.semicolon",
+      "phrase": "semicolon",
+      "role": "concept",
+      "definition": "A rule for a semicolon, the construct the upstream grammar names _semicolon.",
+      "constraints": [
+        "Only the native JavaScript grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:javascript",
+          "name": "semicolon"
         }
       ],
       "formerNames": []
