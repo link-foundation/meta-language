@@ -6,7 +6,7 @@
 
 # Dependency audit
 
-Audit date: 2026-10-02
+Audit date: 2026-10-03
 
 This inventory lists every runtime, development, build and optional dependency
 of the two published packages and the website crate, every lockfile
@@ -134,7 +134,7 @@ they are.
 | `bytecheck` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.8.3` | transitive |  | 0.8.3 (crates.io, bytecheck) | version | current |  |
 | `byteorder` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.5.0` | transitive |  | 1.5.0 (crates.io, byteorder) | version | current |  |
 | `bytes` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.12.1` | transitive |  | 1.12.1 (crates.io, bytes) | version | current |  |
-| `cc` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.67` | direct, build | `1.2` | 1.5.1 (crates.io, cc) | version | behind | Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does. |
+| `cc` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.67` | direct, build | `1.2` | 1.6.0 (crates.io, cc) | version | behind | Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. |
 | `cfg-if` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.5` | transitive |  | 1.0.5 (crates.io, cfg-if) | version | current |  |
 | `clap_builder` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.7 (crates.io, clap_builder) | version | current |  |
 | `clap_derive` | `rust/Cargo.lock` | `rust/Cargo.lock` | `4.6.7` | transitive |  | 4.6.7 (crates.io, clap_derive) | version | current |  |
@@ -428,7 +428,7 @@ they are.
 | `serde_json` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=1.0.151` | runtime |  | 1.0.151 (crates.io, serde_json) | version | current |  |
 | `serde` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=1.0.229` | runtime |  | 1.0.229 (crates.io, serde) | version | current |  |
 | `sha2` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `experiments/grammar-merge-rust-stub/Cargo.toml` | `=0.11.0` | runtime |  | 0.11.0 (crates.io, sha2) | version | current |  |
-| `cc` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=1.5.1` | build |  | 1.5.1 (crates.io, cc) | version | current |  |
+| `cc` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=1.6.0` | build |  | 1.6.0 (crates.io, cc) | version | current |  |
 | `tree-sitter-language` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.1.8` | runtime |  | 0.1.8 (crates.io, tree-sitter-language) | version | current |  |
 | `tree-sitter` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `experiments/issue-195-cmake-scanner/Cargo.toml` | `=0.27.0` | runtime |  | 0.27.0 (crates.io, tree-sitter) | version | current |  |
 
@@ -621,12 +621,12 @@ they are.
 
 ## Behind the current stable release
 
-26 retained items are behind their current stable release on 2026-10-02, each for the recorded reason.
+26 retained items are behind their current stable release on 2026-10-03, each for the recorded reason.
 26 of them are at their newest compatible release, verified against the requirements that hold them;
 0 are stale and fail the delivery check.
 
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.21`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.2.9`).
-- `cc` `1.2.67` → `1.5.1` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
+- `cc` `1.2.67` → `1.6.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
 - `foldhash` `0.1.5` → `0.2.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.1.2`), which does not admit 0.2.0; it moves when that dependent does. Delivered at its newest compatible release `0.1.5`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.1.2`).
 - `getrandom` `0.2.17` → `0.4.3` (`rust/Cargo.lock`): Held by the requirement of `ring` 0.17.14 (`^0.2.10`), which does not admit 0.4.3; it moves when that dependent does. Delivered at its newest compatible release `0.2.17`, held by `crate rust/Cargo.lock ring@0.17.14` (`^0.2.10`).
 - `hashbrown` `0.14.5` → `0.17.1` (`rust/Cargo.lock`): Held by the requirement of `dashmap` 6.2.1 (`^0.14.5`), which does not admit 0.17.1; it moves when that dependent does. Delivered at its newest compatible release `0.14.5`, held by `crate rust/Cargo.lock dashmap@6.2.1` (`^0.14.5`).

@@ -1,5 +1,5 @@
 {
-  "auditDate": "2026-10-02",
+  "auditDate": "2026-10-03",
   "items": [
     {
       "id": "engine node@>=22",
@@ -835,7 +835,7 @@
       "role": "direct",
       "requirement": "1.2",
       "kind": "build",
-      "current": "1.5.1",
+      "current": "1.6.0",
       "evidence": "crates.io, cc",
       "compatible": "1.2.67",
       "heldBy": [
@@ -844,7 +844,7 @@
           "requirement": "~1.2.1"
         }
       ],
-      "reason": "Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.5.1; it moves when that dependent does.",
+      "reason": "Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does.",
       "reasonHeld": true
     },
     {
@@ -6471,21 +6471,21 @@
       "evidence": "crates.io, sha2"
     },
     {
-      "id": "experiment experiments/issue-195-cmake-scanner/Cargo.toml cc@=1.5.1",
+      "id": "experiment experiments/issue-195-cmake-scanner/Cargo.toml cc@=1.6.0",
       "category": "experiment",
       "scope": "experiments/issue-195-cmake-scanner/Cargo.toml",
       "name": "cc",
       "declaredIn": [
         "experiments/issue-195-cmake-scanner/Cargo.toml"
       ],
-      "pinned": "=1.5.1",
+      "pinned": "=1.6.0",
       "compare": "version",
       "source": {
         "type": "crate",
         "crate": "cc"
       },
       "kind": "build",
-      "current": "1.5.1",
+      "current": "1.6.0",
       "evidence": "crates.io, cc"
     },
     {
