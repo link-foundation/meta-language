@@ -421,6 +421,53 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/concept_distinctions.rs', 'rust/src/concept_records.rs', 'rust/src/foundation_models.rs'],
   },
   {
+    id: 'I195-GRAMMAR-SHARED-CONCEPTS',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/grammar-shared-concepts.json',
+    construct: 'a canonical concept record for every rule of every native grammar',
+    expectedBehavior:
+      'Every rule of every native grammar names a canonical concept record, and the record lists the rule as a native source alias. A construct that corresponds one to one in two or more languages resolves to one shared concept identity, such as the JSON and JSON5 object and pair and the Scheme and Racket list, symbol and boolean. Lookalike constructs stay distinct concepts, and a language-specific concept is named by its own language alone. A rule without a concept record fails the check.',
+    assertions: [
+      'everyRuleHasConceptRecord',
+      'recordAliasesMatchRules',
+      'sharedConstructsResolveToOneIdentity',
+      'lookalikeConstructsStayDistinct',
+      'languageSpecificConceptsStayInTheirLanguage',
+    ],
+    javascript: ['js/src/grammar-concepts.js', 'js/src/concept-records.js', 'js/src/concept-distinctions.js'],
+    rust: ['rust/src/grammar_concepts.rs', 'rust/src/concept_records.rs', 'rust/src/concept_distinctions.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-CONCEPT-REUSE-REPORT',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/native-grammar-concept-reuse.json',
+    construct: 'per-language report of shared and language-specific native grammar rules',
+    expectedBehavior:
+      'A generated report lists, for every native grammar, the rules that name a shared concept and the rules that name a language-specific concept, with the counts per language. CI fails when the report is stale, both runtimes compute the same report, and it is published with the merge quality evidence.',
+    assertions: ['reuseReportCurrent', 'sharedAndSpecificRulesListed', 'reportPublishedWithMergeQualityEvidence', 'runtimesAgreeOnReport'],
+    javascript: ['js/src/grammar-concepts.js', 'js/scripts/build-native-grammar-concept-reuse.mjs'],
+    rust: ['rust/src/grammar_concepts.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-CONCEPT-TRANSLATION',
+    area: 'native-grammar',
+    specification: 'grammar-feature-union',
+    fixture: 'parity/fixtures/grammar-shared-concepts.json',
+    construct: 'translation of shared constructs between native grammars through their concepts',
+    expectedBehavior:
+      'A construct of one native grammar translates to another native grammar through its concept record alone, with no rule for the pair of languages. The translated construct tree equals the tree the target grammar parses from the target text, and every construct the target has no rule for is reported as untranslatable instead of guessed.',
+    assertions: [
+      'constructsTranslateThroughConcepts',
+      'noPairwiseRuleUsed',
+      'untranslatableConstructsReported',
+      'translatedTreesMatchTargetParses',
+    ],
+    javascript: ['js/src/grammar-concepts.js'],
+    rust: ['rust/src/grammar_concepts.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-LOSSLESS-TREES',
     area: 'native-grammar',
     specification: 'concrete-and-abstract-syntax-trees',
@@ -689,6 +736,18 @@ export const VISION_REQUIREMENTS = Object.freeze([
       'parity/naming/naming-fixtures.json',
       '.github/workflows/js.yml',
     ],
+  },
+  {
+    id: 'I195-NAMING-NATIVE-GRAMMARS',
+    area: 'readable-naming',
+    specification: 'readable-english-names',
+    fixture: 'parity/naming/canonical-concepts.json',
+    construct: 'readable English rule names in the native grammars',
+    expectedBehavior:
+      'Every rule of every native grammar has a readable English name. A rule renamed from its tree-sitter kind keeps that kind as a source-name alias, and the catalog maps it back for the oracle comparison. The naming check covers every native rule name and every concept reference.',
+    assertions: ['nativeRuleNamesAreEnglish', 'sourceNamesKeptAsAliases', 'oracleKindsPreserved', 'namingCheckCoversNativeGrammars'],
+    javascript: ['js/src/grammar-concepts.js', 'js/src/grammar-links.js', 'js/scripts/issue-195-naming.mjs'],
+    rust: ['rust/src/grammar_concepts.rs', 'rust/src/grammar/interchange/links.rs'],
   },
   {
     id: 'I195-SEMANTICS-CONSTRUCT-INVENTORY',

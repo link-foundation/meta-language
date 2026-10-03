@@ -901,6 +901,10 @@ export async function buildIssue195Manifest(root) {
         'I195-GRAMMAR-NATIVE-RACKET': ISSUE_195_SOURCES.resourceAudit,
         // The green-path audit asks for recovery once, in the executor.
         'I195-GRAMMAR-NATIVE-RECOVERY': ISSUE_195_SOURCES.greenPathAudit,
+        'I195-GRAMMAR-SHARED-CONCEPTS': ISSUE_195_SOURCES.greenPathAudit,
+        'I195-GRAMMAR-CONCEPT-REUSE-REPORT': ISSUE_195_SOURCES.greenPathAudit,
+        'I195-GRAMMAR-CONCEPT-TRANSLATION': ISSUE_195_SOURCES.greenPathAudit,
+        'I195-NAMING-NATIVE-GRAMMARS': ISSUE_195_SOURCES.greenPathAudit,
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'resource-limits')
           .map(({ id }) => [id, ISSUE_195_SOURCES.resourceAudit])),
       },
