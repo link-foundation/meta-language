@@ -286,6 +286,19 @@ fn a_later_error_is_repaired_where_it_is_not_by_skipping_the_input_after_an_earl
 }
 
 #[test]
+fn a_missing_keyword_is_named_by_its_literal() {
+    // A keyword token is its literal and a lookahead that no word character
+    // follows; as tree-sitter names its keyword token, its MISSING leaf is
+    // the literal.
+    let rust = parser(GRAMMARS[8].1);
+    let tree = rendered(&parse(&rust, "oc =c =>=", &recover()));
+    assert!(
+        tree.contains(r#"(return_expression (MISSING@7 "return"))"#),
+        "{tree}"
+    );
+}
+
+#[test]
 fn a_long_repetition_repaired_near_its_end_keeps_every_item_in_order() {
     // A join links its parts instead of copying the children before it, so a
     // repetition of n items costs O(n) and not O(n²); the tree is unchanged.

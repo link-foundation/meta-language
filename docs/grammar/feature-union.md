@@ -613,7 +613,9 @@ parse. That offset becomes a *repair point* and the input is parsed again. At
 a repair point, a failing element yields two results:
 
 - a zero-width MISSING leaf, at cost 2. Its kind is the literal for a literal
-  (marked `literal`), the node kind for a token or atomic rule, the scanner
+  or a keyword (a literal and the lookaheads after it, as `return` is
+  `(token (seq (literal return) (not (ref word_characters))))`; both marked
+  `literal`), the node kind for a token or atomic rule, the scanner
   token's name for a scanner token, and none otherwise. As in tree-sitter,
   whose missing leaf has no padding, the leaf comes before the white space
   (trivia of no kind) that ends the trivia before the repair point, after any

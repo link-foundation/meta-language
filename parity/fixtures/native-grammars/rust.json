@@ -8707,7 +8707,7 @@
     },
     {
       "source": "let x = ;",
-      "recovered": "(source_file (let_declaration \"let\" ~\" \" pattern:(identifier \"x\") ~\" \" \"=\" value:(return_expression (MISSING@7) ~\" \") \";\"))"
+      "recovered": "(source_file (let_declaration \"let\" ~\" \" pattern:(identifier \"x\") ~\" \" \"=\" value:(return_expression (MISSING@7 \"return\") ~\" \") \";\"))"
     },
     {
       "source": "struct S {",
@@ -8727,7 +8727,7 @@
     },
     {
       "source": "fn f() { 1 + }",
-      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"f\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" (binary_expression ~\" \" left:(integer_literal \"1\") ~\" \" operator:\"+\" right:(return_expression (MISSING@12) ~\" \")) \"}\")))"
+      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"f\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" (binary_expression ~\" \" left:(integer_literal \"1\") ~\" \" operator:\"+\" right:(return_expression (MISSING@12 \"return\") ~\" \")) \"}\")))"
     },
     {
       "source": "if x {",
@@ -8755,7 +8755,7 @@
     },
     {
       "source": "a[;",
-      "recovered": "(source_file (expression_statement (index_expression (identifier \"a\") \"[\" (return_expression (MISSING@2)) (MISSING@2 \"]\")) \";\"))"
+      "recovered": "(source_file (expression_statement (index_expression (identifier \"a\") \"[\" (return_expression (MISSING@2 \"return\")) (MISSING@2 \"]\")) \";\"))"
     },
     {
       "source": "match x {",
@@ -8783,7 +8783,7 @@
     },
     {
       "source": "x.;",
-      "recovered": "(source_file (expression_statement (await_expression (identifier \"x\") \".\" (MISSING@2)) \";\"))"
+      "recovered": "(source_file (expression_statement (await_expression (identifier \"x\") \".\" (MISSING@2 \"await\")) \";\"))"
     },
     {
       "source": "let x: = 1;",
@@ -8791,7 +8791,7 @@
     },
     {
       "source": "pub",
-      "recovered": "(source_file (module_item (visibility_modifier \"pub\") (MISSING@3) (MISSING@3 identifier) (MISSING@3 \";\")))"
+      "recovered": "(source_file (module_item (visibility_modifier \"pub\") (MISSING@3 \"mod\") (MISSING@3 identifier) (MISSING@3 \";\")))"
     },
     {
       "source": "#[derive(",
@@ -8811,7 +8811,7 @@
     },
     {
       "source": "1 +",
-      "recovered": "(source_file (expression_statement (binary_expression left:(integer_literal \"1\") ~\" \" operator:\"+\" right:(return_expression (MISSING@3))) (MISSING@3 \";\")))"
+      "recovered": "(source_file (expression_statement (binary_expression left:(integer_literal \"1\") ~\" \" operator:\"+\" right:(return_expression (MISSING@3 \"return\"))) (MISSING@3 \";\")))"
     },
     {
       "source": "fn a() {}\u00a0fn b() {}",

@@ -126,6 +126,15 @@ test('a later error is repaired where it is, not by skipping the input after an 
   assert.deepEqual(repairs({ ...RECOVER, maxRepairs: 1 }), ['MISSING@17', 'ERROR@17..62']);
 });
 
+test('a missing keyword is named by its literal', () => {
+  // A keyword token is its literal and a lookahead that no word character
+  // follows; as tree-sitter names its keyword token, its MISSING leaf is the
+  // literal.
+  const rust = grammars.find(({ entry }) => entry.id === 'rust').parser;
+  const rendered = renderSyntaxTree(rust.parseTree('oc =c =>=', RECOVER).tree);
+  assert.ok(rendered.includes('(return_expression (MISSING@7 "return"))'), rendered);
+});
+
 test('a long repetition, repaired near its end, keeps every item in order', () => {
   // A join links its parts instead of copying the children before it, so a
   // repetition of n items costs O(n) and not O(n²); the tree is unchanged.

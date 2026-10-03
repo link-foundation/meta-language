@@ -6036,7 +6036,7 @@
     },
     {
       "source": "int f(int a,) {}",
-      "recovered": "(translation_unit (function_definition type:(primitive_type \"int\") declarator:(function_declarator ~\" \" declarator:(identifier \"f\") parameters:(parameter_list \"(\" (parameter_declaration type:(primitive_type \"int\") ~\" \" declarator:(identifier \"a\")) \",\" (parameter_declaration type:(sized_type_specifier (MISSING@12))) \")\")) body:(compound_statement ~\" \" \"{\" \"}\")))"
+      "recovered": "(translation_unit (function_definition type:(primitive_type \"int\") declarator:(function_declarator ~\" \" declarator:(identifier \"f\") parameters:(parameter_list \"(\" (parameter_declaration type:(primitive_type \"int\") ~\" \" declarator:(identifier \"a\")) \",\" (parameter_declaration type:(sized_type_specifier (MISSING@12 \"signed\"))) \")\")) body:(compound_statement ~\" \" \"{\" \"}\")))"
     },
     {
       "source": "a[;",
@@ -6068,7 +6068,7 @@
     },
     {
       "source": "typedef;",
-      "recovered": "(translation_unit (type_definition \"typedef\" type:(sized_type_specifier (MISSING@7)) (MISSING@7 type_identifier) \";\"))"
+      "recovered": "(translation_unit (type_definition \"typedef\" type:(sized_type_specifier (MISSING@7 \"signed\")) (MISSING@7 type_identifier) \";\"))"
     },
     {
       "source": "if;",
