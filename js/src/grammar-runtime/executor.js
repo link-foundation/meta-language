@@ -337,8 +337,11 @@ function shiftOrder(result, existing, orders) {
     }
     if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
       const pair = chainPair(a, b);
-      if (pair && pair[0].end !== pair[1].end) {
-        const [long, short, sign] = pair[0].end > pair[1].end ? [...pair, 1] : [pair[1], pair[0], -1];
+      const split = chainPair(a, b, true);
+      const parting = split && split[0].end !== split[1].end ? split : pair;
+      if (parting && parting[0].end !== parting[1].end) {
+        const [first, second] = partedPair(parting[0], parting[1]);
+        const [long, short, sign] = first.end > second.end ? [first, second, 1] : [second, first, -1];
         return sign * shiftPreferred(long, short, orders);
       }
       // The same node reduced on in two ways (Rust's `m!(x);` in a block, a
@@ -372,22 +375,21 @@ function shiftOrder(result, existing, orders) {
 // innermost such node is the item in progress, and its precedence against the
 // token's decides, as in `shiftPreferred`. A token that ends a silent rule
 // reduced under a precedence (Rust's `_let_chain`, `let ... && c` of level 3
-// left before the `&&` of `c && d`) is reduced with that rule's precedence.
+// left before the `&&` of `c && d`) is reduced with that rule's precedence,
+// and so is a node that ends one (`closes`, the `!c` of `let ... && !c`).
 // 1 when `a`'s result is kept, -1 when `b`'s is, 0 when neither.
 function loneReduction(a, b, orders) {
-  if (a.type !== 'node' || b.type !== 'token') return 0;
+  if (a.type !== 'node' || (b.type !== 'token' && !(b.type === 'node' && b.closes))) return 0;
   let progress = a;
   for (;;) {
     const first = progress.children.find((child) => !isTrivia(child));
     if (!first) return 0;
-    if (first.type !== 'node') {
-      if (!sameTree(first, b)) return 0;
-      break;
-    }
+    if (sameTree(first, b)) break;
+    if (first.type !== 'node') return 0;
     progress = first;
   }
   const shifted = progress.precedence ?? unranked(progress.rule);
-  const reduced = b.reduced ?? b.precedence ?? unranked();
+  const reduced = b.type === 'node' ? b.closes : b.reduced ?? b.precedence ?? unranked();
   const order = comparePrecedence(shifted, reduced, orders);
   if (order !== 0) return order;
   if (reduced.associativity === 'right') return 1;
@@ -458,14 +460,35 @@ function leftmostChain(node) {
 }
 
 // The outermost node kind on the leftmost chains of two nodes that start at
-// one offset, as the pair of its nodes, or null.
-function chainPair(a, b) {
+// one offset, as the pair of its nodes, or null. When `distinct`, a node the
+// other chain holds too, the same tree over the same text, is not paired: the
+// two parses built it alike (Rust's `a + b` in `a + b..*c`, the left operand
+// of both the range `a + b..` and the binary expression `a + b..*c`), so they
+// part above it.
+function chainPair(a, b, distinct = false) {
+  const mine = leftmostChain(a);
   const other = leftmostChain(b);
-  for (const node of leftmostChain(a)) {
-    const match = other.find((candidate) => candidate.kind === node.kind && candidate.start === node.start);
+  const shared = (node, chain) => distinct && chain.some((peer) => peer.end === node.end && sameTree(peer, node));
+  for (const node of mine) {
+    if (shared(node, other)) continue;
+    const match = other.find((candidate) => candidate.kind === node.kind && candidate.start === node.start && !shared(candidate, mine));
     if (match) return [node, match];
   }
   return null;
+}
+
+// The innermost pair of nodes of one kind from one offset that end apart,
+// below two such nodes `a` and `b` along their leftmost chains: the two
+// parses part where the first of them ends, so the decision is that pair's
+// (Rust's `g(|| a, |p| p)`, where the closures `||` and `|| a, |p|` part at
+// the parameters `||`, the or-pattern `| a` of level -2 going on past them).
+function partedPair(a, b) {
+  for (let pair = [a, b]; ;) {
+    const [left, right] = pair.map((node) => node.children.find((child) => !isTrivia(child)));
+    const below = left?.type === 'node' && right?.type === 'node' ? chainPair(left, right) : null;
+    if (!below || below[0].end === below[1].end) return pair;
+    pair = below;
+  }
 }
 
 // Which of two results an LR parser keeps when two nodes from one offset end
@@ -1046,7 +1069,7 @@ export class Executor {
         try {
           for (const { end, leaves } of starts) {
             for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
-              if (keyword) this.keywords.matched.add(`${end}|${result.end}`);
+              if (keyword) this.keywords.match(`${end}|${result.end}`, this.callStack[this.callStack.length - 1] ?? null);
               addResult(found, result, this.longestTokens);
             }
             if (scanned && found.size > 0) break;
@@ -1596,6 +1619,7 @@ export class Executor {
     const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}${quiet}`;
     const known = this.memo.get(key);
     if (known) {
+      known.parents?.add(this.callStack[this.callStack.length - 1] ?? null);
       if (!known.evaluating) return known.results;
       // Left recursion: answer with the current seed and mark every call
       // between the two as depending on it, so none of them is memoized.
@@ -1605,7 +1629,11 @@ export class Executor {
       }
       return known.seed;
     }
-    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null };
+    // Under keyword lexing, the calls it was made from (`null` for none),
+    // where it began and whether it builds a node: the parse states of a
+    // keyword matched in it (see `KeywordLexing`).
+    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null };
+    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), position, builds: rule.kind === 'normal' });
     this.memo.set(key, entry);
     this.callStack.push(entry);
     this.depth += 1;
@@ -1722,14 +1750,16 @@ export class Executor {
           continue;
         }
         // The rule is one part of the rule that refers to it, which reduces
-        // with the precedence around that part, not inside it; a token the
-        // rule ends with keeps the precedence the rule reduces with, for the
-        // conflict with a shift after it (see `loneReduction`).
+        // with the precedence around that part, not inside it; a token or a
+        // node the rule ends with keeps the precedence the rule reduces with,
+        // for the conflict with a shift after it (see `loneReduction`).
         const changes = { ambiguous: expected ? false : acted.ambiguous, tail: null };
         const meaningful = acted.tail ? acted.children.filter((child) => !isTrivia(child)) : [];
         const last = meaningful[meaningful.length - 1];
         if (last?.type === 'token' && !samePrecedence(last.reduced ?? last.precedence, acted.tail)) {
           changes.children = acted.children.map((child) => (child === last ? { ...child, reduced: acted.tail } : child));
+        } else if (last?.type === 'node' && !samePrecedence(last.closes ?? null, acted.tail)) {
+          changes.children = acted.children.map((child) => (child === last ? copyNode(child, { closes: acted.tail }) : child));
         }
         built.push(copyResult(acted, changes));
         continue;
@@ -1988,18 +2018,34 @@ function isKeyword(expression) {
  * keyword wherever the parse state admits it, before any parse goes on, so a
  * token rule's leaf over the same text (an identifier `typedef`) is not taken
  * there even when only it would let the parse go on. A parse records the
- * spans where a keyword token matched (`matched`); a leaf of a token rule in
- * its tree over such a span (`lexed`, the rule's kind, which an alias keeps)
- * that the keyword outranks (see `tokenConflict`) makes the span keyword-only
- * (`only`), and the input is parsed again, where no token rule takes a
- * keyword-only span the keyword outranks it on. The spans only grow, so the
- * reparses end.
+ * spans where a keyword token matched (`matched`), each with the rule calls it
+ * matched in; a leaf of a token rule in its tree over such a span (`lexed`,
+ * the rule's kind, which an alias keeps) that the keyword outranks (see
+ * `tokenConflict`) makes the span keyword-only (`only`), and the input is
+ * parsed again, where no token rule takes a keyword-only span the keyword
+ * outranks it on. The spans only grow, so the reparses end.
+ *
+ * The keyword counts only where it matched in the tree's parse state: in a
+ * call made, through some chain of calls up to the first, by calls that build
+ * nodes each beginning a node of the tree that goes on past the span, as the
+ * items a parser has in progress there. A chain through a call that began no
+ * such node lexed the text before the span otherwise (Rust's `m!('"')`, whose
+ * token tree also takes `'` alone and a string to the next `"`, where a later
+ * `_` type is a keyword `_` token): the tree's parse never reached that state.
+ * A call's result is shared by every call that made it, so every chain counts.
  */
 export class KeywordLexing {
   constructor(tokens) {
     this.tokens = tokens;
     this.only = new Set();
-    this.matched = new Set();
+    this.matched = new Map();
+  }
+
+  /** Records a keyword token matched over `span` in the rule call `call`. */
+  match(span, call) {
+    const calls = this.matched.get(span);
+    if (!calls) this.matched.set(span, new Set([call]));
+    else calls.add(call);
   }
 
   // Whether a keyword-only span's keyword outranks a token rule's leaf over it.
@@ -2015,6 +2061,7 @@ export class KeywordLexing {
   /** Marks the spans where `root` took a token rule's leaf over a keyword; true when one is new. */
   conflicts(root) {
     let found = false;
+    let reach = null;
     const pending = [root];
     while (pending.length > 0) {
       const node = pending.pop();
@@ -2026,12 +2073,63 @@ export class KeywordLexing {
       const span = `${node.start}|${node.end}`;
       if (!this.matched.has(span) || this.only.has(span)) continue;
       if (!this.outranksAt({ type: 'token', kind: node.lexed, start: node.start, end: node.end })) continue;
+      reach ??= treeReach(root);
+      const seen = new Set();
+      if (![...this.matched.get(span)].some((call) => inParseState(call, node, reach, seen))) continue;
       this.only.add(span);
       found = true;
     }
-    this.matched = new Set();
+    this.matched = new Map();
     return found;
   }
+}
+
+// The starts of the leaves of a tree that are not trivia, in order, and for
+// each the farthest end of a node that begins with that leaf.
+function treeReach(root) {
+  const starts = [];
+  const ends = new Map();
+  let open = [];
+  const pending = [root];
+  while (pending.length > 0) {
+    const node = pending.pop();
+    if (isTrivia(node)) continue;
+    if (node.type === 'node') {
+      open.push(node.end);
+      for (let index = node.children.length - 1; index >= 0; index -= 1) pending.push(node.children[index]);
+      continue;
+    }
+    starts.push(node.start);
+    if (open.length > 0) ends.set(node.start, Math.max(ends.get(node.start) ?? -1, ...open));
+    open = [];
+  }
+  return { starts, ends };
+}
+
+// Whether a keyword matched in `call` was in the parse state of the tree's
+// `leaf` over its span (see `KeywordLexing`): whether some chain of the calls
+// that made it, up to the first, holds no call that builds a node the tree
+// does not have in progress there. `seen` holds the calls already searched.
+function inParseState(call, leaf, reach, seen) {
+  const pending = [call];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (current === null) return true;
+    if (seen.has(current)) continue;
+    seen.add(current);
+    if (current.builds && current.position < leaf.start) {
+      let [low, high] = [0, reach.starts.length];
+      while (low < high) {
+        const middle = (low + high) >> 1;
+        if (reach.starts[middle] < current.position) low = middle + 1;
+        else high = middle;
+      }
+      const first = reach.starts[low];
+      if (first !== undefined && first < leaf.start && (reach.ends.get(first) ?? -1) < leaf.end) continue;
+    }
+    pending.push(...current.parents);
+  }
+  return false;
 }
 
 /** The expectation a failed terminal records. */

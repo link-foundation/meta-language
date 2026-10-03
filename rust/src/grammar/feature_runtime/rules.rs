@@ -64,6 +64,12 @@ impl Executor<'_> {
             self.repair_mode(position),
         );
         if let Some(known) = self.memo.get(&key).cloned() {
+            if let Some(keywords) = self.keywords {
+                let parent = self.call_stack.last().and_then(|frame| frame.borrow().call);
+                if let Some(call) = known.borrow().call {
+                    keywords.borrow_mut().called(call, parent);
+                }
+            }
             let seed = {
                 let mut entry = known.borrow_mut();
                 if !entry.evaluating {
@@ -82,8 +88,18 @@ impl Executor<'_> {
             }
             return Ok(seed);
         }
+        // Under keyword lexing, the call is recorded with where it began,
+        // whether it builds a node and the call it was made from: the parse
+        // states of a keyword matched in it (see `KeywordLexing`).
+        let call = self.keywords.map(|keywords| {
+            let parent = self.call_stack.last().and_then(|frame| frame.borrow().call);
+            keywords
+                .borrow_mut()
+                .call(position, matches!(rule.kind, RuleKind::Normal), parent)
+        });
         let entry = Rc::new(RefCell::new(Entry {
             evaluating: true,
+            call,
             ..Entry::default()
         }));
         self.memo.insert(key.clone(), entry.clone());
@@ -331,28 +347,33 @@ impl Executor<'_> {
                 };
                 // The rule is one part of the rule that refers to it, which
                 // reduces with the precedence around that part, not inside it;
-                // a token the rule ends with keeps the precedence the rule
-                // reduces with, for the conflict with a shift after it (see
-                // `lone_reduction`).
+                // a token or a node the rule ends with keeps the precedence
+                // the rule reduces with, for the conflict with a shift after
+                // it (see `lone_reduction`).
                 let last = acted
                     .children
                     .iter()
                     .enumerate()
                     .rfind(|(_, child)| !child.trivia)
-                    .filter(|(_, child)| {
-                        child.ty == TreeType::Token
-                            && !PrecedenceTag::same(
-                                child.reduced.as_ref().or(child.precedence.as_ref()),
-                                Some(&tail),
-                            )
+                    .filter(|(_, child)| match child.ty {
+                        TreeType::Token => !PrecedenceTag::same(
+                            child.reduced.as_ref().or(child.precedence.as_ref()),
+                            Some(&tail),
+                        ),
+                        TreeType::Node => !PrecedenceTag::same(child.closes.as_ref(), Some(&tail)),
+                        _ => false,
                     })
                     .map(|(at, child)| (at, Rc::clone(child)));
                 let children = match last {
                     Some((at, child)) => {
-                        let mut leaf = (*child).clone();
-                        leaf.reduced = Some(tail);
+                        let mut tagged = (*child).clone();
+                        if tagged.ty == TreeType::Node {
+                            tagged.closes = Some(tail);
+                        } else {
+                            tagged.reduced = Some(tail);
+                        }
                         let mut children = acted.children.to_vec();
-                        children[at] = Rc::new(leaf);
+                        children[at] = Rc::new(tagged);
                         children_of(children)
                     }
                     None => acted.children.clone(),

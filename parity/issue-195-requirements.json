@@ -1656,7 +1656,7 @@
     "planned:repository-directive:i195-grammar-native-rust": {
       "path": "parity/fixtures/native-grammars/rust.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Rust grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "c17fca4d37f759f4059f37a79da9bc9d26f8de5d26bf0472acf503a30e3c29f3"
+      "sha256": "b9a87877a8000325945b4c1922da633c2690546dbe814e36246b8d0587f64c45"
     },
     "planned:repository-directive:i195-grammar-native-recovery": {
       "path": "parity/fixtures/native-grammars/json.json",

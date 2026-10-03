@@ -391,7 +391,14 @@ when it generates its parser: both results are walked in order, skipping
 trivia, the subtrees they share and equal leaves, to the first two nodes that
 start at one offset; the outermost node kind on both their leftmost chains (a
 node, then its first non-trivia child while that is a node) gives the pair of
-nodes compared. When the pair ends apart, the shorter one was reduced where
+nodes compared, past a node both chains hold alike, the same tree over the
+same text, when the pair after it ends apart (Rust's `a + b` in `a + b..*c`,
+the left operand of both the range `a + b..` and the binary expression
+`a + b..*c`). When the pair ends apart, the innermost pair of one kind from
+one offset below it, along its leftmost chains, that ends apart too is where
+the two parses part, and is compared instead (Rust's `g(|| a, |p| p)`, whose
+closures `||` and `|| a, |p|` part at the parameters `||`). There the shorter
+one was reduced where
 the longer one shifted on, and the precedence of the two nodes decides, as
 the item in progress is the node's own rule (a node without one counts as
 level 0 with no associativity): the higher level wins and, on equal levels,
@@ -413,8 +420,8 @@ rule of level 0 or under a precedence (Rust's `(precedence -1 none (literal
 $))`), where the other shifted on in a node that begins with the token
 (Rust's `$x:expr` binding of level 1); the innermost such node is the item in
 progress and its precedence against the token's decides, as above (a token
-that ends a silent rule reduced under a precedence keeps that precedence,
-see Rule bodies). Or one result may reduce a node the other does not build:
+or a node that ends a silent rule reduced under a precedence keeps that
+precedence, see Rule bodies, and such a node is reduced as such a token). Or one result may reduce a node the other does not build:
 when a subtree at the same offset of the other result is on that node's
 leftmost chain and the children of the innermost such node are, subtree for
 subtree, the next children of the other result's node in progress, the two
@@ -458,8 +465,16 @@ becomes keyword-only and the input is parsed again, each parse with its own
 step budget. There no token rule takes a keyword-only span its keyword
 outranks it on. The keyword-only spans only grow, so the reparses end. Where
 no keyword may come (`x = typedef;`, `int typedef;` in C) the keyword never
-matches, and the identifier stands. The keyword lexing of a parse does not
-reach the grammars it embeds.
+matches, and the identifier stands. The keyword counts only where it
+matched in the tree's parse state: in a rule call made, through some chain of
+calls up to the first, by calls that build nodes each beginning a node of the
+tree that goes on past the span, as the items a parser has in progress there.
+A chain through a call that began no such node lexed the text before the span
+otherwise, and the tree's parse never reached that state (Rust's `m!('"')`,
+whose token tree also takes `'` alone and a string to the next `"`, where a
+later `_` type is a keyword `_` token, does not make that `_` keyword-only). A
+call's result is shared by every call that made it, so every chain counts.
+The keyword lexing of a parse does not reach the grammars it embeds.
 
 **Trivia.** Skipping trivia repeatedly takes the longest match, in token
 context, of any trivia expression allowed in the current mode (the top of the
@@ -597,10 +612,11 @@ its kind, which keeps the result's `tail` for its reduction; the caller's
 result starts without one. A `silent` rule, and any rule in token context,
 splices its children into the caller. A silent rule is one part of the rule
 that refers to it, which reduces with the precedence around that part, so
-the caller's result starts without a `tail` there too, and a token the
-silent rule ends with keeps the rule's reduction precedence, for the conflict
-with a shift after it (Rust's `_let_chain`, `let ... && c` of level 3 left
-before the `&&` of `c && d`). A rule's action runs on each result's leaf or node:
+the caller's result starts without a `tail` there too, and a token or a
+node the silent rule ends with keeps the rule's reduction precedence, for the
+conflict with a shift after it (Rust's `_let_chain`, `let ... && c` of level 3
+left before the `&&` of `c && d`, and `let ... && !c` before the `&&` of
+`!c && d`). A rule's action runs on each result's leaf or node:
 `attribute`, `sumOf` and `fieldText` select the direct non-trivia children
 captured under the field name, or else those of that kind; `fieldText` of a
 node starts at its first non-trivia child; `setAttribute` and `buildNode`

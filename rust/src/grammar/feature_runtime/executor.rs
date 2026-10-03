@@ -438,10 +438,11 @@ impl<'c> Executor<'c> {
                     for skipped in &starts {
                         for result in self.token_leaf(item, skipped, state, in_token)? {
                             if let Some(keywords) = keywords {
+                                let call =
+                                    self.call_stack.last().and_then(|frame| frame.borrow().call);
                                 keywords
                                     .borrow_mut()
-                                    .matched
-                                    .insert((skipped.end, result.end));
+                                    .matched((skipped.end, result.end), call);
                             }
                             found.add(result);
                         }

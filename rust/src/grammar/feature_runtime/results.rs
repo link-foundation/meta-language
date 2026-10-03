@@ -134,6 +134,9 @@ pub(super) struct Tree {
     /// (see `lone_reduction`), or a node reduced alone under one (see
     /// `shift_order`).
     pub(super) reduced: Option<PrecedenceTag>,
+    /// The precedence a node ending a silent rule was reduced with (see
+    /// `lone_reduction`).
+    pub(super) closes: Option<PrecedenceTag>,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
     /// Under keyword lexing, the kind of the token rule that built the leaf,
@@ -160,6 +163,7 @@ impl Tree {
             tail: None,
             priority: None,
             reduced: None,
+            closes: None,
             ambiguous: false,
             literal: false,
             lexed: None,
@@ -372,13 +376,54 @@ impl<'c> ResultSet<'c> {
 /// keyword-only (`only`), and the input is parsed again, where no token rule
 /// takes a keyword-only span the keyword outranks it on. The spans only grow,
 /// so the reparses end.
+///
+/// The keyword counts only where it matched in the tree's parse state: in a
+/// call made, through some chain of calls up to the first, by calls that
+/// build nodes each beginning a node of the tree that goes on past the span,
+/// as the items a parser has in progress there. A chain through a call that
+/// began no such node lexed the text before the span otherwise (Rust's
+/// `m!('"')`, whose token tree also takes `'` alone and a string to the next
+/// `"`, where a later `_` type is a keyword `_` token): the tree's parse never
+/// reached that state. A call's result is shared by every call that made it,
+/// so every chain counts. The calls are kept in `calls`, their makers by
+/// index. It mirrors `KeywordLexing` in js/src/grammar-runtime/executor.js.
 #[derive(Debug, Default)]
 pub(super) struct KeywordLexing {
     only: HashSet<(usize, usize)>,
-    pub(super) matched: HashSet<(usize, usize)>,
+    matched: HashMap<(usize, usize), HashSet<Option<usize>>>,
+    calls: Vec<Call>,
+}
+
+/// One rule call of a parse under keyword lexing: where it began, whether it
+/// builds a node and the calls it was made from (`None` for none).
+#[derive(Debug)]
+struct Call {
+    position: usize,
+    builds: bool,
+    parents: HashSet<Option<usize>>,
 }
 
 impl KeywordLexing {
+    /// Records a rule call beginning at `position` made from `parent`; its index.
+    pub(super) fn call(&mut self, position: usize, builds: bool, parent: Option<usize>) -> usize {
+        self.calls.push(Call {
+            position,
+            builds,
+            parents: HashSet::from([parent]),
+        });
+        self.calls.len() - 1
+    }
+
+    /// Records that the call `call` was made again, from `parent`.
+    pub(super) fn called(&mut self, call: usize, parent: Option<usize>) {
+        self.calls[call].parents.insert(parent);
+    }
+
+    /// Records a keyword token matched over `span` in the rule call `call`.
+    pub(super) fn matched(&mut self, span: (usize, usize), call: Option<usize>) {
+        self.matched.entry(span).or_default().insert(call);
+    }
+
     /// Whether a keyword-only span's keyword outranks a token rule's leaf over it.
     pub(super) fn outranks(&self, leaf: &Tree, tokens: TokenOrder<'_>) -> bool {
         self.only.contains(&(leaf.start, leaf.end)) && outranks_at(leaf, tokens)
@@ -388,6 +433,7 @@ impl KeywordLexing {
     /// true when one is new.
     pub(super) fn conflicts(&mut self, root: &Tree, tokens: TokenOrder<'_>) -> bool {
         let mut found = false;
+        let mut reach = None;
         let mut pending = vec![root];
         while let Some(node) = pending.pop() {
             if node.ty == TreeType::Node {
@@ -398,17 +444,99 @@ impl KeywordLexing {
                 continue;
             };
             let span = (node.start, node.end);
-            if !self.matched.contains(&span) || self.only.contains(&span) {
+            let Some(calls) = self.matched.get(&span) else {
+                continue;
+            };
+            if self.only.contains(&span) {
                 continue;
             }
             let leaf = Tree::new(TreeType::Token, Some(kind.clone()), node.start, node.end);
-            if outranks_at(&leaf, tokens) {
-                self.only.insert(span);
-                found = true;
+            if !outranks_at(&leaf, tokens) {
+                continue;
             }
+            let reach = reach.get_or_insert_with(|| TreeReach::of(root));
+            let mut seen = HashSet::new();
+            if !calls
+                .iter()
+                .any(|call| self.in_parse_state(*call, node, reach, &mut seen))
+            {
+                continue;
+            }
+            self.only.insert(span);
+            found = true;
         }
         self.matched.clear();
+        self.calls.clear();
         found
+    }
+
+    /// Whether a keyword matched in `call` was in the parse state of the
+    /// tree's `leaf` over its span: whether some chain of the calls that made
+    /// it, up to the first, holds no call that builds a node the tree does
+    /// not have in progress there. `seen` holds the calls already searched.
+    fn in_parse_state(
+        &self,
+        call: Option<usize>,
+        leaf: &Tree,
+        reach: &TreeReach,
+        seen: &mut HashSet<usize>,
+    ) -> bool {
+        let mut pending = vec![call];
+        while let Some(current) = pending.pop() {
+            let Some(current) = current else {
+                return true;
+            };
+            if !seen.insert(current) {
+                continue;
+            }
+            let call = &self.calls[current];
+            if call.builds && call.position < leaf.start {
+                let first = reach.starts
+                    [reach.starts.partition_point(|start| *start < call.position)..]
+                    .first()
+                    .copied();
+                if let Some(first) = first
+                    && first < leaf.start
+                    && reach.ends.get(&first).is_none_or(|end| *end < leaf.end)
+                {
+                    continue;
+                }
+            }
+            pending.extend(call.parents.iter().copied());
+        }
+        false
+    }
+}
+
+/// The starts of the leaves of a tree that are not trivia, in order, and for
+/// each the farthest end of a node that begins with that leaf.
+struct TreeReach {
+    starts: Vec<usize>,
+    ends: HashMap<usize, usize>,
+}
+
+impl TreeReach {
+    fn of(root: &Tree) -> Self {
+        let mut starts = Vec::new();
+        let mut ends = HashMap::new();
+        let mut open: Option<usize> = None;
+        let mut pending = vec![root];
+        while let Some(node) = pending.pop() {
+            if node.trivia {
+                continue;
+            }
+            if node.ty == TreeType::Node {
+                open = Some(open.map_or(node.end, |end| end.max(node.end)));
+                pending.extend(node.children.iter().rev().map(|child| &**child));
+                continue;
+            }
+            starts.push(node.start);
+            if let Some(end) = open.take() {
+                let farthest = ends.entry(node.start).or_insert(end);
+                *farthest = (*farthest).max(end);
+            }
+        }
+        Self { starts, ends }
     }
 }
 
@@ -524,6 +652,8 @@ pub(super) struct Entry {
     pub(super) involved: bool,
     pub(super) seed: Vec<Res>,
     pub(super) results: Vec<Res>,
+    /// Under keyword lexing, the call's index in `KeywordLexing`.
+    pub(super) call: Option<usize>,
 }
 
 /// The trivia skipped at one offset.

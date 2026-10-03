@@ -584,6 +584,14 @@ export const NATIVE_GRAMMARS = Object.freeze([
       // over an or-pattern, and bare, prefix and postfix ranges in a row.
       'fn f() { |(|a|b)| c; }', 'fn f() { a ..= ..; }', 'fn f() { .. ..=.. ..; }', 'fn f() { ..=.. ..=..; }',
       'fn f() { ..=..=.. .. ..=.. }',
+      // Shifts LR parsing takes where two parses part deep in shared nodes (a
+      // closure argument, a range after a binary operator), and a let chain
+      // whose silent rule ends a node at its precedence.
+      'fn f() { g(|| a, |p| p) }', 'fn f() { a + b..*c; }', 'fn f(){ if let A = b && !c && d {} }',
+      // A keyword a parse tried where the tree has no node in progress (a
+      // quote in a macro's token tree read as a char literal) does not make
+      // the comment lexed there an error (formal-ai's matches!('"')).
+      'fn a(){m!(\'"\')} //"\ntype A = _;',
     ],
     divergences: [],
     rejections: [

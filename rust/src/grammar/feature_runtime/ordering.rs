@@ -253,17 +253,20 @@ pub(super) fn shift_order(
                     right.pop();
                     continue;
                 }
-                if a_node
-                    && b_node
-                    && a.start == b.start
-                    && let Some((x, y)) = chain_pair(&a, &b)
-                    && x.end != y.end
-                {
-                    return if x.end > y.end {
-                        shift_preferred(&x, &y, orders)
-                    } else {
-                        shift_preferred(&y, &x, orders).reverse()
-                    };
+                if a_node && b_node && a.start == b.start {
+                    let parting = chain_pair(&a, &b, true)
+                        .filter(|(x, y)| x.end != y.end)
+                        .or_else(|| chain_pair(&a, &b, false));
+                    if let Some((x, y)) = parting
+                        && x.end != y.end
+                    {
+                        let (x, y) = parted_pair(x, y);
+                        return if x.end > y.end {
+                            shift_preferred(&x, &y, orders)
+                        } else {
+                            shift_preferred(&y, &x, orders).reverse()
+                        };
+                    }
                 }
                 // The same node reduced on in two ways (Rust's `m!(x);` in a
                 // block, a macro invocation that `_expression_except_range`
@@ -273,7 +276,7 @@ pub(super) fn shift_order(
                 if a_node
                     && b_node
                     && a.start == b.start
-                    && let Some((x, y)) = chain_pair(&a, &b)
+                    && let Some((x, y)) = chain_pair(&a, &b, false)
                 {
                     let reduced = |node: &Tree| {
                         node.reduced
@@ -333,10 +336,13 @@ const fn by_associativity(associativity: Associativity) -> Ordering {
 /// the token's decides, as in `shift_preferred`. A token that ends a silent
 /// rule reduced under a precedence (Rust's `_let_chain`, `let ... && c` of
 /// level 3 left before the `&&` of `c && d`) is reduced with that rule's
-/// precedence. Greater when `a`'s result is kept, Less when `b`'s is, Equal
-/// when neither. It mirrors loneReduction in js/src/grammar-runtime/executor.js.
+/// precedence, and so is a node that ends one (`closes`, the `!c` of
+/// `let ... && !c`). Greater when `a`'s result is kept, Less when `b`'s is,
+/// Equal when neither. It mirrors loneReduction in
+/// js/src/grammar-runtime/executor.js.
 fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -> Ordering {
-    if a.ty != TreeType::Node || b.ty != TreeType::Token {
+    let closing = b.ty == TreeType::Node && b.closes.is_some();
+    if a.ty != TreeType::Node || (b.ty != TreeType::Token && !closing) {
         return Ordering::Equal;
     }
     let mut progress = a.clone();
@@ -344,11 +350,11 @@ fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -
         let Some(first) = first_meaningful(&progress.children) else {
             return Ordering::Equal;
         };
-        if first.ty != TreeType::Node {
-            if !same_tree(&first, b) {
-                return Ordering::Equal;
-            }
+        if same_tree(&first, b) {
             break;
+        }
+        if first.ty != TreeType::Node {
+            return Ordering::Equal;
         }
         progress = first;
     }
@@ -356,11 +362,12 @@ fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -
         .precedence
         .clone()
         .unwrap_or_else(|| PrecedenceTag::unranked(progress.rule.clone()));
-    let reduced = b
-        .reduced
-        .clone()
-        .or_else(|| b.precedence.clone())
-        .unwrap_or(PrecedenceTag::unranked(None));
+    let reduced = if closing {
+        b.closes.clone()
+    } else {
+        b.reduced.clone().or_else(|| b.precedence.clone())
+    }
+    .unwrap_or(PrecedenceTag::unranked(None));
     compare_precedence(&shifted, &reduced, orders)
         .then_with(|| by_associativity(reduced.associativity))
 }
@@ -531,15 +538,58 @@ fn leftmost_chain(node: &Rc<Tree>) -> Vec<Rc<Tree>> {
 }
 
 /// The outermost node kind on the leftmost chains of two nodes that start at
-/// one offset, as the pair of its nodes.
-fn chain_pair(a: &Rc<Tree>, b: &Rc<Tree>) -> Option<(Rc<Tree>, Rc<Tree>)> {
-    let other = leftmost_chain(b);
-    leftmost_chain(a).into_iter().find_map(|node| {
-        other
-            .iter()
-            .find(|candidate| candidate.kind == node.kind && candidate.start == node.start)
-            .map(|found| (node.clone(), found.clone()))
-    })
+/// one offset, as the pair of its nodes. When `distinct`, a node the other
+/// chain holds too, the same tree over the same text, is not paired: the two
+/// parses built it alike (Rust's `a + b` in `a + b..*c`, the left operand of
+/// both the range `a + b..` and the binary expression `a + b..*c`), so they
+/// part above it. It mirrors chainPair in js/src/grammar-runtime/executor.js.
+fn chain_pair(a: &Rc<Tree>, b: &Rc<Tree>, distinct: bool) -> Option<(Rc<Tree>, Rc<Tree>)> {
+    let (mine, other) = (leftmost_chain(a), leftmost_chain(b));
+    let shared = |node: &Rc<Tree>, chain: &[Rc<Tree>]| {
+        distinct
+            && chain
+                .iter()
+                .any(|peer| peer.end == node.end && same_tree(peer, node))
+    };
+    mine.iter()
+        .filter(|node| !shared(node, &other))
+        .find_map(|node| {
+            other
+                .iter()
+                .find(|candidate| {
+                    candidate.kind == node.kind
+                        && candidate.start == node.start
+                        && !shared(candidate, &mine)
+                })
+                .map(|found| (node.clone(), found.clone()))
+        })
+}
+
+/// The innermost pair of nodes of one kind from one offset that end apart,
+/// below two such nodes `a` and `b` along their leftmost chains: the two
+/// parses part where the first of them ends, so the decision is that pair's
+/// (Rust's `g(|| a, |p| p)`, where the closures `||` and `|| a, |p|` part at
+/// the parameters `||`, the or-pattern `| a` of level -2 going on past them).
+/// It mirrors partedPair in js/src/grammar-runtime/executor.js.
+fn parted_pair(a: Rc<Tree>, b: Rc<Tree>) -> (Rc<Tree>, Rc<Tree>) {
+    let mut pair = (a, b);
+    loop {
+        let below = match (
+            first_meaningful(&pair.0.children),
+            first_meaningful(&pair.1.children),
+        ) {
+            (Some(left), Some(right))
+                if left.ty == TreeType::Node && right.ty == TreeType::Node =>
+            {
+                chain_pair(&left, &right, false)
+            }
+            _ => None,
+        };
+        match below {
+            Some(below) if below.0.end != below.1.end => pair = below,
+            _ => return pair,
+        }
+    }
 }
 
 /// Whether a node of the kind and span of `inner` is on the leftmost chain of
