@@ -166,6 +166,48 @@
       "partsOfSpeech": ["adverb"],
       "definition": "Otherwise; the branch taken when a condition fails.",
       "source": "Merriam-Webster Dictionary, else (adverb); ISO/IEC 9899:2018 (C17), section 6.8.4.1 The if statement"
+    },
+    {
+      "word": "frontmatter",
+      "partsOfSpeech": ["noun"],
+      "definition": "Metadata at the start of a source file, set off by lines of three or more dashes.",
+      "source": "RFC 3503, frontmatter; The Rust Reference, Frontmatter"
+    },
+    {
+      "word": "metavariable",
+      "partsOfSpeech": ["noun"],
+      "definition": "A name in a macro matcher that binds a fragment of the input for the transcriber.",
+      "source": "The Rust Reference, Macros By Example, Metavariables"
+    },
+    {
+      "word": "turbofish",
+      "partsOfSpeech": ["noun"],
+      "definition": "The ::<> syntax that gives generic arguments in an expression path.",
+      "source": "The Rust Reference, Paths, Paths in expressions"
+    },
+    {
+      "word": "wildcard",
+      "partsOfSpeech": ["noun"],
+      "definition": "A placeholder that matches anything, such as the _ pattern or the * of a glob import.",
+      "source": "The Rust Reference, Patterns, Wildcard pattern"
+    },
+    {
+      "word": "scoped",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Qualified by the path of the module, type or trait that contains it.",
+      "source": "The Rust Reference, Paths, Qualified paths"
+    },
+    {
+      "word": "tuple",
+      "partsOfSpeech": ["noun"],
+      "definition": "A fixed-length ordered sequence of values of possibly different types.",
+      "source": "The Rust Reference, Tuple types"
+    },
+    {
+      "word": "where",
+      "partsOfSpeech": ["adverb"],
+      "definition": "Under which conditions; a where clause states the bounds a generic item requires.",
+      "source": "Merriam-Webster Dictionary, where (adverb); The Rust Reference, Generic parameters, Where clauses"
     }
   ]
 }

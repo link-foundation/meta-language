@@ -43,6 +43,15 @@ export function sourceText(entry) {
   return bytes.toString('utf8');
 }
 
+/** The native scanner file of a source, checked against its recorded hash, or `''`. */
+export function scannerText(entry) {
+  if (!entry.scanner) return '';
+  const bytes = readFileSync(join(root, entry.scanner.file));
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  if (sha256 !== entry.scanner.sha256) throw new Error(`${entry.scanner.file}: sha256 ${sha256}, the registry pins ${entry.scanner.sha256}`);
+  return bytes.toString('utf8');
+}
+
 /** The pinned source of a native grammar id (`native-c`). */
 export function grammarSourceOf(native) {
   const entry = readJson(GRAMMAR_SOURCES).sources.find((source) => source.native === native);
@@ -114,6 +123,8 @@ export function importSource(entry, expansions, decisions = {}) {
   const imported = importTreeSitterNative(grammar, {
     nameOf: (name) => nativeName(name, expansions, decisions),
     wordRule: WORD_RULE,
+    scanners: scannerText(entry),
+    immediate: entry.scanner?.immediate ?? [],
   });
   const rules = imported.rules.map((rule) => ({ ...rule, concept: ruleConcept(rule, decisions) }));
   const text = renderTreeSitterNative(
@@ -205,8 +216,15 @@ export function mergeReport(result, register, words) {
     native: entry.native,
     sources: [{
       id: entry.id, format: entry.format, package: entry.package, repository: entry.repository, revision: entry.revision,
-      path: entry.path, sha256: entry.sha256, license: entry.license,
+      path: entry.path, sha256: entry.sha256, license: entry.license, ...(entry.patch ? { patch: entry.patch } : {}),
     }],
+    ...(entry.scanner ? {
+      scanner: {
+        file: entry.scanner.file, sha256: entry.scanner.sha256, ports: entry.scanner.ports,
+        scanners: imported.scanners.map((line) => line.match(/^\(scanner (\S+) \(tokens ([^)]*)\)/u)).map(([, name, tokens]) => ({ name, tokens: tokens.split(' ') })),
+        immediate: entry.scanner.immediate,
+      },
+    } : {}),
     rules: rules.length,
     keywords: imported.keywords,
     renamed: rules.filter((rule) => rule.sourceName !== null && rule.sourceName !== rule.name)

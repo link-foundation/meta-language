@@ -6,19 +6,28 @@
     { "word": "arg", "replacement": "argument", "reason": "An abbreviation of argument." },
     { "word": "args", "replacement": "arguments", "reason": "An abbreviation of arguments." },
     { "word": "asm", "replacement": "assembly", "reason": "The asm keyword introduces inline assembly." },
+    { "word": "async", "replacement": "asynchronous", "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)." },
     { "word": "bitfield", "replacement": "bit_field", "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)." },
     { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
+    { "word": "const", "replacement": "constant", "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)." },
     { "word": "declarators", "replacement": "declarator_list", "reason": "A comma-separated list of declarators." },
     { "word": "declspec", "replacement": "declaration_specifier", "reason": "The Microsoft __declspec keyword run together." },
     { "word": "def", "replacement": "definition", "reason": "An abbreviation of definition." },
+    { "word": "delim", "replacement": "delimited", "reason": "An abbreviation of delimited; a delimited token tree is enclosed in parentheses, brackets or braces (The Rust Reference, Macros, DelimTokenTree)." },
+    { "word": "doc", "replacement": "documentation", "reason": "An abbreviation of documentation; a doc comment is a documentation comment (The Rust Reference, Doc comments)." },
     { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
     { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
     { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
+    { "word": "expr", "replacement": "expression", "reason": "An abbreviation of expression." },
+    { "word": "gen", "replacement": "generator", "reason": "The Rust 2024 keyword gen opens a generator block that yields the items of an iterator (RFC 3513, gen blocks)." },
     { "word": "goto", "replacement": "go_to", "reason": "The goto keyword run together." },
     { "word": "ifdef", "replacement": "if_defined", "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined." },
+    { "word": "impl", "replacement": "implementation", "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)." },
     { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
     { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
+    { "word": "mod", "replacement": "module", "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)." },
     { "word": "ms", "replacement": "microsoft", "reason": "Microsoft-specific syntax." },
+    { "word": "mut", "replacement": "mutable", "reason": "The Rust keyword mut makes a binding mutable (The Rust Reference, Identifier patterns)." },
     { "word": "offsetof", "replacement": "offset_of", "reason": "The offsetof macro (ISO/IEC 9899:2018 section 7.19) run together." },
     { "word": "params", "replacement": "parameters", "reason": "An abbreviation of parameters." },
     { "word": "preproc", "replacement": "preprocessor", "reason": "An abbreviation of preprocessor." },
@@ -46,13 +55,37 @@
         "false": "grammar.false-value",
         "attribute": "program.attributes"
       }
+    },
+    "rust": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_let_chain": "let_chain_alias",
+        "ref_pattern": "by_reference_pattern"
+      },
+      "concepts": {
+        "arguments": "grammar.argument-list",
+        "parameters": "grammar.parameter-list",
+        "parameter": "parameter",
+        "type_arguments": "grammar.type-argument-list",
+        "type_parameters": "grammar.type-parameter-list",
+        "attribute": "program.attributes"
+      }
     }
   },
   "concepts": {
     "definitions": {},
     "distinctFrom": {
       "grammar.preprocessor-argument": [{ "id": "grammar.preprocessor-parameters", "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares." }],
-      "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }]
+      "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }],
+      "grammar.condition": [{ "id": "grammar.term", "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction." }],
+      "grammar.pattern": [{ "id": "grammar.rule", "reason": "A pattern matches and destructures a value in a program, while a grammar rule binds a non-terminal to an expression." }],
+      "grammar.reference-expression": [{ "id": "grammar.extension-expression", "reason": "A reference expression borrows a place with & or &mut, while an extension expression marks a GNU C extension with __extension__." }],
+      "grammar.token-pattern": [{ "id": "grammar.token-rule", "reason": "A token pattern is the matcher of a macro rule, while a token rule is a grammar rule matched as one lexical token." }],
+      "grammar.tokens": [{ "id": "grammar.item", "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list." }],
+      "grammar.type": [{ "id": "grammar.value.character", "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value." }],
+      "grammar.yield-expression": [{ "id": "grammar.return-expression", "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function." }],
+      "grammar.type-argument-list": [{ "id": "grammar.type-parameter-list", "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes." }]
     }
   }
 }

@@ -1125,7 +1125,7 @@
       "role": "concept",
       "definition": "A rule for a complete expression of a grammar.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
         "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
@@ -1140,6 +1140,10 @@
         },
         {
           "source": "native:c",
+          "name": "expression"
+        },
+        {
+          "source": "native:rust",
           "name": "expression"
         }
       ],
@@ -1273,7 +1277,7 @@
       "role": "concept",
       "definition": "A rule for a name made of letters, digits and underscores that starts with a letter.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
         "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
@@ -1289,6 +1293,10 @@
         {
           "source": "native:c",
           "name": "identifier"
+        },
+        {
+          "source": "native:rust",
+          "name": "identifier"
         }
       ],
       "formerNames": []
@@ -1299,7 +1307,7 @@
       "role": "concept",
       "definition": "A rule for one statement of a program grammar.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
         "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
@@ -1314,6 +1322,10 @@
         },
         {
           "source": "native:c",
+          "name": "statement"
+        },
+        {
+          "source": "native:rust",
           "name": "statement"
         }
       ],
@@ -1639,6 +1651,10 @@
           "name": "block_comment"
         },
         {
+          "source": "native:rust",
+          "name": "block_comment"
+        },
+        {
           "source": "native:scheme",
           "name": "block_comment"
         }
@@ -1661,6 +1677,10 @@
         {
           "source": "native:racket",
           "name": "character"
+        },
+        {
+          "source": "native:rust",
+          "name": "character_literal"
         },
         {
           "source": "native:scheme",
@@ -1700,6 +1720,10 @@
         },
         {
           "source": "native:racket",
+          "name": "comment"
+        },
+        {
+          "source": "native:rust",
           "name": "comment"
         },
         {
@@ -2176,6 +2200,10 @@
         },
         {
           "source": "native:racket",
+          "name": "escape_sequence"
+        },
+        {
+          "source": "native:rust",
           "name": "escape_sequence"
         },
         {
@@ -3243,6 +3271,7 @@
       "role": "concept",
       "definition": "Named input accepted by a function abstraction.",
       "constraints": [
+        "Only the native Rust grammar defines this construct.",
         "The structural concept is independent of any one programming language.",
         "Every language syntax that expresses it is a syntax alias of the concept."
       ],
@@ -3289,6 +3318,10 @@
         },
         {
           "source": "Delphi/Object Pascal",
+          "name": "parameter"
+        },
+        {
+          "source": "native:rust",
           "name": "parameter"
         }
       ],
@@ -4025,7 +4058,7 @@
       "role": "concept",
       "definition": "The annotations attached to declarations of a program.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Each language frontend reports evidence for this construct or states why it is unavailable."
       ],
       "sourceAliases": [
@@ -4039,6 +4072,10 @@
         },
         {
           "source": "native:c",
+          "name": "attribute"
+        },
+        {
+          "source": "native:rust",
           "name": "attribute"
         }
       ],
@@ -5221,12 +5258,16 @@
       "role": "concept",
       "definition": "A rule for a declaration list, the construct the upstream grammar names declaration_list.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "declaration_list"
+        },
+        {
+          "source": "native:rust",
           "name": "declaration_list"
         }
       ],
@@ -5884,12 +5925,16 @@
       "role": "concept",
       "definition": "A rule for a field declaration list, the construct the upstream grammar names field_declaration_list.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "field_declaration_list"
+        },
+        {
+          "source": "native:rust",
           "name": "field_declaration_list"
         }
       ],
@@ -5918,12 +5963,16 @@
       "role": "concept",
       "definition": "A rule for a field declaration, the construct the upstream grammar names field_declaration.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "field_declaration"
+        },
+        {
+          "source": "native:rust",
           "name": "field_declaration"
         }
       ],
@@ -5986,12 +6035,16 @@
       "role": "concept",
       "definition": "A rule for a variadic parameter, the construct the upstream grammar names variadic_parameter.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "variadic_parameter"
+        },
+        {
+          "source": "native:rust",
           "name": "variadic_parameter"
         }
       ],
@@ -6003,13 +6056,17 @@
       "role": "concept",
       "definition": "A rule for a parameter list, the construct the upstream grammar names parameter_list.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
           "name": "parameter_list"
+        },
+        {
+          "source": "native:rust",
+          "name": "parameters"
         }
       ],
       "formerNames": []
@@ -6139,12 +6196,16 @@
       "role": "concept",
       "definition": "A rule for an expression statement, the construct the upstream grammar names expression_statement.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "expression_statement"
+        },
+        {
+          "source": "native:rust",
           "name": "expression_statement"
         }
       ],
@@ -6173,12 +6234,16 @@
       "role": "concept",
       "definition": "A rule for an else clause, the construct the upstream grammar names else_clause.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "else_clause"
+        },
+        {
+          "source": "native:rust",
           "name": "else_clause"
         }
       ],
@@ -6496,12 +6561,16 @@
       "role": "concept",
       "definition": "A rule for an assignment expression, the construct the upstream grammar names assignment_expression.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "assignment_expression"
+        },
+        {
+          "source": "native:rust",
           "name": "assignment_expression"
         }
       ],
@@ -6530,12 +6599,16 @@
       "role": "concept",
       "definition": "A rule for an unary expression, the construct the upstream grammar names unary_expression.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "unary_expression"
+        },
+        {
+          "source": "native:rust",
           "name": "unary_expression"
         }
       ],
@@ -6547,12 +6620,16 @@
       "role": "concept",
       "definition": "A rule for a binary expression, the construct the upstream grammar names binary_expression.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "binary_expression"
+        },
+        {
+          "source": "native:rust",
           "name": "binary_expression"
         }
       ],
@@ -6700,12 +6777,16 @@
       "role": "concept",
       "definition": "A rule for a call expression, the construct the upstream grammar names call_expression.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "call_expression"
+        },
+        {
+          "source": "native:rust",
           "name": "call_expression"
         }
       ],
@@ -6870,13 +6951,17 @@
       "role": "concept",
       "definition": "A rule for an argument list, the construct the upstream grammar names argument_list.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
           "name": "argument_list"
+        },
+        {
+          "source": "native:rust",
+          "name": "arguments"
         }
       ],
       "formerNames": [],
@@ -6893,12 +6978,16 @@
       "role": "concept",
       "definition": "A rule for a field expression, the construct the upstream grammar names field_expression.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "field_expression"
+        },
+        {
+          "source": "native:rust",
           "name": "field_expression"
         }
       ],
@@ -6927,12 +7016,16 @@
       "role": "concept",
       "definition": "A rule for a parenthesized expression, the construct the upstream grammar names parenthesized_expression.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "parenthesized_expression"
+        },
+        {
+          "source": "native:rust",
           "name": "parenthesized_expression"
         }
       ],
@@ -7063,12 +7156,16 @@
       "role": "concept",
       "definition": "A rule for a string literal, the construct the upstream grammar names string_literal.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "string_literal"
+        },
+        {
+          "source": "native:rust",
           "name": "string_literal"
         }
       ],
@@ -7097,12 +7194,16 @@
       "role": "concept",
       "definition": "A rule for a type identifier alias, the construct the upstream grammar names _type_identifier.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "type_identifier_alias"
+        },
+        {
+          "source": "native:rust",
           "name": "type_identifier_alias"
         }
       ],
@@ -7114,12 +7215,16 @@
       "role": "concept",
       "definition": "A rule for a field identifier alias, the construct the upstream grammar names _field_identifier.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
+          "name": "field_identifier_alias"
+        },
+        {
+          "source": "native:rust",
           "name": "field_identifier_alias"
         }
       ],
@@ -7182,13 +7287,2734 @@
       "role": "concept",
       "definition": "A rule for a word characters, the construct the upstream grammar names word_characters.",
       "constraints": [
-        "Only the native C grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:c",
           "name": "word_characters"
+        },
+        {
+          "source": "native:rust",
+          "name": "word_characters"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.source-file",
+      "phrase": "source file",
+      "role": "concept",
+      "definition": "A rule for a source file, the construct the upstream grammar names source_file.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "source_file"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.empty-statement",
+      "phrase": "empty statement",
+      "role": "concept",
+      "definition": "A rule for an empty statement, the construct the upstream grammar names empty_statement.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "empty_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.declaration-statement",
+      "phrase": "declaration statement",
+      "role": "concept",
+      "definition": "A rule for a declaration statement, the construct the upstream grammar names _declaration_statement.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "declaration_statement"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.macro-definition",
+      "phrase": "macro definition",
+      "role": "concept",
+      "definition": "A rule for a macro definition, the construct the upstream grammar names macro_definition.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "macro_definition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.macro-rule",
+      "phrase": "macro rule",
+      "role": "concept",
+      "definition": "A rule for a macro rule, the construct the upstream grammar names macro_rule.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "macro_rule"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.token-pattern",
+      "phrase": "token pattern",
+      "role": "concept",
+      "definition": "A rule for a token pattern, the construct the upstream grammar names _token_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "token_pattern"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.token-rule",
+          "reason": "A token pattern is the matcher of a macro rule, while a token rule is a grammar rule matched as one lexical token."
+        }
+      ]
+    },
+    {
+      "id": "grammar.token-tree-pattern",
+      "phrase": "token tree pattern",
+      "role": "concept",
+      "definition": "A rule for a token tree pattern, the construct the upstream grammar names token_tree_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "token_tree_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.token-binding-pattern",
+      "phrase": "token binding pattern",
+      "role": "concept",
+      "definition": "A rule for a token binding pattern, the construct the upstream grammar names token_binding_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "token_binding_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.token-repetition-pattern",
+      "phrase": "token repetition pattern",
+      "role": "concept",
+      "definition": "A rule for a token repetition pattern, the construct the upstream grammar names token_repetition_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "token_repetition_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.fragment-specifier",
+      "phrase": "fragment specifier",
+      "role": "concept",
+      "definition": "A rule for a fragment specifier, the construct the upstream grammar names fragment_specifier.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "fragment_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tokens",
+      "phrase": "tokens",
+      "role": "concept",
+      "definition": "A rule for a tokens, the construct the upstream grammar names _tokens.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "tokens"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.item",
+          "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list."
+        }
+      ]
+    },
+    {
+      "id": "grammar.token-tree",
+      "phrase": "token tree",
+      "role": "concept",
+      "definition": "A rule for a token tree, the construct the upstream grammar names token_tree.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "token_tree"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.token-repetition",
+      "phrase": "token repetition",
+      "role": "concept",
+      "definition": "A rule for a token repetition, the construct the upstream grammar names token_repetition.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "token_repetition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.non-special-token",
+      "phrase": "non special token",
+      "role": "concept",
+      "definition": "A rule for a non special token, the construct the upstream grammar names _non_special_token.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "non_special_token"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.attribute-item",
+      "phrase": "attribute item",
+      "role": "concept",
+      "definition": "A rule for an attribute item, the construct the upstream grammar names attribute_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "attribute_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.inner-attribute-item",
+      "phrase": "inner attribute item",
+      "role": "concept",
+      "definition": "A rule for an inner attribute item, the construct the upstream grammar names inner_attribute_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "inner_attribute_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.module-item",
+      "phrase": "module item",
+      "role": "concept",
+      "definition": "A rule for a module item, the construct the upstream grammar names mod_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "module_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.foreign-module-item",
+      "phrase": "foreign module item",
+      "role": "concept",
+      "definition": "A rule for a foreign module item, the construct the upstream grammar names foreign_mod_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "foreign_module_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structure-item",
+      "phrase": "structure item",
+      "role": "concept",
+      "definition": "A rule for a structure item, the construct the upstream grammar names struct_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "structure_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.union-item",
+      "phrase": "union item",
+      "role": "concept",
+      "definition": "A rule for an union item, the construct the upstream grammar names union_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "union_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-item",
+      "phrase": "enumeration item",
+      "role": "concept",
+      "definition": "A rule for an enumeration item, the construct the upstream grammar names enum_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "enumeration_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-variant-list",
+      "phrase": "enumeration variant list",
+      "role": "concept",
+      "definition": "A rule for an enumeration variant list, the construct the upstream grammar names enum_variant_list.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "enumeration_variant_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.enumeration-variant",
+      "phrase": "enumeration variant",
+      "role": "concept",
+      "definition": "A rule for an enumeration variant, the construct the upstream grammar names enum_variant.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "enumeration_variant"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.ordered-field-declaration-list",
+      "phrase": "ordered field declaration list",
+      "role": "concept",
+      "definition": "A rule for an ordered field declaration list, the construct the upstream grammar names ordered_field_declaration_list.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "ordered_field_declaration_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.extern-crate-declaration",
+      "phrase": "extern crate declaration",
+      "role": "concept",
+      "definition": "A rule for an extern crate declaration, the construct the upstream grammar names extern_crate_declaration.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "extern_crate_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constant-item",
+      "phrase": "constant item",
+      "role": "concept",
+      "definition": "A rule for a constant item, the construct the upstream grammar names const_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "constant_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.static-item",
+      "phrase": "static item",
+      "role": "concept",
+      "definition": "A rule for a static item, the construct the upstream grammar names static_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "static_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-item",
+      "phrase": "type item",
+      "role": "concept",
+      "definition": "A rule for a type item, the construct the upstream grammar names type_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "type_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-item",
+      "phrase": "function item",
+      "role": "concept",
+      "definition": "A rule for a function item, the construct the upstream grammar names function_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "function_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-signature-item",
+      "phrase": "function signature item",
+      "role": "concept",
+      "definition": "A rule for a function signature item, the construct the upstream grammar names function_signature_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "function_signature_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-modifiers",
+      "phrase": "function modifiers",
+      "role": "concept",
+      "definition": "A rule for a function modifiers, the construct the upstream grammar names function_modifiers.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "function_modifiers"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.where-clause",
+      "phrase": "where clause",
+      "role": "concept",
+      "definition": "A rule for a where clause, the construct the upstream grammar names where_clause.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "where_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.where-predicate",
+      "phrase": "where predicate",
+      "role": "concept",
+      "definition": "A rule for a where predicate, the construct the upstream grammar names where_predicate.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "where_predicate"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.implementation-item",
+      "phrase": "implementation item",
+      "role": "concept",
+      "definition": "A rule for an implementation item, the construct the upstream grammar names impl_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "implementation_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.trait-item",
+      "phrase": "trait item",
+      "role": "concept",
+      "definition": "A rule for a trait item, the construct the upstream grammar names trait_item.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "trait_item"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.associated-type",
+      "phrase": "associated type",
+      "role": "concept",
+      "definition": "A rule for an associated type, the construct the upstream grammar names associated_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "associated_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.trait-bounds",
+      "phrase": "trait bounds",
+      "role": "concept",
+      "definition": "A rule for a trait bounds, the construct the upstream grammar names trait_bounds.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "trait_bounds"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.higher-ranked-trait-bound",
+      "phrase": "higher ranked trait bound",
+      "role": "concept",
+      "definition": "A rule for a higher ranked trait bound, the construct the upstream grammar names higher_ranked_trait_bound.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "higher_ranked_trait_bound"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.removed-trait-bound",
+      "phrase": "removed trait bound",
+      "role": "concept",
+      "definition": "A rule for a removed trait bound, the construct the upstream grammar names removed_trait_bound.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "removed_trait_bound"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-parameter-list",
+      "phrase": "type parameter list",
+      "role": "concept",
+      "definition": "A rule for a type parameter list, the construct the upstream grammar names type_parameters.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "type_parameters"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constant-parameter",
+      "phrase": "constant parameter",
+      "role": "concept",
+      "definition": "A rule for a constant parameter, the construct the upstream grammar names const_parameter.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "constant_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-parameter",
+      "phrase": "type parameter",
+      "role": "concept",
+      "definition": "A rule for a type parameter, the construct the upstream grammar names type_parameter.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "type_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lifetime-parameter",
+      "phrase": "lifetime parameter",
+      "role": "concept",
+      "definition": "A rule for a lifetime parameter, the construct the upstream grammar names lifetime_parameter.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "lifetime_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.let-declaration",
+      "phrase": "let declaration",
+      "role": "concept",
+      "definition": "A rule for a let declaration, the construct the upstream grammar names let_declaration.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "let_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.use-declaration",
+      "phrase": "use declaration",
+      "role": "concept",
+      "definition": "A rule for an use declaration, the construct the upstream grammar names use_declaration.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "use_declaration"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.use-clause",
+      "phrase": "use clause",
+      "role": "concept",
+      "definition": "A rule for an use clause, the construct the upstream grammar names _use_clause.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "use_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scoped-use-list",
+      "phrase": "scoped use list",
+      "role": "concept",
+      "definition": "A rule for a scoped use list, the construct the upstream grammar names scoped_use_list.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "scoped_use_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.use-list",
+      "phrase": "use list",
+      "role": "concept",
+      "definition": "A rule for an use list, the construct the upstream grammar names use_list.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "use_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.use-as-clause",
+      "phrase": "use as clause",
+      "role": "concept",
+      "definition": "A rule for an use as clause, the construct the upstream grammar names use_as_clause.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "use_as_clause"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.use-wildcard",
+      "phrase": "use wildcard",
+      "role": "concept",
+      "definition": "A rule for an use wildcard, the construct the upstream grammar names use_wildcard.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "use_wildcard"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.self-parameter",
+      "phrase": "self parameter",
+      "role": "concept",
+      "definition": "A rule for a self parameter, the construct the upstream grammar names self_parameter.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "self_parameter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.extern-modifier",
+      "phrase": "extern modifier",
+      "role": "concept",
+      "definition": "A rule for an extern modifier, the construct the upstream grammar names extern_modifier.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "extern_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.visibility-modifier",
+      "phrase": "visibility modifier",
+      "role": "concept",
+      "definition": "A rule for a visibility modifier, the construct the upstream grammar names visibility_modifier.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "visibility_modifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type",
+      "phrase": "type",
+      "role": "concept",
+      "definition": "A rule for a type, the construct the upstream grammar names _type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "type"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.value.character",
+          "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value."
+        }
+      ]
+    },
+    {
+      "id": "grammar.bracketed-type",
+      "phrase": "bracketed type",
+      "role": "concept",
+      "definition": "A rule for a bracketed type, the construct the upstream grammar names bracketed_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "bracketed_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.qualified-type",
+      "phrase": "qualified type",
+      "role": "concept",
+      "definition": "A rule for a qualified type, the construct the upstream grammar names qualified_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "qualified_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.lifetime",
+      "phrase": "lifetime",
+      "role": "concept",
+      "definition": "A rule for a lifetime, the construct the upstream grammar names lifetime.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "lifetime"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.array-type",
+      "phrase": "array type",
+      "role": "concept",
+      "definition": "A rule for an array type, the construct the upstream grammar names array_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "array_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-lifetimes",
+      "phrase": "for lifetimes",
+      "role": "concept",
+      "definition": "A rule for a for lifetimes, the construct the upstream grammar names for_lifetimes.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "for_lifetimes"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.function-type",
+      "phrase": "function type",
+      "role": "concept",
+      "definition": "A rule for a function type, the construct the upstream grammar names function_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "function_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-type",
+      "phrase": "tuple type",
+      "role": "concept",
+      "definition": "A rule for a tuple type, the construct the upstream grammar names tuple_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "tuple_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unit-type",
+      "phrase": "unit type",
+      "role": "concept",
+      "definition": "A rule for an unit type, the construct the upstream grammar names unit_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "unit_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generic-function",
+      "phrase": "generic function",
+      "role": "concept",
+      "definition": "A rule for a generic function, the construct the upstream grammar names generic_function.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "generic_function"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generic-type",
+      "phrase": "generic type",
+      "role": "concept",
+      "definition": "A rule for a generic type, the construct the upstream grammar names generic_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "generic_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generic-type-with-turbofish",
+      "phrase": "generic type with turbofish",
+      "role": "concept",
+      "definition": "A rule for a generic type with turbofish, the construct the upstream grammar names generic_type_with_turbofish.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "generic_type_with_turbofish"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.bounded-type",
+      "phrase": "bounded type",
+      "role": "concept",
+      "definition": "A rule for a bounded type, the construct the upstream grammar names bounded_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "bounded_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.use-bounds",
+      "phrase": "use bounds",
+      "role": "concept",
+      "definition": "A rule for an use bounds, the construct the upstream grammar names use_bounds.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "use_bounds"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-argument-list",
+      "phrase": "type argument list",
+      "role": "concept",
+      "definition": "A rule for a type argument list, the construct the upstream grammar names type_arguments.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "type_arguments"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.type-parameter-list",
+          "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes."
+        }
+      ]
+    },
+    {
+      "id": "grammar.type-binding",
+      "phrase": "type binding",
+      "role": "concept",
+      "definition": "A rule for a type binding, the construct the upstream grammar names type_binding.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "type_binding"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reference-type",
+      "phrase": "reference type",
+      "role": "concept",
+      "definition": "A rule for a reference type, the construct the upstream grammar names reference_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "reference_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pointer-type",
+      "phrase": "pointer type",
+      "role": "concept",
+      "definition": "A rule for a pointer type, the construct the upstream grammar names pointer_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "pointer_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.never-type",
+      "phrase": "never type",
+      "role": "concept",
+      "definition": "A rule for a never type, the construct the upstream grammar names never_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "never_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.abstract-type",
+      "phrase": "abstract type",
+      "role": "concept",
+      "definition": "A rule for an abstract type, the construct the upstream grammar names abstract_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "abstract_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.dynamic-type",
+      "phrase": "dynamic type",
+      "role": "concept",
+      "definition": "A rule for a dynamic type, the construct the upstream grammar names dynamic_type.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "dynamic_type"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.mutable-specifier",
+      "phrase": "mutable specifier",
+      "role": "concept",
+      "definition": "A rule for a mutable specifier, the construct the upstream grammar names mutable_specifier.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "mutable_specifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-except-range",
+      "phrase": "expression except range",
+      "role": "concept",
+      "definition": "A rule for an expression except range, the construct the upstream grammar names _expression_except_range.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "expression_except_range"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.expression-ending-with-block",
+      "phrase": "expression ending with block",
+      "role": "concept",
+      "definition": "A rule for an expression ending with block, the construct the upstream grammar names _expression_ending_with_block.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "expression_ending_with_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.macro-invocation",
+      "phrase": "macro invocation",
+      "role": "concept",
+      "definition": "A rule for a macro invocation, the construct the upstream grammar names macro_invocation.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "macro_invocation"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.delimited-token-tree",
+      "phrase": "delimited token tree",
+      "role": "concept",
+      "definition": "A rule for a delimited token tree, the construct the upstream grammar names delim_token_tree.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "delimited_token_tree"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.delimited-tokens",
+      "phrase": "delimited tokens",
+      "role": "concept",
+      "definition": "A rule for a delimited tokens, the construct the upstream grammar names _delim_tokens.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "delimited_tokens"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.non-delimited-token",
+      "phrase": "non delimited token",
+      "role": "concept",
+      "definition": "A rule for a non delimited token, the construct the upstream grammar names _non_delim_token.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "non_delimited_token"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scoped-identifier",
+      "phrase": "scoped identifier",
+      "role": "concept",
+      "definition": "A rule for a scoped identifier, the construct the upstream grammar names scoped_identifier.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "scoped_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scoped-type-identifier-in-expression-position",
+      "phrase": "scoped type identifier in expression position",
+      "role": "concept",
+      "definition": "A rule for a scoped type identifier in expression position, the construct the upstream grammar names scoped_type_identifier_in_expression_position.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "scoped_type_identifier_in_expression_position"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scoped-type-identifier",
+      "phrase": "scoped type identifier",
+      "role": "concept",
+      "definition": "A rule for a scoped type identifier, the construct the upstream grammar names scoped_type_identifier.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "scoped_type_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.range-expression",
+      "phrase": "range expression",
+      "role": "concept",
+      "definition": "A rule for a range expression, the construct the upstream grammar names range_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "range_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.try-expression",
+      "phrase": "try expression",
+      "role": "concept",
+      "definition": "A rule for a try expression, the construct the upstream grammar names try_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "try_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reference-expression",
+      "phrase": "reference expression",
+      "role": "concept",
+      "definition": "A rule for a reference expression, the construct the upstream grammar names reference_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "reference_expression"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.extension-expression",
+          "reason": "A reference expression borrows a place with & or &mut, while an extension expression marks a GNU C extension with __extension__."
+        }
+      ]
+    },
+    {
+      "id": "grammar.compound-assignment-expression",
+      "phrase": "compound assignment expression",
+      "role": "concept",
+      "definition": "A rule for a compound assignment expression, the construct the upstream grammar names compound_assignment_expr.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "compound_assignment_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.type-cast-expression",
+      "phrase": "type cast expression",
+      "role": "concept",
+      "definition": "A rule for a type cast expression, the construct the upstream grammar names type_cast_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "type_cast_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.return-expression",
+      "phrase": "return expression",
+      "role": "concept",
+      "definition": "A rule for a return expression, the construct the upstream grammar names return_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "return_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.yield-expression",
+      "phrase": "yield expression",
+      "role": "concept",
+      "definition": "A rule for a yield expression, the construct the upstream grammar names yield_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "yield_expression"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.return-expression",
+          "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function."
+        }
+      ]
+    },
+    {
+      "id": "grammar.array-expression",
+      "phrase": "array expression",
+      "role": "concept",
+      "definition": "A rule for an array expression, the construct the upstream grammar names array_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "array_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-expression",
+      "phrase": "tuple expression",
+      "role": "concept",
+      "definition": "A rule for a tuple expression, the construct the upstream grammar names tuple_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "tuple_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unit-expression",
+      "phrase": "unit expression",
+      "role": "concept",
+      "definition": "A rule for an unit expression, the construct the upstream grammar names unit_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "unit_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structure-expression",
+      "phrase": "structure expression",
+      "role": "concept",
+      "definition": "A rule for a structure expression, the construct the upstream grammar names struct_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "structure_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-initializer-list",
+      "phrase": "field initializer list",
+      "role": "concept",
+      "definition": "A rule for a field initializer list, the construct the upstream grammar names field_initializer_list.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "field_initializer_list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.shorthand-field-initializer",
+      "phrase": "shorthand field initializer",
+      "role": "concept",
+      "definition": "A rule for a shorthand field initializer, the construct the upstream grammar names shorthand_field_initializer.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "shorthand_field_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-initializer",
+      "phrase": "field initializer",
+      "role": "concept",
+      "definition": "A rule for a field initializer, the construct the upstream grammar names field_initializer.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "field_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.base-field-initializer",
+      "phrase": "base field initializer",
+      "role": "concept",
+      "definition": "A rule for a base field initializer, the construct the upstream grammar names base_field_initializer.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "base_field_initializer"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.if-expression",
+      "phrase": "if expression",
+      "role": "concept",
+      "definition": "A rule for an if expression, the construct the upstream grammar names if_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "if_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.let-condition",
+      "phrase": "let condition",
+      "role": "concept",
+      "definition": "A rule for a let condition, the construct the upstream grammar names let_condition.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "let_condition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.let-chain-alias",
+      "phrase": "let chain alias",
+      "role": "concept",
+      "definition": "A rule for a let chain alias, the construct the upstream grammar names _let_chain.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "let_chain_alias"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.condition",
+      "phrase": "condition",
+      "role": "concept",
+      "definition": "A rule for a condition, the construct the upstream grammar names _condition.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "condition"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.term",
+          "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction."
+        }
+      ]
+    },
+    {
+      "id": "grammar.match-expression",
+      "phrase": "match expression",
+      "role": "concept",
+      "definition": "A rule for a match expression, the construct the upstream grammar names match_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "match_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.match-block",
+      "phrase": "match block",
+      "role": "concept",
+      "definition": "A rule for a match block, the construct the upstream grammar names match_block.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "match_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.match-arm",
+      "phrase": "match arm",
+      "role": "concept",
+      "definition": "A rule for a match arm, the construct the upstream grammar names match_arm.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "match_arm"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.last-match-arm",
+      "phrase": "last match arm",
+      "role": "concept",
+      "definition": "A rule for a last match arm, the construct the upstream grammar names last_match_arm.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "last_match_arm"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.match-pattern",
+      "phrase": "match pattern",
+      "role": "concept",
+      "definition": "A rule for a match pattern, the construct the upstream grammar names match_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "match_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.while-expression",
+      "phrase": "while expression",
+      "role": "concept",
+      "definition": "A rule for a while expression, the construct the upstream grammar names while_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "while_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.loop-expression",
+      "phrase": "loop expression",
+      "role": "concept",
+      "definition": "A rule for a loop expression, the construct the upstream grammar names loop_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "loop_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.for-expression",
+      "phrase": "for expression",
+      "role": "concept",
+      "definition": "A rule for a for expression, the construct the upstream grammar names for_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "for_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.constant-block",
+      "phrase": "constant block",
+      "role": "concept",
+      "definition": "A rule for a constant block, the construct the upstream grammar names const_block.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "constant_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.closure-expression",
+      "phrase": "closure expression",
+      "role": "concept",
+      "definition": "A rule for a closure expression, the construct the upstream grammar names closure_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "closure_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.closure-parameters",
+      "phrase": "closure parameters",
+      "role": "concept",
+      "definition": "A rule for a closure parameters, the construct the upstream grammar names closure_parameters.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "closure_parameters"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.label",
+      "phrase": "label",
+      "role": "concept",
+      "definition": "A rule for a label, the construct the upstream grammar names label.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "label"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.break-expression",
+      "phrase": "break expression",
+      "role": "concept",
+      "definition": "A rule for a break expression, the construct the upstream grammar names break_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "break_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.continue-expression",
+      "phrase": "continue expression",
+      "role": "concept",
+      "definition": "A rule for a continue expression, the construct the upstream grammar names continue_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "continue_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.index-expression",
+      "phrase": "index expression",
+      "role": "concept",
+      "definition": "A rule for an index expression, the construct the upstream grammar names index_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "index_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.await-expression",
+      "phrase": "await expression",
+      "role": "concept",
+      "definition": "A rule for an await expression, the construct the upstream grammar names await_expression.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "await_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unsafe-block",
+      "phrase": "unsafe block",
+      "role": "concept",
+      "definition": "A rule for an unsafe block, the construct the upstream grammar names unsafe_block.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "unsafe_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.asynchronous-block",
+      "phrase": "asynchronous block",
+      "role": "concept",
+      "definition": "A rule for an asynchronous block, the construct the upstream grammar names async_block.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "asynchronous_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.generator-block",
+      "phrase": "generator block",
+      "role": "concept",
+      "definition": "A rule for a generator block, the construct the upstream grammar names gen_block.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "generator_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.try-block",
+      "phrase": "try block",
+      "role": "concept",
+      "definition": "A rule for a try block, the construct the upstream grammar names try_block.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "try_block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block",
+      "phrase": "block",
+      "role": "concept",
+      "definition": "A rule for a block, the construct the upstream grammar names block.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.pattern",
+      "phrase": "pattern",
+      "role": "concept",
+      "definition": "A rule for a pattern, the construct the upstream grammar names _pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "pattern"
+        }
+      ],
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.rule",
+          "reason": "A pattern matches and destructures a value in a program, while a grammar rule binds a non-terminal to an expression."
+        }
+      ]
+    },
+    {
+      "id": "grammar.generic-pattern",
+      "phrase": "generic pattern",
+      "role": "concept",
+      "definition": "A rule for a generic pattern, the construct the upstream grammar names generic_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "generic_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-pattern",
+      "phrase": "tuple pattern",
+      "role": "concept",
+      "definition": "A rule for a tuple pattern, the construct the upstream grammar names tuple_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "tuple_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.slice-pattern",
+      "phrase": "slice pattern",
+      "role": "concept",
+      "definition": "A rule for a slice pattern, the construct the upstream grammar names slice_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "slice_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.tuple-structure-pattern",
+      "phrase": "tuple structure pattern",
+      "role": "concept",
+      "definition": "A rule for a tuple structure pattern, the construct the upstream grammar names tuple_struct_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "tuple_structure_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.structure-pattern",
+      "phrase": "structure pattern",
+      "role": "concept",
+      "definition": "A rule for a structure pattern, the construct the upstream grammar names struct_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "structure_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.field-pattern",
+      "phrase": "field pattern",
+      "role": "concept",
+      "definition": "A rule for a field pattern, the construct the upstream grammar names field_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "field_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.remaining-field-pattern",
+      "phrase": "remaining field pattern",
+      "role": "concept",
+      "definition": "A rule for a remaining field pattern, the construct the upstream grammar names remaining_field_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "remaining_field_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.mutable-pattern",
+      "phrase": "mutable pattern",
+      "role": "concept",
+      "definition": "A rule for a mutable pattern, the construct the upstream grammar names mut_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "mutable_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.range-pattern",
+      "phrase": "range pattern",
+      "role": "concept",
+      "definition": "A rule for a range pattern, the construct the upstream grammar names range_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "range_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.by-reference-pattern",
+      "phrase": "by reference pattern",
+      "role": "concept",
+      "definition": "A rule for a by reference pattern, the construct the upstream grammar names ref_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "by_reference_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.captured-pattern",
+      "phrase": "captured pattern",
+      "role": "concept",
+      "definition": "A rule for a captured pattern, the construct the upstream grammar names captured_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "captured_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reference-pattern",
+      "phrase": "reference pattern",
+      "role": "concept",
+      "definition": "A rule for a reference pattern, the construct the upstream grammar names reference_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "reference_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.or-pattern",
+      "phrase": "or pattern",
+      "role": "concept",
+      "definition": "A rule for an or pattern, the construct the upstream grammar names or_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "or_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.literal",
+      "phrase": "literal",
+      "role": "concept",
+      "definition": "A rule for a literal, the construct the upstream grammar names _literal.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.literal-pattern",
+      "phrase": "literal pattern",
+      "role": "concept",
+      "definition": "A rule for a literal pattern, the construct the upstream grammar names _literal_pattern.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "literal_pattern"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.negative-literal",
+      "phrase": "negative literal",
+      "role": "concept",
+      "definition": "A rule for a negative literal, the construct the upstream grammar names negative_literal.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "negative_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.integer-literal",
+      "phrase": "integer literal",
+      "role": "concept",
+      "definition": "A rule for an integer literal, the construct the upstream grammar names integer_literal.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "integer_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.raw-string-literal",
+      "phrase": "raw string literal",
+      "role": "concept",
+      "definition": "A rule for a raw string literal, the construct the upstream grammar names raw_string_literal.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "raw_string_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.boolean-literal",
+      "phrase": "boolean literal",
+      "role": "concept",
+      "definition": "A rule for a boolean literal, the construct the upstream grammar names boolean_literal.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "boolean_literal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.line-comment",
+      "phrase": "line comment",
+      "role": "concept",
+      "definition": "A rule for a line comment, the construct the upstream grammar names line_comment.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "line_comment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.line-documentation-comment-marker",
+      "phrase": "line documentation comment marker",
+      "role": "concept",
+      "definition": "A rule for a line documentation comment marker, the construct the upstream grammar names _line_doc_comment_marker.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "line_documentation_comment_marker"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.inner-line-documentation-comment-marker",
+      "phrase": "inner line documentation comment marker",
+      "role": "concept",
+      "definition": "A rule for an inner line documentation comment marker, the construct the upstream grammar names _inner_line_doc_comment_marker.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "inner_line_documentation_comment_marker"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.outer-line-documentation-comment-marker",
+      "phrase": "outer line documentation comment marker",
+      "role": "concept",
+      "definition": "A rule for an outer line documentation comment marker, the construct the upstream grammar names _outer_line_doc_comment_marker.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "outer_line_documentation_comment_marker"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block-documentation-comment-marker",
+      "phrase": "block documentation comment marker",
+      "role": "concept",
+      "definition": "A rule for a block documentation comment marker, the construct the upstream grammar names _block_doc_comment_marker.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "block_documentation_comment_marker"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.path",
+      "phrase": "path",
+      "role": "concept",
+      "definition": "A rule for a path, the construct the upstream grammar names _path.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "path"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.shebang",
+      "phrase": "shebang",
+      "role": "concept",
+      "definition": "A rule for a shebang, the construct the upstream grammar names shebang.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "shebang"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.frontmatter",
+      "phrase": "frontmatter",
+      "role": "concept",
+      "definition": "A rule for a frontmatter, the construct the upstream grammar names frontmatter.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "frontmatter"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.reserved-identifier",
+      "phrase": "reserved identifier",
+      "role": "concept",
+      "definition": "A rule for a reserved identifier, the construct the upstream grammar names _reserved_identifier.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "reserved_identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.self",
+      "phrase": "self",
+      "role": "concept",
+      "definition": "A rule for a self, the construct the upstream grammar names self.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "self"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.super",
+      "phrase": "super",
+      "role": "concept",
+      "definition": "A rule for a super, the construct the upstream grammar names super.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "super"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.crate",
+      "phrase": "crate",
+      "role": "concept",
+      "definition": "A rule for a crate, the construct the upstream grammar names crate.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "crate"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.metavariable",
+      "phrase": "metavariable",
+      "role": "concept",
+      "definition": "A rule for a metavariable, the construct the upstream grammar names metavariable.",
+      "constraints": [
+        "Only the native Rust grammar defines this construct.",
+        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:rust",
+          "name": "metavariable"
         }
       ],
       "formerNames": []

@@ -20,6 +20,11 @@
 // a token tree-sitter leaves unnamed, any but a single STRING outside a
 //                lexical rule, (alias unnamed_token ...): tree-sitter hides it
 // extras         (extra ...); conflicts (conflict ...)
+// externals      a token of a native scanner, (scanner NAME (tokens ...)
+//                (operations ...)), the reviewed port of the upstream C
+//                scanner: (ref TOKEN), under (immediateToken ...) where the C
+//                scanner reads from the current byte without skipping extras,
+//                and (alias unnamed_token ...) for a hidden token
 // word           keyword extraction: a keyword is closed by the word rule,
 //                which takes no keyword's text where the keyword matched, as
 //                the lexer below prefers the keyword (a literal); see Keyword
@@ -393,9 +398,13 @@ function countTokens(node, counts, around = []) {
  *
  * `nameOf(name)` gives the native name of a rule or a named alias
  * (default: the name itself); `externals` maps an external token's tree-sitter
- * name to the native expression that scans it; `wordRule` names the helper
- * rule keyword extraction adds. Returns `{ start, extras, conflicts, rules,
- * keywords, report }`: `rules` lists `{ name, sourceName, kind, body }` in
+ * name to the native expression that scans it; `scanners` is the links text of
+ * the `(scanner ...)` declarations whose tokens, named `nameOf(name)`, scan
+ * the externals, and `immediate` lists the externals the upstream scanner
+ * reads without skipping extras; `wordRule` names the helper rule keyword
+ * extraction adds. Returns `{ start, extras, conflicts, scanners, rules,
+ * keywords, report }`: `scanners` lists the declaration lines and `rules`
+ * lists `{ name, sourceName, kind, body }` in
  * source order, followed by the helper rules; `report` lists the
  * approximations and the constructs left unsupported.
  */
@@ -422,6 +431,17 @@ export function importTreeSitterNative(source, options = {}) {
   const hiddenRules = new Set([...(grammar.supertypes ?? []), ...(grammar.inline ?? [])].map(memberName));
   const syntacticKind = (name) => (name.startsWith('_') || hiddenRules.has(name) ? 'silent' : 'normal');
   const externals = (grammar.externals ?? []).map(memberName);
+  const scannerLines = (options.scanners ?? '').split('\n').filter((line) => line !== '');
+  const scannerTokens = new Set();
+  if (scannerLines.length > 0) {
+    const declared = parseGrammarLinks(`(grammar (start %20))\n${scannerLines.join('\n')}\n(rule %20 normal empty)\n`).declarations?.scanners ?? [];
+    for (const { tokens } of declared) tokens.forEach((token) => scannerTokens.add(token));
+  }
+  const immediate = new Set(options.immediate ?? []);
+  const scanned = (name) => externals.includes(name) && !ruleNames.includes(name) && scannerTokens.has(nameOf(name));
+  for (const name of immediate) {
+    if (!scanned(name)) throw parseError(FORMAT, `the immediate external ${name} is no scanner token`);
+  }
   const namedLevels = new Map();
   for (const list of grammar.precedences ?? []) {
     list.forEach((entry, position) => {
@@ -442,6 +462,11 @@ export function importTreeSitterNative(source, options = {}) {
   const expr = (node, inToken, keywords, aliased = false) => {
     switch (node.type) {
       case 'SYMBOL':
+        if (scanned(node.name)) {
+          const token = immediate.has(node.name) ? `(immediateToken ${ref(node.name)})` : ref(node.name);
+          if (aliased || !(node.name.startsWith('_') || immediate.has(node.name))) return token;
+          return `(alias ${enc(node.name.startsWith('_') ? unnamedToken : nameOf(node.name))} ${token})`;
+        }
         if (externals.includes(node.name) && externalBodies[node.name] === undefined && !ruleNames.includes(node.name)) {
           report.unsupported.push(`external ${node.name}`);
         }
@@ -551,8 +576,9 @@ export function importTreeSitterNative(source, options = {}) {
   // tree-sitter makes a rule a token named after the rule when its whole
   // body (under precedences only) is one token that occurs nowhere else in
   // the grammar, unless the rule is the start rule, or a hidden rule of a
-  // single string: a string under a precedence is no whole token, and a
-  // token used again stays a child of the rule.
+  // single string, even one made a token: a string under a precedence is no
+  // whole token, a token used again stays a child of the rule, and a hidden
+  // rule keeps the anonymous token its string names.
   const usage = countTokens([Object.values(grammar.rules), grammar.externals ?? []], new Map());
   const lexicalRule = (name, index) => {
     if (index === 0) return false;
@@ -566,7 +592,8 @@ export function importTreeSitterNative(source, options = {}) {
     if ((node.type === 'STRING' || node.type === 'PATTERN') && around.length > 0) return false;
     const key = tokenKey(node, around);
     if (usage.get(key) !== 1) return false;
-    const string = JSON.parse(key).type === 'STRING';
+    const token = JSON.parse(key);
+    const string = token.type === 'STRING' || token.content?.type === 'STRING';
     return !(string && name.startsWith('_'));
   };
 
@@ -603,7 +630,7 @@ export function importTreeSitterNative(source, options = {}) {
   }
   if (wordBody !== null && keywords.size > 0) rules.push({ name: wordRule, sourceName: null, kind: 'token', body: wordBody });
   for (const name of externals) {
-    if (ruleNames.includes(name)) continue;
+    if (ruleNames.includes(name) || scanned(name)) continue;
     const body = externalBodies[name];
     if (body === undefined) report.unsupported.push(`external ${name} has no native scanner`);
     rules.push({ name: nameOf(name), sourceName: name, kind: name.startsWith('_') ? 'silent' : 'token', body: body ?? '(not empty)', external: true });
@@ -614,6 +641,7 @@ export function importTreeSitterNative(source, options = {}) {
   const clashes = [];
   const sourcesOf = new Map();
   for (const { name, sourceName } of rules) sourcesOf.set(name, [...(sourcesOf.get(name) ?? []), sourceName]);
+  for (const name of externals.filter(scanned)) sourcesOf.set(nameOf(name), [...(sourcesOf.get(nameOf(name)) ?? []), name]);
   for (const [name, sources] of aliasSources) {
     if (sourcesOf.has(name)) sourcesOf.set(name, [...new Set([...sourcesOf.get(name), ...sources])]);
   }
@@ -623,6 +651,7 @@ export function importTreeSitterNative(source, options = {}) {
     start: nameOf(ruleNames[0]),
     extras,
     conflicts,
+    scanners: scannerLines,
     rules,
     keywords: [...keywords],
     report: { approximations: [...new Set(report.approximations)], unsupported: [...new Set(report.unsupported)] },
@@ -641,6 +670,7 @@ export function renderTreeSitterNative(imported, { annotate } = {}) {
   const lines = [`(grammar (start ${enc(imported.start)}) (matching longest))`];
   for (const extra of imported.extras) lines.push(`(extra ${extra})`);
   for (const group of imported.conflicts) lines.push(`(conflict ${group.map(enc).join(' ')})`);
+  lines.push(...(imported.scanners ?? []));
   for (const rule of imported.rules) {
     lines.push(`(rule ${[enc(rule.name), rule.kind, rule.body, ...fields(rule)].join(' ')})`);
   }
