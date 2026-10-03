@@ -4,6 +4,7 @@
 
 use std::cell::RefCell;
 use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -133,27 +134,48 @@ impl Executor<'_> {
         // where `bounded_type` over `impl A + B` outranks `impl` over `A + B`)
         // changes the trees grown from it, so the next pass grows them again;
         // at most one pass per end changes a tree, for an order that is not
-        // transitive.
+        // transitive. A pass grows only the results the pass before added or
+        // changed: the trees grown from the others are already merged, so a
+        // chain of n operators takes n passes of one seed each, not n of n.
         let mut current = ResultSet::new(self.longest_tokens);
         for result in first {
             current.set(result);
         }
+        let mut seed = current.items.clone();
         let mut settled = 0;
         loop {
-            entry.borrow_mut().seed.clone_from(&current.items);
+            entry.borrow_mut().seed = seed;
             let mut merged = current.clone();
             let mut changed = false;
+            let mut renewed: Vec<(usize, State)> = Vec::new();
             for result in self.rule_body(rule, position, state, in_token)? {
+                let key = result.key();
                 let existing = merged
                     .get(&result)
-                    .map(|existing| existing.children.clone());
+                    .map(|existing| (existing.children.clone(), existing.ambiguous));
                 match existing {
-                    Some(children) if same_children(&children, &result.children) => {
+                    Some((children, _)) if same_children(&children, &result.children) => {
                         merged.set(result);
                     }
-                    Some(_) => changed |= merged.add(result),
+                    Some((_, ambiguous)) => {
+                        if merged.add(result) {
+                            changed = true;
+                            renewed.push(key);
+                        } else if let Some(tied) = merged
+                            .get_key(&key)
+                            .filter(|kept| kept.ambiguous && !ambiguous)
+                        {
+                            // A tie with a tree of an earlier pass is the
+                            // ambiguity the rule body marks when both trees
+                            // meet in one pass.
+                            let marked = self.ambiguous_result(rule, tied.clone(), in_token);
+                            merged.set(marked);
+                            renewed.push(key);
+                        }
+                    }
                     None => {
                         merged.add(result);
+                        renewed.push(key);
                     }
                 }
             }
@@ -168,8 +190,46 @@ impl Executor<'_> {
                     break;
                 }
             }
+            let mut listed = HashSet::new();
+            seed = renewed
+                .into_iter()
+                .filter(|key| listed.insert(key.clone()))
+                .filter_map(|key| current.get_key(&key).cloned())
+                .collect();
         }
         Ok(current.items)
+    }
+
+    /// `result` of `rule`, which a tie marked ambiguous, marked where
+    /// `rule_body` marks it: on the node the rule builds, else on the result,
+    /// unless a conflict declares the silent rule's ambiguity.
+    fn ambiguous_result(&self, rule: &Rule, result: Res, in_token: bool) -> Res {
+        if matches!(rule.kind, RuleKind::Silent) || in_token {
+            let expected = matches!(rule.kind, RuleKind::Silent)
+                && self.program.conflicts.contains(&*rule.node_kind);
+            return Res {
+                ambiguous: !expected,
+                ..result
+            };
+        }
+        let children = result
+            .children
+            .iter()
+            .map(|child| {
+                if child.ty == TreeType::Node {
+                    let mut node = (**child).clone();
+                    node.ambiguous = true;
+                    Rc::new(node)
+                } else {
+                    Rc::clone(child)
+                }
+            })
+            .collect();
+        Res {
+            children: children_of(children),
+            ambiguous: false,
+            ..result
+        }
     }
 
     fn rule_body(

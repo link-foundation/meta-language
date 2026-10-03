@@ -1430,12 +1430,16 @@ export class Executor {
     // where `bounded_type` over `impl A + B` outranks `impl` over `A + B`)
     // changes the trees grown from it, so the next pass grows them again; at
     // most one pass per end changes a tree, for an order that is not
-    // transitive.
+    // transitive. A pass grows only the results the pass before added or
+    // changed: the trees grown from the others are already merged, so a
+    // chain of n operators takes n passes of one seed each, not n of n.
     let current = new Map(first.map((result) => [resultKey(result), result]));
+    let seed = [...current.values()];
     for (let settled = 0; ;) {
-      entry.seed = [...current.values()];
+      entry.seed = seed;
       const merged = new Map(current);
       let changed = false;
+      const renewed = new Set();
       for (const result of this.ruleBody(rule, position, state, inToken)) {
         const key = resultKey(result);
         const existing = merged.get(key);
@@ -1444,13 +1448,33 @@ export class Executor {
           continue;
         }
         addResult(merged, result, this.longestTokens);
+        const kept = merged.get(key);
+        if (kept === existing) continue;
+        // A tie with a tree of an earlier pass is the ambiguity the rule body
+        // marks when both trees meet in one pass.
+        if (kept !== result) merged.set(key, this.ambiguousResult(rule, existing, inToken));
+        renewed.add(key);
         if (existing && merged.get(key) === result) changed = true;
       }
       const grew = merged.size > current.size;
       current = merged;
       if (!grew && (!changed || ++settled > current.size)) break;
+      seed = [...renewed].map((key) => current.get(key));
     }
     return [...current.values()];
+  }
+
+  // `result` of `rule` marked ambiguous where ruleBody marks it: on the node
+  // the rule builds, else on the result, unless a conflict declares the
+  // silent rule's ambiguity.
+  ambiguousResult(rule, result, inToken) {
+    if (rule.kind === 'silent' || inToken) {
+      if (rule.kind === 'silent' && this.program.conflicts.has(rule.nodeKind)) return result;
+      return copyResult(result, { ambiguous: true });
+    }
+    return copyResult(result, {
+      children: result.children.map((child) => (child.type === 'node' ? copyNode(child, { ambiguous: true }) : child)),
+    });
   }
 
   ruleBody(rule, position, state, inToken) {

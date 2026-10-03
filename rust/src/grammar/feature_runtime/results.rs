@@ -253,7 +253,7 @@ impl Res {
         }
     }
 
-    fn key(&self) -> (usize, State) {
+    pub(super) fn key(&self) -> (usize, State) {
         (self.end, self.state.clone())
     }
 }
@@ -326,6 +326,11 @@ impl<'c> ResultSet<'c> {
         self.index
             .get(&result.key())
             .map(|&position| &self.items[position])
+    }
+
+    /// The result of the end and state `key`, if any.
+    pub(super) fn get_key(&self, key: &(usize, State)) -> Option<&Res> {
+        self.index.get(key).map(|&position| &self.items[position])
     }
 
     /// Replaces the result of the same end and state in place, or appends.
