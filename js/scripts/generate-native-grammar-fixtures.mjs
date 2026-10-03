@@ -35,6 +35,10 @@ const JSON5_ESCAPE = 'JSON5 1.0.0 section 5.1 (Escapes) reads \\0 before a non-d
 const SCHEME_BYTEVECTOR = 'R7RS small section 6.9 (Bytevectors) and section 7.1.2 (External representations) read a bytevector as #u8( followed by its bytes and ); tree-sitter-scheme 0.24.7 reads only the R6RS #vu8( form and recovers from it.';
 const SCHEME_DATUM_LABEL = 'R7RS small section 2.4 (Datum labels) reads #<n>=<datum> as a labelled datum and #<n># as a reference to it; tree-sitter-scheme 0.24.7 recovers from them.';
 
+// The Racket Reference reader syntax tree-sitter-racket 0.25.0 recovers from.
+const RACKET_CHARACTER_NEWLINE = 'Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.';
+const RACKET_SYMBOL_NEWLINE = 'Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.';
+
 export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'json',
@@ -439,6 +443,86 @@ export const NATIVE_GRAMMARS = Object.freeze([
       '#e', '#q', '#:', '#;', '#!', '\'', '`', ',', ',@', '#\'', '#`', '#,', '#,@', '#(', '#vu8(', '#vu8', '#U8(1)',
       '#0=', '#0', '#u8', '|a', 'a|b', '#;)', '\' )', '#u8 (1)', '#vu8 (1)', '#t#', '(a))', '((a)', '#|#|#||#|#',
       '#\\x41 )', '#e#',
+    ],
+  },
+  {
+    id: 'racket',
+    language: 'Racket',
+    grammar: 'parity/grammars/native/racket.lino',
+    oracle: 'tree-sitter-racket 0.25.0',
+    sources: [
+      'https://docs.racket-lang.org/reference/reader.html',
+      'https://docs.rs/crate/tree-sitter-racket/0.25.0/source/grammar.js',
+    ],
+    // The runtime skips a leading byte order mark before the oracle root
+    // starts. White space, comment text, string text and the here string
+    // lines are tokens the oracle keeps inside their node without a row.
+    hidden: ['byte_order_mark'],
+    anonymous: [
+      'whitespace', 'comment_text', 'string_text', 'regex_prefix', 'hash_prefix', 'graph_mark', 'here_terminator',
+      'here_newline', 'here_line', 'here_end',
+    ],
+    extras: [],
+    matches: [
+      '', 'a', ' a', 'a ', '(a b c)', '(define (f x) (+ x 1))', '[a]', '{a}', '()', '(a . b)', '(.)', '(. a)', '(.a)',
+      '.', '...', '(a ... b)', '(1 . 2)', '(a .b)', '(a. b)', '( . )', '#t', '#f', '#true', '#false', '#T', '#F',
+      '#TRUE', '#fals', '#tx', '#f(1)', '#t(1)', '#fl(1)', '#fx(1)', '#fl3(1)', '#fx2[1 2]', '#(1 2)', '#3(1)', '#[a]',
+      '#{a}', '#12(1)', '#123456789(1)', '"abc"', '""', '"a\\nb"', '"\\a\\b\\t\\n\\v\\f\\r\\e"', '"\\"\\\'\\\\"',
+      '"\\1"', '"\\12"', '"\\123"', '"\\1234"', '"\\x4"', '"\\x41"', '"\\x414"', '"\\u41"', '"\\u0041"', '"\\u00411"',
+      '"\\U41"', '"\\U0001F600"', '"\\U000000410"', '"a\\\nb"', '"a\\\r\nb"', '"a\\\rb"', '"a\nb"', '"λ"', '#"abc"',
+      '#""', '#"\\n"', '#rx"a"', '#px"a+"', '#rx#"a"', '#px#"a"', '#rx"\\\\d"', '#<<EOF\nabc\nEOF',
+      '#<<EOF\nabc\nEOF\n', '#<<EOF\nEOF', '#<<\n\n', '#<<\nabc\n', '#<< EOF\nx\n EOF', '#<<EOF\r\nEOF\r',
+      '(#<<A\nx\nA\n)', '#<<A\n\nx\ny z\nA', '#<<EOF\nab\ncd\nEOF\n(a)', '#<<A\nB\nA\n#<<B\nA\nB', '#\\a', '#\\space',
+      '#\\nul', '#\\null', '#\\nulx', '#\\backspace', '#\\tab', '#\\newline', '#\\linefeed', '#\\vtab', '#\\page',
+      '#\\return', '#\\rubout', '#\\101', '#\\10', '#\\1011', '#\\u41', '#\\u0041', '#\\u00411', '#\\U41',
+      '#\\U0001F600', '#\\λ', '#\\(', '#\\ ', '#\\\r', '#\\\t', '#\\nx', '#\\uz', '#\\Space', '#\\x41', '1', '-1', '+1',
+      '1.5', '.5', '1.', '1e5', '1/2', '1+2i', '+i', '-i', '+inf.0', '-nan.0', '+inf.f', '+inf.t', '1.5t3', '#e1.5',
+      '#i1', '#x1F', '#b101', '#o17', '#d10', '#x#i1F', '#e#x10', '1#', '1#.#', '1@2', '1abc', '1#a', '#e1x', '#x1.5',
+      '#xff/a', '1/2/3', '+inf.0i', '1+inf.0i', '1-2.5i', '1e-3', '1s5', '1l5', '1d5', '1f5', '#x1s2', '1+i', '+1/2i',
+      '1#/2#', '1.5e+3', '+-1', '1..', '1e', 'e5', '-', '+', '->x', '1+', 'inf.0', '+INF.0', '+nan.F', '#i+inf.0',
+      '#x+inf.t', '#d#e1', '#E1', '#I1', '#B1', '#O1', '#X1', '#D1', 'abc', 'a-b', 'λ', '日本', '|a b|', 'a|b c|d',
+      '|a\nb|', 'a\\ b', '\\a', '#%app', '#%', '#ci', '#cs', '#CI', '#cix', 'a#b', 'a.b', '+a', '1a', 'a1', '\ufeffa',
+      'a\u0085b', 'a\u00a0b', 'a\u2028b', 'a\u3000b', '#:key', '#:', '#:a#b', '#:|a b|', '#&a', '#& a', '#&#&a', '#0=a',
+      '#0#', '#12=(a . #12#)', '#0= a', '#12345678#', '#s(a 1)', '#s[a]', '#hash()', '#hash((a . 1))', '#hasheq()',
+      '#hasheqv()', '#hashalw()', '#HASH()', '#HashEq()', '\'a', '\' a', '`a', ',a', ',@a', ', @a', '#\'a', '#`a',
+      '#,a', '#,@a', '#, @a', '\'()', '`(a ,b ,@c)', '\'#;b a', '\' ; c\n a', '\'#|c|#a', '; c', '; c\n', 'a ; c\nb',
+      ';', '; c\r\n', '; c\u2028x', '#| a |#', '#| a #| b |# c |#', '#||#', '#|||#', '#| | # |#', '#|\n|#', '#;a',
+      '#; a b', '#;#;a b c', '#;(a b) c', '#!racket', '#lang racket', '#lang racket/base', '#lang racket/', '#lang a',
+      '#!/usr/bin/env racket', '#! x', '#!/x\\\ny', '#!/x\\\n', '#reader x', '#reader(a)', '#readerx',
+      '#lang racket\n(define x 1)', 'a"b"', '"a"b', '1"a"', 'a(b)c', 'a\'b', 'a`b', 'a,b', '#t#f', 'a;b', 'a#|b|#',
+      '(a)(b)', '((a))', '[(a)]', '{[()]}', '(a\tb)', '(\n)', '( a )', '(a . )', '#ci Apple', '#CI a', '#cs a',
+      '#ci#cs Apple', '#ci(a B)', '#cI a', '#Cs (a)', '#[1 2]', '#{1}', '#fl[1.0]', '#s[a 1]', '#! comment\n1',
+      '#!/bin/racket\n1', '#hash[(a . 1)]', '#fl3(1.0)', '#Fl(1.0)', '#cia', '#csx',
+    ],
+    divergences: [
+      { source: '#\\\n', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '(#\\\n)', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '#\\\n a', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '\'#\\\n', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '[#\\\n]', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '#(#\\\n)', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '(a #\\\n b)', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '#\\\n;c', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '#&#\\\n', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '#;#\\\n a', reason: RACKET_CHARACTER_NEWLINE },
+      { source: '#\\\n#\\\n', reason: RACKET_CHARACTER_NEWLINE },
+      { source: 'a\\\nb', reason: RACKET_SYMBOL_NEWLINE },
+      { source: '\\\n', reason: RACKET_SYMBOL_NEWLINE },
+      { source: '(a\\\n)', reason: RACKET_SYMBOL_NEWLINE },
+      { source: '\\\na', reason: RACKET_SYMBOL_NEWLINE },
+      { source: 'a\\\n\\\nb', reason: RACKET_SYMBOL_NEWLINE },
+      { source: '|a|\\\n', reason: RACKET_SYMBOL_NEWLINE },
+      { source: '#:a\\\nb', reason: RACKET_SYMBOL_NEWLINE },
+      { source: '#%a\\\n', reason: RACKET_SYMBOL_NEWLINE },
+      { source: '\'a\\\n', reason: RACKET_SYMBOL_NEWLINE },
+      { source: '`(a\\\nb)', reason: RACKET_SYMBOL_NEWLINE },
+      { source: 'a\\\n|b|', reason: RACKET_SYMBOL_NEWLINE },
+    ],
+    rejections: [
+      '#b2', '#o8', ')', '(', ']', '}', '(]', '[)', '(a', 'a)', '"a', '"', '"\\', '"\\q"', '#|', '#| a', '|#', '#',
+      '#\\', '#e', '#q', '#;', '\'', '`', ',', ',@', '#\'', '#`', '#,', '#,@', '#(', '#fl', '#flz', '#fx', '#s', '#sa',
+      '#hash', '#hashe()', '#0=', '#<<', '#<<EOF', '#<<EOF\n', '#<<EOF\nabc', '|a', 'a\\', '#lang', '#lang  racket',
+      '#lang /a', '#!', '#!(a)', '#reader', '#&', '#rx', '#rx a', '#123456789#', '#u8(1)', '#x', '#b', '#<a', '#%(',
     ],
   },
 ]);
