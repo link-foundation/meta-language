@@ -51,26 +51,38 @@ export function grammarSourceOf(native) {
 }
 
 /**
- * The cases of the pinned upstream test corpus of a source, `{ file, title,
- * source }` in corpus order. A tree-sitter corpus case is a `===` line, its
- * title, a closing `===` line, the source, a `---` line and the expected
- * tree; the source keeps one line break at its end.
+ * The cases of one tree-sitter corpus file, `{ title, source }` in file
+ * order. A case is a `===` line, its title, a closing `===` line, the source,
+ * a `---` line and the expected tree. Like `tree-sitter test`, the divider is
+ * the longest line of dashes before the next case, the last of equally long
+ * ones, so a source may itself hold shorter `---` lines (Cargo script
+ * frontmatter, YAML documents); of the line breaks that end the source, one
+ * stays.
  */
-export function corpusCases(entry) {
-  const { files } = JSON.parse(sourceText(entry.corpus));
+export function corpusFileCases(corpus) {
+  const lines = corpus.split('\n');
+  const header = (index) => /^={3,}/u.test(lines[index] ?? '') && /^={3,}/u.test(lines[index + 2] ?? '');
   const cases = [];
-  for (const [file, corpus] of Object.entries(files)) {
-    const lines = corpus.split('\n');
-    for (let index = 0; index < lines.length; index += 1) {
-      if (!/^={3,}/u.test(lines[index]) || !/^={3,}/u.test(lines[index + 2] ?? '')) continue;
-      const start = index + 3;
-      let end = start;
-      while (end < lines.length && !/^-{3,}\s*$/u.test(lines[end])) end += 1;
-      cases.push({ file, title: lines[index + 1].trim(), source: lines.slice(start, end).join('\n').replace(/\n+$/u, '\n') });
-      index = end;
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!header(index)) continue;
+    const start = index + 3;
+    let next = start;
+    while (next < lines.length && !header(next)) next += 1;
+    let divider = -1;
+    for (let line = start; line < next; line += 1) {
+      if (/^-{3,}\s*$/u.test(lines[line]) && (divider < 0 || lines[line].length >= lines[divider].length)) divider = line;
     }
+    const end = divider < 0 ? next : divider;
+    cases.push({ title: lines[index + 1].trim(), source: lines.slice(start, end).join('\n').replace(/\n+$/u, '\n') });
+    index = next - 1;
   }
   return cases;
+}
+
+/** The cases of the pinned upstream test corpus of a source, `{ file, title, source }` in corpus order. */
+export function corpusCases(entry) {
+  const { files } = JSON.parse(sourceText(entry.corpus));
+  return Object.entries(files).flatMap(([file, corpus]) => corpusFileCases(corpus).map((item) => ({ file, ...item })));
 }
 
 /**

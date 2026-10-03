@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { compileGrammar } from '../src/grammar.js';
 import { parseGrammarLinks } from '../src/grammar-links.js';
 import { nativeOracleKinds } from '../scripts/build-language-catalog.mjs';
+import { corpusFileCases } from '../scripts/import-native-grammars.mjs';
 import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 
 const [language, grammarPath, ...corpora] = process.argv.slice(2);
@@ -21,22 +22,7 @@ const text = readFileSync(grammarPath, 'utf8');
 const compiled = compileGrammar(parseGrammarLinks(text));
 const options = { hidden: list('HIDDEN'), anonymous: list('ANONYMOUS'), extras: list('EXTRAS'), oracleKinds: nativeOracleKinds(text) };
 
-// The cases of a tree-sitter corpus file: a `===` header line, its title, a
-// closing `===` line, the source, a `---` line and the expected tree.
-export function corpusCases(corpus) {
-  const lines = corpus.split('\n');
-  const cases = [];
-  for (let index = 0; index < lines.length; index += 1) {
-    if (!/^={3,}/.test(lines[index]) || !/^={3,}/.test(lines[index + 2] ?? '')) continue;
-    const title = lines[index + 1];
-    const start = index + 3;
-    let end = start;
-    while (end < lines.length && !/^-{3,}\s*$/.test(lines[end])) end += 1;
-    cases.push({ title, source: lines.slice(start, end).join('\n').replace(/\n+$/, '\n') });
-    index = end;
-  }
-  return cases;
-}
+export const corpusCases = corpusFileCases;
 
 const totals = {};
 for (const corpus of corpora) {
