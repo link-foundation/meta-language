@@ -14,12 +14,13 @@ grammar is checked against the pinned tree-sitter grammar it replaced as its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: seven catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme and
-Racket, have a native merged grammar, and it is their default parser in both
-runtimes; see [default parse](#default-parse). tree-sitter-json,
+Status: eight catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme, Racket
+and C, have a native merged grammar, and it is their default parser in both
+runtimes; see [default parse](#default-parse). The C grammar is the first that
+the [automatic import pipeline](#imported-grammars) writes. tree-sitter-json,
 tree-sitter-ini, tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard,
-tree-sitter-scheme and tree-sitter-racket remain as pinned oracles; see
-[current limits](#current-limits).
+tree-sitter-scheme, tree-sitter-racket and tree-sitter-c remain as pinned
+oracles; see [current limits](#current-limits).
 
 ## Format
 
@@ -189,6 +190,68 @@ and
 - Whitespace, comment text, string text and the here string lines are trivia
   leaves, so the tree keeps every byte.
 
+## Imported grammars
+
+[`js/scripts/import-native-grammars.mjs`](../../js/scripts/import-native-grammars.mjs)
+is the automatic merge pipeline. It reads each pinned upstream grammar of
+[`parity/grammars/sources.json`](../../parity/grammars/sources.json), which
+records the package, repository, revision, path, license and SHA-256 of the
+gzipped copy under
+[`parity/grammars/sources/`](../../parity/grammars/sources/), and fails when
+a copy does not match its hash. For each grammar it:
+
+- translates the tree-sitter `grammar.json` into an executable native grammar
+  with `importTreeSitterNative`
+  ([`tree-sitter-native.js`](../../js/src/grammar-importers/tree-sitter-native.js)):
+  every pattern becomes native classes, sequences, choices and repeats, and
+  precedence, associativity, dynamic precedence, tokens, fields, aliases,
+  extras, conflicts and the word rule keep their tree-sitter meaning in the
+  executor (see [feature union](feature-union.md#executor));
+- renames every rule to readable English through
+  [`parity/naming/grammar-name-expansions.json`](../../parity/naming/grammar-name-expansions.json),
+  which holds each word replacement and each name or concept a reviewer
+  decided by hand with its reason; the tree-sitter name stays as a
+  `source-names` alias;
+- gives every rule a concept record, shared by name with the other native
+  grammars only where the construct means the same;
+- writes the merge report
+  [`parity/grammars/merge-reports/<language>.json`](../../parity/grammars/merge-reports/):
+  the sources, the rule count, the keywords, every rename and expanded word,
+  the shared and generated concepts, and the constructs it approximated or
+  could not import.
+
+A hand edit of an imported grammar is a decision in the expansions file, not
+an edit of the generated `.lino`. `npm run check:native-imports` runs the
+pipeline with `--check` and fails on any drift, and CI runs it.
+
+For C the source is the `src/grammar.json` of
+[tree-sitter-c 0.24.2](https://github.com/tree-sitter/tree-sitter-c/blob/b780e47fc780ddc8da13afa35a3f4ed5c157823d/src/grammar.json)
+(crates.io tree-sitter-c 0.24.2, revision
+`b780e47fc780ddc8da13afa35a3f4ed5c157823d`, MIT):
+
+- [`parity/grammars/native/c.lino`](../../parity/grammars/native/c.lino) has
+  183 rules, 106 keywords and the 17 conflicts tree-sitter-c declares. The
+  [merge report](../../parity/grammars/merge-reports/c.json) lists 93
+  renamed rules and 24 expanded words, such as `preproc_include` to
+  `preprocessor_include` and `sizeof` to `size_of`, and no approximated or
+  unsupported construct. tree-sitter-c has no external scanner.
+- A keyword is lexed wherever the parse admits it, as the tree-sitter lexer
+  does, so `typedef` is an identifier only where no keyword may stand
+  (`x = typedef;`); `typedef;` and `if;` are rejected
+  ([keyword lexing](feature-union.md#executor)).
+- The oracle's LR conflicts are settled as its generated parser settles them:
+  a conflict between silent rules is not an ambiguity (`a;` is an expression
+  statement), and a shift/reduce choice follows precedence and associativity
+  (a case statement keeps the statements after it). Both executors parse every
+  corpus source with no ambiguity.
+- [`parity/fixtures/native-grammars/c.json`](../../parity/fixtures/native-grammars/c.json)
+  holds 100 matches (the 85 cases of the upstream `test/corpus` at the same
+  revision and 15 more), no divergence and 30 rejections.
+- The ISO C standard is not a merged source yet: the grammar accepts what
+  tree-sitter-c accepts, GNU and Microsoft extensions included.
+- Whitespace, line continuations, comments, string text and the line breaks
+  of preprocessor directives are leaves, so the tree keeps every byte.
+
 ## Concepts
 
 Every rule has a readable English name and names a canonical concept record
@@ -200,7 +263,7 @@ lists the rule as a `native:<language>` source alias.
 
 A construct that means the same in two or more native grammars names one
 shared concept: a JSON `pair` and a JSON5 `member` are both `grammar.member`,
-and a string is `grammar.string` in CSV, JSON, JSON5, Scheme and Racket.
+and a string is `grammar.string` in CSV, JSON, JSON5, Scheme, Racket and C.
 Lookalikes stay apart. A Scheme `list` is `grammar.linked-list`, not the
 `grammar.list` of a JSON `array`. A JSON `object` is `grammar.object`, not the
 `grammar.racket.hash-table` of a Racket `hash`. A construct only one language has
@@ -271,6 +334,7 @@ rows, and a Rust suite. Both record evidence for the language's ledger row:
 | JSON5 | [`issue-195-grammar-native-json5.test.js`](../../js/tests/issue-195-grammar-native-json5.test.js) | [`issue_195_grammar_native_json5.rs`](../../rust/tests/unit/issue_195_grammar_native_json5.rs) | `I195-GRAMMAR-NATIVE-JSON5` |
 | Scheme | [`issue-195-grammar-native-scheme.test.js`](../../js/tests/issue-195-grammar-native-scheme.test.js) | [`issue_195_grammar_native_scheme.rs`](../../rust/tests/unit/issue_195_grammar_native_scheme.rs) | `I195-GRAMMAR-NATIVE-SCHEME` |
 | Racket | [`issue-195-grammar-native-racket.test.js`](../../js/tests/issue-195-grammar-native-racket.test.js) | [`issue_195_grammar_native_racket.rs`](../../rust/tests/unit/issue_195_grammar_native_racket.rs) | `I195-GRAMMAR-NATIVE-RACKET` |
+| C | [`issue-195-grammar-native-c.test.js`](../../js/tests/issue-195-grammar-native-c.test.js) | [`issue_195_grammar_native_c.rs`](../../rust/tests/unit/issue_195_grammar_native_c.rs) | `I195-GRAMMAR-NATIVE-C` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -323,8 +387,8 @@ writes the file with the per-grammar fixtures.
   nodes of an invalid input are placed where the native executor repairs it,
   not where tree-sitter's LR recovery places them; the two are not compared.
 - tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
-  tree-sitter-json5-orchard, tree-sitter-scheme and tree-sitter-racket no
-  longer back a default parse, so they are development files only: the Rust
+  tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket and
+  tree-sitter-c no longer back a default parse, so they are development files only: the Rust
   crates are `[dev-dependencies]` that the `pinned_*_oracle_gives_the_fixture`
   tests load, the vendored CSV parser is no longer compiled into or published
   with the crate, and their WebAssembly builds and licenses are in
@@ -362,6 +426,9 @@ writes the file with the per-grammar fixtures.
   than an flvector or fxvector, and `#\nx` reads as the character `#\n`
   followed by the symbol `x`, where section 1.3.14 reads no character whose
   letter is followed by another letter.
+- The C grammar has one source, tree-sitter-c; inputs the C standard and
+  tree-sitter-c read differently are outside the corpus until the standard
+  is merged.
 - No other catalog language has a native merged grammar yet. The open rows are
   `I195-GRAMMAR-NATIVE-MERGED`, `I195-GRAMMAR-LANGUAGE-CATALOG` and
   `I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED` in the

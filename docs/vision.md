@@ -679,14 +679,19 @@ gaps against the target above:
   JSON5
   ([`parity/grammars/native/json5.lino`](../parity/grammars/native/json5.lino)),
   Scheme
-  ([`parity/grammars/native/scheme.lino`](../parity/grammars/native/scheme.lino))
-  and Racket
-  ([`parity/grammars/native/racket.lino`](../parity/grammars/native/racket.lino)),
-  which are checked against tree-sitter-json, tree-sitter-ini,
-  tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard,
-  tree-sitter-scheme and tree-sitter-racket but reject invalid input instead
-  of recovering. The default JSON, INI, Diff, CSV, JSON5, Scheme and Racket
-  parses still run those tree-sitter grammars.
+  ([`parity/grammars/native/scheme.lino`](../parity/grammars/native/scheme.lino)),
+  Racket
+  ([`parity/grammars/native/racket.lino`](../parity/grammars/native/racket.lino))
+  and C
+  ([`parity/grammars/native/c.lino`](../parity/grammars/native/c.lino), the
+  first written by the automatic import pipeline
+  [`js/scripts/import-native-grammars.mjs`](../js/scripts/import-native-grammars.mjs)).
+  These eight are the default parsers of their languages in both runtimes,
+  with automatic error recovery, and are checked against tree-sitter-json,
+  tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
+  tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket and
+  tree-sitter-c, which are now development dependencies only. Every other
+  catalog language still parses with its tree-sitter grammar.
 - **Incomplete grammar expression model.** The model in
   [`rust/src/grammar/mod.rs`](../rust/src/grammar/mod.rs) covers:
   - terminals and non-terminals;
