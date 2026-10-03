@@ -8710,6 +8710,20 @@
       }
     },
     {
+      "id": "published crate src/data/native-grammars/*.lino@include",
+      "category": "published",
+      "scope": "crate",
+      "name": "src/data/native-grammars/*.lino",
+      "declaredIn": [
+        "rust/Cargo.toml"
+      ],
+      "pinned": "include",
+      "compare": "unversioned",
+      "source": {
+        "type": "none"
+      }
+    },
+    {
       "id": "published crate src/data/language-trigrams.json@include",
       "category": "published",
       "scope": "crate",

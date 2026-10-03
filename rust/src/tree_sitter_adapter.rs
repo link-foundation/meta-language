@@ -73,12 +73,16 @@ mod cmake_grammar {
 }
 
 use crate::line_index::LineIndex;
+use crate::native_grammar_parser::{NativeNode, is_native_grammar, parse_native};
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, Point,
     SourceSpan,
 };
 
 pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Option<LinkNetwork> {
+    if let Some(id) = native_grammar_for_language(language) {
+        return Some(network_from_native(text, language, configuration, id));
+    }
     let grammar = grammar_for_language(language)?;
     let mut parser = Parser::new();
     parser.set_language(&grammar).ok()?;
@@ -94,6 +98,16 @@ pub fn parse_incremental(
     language: &str,
     configuration: ParseConfiguration,
 ) -> Option<LinkNetwork> {
+    if let Some(id) = native_grammar_for_language(language) {
+        // The native executor parses the whole edited text.
+        let edited_text = apply_text_edit(old_text, range, replacement)?;
+        return Some(network_from_native(
+            &edited_text,
+            language,
+            configuration,
+            id,
+        ));
+    }
     let grammar = grammar_for_language(language)?;
     let edited_text = apply_text_edit(old_text, range, replacement)?;
     let mut parser = Parser::new();
@@ -116,6 +130,30 @@ pub fn parse_incremental(
         configuration,
         &parsed,
     ))
+}
+
+/// Builds the network of `text` from the projected tree of the native
+/// grammar `id`, as `network_from_tree` builds it from a tree-sitter tree.
+fn network_from_native(
+    text: &str,
+    language: &str,
+    configuration: ParseConfiguration,
+    id: &str,
+) -> LinkNetwork {
+    let (mut network, document) = LinkNetwork::new_parse_document(text, language);
+    let root = parse_native(id, text);
+    let lines = LineIndex::new(text);
+    let context = ConvertContext::new(
+        text,
+        &lines,
+        language,
+        configuration,
+        SpanOffset::zero(),
+        text.len(),
+    );
+    convert_native_root(&mut network, document, &root, context);
+    network.attach_embedded_regions(document, text, language, configuration);
+    network
 }
 
 fn network_from_tree(
@@ -213,8 +251,21 @@ pub fn parse_embedded_region_into(
     span: SourceSpan,
     configuration: ParseConfiguration,
 ) -> Option<LinkId> {
-    let grammar = grammar_for_language(language)?;
     let parse_text = embedded_parse_text(text, language);
+    if let Some(id) = native_grammar_for_language(language) {
+        let root = parse_native(id, parse_text.as_ref());
+        let lines = LineIndex::new(parse_text.as_ref());
+        let context = ConvertContext::new(
+            parse_text.as_ref(),
+            &lines,
+            language,
+            configuration,
+            SpanOffset::new(span.byte_range().start(), span.start_point()),
+            text.len(),
+        );
+        return Some(convert_native_root(network, region, &root, context));
+    }
+    let grammar = grammar_for_language(language)?;
     let mut parser = Parser::new();
     parser.set_language(&grammar).ok()?;
     let parsed = parser.parse(parse_text.as_ref(), None)?;
@@ -251,6 +302,111 @@ fn convert_root(
         context,
     );
     root_id
+}
+
+/// Converts the projected root of a native grammar below `parent`, with the
+/// text outside the root retained as gap tokens beside it, as `convert_root`
+/// converts a tree-sitter root.
+fn convert_native_root(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    root: &NativeNode,
+    context: ConvertContext<'_>,
+) -> LinkId {
+    insert_gap_token(network, parent, 0, root.start, context);
+    let root_id = convert_native_node(network, parent, root, context);
+    insert_gap_token(network, parent, root.end, context.source_len, context);
+    root_id
+}
+
+/// Converts a projected native node as `convert_node_with` converts a
+/// tree-sitter node, mirroring `convertGrammarNode` over the native adapter
+/// of `js/src/native-grammar-parser.js`.
+fn convert_native_node(
+    network: &mut LinkNetwork,
+    parent: LinkId,
+    node: &NativeNode,
+    context: ConvertContext<'_>,
+) -> LinkId {
+    let flags = native_flags(node);
+    let start = node.start.min(context.source_len);
+    let end = node.end.min(context.source_len);
+    let node_id = network.insert_link(
+        [parent],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Syntax)
+            .with_named(node.named)
+            .with_term(&node.term)
+            .with_language(context.language)
+            .with_span(span_for_range(context.lines, start, end, context.offset))
+            .with_flags(flags),
+    );
+
+    if node.children.is_empty() {
+        if !node.is_missing && start < end {
+            let span = span_for_range(context.lines, start, end, context.offset);
+            let token = network.insert_link(
+                [node_id],
+                LinkMetadata::new()
+                    .with_link_type(LinkType::Token)
+                    .with_named(node.named)
+                    .with_term(&context.text[start..end])
+                    .with_language(context.language)
+                    .with_span(span)
+                    .with_flags(flags),
+            );
+            if flags.is_extra() {
+                network.attach_trivia(
+                    node_id,
+                    token,
+                    span,
+                    context.configuration.trivia_attachment_policy(),
+                );
+            }
+        }
+        return node_id;
+    }
+
+    let mut covered_until = node.start;
+    for (child, field) in &node.children {
+        if context.has_synthetic_suffix() && child.start >= context.source_len {
+            break;
+        }
+        insert_gap_token(network, node_id, covered_until, child.start, context);
+        let child_id = convert_native_node(network, node_id, child, context);
+        if let Some(label) = field {
+            network.insert_field(node_id, label, child_id);
+        }
+        covered_until = covered_until.max(child.end.min(context.source_len));
+    }
+    insert_gap_token(network, node_id, covered_until, node.end, context);
+    node_id
+}
+
+const fn native_flags(node: &NativeNode) -> LinkFlags {
+    let mut flags = LinkFlags::clean();
+    if node.is_error {
+        flags = flags.with_error();
+    }
+    if node.has_error || node.is_error || node.is_missing {
+        flags = flags.with_containing_error();
+    }
+    if node.is_missing {
+        flags = flags.with_missing();
+    }
+    if node.is_extra {
+        flags = flags.with_extra();
+    }
+    flags
+}
+
+/// Returns the native grammar id the language catalog records as the primary
+/// default grammar of a language name or alias, when it is a native grammar.
+fn native_grammar_for_language(language: &str) -> Option<&'static str> {
+    let grammar = crate::language_catalog::language_entry(language)?
+        .grammars
+        .first()?;
+    is_native_grammar(&grammar.id).then_some(grammar.id.as_str())
 }
 
 /// Selects the primary default grammar the language catalog records for a

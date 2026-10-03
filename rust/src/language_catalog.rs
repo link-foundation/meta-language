@@ -15,11 +15,13 @@ const LANGUAGE_CATALOG_JSON: &str = include_str!("data/language-catalog.json");
 /// A grammar that parses a registered language by default.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GrammarProvenance {
-    /// Grammar id in the grammar lock, such as `javascript` or `markdown_inline`.
+    /// Grammar id in the grammar lock, such as `javascript` or `markdown_inline`,
+    /// or a native grammar id of the catalog, such as `native-json`.
     pub id: String,
     /// Exact grammar version (crate version or pinned upstream revision).
     pub version: String,
-    /// SHA-256 of the generated `parser.c` both runtimes compile.
+    /// SHA-256 of the generated `parser.c` both runtimes compile, or of a
+    /// native grammar's Links Notation text.
     pub parser_sha256: String,
 }
 
@@ -98,10 +100,102 @@ pub fn grammar_provenance(language: &str) -> &'static [GrammarProvenance] {
     language_entry(language).map_or(&[], |entry| entry.grammars.as_slice())
 }
 
+/// Returns the pinned tree-sitter grammars a language's native default
+/// grammar replaced, which stay its oracles; empty for a language without a
+/// native default grammar.
+#[must_use]
+pub fn oracle_grammar_provenance(language: &str) -> &'static [GrammarProvenance] {
+    static ORACLES: OnceLock<Vec<(String, Vec<GrammarProvenance>)>> = OnceLock::new();
+    let Some(entry) = language_entry(language) else {
+        return &[];
+    };
+    ORACLES
+        .get_or_init(|| {
+            catalog_value()["languages"]
+                .as_array()
+                .expect("language catalog lists languages")
+                .iter()
+                .filter(|language| language["oracleGrammars"].is_array())
+                .map(|language| {
+                    (
+                        string(&language["name"]),
+                        provenance(&language["oracleGrammars"]),
+                    )
+                })
+                .collect()
+        })
+        .iter()
+        .find(|(name, _)| *name == entry.name)
+        .map_or(&[], |(_, grammars)| grammars.as_slice())
+}
+
+/// A native Links Notation grammar of the catalog, which parses its languages
+/// by default, with the kinds its tree places as its tree-sitter oracle does.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NativeGrammarEntry {
+    /// Grammar id, such as `native-json`.
+    pub id: String,
+    /// The grammar file below `src/data/`, such as `native-grammars/json.lino`.
+    pub file: String,
+    /// Leaf kinds the oracle drops, such as a byte order mark.
+    pub hidden: Vec<String>,
+    /// Leaf kinds the oracle keeps inside a node without a node of their own.
+    pub anonymous: Vec<String>,
+    /// Node kinds the oracle marks as extras.
+    pub extras: Vec<String>,
+}
+
+/// Returns every native grammar of the catalog.
+#[must_use]
+pub fn native_grammars() -> &'static [NativeGrammarEntry] {
+    static NATIVE: OnceLock<Vec<NativeGrammarEntry>> = OnceLock::new();
+    NATIVE.get_or_init(|| {
+        catalog_value()["nativeGrammars"]
+            .as_object()
+            .map(|grammars| {
+                grammars
+                    .iter()
+                    .map(|(id, grammar)| NativeGrammarEntry {
+                        id: id.clone(),
+                        file: string(&grammar["file"]),
+                        hidden: strings(&grammar["hidden"]),
+                        anonymous: strings(&grammar["anonymous"]),
+                        extras: strings(&grammar["extras"]),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    })
+}
+
+/// Returns the native grammar of the catalog with id `id`.
+#[must_use]
+pub fn native_grammar(id: &str) -> Option<&'static NativeGrammarEntry> {
+    native_grammars().iter().find(|grammar| grammar.id == id)
+}
+
+fn catalog_value() -> &'static Value {
+    static VALUE: OnceLock<Value> = OnceLock::new();
+    VALUE.get_or_init(|| {
+        serde_json::from_str(LANGUAGE_CATALOG_JSON).expect("language catalog is valid JSON")
+    })
+}
+
+fn provenance(grammars: &Value) -> Vec<GrammarProvenance> {
+    grammars
+        .as_array()
+        .expect("language grammars")
+        .iter()
+        .map(|grammar| GrammarProvenance {
+            id: string(&grammar["id"]),
+            version: string(&grammar["version"]),
+            parser_sha256: string(&grammar["parserSha256"]),
+        })
+        .collect()
+}
+
 fn parse_catalog() -> Vec<LanguageEntry> {
-    let value: Value =
-        serde_json::from_str(LANGUAGE_CATALOG_JSON).expect("language catalog is valid JSON");
-    value["languages"]
+    catalog_value()["languages"]
         .as_array()
         .expect("language catalog lists languages")
         .iter()
@@ -110,16 +204,7 @@ fn parse_catalog() -> Vec<LanguageEntry> {
             family: string(&language["family"]),
             aliases: strings(&language["aliases"]),
             extensions: strings(&language["extensions"]),
-            grammars: language["grammars"]
-                .as_array()
-                .expect("language grammars")
-                .iter()
-                .map(|grammar| GrammarProvenance {
-                    id: string(&grammar["id"]),
-                    version: string(&grammar["version"]),
-                    parser_sha256: string(&grammar["parserSha256"]),
-                })
-                .collect(),
+            grammars: provenance(&language["grammars"]),
         })
         .collect()
 }

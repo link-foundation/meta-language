@@ -1,6 +1,6 @@
 //! Requirement I195-GRAMMAR-NATIVE-SCHEME: the native merged Scheme grammar,
 //! parity/grammars/native/scheme.lino, builds the concrete syntax trees of the
-//! tree-sitter-scheme oracle that still backs the default Scheme parse.
+//! tree-sitter-scheme oracle the native grammar replaced as the default Scheme parse.
 //! parity/fixtures/native-grammars/scheme.json holds the corpus with the
 //! oracle rows, which js/scripts/generate-native-grammar-fixtures.mjs
 //! generates; this suite projects the Rust executor's trees with

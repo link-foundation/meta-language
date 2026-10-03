@@ -1,6 +1,6 @@
 //! Requirement I195-GRAMMAR-NATIVE-JSON5: the native merged JSON5 grammar,
 //! parity/grammars/native/json5.lino, builds the concrete syntax trees of the
-//! tree-sitter-json5-orchard oracle that still backs the default JSON5 parse.
+//! tree-sitter-json5-orchard oracle the native grammar replaced as the default JSON5 parse.
 //! parity/fixtures/native-grammars/json5.json holds the corpus with the
 //! oracle rows, which js/scripts/generate-native-grammar-fixtures.mjs
 //! generates; this suite projects the Rust executor's trees with

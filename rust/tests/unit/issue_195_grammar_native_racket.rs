@@ -1,6 +1,6 @@
 //! Requirement I195-GRAMMAR-NATIVE-RACKET: the native merged Racket grammar,
 //! parity/grammars/native/racket.lino, builds the concrete syntax trees of the
-//! tree-sitter-racket oracle that still backs the default Racket parse.
+//! tree-sitter-racket oracle the native grammar replaced as the default Racket parse.
 //! parity/fixtures/native-grammars/racket.json holds the corpus with the
 //! oracle rows, which js/scripts/generate-native-grammar-fixtures.mjs
 //! generates; this suite projects the Rust executor's trees with

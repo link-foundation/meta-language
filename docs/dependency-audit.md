@@ -70,7 +70,7 @@ they are.
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 19 | 0 | 0 | 19 |
+| Published artifact contents | 20 | 0 | 0 | 20 |
 
 ## JavaScript engines
 
@@ -610,6 +610,7 @@ they are.
 | `src/data/foundation-models.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lock.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-catalog.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/native-grammars/*.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/language-trigrams.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/semantic-lexicon.json` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `vendor/tree-sitter-cmake/**` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |

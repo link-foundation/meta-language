@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use meta_language::{
     LinkNetwork, LinkType, ParseConfiguration, canonical_language_name, grammar_provenance,
     language_candidates_for_path, language_catalog, language_entry, language_for_path,
+    oracle_grammar_provenance,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -129,19 +130,54 @@ fn grammar_provenance_names_the_locked_grammar_versions_and_digests() {
             .iter()
             .map(|grammar| grammar.id.as_str())
             .collect();
-        let mut expected = language.get("grammars").map(strings).unwrap_or_default();
+        let native = language["nativeGrammar"].as_str();
+        let oracles = language.get("grammars").map(strings).unwrap_or_default();
+        let mut expected = native.map_or_else(|| oracles.clone(), |id| vec![id.to_string()]);
         let builtin = language["builtinGrammar"].as_str();
         expected.extend(builtin.map(str::to_string));
         assert_eq!(ids, expected, "{name}");
+        // A language a native grammar parses keeps its locked tree-sitter
+        // grammars as oracles.
+        let oracle_ids: Vec<&str> = oracle_grammar_provenance(name)
+            .iter()
+            .map(|grammar| grammar.id.as_str())
+            .collect();
+        assert_eq!(
+            oracle_ids,
+            if native.is_some() {
+                oracles
+            } else {
+                Vec::new()
+            },
+            "{name}"
+        );
+        for grammar in oracle_grammar_provenance(name) {
+            let locked = &lock["grammars"][&grammar.id];
+            assert_eq!(
+                grammar.version,
+                locked["version"].as_str().expect("version")
+            );
+            assert_eq!(
+                grammar.parser_sha256,
+                locked["parserSha256"].as_str().expect("parser digest")
+            );
+        }
         for grammar in provenance {
-            if Some(grammar.id.as_str()) == builtin {
+            let declared = if Some(grammar.id.as_str()) == builtin {
+                Some((&inventory["builtinGrammars"][&grammar.id], "specification"))
+            } else if Some(grammar.id.as_str()) == native {
+                Some((&inventory["nativeGrammars"][&grammar.id], "grammar"))
+            } else {
+                None
+            };
+            if let Some((declared, file)) = declared {
                 // A built-in grammar is recorded with the digest of its
-                // specification.
-                let declared = &inventory["builtinGrammars"][&grammar.id];
+                // specification, a native grammar with the digest of its
+                // Links Notation text.
                 let specification = fs::read(
                     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                         .join("..")
-                        .join(declared["specification"].as_str().expect("specification")),
+                        .join(declared[file].as_str().expect("grammar file")),
                 )
                 .expect("built-in grammar specification is readable");
                 assert_eq!(

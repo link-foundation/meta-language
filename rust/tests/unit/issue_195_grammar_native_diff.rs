@@ -1,6 +1,6 @@
 //! Requirement I195-GRAMMAR-NATIVE-DIFF: the native merged diff grammar,
 //! parity/grammars/native/diff.lino, builds the concrete syntax trees of the
-//! tree-sitter-diff oracle that still backs the default diff parse.
+//! tree-sitter-diff oracle the native grammar replaced as the default diff parse.
 //! parity/fixtures/native-grammars/diff.json holds the corpus with the oracle
 //! rows, which js/scripts/generate-native-grammar-fixtures.mjs generates; this
 //! suite projects the Rust executor's trees with

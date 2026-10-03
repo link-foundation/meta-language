@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use meta_language::{
     LinkId, LinkNetwork, LinkType, ParseConfiguration, grammar_names, grammar_provenance,
-    language_candidates_for_path, language_for_path,
+    language_candidates_for_path, language_for_path, oracle_grammar_provenance,
 };
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -20,19 +20,74 @@ fn parity_json(name: &str) -> Value {
 
 /// Grammar rows of every inventory language: tree-sitter languages from
 /// `default-cst-expected.json`, built-in grammar languages from
-/// `builtin-cst-expected.json`.
+/// `builtin-cst-expected.json`, and languages a native grammar parses by
+/// default from `native-default-cst-expected.json`, which replace the rows of
+/// their tree-sitter oracle.
 fn expected_languages() -> serde_json::Map<String, Value> {
     let mut languages = parity_json("fixtures/default-cst-expected.json")["languages"]
         .as_object()
         .expect("default CST languages")
         .clone();
-    languages.extend(
-        parity_json("fixtures/builtin-cst-expected.json")["languages"]
-            .as_object()
-            .expect("built-in CST languages")
-            .clone(),
-    );
+    for fixture in [
+        "fixtures/builtin-cst-expected.json",
+        "fixtures/native-default-cst-expected.json",
+    ] {
+        languages.extend(
+            parity_json(fixture)["languages"]
+                .as_object()
+                .expect("CST languages")
+                .clone(),
+        );
+    }
     languages
+}
+
+#[test]
+fn a_native_default_grammar_builds_the_trees_of_its_pinned_tree_sitter_oracle() {
+    let oracle = parity_json("fixtures/default-cst-expected.json");
+    let native = parity_json("fixtures/native-default-cst-expected.json");
+    let native = native["languages"].as_object().expect("native languages");
+    assert!(!native.is_empty());
+    for (name, want) in native {
+        let oracle = &oracle["languages"][name];
+        assert_eq!(want["positive"], oracle["positive"], "{name} positive rows");
+        assert_eq!(want["sourceSha256"], oracle["sourceSha256"], "{name}");
+        assert_eq!(
+            want["recoverySourceSha256"], oracle["recoverySourceSha256"],
+            "{name}"
+        );
+        let provenance = grammar_provenance(name);
+        assert_eq!(provenance.len(), 1, "{name}");
+        assert!(
+            meta_language::native_grammar(&provenance[0].id).is_some(),
+            "{name} parses with a native grammar"
+        );
+        let oracles = oracle_grammar_provenance(name);
+        assert_eq!(
+            want["oracleGrammars"].as_object().map(serde_json::Map::len),
+            Some(oracles.len()),
+            "{name}"
+        );
+        for grammar in oracles {
+            let pinned = &oracle["grammars"][grammar.id.as_str()];
+            assert_eq!(pinned["version"], grammar.version.as_str(), "{name}");
+            assert_eq!(
+                pinned["parserSha256"],
+                grammar.parser_sha256.as_str(),
+                "{name}"
+            );
+            assert_eq!(
+                want["oracleGrammars"][grammar.id.as_str()]["version"],
+                pinned["version"]
+            );
+        }
+        assert!(
+            rows_of(&want["recovery"])
+                .iter()
+                .any(|row| has_flag(row, "EM")),
+            "{name} recovers natively"
+        );
+    }
 }
 
 /// Projects the Syntax links of a public network to the grammar rows of

@@ -177,8 +177,9 @@ pub use graphql_adapter::{
     GraphQlSchemaRegistry, lower_graphql,
 };
 pub use language_catalog::{
-    GrammarProvenance, LanguageEntry, canonical_language_name, grammar_provenance,
-    language_candidates_for_path, language_catalog, language_entry, language_for_path,
+    GrammarProvenance, LanguageEntry, NativeGrammarEntry, canonical_language_name,
+    grammar_provenance, language_candidates_for_path, language_catalog, language_entry,
+    language_for_path, native_grammar, native_grammars, oracle_grammar_provenance,
 };
 pub use language_identification::identify_language;
 pub use language_parser::{BuiltInLanguageParser, LanguageParser};
@@ -263,5 +264,6 @@ pub use translation_rules::{
 pub use tree_sitter_adapter::{GrammarNames, grammar_names};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
+mod native_grammar_parser;
 mod self_description;
 mod tree_sitter_adapter;

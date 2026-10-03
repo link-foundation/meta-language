@@ -21,6 +21,7 @@ include = [
     "src/data/semantic-lexicon.json",
     "src/data/grammar-lock.json",
     "src/data/language-catalog.json",
+    "src/data/native-grammars/*.lino",
     "src/data/concept-records.json",
     "src/data/foundation-models.json",
     "src/data/language-trigrams.json",

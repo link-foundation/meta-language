@@ -1,6 +1,6 @@
 //! Requirement I195-GRAMMAR-NATIVE-INI: the native merged INI grammar,
 //! parity/grammars/native/ini.lino, builds the concrete syntax trees of the
-//! tree-sitter-ini oracle that still backs the default INI parse.
+//! tree-sitter-ini oracle the native grammar replaced as the default INI parse.
 //! parity/fixtures/native-grammars/ini.json holds the corpus with the oracle
 //! rows, which js/scripts/generate-native-grammar-fixtures.mjs generates; this
 //! suite projects the Rust executor's trees with
