@@ -156,7 +156,7 @@
     {
       "id": "precedence",
       "title": "precedence and associativity",
-      "listing": "start e\nrule e = normal choice(precedence(1, left, seq(ref(e), literal(\"+\"), ref(e))), precedence(2, left, seq(ref(e), literal(\"*\"), ref(e))), precedence(3, right, seq(ref(e), literal(\"^\"), ref(e))), precedence(0, none, seq(ref(e), literal(\"=\"), ref(e))), precedence(4, left, seq(ref(e), literal(\"(\"), literal(\")\"))), precedence(5, left, seq(ref(e), literal(\".\"), ref(n))), precedence(0, none, seq(literal(\"?\"), ref(n), optional(ref(otherwise)))), ref(n))\nrule otherwise = normal precedence(0, none, seq(literal(\":\"), ref(n)))\nrule n = token repeat1(range(\"0\", \"9\"))\n",
+      "listing": "start e\nrule e = normal choice(precedence(1, left, seq(ref(e), literal(\"+\"), ref(e))), precedence(2, left, seq(ref(e), literal(\"*\"), ref(e))), precedence(3, right, seq(ref(e), literal(\"^\"), ref(e))), precedence(0, none, seq(ref(e), literal(\"=\"), ref(e))), precedence(4, left, seq(ref(e), literal(\"(\"), literal(\")\"))), precedence(5, left, seq(ref(e), literal(\".\"), ref(n))), precedence(0, none, seq(literal(\"?\"), ref(n), optional(ref(otherwise)))), precedence(0, none, seq(literal(\"#\"), repeat0(ref(item)))), ref(n))\nrule otherwise = normal precedence(0, none, seq(literal(\":\"), ref(n)))\nrule item = silent choice(ref(otherwise), seq(ref(n), literal(\";\")))\nrule n = token repeat1(range(\"0\", \"9\"))\n",
       "options": {
         "ambiguity": "reject"
       },
@@ -192,6 +192,10 @@
         {
           "input": "?1:2",
           "tree": "(e \"?\" (n \"1\") (otherwise \":\" (n \"2\")))"
+        },
+        {
+          "input": "#1;:2",
+          "tree": "(e \"#\" (n \"1\") \";\" (otherwise \":\" (n \"2\")))"
         }
       ],
       "negative": [
@@ -221,6 +225,7 @@
             "line": 1,
             "column": 3,
             "expected": [
+              "\"#\"",
               "\"?\"",
               "n"
             ]
@@ -242,7 +247,7 @@
     {
       "id": "ambiguity",
       "title": "ambiguity and conflicts",
-      "listing": "start s\nmatching longest\nextra class(char(\"\\n\"))\nconflict declared\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)), seq(literal(\"k:\"), ref(key)), seq(literal(\"n:\"), ref(lines)))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\nrule key = normal choice(literal(\"if\"), ref(name))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule lines = normal repeat1(ref(line))\nrule line = normal seq(ref(n), optional(literal(\"\\n\")))\n",
+      "listing": "start s\nmatching longest\nextra class(char(\"\\n\"))\nextra ref(note)\nconflict declared\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)), seq(literal(\"k:\"), ref(key)), seq(literal(\"n:\"), ref(lines)), seq(literal(\"i:\"), ref(name), immediateToken(literal(\"!\"))))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\nrule key = normal choice(literal(\"if\"), dynamicPrecedence(1, ref(name)))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule lines = normal repeat1(ref(line))\nrule line = normal seq(ref(n), optional(ref(n)), optional(literal(\"\\n\")))\nrule note = token seq(literal(\"{\"), repeat0(notClass(char(\"}\"))), literal(\"}\"))\n",
       "options": {
         "ambiguity": "reject"
       },
@@ -278,6 +283,14 @@
         {
           "input": "n:1\n\n2",
           "tree": "(s \"n:\" (lines (line (n \"1\") (\"'\\n\" \"\\n\\n\")) (line (n \"2\"))))"
+        },
+        {
+          "input": "n:1\n2\n3",
+          "tree": "(s \"n:\" (lines (line (n \"1\") \"\\n\") (line (n \"2\") \"\\n\") (line (n \"3\"))))"
+        },
+        {
+          "input": "i:a{b}!",
+          "tree": "(s \"i:\" (name \"a\") ~(note \"{b}\") \"!\")"
         }
       ],
       "negative": [
@@ -307,6 +320,30 @@
             "column": 5,
             "expected": [
               "n"
+            ]
+          }
+        },
+        {
+          "input": "i:a\n!",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 3,
+            "line": 1,
+            "column": 4,
+            "expected": [
+              "\"!\""
+            ]
+          }
+        },
+        {
+          "input": "i:a{b}\n!",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 6,
+            "line": 1,
+            "column": 7,
+            "expected": [
+              "\"!\""
             ]
           }
         }
@@ -363,25 +400,31 @@
         {
           "from": "matching longest\n",
           "to": "",
+          "input": "i:a{b}!",
+          "before": {
+            "tree": "(s \"i:\" (name \"a\") ~(note \"{b}\") \"!\")"
+          },
+          "after": {
+            "rejection": {
+              "reason": "syntax",
+              "offset": 3,
+              "line": 1,
+              "column": 4,
+              "expected": [
+                "\"!\""
+              ]
+            }
+          }
+        },
+        {
+          "from": "matching longest\n",
+          "to": "",
           "input": "k:if",
           "before": {
             "tree": "(s \"k:\" (key \"if\"))"
           },
           "after": {
-            "tree": "(s \"k:\" (key \"if\"))",
-            "ambiguities": [
-              {
-                "rule": "key",
-                "start": 2,
-                "end": 4
-              }
-            ],
-            "rejection": {
-              "reason": "ambiguity",
-              "offset": 2,
-              "line": 1,
-              "column": 3
-            }
+            "tree": "(s \"k:\" (key (name \"if\")))"
           }
         },
         {
@@ -392,7 +435,20 @@
             "tree": "(s \"n:\" (lines (line (n \"1\") \"\\n\") (line (n \"2\"))))"
           },
           "after": {
-            "tree": "(s \"n:\" (lines (line (n \"1\")) (line ~\"\\n\" (n \"2\"))))"
+            "tree": "(s \"n:\" (lines (line (n \"1\") ~\"\\n\" (n \"2\"))))",
+            "ambiguities": [
+              {
+                "rule": "lines",
+                "start": 2,
+                "end": 5
+              }
+            ],
+            "rejection": {
+              "reason": "ambiguity",
+              "offset": 2,
+              "line": 1,
+              "column": 3
+            }
           }
         }
       ]
@@ -883,7 +939,7 @@
     {
       "id": "fields",
       "title": "captures, fields and aliases",
-      "listing": "start s\nextra class(char(\" \"))\nrule s = normal seq(capture(\"target\", ref(name)), literal(\"=\"), capture(\"value\", choice(alias(variable, ref(name)), alias(pair, seq(ref(name), literal(\",\"), ref(name))))))\nrule name = token repeat1(range(\"a\", \"z\"))\n",
+      "listing": "start s\nextra class(char(\" \"))\nrule s = normal seq(capture(\"target\", ref(name)), literal(\"=\"), capture(\"value\", choice(alias(variable, ref(name)), alias(pair, seq(ref(name), literal(\",\"), ref(name))), alias(number, ref(digits)))))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule digits = silent ref(digit)\nrule digit = token repeat1(range(\"0\", \"9\"))\n",
       "positive": [
         {
           "input": "x = y",
@@ -892,6 +948,10 @@
         {
           "input": "x=a,b",
           "tree": "(s target:(name \"x\") \"=\" value:(pair (name \"a\") \",\" (name \"b\")))"
+        },
+        {
+          "input": "x = 12",
+          "tree": "(s target:(name \"x\") ~\" \" \"=\" value:(number ~\" \" (digit \"12\")))"
         }
       ],
       "negative": [
@@ -903,6 +963,7 @@
             "line": 1,
             "column": 4,
             "expected": [
+              "digit",
               "name"
             ]
           }

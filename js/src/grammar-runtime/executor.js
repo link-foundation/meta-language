@@ -45,22 +45,23 @@ function resultKey(result) {
 }
 
 // Adds a result to a deduplicating map: of two results with the same end
-// and state, the lower repair cost wins, then the higher dynamic precedence,
-// then, under `(matching longest)` (when `tokens` holds the token ranks and
-// the input bytes), the tokens a lexer prefers; on a tie the first stays and,
+// and state, the lower repair cost wins, then, under `(matching longest)`
+// (when `tokens` holds the token ranks and the input bytes), the tokens a
+// lexer prefers (a lexer decides them before any parse does), then the
+// higher dynamic precedence; on a tie the first stays and,
 // without repairs, is marked ambiguous (as a copy, since results are shared
 // through the memo).
 function addResult(results, result, tokens = null) {
   const key = resultKey(result);
   const existing = results.get(key);
-  if (!existing || result.cost < existing.cost) results.set(key, result);
-  else if (result.cost > existing.cost) return;
-  else if (result.dynamic > existing.dynamic) results.set(key, result);
-  else if (result.dynamic === existing.dynamic) {
-    const order = tokens ? preferredTokens(result, existing, tokens) : 0;
-    if (order > 0) results.set(key, result);
-    else if (order === 0 && existing.cost === 0 && !existing.ambiguous) results.set(key, copyResult(existing, { ambiguous: true }));
+  if (!existing || result.cost < existing.cost) {
+    results.set(key, result);
+    return;
   }
+  if (result.cost > existing.cost) return;
+  const order = tokens ? preferredTokens(result, existing, tokens) : 0;
+  if (order > 0 || (order === 0 && result.dynamic > existing.dynamic)) results.set(key, result);
+  else if (order === 0 && result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous) results.set(key, copyResult(existing, { ambiguous: true }));
 }
 
 // Which of two results over the same text has the tokens a lexer prefers:
@@ -390,6 +391,20 @@ export class Executor {
     return inToken ? { end: position, leaves: NO_CHILDREN } : this.skipTrivia(position, state);
   }
 
+  // The starts of an immediate token: at once, or, in syntactic context under
+  // `(matching longest)`, after the trivia up to an extra that is no separator
+  // (such as a comment): a lexer skips no separator before an immediate token,
+  // but lexes an extra token before it as before any other.
+  immediateStarts(position, state, inToken) {
+    const starts = [{ end: position, leaves: NO_CHILDREN }];
+    if (inToken || !this.longestTokens) return starts;
+    const { leaves } = this.skipTrivia(position, state);
+    leaves.forEach((leaf, index) => {
+      if (leaf.kind !== null) starts.push({ end: leaf.end, leaves: leaves.slice(0, index + 1) });
+    });
+    return starts;
+  }
+
   // Under `(matching longest)` a lexer takes a valid token over a separator
   // (an anonymous trivia leaf, such as whitespace) it covers: a terminal that
   // matches at the start of such a leaf, at least as far, is matched there,
@@ -481,10 +496,15 @@ export class Executor {
       case 'lexicalPrecedence': return this.evaluate(expression.item, position, state, inToken);
       case 'longest': return this.longest(expression, position, state, inToken);
       case 'token': case 'immediateToken': {
-        const { end: start, leaves } = expression.kind === 'token'
-          ? this.terminalStart(position, state, inToken)
-          : { end: position, leaves: NO_CHILDREN };
-        const results = this.tokenLeaf(expression.item, start, leaves, state, inToken, null);
+        const starts = expression.kind === 'token'
+          ? [this.terminalStart(position, state, inToken)]
+          : this.immediateStarts(position, state, inToken);
+        const found = new Map();
+        for (const { end, leaves } of starts) {
+          for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) addResult(found, result, this.longestTokens);
+        }
+        const results = [...found.values()];
+        const { end: start, leaves } = starts[0];
         if (results.length > 0 || inToken) return results;
         return this.elementFailed(start, leaves, state, missingOf(expression.item), (cursor) => this.evaluate(expression, cursor, state, false));
       }
@@ -583,19 +603,17 @@ export class Executor {
     }
     // Generalized: a breadth-first frontier by iteration count. Once the
     // minimum is met, a result whose end and state were already reached is
-    // not extended again (it is the same continuation) but marks ambiguity.
+    // not extended again (it is the same continuation) but marks ambiguity,
+    // unless it replaces the result reached before: then the continuations
+    // of the replaced one are replaced too, by extending it.
     const results = new Map();
     let frontier = [makeResult(position, state)];
     for (let count = 0; frontier.length > 0; count += 1) {
       if (count >= min) {
         const fresh = [];
         for (const result of frontier) {
-          const key = resultKey(result);
-          if (results.has(key)) addResult(results, result, this.longestTokens);
-          else {
-            results.set(key, result);
-            fresh.push(result);
-          }
+          addResult(results, result, this.longestTokens);
+          if (results.get(resultKey(result)) === result) fresh.push(result);
         }
         frontier = fresh;
       }
@@ -616,11 +634,15 @@ export class Executor {
     return [...results.values()];
   }
 
+  // An alias of a silent rule names the node the rule does not build, as a
+  // tree-sitter alias of a hidden rule does, even around a single child.
   alias(expression, position, state, inToken) {
-    return this.evaluate(expression.item, position, state, inToken).map((result) => {
+    const { item } = expression;
+    const wraps = item.kind === 'ref' && this.program.rules.get(item.name)?.kind === 'silent';
+    return this.evaluate(item, position, state, inToken).map((result) => {
       if (inToken) return result;
       const meaningful = result.children.filter((child) => !isTrivia(child));
-      if (meaningful.length === 1) {
+      if (meaningful.length === 1 && !wraps) {
         return copyResult(result, { children: result.children.map((child) => (child === meaningful[0] ? renamed(child, expression.name) : child)) });
       }
       const node = shareChildren({
@@ -672,7 +694,7 @@ export class Executor {
     if (kinds) return kinds;
     const edge = (item, side) => {
       if (item.kind === 'capture') return edge(item.item, side);
-      if (item.kind === 'seq' && item.items.length > 0) return this.unitKinds(item.items[side === 'left' ? 0 : item.items.length - 1], new Set());
+      if (item.kind === 'seq' && item.items.length > 0) return this.unitKinds(item.items[side === 'left' ? 0 : item.items.length - 1], new Set(), side);
       if (item.kind === 'choice') return union(item.items.map((choice) => edge(choice, side)));
       return null;
     };
@@ -683,7 +705,11 @@ export class Executor {
 
   // The node kinds `expression` can match as one child, or null when unknown;
   // the child at the edge of a repetition (or an optional) is one of its item.
-  unitKinds(expression, visiting) {
+  // The operand on the `side` of the operator faces it with the opposite end
+  // of a sequence a silent rule inlines: its first item for the right
+  // operand, its last for the left one, and the items after it while those
+  // may match nothing.
+  unitKinds(expression, visiting, side) {
     switch (expression.kind) {
       case 'ref': {
         const rule = this.program.rules.get(expression.name);
@@ -691,11 +717,20 @@ export class Executor {
         if (rule.kind !== 'silent') return new Set([rule.nodeKind]);
         if (visiting.has(expression.name)) return new Set();
         visiting.add(expression.name);
-        return this.unitKinds(rule.expression, visiting);
+        return this.unitKinds(rule.expression, visiting, side);
       }
-      case 'choice': return union(expression.items.map((item) => this.unitKinds(item, visiting)));
+      case 'seq': {
+        const items = side === 'left' ? [...expression.items].reverse() : expression.items;
+        const kinds = [];
+        for (const item of items) {
+          kinds.push(this.unitKinds(item, visiting, side));
+          if (!(item.kind === 'optional' || item.kind === 'repeat0' || (item.kind === 'repeat' && item.min === 0))) break;
+        }
+        return kinds.length > 0 ? union(kinds) : null;
+      }
+      case 'choice': return union(expression.items.map((item) => this.unitKinds(item, visiting, side)));
       case 'capture': case 'precedence': case 'dynamicPrecedence':
-      case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.unitKinds(expression.item, visiting);
+      case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.unitKinds(expression.item, visiting, side);
       case 'alias': return new Set([expression.name]);
       default: return null;
     }

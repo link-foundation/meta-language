@@ -67,16 +67,19 @@ const features = [
     title: 'precedence and associativity',
     listing: lines(
       'start e',
-      'rule e = normal choice(precedence(1, left, seq(ref(e), literal("+"), ref(e))), precedence(2, left, seq(ref(e), literal("*"), ref(e))), precedence(3, right, seq(ref(e), literal("^"), ref(e))), precedence(0, none, seq(ref(e), literal("="), ref(e))), precedence(4, left, seq(ref(e), literal("("), literal(")"))), precedence(5, left, seq(ref(e), literal("."), ref(n))), precedence(0, none, seq(literal("?"), ref(n), optional(ref(otherwise)))), ref(n))',
+      'rule e = normal choice(precedence(1, left, seq(ref(e), literal("+"), ref(e))), precedence(2, left, seq(ref(e), literal("*"), ref(e))), precedence(3, right, seq(ref(e), literal("^"), ref(e))), precedence(0, none, seq(ref(e), literal("="), ref(e))), precedence(4, left, seq(ref(e), literal("("), literal(")"))), precedence(5, left, seq(ref(e), literal("."), ref(n))), precedence(0, none, seq(literal("?"), ref(n), optional(ref(otherwise)))), precedence(0, none, seq(literal("#"), repeat0(ref(item)))), ref(n))',
       'rule otherwise = normal precedence(0, none, seq(literal(":"), ref(n)))',
+      'rule item = silent choice(ref(otherwise), seq(ref(n), literal(";")))',
       'rule n = token repeat1(range("0", "9"))',
     ),
     options: { ambiguity: 'reject' },
     // A lower-precedence edge child conflicts only when its own child facing
     // the operator could be the operand: `1().2` stands, `(1+2).3` does not.
     // The child at the edge of an optional is one of its item: `:2` is an
-    // `otherwise`, which `:` cannot be, so `?1:2` stands.
-    positive: ['1+2*3', '1*2+3', '1+2+3', '2^3^4', '1+2=3', '1().2', '1+2.3', '?1:2'],
+    // `otherwise`, which `:` cannot be, so `?1:2` stands. A sequence a silent
+    // rule inlines faces the operator with its first item, here an `n`, so
+    // `#1;:2` stands too.
+    positive: ['1+2*3', '1*2+3', '1+2+3', '2^3^4', '1+2=3', '1().2', '1+2.3', '?1:2', '#1;:2'],
     negative: [{ input: '1=2=3' }, { input: '1+*2' }],
     mutation: {
       replace: ['precedence(1, left, seq(ref(e), literal("+"), ref(e)))', 'precedence(1, right, seq(ref(e), literal("+"), ref(e)))'],
@@ -90,8 +93,9 @@ const features = [
       'start s',
       'matching longest',
       'extra class(char("\\n"))',
+      'extra ref(note)',
       'conflict declared',
-      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)), seq(literal("k:"), ref(key)), seq(literal("n:"), ref(lines)))',
+      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)), seq(literal("k:"), ref(key)), seq(literal("n:"), ref(lines)), seq(literal("i:"), ref(name), immediateToken(literal("!"))))',
       'rule declared = normal choice(seq(ref(declared), literal("-"), ref(declared)), ref(n))',
       'rule undeclared = normal choice(seq(ref(undeclared), literal("-"), ref(undeclared)), ref(n))',
       'rule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal("-"), ref(n))), seq(ref(resolved), literal("-"), ref(resolved)), ref(n))',
@@ -99,24 +103,33 @@ const features = [
       'rule signed = normal choice(seq(ref(minus), ref(n)), ref(number))',
       'rule minus = token literal("-")',
       'rule number = token seq(literal("-"), range("0", "9"))',
-      'rule key = normal choice(literal("if"), ref(name))',
+      'rule key = normal choice(literal("if"), dynamicPrecedence(1, ref(name)))',
       'rule name = token repeat1(range("a", "z"))',
       'rule lines = normal repeat1(ref(line))',
-      'rule line = normal seq(ref(n), optional(literal("\\n")))',
+      'rule line = normal seq(ref(n), optional(ref(n)), optional(literal("\\n")))',
+      'rule note = token seq(literal("{"), repeat0(notClass(char("}"))), literal("}"))',
     ),
     options: { ambiguity: 'reject' },
     // Longest matching decides as a lexer does: `if` is the literal, more
-    // specific than a name of one length, and a line break that ends a line
+    // specific than a name of one length, even where the name has the higher
+    // dynamic precedence (a lexer decides before any parse does), and a line
+    // break that ends a line
     // is the token, not the separator; a token that also takes the line
-    // breaks after it is still the `\n` token.
-    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2', 'n:1\n\n2'],
-    negative: [{ input: 'u:1-2-3' }, { input: 'd:1--2' }],
+    // breaks after it is still the `\n` token. The lines `1` and `2` reach
+    // the end of `1\n2\n` later than the line `1 2`, which skips the first
+    // line break, yet they are preferred and continued. A lexer skips no
+    // separator before the immediate `!`, but lexes the note before it as
+    // before any token.
+    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2', 'n:1\n\n2', 'n:1\n2\n3', 'i:a{b}!'],
+    negative: [{ input: 'u:1-2-3' }, { input: 'd:1--2' }, { input: 'i:a\n!' }, { input: 'i:a{b}\n!' }],
     mutation: { replace: ['conflict declared', 'conflict undeclared'], input: 'u:1-2-3' },
     // Without longest matching, "-" "1" and "-1" are two parses alike in cost
-    // and dynamic precedence, as are the literal and the name `if`, and the
-    // line break as a token and as a separator: ambiguities.
+    // and dynamic precedence, as are the line break as a token and as a
+    // separator: ambiguities; the name `if` wins by its dynamic precedence;
+    // and no trivia comes before an immediate token.
     mutations: [
       { replace: ['matching longest\n', ''], input: 'l:-1' },
+      { replace: ['matching longest\n', ''], input: 'i:a{b}!' },
       { replace: ['matching longest\n', ''], input: 'k:if' },
       { replace: ['matching longest\n', ''], input: 'n:1\n2' },
     ],
@@ -237,10 +250,12 @@ const features = [
     listing: lines(
       'start s',
       'extra class(char(" "))',
-      'rule s = normal seq(capture("target", ref(name)), literal("="), capture("value", choice(alias(variable, ref(name)), alias(pair, seq(ref(name), literal(","), ref(name))))))',
+      'rule s = normal seq(capture("target", ref(name)), literal("="), capture("value", choice(alias(variable, ref(name)), alias(pair, seq(ref(name), literal(","), ref(name))), alias(number, ref(digits)))))',
       'rule name = token repeat1(range("a", "z"))',
+      'rule digits = silent ref(digit)',
+      'rule digit = token repeat1(range("0", "9"))',
     ),
-    positive: ['x = y', 'x=a,b'],
+    positive: ['x = y', 'x=a,b', 'x = 12'],
     negative: [{ input: 'x =' }, { input: '= y' }],
     mutation: { replace: ['alias(variable, ref(name))', 'alias(reference, ref(name))'], input: 'x = y' },
   },

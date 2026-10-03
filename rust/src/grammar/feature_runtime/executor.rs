@@ -329,6 +329,36 @@ impl<'c> Executor<'c> {
         }
     }
 
+    /// The starts of an immediate token: at once, or, in syntactic context
+    /// under `(matching longest)`, after the trivia up to an extra that is no
+    /// separator (such as a comment): a lexer skips no separator before an
+    /// immediate token, but lexes an extra token before it as before any
+    /// other.
+    fn immediate_starts(
+        &mut self,
+        position: usize,
+        state: &State,
+        in_token: bool,
+    ) -> Run<Vec<Rc<Skipped>>> {
+        let mut starts = vec![Rc::new(Skipped {
+            end: position,
+            leaves: no_children(),
+        })];
+        if in_token || self.longest_tokens.is_none() {
+            return Ok(starts);
+        }
+        let skipped = self.skip_trivia(position, state)?;
+        for (index, leaf) in skipped.leaves.iter().enumerate() {
+            if leaf.kind.is_some() {
+                starts.push(Rc::new(Skipped {
+                    end: leaf.end,
+                    leaves: children_of(skipped.leaves[..=index].to_vec()),
+                }));
+            }
+        }
+        Ok(starts)
+    }
+
     fn terminal(
         &mut self,
         matcher: &Matcher,
@@ -519,18 +549,22 @@ impl<'c> Executor<'c> {
             Expr::LexicalPrecedence { item, .. } => self.evaluate(item, position, state, in_token),
             Expr::Longest(items) => self.longest(items, position, state, in_token),
             Expr::Token(item) | Expr::ImmediateToken(item) => {
-                let skipped = if matches!(expr, Expr::Token(_)) {
-                    self.terminal_start(position, state, in_token)?
+                let starts = if matches!(expr, Expr::Token(_)) {
+                    vec![self.terminal_start(position, state, in_token)?]
                 } else {
-                    Rc::new(Skipped {
-                        end: position,
-                        leaves: no_children(),
-                    })
+                    self.immediate_starts(position, state, in_token)?
                 };
-                let results = self.token_leaf(item, &skipped, state, in_token)?;
+                let mut found = ResultSet::new(self.longest_tokens);
+                for skipped in &starts {
+                    for result in self.token_leaf(item, skipped, state, in_token)? {
+                        found.add(result);
+                    }
+                }
+                let results = found.items;
                 if !results.is_empty() || in_token {
                     return Ok(results);
                 }
+                let skipped = &starts[0];
                 let (kind, literal) = missing_of(item);
                 self.element_failed(
                     skipped.end,
@@ -731,7 +765,9 @@ impl<'c> Executor<'c> {
         }
         // Generalized: a breadth-first frontier by iteration count. Once the
         // minimum is met, a result whose end and state were already reached is
-        // not extended again (it is the same continuation) but marks ambiguity.
+        // not extended again (it is the same continuation) but marks ambiguity,
+        // unless it replaces the result reached before: then the continuations
+        // of the replaced one are replaced too, by extending it.
         let mut results = ResultSet::new(self.longest_tokens);
         let mut frontier = vec![Res::new(position, state.clone(), no_children(), 0)];
         let mut count = 0;
@@ -739,10 +775,7 @@ impl<'c> Executor<'c> {
             if count >= min {
                 let mut fresh = Vec::new();
                 for result in frontier {
-                    if results.contains(&result) {
-                        results.add(result);
-                    } else {
-                        results.set(result.clone());
+                    if results.add(result.clone()) {
                         fresh.push(result);
                     }
                 }
@@ -782,11 +815,14 @@ impl<'c> Executor<'c> {
         if in_token {
             return Ok(results);
         }
+        // An alias of a silent rule names the node the rule does not build, as a
+        // tree-sitter alias of a hidden rule does, even around a single child.
+        let wraps = matches!(item, Expr::Ref(Target::Rule(index)) if matches!(self.program.rules[*index].kind, RuleKind::Silent));
         Ok(results
             .into_iter()
             .map(|result| {
                 let meaningful = result.children.iter().filter(|child| !child.trivia).count();
-                if meaningful == 1 {
+                if meaningful == 1 && !wraps {
                     let children = result
                         .children
                         .iter()
@@ -920,7 +956,7 @@ impl<'c> Executor<'c> {
                 } else {
                     &items[items.len() - 1]
                 };
-                self.unit_kinds(operand, &mut HashSet::new())
+                self.unit_kinds(operand, &mut HashSet::new(), side)
             }
             Expr::Choice { items, .. } => {
                 union(items.iter().map(|item| self.edge_kinds(item, side)))
@@ -931,8 +967,16 @@ impl<'c> Executor<'c> {
 
     // The node kinds `expr` can match as one child, or None when unknown;
     // the child at the edge of a repetition (or an optional) is one of its
-    // item.
-    fn unit_kinds(&self, expr: &Expr, visiting: &mut HashSet<usize>) -> Option<HashSet<Name>> {
+    // item. The operand on the `side` of the operator faces it with the
+    // opposite end of a sequence a silent rule inlines: its first item for
+    // the right operand, its last for the left one, and the items after it
+    // while those may match nothing.
+    fn unit_kinds(
+        &self,
+        expr: &Expr,
+        visiting: &mut HashSet<usize>,
+        side: Associativity,
+    ) -> Option<HashSet<Name>> {
         match expr {
             Expr::Ref(Target::Rule(index)) => {
                 let rule = &self.program.rules[*index];
@@ -942,15 +986,32 @@ impl<'c> Executor<'c> {
                 if !visiting.insert(*index) {
                     return Some(HashSet::new());
                 }
-                self.unit_kinds(&rule.expression, visiting)
+                self.unit_kinds(&rule.expression, visiting, side)
             }
-            Expr::Choice { items, .. } => {
-                union(items.iter().map(|item| self.unit_kinds(item, visiting)))
+            Expr::Seq(items) if !items.is_empty() => {
+                let ordered: Box<dyn Iterator<Item = &Expr>> = if side == Associativity::Left {
+                    Box::new(items.iter().rev())
+                } else {
+                    Box::new(items.iter())
+                };
+                let mut kinds = Vec::new();
+                for item in ordered {
+                    kinds.push(self.unit_kinds(item, visiting, side));
+                    if !matches!(item, Expr::Repeat { min: 0, .. }) {
+                        break;
+                    }
+                }
+                union(kinds.into_iter())
             }
+            Expr::Choice { items, .. } => union(
+                items
+                    .iter()
+                    .map(|item| self.unit_kinds(item, visiting, side)),
+            ),
             Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
-            | Expr::Repeat { item, .. } => self.unit_kinds(item, visiting),
+            | Expr::Repeat { item, .. } => self.unit_kinds(item, visiting, side),
             Expr::Alias { name, .. } => Some(HashSet::from([name.clone()])),
             _ => None,
         }

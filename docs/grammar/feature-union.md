@@ -331,8 +331,9 @@ in syntactic or token context yields a list of results
 
 **Result sets.** Results are deduplicated by `end` and state key. Of two equal
 results the one with the higher `dynamic` stays; on a tie the first stays and
-is marked ambiguous. Under `matching longest` a tie goes first to the result
-with the tokens a lexer prefers: both results' leaves are walked in order,
+is marked ambiguous. Under `matching longest` the result with the tokens a
+lexer prefers stays before `dynamic` is compared, as a lexer decides its
+tokens before any parse does: both results' leaves are walked in order,
 skipping trivia and the subtrees they share, and the first leaf pair that
 differs decides as a tree-sitter lexer decides between two tokens at one
 offset: the higher lexical precedence, then the longer token, then the more
@@ -360,7 +361,11 @@ takes a valid token over a separator: a terminal in syntactic context that
 matches at the start of a skipped anonymous trivia leaf, at least to its end,
 is matched there instead, before that leaf and the trivia after it, and then
 also takes each next such leaf it matches the same way, so `\n` ends a line
-where whitespace is trivia and `\n\n` is one `\n` token.
+where whitespace is trivia and `\n\n` is one `\n` token. Under `matching
+longest` an `immediateToken` in syntactic context may also start after the
+skipped trivia up to any named trivia leaf (an extra rule such as a comment),
+as a lexer skips no separator before an immediate token but lexes an extra
+token before it as before any other; the results of all its starts are merged.
 
 **Trivia.** Skipping trivia repeatedly takes the longest match, in token
 context, of any trivia expression allowed in the current mode (the top of the
@@ -385,15 +390,18 @@ children before it. `experiments/issue-195-native-scale.mjs` and
 **Repetition.** Under `peg` a repetition is greedy and possessive, and a
 zero-width iteration ends it. Under `generalized` it is a breadth-first
 frontier by iteration count: once `min` is met each new end and state is a
-result, a result reached again marks ambiguity and is not extended, and a
-zero-width iteration only pads up to `min`.
+result, a result reached again marks ambiguity and is not extended unless it
+replaces the earlier one (lower cost, preferred tokens or higher dynamic
+precedence), whose continuations it then replaces, and a zero-width iteration only
+pads up to `min`.
 
 **Lookahead.** `and` and `not` evaluate the item without recording
 expectations and yield a zero-width result.
 
 **Captures and aliases.** `capture` sets `field` on each non-trivia child.
 `alias` renames the only non-trivia child, or wraps several in a node of the
-alias name.
+alias name. An alias of a silent rule always wraps, even a single child, as a
+tree-sitter alias of a hidden rule names the node the rule does not build.
 
 **Precedence.** `precedence(level, associativity, item)` filters the item's
 results before they are merged: a result whose first or last non-trivia child
@@ -403,8 +411,11 @@ or equal while the associativity is not `left` (first child) or not `right`
 child facing the operator (its last child for the first edge, its first child
 for the last edge) has a kind the item's operand on that edge can match as
 one child: the node kind of a rule it refers to, through silent rules,
-choices, captures, precedences and aliases, and, for an optional or a
-repetition, the kinds of its item. When that set is unknown every
+choices, captures, precedences and aliases, for an optional or a
+repetition, the kinds of its item, and, for a sequence a silent rule inlines,
+the kinds of its item facing the operator (its last item for the first edge,
+its first for the last edge, and past one that may match nothing the next).
+When that set is unknown every
 such inner node conflicts. So `(1+2).3` is invalid as `2` could be the
 operand of `.`, while `1().2` stands as `)` could not, as an LR parser would
 find a conflict only in the first. A rejected result records the expectation

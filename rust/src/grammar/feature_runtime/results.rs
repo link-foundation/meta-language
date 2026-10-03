@@ -254,31 +254,36 @@ impl<'c> ResultSet<'c> {
     }
 
     /// Of two results with the same end and state, the lower repair cost
-    /// wins, then the higher dynamic precedence, then, under `(matching
-    /// longest)`, the tokens a lexer prefers; on a tie the first stays and,
-    /// without repairs, is marked ambiguous.
-    pub(super) fn add(&mut self, result: Res) {
+    /// wins, then, under `(matching longest)`, the tokens a lexer prefers (a
+    /// lexer decides them before any parse does), then the higher dynamic
+    /// precedence; on a tie the first stays and, without repairs, is marked
+    /// ambiguous. True when `result` was kept.
+    pub(super) fn add(&mut self, result: Res) -> bool {
         match self.index.get(&result.key()) {
             None => self.push(result),
             Some(&position) => {
                 let existing = &mut self.items[position];
-                if result.cost < existing.cost {
-                    *existing = result;
-                } else if result.cost > existing.cost {
-                } else if result.dynamic > existing.dynamic {
-                    *existing = result;
-                } else if result.dynamic == existing.dynamic {
-                    let order = self.tokens.map_or(Ordering::Equal, |tokens| {
-                        preferred_tokens(&result, existing, tokens)
-                    });
-                    if order == Ordering::Greater {
-                        *existing = result;
-                    } else if order == Ordering::Equal && existing.cost == 0 {
-                        existing.ambiguous = true;
+                if result.cost > existing.cost {
+                    return false;
+                }
+                if result.cost == existing.cost {
+                    let order = self
+                        .tokens
+                        .map_or(Ordering::Equal, |tokens| {
+                            preferred_tokens(&result, existing, tokens)
+                        })
+                        .then(result.dynamic.cmp(&existing.dynamic));
+                    if order != Ordering::Greater {
+                        if order == Ordering::Equal && existing.cost == 0 {
+                            existing.ambiguous = true;
+                        }
+                        return false;
                     }
                 }
+                *existing = result;
             }
         }
+        true
     }
 
     /// Replaces the result of the same end and state in place, or appends.
@@ -292,10 +297,6 @@ impl<'c> ResultSet<'c> {
     fn push(&mut self, result: Res) {
         self.index.insert(result.key(), self.items.len());
         self.items.push(result);
-    }
-
-    pub(super) fn contains(&self, result: &Res) -> bool {
-        self.index.contains_key(&result.key())
     }
 
     pub(super) const fn len(&self) -> usize {
