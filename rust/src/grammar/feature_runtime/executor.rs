@@ -21,8 +21,8 @@ use super::precedence::{Keep, Operands};
 use super::program::{Associativity, Compiled, Expr, Matcher, Name, Program, Target};
 use super::results::{
     Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared,
-    Skipped, TokenOrder, Tree, TreeType, children_of, concat, content_start, longest_result,
-    no_children, with_leaf,
+    Skipped, TokenOrder, Tree, TreeType, children_of, concat, content_start, is_separator,
+    longest_result, no_children, with_leaf,
 };
 use super::text::{column_of, decode_at, text_of};
 use crate::grammar::RuleKind;
@@ -240,9 +240,23 @@ impl<'c> Executor<'c> {
             }
             return Ok(Vec::new());
         }
-        let mut missing = Tree::new(TreeType::Missing, kind, start, start);
+        // As in tree-sitter, whose missing leaf has no padding, the MISSING
+        // leaf comes before the separators (white space) that end the trivia
+        // before it, after any other extra.
+        let kept = leaves.len()
+            - leaves
+                .iter()
+                .rev()
+                .take_while(|leaf| is_separator(leaf))
+                .count();
+        let at = match kept {
+            0 => leaves.first().map_or(start, |leaf| leaf.start),
+            _ => leaves[kept - 1].end,
+        };
+        let mut missing = Tree::new(TreeType::Missing, kind, at, at);
         missing.literal = literal;
-        let mut repaired = Res::new(start, state.clone(), with_leaf(leaves, missing), 0);
+        let placed = concat(&with_leaf(&leaves[..kept], missing), &leaves[kept..]);
+        let mut repaired = Res::new(start, state.clone(), placed, 0);
         repaired.cost = MISSING_COST;
         let mut results = vec![repaired];
         let key = (element, start, state.clone(), self.in_extra);
@@ -456,8 +470,10 @@ impl<'c> Executor<'c> {
             .is_some_and(|points| points.contains(&left.end))
             && left
                 .children
-                .last()
-                .is_some_and(|last| last.ty == TreeType::Missing && last.start == left.end);
+                .iter()
+                .rev()
+                .find(|child| !is_separator(child))
+                .is_some_and(|last| last.ty == TreeType::Missing);
         if !repaired {
             return self.evaluate(item, left.end, &left.state, in_token);
         }

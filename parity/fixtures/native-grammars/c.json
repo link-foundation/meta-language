@@ -5968,7 +5968,7 @@
     },
     {
       "source": "int x = ;",
-      "recovered": "(translation_unit (declaration type:(primitive_type \"int\") declarator:(initialized_declarator ~\" \" declarator:(identifier \"x\") ~\" \" \"=\" ~\" \" (MISSING@8 identifier)) \";\"))"
+      "recovered": "(translation_unit (declaration type:(primitive_type \"int\") declarator:(initialized_declarator ~\" \" declarator:(identifier \"x\") ~\" \" \"=\" (MISSING@7 identifier) ~\" \") \";\"))"
     },
     {
       "source": "{",
@@ -6056,7 +6056,7 @@
     },
     {
       "source": "int main() { return 0 }",
-      "recovered": "(translation_unit (function_definition type:(primitive_type \"int\") declarator:(function_declarator ~\" \" declarator:(identifier \"main\") parameters:(parameter_list \"(\" \")\")) body:(compound_statement ~\" \" \"{\" (return_statement ~\" \" \"return\" ~\" \" (number_literal \"0\") ~\" \" (MISSING@22 \";\")) \"}\")))"
+      "recovered": "(translation_unit (function_definition type:(primitive_type \"int\") declarator:(function_declarator ~\" \" declarator:(identifier \"main\") parameters:(parameter_list \"(\" \")\")) body:(compound_statement ~\" \" \"{\" (return_statement ~\" \" \"return\" ~\" \" (number_literal \"0\") (MISSING@21 \";\") ~\" \") \"}\")))"
     },
     {
       "source": "x->;",

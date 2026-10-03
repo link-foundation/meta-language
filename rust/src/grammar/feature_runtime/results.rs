@@ -195,6 +195,12 @@ pub(super) fn concat(left: &[Rc<Tree>], right: &[Rc<Tree>]) -> Children {
     children_of(joined)
 }
 
+/// Whether `tree` is a trivia leaf of no kind: white space, which a lexer
+/// skips as padding.
+pub(super) fn is_separator(tree: &Tree) -> bool {
+    tree.ty == TreeType::Token && tree.trivia && tree.kind.is_none()
+}
+
 /// `[...leaves, leaf]`.
 pub(super) fn with_leaf(leaves: &[Rc<Tree>], leaf: Tree) -> Children {
     concat(leaves, &[Rc::new(leaf)])

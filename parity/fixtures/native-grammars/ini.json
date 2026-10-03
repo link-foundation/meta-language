@@ -886,7 +886,7 @@
     },
     {
       "source": "k\n",
-      "recovered": "(document (setting (setting_name \"k\") ~\"\\n\" (MISSING@2 \"=\") (MISSING@2 newline)))"
+      "recovered": "(document (setting (setting_name \"k\") (MISSING@1 \"=\") ~\"\\n\" (MISSING@2 newline)))"
     },
     {
       "source": "=v\n",

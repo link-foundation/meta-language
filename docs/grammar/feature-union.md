@@ -614,15 +614,19 @@ a repair point, a failing element yields two results:
 
 - a zero-width MISSING leaf, at cost 2. Its kind is the literal for a literal
   (marked `literal`), the node kind for a token or atomic rule, the scanner
-  token's name for a scanner token, and none otherwise;
+  token's name for a scanner token, and none otherwise. As in tree-sitter,
+  whose missing leaf has no padding, the leaf comes before the white space
+  (trivia of no kind) that ends the trivia before the repair point, after any
+  other extra such as a comment, so in `{"a" 1}` the MISSING `":"` is at 4,
+  where the key ends;
 - the element's match at the first later code point boundary where it
   matches, behind an ERROR leaf over the skipped bytes, at a cost of one per
   skipped byte.
 
 A sequence continues after a MISSING leaf at a repair point with the
 elements and rules that follow, which may repair the same offset. A second
-continuation after a MISSING leaf at that offset, inside the first, is matched
-quietly. So `(MISSING@4 argument) (filename (MISSING@4 word))` stands, but
+continuation after a MISSING leaf there (the last child other than white
+space), inside the first, is matched quietly. So `(MISSING@4 argument) (filename (MISSING@4 word))` stands, but
 chains of zero-width MISSING leaves, which would make every rule
 left-recursive at the offset, are never built. Calls inside the first
 continuation are memoized apart from the same calls made in the open.

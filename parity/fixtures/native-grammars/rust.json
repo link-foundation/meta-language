@@ -8675,7 +8675,7 @@
   "rejections": [
     {
       "source": "\nconst A: &[&str] = &[\n    @\"asdf\",\n    <\"asdf\",\n    >\"asdf\",\n    :\"asdf\"\n];\n",
-      "recovered": "(source_file (constant_item ~\"\\n\" \"const\" ~\" \" name:(identifier \"A\") \":\" type:(reference_type ~\" \" \"&\" type:(array_type \"[\" element:(reference_type \"&\" type:(primitive_type \"str\")) \"]\")) ~\" \" \"=\" value:(reference_expression ~\" \" \"&\" value:(array_expression \"[\" ~\"\\n\" ~\" \" ~\" \" ~\" \" ~\" \" (MISSING@27 \"]\"))) (MISSING@27 \";\")) (expression_statement (macro_invocation (MISSING@27 identifier) (MISSING@27 \"!\") (token_tree (MISSING@27 \"[\") \"@\" (string_literal (\"'\\\"\" \"\\\"\") (string_content \"asdf\") (\"'\\\"\" \"\\\"\")) \",\" ~\"\\n\" ~\" \" ~\" \" ~\" \" ~\" \" \"<\" (string_literal (\"'\\\"\" \"\\\"\") (string_content \"asdf\") (\"'\\\"\" \"\\\"\")) \",\" ~\"\\n\" ~\" \" ~\" \" ~\" \" ~\" \" \">\" (string_literal (\"'\\\"\" \"\\\"\") (string_content \"asdf\") (\"'\\\"\" \"\\\"\")) \",\" ~\"\\n\" ~\" \" ~\" \" ~\" \" ~\" \" \":\" (string_literal (\"'\\\"\" \"\\\"\") (string_content \"asdf\") (\"'\\\"\" \"\\\"\")) ~\"\\n\" \"]\")) \";\") ~\"\\n\")"
+      "recovered": "(source_file (constant_item ~\"\\n\" \"const\" ~\" \" name:(identifier \"A\") \":\" type:(reference_type ~\" \" \"&\" type:(array_type \"[\" element:(reference_type \"&\" type:(primitive_type \"str\")) \"]\")) ~\" \" \"=\" value:(reference_expression ~\" \" \"&\" value:(array_expression \"[\" (MISSING@22 \"]\") ~\"\\n\" ~\" \" ~\" \" ~\" \" ~\" \")) (MISSING@27 \";\")) (expression_statement (macro_invocation (MISSING@27 identifier) (MISSING@27 \"!\") (token_tree (MISSING@27 \"[\") \"@\" (string_literal (\"'\\\"\" \"\\\"\") (string_content \"asdf\") (\"'\\\"\" \"\\\"\")) \",\" ~\"\\n\" ~\" \" ~\" \" ~\" \" ~\" \" \"<\" (string_literal (\"'\\\"\" \"\\\"\") (string_content \"asdf\") (\"'\\\"\" \"\\\"\")) \",\" ~\"\\n\" ~\" \" ~\" \" ~\" \" ~\" \" \">\" (string_literal (\"'\\\"\" \"\\\"\") (string_content \"asdf\") (\"'\\\"\" \"\\\"\")) \",\" ~\"\\n\" ~\" \" ~\" \" ~\" \" ~\" \" \":\" (string_literal (\"'\\\"\" \"\\\"\") (string_content \"asdf\") (\"'\\\"\" \"\\\"\")) ~\"\\n\" \"]\")) \";\") ~\"\\n\")"
     },
     {
       "source": "\n({ \"session_id\": session_id, \"output\": output })\n",
@@ -8707,7 +8707,7 @@
     },
     {
       "source": "let x = ;",
-      "recovered": "(source_file (let_declaration \"let\" ~\" \" pattern:(identifier \"x\") ~\" \" \"=\" value:(return_expression ~\" \" (MISSING@8)) \";\"))"
+      "recovered": "(source_file (let_declaration \"let\" ~\" \" pattern:(identifier \"x\") ~\" \" \"=\" value:(return_expression (MISSING@7) ~\" \") \";\"))"
     },
     {
       "source": "struct S {",
@@ -8727,7 +8727,7 @@
     },
     {
       "source": "fn f() { 1 + }",
-      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"f\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" (binary_expression ~\" \" left:(integer_literal \"1\") ~\" \" operator:\"+\" right:(return_expression ~\" \" (MISSING@13))) \"}\")))"
+      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"f\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" (binary_expression ~\" \" left:(integer_literal \"1\") ~\" \" operator:\"+\" right:(return_expression (MISSING@12) ~\" \")) \"}\")))"
     },
     {
       "source": "if x {",
@@ -8735,11 +8735,11 @@
     },
     {
       "source": "impl {",
-      "recovered": "(source_file (implementation_item \"impl\" ~\" \" (MISSING@5 metavariable) (MISSING@5 \";\")) (ERROR@5..6 \"{\"))"
+      "recovered": "(source_file (implementation_item \"impl\" (MISSING@4 metavariable) ~\" \" (MISSING@5 \";\")) (ERROR@5..6 \"{\"))"
     },
     {
       "source": "use ;",
-      "recovered": "(source_file (use_declaration \"use\" ~\" \" (MISSING@4 self) \";\"))"
+      "recovered": "(source_file (use_declaration \"use\" (MISSING@3 self) ~\" \" \";\"))"
     },
     {
       "source": "mod",
@@ -8767,7 +8767,7 @@
     },
     {
       "source": "fn main() { let }",
-      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"main\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" (let_declaration ~\" \" \"let\" ~\" \" (MISSING@16 character_literal) (MISSING@16 \";\")) \"}\")))"
+      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"main\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" (let_declaration ~\" \" \"let\" (MISSING@15 character_literal) ~\" \" (MISSING@16 \";\")) \"}\")))"
     },
     {
       "source": "trait T {",
@@ -8787,7 +8787,7 @@
     },
     {
       "source": "let x: = 1;",
-      "recovered": "(source_file (let_declaration \"let\" ~\" \" pattern:(identifier \"x\") \":\" ~\" \" (MISSING@7 metavariable) \"=\" ~\" \" value:(integer_literal \"1\") \";\"))"
+      "recovered": "(source_file (let_declaration \"let\" ~\" \" pattern:(identifier \"x\") \":\" (MISSING@6 metavariable) ~\" \" \"=\" ~\" \" value:(integer_literal \"1\") \";\"))"
     },
     {
       "source": "pub",
@@ -8807,7 +8807,7 @@
     },
     {
       "source": "fn f() -> {}",
-      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"f\") parameters:(parameters \"(\" \")\") ~\" \" \"->\" ~\" \" (MISSING@10 metavariable) body:(block \"{\" \"}\")))"
+      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"f\") parameters:(parameters \"(\" \")\") ~\" \" \"->\" (MISSING@9 metavariable) ~\" \" body:(block \"{\" \"}\")))"
     },
     {
       "source": "1 +",

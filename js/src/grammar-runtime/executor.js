@@ -610,6 +610,11 @@ function union(sets) {
   return new Set(sets.flatMap((set) => [...set]));
 }
 
+// A trivia leaf of no kind: white space, which a lexer skips as padding.
+function isSeparator(child) {
+  return child.type === 'token' && child.trivia === true && child.kind === null;
+}
+
 function isTrivia(child) {
   return child.trivia === true;
 }
@@ -726,7 +731,14 @@ export class Executor {
       if (start > this.elementFarthest) this.elementFarthest = start;
       return [];
     }
-    const results = [makeResult(start, state, [...leaves, { type: 'missing', start, end: start, ...missing }], 0, MISSING_COST)];
+    // As in tree-sitter, whose missing leaf has no padding, the MISSING leaf
+    // comes before the separators (white space) that end the trivia before
+    // it, after any other extra.
+    let kept = leaves.length;
+    while (kept > 0 && isSeparator(leaves[kept - 1])) kept -= 1;
+    const at = kept > 0 ? leaves[kept - 1].end : leaves[0]?.start ?? start;
+    const placed = [...leaves.slice(0, kept), { type: 'missing', start: at, end: at, ...missing }, ...leaves.slice(kept)];
+    const results = [makeResult(start, state, placed, 0, MISSING_COST)];
     let scans = this.repairMemo.get(element);
     if (!scans) this.repairMemo.set(element, scans = new Map());
     const key = `${start}|${state.key}|${this.inExtra}`;
@@ -960,8 +972,8 @@ export class Executor {
   // never built.
   continuation(item, left, inToken) {
     if (!this.repairPoints?.has(left.end)) return this.evaluate(item, left.end, left.state, inToken);
-    const last = left.children[left.children.length - 1];
-    if (last?.type !== 'missing' || last.start !== left.end) return this.evaluate(item, left.end, left.state, inToken);
+    const last = left.children.findLast((child) => !isSeparator(child));
+    if (last?.type !== 'missing') return this.evaluate(item, left.end, left.state, inToken);
     if (this.chained.has(left.end)) return this.quietly(() => this.evaluate(item, left.end, left.state, inToken));
     this.chained.add(left.end);
     try {

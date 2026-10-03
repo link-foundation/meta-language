@@ -84,8 +84,10 @@ test('automatic recovery leaves the trees of accepted input unchanged', (context
 test('a repair inserts a MISSING leaf or skips input as an ERROR leaf, whichever costs less', () => {
   const json = grammars.find(({ entry }) => entry.id === 'json').parser;
   const tree = (source, options = RECOVER) => renderSyntaxTree(json.parseTree(source, options).tree);
-  // A missing separator and a missing closing bracket are inserted.
-  assert.equal(tree('{"a" 1}'), '(document (object "{" (pair key:(string "\\"" (string_content "a") "\\"") ~" " (MISSING@5 ":") value:(number "1")) "}"))');
+  // A missing separator and a missing closing bracket are inserted; as in
+  // tree-sitter, a MISSING leaf comes before the white space after the token
+  // it follows.
+  assert.equal(tree('{"a" 1}'), '(document (object "{" (pair key:(string "\\"" (string_content "a") "\\"") (MISSING@4 ":") ~" " value:(number "1")) "}"))');
   assert.equal(tree('[1, 2'), '(document (array "[" (number "1") "," ~" " (number "2") (MISSING@5 "]")))');
   // A stray value is skipped: deleting one byte costs less than inserting a comma.
   assert.equal(tree('[1, 2 3]'), '(document (array "[" (number "1") "," ~" " (number "2") ~" " (ERROR@6..7 "3") "]"))');

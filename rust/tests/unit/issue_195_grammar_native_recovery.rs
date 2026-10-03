@@ -196,10 +196,12 @@ fn a_repair_inserts_a_missing_leaf_or_skips_input_as_an_error_leaf() {
     let json = parser(GRAMMARS[0].1);
     let tree =
         |source: &str, options: &FeatureParseOptions| rendered(&parse(&json, source, options));
-    // A missing separator and a missing closing bracket are inserted.
+    // A missing separator and a missing closing bracket are inserted; as in
+    // tree-sitter, a MISSING leaf comes before the white space after the
+    // token it follows.
     assert_eq!(
         tree(r#"{"a" 1}"#, &recover()),
-        r#"(document (object "{" (pair key:(string "\"" (string_content "a") "\"") ~" " (MISSING@5 ":") value:(number "1")) "}"))"#
+        r#"(document (object "{" (pair key:(string "\"" (string_content "a") "\"") (MISSING@4 ":") ~" " value:(number "1")) "}"))"#
     );
     assert_eq!(
         tree("[1, 2", &recover()),

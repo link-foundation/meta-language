@@ -1962,15 +1962,15 @@
     },
     {
       "source": "index 123..456\n",
-      "recovered": "(source (index \"index\" ~\" \" (MISSING@6 commit) (ERROR@6..9 \"123\") \"..\" (MISSING@11 commit) (mode \"456\")) (newline \"\\n\"))"
+      "recovered": "(source (index \"index\" (MISSING@5 commit) ~\" \" (ERROR@6..9 \"123\") \"..\" (MISSING@11 commit) (mode \"456\")) (newline \"\\n\"))"
     },
     {
       "source": "similarity index x%\n",
-      "recovered": "(source (similarity \"similarity\" ~\" \" \"index\" ~\" \" (MISSING@17 score) (ERROR@17..18 \"x\") \"%\") (newline \"\\n\"))"
+      "recovered": "(source (similarity \"similarity\" ~\" \" \"index\" (MISSING@16 score) ~\" \" (ERROR@17..18 \"x\") \"%\") (newline \"\\n\"))"
     },
     {
       "source": "@@ -1 @@\n",
-      "recovered": "(source (location \"@@\" ~\" \" (line_range \"-1\") ~\" \" (MISSING@6 line_range) \"@@\") (newline \"\\n\"))"
+      "recovered": "(source (location \"@@\" ~\" \" (line_range \"-1\") (MISSING@5 line_range) ~\" \" \"@@\") (newline \"\\n\"))"
     },
     {
       "source": "new file\n",
@@ -1978,7 +1978,7 @@
     },
     {
       "source": "rename x\n",
-      "recovered": "(source (file_change \"rename\" ~\" \" (MISSING@7 \"from\") (filename (word \"x\"))) (newline \"\\n\"))"
+      "recovered": "(source (file_change \"rename\" (MISSING@6 \"from\") ~\" \" (filename (word \"x\"))) (newline \"\\n\"))"
     },
     {
       "source": "Binary files a b differ\n",
