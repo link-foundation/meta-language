@@ -55,7 +55,7 @@ const CONCEPTS = {
   },
   json5: {
     file: 'grammar.document', value: 'grammar.value', object: 'grammar.object', member: 'grammar.member',
-    identifier: 'grammar.json5.identifier-name', array: 'grammar.list', string: 'grammar.string',
+    identifier: 'grammar.identifier-name', array: 'grammar.list', string: 'grammar.string',
     number: 'grammar.number', null: 'grammar.null', true: 'grammar.true-value', false: 'grammar.false-value',
     comment: 'grammar.comment',
   },

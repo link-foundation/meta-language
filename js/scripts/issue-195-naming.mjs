@@ -19,8 +19,9 @@
 //   former name still in use, or a former name a source still decodes that its
 //   record does not list (full inventory coverage).
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { areSynonyms, baseForms, PARTS_OF_SPEECH, partsOfSpeech } from './english-vocabulary.mjs';
 
@@ -338,6 +339,20 @@ const grammarLinkRecord = (term) =>
 
 const grammarConceptRecord = (name) => name.replace(/^grammar::concept::/u, 'grammar.');
 
+// The native grammars of the catalog, one Links Notation file per language.
+const NATIVE_GRAMMAR_DIRECTORY = 'parity/grammars/native';
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const NATIVE_GRAMMAR_FILES = readdirSync(path.join(repositoryRoot, NATIVE_GRAMMAR_DIRECTORY))
+  .filter((file) => file.endsWith('.lino'))
+  .sort()
+  .map((file) => `${NATIVE_GRAMMAR_DIRECTORY}/${file}`);
+
+/** The source a native grammar file gives its rule names: `native:json` for parity/grammars/native/json.lino. */
+export const nativeGrammarSource = (file) => `native:${path.basename(file, '.lino')}`;
+
+// `(rule NAME KIND … (concept ID) …)`: each rule of a native grammar and its concept.
+const nativeRuleConcepts = (text) => [...text.matchAll(/^\(rule ([a-z0-9_]+) [^\n]*?\(concept ([^()\s]+)\)/gmu)].map(([, rule, concept]) => ({ rule, concept }));
+
 /**
  * Where meta-language defines canonical names. Each inventory reads the names
  * from its source files and gives the concept record each name belongs to; an
@@ -490,6 +505,19 @@ export const NAME_INVENTORIES = Object.freeze([
     recordOf: (name) => `operation.${name}`,
   },
   {
+    inventory: 'native grammar rule names',
+    files: NATIVE_GRAMMAR_FILES,
+    extract: (text) => captures(text, /\((?:rule|alias) ([a-z0-9_]+) /gu),
+    words: true,
+  },
+  {
+    inventory: 'native grammar concept references',
+    files: NATIVE_GRAMMAR_FILES,
+    extract: (text) => nativeRuleConcepts(text).map(({ concept }) => concept),
+    describe: (text, file) =>
+      nativeRuleConcepts(text).map(({ rule, concept }) => ({ name: concept, sourceAliases: [{ source: nativeGrammarSource(file), name: rule }] })),
+  },
+  {
     inventory: 'translation stages',
     files: ['parity/fixtures/translation-stages.json'],
     extract: (text) => [
@@ -565,7 +593,7 @@ export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
   for (const { inventory, files, extract, recordOf = (name) => name, words = false } of inventories) {
     for (const file of files) {
       const text = existsSync(path.join(root, file)) ? readFileSync(path.join(root, file), 'utf8') : '';
-      for (const name of new Set(extract(text))) names.push({ inventory, file, name, record: words ? null : recordOf(name) });
+      for (const name of new Set(extract(text, file))) names.push({ inventory, file, name, record: words ? null : recordOf(name) });
     }
   }
   return names;
@@ -578,7 +606,7 @@ export function extractSourceDescriptions(root, inventories = NAME_INVENTORIES) 
     if (!describe) continue;
     for (const file of files) {
       const text = existsSync(path.join(root, file)) ? readFileSync(path.join(root, file), 'utf8') : '';
-      for (const entry of describe(text)) descriptions.push({ inventory, file, ...entry, record: recordOf(entry.name) });
+      for (const entry of describe(text, file)) descriptions.push({ inventory, file, ...entry, record: recordOf(entry.name) });
     }
   }
   return descriptions;

@@ -40,6 +40,78 @@
       "partsOfSpeech": ["noun", "verb"],
       "definition": "To record the state of something at one moment.",
       "source": "Merriam-Webster Dictionary, snapshot (verb)"
+    },
+    {
+      "word": "csv",
+      "partsOfSpeech": ["noun"],
+      "definition": "A plain text table format whose records are lines of fields separated by commas.",
+      "source": "RFC 4180, Common Format and MIME Type for Comma-Separated Values (CSV) Files (2005), section 2"
+    },
+    {
+      "word": "diff",
+      "partsOfSpeech": ["noun"],
+      "definition": "A text that lists the line differences between two files, as the diff utility writes it.",
+      "source": "POSIX.1-2017 (IEEE Std 1003.1-2017), diff utility"
+    },
+    {
+      "word": "ini",
+      "partsOfSpeech": ["noun"],
+      "definition": "A configuration file format of bracketed sections that hold key and value settings.",
+      "source": "Microsoft Win32 API documentation, GetPrivateProfileString function (initialization files)"
+    },
+    {
+      "word": "unquoted",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Not enclosed in quotation marks.",
+      "source": "RFC 4180, Common Format and MIME Type for Comma-Separated Values (CSV) Files (2005), section 2"
+    },
+    {
+      "word": "keyword",
+      "partsOfSpeech": ["noun"],
+      "definition": "A datum written with a hash-colon prefix that evaluates to itself and is never a variable.",
+      "source": "The Racket Reference, Reading Keywords"
+    },
+    {
+      "word": "quasiquote",
+      "partsOfSpeech": ["noun"],
+      "definition": "A template, written with a backquote, whose unquoted parts are evaluated.",
+      "source": "R7RS small (2013), section 4.2.8 Quasiquotation"
+    },
+    {
+      "word": "unquote",
+      "partsOfSpeech": ["noun"],
+      "definition": "A part of a quasiquote template, written with a comma, that is evaluated.",
+      "source": "R7RS small (2013), section 4.2.8 Quasiquotation"
+    },
+    {
+      "word": "quasisyntax",
+      "partsOfSpeech": ["noun"],
+      "definition": "A syntax template, written with a hash-backquote, whose unsyntax parts are evaluated.",
+      "source": "The Racket Reference, Reading Quotes"
+    },
+    {
+      "word": "unsyntax",
+      "partsOfSpeech": ["noun"],
+      "definition": "A part of a quasisyntax template, written with a hash-comma, that is evaluated.",
+      "source": "The Racket Reference, Reading Quotes"
+    },
+    {
+      "word": "anything",
+      "partsOfSpeech": ["noun"],
+      "definition": "A thing of any kind.",
+      "source": "Merriam-Webster Dictionary, anything (noun)"
+    },
+    {
+      "word": "newline",
+      "partsOfSpeech": ["noun"],
+      "definition": "The character or character pair that ends a line of text.",
+      "source": "The Unicode Standard, version 15.0, section 5.8 Newline Guidelines"
+    },
+    {
+      "word": "whitespace",
+      "partsOfSpeech": ["noun"],
+      "definition": "Characters such as spaces, tabs and line breaks that separate tokens and print as blank space.",
+      "source": "R7RS small (2013), section 2.1 Identifiers and section 7.1.1 Lexical structure"
     }
   ]
 }

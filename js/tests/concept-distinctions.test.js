@@ -79,7 +79,21 @@ test('every fixture correspondence relates the spellings as recorded, and shared
 test('checkConceptDistinctions rejects records that merge or fail to justify a required distinction', () => {
   assert.deepEqual(
     REQUIRED_CONCEPT_DISTINCTIONS.map(({ concepts }) => concepts.join(' / ')),
-    ['grammar.ordered-choice / grammar.unordered-choice', 'grammar.lexical-precedence / grammar.syntactic-precedence', 'binding / assignment'],
+    [
+      'grammar.ordered-choice / grammar.unordered-choice',
+      'grammar.lexical-precedence / grammar.syntactic-precedence',
+      'binding / assignment',
+      'grammar.list / grammar.linked-list',
+      'grammar.string / grammar.symbol',
+      'grammar.member / grammar.ini.setting',
+      'grammar.object / grammar.racket.hash-table',
+      'grammar.value / grammar.datum',
+      'grammar.identifier / grammar.identifier-name',
+      'grammar.document / grammar.program',
+      'grammar.boolean-value / grammar.true-value',
+      'grammar.symbol / grammar.keyword',
+      'grammar.comment / grammar.block-comment',
+    ],
   );
   assert.equal(REQUIRED_FOUNDATION_DISTINCTIONS.length, 6);
 

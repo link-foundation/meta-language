@@ -145,7 +145,8 @@ test('every name the sources define has a concept record and every record is use
   const descriptions = extractSourceDescriptions(root);
   const exempt = (name) => repository.exemptions.some(({ pattern }) => new RegExp(pattern, 'u').test(name));
   for (const inventory of new Set(descriptions.map((entry) => entry.inventory))) {
-    const defined = new Set(extractNameInventory(root).filter((entry) => entry.inventory === inventory && entry.file.endsWith('.rs') && !exempt(entry.name)).map((entry) => entry.name));
+    const files = new Set(descriptions.filter((entry) => entry.inventory === inventory).map((entry) => entry.file));
+    const defined = new Set(extractNameInventory(root).filter((entry) => entry.inventory === inventory && files.has(entry.file) && !exempt(entry.name)).map((entry) => entry.name));
     const described = new Set(descriptions.filter((entry) => entry.inventory === inventory).map((entry) => entry.name));
     assert.deepEqual([...described].sort(), [...defined].sort(), inventory);
   }

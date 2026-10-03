@@ -1189,7 +1189,8 @@
       "definition": "A rule for a numeric literal.",
       "constraints": [
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept."
+        "The English and Russian grammar surfaces translate the rule name through this concept.",
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -1199,6 +1200,22 @@
         {
           "source": "Russian grammar surface",
           "name": "число"
+        },
+        {
+          "source": "native:json",
+          "name": "number"
+        },
+        {
+          "source": "native:json5",
+          "name": "number"
+        },
+        {
+          "source": "native:racket",
+          "name": "number"
+        },
+        {
+          "source": "native:scheme",
+          "name": "number"
         }
       ],
       "formerNames": []
@@ -1315,7 +1332,8 @@
       "definition": "A rule for a delimited sequence of items.",
       "constraints": [
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept."
+        "The English and Russian grammar surfaces translate the rule name through this concept.",
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -1325,6 +1343,22 @@
         {
           "source": "Russian grammar surface",
           "name": "список"
+        },
+        {
+          "source": "native:json",
+          "name": "array"
+        },
+        {
+          "source": "native:json5",
+          "name": "array"
+        },
+        {
+          "source": "native:racket",
+          "name": "vector"
+        },
+        {
+          "source": "native:scheme",
+          "name": "vector"
         }
       ],
       "formerNames": []
@@ -1336,7 +1370,8 @@
       "definition": "A rule for any value of a data grammar.",
       "constraints": [
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept."
+        "The English and Russian grammar surfaces translate the rule name through this concept.",
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -1346,6 +1381,14 @@
         {
           "source": "Russian grammar surface",
           "name": "значение"
+        },
+        {
+          "source": "native:json",
+          "name": "value"
+        },
+        {
+          "source": "native:json5",
+          "name": "value"
         }
       ],
       "formerNames": []
@@ -1378,7 +1421,8 @@
       "definition": "A rule for a delimited set of named members.",
       "constraints": [
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept."
+        "The English and Russian grammar surfaces translate the rule name through this concept.",
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -1388,6 +1432,14 @@
         {
           "source": "Russian grammar surface",
           "name": "объект"
+        },
+        {
+          "source": "native:json",
+          "name": "object"
+        },
+        {
+          "source": "native:json5",
+          "name": "object"
         }
       ],
       "formerNames": []
@@ -1399,7 +1451,8 @@
       "definition": "A rule for one name and value pair of an object.",
       "constraints": [
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept."
+        "The English and Russian grammar surfaces translate the rule name through this concept.",
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -1409,6 +1462,14 @@
         {
           "source": "Russian grammar surface",
           "name": "член"
+        },
+        {
+          "source": "native:json",
+          "name": "pair"
+        },
+        {
+          "source": "native:json5",
+          "name": "member"
         }
       ],
       "formerNames": []
@@ -1420,7 +1481,8 @@
       "definition": "A rule for a quoted text literal.",
       "constraints": [
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept."
+        "The English and Russian grammar surfaces translate the rule name through this concept.",
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -1430,6 +1492,26 @@
         {
           "source": "Russian grammar surface",
           "name": "строка"
+        },
+        {
+          "source": "native:csv",
+          "name": "quoted"
+        },
+        {
+          "source": "native:json",
+          "name": "string"
+        },
+        {
+          "source": "native:json5",
+          "name": "string"
+        },
+        {
+          "source": "native:racket",
+          "name": "string"
+        },
+        {
+          "source": "native:scheme",
+          "name": "string"
         }
       ],
       "formerNames": []
@@ -1441,7 +1523,8 @@
       "definition": "A rule for the literals true and false.",
       "constraints": [
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept."
+        "The English and Russian grammar surfaces translate the rule name through this concept.",
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -1451,6 +1534,18 @@
         {
           "source": "Russian grammar surface",
           "name": "логическое"
+        },
+        {
+          "source": "native:csv",
+          "name": "boolean"
+        },
+        {
+          "source": "native:racket",
+          "name": "boolean"
+        },
+        {
+          "source": "native:scheme",
+          "name": "boolean"
         }
       ],
       "formerNames": [
@@ -1464,7 +1559,8 @@
       "definition": "A rule for the literal that denotes no value.",
       "constraints": [
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept."
+        "The English and Russian grammar surfaces translate the rule name through this concept.",
+        "Native grammars share this concept only where the construct means the same in each language."
       ],
       "sourceAliases": [
         {
@@ -1474,6 +1570,1282 @@
         {
           "source": "Russian grammar surface",
           "name": "нуль"
+        },
+        {
+          "source": "native:json",
+          "name": "null"
+        },
+        {
+          "source": "native:json5",
+          "name": "null"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.atmosphere",
+      "phrase": "atmosphere",
+      "role": "concept",
+      "definition": "A rule for the white space and comments between data, which the reader skips.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "atmosphere"
+        },
+        {
+          "source": "native:scheme",
+          "name": "atmosphere"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.block-comment",
+      "phrase": "block comment",
+      "role": "concept",
+      "definition": "A rule for a comment between an opening and a closing delimiter that may nest.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "block_comment"
+        },
+        {
+          "source": "native:scheme",
+          "name": "block_comment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.character-literal",
+      "phrase": "character literal",
+      "role": "concept",
+      "definition": "A rule for a literal that denotes a single character.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "character"
+        },
+        {
+          "source": "native:scheme",
+          "name": "character"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.comment",
+      "phrase": "comment",
+      "role": "concept",
+      "definition": "A rule for a comment, text the reader skips as no part of the data.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "comment"
+        },
+        {
+          "source": "native:ini",
+          "name": "comment"
+        },
+        {
+          "source": "native:json",
+          "name": "comment"
+        },
+        {
+          "source": "native:json5",
+          "name": "comment"
+        },
+        {
+          "source": "native:racket",
+          "name": "comment"
+        },
+        {
+          "source": "native:scheme",
+          "name": "comment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.csv.floating-point-number",
+      "phrase": "floating point number",
+      "role": "concept",
+      "definition": "A rule for a CSV field that holds a number with a fractional part or an exponent.",
+      "constraints": [
+        "Only the native CSV grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csv",
+          "name": "float"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.csv.integer",
+      "phrase": "integer",
+      "role": "concept",
+      "definition": "A rule for a CSV field that holds a whole number.",
+      "constraints": [
+        "Only the native CSV grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csv",
+          "name": "number"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.csv.unquoted-text",
+      "phrase": "unquoted text",
+      "role": "concept",
+      "definition": "A rule for a CSV field of plain text without quotation marks.",
+      "constraints": [
+        "Only the native CSV grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csv",
+          "name": "text"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.datum",
+      "phrase": "datum",
+      "role": "concept",
+      "definition": "A rule for one external representation of a value that the reader reads as data.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "datum"
+        },
+        {
+          "source": "native:scheme",
+          "name": "datum"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.added-line",
+      "phrase": "added line",
+      "role": "concept",
+      "definition": "A rule for a line the change adds, marked with a plus sign.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "addition"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.binary-file-change",
+      "phrase": "binary file change",
+      "role": "concept",
+      "definition": "A rule for the line that reports two binary files differ.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "binary_change"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.change",
+      "phrase": "change",
+      "role": "concept",
+      "definition": "A rule for one added, deleted or context line of a hunk.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "change"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.change-sequence",
+      "phrase": "change sequence",
+      "role": "concept",
+      "definition": "A rule for the consecutive changed and context lines of one hunk.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "changes"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.commit-hash",
+      "phrase": "commit hash",
+      "role": "concept",
+      "definition": "A rule for an abbreviated or full hexadecimal object hash.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "commit"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.context-line",
+      "phrase": "context line",
+      "role": "concept",
+      "definition": "A rule for an unchanged line shown around the changes of a hunk.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "context"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.deleted-line",
+      "phrase": "deleted line",
+      "role": "concept",
+      "definition": "A rule for a line the change deletes, marked with a minus sign.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "deletion"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.difference-command",
+      "phrase": "difference command",
+      "role": "concept",
+      "definition": "A rule for the diff command line that opens a file difference.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "command"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.file-change",
+      "phrase": "file change",
+      "role": "concept",
+      "definition": "A rule for a header line that creates, deletes, renames or copies a file or changes its mode.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "file_change"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.file-difference",
+      "phrase": "file difference",
+      "role": "concept",
+      "definition": "A rule for the difference of one file: its diff command, header lines and hunks.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "block"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.file-header",
+      "phrase": "file header",
+      "role": "concept",
+      "definition": "A rule for one extended header line of a file difference block.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "header"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.file-mode",
+      "phrase": "file mode",
+      "role": "concept",
+      "definition": "A rule for the octal permission mode of a file.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "mode"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.file-name",
+      "phrase": "file name",
+      "role": "concept",
+      "definition": "A rule for the path of a file a patch line names.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "filename"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.hunk",
+      "phrase": "hunk",
+      "role": "concept",
+      "definition": "A rule for one hunk: its hunk header and the changed lines it covers.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "hunk"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.hunk-header",
+      "phrase": "hunk header",
+      "role": "concept",
+      "definition": "A rule for the double-at line that gives the line ranges of a hunk.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "location"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.hunk-sequence",
+      "phrase": "hunk sequence",
+      "role": "concept",
+      "definition": "A rule for the consecutive hunks of one file difference.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "hunks"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.index-line",
+      "phrase": "index line",
+      "role": "concept",
+      "definition": "A rule for the index line with the object hashes of both file versions.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "index"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.line-range",
+      "phrase": "line range",
+      "role": "concept",
+      "definition": "A rule for the start line and line count of one side of a hunk.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "line_range"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.new-file-line",
+      "phrase": "new file line",
+      "role": "concept",
+      "definition": "A rule for the three-plus line that names the changed file.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "new_file"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.old-file-line",
+      "phrase": "old file line",
+      "role": "concept",
+      "definition": "A rule for the three-minus line that names the original file.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "old_file"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.patch-line",
+      "phrase": "patch line",
+      "role": "concept",
+      "definition": "A rule for one line of a patch outside a file difference block.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "line"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.diff.similarity-index",
+      "phrase": "similarity index",
+      "role": "concept",
+      "definition": "A rule for the line that gives how similar a renamed or copied file is.",
+      "constraints": [
+        "Only the native diff grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:diff",
+          "name": "similarity"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.document",
+      "phrase": "document",
+      "role": "concept",
+      "definition": "A rule for the whole text of a data or document format.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:csv",
+          "name": "document"
+        },
+        {
+          "source": "native:diff",
+          "name": "source"
+        },
+        {
+          "source": "native:ini",
+          "name": "document"
+        },
+        {
+          "source": "native:json",
+          "name": "document"
+        },
+        {
+          "source": "native:json5",
+          "name": "file"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.escape-sequence",
+      "phrase": "escape sequence",
+      "role": "concept",
+      "definition": "A rule for a backslash sequence inside a string that stands for one character.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "escape_sequence"
+        },
+        {
+          "source": "native:scheme",
+          "name": "escape_sequence"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.false-value",
+      "phrase": "false value",
+      "role": "concept",
+      "definition": "A rule for the literal false alone.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:json",
+          "name": "false"
+        },
+        {
+          "source": "native:json5",
+          "name": "false"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.identifier-name",
+      "phrase": "identifier name",
+      "role": "concept",
+      "definition": "A rule for an ECMAScript identifier name used as an unquoted member name.",
+      "constraints": [
+        "Only the native JSON5 grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:json5",
+          "name": "identifier"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.ini.section",
+      "phrase": "section",
+      "role": "concept",
+      "definition": "A rule for an INI section: its bracketed name and the settings under it.",
+      "constraints": [
+        "Only the native INI grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:ini",
+          "name": "section"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.ini.section-name",
+      "phrase": "section name",
+      "role": "concept",
+      "definition": "A rule for the bracketed name that opens an INI section.",
+      "constraints": [
+        "Only the native INI grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:ini",
+          "name": "section_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.ini.setting",
+      "phrase": "setting",
+      "role": "concept",
+      "definition": "A rule for one key and value line of an INI file.",
+      "constraints": [
+        "Only the native INI grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:ini",
+          "name": "setting"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.keyword",
+      "phrase": "keyword",
+      "role": "concept",
+      "definition": "A rule for a hash-colon keyword datum, which is never a variable.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "keyword"
+        },
+        {
+          "source": "native:scheme",
+          "name": "keyword"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.linked-list",
+      "phrase": "linked list",
+      "role": "concept",
+      "definition": "A rule for a parenthesized list of pairs that may end in a dotted pair.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "list"
+        },
+        {
+          "source": "native:scheme",
+          "name": "list"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.program",
+      "phrase": "program",
+      "role": "concept",
+      "definition": "A rule for the whole source text of a program.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "program"
+        },
+        {
+          "source": "native:scheme",
+          "name": "program"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.program-element",
+      "phrase": "program element",
+      "role": "concept",
+      "definition": "A rule for one top-level element of a program: a datum or the atmosphere around it.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "program_element"
+        },
+        {
+          "source": "native:scheme",
+          "name": "program_element"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.quasiquote",
+      "phrase": "quasiquote",
+      "role": "concept",
+      "definition": "A rule for a backquote before a datum, which reads as a quasiquote form.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "quasiquote"
+        },
+        {
+          "source": "native:scheme",
+          "name": "quasiquote"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.quasisyntax",
+      "phrase": "quasisyntax",
+      "role": "concept",
+      "definition": "A rule for a hash-backquote before a datum, which reads as a quasisyntax form.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "quasisyntax"
+        },
+        {
+          "source": "native:scheme",
+          "name": "quasisyntax"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.quote",
+      "phrase": "quote",
+      "role": "concept",
+      "definition": "A rule for an apostrophe before a datum, which reads as a quote form.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "quote"
+        },
+        {
+          "source": "native:scheme",
+          "name": "quote"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.box",
+      "phrase": "box",
+      "role": "concept",
+      "definition": "A rule for a hash-ampersand box around a datum.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "box"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.byte-string",
+      "phrase": "byte string",
+      "role": "concept",
+      "definition": "A rule for a hash-quoted byte string literal.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "byte_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.datum-comment",
+      "phrase": "datum comment",
+      "role": "concept",
+      "definition": "A rule for a hash-semicolon comment that skips the next datum.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "datum_comment"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.graph-notation",
+      "phrase": "graph notation",
+      "role": "concept",
+      "definition": "A rule for a graph label or reference that shares or cycles a datum.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "graph"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.hash-table",
+      "phrase": "hash table",
+      "role": "concept",
+      "definition": "A rule for a hash-hash literal of key and value pairs, keyed by equality.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "hash"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.here-string",
+      "phrase": "here string",
+      "role": "concept",
+      "definition": "A rule for a here string, whose lines run up to a line equal to its terminator.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "here_string"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.here-string-end",
+      "phrase": "here string end",
+      "role": "concept",
+      "definition": "A rule for the closing line of a here string, equal to its terminator.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "here_end"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.here-string-line",
+      "phrase": "here string line",
+      "role": "concept",
+      "definition": "A rule for one line of a here string that is not its terminator.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "here_line"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.here-string-line-break",
+      "phrase": "here string line break",
+      "role": "concept",
+      "definition": "A rule for a line break inside a here string.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "here_newline"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.here-string-terminator",
+      "phrase": "here string terminator",
+      "role": "concept",
+      "definition": "A rule for the terminator text that opens a here string.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "here_terminator"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.language-name",
+      "phrase": "language name",
+      "role": "concept",
+      "definition": "A rule for the module path a hash-lang line names.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "language_name"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.pair-separator",
+      "phrase": "pair separator",
+      "role": "concept",
+      "definition": "A rule for the dot between the two parts of a pair.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "dot"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.reader-extension",
+      "phrase": "reader extension",
+      "role": "concept",
+      "definition": "A rule for a hash-reader or hash-lang line that hands reading to another reader.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "extension"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.regular-expression-literal",
+      "phrase": "regular expression literal",
+      "role": "concept",
+      "definition": "A rule for a hash-rx or hash-px regular expression literal.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "regular_expression"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.structure-literal",
+      "phrase": "structure literal",
+      "role": "concept",
+      "definition": "A rule for a hash-s prefab structure literal.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "structure"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.racket.vector-length",
+      "phrase": "vector length",
+      "role": "concept",
+      "definition": "A rule for the decimal length prefix of a vector or flonum vector.",
+      "constraints": [
+        "Only the native Racket grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "decimal"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scheme.byte-vector",
+      "phrase": "byte vector",
+      "role": "concept",
+      "definition": "A rule for a bytevector literal, a hash-u8 list of bytes.",
+      "constraints": [
+        "Only the native Scheme grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:scheme",
+          "name": "byte_vector"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scheme.datum-label",
+      "phrase": "datum label",
+      "role": "concept",
+      "definition": "A rule for a datum labelled for later reference, as in hash-n-equals.",
+      "constraints": [
+        "Only the native Scheme grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:scheme",
+          "name": "datum_label"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scheme.datum-label-marker",
+      "phrase": "datum label marker",
+      "role": "concept",
+      "definition": "A rule for the hash-n-equals marker that labels a datum.",
+      "constraints": [
+        "Only the native Scheme grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:scheme",
+          "name": "label"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scheme.datum-reference",
+      "phrase": "datum reference",
+      "role": "concept",
+      "definition": "A rule for the hash-n-hash reference to a labelled datum.",
+      "constraints": [
+        "Only the native Scheme grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:scheme",
+          "name": "datum_reference"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.scheme.reader-directive",
+      "phrase": "reader directive",
+      "role": "concept",
+      "definition": "A rule for a hash-bang directive such as fold-case that changes how the reader reads.",
+      "constraints": [
+        "Only the native Scheme grammar defines this construct."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:scheme",
+          "name": "directive"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.symbol",
+      "phrase": "symbol",
+      "role": "concept",
+      "definition": "A rule for an identifier read as a symbol datum rather than as text.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "symbol"
+        },
+        {
+          "source": "native:scheme",
+          "name": "symbol"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.syntax-quote",
+      "phrase": "syntax quote",
+      "role": "concept",
+      "definition": "A rule for a hash-apostrophe before a datum, which reads as a syntax form.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "syntax"
+        },
+        {
+          "source": "native:scheme",
+          "name": "syntax"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.true-value",
+      "phrase": "true value",
+      "role": "concept",
+      "definition": "A rule for the literal true alone.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:json",
+          "name": "true"
+        },
+        {
+          "source": "native:json5",
+          "name": "true"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unquote",
+      "phrase": "unquote",
+      "role": "concept",
+      "definition": "A rule for a comma before a datum, which reads as an unquote form.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "unquote"
+        },
+        {
+          "source": "native:scheme",
+          "name": "unquote"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unquote-splicing",
+      "phrase": "unquote splicing",
+      "role": "concept",
+      "definition": "A rule for a comma-at before a datum, which reads as an unquote-splicing form.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "unquote_splicing"
+        },
+        {
+          "source": "native:scheme",
+          "name": "unquote_splicing"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unsyntax",
+      "phrase": "unsyntax",
+      "role": "concept",
+      "definition": "A rule for a hash-comma before a datum, which reads as an unsyntax form.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "unsyntax"
+        },
+        {
+          "source": "native:scheme",
+          "name": "unsyntax"
+        }
+      ],
+      "formerNames": []
+    },
+    {
+      "id": "grammar.unsyntax-splicing",
+      "phrase": "unsyntax splicing",
+      "role": "concept",
+      "definition": "A rule for a hash-comma-at before a datum, which reads as an unsyntax-splicing form.",
+      "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language."
+      ],
+      "sourceAliases": [
+        {
+          "source": "native:racket",
+          "name": "unsyntax_splicing"
+        },
+        {
+          "source": "native:scheme",
+          "name": "unsyntax_splicing"
         }
       ],
       "formerNames": []
@@ -2439,7 +3811,8 @@
       "definition": "Row within a table.",
       "constraints": [
         "Every document format that supports the element maps it to this concept.",
-        "The formatting concept round-trips through Markdown and HTML templates."
+        "The formatting concept round-trips through Markdown and HTML templates.",
+        "Only the native CSV grammar defines this construct."
       ],
       "sourceAliases": [
         {
@@ -2449,6 +3822,10 @@
         {
           "source": "HTML",
           "name": "<tr>{}</tr>"
+        },
+        {
+          "source": "native:csv",
+          "name": "row"
         }
       ],
       "formerNames": []
@@ -2460,7 +3837,8 @@
       "definition": "Cell within a table row.",
       "constraints": [
         "Every document format that supports the element maps it to this concept.",
-        "The formatting concept round-trips through Markdown and HTML templates."
+        "The formatting concept round-trips through Markdown and HTML templates.",
+        "Only the native CSV grammar defines this construct."
       ],
       "sourceAliases": [
         {
@@ -2470,6 +3848,10 @@
         {
           "source": "HTML",
           "name": "<td>{}</td>"
+        },
+        {
+          "source": "native:csv",
+          "name": "field"
         }
       ],
       "formerNames": []

@@ -248,7 +248,7 @@
       "grammars": {
         "native-json5": {
           "version": "1.0.0",
-          "parserSha256": "d733ca1db7708114c21d1ea12a31f18d3ceb1cc7d245a750d36eebc996acafaa"
+          "parserSha256": "2aaa4d4408807207be935ec51bd476a828556f05e654abae2728f408fb3e86d2"
         }
       },
       "oracleGrammars": {

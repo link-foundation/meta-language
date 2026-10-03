@@ -177,7 +177,17 @@ fn check_rejects_records_that_merge_or_fail_to_justify_a_required_distinction() 
         [
             "grammar.ordered-choice / grammar.unordered-choice",
             "grammar.lexical-precedence / grammar.syntactic-precedence",
-            "binding / assignment"
+            "binding / assignment",
+            "grammar.list / grammar.linked-list",
+            "grammar.string / grammar.symbol",
+            "grammar.member / grammar.ini.setting",
+            "grammar.object / grammar.racket.hash-table",
+            "grammar.value / grammar.datum",
+            "grammar.identifier / grammar.identifier-name",
+            "grammar.document / grammar.program",
+            "grammar.boolean-value / grammar.true-value",
+            "grammar.symbol / grammar.keyword",
+            "grammar.comment / grammar.block-comment",
         ]
     );
     assert_eq!(REQUIRED_FOUNDATION_DISTINCTIONS.len(), 6);
