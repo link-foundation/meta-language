@@ -387,6 +387,79 @@ export function checkConceptDistinctions(records?: readonly ConceptRecord[], reg
 export function grammarExprConceptId(expression: { kind: string; ordered?: boolean }): string;
 export function grammarPrecedenceConcepts(grammar: Grammar): PrecedenceUse[];
 
+/** A rule of a native grammar and the concept it names. */
+export interface NativeRuleConcept {
+  rule: string;
+  concept: string | null;
+}
+
+export type NativeConceptProblemKind =
+  | 'rule-without-concept'
+  | 'concept-without-record'
+  | 'rule-without-alias'
+  | 'alias-without-rule'
+  | 'namespace-mismatch';
+
+export interface NativeConceptProblem {
+  kind: NativeConceptProblemKind;
+  grammar: string;
+  rule: string;
+  concept: string | null;
+}
+
+export interface NativeConceptCheckOptions {
+  records?: readonly ConceptRecord[];
+  grammars?: readonly string[];
+  ruleConcepts?: (grammar: string) => NativeRuleConcept[];
+}
+
+/** The per-language reuse report of the native grammars. */
+export interface NativeConceptReuse {
+  grammars: {
+    grammar: string;
+    language: string;
+    rules: number;
+    shared: { rule: string; concept: string; languages: string[] }[];
+    specific: { rule: string; concept: string }[];
+  }[];
+  concepts: { concept: string; languages: string[]; shared: boolean }[];
+}
+
+export type ConstructTranslationRelation = 'translated' | 'untranslatable' | 'ambiguous' | 'unknown';
+
+export interface ConstructTranslation {
+  relation: ConstructTranslationRelation;
+  concept: string | null;
+  rules: string[];
+}
+
+/** A node of a native parse tree whose kind is a rule of the grammar. */
+export interface ConstructTree {
+  kind: string;
+  concept: string;
+  children: ConstructTree[];
+}
+
+export function nativeGrammarIds(): string[];
+export function nativeGrammarLanguage(id: string): string;
+export function nativeGrammarSource(id: string): string;
+export function nativeGrammarRuleConcepts(id: string): NativeRuleConcept[];
+export function checkNativeGrammarConcepts(options?: NativeConceptCheckOptions): NativeConceptProblem[];
+export function nativeGrammarConceptReuse(options?: { records?: readonly ConceptRecord[]; grammars?: readonly string[] }): NativeConceptReuse;
+export function translateNativeConstruct(
+  from: string,
+  rule: string,
+  to: string,
+  options?: { records?: readonly ConceptRecord[] },
+): ConstructTranslation;
+export function nativeConstructTree(id: string, source: string): ConstructTree;
+export function translateNativeConstructTree(
+  tree: ConstructTree,
+  from: string,
+  to: string,
+  options?: { records?: readonly ConceptRecord[] },
+): { tree: ConstructTree | null; problems: { kind: string; concept: string | null; relation: ConstructTranslationRelation }[] };
+
 /** Node kind and field names of a default grammar; `fields` starts at field id 1. */
 export interface GrammarNames {
   nodeKinds: string[];

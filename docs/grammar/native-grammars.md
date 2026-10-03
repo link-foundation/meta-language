@@ -189,6 +189,37 @@ and
 - Whitespace, comment text, string text and the here string lines are trivia
   leaves, so the tree keeps every byte.
 
+## Concepts
+
+Every rule has a readable English name and names a canonical concept record
+in [`parity/naming/canonical-concepts.json`](../../parity/naming/canonical-concepts.json)
+with `(concept ID)`. A rule that replaces a differently named tree-sitter kind
+keeps that name as `(source-names (tree-sitter NAME))`, and the catalog's
+`oracleKinds` maps the rule back to it for the oracle comparison. The record
+lists the rule as a `native:<language>` source alias.
+
+A construct that means the same in two or more native grammars names one
+shared concept: a JSON `pair` and a JSON5 `member` are both `grammar.member`,
+and a string is `grammar.string` in CSV, JSON, JSON5, Scheme and Racket.
+Lookalikes stay apart. A Scheme `list` is `grammar.linked-list`, not the
+`grammar.list` of a JSON `array`. A JSON `object` is `grammar.object`, not the
+`grammar.racket.hash-table` of a Racket `hash`. A construct only one language has
+names a concept in that language's namespace, such as `grammar.diff.hunk`.
+`checkNativeGrammarConcepts` and `check_native_grammar_concepts` fail on any
+rule without a record, and on any record alias without a rule.
+
+`translateNativeConstruct` and `translate_native_construct` translate a rule
+from one native grammar to another through its concept record alone; no rule
+exists for the pair of languages. `translateNativeConstructTree` and
+`translate_native_construct_tree` translate a whole construct tree, or report
+every construct the target grammar has no rule for. The per-language counts of
+shared and language-specific rules are in the generated
+[concept reuse report](native-grammar-concept-reuse.md), which
+`npm run check:concept-reuse` keeps current. The fixtures are
+[`parity/fixtures/grammar-shared-concepts.json`](../../parity/fixtures/grammar-shared-concepts.json)
+and
+[`parity/fixtures/native-grammar-concept-reuse.json`](../../parity/fixtures/native-grammar-concept-reuse.json).
+
 ## Checking against the oracle
 
 [`js/scripts/generate-native-grammar-fixtures.mjs`](../../js/scripts/generate-native-grammar-fixtures.mjs)

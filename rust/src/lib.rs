@@ -12,6 +12,7 @@ mod docx_parser;
 mod embedded_region_parser;
 mod foundation_models;
 pub mod grammar;
+mod grammar_concepts;
 pub mod graphql_adapter;
 mod incremental;
 pub mod language_catalog;
@@ -172,6 +173,15 @@ pub use grammar::{
 };
 #[cfg(feature = "llm-assist")]
 pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
+pub use grammar_concepts::{
+    ConceptReuse, ConstructTranslation, ConstructTranslationProblem, ConstructTranslationRelation,
+    ConstructTree, ConstructTreeTranslation, GrammarConceptReuse, NativeConceptProblem,
+    NativeConceptProblemKind, NativeConceptReuse, NativeRuleConcept, SharedRule, SpecificRule,
+    check_native_grammar_concepts, check_native_grammar_concepts_in, native_construct_tree,
+    native_grammar_concept_reuse, native_grammar_ids, native_grammar_language,
+    native_grammar_rule_concepts, native_grammar_source, translate_native_construct,
+    translate_native_construct_in, translate_native_construct_tree,
+};
 pub use graphql_adapter::{
     GraphQlAdapterError, GraphQlArgumentRole, GraphQlOperationType, GraphQlRootMapping,
     GraphQlSchemaRegistry, lower_graphql,

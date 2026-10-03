@@ -90,8 +90,13 @@ fn native_grammar_index(id: &str) -> Option<usize> {
         .position(|(path, _)| path == file)
 }
 
+/// The Links Notation text of the native grammar `id`.
+pub fn native_grammar_text(id: &str) -> Option<&'static str> {
+    native_grammar_index(id).map(|index| NATIVE_GRAMMAR_TEXTS[index].1)
+}
+
 // Each native grammar is compiled on its first use and kept for the process.
-fn native_parser(id: &str) -> Option<&'static FeatureGrammarParser> {
+pub fn native_parser(id: &str) -> Option<&'static FeatureGrammarParser> {
     static PARSERS: [OnceLock<Option<FeatureGrammarParser>>; NATIVE_GRAMMAR_TEXTS.len()] =
         [const { OnceLock::new() }; NATIVE_GRAMMAR_TEXTS.len()];
     let index = native_grammar_index(id)?;

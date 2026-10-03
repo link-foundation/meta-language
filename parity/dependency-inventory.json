@@ -6640,8 +6640,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/csv.wasm.gz@f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
-      "name": "js/oracles/grammars/csv.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/csv.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6657,8 +6657,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/diff.wasm.gz@0.1.0",
-      "name": "js/oracles/grammars/diff.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/diff.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6674,8 +6674,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/ini.wasm.gz@1.4.0",
-      "name": "js/oracles/grammars/ini.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/ini.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6691,8 +6691,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/json.wasm.gz@0.24.8",
-      "name": "js/oracles/grammars/json.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/json.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6708,8 +6708,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/json5.wasm.gz@0.1.0",
-      "name": "js/oracles/grammars/json5.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/json5.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6725,8 +6725,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/racket.wasm.gz@0.25.0",
-      "name": "js/oracles/grammars/racket.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/racket.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6742,8 +6742,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/scheme.wasm.gz@0.24.7",
-      "name": "js/oracles/grammars/scheme.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/scheme.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -7747,6 +7747,20 @@
       ]
     },
     {
+      "id": "generator js/scripts/build-native-grammar-concept-reuse.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/build-native-grammar-concept-reuse.mjs",
+      "declaredIn": [
+        "js/scripts/build-native-grammar-concept-reuse.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": []
+    },
+    {
       "id": "generator js/scripts/build-translation-stage-fixtures.mjs@script",
       "category": "generator",
       "name": "js/scripts/build-translation-stage-fixtures.mjs",
@@ -8571,9 +8585,9 @@
     },
     {
       "id": "published crate /LICENSE@include",
-      "name": "/LICENSE",
       "category": "published",
       "scope": "crate",
+      "name": "/LICENSE",
       "declaredIn": [
         "rust/Cargo.toml"
       ],
