@@ -173,7 +173,7 @@ fn native_c_grammar_builds_the_oracle_rows() {
 fn native_c_grammar_rejects_invalid_input() {
     let fixture = fixture();
     let parser = parser();
-    assert!(cases(&fixture, "divergences").is_empty());
+    assert_eq!(cases(&fixture, "divergences"), [] as [Value; 0]);
     let rejections = cases(&fixture, "rejections");
     assert!(rejections.len() >= 20);
     for case in rejections {
