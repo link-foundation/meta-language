@@ -4,7 +4,7 @@
 
 use std::cell::{Cell, OnceCell, RefCell};
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -123,6 +123,9 @@ pub(super) struct Tree {
     pub(super) precedence: Option<(i64, Associativity)>,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
+    /// Under keyword lexing, the kind of the token rule that built the leaf,
+    /// which an alias keeps.
+    pub(super) lexed: Option<Name>,
     pub(super) language: Option<Name>,
     pub(super) root: Option<Rc<Self>>,
     pub(super) program: usize,
@@ -143,6 +146,7 @@ impl Tree {
             precedence: None,
             ambiguous: false,
             literal: false,
+            lexed: None,
             language: None,
             root: None,
             program: 0,
@@ -445,6 +449,62 @@ fn token_conflict(a: &Tree, b: &Tree, tokens: TokenOrder<'_>) -> Ordering {
         }
         Some((first, second)) => second.order.cmp(&first.order),
     }
+}
+
+/// Keyword lexing under `(matching longest)`. A tree-sitter lexer lexes a
+/// keyword wherever the parse state admits it, before any parse goes on, so a
+/// token rule's leaf over the same text (an identifier `typedef`) is not taken
+/// there even when only it would let the parse go on. A parse records the
+/// spans where a keyword token matched (`matched`); a leaf of a token rule in
+/// its tree over such a span (`lexed`, the rule's kind, which an alias keeps)
+/// that the keyword outranks (see `token_conflict`) makes the span
+/// keyword-only (`only`), and the input is parsed again, where no token rule
+/// takes a keyword-only span the keyword outranks it on. The spans only grow,
+/// so the reparses end.
+#[derive(Debug, Default)]
+pub(super) struct KeywordLexing {
+    only: HashSet<(usize, usize)>,
+    pub(super) matched: HashSet<(usize, usize)>,
+}
+
+impl KeywordLexing {
+    /// Whether a keyword-only span's keyword outranks a token rule's leaf over it.
+    pub(super) fn outranks(&self, leaf: &Tree, tokens: TokenOrder<'_>) -> bool {
+        self.only.contains(&(leaf.start, leaf.end)) && outranks_at(leaf, tokens)
+    }
+
+    /// Marks the spans where `root` took a token rule's leaf over a keyword;
+    /// true when one is new.
+    pub(super) fn conflicts(&mut self, root: &Tree, tokens: TokenOrder<'_>) -> bool {
+        let mut found = false;
+        let mut pending = vec![root];
+        while let Some(node) = pending.pop() {
+            if node.ty == TreeType::Node {
+                pending.extend(node.children.iter().rev().map(|child| &**child));
+                continue;
+            }
+            let Some(kind) = &node.lexed else {
+                continue;
+            };
+            let span = (node.start, node.end);
+            if !self.matched.contains(&span) || self.only.contains(&span) {
+                continue;
+            }
+            let leaf = Tree::new(TreeType::Token, Some(kind.clone()), node.start, node.end);
+            if outranks_at(&leaf, tokens) {
+                self.only.insert(span);
+                found = true;
+            }
+        }
+        self.matched.clear();
+        found
+    }
+}
+
+/// Whether a keyword over the span of a token rule's leaf outranks it.
+fn outranks_at(leaf: &Tree, tokens: TokenOrder<'_>) -> bool {
+    let keyword = Tree::new(TreeType::Token, None, leaf.start, leaf.end);
+    token_conflict(&keyword, leaf, tokens) == Ordering::Greater
 }
 
 pub(super) fn longest_result(results: Vec<Res>) -> Option<Res> {

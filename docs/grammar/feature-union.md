@@ -367,6 +367,23 @@ skipped trivia up to any named trivia leaf (an extra rule such as a comment),
 as a lexer skips no separator before an immediate token but lexes an extra
 token before it as before any other; the results of all its starts are merged.
 
+**Keyword lexing.** Under `matching longest` a tree-sitter lexer lexes a
+keyword wherever the parse state admits it, before any parse goes on, so a
+token rule's leaf over the same text (an identifier `typedef`) is not taken
+where a keyword could be, even when only it would let the parse go on (`if;`
+is no expression statement). A keyword is a `token` or `immediateToken` of a
+literal closed by lookaheads (`(token (seq (literal typedef) (not (ref
+word_characters))))`). A parse records the spans where a keyword in syntactic
+context matched; when the finished tree (repaired or not) has a token rule's
+leaf, in syntactic context, over such a span and the keyword outranks it as a
+lexer decides (see Result sets; an alias keeps the rule's rank), the span
+becomes keyword-only and the input is parsed again, each parse with its own
+step budget. There no token rule takes a keyword-only span its keyword
+outranks it on. The keyword-only spans only grow, so the reparses end. Where
+no keyword may come (`x = typedef;`, `int typedef;` in C) the keyword never
+matches, and the identifier stands. The keyword lexing of a parse does not
+reach the grammars it embeds.
+
 **Trivia.** Skipping trivia repeatedly takes the longest match, in token
 context, of any trivia expression allowed in the current mode (the top of the
 mode stack); the first expression wins a tie. Each match is a trivia leaf

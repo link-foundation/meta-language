@@ -169,6 +169,14 @@ impl Executor<'_> {
                     start,
                     result.end,
                 );
+                if let (Some(keywords), Some(tokens), false) =
+                    (self.keywords, self.longest_tokens, in_token)
+                {
+                    if keywords.borrow().outranks(&leaf, tokens) {
+                        continue;
+                    }
+                    leaf.lexed = Some(rule.node_kind.clone());
+                }
                 let Some(acted) = self.run_action(rule, result, &mut leaf, start)? else {
                     continue;
                 };

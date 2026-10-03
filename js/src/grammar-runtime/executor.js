@@ -298,6 +298,9 @@ export class Executor {
     // and the farthest offset where an element failed without a repair.
     this.repairPoints = null;
     this.elementFarthest = -1;
+    // Under `(matching longest)`, the keyword lexing of the parse (see
+    // `KeywordLexing`), or none.
+    this.keywords = null;
   }
 
   step() {
@@ -500,8 +503,12 @@ export class Executor {
           ? [this.terminalStart(position, state, inToken)]
           : this.immediateStarts(position, state, inToken);
         const found = new Map();
+        const keyword = this.keywords !== null && !inToken && isKeyword(expression.item);
         for (const { end, leaves } of starts) {
-          for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) addResult(found, result, this.longestTokens);
+          for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
+            if (keyword) this.keywords.matched.add(`${end}|${result.end}`);
+            addResult(found, result, this.longestTokens);
+          }
         }
         const results = [...found.values()];
         const { end: start, leaves } = starts[0];
@@ -933,6 +940,10 @@ export class Executor {
       const built = [];
       for (const result of results) {
         const leaf = { type: 'token', kind: rule.nodeKind, start, end: result.end };
+        if (this.keywords && !inToken) {
+          if (this.keywords.outranks(leaf)) continue;
+          leaf.lexed = rule.nodeKind;
+        }
         const acted = this.runAction(rule, result, leaf, start);
         if (!acted) continue;
         built.push(copyResult(acted, { children: inToken ? NO_CHILDREN : [...leaves, leaf], precedence: null, ambiguous: false }));
@@ -1141,6 +1152,64 @@ export class Executor {
       type: 'node', kind, rule: kind, start: this.begin, end: this.end,
       children: [{ type: 'error', start: this.begin, end: this.end }], ambiguous: false,
     };
+  }
+}
+
+// Whether a token is a keyword, a literal closed by lookaheads (`(seq
+// (literal typedef) (not (ref word_characters)))`).
+function isKeyword(expression) {
+  if (expression.kind !== 'seq' || expression.items.length < 2 || expression.items[0].kind !== 'literal') return false;
+  return expression.items.slice(1).every((item) => item.kind === 'not' || item.kind === 'and');
+}
+
+/**
+ * Keyword lexing under `(matching longest)`. A tree-sitter lexer lexes a
+ * keyword wherever the parse state admits it, before any parse goes on, so a
+ * token rule's leaf over the same text (an identifier `typedef`) is not taken
+ * there even when only it would let the parse go on. A parse records the
+ * spans where a keyword token matched (`matched`); a leaf of a token rule in
+ * its tree over such a span (`lexed`, the rule's kind, which an alias keeps)
+ * that the keyword outranks (see `tokenConflict`) makes the span keyword-only
+ * (`only`), and the input is parsed again, where no token rule takes a
+ * keyword-only span the keyword outranks it on. The spans only grow, so the
+ * reparses end.
+ */
+export class KeywordLexing {
+  constructor(tokens) {
+    this.tokens = tokens;
+    this.only = new Set();
+    this.matched = new Set();
+  }
+
+  // Whether a keyword-only span's keyword outranks a token rule's leaf over it.
+  outranks(leaf) {
+    return this.only.has(`${leaf.start}|${leaf.end}`) && this.outranksAt(leaf);
+  }
+
+  // Whether a keyword over the span of a token rule's leaf outranks it.
+  outranksAt(leaf) {
+    return tokenConflict({ type: 'token', kind: null, start: leaf.start, end: leaf.end }, leaf, this.tokens) > 0;
+  }
+
+  /** Marks the spans where `root` took a token rule's leaf over a keyword; true when one is new. */
+  conflicts(root) {
+    let found = false;
+    const pending = [root];
+    while (pending.length > 0) {
+      const node = pending.pop();
+      if (node.type === 'node') {
+        for (let index = node.children.length - 1; index >= 0; index -= 1) pending.push(node.children[index]);
+        continue;
+      }
+      if (node.lexed === undefined) continue;
+      const span = `${node.start}|${node.end}`;
+      if (!this.matched.has(span) || this.only.has(span)) continue;
+      if (!this.outranksAt({ type: 'token', kind: node.lexed, start: node.start, end: node.end })) continue;
+      this.only.add(span);
+      found = true;
+    }
+    this.matched = new Set();
+    return found;
   }
 }
 

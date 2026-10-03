@@ -5,7 +5,7 @@
 // (grammar-runtime/executor.js) runs it within explicit resource limits; the
 // tree module (grammar-runtime/syntax-tree.js) copies and renders the result.
 // docs/grammar/feature-union.md is the specification the Rust port follows.
-import { Executor, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
+import { Executor, KeywordLexing, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
 import { GrammarRuntimeError, loadProgram } from './grammar-runtime/load.js';
 import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
 import { inputBytes, lineAndColumn } from './grammar-runtime/text.js';
@@ -49,7 +49,7 @@ function positioned(reason, bytes, offset, extra = {}) {
  * or when no new point appears, the last round's partial tree stands, the
  * rest of the input an ERROR leaf. Each round has its own step budget.
  */
-function repairParse(program, bytes, startRule, options, maxDepth, failed) {
+function repairParse(program, bytes, startRule, options, maxDepth, failed, keywords) {
   const points = new Set();
   const maxRepairs = options.maxRepairs ?? 32;
   let outcome = failed;
@@ -59,6 +59,7 @@ function repairParse(program, bytes, startRule, options, maxDepth, failed) {
     points.add(point);
     const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length), maxDepth);
     executor.repairPoints = points;
+    executor.keywords = keywords;
     outcome = executor.run(startRule);
     if (outcome.ok) return outcome;
   }
@@ -77,12 +78,19 @@ function parseProgram(program, source, options) {
   const budget = stepBudget(options, bytes.length);
   const maxDepth = options.maxDepth ?? 1000;
   let outcome;
+  // Under `(matching longest)` the input is parsed again while the tree takes
+  // a token rule's leaf where a keyword a lexer prefers matched.
+  const keywords = program.tokenRanks ? new KeywordLexing({ ...program.tokenRanks, bytes }) : null;
   try {
-    const executor = new Executor(program, bytes, 0, bytes.length, options, budget, maxDepth);
-    // With no repair point yet, recovery only notes where elements fail.
-    if (options.errorRecovery) executor.repairPoints = new Set();
-    outcome = executor.run(startRule);
-    if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome);
+    do {
+      // Each parse has its own step budget.
+      const executor = new Executor(program, bytes, 0, bytes.length, options, stepBudget(options, bytes.length), maxDepth);
+      executor.keywords = keywords;
+      // With no repair point yet, recovery only notes where elements fail.
+      if (options.errorRecovery) executor.repairPoints = new Set();
+      outcome = executor.run(startRule);
+      if (!outcome.ok && options.errorRecovery) outcome = repairParse(program, bytes, startRule, options, maxDepth, outcome, keywords);
+    } while (keywords && outcome.ok && keywords.conflicts(outcome.root));
   } catch (error) {
     if (error instanceof StepLimitReached) {
       return { ok: false, tree: null, ambiguities: [], rejection: { reason: 'stepLimit', limit: budget.limit } };

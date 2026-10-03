@@ -17,9 +17,9 @@ use std::rc::Rc;
 use super::operations::{Abort, Machine, OpError, OpResult, State, Working, evaluate_condition};
 use super::program::{Associativity, Compiled, Expr, Matcher, Name, Program, Target};
 use super::results::{
-    Children, Entry, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared, Skipped,
-    TokenOrder, Tree, TreeType, children_of, concat, content_start, longest_result, no_children,
-    with_leaf,
+    Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared,
+    Skipped, TokenOrder, Tree, TreeType, children_of, concat, content_start, longest_result,
+    no_children, with_leaf,
 };
 use super::text::{column_of, decode_at, text_of};
 use crate::grammar::RuleKind;
@@ -69,6 +69,25 @@ fn missing_of(expr: &Expr) -> (Option<Name>, bool) {
     }
 }
 
+// Whether a token is a keyword, a literal closed by lookaheads (`(seq
+// (literal typedef) (not (ref word_characters)))`).
+fn is_keyword(expr: &Expr) -> bool {
+    match expr {
+        Expr::Seq(items) if items.len() >= 2 => {
+            matches!(
+                items[0],
+                Expr::Terminal {
+                    matcher: Matcher::Literal(_),
+                    ..
+                }
+            ) && items[1..]
+                .iter()
+                .all(|item| matches!(item, Expr::Not(_) | Expr::And(_)))
+        }
+        _ => false,
+    }
+}
+
 // A literal that took the separators after it (see `before_separator`) is
 // still that literal, as a tree-sitter lexer names it: its leaf is an
 // anonymous alias of the literal (`'\n` over `\n\n`). Any other terminal
@@ -109,6 +128,9 @@ pub(super) struct Executor<'c> {
     pub(super) element_farthest: Option<usize>,
     /// The repair points where a continuation after a MISSING leaf is open.
     chained: HashSet<usize>,
+    /// Under `(matching longest)`, the keyword lexing of the parse (see
+    /// `KeywordLexing`), or none.
+    pub(super) keywords: Option<&'c RefCell<KeywordLexing>>,
 }
 
 impl<'c> Executor<'c> {
@@ -149,6 +171,7 @@ impl<'c> Executor<'c> {
             repair_points: None,
             element_farthest: None,
             chained: HashSet::new(),
+            keywords: None,
         }
     }
 
@@ -555,8 +578,15 @@ impl<'c> Executor<'c> {
                     self.immediate_starts(position, state, in_token)?
                 };
                 let mut found = ResultSet::new(self.longest_tokens);
+                let keywords = self.keywords.filter(|_| !in_token && is_keyword(item));
                 for skipped in &starts {
                     for result in self.token_leaf(item, skipped, state, in_token)? {
+                        if let Some(keywords) = keywords {
+                            keywords
+                                .borrow_mut()
+                                .matched
+                                .insert((skipped.end, result.end));
+                        }
                         found.add(result);
                     }
                 }

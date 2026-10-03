@@ -19,7 +19,7 @@ mod rules;
 mod text;
 mod tree;
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
 use std::fmt;
 
@@ -31,7 +31,7 @@ use super::Grammar;
 use executor::Executor;
 use operations::Abort;
 use program::Compiled;
-use results::{Outcome, Shared};
+use results::{KeywordLexing, Outcome, Shared, TokenOrder};
 
 /// The default bound on nested rule calls.
 const DEFAULT_MAX_DEPTH: usize = 1000;
@@ -333,6 +333,13 @@ fn parse_program(
         ambiguities: Vec::new(),
         rejection: Some(rejection),
     };
+    // Under `(matching longest)` the input is parsed again while the tree
+    // takes a token rule's leaf where a keyword a lexer prefers matched.
+    let tokens = compiled.programs[compiled.main]
+        .token_ranks
+        .as_ref()
+        .map(|ranks| TokenOrder { ranks, bytes });
+    let keywords = tokens.map(|_| RefCell::new(KeywordLexing::default()));
     let attempt = |points: Option<&HashSet<usize>>| {
         let shared = Shared {
             steps: Cell::new(0),
@@ -350,18 +357,29 @@ fn parse_program(
             max_depth,
         );
         executor.repair_points = points.cloned();
+        executor.keywords = keywords.as_ref();
         executor.run(start_rule)
     };
     let recovery = options.error_recovery == Some(true);
-    // With no repair point yet, recovery only notes where elements fail.
-    let outcome = attempt(recovery.then(HashSet::new).as_ref()).and_then(|outcome| match outcome {
-        Outcome::Failed { .. } if recovery => repair_parse(
-            outcome,
-            options.max_repairs.unwrap_or(DEFAULT_MAX_REPAIRS),
-            attempt,
-        ),
-        outcome => Ok(outcome),
-    });
+    let outcome = loop {
+        // With no repair point yet, recovery only notes where elements fail.
+        let outcome =
+            attempt(recovery.then(HashSet::new).as_ref()).and_then(|outcome| match outcome {
+                Outcome::Failed { .. } if recovery => repair_parse(
+                    outcome,
+                    options.max_repairs.unwrap_or(DEFAULT_MAX_REPAIRS),
+                    attempt,
+                ),
+                outcome => Ok(outcome),
+            });
+        if let (Ok(Outcome::Parsed(root)), Some(keywords), Some(tokens)) =
+            (&outcome, &keywords, tokens)
+            && keywords.borrow_mut().conflicts(root, tokens)
+        {
+            continue;
+        }
+        break outcome;
+    };
     let root = match outcome {
         Err(Abort::StepLimit) => {
             return refused(ParseRejection::limited("stepLimit", limit), None);

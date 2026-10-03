@@ -95,7 +95,7 @@ const features = [
       'extra class(char("\\n"))',
       'extra ref(note)',
       'conflict declared',
-      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)), seq(literal("k:"), ref(key)), seq(literal("n:"), ref(lines)), seq(literal("i:"), ref(name), immediateToken(literal("!"))))',
+      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)), seq(literal("k:"), ref(key)), seq(literal("n:"), ref(lines)), seq(literal("i:"), ref(name), immediateToken(literal("!"))), seq(literal("w:"), ref(statement)))',
       'rule declared = normal choice(seq(ref(declared), literal("-"), ref(declared)), ref(n))',
       'rule undeclared = normal choice(seq(ref(undeclared), literal("-"), ref(undeclared)), ref(n))',
       'rule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal("-"), ref(n))), seq(ref(resolved), literal("-"), ref(resolved)), ref(n))',
@@ -105,6 +105,7 @@ const features = [
       'rule number = token seq(literal("-"), range("0", "9"))',
       'rule key = normal choice(literal("if"), dynamicPrecedence(1, ref(name)))',
       'rule name = token repeat1(range("a", "z"))',
+      'rule statement = normal choice(seq(token(seq(literal("do"), not(range("a", "z")))), ref(name), literal(";")), seq(ref(name), optional(seq(literal("="), ref(name))), literal(";")))',
       'rule lines = normal repeat1(ref(line))',
       'rule line = normal seq(ref(n), optional(ref(n)), optional(literal("\\n")))',
       'rule note = token seq(literal("{"), repeat0(notClass(char("}"))), literal("}"))',
@@ -119,19 +120,23 @@ const features = [
     // the end of `1\n2\n` later than the line `1 2`, which skips the first
     // line break, yet they are preferred and continued. A lexer skips no
     // separator before the immediate `!`, but lexes the note before it as
-    // before any token.
-    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2', 'n:1\n\n2', 'n:1\n2\n3', 'i:a{b}!'],
-    negative: [{ input: 'u:1-2-3' }, { input: 'd:1--2' }, { input: 'i:a\n!' }, { input: 'i:a{b}\n!' }],
+    // before any token. A lexer lexes the keyword `do` wherever a statement
+    // may start, so `do;` is no statement `;` after the name `do`; where no
+    // keyword may come, after `=`, `do` is a name.
+    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2', 'n:1\n\n2', 'n:1\n2\n3', 'i:a{b}!', 'w:do\nx;', 'w:dox;', 'w:x=do;'],
+    negative: [{ input: 'u:1-2-3' }, { input: 'd:1--2' }, { input: 'i:a\n!' }, { input: 'i:a{b}\n!' }, { input: 'w:do;' }],
     mutation: { replace: ['conflict declared', 'conflict undeclared'], input: 'u:1-2-3' },
     // Without longest matching, "-" "1" and "-1" are two parses alike in cost
     // and dynamic precedence, as are the line break as a token and as a
     // separator: ambiguities; the name `if` wins by its dynamic precedence;
-    // and no trivia comes before an immediate token.
+    // no trivia comes before an immediate token; and the name `do` makes a
+    // statement.
     mutations: [
       { replace: ['matching longest\n', ''], input: 'l:-1' },
       { replace: ['matching longest\n', ''], input: 'i:a{b}!' },
       { replace: ['matching longest\n', ''], input: 'k:if' },
       { replace: ['matching longest\n', ''], input: 'n:1\n2' },
+      { replace: ['matching longest\n', ''], input: 'w:do;' },
     ],
   },
   {

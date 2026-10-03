@@ -247,7 +247,7 @@
     {
       "id": "ambiguity",
       "title": "ambiguity and conflicts",
-      "listing": "start s\nmatching longest\nextra class(char(\"\\n\"))\nextra ref(note)\nconflict declared\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)), seq(literal(\"k:\"), ref(key)), seq(literal(\"n:\"), ref(lines)), seq(literal(\"i:\"), ref(name), immediateToken(literal(\"!\"))))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\nrule key = normal choice(literal(\"if\"), dynamicPrecedence(1, ref(name)))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule lines = normal repeat1(ref(line))\nrule line = normal seq(ref(n), optional(ref(n)), optional(literal(\"\\n\")))\nrule note = token seq(literal(\"{\"), repeat0(notClass(char(\"}\"))), literal(\"}\"))\n",
+      "listing": "start s\nmatching longest\nextra class(char(\"\\n\"))\nextra ref(note)\nconflict declared\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)), seq(literal(\"k:\"), ref(key)), seq(literal(\"n:\"), ref(lines)), seq(literal(\"i:\"), ref(name), immediateToken(literal(\"!\"))), seq(literal(\"w:\"), ref(statement)))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\nrule key = normal choice(literal(\"if\"), dynamicPrecedence(1, ref(name)))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule statement = normal choice(seq(token(seq(literal(\"do\"), not(range(\"a\", \"z\")))), ref(name), literal(\";\")), seq(ref(name), optional(seq(literal(\"=\"), ref(name))), literal(\";\")))\nrule lines = normal repeat1(ref(line))\nrule line = normal seq(ref(n), optional(ref(n)), optional(literal(\"\\n\")))\nrule note = token seq(literal(\"{\"), repeat0(notClass(char(\"}\"))), literal(\"}\"))\n",
       "options": {
         "ambiguity": "reject"
       },
@@ -291,6 +291,18 @@
         {
           "input": "i:a{b}!",
           "tree": "(s \"i:\" (name \"a\") ~(note \"{b}\") \"!\")"
+        },
+        {
+          "input": "w:do\nx;",
+          "tree": "(s \"w:\" (statement \"do\" ~\"\\n\" (name \"x\") \";\"))"
+        },
+        {
+          "input": "w:dox;",
+          "tree": "(s \"w:\" (statement (name \"dox\") \";\"))"
+        },
+        {
+          "input": "w:x=do;",
+          "tree": "(s \"w:\" (statement (name \"x\") \"=\" (name \"do\") \";\"))"
         }
       ],
       "negative": [
@@ -344,6 +356,18 @@
             "column": 7,
             "expected": [
               "\"!\""
+            ]
+          }
+        },
+        {
+          "input": "w:do;",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 4,
+            "line": 1,
+            "column": 5,
+            "expected": [
+              "name"
             ]
           }
         }
@@ -449,6 +473,25 @@
               "line": 1,
               "column": 3
             }
+          }
+        },
+        {
+          "from": "matching longest\n",
+          "to": "",
+          "input": "w:do;",
+          "before": {
+            "rejection": {
+              "reason": "syntax",
+              "offset": 4,
+              "line": 1,
+              "column": 5,
+              "expected": [
+                "name"
+              ]
+            }
+          },
+          "after": {
+            "tree": "(s \"w:\" (statement (name \"do\") \";\"))"
           }
         }
       ]
