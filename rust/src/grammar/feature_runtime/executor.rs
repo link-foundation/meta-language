@@ -17,8 +17,9 @@ use std::rc::Rc;
 use super::operations::{Abort, Machine, OpError, OpResult, State, Working, evaluate_condition};
 use super::program::{Associativity, Compiled, Expr, Matcher, Name, Program, Target};
 use super::results::{
-    Children, Entry, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared, Skipped, Tree,
-    TreeType, children_of, concat, content_start, longest_result, no_children, with_leaf,
+    Children, Entry, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared, Skipped,
+    TokenOrder, Tree, TreeType, children_of, concat, content_start, longest_result, no_children,
+    with_leaf,
 };
 use super::text::{column_of, decode_at, text_of};
 use crate::grammar::RuleKind;
@@ -78,7 +79,7 @@ pub(super) struct Executor<'c> {
     pub(super) shared: &'c Shared,
     pub(super) max_depth: usize,
     pub(super) peg: bool,
-    pub(super) longest_tokens: bool,
+    pub(super) longest_tokens: Option<TokenOrder<'c>>,
     pub(super) depth: usize,
     pub(super) memo: HashMap<MemoKey, Rc<RefCell<Entry>>>,
     pub(super) call_stack: Vec<Rc<RefCell<Entry>>>,
@@ -118,7 +119,10 @@ impl<'c> Executor<'c> {
             shared,
             max_depth,
             peg: program.peg,
-            longest_tokens: program.longest,
+            longest_tokens: program
+                .token_ranks
+                .as_ref()
+                .map(|ranks| TokenOrder { ranks, bytes }),
             depth: 0,
             memo: HashMap::new(),
             call_stack: Vec::new(),
@@ -321,8 +325,18 @@ impl<'c> Executor<'c> {
         in_token: bool,
     ) -> Run<Vec<Res>> {
         let skipped = self.terminal_start(position, state, in_token)?;
-        let start = skipped.end;
-        let Some(end) = matcher.matches(self.bytes, start, self.end) else {
+        let mut start = skipped.end;
+        let mut leaves: &[Rc<Tree>] = &skipped.leaves;
+        let found = if self.longest_tokens.is_some()
+            && let Some((at, from, end)) = self.before_separator(matcher, leaves)
+        {
+            start = from;
+            leaves = &leaves[..at];
+            Some(end)
+        } else {
+            None
+        };
+        let Some(end) = found.or_else(|| matcher.matches(self.bytes, start, self.end)) else {
             self.fail(start, expectation);
             if in_token {
                 return Ok(Vec::new());
@@ -333,24 +347,49 @@ impl<'c> Executor<'c> {
                 }
                 _ => (None, false),
             };
-            return self.element_failed(
-                start,
-                &skipped.leaves,
-                state,
-                kind,
-                literal,
-                |this, cursor| this.terminal(matcher, expectation, cursor, state, false),
-            );
+            return self.element_failed(start, leaves, state, kind, literal, |this, cursor| {
+                this.terminal(matcher, expectation, cursor, state, false)
+            });
         };
         let children = if in_token {
             no_children()
         } else {
-            with_leaf(
-                &skipped.leaves,
-                Tree::new(TreeType::Token, None, start, end),
-            )
+            with_leaf(leaves, Tree::new(TreeType::Token, None, start, end))
         };
         Ok(vec![Res::new(end, state.clone(), children, 0)])
+    }
+
+    // Under `(matching longest)` a lexer takes a valid token over a separator
+    // (an anonymous trivia leaf, such as whitespace) it covers: a terminal
+    // that matches at the start of such a leaf, at least as far, is matched
+    // there, before it and the trivia after it, so `\n` ends a line where
+    // whitespace is trivia. As in a tree-sitter lexer, whose separators loop
+    // back to the start of every token, the token then also takes each next
+    // separator it matches the same way (`\n\n` is one `\n` token). The
+    // index of the first such leaf, its start and the end of the match, or
+    // None when no such separator precedes the terminal.
+    fn before_separator(
+        &self,
+        matcher: &Matcher,
+        leaves: &[Rc<Tree>],
+    ) -> Option<(usize, usize, usize)> {
+        let covers = |leaf: &Tree, from: usize| {
+            leaf.kind.is_none()
+                && leaf.start == from
+                && matcher
+                    .matches(self.bytes, from, self.end)
+                    .is_some_and(|end| end >= leaf.end)
+        };
+        let at = leaves.iter().position(|leaf| covers(leaf, leaf.start))?;
+        let from = leaves[at].start;
+        let mut end = matcher.matches(self.bytes, from, self.end)?;
+        for leaf in &leaves[at + 1..] {
+            if !covers(leaf, end) {
+                break;
+            }
+            end = matcher.matches(self.bytes, end, self.end)?;
+        }
+        Some((at, from, end))
     }
 
     // A leaf over the longest match of `item` in token context: token(),
@@ -876,7 +915,9 @@ impl<'c> Executor<'c> {
         }
     }
 
-    // The node kinds `expr` can match as one child, or None when unknown.
+    // The node kinds `expr` can match as one child, or None when unknown;
+    // the child at the edge of a repetition (or an optional) is one of its
+    // item.
     fn unit_kinds(&self, expr: &Expr, visiting: &mut HashSet<usize>) -> Option<HashSet<Name>> {
         match expr {
             Expr::Ref(Target::Rule(index)) => {
@@ -894,7 +935,8 @@ impl<'c> Executor<'c> {
             }
             Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
-            | Expr::DynamicPrecedence { item, .. } => self.unit_kinds(item, visiting),
+            | Expr::DynamicPrecedence { item, .. }
+            | Expr::Repeat { item, .. } => self.unit_kinds(item, visiting),
             Expr::Alias { name, .. } => Some(HashSet::from([name.clone()])),
             _ => None,
         }

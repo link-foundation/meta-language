@@ -46,31 +46,39 @@ function resultKey(result) {
 
 // Adds a result to a deduplicating map: of two results with the same end
 // and state, the lower repair cost wins, then the higher dynamic precedence,
-// then, under `(matching longest)`, the longer tokens; on a tie the first
-// stays and, without repairs, is marked ambiguous (as a copy, since results
-// are shared through the memo).
-function addResult(results, result, longest = false) {
+// then, under `(matching longest)` (when `tokens` holds the token ranks and
+// the input bytes), the tokens a lexer prefers; on a tie the first stays and,
+// without repairs, is marked ambiguous (as a copy, since results are shared
+// through the memo).
+function addResult(results, result, tokens = null) {
   const key = resultKey(result);
   const existing = results.get(key);
   if (!existing || result.cost < existing.cost) results.set(key, result);
   else if (result.cost > existing.cost) return;
   else if (result.dynamic > existing.dynamic) results.set(key, result);
   else if (result.dynamic === existing.dynamic) {
-    const order = longest ? longerTokens(result, existing) : 0;
+    const order = tokens ? preferredTokens(result, existing, tokens) : 0;
     if (order > 0) results.set(key, result);
     else if (order === 0 && existing.cost === 0 && !existing.ambiguous) results.set(key, copyResult(existing, { ambiguous: true }));
   }
 }
 
-// Which of two results over the same text has the longer tokens, as a lexer
-// takes the longest token: their leaves are walked in order, skipping trivia
-// and the subtrees both share, and the first leaf pair that differs decides.
-// 1 when `result` has the longer token, -1 when `existing` has, 0 when the
-// pair ends alike but differs in kind (two tokens of one length, which a
-// lexer orders by precedence, not length) or every leaf ends alike.
-function longerTokens(result, existing) {
+// Which of two results over the same text has the tokens a lexer prefers:
+// their leaves are walked in order, skipping trivia and the subtrees both
+// share, and the first leaf pair that differs decides, as a tree-sitter lexer
+// decides a conflict between two tokens at one offset: the higher lexical
+// precedence, then the longer token, then the more specific (a literal over a
+// pattern) and the earlier one (see `tokenRanks` in load.js). A token where
+// the other result skipped a separator it covers (whitespace trivia) wins
+// too, as the lexer takes a valid token over a separator. 1 when `result`
+// has the preferred token, -1 when `existing` has, 0 when neither (a pair
+// without ranks that ends alike but differs in kind, or every leaf alike).
+function preferredTokens(result, existing, tokens) {
   const left = [[result.children, 0]];
   const right = [[existing.children, 0]];
+  // The trivia each side skipped since the last leaf both share.
+  let skipped = [[], []];
+  const covers = (leaf, trivia) => trivia.some((item) => item.kind === null && item.start === leaf.start && leaf.end >= item.end);
   const peek = (stack) => {
     while (stack.length > 0) {
       const top = stack[stack.length - 1];
@@ -91,21 +99,47 @@ function longerTokens(result, existing) {
     if (a === b) {
       skip(left);
       skip(right);
+      skipped = [[], []];
     } else if (a.type === 'node' || b.type === 'node') {
       if (a.type === 'node') enter(left, a);
       if (b.type === 'node') enter(right, b);
     } else if (a.trivia || b.trivia) {
+      if (a.trivia) skipped[0].push(a);
+      if (b.trivia) skipped[1].push(b);
       if (a.trivia) skip(left);
       if (b.trivia) skip(right);
-    } else if (a.end !== b.end) {
-      return a.end > b.end ? 1 : -1;
-    } else if (a.kind !== b.kind) {
-      return 0;
+    } else if (a.start < b.start && covers(a, skipped[1])) {
+      return 1;
+    } else if (b.start < a.start && covers(b, skipped[0])) {
+      return -1;
+    } else if (a.end !== b.end || a.kind !== b.kind) {
+      return tokenConflict(a, b, tokens);
     } else {
       skip(left);
       skip(right);
+      skipped = [[], []];
     }
   }
+}
+
+// The rank of a token leaf, or null for another leaf or an unranked token.
+function tokenRank(leaf, tokens) {
+  if (leaf.type !== 'token') return null;
+  if (leaf.kind !== null) return tokens.kinds.get(leaf.kind) ?? null;
+  return tokens.literals.get(textOf(tokens.bytes, leaf.start, leaf.end)) ?? null;
+}
+
+// Two leaves that differ in end or kind: 1 when a lexer prefers `a`, -1 when
+// it prefers `b`, 0 when it cannot tell. The ranks decide only between two
+// tokens at one offset; otherwise the longer leaf wins.
+function tokenConflict(a, b, tokens) {
+  const first = a.start === b.start ? tokenRank(a, tokens) : null;
+  const second = a.start === b.start ? tokenRank(b, tokens) : null;
+  if (first && second && first.priority !== second.priority) return first.priority > second.priority ? 1 : -1;
+  if (a.end !== b.end) return a.end > b.end ? 1 : -1;
+  if (!first || !second || first === second) return 0;
+  if (first.specificity !== second.specificity) return first.specificity > second.specificity ? 1 : -1;
+  return first.order < second.order ? 1 : -1;
 }
 
 // The children of a joined result are the children of its left part followed
@@ -234,7 +268,9 @@ export class Executor {
     this.budget = budget;
     this.maxDepth = maxDepth;
     this.peg = program.matching === 'peg';
-    this.longestTokens = program.matching === 'longest';
+    // `(matching longest)`: the token ranks and the input, by which addResult
+    // orders two parses that differ in their tokens.
+    this.longestTokens = program.tokenRanks ? { ...program.tokenRanks, bytes } : null;
     this.depth = 0;
     this.memo = new Map();
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
@@ -346,6 +382,23 @@ export class Executor {
     return inToken ? { end: position, leaves: NO_CHILDREN } : this.skipTrivia(position, state);
   }
 
+  // Under `(matching longest)` a lexer takes a valid token over a separator
+  // (an anonymous trivia leaf, such as whitespace) it covers: a terminal that
+  // matches at the start of such a leaf, at least as far, is matched there,
+  // before it and the trivia after it, so `\n` ends a line where whitespace
+  // is trivia. As in a tree-sitter lexer, whose separators loop back to the
+  // start of every token, the token then also takes each next separator it
+  // matches the same way (`\n\n` is one `\n` token). The end is -1 when no
+  // such separator precedes `start`.
+  beforeSeparator(expression, start, leaves) {
+    const covers = (leaf, from) => leaf.kind === null && leaf.start === from && this.matchTerminal(expression, from) >= leaf.end;
+    const at = leaves.findIndex((leaf) => covers(leaf, leaf.start));
+    if (at < 0) return { start, end: -1, leaves };
+    let end = this.matchTerminal(expression, leaves[at].start);
+    for (let index = at + 1; index < leaves.length && covers(leaves[index], end); index += 1) end = this.matchTerminal(expression, end);
+    return { start: leaves[at].start, end, leaves: leaves.slice(0, at) };
+  }
+
   matcher(expression) {
     return this.program.matchers.get(expression);
   }
@@ -364,8 +417,10 @@ export class Executor {
   }
 
   terminal(expression, position, state, inToken) {
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
-    const end = this.matchTerminal(expression, start);
+    let { end: start, leaves } = this.terminalStart(position, state, inToken);
+    let end = -1;
+    if (this.longestTokens && leaves.length > 0) ({ start, end, leaves } = this.beforeSeparator(expression, start, leaves));
+    if (end < 0) end = this.matchTerminal(expression, start);
     if (end < 0) {
       this.fail(start, expectationOf(expression));
       if (inToken) return [];
@@ -618,7 +673,8 @@ export class Executor {
     return kinds;
   }
 
-  // The node kinds `expression` can match as one child, or null when unknown.
+  // The node kinds `expression` can match as one child, or null when unknown;
+  // the child at the edge of a repetition (or an optional) is one of its item.
   unitKinds(expression, visiting) {
     switch (expression.kind) {
       case 'ref': {
@@ -630,7 +686,8 @@ export class Executor {
         return this.unitKinds(rule.expression, visiting);
       }
       case 'choice': return union(expression.items.map((item) => this.unitKinds(item, visiting)));
-      case 'capture': case 'precedence': case 'dynamicPrecedence': return this.unitKinds(expression.item, visiting);
+      case 'capture': case 'precedence': case 'dynamicPrecedence':
+      case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.unitKinds(expression.item, visiting);
       case 'alias': return new Set([expression.name]);
       default: return null;
     }

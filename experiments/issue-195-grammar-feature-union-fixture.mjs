@@ -1,9 +1,10 @@
 // Drafts the grammar feature union fixture (parity/fixtures/grammar-feature-union.json):
 // every feature's listing, positive and negative inputs, and a grammar
-// mutation, with the expectations the native executor produces. The output
+// mutation, with the expectations the native executor produces. The
+// `interchange` section of the written fixture is kept as it is. The output
 // is reviewed by hand before it is written; run from the repository root:
 //   node experiments/issue-195-grammar-feature-union-fixture.mjs [--write]
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { compileGrammar, parseNativeGrammar, renderSyntaxTree } from '../js/src/index.js';
 
 const lines = (...items) => `${items.join('\n')}\n`;
@@ -66,13 +67,16 @@ const features = [
     title: 'precedence and associativity',
     listing: lines(
       'start e',
-      'rule e = normal choice(precedence(1, left, seq(ref(e), literal("+"), ref(e))), precedence(2, left, seq(ref(e), literal("*"), ref(e))), precedence(3, right, seq(ref(e), literal("^"), ref(e))), precedence(0, none, seq(ref(e), literal("="), ref(e))), precedence(4, left, seq(ref(e), literal("("), literal(")"))), precedence(5, left, seq(ref(e), literal("."), ref(n))), ref(n))',
+      'rule e = normal choice(precedence(1, left, seq(ref(e), literal("+"), ref(e))), precedence(2, left, seq(ref(e), literal("*"), ref(e))), precedence(3, right, seq(ref(e), literal("^"), ref(e))), precedence(0, none, seq(ref(e), literal("="), ref(e))), precedence(4, left, seq(ref(e), literal("("), literal(")"))), precedence(5, left, seq(ref(e), literal("."), ref(n))), precedence(0, none, seq(literal("?"), ref(n), optional(ref(otherwise)))), ref(n))',
+      'rule otherwise = normal precedence(0, none, seq(literal(":"), ref(n)))',
       'rule n = token repeat1(range("0", "9"))',
     ),
     options: { ambiguity: 'reject' },
     // A lower-precedence edge child conflicts only when its own child facing
     // the operator could be the operand: `1().2` stands, `(1+2).3` does not.
-    positive: ['1+2*3', '1*2+3', '1+2+3', '2^3^4', '1+2=3', '1().2', '1+2.3'],
+    // The child at the edge of an optional is one of its item: `:2` is an
+    // `otherwise`, which `:` cannot be, so `?1:2` stands.
+    positive: ['1+2*3', '1*2+3', '1+2+3', '2^3^4', '1+2=3', '1().2', '1+2.3', '?1:2'],
     negative: [{ input: '1=2=3' }, { input: '1+*2' }],
     mutation: {
       replace: ['precedence(1, left, seq(ref(e), literal("+"), ref(e)))', 'precedence(1, right, seq(ref(e), literal("+"), ref(e)))'],
@@ -85,8 +89,9 @@ const features = [
     listing: lines(
       'start s',
       'matching longest',
+      'extra class(char("\\n"))',
       'conflict declared',
-      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)))',
+      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)), seq(literal("k:"), ref(key)), seq(literal("n:"), ref(lines)))',
       'rule declared = normal choice(seq(ref(declared), literal("-"), ref(declared)), ref(n))',
       'rule undeclared = normal choice(seq(ref(undeclared), literal("-"), ref(undeclared)), ref(n))',
       'rule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal("-"), ref(n))), seq(ref(resolved), literal("-"), ref(resolved)), ref(n))',
@@ -94,14 +99,26 @@ const features = [
       'rule signed = normal choice(seq(ref(minus), ref(n)), ref(number))',
       'rule minus = token literal("-")',
       'rule number = token seq(literal("-"), range("0", "9"))',
+      'rule key = normal choice(literal("if"), ref(name))',
+      'rule name = token repeat1(range("a", "z"))',
+      'rule lines = normal repeat1(ref(line))',
+      'rule line = normal seq(ref(n), optional(literal("\\n")))',
     ),
     options: { ambiguity: 'reject' },
-    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1'],
+    // Longest matching decides as a lexer does: `if` is the literal, more
+    // specific than a name of one length, and a line break that ends a line
+    // is the token, not the separator.
+    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2'],
     negative: [{ input: 'u:1-2-3' }, { input: 'd:1--2' }],
     mutation: { replace: ['conflict declared', 'conflict undeclared'], input: 'u:1-2-3' },
     // Without longest matching, "-" "1" and "-1" are two parses alike in cost
-    // and dynamic precedence: an ambiguity.
-    mutations: [{ replace: ['matching longest\n', ''], input: 'l:-1' }],
+    // and dynamic precedence, as are the literal and the name `if`, and the
+    // line break as a token and as a separator: ambiguities.
+    mutations: [
+      { replace: ['matching longest\n', ''], input: 'l:-1' },
+      { replace: ['matching longest\n', ''], input: 'k:if' },
+      { replace: ['matching longest\n', ''], input: 'n:1\n2' },
+    ],
   },
   {
     id: 'lexical',
@@ -388,6 +405,8 @@ for (const feature of features) {
   if (feature.mutations) entry.mutations = feature.mutations.map(mutation);
   fixture.features.push(entry);
 }
+const fixtureUrl = new URL('../parity/fixtures/grammar-feature-union.json', import.meta.url);
+fixture.interchange = JSON.parse(readFileSync(fixtureUrl, 'utf8')).interchange;
 const text = `${JSON.stringify(fixture, null, 2)}\n`;
-if (process.argv.includes('--write')) writeFileSync(new URL('../parity/fixtures/grammar-feature-union.json', import.meta.url), text);
+if (process.argv.includes('--write')) writeFileSync(fixtureUrl, text);
 else process.stdout.write(text);

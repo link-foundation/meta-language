@@ -10,7 +10,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use super::operations::{OperationValue, State};
-use super::program::{Associativity, Name};
+use super::program::{Associativity, Name, TokenRank, TokenRanks};
 
 /// The type of a syntax tree node.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -228,27 +228,35 @@ impl Res {
     }
 }
 
-/// A deduplicating, insertion-ordered set of results keyed by end and state.
-#[derive(Clone, Debug, Default)]
-pub(super) struct ResultSet {
-    pub(super) items: Vec<Res>,
-    index: HashMap<(usize, State), usize>,
-    /// `(matching longest)`: a tie goes to the result with the longer token.
-    longest: bool,
+/// The token ranks of a `(matching longest)` grammar and the input bytes, by
+/// which a tie between results goes to the tokens a lexer prefers.
+#[derive(Clone, Copy, Debug)]
+pub(super) struct TokenOrder<'c> {
+    pub(super) ranks: &'c TokenRanks,
+    pub(super) bytes: &'c [u8],
 }
 
-impl ResultSet {
-    pub(super) fn new(longest: bool) -> Self {
+/// A deduplicating, insertion-ordered set of results keyed by end and state.
+#[derive(Clone, Debug, Default)]
+pub(super) struct ResultSet<'c> {
+    pub(super) items: Vec<Res>,
+    index: HashMap<(usize, State), usize>,
+    /// `(matching longest)`: a tie goes to the tokens a lexer prefers.
+    tokens: Option<TokenOrder<'c>>,
+}
+
+impl<'c> ResultSet<'c> {
+    pub(super) fn new(tokens: Option<TokenOrder<'c>>) -> Self {
         Self {
-            longest,
+            tokens,
             ..Self::default()
         }
     }
 
     /// Of two results with the same end and state, the lower repair cost
     /// wins, then the higher dynamic precedence, then, under `(matching
-    /// longest)`, the longer tokens; on a tie the first stays and, without
-    /// repairs, is marked ambiguous.
+    /// longest)`, the tokens a lexer prefers; on a tie the first stays and,
+    /// without repairs, is marked ambiguous.
     pub(super) fn add(&mut self, result: Res) {
         match self.index.get(&result.key()) {
             None => self.push(result),
@@ -260,11 +268,9 @@ impl ResultSet {
                 } else if result.dynamic > existing.dynamic {
                     *existing = result;
                 } else if result.dynamic == existing.dynamic {
-                    let order = if self.longest {
-                        longer_tokens(&result, existing)
-                    } else {
-                        Ordering::Equal
-                    };
+                    let order = self.tokens.map_or(Ordering::Equal, |tokens| {
+                        preferred_tokens(&result, existing, tokens)
+                    });
                     if order == Ordering::Greater {
                         *existing = result;
                     } else if order == Ordering::Equal && existing.cost == 0 {
@@ -325,30 +331,47 @@ fn open_node(walk: &mut Vec<Walk>) {
     }
 }
 
-/// Which of two results over the same text has the longer tokens, as a
-/// lexer takes the longest token: their leaves are walked in order, skipping
-/// trivia and the parts both share, and the first leaf pair that differs
-/// decides. Greater when `result` has the longer token, Less when `existing`
-/// has, Equal when the pair ends alike but differs in kind (two tokens of one
-/// length, which a lexer orders by precedence, not length) or every leaf
-/// ends alike. It mirrors longerTokens in js/src/grammar-runtime/executor.js.
-fn longer_tokens(result: &Res, existing: &Res) -> Ordering {
+/// Which of two results over the same text has the tokens a lexer prefers:
+/// their leaves are walked in order, skipping trivia and the parts both
+/// share, and the first leaf pair that differs decides, as a tree-sitter
+/// lexer decides a conflict between two tokens at one offset: the higher
+/// lexical precedence, then the longer token, then the more specific (a
+/// literal over a pattern) and the earlier one (see `token_ranks` in
+/// load.rs). A token where the other result skipped a separator it covers
+/// (whitespace trivia) wins too, as the lexer takes a valid token over a
+/// separator. Greater when `result` has the preferred token, Less when
+/// `existing` has, Equal when neither (a pair without ranks that ends alike
+/// but differs in kind, or every leaf alike). It mirrors preferredTokens in
+/// js/src/grammar-runtime/executor.js.
+fn preferred_tokens(result: &Res, existing: &Res, tokens: TokenOrder<'_>) -> Ordering {
     let mut left = vec![Walk::Part(result.children.clone())];
     let mut right = vec![Walk::Part(existing.children.clone())];
+    // The trivia each side skipped since the last leaf both share.
+    let mut skipped: [Vec<Rc<Tree>>; 2] = [Vec::new(), Vec::new()];
+    let covers = |leaf: &Tree, trivia: &[Rc<Tree>]| {
+        trivia
+            .iter()
+            .any(|item| item.kind.is_none() && item.start == leaf.start && leaf.end >= item.end)
+    };
     loop {
         match (left.last(), right.last()) {
             (None, _) | (_, None) => return Ordering::Equal,
             (Some(Walk::Part(a)), Some(Walk::Part(b))) if Rc::ptr_eq(a, b) => {
+                if a.count > 0 {
+                    skipped = [Vec::new(), Vec::new()];
+                }
                 left.pop();
                 right.pop();
             }
             (Some(Walk::Part(_)), _) => open_part(&mut left),
             (_, Some(Walk::Part(_))) => open_part(&mut right),
             (Some(Walk::Item(a)), Some(Walk::Item(b))) => {
+                let (a, b) = (a.clone(), b.clone());
                 let (a_node, b_node) = (a.ty == TreeType::Node, b.ty == TreeType::Node);
-                if Rc::ptr_eq(a, b) {
+                if Rc::ptr_eq(&a, &b) {
                     left.pop();
                     right.pop();
+                    skipped = [Vec::new(), Vec::new()];
                 } else if a_node || b_node {
                     if a_node {
                         open_node(&mut left);
@@ -357,23 +380,69 @@ fn longer_tokens(result: &Res, existing: &Res) -> Ordering {
                         open_node(&mut right);
                     }
                 } else if a.trivia || b.trivia {
-                    let (a_trivia, b_trivia) = (a.trivia, b.trivia);
-                    if a_trivia {
+                    if a.trivia {
+                        skipped[0].push(a);
                         left.pop();
                     }
-                    if b_trivia {
+                    if b.trivia {
+                        skipped[1].push(b);
                         right.pop();
                     }
-                } else if a.end != b.end {
-                    return a.end.cmp(&b.end);
-                } else if a.kind != b.kind {
-                    return Ordering::Equal;
+                } else if a.start < b.start && covers(&a, &skipped[1]) {
+                    return Ordering::Greater;
+                } else if b.start < a.start && covers(&b, &skipped[0]) {
+                    return Ordering::Less;
+                } else if a.end != b.end || a.kind != b.kind {
+                    return token_conflict(&a, &b, tokens);
                 } else {
                     left.pop();
                     right.pop();
+                    skipped = [Vec::new(), Vec::new()];
                 }
             }
         }
+    }
+}
+
+/// The rank of a token leaf, or None for another leaf or an unranked token.
+fn token_rank(leaf: &Tree, tokens: TokenOrder<'_>) -> Option<TokenRank> {
+    if leaf.ty != TreeType::Token {
+        return None;
+    }
+    match &leaf.kind {
+        Some(kind) => tokens.ranks.kinds.get(kind).copied(),
+        None => tokens
+            .ranks
+            .literals
+            .get(tokens.bytes.get(leaf.start..leaf.end)?)
+            .copied(),
+    }
+}
+
+/// Two leaves that differ in end or kind: Greater when a lexer prefers `a`,
+/// Less when it prefers `b`, Equal when it cannot tell. The ranks decide only
+/// between two tokens at one offset; otherwise the longer leaf wins.
+fn token_conflict(a: &Tree, b: &Tree, tokens: TokenOrder<'_>) -> Ordering {
+    let ranks = if a.start == b.start {
+        token_rank(a, tokens).zip(token_rank(b, tokens))
+    } else {
+        None
+    };
+    if let Some((first, second)) = ranks
+        && first.priority != second.priority
+    {
+        return first.priority.cmp(&second.priority);
+    }
+    if a.end != b.end {
+        return a.end.cmp(&b.end);
+    }
+    match ranks {
+        None => Ordering::Equal,
+        Some((first, second)) if first == second => Ordering::Equal,
+        Some((first, second)) if first.specificity != second.specificity => {
+            first.specificity.cmp(&second.specificity)
+        }
+        Some((first, second)) => second.order.cmp(&first.order),
     }
 }
 

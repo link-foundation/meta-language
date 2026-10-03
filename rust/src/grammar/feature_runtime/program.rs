@@ -216,6 +216,24 @@ pub(super) struct Rule {
     pub(super) lexical_priority: i64,
 }
 
+/// The rank of a token of a `(matching longest)` grammar: its lexical
+/// precedence, its specificity (2 for a literal, 0 for a pattern, one more
+/// for an immediate token) and its order in the grammar.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct TokenRank {
+    pub(super) priority: i64,
+    pub(super) specificity: u8,
+    pub(super) order: usize,
+}
+
+/// The ranks of the tokens of a `(matching longest)` grammar, keyed by leaf
+/// kind and, for a literal leaf, which has none, by text.
+#[derive(Debug, Default)]
+pub(super) struct TokenRanks {
+    pub(super) kinds: HashMap<Name, TokenRank>,
+    pub(super) literals: HashMap<Vec<u8>, TokenRank>,
+}
+
 /// One external scanner.
 #[derive(Debug)]
 pub(super) struct Scanner {
@@ -234,8 +252,9 @@ pub(super) struct Trivia {
 #[derive(Debug)]
 pub(super) struct Program {
     pub(super) peg: bool,
-    /// `(matching longest)`: a tie between results goes to the longer token.
-    pub(super) longest: bool,
+    /// `(matching longest)`: the token ranks by which a tie between results
+    /// goes to the tokens a lexer prefers.
+    pub(super) token_ranks: Option<TokenRanks>,
     pub(super) start: Option<String>,
     pub(super) rules: Vec<Rule>,
     pub(super) rule_index: HashMap<String, usize>,

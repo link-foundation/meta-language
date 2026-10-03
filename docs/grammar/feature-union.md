@@ -332,11 +332,19 @@ in syntactic or token context yields a list of results
 **Result sets.** Results are deduplicated by `end` and state key. Of two equal
 results the one with the higher `dynamic` stays; on a tie the first stays and
 is marked ambiguous. Under `matching longest` a tie goes first to the result
-with the longer token: both results' leaves are walked in order, skipping
-trivia and the subtrees they share, and at the first leaf pair that differs
-the leaf ending later wins; when that pair ends alike, or no pair differs, the
-first is marked ambiguous. Under `matching peg` a sequence keeps only its first
-result.
+with the tokens a lexer prefers: both results' leaves are walked in order,
+skipping trivia and the subtrees they share, and the first leaf pair that
+differs decides as a tree-sitter lexer decides between two tokens at one
+offset: the higher lexical precedence, then the longer token, then the more
+specific (a literal ranks 2, a pattern 0, an immediate token one more; a
+literal closed by lookaheads, such as a keyword, ranks as the literal), then
+the token that appears first in rule order (a token rule at its definition,
+a literal, an inline token or an alias of either where it is used). Two
+leaves at different offsets compare by length only. A token wins, too, where
+the other result skipped an anonymous trivia leaf (a separator such as
+whitespace) that starts where the token starts and that the token covers.
+When the pair ties, or no pair differs, the first is marked ambiguous. Under
+`matching peg` a sequence keeps only its first result.
 
 **Terminals.** In syntactic context a terminal first skips trivia; in token
 context it does not. Matchers: `literal` compares UTF-8 bytes;
@@ -347,7 +355,12 @@ byte; `any` takes one code point or stray byte; `regex` runs a JavaScript
 regular expression (sticky, Unicode when it compiles so) over the UTF-16 view
 of the input with stray bytes as U+FFFD. A failed terminal records an
 expectation at its start: `"lit"`, `"lit"i`, `"a".."z"`, `character class`,
-`byte class`, `any character` or `/re/`.
+`byte class`, `any character` or `/re/`. Under `matching longest` a lexer
+takes a valid token over a separator: a terminal in syntactic context that
+matches at the start of a skipped anonymous trivia leaf, at least to its end,
+is matched there instead, before that leaf and the trivia after it, and then
+also takes each next such leaf it matches the same way, so `\n` ends a line
+where whitespace is trivia and `\n\n` is one `\n` token.
 
 **Trivia.** Skipping trivia repeatedly takes the longest match, in token
 context, of any trivia expression allowed in the current mode (the top of the
@@ -390,7 +403,8 @@ or equal while the associativity is not `left` (first child) or not `right`
 child facing the operator (its last child for the first edge, its first child
 for the last edge) has a kind the item's operand on that edge can match as
 one child: the node kind of a rule it refers to, through silent rules,
-choices, captures, precedences and aliases. When that set is unknown every
+choices, captures, precedences and aliases, and, for an optional or a
+repetition, the kinds of its item. When that set is unknown every
 such inner node conflicts. So `(1+2).3` is invalid as `2` could be the
 operand of `.`, while `1().2` stands as `)` could not, as an LR parser would
 find a conflict only in the first. A rejected result records the expectation

@@ -319,6 +319,7 @@ function loadInContext(grammar, context) {
   for (const scanner of new Set(scanners.values())) {
     checkOperations(scanner.operations, 'scanner', `scanner ${scanner.name}`, scanner.tokens);
   }
+  if (matching === 'longest') program.tokenRanks = tokenRanks(rules);
 
   for (const language of embedded) {
     if (context.languages.has(language)) continue;
@@ -326,6 +327,73 @@ function loadInContext(grammar, context) {
     context.languages.set(language, loadInContext(context.resolve(language, 'embed'), context));
   }
   return program;
+}
+
+// The rank of each token of a `(matching longest)` grammar, by which two
+// tokens over the same text conflict as a lexer orders them: the higher
+// lexical precedence, then (at one length) a literal over a pattern, an
+// immediate token by one more, then the earlier token. Tokens are numbered in
+// rule order as they first appear: a token rule at its own definition, a
+// literal, an inline token and an alias of either where they are used. The
+// ranks are keyed by leaf kind (`kinds`) and, for a literal leaf, which has
+// none, by text (`literals`).
+function tokenRanks(rules) {
+  const kinds = new Map();
+  const literals = new Map();
+  const aliased = [];
+  let order = 0;
+  const assign = (map, key, rank) => {
+    if (map.has(key)) return;
+    map.set(key, { ...rank, order });
+    order += 1;
+  };
+  // A literal closed by lookaheads, such as a keyword, ranks as the literal.
+  const closed = (expression) => {
+    if (expression.kind !== 'seq') return expression;
+    const items = expression.items.filter((item) => item.kind !== 'not' && item.kind !== 'and');
+    return items.length === 1 ? closed(items[0]) : expression;
+  };
+  const rankOf = (expression, priority = 0) => {
+    expression = closed(expression);
+    if (expression.kind === 'lexicalPrecedence') return rankOf(expression.item, expression.level);
+    if (expression.kind === 'immediateToken' || expression.kind === 'token') {
+      const inner = rankOf(expression.item, priority);
+      return { priority: inner.priority, specificity: inner.specificity + (expression.kind === 'immediateToken' ? 1 : 0) };
+    }
+    return { priority, specificity: expression.kind === 'literal' ? 2 : 0 };
+  };
+  const lexical = (expression) => ['literal', 'token', 'immediateToken'].includes(expression.kind)
+    || (expression.kind === 'lexicalPrecedence' && lexical(expression.item));
+  const bare = (expression) => {
+    const inner = closed(expression);
+    if (inner.kind === 'literal') return inner;
+    return ['lexicalPrecedence', 'token', 'immediateToken'].includes(inner.kind) ? bare(inner.item) : null;
+  };
+  const walk = (expression) => {
+    if (expression.kind === 'alias' && expression.item.kind === 'ref') {
+      aliased.push(expression);
+    } else if (expression.kind === 'alias' && lexical(expression.item)) {
+      assign(kinds, expression.name, rankOf(expression.item));
+    } else if (lexical(expression)) {
+      const literal = bare(expression);
+      if (literal) assign(literals, literal.value, rankOf(expression));
+    } else {
+      // A predicate condition consumes no text, so its tokens are not ranked.
+      mapChildren(expression.condition ? { ...expression, condition: null } : expression, (child) => {
+        walk(child);
+        return child;
+      });
+    }
+  };
+  for (const rule of rules.values()) {
+    if (rule.kind === 'token') assign(kinds, rule.nodeKind, rankOf(rule.expression));
+    else walk(rule.expression);
+  }
+  for (const alias of aliased) {
+    const rule = rules.get(alias.item.name);
+    if (rule?.kind === 'token' && !kinds.has(alias.name)) kinds.set(alias.name, kinds.get(rule.nodeKind));
+  }
+  return { kinds, literals };
 }
 
 function buildsNode(operation) {
