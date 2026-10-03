@@ -13,7 +13,7 @@ use serde_json::Value;
 use super::issue_195_native_grammar_rows::{cases, parser, source};
 use super::issue_195_observations::{Observation, record};
 
-const GRAMMARS: [(&str, &str, &str); 8] = [
+const GRAMMARS: [(&str, &str, &str); 9] = [
     (
         "json",
         include_str!("../../../parity/grammars/native/json.lino"),
@@ -53,6 +53,11 @@ const GRAMMARS: [(&str, &str, &str); 8] = [
         "c",
         include_str!("../../../parity/grammars/native/c.lino"),
         include_str!("../../../parity/fixtures/native-grammars/c.json"),
+    ),
+    (
+        "rust",
+        include_str!("../../../parity/grammars/native/rust.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/rust.json"),
     ),
 ];
 

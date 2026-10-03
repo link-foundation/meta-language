@@ -403,7 +403,7 @@ export const VISION_REQUIREMENTS = Object.freeze([
     fixture: 'parity/fixtures/native-grammars/json.json',
     construct: 'automatic error recovery of the native executor for every native grammar',
     expectedBehavior:
-      'With errorRecovery (error_recovery in Rust) both executors repair a parse the grammar rejects, without recovery rules in the grammar: at the farthest failing element they insert a zero-width MISSING leaf or skip to the next match of the element behind an ERROR leaf, choose the repair of least cost, and cover input no repair reaches with an ERROR leaf. For every rejection of the seven native grammar fixtures (JSON, INI, diff, CSV, JSON5, Scheme, Racket) both executors build the same recorded tree, which keeps every source byte and is reported as a recovered rejection; without the option the parse is still rejected, and inputs the grammar accepts parse to the same tree with and without it.',
+      'With errorRecovery (error_recovery in Rust) both executors repair a parse the grammar rejects, without recovery rules in the grammar: at the farthest failing element they insert a zero-width MISSING leaf or skip to the next match of the element behind an ERROR leaf, choose the repair of least cost, and cover input no repair reaches with an ERROR leaf. For every rejection of the nine native grammar fixtures (JSON, INI, diff, CSV, JSON5, Scheme, Racket, C, Rust) both executors build the same recorded tree, which keeps every source byte and is reported as a recovered rejection; without the option the parse is still rejected, and inputs the grammar accepts parse to the same tree with and without it.',
     assertions: [
       'nativeRecoveryTreesMatchFixtures',
       'nativeRecoveryTreesLossless',
