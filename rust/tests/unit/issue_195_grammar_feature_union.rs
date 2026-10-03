@@ -414,7 +414,14 @@ const FEATURE_FORMS: &[(&str, &[&str])] = &[
     ("alternatives", &["choice:ordered", "choice:unordered"]),
     ("recursion", &["left-recursion"]),
     ("precedence", &["precedence"]),
-    ("ambiguity", &["declaration:conflicts", "dynamicPrecedence"]),
+    (
+        "ambiguity",
+        &[
+            "declaration:conflicts",
+            "declaration:matching",
+            "dynamicPrecedence",
+        ],
+    ),
     ("lexical", &["longest", "lexicalPrecedence"]),
     (
         "unicode",
@@ -550,26 +557,28 @@ fn every_union_feature_executes_its_positive_cases_and_mutation() {
                 assert_eq!((tree.start(), tree.end()), (0, input_of(item).len()));
             }
         }
-        let mutation = &feature["mutation"];
-        let listing = text(feature, "listing");
-        let (from, to) = (text(mutation, "from"), text(mutation, "to"));
-        assert!(listing.contains(from), "{id}: the mutation applies");
-        let mutated = listing.replacen(from, to, 1);
-        assert_ne!(
-            mutation["after"], mutation["before"],
-            "{id}: the mutation changes the result"
-        );
-        assert_eq!(
-            outcome(&parsers[0], mutation),
-            mutation["before"],
-            "{id}: before"
-        );
-        let after = if mutation["after"].get("loadError").is_some() {
-            json!({ "loadError": suite.load_failure(&mutated, feature) })
-        } else {
-            outcome(&suite.parser(&native(&mutated), feature), mutation)
-        };
-        assert_eq!(after, mutation["after"], "{id}: the mutated grammar");
+        let more = feature.get("mutations").and_then(Value::as_array);
+        for mutation in std::iter::once(&feature["mutation"]).chain(more.into_iter().flatten()) {
+            let listing = text(feature, "listing");
+            let (from, to) = (text(mutation, "from"), text(mutation, "to"));
+            assert!(listing.contains(from), "{id}: the mutation applies");
+            let mutated = listing.replacen(from, to, 1);
+            assert_ne!(
+                mutation["after"], mutation["before"],
+                "{id}: the mutation changes the result"
+            );
+            assert_eq!(
+                outcome(&parsers[0], mutation),
+                mutation["before"],
+                "{id}: before"
+            );
+            let after = if mutation["after"].get("loadError").is_some() {
+                json!({ "loadError": suite.load_failure(&mutated, feature) })
+            } else {
+                outcome(&suite.parser(&native(&mutated), feature), mutation)
+            };
+            assert_eq!(after, mutation["after"], "{id}: the mutated grammar");
+        }
     }
     observe(
         &["everyUnionFeatureExecuted"],

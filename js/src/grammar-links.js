@@ -15,7 +15,7 @@
 // rust/src/grammar/interchange/links.rs.
 //
 // The grammar feature union (docs/grammar/feature-union.md#links-form) adds,
-// only where a grammar uses them: `(matching peg|generalized)` in the grammar
+// only where a grammar uses them: `(matching peg|generalized|longest)` in the grammar
 // link; `(import NAME)`, `(mode NAME)`, `(extra EXPRESSION)`, `(conflict
 // NAME...)`, `(macro NAME (parameters P...) EXPRESSION)` and `(scanner NAME
 // (tokens T...) (operations OPERATION...))` links between the grammar link

@@ -73,8 +73,11 @@ export const OPERATION_FORMS = Object.freeze({
   multiply: ['value', [['left', 'value'], ['right', 'value']]],
 });
 
-/** The ways a grammar may match: generalized (every alternative) or PEG (first and greedy). */
-export const MATCHING_MODES = Object.freeze(['generalized', 'peg']);
+/**
+ * The ways a grammar may match: generalized (every alternative), PEG (first
+ * and greedy) or longest (generalized, ties going to the longer token).
+ */
+export const MATCHING_MODES = Object.freeze(['generalized', 'peg', 'longest']);
 
 /** The rule attributes, in the order both serializations write them. */
 export const RULE_ATTRIBUTES = Object.freeze(['channel', 'modes', 'action']);

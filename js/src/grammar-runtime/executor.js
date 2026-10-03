@@ -45,16 +45,67 @@ function resultKey(result) {
 }
 
 // Adds a result to a deduplicating map: of two results with the same end
-// and state, the lower repair cost wins, then the higher dynamic precedence;
-// on a tie the first stays and, without repairs, is marked ambiguous (as a
-// copy, since results are shared through the memo).
-function addResult(results, result) {
+// and state, the lower repair cost wins, then the higher dynamic precedence,
+// then, under `(matching longest)`, the longer tokens; on a tie the first
+// stays and, without repairs, is marked ambiguous (as a copy, since results
+// are shared through the memo).
+function addResult(results, result, longest = false) {
   const key = resultKey(result);
   const existing = results.get(key);
   if (!existing || result.cost < existing.cost) results.set(key, result);
   else if (result.cost > existing.cost) return;
   else if (result.dynamic > existing.dynamic) results.set(key, result);
-  else if (result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous) results.set(key, copyResult(existing, { ambiguous: true }));
+  else if (result.dynamic === existing.dynamic) {
+    const order = longest ? longerTokens(result, existing) : 0;
+    if (order > 0) results.set(key, result);
+    else if (order === 0 && existing.cost === 0 && !existing.ambiguous) results.set(key, copyResult(existing, { ambiguous: true }));
+  }
+}
+
+// Which of two results over the same text has the longer tokens, as a lexer
+// takes the longest token: their leaves are walked in order, skipping trivia
+// and the subtrees both share, and the first leaf pair that differs decides.
+// 1 when `result` has the longer token, -1 when `existing` has, 0 when the
+// pair ends alike but differs in kind (two tokens of one length, which a
+// lexer orders by precedence, not length) or every leaf ends alike.
+function longerTokens(result, existing) {
+  const left = [[result.children, 0]];
+  const right = [[existing.children, 0]];
+  const peek = (stack) => {
+    while (stack.length > 0) {
+      const top = stack[stack.length - 1];
+      if (top[1] < top[0].length) return top[0][top[1]];
+      stack.pop();
+    }
+    return null;
+  };
+  const skip = (stack) => { stack[stack.length - 1][1] += 1; };
+  const enter = (stack, node) => {
+    skip(stack);
+    stack.push([node.children, 0]);
+  };
+  for (;;) {
+    const a = peek(left);
+    const b = peek(right);
+    if (a === null || b === null) return 0;
+    if (a === b) {
+      skip(left);
+      skip(right);
+    } else if (a.type === 'node' || b.type === 'node') {
+      if (a.type === 'node') enter(left, a);
+      if (b.type === 'node') enter(right, b);
+    } else if (a.trivia || b.trivia) {
+      if (a.trivia) skip(left);
+      if (b.trivia) skip(right);
+    } else if (a.end !== b.end) {
+      return a.end > b.end ? 1 : -1;
+    } else if (a.kind !== b.kind) {
+      return 0;
+    } else {
+      skip(left);
+      skip(right);
+    }
+  }
 }
 
 // The children of a joined result are the children of its left part followed
@@ -177,6 +228,7 @@ export class Executor {
     this.budget = budget;
     this.maxDepth = maxDepth;
     this.peg = program.matching === 'peg';
+    this.longestTokens = program.matching === 'longest';
     this.depth = 0;
     this.memo = new Map();
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
@@ -384,7 +436,7 @@ export class Executor {
         for (const right of this.evaluate(item, left.end, left.state, inToken)) {
           const joined = joinResults(left, right, inToken);
           if (last && keep && !keep(joined)) continue;
-          addResult(next, joined);
+          addResult(next, joined, this.longestTokens);
         }
       }
       current = [...next.values()];
@@ -413,7 +465,7 @@ export class Executor {
     }
     const results = new Map();
     for (const item of expression.items) {
-      for (const result of this.evaluate(item, position, state, inToken)) addResult(results, result);
+      for (const result of this.evaluate(item, position, state, inToken)) addResult(results, result, this.longestTokens);
     }
     return [...results.values()];
   }
@@ -448,7 +500,7 @@ export class Executor {
         const fresh = [];
         for (const result of frontier) {
           const key = resultKey(result);
-          if (results.has(key)) addResult(results, result);
+          if (results.has(key)) addResult(results, result, this.longestTokens);
           else {
             results.set(key, result);
             fresh.push(result);
@@ -462,10 +514,10 @@ export class Executor {
         for (const right of this.evaluate(item, left.end, left.state, inToken)) {
           if (zeroWidth(left, right)) {
             // Zero-width iterations can pad up to the minimum once.
-            if (count < min) addResult(results, join(left, right));
+            if (count < min) addResult(results, join(left, right), this.longestTokens);
             continue;
           }
-          addResult(next, join(left, right));
+          addResult(next, join(left, right), this.longestTokens);
         }
       }
       frontier = [...next.values()];
@@ -528,7 +580,7 @@ export class Executor {
       this.step();
       const results = new Map();
       for (const item of expression.items) {
-        for (const result of this.filtered(item, position, state, keep)) addResult(results, result);
+        for (const result of this.filtered(item, position, state, keep)) addResult(results, result, this.longestTokens);
       }
       return [...results.values()];
     }

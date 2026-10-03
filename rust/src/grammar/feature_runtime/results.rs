@@ -3,6 +3,7 @@
 //! memo entries and shared resource counters of one parse.
 
 use std::cell::{Cell, OnceCell, RefCell};
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::ops::Deref;
@@ -232,12 +233,22 @@ impl Res {
 pub(super) struct ResultSet {
     pub(super) items: Vec<Res>,
     index: HashMap<(usize, State), usize>,
+    /// `(matching longest)`: a tie goes to the result with the longer token.
+    longest: bool,
 }
 
 impl ResultSet {
+    pub(super) fn new(longest: bool) -> Self {
+        Self {
+            longest,
+            ..Self::default()
+        }
+    }
+
     /// Of two results with the same end and state, the lower repair cost
-    /// wins, then the higher dynamic precedence; on a tie the first stays
-    /// and, without repairs, is marked ambiguous.
+    /// wins, then the higher dynamic precedence, then, under `(matching
+    /// longest)`, the longer tokens; on a tie the first stays and, without
+    /// repairs, is marked ambiguous.
     pub(super) fn add(&mut self, result: Res) {
         match self.index.get(&result.key()) {
             None => self.push(result),
@@ -248,8 +259,17 @@ impl ResultSet {
                 } else if result.cost > existing.cost {
                 } else if result.dynamic > existing.dynamic {
                     *existing = result;
-                } else if result.dynamic == existing.dynamic && existing.cost == 0 {
-                    existing.ambiguous = true;
+                } else if result.dynamic == existing.dynamic {
+                    let order = if self.longest {
+                        longer_tokens(&result, existing)
+                    } else {
+                        Ordering::Equal
+                    };
+                    if order == Ordering::Greater {
+                        *existing = result;
+                    } else if order == Ordering::Equal && existing.cost == 0 {
+                        existing.ambiguous = true;
+                    }
                 }
             }
         }
@@ -274,6 +294,86 @@ impl ResultSet {
 
     pub(super) const fn len(&self) -> usize {
         self.items.len()
+    }
+}
+
+/// One step of a walk over the leaves of a result: a part of a child list,
+/// not yet opened, or one tree.
+enum Walk {
+    Part(Children),
+    Item(Rc<Tree>),
+}
+
+/// Opens the part on top of a walk: its items, or its two linked halves,
+/// without flattening it.
+fn open_part(walk: &mut Vec<Walk>) {
+    let Some(Walk::Part(part)) = walk.pop() else {
+        return;
+    };
+    if let Some(items) = part.flat.get() {
+        walk.extend(items.iter().rev().cloned().map(Walk::Item));
+    } else if let Some((before, after)) = part.link.borrow().clone() {
+        walk.push(Walk::Part(after));
+        walk.push(Walk::Part(before));
+    }
+}
+
+/// Replaces the node on top of a walk with its children.
+fn open_node(walk: &mut Vec<Walk>) {
+    if let Some(Walk::Item(node)) = walk.pop() {
+        walk.push(Walk::Part(node.children.clone()));
+    }
+}
+
+/// Which of two results over the same text has the longer tokens, as a
+/// lexer takes the longest token: their leaves are walked in order, skipping
+/// trivia and the parts both share, and the first leaf pair that differs
+/// decides. Greater when `result` has the longer token, Less when `existing`
+/// has, Equal when the pair ends alike but differs in kind (two tokens of one
+/// length, which a lexer orders by precedence, not length) or every leaf
+/// ends alike. It mirrors longerTokens in js/src/grammar-runtime/executor.js.
+fn longer_tokens(result: &Res, existing: &Res) -> Ordering {
+    let mut left = vec![Walk::Part(result.children.clone())];
+    let mut right = vec![Walk::Part(existing.children.clone())];
+    loop {
+        match (left.last(), right.last()) {
+            (None, _) | (_, None) => return Ordering::Equal,
+            (Some(Walk::Part(a)), Some(Walk::Part(b))) if Rc::ptr_eq(a, b) => {
+                left.pop();
+                right.pop();
+            }
+            (Some(Walk::Part(_)), _) => open_part(&mut left),
+            (_, Some(Walk::Part(_))) => open_part(&mut right),
+            (Some(Walk::Item(a)), Some(Walk::Item(b))) => {
+                let (a_node, b_node) = (a.ty == TreeType::Node, b.ty == TreeType::Node);
+                if Rc::ptr_eq(a, b) {
+                    left.pop();
+                    right.pop();
+                } else if a_node || b_node {
+                    if a_node {
+                        open_node(&mut left);
+                    }
+                    if b_node {
+                        open_node(&mut right);
+                    }
+                } else if a.trivia || b.trivia {
+                    let (a_trivia, b_trivia) = (a.trivia, b.trivia);
+                    if a_trivia {
+                        left.pop();
+                    }
+                    if b_trivia {
+                        right.pop();
+                    }
+                } else if a.end != b.end {
+                    return a.end.cmp(&b.end);
+                } else if a.kind != b.kind {
+                    return Ordering::Equal;
+                } else {
+                    left.pop();
+                    right.pop();
+                }
+            }
+        }
     }
 }
 

@@ -234,6 +234,8 @@ pub(super) struct Trivia {
 #[derive(Debug)]
 pub(super) struct Program {
     pub(super) peg: bool,
+    /// `(matching longest)`: a tie between results goes to the longer token.
+    pub(super) longest: bool,
     pub(super) start: Option<String>,
     pub(super) rules: Vec<Rule>,
     pub(super) rule_index: HashMap<String, usize>,

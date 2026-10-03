@@ -161,7 +161,7 @@ const FEATURE_FORMS = {
   alternatives: ['choice:ordered', 'choice:unordered'],
   recursion: ['left-recursion'],
   precedence: ['precedence'],
-  ambiguity: ['declaration:conflicts', 'dynamicPrecedence'],
+  ambiguity: ['declaration:conflicts', 'declaration:matching', 'dynamicPrecedence'],
   lexical: ['longest', 'lexicalPrecedence'],
   unicode: ['charClass:category', 'charClass:script', 'byteClass', 'byteClass:byteRange'],
   trivia: ['declaration:extras', 'token', 'immediateToken'],
@@ -225,15 +225,16 @@ test('every feature executes its positive cases into the expected concrete synta
       assert.equal(tree.start, 0);
       assert.equal(tree.end, typeof inputOf(item) === 'string' ? Buffer.byteLength(inputOf(item)) : inputOf(item).length);
     }
-    const { mutation } = feature;
-    assert.ok(feature.listing.includes(mutation.from), `${feature.id}: the mutation applies`);
-    const mutated = feature.listing.replace(mutation.from, mutation.to);
-    assert.notDeepEqual(mutation.after, mutation.before, `${feature.id}: the mutation changes the result`);
-    assert.deepEqual(outcome(compile(grammar, feature), mutation), mutation.before);
-    const after = mutation.after.loadError
-      ? { loadError: loadFailure(mutated, feature) }
-      : outcome(compile(parseNativeGrammar(mutated), feature), mutation);
-    assert.deepEqual(after, mutation.after, `${feature.id}: the mutated grammar`);
+    for (const mutation of [feature.mutation, ...(feature.mutations ?? [])]) {
+      assert.ok(feature.listing.includes(mutation.from), `${feature.id}: the mutation applies`);
+      const mutated = feature.listing.replace(mutation.from, mutation.to);
+      assert.notDeepEqual(mutation.after, mutation.before, `${feature.id}: the mutation changes the result`);
+      assert.deepEqual(outcome(compile(grammar, feature), mutation), mutation.before);
+      const after = mutation.after.loadError
+        ? { loadError: loadFailure(mutated, feature) }
+        : outcome(compile(parseNativeGrammar(mutated), feature), mutation);
+      assert.deepEqual(after, mutation.after, `${feature.id}: the mutated grammar`);
+    }
   }
   observe(['everyUnionFeatureExecuted'], context.name);
 });

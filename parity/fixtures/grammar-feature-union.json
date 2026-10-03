@@ -1,5 +1,5 @@
 {
-  "description": "The grammar feature union of docs/vision.md#grammar-feature-union as executable cases: per feature a native grammar listing, positive inputs with the expected concrete syntax tree in the notation of docs/grammar/feature-union.md#tree-notation, negative inputs with the expected rejection, and a grammar mutation that changes the outcome. Grammars named by imports and embedded languages are in languages. Written by experiments/issue-195-grammar-feature-union-fixture.mjs and reviewed by hand.",
+  "description": "The grammar feature union of docs/vision.md#grammar-feature-union as executable cases: per feature a native grammar listing, positive inputs with the expected concrete syntax tree in the notation of docs/grammar/feature-union.md#tree-notation, negative inputs with the expected rejection, and a grammar mutation that changes the outcome (more in mutations). Grammars named by imports and embedded languages are in languages. Written by experiments/issue-195-grammar-feature-union-fixture.mjs and reviewed by hand.",
   "requirement": "I195-GRAMMAR-FEATURE-UNION",
   "languages": {
     "base": "start value\nextra class(char(\" \"))\nrule value = normal choice(ref(number), ref(word))\nrule number = token repeat1(range(\"0\", \"9\"))\nrule word = token repeat1(range(\"a\", \"z\"))\n",
@@ -227,7 +227,7 @@
     {
       "id": "ambiguity",
       "title": "ambiguity and conflicts",
-      "listing": "start s\nconflict declared\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\n",
+      "listing": "start s\nmatching longest\nconflict declared\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\n",
       "options": {
         "ambiguity": "reject"
       },
@@ -243,6 +243,10 @@
         {
           "input": "r:1-2-3",
           "tree": "(s \"r:\" (resolved (resolved (resolved (n \"1\")) \"-\" (n \"2\")) \"-\" (n \"3\")))"
+        },
+        {
+          "input": "l:-1",
+          "tree": "(s \"l:\" (signed (number \"-1\")))"
         }
       ],
       "negative": [
@@ -299,7 +303,33 @@
         "after": {
           "tree": "(s \"u:\" (undeclared (undeclared (n \"1\")) \"-\" (undeclared (undeclared (n \"2\")) \"-\" (undeclared (n \"3\")))))"
         }
-      }
+      },
+      "mutations": [
+        {
+          "from": "matching longest\n",
+          "to": "",
+          "input": "l:-1",
+          "before": {
+            "tree": "(s \"l:\" (signed (number \"-1\")))"
+          },
+          "after": {
+            "tree": "(s \"l:\" (signed (minus \"-\") (n \"1\")))",
+            "ambiguities": [
+              {
+                "rule": "signed",
+                "start": 2,
+                "end": 4
+              }
+            ],
+            "rejection": {
+              "reason": "ambiguity",
+              "offset": 2,
+              "line": 1,
+              "column": 3
+            }
+          }
+        }
+      ]
     },
     {
       "id": "lexical",

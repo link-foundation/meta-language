@@ -82,17 +82,24 @@ const features = [
     title: 'ambiguity and conflicts',
     listing: lines(
       'start s',
+      'matching longest',
       'conflict declared',
-      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)))',
+      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)))',
       'rule declared = normal choice(seq(ref(declared), literal("-"), ref(declared)), ref(n))',
       'rule undeclared = normal choice(seq(ref(undeclared), literal("-"), ref(undeclared)), ref(n))',
       'rule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal("-"), ref(n))), seq(ref(resolved), literal("-"), ref(resolved)), ref(n))',
       'rule n = token range("0", "9")',
+      'rule signed = normal choice(seq(ref(minus), ref(n)), ref(number))',
+      'rule minus = token literal("-")',
+      'rule number = token seq(literal("-"), range("0", "9"))',
     ),
     options: { ambiguity: 'reject' },
-    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3'],
+    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1'],
     negative: [{ input: 'u:1-2-3' }, { input: 'd:1--2' }],
     mutation: { replace: ['conflict declared', 'conflict undeclared'], input: 'u:1-2-3' },
+    // Without longest matching, "-" "1" and "-1" are two parses alike in cost
+    // and dynamic precedence: an ambiguity.
+    mutations: [{ replace: ['matching longest\n', ''], input: 'l:-1' }],
   },
   {
     id: 'lexical',
@@ -350,7 +357,7 @@ function expectation(listing, item, options) {
 }
 
 const fixture = {
-  description: 'The grammar feature union of docs/vision.md#grammar-feature-union as executable cases: per feature a native grammar listing, positive inputs with the expected concrete syntax tree in the notation of docs/grammar/feature-union.md#tree-notation, negative inputs with the expected rejection, and a grammar mutation that changes the outcome. Grammars named by imports and embedded languages are in languages. Written by experiments/issue-195-grammar-feature-union-fixture.mjs and reviewed by hand.',
+  description: 'The grammar feature union of docs/vision.md#grammar-feature-union as executable cases: per feature a native grammar listing, positive inputs with the expected concrete syntax tree in the notation of docs/grammar/feature-union.md#tree-notation, negative inputs with the expected rejection, and a grammar mutation that changes the outcome (more in mutations). Grammars named by imports and embedded languages are in languages. Written by experiments/issue-195-grammar-feature-union-fixture.mjs and reviewed by hand.',
   requirement: 'I195-GRAMMAR-FEATURE-UNION',
   languages,
   features: [],
@@ -368,15 +375,15 @@ for (const feature of features) {
     if (item.listing) return { listing: item.listing, ...expectation(item.listing, '', options) };
     return { ...caseInput(item), ...(item.options ? { options: item.options } : {}), ...expectation(feature.listing, item, options) };
   });
-  const [from, to] = feature.mutation.replace;
-  const mutated = feature.listing.replace(from, to);
-  entry.mutation = {
+  const mutation = ({ replace: [from, to], input }) => ({
     from,
     to,
-    ...caseInput(feature.mutation.input),
-    before: expectation(feature.listing, feature.mutation.input, options),
-    after: expectation(mutated, feature.mutation.input, options),
-  };
+    ...caseInput(input),
+    before: expectation(feature.listing, input, options),
+    after: expectation(feature.listing.replace(from, to), input, options),
+  });
+  entry.mutation = mutation(feature.mutation);
+  if (feature.mutations) entry.mutations = feature.mutations.map(mutation);
   fixture.features.push(entry);
 }
 const text = `${JSON.stringify(fixture, null, 2)}\n`;

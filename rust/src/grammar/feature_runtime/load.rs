@@ -612,6 +612,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         .matching
         .as_deref()
         .map_or(resolved.peg_source, |matching| matching == "peg");
+    let longest = resolved.matching.as_deref() == Some("longest");
     let instances = instantiator.rules;
     let rule_index: HashMap<String, usize> = instances
         .items
@@ -719,6 +720,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
     let index = context.programs.len();
     context.programs.push(Program {
         peg,
+        longest,
         start,
         rules,
         rule_index,

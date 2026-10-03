@@ -126,7 +126,7 @@ impl Executor<'_> {
             }
             return Ok(best.into_iter().collect());
         }
-        let mut current = ResultSet::default();
+        let mut current = ResultSet::new(self.longest_tokens);
         for result in first {
             current.set(result);
         }

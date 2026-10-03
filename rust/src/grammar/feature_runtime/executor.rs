@@ -54,6 +54,7 @@ pub(super) struct Executor<'c> {
     pub(super) shared: &'c Shared,
     pub(super) max_depth: usize,
     pub(super) peg: bool,
+    pub(super) longest_tokens: bool,
     pub(super) depth: usize,
     pub(super) memo: HashMap<MemoKey, Rc<RefCell<Entry>>>,
     pub(super) call_stack: Vec<Rc<RefCell<Entry>>>,
@@ -90,6 +91,7 @@ impl<'c> Executor<'c> {
             shared,
             max_depth,
             peg: program.peg,
+            longest_tokens: program.longest,
             depth: 0,
             memo: HashMap::new(),
             call_stack: Vec::new(),
@@ -503,7 +505,7 @@ impl<'c> Executor<'c> {
     ) -> Run<Vec<Res>> {
         let mut current = vec![Res::new(position, state.clone(), no_children(), 0)];
         for (index, item) in items.iter().enumerate() {
-            let mut next = ResultSet::default();
+            let mut next = ResultSet::new(self.longest_tokens);
             let last = index == items.len() - 1;
             for left in &current {
                 for right in self.evaluate(item, left.end, &left.state, in_token)? {
@@ -560,7 +562,7 @@ impl<'c> Executor<'c> {
             }
             return Ok(best.into_iter().collect());
         }
-        let mut results = ResultSet::default();
+        let mut results = ResultSet::new(self.longest_tokens);
         for item in items {
             for result in self.evaluate(item, position, state, in_token)? {
                 results.add(result);
@@ -611,7 +613,7 @@ impl<'c> Executor<'c> {
         // Generalized: a breadth-first frontier by iteration count. Once the
         // minimum is met, a result whose end and state were already reached is
         // not extended again (it is the same continuation) but marks ambiguity.
-        let mut results = ResultSet::default();
+        let mut results = ResultSet::new(self.longest_tokens);
         let mut frontier = vec![Res::new(position, state.clone(), no_children(), 0)];
         let mut count = 0;
         while !frontier.is_empty() {
@@ -630,7 +632,7 @@ impl<'c> Executor<'c> {
             if !below_max(count) {
                 break;
             }
-            let mut next = ResultSet::default();
+            let mut next = ResultSet::new(self.longest_tokens);
             for left in &frontier {
                 for right in self.evaluate(item, left.end, &left.state, in_token)? {
                     if zero_width(left, &right) {
@@ -763,7 +765,7 @@ impl<'c> Executor<'c> {
                 items,
             } if !self.peg => {
                 self.step()?;
-                let mut results = ResultSet::default();
+                let mut results = ResultSet::new(self.longest_tokens);
                 for item in items {
                     for result in self.filtered(item, position, state, keep)? {
                         results.add(result);

@@ -213,8 +213,9 @@ pub const OPERATION_FORMS: &[(&str, OperationCategory, FormFields)] = &[
     ("multiply", VALUE, TWO_VALUES),
 ];
 
-/// The ways a grammar may match: generalized (every alternative) or PEG (first and greedy).
-pub const MATCHING_MODES: &[&str] = &["generalized", "peg"];
+/// The ways a grammar may match: generalized (every alternative), PEG (first
+/// and greedy) or longest (generalized, ties going to the longer token).
+pub const MATCHING_MODES: &[&str] = &["generalized", "peg", "longest"];
 
 /// The longest integer a form may spell, in decimal digits.
 pub const MAX_INTEGER_DIGITS: usize = 15;

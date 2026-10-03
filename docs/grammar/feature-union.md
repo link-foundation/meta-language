@@ -129,8 +129,10 @@ list of the [operation language](#operation-language).
 
 `declarations` holds, each optional:
 
-- `matching`: `generalized` (every alternative, the default) or `peg` (first
-  and greedy; the default when `sourceFormat` is `peg`);
+- `matching`: `generalized` (every alternative, the default), `peg` (first
+  and greedy; the default when `sourceFormat` is `peg`) or `longest`
+  (generalized, and of two parses alike in precedence the one whose first
+  differing token is longer wins, as a lexer takes the longest token);
 - `imports`: names of grammars whose rules and declarations this one inherits;
 - `modes`: the lexer modes beyond `default`;
 - `extras`: trivia expressions allowed between any two tokens;
@@ -329,7 +331,11 @@ in syntactic or token context yields a list of results
 
 **Result sets.** Results are deduplicated by `end` and state key. Of two equal
 results the one with the higher `dynamic` stays; on a tie the first stays and
-is marked ambiguous. Under `matching peg` a sequence keeps only its first
+is marked ambiguous. Under `matching longest` a tie goes first to the result
+with the longer token: both results' leaves are walked in order, skipping
+trivia and the subtrees they share, and at the first leaf pair that differs
+the leaf ending later wins; when that pair ends alike, or no pair differs, the
+first is marked ambiguous. Under `matching peg` a sequence keeps only its first
 result.
 
 **Terminals.** In syntactic context a terminal first skips trivia; in token
