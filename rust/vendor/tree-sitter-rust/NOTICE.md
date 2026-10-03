@@ -33,6 +33,7 @@ The `parser.h` SHA-256 is
 The `scanner.c` SHA-256 is
 `9609a2f92dbb7c32bc056fd8fb94e5478428f04496696aa08b048a9b66caf283`.
 
-The grammar is MIT licensed; see `LICENSE`. `build.rs` expands the
-deterministically compressed parser into Cargo's output directory before
-compilation.
+The grammar is MIT licensed; see `LICENSE`. Rust parses with its native
+grammar in `parity/grammars/native`, so this parser is that grammar's oracle:
+the JavaScript build compiles it to `js/oracles/grammars/rust.wasm.gz`, a
+development file, and the crate neither compiles nor publishes it.

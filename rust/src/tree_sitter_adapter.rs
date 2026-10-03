@@ -18,20 +18,6 @@ mod rocq_grammar {
 }
 
 #[allow(unsafe_code)]
-mod rust_grammar {
-    use tree_sitter_language::LanguageFn;
-
-    unsafe extern "C" {
-        fn tree_sitter_rust() -> *const ();
-    }
-
-    // SAFETY: build.rs compiles the generated parser and scanner from the
-    // pinned tag recorded in vendor/tree-sitter-rust/NOTICE.md with this
-    // exact symbol.
-    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_rust) };
-}
-
-#[allow(unsafe_code)]
 mod lean_grammar {
     use tree_sitter_language::LanguageFn;
 
@@ -501,7 +487,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "regex" => tree_sitter_regex::LANGUAGE.into(),
         "rocq" => rocq_grammar::LANGUAGE.into(),
         "ruby" => tree_sitter_ruby::LANGUAGE.into(),
-        "rust" => rust_grammar::LANGUAGE.into(),
         "scala" => tree_sitter_scala::LANGUAGE.into(),
         "solidity" => tree_sitter_solidity::LANGUAGE.into(),
         "sql" => tree_sitter_sequel::LANGUAGE.into(),

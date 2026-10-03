@@ -70,7 +70,7 @@ they are.
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 19 | 0 | 0 | 19 |
+| Published artifact contents | 18 | 0 | 0 | 18 |
 
 ## JavaScript engines
 
@@ -460,6 +460,7 @@ they are.
 | `js/oracles/grammars/json.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.8` |  | derived | current |  |
 | `js/oracles/grammars/json5.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
 | `js/oracles/grammars/racket.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
+| `js/oracles/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `v0.24.2` |  | derived | current |  |
 | `js/oracles/grammars/scheme.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.24.7` |  | derived | current |  |
 | `js/src/vendor/grammars/agda.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.3.3` |  | derived | current |  |
 | `js/src/vendor/grammars/bash.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.1` |  | derived | current |  |
@@ -501,7 +502,6 @@ they are.
 | `js/src/vendor/grammars/regex.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.25.0` |  | derived | current |  |
 | `js/src/vendor/grammars/rocq.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `300fe33fc299c30f736fd56d8ef8a28b08acd4e6` |  | derived | current |  |
 | `js/src/vendor/grammars/ruby.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.23.1` |  | derived | current |  |
-| `js/src/vendor/grammars/rust.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `v0.24.2` |  | derived | current |  |
 | `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.2` |  | derived | current |  |
 | `js/src/vendor/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.2.13` |  | derived | current |  |
 | `js/src/vendor/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.11` |  | derived | current |  |
@@ -617,7 +617,6 @@ they are.
 | `vendor/tree-sitter-cmake/**` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `vendor/tree-sitter-lean/**` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `vendor/tree-sitter-rocq/**` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `vendor/tree-sitter-rust/**` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 

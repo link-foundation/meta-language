@@ -441,6 +441,7 @@
     },
     "rust": {
       "id": "rust",
+      "oracle": true,
       "upstream": "tree-sitter/tree-sitter-rust",
       "vendored": "rust/vendor/tree-sitter-rust",
       "patch": "rust/vendor/tree-sitter-rust/meta-language.patch",

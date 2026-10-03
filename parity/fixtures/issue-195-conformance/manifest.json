@@ -699,7 +699,7 @@
         "tag": "v0.24.2",
         "patch": "rust/vendor/tree-sitter-rust/meta-language.patch",
         "parserSha256": "555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3",
-        "license": "js/src/vendor/grammars/rust.LICENSE"
+        "license": "js/oracles/grammars/rust.LICENSE"
       },
       "corpus": {
         "directory": "rust/corpus",

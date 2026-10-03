@@ -135,6 +135,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
     // named like primitive types, the 2015 `try!` macro and cargo script
     // frontmatter.
     patch: 'rust/vendor/tree-sitter-rust/meta-language.patch',
+    oracle: true,
     dir: '.',
   },
   scala: { crate: 'tree-sitter-scala', dir: '.' },

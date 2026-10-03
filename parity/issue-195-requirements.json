@@ -891,7 +891,7 @@
     "planned:conformance:JavaScript": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "JavaScript mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "51ccaf37cd8ccfab3751db4d5c9c63a51c458b11d0822902eacd228c8cd1cc29"
+      "sha256": "83122a1f302bae388b3c90e2e89b1e207438e1f35410ce90ece7f8987f24e6d4"
     },
     "planned:generative:JavaScript": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
@@ -901,7 +901,7 @@
     "planned:conformance:Rust": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Rust mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "51ccaf37cd8ccfab3751db4d5c9c63a51c458b11d0822902eacd228c8cd1cc29"
+      "sha256": "83122a1f302bae388b3c90e2e89b1e207438e1f35410ce90ece7f8987f24e6d4"
     },
     "planned:generative:Rust": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
@@ -911,7 +911,7 @@
     "planned:conformance:Lean": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Lean mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "51ccaf37cd8ccfab3751db4d5c9c63a51c458b11d0822902eacd228c8cd1cc29"
+      "sha256": "83122a1f302bae388b3c90e2e89b1e207438e1f35410ce90ece7f8987f24e6d4"
     },
     "planned:generative:Lean": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
@@ -921,7 +921,7 @@
     "planned:conformance:Rocq": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
       "selector": "Rocq mapped upstream conformance suites, grammar corpora, and representative real projects",
-      "sha256": "51ccaf37cd8ccfab3751db4d5c9c63a51c458b11d0822902eacd228c8cd1cc29"
+      "sha256": "83122a1f302bae388b3c90e2e89b1e207438e1f35410ce90ece7f8987f24e6d4"
     },
     "planned:generative:Rocq": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
@@ -1576,7 +1576,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "f2622efa05799ddf8c5dbfef1ba58fa6db833cf3bcef384fb79238c52ef82655"
+      "sha256": "25c155500732d2488febaa76a723e0c917161c29be836962afd9f5a62c668caf"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1586,7 +1586,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "f2622efa05799ddf8c5dbfef1ba58fa6db833cf3bcef384fb79238c52ef82655"
+      "sha256": "25c155500732d2488febaa76a723e0c917161c29be836962afd9f5a62c668caf"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",

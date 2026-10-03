@@ -26,7 +26,6 @@ include = [
     "src/data/foundation-models.json",
     "src/data/language-trigrams.json",
     "vendor/tree-sitter-rocq/**",
-    "vendor/tree-sitter-rust/**",
     "vendor/tree-sitter-lean/**",
     "vendor/tree-sitter-cmake/**",
     "examples/**/*.rs",

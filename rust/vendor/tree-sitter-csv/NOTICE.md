@@ -23,6 +23,7 @@ The uncompressed `parser.c` SHA-256 is
 The `parser.h` SHA-256 is
 `180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2`.
 
-The grammar is MIT licensed; see `LICENSE`. `build.rs` expands the
-deterministically compressed parser into Cargo's output directory before
-compilation.
+The grammar is MIT licensed; see `LICENSE`. CSV parses with its native
+grammar in `parity/grammars/native`, so this parser is that grammar's oracle:
+the JavaScript build compiles it to `js/oracles/grammars/csv.wasm.gz`, a
+development file, and the crate neither compiles nor publishes it.

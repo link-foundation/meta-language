@@ -399,20 +399,19 @@ recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
   nodes of an invalid input are placed where the native executor repairs it,
   not where tree-sitter's LR recovery places them; the two are not compared.
 - tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
-  tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket and
-  tree-sitter-c no longer back a default parse, so they are development files only: the Rust
-  crates are `[dev-dependencies]` that the `pinned_*_oracle_gives_the_fixture`
-  tests load, the vendored CSV parser is no longer compiled into or published
-  with the crate, and their WebAssembly builds and licenses are in
+  tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket,
+  tree-sitter-c and tree-sitter-rust no longer back a default parse, so they
+  are development files only: the Rust crates are `[dev-dependencies]` that the
+  `pinned_*_oracle_gives_the_fixture` tests load, the vendored and patched CSV
+  and Rust parsers are no longer compiled into or published with the crate,
+  and their WebAssembly builds and licenses are in
   [`js/oracles/grammars`](../../js/oracles/grammars/NOTICE.md), outside the npm
   package, where the fixture generator and the oracle checks load them. Their
   lock entries carry `"oracle": true`, and `grammarNames`/`grammar_names` and
-  `grammar_by_id` return nothing for their ids.
-- tree-sitter-rust 0.24.2, patched for the oracle and vendored under
-  `rust/vendor/tree-sitter-rust`, is still compiled into the Rust crate, and
-  its WebAssembly build is still in the npm package, so it is not yet a
-  development file like the oracles above; the Rust suite checks the
-  executor against the fixture rows, not against the loaded oracle.
+  `grammar_by_id` return nothing for their ids. No crate carries the patched
+  CSV and Rust parsers, so the Rust suites of those two check the executor
+  against the fixture rows the JavaScript oracle writes, not against a loaded
+  oracle.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
   tree-sitter-diff recovers from and the native grammar accepts as context; a
