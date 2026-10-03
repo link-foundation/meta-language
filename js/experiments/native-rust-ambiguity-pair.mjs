@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 globalThis.__ambiguityPairs = [];
-const parser = compileGrammar(parseGrammarLinks(readFileSync(new URL('../../parity/grammars/native/rust.lino', import.meta.url), 'utf8')));
+const parser = compileGrammar(parseGrammarLinks(readFileSync(new URL(`../../parity/grammars/native/${process.env.GRAMMAR ?? 'rust'}.lino`, import.meta.url), 'utf8')));
 const source = process.env.SOURCE;
 parser.parseTree(source);
 const bytes = Buffer.from(source);

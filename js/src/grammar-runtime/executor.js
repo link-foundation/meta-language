@@ -61,6 +61,9 @@ function addResult(results, result, tokens = null) {
   }
   if (result.cost > existing.cost) return;
   const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing) : 0;
+  // A trace, off unless a probe sets the array (see
+  // experiments/native-order-trace.mjs): every decided pair and its order.
+  globalThis.__orderTrace?.push([result, existing, order]);
   if (order > 0 || (order === 0 && result.dynamic > existing.dynamic)) results.set(key, result);
   else if (order === 0 && result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous && !sameOutput(result.children, existing.children)) {
     // A trace, off unless a probe sets the array (see
@@ -145,6 +148,13 @@ function preferredTokens(result, existing, tokens) {
       skip(left);
       skip(right);
       skipped = [[], []];
+    } else if (a.type === 'node' && b.type === 'node' && (nestsFirst(a, b) || nestsFirst(b, a))) {
+      // A node one parse wraps deeper (Rust's `.. ..` as the left operand of
+      // `..=` or of an assignment) is the first part of the other parse's
+      // node: that one is entered alone until the two line up, so the node
+      // meets its match, not a leaf of it.
+      if (nestsFirst(a, b)) enter(left, a);
+      else enter(right, b);
     } else if (a.type === 'node' || b.type === 'node') {
       const lone = a.type === 'node' ? b : a;
       if (lone.type !== 'node' && !isTrivia(lone)) pending = Math.min(pending, lone.end);
@@ -170,6 +180,13 @@ function preferredTokens(result, existing, tokens) {
       skipped = [[], []];
     }
   }
+}
+
+// Whether a node of the kind and span of `inner` is on the leftmost chain of
+// the longer node `outer`.
+function nestsFirst(outer, inner) {
+  return outer.end > inner.end && leftmostChain(outer).some((node) =>
+    node.kind === inner.kind && node.start === inner.start && node.end === inner.end);
 }
 
 // The rank of a token leaf, or null for another leaf or an unranked token.
@@ -266,6 +283,10 @@ function shiftOrder(result, existing) {
     if (lone !== 0) return lone;
     const reduced = extraReduction(a, b, right) || -extraReduction(b, a, left);
     if (reduced !== 0) return reduced;
+    if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
+      const parted = chainConflict(a, b);
+      if (parted !== 0) return parted;
+    }
     if (a.type !== 'node' && b.type !== 'node') return 0;
     if (a.type === 'node') enter(left, a);
     if (b.type === 'node') enter(right, b);
@@ -373,6 +394,33 @@ function chainPair(a, b) {
     if (match) return [node, match];
   }
   return null;
+}
+
+// Which of two results an LR parser keeps when two nodes from one offset have
+// no node kind in common along their leftmost chains (Rust's closure `|a| b`
+// and or-pattern `|a|b` in a tuple pattern): the two parses part at the first
+// end only one chain has, where one reduced the innermost node ending there
+// (the or-pattern `|a` of level -2) and the other shifted on in the innermost
+// node going past it (the closure parameters `|a|`), as in `shiftPreferred`,
+// when the reduced node's children begin the other node's, so the two parses
+// agree up to that end. 1 when `a`'s result is kept, -1 when `b`'s is, 0 when
+// neither.
+function chainConflict(a, b) {
+  const first = leftmostChain(a);
+  const second = leftmostChain(b);
+  const ends = (chain) => new Set(chain.map((node) => node.end));
+  const [mine, theirs] = [ends(first), ends(second)];
+  const parted = [...mine].filter((end) => !theirs.has(end)).concat([...theirs].filter((end) => !mine.has(end)));
+  if (parted.length === 0) return 0;
+  const end = Math.min(...parted);
+  const [reducing, shifting, sign] = mine.has(end) ? [first, second, -1] : [second, first, 1];
+  const short = reducing.findLast((node) => node.end === end);
+  const long = shifting.findLast((node) => node.end > end);
+  if (!long) return 0;
+  const own = short.children.filter((child) => !isTrivia(child));
+  const next = long.children.filter((child) => !isTrivia(child));
+  if (own.length >= next.length || own.some((child, at) => !sameTree(child, next[at]))) return 0;
+  return sign * shiftPreferred(long, short);
 }
 
 // 1 when the shift that built `long` is preferred to the reduction that
@@ -1056,9 +1104,12 @@ export class Executor {
       if (inner > level || (inner === level && associativity === side)) return false;
       if (side === 'right' && this.lexedShift(child.rule)) return false;
       if (!this.reachesOwner(expression, child.rule, side)) return false;
+      // A child of one part (Rust's bare range `..` in `a ..= ..`) has no
+      // operand of its own the operator could have taken instead.
+      const facing = child.children.filter((grandchild) => !isTrivia(grandchild));
+      if (facing.length < 2) return false;
       const kinds = this.operandKinds(expression)[side];
       if (kinds === null) return true;
-      const facing = child.children.filter((grandchild) => !isTrivia(grandchild));
       const edge = side === 'left' ? facing[facing.length - 1] : facing[0];
       return edge !== undefined && kinds.has(edge.kind);
     };
