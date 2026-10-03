@@ -19,11 +19,15 @@ const inventory = JSON.parse(inventoryBytes);
 const inventoryDigest = createHash('sha256').update(inventoryBytes).digest('hex');
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 // Tree-sitter languages and built-in grammar languages together cover the
-// inventory.
+// inventory. A language a native grammar parses by default takes the native
+// expectation, whose positive trees are its tree-sitter oracle's.
+const oracleExpected = await parityJson('fixtures/default-cst-expected.json');
+const nativeExpected = await parityJson('fixtures/native-default-cst-expected.json');
 const expected = {
   languages: {
-    ...(await parityJson('fixtures/default-cst-expected.json')).languages,
+    ...oracleExpected.languages,
     ...(await parityJson('fixtures/builtin-cst-expected.json')).languages,
+    ...nativeExpected.languages,
   },
 };
 
@@ -132,6 +136,23 @@ function firstDifference(actual, wanted) {
     ? undefined
     : `row ${index} (${actual.length} vs ${wanted.length}): actual ${JSON.stringify(actual.slice(index, index + 2))} expected ${JSON.stringify(wanted.slice(index, index + 2))}`;
 }
+
+test('a native default grammar builds the trees of its pinned tree-sitter oracle', () => {
+  assert.ok(Object.keys(nativeExpected.languages).length > 0);
+  for (const [name, want] of Object.entries(nativeExpected.languages)) {
+    const oracle = oracleExpected.languages[name];
+    assert.deepEqual(want.positive, oracle.positive, name);
+    assert.equal(want.sourceSha256, oracle.sourceSha256, name);
+    assert.equal(want.recoverySourceSha256, oracle.recoverySourceSha256, name);
+    assert.deepEqual(
+      Object.entries(want.oracleGrammars).map(([id, { version, parserSha256 }]) => [id, version, parserSha256]),
+      Object.entries(oracle.grammars).map(([id, { version, parserSha256 }]) => [id, version, parserSha256]),
+      name,
+    );
+    assert.deepEqual(Object.keys(want.grammars), grammarProvenance(name).map(({ id }) => id), name);
+    assert.ok(want.recovery.some((row) => /[EM]/u.test(row[6])), `${name} recovery`);
+  }
+});
 
 test('JavaScript public networks match grammar-derived rows', () => {
   const differences = [];

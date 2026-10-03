@@ -1,6 +1,6 @@
 // Requirement I195-GRAMMAR-NATIVE-CSV: the native merged CSV grammar,
 // parity/grammars/native/csv.lino, builds the concrete syntax trees of the
-// tree-sitter-csv oracle that still backs the default CSV parse.
+// tree-sitter-csv oracle the native grammar replaced as the default CSV parse.
 // parity/fixtures/native-grammars/csv.json holds the corpus with the oracle
 // rows; rust/tests/unit/issue_195_grammar_native_csv.rs checks the Rust
 // executor against the same fixture.

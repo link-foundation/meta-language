@@ -1,0 +1,454 @@
+{
+  "description": "Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.",
+  "generator": {
+    "script": "js/scripts/generate-native-grammar-fixtures.mjs"
+  },
+  "languages": {
+    "JSON": {
+      "grammars": {
+        "native-json": {
+          "version": "1.0.0",
+          "parserSha256": "29b1ed5d75f545d8a07f358c9eb8a0962347f26216277d79264e657c3524e04d"
+        }
+      },
+      "oracleGrammars": {
+        "json": {
+          "version": "0.24.8",
+          "parserSha256": "e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab"
+        }
+      },
+      "sourceSha256": "17d9c0be51052d7de23ecbbe1ae54c278e4b4acd62d512cda932a44c93721bfb",
+      "recoverySourceSha256": "28c5b725e06e98627aa7aa379eb911e18a6721182884e699acb6d51502e53f93",
+      "positive": [
+        [0,null,"document",1,0,76,""],
+        [1,null,"object",1,0,75,""],
+        [2,null,"{",0,0,1,""],
+        [2,null,"pair",1,1,16,""],
+        [3,"key","string",1,1,7,""],
+        [4,null,"\"",0,1,2,""],
+        [4,null,"string_content",1,2,6,""],
+        [4,null,"\"",0,6,7,""],
+        [3,null,":",0,7,8,""],
+        [3,"value","string",1,9,16,""],
+        [4,null,"\"",0,9,10,""],
+        [4,null,"string_content",1,10,15,""],
+        [4,null,"\"",0,15,16,""],
+        [2,null,",",0,16,17,""],
+        [2,null,"pair",1,18,48,""],
+        [3,"key","string",1,18,26,""],
+        [4,null,"\"",0,18,19,""],
+        [4,null,"string_content",1,19,25,""],
+        [4,null,"\"",0,25,26,""],
+        [3,null,":",0,26,27,""],
+        [3,"value","array",1,28,48,""],
+        [4,null,"[",0,28,29,""],
+        [4,null,"number",1,29,30,""],
+        [4,null,",",0,30,31,""],
+        [4,null,"number",1,32,35,""],
+        [4,null,",",0,35,36,""],
+        [4,null,"true",1,37,41,""],
+        [4,null,",",0,41,42,""],
+        [4,null,"null",1,43,47,""],
+        [4,null,"]",0,47,48,""],
+        [2,null,",",0,48,49,""],
+        [2,null,"pair",1,51,74,""],
+        [3,"key","string",1,51,59,""],
+        [4,null,"\"",0,51,52,""],
+        [4,null,"string_content",1,52,58,""],
+        [4,null,"\"",0,58,59,""],
+        [3,null,":",0,59,60,""],
+        [3,"value","object",1,61,74,""],
+        [4,null,"{",0,61,62,""],
+        [4,null,"pair",1,62,73,""],
+        [5,"key","string",1,62,66,""],
+        [6,null,"\"",0,62,63,""],
+        [6,null,"string_content",1,63,65,""],
+        [6,null,"\"",0,65,66,""],
+        [5,null,":",0,66,67,""],
+        [5,"value","false",1,68,73,""],
+        [4,null,"}",0,73,74,""],
+        [2,null,"}",0,74,75,""]
+      ],
+      "recovery": [
+        [0,null,"document",1,0,13,""],
+        [1,null,"object",1,0,13,""],
+        [2,null,"{",0,0,1,""],
+        [2,null,"pair",1,1,11,""],
+        [3,"key","string",1,1,8,""],
+        [4,null,"\"",0,1,2,""],
+        [4,null,"string_content",1,2,7,""],
+        [4,null,"\"",0,7,8,""],
+        [3,null,":",0,8,9,""],
+        [3,"value","number",1,10,11,""],
+        [2,null,",",0,11,12,""],
+        [2,null,"pair",1,13,13,""],
+        [3,"key","string",1,13,13,""],
+        [4,null,"\"",0,13,13,"M"],
+        [4,null,"\"",0,13,13,"M"],
+        [3,null,":",0,13,13,"M"],
+        [3,null,"number",1,13,13,"M"],
+        [2,null,"}",0,13,13,"M"]
+      ],
+      "embedded": []
+    },
+    "INI": {
+      "grammars": {
+        "native-ini": {
+          "version": "1.0.0",
+          "parserSha256": "ea2b2f371e776b77fe0adb46d6ac3cf3efc21de18e761659f08eff90acaeabe4"
+        }
+      },
+      "oracleGrammars": {
+        "ini": {
+          "version": "1.4.0",
+          "parserSha256": "3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123"
+        }
+      },
+      "sourceSha256": "b5bb3ec1d09118cb345d63088fc1cb016751e495879346f16322cb54325f1618",
+      "recoverySourceSha256": "7a00f79d23057f16184e05b0b895e5e63395d4e189d44aaa5f84bc95dd8af06c",
+      "positive": [
+        [0,null,"document",1,0,26,""],
+        [1,null,"comment",1,0,8,"X"],
+        [2,null,"text",1,1,7,""],
+        [1,null,"section",1,8,26,""],
+        [2,null,"section_name",1,8,16,""],
+        [3,null,"[",0,8,9,""],
+        [3,null,"text",1,9,14,""],
+        [3,null,"]",0,14,15,""],
+        [2,null,"setting",1,16,26,""],
+        [3,null,"setting_name",1,16,20,""],
+        [3,null,"=",0,21,22,""],
+        [3,null,"setting_value",1,22,25,""]
+      ],
+      "recovery": [
+        [0,null,"document",1,0,20,""],
+        [1,null,"section",1,0,20,""],
+        [2,null,"section_name",1,0,20,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,20,""],
+        [3,null,"]",0,20,20,"M"],
+        [3,null,"newline",1,20,20,"M"]
+      ],
+      "embedded": []
+    },
+    "Diff": {
+      "grammars": {
+        "native-diff": {
+          "version": "1.0.0",
+          "parserSha256": "08348d9f3400ceb3bad8b06c192ca71efae8b6c7c212c2be2c1134538f28a2f2"
+        }
+      },
+      "oracleGrammars": {
+        "diff": {
+          "version": "0.1.0",
+          "parserSha256": "4c9e3e545073a7d93088f7d90b0ee89e56fb43ca751f25fa440c4a1906ecb3e6"
+        }
+      },
+      "sourceSha256": "a5ef6911a12cb1ad93f4672b4209d3db99149e067438cc19cf3fb36c8b571c11",
+      "recoverySourceSha256": "2913cceb6c15d146125a868219a693736f5e8a191d1e7b93ab8f289e3109ee9a",
+      "positive": [
+        [0,null,"source",1,0,120,""],
+        [1,null,"block",1,0,120,""],
+        [2,null,"command",1,0,26,""],
+        [3,null,"diff",0,0,4,""],
+        [3,null,"argument",1,5,10,""],
+        [3,null,"filename",1,11,26,""],
+        [2,null,"index",1,27,56,""],
+        [3,null,"index",0,27,32,""],
+        [3,null,"commit",1,33,40,""],
+        [3,null,"..",0,40,42,""],
+        [3,null,"commit",1,42,49,""],
+        [3,null,"mode",1,50,56,""],
+        [2,null,"old_file",1,57,68,""],
+        [3,null,"---",0,57,60,""],
+        [3,null,"filename",1,61,68,""],
+        [2,null,"new_file",1,69,80,""],
+        [3,null,"+++",0,69,72,""],
+        [3,null,"filename",1,73,80,""],
+        [2,null,"hunks",1,81,120,""],
+        [3,null,"hunk",1,81,120,""],
+        [4,"location","location",1,81,96,""],
+        [5,null,"@@",0,81,83,""],
+        [5,null,"linerange",1,84,88,""],
+        [5,null,"linerange",1,89,93,""],
+        [5,null,"@@",0,94,96,""],
+        [4,"changes","changes",1,97,120,""],
+        [5,null,"context",1,97,103,""],
+        [5,null,"deletion",1,104,111,""],
+        [6,null,"-",0,104,105,""],
+        [5,null,"addition",1,112,119,""],
+        [6,null,"+",0,112,113,""]
+      ],
+      "recovery": [
+        [0,null,"source",1,0,18,""],
+        [1,null,"location",1,0,17,""],
+        [2,null,"@@",0,0,2,""],
+        [2,null,"linerange",1,3,7,""],
+        [2,null,"linerange",1,8,12,""],
+        [2,null,"@@",0,12,12,"M"],
+        [2,null,"anything",1,12,17,""],
+        [3,null,"ERROR",1,12,13,"E"],
+        [3,null,"-old",0,13,17,""]
+      ],
+      "embedded": []
+    },
+    "CSV": {
+      "grammars": {
+        "native-csv": {
+          "version": "1.0.0",
+          "parserSha256": "3ef4faabdccab35b8ac3cc4578069793254bd066224d02f0f4a528a01b790621"
+        }
+      },
+      "oracleGrammars": {
+        "csv": {
+          "version": "f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
+          "parserSha256": "6a7ede804cb8ced3f9466cecf38872d175e6179e8ea951956a195b2d55add8bc"
+        }
+      },
+      "sourceSha256": "cc9dd1b2cba097089cb60affcee67bd077ee61a1a42f464203490a48746f5af2",
+      "recoverySourceSha256": "3788eb99d962b9c302099d27b91c0dde2c6e4b4181edc8bab9387d09938381e5",
+      "positive": [
+        [0,null,"document",1,0,41,""],
+        [1,null,"row",1,0,10,""],
+        [2,null,"field",1,0,4,""],
+        [3,null,"text",1,0,4,""],
+        [2,null,",",0,4,5,""],
+        [2,null,"field",1,5,10,""],
+        [3,null,"text",1,5,10,""],
+        [1,null,"row",1,11,24,""],
+        [2,null,"field",1,11,22,""],
+        [3,null,"text",1,11,22,""],
+        [2,null,",",0,22,23,""],
+        [2,null,"field",1,23,24,""],
+        [3,null,"number",1,23,24,""],
+        [1,null,"row",1,25,40,""],
+        [2,null,"field",1,25,38,""],
+        [3,null,"text",1,25,38,""],
+        [2,null,",",0,38,39,""],
+        [2,null,"field",1,39,40,""],
+        [3,null,"number",1,39,40,""]
+      ],
+      "recovery": [
+        [0,null,"document",1,0,19,""],
+        [1,null,"row",1,0,10,""],
+        [2,null,"field",1,0,4,""],
+        [3,null,"text",1,0,4,""],
+        [2,null,",",0,4,5,""],
+        [2,null,"field",1,5,10,""],
+        [3,null,"text",1,5,10,""],
+        [1,null,"row",1,11,18,""],
+        [2,null,"field",1,11,18,""],
+        [3,null,"number",1,11,18,""],
+        [4,null,"ERROR",1,11,17,"E"],
+        [4,null,"1",0,17,18,""]
+      ],
+      "embedded": []
+    },
+    "JSON5": {
+      "grammars": {
+        "native-json5": {
+          "version": "1.0.0",
+          "parserSha256": "6d6572f1da5a5090760c39504a09f88cb5bcf48bb19a2fbb3f4d520d2dbeb4f3"
+        }
+      },
+      "oracleGrammars": {
+        "json5": {
+          "version": "0.1.0",
+          "parserSha256": "0024a5353393c7186a9a4f531f451279d301c7c3925ba292348176a83d3765b4"
+        }
+      },
+      "sourceSha256": "8bc1d4ae719423ed0bed7f90d5b216f7ee74a03858ffa5fd44579856fd43528b",
+      "recoverySourceSha256": "9b0f875878400bbd1fb673fa6eecaf6eae2381f4abba00bd15a794eabcf00782",
+      "positive": [
+        [0,null,"file",1,0,47,""],
+        [1,null,"comment",1,0,8,"X"],
+        [1,null,"object",1,9,46,""],
+        [2,null,"{",0,9,10,""],
+        [2,null,"member",1,10,18,""],
+        [3,"name","identifier",1,10,15,""],
+        [3,null,":",0,15,16,""],
+        [3,"value","number",1,17,18,""],
+        [2,null,",",0,18,19,""],
+        [2,null,"member",1,20,44,""],
+        [3,"name","string",1,20,24,""],
+        [3,null,":",0,24,25,""],
+        [3,"value","array",1,26,44,""],
+        [4,null,"[",0,26,27,""],
+        [4,null,"number",1,27,31,""],
+        [4,null,",",0,31,32,""],
+        [4,null,"number",1,33,42,""],
+        [4,null,",",0,42,43,""],
+        [4,null,"]",0,43,44,""],
+        [2,null,",",0,44,45,""],
+        [2,null,"}",0,45,46,""]
+      ],
+      "recovery": [
+        [0,null,"file",1,0,10,""],
+        [1,null,"object",1,0,10,""],
+        [2,null,"{",0,0,1,""],
+        [2,null,"member",1,1,9,""],
+        [3,"name","identifier",1,1,6,""],
+        [3,null,":",0,6,7,""],
+        [3,"value","object",1,8,9,""],
+        [4,null,"{",0,8,8,"M"],
+        [4,null,"}",0,8,9,""],
+        [2,null,"}",0,10,10,"M"]
+      ],
+      "embedded": []
+    },
+    "Scheme": {
+      "grammars": {
+        "native-scheme": {
+          "version": "1.0.0",
+          "parserSha256": "13f1c7caac4cc7cb7511b64f0c13316d37675b173bc46c3cea56b8a9e0947872"
+        }
+      },
+      "oracleGrammars": {
+        "scheme": {
+          "version": "0.24.7",
+          "parserSha256": "5d4c1786eb70c3be05f395e5a26edbb7cca12e7547f7a1d8cdb94e092ee74d0d"
+        }
+      },
+      "sourceSha256": "86e4eb2dbabef6a354c725f4901f742988510d123134740ceb53a506e3cda6df",
+      "recoverySourceSha256": "01a27cb87cde49573a931ee5eaa0a61b198d187302a165c489a96a32e7309c32",
+      "positive": [
+        [0,null,"program",1,0,85,""],
+        [1,null,"comment",1,0,7,""],
+        [1,null,"list",1,8,30,""],
+        [2,null,"(",0,8,9,""],
+        [2,null,"symbol",1,9,15,""],
+        [2,null,"list",1,16,21,""],
+        [3,null,"(",0,16,17,""],
+        [3,null,"symbol",1,17,18,""],
+        [3,null,"symbol",1,19,20,""],
+        [3,null,")",0,20,21,""],
+        [2,null,"list",1,22,29,""],
+        [3,null,"(",0,22,23,""],
+        [3,null,"symbol",1,23,24,""],
+        [3,null,"symbol",1,25,26,""],
+        [3,null,"number",1,27,28,""],
+        [3,null,")",0,28,29,""],
+        [2,null,")",0,29,30,""],
+        [1,null,"list",1,31,84,""],
+        [2,null,"(",0,31,32,""],
+        [2,null,"symbol",1,32,39,""],
+        [2,null,"list",1,40,83,""],
+        [3,null,"(",0,40,41,""],
+        [3,null,"symbol",1,41,54,""],
+        [3,null,"string",1,55,59,""],
+        [4,null,"\"",0,55,56,""],
+        [4,null,"\"",0,58,59,""],
+        [3,null,"list",1,60,82,""],
+        [4,null,"(",0,60,61,""],
+        [4,null,"symbol",1,61,75,""],
+        [4,null,"list",1,76,81,""],
+        [5,null,"(",0,76,77,""],
+        [5,null,"symbol",1,77,78,""],
+        [5,null,"number",1,79,80,""],
+        [5,null,")",0,80,81,""],
+        [4,null,")",0,81,82,""],
+        [3,null,")",0,82,83,""],
+        [2,null,")",0,83,84,""]
+      ],
+      "recovery": [
+        [0,null,"program",1,0,22,""],
+        [1,null,"list",1,0,22,""],
+        [2,null,"(",0,0,1,""],
+        [2,null,"symbol",1,1,7,""],
+        [2,null,"list",1,8,13,""],
+        [3,null,"(",0,8,9,""],
+        [3,null,"symbol",1,9,10,""],
+        [3,null,"symbol",1,11,12,""],
+        [3,null,")",0,12,13,""],
+        [2,null,"list",1,14,21,""],
+        [3,null,"(",0,14,15,""],
+        [3,null,"symbol",1,15,16,""],
+        [3,null,"symbol",1,17,18,""],
+        [3,null,"number",1,19,20,""],
+        [3,null,")",0,20,21,""],
+        [2,null,")",0,22,22,"M"]
+      ],
+      "embedded": []
+    },
+    "Racket": {
+      "grammars": {
+        "native-racket": {
+          "version": "1.0.0",
+          "parserSha256": "b9a5df8aac0af932330a4ec0480741cf91137e96fd8908cbc336cb4d7804f238"
+        }
+      },
+      "oracleGrammars": {
+        "racket": {
+          "version": "0.25.0",
+          "parserSha256": "3cbab79ab9bd99684a7de4cb93a0aafd6773bb3ecf6720c59f1b7cdb0ceddd9c"
+        }
+      },
+      "sourceSha256": "0bd33da4a661a6dcb37a188af81b83bf0cb905dbd30922a56fac8a3f1167e2af",
+      "recoverySourceSha256": "1e4a28074f6a5872ecf3a0d1a00e65487710242914bd4bb748fd168a0f37909c",
+      "positive": [
+        [0,null,"program",1,0,100,""],
+        [1,null,"extension",1,0,12,""],
+        [2,null,"#lang ",0,0,6,""],
+        [2,null,"lang_name",1,6,12,""],
+        [1,null,"comment",1,13,20,""],
+        [1,null,"list",1,21,43,""],
+        [2,null,"(",0,21,22,""],
+        [2,null,"symbol",1,22,28,""],
+        [2,null,"list",1,29,34,""],
+        [3,null,"(",0,29,30,""],
+        [3,null,"symbol",1,30,31,""],
+        [3,null,"symbol",1,32,33,""],
+        [3,null,")",0,33,34,""],
+        [2,null,"list",1,35,42,""],
+        [3,null,"(",0,35,36,""],
+        [3,null,"symbol",1,36,37,""],
+        [3,null,"symbol",1,38,39,""],
+        [3,null,"number",1,40,41,""],
+        [3,null,")",0,41,42,""],
+        [2,null,")",0,42,43,""],
+        [1,null,"list",1,44,99,""],
+        [2,null,"(",0,44,45,""],
+        [2,null,"symbol",1,45,54,""],
+        [2,null,"list",1,55,98,""],
+        [3,null,"(",0,55,56,""],
+        [3,null,"symbol",1,56,69,""],
+        [3,null,"string",1,70,74,""],
+        [4,null,"\"",0,70,71,""],
+        [4,null,"\"",0,73,74,""],
+        [3,null,"list",1,75,97,""],
+        [4,null,"(",0,75,76,""],
+        [4,null,"symbol",1,76,90,""],
+        [4,null,"list",1,91,96,""],
+        [5,null,"(",0,91,92,""],
+        [5,null,"symbol",1,92,93,""],
+        [5,null,"number",1,94,95,""],
+        [5,null,")",0,95,96,""],
+        [4,null,")",0,96,97,""],
+        [3,null,")",0,97,98,""],
+        [2,null,")",0,98,99,""]
+      ],
+      "recovery": [
+        [0,null,"program",1,0,35,""],
+        [1,null,"extension",1,0,12,""],
+        [2,null,"#lang ",0,0,6,""],
+        [2,null,"lang_name",1,6,12,""],
+        [1,null,"list",1,13,35,""],
+        [2,null,"(",0,13,14,""],
+        [2,null,"symbol",1,14,20,""],
+        [2,null,"list",1,21,26,""],
+        [3,null,"(",0,21,22,""],
+        [3,null,"symbol",1,22,23,""],
+        [3,null,"symbol",1,24,25,""],
+        [3,null,")",0,25,26,""],
+        [2,null,"list",1,27,34,""],
+        [3,null,"(",0,27,28,""],
+        [3,null,"symbol",1,28,29,""],
+        [3,null,"symbol",1,30,31,""],
+        [3,null,"number",1,32,33,""],
+        [3,null,")",0,33,34,""],
+        [2,null,")",0,35,35,"M"]
+      ],
+      "embedded": []
+    }
+  }
+}

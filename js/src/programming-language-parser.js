@@ -11,6 +11,7 @@ import { parseNaturalLanguageCst, parsePlainTextCst } from './text-grammar.js';
 import { treeSitterNodeKind } from './tree-sitter-node-kind.js';
 import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 import { loadGrammarLanguage } from './grammar-tiering.js';
+import { isNativeGrammar, nativeAdapter, parseNative } from './native-grammar-parser.js';
 import { sourceBoundaries } from './source-boundaries.js';
 
 const encoder = new TextEncoder();
@@ -197,6 +198,19 @@ function parseGrammarCst(text, canonical) {
     return { canonical, rootTerm: tree.term, tokens, tree };
   }
   const id = languageEntry(canonical).grammars[0]?.id;
+  if (id !== undefined && isNativeGrammar(id)) {
+    // A native grammar's root, like tree-sitter's, starts after its leading
+    // padding, and its projected tree has tree-sitter's shape.
+    const root = parseNative(id, text);
+    const adapter = nativeAdapter(boundaries);
+    const tokens = [];
+    const leading = [];
+    pushGapNodes(leading, 0, adapter.startOffset(root), text, boundaries, tokens);
+    const tree = convertGrammarNode(root, adapter, canonical, text, boundaries, tokens);
+    const trailing = [];
+    pushGapNodes(trailing, adapter.endOffset(root), text.length, text, boundaries, tokens);
+    return { canonical, rootTerm: tree.term, tokens, tree, leading, trailing };
+  }
   const grammar = id === undefined ? undefined : grammarLanguage(id);
   if (!grammar) {
     throw new Error(`no tree-sitter grammar is registered for ${canonical}`);

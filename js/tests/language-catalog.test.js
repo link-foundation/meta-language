@@ -83,9 +83,25 @@ test('grammar provenance names the locked grammar versions and parser digests', 
     const provenance = grammarProvenance(language.name);
     assert.deepEqual(
       provenance.map(({ id }) => id),
-      [...(language.grammars ?? []), ...(language.builtinGrammar ? [language.builtinGrammar] : [])],
+      language.nativeGrammar
+        ? [language.nativeGrammar]
+        : [...(language.grammars ?? []), ...(language.builtinGrammar ? [language.builtinGrammar] : [])],
       language.name,
     );
+    if (language.nativeGrammar) {
+      // A native grammar is recorded with the digest of its Links Notation
+      // text, and its tree-sitter grammars stay pinned as its oracles.
+      const declared = inventory.nativeGrammars[language.nativeGrammar];
+      const text = await readFile(new URL(`../../${declared.grammar}`, import.meta.url));
+      assert.equal(provenance[0].version, declared.version);
+      assert.equal(provenance[0].parserSha256, createHash('sha256').update(text).digest('hex'));
+      assert.deepEqual(
+        languageEntry(language.name).oracleGrammars.map(({ id, version, parserSha256 }) => [id, version, parserSha256]),
+        language.grammars.map((id) => [id, GRAMMAR_LOCK.grammars[id].version, GRAMMAR_LOCK.grammars[id].parserSha256]),
+        language.name,
+      );
+      continue;
+    }
     for (const grammar of provenance) {
       if (grammar.id === language.builtinGrammar) {
         // A built-in grammar is recorded with the digest of its specification.
@@ -99,6 +115,23 @@ test('grammar provenance names the locked grammar versions and parser digests', 
       assert.equal(grammar.version, locked.version);
       assert.equal(grammar.parserSha256, locked.parserSha256);
     }
+  }
+});
+
+test('the catalog ships each native grammar as the text the inventory declares', async () => {
+  const ids = inventory.languages.filter(({ nativeGrammar }) => nativeGrammar).map(({ nativeGrammar }) => nativeGrammar);
+  assert.deepEqual(Object.keys(LANGUAGE_CATALOG.nativeGrammars), Object.keys(inventory.nativeGrammars));
+  assert.deepEqual([...ids].sort(), Object.keys(inventory.nativeGrammars).sort());
+  for (const [id, declared] of Object.entries(inventory.nativeGrammars)) {
+    const shipped = LANGUAGE_CATALOG.nativeGrammars[id];
+    const text = await readFile(new URL(`../../${declared.grammar}`, import.meta.url), 'utf8');
+    assert.equal(await readFile(new URL(`../src/data/${shipped.file}`, import.meta.url), 'utf8'), text, id);
+    assert.equal(await readFile(new URL(`../../rust/src/data/${shipped.file}`, import.meta.url), 'utf8'), text, id);
+    assert.deepEqual(
+      [shipped.hidden, shipped.anonymous, shipped.extras],
+      [declared.hidden, declared.anonymous, declared.extras],
+      id,
+    );
   }
 });
 

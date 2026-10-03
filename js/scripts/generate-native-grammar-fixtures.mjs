@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Generates parity/fixtures/native-grammars/<language>.json: the corpus a
 // native merged grammar in parity/grammars/native/ is checked against, with
-// the rows of the tree-sitter oracle that still backs the language's default
-// parse.
+// the rows of the pinned tree-sitter grammar the language's default parse
+// used before, now an oracle; and parity/fixtures/native-default-cst-expected.json,
+// the default concrete syntax trees of the languages these grammars parse.
 //
 //   node scripts/generate-native-grammar-fixtures.mjs           write the fixtures
 //   node scripts/generate-native-grammar-fixtures.mjs --check   fail when one is stale
@@ -12,17 +13,29 @@
 // grammar accepts them and the fixture keeps its rows. `rejections` are
 // invalid sources: the oracle recovers with error nodes, the native grammar
 // rejects them by default, and with `errorRecovery` repairs each into the
-// lossless `recovered` tree of ERROR and MISSING leaves. `hidden`, `anonymous` and
-// `extras` tell js/scripts/native-grammar-rows.mjs how the oracle shows the
-// native leaves and nodes of those kinds.
+// lossless `recovered` tree of ERROR and MISSING leaves. `hidden`,
+// `anonymous` and `extras`, from the `nativeGrammars` of
+// parity/language-grammar-inventory.json, tell
+// js/scripts/native-grammar-rows.mjs how the oracle shows the native leaves
+// and nodes of those kinds.
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { compileGrammar, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
-import { nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
+import { compileGrammar, languageEntry, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
+import { hasRecovery, nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const inventory = JSON.parse(readFileSync(path.join(root, 'parity/language-grammar-inventory.json'), 'utf8'));
+
+// The id of a native grammar in the language inventory, with the kinds its
+// default tree places as the oracle does, which both runtimes read from the
+// language catalog.
+function nativeGrammar(id) {
+  const { hidden, anonymous, extras } = inventory.nativeGrammars[id];
+  return { nativeGrammar: id, hidden, anonymous, extras };
+}
 
 // The empty last field the RFC 4180 ABNF allows and the oracle recovers from.
 const EMPTY_LAST_FIELD = 'RFC 4180 section 2 reads an empty last field (non-escaped = *TEXTDATA) at the end of the input; tree-sitter-csv f6bf6e3 recovers from it.';
@@ -54,9 +67,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // tree-sitter-json skips a leading byte order mark as whitespace; the
     // native grammar keeps it as a named leaf (RFC 8259 section 8.1 lets a
     // parser ignore it).
-    hidden: ['byte_order_mark'],
-    anonymous: [],
-    extras: [],
+    ...nativeGrammar('native-json'),
     matches: [
       '{"name": "meta", "tags": [1, 2.5, true, null], "nested": {"ok": false}}\n',
       '[]', '{}', '""', '0', '-0', '1.', '1.5e10', '-2E-3', '12e3', '1e-7', '"\\u00e9\\n\\"\\\\\\/"', '"\\u12"',
@@ -103,9 +114,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // tree-sitter-ini starts the document at a leading blank line but skips
     // the spaces before it, keeps line breaks and comment markers as hidden
     // tokens inside their node, and parses a comment as an extra.
-    hidden: ['blank_space'],
-    anonymous: ['newline', 'comment_marker'],
-    extras: ['comment'],
+    ...nativeGrammar('native-ini'),
     matches: [
       'a=1\n', '', '\n', '\n\n', '   ', 'k = \n', 'k==v\n', 'k=v\n', 'a = b\nc = d\n', '[x]\n# c\n', '[a]\n[b]\n',
       'k = v=w\n', '[s]\n\tk = v\n', 'k = \t v\n', '[s.t]\nk=v\n', '[s]\r\n', 'k=v\t\n', '[s]\n# a\n# b\nk=v\n',
@@ -187,9 +196,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // tree-sitter-diff keeps line breaks, the rest of a changed, comment or
     // hunk header line and the words of a file name as regular expression
     // tokens without rows of their own.
-    hidden: [],
-    anonymous: ['newline', 'anything', 'word'],
-    extras: [],
+    ...nativeGrammar('native-diff'),
     matches: [
       'diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -1,2 +1,2 @@ f\n a\n-b\n+c\n', '+a\n',
       '-a\n', ' a\n', '# c\n', 'x', '\n', '--- a\n+++ b\n', '', ' ', 'a\n ', ' \n', '\n\n', 'x\r\n', 'x \n', '+ \n',
@@ -275,9 +282,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     ],
     // tree-sitter-csv skips the spaces after a closing quote as whitespace,
     // and keeps line breaks as a regular expression token without a row.
-    hidden: ['blank_space'],
-    anonymous: ['newline'],
-    extras: [],
+    ...nativeGrammar('native-csv'),
     matches: [
       '', '\n', '\r\n', '\r', 'a', 'a\n', 'a,1\n', 'a,b', 'a,b\nc,d', 'a,b\r\nc,d\r\n', '1,2,3\n4,5,6\n', '1\n2\n',
       ' a , 1 \n', '1.5,true,0x1F\n', '"a""b",c\r\n', '""', '""\n', '"a"', '"a"\n', '" "', '" a "', '"a,b"', '"a\nb"',
@@ -316,9 +321,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'https://docs.rs/crate/tree-sitter-json5-orchard/0.1.0/source/grammar.js',
     ],
     // Comments are extras both trees keep; whitespace is invisible trivia.
-    hidden: [],
-    anonymous: [],
-    extras: [],
+    ...nativeGrammar('native-json5'),
     matches: [
       '{a: 1}', '{a:1,}', '[1,]//c\n', '1', 'null', 'true', 'false', '"a"', '\'a\'', '[]', '{}', '[ ]', '{ }',
       '\ufeff1', '\t1\v\f', ' [ 1 , 2 ] ', '{true:1}', '{null:1, Infinity:2}', '{$_é9:1}', '[.]',
@@ -385,9 +388,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     ],
     // The oracle has no extras: white space, comment text and string text are
     // tokens it keeps inside their node without a row.
-    hidden: [],
-    anonymous: ['whitespace', 'comment_text', 'string_text', 'directive_name'],
-    extras: [],
+    ...nativeGrammar('native-scheme'),
     matches: [
       '', 'a', ' a', 'a ', '(a b c)', '(define (f x) (+ x 1))', '[a]', '{a}', '()', '#t', '#f', '#true', '#false',
       '#tRuE', '#truex', '#\\a', '#\\space', '#\\spacex', '#\\x41', '#\\newline', '#\\NEWLINE', '#\\(', '#\\ ',
@@ -458,12 +459,7 @@ export const NATIVE_GRAMMARS = Object.freeze([
     // The runtime skips a leading byte order mark before the oracle root
     // starts. White space, comment text, string text and the here string
     // lines are tokens the oracle keeps inside their node without a row.
-    hidden: ['byte_order_mark'],
-    anonymous: [
-      'whitespace', 'comment_text', 'string_text', 'regex_prefix', 'hash_prefix', 'graph_mark', 'here_terminator',
-      'here_newline', 'here_line', 'here_end',
-    ],
-    extras: [],
+    ...nativeGrammar('native-racket'),
     matches: [
       '', 'a', ' a', 'a ', '(a b c)', '(define (f x) (+ x 1))', '[a]', '{a}', '()', '(a . b)', '(.)', '(. a)', '(.a)',
       '.', '...', '(a ... b)', '(1 . 2)', '(a .b)', '(a. b)', '( . )', '#t', '#f', '#true', '#false', '#T', '#F',
@@ -569,9 +565,63 @@ export function buildNativeGrammarFixture(entry) {
 
 export const fixturePath = (entry) => `parity/fixtures/native-grammars/${entry.id}.json`;
 
+export const DEFAULT_CST_PATH = 'parity/fixtures/native-default-cst-expected.json';
+
+const sha256 = (text) => createHash('sha256').update(text).digest('hex');
+
+/**
+ * The default concrete syntax trees of the inventory sources of every
+ * language a native grammar parses by default, in the rows of
+ * parity/fixtures/default-cst-expected.json. A positive tree is the oracle's
+ * tree of the source, which the native grammar must build; a recovery tree is
+ * the native grammar's repair of the recovery source, which the oracle also
+ * recovers from.
+ */
+export function buildNativeDefaultCstExpected() {
+  const languages = {};
+  for (const entry of NATIVE_GRAMMARS) {
+    const language = inventory.languages.find(({ name }) => name === entry.language);
+    const catalog = languageEntry(entry.language);
+    if (catalog.grammars[0]?.id !== entry.nativeGrammar) {
+      throw new Error(`the catalog does not parse ${entry.language} with ${entry.nativeGrammar}`);
+    }
+    const parser = grammarParser(entry);
+    const positive = parser.parseTree(language.source);
+    if (!positive.ok) throw new Error(`${entry.grammar} rejects the ${entry.language} inventory source`);
+    const rows = oracleRows(language.source, entry.language);
+    if (JSON.stringify(nativeRows(positive.tree, language.source, entry)) !== JSON.stringify(rows)) {
+      throw new Error(`${entry.grammar} and ${entry.oracle} disagree on the ${entry.language} inventory source`);
+    }
+    if (!oracleRecovers(language.recoverySource, entry.language)) {
+      throw new Error(`the ${entry.oracle} oracle accepts the ${entry.language} recovery source`);
+    }
+    const repaired = parser.parseTree(language.recoverySource, { errorRecovery: true, recovery: 'accept' });
+    const recovery = nativeRows(repaired.tree, language.recoverySource, entry);
+    if (!hasRecovery(recovery)) throw new Error(`${entry.grammar} repairs the ${entry.language} recovery source without an ERROR or MISSING node`);
+    const versions = (grammars) => Object.fromEntries(grammars.map(({ id, version, parserSha256 }) => [id, { version, parserSha256 }]));
+    languages[entry.language] = {
+      grammars: versions(catalog.grammars),
+      oracleGrammars: versions(catalog.oracleGrammars),
+      sourceSha256: sha256(language.source),
+      recoverySourceSha256: sha256(language.recoverySource),
+      positive: rows,
+      recovery,
+      embedded: [],
+    };
+  }
+  return {
+    description:
+      'Default concrete syntax trees of the inventory sources of the languages a native Links Notation grammar parses by default. Positive rows are the trees of the pinned tree-sitter oracle grammar, which the native grammar builds; recovery rows are the native repair of the recovery source, which the oracle also recovers from. Row: [depth, field, kind, named, startByte, endByte, flags]; flags: E error, M missing, X extra.',
+    generator: { script: 'js/scripts/generate-native-grammar-fixtures.mjs' },
+    languages,
+  };
+}
+
+const ROW_KEYS = new Set(['rows', 'positive', 'recovery']);
+
 // One row per line, and invisible characters escaped so the fixture reads unambiguously.
 export function renderFixture(fixture) {
-  const text = JSON.stringify(fixture, (key, value) => (key === 'rows' ? value.map((row) => `@@${JSON.stringify(row)}@@`) : value), 2)
+  const text = JSON.stringify(fixture, (key, value) => (ROW_KEYS.has(key) && Array.isArray(value) ? value.map((row) => `@@${JSON.stringify(row)}@@`) : value), 2)
     .replace(/"@@((?:[^"\\]|\\.)*)@@"/gu, (_, row) => JSON.parse(`"${row}"`))
     .replace(/[\u00a0\u2028\u2029\ufeff]/gu, (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`);
   return `${text}\n`;
@@ -580,9 +630,13 @@ export function renderFixture(fixture) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
   let stale = 0;
-  for (const entry of NATIVE_GRAMMARS) {
-    const file = path.join(root, fixturePath(entry));
-    const text = renderFixture(buildNativeGrammarFixture(entry));
+  const outputs = [
+    ...NATIVE_GRAMMARS.map((entry) => [fixturePath(entry), () => buildNativeGrammarFixture(entry)]),
+    [DEFAULT_CST_PATH, buildNativeDefaultCstExpected],
+  ];
+  for (const [relative, build] of outputs) {
+    const file = path.join(root, relative);
+    const text = renderFixture(build());
     if (check) {
       let current = null;
       try {
@@ -592,12 +646,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       }
       if (current !== text) {
         stale += 1;
-        console.error(`${fixturePath(entry)} is stale; run node scripts/generate-native-grammar-fixtures.mjs`);
+        console.error(`${relative} is stale; run node scripts/generate-native-grammar-fixtures.mjs`);
       }
     } else {
       mkdirSync(path.dirname(file), { recursive: true });
       writeFileSync(file, text);
-      console.log(`wrote ${fixturePath(entry)}`);
+      console.log(`wrote ${relative}`);
     }
   }
   if (stale > 0) process.exit(1);
