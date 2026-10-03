@@ -660,14 +660,16 @@ gaps against the target above:
   CSV
   ([`parity/grammars/native/csv.lino`](../parity/grammars/native/csv.lino)),
   JSON5
-  ([`parity/grammars/native/json5.lino`](../parity/grammars/native/json5.lino))
-  and Scheme
-  ([`parity/grammars/native/scheme.lino`](../parity/grammars/native/scheme.lino)),
+  ([`parity/grammars/native/json5.lino`](../parity/grammars/native/json5.lino)),
+  Scheme
+  ([`parity/grammars/native/scheme.lino`](../parity/grammars/native/scheme.lino))
+  and Racket
+  ([`parity/grammars/native/racket.lino`](../parity/grammars/native/racket.lino)),
   which are checked against tree-sitter-json, tree-sitter-ini,
-  tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard and
-  tree-sitter-scheme but reject invalid input instead of recovering. The
-  default JSON, INI, Diff, CSV, JSON5 and Scheme parses still run those
-  tree-sitter grammars.
+  tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard,
+  tree-sitter-scheme and tree-sitter-racket but reject invalid input instead
+  of recovering. The default JSON, INI, Diff, CSV, JSON5, Scheme and Racket
+  parses still run those tree-sitter grammars.
 - **Incomplete grammar expression model.** The model in
   [`rust/src/grammar/mod.rs`](../rust/src/grammar/mod.rs) covers:
   - terminals and non-terminals;

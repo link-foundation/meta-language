@@ -345,6 +345,24 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-RACKET',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/racket.json',
+    construct: 'native merged Racket grammar checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/racket.lino is a canonical native Links Notation grammar merged from tree-sitter-racket 0.25.0 and the reader chapter of the Racket Reference. Both executors build, for every corpus source, exactly the concrete syntax tree rows of the tree-sitter-racket oracle with no ambiguity, lists with dots, vectors, flvectors, fxvectors, structures, hash tables, boxes, graph labels, quote, quasiquote, unquote and syntax forms, booleans, characters, strings, byte strings, here strings, regular expressions, numbers and extflonums, symbols, keywords, #lang and #reader extensions and line, datum and nested block comments included; they accept the line feeds a backslash quotes in characters and symbols, which the oracle recovers from, reject invalid input, and keep every source byte, comments, white space and a leading byte order mark included, in the tree.',
+    assertions: [
+      'nativeRacketGrammarIsCanonicalLinks',
+      'nativeRacketTreesMatchOracle',
+      'nativeRacketAcceptsMergedSourceExtensions',
+      'nativeRacketRejectsInvalidInput',
+      'nativeRacketTreesLossless',
+    ],
+    javascript: ['js/src/grammar-links.js', 'js/src/grammar-runtime.js', 'js/src/grammar-runtime/text.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/mod.rs', 'rust/src/grammar/feature_runtime/tree.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-FEATURE-UNION',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

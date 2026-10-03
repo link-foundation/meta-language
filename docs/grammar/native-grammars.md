@@ -14,11 +14,11 @@ grammar is checked against the tree-sitter grammar that still backs its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: six catalog languages, JSON, INI, Diff, CSV, JSON5 and Scheme, have a
-native merged grammar. Their default parses still run tree-sitter-json,
-tree-sitter-ini, tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard
-and tree-sitter-scheme until the grammars have recovery rules for invalid
-input; see [current limits](#current-limits).
+Status: seven catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme and
+Racket, have a native merged grammar. Their default parses still run
+tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
+tree-sitter-json5-orchard, tree-sitter-scheme and tree-sitter-racket until the
+grammars have recovery rules for invalid input; see [current limits](#current-limits).
 
 ## Format
 
@@ -156,6 +156,38 @@ For Scheme the sources are the
 - Whitespace, comment text, string text and directive names are trivia
   leaves, so the tree keeps every byte.
 
+For Racket the sources are the
+[reader chapter of the Racket Reference](https://docs.racket-lang.org/reference/reader.html)
+and
+[tree-sitter-racket 0.25.0](https://docs.rs/crate/tree-sitter-racket/0.25.0/source/grammar.js):
+
+- From tree-sitter-racket: the tree shape and the lexical rules. A `program`
+  holds data and may start with a byte order mark, which has no row; a `list`
+  may use `()`, `[]` or `{}` and holds `dot` rows; `vector` (with the `#fl`
+  and `#fx` prefixes and a length), `structure`, `hash`, `box`, `graph`,
+  `quote`, `quasiquote`, `unquote`, `unquote_splicing`, `syntax`,
+  `quasisyntax`, `unsyntax` and `unsyntax_splicing` hold their datum.
+  `boolean`, `character`, `number` (extflonums included), `symbol` and
+  `keyword` are leaves; a string or byte string holds `escape_sequence` rows,
+  and `regex` holds its string. Line comments, `#;` datum comments, nested
+  `#| |#` block comments and `#lang`, `#!` and `#reader` extensions are rows
+  between data, as the oracle declares no extras. Where a number and a symbol
+  both match, the longer one wins and the number wins a tie.
+- A `here_string` replaces the oracle's external scanner with grammar
+  actions: `here_terminator` stores the rest of the `#<<` line in a state
+  variable, `here_line` fails on a line equal to it and `here_end` matches
+  only that line, as Racket Reference section 1.3.7 (Reading Strings) reads a
+  here string.
+- From Racket Reference section 1.3.14 (Reading Characters): `#\` followed by
+  a line feed is a `character`; tree-sitter-racket 0.25.0 reads no line feed
+  after `#\` and recovers from it.
+- From Racket Reference sections 1.3.1 (Delimiters and Dispatch) and 1.3.2
+  (Reading Symbols): a backslash quotes the next character of a symbol or
+  keyword, a line feed included; tree-sitter-racket 0.25.0 quotes any
+  character but a line feed and recovers from it.
+- Whitespace, comment text, string text and the here string lines are trivia
+  leaves, so the tree keeps every byte.
+
 ## Checking against the oracle
 
 [`js/scripts/generate-native-grammar-fixtures.mjs`](../../js/scripts/generate-native-grammar-fixtures.mjs)
@@ -206,6 +238,7 @@ rows, and a Rust suite. Both record evidence for the language's ledger row:
 | CSV | [`issue-195-grammar-native-csv.test.js`](../../js/tests/issue-195-grammar-native-csv.test.js) | [`issue_195_grammar_native_csv.rs`](../../rust/tests/unit/issue_195_grammar_native_csv.rs) | `I195-GRAMMAR-NATIVE-CSV` |
 | JSON5 | [`issue-195-grammar-native-json5.test.js`](../../js/tests/issue-195-grammar-native-json5.test.js) | [`issue_195_grammar_native_json5.rs`](../../rust/tests/unit/issue_195_grammar_native_json5.rs) | `I195-GRAMMAR-NATIVE-JSON5` |
 | Scheme | [`issue-195-grammar-native-scheme.test.js`](../../js/tests/issue-195-grammar-native-scheme.test.js) | [`issue_195_grammar_native_scheme.rs`](../../rust/tests/unit/issue_195_grammar_native_scheme.rs) | `I195-GRAMMAR-NATIVE-SCHEME` |
+| Racket | [`issue-195-grammar-native-racket.test.js`](../../js/tests/issue-195-grammar-native-racket.test.js) | [`issue_195_grammar_native_racket.rs`](../../rust/tests/unit/issue_195_grammar_native_racket.rs) | `I195-GRAMMAR-NATIVE-RACKET` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -220,10 +253,10 @@ when a fixture is stale, and CI runs it.
 ## Current limits
 
 - Invalid input is rejected instead of recovered. The default JSON, INI, Diff,
-  CSV, JSON5 and Scheme parses still use tree-sitter-json, tree-sitter-ini,
-  tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard and
-  tree-sitter-scheme, which stay production dependencies until the native
-  grammars have recovery rules.
+  CSV, JSON5, Scheme and Racket parses still use tree-sitter-json,
+  tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
+  tree-sitter-json5-orchard, tree-sitter-scheme and tree-sitter-racket, which
+  stay production dependencies until the native grammars have recovery rules.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
   tree-sitter-diff recovers from and the native grammar accepts as context; a
@@ -240,6 +273,20 @@ when a fixture is stale, and CI runs it.
   JSON5 section 7 ends it at any ECMAScript 5.1 LineTerminator, which would
   split the oracle's comment rows, so inputs that differ there are outside
   the corpus.
+- The tree-sitter-racket 0.25.0 here string scanner packs each character in
+  32 bits and compares a line with the terminator by `strcmp`, so it compares
+  only the first character: it accepts `#<<EOF\nab\nEOFx`, ending the here
+  string at `EOFx`. The native grammar ends a here string only at a line
+  equal to its terminator, as Racket Reference section 1.3.7 requires, and
+  rejects these inputs; since the oracle accepts them they are not
+  rejections, and they are outside the corpus. The Racket suites check that
+  the native grammar rejects them.
+- The native Racket grammar follows the oracle where it accepts input the
+  Racket Reference reads differently, so those inputs stay matches: `#Fl(`
+  and `#Fx(` read as the boolean `#F` followed by a symbol and a list rather
+  than an flvector or fxvector, and `#\nx` reads as the character `#\n`
+  followed by the symbol `x`, where section 1.3.14 reads no character whose
+  letter is followed by another letter.
 - No other catalog language has a native merged grammar yet. The open rows are
   `I195-GRAMMAR-NATIVE-MERGED`, `I195-GRAMMAR-LANGUAGE-CATALOG` and
   `I195-DEPENDENCY-PRODUCTION-PARSERS-REMOVED` in the
