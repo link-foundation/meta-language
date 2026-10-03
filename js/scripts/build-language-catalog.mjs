@@ -18,6 +18,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { parseGrammarLinks } from '../src/grammar-links.js';
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const inventoryPath = join(root, 'parity/language-grammar-inventory.json');
 const lockPath = join(root, 'js/src/vendor/grammars/grammar-lock.json');
@@ -91,8 +93,9 @@ export function buildLanguageCatalog(inventory, lock) {
 
 /**
  * The native grammars by id: the file each runtime loads from its
- * `src/data` directory and the leaf and node kinds whose tree-sitter
- * placement the default tree reproduces (docs/grammar/native-grammars.md).
+ * `src/data` directory, the leaf and node kinds whose tree-sitter
+ * placement the default tree reproduces (docs/grammar/native-grammars.md),
+ * and the tree-sitter kind of each rule renamed from it.
  */
 function nativeGrammarCatalog(inventory) {
   return Object.fromEntries(Object.entries(inventory.nativeGrammars ?? {}).map(([id, native]) => [id, {
@@ -100,7 +103,22 @@ function nativeGrammarCatalog(inventory) {
     hidden: native.hidden,
     anonymous: native.anonymous,
     extras: native.extras,
+    oracleKinds: nativeOracleKinds(readFileSync(join(root, native.grammar), 'utf8')),
   }]));
+}
+
+/**
+ * The tree-sitter kind of each rule of a native grammar renamed from it: the
+ * rule's `(source-names (tree-sitter NAME))`, by rule name. The default tree
+ * keeps the tree-sitter kind, so the rename does not change it.
+ */
+export function nativeOracleKinds(text) {
+  const kinds = {};
+  for (const [name, rule] of parseGrammarLinks(text).rules) {
+    const oracle = rule.sourceNames?.find(({ source }) => source === 'tree-sitter');
+    if (oracle && oracle.name !== name) kinds[name] = oracle.name;
+  }
+  return kinds;
 }
 
 /** The shipped copies of the native grammars: `[path, text]` for each runtime. */

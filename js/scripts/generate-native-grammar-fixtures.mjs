@@ -15,7 +15,8 @@
 // rejects them by default, and with `errorRecovery` repairs each into the
 // lossless `recovered` tree of ERROR and MISSING leaves. `hidden`,
 // `anonymous` and `extras`, from the `nativeGrammars` of
-// parity/language-grammar-inventory.json, tell
+// parity/language-grammar-inventory.json, and `oracleKinds`, the tree-sitter
+// names of the renamed rules, tell
 // js/scripts/native-grammar-rows.mjs how the oracle shows the native leaves
 // and nodes of those kinds.
 import { createHash } from 'node:crypto';
@@ -24,6 +25,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { compileGrammar, languageEntry, parseGrammarLinks, renderSyntaxTree } from '../src/index.js';
+import { nativeOracleKinds } from './build-language-catalog.mjs';
 import { hasRecovery, nativeRows, oracleRecovers, oracleRows } from './native-grammar-rows.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -33,8 +35,9 @@ const inventory = JSON.parse(readFileSync(path.join(root, 'parity/language-gramm
 // default tree places as the oracle does, which both runtimes read from the
 // language catalog.
 function nativeGrammar(id) {
-  const { hidden, anonymous, extras } = inventory.nativeGrammars[id];
-  return { nativeGrammar: id, hidden, anonymous, extras };
+  const { grammar, hidden, anonymous, extras } = inventory.nativeGrammars[id];
+  const oracleKinds = nativeOracleKinds(readFileSync(path.join(root, grammar), 'utf8'));
+  return { nativeGrammar: id, hidden, anonymous, extras, oracleKinds };
 }
 
 // The empty last field the RFC 4180 ABNF allows and the oracle recovers from.
@@ -559,8 +562,10 @@ export function buildNativeGrammarFixture(entry) {
     if (repaired.rejection?.reason !== 'recovered') throw new Error(`${entry.grammar} does not recover from ${JSON.stringify(source)}`);
     return { source, recovered: renderSyntaxTree(repaired.tree) };
   });
-  const { id, language, grammar, oracle, sources, hidden, anonymous, extras } = entry;
-  return { schemaVersion: 1, id, language, grammar, oracle, sources, hidden, anonymous, extras, matches, divergences, rejections };
+  const { id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds } = entry;
+  return {
+    schemaVersion: 1, id, language, grammar, oracle, sources, hidden, anonymous, extras, oracleKinds, matches, divergences, rejections,
+  };
 }
 
 export const fixturePath = (entry) => `parity/fixtures/native-grammars/${entry.id}.json`;

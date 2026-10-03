@@ -17,7 +17,8 @@
 // keeps inside a node without a row of their own, as tree-sitter keeps a
 // regular expression token such as a line break; they are not rows but count
 // in the spans. Node kinds in `extras` are rows with flag X, as the oracle
-// marks a comment node it parses as an extra. An ERROR leaf is a named
+// marks a comment node it parses as an extra. A rule renamed from its
+// tree-sitter name is a row of that name (`oracleKinds`). An ERROR leaf is a named
 // `ERROR` row with flag E and a MISSING leaf an empty row with flag M, named
 // unless it stands for a literal.
 import { readFileSync } from 'node:fs';
@@ -80,7 +81,9 @@ export function oracleRows(source, language) {
 }
 
 /** The rows of a native `SyntaxTree` of `source`. */
-export function nativeRows(tree, source, { hidden = [], anonymous = [], extras = [] } = {}) {
+export function nativeRows(tree, source, { hidden = [], anonymous = [], extras = [], oracleKinds = {} } = {}) {
+  const oracleNames = new Map(Object.entries(oracleKinds));
+  const oracleKind = (kind) => oracleNames.get(kind) ?? kind;
   const hiddenKinds = new Set(hidden);
   const anonymousKinds = new Set(anonymous);
   const extraKinds = new Set(extras);
@@ -103,14 +106,14 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
     if (invisible(node) || (node.type === 'token' && anonymousKinds.has(node.kind))) return;
     const [start, end] = span(node);
     if (node.type === 'node') {
-      rows.push([depth, node.field ?? null, node.kind, 1, start, end, extraKinds.has(node.kind) ? 'X' : '']);
+      rows.push([depth, node.field ?? null, oracleKind(node.kind), 1, start, end, extraKinds.has(node.kind) ? 'X' : '']);
       for (const child of node.children.flatMap(hoist)) visit(child, depth + 1);
     } else if (node.type === 'error') {
       rows.push([depth, null, 'ERROR', 1, start, end, 'E']);
     } else if (node.type === 'missing') {
-      rows.push([depth, null, node.kind, node.literal ? 0 : 1, start, end, 'M']);
+      rows.push([depth, null, oracleKind(node.kind), node.literal ? 0 : 1, start, end, 'M']);
     } else {
-      rows.push([depth, node.field ?? null, node.kind ?? node.text, node.kind ? 1 : 0, start, end, node.trivia ? 'X' : '']);
+      rows.push([depth, node.field ?? null, node.kind ? oracleKind(node.kind) : node.text, node.kind ? 1 : 0, start, end, node.trivia ? 'X' : '']);
     }
   };
   const length = Buffer.byteLength(source);
@@ -118,7 +121,7 @@ export function nativeRows(tree, source, { hidden = [], anonymous = [], extras =
   const collect = (node) => (node.type === 'node' ? node.children.forEach(collect) : leaves.push(node));
   collect(tree);
   const first = leaves.find((leaf) => !invisible(leaf));
-  rows.push([0, null, tree.kind, 1, first ? first.start : length, length, '']);
+  rows.push([0, null, oracleKind(tree.kind), 1, first ? first.start : length, length, '']);
   for (const child of tree.children.flatMap(hoist)) visit(child, 1);
   return rows;
 }

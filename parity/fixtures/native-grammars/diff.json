@@ -17,6 +17,7 @@
     "word"
   ],
   "extras": [],
+  "oracleKinds": {},
   "matches": [
     {
       "source": "diff --git a/x b/x\nindex 1234567..89abcde 100644\n--- a/x\n+++ b/x\n@@ -1,2 +1,2 @@ f\n a\n-b\n+c\n",

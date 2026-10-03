@@ -14,10 +14,12 @@
 //! `anonymous` are leaves the oracle keeps inside a node without a node of
 //! their own; the text of both is the gap text between nodes. Node kinds in
 //! `extras` are extra nodes, as the oracle marks a comment node it parses as an
-//! extra. An ERROR leaf is a named `ERROR` node and a MISSING leaf an empty
+//! extra. A rule renamed from its tree-sitter name keeps that name as its
+//! node kind (`oracle_kinds`, from the rule's `(source-names (tree-sitter
+//! NAME))`). An ERROR leaf is a named `ERROR` node and a MISSING leaf an empty
 //! MISSING node, named unless it stands for a literal.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
 use crate::{
@@ -131,6 +133,7 @@ pub fn parse_native(id: &str, source: &str) -> NativeNode {
                 hidden: entry.hidden.iter().map(String::as_str).collect(),
                 anonymous: entry.anonymous.iter().map(String::as_str).collect(),
                 extras: entry.extras.iter().map(String::as_str).collect(),
+                oracle_kinds: &entry.oracle_kinds,
             }
             .root(&tree, length),
             _ => error_root(),
@@ -143,9 +146,18 @@ struct Projection<'a> {
     hidden: BTreeSet<&'a str>,
     anonymous: BTreeSet<&'a str>,
     extras: BTreeSet<&'a str>,
+    oracle_kinds: &'a BTreeMap<String, String>,
 }
 
 impl Projection<'_> {
+    /// The tree-sitter kind of a native kind: the kind itself unless its rule
+    /// was renamed from it.
+    fn oracle_kind(&self, kind: &str) -> String {
+        self.oracle_kinds
+            .get(kind)
+            .map_or_else(|| kind.to_owned(), Clone::clone)
+    }
+
     fn invisible(&self, node: &SyntaxTree) -> bool {
         matches!(node, SyntaxTree::Token { kind, trivia, .. }
             if (*trivia && kind.is_none())
@@ -252,7 +264,7 @@ impl Projection<'_> {
                     has_error: children.iter().any(|(child, _)| child.has_error),
                     is_extra: self.extras.contains(kind.as_str()),
                     children,
-                    ..leaf(kind.clone(), true)
+                    ..leaf(self.oracle_kind(kind), true)
                 }
             }
             SyntaxTree::Error { .. } => NativeNode {
@@ -264,7 +276,8 @@ impl Projection<'_> {
                 is_missing: true,
                 has_error: true,
                 ..leaf(
-                    kind.clone().unwrap_or_else(|| "MISSING".to_owned()),
+                    kind.as_deref()
+                        .map_or_else(|| "MISSING".to_owned(), |kind| self.oracle_kind(kind)),
                     !literal,
                 )
             },
@@ -273,9 +286,12 @@ impl Projection<'_> {
             } => NativeNode {
                 is_extra: *trivia,
                 ..leaf(
-                    kind.clone().unwrap_or_else(|| match text {
-                        LeafText::Text(text) | LeafText::Hex(text) => text.clone(),
-                    }),
+                    kind.as_deref().map_or_else(
+                        || match text {
+                            LeafText::Text(text) | LeafText::Hex(text) => text.clone(),
+                        },
+                        |kind| self.oracle_kind(kind),
+                    ),
                     kind.is_some(),
                 )
             },
@@ -295,7 +311,7 @@ impl Projection<'_> {
             .map_or(length, |leaf| self.span(leaf).0);
         let children = self.project(children);
         NativeNode {
-            term: kind.clone(),
+            term: self.oracle_kind(kind),
             named: true,
             start,
             end: length,

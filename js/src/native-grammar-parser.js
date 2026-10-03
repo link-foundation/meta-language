@@ -15,7 +15,9 @@
 // `anonymous` are leaves the oracle keeps inside a node without a node of
 // their own; the text of both is the gap text between nodes. Node kinds in
 // `extras` are extra nodes, as the oracle marks a comment node it parses as an
-// extra. An ERROR leaf is a named `ERROR` node and a MISSING leaf an empty
+// extra. A rule renamed from its tree-sitter name keeps that name as its node
+// kind (`oracleKinds`, from the rule's `(source-names (tree-sitter NAME))`).
+// An ERROR leaf is a named `ERROR` node and a MISSING leaf an empty
 // MISSING node, named unless it stands for a literal.
 import { readFileSync } from 'node:fs';
 
@@ -53,16 +55,18 @@ function nativeParser(id) {
  * cannot finish within its resource limits is one ERROR root.
  */
 export function parseNative(id, source) {
-  const { hidden, anonymous, extras } = NATIVE_GRAMMARS[id];
+  const { hidden, anonymous, extras, oracleKinds } = NATIVE_GRAMMARS[id];
   const { tree } = nativeParser(id).parseTree(source, { errorRecovery: true, recovery: 'accept' });
   const length = Buffer.byteLength(source);
   if (!tree || tree.type !== 'node') {
     return { term: 'ERROR', named: true, start: 0, end: length, isError: true, isMissing: false, isExtra: false, hasError: true, children: [] };
   }
-  return projectNativeTree(tree, length, { hidden, anonymous, extras });
+  return projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKinds });
 }
 
-function projectNativeTree(tree, length, { hidden, anonymous, extras }) {
+function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKinds }) {
+  const oracleNames = new Map(Object.entries(oracleKinds));
+  const oracleKind = (kind) => oracleNames.get(kind) ?? kind;
   const hiddenKinds = new Set(hidden);
   const anonymousKinds = new Set(anonymous);
   const extraKinds = new Set(extras);
@@ -89,7 +93,7 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras }) {
     if (node.type === 'node') {
       const children = project(node.children);
       return {
-        term: node.kind, named: true, start, end, isError: false, isMissing: false,
+        term: oracleKind(node.kind), named: true, start, end, isError: false, isMissing: false,
         isExtra: extraKinds.has(node.kind), hasError: children.some(({ node: child }) => child.hasError), children,
       };
     }
@@ -97,10 +101,10 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras }) {
       return { term: 'ERROR', named: true, start, end, isError: true, isMissing: false, isExtra: false, hasError: true, children: [] };
     }
     if (node.type === 'missing') {
-      return { term: node.kind, named: !node.literal, start, end, isError: false, isMissing: true, isExtra: false, hasError: true, children: [] };
+      return { term: oracleKind(node.kind), named: !node.literal, start, end, isError: false, isMissing: true, isExtra: false, hasError: true, children: [] };
     }
     return {
-      term: node.kind ?? node.text, named: Boolean(node.kind), start, end, isError: false, isMissing: false,
+      term: node.kind ? oracleKind(node.kind) : node.text, named: Boolean(node.kind), start, end, isError: false, isMissing: false,
       isExtra: Boolean(node.trivia), hasError: false, children: [],
     };
   };
@@ -110,7 +114,7 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras }) {
   const first = leaves.find((leaf) => !invisible(leaf));
   const children = project(tree.children);
   return {
-    term: tree.kind, named: true, start: first ? first.start : length, end: length, isError: false, isMissing: false,
+    term: oracleKind(tree.kind), named: true, start: first ? first.start : length, end: length, isError: false, isMissing: false,
     isExtra: false, hasError: children.some(({ node }) => node.hasError), children,
   };
 }

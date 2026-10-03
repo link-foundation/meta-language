@@ -11,7 +11,7 @@
 //! parse; the CSV oracle is a vendored parser that only the JavaScript suite
 //! loads.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use meta_language::{
     FeatureGrammarParser, FeatureParseOptions, LeafText, SyntaxTree, compile_feature_grammar,
@@ -79,11 +79,13 @@ fn kinds<'a>(fixture: &'a Value, key: &str) -> HashSet<&'a str> {
 /// Projects a native tree to the rows of the tree-sitter oracle: see
 /// js/scripts/native-grammar-rows.mjs. `hidden` leaves are projected like
 /// whitespace, `anonymous` leaves are not rows but count in the spans, and
-/// `extras` nodes are rows with flag X.
+/// `extras` nodes are rows with flag X. A rule renamed from its tree-sitter
+/// name is a row of that name (`oracleKinds`).
 pub struct Rows<'a> {
     hidden: HashSet<&'a str>,
     anonymous: HashSet<&'a str>,
     extras: HashSet<&'a str>,
+    oracle_kinds: HashMap<&'a str, &'a str>,
 }
 
 impl<'a> Rows<'a> {
@@ -92,7 +94,17 @@ impl<'a> Rows<'a> {
             hidden: kinds(fixture, "hidden"),
             anonymous: kinds(fixture, "anonymous"),
             extras: kinds(fixture, "extras"),
+            oracle_kinds: fixture["oracleKinds"]
+                .as_object()
+                .expect("fixture oracle kinds")
+                .iter()
+                .map(|(name, kind)| (name.as_str(), kind.as_str().expect("oracle kind")))
+                .collect(),
         }
+    }
+
+    fn oracle_kind<'b>(&'b self, kind: &'b str) -> &'b str {
+        self.oracle_kinds.get(kind).copied().unwrap_or(kind)
     }
 
     /// Whitespace and hidden leaves, which are not rows.
@@ -184,7 +196,15 @@ impl<'a> Rows<'a> {
                 } else {
                     ""
                 };
-                rows.push(json!([depth, field, kind, 1, start, end, flags]));
+                rows.push(json!([
+                    depth,
+                    field,
+                    self.oracle_kind(kind),
+                    1,
+                    start,
+                    end,
+                    flags
+                ]));
                 for child in children.iter().flat_map(|child| self.hoist(child)) {
                     self.visit(&child, depth + 1, rows);
                 }
@@ -198,7 +218,7 @@ impl<'a> Rows<'a> {
             } => {
                 let (kind, named) = kind
                     .as_deref()
-                    .map_or_else(|| (text(leaf), 0), |kind| (kind, 1));
+                    .map_or_else(|| (text(leaf), 0), |kind| (self.oracle_kind(kind), 1));
                 rows.push(json!([
                     depth,
                     field,
@@ -219,7 +239,15 @@ impl<'a> Rows<'a> {
         };
         let first = leaves(tree).into_iter().find(|leaf| !self.invisible(leaf));
         let start = first.map_or(source.len(), SyntaxTree::start);
-        let mut rows = vec![json!([0, null, kind, 1, start, source.len(), ""])];
+        let mut rows = vec![json!([
+            0,
+            null,
+            self.oracle_kind(kind),
+            1,
+            start,
+            source.len(),
+            ""
+        ])];
         for child in children.iter().flat_map(|child| self.hoist(child)) {
             self.visit(&child, 1, &mut rows);
         }

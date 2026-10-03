@@ -18,6 +18,7 @@
   "extras": [
     "comment"
   ],
+  "oracleKinds": {},
   "matches": [
     {
       "source": "a=1\n",

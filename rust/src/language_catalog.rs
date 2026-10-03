@@ -6,6 +6,7 @@
 //! file, so both runtimes agree on every alias, file extension, and default
 //! grammar.
 
+use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
 use serde_json::Value;
@@ -143,6 +144,8 @@ pub struct NativeGrammarEntry {
     pub anonymous: Vec<String>,
     /// Node kinds the oracle marks as extras.
     pub extras: Vec<String>,
+    /// The tree-sitter kind of each rule renamed from it, by rule name.
+    pub oracle_kinds: BTreeMap<String, String>,
 }
 
 /// Returns every native grammar of the catalog.
@@ -161,6 +164,15 @@ pub fn native_grammars() -> &'static [NativeGrammarEntry] {
                         hidden: strings(&grammar["hidden"]),
                         anonymous: strings(&grammar["anonymous"]),
                         extras: strings(&grammar["extras"]),
+                        oracle_kinds: grammar["oracleKinds"]
+                            .as_object()
+                            .map(|kinds| {
+                                kinds
+                                    .iter()
+                                    .map(|(name, kind)| (name.clone(), string(kind)))
+                                    .collect()
+                            })
+                            .unwrap_or_default(),
                     })
                     .collect()
             })
