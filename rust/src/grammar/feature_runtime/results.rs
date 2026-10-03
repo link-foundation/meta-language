@@ -450,7 +450,8 @@ pub(super) enum Outcome {
         /// The farthest offset where an element failed without a repair.
         element_farthest: Option<usize>,
         /// While repairing, the root of the result that reaches farthest,
-        /// the rest of the input an ERROR leaf.
+        /// the rest of the input an ERROR leaf, or of the cheapest complete
+        /// result when the round asks for one more repair point.
         partial: Option<Rc<Tree>>,
     },
 }

@@ -639,9 +639,16 @@ continuation are memoized apart from the same calls made in the open.
 Trailing input that a result leaves unmatched becomes an ERROR leaf. The
 result counts as complete when that input starts at a repair point. Otherwise
 it costs one per byte and is kept as the partial tree. The cheapest complete
-result is the tree; on a tie the first one. Rounds stop when a parse
-completes, when a round notes no new offset, or after `maxRepairs` repair
-points (default 32). The last round's partial tree, the result that reaches
+result is the tree; on a tie the first one. But when that result takes the
+rest of the input as ERROR at a repair point and the partial result that
+reaches farthest ends past it at a cost of at least two less, the partial
+result could still complete for less with one more repair at its end: the
+round asks for that end as the next repair point, so in
+`struct S { a: u8,, }` followed by an item with a stray `]` after it, each
+stray token becomes one ERROR instead of all the input after the comma.
+Rounds stop when a parse completes, when a round notes no new offset, or
+after `maxRepairs` repair points (default 32); a complete result that a
+round set aside then stands. The last round's partial tree, the result that reaches
 farthest, then stands. When the start rule matches nothing, the root holds one
 ERROR leaf over the whole input. Every round has its own step budget. A
 repaired tree holds an ERROR or MISSING leaf, so it is reported as

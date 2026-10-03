@@ -495,7 +495,8 @@ impl Executor<'_> {
     /// Parses the whole range from `start_rule`: the tree, or the farthest
     /// failure with its sorted expectations. Resource limits abort. While
     /// repairing, a failure carries the root of the result that reaches
-    /// farthest, with the rest of the input as an ERROR leaf.
+    /// farthest, with the rest of the input as an ERROR leaf, or of the
+    /// cheapest complete result when the round asks for one more repair point.
     pub(super) fn run(&mut self, start_rule: usize) -> Run<Outcome> {
         let results = self.reference(
             &Target::Rule(start_rule),
@@ -503,12 +504,15 @@ impl Executor<'_> {
             &State::initial(),
             false,
         )?;
-        let mut complete: Vec<(Res, Children)> = Vec::new();
-        let mut partial: Option<(usize, Res, Children)> = None;
+        // A complete result, with the offset where the rest of the input it
+        // takes as ERROR starts.
+        let mut complete: Vec<(Res, Children, Option<usize>)> = Vec::new();
+        // The result that reaches farthest, with its cost before the rest.
+        let mut partial: Option<(usize, usize, Res, Children)> = None;
         for result in results {
             let trailing = self.skip_trivia(result.end, &result.state)?;
             if trailing.end == self.end {
-                complete.push((result, trailing.leaves.clone()));
+                complete.push((result, trailing.leaves.clone(), None));
                 continue;
             }
             self.fail(trailing.end, &Name::from("end of input"));
@@ -519,10 +523,11 @@ impl Executor<'_> {
                 &trailing.leaves,
                 Tree::new(TreeType::Error, None, trailing.end, self.end),
             );
-            let cost = result.cost + self.end - trailing.end;
+            let before = result.cost;
+            let cost = before + self.end - trailing.end;
             let repaired = Res { cost, ..result };
             if points.contains(&trailing.end) {
-                complete.push((repaired, rest));
+                complete.push((repaired, rest, Some(trailing.end)));
                 continue;
             }
             if self
@@ -531,10 +536,10 @@ impl Executor<'_> {
             {
                 self.element_farthest = Some(trailing.end);
             }
-            if partial.as_ref().is_none_or(|(end, best, _)| {
+            if partial.as_ref().is_none_or(|(end, _, best, _)| {
                 trailing.end > *end || (trailing.end == *end && cost < best.cost)
             }) {
-                partial = Some((trailing.end, repaired, rest));
+                partial = Some((trailing.end, before, repaired, rest));
             }
         }
         if complete.is_empty() {
@@ -543,7 +548,7 @@ impl Executor<'_> {
             let partial = self.repair_points.is_some().then(|| {
                 Rc::new(partial.map_or_else(
                     || self.error_root(start_rule),
-                    |(_, result, trailing)| self.root(start_rule, &result, &trailing, false),
+                    |(_, _, result, trailing)| self.root(start_rule, &result, &trailing, false),
                 ))
             });
             return Ok(Outcome::Failed {
@@ -575,8 +580,28 @@ impl Executor<'_> {
             }
         }
         let several = tied && chosen.0.cost == 0;
-        let root = self.root(start_rule, &chosen.0, &chosen.1, several);
-        Ok(Outcome::Parsed(Rc::new(root)))
+        let root = Rc::new(self.root(start_rule, &chosen.0, &chosen.1, several));
+        // When the cheapest complete result takes the rest of the input as
+        // ERROR at a repair point, a result that reached past that point
+        // without completing costs at least one more repair, at its end. While
+        // that could still complete for less, the round asks for its end as
+        // the next repair point, so a later error is repaired where it is and
+        // not by skipping all the input after an earlier one; the complete
+        // result stands when the rounds end.
+        if let (Some(rest), Some((end, before, _, _))) = (chosen.2, &partial)
+            && *end > rest
+            && before + 1 < chosen.0.cost
+        {
+            let mut expected: Vec<String> = self.expected.iter().map(ToString::to_string).collect();
+            expected.sort();
+            return Ok(Outcome::Failed {
+                farthest: self.farthest,
+                expected,
+                element_farthest: Some(*end),
+                partial: Some(root),
+            });
+        }
+        Ok(Outcome::Parsed(root))
     }
 
     fn root(&self, start_rule: usize, result: &Res, trailing: &[Rc<Tree>], several: bool) -> Tree {

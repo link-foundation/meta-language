@@ -3142,7 +3142,7 @@
     },
     {
       "source": "#!(a)",
-      "recovered": "(program (extension \"#!\" (MISSING@2 language_name)) (ERROR@2..5 \"(a)\"))"
+      "recovered": "(program (extension \"#!\" (ERROR@2..3 \"(\") (language_name \"a\")) (ERROR@4..5 \")\"))"
     },
     {
       "source": "#reader",

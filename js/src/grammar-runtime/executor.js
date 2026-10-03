@@ -1760,7 +1760,8 @@ export class Executor {
    * Parses the whole range from `startRule`. Returns `{ ok, root }` or
    * `{ ok: false, farthest, expected, elementFarthest, partial }`; resource
    * limits throw. While repairing, `partial` is the root of the result that
-   * reaches farthest, with the rest of the input as an ERROR leaf.
+   * reaches farthest, with the rest of the input as an ERROR leaf, or of the
+   * cheapest complete result when the round asks for one more repair point.
    */
   run(startRule) {
     const results = this.reference(startRule, this.begin, INITIAL_STATE, false);
@@ -1775,12 +1776,12 @@ export class Executor {
       this.fail(trailing.end, 'end of input');
       if (!this.repairPoints) continue;
       const rest = [...trailing.leaves, { type: 'error', start: trailing.end, end: this.end }];
-      const repaired = { result: copyResult(result, { cost: result.cost + this.end - trailing.end }), trailing: rest };
+      const repaired = { result: copyResult(result, { cost: result.cost + this.end - trailing.end }), trailing: rest, rest: trailing.end };
       if (this.repairPoints.has(trailing.end)) complete.push(repaired);
       else {
         if (trailing.end > this.elementFarthest) this.elementFarthest = trailing.end;
         if (!partial || trailing.end > partial.end || (trailing.end === partial.end && repaired.result.cost < partial.repaired.result.cost)) {
-          partial = { end: trailing.end, repaired };
+          partial = { end: trailing.end, cost: result.cost, repaired };
         }
       }
     }
@@ -1804,7 +1805,18 @@ export class Executor {
         tied = true;
       }
     }
-    return { ok: true, root: this.root(startRule, chosen, tied && chosen.result.cost === 0) };
+    const root = this.root(startRule, chosen, tied && chosen.result.cost === 0);
+    // When the cheapest complete result takes the rest of the input as ERROR
+    // at a repair point, a result that reached past that point without
+    // completing costs at least one more repair, at its end. While that could
+    // still complete for less, the round asks for its end as the next repair
+    // point, so a later error is repaired where it is and not by skipping all
+    // the input after an earlier one; the complete result stands when the
+    // rounds end.
+    if (chosen.rest !== undefined && partial && partial.end > chosen.rest && partial.cost + 1 < chosen.result.cost) {
+      return { ok: false, farthest: this.farthest, expected: [...this.expected].sort(), elementFarthest: partial.end, partial: root };
+    }
+    return { ok: true, root };
   }
 
   // 1 when the complete result `a` is preferred to `b`, -1 when `b` is, 0 on a tie.

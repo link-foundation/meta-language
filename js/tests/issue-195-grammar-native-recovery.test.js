@@ -113,6 +113,19 @@ test('a skip never ends at an external scanner token, so a repair stays within t
   assert.equal(leafText(outcome.tree, source), source);
 });
 
+test('a later error is repaired where it is, not by skipping the input after an earlier one', () => {
+  // With the stray comma as the only repair point, the cheapest complete
+  // result takes the rest of the input as ERROR there; the result that skips
+  // the comma reaches the stray bracket, so its end becomes the next repair
+  // point and each stray token is one ERROR, as in tree-sitter.
+  const rust = grammars.find(({ entry }) => entry.id === 'rust').parser;
+  const source = 'struct S { a: u8,, }\nimpl S { fn f(&self) -> u8 { self.a } } ]\n';
+  const repairs = (options) => renderSyntaxTree(rust.parseTree(source, options).tree).match(/ERROR@\d+\.\.\d+|MISSING@\d+/gu);
+  assert.deepEqual(repairs(RECOVER), ['ERROR@17..18', 'ERROR@61..63']);
+  // When the rounds end first, the complete result stands.
+  assert.deepEqual(repairs({ ...RECOVER, maxRepairs: 1 }), ['MISSING@17', 'ERROR@17..63']);
+});
+
 test('a long repetition, repaired near its end, keeps every item in order', () => {
   // A join links its parts instead of copying the children before it, so a
   // repetition of n items costs O(n) and not O(n²); the tree is unchanged.

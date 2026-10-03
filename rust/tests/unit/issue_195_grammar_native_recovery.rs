@@ -262,6 +262,30 @@ fn a_skip_never_ends_at_an_external_scanner_token() {
 }
 
 #[test]
+fn a_later_error_is_repaired_where_it_is_not_by_skipping_the_input_after_an_earlier_one() {
+    // With the stray comma as the only repair point, the cheapest complete
+    // result takes the rest of the input as ERROR there; the result that
+    // skips the comma reaches the stray bracket, so its end becomes the next
+    // repair point and each stray token is one ERROR, as in tree-sitter.
+    let rust = parser(GRAMMARS[8].1);
+    let source = "struct S { a: u8,, }\nimpl S { fn f(&self) -> u8 { self.a } } ]\n";
+    let repairs = |options: &FeatureParseOptions| -> Vec<String> {
+        let tree = rendered(&parse(&rust, source, options));
+        tree.split(['(', ' '])
+            .filter(|part| part.starts_with("ERROR@") || part.starts_with("MISSING@"))
+            .map(ToString::to_string)
+            .collect()
+    };
+    assert_eq!(repairs(&recover()), ["ERROR@17..18", "ERROR@61..63"]);
+    // When the rounds end first, the complete result stands.
+    let one = FeatureParseOptions {
+        max_repairs: Some(1),
+        ..recover()
+    };
+    assert_eq!(repairs(&one), ["MISSING@17", "ERROR@17..63"]);
+}
+
+#[test]
 fn a_long_repetition_repaired_near_its_end_keeps_every_item_in_order() {
     // A join links its parts instead of copying the children before it, so a
     // repetition of n items costs O(n) and not O(n²); the tree is unchanged.
