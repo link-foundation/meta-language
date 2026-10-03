@@ -14,10 +14,10 @@ grammar is checked against the tree-sitter grammar that still backs its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: five catalog languages, JSON, INI, Diff, CSV and JSON5, have a native
-merged grammar. Their default parses still run tree-sitter-json,
-tree-sitter-ini, tree-sitter-diff, tree-sitter-csv and
-tree-sitter-json5-orchard until the grammars have recovery rules for invalid
+Status: six catalog languages, JSON, INI, Diff, CSV, JSON5 and Scheme, have a
+native merged grammar. Their default parses still run tree-sitter-json,
+tree-sitter-ini, tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard
+and tree-sitter-scheme until the grammars have recovery rules for invalid
 input; see [current limits](#current-limits).
 
 ## Format
@@ -132,6 +132,30 @@ and
   continuation after a lone CR, LS or PS.
 - Whitespace and comments are trivia leaves, so the tree keeps every byte.
 
+For Scheme the sources are the
+[R7RS small report](https://small.r7rs.org/attachment/r7rs.pdf) and
+[tree-sitter-scheme 0.24.7](https://docs.rs/crate/tree-sitter-scheme/0.24.7/source/grammar.js):
+
+- From tree-sitter-scheme: the tree shape and the lexical rules. A `program`
+  holds data; a `list` may use `()`, `[]` or `{}`; `vector`, `byte_vector`
+  (R6RS `#vu8(`), `quote`, `quasiquote`, `unquote`, `unquote_splicing`,
+  `syntax`, `quasisyntax`, `unsyntax` and `unsyntax_splicing` hold their
+  datum. `boolean`, `character`, `number`, `symbol` and `keyword` are leaves
+  of the R5RS, R6RS and R7RS spellings the oracle unions, and a string holds
+  `escape_sequence` rows. Line comments, `#;` datum comments, nested `#| |#`
+  block comments and `#!` directives are rows between data, as the oracle
+  declares no extras. Where a number and a symbol
+  both match, the longer one wins and the number wins a tie, as the oracle's
+  lexer reads `1#a` (a number and a symbol) and `1abc` (a symbol).
+- From R7RS small sections 6.9 (Bytevectors) and 7.1.2 (External
+  representations): a `#u8(` bytevector is a `byte_vector`;
+  tree-sitter-scheme 0.24.7 reads only `#vu8(`.
+- From R7RS small section 2.4 (Datum labels): `#<n>=<datum>` is a
+  `datum_label` holding a `label` and its datum, and `#<n>#` is a
+  `datum_reference`; tree-sitter-scheme 0.24.7 recovers from both.
+- Whitespace, comment text, string text and directive names are trivia
+  leaves, so the tree keeps every byte.
+
 ## Checking against the oracle
 
 [`js/scripts/generate-native-grammar-fixtures.mjs`](../../js/scripts/generate-native-grammar-fixtures.mjs)
@@ -181,6 +205,7 @@ rows, and a Rust suite. Both record evidence for the language's ledger row:
 | Diff | [`issue-195-grammar-native-diff.test.js`](../../js/tests/issue-195-grammar-native-diff.test.js) | [`issue_195_grammar_native_diff.rs`](../../rust/tests/unit/issue_195_grammar_native_diff.rs) | `I195-GRAMMAR-NATIVE-DIFF` |
 | CSV | [`issue-195-grammar-native-csv.test.js`](../../js/tests/issue-195-grammar-native-csv.test.js) | [`issue_195_grammar_native_csv.rs`](../../rust/tests/unit/issue_195_grammar_native_csv.rs) | `I195-GRAMMAR-NATIVE-CSV` |
 | JSON5 | [`issue-195-grammar-native-json5.test.js`](../../js/tests/issue-195-grammar-native-json5.test.js) | [`issue_195_grammar_native_json5.rs`](../../rust/tests/unit/issue_195_grammar_native_json5.rs) | `I195-GRAMMAR-NATIVE-JSON5` |
+| Scheme | [`issue-195-grammar-native-scheme.test.js`](../../js/tests/issue-195-grammar-native-scheme.test.js) | [`issue_195_grammar_native_scheme.rs`](../../rust/tests/unit/issue_195_grammar_native_scheme.rs) | `I195-GRAMMAR-NATIVE-SCHEME` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -195,9 +220,10 @@ when a fixture is stale, and CI runs it.
 ## Current limits
 
 - Invalid input is rejected instead of recovered. The default JSON, INI, Diff,
-  CSV and JSON5 parses still use tree-sitter-json, tree-sitter-ini,
-  tree-sitter-diff, tree-sitter-csv and tree-sitter-json5-orchard, which stay
-  production dependencies until the native grammars have recovery rules.
+  CSV, JSON5 and Scheme parses still use tree-sitter-json, tree-sitter-ini,
+  tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard and
+  tree-sitter-scheme, which stay production dependencies until the native
+  grammars have recovery rules.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
   tree-sitter-diff recovers from and the native grammar accepts as context; a
