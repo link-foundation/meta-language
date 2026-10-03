@@ -208,6 +208,12 @@ a copy does not match its hash. For each grammar it:
   precedence, associativity, dynamic precedence, tokens, fields, aliases,
   extras, conflicts and the word rule keep their tree-sitter meaning in the
   executor (see [feature union](feature-union.md#executor));
+- substitutes a rule of the grammar's `inline` list where an alias names it,
+  as tree-sitter inlines it before it aliases, so an alias of an inlined
+  keyword choice is one leaf (tree-sitter-javascript's `_reserved_identifier`
+  aliased to `identifier`), and keeps an alias of a lexical
+  `IMMEDIATE_TOKEN` rule an immediate token of the rule's content, as the
+  renamed token it is (a string fragment);
 - renames every rule to readable English through
   [`parity/naming/grammar-name-expansions.json`](../../parity/naming/grammar-name-expansions.json),
   which holds each word replacement and each name or concept a reviewer

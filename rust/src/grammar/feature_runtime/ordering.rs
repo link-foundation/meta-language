@@ -193,7 +193,16 @@ pub(super) fn preferred_tokens(
                     if a.start.min(b.start) > decided {
                         return Ordering::Equal;
                     }
-                    return token_conflict(&a, &b, tokens);
+                    // A scanner token against a token the lexer would lex
+                    // there: tree-sitter runs the external scanner before its
+                    // lexer wherever one of its tokens is valid, and takes
+                    // the token it scans (JavaScript's automatic semicolon
+                    // after `return` before a line break, not the next
+                    // line's expression).
+                    return a
+                        .scanned
+                        .cmp(&b.scanned)
+                        .then_with(|| token_conflict(&a, &b, tokens));
                 } else {
                     lookahead(&a, pending, &mut decided);
                     left.pop();

@@ -342,6 +342,9 @@ impl Executor<'_> {
             if let Expr::LexicalPrecedence { level, .. } = item {
                 leaf.priority = Some(*level);
             }
+            // A token of an external scanner is marked, whatever an alias
+            // names it (see `preferred_tokens`).
+            leaf.scanned = matches!(item, Expr::Ref(Target::External(_)));
             with_leaf(&skipped.leaves, leaf)
         };
         Ok(vec![Res::new(best.end, best.state, children, best.dynamic)])

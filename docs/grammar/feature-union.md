@@ -376,7 +376,11 @@ rule's kind ranks as the rule even where an alias to it came first, as Rust's
 `(alias identifier (literal default))`). A leaf matched under a
 `lexicalPrecedence` ranks at that level, as the token defined there (Rust's
 `//!` marker `!` outranks the comment text); two leaves of the same rank are
-one token and do not conflict. Two leaves at different offsets compare by
+one token and do not conflict. A leaf an external scanner built, under any alias, wins
+over a leaf the lexer matched before any rank is compared, as tree-sitter
+runs the external scanner first wherever one of its tokens is valid and takes
+the token it scans (JavaScript's automatic semicolon after `return` before a
+line break, not the next line's expression). Two leaves at different offsets compare by
 length only. Where one result has a leaf alone and the other a node that
 begins with it, one of them reduced that leaf where the other shifted on: an
 LR parser decides between them on the token after the leaf, the lookahead, so

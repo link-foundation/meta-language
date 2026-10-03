@@ -516,7 +516,7 @@ export function importTreeSitterNative(source, options = {}) {
       }
       case 'FIELD': return `(capture labeled ${enc(node.name)} ${expr(node.content, inToken, keywords)})`;
       case 'ALIAS': {
-        const inner = expr(node.content, inToken, keywords, true);
+        const inner = node.content.type === 'SYMBOL' && !inToken ? aliasedRule(node.content, keywords) : expr(node.content, inToken, keywords, true);
         // An anonymous alias is a leaf whose kind is its text.
         if (!node.named) return `(alias ${enc(`'${node.value}`)} ${inner})`;
         const name = nameOf(node.value);
@@ -526,6 +526,22 @@ export function importTreeSitterNative(source, options = {}) {
       case 'RESERVED': return expr(node.content, inToken, keywords);
       default: throw new UnsupportedTreeSitterPattern(`node type ${node.type}`);
     }
+  };
+
+  // What an alias of a rule names. tree-sitter substitutes an inlined rule
+  // before it aliases, so the alias names each token of the body (JavaScript's
+  // `_reserved_identifier` aliased as an identifier is a leaf, no node over
+  // the keyword), and an alias of a rule that is an immediate token (made a
+  // silent rule around it here) renames that token (JavaScript's
+  // `unescaped_double_string_fragment` aliased as a string_fragment).
+  const inlined = new Set((grammar.inline ?? []).map(memberName));
+  const aliasedRule = (node, keywords) => {
+    const index = ruleNames.indexOf(node.name);
+    if (index < 0) return expr(node, false, keywords, true);
+    if (inlined.has(node.name)) return expr(grammar.rules[node.name], false, keywords, true);
+    const bare = unwrapPrecedence(grammar.rules[node.name]);
+    if (bare.type === 'IMMEDIATE_TOKEN' && lexicalRule(node.name, index)) return `(immediateToken ${expr(bare.content, true, keywords)})`;
+    return expr(node, false, keywords, true);
   };
 
   // Keyword extraction: the strings the word token matches entirely, tested

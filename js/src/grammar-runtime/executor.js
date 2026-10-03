@@ -220,7 +220,14 @@ function preferredTokens(result, existing, tokens) {
     } else if (a.end !== b.end || a.kind !== b.kind) {
       lookahead(a);
       lookahead(b);
-      return Math.min(a.start, b.start) > decided ? 0 : tokenConflict(a, b, tokens);
+      if (Math.min(a.start, b.start) > decided) return 0;
+      // A scanner token against a token the lexer would lex there: tree-sitter
+      // runs the external scanner before its lexer wherever one of its tokens
+      // is valid, and takes the token it scans (JavaScript's automatic
+      // semicolon after `return` before a line break, not the next line's
+      // expression).
+      const scanned = scannedToken(a) - scannedToken(b);
+      return scanned !== 0 ? scanned : tokenConflict(a, b, tokens);
     } else {
       lookahead(a);
       skip(left);
@@ -228,6 +235,11 @@ function preferredTokens(result, existing, tokens) {
       skipped = [[], []];
     }
   }
+}
+
+// 1 when a leaf is a token of an external scanner, 0 otherwise.
+function scannedToken(leaf) {
+  return leaf.scanned === true ? 1 : 0;
 }
 
 // Whether a node of the kind and span of `inner` is on the leftmost chain of
@@ -1017,6 +1029,9 @@ export class Executor {
     const leaf = item.kind === 'lexicalPrecedence'
       ? { type: 'token', kind, start, end: best.end, priority: item.level }
       : { type: 'token', kind, start, end: best.end };
+    // A token of an external scanner is marked, whatever an alias names it
+    // (see `preferredTokens`).
+    if (item.kind === 'ref' && this.program.externalTokens.has(item.name)) leaf.scanned = true;
     const children = inToken ? NO_CHILDREN : [...leaves, leaf];
     return [makeResult(best.end, best.state, children, best.dynamic)];
   }
@@ -1844,7 +1859,7 @@ export class Executor {
     const children = inToken ? NO_CHILDREN : [
       ...leaves,
       ...scanned.skipped,
-      { type: 'token', kind: name, start: scanned.tokenStart, end: scanned.end },
+      { type: 'token', kind: name, start: scanned.tokenStart, end: scanned.end, scanned: true },
     ];
     return [makeResult(scanned.end, scanned.state, children)];
   }

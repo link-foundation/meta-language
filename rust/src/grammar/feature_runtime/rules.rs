@@ -492,12 +492,13 @@ impl Executor<'_> {
         let children = if in_token {
             no_children()
         } else {
-            let token = Tree::new(
+            let mut token = Tree::new(
                 TreeType::Token,
                 Some(name.clone()),
                 scanned.token_start,
                 scanned.end,
             );
+            token.scanned = true;
             with_leaf(&concat(&skipped.leaves, &scanned.skipped), token)
         };
         Ok(vec![Res::new(

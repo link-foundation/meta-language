@@ -113,6 +113,7 @@ pub(super) fn join_children(left: &Children, right: &Children) -> Children {
 
 /// One node of the executor's syntax tree.
 #[derive(Clone, Debug)]
+#[allow(clippy::struct_excessive_bools)] // the flags of one node, as on the JavaScript tree
 pub(super) struct Tree {
     pub(super) ty: TreeType,
     pub(super) kind: Option<Name>,
@@ -139,6 +140,9 @@ pub(super) struct Tree {
     pub(super) closes: Option<PrecedenceTag>,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
+    /// A token of an external scanner, whatever an alias names it (see
+    /// `preferred_tokens`).
+    pub(super) scanned: bool,
     /// Under keyword lexing, the kind of the token rule that built the leaf,
     /// which an alias keeps.
     pub(super) lexed: Option<Name>,
@@ -166,6 +170,7 @@ impl Tree {
             closes: None,
             ambiguous: false,
             literal: false,
+            scanned: false,
             lexed: None,
             language: None,
             root: None,
