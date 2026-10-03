@@ -57,7 +57,7 @@ column names the representation the fixture grammar for that feature must use
 (the test checks their presence); the cases column counts the positive and the
 negative cases of the fixture (load-error negatives in parentheses). Every
 feature also carries one grammar mutation whose outcome must differ (the
-`ambiguity` feature carries eight more).
+`ambiguity` feature carries eight more, the `trivia` feature one more).
 
 | Fixture id | Vision feature | Forms exercised | Positive | Negative |
 | --- | --- | --- | --- | --- |
@@ -67,7 +67,7 @@ feature also carries one grammar mutation whose outcome must differ (the
 | `ambiguity` | ambiguity and conflicts | `conflict` declaration, `dynamicPrecedence` | 17 | 5 |
 | `lexical` | lexical priority and longest-match rules | `longest`, `lexicalPrecedence` | 2 | 2 |
 | `unicode` | Unicode and byte classes | class `category` and `script` items, `byteClass` | 2 | 3 |
-| `trivia` | token boundaries and trivia | `extra` declaration, `token`, `immediateToken` | 2 | 3 |
+| `trivia` | token boundaries and trivia | `extra` declaration, `token`, `immediateToken` | 3 | 3 |
 | `modes` | lexer modes, channels and state | `mode` declaration, rule `modes` and `channel`, `pushMode`, `popMode` | 2 | 3 |
 | `layout` | indentation and layout | `scanner` declaration, `emit`, `push`, `pop`, `predicate` | 3 | 3 |
 | `predicates` | context-sensitive predicates | `predicate`, rule `action`, `fieldText` | 3 | 2 |
@@ -328,7 +328,8 @@ memoizing interpreter over the input bytes. Every offset is a byte offset;
 text is UTF-8, and a byte that does not start a well-formed sequence is one
 unit with no code point. Evaluating an expression at a position, in a state,
 in syntactic or token context yields a list of results
-`{end, state, children, dynamic, precedence, ambiguous}`.
+`{end, state, children, dynamic, precedence, tail, ambiguous}`; `tail` is
+the innermost precedence over the result's last part (see Precedence).
 
 **Result sets.** Results are deduplicated by `end` and state key. Of two equal
 results the one with the higher `dynamic` stays; on a tie the first stays and
@@ -341,8 +342,18 @@ offset: the higher lexical precedence, then the longer token, then the more
 specific (a literal ranks 2, a pattern 0, an immediate token one more; a
 literal closed by lookaheads, such as a keyword, ranks as the literal), then
 the token that appears first in rule order (a token rule at its definition,
-a literal, an inline token or an alias of either where it is used). Two
-leaves at different offsets compare by length only. A token wins, too, where
+a literal, an inline token or an alias of either where it is used; a token
+rule's kind ranks as the rule even where an alias to it came first, as Rust's
+`(alias identifier (literal default))`). A leaf matched under a
+`lexicalPrecedence` ranks at that level, as the token defined there (Rust's
+`//!` marker `!` outranks the comment text); two leaves of the same rank are
+one token and do not conflict. Two leaves at different offsets compare by
+length only. Where one result has a leaf alone and the other a node that
+begins with it, one of them reduced that leaf where the other shifted on: an
+LR parser decides between them on the token after the leaf, the lookahead, so
+a leaf conflict that starts after the lookahead is no lexer's, as the two
+then lex in different parse states (Rust's `$(...);*`, whose `;` is a
+separator only after `$(` was shifted), and it does not decide. A token wins, too, where
 the other result skipped an anonymous trivia leaf (a separator such as
 whitespace) that starts where the token starts and that the token covers.
 When the pair ties, or no pair differs, the shift or reduction an LR parser
@@ -356,7 +367,31 @@ the longer one shifted on, and the precedence of the two nodes decides, as
 the item in progress is the node's own rule (a node without one counts as
 level 0 with no associativity): the higher level wins and, on equal levels,
 the associativity of the shorter node, `right` keeping the longer node and
-`left` the shorter. When that cannot tell either, the higher `dynamic` wins,
+`left` the shorter. A node is reduced with its reduction precedence: the
+innermost precedence over its last part (its `tail`), as a generated parser
+takes the precedence of a production's last step (Rust's `let` condition,
+whose value is `(precedence 3 left (ref expression))`, reduces before the
+`&&` of a binary expression of level 3), else its own; and where the shift
+went on in a node whose first part is the last part of a node along the
+shorter node's rightmost chain, the innermost such node is the production
+completed at the conflict (Rust's `let bar = || baz && quux`, where the
+closure of level -1 ends with `baz`). When the shift is in a node that began
+with the shorter node, the longer result reduced that operand to a silent
+rule of level 0 where the shorter one reduced its node, and the two
+reductions conflict instead. Before the pair of nodes is compared, two more
+conflicts are settled. One result may have reduced a token alone, to a silent
+rule of level 0 or under a precedence (Rust's `(precedence -1 none (literal
+$))`), where the other shifted on in a node that begins with the token
+(Rust's `$x:expr` binding of level 1); the innermost such node is the item in
+progress and its precedence against the token's decides, as above (a token
+that ends a silent rule reduced under a precedence keeps that precedence,
+see Rule bodies). Or one result may reduce a node the other does not build:
+when a subtree at the same offset of the other result is on that node's
+leftmost chain and the children of the innermost such node are, subtree for
+subtree, the next children of the other result's node in progress, the two
+reductions conflict at the end of that node: the higher level wins and, on
+equal levels where the other node goes on, the associativity of the reduced
+node. When that cannot tell either, the higher `dynamic` wins,
 and on a tie the first is marked ambiguous. Under `matching peg` a sequence
 keeps only its first result.
 
@@ -400,8 +435,15 @@ reach the grammars it embeds.
 **Trivia.** Skipping trivia repeatedly takes the longest match, in token
 context, of any trivia expression allowed in the current mode (the top of the
 mode stack); the first expression wins a tie. Each match is a trivia leaf
-(`trivia: true`) placed before the next leaf. Skips are memoized by position
-and state.
+(`trivia: true`) placed before the next leaf. An extra that refers to a
+`normal` rule is instead the node that rule builds over the match, parsed as
+syntax and marked `trivia: true`, as a tree-sitter extra of a rule that is no
+token is a node with its children (Rust's doc comments). Inside it only the
+extras that are no rule (white space) are trivia, as no extra nests in
+another. Under `matching longest` the node is the parse whose tokens a lexer
+prefers, which may end before the longest match (Rust's `////` is a comment
+without a doc marker); otherwise it is the parse that ends at the match. Skips
+are memoized by position, state and whether an extra's node is being parsed.
 
 **Sequences and choices.** A sequence joins every left result with every
 result of the next item. An ordered choice returns the results of the first
@@ -448,10 +490,24 @@ its first for the last edge, and past one that may match nothing the next).
 When that set is unknown every
 such inner node conflicts. So `(1+2).3` is invalid as `2` could be the
 operand of `.`, while `1().2` stands as `)` could not, as an LR parser would
-find a conflict only in the first. A rejected result records the expectation
-`precedence`. Kept
+find a conflict only in the first. Two more cases are no conflict. An inner
+node that is the last operand is none when its rule goes on after its first
+part only with tokens of raised lexical precedence (Rust's `B<C>`, whose `<`
+is `(token (lexicalPrecedence 1 (literal <)))`): a lexer takes such a token
+wherever the parse admits it, so the parse shifts it instead of reducing the
+operator before the node. And an inner node is none when the rule holding the
+outer precedence cannot stand at the inner node's edge facing the operator
+(its last part for the first edge, its first for the last, through silent
+rules, choices, captures, precedences, aliases and repetitions, and past a
+part that may be absent): only then could a generated parser build the
+operator's node inside the operand (a field of Rust's `a.0.1` is never a
+field expression, so `a.0` is no operand of lower precedence there). A
+rejected result records the expectation `precedence`. Kept
 results are tagged with the level and associativity, and a rule node carries
-the tag of its result. `dynamicPrecedence` adds its level to `dynamic`.
+the tag of its result. Outside token context a result also keeps the
+innermost precedence over it as its `tail`, which a rule node keeps for its
+reduction (see Result sets), and a token a precedence holds alone keeps the
+precedence on its leaf. `dynamicPrecedence` adds its level to `dynamic`.
 `lexicalPrecedence` matches its item and only matters to `longest`.
 
 **Tokens.** `longest` skips trivia, then takes the longest token-context match
@@ -459,7 +515,9 @@ of its alternatives; a tie goes to the higher lexical priority (the level of a
 `lexicalPrecedence` alternative or of a rule's lexical priority), then to the
 first. The leaf's kind is the winning rule's node kind for a `ref`, else none.
 `token` skips trivia and makes one leaf of the item's longest token-context
-match; `immediateToken` does the same without skipping trivia.
+match; `immediateToken` does the same without skipping trivia. A leaf over a
+`lexicalPrecedence` item keeps its level as the leaf's rank (see Result
+sets).
 
 **Predicates.** `predicate(item, condition)` keeps the item's results whose
 condition holds; `column` and `matched` are measured from the first
@@ -487,7 +545,12 @@ is memoized by rule, position, state key and context. Left recursion is
 handled by seed growing: a call that meets itself in progress answers with the
 current seed, and the calls in between are not memoized; the outer call then
 grows the seed. Under `peg` it repeats while the end increases; under
-`generalized` it merges results until no new end and state appears. Each
+`generalized` it merges results until no new end and state appears and no
+pass settles an end on another tree: a left operand ranked anew (Rust's `impl
+A + B + C`, where `bounded_type` over `impl A + B` outranks `impl` over `A +
+B`) changes the trees grown from it, so the next pass grows them again. A
+result with the same trees as the one it meets replaces it; at most one pass
+per result changes a tree, so an order that is not transitive still ends. Each
 call past `maxDepth` nesting aborts the parse.
 
 **Rule bodies.** A `token` or `atomic` rule skips trivia and evaluates its
@@ -495,8 +558,14 @@ expression in token context without recording inner expectations; a `token`
 rule, or any rule under `peg`, keeps the longest result; each result becomes a
 leaf of the rule's node kind, and when none survives the rule's name is
 recorded as the expectation. A `normal` rule wraps each result in a node of
-its kind. A `silent` rule, and any rule in token context, splices its
-children into the caller. A rule's action runs on each result's leaf or node:
+its kind, which keeps the result's `tail` for its reduction; the caller's
+result starts without one. A `silent` rule, and any rule in token context,
+splices its children into the caller. A silent rule is one part of the rule
+that refers to it, which reduces with the precedence around that part, so
+the caller's result starts without a `tail` there too, and a token the
+silent rule ends with keeps the rule's reduction precedence, for the conflict
+with a shift after it (Rust's `_let_chain`, `let ... && c` of level 3 left
+before the `&&` of `c && d`). A rule's action runs on each result's leaf or node:
 `attribute`, `sumOf` and `fieldText` select the direct non-trivia children
 captured under the field name, or else those of that kind; `fieldText` of a
 node starts at its first non-trivia child; `setAttribute` and `buildNode`
@@ -570,7 +639,7 @@ The public tree (`SyntaxTreeNode` in
 [`index.d.ts`](../../js/src/index.d.ts)) is lossless: concatenating the token,
 trivia and ERROR leaves in order reproduces the input bytes.
 
-- `{type: 'node', kind, field?, start, end, children, attributes?}`
+- `{type: 'node', kind, field?, trivia?, start, end, children, attributes?}` (`trivia` on the node of an extra)
 - `{type: 'token', kind (or null), field?, trivia?, start, end, attributes?, text, hex?}`
 - `{type: 'error', start, end, text, hex?, reason?}`
 - `{type: 'missing', kind (or null), start, end, literal?}`
@@ -590,7 +659,8 @@ is expected there, as on a node of a declared rule.
 - node: `(kind {a=1,b="x"} child ...)`, attributes sorted by name, omitted when absent;
 - captured child: `field:` before it;
 - anonymous token: its quoted text; named token: `(kind "text")`; unnamed
-  token with attributes: `(_ {...} "text")`; trivia: `~` before it;
+  token with attributes: `(_ {...} "text")`; trivia, a token or the node of
+  an extra: `~` before it;
 - `(ERROR@S..E "text")`, `(MISSING@P kind)`, `(MISSING@P "literal")`, `(MISSING@P)`;
 - `(EMBED language@S..E root)`;
 - invalid UTF-8: `<hex>` in place of the quoted text.

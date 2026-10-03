@@ -11,6 +11,7 @@
 //! and external scanners.
 
 use std::cell::RefCell;
+use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
@@ -19,7 +20,7 @@ use super::program::{Associativity, Compiled, Expr, Matcher, Name, Program, Targ
 use super::results::{
     Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared,
     Skipped, TokenOrder, Tree, TreeType, children_of, concat, content_start, longest_result,
-    no_children, with_leaf,
+    no_children, preferred_tokens, with_leaf,
 };
 use super::text::{column_of, decode_at, text_of};
 use crate::grammar::RuleKind;
@@ -31,11 +32,29 @@ pub(super) struct Operands {
     right: Option<HashSet<Name>>,
 }
 
-/// A precedence filter: the level, the associativity and the operand kinds.
+/// A precedence filter: the level, the associativity, the operand kinds and
+/// the address of the precedence's item, by which its rule is known (see
+/// `reaches_owner`).
 pub(super) struct Keep {
     level: i64,
     associativity: Associativity,
     operands: Rc<Operands>,
+    item: usize,
+}
+
+/// Whether an expression may match nothing, as far as its shape tells.
+fn nullable(expr: &Expr) -> bool {
+    match expr {
+        Expr::Empty | Expr::And(_) | Expr::Not(_) => true,
+        Expr::Repeat { item, min, .. } => *min == 0 || nullable(item),
+        Expr::Seq(items) => items.iter().all(nullable),
+        Expr::Choice { items, .. } => items.iter().any(nullable),
+        Expr::Capture { item, .. }
+        | Expr::Precedence { item, .. }
+        | Expr::DynamicPrecedence { item, .. }
+        | Expr::Alias { item, .. } => nullable(item),
+        _ => false,
+    }
 }
 
 /// The union of kind sets, or None when any is unknown.
@@ -115,8 +134,17 @@ pub(super) struct Executor<'c> {
     pub(super) depth: usize,
     pub(super) memo: HashMap<MemoKey, Rc<RefCell<Entry>>>,
     pub(super) call_stack: Vec<Rc<RefCell<Entry>>>,
-    trivia_memo: HashMap<(usize, State), Rc<Skipped>>,
+    trivia_memo: HashMap<(usize, State, bool), Rc<Skipped>>,
     operand_memo: HashMap<usize, Rc<Operands>>,
+    /// The kinds whose nodes go on only with tokens of raised lexical
+    /// precedence (see `lexed_shift`).
+    shift_memo: HashMap<Name, bool>,
+    /// The rule holding each precedence, by the address of its item.
+    owners: Option<HashMap<usize, usize>>,
+    /// The rules at the edge of a kind's node facing an operator.
+    edge_memo: HashMap<(Name, Associativity), Rc<HashSet<usize>>>,
+    /// Whether an extra that builds a node is being parsed (see `extra_node`).
+    in_extra: bool,
     pub(super) scanner_memo: HashMap<(Name, usize, State), Option<Rc<Scanned>>>,
     embed_memo: HashMap<(Name, usize, usize), Rc<Outcome>>,
     pub(super) farthest: usize,
@@ -163,6 +191,10 @@ impl<'c> Executor<'c> {
             call_stack: Vec::new(),
             trivia_memo: HashMap::new(),
             operand_memo: HashMap::new(),
+            shift_memo: HashMap::new(),
+            owners: None,
+            edge_memo: HashMap::new(),
+            in_extra: false,
             scanner_memo: HashMap::new(),
             embed_memo: HashMap::new(),
             farthest: begin,
@@ -284,7 +316,9 @@ impl<'c> Executor<'c> {
     }
 
     /// Skips trivia: repeatedly the longest match of any trivia expression
-    /// allowed in the current mode.
+    /// allowed in the current mode. Inside an extra that builds a node, only
+    /// the extras that are no rule (white space) are trivia, as no extra nests
+    /// in another.
     pub(super) fn skip_trivia(&mut self, position: usize, state: &State) -> Run<Rc<Skipped>> {
         let program = self.program;
         let trivia = &program.trivia;
@@ -294,7 +328,7 @@ impl<'c> Executor<'c> {
                 leaves: no_children(),
             }));
         }
-        let key = (position, state.clone());
+        let key = (position, state.clone(), self.in_extra);
         if let Some(cached) = self.trivia_memo.get(&key) {
             return Ok(cached.clone());
         }
@@ -309,6 +343,7 @@ impl<'c> Executor<'c> {
                     .modes
                     .as_ref()
                     .is_some_and(|modes| !modes.iter().any(|allowed| **allowed == *mode))
+                    || (self.in_extra && item.kind.is_some())
                 {
                     continue;
                 }
@@ -324,8 +359,13 @@ impl<'c> Executor<'c> {
             if best == cursor {
                 break;
             }
-            leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
-            cursor = best;
+            if let Some((node, end)) = self.extra_node(best_kind.as_ref(), cursor, best, state)? {
+                leaves.push(node);
+                cursor = end;
+            } else {
+                leaves.push(Rc::new(Tree::trivia_leaf(best_kind, cursor, best)));
+                cursor = best;
+            }
         }
         let skipped = Rc::new(Skipped {
             end: cursor,
@@ -333,6 +373,65 @@ impl<'c> Executor<'c> {
         });
         self.trivia_memo.insert(key, skipped.clone());
         Ok(skipped)
+    }
+
+    /// The node an extra of a rule that builds one makes of its text, parsed
+    /// as syntax, as a tree-sitter extra of a rule that is no token is a node
+    /// with its children (Rust's doc comments); None for any other extra.
+    /// Under `(matching longest)` the parse is the one with the tokens a lexer
+    /// prefers, which may end before the longest (Rust's `////` is a comment
+    /// without a doc marker); otherwise the one that ends at `end`. Gives the
+    /// node and its end.
+    fn extra_node(
+        &mut self,
+        kind: Option<&Name>,
+        start: usize,
+        end: usize,
+        state: &State,
+    ) -> Run<Option<(Rc<Tree>, usize)>> {
+        let Some(&index) = kind.and_then(|kind| self.program.rule_index.get(&**kind)) else {
+            return Ok(None);
+        };
+        if !matches!(self.program.rules[index].kind, RuleKind::Normal) {
+            return Ok(None);
+        }
+        self.in_extra = true;
+        let results =
+            self.quietly(|this| this.reference(&Target::Rule(index), start, state, false));
+        self.in_extra = false;
+        let mut best: Option<Res> = None;
+        for result in results? {
+            if result.cost != 0
+                || !result
+                    .children
+                    .iter()
+                    .any(|child| child.ty == TreeType::Node)
+            {
+                continue;
+            }
+            let better = match (self.longest_tokens, &best) {
+                (_, None) if self.longest_tokens.is_some() => true,
+                (None, best) => best.is_none() && result.end == end,
+                (Some(tokens), Some(best)) => {
+                    let order = preferred_tokens(&result.children, &best.children, tokens);
+                    order == Ordering::Greater
+                        || (order == Ordering::Equal && result.end > best.end)
+                }
+                (Some(_), None) => true,
+            };
+            if better {
+                best = Some(result);
+            }
+        }
+        Ok(best.and_then(|best| {
+            let node = best
+                .children
+                .iter()
+                .find(|child| child.ty == TreeType::Node)?;
+            let mut extra = (**node).clone();
+            extra.trivia = true;
+            Some((Rc::new(extra), best.end))
+        }))
     }
 
     /// The start of a terminal: after trivia in syntactic context, at once in token context.
@@ -460,7 +559,9 @@ impl<'c> Executor<'c> {
     }
 
     // A leaf over the longest match of `item` in token context: token(),
-    // immediateToken() and longest() alternatives build on it.
+    // immediateToken() and longest() alternatives build on it. A token under
+    // a lexical precedence keeps its level on the leaf, as the token's rank
+    // where it is matched (see `token_rank`).
     fn token_leaf(
         &mut self,
         item: &Expr,
@@ -475,10 +576,11 @@ impl<'c> Executor<'c> {
         let children = if in_token {
             no_children()
         } else {
-            with_leaf(
-                &skipped.leaves,
-                Tree::new(TreeType::Token, None, start, best.end),
-            )
+            let mut leaf = Tree::new(TreeType::Token, None, start, best.end);
+            if let Expr::LexicalPrecedence { level, .. } = item {
+                leaf.priority = Some(*level);
+            }
+            with_leaf(&skipped.leaves, leaf)
         };
         Ok(vec![Res::new(best.end, best.state, children, best.dynamic)])
     }
@@ -892,48 +994,254 @@ impl<'c> Executor<'c> {
     // when it conflicts, that is when its own child facing the operator could
     // have been the operand instead (`-a->t` but not `f(a)->t`).
     fn precedence_valid(&mut self, keep: &Keep, result: &Res) -> bool {
-        let meaningful: Vec<&Rc<Tree>> = result
+        let meaningful: Vec<Rc<Tree>> = result
             .children
             .iter()
             .filter(|child| !child.trivia)
+            .cloned()
             .collect();
-        let conflicts = |child: &Tree, side: Associativity| {
-            let Some((inner, _)) = child.precedence else {
-                return false;
-            };
-            if child.ty != TreeType::Node
-                || inner > keep.level
-                || (inner == keep.level && keep.associativity == side)
-            {
-                return false;
-            }
-            let kinds = if side == Associativity::Left {
-                &keep.operands.left
-            } else {
-                &keep.operands.right
-            };
-            let Some(kinds) = kinds else {
-                return true;
-            };
-            let mut facing = child
-                .children
-                .iter()
-                .filter(|grandchild| !grandchild.trivia);
-            let edge = if side == Associativity::Left {
-                facing.next_back()
-            } else {
-                facing.next()
-            };
-            edge.and_then(|edge| edge.kind.as_ref())
-                .is_some_and(|kind| kinds.contains(kind))
-        };
         let allowed = meaningful.len() < 2
-            || !(conflicts(meaningful[0], Associativity::Left)
-                || conflicts(meaningful[meaningful.len() - 1], Associativity::Right));
+            || !(self.conflicts(keep, &meaningful[0], Associativity::Left)
+                || self.conflicts(
+                    keep,
+                    &meaningful[meaningful.len() - 1],
+                    Associativity::Right,
+                ));
         if !allowed {
             self.fail(result.end, &Name::from("precedence"));
         }
         allowed
+    }
+
+    // Whether the operand `child` on `side` conflicts with the precedence of
+    // `keep` (see `precedence_valid`).
+    fn conflicts(&mut self, keep: &Keep, child: &Tree, side: Associativity) -> bool {
+        let Some((inner, _)) = child.precedence else {
+            return false;
+        };
+        if child.ty != TreeType::Node
+            || inner > keep.level
+            || (inner == keep.level && keep.associativity == side)
+        {
+            return false;
+        }
+        if let Some(kind) = &child.rule {
+            if side == Associativity::Right && self.lexed_shift(kind) {
+                return false;
+            }
+            if !self.reaches_owner(keep.item, kind, side) {
+                return false;
+            }
+        }
+        let kinds = if side == Associativity::Left {
+            &keep.operands.left
+        } else {
+            &keep.operands.right
+        };
+        let Some(kinds) = kinds else {
+            return true;
+        };
+        let mut facing = child
+            .children
+            .iter()
+            .filter(|grandchild| !grandchild.trivia);
+        let edge = if side == Associativity::Left {
+            facing.next_back()
+        } else {
+            facing.next()
+        };
+        edge.and_then(|edge| edge.kind.as_ref())
+            .is_some_and(|kind| kinds.contains(kind))
+    }
+
+    // The rule a node of `kind` is built by under its own name, if any.
+    fn own_rule(&self, kind: &str) -> Option<usize> {
+        self.program
+            .rule_index
+            .get(kind)
+            .copied()
+            .filter(|&index| &*self.program.rules[index].node_kind == kind)
+    }
+
+    // Whether a node of `kind` goes on after its first child only with
+    // tokens of raised lexical precedence (Rust's `B<C>`, whose `<` is
+    // `(token (lexicalPrecedence 1 (literal <)))`): a lexer takes such a
+    // token wherever the parse admits it, so the parse shifts it instead of
+    // reducing the operator before the node, and the lower precedence of the
+    // node as a right operand is no conflict.
+    fn lexed_shift(&mut self, kind: &Name) -> bool {
+        if let Some(&shifts) = self.shift_memo.get(kind) {
+            return shifts;
+        }
+        let program = self.program;
+        let mut body = self
+            .own_rule(kind)
+            .map(|index| &program.rules[index].expression);
+        while let Some(
+            Expr::Precedence { item, .. }
+            | Expr::DynamicPrecedence { item, .. }
+            | Expr::Capture { item, .. },
+        ) = body
+        {
+            body = Some(item);
+        }
+        let shifts = match body {
+            Some(Expr::Seq(items)) if items.len() > 1 && !nullable(&items[0]) => {
+                self.lead_priority_seq(&items[1..], &mut HashSet::new())
+                    .unwrap_or(0)
+                    > 0
+            }
+            _ => false,
+        };
+        self.shift_memo.insert(kind.clone(), shifts);
+        shifts
+    }
+
+    // The lowest lexical precedence of the tokens `expr` can begin with, or
+    // None when it may match nothing first.
+    fn lead_priority(&self, expr: &Expr, visiting: &mut HashSet<usize>) -> Option<i64> {
+        match expr {
+            Expr::Token(item) | Expr::ImmediateToken(item) => Some(match &**item {
+                Expr::LexicalPrecedence { level, .. } => *level,
+                _ => 0,
+            }),
+            Expr::LexicalPrecedence { level, .. } => Some(*level),
+            Expr::Ref(Target::Rule(index)) => {
+                let rule = &self.program.rules[*index];
+                if matches!(rule.kind, RuleKind::Token | RuleKind::Atomic) {
+                    return Some(rule.lexical_priority);
+                }
+                if !visiting.insert(*index) {
+                    return None;
+                }
+                self.lead_priority(&rule.expression, visiting)
+            }
+            Expr::Seq(items) => self.lead_priority_seq(items, visiting),
+            Expr::Choice { items, .. } => items
+                .iter()
+                .filter_map(|item| self.lead_priority(item, visiting))
+                .min(),
+            Expr::Capture { item, .. }
+            | Expr::Precedence { item, .. }
+            | Expr::DynamicPrecedence { item, .. }
+            | Expr::Alias { item, .. }
+            | Expr::Repeat { item, .. } => self.lead_priority(item, visiting),
+            Expr::Empty | Expr::And(_) | Expr::Not(_) => None,
+            _ => Some(0),
+        }
+    }
+
+    fn lead_priority_seq(&self, items: &[Expr], visiting: &mut HashSet<usize>) -> Option<i64> {
+        let mut lowest: Option<i64> = None;
+        for item in items {
+            if let Some(lead) = self.lead_priority(item, visiting) {
+                lowest = Some(lowest.map_or(lead, |lowest| lowest.min(lead)));
+            }
+            if !nullable(item) {
+                return lowest;
+            }
+        }
+        lowest
+    }
+
+    // Whether the rule whose body holds the precedence of `item` may stand at
+    // the edge of a `kind` node that faces the operator on `side` (its last
+    // part for the left operand): only then could a generated parser build
+    // the operator's node inside the operand, so that the two conflict. A
+    // field of Rust's `a.0.1` is never a field expression, so `a.0` is no
+    // operand of lower precedence there. True when either rule is unknown.
+    fn reaches_owner(&mut self, item: usize, kind: &Name, side: Associativity) -> bool {
+        let program = self.program;
+        let owners = self.owners.get_or_insert_with(|| {
+            let mut owners = HashMap::new();
+            for (index, rule) in program.rules.iter().enumerate() {
+                let mut pending = vec![&rule.expression];
+                while let Some(expr) = pending.pop() {
+                    match expr {
+                        Expr::Precedence { item, .. } => {
+                            owners
+                                .entry(std::ptr::from_ref(&**item) as usize)
+                                .or_insert(index);
+                            pending.push(item);
+                        }
+                        Expr::Seq(items) | Expr::Choice { items, .. } | Expr::Longest(items) => {
+                            pending.extend(items.iter().rev());
+                        }
+                        Expr::Repeat { item, .. }
+                        | Expr::And(item)
+                        | Expr::Not(item)
+                        | Expr::Capture { item, .. }
+                        | Expr::Alias { item, .. }
+                        | Expr::DynamicPrecedence { item, .. }
+                        | Expr::LexicalPrecedence { item, .. }
+                        | Expr::Token(item)
+                        | Expr::ImmediateToken(item)
+                        | Expr::Predicate { item, .. }
+                        | Expr::Recover { item, .. }
+                        | Expr::Missing { item, .. }
+                        | Expr::Embed { item, .. } => pending.push(item),
+                        Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
+                    }
+                }
+            }
+            owners
+        });
+        let owner = owners.get(&item).copied();
+        let (Some(owner), Some(index)) = (owner, self.own_rule(kind)) else {
+            return true;
+        };
+        let key = (kind.clone(), side);
+        let names = if let Some(names) = self.edge_memo.get(&key) {
+            Rc::clone(names)
+        } else {
+            let mut names = HashSet::new();
+            self.edge_rules(&program.rules[index].expression, side, &mut names);
+            let names = Rc::new(names);
+            self.edge_memo.insert(key, Rc::clone(&names));
+            names
+        };
+        names.contains(&owner)
+    }
+
+    // Adds to `names` the rules `expr` may match at its edge facing the
+    // operator on `side`, through the silent rules there, as `unit_kinds`
+    // walks.
+    fn edge_rules(&self, expr: &Expr, side: Associativity, names: &mut HashSet<usize>) {
+        match expr {
+            Expr::Ref(Target::Rule(index)) => {
+                if !names.insert(*index) {
+                    return;
+                }
+                let rule = &self.program.rules[*index];
+                if matches!(rule.kind, RuleKind::Silent) {
+                    self.edge_rules(&rule.expression, side, names);
+                }
+            }
+            Expr::Seq(items) => {
+                let ordered: Box<dyn Iterator<Item = &Expr>> = if side == Associativity::Left {
+                    Box::new(items.iter().rev())
+                } else {
+                    Box::new(items.iter())
+                };
+                for item in ordered {
+                    self.edge_rules(item, side, names);
+                    if !matches!(item, Expr::Repeat { min: 0, .. }) {
+                        return;
+                    }
+                }
+            }
+            Expr::Choice { items, .. } => {
+                for item in items {
+                    self.edge_rules(item, side, names);
+                }
+            }
+            Expr::Capture { item, .. }
+            | Expr::Precedence { item, .. }
+            | Expr::DynamicPrecedence { item, .. }
+            | Expr::Alias { item, .. }
+            | Expr::Repeat { item, .. } => self.edge_rules(item, side, names),
+            _ => {}
+        }
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -953,11 +1261,35 @@ impl<'c> Executor<'c> {
                 level,
                 associativity,
                 operands: self.operand_kinds(item),
+                item: std::ptr::from_ref(item) as usize,
             };
             self.filtered(item, position, state, &keep)?
         };
+        let tag = Some((level, associativity));
         for result in &mut results {
-            result.precedence = Some((level, associativity));
+            result.precedence = tag;
+            if in_token {
+                continue;
+            }
+            // The innermost precedence over the last part of a result is the
+            // one its rule reduces with (see `reduction` in results.rs).
+            result.tail = result.tail.or(tag);
+            // A token reduced alone keeps the precedence on its leaf, for the
+            // conflict with a shift after it (see `lone_reduction`).
+            let mut meaningful = result
+                .children
+                .iter()
+                .enumerate()
+                .filter(|(_, child)| !child.trivia);
+            if let (Some((at, only)), None) = (meaningful.next(), meaningful.next())
+                && only.ty == TreeType::Token
+            {
+                let mut leaf = (**only).clone();
+                leaf.precedence = tag;
+                let mut children = result.children.to_vec();
+                children[at] = Rc::new(leaf);
+                result.children = children_of(children);
+            }
         }
         Ok(results)
     }
@@ -1042,7 +1374,10 @@ impl<'c> Executor<'c> {
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
             | Expr::Repeat { item, .. } => self.unit_kinds(item, visiting, side),
-            Expr::Alias { name, .. } => Some(HashSet::from([name.clone()])),
+            // A scanner token is a leaf of its own kind.
+            Expr::Alias { name, .. } | Expr::Ref(Target::External(name)) => {
+                Some(HashSet::from([name.clone()]))
+            }
             _ => None,
         }
     }

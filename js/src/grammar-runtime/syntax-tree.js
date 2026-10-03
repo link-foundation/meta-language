@@ -18,6 +18,7 @@ export function publicTree(node, bytes) {
     case 'node': {
       const copy = { type: 'node', kind: node.kind };
       if (node.field !== undefined) copy.field = node.field;
+      if (node.trivia) copy.trivia = true;
       Object.assign(copy, { start: node.start, end: node.end, children: node.children.map((child) => publicTree(child, bytes)) });
       if (node.attributes) copy.attributes = { ...node.attributes };
       return copy;
@@ -98,7 +99,7 @@ export function renderSyntaxTree(node) {
       const attributes = renderAttributes(node.attributes);
       if (attributes) parts.push(attributes);
       parts.push(...node.children.map(renderSyntaxTree));
-      return `${prefix}(${parts.join(' ')})`;
+      return `${prefix}${node.trivia ? '~' : ''}(${parts.join(' ')})`;
     }
     case 'token': {
       const trivia = node.trivia ? '~' : '';

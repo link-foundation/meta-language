@@ -14,7 +14,7 @@ use super::operations::{
 use super::program::{Expr, Name, Rule, Target};
 use super::results::{
     Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, complete_order,
-    concat, content_start, longest_result, no_children, with_leaf,
+    concat, content_start, longest_result, no_children, same_children, with_leaf,
 };
 use super::text::{column_of, decode_at};
 use crate::grammar::RuleKind;
@@ -128,20 +128,45 @@ impl Executor<'_> {
             }
             return Ok(best.into_iter().collect());
         }
+        // The seed grows while a pass reaches a new end or settles an end on
+        // another tree: a left operand ranked anew (Rust's `impl A + B + C`,
+        // where `bounded_type` over `impl A + B` outranks `impl` over `A + B`)
+        // changes the trees grown from it, so the next pass grows them again;
+        // at most one pass per end changes a tree, for an order that is not
+        // transitive.
         let mut current = ResultSet::new(self.longest_tokens);
         for result in first {
             current.set(result);
         }
+        let mut settled = 0;
         loop {
             entry.borrow_mut().seed.clone_from(&current.items);
             let mut merged = current.clone();
+            let mut changed = false;
             for result in self.rule_body(rule, position, state, in_token)? {
-                merged.set(result);
+                let existing = merged
+                    .get(&result)
+                    .map(|existing| existing.children.clone());
+                match existing {
+                    Some(children) if same_children(&children, &result.children) => {
+                        merged.set(result);
+                    }
+                    Some(_) => changed |= merged.add(result),
+                    None => {
+                        merged.add(result);
+                    }
+                }
             }
             let grew = merged.len() > current.len();
             current = merged;
-            if !grew {
+            if !grew && !changed {
                 break;
+            }
+            if !grew {
+                settled += 1;
+                if settled > current.len() {
+                    break;
+                }
             }
         }
         Ok(current.items)
@@ -221,12 +246,47 @@ impl Executor<'_> {
                     result.end,
                 );
                 scratch.children = result.children.clone();
-                if let Some(acted) = self.run_action(rule, result, &mut scratch, position)? {
+                let Some(acted) = self.run_action(rule, result, &mut scratch, position)? else {
+                    continue;
+                };
+                let Some(tail) = acted.tail else {
                     built.push(Res {
                         ambiguous: acted.ambiguous && !expected,
                         ..acted
                     });
-                }
+                    continue;
+                };
+                // The rule is one part of the rule that refers to it, which
+                // reduces with the precedence around that part, not inside it;
+                // a token the rule ends with keeps the precedence the rule
+                // reduces with, for the conflict with a shift after it (see
+                // `lone_reduction`).
+                let last = acted
+                    .children
+                    .iter()
+                    .enumerate()
+                    .rfind(|(_, child)| !child.trivia)
+                    .filter(|(_, child)| {
+                        child.ty == TreeType::Token
+                            && child.reduced.or(child.precedence) != Some(tail)
+                    })
+                    .map(|(at, child)| (at, Rc::clone(child)));
+                let children = match last {
+                    Some((at, child)) => {
+                        let mut leaf = (*child).clone();
+                        leaf.reduced = Some(tail);
+                        let mut children = acted.children.to_vec();
+                        children[at] = Rc::new(leaf);
+                        children_of(children)
+                    }
+                    None => acted.children.clone(),
+                };
+                built.push(Res {
+                    children,
+                    ambiguous: acted.ambiguous && !expected,
+                    tail: None,
+                    ..acted
+                });
                 continue;
             }
             let mut node = Tree::node(
@@ -236,10 +296,12 @@ impl Executor<'_> {
                 result.children.clone(),
             );
             node.precedence = result.precedence;
+            node.tail = result.tail;
             node.ambiguous = result.ambiguous;
             if let Some(acted) = self.run_action(rule, result, &mut node, position)? {
                 built.push(Res {
                     children: children_of(vec![Rc::new(node)]),
+                    tail: None,
                     ambiguous: false,
                     ..acted
                 });

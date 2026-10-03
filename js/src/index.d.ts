@@ -1233,6 +1233,8 @@ export type SyntaxTreeNode =
       type: 'node';
       kind: string;
       field?: string;
+      /** An extra of a rule that builds a node. */
+      trivia?: true;
       start: number;
       end: number;
       children: SyntaxTreeNode[];

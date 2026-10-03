@@ -37,7 +37,7 @@ export function stepBudget(options, length) {
 const MISSING_COST = 2;
 
 function makeResult(end, state, children = NO_CHILDREN, dynamic = 0, cost = 0) {
-  return { end, state, children, dynamic, precedence: null, ambiguous: false, cost };
+  return { end, state, children, dynamic, precedence: null, tail: null, ambiguous: false, cost };
 }
 
 function resultKey(result) {
@@ -80,6 +80,18 @@ function preferredTokens(result, existing, tokens) {
   const right = [[existing.children, 0]];
   // The trivia each side skipped since the last leaf both share.
   let skipped = [[], []];
+  // Where one parse has a leaf alone and the other a node that begins with
+  // it, one of them reduced that leaf (to a silent rule, or to the node) where
+  // the other shifted on: an LR parser decides between them on the token
+  // after the leaf, the lookahead, and a leaf conflict after the lookahead is
+  // no lexer's, as the two then lex in different parse states (Rust's
+  // `$(...);*`, whose `;` is a separator only after `$(` was shifted).
+  // `pending` is the end of that leaf, `decided` the lookahead's start.
+  let pending = Infinity;
+  let decided = Infinity;
+  const lookahead = (tree) => {
+    if (decided === Infinity && !isTrivia(tree) && firstLeafStart(tree) >= pending) decided = firstLeafStart(tree);
+  };
   const covers = (leaf, trivia) => trivia.some((item) => item.kind === null && item.start === leaf.start && leaf.end >= item.end);
   const peek = (stack) => {
     while (stack.length > 0) {
@@ -99,10 +111,13 @@ function preferredTokens(result, existing, tokens) {
     const b = peek(right);
     if (a === null || b === null) return 0;
     if (a === b) {
+      lookahead(a);
       skip(left);
       skip(right);
       skipped = [[], []];
     } else if (a.type === 'node' || b.type === 'node') {
+      const lone = a.type === 'node' ? b : a;
+      if (lone.type !== 'node' && !isTrivia(lone)) pending = Math.min(pending, lone.end);
       if (a.type === 'node') enter(left, a);
       if (b.type === 'node') enter(right, b);
     } else if (a.trivia || b.trivia) {
@@ -115,8 +130,11 @@ function preferredTokens(result, existing, tokens) {
     } else if (b.start < a.start && covers(b, skipped[0])) {
       return -1;
     } else if (a.end !== b.end || a.kind !== b.kind) {
-      return tokenConflict(a, b, tokens);
+      lookahead(a);
+      lookahead(b);
+      return Math.min(a.start, b.start) > decided ? 0 : tokenConflict(a, b, tokens);
     } else {
+      lookahead(a);
       skip(left);
       skip(right);
       skipped = [[], []];
@@ -125,10 +143,13 @@ function preferredTokens(result, existing, tokens) {
 }
 
 // The rank of a token leaf, or null for another leaf or an unranked token.
+// A leaf matched under a lexical precedence ranks at that level, as the
+// token defined there (Rust's `//!` marker `!` outranks the comment text).
 function tokenRank(leaf, tokens) {
   if (leaf.type !== 'token') return null;
-  if (leaf.kind !== null) return tokens.kinds.get(leaf.kind) ?? null;
-  return tokens.literals.get(textOf(tokens.bytes, leaf.start, leaf.end)) ?? null;
+  const rank = (leaf.kind !== null ? tokens.kinds.get(leaf.kind) : tokens.literals.get(textOf(tokens.bytes, leaf.start, leaf.end))) ?? null;
+  if (leaf.priority === undefined) return rank;
+  return { specificity: 0, order: Infinity, ...rank, priority: leaf.priority };
 }
 
 // Two leaves that differ in end or kind: 1 when a lexer prefers `a`, -1 when
@@ -139,9 +160,20 @@ function tokenConflict(a, b, tokens) {
   const second = a.start === b.start ? tokenRank(b, tokens) : null;
   if (first && second && first.priority !== second.priority) return first.priority > second.priority ? 1 : -1;
   if (a.end !== b.end) return a.end > b.end ? 1 : -1;
-  if (!first || !second || first === second) return 0;
+  if (!first || !second || sameRank(first, second)) return 0;
   if (first.specificity !== second.specificity) return first.specificity > second.specificity ? 1 : -1;
   return first.order < second.order ? 1 : -1;
+}
+
+// Whether two token ranks are the same, as one token's.
+function sameRank(a, b) {
+  return a.priority === b.priority && a.specificity === b.specificity && a.order === b.order;
+}
+
+// Whether two precedences are the same, or both none.
+function samePrecedence(a, b) {
+  if (!a || !b) return !a && !b;
+  return a.level === b.level && a.associativity === b.associativity;
 }
 
 // Which of two results over the same text an LR parser keeps when it decides
@@ -154,8 +186,8 @@ function tokenConflict(a, b, tokens) {
 // node, right to shift and left to reduce. 1 when `result` is kept, -1 when
 // `existing` is, 0 when neither.
 function shiftOrder(result, existing) {
-  const left = [[result.children, 0]];
-  const right = [[existing.children, 0]];
+  const left = [[result.children, 0, null]];
+  const right = [[existing.children, 0, null]];
   const peek = (stack) => {
     while (stack.length > 0) {
       const top = stack[stack.length - 1];
@@ -172,7 +204,7 @@ function shiftOrder(result, existing) {
   const skip = (stack) => { stack[stack.length - 1][1] += 1; };
   const enter = (stack, node) => {
     skip(stack);
-    stack.push([node.children, 0]);
+    stack.push([node.children, 0, node]);
   };
   for (;;) {
     const a = peek(left);
@@ -190,10 +222,98 @@ function shiftOrder(result, existing) {
         return sign * shiftPreferred(long, short);
       }
     }
+    const lone = loneReduction(a, b) || -loneReduction(b, a);
+    if (lone !== 0) return lone;
+    const reduced = extraReduction(a, b, right) || -extraReduction(b, a, left);
+    if (reduced !== 0) return reduced;
     if (a.type !== 'node' && b.type !== 'node') return 0;
     if (a.type === 'node') enter(left, a);
     if (b.type === 'node') enter(right, b);
   }
+}
+
+// Which of two results an LR parser keeps when one of them reduced a token
+// alone, to a silent rule of level 0 or under a precedence (Rust's
+// `(precedence -1 none (literal $))`), where the other shifted on in a node
+// `a` that begins with the token (Rust's `$x:expr` binding of level 1): the
+// innermost such node is the item in progress, and its precedence against the
+// token's decides, as in `shiftPreferred`. A token that ends a silent rule
+// reduced under a precedence (Rust's `_let_chain`, `let ... && c` of level 3
+// left before the `&&` of `c && d`) is reduced with that rule's precedence.
+// 1 when `a`'s result is kept, -1 when `b`'s is, 0 when neither.
+function loneReduction(a, b) {
+  if (a.type !== 'node' || b.type !== 'token') return 0;
+  let progress = a;
+  for (;;) {
+    const first = progress.children.find((child) => !isTrivia(child));
+    if (!first) return 0;
+    if (first.type !== 'node') {
+      if (!sameTree(first, b)) return 0;
+      break;
+    }
+    progress = first;
+  }
+  const none = { level: 0, associativity: 'none' };
+  const shifted = progress.precedence ?? none;
+  const reduced = b.reduced ?? b.precedence ?? none;
+  if (shifted.level !== reduced.level) return shifted.level > reduced.level ? 1 : -1;
+  if (reduced.associativity === 'right') return 1;
+  if (reduced.associativity === 'left') return -1;
+  return 0;
+}
+
+// Which of two results an LR parser keeps when one of them reduces a node the
+// other does not build: `a` is that node when `b`, at the same offset in the
+// other result, is a subtree on its leftmost chain and the children of the
+// innermost such node are, subtree for subtree, the next children of the
+// other result's node in progress (`stack` holds its place). The two
+// reductions of the same text then conflict at the end of that node, which
+// one result reduces where the other reduces or shifts in its own node: the
+// higher precedence level wins and, on equal levels where the other node
+// goes on, the associativity of the reduced node. 1 when `a`'s result is
+// kept, -1 when the other is, 0 when neither.
+function extraReduction(a, b, stack) {
+  if (a.type !== 'node') return 0;
+  let parent = a;
+  for (;;) {
+    const first = parent.children.find((child) => !isTrivia(child));
+    if (!first) return 0;
+    if (sameTree(first, b)) break;
+    if (first.type !== 'node') return 0;
+    parent = first;
+  }
+  const [siblings, index, container] = stack[stack.length - 1];
+  const next = siblings.slice(index).filter((child) => !isTrivia(child));
+  const own = parent.children.filter((child) => !isTrivia(child));
+  if (own.length > next.length || own.some((child, at) => !sameTree(child, next[at]))) return 0;
+  const none = { level: 0, associativity: 'none' };
+  const mine = reduction(parent);
+  const other = container?.precedence ?? none;
+  if (mine.level !== other.level) return mine.level > other.level ? 1 : -1;
+  if (container && container.end > parent.end) {
+    if (mine.associativity === 'left') return 1;
+    if (mine.associativity === 'right') return -1;
+  }
+  return 0;
+}
+
+// Whether two subtrees are the same tree over the same text, whichever of
+// them holds the white space around it.
+function sameTree(a, b) {
+  if (a === b) return true;
+  if (a.type !== b.type || a.kind !== b.kind) return false;
+  if (a.type !== 'node') return a.start === b.start && a.end === b.end;
+  const first = a.children.filter((child) => !isTrivia(child));
+  const second = b.children.filter((child) => !isTrivia(child));
+  return first.length === second.length && first.every((child, index) => sameTree(child, second[index]));
+}
+
+// Whether two child lists are the same trees over the same text.
+function sameChildren(a, b) {
+  if (a === b) return true;
+  const first = a.filter((child) => !isTrivia(child));
+  const second = b.filter((child) => !isTrivia(child));
+  return first.length === second.length && first.every((child, index) => sameTree(child, second[index]));
 }
 
 // The nodes along the leftmost chain of a node: itself, then its first
@@ -217,16 +337,72 @@ function chainPair(a, b) {
 
 // 1 when the shift that built `long` is preferred to the reduction that
 // ended `short` (the same node kind from the same offset), -1 when the
-// reduction is, 0 when the precedences cannot tell.
+// reduction is, 0 when the precedences cannot tell. The shift is in the
+// innermost node of `long` that goes on past the end of `short`. When that
+// node began with `short`, as a binary expression whose left operand is the
+// expression a statement is of, the long result reduced that operand to a
+// silent rule where the short one reduced its node: the two reductions
+// conflict instead, and a silent rule's reduction is of level 0.
 function shiftPreferred(long, short) {
   const none = { level: 0, associativity: 'none' };
-  const shifted = long.precedence ?? none;
-  const reduced = short.precedence ?? none;
+  const begin = firstLeafStart(short);
+  let progress = long;
+  for (;;) {
+    const inner = progress.children.find((child) => child.type === 'node' && child.start < short.end && child.end > short.end);
+    if (!inner) break;
+    if (firstLeafStart(inner) === begin) {
+      const reduced = reduction(short);
+      return reduced.level === 0 ? 0 : -Math.sign(reduced.level);
+    }
+    progress = inner;
+  }
+  const shifted = progress.precedence ?? none;
+  const reduced = reducedBefore(short, progress);
   if (shifted.level !== reduced.level) return shifted.level > reduced.level ? 1 : -1;
   if (reduced.associativity === 'right') return 1;
   if (reduced.associativity === 'left') return -1;
   return 0;
 }
+
+// The precedence a node is reduced with: the innermost one over its last
+// part, as a generated parser takes the precedence of a production's last
+// step (Rust's `let` condition, whose value is `(precedence 3 left (ref
+// expression))`, reduces before the `&&` of a binary expression of level 3),
+// else none of level 0.
+function reduction(node) {
+  return node.tail ?? node.precedence ?? { level: 0, associativity: 'none' };
+}
+
+// The precedence `short` was reduced with where the shift in `progress` went
+// on instead: that of the innermost node along its rightmost chain whose
+// last part is the first part of `progress`, as the production a generated
+// parser completes at the conflict (Rust's `let bar = || baz && quux`, where
+// the closure of level -1 ends with `baz`, not the `let` condition), or the
+// precedence a token ending a silent rule keeps (see `loneReduction`); else
+// the precedence `short` reduces with.
+function reducedBefore(short, progress) {
+  const first = progress.children.find((child) => !isTrivia(child));
+  for (let node = short; first && node.type === 'node';) {
+    const meaningful = node.children.filter((child) => !isTrivia(child));
+    const last = meaningful[meaningful.length - 1];
+    if (!last) break;
+    if (sameTree(last, first)) return (last.type === 'token' && last.reduced) || reduction(node);
+    node = last;
+  }
+  return reduction(short);
+}
+
+// The offset of the first leaf under a node that is not white space.
+function firstLeafStart(node) {
+  let current = node;
+  while (current.type === 'node') {
+    const first = current.children.find((child) => !isTrivia(child));
+    if (!first) return current.start;
+    current = first;
+  }
+  return current.start;
+}
+
 
 // The children of a joined result are the children of its left part followed
 // by those of its right part. Copying them on every join made a repetition of
@@ -283,7 +459,7 @@ function shareChildren(target, source) {
 function copyResult(result, changes) {
   const copy = {
     end: result.end, state: result.state, dynamic: result.dynamic,
-    precedence: result.precedence, ambiguous: result.ambiguous, cost: result.cost,
+    precedence: result.precedence, tail: result.tail, ambiguous: result.ambiguous, cost: result.cost,
   };
   if (!('children' in changes)) shareChildren(copy, result);
   return Object.assign(copy, changes);
@@ -295,6 +471,7 @@ function joinResults(left, right, inToken) {
     state: right.state,
     dynamic: left.dynamic + right.dynamic,
     precedence: null,
+    tail: null,
     ambiguous: left.ambiguous || right.ambiguous,
     cost: left.cost + right.cost,
   };
@@ -304,6 +481,7 @@ function joinResults(left, right, inToken) {
   }
   const leftCount = childCount(left);
   const rightCount = childCount(right);
+  joined.tail = rightCount === 0 ? left.tail : right.tail;
   if (rightCount === 0) return shareChildren(joined, left);
   if (leftCount === 0) return shareChildren(joined, right);
   return shareChildren(joined, { [CHAIN]: { left: partOf(left), right: partOf(right), length: leftCount + rightCount, flat: null } });
@@ -313,6 +491,18 @@ function longestResult(results) {
   let best = null;
   for (const result of results) if (!best || result.end > best.end) best = result;
   return best;
+}
+
+// Whether an expression may match nothing, as far as its shape tells.
+function nullable(expression) {
+  switch (expression.kind) {
+    case 'empty': case 'optional': case 'repeat0': case 'and': case 'not': return true;
+    case 'repeat': return expression.min === 0 || nullable(expression.item);
+    case 'seq': return expression.items.every(nullable);
+    case 'choice': return expression.items.some(nullable);
+    case 'capture': case 'precedence': case 'dynamicPrecedence': case 'alias': case 'repeat1': return nullable(expression.item);
+    default: return false;
+  }
 }
 
 // The union of kind sets, or null when any is unknown.
@@ -371,6 +561,10 @@ export class Executor {
     this.callStack = [];
     this.triviaMemo = new Map();
     this.operandMemo = new Map();
+    this.shiftMemo = new Map();
+    this.owners = null;
+    this.edgeMemo = new Map();
+    this.inExtra = false;
     // The repair points where a continuation after a MISSING leaf is open.
     this.chained = new Set();
     this.scannerMemo = new Map();
@@ -445,10 +639,12 @@ export class Executor {
 
   // Skips trivia: repeatedly the longest match of any trivia expression
   // allowed in the current mode. Returns the new offset and the trivia leaves.
+  // Inside an extra that builds a node, only the extras that are no rule
+  // (white space) are trivia, as no extra nests in another.
   skipTrivia(position, state) {
     const { trivia } = this.program;
     if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN };
-    const key = `${position}|${state.key}`;
+    const key = `${position}|${state.key}|${this.inExtra}`;
     const cached = this.triviaMemo.get(key);
     if (cached) return cached;
     const mode = state.modes[state.modes.length - 1];
@@ -459,6 +655,7 @@ export class Executor {
       let bestKind = null;
       for (const item of trivia) {
         if (item.modes && !item.modes.includes(mode)) continue;
+        if (this.inExtra && item.kind !== null) continue;
         const end = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, state, true))?.end ?? -1);
         if (end > best) {
           best = end;
@@ -466,12 +663,42 @@ export class Executor {
         }
       }
       if (best === cursor) break;
-      leaves.push({ type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
-      cursor = best;
+      const extra = this.extraNode(bestKind, cursor, best, state);
+      leaves.push(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
+      cursor = extra?.end ?? best;
     }
     const skipped = { end: cursor, leaves };
     this.triviaMemo.set(key, skipped);
     return skipped;
+  }
+
+  // The node an extra of a rule that builds one makes of its text, parsed as
+  // syntax, as a tree-sitter extra of a rule that is no token is a node with
+  // its children (Rust's doc comments); null for any other extra.
+  // Under `(matching longest)` the parse is the one with the tokens a lexer
+  // prefers, which may end before the longest (Rust's `////` is a comment
+  // without a doc marker); otherwise the one that ends at `end`. Gives the
+  // node and its end.
+  extraNode(kind, start, end, state) {
+    if (kind === null || this.program.rules.get(kind)?.kind !== 'normal') return null;
+    this.inExtra = true;
+    try {
+      const results = this.quietly(() => this.evaluate({ kind: 'ref', name: kind }, start, state, false))
+        .filter((result) => result.cost === 0 && result.children.some((child) => child.type === 'node'));
+      let best = null;
+      for (const result of results) {
+        if (!this.longestTokens) {
+          if (result.end === end) best ??= result;
+          continue;
+        }
+        const order = best === null ? 1 : preferredTokens(result, best, this.longestTokens);
+        if (order > 0 || (order === 0 && result.end > best.end)) best = result;
+      }
+      const node = best?.children.find((child) => child.type === 'node');
+      return node ? { node: { ...node, trivia: true }, end: best.end } : null;
+    } finally {
+      this.inExtra = false;
+    }
   }
 
   // The start of a terminal: after trivia in syntactic context, at once in token context.
@@ -543,10 +770,15 @@ export class Executor {
 
   // A leaf over the longest match of `item` in token context: token(),
   // immediateToken() and longest() alternatives build on it.
+  // A token under a lexical precedence keeps its level on the leaf, as the
+  // token's rank where it is matched (see `tokenRank`).
   tokenLeaf(item, start, leaves, state, inToken, kind) {
     const best = longestResult(this.evaluate(item, start, state, true));
     if (!best) return [];
-    const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind, start, end: best.end }];
+    const leaf = item.kind === 'lexicalPrecedence'
+      ? { type: 'token', kind, start, end: best.end, priority: item.level }
+      : { type: 'token', kind, start, end: best.end };
+    const children = inToken ? NO_CHILDREN : [...leaves, leaf];
     return [makeResult(best.end, best.state, children, best.dynamic)];
   }
 
@@ -762,6 +994,8 @@ export class Executor {
       if (child.type !== 'node' || !child.precedence) return false;
       const inner = child.precedence.level;
       if (inner > level || (inner === level && associativity === side)) return false;
+      if (side === 'right' && this.lexedShift(child.rule)) return false;
+      if (!this.reachesOwner(expression, child.rule, side)) return false;
       const kinds = this.operandKinds(expression)[side];
       if (kinds === null) return true;
       const facing = child.children.filter((grandchild) => !isTrivia(grandchild));
@@ -776,7 +1010,127 @@ export class Executor {
     const results = inToken
       ? this.evaluate(expression.item, position, state, inToken)
       : this.filtered(expression.item, position, state, valid);
-    return results.map((result) => copyResult(result, { precedence: tag }));
+    return results.map((result) => {
+      if (inToken) return copyResult(result, { precedence: tag });
+      // The innermost precedence over the last part of a result is the one
+      // its rule reduces with (see `reduction`).
+      const tail = result.tail ?? tag;
+      // A token reduced alone keeps the precedence on its leaf, for the
+      // conflict with a shift after it (see `loneReduction`).
+      const meaningful = result.children.filter((child) => !isTrivia(child));
+      if (meaningful.length !== 1 || meaningful[0].type !== 'token') return copyResult(result, { precedence: tag, tail });
+      const children = result.children.map((child) => (child === meaningful[0] ? { ...child, precedence: tag } : child));
+      return copyResult(result, { precedence: tag, tail, children });
+    });
+  }
+
+  // Whether a node of `kind` goes on after its first child only with tokens
+  // of raised lexical precedence (Rust's `B<C>`, whose `<` is
+  // `(token (lexicalPrecedence 1 (literal <)))`): a lexer takes such a token
+  // wherever the parse admits it, so the parse shifts it instead of reducing
+  // the operator before the node, and the lower precedence of the node as a
+  // right operand is no conflict.
+  lexedShift(kind) {
+    let shifts = this.shiftMemo.get(kind);
+    if (shifts !== undefined) return shifts;
+    shifts = false;
+    const rule = this.program.rules.get(kind);
+    let body = rule?.nodeKind === kind ? rule.expression : null;
+    while (body && ['precedence', 'dynamicPrecedence', 'capture'].includes(body.kind)) body = body.item;
+    if (body?.kind === 'seq' && body.items.length > 1 && !nullable(body.items[0])) {
+      shifts = (this.leadPriority({ kind: 'seq', items: body.items.slice(1) }, new Set()) ?? 0) > 0;
+    }
+    this.shiftMemo.set(kind, shifts);
+    return shifts;
+  }
+
+  // The lowest lexical precedence of the tokens `expression` can begin with,
+  // or null when it may match nothing first.
+  leadPriority(expression, visiting) {
+    switch (expression.kind) {
+      case 'token': case 'immediateToken':
+        return expression.item.kind === 'lexicalPrecedence' ? expression.item.level : 0;
+      case 'lexicalPrecedence': return expression.level;
+      case 'ref': {
+        const rule = this.program.rules.get(expression.name);
+        if (!rule || rule.kind === 'token' || rule.kind === 'atomic') return rule?.lexicalPriority ?? 0;
+        if (visiting.has(expression.name)) return null;
+        visiting.add(expression.name);
+        return this.leadPriority(rule.expression, visiting);
+      }
+      case 'seq': {
+        let lowest = null;
+        for (const item of expression.items) {
+          const lead = this.leadPriority(item, visiting);
+          if (lead !== null) lowest = lowest === null ? lead : Math.min(lowest, lead);
+          if (!nullable(item)) return lowest;
+        }
+        return lowest;
+      }
+      case 'choice': {
+        const leads = expression.items.map((item) => this.leadPriority(item, visiting)).filter((lead) => lead !== null);
+        return leads.length > 0 ? Math.min(...leads) : null;
+      }
+      case 'capture': case 'precedence': case 'dynamicPrecedence': case 'alias':
+      case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.leadPriority(expression.item, visiting);
+      case 'empty': case 'and': case 'not': return null;
+      default: return 0;
+    }
+  }
+
+  // Whether the rule whose body holds the precedence `expression` may stand
+  // at the edge of a `kind` node that faces the operator on `side` (its last
+  // part for the left operand): only then could a generated parser build the
+  // operator's node inside the operand, so that the two conflict. A field of
+  // Rust's `a.0.1` is never a field expression, so `a.0` is no operand of
+  // lower precedence there. True when either rule is unknown.
+  reachesOwner(expression, kind, side) {
+    if (!this.owners) {
+      this.owners = new Map();
+      const walk = (item, name) => {
+        if (!item || typeof item !== 'object') return;
+        if (item.kind === 'precedence' && !this.owners.has(item)) this.owners.set(item, name);
+        walk(item.item, name);
+        if (Array.isArray(item.items)) for (const child of item.items) walk(child, name);
+      };
+      for (const [name, rule] of this.program.rules) walk(rule.expression, name);
+    }
+    const owner = this.owners.get(expression);
+    const rule = this.program.rules.get(kind);
+    if (owner === undefined || rule?.nodeKind !== kind) return true;
+    const key = `${kind}|${side}`;
+    let names = this.edgeMemo.get(key);
+    if (!names) {
+      names = new Set();
+      this.edgeRules(rule.expression, side, names);
+      this.edgeMemo.set(key, names);
+    }
+    return names.has(owner);
+  }
+
+  // Adds to `names` the rules `expression` may match at its edge facing the
+  // operator on `side`, through the silent rules there, as `unitKinds` walks.
+  edgeRules(expression, side, names) {
+    switch (expression.kind) {
+      case 'ref': {
+        if (names.has(expression.name)) return;
+        names.add(expression.name);
+        const rule = this.program.rules.get(expression.name);
+        if (rule?.kind === 'silent') this.edgeRules(rule.expression, side, names);
+        return;
+      }
+      case 'seq': {
+        const items = side === 'left' ? [...expression.items].reverse() : expression.items;
+        for (const item of items) {
+          this.edgeRules(item, side, names);
+          if (!(item.kind === 'optional' || item.kind === 'repeat0' || (item.kind === 'repeat' && item.min === 0))) return;
+        }
+        return;
+      }
+      case 'choice': for (const item of expression.items) this.edgeRules(item, side, names); return;
+      case 'capture': case 'precedence': case 'dynamicPrecedence': case 'alias':
+      case 'optional': case 'repeat0': case 'repeat1': case 'repeat': this.edgeRules(expression.item, side, names);
+    }
   }
 
   // The node kinds the leftmost and rightmost operand of a precedence
@@ -805,7 +1159,8 @@ export class Executor {
     switch (expression.kind) {
       case 'ref': {
         const rule = this.program.rules.get(expression.name);
-        if (!rule) return null;
+        // A scanner token is a leaf of its own kind.
+        if (!rule) return this.program.scanners.has(expression.name) ? new Set([expression.name]) : null;
         if (rule.kind !== 'silent') return new Set([rule.nodeKind]);
         if (visiting.has(expression.name)) return new Set();
         visiting.add(expression.name);
@@ -1005,14 +1360,30 @@ export class Executor {
       }
       return best ? [best] : [];
     }
+    // The seed grows while a pass reaches a new end or settles an end on
+    // another tree: a left operand ranked anew (Rust's `impl A + B + C`,
+    // where `bounded_type` over `impl A + B` outranks `impl` over `A + B`)
+    // changes the trees grown from it, so the next pass grows them again; at
+    // most one pass per end changes a tree, for an order that is not
+    // transitive.
     let current = new Map(first.map((result) => [resultKey(result), result]));
-    for (;;) {
+    for (let settled = 0; ;) {
       entry.seed = [...current.values()];
       const merged = new Map(current);
-      for (const result of this.ruleBody(rule, position, state, inToken)) merged.set(resultKey(result), result);
+      let changed = false;
+      for (const result of this.ruleBody(rule, position, state, inToken)) {
+        const key = resultKey(result);
+        const existing = merged.get(key);
+        if (existing && sameChildren(existing.children, result.children)) {
+          merged.set(key, result);
+          continue;
+        }
+        addResult(merged, result, this.longestTokens);
+        if (existing && merged.get(key) === result) changed = true;
+      }
       const grew = merged.size > current.size;
       current = merged;
-      if (!grew) break;
+      if (!grew && (!changed || ++settled > current.size)) break;
     }
     return [...current.values()];
   }
@@ -1047,15 +1418,30 @@ export class Executor {
       if (rule.kind === 'silent' || inToken) {
         const scratch = { type: 'node', kind: rule.nodeKind, start: position, end: result.end, children: result.children };
         const acted = this.runAction(rule, result, scratch, position);
-        if (acted) built.push(expected && acted.ambiguous ? copyResult(acted, { ambiguous: false }) : acted);
+        if (!acted) continue;
+        if (!(expected && acted.ambiguous) && !acted.tail) {
+          built.push(acted);
+          continue;
+        }
+        // The rule is one part of the rule that refers to it, which reduces
+        // with the precedence around that part, not inside it; a token the
+        // rule ends with keeps the precedence the rule reduces with, for the
+        // conflict with a shift after it (see `loneReduction`).
+        const changes = { ambiguous: expected ? false : acted.ambiguous, tail: null };
+        const meaningful = acted.tail ? acted.children.filter((child) => !isTrivia(child)) : [];
+        const last = meaningful[meaningful.length - 1];
+        if (last?.type === 'token' && !samePrecedence(last.reduced ?? last.precedence, acted.tail)) {
+          changes.children = acted.children.map((child) => (child === last ? { ...child, reduced: acted.tail } : child));
+        }
+        built.push(copyResult(acted, changes));
         continue;
       }
       const node = shareChildren({
         type: 'node', kind: rule.nodeKind, rule: rule.nodeKind, start: position, end: result.end,
-        precedence: result.precedence, ambiguous: result.ambiguous,
+        precedence: result.precedence, tail: result.tail, ambiguous: result.ambiguous,
       }, result);
       const acted = this.runAction(rule, result, node, position);
-      if (acted) built.push(copyResult(acted, { children: [node], ambiguous: false }));
+      if (acted) built.push(copyResult(acted, { children: [node], tail: null, ambiguous: false }));
     }
     return built;
   }

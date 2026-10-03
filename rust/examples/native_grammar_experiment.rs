@@ -6,13 +6,17 @@ use meta_language::{
 };
 
 const fn trivia(node: &SyntaxTree) -> bool {
-    matches!(node, SyntaxTree::Token { trivia: true, .. })
+    matches!(
+        node,
+        SyntaxTree::Token { trivia: true, .. } | SyntaxTree::Node { trivia: true, .. }
+    )
 }
 
 fn hoist(node: &SyntaxTree) -> Vec<SyntaxTree> {
     let SyntaxTree::Node {
         kind,
         field,
+        trivia: is_trivia,
         start,
         end,
         children,
@@ -27,6 +31,7 @@ fn hoist(node: &SyntaxTree) -> Vec<SyntaxTree> {
     children.push(SyntaxTree::Node {
         kind: kind.clone(),
         field: field.clone(),
+        trivia: *is_trivia,
         start: *start,
         end: *end,
         children: rest,
@@ -96,6 +101,7 @@ fn main() {
         if let Some(SyntaxTree::Node {
             kind,
             field,
+            trivia,
             start,
             end,
             children,
@@ -105,6 +111,7 @@ fn main() {
             let root = SyntaxTree::Node {
                 kind,
                 field,
+                trivia,
                 start,
                 end,
                 children: children.iter().flat_map(hoist).collect(),

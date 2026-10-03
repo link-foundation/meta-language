@@ -760,16 +760,21 @@ fn builds_node(operation: &Operation) -> bool {
 /// lexical precedence, then (at one length) a literal over a pattern, an
 /// immediate token by one more, then the earlier token. Tokens are numbered
 /// in rule order as they first appear: a token rule at its own definition, a
-/// literal, an inline token and an alias of either where they are used. It
+/// literal, an inline token and an alias of either where they are used; a
+/// token rule's kind ranks as the rule even where an alias took it first. It
 /// mirrors tokenRanks in js/src/grammar-runtime/load.js.
 fn token_ranks(rules: &[Rule]) -> TokenRanks {
     let mut ranks = Ranking::default();
     let mut aliased = Vec::new();
+    // A token rule ranks its own kind, over an alias of another token to it
+    // that came first (Rust's `(alias identifier (literal default))`).
+    let mut defined = HashSet::new();
     for rule in rules {
-        if rule.kind == RuleKind::Token {
-            ranks.assign_kind(&rule.node_kind, rank_of(&rule.expression, 0));
-        } else {
+        if rule.kind != RuleKind::Token {
             ranks.walk(&rule.expression, &mut aliased);
+        } else if defined.insert(rule.node_kind.clone()) {
+            ranks.ranks.kinds.remove(rule.node_kind.as_ref());
+            ranks.assign_kind(&rule.node_kind, rank_of(&rule.expression, 0));
         }
     }
     for (name, index) in aliased {

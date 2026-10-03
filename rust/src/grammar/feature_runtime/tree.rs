@@ -48,6 +48,8 @@ pub enum SyntaxTree {
         kind: String,
         /// The field the node is captured under.
         field: Option<String>,
+        /// Whether the node is trivia (an extra of a rule that builds a node).
+        trivia: bool,
         /// The first byte.
         start: usize,
         /// The byte after the last.
@@ -162,11 +164,15 @@ impl SyntaxTree {
             Self::Node {
                 kind,
                 field,
+                trivia,
                 children,
                 attributes,
                 ..
             } => {
                 render_field(field.as_deref(), out);
+                if *trivia {
+                    out.push('~');
+                }
                 out.push('(');
                 out.push_str(&render_name(kind));
                 if let Some(attributes) = attributes {
@@ -287,6 +293,7 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
         TreeType::Node => SyntaxTree::Node {
             kind: name(&node.kind).unwrap_or_default(),
             field: name(&node.field),
+            trivia: node.trivia,
             start: node.start,
             end: node.end,
             children: node

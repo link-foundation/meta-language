@@ -703,7 +703,7 @@
     {
       "id": "trivia",
       "title": "token boundaries and trivia",
-      "listing": "start s\nextra ref(space)\nextra ref(comment)\nrule s = normal repeat1(ref(call))\nrule call = normal seq(ref(name), immediateToken(literal(\"(\")), token(seq(literal(\"<\"), ref(name), literal(\">\"))), literal(\")\"))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule space = token repeat1(class(char(\" \"), char(\"\\n\")))\nrule comment = token seq(literal(\"#\"), repeat0(notClass(char(\"\\n\"))))\n",
+      "listing": "start s\nextra ref(space)\nextra ref(comment)\nextra ref(doc)\nrule s = normal repeat1(ref(call))\nrule call = normal seq(ref(name), immediateToken(literal(\"(\")), token(seq(literal(\"<\"), ref(name), literal(\">\"))), literal(\")\"))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule space = token repeat1(class(char(\" \"), char(\"\\n\")))\nrule comment = token seq(literal(\"#\"), repeat0(notClass(char(\"\\n\"))))\nrule doc = normal seq(literal(\"@\"), ref(name))\n",
       "positive": [
         {
           "input": "f( <x> ) # done\ng(<y>)",
@@ -712,6 +712,10 @@
         {
           "input": "ab(<c>)",
           "tree": "(s (call (name \"ab\") \"(\" \"<c>\" \")\"))"
+        },
+        {
+          "input": "f(<x>) @y g(@z<y>)",
+          "tree": "(s (call (name \"f\") \"(\" \"<x>\" \")\") (call ~(space \" \") ~(doc \"@\" (name \"y\")) ~(space \" \") (name \"g\") \"(\" ~(doc \"@\" (name \"z\")) \"<y>\" \")\"))"
         }
       ],
       "negative": [
@@ -770,7 +774,20 @@
         "after": {
           "tree": "(s (call (name \"f\") ~(space \" \") \"(\" \"<x>\" \")\"))"
         }
-      }
+      },
+      "mutations": [
+        {
+          "from": "rule doc = normal",
+          "to": "rule doc = token",
+          "input": "f(<x>) @y g(<y>)",
+          "before": {
+            "tree": "(s (call (name \"f\") \"(\" \"<x>\" \")\") (call ~(space \" \") ~(doc \"@\" (name \"y\")) ~(space \" \") (name \"g\") \"(\" \"<y>\" \")\"))"
+          },
+          "after": {
+            "tree": "(s (call (name \"f\") \"(\" \"<x>\" \")\") (call ~(space \" \") ~(doc \"@y\") ~(space \" \") (name \"g\") \"(\" \"<y>\" \")\"))"
+          }
+        }
+      ]
     },
     {
       "id": "modes",

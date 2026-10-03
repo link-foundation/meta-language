@@ -180,7 +180,9 @@ impl Projection<'_> {
     }
 
     fn trivia(&self, node: &SyntaxTree) -> bool {
-        self.invisible(node) || matches!(node, SyntaxTree::Token { trivia: true, .. })
+        self.invisible(node)
+            || matches!(node, SyntaxTree::Token { trivia: true, .. })
+            || matches!(node, SyntaxTree::Node { kind, .. } if self.extras.contains(kind.as_str()))
     }
 
     fn anonymous(&self, node: &SyntaxTree) -> bool {
@@ -192,6 +194,7 @@ impl Projection<'_> {
         let SyntaxTree::Node {
             kind,
             field,
+            trivia,
             start,
             end,
             children,
@@ -212,6 +215,7 @@ impl Projection<'_> {
         children.push(SyntaxTree::Node {
             kind: kind.clone(),
             field: field.clone(),
+            trivia: *trivia,
             start: *start,
             end: *end,
             children: rest,

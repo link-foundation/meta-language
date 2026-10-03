@@ -334,7 +334,8 @@ function loadInContext(grammar, context) {
 // lexical precedence, then (at one length) a literal over a pattern, an
 // immediate token by one more, then the earlier token. Tokens are numbered in
 // rule order as they first appear: a token rule at its own definition, a
-// literal, an inline token and an alias of either where they are used. The
+// literal, an inline token and an alias of either where they are used; a
+// token rule's kind ranks as the rule even where an alias took it first. The
 // ranks are keyed by leaf kind (`kinds`) and, for a literal leaf, which has
 // none, by text (`literals`).
 function tokenRanks(rules) {
@@ -385,9 +386,17 @@ function tokenRanks(rules) {
       });
     }
   };
+  // A token rule ranks its own kind, over an alias of another token to it
+  // that came first (Rust's `(alias identifier (literal default))`).
+  const defined = new Set();
   for (const rule of rules.values()) {
-    if (rule.kind === 'token') assign(kinds, rule.nodeKind, rankOf(rule.expression));
-    else walk(rule.expression);
+    if (rule.kind !== 'token') {
+      walk(rule.expression);
+    } else if (!defined.has(rule.nodeKind)) {
+      defined.add(rule.nodeKind);
+      kinds.delete(rule.nodeKind);
+      assign(kinds, rule.nodeKind, rankOf(rule.expression));
+    }
   }
   for (const alias of aliased) {
     const rule = rules.get(alias.item.name);

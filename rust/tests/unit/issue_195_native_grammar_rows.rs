@@ -128,7 +128,9 @@ impl<'a> Rows<'a> {
     }
 
     fn trivia(&self, tree: &SyntaxTree) -> bool {
-        self.invisible(tree) || matches!(tree, SyntaxTree::Token { trivia: true, .. })
+        self.invisible(tree)
+            || matches!(tree, SyntaxTree::Token { trivia: true, .. })
+            || matches!(tree, SyntaxTree::Node { kind, .. } if self.extras.contains(kind.as_str()))
     }
 
     /// The node with its leading trivia moved before it.
@@ -136,6 +138,7 @@ impl<'a> Rows<'a> {
         let SyntaxTree::Node {
             kind,
             field,
+            trivia,
             start,
             end,
             children,
@@ -156,6 +159,7 @@ impl<'a> Rows<'a> {
         children.push(SyntaxTree::Node {
             kind: kind.clone(),
             field: field.clone(),
+            trivia: *trivia,
             start: *start,
             end: *end,
             children: rest,
