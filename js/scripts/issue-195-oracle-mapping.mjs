@@ -8,6 +8,7 @@
 import { createHash } from 'node:crypto';
 
 import { languageSupport } from '../src/index.js';
+import { grammarFile } from './grammar-files.mjs';
 
 const COMMIT = /^[0-9a-f]{40}$/u;
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -44,7 +45,7 @@ export function conformanceOracleProblems(manifest, { lock, read, readRepository
     const pinned = lock.grammars[grammar.id];
     if (languageSupport(grammar.id)?.name !== language) problems.push(`${language} is mapped to the grammar ${grammar.id}`);
     if (!pinned || grammar.parserSha256 !== pinned.parserSha256) problems.push(`${language} grammar parser is not the pinned one`);
-    if (pinned && grammar.license !== `js/src/vendor/grammars/${pinned.license}`) problems.push(`${language} grammar license is not the pinned one`);
+    if (pinned && grammar.license !== grammarFile(pinned, pinned.license)) problems.push(`${language} grammar license is not the pinned one`);
     if (!COMMIT.test(grammar.revision ?? '')) problems.push(`${language} grammar revision is not a commit`);
     if (!nonempty(grammar.license, readRepository)) problems.push(`${language} grammar license is missing`);
     let oracle = null;

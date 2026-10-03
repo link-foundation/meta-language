@@ -40,8 +40,10 @@ await WebTreeSitterParser.init({
 // grammar-tiering.js for how grammar code is compiled.
 const GRAMMARS = new Map();
 
+// The oracle grammars of the languages a native grammar parses are development
+// files the package does not ship, so their ids load nothing.
 function grammarLanguage(id) {
-  if (!Object.hasOwn(GRAMMAR_LOCK.grammars, id)) return undefined;
+  if (!Object.hasOwn(GRAMMAR_LOCK.grammars, id) || GRAMMAR_LOCK.grammars[id].oracle) return undefined;
   let language = GRAMMARS.get(id);
   if (!language) {
     const binary = gunzipSync(readFileSync(new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY)));
@@ -59,7 +61,7 @@ export function loadedGrammarIds() {
 /**
  * Returns the node kind and field names of a default grammar by its
  * grammar-lock id (`{ nodeKinds, fields }`, fields from field id 1), or
- * undefined for an unknown id. They equal the names the Rust runtime compiles.
+ * undefined for an unknown id or an oracle grammar. They equal the names the Rust runtime compiles.
  */
 export function grammarNames(id) {
   const language = grammarLanguage(id);

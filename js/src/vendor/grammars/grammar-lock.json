@@ -72,6 +72,7 @@
     },
     "csv": {
       "id": "csv",
+      "oracle": true,
       "upstream": "tree-sitter-grammars/tree-sitter-csv",
       "vendored": "rust/vendor/tree-sitter-csv",
       "patch": "rust/vendor/tree-sitter-csv/rfc4180-quotes.patch",
@@ -91,6 +92,7 @@
     },
     "diff": {
       "id": "diff",
+      "oracle": true,
       "crate": "tree-sitter-diff",
       "directory": ".",
       "version": "0.1.0",
@@ -190,6 +192,7 @@
     },
     "ini": {
       "id": "ini",
+      "oracle": true,
       "crate": "tree-sitter-ini",
       "directory": ".",
       "version": "1.4.0",
@@ -217,6 +220,7 @@
     },
     "json": {
       "id": "json",
+      "oracle": true,
       "crate": "tree-sitter-json",
       "directory": ".",
       "version": "0.24.8",
@@ -226,6 +230,7 @@
     },
     "json5": {
       "id": "json5",
+      "oracle": true,
       "crate": "tree-sitter-json5-orchard",
       "directory": ".",
       "version": "0.1.0",
@@ -397,6 +402,7 @@
     },
     "racket": {
       "id": "racket",
+      "oracle": true,
       "crate": "tree-sitter-racket",
       "directory": ".",
       "version": "0.25.0",
@@ -453,6 +459,7 @@
     },
     "scheme": {
       "id": "scheme",
+      "oracle": true,
       "crate": "tree-sitter-scheme",
       "directory": ".",
       "version": "0.24.7",

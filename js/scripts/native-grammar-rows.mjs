@@ -27,9 +27,11 @@ import { Parser } from 'web-tree-sitter';
 import { languageEntry } from '../src/index.js';
 import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
+import { grammarFile } from './grammar-files.mjs';
 
 const encoder = new TextEncoder();
 const ORACLES = new Map();
+const LOCK = JSON.parse(readFileSync(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url), 'utf8'));
 
 /** The pinned tree-sitter grammar that is the oracle of `language`. */
 function oracleLanguage(language) {
@@ -37,7 +39,8 @@ function oracleLanguage(language) {
   const id = (entry.oracleGrammars ?? entry.grammars)[0].id;
   let grammar = ORACLES.get(id);
   if (!grammar) {
-    grammar = loadGrammarLanguage(gunzipSync(readFileSync(new URL(`../src/vendor/grammars/${id}.wasm.gz`, import.meta.url))));
+    const file = new URL(`../../${grammarFile(LOCK.grammars[id], `${id}.wasm.gz`)}`, import.meta.url);
+    grammar = loadGrammarLanguage(gunzipSync(readFileSync(file)));
     ORACLES.set(id, grammar);
   }
   return grammar;

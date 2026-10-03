@@ -31,6 +31,7 @@ import { normalize, parseCorpus, stripFields } from '../tests/support/cst-sexpre
 
 import { GRAMMAR_CACHE_ROOT } from '../../scripts/lib/cache-classes.mjs';
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
+import { grammarFile } from './grammar-files.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -365,7 +366,7 @@ async function generate(work, treeSitter) {
           ...(language.tag ? { tag: language.tag } : {}),
           ...(language.patch ? { patch: language.patch } : {}),
           parserSha256: lock.grammars[language.id].parserSha256,
-          license: `js/src/vendor/grammars/${lock.grammars[language.id].license}`,
+          license: grammarFile(lock.grammars[language.id], lock.grammars[language.id].license),
         },
         corpus: {
           directory: `${language.id}/corpus`,

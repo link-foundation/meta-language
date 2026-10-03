@@ -9,6 +9,10 @@ runtimes parse with the same grammar revision. They are rebuilt by
 listed; the parser digest is of the generated `src/parser.c` (after the
 listed patch, if any).
 
+The tree-sitter oracles of the languages a native grammar parses are
+development files this package does not ship (`js/oracles/grammars` in the
+repository).
+
 | File | Source | parser.c SHA-256 | wasm SHA-256 | License |
 | --- | --- | --- | --- | --- |
 | `agda.wasm.gz` | crate `tree-sitter-agda` 1.3.3 | `ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980` | `9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a` | [`agda.LICENSE`](agda.LICENSE) |
@@ -18,9 +22,7 @@ listed patch, if any).
 | `cpp.wasm.gz` | crate `tree-sitter-cpp` 0.23.4 | `2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814` | `f5ff3ba7af054af846f37dfd2525bdfede95530d5747a8fe30df87d070ece607` | [`cpp.LICENSE`](cpp.LICENSE) |
 | `csharp.wasm.gz` | crate `tree-sitter-c-sharp` 0.23.5 | `0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427` | `a4b053f6fdedfc9c94876b415441ea953c0046ef83d45e0cbc4d9b8938ae6cbc` | [`csharp.LICENSE`](csharp.LICENSE) |
 | `css.wasm.gz` | crate `tree-sitter-css` 0.25.0 | `2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e` | `f0fa4c3171f3322560e3a56445989f2da9d77c38bae61e9f07ae0b3e01d88b36` | [`css.LICENSE`](css.LICENSE) |
-| `csv.wasm.gz` | `tree-sitter-grammars/tree-sitter-csv` f6bf6e35eb0b95fbadea4bb39cb9709507fcb181 with [`rfc4180-quotes.patch`](../../../../rust/vendor/tree-sitter-csv/rfc4180-quotes.patch) (vendored in `rust/vendor/tree-sitter-csv`) | `6a7ede804cb8ced3f9466cecf38872d175e6179e8ea951956a195b2d55add8bc` | `926e300e68fca1881734251e2b0b3a51cc56625c1afd3471f3102ce5274a1cd9` | [`csv.LICENSE`](csv.LICENSE) |
 | `dart.wasm.gz` | crate `tree-sitter-dart` 0.2.0 | `1894ef57f8e0ceb483ccf6d548429517dc42b0d983293ebdb5ff9ff9c612c4a9` | `e700b38561a3f1e641340fac8232dfca493dbc024d142d338a5075feca3e9efc` | [`dart.LICENSE`](dart.LICENSE) |
-| `diff.wasm.gz` | crate `tree-sitter-diff` 0.1.0 | `4c9e3e545073a7d93088f7d90b0ee89e56fb43ca751f25fa440c4a1906ecb3e6` | `8c32b60b7900e18ad10e2223e6311f4f1aff29b4d12226862a2a889a99596f29` | [`diff.LICENSE`](diff.LICENSE) |
 | `dtd.wasm.gz` | crate `tree-sitter-xml` 0.7.0 (`dtd`) | `79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932` | `2534944fea9484174b791535509c09a25fcd1c4099da9392056b009311dcfe81` | [`dtd.LICENSE`](dtd.LICENSE) |
 | `elixir.wasm.gz` | crate `tree-sitter-elixir` 0.3.5 | `d1c2000b477e873e44e485f55809e3af7e2bfce83fa4d58cfa3a9f83660e7d79` | `33f71c86131d02eab80841e4142005ccaa54bcc06bcc3a7e8dc6a9a8a0ca5e94` | [`elixir.LICENSE`](elixir.LICENSE) |
 | `elm.wasm.gz` | crate `tree-sitter-elm` 5.9.4 | `7c993bdabb63c6c6424fc0b433073c9000446a0e3de189d8a2ab93b33636369d` | `30e2708c30704223fa0351428d4e81aef32acd9121a7ea35606ddc9fa45bc319` | [`elm.LICENSE`](elm.LICENSE) |
@@ -31,11 +33,8 @@ listed patch, if any).
 | `haskell.wasm.gz` | crate `tree-sitter-haskell` 0.24.1 | `a136b31118c6767f3a9fbbb245adc559370eabd914b72b90438395542327a089` | `ea89cb1199b1ca2102e273b27239e795baff17248128a9bcd3c3825ac17d8cc0` | [`haskell.LICENSE`](haskell.LICENSE) |
 | `hcl.wasm.gz` | crate `tree-sitter-hcl` 1.1.0 | `0c821e2979f54f8f460201eafe9464d5d3dae0076c5bdd51567a798fb7add543` | `c7fa4ff3cecbd8c9eba1b9643b511a5b226b47d29eb5ec38656a5bc7a216bfc5` | [`hcl.LICENSE`](hcl.LICENSE) |
 | `html.wasm.gz` | crate `tree-sitter-html` 0.23.2 | `65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1` | `11960fcc4fe3a01930de6bbae9b2c5c4d0a6c16012a5d20cc2069fa5b78d3bbd` | [`html.LICENSE`](html.LICENSE) |
-| `ini.wasm.gz` | crate `tree-sitter-ini` 1.4.0 | `3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123` | `49e4442e41b44226268a89d810a4a3d2b3dde810b539579c2acd4a55223d8548` | [`ini.LICENSE`](ini.LICENSE) |
 | `java.wasm.gz` | crate `tree-sitter-java` 0.23.5 | `4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4` | `6476728734128931bd50de2d1e5e9c75c506b51e278f54eaf709836a0de35759` | [`java.LICENSE`](java.LICENSE) |
 | `javascript.wasm.gz` | crate `tree-sitter-javascript` 0.25.0 | `67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384` | `7ccbce5ba189363aee524c4be7f3a0bdb25b961d4c6d2472a8f3aeb526eecbfe` | [`javascript.LICENSE`](javascript.LICENSE) |
-| `json.wasm.gz` | crate `tree-sitter-json` 0.24.8 | `e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab` | `564e489724cbcf9b4563cd758a7fb7f355f896b11127819ae9e8ef71e7c15e60` | [`json.LICENSE`](json.LICENSE) |
-| `json5.wasm.gz` | crate `tree-sitter-json5-orchard` 0.1.0 | `0024a5353393c7186a9a4f531f451279d301c7c3925ba292348176a83d3765b4` | `b726ecea6c05ff5b62b9a32563762d297e019c5eaaa7371d20b2245ca17421f4` | [`json5.LICENSE`](json5.LICENSE) |
 | `kotlin.wasm.gz` | crate `tree-sitter-kotlin-ng` 1.1.0 | `9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3` | `5d44eef5c02b4546f01ddc376ed237294b18604f727b192a832a5ce08a040e8f` | [`kotlin.LICENSE`](kotlin.LICENSE) |
 | `lean.wasm.gz` | `wvhulle/tree-sitter-lean` bd942cd2795016239be02b3b3d5ef635645ddd38 (vendored in `rust/vendor/tree-sitter-lean`) | `d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b` | `7b58425afbe7f59e90fa9f01ebafe9241cdedbf1fe7e2daca4bec2f15122cc59` | [`lean.LICENSE`](lean.LICENSE) |
 | `lua.wasm.gz` | crate `tree-sitter-lua` 0.5.0 | `933206d96a78f7785c13b2600182f1527dcd755c200b1271bb5bc4d8da4b17b3` | `43db0f3e64ffd4ed1ada7a77e4489e54afa5afd7b5aa013679d8284d4ea0f074` | [`lua.LICENSE`](lua.LICENSE) |
@@ -54,13 +53,11 @@ listed patch, if any).
 | `proto.wasm.gz` | crate `tree-sitter-proto` 0.6.0 | `ac481450c32e8fa52976075581701ecc63790fbab4c9c4f10d0901c9a39b61eb` | `2179ef77376c7c1a1c08c145915c8902436d6f08724cb055ce597879f107bf61` | [`proto.LICENSE`](proto.LICENSE) |
 | `python.wasm.gz` | crate `tree-sitter-python` 0.25.0 | `a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0` | `3523e4dc3d12894bbb2f7ea4b86b50eec69aed321c3d9b49271d82ed9f5f79b0` | [`python.LICENSE`](python.LICENSE) |
 | `r.wasm.gz` | crate `tree-sitter-r` 1.3.0 | `43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771` | `8443d229942c1719c40fac5729e8d9252e48950aa2e0dbcf86c52bd38e875209` | [`r.LICENSE`](r.LICENSE) |
-| `racket.wasm.gz` | crate `tree-sitter-racket` 0.25.0 | `3cbab79ab9bd99684a7de4cb93a0aafd6773bb3ecf6720c59f1b7cdb0ceddd9c` | `5affec93f88d8b9e66aee6ad9a385d04f6af07dfc55bc6944993b02af1fa21b2` | [`racket.LICENSE`](racket.LICENSE) |
 | `regex.wasm.gz` | crate `tree-sitter-regex` 0.25.0 | `ddf28eb5ad0dd0898b9ed0f2593852edac639a339a410d9e93350e472859700f` | `0b64ac3dc55cfb73a95da3ea3eb1ac89e0f8fafd6050aa32139988b8413c14f1` | [`regex.LICENSE`](regex.LICENSE) |
 | `rocq.wasm.gz` | `aruzdh/tree-sitter-rocq` 300fe33fc299c30f736fd56d8ef8a28b08acd4e6 with [`meta-language.patch`](../../../../rust/vendor/tree-sitter-rocq/meta-language.patch) (vendored in `rust/vendor/tree-sitter-rocq`) | `4f0807b15d47e4335c28ccb7be5eb8d01851baaab4843dfa24b2d8fb1966ecd2` | `9d0d3172500d14ee0d06d61b0d3a3a33e757003a94eb7f1c7221b11c740e0530` | [`rocq.LICENSE`](rocq.LICENSE) |
 | `ruby.wasm.gz` | crate `tree-sitter-ruby` 0.23.1 | `4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15` | `2a06cd2fa165a2913f6598b92c9d3d3132ecfbf3fa7ffa8ca93b31efb2bfb58d` | [`ruby.LICENSE`](ruby.LICENSE) |
 | `rust.wasm.gz` | `tree-sitter/tree-sitter-rust` v0.24.2 with [`meta-language.patch`](../../../../rust/vendor/tree-sitter-rust/meta-language.patch) (vendored in `rust/vendor/tree-sitter-rust`) | `555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3` | `9e42546db0d259b49f09ce1170528b57d97453f19824ca27197016c330dcae03` | [`rust.LICENSE`](rust.LICENSE) |
 | `scala.wasm.gz` | crate `tree-sitter-scala` 0.26.2 | `9f6d03fa6c63d2d855b6f9e0368046a58568587eefc38b5e38bdb001e8ec68db` | `c2d92c43913a24efa76528c6aff75c97c0964798c4d360c7dc1951b04058fe52` | [`scala.LICENSE`](scala.LICENSE) |
-| `scheme.wasm.gz` | crate `tree-sitter-scheme` 0.24.7 | `5d4c1786eb70c3be05f395e5a26edbb7cca12e7547f7a1d8cdb94e092ee74d0d` | `f138334dfc4d3df3c85c3e0d675e154f2bd6b1a8d4325f04c53512eef099241e` | [`scheme.LICENSE`](scheme.LICENSE) |
 | `solidity.wasm.gz` | crate `tree-sitter-solidity` 1.2.13 | `e71971f6ddc0704e81f4af3f43ecc79793742bb5f1d256a5fdd718aa06d74acb` | `7ae2d8aff2ec119ff8706667f45f5ff0d4edea901acef86e227664de83c6df51` | [`solidity.LICENSE`](solidity.LICENSE) |
 | `sql.wasm.gz` | crate `tree-sitter-sequel` 0.3.11 | `852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580` | `e03fb5079e88cfe0807056c284fd2b0589cee35df9bbb3d07e72f2f4178de8de` | [`sql.LICENSE`](sql.LICENSE) |
 | `swift.wasm.gz` | crate `tree-sitter-swift` 0.7.3 | `d3edff6effe31b9a507f496577407987343b101b23eb7bee7a9b050e8ab5d27a` | `1fda79c994cb9cb6c7d6bc71520698742e9e88946c92186520a314bbeb45a4fd` | [`swift.LICENSE`](swift.LICENSE) |

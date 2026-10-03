@@ -293,9 +293,14 @@ writes the file with the per-grammar fixtures.
   not where tree-sitter's LR recovery places them; the two are not compared.
 - tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
   tree-sitter-json5-orchard, tree-sitter-scheme and tree-sitter-racket no
-  longer back a default parse, but they are still production dependencies of
-  both packages, as the fixture generator and the oracle checks load them; they
-  move to development dependencies in a later change.
+  longer back a default parse, so they are development files only: the Rust
+  crates are `[dev-dependencies]` that the `pinned_*_oracle_gives_the_fixture`
+  tests load, the vendored CSV parser is no longer compiled into or published
+  with the crate, and their WebAssembly builds and licenses are in
+  [`js/oracles/grammars`](../../js/oracles/grammars/NOTICE.md), outside the npm
+  package, where the fixture generator and the oracle checks load them. Their
+  lock entries carry `"oracle": true`, and `grammarNames`/`grammar_names` and
+  `grammar_by_id` return nothing for their ids.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
   tree-sitter-diff recovers from and the native grammar accepts as context; a

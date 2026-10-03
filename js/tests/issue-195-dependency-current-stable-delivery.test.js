@@ -23,6 +23,7 @@ import {
   ownStatus,
   parseCargoLock,
 } from '../scripts/dependency-inventory.mjs';
+import { grammarFile } from '../scripts/grammar-files.mjs';
 import { compareVersions, isPrerelease, satisfies } from '../scripts/semver-range.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
@@ -233,14 +234,14 @@ test('version-coupled artifacts are regenerated from the delivered pins', () => 
   const grammars = Object.values(lock.grammars);
   assert.equal(grammars.length > 0, true);
   for (const grammar of grammars) {
-    const vendored = item(inventory.items, ({ category, name }) => category === 'vendored-grammar' && name === `js/src/vendor/grammars/${grammar.id}.wasm.gz`, `the ${grammar.id} grammar build`);
+    const vendored = item(inventory.items, ({ category, name }) => category === 'vendored-grammar' && name === grammarFile(grammar, `${grammar.id}.wasm.gz`), `the ${grammar.id} grammar build`);
     assert.equal(vendored.pinned, grammar.version);
     const source = grammar.crate ? crates.get(grammar.crate) : byId.get(vendored.dependsOn.find((id) => id.startsWith(`vendored-parser ${grammar.vendored}@`)));
     assert.ok(source, `${grammar.id} is built from an inventoried source`);
     assert.equal(source.pinned, grammar.version, `${grammar.id} is built from the delivered ${source.id}`);
     assert.deepEqual([...vendored.dependsOn].sort(), [source.id, cli.id].sort());
     assert.equal(verdicts.get(vendored.id).status, 'current', `${vendored.id}: ${verdicts.get(vendored.id).cause}`);
-    const wasm = gunzipSync(readFileSync(path.join(root, `js/src/vendor/grammars/${grammar.id}.wasm.gz`)));
+    const wasm = gunzipSync(readFileSync(path.join(root, grammarFile(grammar, `${grammar.id}.wasm.gz`))));
     assert.equal(sha256(wasm), grammar.wasmSha256, `${grammar.id}.wasm.gz is the recorded build`);
   }
   const runtimeLock = readJson('js/src/vendor/web-tree-sitter/runtime-lock.json');

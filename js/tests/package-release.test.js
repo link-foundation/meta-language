@@ -4,6 +4,9 @@ import { readFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { test } from 'node:test';
 
+import { parseCargoManifest } from '../scripts/dependency-inventory.mjs';
+import { grammarFile } from '../scripts/grammar-files.mjs';
+
 async function readJson(url) {
   return JSON.parse(await readFile(url, 'utf8'));
 }
@@ -53,15 +56,42 @@ test('npm delivery is script-free and carries every locked portable grammar', as
   assert.equal(packageJson.bundleDependencies, undefined);
   assert.ok(packageJson.files.includes('src'));
   for (const [id, grammar] of Object.entries(lock.grammars)) {
-    const wasm = gunzipSync(
-      await readFile(new URL(`../src/vendor/grammars/${id}.wasm.gz`, import.meta.url)),
-    );
+    const file = (name) => new URL(`../../${grammarFile(grammar, name)}`, import.meta.url);
+    const wasm = gunzipSync(await readFile(file(`${id}.wasm.gz`)));
     assert.equal(createHash('sha256').update(wasm).digest('hex'), grammar.wasmSha256, id);
-    const license = await readFile(
-      new URL(`../src/vendor/grammars/${id}.LICENSE`, import.meta.url),
-      'utf8',
+    const license = await readFile(file(`${id}.LICENSE`), 'utf8');
+    assert.ok(license.trim().length > 0, `${id} carries its license`);
+  }
+});
+
+test('the tree-sitter oracles of the native languages are development files only', async () => {
+  const packageJson = await readJson(new URL('../package.json', import.meta.url));
+  const lock = await readJson(new URL('../src/vendor/grammars/grammar-lock.json', import.meta.url));
+  const manifest = await readFile(new URL('../../rust/Cargo.toml', import.meta.url), 'utf8');
+  const build = await readFile(new URL('../../rust/build.rs', import.meta.url), 'utf8');
+  const { dependencies } = parseCargoManifest(manifest);
+  const include = manifest.match(/^include = \[([^\]]*)\]/mu)[1];
+  const oracles = Object.values(lock.grammars).filter((grammar) => grammar.oracle);
+  assert.deepEqual(
+    oracles.map(({ id }) => id),
+    ['csv', 'diff', 'ini', 'json', 'json5', 'racket', 'scheme'],
+  );
+  assert.ok(packageJson.files.every((entry) => !entry.startsWith('oracles')));
+  for (const grammar of oracles) {
+    assert.ok(grammarFile(grammar, '').startsWith('js/oracles/'), grammar.id);
+    await assert.rejects(
+      readFile(new URL(`../src/vendor/grammars/${grammar.id}.wasm.gz`, import.meta.url)),
+      grammar.id,
     );
-    assert.ok(license.trim().length > 0, `${id} ships its license`);
+    if (grammar.crate) {
+      // The Rust suites still load the oracle crate, as a development dependency.
+      const declared = dependencies.filter(({ name }) => name === grammar.crate);
+      assert.deepEqual(declared.map(({ kind }) => kind), ['development'], grammar.crate);
+    } else {
+      // A vendored oracle parser is neither compiled nor published.
+      assert.ok(!include.includes(grammar.vendored.replace(/^rust\//u, '')), grammar.vendored);
+      assert.ok(!build.includes(`"${grammar.id}"`), grammar.id);
+    }
   }
 });
 

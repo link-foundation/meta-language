@@ -35,6 +35,7 @@ import {
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 import { loadGrammarLanguage } from '../src/grammar-tiering.js';
 import { treeSitterNodeKind } from '../src/tree-sitter-node-kind.js';
+import { grammarFile } from './grammar-files.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -42,6 +43,7 @@ const inventoryPath = join(root, 'parity/language-grammar-inventory.json');
 const expectedPath = join(root, 'parity/fixtures/default-cst-expected.json');
 const evidencePath = join(root, 'parity/fixtures/issue-195-evidence.json');
 const grammarDir = join(root, 'js/src/vendor/grammars');
+const grammarLock = JSON.parse(await readFile(join(grammarDir, 'grammar-lock.json'), 'utf8'));
 const encoder = new TextEncoder();
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
@@ -67,7 +69,8 @@ await Parser.init({
 const languages = new Map();
 async function loadGrammar(id) {
   if (!languages.has(id)) {
-    languages.set(id, loadGrammarLanguage(gunzipSync(await readFile(join(grammarDir, `${id}.wasm.gz`)))));
+    const file = join(root, grammarFile(grammarLock.grammars[id], `${id}.wasm.gz`));
+    languages.set(id, loadGrammarLanguage(gunzipSync(await readFile(file))));
   }
   return languages.get(id);
 }
@@ -489,7 +492,7 @@ function formatExpected(value) {
 
 async function generate() {
   const inventory = JSON.parse(await readFile(inventoryPath, 'utf8'));
-  const lock = JSON.parse(await readFile(join(grammarDir, 'grammar-lock.json'), 'utf8'));
+  const lock = grammarLock;
   const webTreeSitter = JSON.parse(await readFile(join(root, 'js/node_modules/web-tree-sitter/package.json'), 'utf8')).version;
   const result = {};
   for (const language of inventory.languages) {

@@ -13,7 +13,9 @@ use meta_language::{
 };
 use serde_json::{Value, json};
 
-use super::issue_195_native_grammar_rows::{Rows, cases, leaves, parse, rebuilt, source, text};
+use super::issue_195_native_grammar_rows::{
+    Rows, cases, leaves, oracle_agrees, parse, rebuilt, source, text,
+};
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE_FILE: &str = "parity/fixtures/native-grammars/json5.json";
@@ -207,4 +209,11 @@ fn native_json5_trees_keep_every_byte() {
         &["nativeJson5TreesLossless"],
         "native JSON5 trees keep every byte",
     );
+}
+
+#[test]
+fn pinned_json5_oracle_gives_the_fixture() {
+    // The oracle is a development dependency since the native grammar
+    // replaced it as the default JSON5 parse.
+    oracle_agrees(&tree_sitter_json5_orchard::LANGUAGE.into(), &fixture());
 }

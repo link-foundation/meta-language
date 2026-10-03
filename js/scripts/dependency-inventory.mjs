@@ -15,6 +15,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { compareVersions, isPrerelease, newestStable, satisfies, versionParts } from './semver-range.mjs';
+import { grammarFile } from './grammar-files.mjs';
 
 export const INVENTORY_FILE = 'parity/dependency-inventory.json';
 export const AUDIT_DOCUMENT = 'docs/dependency-audit.md';
@@ -316,7 +317,7 @@ function collectVendored(root, items) {
     }
     addItem(items, {
       category: 'vendored-grammar',
-      name: `js/src/vendor/grammars/${id}.wasm.gz`,
+      name: grammarFile(grammar, `${id}.wasm.gz`),
       declaredIn: grammarLockFile,
       pinned: grammar.version,
       compare: 'derived',

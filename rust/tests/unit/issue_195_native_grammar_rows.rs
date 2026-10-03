@@ -6,6 +6,10 @@
 //! parity/fixtures/native-grammars/, parse with the Rust
 //! executor and project its trees to the rows of the tree-sitter oracle the
 //! way js/scripts/native-grammar-rows.mjs projects the JavaScript ones.
+//! `oracle_agrees` parses the corpus with the pinned oracle crate, a
+//! development dependency since the native grammar replaced it as the default
+//! parse; the CSV oracle is a vendored parser that only the JavaScript suite
+//! loads.
 
 use std::collections::HashSet;
 
@@ -220,5 +224,61 @@ impl<'a> Rows<'a> {
             self.visit(&child, 1, &mut rows);
         }
         rows
+    }
+}
+
+/// The rows of the pinned tree-sitter oracle's tree of `source`, and whether
+/// the oracle recovers from an error in it.
+fn oracle_rows(language: &tree_sitter::Language, source: &str) -> (Vec<Value>, bool) {
+    fn visit(
+        node: tree_sitter::Node<'_>,
+        depth: usize,
+        field: Option<&str>,
+        rows: &mut Vec<Value>,
+    ) {
+        let flags = [
+            (node.is_error(), "E"),
+            (node.is_missing(), "M"),
+            (node.is_extra(), "X"),
+        ]
+        .iter()
+        .filter(|(set, _)| *set)
+        .map(|(_, flag)| *flag)
+        .collect::<String>();
+        rows.push(json!([
+            depth,
+            field,
+            node.kind(),
+            u8::from(node.is_named()),
+            node.start_byte(),
+            node.end_byte(),
+            flags
+        ]));
+        for index in 0..node.child_count() {
+            let child = node.child(index).expect("a child");
+            visit(child, depth + 1, node.field_name_for_child(index), rows);
+        }
+    }
+    let mut parser = tree_sitter::Parser::new();
+    parser.set_language(language).expect("the oracle loads");
+    let tree = parser.parse(source, None).expect("the oracle parses");
+    let mut rows = Vec::new();
+    visit(tree.root_node(), 0, None, &mut rows);
+    (rows, tree.root_node().has_error())
+}
+
+/// Checks that the pinned oracle still gives the fixture: the rows of every
+/// match, and a recovery from every divergence and rejection.
+pub fn oracle_agrees(language: &tree_sitter::Language, fixture: &Value) {
+    for case in cases(fixture, "matches") {
+        let (rows, recovers) = oracle_rows(language, source(case));
+        assert!(!recovers, "{:?}", source(case));
+        assert_eq!(Value::Array(rows), case["rows"], "{:?}", source(case));
+    }
+    for case in cases(fixture, "divergences")
+        .iter()
+        .chain(cases(fixture, "rejections"))
+    {
+        assert!(oracle_rows(language, source(case)).1, "{:?}", source(case));
     }
 }

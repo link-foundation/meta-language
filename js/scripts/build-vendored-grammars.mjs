@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Rebuilds js/src/vendor/grammars/*.wasm from the exact grammar crates pinned
 // in rust/Cargo.lock, so both runtimes parse with byte-identical generated
-// parsers. Requires `cargo fetch` (for crate sources) and the tree-sitter CLI
+// parsers. The oracle grammars of the languages a native grammar parses are
+// built into js/oracles/grammars, which the npm package does not ship. Requires `cargo fetch` (for crate sources) and the tree-sitter CLI
 // 0.27.0, which downloads the WASI SDK that `tree-sitter build --wasm` uses.
 //
 //   node js/scripts/build-vendored-grammars.mjs [--only id,id] [--jobs N]
@@ -20,16 +21,21 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
+import { ORACLE_GRAMMAR_DIRECTORY, PACKAGED_GRAMMAR_DIRECTORY, grammarFile } from './grammar-files.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const vendorDir = join(root, 'js/src/vendor/grammars');
+const vendorDir = join(root, PACKAGED_GRAMMAR_DIRECTORY);
+const oracleDir = join(root, ORACLE_GRAMMAR_DIRECTORY);
 const lockPath = join(vendorDir, 'grammar-lock.json');
 const rustLockPath = join(root, 'rust/src/data/grammar-lock.json');
 
 /**
  * Grammar id -> Rust crate and the parser directory inside the crate, or the
  * generated parser vendored under rust/vendor (compiled by rust/build.rs).
+ * `oracle` marks the tree-sitter oracle of a language a native grammar parses:
+ * a Rust development dependency (the CSV parser is not compiled at all) whose
+ * WebAssembly build the npm package does not ship.
  */
 export const GRAMMAR_SOURCES = Object.freeze({
   agda: { crate: 'tree-sitter-agda', dir: '.' },
@@ -54,12 +60,13 @@ export const GRAMMAR_SOURCES = Object.freeze({
     // RFC 4180: unquoted fields contain no quotes, so a stray or unterminated
     // quote is a parse error instead of text.
     patch: 'rust/vendor/tree-sitter-csv/rfc4180-quotes.patch',
+    oracle: true,
     dir: 'csv',
   },
   csharp: { crate: 'tree-sitter-c-sharp', dir: '.' },
   css: { crate: 'tree-sitter-css', dir: '.' },
   dart: { crate: 'tree-sitter-dart', dir: '.' },
-  diff: { crate: 'tree-sitter-diff', dir: '.' },
+  diff: { crate: 'tree-sitter-diff', dir: '.', oracle: true },
   dtd: { crate: 'tree-sitter-xml', dir: 'dtd' },
   elixir: { crate: 'tree-sitter-elixir', dir: '.' },
   elm: { crate: 'tree-sitter-elm', dir: '.' },
@@ -70,11 +77,11 @@ export const GRAMMAR_SOURCES = Object.freeze({
   haskell: { crate: 'tree-sitter-haskell', dir: '.' },
   hcl: { crate: 'tree-sitter-hcl', dir: '.' },
   html: { crate: 'tree-sitter-html', dir: '.' },
-  ini: { crate: 'tree-sitter-ini', dir: '.' },
+  ini: { crate: 'tree-sitter-ini', dir: '.', oracle: true },
   java: { crate: 'tree-sitter-java', dir: '.' },
   javascript: { crate: 'tree-sitter-javascript', dir: '.' },
-  json: { crate: 'tree-sitter-json', dir: '.' },
-  json5: { crate: 'tree-sitter-json5-orchard', dir: '.' },
+  json: { crate: 'tree-sitter-json', dir: '.', oracle: true },
+  json5: { crate: 'tree-sitter-json5-orchard', dir: '.', oracle: true },
   kotlin: { crate: 'tree-sitter-kotlin-ng', dir: '.' },
   lean: {
     vendored: 'rust/vendor/tree-sitter-lean',
@@ -102,7 +109,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
   proto: { crate: 'tree-sitter-proto', dir: '.' },
   python: { crate: 'tree-sitter-python', dir: '.' },
   r: { crate: 'tree-sitter-r', dir: '.' },
-  racket: { crate: 'tree-sitter-racket', dir: '.' },
+  racket: { crate: 'tree-sitter-racket', dir: '.', oracle: true },
   regex: { crate: 'tree-sitter-regex', dir: '.' },
   ruby: { crate: 'tree-sitter-ruby', dir: '.' },
   rocq: {
@@ -131,7 +138,7 @@ export const GRAMMAR_SOURCES = Object.freeze({
     dir: '.',
   },
   scala: { crate: 'tree-sitter-scala', dir: '.' },
-  scheme: { crate: 'tree-sitter-scheme', dir: '.' },
+  scheme: { crate: 'tree-sitter-scheme', dir: '.', oracle: true },
   solidity: { crate: 'tree-sitter-solidity', dir: '.' },
   sql: { crate: 'tree-sitter-sequel', dir: '.' },
   swift: { crate: 'tree-sitter-swift', dir: '.' },
@@ -313,7 +320,7 @@ async function refreshLicenses(lock, versions) {
         await checkoutUpstream(source, dir);
       }
       const license = await licenseText(dir);
-      if (license) await writeFile(join(vendorDir, `${id}.LICENSE`), license);
+      if (license) await writeFile(join(root, grammarFile(lock.grammars[id], `${id}.LICENSE`)), license);
       lock.grammars[id].license = license ? `${id}.LICENSE` : null;
     } finally {
       await rm(work, { recursive: true, force: true });
@@ -348,11 +355,12 @@ async function buildOne(id, versions, treeSitter, options) {
       maxBuffer: 64 * 1024 * 1024,
     });
     const wasm = await readFile(output);
-    await writeFile(join(vendorDir, `${id}.wasm.gz`), compressWasm(wasm));
+    await writeFile(join(root, grammarFile(source, `${id}.wasm.gz`)), compressWasm(wasm));
     const license = await licenseText(source.vendored ? join(work, 'crate') : source.crateDir);
-    if (license) await writeFile(join(vendorDir, `${id}.LICENSE`), license);
+    if (license) await writeFile(join(root, grammarFile(source, `${id}.LICENSE`)), license);
     return {
       id,
+      ...(source.oracle ? { oracle: true } : {}),
       ...(source.vendored
         ? {
             upstream: source.upstream,
@@ -386,6 +394,9 @@ async function checkLock(lock, versions) {
       problems.push(`${id}: lock has ${entry.version}, the Rust build pins ${pinned}`);
       continue;
     }
+    if (Boolean(entry.oracle) !== Boolean(source.oracle)) {
+      problems.push(`${id}: lock records oracle ${Boolean(entry.oracle)}, the source has ${Boolean(source.oracle)}`);
+    }
     if ((entry.patch ?? null) !== (source.patch ?? null)) {
       problems.push(`${id}: lock records patch ${entry.patch ?? 'none'}, the source has ${source.patch ?? 'none'}`);
     }
@@ -393,39 +404,64 @@ async function checkLock(lock, versions) {
     if (sha256(parser) !== entry.parserSha256) {
       problems.push(`${id}: parser.c digest differs from the Rust build input`);
     }
-    const wasm = gunzipSync(await readFile(join(vendorDir, `${id}.wasm.gz`)));
+    const wasm = gunzipSync(await readFile(join(root, grammarFile(source, `${id}.wasm.gz`))));
     if (sha256(wasm) !== entry.wasmSha256) problems.push(`${id}: wasm digest mismatch`);
   }
   return problems;
 }
 
-async function writeNotice(lock) {
-  const rows = Object.values(lock.grammars).map((entry) => {
+function noticeRows(entries) {
+  return entries.map((entry) => {
     const source = entry.crate
       ? `crate \`${entry.crate}\` ${entry.version}${entry.directory === '.' ? '' : ` (\`${entry.directory}\`)`}`
-      : `\`${entry.upstream}\` ${entry.version}${entry.patch ? ` with [\`${entry.patch.split('/').pop()}\`](../../../../${entry.patch})` : ''} (vendored in \`${entry.vendored}\`)`;
+      : `\`${entry.upstream}\` ${entry.version}${entry.patch ? ` with [\`${entry.patch.split('/').pop()}\`](${entry.oracle ? '../../..' : '../../../..'}/${entry.patch})` : ''} (vendored in \`${entry.vendored}\`)`;
     const license = entry.license ? `[\`${entry.license}\`](${entry.license})` : 'see upstream';
     return `| \`${entry.id}.wasm.gz\` | ${source} | \`${entry.parserSha256}\` | \`${entry.wasmSha256}\` | ${license} |`;
   });
+}
+
+/** Writes the NOTICE.md of the packaged grammars and of the oracle grammars. */
+export async function writeNotice(lock) {
+  const entries = Object.values(lock.grammars);
+  const table = (oracle) => `| File | Source | parser.c SHA-256 | wasm SHA-256 | License |
+| --- | --- | --- | --- | --- |
+${noticeRows(entries.filter((entry) => Boolean(entry.oracle) === oracle)).join('\n')}
+
+Every grammar is distributed under its upstream license (MIT unless the
+linked license file states otherwise).
+`;
+  const build = `\`node js/scripts/build-vendored-grammars.mjs\` with tree-sitter CLI
+${lock.treeSitterCli.split(' ')[1]} and verified against \`grammar-lock.json\` by
+\`--check\`. Each file is a zero-mtime gzip of the \`.wasm\` whose SHA-256 is
+listed; the parser digest is of the generated \`src/parser.c\` (after the
+listed patch, if any).`;
   const notice = `# Vendored tree-sitter grammars
 
 These WebAssembly grammars are compiled from exactly the generated parsers the
 Rust crate links (\`rust/Cargo.lock\` crates or \`rust/vendor\`), so both
 runtimes parse with the same grammar revision. They are rebuilt by
-\`node js/scripts/build-vendored-grammars.mjs\` with tree-sitter CLI
-${lock.treeSitterCli.split(' ')[1]} and verified against \`grammar-lock.json\` by
-\`--check\`. Each file is a zero-mtime gzip of the \`.wasm\` whose SHA-256 is
-listed; the parser digest is of the generated \`src/parser.c\` (after the
-listed patch, if any).
+${build}
 
-| File | Source | parser.c SHA-256 | wasm SHA-256 | License |
-| --- | --- | --- | --- | --- |
-${rows.join('\n')}
+The tree-sitter oracles of the languages a native grammar parses are
+development files this package does not ship (\`js/oracles/grammars\` in the
+repository).
 
-Every grammar is distributed under its upstream license (MIT unless the
-linked license file states otherwise).
-`;
+${table(false)}`;
+  const oracles = `# Oracle tree-sitter grammars
+
+The languages these grammars describe are parsed by the native grammars of
+\`parity/grammars/native\`. The tree-sitter grammars stay as their oracles: the
+fixture generators and the tests compare the native trees with theirs, so they
+are development files the npm package does not ship (Rust links them as
+development dependencies). Their \`grammar-lock.json\` entries have
+\`"oracle": true\`. They are compiled from exactly the generated parsers of
+\`rust/Cargo.lock\` crates or \`rust/vendor\`, and rebuilt by
+${build}
+
+${table(true)}`;
   await writeFile(join(vendorDir, 'NOTICE.md'), notice);
+  await mkdir(oracleDir, { recursive: true });
+  await writeFile(join(oracleDir, 'NOTICE.md'), oracles);
 }
 
 /** The lock ships in both packages: npm under src/vendor, the crate under src/data. */
@@ -467,6 +503,7 @@ async function main() {
   const { stdout: cliVersion } = await run(treeSitter, ['--version']);
 
   await mkdir(vendorDir, { recursive: true });
+  await mkdir(oracleDir, { recursive: true });
   const ids = Object.keys(GRAMMAR_SOURCES).filter((id) => !only || only.has(id));
   const grammars = { ...(previous?.grammars ?? {}) };
   const queue = [...ids];

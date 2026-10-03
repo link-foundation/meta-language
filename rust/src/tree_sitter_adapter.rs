@@ -18,19 +18,6 @@ mod rocq_grammar {
 }
 
 #[allow(unsafe_code)]
-mod csv_grammar {
-    use tree_sitter_language::LanguageFn;
-
-    unsafe extern "C" {
-        fn tree_sitter_csv() -> *const ();
-    }
-
-    // SAFETY: build.rs compiles the generated parser from the pinned tag
-    // recorded in vendor/tree-sitter-csv/NOTICE.md with this exact symbol.
-    pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_csv) };
-}
-
-#[allow(unsafe_code)]
 mod rust_grammar {
     use tree_sitter_language::LanguageFn;
 
@@ -428,7 +415,7 @@ pub struct GrammarNames {
 }
 
 /// Returns the node kind and field names of a default grammar by its
-/// grammar-lock id, or `None` for an unknown id.
+/// grammar-lock id, or `None` for an unknown id or an oracle grammar.
 ///
 /// Both runtimes compile the same generated parser, so the names equal the
 /// WebAssembly grammar's. A C compiler that re-encodes the parser's non-ASCII
@@ -469,7 +456,9 @@ pub fn grammar_names(id: &str) -> Option<GrammarNames> {
     Some(GrammarNames { node_kinds, fields })
 }
 
-/// Returns the compiled grammar for a grammar-lock id.
+/// Returns the compiled grammar for a grammar-lock id. The oracle grammars of
+/// the languages a native grammar parses are development dependencies, so
+/// their ids return `None`.
 pub fn grammar_by_id(id: &str) -> Option<Language> {
     Some(match id {
         "agda" => tree_sitter_agda::LANGUAGE.into(),
@@ -479,9 +468,7 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "cpp" => tree_sitter_cpp::LANGUAGE.into(),
         "csharp" => tree_sitter_c_sharp::LANGUAGE.into(),
         "css" => tree_sitter_css::LANGUAGE.into(),
-        "csv" => csv_grammar::LANGUAGE.into(),
         "dart" => tree_sitter_dart::LANGUAGE.into(),
-        "diff" => tree_sitter_diff::LANGUAGE.into(),
         "dtd" => tree_sitter_xml::LANGUAGE_DTD.into(),
         "elixir" => tree_sitter_elixir::LANGUAGE.into(),
         "elm" => tree_sitter_elm::LANGUAGE.into(),
@@ -492,11 +479,8 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "haskell" => tree_sitter_haskell::LANGUAGE.into(),
         "hcl" => tree_sitter_hcl::LANGUAGE.into(),
         "html" => tree_sitter_html::LANGUAGE.into(),
-        "ini" => tree_sitter_ini::LANGUAGE.into(),
         "java" => tree_sitter_java::LANGUAGE.into(),
         "javascript" => tree_sitter_javascript::LANGUAGE.into(),
-        "json" => tree_sitter_json::LANGUAGE.into(),
-        "json5" => tree_sitter_json5_orchard::LANGUAGE.into(),
         "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
         "lean" => lean_grammar::LANGUAGE.into(),
         "lua" => tree_sitter_lua::LANGUAGE.into(),
@@ -515,13 +499,11 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "proto" => tree_sitter_proto::LANGUAGE.into(),
         "python" => tree_sitter_python::LANGUAGE.into(),
         "r" => tree_sitter_r::LANGUAGE.into(),
-        "racket" => tree_sitter_racket::LANGUAGE.into(),
         "regex" => tree_sitter_regex::LANGUAGE.into(),
         "rocq" => rocq_grammar::LANGUAGE.into(),
         "ruby" => tree_sitter_ruby::LANGUAGE.into(),
         "rust" => rust_grammar::LANGUAGE.into(),
         "scala" => tree_sitter_scala::LANGUAGE.into(),
-        "scheme" => tree_sitter_scheme::LANGUAGE.into(),
         "solidity" => tree_sitter_solidity::LANGUAGE.into(),
         "sql" => tree_sitter_sequel::LANGUAGE.into(),
         "swift" => tree_sitter_swift::LANGUAGE.into(),
