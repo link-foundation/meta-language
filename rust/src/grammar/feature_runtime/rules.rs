@@ -339,12 +339,12 @@ impl Executor<'_> {
                 let Some(mut acted) = self.run_action(rule, result, &mut scratch, position)? else {
                     continue;
                 };
-                // An item a silent rule the precedence orders name reduces
-                // alone records that rule, the outermost such one, for the
-                // conflict with a shift where the item is not reduced to it
-                // (see `child_parting`).
-                if !in_token && self.program.ranked_silent.contains(&*rule.node_kind) {
-                    acted = reduced_alone(acted, &rule.node_kind);
+                // An item a silent rule reduces alone records it, for the
+                // conflict with a shift where the item is not reduced (see
+                // `preferred_tokens` and `child_parting`).
+                if !in_token {
+                    let ranked = self.program.ranked_silent.contains(&*rule.node_kind);
+                    acted = reduced_alone(acted, &rule.node_kind, ranked);
                 }
                 let Some(tail) = acted.tail.clone() else {
                     built.push(Res {

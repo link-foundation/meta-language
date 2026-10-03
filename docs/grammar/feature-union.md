@@ -376,7 +376,9 @@ rule's kind ranks as the rule even where an alias to it came first, as Rust's
 `(alias identifier (literal default))`). A leaf matched under a
 `lexicalPrecedence` ranks at that level, as the token defined there (Rust's
 `//!` marker `!` outranks the comment text); two leaves of the same rank are
-one token and do not conflict. A leaf an external scanner built, under any alias, wins
+one token and do not conflict, and so are two leaves of one span that one
+token rule built under keyword lexing (JavaScript's `identifier` and its alias
+`shorthand_property_identifier`). A leaf an external scanner built, under any alias, wins
 over a leaf the lexer matched before any rank is compared, as tree-sitter
 runs the external scanner first wherever one of its tokens is valid and takes
 the token it scans (JavaScript's automatic semicolon after `return` before a
@@ -386,12 +388,22 @@ begins with it, one of them reduced that leaf where the other shifted on: an
 LR parser decides between them on the token after the leaf, the lookahead, so
 a leaf conflict that starts after the lookahead is no lexer's, as the two
 then lex in different parse states (Rust's `$(...);*`, whose `;` is a
-separator only after `$(` was shifted), and it does not decide. A token wins, too, where
+separator only after `$(` was shifted), and it does not decide. That holds
+where a silent rule reduced the leaf alone in one of them, or the node, or one
+along its leftmost chain, ends with the leaf; where neither reduced it (the
+`{` of a JavaScript block and of an object), the two shift it alike and their
+next leaves conflict as the lexer's. Two equal leaves part at their end too
+where a silent rule reduced only one of them alone (Rust's `$` of a token
+tree pattern and of `$(...);*`). A token wins, too, where
 the other result skipped an anonymous trivia leaf (a separator such as
 whitespace) that starts where the token starts and that the token covers.
 When the pair ties, or no pair differs, the shift or reduction an LR parser
 keeps by precedence decides, as tree-sitter decides a shift-reduce conflict
-when it generates its parser: both results are walked in order, skipping
+when it generates its parser (two nodes of different kinds over the same
+tokens from one offset, neither on the other's leftmost chain, as
+JavaScript's `{}` as a `statement_block` and as an `object`, are a
+reduce-reduce conflict that the higher precedence they are reduced with
+settles first): both results are walked in order, skipping
 trivia, the subtrees they share and equal leaves, to the first two nodes that
 start at one offset; the outermost node kind on both their leftmost chains (a
 node, then its first non-trivia child while that is a node) gives the pair of
@@ -410,9 +422,10 @@ names, and took it as the first part of the longer child (JavaScript's
 arguments where the call `f()` reduced `f` to an `expression`, which
 `(precedences (name member) ... (name new) (name call) (rule expression))`
 ranks below `new`). An item such a silent rule reduces alone records the
-outermost such rule, and the node's precedence against that reduction's
-(the item's own reduction precedence if a token, else the silent rule's
-level 0) decides, as below. Otherwise the shorter
+rule after the inner ones it was reduced to, and the node's precedence
+against the reduction to the first of those rules the shorter child was not
+reduced to as well (the item's own reduction precedence if a token, else the
+silent rule's level 0) decides, as below. Otherwise the shorter
 one was reduced where
 the longer one shifted on, and the precedence of the two nodes decides, as
 the item in progress is the node's own rule (a node without one counts as

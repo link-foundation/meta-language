@@ -166,7 +166,11 @@ function preferredTokens(result, existing, tokens) {
   // the other shifted on: an LR parser decides between them on the token
   // after the leaf, the lookahead, and a leaf conflict after the lookahead is
   // no lexer's, as the two then lex in different parse states (Rust's
-  // `$(...);*`, whose `;` is a separator only after `$(` was shifted).
+  // `$(...);*`, whose `;` is a separator only after `$(` was shifted): a
+  // silent rule reduced the leaf alone in one of them, or the node, or one
+  // along its leftmost chain, ends with it. Where neither reduced it (the `{`
+  // of a JavaScript block and of an object), the two shift it alike. Two
+  // leaves alike part at their end too where only one was reduced alone.
   // `pending` is the end of that leaf, `decided` the lookahead's start.
   let pending = Infinity;
   let decided = Infinity;
@@ -204,8 +208,8 @@ function preferredTokens(result, existing, tokens) {
       if (nestsFirst(a, b)) enter(left, a);
       else enter(right, b);
     } else if (a.type === 'node' || b.type === 'node') {
-      const lone = a.type === 'node' ? b : a;
-      if (lone.type !== 'node' && !isTrivia(lone)) pending = Math.min(pending, lone.end);
+      const [node, lone] = a.type === 'node' ? [a, b] : [b, a];
+      if (lone.type !== 'node' && !isTrivia(lone) && reducedFirst(node, lone)) pending = Math.min(pending, lone.end);
       if (a.type === 'node') enter(left, a);
       if (b.type === 'node') enter(right, b);
     } else if (a.trivia || b.trivia) {
@@ -217,7 +221,10 @@ function preferredTokens(result, existing, tokens) {
       return 1;
     } else if (b.start < a.start && covers(b, skipped[0])) {
       return -1;
-    } else if (a.end !== b.end || a.kind !== b.kind) {
+    } else if (a.end !== b.end || (a.kind !== b.kind && !(a.start === b.start && a.lexed !== undefined && a.lexed === b.lexed))) {
+      // Two leaves of one span the same token rule built (JavaScript's
+      // `identifier` and its alias `shorthand_property_identifier`) are one
+      // token to the lexer.
       lookahead(a);
       lookahead(b);
       if (Math.min(a.start, b.start) > decided) return 0;
@@ -230,11 +237,24 @@ function preferredTokens(result, existing, tokens) {
       return scanned !== 0 ? scanned : tokenConflict(a, b, tokens);
     } else {
       lookahead(a);
+      // One leaf a silent rule reduced alone, the other not: the two part
+      // at its end (Rust's `$` of a token tree pattern, a lone token, and
+      // of `$(...);*`).
+      if (Boolean(a.alone) !== Boolean(b.alone)) pending = Math.min(pending, a.end);
       skip(left);
       skip(right);
       skipped = [[], []];
     }
   }
+}
+
+// Whether a parse that has `leaf` alone and one that has `node`, which begins
+// with it, part at its end: one of them reduced the leaf, a silent rule alone
+// or as the end of `node` or of a node along its leftmost chain.
+function reducedFirst(node, leaf) {
+  const chain = leftmostChain(node);
+  const first = chain.at(-1)?.children.find((child) => !isTrivia(child));
+  return Boolean(leaf.alone || (first?.start === leaf.start && first.alone) || chain.some((inner) => inner.end === leaf.end));
 }
 
 // 1 when a leaf is a token of an external scanner, 0 otherwise.
@@ -367,6 +387,14 @@ function shiftOrder(result, existing, orders) {
         const order = comparePrecedence(pair[0].reduced ?? unranked(), pair[1].reduced ?? unranked(), orders);
         if (order !== 0) return order;
       }
+      // Two nodes of different kinds over the same tokens (JavaScript's
+      // `{}`, a `statement_block` and an `object`), neither of which holds
+      // the other, conflict where both are reduced: the higher precedence
+      // they are reduced with wins.
+      if (a.end === b.end && a.kind !== b.kind && !holdsFirst(a, b) && !holdsFirst(b, a) && sameTokens(a, b)) {
+        const order = comparePrecedence(reduction(a), reduction(b), orders);
+        if (order !== 0) return order;
+      }
     }
     const lone = loneReduction(a, b, orders) || -loneReduction(b, a, orders);
     if (lone !== 0) return lone;
@@ -446,13 +474,19 @@ function extraReduction(a, b, stack, orders) {
   return 0;
 }
 
-// A result whose one meaningful item records that it was reduced alone to the
-// silent rule `name`; any other result as it is.
-function reducedAlone(result, name) {
+// A result whose one meaningful item records that the silent rule `name`
+// reduced it alone: a token as `alone`, and any item, when the precedence
+// orders name the rule (`ranked`), the rule after the inner ones it was
+// reduced to (`reducedTo`); any other result as it is.
+function reducedAlone(result, name, ranked) {
   const meaningful = result.children.filter((child) => !isTrivia(child));
-  if (meaningful.length !== 1 || meaningful[0].reducedTo === name) return result;
+  if (meaningful.length !== 1) return result;
   const only = meaningful[0];
-  const tagged = only.type === 'node' ? copyNode(only, { reducedTo: name }) : { ...only, reducedTo: name };
+  const changes = {};
+  if (only.type === 'token' && !only.alone) changes.alone = true;
+  if (ranked && !only.reducedTo?.includes(name)) changes.reducedTo = [...(only.reducedTo ?? []), name];
+  if (Object.keys(changes).length === 0) return result;
+  const tagged = only.type === 'node' ? copyNode(only, changes) : { ...only, ...changes };
   return copyResult(result, { children: result.children.map((child) => (child === only ? tagged : child)) });
 }
 
@@ -484,10 +518,13 @@ function childParting(a, b, orders) {
       if (sameTree(head, short)) break;
       progress = head;
     }
-    if (progress.end === short.end || !head.reducedTo || head.reducedTo === short.reducedTo) return 0;
+    // The reduction in conflict is the first of the head's the short child
+    // was not reduced to as well.
+    const rule = head.reducedTo?.find((name) => !short.reducedTo?.includes(name));
+    if (progress.end === short.end || !rule) return 0;
     const shifted = node.precedence ?? unranked(node.rule);
     // A node's own precedence is its rule's, not the one it was reduced with.
-    const reduced = head.reduced ?? (head.type === 'token' ? head.precedence : null) ?? unranked(head.reducedTo);
+    const reduced = head.reduced ?? (head.type === 'token' ? head.precedence : null) ?? unranked(rule);
     const order = comparePrecedence(shifted, reduced, orders);
     if (order !== 0) return sign * order;
     if (reduced.associativity === 'right') return sign;
@@ -495,6 +532,29 @@ function childParting(a, b, orders) {
     return 0;
   }
   return 0;
+}
+
+// Whether a node of the kind and span of `inner` is on the leftmost chain of
+// `outer`, which ends with it.
+function holdsFirst(outer, inner) {
+  return leftmostChain(outer).some((node) => node.kind === inner.kind && node.start === inner.start && node.end === inner.end);
+}
+
+// Whether two subtrees hold the same tokens: leaves of one span each, of one
+// kind or built by one token rule.
+function sameTokens(a, b) {
+  const leaves = (tree, out) => {
+    if (isTrivia(tree)) return out;
+    if (tree.type !== 'node') out.push(tree);
+    else for (const child of tree.children) leaves(child, out);
+    return out;
+  };
+  const [first, second] = [leaves(a, []), leaves(b, [])];
+  return first.length === second.length && first.every((leaf, index) => {
+    const other = second[index];
+    return leaf.type === other.type && leaf.start === other.start && leaf.end === other.end
+      && (leaf.kind === other.kind || (leaf.lexed !== undefined && leaf.lexed === other.lexed));
+  });
 }
 
 // Whether two subtrees are the same tree over the same text, whichever of
@@ -1813,10 +1873,10 @@ export class Executor {
         const scratch = { type: 'node', kind: rule.nodeKind, start: position, end: result.end, children: result.children };
         let acted = this.runAction(rule, result, scratch, position);
         if (!acted) continue;
-        // An item a silent rule the precedence orders name reduces alone
-        // records that rule, the outermost such one, for the conflict with a
-        // shift where the item is not reduced to it (see `childParting`).
-        if (!inToken && this.program.rankedSilent?.has(rule.nodeKind)) acted = reducedAlone(acted, rule.nodeKind);
+        // An item a silent rule reduces alone records it, for the conflict
+        // with a shift where the item is not reduced (see `preferredTokens`
+        // and `childParting`).
+        if (!inToken) acted = reducedAlone(acted, rule.nodeKind, this.program.rankedSilent?.has(rule.nodeKind));
         if (!(expected && acted.ambiguous) && !acted.tail) {
           built.push(acted);
           continue;

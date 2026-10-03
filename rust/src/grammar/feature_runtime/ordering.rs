@@ -7,6 +7,7 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+use super::parting::{child_parting, holds_first, one_token, reduced_first, same_tokens};
 use super::program::{Associativity, PrecedenceTag, TokenRank, compare_precedence};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
 use crate::grammar::PrecedenceEntry;
@@ -75,7 +76,7 @@ fn items(children: &Children) -> Items {
 }
 
 /// The meaningful (not trivia) items of a child list.
-fn meaningful(children: &Children) -> Vec<Rc<Tree>> {
+pub(super) fn meaningful(children: &Children) -> Vec<Rc<Tree>> {
     items(children).filter(|child| !child.trivia).collect()
 }
 
@@ -106,8 +107,12 @@ pub(super) fn preferred_tokens(
     // token after the leaf, the lookahead, and a leaf conflict after the
     // lookahead is no lexer's, as the two then lex in different parse states
     // (Rust's `$(...);*`, whose `;` is a separator only after `$(` was
-    // shifted). `pending` is the end of that leaf, `decided` the lookahead's
-    // start.
+    // shifted): a silent rule reduced the leaf alone in one of them, or the
+    // node, or one along its leftmost chain, ends with it. Where neither
+    // reduced it (the `{` of a JavaScript block and of an object), the two
+    // shift it alike. Two leaves alike part at their end too where only one
+    // was reduced alone. `pending` is the end of that leaf, `decided` the
+    // lookahead's start.
     let mut pending = usize::MAX;
     let mut decided = usize::MAX;
     let lookahead = |tree: &Rc<Tree>, pending: usize, decided: &mut usize| {
@@ -164,8 +169,8 @@ pub(super) fn preferred_tokens(
                         open_node(&mut right, false);
                     }
                 } else if a_node || b_node {
-                    let lone = if a_node { &b } else { &a };
-                    if lone.ty != TreeType::Node && !lone.trivia {
+                    let (node, lone) = if a_node { (&a, &b) } else { (&b, &a) };
+                    if lone.ty != TreeType::Node && !lone.trivia && reduced_first(node, lone) {
                         pending = pending.min(lone.end);
                     }
                     if a_node {
@@ -187,7 +192,11 @@ pub(super) fn preferred_tokens(
                     return Ordering::Greater;
                 } else if b.start < a.start && covers(&b, &skipped[0]) {
                     return Ordering::Less;
-                } else if a.end != b.end || a.kind != b.kind {
+                } else if a.end != b.end || !one_token(&a, &b) {
+                    // Two leaves of one span the same token rule built
+                    // (JavaScript's `identifier` and its alias
+                    // `shorthand_property_identifier`) are one token to the
+                    // lexer.
                     lookahead(&a, pending, &mut decided);
                     lookahead(&b, pending, &mut decided);
                     if a.start.min(b.start) > decided {
@@ -205,6 +214,12 @@ pub(super) fn preferred_tokens(
                         .then_with(|| token_conflict(&a, &b, tokens));
                 } else {
                     lookahead(&a, pending, &mut decided);
+                    // One leaf a silent rule reduced alone, the other not:
+                    // the two part at its end (Rust's `$` of a token tree
+                    // pattern, a lone token, and of `$(...);*`).
+                    if a.alone != b.alone {
+                        pending = pending.min(a.end);
+                    }
                     left.pop();
                     right.pop();
                     skipped = [Vec::new(), Vec::new()];
@@ -301,6 +316,24 @@ pub(super) fn shift_order(
                         return order;
                     }
                 }
+                // Two nodes of different kinds over the same tokens
+                // (JavaScript's `{}`, a `statement_block` and an `object`),
+                // neither of which holds the other, conflict where both are
+                // reduced: the higher precedence they are reduced with wins.
+                if a_node
+                    && b_node
+                    && a.start == b.start
+                    && a.end == b.end
+                    && a.kind != b.kind
+                    && !holds_first(&a, &b)
+                    && !holds_first(&b, &a)
+                    && same_tokens(&a, &b)
+                {
+                    let order = compare_precedence(&reduction(&a), &reduction(&b), orders);
+                    if order != Ordering::Equal {
+                        return order;
+                    }
+                }
                 let lone = lone_reduction(&a, &b, orders)
                     .then_with(|| lone_reduction(&b, &a, orders).reverse());
                 if lone != Ordering::Equal {
@@ -333,7 +366,7 @@ pub(super) fn shift_order(
 
 /// Of a precedence decided on equal levels, Greater for a shift (right
 /// associativity), Less for a reduction (left), Equal for none.
-const fn by_associativity(associativity: Associativity) -> Ordering {
+pub(super) const fn by_associativity(associativity: Associativity) -> Ordering {
     match associativity {
         Associativity::Right => Ordering::Greater,
         Associativity::Left => Ordering::Less,
@@ -476,7 +509,7 @@ fn extra_reduction(
 
 /// Whether two subtrees are the same tree over the same text, whichever of
 /// them holds the white space around it.
-fn same_tree(a: &Rc<Tree>, b: &Rc<Tree>) -> bool {
+pub(super) fn same_tree(a: &Rc<Tree>, b: &Rc<Tree>) -> bool {
     if Rc::ptr_eq(a, b) {
         return true;
     }
@@ -522,12 +555,12 @@ pub(super) fn same_output(a: &Children, b: &Children) -> bool {
 }
 
 /// The first child of a list that is not trivia, without flattening it.
-fn first_meaningful(children: &Children) -> Option<Rc<Tree>> {
+pub(super) fn first_meaningful(children: &Children) -> Option<Rc<Tree>> {
     items(children).find(|child| !child.trivia)
 }
 
 /// The offset of the first leaf under a node that is not white space.
-fn first_leaf_start(node: &Rc<Tree>) -> usize {
+pub(super) fn first_leaf_start(node: &Rc<Tree>) -> usize {
     let mut current = node.clone();
     while current.ty == TreeType::Node {
         let Some(first) = first_meaningful(&current.children) else {
@@ -540,7 +573,7 @@ fn first_leaf_start(node: &Rc<Tree>) -> usize {
 
 /// The nodes along the leftmost chain of a node: itself, then its first
 /// meaningful child while that is a node.
-fn leftmost_chain(node: &Rc<Tree>) -> Vec<Rc<Tree>> {
+pub(super) fn leftmost_chain(node: &Rc<Tree>) -> Vec<Rc<Tree>> {
     let mut chain = Vec::new();
     let mut current = Some(node.clone());
     while let Some(next) = current.filter(|next| next.ty == TreeType::Node) {
@@ -658,81 +691,6 @@ fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -
     } else {
         order.reverse()
     }
-}
-
-/// Which of two results an LR parser keeps when two nodes of one kind from
-/// one offset, which end apart, part before either ends, where their
-/// children first differ by end: the parse whose child ends first shifts on
-/// in its node, where the other reduced that child alone to the silent rule
-/// the longer child's node in progress takes it as (JavaScript's `new f()`
-/// before a template, whose `new_expression` shifts `(` as its arguments
-/// under `new`, where the call `f()` reduced `f` to an `expression`, which
-/// the order ranks below `new`). The precedence of the node that shifts
-/// against that reduction's decides, as in `shift_preferred`. Greater when
-/// `a`'s result is kept, Less when `b`'s is, Equal when neither. It mirrors
-/// childParting in js/src/grammar-runtime/executor.js.
-fn child_parting(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -> Ordering {
-    let (first, second) = (meaningful(&a.children), meaningful(&b.children));
-    for (index, (x, y)) in first.iter().zip(&second).enumerate() {
-        if same_tree(x, y) {
-            continue;
-        }
-        if first_leaf_start(x) != first_leaf_start(y) || x.end == y.end {
-            return Ordering::Equal;
-        }
-        let (short, long, node, own, kept) = if x.end < y.end {
-            (x, y, a, &first, Ordering::Greater)
-        } else {
-            (y, x, b, &second, Ordering::Less)
-        };
-        if index + 1 == own.len() {
-            return Ordering::Equal;
-        }
-        let mut progress = long.clone();
-        let head = loop {
-            if progress.ty != TreeType::Node {
-                return Ordering::Equal;
-            }
-            let Some(head) = first_meaningful(&progress.children) else {
-                return Ordering::Equal;
-            };
-            if same_tree(&head, short) {
-                break head;
-            }
-            progress = head;
-        };
-        if progress.end == short.end
-            || head.reduced_to.is_none()
-            || head.reduced_to == short.reduced_to
-        {
-            return Ordering::Equal;
-        }
-        let shifted = node
-            .precedence
-            .clone()
-            .unwrap_or_else(|| PrecedenceTag::unranked(node.rule.clone()));
-        // A node's own precedence is its rule's, not the one it was reduced
-        // with.
-        let reduced = head
-            .reduced
-            .clone()
-            .or_else(|| {
-                if head.ty == TreeType::Token {
-                    head.precedence.clone()
-                } else {
-                    None
-                }
-            })
-            .unwrap_or_else(|| PrecedenceTag::unranked(head.reduced_to.clone()));
-        let order = compare_precedence(&shifted, &reduced, orders)
-            .then_with(|| by_associativity(reduced.associativity));
-        return if kept == Ordering::Greater {
-            order
-        } else {
-            order.reverse()
-        };
-    }
-    Ordering::Equal
 }
 
 /// Greater when the shift that built `long` is preferred to the reduction

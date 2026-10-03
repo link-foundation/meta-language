@@ -138,9 +138,11 @@ pub(super) struct Tree {
     /// The precedence a node ending a silent rule was reduced with (see
     /// `lone_reduction`).
     pub(super) closes: Option<PrecedenceTag>,
-    /// The outermost silent rule the precedence orders name that reduced
-    /// the item alone (see `child_parting`).
-    pub(super) reduced_to: Option<Name>,
+    /// The silent rules the precedence orders name that reduced the item
+    /// alone, innermost first (see `child_parting`).
+    pub(super) reduced_to: Vec<Name>,
+    /// A token leaf a silent rule reduced alone (see `preferred_tokens`).
+    pub(super) alone: bool,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
     /// A token of an external scanner, whatever an alias names it (see
@@ -171,7 +173,8 @@ impl Tree {
             priority: None,
             reduced: None,
             closes: None,
-            reduced_to: None,
+            reduced_to: Vec::new(),
+            alone: false,
             ambiguous: false,
             literal: false,
             scanned: false,
@@ -555,10 +558,12 @@ fn outranks_at(leaf: &Tree, tokens: TokenOrder<'_>) -> bool {
     token_conflict(&keyword, leaf, tokens) == Ordering::Greater
 }
 
-/// `result` with its one meaningful item recording that it was reduced alone
-/// to the silent rule `name`; any other result as it is. It mirrors
+/// `result` with its one meaningful item recording that the silent rule
+/// `name` reduced it alone: a token as `alone`, and any item, when the
+/// precedence orders name the rule (`ranked`), the rule after the inner ones
+/// it was reduced to (`reduced_to`); any other result as it is. It mirrors
 /// reducedAlone in js/src/grammar-runtime/executor.js.
-pub(super) fn reduced_alone(result: Res, name: &Name) -> Res {
+pub(super) fn reduced_alone(result: Res, name: &Name, ranked: bool) -> Res {
     let mut children = result.children.to_vec();
     let mut meaningful = children
         .iter()
@@ -567,11 +572,16 @@ pub(super) fn reduced_alone(result: Res, name: &Name) -> Res {
     let (Some((at, only)), None) = (meaningful.next(), meaningful.next()) else {
         return result;
     };
-    if only.reduced_to.as_ref() == Some(name) {
+    let alone = only.ty == TreeType::Token && !only.alone;
+    let reduced = ranked && !only.reduced_to.contains(name);
+    if !alone && !reduced {
         return result;
     }
     let mut tagged = (**only).clone();
-    tagged.reduced_to = Some(name.clone());
+    tagged.alone |= alone;
+    if reduced {
+        tagged.reduced_to.push(name.clone());
+    }
     children[at] = Rc::new(tagged);
     Res {
         children: children_of(children),

@@ -15,6 +15,7 @@ mod lexing;
 mod load;
 mod operations;
 mod ordering;
+mod parting;
 mod precedence;
 mod program;
 mod results;
