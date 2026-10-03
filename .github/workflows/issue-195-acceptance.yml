@@ -31,9 +31,17 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
+
+      # The evidence runner reads the language catalog, whose native grammar
+      # source names are parsed with links-notation.
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
 
       - name: Pack candidates or download the published release
         env:
