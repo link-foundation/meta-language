@@ -114,8 +114,11 @@ function nativeGrammarCatalog(inventory) {
  */
 export function nativeOracleKinds(text) {
   const kinds = {};
-  for (const [name, rule] of parseGrammarLinks(text).rules) {
-    const oracle = rule.sourceNames?.find(({ source }) => source === 'tree-sitter');
+  const grammar = parseGrammarLinks(text);
+  // The renamed rules and the renamed node kinds no rule defines, such as
+  // the kind an alias names.
+  for (const [name, { sourceNames }] of [...grammar.rules, ...grammar.kinds.map((kind) => [kind.name, kind])]) {
+    const oracle = sourceNames?.find(({ source }) => source === 'tree-sitter');
     if (oracle && oracle.name !== name) kinds[name] = oracle.name;
   }
   return kinds;

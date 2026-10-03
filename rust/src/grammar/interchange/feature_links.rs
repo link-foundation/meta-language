@@ -323,8 +323,10 @@ pub(super) struct RuleFields {
     pub doc: Option<String>,
 }
 
-/// Reads `(source-names (SOURCE NAME)...)`.
-fn source_names(args: &[Node]) -> Result<Vec<GrammarSourceName>, GrammarImportError> {
+/// Reads the `(SOURCE NAME)...` items of `(source-names (SOURCE NAME)...)`.
+pub(super) fn read_source_names(
+    args: &[Node],
+) -> Result<Vec<GrammarSourceName>, GrammarImportError> {
     if args.is_empty() {
         return Err(links_error("source-names lists at least one source name"));
     }
@@ -360,7 +362,7 @@ pub(super) fn read_rule_fields(fields: &[Node]) -> Result<RuleFields, GrammarImp
             "parameters" => read.attributes.parameters = names(field, "parameters")?,
             "modes" => read.attributes.modes = Some(names(field, "modes")?),
             "action" => read.attributes.action = Some(operations(field, "action")?),
-            "source-names" => read.source_names = source_names(args)?,
+            "source-names" => read.source_names = read_source_names(args)?,
             "channel" => {
                 arity(head, args, 1)?;
                 read.attributes.channel = Some(decoded_word(args.first(), "a channel name")?);

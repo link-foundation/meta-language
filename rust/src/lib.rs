@@ -115,7 +115,7 @@ pub use grammar::{
     GRAMMAR_CONCEPTS, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS, GoldenCorpus, Grammar,
     GrammarAcceptorOracle, GrammarBuilder, GrammarConcept, GrammarDiagnostic, GrammarEmitError,
     GrammarExpr, GrammarFidelityLevel, GrammarFormat, GrammarFormatProfile, GrammarImportError,
-    GrammarOracle, GrammarParser, GrammarRule, GrammarSourceName, GrammarSurfaceError,
+    GrammarKind, GrammarOracle, GrammarParser, GrammarRule, GrammarSourceName, GrammarSurfaceError,
     GrammarTranslateError, InferenceOptions, InferenceReport, InferenceResult, InferredAutomaton,
     JsParserArtifacts, LeafKind, LengthUnit, LexicalConfig, LexicalModel, Mdl, MdlMergeAdvisor,
     MembershipOracle, MergeAdvisor, MergeCandidate, MergeRequest, MergeScore, MergeStrategy,

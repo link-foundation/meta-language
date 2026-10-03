@@ -206,6 +206,13 @@ fixture begins:
 (scanner layout (tokens newline indent dedent) (operations (if (valid newline) (then (consume (literal %0A)) ...
 ```
 
+The links form also carries metadata that the listing and the JSON leave out.
+A rule may end with `(concept ID)` and `(source-names (SOURCE NAME) ...)`
+before its doc. After the declarations, and once for each name,
+`(kind NAME (source-names (SOURCE NAME) ...))` keeps the source names of a
+node kind that no rule defines, such as the kind an alias names (see
+[native grammars](native-grammars.md#concepts)).
+
 The listing, the links form and the serialized JSON all round-trip every form:
 `parse(render(g))` yields a normalized grammar equal to `g`, and rendering it
 again yields the same text. Both codecs are driven by one table,

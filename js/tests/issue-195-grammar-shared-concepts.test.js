@@ -217,11 +217,13 @@ test('native rule names are readable English and keep their tree-sitter names as
     const parsed = parseGrammarLinks(text);
     assert.equal(renderGrammarLinks(parsed), text, `${grammar} round-trips its concepts and source names`);
     const { oracleKinds } = LANGUAGE_CATALOG.nativeGrammars[grammar];
-    for (const [name, rule] of parsed.rules) {
+    const named = [...parsed.rules, ...parsed.kinds.map((kind) => [kind.name, kind])];
+    for (const [name, { sourceNames }] of named) {
       assert.match(name, english, `${grammar} ${name}`);
-      const original = rule.sourceNames?.find(({ source }) => source === 'tree-sitter')?.name;
+      const original = sourceNames?.find(({ source }) => source === 'tree-sitter')?.name;
       assert.equal(oracleKinds[name], original, `${grammar} ${name} keeps its tree-sitter kind`);
     }
+    assert.equal(Object.keys(oracleKinds).length, named.filter(([, { sourceNames }]) => sourceNames?.length > 0).length);
   }
   assert.deepEqual(LANGUAGE_CATALOG.nativeGrammars['native-json'].oracleKinds, { value: '_value' });
   assert.equal(LANGUAGE_CATALOG.nativeGrammars['native-racket'].oracleKinds.datum_comment, 'sexp_comment');

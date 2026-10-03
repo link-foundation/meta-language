@@ -9,7 +9,9 @@ import { createGrammarParser } from './grammar-runtime.js';
  * `action` attributes. docs/grammar/feature-union.md describes them. A rule
  * may also carry the metadata `concept`, the id of the concept record it
  * means, and `sourceNames`, `[{ source, name }]`, the names it has in the
- * grammars it was merged from (docs/grammar/native-grammars.md).
+ * grammars it was merged from (docs/grammar/native-grammars.md). The
+ * metadata `kinds`, `[{ name, sourceNames }]`, keeps the source names of the
+ * node kinds no rule defines, such as the kind an alias names.
  */
 export class Grammar {
   constructor(start, rules, sourceFormat = null, declarations = null) {
@@ -17,6 +19,7 @@ export class Grammar {
     this.sourceFormat = sourceFormat;
     this.declarations = compactDeclarations(declarations);
     this.rules = new Map();
+    this.kinds = [];
     for (const [name, rule] of rules ?? []) {
       const entry = { name, kind: rule.kind ?? 'normal', expression: rule.expression };
       if (rule.parameters?.length > 0) entry.parameters = rule.parameters;

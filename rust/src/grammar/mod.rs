@@ -34,6 +34,7 @@ pub mod inference;
 pub mod interchange;
 mod links;
 pub mod merge;
+mod metadata;
 pub mod reverse;
 pub mod round_trip;
 pub mod runtime;
@@ -127,6 +128,7 @@ pub use merge::{
     MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
     normalized_rule_definition, rename_grammar_rule, restore_source_names,
 };
+pub use metadata::{GrammarKind, GrammarSourceName};
 pub use reverse::{
     GrammarReverseConversion, GrammarReverseFailure, GrammarReverseFailureKind,
     GrammarReverseReport, GrammarReverseStage, GrammarReverseStatus,
@@ -541,16 +543,6 @@ impl fmt::Display for RuleKind {
     }
 }
 
-/// A name a rule has in a grammar it was merged from, such as its tree-sitter
-/// or ANTLR name, kept for the reverse conversion.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct GrammarSourceName {
-    /// The grammar source, such as `tree-sitter` or `antlr`.
-    pub source: String,
-    /// The rule name in that source.
-    pub name: String,
-}
-
 /// A named grammar rule.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GrammarRule {
@@ -731,6 +723,7 @@ pub struct Grammar {
     start: Option<String>,
     source_format: Option<GrammarFormat>,
     declarations: GrammarDeclarations,
+    kinds: Vec<GrammarKind>,
 }
 
 impl Grammar {
@@ -750,6 +743,7 @@ impl Grammar {
                 macros: Vec::new(),
                 scanners: Vec::new(),
             },
+            kinds: Vec::new(),
         }
     }
 
@@ -802,6 +796,17 @@ impl Grammar {
     /// Replaces the feature union declarations.
     pub fn set_declarations(&mut self, declarations: GrammarDeclarations) {
         self.declarations = declarations;
+    }
+
+    /// The node kinds no rule defines that keep their source names.
+    #[must_use]
+    pub fn kinds(&self) -> &[GrammarKind] {
+        &self.kinds
+    }
+
+    /// Replaces the node kinds no rule defines.
+    pub fn set_kinds(&mut self, kinds: Vec<GrammarKind>) {
+        self.kinds = kinds;
     }
 
     /// Adds a rule to the grammar.

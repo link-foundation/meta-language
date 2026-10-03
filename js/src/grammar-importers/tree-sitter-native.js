@@ -16,7 +16,9 @@
 // PREC_DYNAMIC   (dynamicPrecedence LEVEL ...)
 // TOKEN          (token ...); IMMEDIATE_TOKEN (immediateToken ...)
 // FIELD          (capture labeled NAME ...)
-// ALIAS          (alias NAME ...); an anonymous alias is named 'TEXT
+// ALIAS          (alias NAME ...); an anonymous alias is named 'TEXT; a
+//                renamed kind no rule defines keeps its source name as
+//                (kind NAME (source-names (tree-sitter SOURCE)))
 // a token tree-sitter leaves unnamed, any but a single STRING outside a
 //                lexical rule, (alias unnamed_token ...): tree-sitter hides it
 // extras         (extra ...); conflicts (conflict ...)
@@ -642,8 +644,12 @@ export function importTreeSitterNative(source, options = {}) {
   const sourcesOf = new Map();
   for (const { name, sourceName } of rules) sourcesOf.set(name, [...(sourcesOf.get(name) ?? []), sourceName]);
   for (const name of externals.filter(scanned)) sourcesOf.set(nameOf(name), [...(sourcesOf.get(nameOf(name)) ?? []), name]);
+  // The kinds only an alias names keep their upstream names, as the rules do.
+  const kinds = [];
   for (const [name, sources] of aliasSources) {
     if (sourcesOf.has(name)) sourcesOf.set(name, [...new Set([...sourcesOf.get(name), ...sources])]);
+    else if (sources.size > 1) clashes.push(`${name} (${[...sources].join(', ')})`);
+    else if (!sources.has(name)) kinds.push({ name, sourceName: [...sources][0] });
   }
   for (const [name, sources] of sourcesOf) if (sources.length > 1) clashes.push(`${name} (${sources.join(', ')})`);
   if (clashes.length > 0) throw parseError(FORMAT, `upstream names read the same natively: ${clashes.join('; ')}`);
@@ -652,6 +658,7 @@ export function importTreeSitterNative(source, options = {}) {
     extras,
     conflicts,
     scanners: scannerLines,
+    kinds,
     rules,
     keywords: [...keywords],
     report: { approximations: [...new Set(report.approximations)], unsupported: [...new Set(report.unsupported)] },
@@ -671,6 +678,9 @@ export function renderTreeSitterNative(imported, { annotate } = {}) {
   for (const extra of imported.extras) lines.push(`(extra ${extra})`);
   for (const group of imported.conflicts) lines.push(`(conflict ${group.map(enc).join(' ')})`);
   lines.push(...(imported.scanners ?? []));
+  for (const kind of imported.kinds ?? []) {
+    lines.push(`(kind ${enc(kind.name)} (source-names (tree-sitter ${enc(kind.sourceName)})))`);
+  }
   for (const rule of imported.rules) {
     lines.push(`(rule ${[enc(rule.name), rule.kind, rule.body, ...fields(rule)].join(' ')})`);
   }

@@ -259,7 +259,11 @@ in [`parity/naming/canonical-concepts.json`](../../parity/naming/canonical-conce
 with `(concept ID)`. A rule that replaces a differently named tree-sitter kind
 keeps that name as `(source-names (tree-sitter NAME))`, and the catalog's
 `oracleKinds` maps the rule back to it for the oracle comparison. The record
-lists the rule as a `native:<language>` source alias.
+lists the rule as a `native:<language>` source alias. A node kind that only an
+alias names, such as tree-sitter-rust's `doc_comment`, has no rule to carry its
+source name. It keeps that name in a
+`(kind documentation_comment (source-names (tree-sitter doc_comment)))` link
+before the rules, and `oracleKinds` maps it back the same way.
 
 A construct that means the same in two or more native grammars names one
 shared concept: a JSON `pair` and a JSON5 `member` are both `grammar.member`,

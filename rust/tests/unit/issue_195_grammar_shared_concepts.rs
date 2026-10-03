@@ -482,6 +482,24 @@ fn native_rule_names_are_english_and_keep_their_tree_sitter_names() {
                 renamed.insert(name.clone(), original.name.clone());
             }
         }
+        // The node kinds no rule defines, such as the kind an alias names,
+        // keep their tree-sitter kinds too.
+        for kind in parsed.kinds() {
+            assert!(
+                kind.name
+                    .split('_')
+                    .all(|word| !word.is_empty() && word.chars().all(|c| c.is_ascii_lowercase())),
+                "{grammar} {}",
+                kind.name
+            );
+            if let Some(original) = kind
+                .source_names
+                .iter()
+                .find(|alias| alias.source == "tree-sitter")
+            {
+                renamed.insert(kind.name.clone(), original.name.clone());
+            }
+        }
         // The catalog maps every renamed rule back to its tree-sitter kind.
         assert_eq!(entry.oracle_kinds, renamed, "{grammar}");
     }

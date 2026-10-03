@@ -24,7 +24,10 @@
 // the rule metadata `(concept ID)`, the canonical concept record the rule
 // means (parity/naming/canonical-concepts.json), and `(source-names (SOURCE
 // NAME)...)`, the names the rule has in the grammars it was merged from, for
-// reverse conversion, between the action and the doc;
+// reverse conversion, between the action and the doc; the metadata `(kind
+// NAME (source-names (SOURCE NAME)...))` links after the declarations, the
+// source names of the node kinds no rule defines, such as the kind an alias
+// names;
 // `(category V)` and `(script V)` class items; `(ref NAME ARGUMENT...)`; and
 // the feature expressions and operations of grammar-feature-forms.js.
 import { Parser } from 'links-notation';
@@ -95,6 +98,9 @@ export function renderGrammarLinks(grammar) {
   if (declarations.matching) header.push(`(matching ${declarations.matching})`);
   const lines = [`(${header.join(' ')})`];
   lines.push(...renderDeclarationLinks(declarations));
+  for (const kind of grammar.kinds ?? []) {
+    lines.push(`(kind ${percentEncodeLinksText(kind.name)} ${renderSourceNames(kind.sourceNames)})`);
+  }
   for (const rule of grammar.rules.values()) lines.push(renderRuleLink(grammar, rule));
   return lines.map((line) => `${line}\n`).join('');
 }
@@ -103,6 +109,12 @@ const LINKS_CODEC = linksCodec((expression) => renderLinksExpression(expression)
 
 function renderOperations(operations) {
   return operations.map((operation) => renderOperation(operation, LINKS_CODEC));
+}
+
+// Renders `(source-names (SOURCE NAME)...)`.
+function renderSourceNames(sourceNames) {
+  const names = sourceNames.map(({ source, name }) => `(${percentEncodeLinksText(source)} ${percentEncodeLinksText(name)})`);
+  return `(${['source-names', ...names].join(' ')})`;
 }
 
 function renderNames(head, names) {
@@ -134,10 +146,7 @@ export function renderRuleLink(grammar, rule) {
   const parts = ['rule', percentEncodeLinksText(rule.name), rule.kind, renderLinksExpression(rule.expression)];
   parts.push(...renderRuleFieldLinks(rule));
   if (rule.concept !== undefined) parts.push(`(concept ${percentEncodeLinksText(rule.concept)})`);
-  if (rule.sourceNames?.length > 0) {
-    const names = rule.sourceNames.map(({ source, name }) => `(${percentEncodeLinksText(source)} ${percentEncodeLinksText(name)})`);
-    parts.push(`(${['source-names', ...names].join(' ')})`);
-  }
+  if (rule.sourceNames?.length > 0) parts.push(renderSourceNames(rule.sourceNames));
   const doc = ruleDoc(grammar, rule);
   if (doc !== null) parts.push(`(doc ${percentEncodeLinksText(doc)})`);
   return `(${parts.join(' ')})`;
@@ -434,8 +443,18 @@ export function parseGrammarLinks(source) {
   }
   const rules = new Map();
   const docs = new Map();
+  const kinds = [];
   for (const statement of statements.slice(1)) {
     const [head, args] = parts(statement);
+    if (head === 'kind' && rules.size === 0) {
+      arity(head, args, 2);
+      const name = decodedWord(args[0], 'a kind name');
+      if (kinds.some((kind) => kind.name === name)) throw linksError(`kind ${name} is given twice`);
+      const [field, names] = parts(args[1]);
+      if (field !== 'source-names') throw linksError(`expected (source-names ...), not ${field}`);
+      kinds.push({ name, sourceNames: sourceNames(names) });
+      continue;
+    }
     if (head !== 'rule') {
       if (rules.size > 0 || !readDeclaration(head, args, declarations)) throw linksError(`unexpected link ${head}`);
       continue;
@@ -453,5 +472,6 @@ export function parseGrammarLinks(source) {
   if (start !== null && !rules.has(start)) throw linksError(`start rule ${start} is not defined`);
   const grammar = new Grammar(start ?? rules.keys().next().value, rules, sourceFormat, declarations);
   for (const [name, doc] of docs) grammar.rules.set(name, Object.freeze({ ...grammar.rules.get(name), doc }));
+  grammar.kinds = kinds;
   return grammar;
 }

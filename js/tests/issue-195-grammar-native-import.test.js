@@ -6,6 +6,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { corpusFileCases } from '../scripts/import-native-grammars.mjs';
+import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
+import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
 const rule = (character, length = 80) => character.repeat(length);
 
@@ -46,4 +48,70 @@ test('of equally long lines of dashes, the last divides, and a case without one 
     { title: 'Twice', source: 'a\n---\nb' },
     { title: 'Open', source: 'c\n' },
   ]);
+});
+
+// A string whose text and closing quote an external scanner reads, as
+// tree-sitter-rust's string_content and string_close are.
+const QUOTED = {
+  name: 'quoted',
+  rules: {
+    source: { type: 'REPEAT', content: { type: 'SYMBOL', name: 'string' } },
+    string: { type: 'SEQ', members: [{ type: 'STRING', value: '"' }, { type: 'SYMBOL', name: 'string_content' }, { type: 'SYMBOL', name: '_close' }] },
+  },
+  extras: [{ type: 'PATTERN', value: '[ ]' }],
+  externals: [{ type: 'SYMBOL', name: 'string_content' }, { type: 'SYMBOL', name: '_close' }],
+};
+const QUOTES = '(scanner quotes (tokens string_content _close) (operations '
+  + '(if (valid string_content) (then (while (not (next (literal %22))) (do advance)) (emit string_content))) '
+  + '(if (valid _close) (then (consume (literal %22)) (emit _close))) fail))\n';
+const tokens = (tree) => (tree.type === 'token' ? (tree.trivia ? [] : [[tree.kind, tree.text]]) : tree.children.flatMap(tokens));
+
+test('a native scanner reads the externals, from the current byte where the upstream scanner does', () => {
+  const imported = importTreeSitterNative(QUOTED, { scanners: QUOTES, immediate: ['string_content', '_close'] });
+  const text = renderTreeSitterNative(imported);
+  const lines = text.split('\n');
+  assert.equal(lines[2], QUOTES.trim(), 'the scanner comes before the rules');
+  // The hidden _close is a token tree-sitter leaves unnamed.
+  assert.equal(lines[4], '(rule string normal (seq (literal %22) (alias string_content (immediateToken (ref string_content))) (alias unnamed_token (immediateToken (ref _close)))))');
+  const outcome = compileGrammar(parseGrammarLinks(text)).parseTree('"a b" "c"');
+  assert.ok(outcome.ok);
+  assert.deepEqual(tokens(outcome.tree), [
+    [null, '"'], ['string_content', 'a b'], ['unnamed_token', '"'],
+    [null, '"'], ['string_content', 'c'], ['unnamed_token', '"'],
+  ]);
+  // Without immediateToken the extras before the text would be skipped.
+  const skipping = renderTreeSitterNative(importTreeSitterNative(QUOTED, { scanners: QUOTES }));
+  assert.deepEqual(tokens(compileGrammar(parseGrammarLinks(skipping)).parseTree('" a"').tree)[1], ['string_content', 'a']);
+  assert.throws(
+    () => importTreeSitterNative(QUOTED, { scanners: QUOTES, immediate: ['string'] }),
+    /the immediate external string is no scanner token/u,
+  );
+});
+
+test('a renamed node kind that only an alias names keeps its tree-sitter name', () => {
+  const commented = (second) => ({
+    name: 'commented',
+    rules: {
+      source: { type: 'REPEAT', content: { type: 'CHOICE', members: [
+        { type: 'ALIAS', named: true, value: 'doc_comment', content: { type: 'SYMBOL', name: '_line' } },
+        { type: 'ALIAS', named: true, value: second, content: { type: 'SYMBOL', name: '_block' } },
+      ] } },
+      _line: { type: 'PATTERN', value: '#[a-z]*' },
+      _block: { type: 'PATTERN', value: '![a-z]*' },
+    },
+    extras: [],
+  });
+  const nameOf = (name) => name.replace('doc_', 'documentation_');
+  const text = renderTreeSitterNative(importTreeSitterNative(commented('doc_comment'), { nameOf }));
+  assert.match(text, /^\(kind documentation_comment \(source-names \(tree-sitter doc_comment\)\)\)$/mu);
+  const grammar = parseGrammarLinks(text);
+  assert.deepEqual(grammar.kinds, [{ name: 'documentation_comment', sourceNames: [{ source: 'tree-sitter', name: 'doc_comment' }] }]);
+  assert.deepEqual(tokens(compileGrammar(grammar).parseTree('#a!b').tree).map(([kind]) => kind), ['documentation_comment', 'documentation_comment']);
+  // An alias kept as is needs no kind link.
+  assert.doesNotMatch(renderTreeSitterNative(importTreeSitterNative(commented('doc_comment'))), /^\(kind /mu);
+  // Two upstream kinds that read the same natively are refused.
+  assert.throws(
+    () => importTreeSitterNative(commented('documentation_comment'), { nameOf }),
+    /upstream names read the same natively: documentation_comment \(doc_comment, documentation_comment\)/u,
+  );
 });

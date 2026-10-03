@@ -367,3 +367,21 @@ test('no JavaScript source module imports peggy, which is only a development dep
   assert.equal(manifest.dependencies.peggy, undefined);
   assert.equal(manifest.devDependencies.peggy, '5.1.0');
 });
+
+test('node kinds no rule defines keep their source names in the links form', () => {
+  const links = '(grammar (start comment))\n'
+    + '(kind documentation_comment (source-names (tree-sitter doc_comment)))\n'
+    + '(rule comment normal (literal %2F%2F))\n';
+  const grammar = parseGrammarLinks(links);
+  assert.deepEqual(grammar.kinds, [{ name: 'documentation_comment', sourceNames: [{ source: 'tree-sitter', name: 'doc_comment' }] }]);
+  assert.equal(renderGrammarLinks(grammar), links);
+  // The kinds come before the rules, once each, with their source names.
+  for (const [malformed, detail] of [
+    ['(grammar)\n(rule a normal empty)\n(kind b (source-names (t c)))\n', 'unexpected link kind'],
+    ['(grammar)\n(kind b (source-names (t c)))\n(kind b (source-names (t c)))\n(rule a normal empty)\n', 'kind b is given twice'],
+    ['(grammar)\n(kind b (doc x))\n(rule a normal empty)\n', 'expected (source-names ...), not doc'],
+    ['(grammar)\n(kind b (source-names))\n(rule a normal empty)\n', 'source-names lists at least one source name'],
+  ]) {
+    assert.throws(() => parseGrammarLinks(malformed), (error) => error.message.endsWith(detail), malformed);
+  }
+});

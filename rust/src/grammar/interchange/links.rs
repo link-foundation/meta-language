@@ -14,7 +14,9 @@
 //! `(capture unlabeled ITEM)`. The grammar feature union adds an optional
 //! `(matching MODE)` header field, declaration links before the first rule,
 //! rule fields before the doc and feature expressions (see the
-//! `feature_links` module). Names, texts and characters are percent-encoded
+//! `feature_links` module). The metadata `(kind NAME (source-names (SOURCE
+//! NAME)...))` links after the declarations keep the source names of the
+//! node kinds no rule defines, such as the kind an alias names. Names, texts and characters are percent-encoded
 //! as [`LinkNetwork`](crate::LinkNetwork) `LiNo` terms are (ASCII letters,
 //! digits and `-_.` kept, every other UTF-8 byte as `%XX`, the empty text as
 //! `%`). It mirrors `js/src/grammar-links.js`.
@@ -25,11 +27,11 @@ use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 
 use super::super::{
     CharClassItem, FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat,
-    GrammarImportError, GrammarRule, MATCHING_MODES, RuleKind,
+    GrammarImportError, GrammarKind, GrammarRule, GrammarSourceName, MATCHING_MODES, RuleKind,
 };
 use super::feature_links::{
-    read_class, read_declaration, read_feature, read_rule_fields, render_declaration_links,
-    render_links_feature, render_rule_fields,
+    read_class, read_declaration, read_feature, read_rule_fields, read_source_names,
+    render_declaration_links, render_links_feature, render_rule_fields,
 };
 
 /// The longest repetition bound the links may spell, in decimal digits.
@@ -120,6 +122,13 @@ pub fn render_grammar_links(grammar: &Grammar) -> String {
     }
     let mut lines = vec![format!("({})", header.join(" "))];
     lines.extend(render_declaration_links(declarations));
+    lines.extend(grammar.kinds().iter().map(|kind| {
+        link(&[
+            "kind".to_owned(),
+            percent_encode_links_text(&kind.name),
+            render_source_names(&kind.source_names),
+        ])
+    }));
     lines.extend(grammar.rules().iter().map(render_rule_link));
     lines.iter().fold(String::new(), |mut text, line| {
         text.push_str(line);
@@ -143,20 +152,25 @@ pub fn render_rule_link(rule: &GrammarRule) -> String {
         parts.push(format!("(concept {})", percent_encode_links_text(concept)));
     }
     if !rule.source_names().is_empty() {
-        let mut names = vec!["source-names".to_owned()];
-        names.extend(rule.source_names().iter().map(|source_name| {
-            format!(
-                "({} {})",
-                percent_encode_links_text(&source_name.source),
-                percent_encode_links_text(&source_name.name)
-            )
-        }));
-        parts.push(link(&names));
+        parts.push(render_source_names(rule.source_names()));
     }
     if let Some(doc) = rule.doc() {
         parts.push(format!("(doc {})", percent_encode_links_text(doc)));
     }
     link(&parts)
+}
+
+/// Renders `(source-names (SOURCE NAME)...)`.
+fn render_source_names(source_names: &[GrammarSourceName]) -> String {
+    let mut names = vec!["source-names".to_owned()];
+    names.extend(source_names.iter().map(|source_name| {
+        format!(
+            "({} {})",
+            percent_encode_links_text(&source_name.source),
+            percent_encode_links_text(&source_name.name)
+        )
+    }));
+    link(&names)
 }
 
 pub(super) fn link(parts: &[String]) -> String {
@@ -497,8 +511,25 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
         }
     }
     let mut rules: Vec<GrammarRule> = Vec::new();
+    let mut kinds: Vec<GrammarKind> = Vec::new();
     for statement in statements {
         let (head, args) = parts(statement)?;
+        if head == "kind" && rules.is_empty() {
+            arity(head, args, 2)?;
+            let name = decoded_word(args.first(), "a kind name")?;
+            if kinds.iter().any(|kind| kind.name == name) {
+                return Err(links_error(format!("kind {name} is given twice")));
+            }
+            let (field, names) = parts(&args[1])?;
+            if field != "source-names" {
+                return Err(links_error(format!(
+                    "expected (source-names ...), not {field}"
+                )));
+            }
+            let source_names = read_source_names(names)?;
+            kinds.push(GrammarKind { name, source_names });
+            continue;
+        }
         if head != "rule" {
             if !rules.is_empty() || !read_declaration(head, args, &mut declarations)? {
                 return Err(links_error(format!("unexpected link {head}")));
@@ -548,5 +579,6 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
         grammar.set_source_format(format);
     }
     grammar.set_declarations(declarations);
+    grammar.set_kinds(kinds);
     Ok(grammar)
 }

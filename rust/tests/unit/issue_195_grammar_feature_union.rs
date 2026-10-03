@@ -753,3 +753,45 @@ fn external_scanners_and_semantic_actions_are_executable_link_definitions() {
         "external_scanners_and_semantic_actions_are_executable_link_definitions",
     );
 }
+
+#[test]
+fn node_kinds_no_rule_defines_keep_their_source_names_in_the_links_form() {
+    let links = "(grammar (start comment))\n\
+        (kind documentation_comment (source-names (tree-sitter doc_comment)))\n\
+        (rule comment normal (literal %2F%2F))\n";
+    let grammar = parse_grammar_links(links).expect("the kind links parse");
+    let [kind] = grammar.kinds() else {
+        panic!("one kind: {:?}", grammar.kinds());
+    };
+    assert_eq!(kind.name, "documentation_comment");
+    assert_eq!(
+        kind.source_names
+            .iter()
+            .map(|name| (name.source.as_str(), name.name.as_str()))
+            .collect::<Vec<_>>(),
+        [("tree-sitter", "doc_comment")]
+    );
+    assert_eq!(render_grammar_links(&grammar), links);
+    // The kinds come before the rules, once each, with their source names.
+    for (malformed, detail) in [
+        (
+            "(grammar)\n(rule a normal empty)\n(kind b (source-names (t c)))\n",
+            "unexpected link kind",
+        ),
+        (
+            "(grammar)\n(kind b (source-names (t c)))\n(kind b (source-names (t c)))\n(rule a normal empty)\n",
+            "kind b is given twice",
+        ),
+        (
+            "(grammar)\n(kind b (doc x))\n(rule a normal empty)\n",
+            "expected (source-names ...), not doc",
+        ),
+        (
+            "(grammar)\n(kind b (source-names))\n(rule a normal empty)\n",
+            "source-names lists at least one source name",
+        ),
+    ] {
+        let error = parse_grammar_links(malformed).expect_err(malformed);
+        assert!(error.to_string().ends_with(detail), "{error}");
+    }
+}
