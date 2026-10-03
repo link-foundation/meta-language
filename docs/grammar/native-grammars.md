@@ -10,15 +10,16 @@ A native merged grammar is a Links Notation grammar in
 [`parity/grammars/native/`](../../parity/grammars/native/). It runs on the
 native executors with no parser generator: `compileGrammar` in JavaScript and
 `compile_feature_grammar` in Rust (see [feature union](feature-union.md)). Each
-grammar is checked against the tree-sitter grammar that still backs its
+grammar is checked against the pinned tree-sitter grammar it replaced as its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
 Status: seven catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme and
-Racket, have a native merged grammar. Their default parses still run
-tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
-tree-sitter-json5-orchard, tree-sitter-scheme and tree-sitter-racket until the
-grammars have recovery rules for invalid input; see [current limits](#current-limits).
+Racket, have a native merged grammar, and it is their default parser in both
+runtimes; see [default parse](#default-parse). tree-sitter-json,
+tree-sitter-ini, tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard,
+tree-sitter-scheme and tree-sitter-racket remain as pinned oracles; see
+[current limits](#current-limits).
 
 ## Format
 
@@ -250,6 +251,35 @@ node scripts/generate-native-grammar-fixtures.mjs
 `npm run check:native-grammars` runs the generator with `--check`. It fails
 when a fixture is stale, and CI runs it.
 
+## Default parse
+
+The language catalog lists the native grammar first in a native language's
+`grammars`, with the SHA-256 of its file as `parserSha256`, and its
+tree-sitter oracles in `oracleGrammars`. The catalog's top-level `nativeGrammars` gives each native
+grammar's file, a copy of the `parity/grammars/native/` file under
+`src/data/native-grammars/` in both packages, and its `hidden`, `anonymous`
+and `extras` kinds. `parseNative` in
+[`js/src/native-grammar-parser.js`](../../js/src/native-grammar-parser.js) and
+`parse_native` in
+[`rust/src/native_grammar_parser.rs`](../../rust/src/native_grammar_parser.rs)
+run the grammar with automatic error recovery and project the tree the way
+the fixture rows above do, so `parseProgrammingLanguage` and
+`parse_programming_language` build the same lossless network they built from
+the oracle. An embedded region in a native language and an incremental
+reparse use the native grammar too; an incremental reparse parses the edited
+text again.
+
+[`parity/fixtures/native-default-cst-expected.json`](../../parity/fixtures/native-default-cst-expected.json)
+holds each native language's default CST rows. For valid input the rows and
+digests equal those of the oracle in
+[`parity/fixtures/builtin-cst-expected.json`](../../parity/fixtures/builtin-cst-expected.json);
+for invalid input they hold the native repair, which
+[`default-cst-expectations.test.js`](../../js/tests/default-cst-expectations.test.js)
+and
+[`default_cst_expectations.rs`](../../rust/tests/unit/default_cst_expectations.rs)
+check in both runtimes. `node scripts/generate-native-grammar-fixtures.mjs`
+writes the file with the per-grammar fixtures.
+
 ## Current limits
 
 - Invalid input is rejected by default. With `errorRecovery` the executor
@@ -258,12 +288,14 @@ when a fixture is stale, and CI runs it.
   [`issue-195-grammar-native-recovery.test.js`](../../js/tests/issue-195-grammar-native-recovery.test.js)
   and
   [`issue_195_grammar_native_recovery.rs`](../../rust/tests/unit/issue_195_grammar_native_recovery.rs)
-  check. Those trees are not yet compared with the oracle's ERROR and MISSING
-  nodes. The default JSON, INI, Diff, CSV, JSON5, Scheme and Racket parses
-  still use tree-sitter-json, tree-sitter-ini, tree-sitter-diff,
-  tree-sitter-csv, tree-sitter-json5-orchard, tree-sitter-scheme and
-  tree-sitter-racket. They stay production dependencies until the native
-  grammars back the default parse.
+  check. The default parse uses these repairs, so the ERROR and MISSING
+  nodes of an invalid input are placed where the native executor repairs it,
+  not where tree-sitter's LR recovery places them; the two are not compared.
+- tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
+  tree-sitter-json5-orchard, tree-sitter-scheme and tree-sitter-racket no
+  longer back a default parse, but they are still production dependencies of
+  both packages, as the fixture generator and the oracle checks load them; they
+  move to development dependencies in a later change.
 - Some inputs the diff oracle reads with its LR recovery are outside the
   corpus, because no source decides them: a NUL byte in a line, which
   tree-sitter-diff recovers from and the native grammar accepts as context; a
