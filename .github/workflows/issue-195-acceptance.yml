@@ -653,6 +653,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   acceptance:
     name: Full Requirements Aggregate
     needs: [candidates, consumers, rml-workloads, formal-ai-workloads, runtime-parity, native-translations, evidence-stages]
