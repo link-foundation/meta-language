@@ -240,12 +240,23 @@ const features = [
         + 'if(valid(dedent), then(if(less(variable(pending), top(indents)), then(pop(indents), emit(dedent))))), '
         + 'fail)',
       'rule block = normal repeat1(ref(statement))',
-      'rule statement = normal predicate(choice(seq(ref(name), literal(":"), ref(newline), ref(indent), ref(block), ref(dedent)), seq(ref(name), ref(newline))), equal(column, top(indents)))',
+      'rule statement = normal predicate(choice(seq(ref(name), ref(newline)), seq(ref(name), literal(":"), ref(newline), ref(indent), ref(block), ref(dedent))), equal(column, top(indents)))',
       'rule name = token repeat1(range("a", "z"))',
     ),
     positive: ['a\nb:\n  c\n  d\ne\n', 'a:\n  b:\n    c\nd\n', 'a:\n  b:\n    c\n'],
-    negative: [{ input: 'a:\n  b\n c\n' }, { input: 'a\n  b\n' }, { input: 'a:\nb\n' }],
+    negative: [
+      { input: 'a:\n  b\n c\n' },
+      { input: 'a\n  b\n' },
+      { input: 'a:\nb\n' },
+      // `expected` asks about a literal or a rule the grammar defines.
+      { listing: 'start s\nscanner t tokens(x) operations(if(expected(ref(missing)), then(emit(x))), fail)\nrule s = normal ref(x)\n' },
+      { listing: 'start s\nscanner t tokens(x) operations(if(expected(seq(literal("a"), literal("b"))), then(emit(x))), fail)\nrule s = normal ref(x)\n' },
+    ],
     mutation: { replace: ['equal(column, top(indents))', 'not(less(column, integer(0)))'], input: 'a:\n  b\n c\n' },
+    // A newline where the parse expects ":" fails: the scanner is asked
+    // before the second alternative requests ":", so the answer holds only
+    // after the parse runs again.
+    mutations: [{ replace: ['if(valid(newline), then(consume', 'if(valid(newline), then(if(expected(literal(":")), then(fail)), consume'], input: 'a\nb:\n  c\n' }],
   },
   {
     id: 'predicates',

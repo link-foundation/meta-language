@@ -29,11 +29,23 @@ impl Executor<'_> {
         state: &State,
         in_token: bool,
     ) -> Run<Vec<Res>> {
+        let program = self.program;
+        if !in_token && !program.expected_references.is_empty() {
+            let name = match target {
+                Target::External(name) => name,
+                Target::Rule(index) => &program.rules[*index].name,
+            };
+            if let Some(&id) = program.expected_references.get(&**name) {
+                self.shared
+                    .expectations
+                    .borrow_mut()
+                    .request(position, (self.program_index, id));
+            }
+        }
         let index = match target {
             Target::External(name) => return self.scanner_token(name, position, state, in_token),
             Target::Rule(index) => *index,
         };
-        let program = self.program;
         let rule = &program.rules[index];
         if let Some(modes) = &rule.modes
             && !modes.iter().any(|mode| **mode == *state.mode())
@@ -420,11 +432,24 @@ impl Executor<'_> {
     ) -> Run<Vec<Res>> {
         let skipped = self.terminal_start(position, state, in_token)?;
         let start = skipped.end;
-        let key = (name.clone(), start, state.clone());
+        let program = self.program;
+        let consults = program.scanners[program.external[&**name]].consults;
+        // Where the scanner answers `expected` for (see `Expectations`).
+        let context = if in_token {
+            self.scan_context.unwrap_or(start)
+        } else {
+            position
+        };
+        let key = (
+            name.clone(),
+            start,
+            consults.then_some(context),
+            state.clone(),
+        );
         let scanned = if let Some(scanned) = self.scanner_memo.get(&key) {
             scanned.clone()
         } else {
-            let scanned = self.run_scanner(name, start, state)?.map(Rc::new);
+            let scanned = self.run_scanner(name, start, context, state)?.map(Rc::new);
             self.scanner_memo.insert(key, scanned.clone());
             scanned
         };
@@ -462,12 +487,19 @@ impl Executor<'_> {
         )])
     }
 
-    fn run_scanner(&mut self, name: &Name, start: usize, state: &State) -> Run<Option<Scanned>> {
+    fn run_scanner(
+        &mut self,
+        name: &Name,
+        start: usize,
+        context: usize,
+        state: &State,
+    ) -> Run<Option<Scanned>> {
         let program = self.program;
         let scanner = &program.scanners[program.external[&**name]];
         let mut machine = ScannerMachine {
             executor: self,
             requested: name.clone(),
+            context,
             state,
             working: state.working(),
             cursor: start,
@@ -774,6 +806,8 @@ impl Machine for ActionMachine<'_, '_, '_> {
 struct ScannerMachine<'e, 'c, 's> {
     executor: &'e mut Executor<'c>,
     requested: Name,
+    /// The offset the scanner answers `expected` for.
+    context: usize,
     state: &'s State,
     working: Working,
     cursor: usize,
@@ -806,6 +840,15 @@ impl Machine for ScannerMachine<'_, '_, '_> {
 
     fn requested(&self) -> Option<&str> {
         Some(&self.requested)
+    }
+
+    fn expected(&mut self, id: usize) -> bool {
+        let item = (self.executor.program_index, id);
+        self.executor
+            .shared
+            .expectations
+            .borrow_mut()
+            .holds(self.context, item)
     }
 
     fn column(&mut self) -> usize {

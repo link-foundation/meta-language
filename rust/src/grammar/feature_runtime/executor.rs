@@ -61,10 +61,17 @@ fn missing_of(expr: &Expr) -> (Option<Name>, bool) {
     }
 }
 
+/// A scan of a scanner token: its name, its start, the context offset where
+/// the scanner asks what the parse expects, and the state.
+pub(super) type ScanKey = (Name, usize, Option<usize>, State);
+
 /// Interprets one program over `bytes[begin, end)`.
 pub(super) struct Executor<'c> {
     pub(super) compiled: &'c Compiled,
     pub(super) program: &'c Program,
+    /// The index of the program, by which the items a scanner's `expected`
+    /// asks about are distinct across embedded languages.
+    pub(super) program_index: usize,
     pub(super) bytes: &'c [u8],
     pub(super) begin: usize,
     pub(super) end: usize,
@@ -86,7 +93,12 @@ pub(super) struct Executor<'c> {
     pub(super) edge_memo: HashMap<(Name, Associativity), Rc<HashSet<usize>>>,
     /// Whether an extra that builds a node is being parsed (see `extra_node`).
     pub(super) in_extra: bool,
-    pub(super) scanner_memo: HashMap<(Name, usize, State), Option<Rc<Scanned>>>,
+    /// The scans of each scanner token at an offset, by the context offset
+    /// too where the scanner asks what the parse expects.
+    pub(super) scanner_memo: HashMap<ScanKey, Option<Rc<Scanned>>>,
+    /// The context offset of a scan inside a token or trivia: where the
+    /// token's terminal or the trivia started (see `Expectations`).
+    pub(super) scan_context: Option<usize>,
     pub(super) embed_memo: HashMap<(Name, usize, usize), Rc<Outcome>>,
     pub(super) farthest: usize,
     pub(super) expected: HashSet<Name>,
@@ -134,6 +146,7 @@ impl<'c> Executor<'c> {
         Self {
             compiled,
             program,
+            program_index,
             bytes,
             begin,
             end,
@@ -155,6 +168,7 @@ impl<'c> Executor<'c> {
             edge_memo: HashMap::new(),
             in_extra: false,
             scanner_memo: HashMap::new(),
+            scan_context: None,
             embed_memo: HashMap::new(),
             farthest: begin,
             expected: HashSet::new(),
@@ -336,7 +350,8 @@ impl<'c> Executor<'c> {
             Expr::Terminal {
                 matcher,
                 expectation,
-            } => self.terminal(matcher, expectation, position, state, in_token),
+                expected,
+            } => self.terminal((matcher, expectation, *expected), position, state, in_token),
             Expr::Ref(target) => self.reference(target, position, state, in_token),
             Expr::Seq(items) => self.sequence(items, position, state, in_token, None),
             Expr::Choice { ordered, items } => {
@@ -410,24 +425,40 @@ impl<'c> Executor<'c> {
                 };
                 let mut found = ResultSet::new(self.longest_tokens);
                 let keywords = self.keywords.filter(|_| !in_token && is_keyword(item));
-                for skipped in &starts {
-                    for result in self.token_leaf(item, skipped, state, in_token)? {
-                        if let Some(keywords) = keywords {
-                            keywords
-                                .borrow_mut()
-                                .matched
-                                .insert((skipped.end, result.end));
-                        }
-                        found.add(result);
-                    }
+                // A scanner token is lexed at the first start where its
+                // scanner succeeds, as a lexer runs the external scanner
+                // before it lexes an extra: after a comment only where it
+                // fails before it.
+                let scanned = matches!(**item, Expr::Ref(Target::External(_)));
+                let context = self.scan_context;
+                if !in_token {
+                    self.scan_context = Some(position);
                 }
+                let lexed = (|| -> Run<()> {
+                    for skipped in &starts {
+                        for result in self.token_leaf(item, skipped, state, in_token)? {
+                            if let Some(keywords) = keywords {
+                                keywords
+                                    .borrow_mut()
+                                    .matched
+                                    .insert((skipped.end, result.end));
+                            }
+                            found.add(result);
+                        }
+                        if scanned && !found.items.is_empty() {
+                            break;
+                        }
+                    }
+                    Ok(())
+                })();
+                self.scan_context = context;
+                lexed?;
                 let results = found.items;
                 if !results.is_empty() || in_token {
                     return Ok(results);
                 }
                 let skipped = &starts[0];
                 let (kind, literal) = missing_of(item);
-                let scanned = matches!(**item, Expr::Ref(Target::External(_)));
                 self.element_failed(
                     skipped.end,
                     &skipped.leaves,

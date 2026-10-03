@@ -57,28 +57,30 @@ column names the representation the fixture grammar for that feature must use
 (the test checks their presence); the cases column counts the positive and the
 negative cases of the fixture (load-error negatives in parentheses). Every
 feature also carries one grammar mutation whose outcome must differ (the
-`ambiguity` feature carries eight more, the `trivia` feature one more).
+`precedence`, `trivia` and `layout` features carry one more each, the
+`ambiguity` feature eight more; the `layout` one uses the scanner condition
+`expected`).
 
 | Fixture id | Vision feature | Forms exercised | Positive | Negative |
 | --- | --- | --- | --- | --- |
 | `alternatives` | ordered and unordered alternatives | `choice` ordered and unordered | 3 | 2 |
 | `recursion` | recursion, including left recursion | direct and indirect left recursion | 3 | 4 |
-| `precedence` | precedence and associativity | `precedence` | 9 | 2 |
-| `ambiguity` | ambiguity and conflicts | `conflict` declaration, `dynamicPrecedence` | 17 | 5 |
+| `precedence` | precedence and associativity | `precedence`, `namedPrecedence`, `precedences` declaration | 11 | 2 |
+| `ambiguity` | ambiguity and conflicts | `conflict` and `matching` declarations, `dynamicPrecedence` | 17 | 5 |
 | `lexical` | lexical priority and longest-match rules | `longest`, `lexicalPrecedence` | 2 | 2 |
 | `unicode` | Unicode and byte classes | class `category` and `script` items, `byteClass` | 2 | 3 |
 | `trivia` | token boundaries and trivia | `extra` declaration, `token`, `immediateToken` | 3 | 3 |
 | `modes` | lexer modes, channels and state | `mode` declaration, rule `modes` and `channel`, `pushMode`, `popMode` | 2 | 3 |
-| `layout` | indentation and layout | `scanner` declaration, `emit`, `push`, `pop`, `predicate` | 3 | 3 |
+| `layout` | indentation and layout | `scanner` declaration, `emit`, `push`, `pop`, `predicate` | 3 | 5 (2) |
 | `predicates` | context-sensitive predicates | `predicate`, rule `action`, `fieldText` | 3 | 2 |
 | `actions` | semantic actions and attributes | rule `action`, `setAttribute`, `buildNode`, `sumOf` | 3 | 2 |
-| `fields` | captures, fields and aliases | `capture`, `alias` | 2 | 2 |
+| `fields` | captures, fields and aliases | `capture`, `alias` | 3 | 2 |
 | `parameterization` | parameterization | rule `parameters`, `parameter`, `ref` arguments | 2 | 4 (2) |
 | `imports` | imports and inheritance | `import` declaration | 2 | 4 (2) |
 | `macros` | macros and notation | `macro` declaration, `expand` | 2 | 4 (2) |
 | `embedded` | embedded languages | `embed` | 2 | 3 (1) |
 | `recovery` | error and missing nodes, and recovery | `recover`, `missing` | 3 | 3 |
-| total | | | 43 | 48 (7) |
+| total | | | 66 | 53 (9) |
 
 ## Representation
 
@@ -101,6 +103,7 @@ feature union adds:
 | `charClass` items | `{kind: 'category', value}`, `{kind: 'script', value}` | a Unicode general category (`Lu`, `L`, `Nd`) or script (`Greek`, `Han`) |
 | `byteClass` | `negated`, `items` of `{kind: 'byte', value}` and `{kind: 'byteRange', start, end}` | one byte, 0 to 255 |
 | `precedence` | `level` (integer), `associativity` (`left`, `right` or `none`), `item` | static precedence of the item's binary shape |
+| `namedPrecedence` | `name`, `associativity`, `item` | as `precedence`, ranked by the `precedences` orders instead of a level |
 | `dynamicPrecedence` | `level`, `item` | adds `level` to the score that settles an ambiguity |
 | `lexicalPrecedence` | `level`, `item` | the priority a `longest` tie uses |
 | `longest` | `items` (at least one) | the longest match among the alternatives, as one token |
@@ -138,6 +141,9 @@ list of the [operation language](#operation-language).
 - `modes`: the lexer modes beyond `default`;
 - `extras`: trivia expressions allowed between any two tokens;
 - `conflicts`: groups of rule names whose ambiguity is expected and not reported;
+- `precedences`: orders of at least two entries, each `{kind: 'name', value}`
+  (a `namedPrecedence` name) or `{kind: 'rule', value}` (a rule), the earlier
+  entry higher (see Precedence);
 - `macros`: `{name, parameters, expression}`;
 - `scanners`: external scanners, `{name, tokens, operations}`; each token is
   referenced as `ref(TOKEN)` like a rule.
@@ -147,7 +153,8 @@ list of the [operation language](#operation-language).
 The line listing of `renderNativeGrammar` and `parseNativeGrammar` writes, in
 this order: an optional `format TAG` line, `start NAME`, then the declaration
 lines `matching M`, `import NAME`, `mode NAME`, `extra EXPRESSION`,
-`conflict NAME NAME...`, `macro NAME(P, ...) = EXPRESSION` and
+`conflict NAME NAME...`, `precedences name(N) rule(R) ...`,
+`macro NAME(P, ...) = EXPRESSION` and
 `scanner NAME tokens(T, ...) operations(OPERATION, ...)`, then one rule line
 per rule:
 
@@ -187,6 +194,7 @@ rule is rejected), in the listing order:
 (mode NAME)
 (extra EXPRESSION)
 (conflict NAME NAME ...)
+(precedences (name N) (rule R) ...)
 (macro NAME (parameters P ...) EXPRESSION)
 (scanner NAME (tokens T ...) (operations OPERATION ...))
 ```
@@ -248,9 +256,22 @@ Statements (run in order; a statement list ends early on `emit`):
 | `buildNode` | `kind` | rename the node being built |
 
 Conditions: `valid(token)` (the scanner was asked for `token`),
-`next(item)` (the item matches at the cursor, consuming nothing), `atEnd`,
+`next(item)` (the item matches at the cursor, consuming nothing),
+`expected(item)` (below), `atEnd`,
 `equal(left, right)` (same type and value), `less`, `greater` (integers),
 `all(...)`, `some(...)` (short-circuit), `not(condition)`.
+
+`expected(item)`, with a `literal` or a `ref` naming a rule or a scanner
+token, holds when the parse requested that item at the scanner's context
+offset, as a tree-sitter scanner reads `valid_symbols`: a literal terminal of
+a rule body requests itself and a `ref` its rule or token, each at the offset
+it is tried, outside tokens. The context offset is where the token being
+lexed (or the trivia being skipped) begins, before any trivia the scanner
+skips. A parse is a search, so an answer may be given before a later request
+at the same offset: such a parse runs again, from the start and with a fresh
+step budget, keeping the requests so far, until no answer is stale; scanner
+results are memoized per context offset for a scanner that asks. Any other
+item is `operation`, and a `ref` to no rule or token is `reference`.
 
 Values: `integer`, `text`, `variable(name)` (0 when unset), `top(stack)` (0
 when empty), `depth(stack)`, `column` (0-based, in code points since the last
@@ -271,8 +292,8 @@ any other operation with reason `operation`:
 - scanner: every statement except `setAttribute` and `buildNode`; every
   condition; every value except `matched`, `attribute`, `sumOf` and `fieldText`;
 - action: every statement except `advance`, `consume`, `skip`, `mark` and
-  `emit`; every condition except `valid` and `next`; every value;
-- predicate: conditions except `valid` and `next`, and values except
+  `emit`; every condition except `valid`, `next` and `expected`; every value;
+- predicate: conditions except `valid`, `next` and `expected`, and values except
   `attribute`, `sumOf` and `fieldText`.
 
 ### Parser state
@@ -311,7 +332,8 @@ steps, in order:
    `parameter`; an undefined rule is `reference`.
 7. The start rule must exist (`reference`) and take no parameters
    (`parameter`).
-8. Conflicts must name rules (`declaration`). `matching` is the declared one,
+8. Conflicts, and the `rule` entries of `precedences`, must name rules
+   (`declaration`). `matching` is the declared one,
    else `peg` for a `peg` source format, else `generalized`.
 9. Checks over every expression and operation: an `expand` or `parameter`
    that survives is `macro`; a `recover` without `synchronize`, a mode
@@ -483,7 +505,8 @@ alias name. An alias of a silent rule always wraps, even a single child, as a
 tree-sitter alias of a hidden rule names the node the rule does not build.
 
 **Precedence.** `precedence(level, associativity, item)` filters the item's
-results before they are merged: a result whose first or last non-trivia child
+results before they are merged (a `namedPrecedence` the same way, its rank
+from the orders below): a result whose first or last non-trivia child
 is a node tagged with an inner level is invalid when the inner level is lower,
 or equal while the associativity is not `left` (first child) or not `right`
 (last child), and the two conflict. They conflict when the inner node's own
@@ -514,8 +537,13 @@ results are tagged with the level and associativity, and a rule node carries
 the tag of its result. Outside token context a result also keeps the
 innermost precedence over it as its `tail`, which a rule node keeps for its
 reduction (see Result sets), and a token a precedence holds alone keeps the
-precedence on its leaf. `dynamicPrecedence` adds its level to `dynamic`.
-`lexicalPrecedence` matches its item and only matters to `longest`.
+precedence on its leaf. Two precedences compare as tree-sitter's
+`compare_precedence`: by level when neither is named and either level is
+nonzero; otherwise the first `precedences` order with an entry for each
+decides, the earlier entry higher, where a `name` entry stands for a
+`namedPrecedence` of that name and a `rule` entry for any precedence (or none)
+in that rule's body; else they are equal. `dynamicPrecedence` adds its level
+to `dynamic`. `lexicalPrecedence` matches its item and only matters to `longest`.
 
 **Tokens.** `longest` skips trivia, then takes the longest token-context match
 of its alternatives; a tie goes to the higher lexical priority (the level of a

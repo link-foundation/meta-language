@@ -14,8 +14,8 @@ use super::program::{
 };
 use crate::grammar::interchange::render_native_expression;
 use crate::grammar::{
-    FeatureExpr, FeatureForm, Grammar, GrammarExpr, GrammarFormat, GrammarMacro, GrammarScanner,
-    Operation, PrecedenceEntry, RuleAttributes, RuleKind,
+    FeatureExpr, FeatureForm, FieldValue, Grammar, GrammarExpr, GrammarFormat, GrammarMacro,
+    GrammarScanner, Operation, PrecedenceEntry, RuleAttributes, RuleKind,
 };
 
 /// A grammar that cannot be loaded or a parse that cannot run; `reason`
@@ -647,6 +647,28 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         .map(|(name, instance)| (name.clone(), Arc::from(instance.node_kind.as_str())))
         .collect();
     let mut compiler = Compiler::new(&rule_index, &external, &modes, node_kinds);
+    // The items a scanner's `expected` asks about, each with an id, which
+    // the parse requests where its rules try them (see `Expectations` in
+    // executor.rs); a scanner that asks answers per context offset.
+    let mut consults = Vec::new();
+    for (scanner, operations) in resolved.scanners.iter().zip(&scanner_operations) {
+        let mut items = Vec::new();
+        if !scanner.tokens.is_empty() {
+            expected_items(operations, &mut items);
+        }
+        consults.push(!items.is_empty());
+        for item in items {
+            if let Some(key) = compiler.expectation(item) {
+                let id = compiler.expectations.len();
+                compiler.expectations.entry(key).or_insert(id);
+            }
+        }
+    }
+    let expected_references = compiler
+        .expectations
+        .iter()
+        .filter_map(|(key, &id)| Some((key.strip_prefix("ref ")?.to_owned(), id)))
+        .collect();
 
     // Trivia: the `extra` expressions first, in declaration order, then every
     // rule on a channel other than `default`, each limited to its modes.
@@ -669,7 +691,10 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
             .get(&instance.source)
             .expect("an instance has a source");
         let owner = format!("rule {}", instance.node_kind);
-        let expression = compiler.expression(&instance.expression, &owner)?;
+        compiler.requesting = true;
+        let expression = compiler.expression(&instance.expression, &owner);
+        compiler.requesting = false;
+        let expression = expression?;
         let action = match &instance.action {
             Some(action) => {
                 if source.kind == RuleKind::Silent && action.iter().any(builds_node) {
@@ -723,7 +748,12 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         });
     }
     let mut scanners = Vec::new();
-    for (scanner, operations) in resolved.scanners.iter().zip(&scanner_operations) {
+    for ((scanner, operations), consults) in resolved
+        .scanners
+        .iter()
+        .zip(&scanner_operations)
+        .zip(consults)
+    {
         let owner = format!("scanner {}", scanner.name);
         let operations = if scanner.tokens.is_empty() {
             Vec::new()
@@ -735,7 +765,10 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
                 Some(scanner.tokens.as_slice()),
             )?
         };
-        scanners.push(Scanner { operations });
+        scanners.push(Scanner {
+            operations,
+            consults,
+        });
     }
     let embedded = compiler.into_embedded();
 
@@ -752,6 +785,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         conflicts,
         precedence_orders: resolved.precedences.clone(),
         trivia,
+        expected_references,
     });
     for language in embedded {
         if context.languages.contains_key(&language) {
@@ -763,6 +797,28 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         context.languages.insert(language, loaded);
     }
     Ok(index)
+}
+
+/// The items of the `expected` conditions in a scanner's operations.
+fn expected_items<'a>(operations: &'a [Operation], items: &mut Vec<&'a GrammarExpr>) {
+    for operation in operations {
+        if operation.head == "expected"
+            && let Some(item) = operation.expression("item")
+        {
+            items.push(item);
+        }
+        for value in &operation.fields {
+            match value {
+                FieldValue::Operation(operation) => {
+                    expected_items(std::slice::from_ref(operation), items);
+                }
+                FieldValue::Operations(block) | FieldValue::Block(Some(block)) => {
+                    expected_items(block, items);
+                }
+                _ => {}
+            }
+        }
+    }
 }
 
 fn builds_node(operation: &Operation) -> bool {

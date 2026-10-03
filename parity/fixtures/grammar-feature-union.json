@@ -882,7 +882,7 @@
     {
       "id": "layout",
       "title": "indentation and layout",
-      "listing": "start block\nscanner layout tokens(newline, indent, dedent) operations(if(valid(newline), then(consume(literal(\"\\n\")), while(next(literal(\" \")), do(advance)), set(pending, column), emit(newline))), if(valid(indent), then(if(greater(variable(pending), top(indents)), then(push(indents, variable(pending)), emit(indent))))), if(valid(dedent), then(if(less(variable(pending), top(indents)), then(pop(indents), emit(dedent))))), fail)\nrule block = normal repeat1(ref(statement))\nrule statement = normal predicate(choice(seq(ref(name), literal(\":\"), ref(newline), ref(indent), ref(block), ref(dedent)), seq(ref(name), ref(newline))), equal(column, top(indents)))\nrule name = token repeat1(range(\"a\", \"z\"))\n",
+      "listing": "start block\nscanner layout tokens(newline, indent, dedent) operations(if(valid(newline), then(consume(literal(\"\\n\")), while(next(literal(\" \")), do(advance)), set(pending, column), emit(newline))), if(valid(indent), then(if(greater(variable(pending), top(indents)), then(push(indents, variable(pending)), emit(indent))))), if(valid(dedent), then(if(less(variable(pending), top(indents)), then(pop(indents), emit(dedent))))), fail)\nrule block = normal repeat1(ref(statement))\nrule statement = normal predicate(choice(seq(ref(name), ref(newline)), seq(ref(name), literal(\":\"), ref(newline), ref(indent), ref(block), ref(dedent))), equal(column, top(indents)))\nrule name = token repeat1(range(\"a\", \"z\"))\n",
       "positive": [
         {
           "input": "a\nb:\n  c\n  d\ne\n",
@@ -933,6 +933,18 @@
               "indent"
             ]
           }
+        },
+        {
+          "listing": "start s\nscanner t tokens(x) operations(if(expected(ref(missing)), then(emit(x))), fail)\nrule s = normal ref(x)\n",
+          "loadError": {
+            "reason": "reference"
+          }
+        },
+        {
+          "listing": "start s\nscanner t tokens(x) operations(if(expected(seq(literal(\"a\"), literal(\"b\"))), then(emit(x))), fail)\nrule s = normal ref(x)\n",
+          "loadError": {
+            "reason": "operation"
+          }
         }
       ],
       "mutation": {
@@ -960,7 +972,29 @@
             }
           ]
         }
-      }
+      },
+      "mutations": [
+        {
+          "from": "if(valid(newline), then(consume",
+          "to": "if(valid(newline), then(if(expected(literal(\":\")), then(fail)), consume",
+          "input": "a\nb:\n  c\n",
+          "before": {
+            "tree": "(block (statement (name \"a\") (newline \"\\n\")) (statement (name \"b\") \":\" (newline \"\\n  \") (indent \"\") (block (statement (name \"c\") (newline \"\\n\"))) (dedent \"\")))"
+          },
+          "after": {
+            "rejection": {
+              "reason": "syntax",
+              "offset": 1,
+              "line": 1,
+              "column": 2,
+              "expected": [
+                "\":\"",
+                "newline"
+              ]
+            }
+          }
+        }
+      ]
     },
     {
       "id": "predicates",

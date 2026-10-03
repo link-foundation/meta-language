@@ -436,13 +436,68 @@ pub(super) fn content_start(children: &[Rc<Tree>], fallback: usize) -> usize {
 }
 
 /// The step budget and the frame count of one parse, shared with every
-/// embedded-language executor.
+/// embedded-language executor, and the record of what the parse expects.
 #[derive(Debug)]
 pub(super) struct Shared {
     pub(super) steps: Cell<usize>,
     pub(super) limit: usize,
     pub(super) frames: Cell<usize>,
     pub(super) memo_limit: usize,
+    pub(super) expectations: RefCell<Expectations>,
+}
+
+/// An item a scanner's `expected` asks about: the index of its program and
+/// its id there.
+pub(super) type Expectation = (usize, usize);
+
+/// What a scanner's `(expected ITEM)` answers: whether the parse requested the
+/// item, a literal or a rule, at the scanner's context offset, as a tree-sitter
+/// scanner asks whether a token is valid in the parse state. The context of a
+/// token is the offset before the trivia its terminal skips, and of an extra
+/// the offset its trivia starts at. A request is recorded where the parse
+/// makes it, so one the scanner asks about before the parse made it was
+/// answered wrong: the parse is then `stale` and runs again, seeded with the
+/// requests so far. The requests only grow, so the runs end. One parse, its
+/// rounds and its embedded languages share one record. It mirrors
+/// `Expectations` in js/src/grammar-runtime/executor.js.
+#[derive(Debug, Default)]
+pub(super) struct Expectations {
+    requested: HashMap<usize, HashSet<Expectation>>,
+    consulted: HashMap<usize, HashSet<Expectation>>,
+    pub(super) stale: bool,
+}
+
+impl Expectations {
+    /// Starts a run of the parse, keeping the requests.
+    pub(super) fn restart(&mut self) {
+        self.consulted.clear();
+        self.stale = false;
+    }
+
+    pub(super) fn request(&mut self, position: usize, item: Expectation) {
+        if !self.requested.entry(position).or_default().insert(item) {
+            return;
+        }
+        if self
+            .consulted
+            .get(&position)
+            .is_some_and(|items| items.contains(&item))
+        {
+            self.stale = true;
+        }
+    }
+
+    pub(super) fn holds(&mut self, position: usize, item: Expectation) -> bool {
+        if self
+            .requested
+            .get(&position)
+            .is_some_and(|items| items.contains(&item))
+        {
+            return true;
+        }
+        self.consulted.entry(position).or_default().insert(item);
+        false
+    }
 }
 
 /// The outcome of a parse that ran to its end.

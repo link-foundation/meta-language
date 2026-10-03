@@ -219,6 +219,9 @@ pub(super) enum Expr {
     Terminal {
         matcher: Matcher,
         expectation: Name,
+        /// The id of the literal where a scanner's `expected` asks about it,
+        /// which the parse requests where it tries the literal.
+        expected: Option<usize>,
     },
     Ref(Target),
     Seq(Vec<Self>),
@@ -312,6 +315,9 @@ pub(super) struct TokenRanks {
 #[derive(Debug)]
 pub(super) struct Scanner {
     pub(super) operations: Vec<Statement>,
+    /// Whether the scanner asks what the parse expects (`expected`), so that
+    /// it answers per context offset.
+    pub(super) consults: bool,
 }
 
 /// One trivia expression: an `extra` or a rule on a channel other than `default`.
@@ -338,6 +344,10 @@ pub(super) struct Program {
     /// The orders of named precedences (see `compare_precedence`).
     pub(super) precedence_orders: Vec<Vec<PrecedenceEntry>>,
     pub(super) trivia: Vec<Trivia>,
+    /// The rules and external tokens a scanner's `expected` asks about, each
+    /// by the id of its item, which the parse requests where it calls them
+    /// (see `Expectations` in executor.rs).
+    pub(super) expected_references: HashMap<String, usize>,
 }
 
 /// A grammar with every language it embeds.

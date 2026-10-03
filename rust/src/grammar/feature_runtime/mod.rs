@@ -34,7 +34,7 @@ use super::Grammar;
 use executor::Executor;
 use operations::Abort;
 use program::Compiled;
-use results::{KeywordLexing, Outcome, Shared, TokenOrder};
+use results::{Expectations, KeywordLexing, Outcome, Shared, TokenOrder};
 
 /// The default bound on nested rule calls.
 const DEFAULT_MAX_DEPTH: usize = 1000;
@@ -347,25 +347,41 @@ fn parse_program(
             orders: &compiled.programs[compiled.main].precedence_orders,
         });
     let keywords = tokens.map(|_| RefCell::new(KeywordLexing::default()));
-    let attempt = |points: Option<&HashSet<usize>>| {
+    let expectations = RefCell::new(Expectations::default());
+    // Parses the whole input with a fresh executor. While a scanner's
+    // `expected` was answered before the parse made the request it asks
+    // about, the parse runs again with the requests so far (see
+    // `Expectations`). Each run has its own step budget.
+    let attempt = |points: Option<&HashSet<usize>>| loop {
+        let mut record = expectations.take();
+        record.restart();
         let shared = Shared {
             steps: Cell::new(0),
             limit,
             frames: Cell::new(0),
             memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
+            expectations: RefCell::new(record),
         };
-        let mut executor = Executor::new(
-            compiled,
-            compiled.main,
-            bytes,
-            0,
-            bytes.len(),
-            &shared,
-            max_depth,
-        );
-        executor.repair_points = points.cloned();
-        executor.keywords = keywords.as_ref();
-        executor.run(start_rule)
+        let outcome = {
+            let mut executor = Executor::new(
+                compiled,
+                compiled.main,
+                bytes,
+                0,
+                bytes.len(),
+                &shared,
+                max_depth,
+            );
+            executor.repair_points = points.cloned();
+            executor.keywords = keywords.as_ref();
+            executor.run(start_rule)
+        };
+        let record = shared.expectations.into_inner();
+        let stale = record.stale;
+        expectations.replace(record);
+        if outcome.is_err() || !stale {
+            break outcome;
+        }
     };
     let recovery = options.error_recovery == Some(true);
     let outcome = loop {

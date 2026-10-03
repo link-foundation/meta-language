@@ -65,6 +65,28 @@ impl Executor<'_> {
         }
         let mode = state.mode().to_owned();
         let mut leaves = Vec::new();
+        // A scanner in the trivia answers `expected` for where they start.
+        let context = self.scan_context.replace(position);
+        let end = self.skip_from(position, &mut leaves, &mode, state);
+        self.scan_context = context;
+        let skipped = Rc::new(Skipped {
+            end: end?,
+            leaves: children_of(leaves),
+        });
+        self.trivia_memo.insert(key, skipped.clone());
+        Ok(skipped)
+    }
+
+    /// Skips the trivia from `position`, pushing their leaves; gives where
+    /// they end.
+    fn skip_from(
+        &mut self,
+        position: usize,
+        leaves: &mut Vec<Rc<Tree>>,
+        mode: &str,
+        state: &State,
+    ) -> Run<usize> {
+        let trivia = &self.program.trivia;
         let mut cursor = position;
         loop {
             let mut best = cursor;
@@ -98,12 +120,7 @@ impl Executor<'_> {
                 cursor = best;
             }
         }
-        let skipped = Rc::new(Skipped {
-            end: cursor,
-            leaves: children_of(leaves),
-        });
-        self.trivia_memo.insert(key, skipped.clone());
-        Ok(skipped)
+        Ok(cursor)
     }
 
     /// The node an extra of a rule that builds one makes of its text, parsed
@@ -212,14 +229,22 @@ impl Executor<'_> {
         Ok(starts)
     }
 
+    /// A terminal: its matcher, its expectation and the id of the literal
+    /// where a scanner's `expected` asks about it.
     pub(super) fn terminal(
         &mut self,
-        matcher: &Matcher,
-        expectation: &Name,
+        terminal: (&Matcher, &Name, Option<usize>),
         position: usize,
         state: &State,
         in_token: bool,
     ) -> Run<Vec<Res>> {
+        let (matcher, expectation, expected) = terminal;
+        if !in_token && let Some(id) = expected {
+            self.shared
+                .expectations
+                .borrow_mut()
+                .request(position, (self.program_index, id));
+        }
         let skipped = self.terminal_start(position, state, in_token)?;
         let mut start = skipped.end;
         let mut leaves: &[Rc<Tree>] = &skipped.leaves;
@@ -250,7 +275,7 @@ impl Executor<'_> {
                 kind,
                 literal,
                 Element::of(matcher),
-                Some(&mut |this, cursor| this.terminal(matcher, expectation, cursor, state, false)),
+                Some(&mut |this, cursor| this.terminal(terminal, cursor, state, false)),
             );
         };
         let children = if in_token {

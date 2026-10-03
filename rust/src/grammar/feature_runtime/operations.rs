@@ -131,6 +131,9 @@ pub(super) enum ValueOp {
 #[derive(Debug)]
 pub(super) enum Condition {
     Valid(Arc<str>),
+    /// Whether the parse, where the scan started, tries the item of this id
+    /// (see `Expectations` in executor.rs).
+    Expected(usize),
     Next(Expr),
     AtEnd,
     Equal(ValueOp, ValueOp),
@@ -170,6 +173,9 @@ pub(super) trait Machine {
     fn step(&mut self) -> Result<(), Abort>;
     fn requested(&self) -> Option<&str> {
         None
+    }
+    fn expected(&mut self, _id: usize) -> bool {
+        false
     }
     fn column(&mut self) -> usize;
     fn at_end(&mut self) -> bool;
@@ -305,6 +311,7 @@ pub(super) fn evaluate_condition(
     machine.step()?;
     Ok(match condition {
         Condition::Valid(token) => machine.requested() == Some(&**token),
+        Condition::Expected(id) => machine.expected(*id),
         Condition::Next(item) => machine.lookahead(item)?,
         Condition::AtEnd => machine.at_end(),
         Condition::Equal(left, right) => {
@@ -424,7 +431,7 @@ pub(super) fn allowed_in(context: &str, operation: &str) -> bool {
         "column", "mode", "length", "number", "add", "subtract", "multiply",
     ];
     const SCANNER: &[&str] = &[
-        "advance", "consume", "skip", "mark", "emit", "fail", "valid", "next",
+        "advance", "consume", "skip", "mark", "emit", "fail", "valid", "expected", "next",
     ];
     const ACTION: &[&str] = &[
         "fail",

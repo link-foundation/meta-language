@@ -23,6 +23,50 @@ pub(super) struct Compiler<'a> {
     modes: &'a HashSet<String>,
     node_kinds: HashMap<String, Name>,
     embedded: Vec<String>,
+    /// The items a scanner's `expected` asks about, by their keys (see
+    /// `expectation_key`), each with its id.
+    pub(super) expectations: HashMap<String, usize>,
+    /// Whether the compiled literals are requested, as those of rule bodies
+    /// are and those of extras are not.
+    pub(super) requesting: bool,
+}
+
+/// The key of an item a scanner's `expected` asks about: a literal by its
+/// text, a rule or an external token by its name.
+fn expectation_key(literal: bool, value: &str) -> String {
+    if literal {
+        format!("literal {value}")
+    } else {
+        format!("ref {value}")
+    }
+}
+
+/// The kind `load.js` names an expression by.
+fn kind_name(expr: &GrammarExpr) -> &str {
+    match expr {
+        GrammarExpr::Empty => "empty",
+        GrammarExpr::AnyChar => "any",
+        GrammarExpr::Terminal(_) => "literal",
+        GrammarExpr::TerminalInsensitive(_) => "literalInsensitive",
+        GrammarExpr::CharRange(..) => "charRange",
+        GrammarExpr::CharClass { .. } => "charClass",
+        GrammarExpr::NonTerminal(_) => "ref",
+        GrammarExpr::Choice { .. } => "choice",
+        GrammarExpr::Sequence(_) => "seq",
+        GrammarExpr::Optional(_) => "optional",
+        GrammarExpr::ZeroOrMore(_) => "repeat0",
+        GrammarExpr::OneOrMore(_) => "repeat1",
+        GrammarExpr::And(_) => "and",
+        GrammarExpr::Not(_) => "not",
+        GrammarExpr::Repeat { .. } => "repeat",
+        GrammarExpr::Capture { .. } => "capture",
+        GrammarExpr::Feature(feature) => match feature.as_ref() {
+            FeatureExpr::Form(form) => &form.head,
+            FeatureExpr::ByteClass { .. } => "byteClass",
+            FeatureExpr::UnicodeClass { .. } => "charClass",
+            FeatureExpr::Call { .. } => "ref",
+        },
+    }
 }
 
 fn boxed(expr: Expr) -> Box<Expr> {
@@ -33,11 +77,12 @@ fn terminal(matcher: Matcher, expectation: &str) -> Expr {
     Expr::Terminal {
         matcher,
         expectation: Arc::from(expectation),
+        expected: None,
     }
 }
 
 impl<'a> Compiler<'a> {
-    pub(super) const fn new(
+    pub(super) fn new(
         rule_index: &'a HashMap<String, usize>,
         external: &'a HashMap<String, usize>,
         modes: &'a HashSet<String>,
@@ -49,6 +94,8 @@ impl<'a> Compiler<'a> {
             modes,
             node_kinds,
             embedded: Vec::new(),
+            expectations: HashMap::new(),
+            requesting: false,
         }
     }
 
@@ -100,6 +147,13 @@ impl<'a> Compiler<'a> {
             GrammarExpr::Terminal(value) => Expr::Terminal {
                 matcher: Matcher::Literal(value.as_bytes().to_vec()),
                 expectation: literal_expectation(value),
+                expected: if self.requesting && !self.expectations.is_empty() {
+                    self.expectations
+                        .get(&expectation_key(true, value))
+                        .copied()
+                } else {
+                    None
+                },
             },
             GrammarExpr::TerminalInsensitive(value) => Expr::Terminal {
                 matcher: Matcher::Insensitive {
@@ -107,10 +161,12 @@ impl<'a> Compiler<'a> {
                     count: value.chars().count(),
                 },
                 expectation: insensitive_expectation(value),
+                expected: None,
             },
             GrammarExpr::CharRange(start, end) => Expr::Terminal {
                 matcher: Matcher::CharRange(u32::from(*start), u32::from(*end)),
                 expectation: range_expectation(*start, *end),
+                expected: None,
             },
             GrammarExpr::CharClass { negated, items } => terminal(
                 Matcher::CharClass {
@@ -346,6 +402,20 @@ impl<'a> Compiler<'a> {
         )
     }
 
+    /// The key of an item a scanner's `expected` may ask about: a literal, or
+    /// a rule or an external token the grammar defines.
+    pub(super) fn expectation(&self, item: &GrammarExpr) -> Option<String> {
+        match item {
+            GrammarExpr::Terminal(value) => Some(expectation_key(true, value)),
+            GrammarExpr::NonTerminal(name)
+                if self.rule_index.contains_key(name) || self.external.contains_key(name) =>
+            {
+                Some(expectation_key(false, name))
+            }
+            _ => None,
+        }
+    }
+
     fn name_of(operation: &Operation, key: &str) -> Name {
         Arc::from(operation.text(key).unwrap_or_default())
     }
@@ -463,6 +533,29 @@ impl<'a> Compiler<'a> {
         };
         Ok(match operation.head.as_str() {
             "valid" => Condition::Valid(Self::name_of(operation, "token")),
+            "expected" => {
+                let Some(item) = operation.expression("item") else {
+                    return refuse("operation", format!("expected in {owner} has no item"));
+                };
+                if let GrammarExpr::NonTerminal(name) = item
+                    && self.expectation(item).is_none()
+                {
+                    return refuse(
+                        "reference",
+                        format!("expected names undefined rule {name} in {owner}"),
+                    );
+                }
+                let Some(key) = self.expectation(item) else {
+                    return refuse(
+                        "operation",
+                        format!(
+                            "expected asks about a {}, not a literal or a rule, in {owner}",
+                            kind_name(item)
+                        ),
+                    );
+                };
+                Condition::Expected(self.expectations[&key])
+            }
             "next" => Condition::Next(self.operation_item(operation, owner)?),
             "atEnd" => Condition::AtEnd,
             "equal" => {
