@@ -15,7 +15,7 @@ use super::program::{
 use crate::grammar::interchange::render_native_expression;
 use crate::grammar::{
     FeatureExpr, FeatureForm, Grammar, GrammarExpr, GrammarFormat, GrammarMacro, GrammarScanner,
-    Operation, RuleAttributes, RuleKind,
+    Operation, PrecedenceEntry, RuleAttributes, RuleKind,
 };
 
 /// A grammar that cannot be loaded or a parse that cannot run; `reason`
@@ -195,6 +195,7 @@ struct Resolved {
     modes: Vec<String>,
     extras: Vec<GrammarExpr>,
     conflicts: Vec<Vec<String>>,
+    precedences: Vec<Vec<PrecedenceEntry>>,
     macros: Ordered<GrammarMacro>,
     scanners: Vec<GrammarScanner>,
 }
@@ -220,6 +221,7 @@ fn resolve_imports(
         modes: Vec::new(),
         extras: Vec::new(),
         conflicts: Vec::new(),
+        precedences: Vec::new(),
         macros: Ordered::new(),
         scanners: Vec::new(),
     };
@@ -237,6 +239,7 @@ fn resolve_imports(
         resolved.modes.extend(inner.modes);
         resolved.extras.extend(inner.extras);
         resolved.conflicts.extend(inner.conflicts);
+        resolved.precedences.extend(inner.precedences);
         for (macro_name, item) in inner.macros.items {
             resolved.macros.set(macro_name, item);
         }
@@ -253,6 +256,9 @@ fn resolve_imports(
     resolved
         .conflicts
         .extend(declarations.conflicts.iter().cloned());
+    resolved
+        .precedences
+        .extend(declarations.precedences.iter().cloned());
     for item in &declarations.macros {
         resolved.macros.set(item.name.clone(), item.clone());
     }
@@ -609,6 +615,19 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
             conflicts.insert(name.clone());
         }
     }
+    // The orders of named precedences (see `compare_precedence`).
+    for order in &resolved.precedences {
+        for entry in order {
+            if let PrecedenceEntry::Rule(name) = entry
+                && !sources.contains(name)
+            {
+                return refuse(
+                    "declaration",
+                    format!("precedences names undefined rule {name}"),
+                );
+            }
+        }
+    }
 
     let peg = resolved
         .matching
@@ -645,7 +664,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         });
     }
     let mut rules = Vec::new();
-    for (index, (_, instance)) in instances.items.iter().enumerate() {
+    for (index, (name, instance)) in instances.items.iter().enumerate() {
         let source = sources
             .get(&instance.source)
             .expect("an instance has a source");
@@ -694,6 +713,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
             });
         }
         rules.push(Rule {
+            name: Arc::from(name.as_str()),
             node_kind,
             kind: source.kind,
             expression,
@@ -730,6 +750,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         external,
         scanners,
         conflicts,
+        precedence_orders: resolved.precedences.clone(),
         trivia,
     });
     for language in embedded {

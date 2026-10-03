@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use super::executor::{Executor, Run};
 use super::operations::State;
-use super::program::{Associativity, Expr, Name, Target};
+use super::program::{Associativity, Expr, Name, PrecedenceTag, Target, compare_precedence};
 use super::results::{Res, ResultSet, Tree, TreeType, children_of};
 use crate::grammar::RuleKind;
 
@@ -18,13 +18,11 @@ pub(super) struct Operands {
     right: Option<HashSet<Name>>,
 }
 
-/// A precedence filter: the level, the associativity, the operand kinds and
-/// the address of the precedence's item, by which its rule is known (see
+/// A precedence filter: the precedence, the operand kinds and the address of the precedence's item, by which its rule is known (see
 /// `reaches_owner`), with the results whose right operand is of one part,
 /// which wait for the others (see `lone_pending`).
 pub(super) struct Keep {
-    level: i64,
-    associativity: Associativity,
+    tag: PrecedenceTag,
     operands: Rc<Operands>,
     item: usize,
     pending: RefCell<Vec<Res>>,
@@ -131,12 +129,15 @@ impl Executor<'_> {
     // Whether the operand `child` on `side` conflicts with the precedence of
     // `keep` (see `precedence_valid`).
     pub(super) fn conflicts(&mut self, keep: &Keep, child: &Tree, side: Associativity) -> Conflict {
-        let Some((inner, _)) = child.precedence else {
+        let Some(inner) = &child.precedence else {
             return Conflict::No;
         };
-        if child.ty != TreeType::Node
-            || inner > keep.level
-            || (inner == keep.level && keep.associativity == side)
+        if child.ty != TreeType::Node {
+            return Conflict::No;
+        }
+        let order = compare_precedence(inner, &keep.tag, &self.program.precedence_orders);
+        if order == std::cmp::Ordering::Greater
+            || (order == std::cmp::Ordering::Equal && keep.tag.associativity == side)
         {
             return Conflict::No;
         }
@@ -288,6 +289,27 @@ impl Executor<'_> {
     // operand of lower precedence there. True when either rule is unknown.
     pub(super) fn reaches_owner(&mut self, item: usize, kind: &Name, side: Associativity) -> bool {
         let program = self.program;
+        let owner = self.owner_of(item);
+        let (Some(owner), Some(index)) = (owner, self.own_rule(kind)) else {
+            return true;
+        };
+        let key = (kind.clone(), side);
+        let names = if let Some(names) = self.edge_memo.get(&key) {
+            Rc::clone(names)
+        } else {
+            let mut names = HashSet::new();
+            self.edge_rules(&program.rules[index].expression, side, &mut names);
+            let names = Rc::new(names);
+            self.edge_memo.insert(key, Rc::clone(&names));
+            names
+        };
+        names.contains(&owner)
+    }
+
+    // The index of the rule whose body holds the precedence of `item` (the
+    // address of the precedence's item), or None.
+    pub(super) fn owner_of(&mut self, item: usize) -> Option<usize> {
+        let program = self.program;
         let owners = self.owners.get_or_insert_with(|| {
             let mut owners = HashMap::new();
             for (index, rule) in program.rules.iter().enumerate() {
@@ -322,21 +344,7 @@ impl Executor<'_> {
             }
             owners
         });
-        let owner = owners.get(&item).copied();
-        let (Some(owner), Some(index)) = (owner, self.own_rule(kind)) else {
-            return true;
-        };
-        let key = (kind.clone(), side);
-        let names = if let Some(names) = self.edge_memo.get(&key) {
-            Rc::clone(names)
-        } else {
-            let mut names = HashSet::new();
-            self.edge_rules(&program.rules[index].expression, side, &mut names);
-            let names = Rc::new(names);
-            self.edge_memo.insert(key, Rc::clone(&names));
-            names
-        };
-        names.contains(&owner)
+        owners.get(&item).copied()
     }
 
     // Adds to `names` the rules `expr` may match at its edge facing the
@@ -384,20 +392,31 @@ impl Executor<'_> {
     pub(super) fn precedence(
         &mut self,
         level: i64,
+        name: Option<&Name>,
         associativity: Associativity,
         item: &Expr,
         position: usize,
         state: &State,
         in_token: bool,
     ) -> Run<Vec<Res>> {
+        // The rule a precedence ranks is the one whose body holds it.
+        let address = std::ptr::from_ref(item) as usize;
+        let rule = self
+            .owner_of(address)
+            .map(|index| self.program.rules[index].name.clone());
+        let tag = PrecedenceTag {
+            level,
+            name: name.cloned(),
+            associativity,
+            rule,
+        };
         let mut results = if in_token {
             self.evaluate(item, position, state, in_token)?
         } else {
             let keep = Keep {
-                level,
-                associativity,
+                tag: tag.clone(),
                 operands: self.operand_kinds(item),
-                item: std::ptr::from_ref(item) as usize,
+                item: address,
                 pending: RefCell::new(Vec::new()),
             };
             let results = self.filtered(item, position, state, &keep)?;
@@ -408,15 +427,16 @@ impl Executor<'_> {
                 self.lone_pending(results, pending)
             }
         };
-        let tag = Some((level, associativity));
         for result in &mut results {
-            result.precedence = tag;
+            result.precedence = Some(tag.clone());
             if in_token {
                 continue;
             }
             // The innermost precedence over the last part of a result is the
             // one its rule reduces with (see `reduction` in results.rs).
-            result.tail = result.tail.or(tag);
+            if result.tail.is_none() {
+                result.tail = Some(tag.clone());
+            }
             // A token reduced alone keeps the precedence on its leaf, for the
             // conflict with a shift after it (see `lone_reduction`), and a
             // node reduced alone keeps it as the precedence it was reduced
@@ -432,9 +452,9 @@ impl Executor<'_> {
             {
                 let mut tagged = (**only).clone();
                 if only.ty == TreeType::Token {
-                    tagged.precedence = tag;
+                    tagged.precedence = Some(tag.clone());
                 } else {
-                    tagged.reduced = tag;
+                    tagged.reduced = Some(tag.clone());
                 }
                 let mut children = result.children.to_vec();
                 children[at] = Rc::new(tagged);

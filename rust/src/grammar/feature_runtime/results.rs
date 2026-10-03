@@ -12,7 +12,8 @@ use std::rc::Rc;
 use super::operations::{OperationValue, State};
 pub(super) use super::ordering::{complete_order, preferred_tokens, same_children};
 use super::ordering::{same_output, shift_order, token_conflict};
-use super::program::{Associativity, Name, TokenRanks};
+use super::program::{Name, PrecedenceTag, TokenRanks};
+use crate::grammar::PrecedenceEntry;
 
 /// The type of a syntax tree node.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -122,17 +123,17 @@ pub(super) struct Tree {
     pub(super) end: usize,
     pub(super) children: Children,
     pub(super) attributes: Option<BTreeMap<String, OperationValue>>,
-    pub(super) precedence: Option<(i64, Associativity)>,
+    pub(super) precedence: Option<PrecedenceTag>,
     /// The innermost precedence over the node's last part, which its rule
     /// reduces with (see `reduction`).
-    pub(super) tail: Option<(i64, Associativity)>,
+    pub(super) tail: Option<PrecedenceTag>,
     /// A token leaf's lexical precedence where it was matched under one
     /// (see `token_rank`).
     pub(super) priority: Option<i64>,
     /// The precedence a token leaf ending a silent rule was reduced with
     /// (see `lone_reduction`), or a node reduced alone under one (see
     /// `shift_order`).
-    pub(super) reduced: Option<(i64, Associativity)>,
+    pub(super) reduced: Option<PrecedenceTag>,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
     /// Under keyword lexing, the kind of the token rule that built the leaf,
@@ -213,10 +214,10 @@ pub(super) struct Res {
     pub(super) state: State,
     pub(super) children: Children,
     pub(super) dynamic: i64,
-    pub(super) precedence: Option<(i64, Associativity)>,
+    pub(super) precedence: Option<PrecedenceTag>,
     /// The innermost precedence over the last part of the result (see
     /// `reduction`).
-    pub(super) tail: Option<(i64, Associativity)>,
+    pub(super) tail: Option<PrecedenceTag>,
     pub(super) ambiguous: bool,
     /// The repair cost: 2 per MISSING leaf, the skipped bytes per ERROR leaf.
     pub(super) cost: usize,
@@ -250,7 +251,7 @@ impl Res {
             tail: if in_token {
                 None
             } else if right.children.count == 0 {
-                left.tail
+                left.tail.clone()
             } else {
                 right.tail
             },
@@ -270,6 +271,8 @@ impl Res {
 pub(super) struct TokenOrder<'c> {
     pub(super) ranks: &'c TokenRanks,
     pub(super) bytes: &'c [u8],
+    /// The precedence orders by which `shift_order` ranks named precedences.
+    pub(super) orders: &'c [Vec<PrecedenceEntry>],
 }
 
 /// A deduplicating, insertion-ordered set of results keyed by end and state.
@@ -308,7 +311,9 @@ impl<'c> ResultSet<'c> {
                         .tokens
                         .map_or(Ordering::Equal, |tokens| {
                             preferred_tokens(&result.children, &existing.children, tokens)
-                                .then_with(|| shift_order(&result.children, &existing.children))
+                                .then_with(|| {
+                                    shift_order(&result.children, &existing.children, tokens.orders)
+                                })
                         })
                         .then(result.dynamic.cmp(&existing.dynamic));
                     if order != Ordering::Greater {

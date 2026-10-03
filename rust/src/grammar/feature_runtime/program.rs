@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use super::operations::{Condition, Statement};
 use super::text::{decode_at, fold_case, quote_text};
-use crate::grammar::{ByteClassItem, RuleKind};
+use crate::grammar::{ByteClassItem, PrecedenceEntry, RuleKind};
 
 /// A shared name: a rule, a node kind, a field, a mode or a language.
 pub(super) type Name = Arc<str>;
@@ -134,6 +134,77 @@ pub(super) enum Associativity {
     None,
 }
 
+/// The precedence a result or a node is built under: its level, its name (a
+/// named precedence ranks by the grammar's precedence orders), its
+/// associativity and the rule it ranks for (the rule whose body holds it, or
+/// for no precedence the node's own rule). See `compare_precedence`.
+#[derive(Clone, Debug)]
+pub(super) struct PrecedenceTag {
+    pub(super) level: i64,
+    pub(super) name: Option<Name>,
+    pub(super) associativity: Associativity,
+    pub(super) rule: Option<Name>,
+}
+
+impl PrecedenceTag {
+    /// The precedence of a production reduced or shifted under none: level
+    /// 0, ranked only by its rule's entries in the precedence orders.
+    pub(super) const fn unranked(rule: Option<Name>) -> Self {
+        Self {
+            level: 0,
+            name: None,
+            associativity: Associativity::None,
+            rule,
+        }
+    }
+
+    /// Whether two precedences are the same, whichever rule they rank for.
+    pub(super) fn same(a: Option<&Self>, b: Option<&Self>) -> bool {
+        match (a, b) {
+            (Some(a), Some(b)) => {
+                a.level == b.level && a.name == b.name && a.associativity == b.associativity
+            }
+            (a, b) => a.is_none() && b.is_none(),
+        }
+    }
+}
+
+/// How precedence `a` compares with `b`, as tree-sitter's
+/// `compare_precedence`: two levels compare when either is nonzero and
+/// neither precedence is named; otherwise the first of the `orders` with an
+/// entry for each decides, the earlier entry higher. A `name` entry stands
+/// for a named precedence, a `rule` entry for any precedence of the rule's
+/// productions. Equal when neither is higher. It mirrors comparePrecedence in
+/// js/src/grammar-runtime/executor.js.
+pub(super) fn compare_precedence(
+    a: &PrecedenceTag,
+    b: &PrecedenceTag,
+    orders: &[Vec<PrecedenceEntry>],
+) -> std::cmp::Ordering {
+    if a.name.is_none() && b.name.is_none() && (a.level != 0 || b.level != 0) {
+        return a.level.cmp(&b.level);
+    }
+    let matches = |entry: &PrecedenceEntry, tag: &PrecedenceTag| match entry {
+        PrecedenceEntry::Name(name) => tag.name.as_deref() == Some(name.as_str()),
+        PrecedenceEntry::Rule(rule) => tag.rule.as_deref() == Some(rule.as_str()),
+    };
+    for order in orders {
+        let (mut left, mut right) = (None, None);
+        for (position, entry) in order.iter().enumerate() {
+            if matches(entry, a) {
+                left = Some(position);
+            }
+            if matches(entry, b) {
+                right = Some(position);
+            }
+            if let (Some(left), Some(right)) = (left, right) {
+                return right.cmp(&left);
+            }
+        }
+    }
+    std::cmp::Ordering::Equal
+}
+
 /// The target of a rule call.
 #[derive(Clone, Debug)]
 pub(super) enum Target {
@@ -172,6 +243,7 @@ pub(super) enum Expr {
     },
     Precedence {
         level: i64,
+        name: Option<Name>,
         associativity: Associativity,
         item: Box<Self>,
     },
@@ -208,6 +280,8 @@ pub(super) enum Expr {
 /// One loaded rule; an instance of a parameterized rule keeps its kind.
 #[derive(Debug)]
 pub(super) struct Rule {
+    /// The rule's name, an instance's own.
+    pub(super) name: Name,
     pub(super) node_kind: Name,
     pub(super) kind: RuleKind,
     pub(super) expression: Expr,
@@ -261,6 +335,8 @@ pub(super) struct Program {
     pub(super) external: HashMap<String, usize>,
     pub(super) scanners: Vec<Scanner>,
     pub(super) conflicts: HashSet<String>,
+    /// The orders of named precedences (see `compare_precedence`).
+    pub(super) precedence_orders: Vec<Vec<PrecedenceEntry>>,
     pub(super) trivia: Vec<Trivia>,
 }
 

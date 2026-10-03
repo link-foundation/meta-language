@@ -7,8 +7,9 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::program::{Associativity, TokenRank};
+use super::program::{Associativity, PrecedenceTag, TokenRank, compare_precedence};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
+use crate::grammar::PrecedenceEntry;
 
 /// One step of a walk over the leaves of a result: a part of a child list,
 /// not yet opened, one tree, or the end of the children of a node the walk
@@ -77,9 +78,6 @@ fn items(children: &Children) -> Items {
 fn meaningful(children: &Children) -> Vec<Rc<Tree>> {
     items(children).filter(|child| !child.trivia).collect()
 }
-
-/// No precedence: level 0, no associativity.
-const NO_PRECEDENCE: (i64, Associativity) = (0, Associativity::None);
 
 /// Which of two results over the same text has the tokens a lexer prefers:
 /// their leaves are walked in order, skipping trivia and the parts both
@@ -217,7 +215,11 @@ pub(super) fn preferred_tokens(
 /// node, right to shift and left to reduce. Greater when `result` is kept,
 /// Less when `existing` is, Equal when neither. It mirrors shiftOrder in
 /// js/src/grammar-runtime/executor.js.
-pub(super) fn shift_order(result: &Children, existing: &Children) -> Ordering {
+pub(super) fn shift_order(
+    result: &Children,
+    existing: &Children,
+    orders: &[Vec<PrecedenceEntry>],
+) -> Ordering {
     let mut left = vec![Walk::Part(result.clone())];
     let mut right = vec![Walk::Part(existing.clone())];
     loop {
@@ -258,38 +260,43 @@ pub(super) fn shift_order(result: &Children, existing: &Children) -> Ordering {
                     && x.end != y.end
                 {
                     return if x.end > y.end {
-                        shift_preferred(&x, &y)
+                        shift_preferred(&x, &y, orders)
                     } else {
-                        shift_preferred(&y, &x).reverse()
+                        shift_preferred(&y, &x, orders).reverse()
                     };
                 }
                 // The same node reduced on in two ways (Rust's `m!(x);` in a
                 // block, a macro invocation that `_expression_except_range`
                 // reduces under `(precedence 1 none (ref macro_invocation))`
                 // and `_declaration_statement` of level 0) conflicts at its
-                // end: the higher level it was reduced with wins.
+                // end: the higher precedence it was reduced with wins.
                 if a_node
                     && b_node
                     && a.start == b.start
                     && let Some((x, y)) = chain_pair(&a, &b)
                 {
-                    let level = |node: &Tree| node.reduced.map_or(0, |(level, _)| level);
-                    let order = level(&x).cmp(&level(&y));
+                    let reduced = |node: &Tree| {
+                        node.reduced
+                            .clone()
+                            .unwrap_or(PrecedenceTag::unranked(None))
+                    };
+                    let order = compare_precedence(&reduced(&x), &reduced(&y), orders);
                     if order != Ordering::Equal {
                         return order;
                     }
                 }
-                let lone = lone_reduction(&a, &b).then_with(|| lone_reduction(&b, &a).reverse());
+                let lone = lone_reduction(&a, &b, orders)
+                    .then_with(|| lone_reduction(&b, &a, orders).reverse());
                 if lone != Ordering::Equal {
                     return lone;
                 }
-                let reduced = extra_reduction(&a, &b, &right)
-                    .then_with(|| extra_reduction(&b, &a, &left).reverse());
+                let reduced = extra_reduction(&a, &b, &right, orders)
+                    .then_with(|| extra_reduction(&b, &a, &left, orders).reverse());
                 if reduced != Ordering::Equal {
                     return reduced;
                 }
                 if a_node && b_node && a.start == b.start {
-                    let parted = chain_conflict(&a, &b);
+                    let parted = chain_conflict(&a, &b, orders);
                     if parted != Ordering::Equal {
                         return parted;
                     }
@@ -328,7 +335,7 @@ const fn by_associativity(associativity: Associativity) -> Ordering {
 /// level 3 left before the `&&` of `c && d`) is reduced with that rule's
 /// precedence. Greater when `a`'s result is kept, Less when `b`'s is, Equal
 /// when neither. It mirrors loneReduction in js/src/grammar-runtime/executor.js.
-fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>) -> Ordering {
+fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -> Ordering {
     if a.ty != TreeType::Node || b.ty != TreeType::Token {
         return Ordering::Equal;
     }
@@ -345,12 +352,17 @@ fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>) -> Ordering {
         }
         progress = first;
     }
-    let (shifted, _) = progress.precedence.unwrap_or(NO_PRECEDENCE);
-    let (reduced, associativity) = b.reduced.or(b.precedence).unwrap_or(NO_PRECEDENCE);
-    if shifted != reduced {
-        return shifted.cmp(&reduced);
-    }
-    by_associativity(associativity)
+    let shifted = progress
+        .precedence
+        .clone()
+        .unwrap_or_else(|| PrecedenceTag::unranked(progress.rule.clone()));
+    let reduced = b
+        .reduced
+        .clone()
+        .or_else(|| b.precedence.clone())
+        .unwrap_or(PrecedenceTag::unranked(None));
+    compare_precedence(&shifted, &reduced, orders)
+        .then_with(|| by_associativity(reduced.associativity))
 }
 
 /// Which of two results an LR parser keeps when one of them reduces a node
@@ -364,7 +376,12 @@ fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>) -> Ordering {
 /// goes on, the associativity of the reduced node. Greater when `a`'s result
 /// is kept, Less when the other is, Equal when neither. It mirrors
 /// extraReduction in js/src/grammar-runtime/executor.js.
-fn extra_reduction(a: &Rc<Tree>, b: &Rc<Tree>, walk: &[Walk]) -> Ordering {
+fn extra_reduction(
+    a: &Rc<Tree>,
+    b: &Rc<Tree>,
+    walk: &[Walk],
+    orders: &[Vec<PrecedenceEntry>],
+) -> Ordering {
     if a.ty != TreeType::Node {
         return Ordering::Equal;
     }
@@ -418,16 +435,21 @@ fn extra_reduction(a: &Rc<Tree>, b: &Rc<Tree>, walk: &[Walk]) -> Ordering {
     {
         return Ordering::Equal;
     }
-    let (mine, associativity) = reduction(&parent);
-    let (other, _) = container
-        .as_ref()
-        .and_then(|node| node.precedence)
-        .unwrap_or(NO_PRECEDENCE);
-    if mine != other {
-        return mine.cmp(&other);
+    let mine = reduction(&parent);
+    let other = container.as_ref().map_or_else(
+        || PrecedenceTag::unranked(None),
+        |node| {
+            node.precedence
+                .clone()
+                .unwrap_or_else(|| PrecedenceTag::unranked(node.rule.clone()))
+        },
+    );
+    let order = compare_precedence(&mine, &other, orders);
+    if order != Ordering::Equal {
+        return order;
     }
-    if container.is_some_and(|node| node.end > parent.end) {
-        return by_associativity(associativity).reverse();
+    if container.is_none_or(|node| node.end > parent.end) {
+        return by_associativity(mine.associativity).reverse();
     }
     Ordering::Equal
 }
@@ -540,7 +562,7 @@ fn nests_first(outer: &Rc<Tree>, inner: &Rc<Tree>) -> bool {
 /// node's, so the two parses agree up to that end. Greater when `a`'s result
 /// is kept, Less when `b`'s is, Equal when neither. It mirrors chainConflict
 /// in js/src/grammar-runtime/executor.js.
-fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>) -> Ordering {
+fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -> Ordering {
     let (first, second) = (leftmost_chain(a), leftmost_chain(b));
     let ends = |chain: &[Rc<Tree>]| {
         chain
@@ -567,7 +589,7 @@ fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>) -> Ordering {
     if own.len() >= next.len() || own.iter().zip(&next).any(|(x, y)| !same_tree(x, y)) {
         return Ordering::Equal;
     }
-    let order = shift_preferred(long, short);
+    let order = shift_preferred(long, short, orders);
     if kept == Ordering::Greater {
         order
     } else {
@@ -583,33 +605,37 @@ fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>) -> Ordering {
 /// is the expression a statement is of, the long result reduced that operand
 /// to a silent rule where the short one reduced its node: the two reductions
 /// conflict instead, and a silent rule's reduction is of level 0.
-fn shift_preferred(long: &Rc<Tree>, short: &Rc<Tree>) -> Ordering {
+fn shift_preferred(long: &Rc<Tree>, short: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -> Ordering {
     let begin = first_leaf_start(short);
     let mut progress = long.clone();
     while let Some(inner) = items(&progress.children).find(|child| {
         child.ty == TreeType::Node && child.start < short.end && child.end > short.end
     }) {
         if first_leaf_start(&inner) == begin {
-            let (reduced, _) = reduction(short);
-            return 0.cmp(&reduced);
+            return compare_precedence(&reduction(short), &PrecedenceTag::unranked(None), orders)
+                .reverse();
         }
         progress = inner;
     }
-    let (shifted, _) = progress.precedence.unwrap_or(NO_PRECEDENCE);
-    let (reduced, associativity) = reduced_before(short, &progress);
-    if shifted != reduced {
-        return shifted.cmp(&reduced);
-    }
-    by_associativity(associativity)
+    let shifted = progress
+        .precedence
+        .clone()
+        .unwrap_or_else(|| PrecedenceTag::unranked(progress.rule.clone()));
+    let reduced = reduced_before(short, &progress);
+    compare_precedence(&shifted, &reduced, orders)
+        .then_with(|| by_associativity(reduced.associativity))
 }
 
 /// The precedence a node is reduced with: the innermost one over its last
 /// part, as a generated parser takes the precedence of a production's last
 /// step (Rust's `let` condition, whose value is `(precedence 3 left (ref
 /// expression))`, reduces before the `&&` of a binary expression of level
-/// 3), else none of level 0.
-fn reduction(node: &Tree) -> (i64, Associativity) {
-    node.tail.or(node.precedence).unwrap_or(NO_PRECEDENCE)
+/// 3), else none of level 0, ranked by the node's rule.
+fn reduction(node: &Tree) -> PrecedenceTag {
+    node.tail
+        .clone()
+        .or_else(|| node.precedence.clone())
+        .unwrap_or_else(|| PrecedenceTag::unranked(node.rule.clone()))
 }
 
 /// The precedence `short` was reduced with where the shift in `progress`
@@ -619,7 +645,7 @@ fn reduction(node: &Tree) -> (i64, Associativity) {
 /// quux`, where the closure of level -1 ends with `baz`, not the `let`
 /// condition), or the precedence a token ending a silent rule keeps (see
 /// `lone_reduction`); else the precedence `short` reduces with.
-fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> (i64, Associativity) {
+fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
     if let Some(first) = first_meaningful(&progress.children) {
         let mut node = short.clone();
         while node.ty == TreeType::Node {
@@ -633,8 +659,8 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> (i64, Associativity) {
                 break;
             };
             if same_tree(&last, &first) {
-                return match last.reduced {
-                    Some(reduced) if last.ty == TreeType::Token => reduced,
+                return match &last.reduced {
+                    Some(reduced) if last.ty == TreeType::Token => reduced.clone(),
                     _ => reduction(&node),
                 };
             }
@@ -662,7 +688,8 @@ pub(super) fn complete_order(
     );
     tokens
         .map_or(Ordering::Equal, |tokens| {
-            preferred_tokens(&left, &right, tokens).then_with(|| shift_order(&left, &right))
+            preferred_tokens(&left, &right, tokens)
+                .then_with(|| shift_order(&left, &right, tokens.orders))
         })
         .then(a.0.dynamic.cmp(&b.0.dynamic))
 }

@@ -208,8 +208,10 @@ impl<'a> Compiler<'a> {
 
     fn form(&mut self, form: &FeatureForm, owner: &str) -> LoadResult<Expr> {
         Ok(match form.head.as_str() {
-            "precedence" => Expr::Precedence {
+            head @ ("precedence" | "namedPrecedence") => Expr::Precedence {
                 level: Self::level(form),
+                name: (head == "namedPrecedence")
+                    .then(|| Arc::from(form.text("name").unwrap_or_default())),
                 associativity: match form.text("associativity") {
                     Some("left") => Associativity::Left,
                     Some("right") => Associativity::Right,

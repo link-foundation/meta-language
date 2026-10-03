@@ -341,7 +341,11 @@ fn parse_program(
     let tokens = compiled.programs[compiled.main]
         .token_ranks
         .as_ref()
-        .map(|ranks| TokenOrder { ranks, bytes });
+        .map(|ranks| TokenOrder {
+            ranks,
+            bytes,
+            orders: &compiled.programs[compiled.main].precedence_orders,
+        });
     let keywords = tokens.map(|_| RefCell::new(KeywordLexing::default()));
     let attempt = |points: Option<&HashSet<usize>>| {
         let shared = Shared {

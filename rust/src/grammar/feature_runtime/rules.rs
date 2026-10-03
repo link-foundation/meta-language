@@ -12,7 +12,7 @@ use super::executor::{Element, Executor, Run};
 use super::operations::{
     Abort, Machine, OpError, OpResult, OperationValue, State, Working, run_statements,
 };
-use super::program::{Expr, Name, Rule, Target};
+use super::program::{Expr, Name, PrecedenceTag, Rule, Target};
 use super::results::{
     Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, complete_order,
     concat, content_start, is_separator, longest_result, no_children, same_children, with_leaf,
@@ -310,7 +310,7 @@ impl Executor<'_> {
                 let Some(acted) = self.run_action(rule, result, &mut scratch, position)? else {
                     continue;
                 };
-                let Some(tail) = acted.tail else {
+                let Some(tail) = acted.tail.clone() else {
                     built.push(Res {
                         ambiguous: acted.ambiguous && !expected,
                         ..acted
@@ -329,7 +329,10 @@ impl Executor<'_> {
                     .rfind(|(_, child)| !child.trivia)
                     .filter(|(_, child)| {
                         child.ty == TreeType::Token
-                            && child.reduced.or(child.precedence) != Some(tail)
+                            && !PrecedenceTag::same(
+                                child.reduced.as_ref().or(child.precedence.as_ref()),
+                                Some(&tail),
+                            )
                     })
                     .map(|(at, child)| (at, Rc::clone(child)));
                 let children = match last {
@@ -356,8 +359,8 @@ impl Executor<'_> {
                 result.end,
                 result.children.clone(),
             );
-            node.precedence = result.precedence;
-            node.tail = result.tail;
+            node.precedence.clone_from(&result.precedence);
+            node.tail.clone_from(&result.tail);
             node.ambiguous = result.ambiguous;
             if let Some(acted) = self.run_action(rule, result, &mut node, position)? {
                 built.push(Res {

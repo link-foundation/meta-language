@@ -140,10 +140,11 @@ impl<'c> Executor<'c> {
             shared,
             max_depth,
             peg: program.peg,
-            longest_tokens: program
-                .token_ranks
-                .as_ref()
-                .map(|ranks| TokenOrder { ranks, bytes }),
+            longest_tokens: program.token_ranks.as_ref().map(|ranks| TokenOrder {
+                ranks,
+                bytes,
+                orders: &program.precedence_orders,
+            }),
             depth: 0,
             memo: HashMap::new(),
             call_stack: Vec::new(),
@@ -380,9 +381,18 @@ impl<'c> Executor<'c> {
             Expr::Alias { name, item } => self.alias(name, item, position, state, in_token),
             Expr::Precedence {
                 level,
+                name,
                 associativity,
                 item,
-            } => self.precedence(*level, *associativity, item, position, state, in_token),
+            } => self.precedence(
+                *level,
+                name.as_ref(),
+                *associativity,
+                item,
+                position,
+                state,
+                in_token,
+            ),
             Expr::DynamicPrecedence { level, item } => {
                 let mut results = self.evaluate(item, position, state, in_token)?;
                 for result in &mut results {
