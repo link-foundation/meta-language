@@ -21,6 +21,30 @@ use super::results::{
     children_of, concat, content_start, longest_result, no_children, with_leaf,
 };
 use super::text::{column_of, decode_at, text_of};
+use crate::grammar::RuleKind;
+
+/// The node kinds the leftmost and rightmost operand of a precedence
+/// expression can match as one child, or None when unknown.
+pub(super) struct Operands {
+    left: Option<HashSet<Name>>,
+    right: Option<HashSet<Name>>,
+}
+
+/// A precedence filter: the level, the associativity and the operand kinds.
+pub(super) struct Keep {
+    level: i64,
+    associativity: Associativity,
+    operands: Rc<Operands>,
+}
+
+/// The union of kind sets, or None when any is unknown.
+fn union(sets: impl Iterator<Item = Option<HashSet<Name>>>) -> Option<HashSet<Name>> {
+    let mut all = HashSet::new();
+    for set in sets {
+        all.extend(set?);
+    }
+    Some(all)
+}
 
 /// The outcome of a step that a resource limit may end.
 pub(super) type Run<T> = Result<T, Abort>;
@@ -59,6 +83,7 @@ pub(super) struct Executor<'c> {
     pub(super) memo: HashMap<MemoKey, Rc<RefCell<Entry>>>,
     pub(super) call_stack: Vec<Rc<RefCell<Entry>>>,
     trivia_memo: HashMap<(usize, State), Rc<Skipped>>,
+    operand_memo: HashMap<usize, Rc<Operands>>,
     pub(super) scanner_memo: HashMap<(Name, usize, State), Option<Rc<Scanned>>>,
     embed_memo: HashMap<(Name, usize, usize), Rc<Outcome>>,
     pub(super) farthest: usize,
@@ -96,6 +121,7 @@ impl<'c> Executor<'c> {
             memo: HashMap::new(),
             call_stack: Vec::new(),
             trivia_memo: HashMap::new(),
+            operand_memo: HashMap::new(),
             scanner_memo: HashMap::new(),
             embed_memo: HashMap::new(),
             farthest: begin,
@@ -501,7 +527,7 @@ impl<'c> Executor<'c> {
         position: usize,
         state: &State,
         in_token: bool,
-        keep: Option<(i64, Associativity)>,
+        keep: Option<&Keep>,
     ) -> Run<Vec<Res>> {
         let mut current = vec![Res::new(position, state.clone(), no_children(), 0)];
         for (index, item) in items.iter().enumerate() {
@@ -511,8 +537,8 @@ impl<'c> Executor<'c> {
                 for right in self.evaluate(item, left.end, &left.state, in_token)? {
                     let joined = Res::join(left, right, in_token);
                     if last
-                        && let Some((level, associativity)) = keep
-                        && !self.precedence_valid(level, associativity, &joined)
+                        && let Some(keep) = keep
+                        && !self.precedence_valid(keep, &joined)
                     {
                         continue;
                     }
@@ -703,22 +729,48 @@ impl<'c> Executor<'c> {
 
     // Precedence and associativity filter the binary-shaped results: a
     // leftmost or rightmost child node of lower precedence, or of equal
-    // precedence on the side the associativity forbids, invalidates a result.
-    fn precedence_valid(&mut self, level: i64, associativity: Associativity, result: &Res) -> bool {
+    // precedence on the side the associativity forbids, invalidates a result
+    // when it conflicts, that is when its own child facing the operator could
+    // have been the operand instead (`-a->t` but not `f(a)->t`).
+    fn precedence_valid(&mut self, keep: &Keep, result: &Res) -> bool {
         let meaningful: Vec<&Rc<Tree>> = result
             .children
             .iter()
             .filter(|child| !child.trivia)
             .collect();
-        let forbids = |child: &Tree, side: Associativity| {
-            child.ty == TreeType::Node
-                && child.precedence.is_some_and(|(inner, _)| {
-                    inner < level || (inner == level && associativity != side)
-                })
+        let conflicts = |child: &Tree, side: Associativity| {
+            let Some((inner, _)) = child.precedence else {
+                return false;
+            };
+            if child.ty != TreeType::Node
+                || inner > keep.level
+                || (inner == keep.level && keep.associativity == side)
+            {
+                return false;
+            }
+            let kinds = if side == Associativity::Left {
+                &keep.operands.left
+            } else {
+                &keep.operands.right
+            };
+            let Some(kinds) = kinds else {
+                return true;
+            };
+            let mut facing = child
+                .children
+                .iter()
+                .filter(|grandchild| !grandchild.trivia);
+            let edge = if side == Associativity::Left {
+                facing.next_back()
+            } else {
+                facing.next()
+            };
+            edge.and_then(|edge| edge.kind.as_ref())
+                .is_some_and(|kind| kinds.contains(kind))
         };
         let allowed = meaningful.len() < 2
-            || !(forbids(meaningful[0], Associativity::Left)
-                || forbids(meaningful[meaningful.len() - 1], Associativity::Right));
+            || !(conflicts(meaningful[0], Associativity::Left)
+                || conflicts(meaningful[meaningful.len() - 1], Associativity::Right));
         if !allowed {
             self.fail(result.end, &Name::from("precedence"));
         }
@@ -738,12 +790,74 @@ impl<'c> Executor<'c> {
         let mut results = if in_token {
             self.evaluate(item, position, state, in_token)?
         } else {
-            self.filtered(item, position, state, (level, associativity))?
+            let keep = Keep {
+                level,
+                associativity,
+                operands: self.operand_kinds(item),
+            };
+            self.filtered(item, position, state, &keep)?
         };
         for result in &mut results {
             result.precedence = Some((level, associativity));
         }
         Ok(results)
+    }
+
+    // The node kinds the leftmost and rightmost operand of a precedence
+    // expression can match as one child, or None when unknown.
+    fn operand_kinds(&mut self, item: &Expr) -> Rc<Operands> {
+        let key = std::ptr::from_ref(item) as usize;
+        if let Some(operands) = self.operand_memo.get(&key) {
+            return Rc::clone(operands);
+        }
+        let operands = Rc::new(Operands {
+            left: self.edge_kinds(item, Associativity::Left),
+            right: self.edge_kinds(item, Associativity::Right),
+        });
+        self.operand_memo.insert(key, Rc::clone(&operands));
+        operands
+    }
+
+    fn edge_kinds(&self, item: &Expr, side: Associativity) -> Option<HashSet<Name>> {
+        match item {
+            Expr::Capture { item, .. } => self.edge_kinds(item, side),
+            Expr::Seq(items) if !items.is_empty() => {
+                let operand = if side == Associativity::Left {
+                    &items[0]
+                } else {
+                    &items[items.len() - 1]
+                };
+                self.unit_kinds(operand, &mut HashSet::new())
+            }
+            Expr::Choice { items, .. } => {
+                union(items.iter().map(|item| self.edge_kinds(item, side)))
+            }
+            _ => None,
+        }
+    }
+
+    // The node kinds `expr` can match as one child, or None when unknown.
+    fn unit_kinds(&self, expr: &Expr, visiting: &mut HashSet<usize>) -> Option<HashSet<Name>> {
+        match expr {
+            Expr::Ref(Target::Rule(index)) => {
+                let rule = &self.program.rules[*index];
+                if !matches!(rule.kind, RuleKind::Silent) {
+                    return Some(HashSet::from([rule.node_kind.clone()]));
+                }
+                if !visiting.insert(*index) {
+                    return Some(HashSet::new());
+                }
+                self.unit_kinds(&rule.expression, visiting)
+            }
+            Expr::Choice { items, .. } => {
+                union(items.iter().map(|item| self.unit_kinds(item, visiting)))
+            }
+            Expr::Capture { item, .. }
+            | Expr::Precedence { item, .. }
+            | Expr::DynamicPrecedence { item, .. } => self.unit_kinds(item, visiting),
+            Expr::Alias { name, .. } => Some(HashSet::from([name.clone()])),
+            _ => None,
+        }
     }
 
     // The results of `expr` that the precedence filter accepts, filtered
@@ -754,7 +868,7 @@ impl<'c> Executor<'c> {
         expr: &Expr,
         position: usize,
         state: &State,
-        keep: (i64, Associativity),
+        keep: &Keep,
     ) -> Run<Vec<Res>> {
         match expr {
             Expr::Seq(items) if !items.is_empty() => {
@@ -777,7 +891,7 @@ impl<'c> Executor<'c> {
                 let results = self.evaluate(expr, position, state, false)?;
                 Ok(results
                     .into_iter()
-                    .filter(|result| self.precedence_valid(keep.0, keep.1, result))
+                    .filter(|result| self.precedence_valid(keep, result))
                     .collect())
             }
         }

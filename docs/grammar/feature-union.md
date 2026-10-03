@@ -386,7 +386,15 @@ alias name.
 results before they are merged: a result whose first or last non-trivia child
 is a node tagged with an inner level is invalid when the inner level is lower,
 or equal while the associativity is not `left` (first child) or not `right`
-(last child). A rejected result records the expectation `precedence`. Kept
+(last child), and the two conflict. They conflict when the inner node's own
+child facing the operator (its last child for the first edge, its first child
+for the last edge) has a kind the item's operand on that edge can match as
+one child: the node kind of a rule it refers to, through silent rules,
+choices, captures, precedences and aliases. When that set is unknown every
+such inner node conflicts. So `(1+2).3` is invalid as `2` could be the
+operand of `.`, while `1().2` stands as `)` could not, as an LR parser would
+find a conflict only in the first. A rejected result records the expectation
+`precedence`. Kept
 results are tagged with the level and associativity, and a rule node carries
 the tag of its result. `dynamicPrecedence` adds its level to `dynamic`.
 `lexicalPrecedence` matches its item and only matters to `longest`.

@@ -195,6 +195,12 @@ function longestResult(results) {
   return best;
 }
 
+// The union of kind sets, or null when any is unknown.
+function union(sets) {
+  if (sets.some((set) => set === null)) return null;
+  return new Set(sets.flatMap((set) => [...set]));
+}
+
 function isTrivia(child) {
   return child.trivia === true;
 }
@@ -234,6 +240,7 @@ export class Executor {
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
     this.callStack = [];
     this.triviaMemo = new Map();
+    this.operandMemo = new Map();
     this.scannerMemo = new Map();
     this.embedMemo = new Map();
     this.farthest = begin;
@@ -542,7 +549,9 @@ export class Executor {
 
   // Precedence and associativity filter the binary-shaped results: a
   // leftmost or rightmost child node of lower precedence, or of equal
-  // precedence on the side the associativity forbids, invalidates a result.
+  // precedence on the side the associativity forbids, invalidates a result
+  // when it conflicts, that is when its own child facing the operator could
+  // have been the operand instead (`-a->t` but not `f(a)->t`).
   precedence(expression, position, state, inToken) {
     const { level, associativity } = expression;
     const tag = { level, associativity };
@@ -551,25 +560,59 @@ export class Executor {
       this.fail(result.end, 'precedence');
       return false;
     };
+    const conflicts = (child, side) => {
+      if (child.type !== 'node' || !child.precedence) return false;
+      const inner = child.precedence.level;
+      if (inner > level || (inner === level && associativity === side)) return false;
+      const kinds = this.operandKinds(expression)[side];
+      if (kinds === null) return true;
+      const facing = child.children.filter((grandchild) => !isTrivia(grandchild));
+      const edge = side === 'left' ? facing[facing.length - 1] : facing[0];
+      return edge !== undefined && kinds.has(edge.kind);
+    };
     const allowed = (result) => {
       const meaningful = result.children.filter((child) => !isTrivia(child));
       if (meaningful.length < 2) return true;
-      const first = meaningful[0];
-      const last = meaningful[meaningful.length - 1];
-      if (first.type === 'node' && first.precedence) {
-        const inner = first.precedence.level;
-        if (inner < level || (inner === level && associativity !== 'left')) return false;
-      }
-      if (last.type === 'node' && last.precedence) {
-        const inner = last.precedence.level;
-        if (inner < level || (inner === level && associativity !== 'right')) return false;
-      }
-      return true;
+      return !conflicts(meaningful[0], 'left') && !conflicts(meaningful[meaningful.length - 1], 'right');
     };
     const results = inToken
       ? this.evaluate(expression.item, position, state, inToken)
       : this.filtered(expression.item, position, state, valid);
     return results.map((result) => copyResult(result, { precedence: tag }));
+  }
+
+  // The node kinds the leftmost and rightmost operand of a precedence
+  // expression can match as one child, or null when unknown.
+  operandKinds(expression) {
+    let kinds = this.operandMemo.get(expression);
+    if (kinds) return kinds;
+    const edge = (item, side) => {
+      if (item.kind === 'capture') return edge(item.item, side);
+      if (item.kind === 'seq' && item.items.length > 0) return this.unitKinds(item.items[side === 'left' ? 0 : item.items.length - 1], new Set());
+      if (item.kind === 'choice') return union(item.items.map((choice) => edge(choice, side)));
+      return null;
+    };
+    kinds = { left: edge(expression.item, 'left'), right: edge(expression.item, 'right') };
+    this.operandMemo.set(expression, kinds);
+    return kinds;
+  }
+
+  // The node kinds `expression` can match as one child, or null when unknown.
+  unitKinds(expression, visiting) {
+    switch (expression.kind) {
+      case 'ref': {
+        const rule = this.program.rules.get(expression.name);
+        if (!rule) return null;
+        if (rule.kind !== 'silent') return new Set([rule.nodeKind]);
+        if (visiting.has(expression.name)) return new Set();
+        visiting.add(expression.name);
+        return this.unitKinds(rule.expression, visiting);
+      }
+      case 'choice': return union(expression.items.map((item) => this.unitKinds(item, visiting)));
+      case 'capture': case 'precedence': case 'dynamicPrecedence': return this.unitKinds(expression.item, visiting);
+      case 'alias': return new Set([expression.name]);
+      default: return null;
+    }
   }
 
   // The results of `expression` that `keep` accepts, filtered before a

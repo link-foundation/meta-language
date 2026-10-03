@@ -156,7 +156,7 @@
     {
       "id": "precedence",
       "title": "precedence and associativity",
-      "listing": "start e\nrule e = normal choice(precedence(1, left, seq(ref(e), literal(\"+\"), ref(e))), precedence(2, left, seq(ref(e), literal(\"*\"), ref(e))), precedence(3, right, seq(ref(e), literal(\"^\"), ref(e))), precedence(0, none, seq(ref(e), literal(\"=\"), ref(e))), ref(n))\nrule n = token repeat1(range(\"0\", \"9\"))\n",
+      "listing": "start e\nrule e = normal choice(precedence(1, left, seq(ref(e), literal(\"+\"), ref(e))), precedence(2, left, seq(ref(e), literal(\"*\"), ref(e))), precedence(3, right, seq(ref(e), literal(\"^\"), ref(e))), precedence(0, none, seq(ref(e), literal(\"=\"), ref(e))), precedence(4, left, seq(ref(e), literal(\"(\"), literal(\")\"))), precedence(5, left, seq(ref(e), literal(\".\"), ref(n))), ref(n))\nrule n = token repeat1(range(\"0\", \"9\"))\n",
       "options": {
         "ambiguity": "reject"
       },
@@ -180,6 +180,14 @@
         {
           "input": "1+2=3",
           "tree": "(e (e (e (n \"1\")) \"+\" (e (n \"2\"))) \"=\" (e (n \"3\")))"
+        },
+        {
+          "input": "1().2",
+          "tree": "(e (e (e (n \"1\")) \"(\" \")\") \".\" (n \"2\"))"
+        },
+        {
+          "input": "1+2.3",
+          "tree": "(e (e (n \"1\")) \"+\" (e (e (n \"2\")) \".\" (n \"3\")))"
         }
       ],
       "negative": [
@@ -191,8 +199,10 @@
             "line": 1,
             "column": 6,
             "expected": [
+              "\"(\"",
               "\"*\"",
               "\"+\"",
+              "\".\"",
               "\"=\"",
               "\"^\"",
               "precedence"

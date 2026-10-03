@@ -1,11 +1,11 @@
 //! Parses files with a native Links Notation grammar file and prints the
 //! s-expression js/experiments/tree-sitter-native-compare.mjs prints.
-//!   cargo run --release --example native_grammar_experiment -- GRAMMAR.lino FILE...
+//!   `cargo run --release --example native_grammar_experiment -- GRAMMAR.lino FILE...`
 use meta_language::{
     FeatureParseOptions, SyntaxTree, compile_feature_grammar, parse_grammar_links,
 };
 
-fn trivia(node: &SyntaxTree) -> bool {
+const fn trivia(node: &SyntaxTree) -> bool {
     matches!(node, SyntaxTree::Token { trivia: true, .. })
 }
 

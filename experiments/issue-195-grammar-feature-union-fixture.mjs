@@ -66,11 +66,13 @@ const features = [
     title: 'precedence and associativity',
     listing: lines(
       'start e',
-      'rule e = normal choice(precedence(1, left, seq(ref(e), literal("+"), ref(e))), precedence(2, left, seq(ref(e), literal("*"), ref(e))), precedence(3, right, seq(ref(e), literal("^"), ref(e))), precedence(0, none, seq(ref(e), literal("="), ref(e))), ref(n))',
+      'rule e = normal choice(precedence(1, left, seq(ref(e), literal("+"), ref(e))), precedence(2, left, seq(ref(e), literal("*"), ref(e))), precedence(3, right, seq(ref(e), literal("^"), ref(e))), precedence(0, none, seq(ref(e), literal("="), ref(e))), precedence(4, left, seq(ref(e), literal("("), literal(")"))), precedence(5, left, seq(ref(e), literal("."), ref(n))), ref(n))',
       'rule n = token repeat1(range("0", "9"))',
     ),
     options: { ambiguity: 'reject' },
-    positive: ['1+2*3', '1*2+3', '1+2+3', '2^3^4', '1+2=3'],
+    // A lower-precedence edge child conflicts only when its own child facing
+    // the operator could be the operand: `1().2` stands, `(1+2).3` does not.
+    positive: ['1+2*3', '1*2+3', '1+2+3', '2^3^4', '1+2=3', '1().2', '1+2.3'],
     negative: [{ input: '1=2=3' }, { input: '1+*2' }],
     mutation: {
       replace: ['precedence(1, left, seq(ref(e), literal("+"), ref(e)))', 'precedence(1, right, seq(ref(e), literal("+"), ref(e)))'],
