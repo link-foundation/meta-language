@@ -4,7 +4,9 @@
 // tree-sitter CLI printed for it (js/scripts/generate-issue-195-conformance.mjs):
 // structure, kinds, fields, spans, error and missing nodes, trivia, diagnostics and
 // exact reconstruction. Where the upstream authors' expected tree agrees with the
-// CLI, the public tree must equal it too.
+// CLI, the public tree must equal it too. Where a language parses with its native grammar,
+// a malformed case whose native recovery differs from tree-sitter's must instead match its
+// justified record in parity/fixtures/native-recovery.json (support/native-recovery.js).
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -24,6 +26,7 @@ import {
 } from './support/cst-lines.js';
 import { normalize, parseCorpus, stripFields } from './support/cst-sexpression.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { nativeRecovery } from './support/native-recovery.js';
 
 const MANIFEST_FILE = 'parity/fixtures/issue-195-conformance/manifest.json';
 const fixtureRoot = new URL('../../parity/fixtures/issue-195-conformance/', import.meta.url);
@@ -59,7 +62,7 @@ function caseSources(language, details) {
   return sources;
 }
 
-/** Problems of the public tree of one non-mixed case against its oracle tree. */
+/** Problems of the public tree of one non-mixed case against its oracle tree, and that tree. */
 function documentProblems(language, entry, source, corpusCase) {
   const network = LinkNetwork.parse(source, language);
   const { problems, text } = documentOracleProblems(network, language, source, entry.cst);
@@ -72,22 +75,22 @@ function documentProblems(language, entry, source, corpusCase) {
   if (entry.upstream === 'error-expected' && network.verifyFullMatch().isClean()) {
     problems.push('the upstream corpus expects an error, but the network verifies clean');
   }
-  return problems;
+  return { problems, text };
 }
 
-/** Problems of the public region tree of one mixed-language case against its oracle tree. */
+/** Problems of the public region tree of one mixed-language case against its oracle tree, and that tree. */
 function regionProblems(language, entry, host) {
   const network = LinkNetwork.parse(host.source, host.host);
   const region = regionGrammarRoots(network).find((candidate) => candidate.language === language &&
     candidate.span.byteRange.start === entry.startByte && candidate.span.byteRange.end === entry.endByte);
-  if (!region) return [`no ${language} region at ${entry.startByte}..${entry.endByte} of the ${host.host} host`];
+  if (!region) return { problems: [`no ${language} region at ${entry.startByte}..${entry.endByte} of the ${host.host} host`], text: '' };
   const { text, rendered } = renderCstLines(region, language);
   const problems = [];
   if (text !== entry.cst) problems.push(`region CST differs at ${firstDifference(text, entry.cst)}`);
   if (network.reconstructText() !== host.source) problems.push('reconstruction differs from the host source');
   problems.push(...triviaProblems(network, host.source, entry.cst, [entry.startByte, entry.endByte]));
   problems.push(...diagnosticProblems(network, rendered, entry.cst, { checkClean: false }));
-  return problems;
+  return { problems, text };
 }
 
 test('the conformance fixtures record their provenance and match their pinned inputs', () => {
@@ -101,9 +104,9 @@ test('the comparison rejects a tree that differs from the oracle', () => {
   const malformed = oracle.cases.find((entry) => entry.kind === 'malformed');
   const source = malformed.source;
   const cleanOracle = malformed.cst.replaceAll('•', '').replace(/ERROR /u, 'program ');
-  assert.notDeepEqual(documentProblems(language, { ...malformed, cst: cleanOracle }, source), []);
+  assert.notDeepEqual(documentProblems(language, { ...malformed, cst: cleanOracle }, source).problems, []);
   const shifted = malformed.cst.replace(/(\d+):(\d+)$/mu, (_, row, column) => `${row}:${Number(column) + 1}`);
-  assert.notDeepEqual(documentProblems(language, { ...malformed, cst: shifted }, source), []);
+  assert.notDeepEqual(documentProblems(language, { ...malformed, cst: shifted }, source).problems, []);
 });
 
 for (const [language, details] of Object.entries(manifest.languages)) {
@@ -112,6 +115,7 @@ for (const [language, details] of Object.entries(manifest.languages)) {
     const oracle = JSON.parse(read(details.oracle));
     assert.equal(oracle.language, language);
     const sources = caseSources(language, details);
+    const recovery = nativeRecovery('conformance', language);
     const counts = {};
     const failures = [];
     for (const entry of oracle.cases) {
@@ -120,16 +124,23 @@ for (const [language, details] of Object.entries(manifest.languages)) {
       if (entry.kind === 'mixed') {
         const host = inputs.mixed.find((candidate) => candidate.id === entry.hostCase);
         assert.equal(sha256(host.source), entry.sourceSha256, entry.id);
-        problems = regionProblems(language, entry, host);
+        const compared = regionProblems(language, entry, host);
+        problems = recovery.resolve({ id: entry.id, source: host.source, oracle: entry.cst, ...compared,
+          check: (cst) => regionProblems(language, { ...entry, cst }, host).problems });
       } else {
         const corpusCase = sources.get(entry.id);
         const source = entry.source ?? corpusCase.source;
         assert.equal(sha256(source), entry.sourceSha256, entry.id);
-        problems = documentProblems(language, entry, source, corpusCase);
+        const compared = documentProblems(language, entry, source, corpusCase);
+        // The upstream tree of a recorded case is the oracle's, whose difference the record
+        // justifies; the native tree is checked as malformed instead.
+        problems = recovery.resolve({ id: entry.id, source, oracle: entry.cst, ...compared,
+          check: (cst) => documentProblems(language, { ...entry, cst, upstream: undefined }, source, corpusCase).problems });
       }
       if (problems.length) failures.push(`${entry.id}${entry.name ? ` (${entry.name})` : ''}: ${problems.join('; ')}`);
     }
     assert.deepEqual(failures, []);
+    assert.deepEqual(recovery.unused(), [], `${language} recovery records without a conformance case`);
     assert.deepEqual(counts, details.cases);
 
     // Every case family is present, and each exercises what it claims.

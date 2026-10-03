@@ -5,7 +5,9 @@
 // the oracle, every parse must keep the oracle-free properties of support/generative.js,
 // and a run-time fuzz pass (seed ISSUE_195_GENERATIVE_SEED, default the fixture seed; count
 // ISSUE_195_GENERATIVE_CASES, default 48) checks them, and the blank-line metamorphic
-// relation of clean trees, on inputs no fixture contains.
+// relation of clean trees, on inputs no fixture contains. Where a language parses with its
+// native grammar, a malformed case whose native recovery differs from tree-sitter's must
+// instead match its justified record in parity/fixtures/native-recovery.json.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -25,6 +27,7 @@ import {
   seedSources,
 } from './support/generative.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { nativeRecovery } from './support/native-recovery.js';
 
 const MANIFEST_FILE = 'parity/fixtures/issue-195-generative/manifest.json';
 const fixtureRoot = new URL('../../parity/fixtures/issue-195-generative/', import.meta.url);
@@ -53,6 +56,14 @@ function parseProblems(language, source, cst) {
   const network = LinkNetwork.parse(source, language);
   const { problems, text } = documentOracleProblems(network, language, source, cst);
   return { problems: [...problems, ...propertyProblems(network, source)], text };
+}
+
+/** `parseProblems` of case `id`, those of its recovery record where it has one. */
+function caseProblems(recovery, language, id, source, cst) {
+  const compared = parseProblems(language, source, cst);
+  const problems = recovery.resolve({ id, source, oracle: cst, ...compared,
+    check: (text) => parseProblems(language, source, text).problems });
+  return { problems, text: compared.text };
 }
 
 const renderPublic = (language, source) => {
@@ -111,15 +122,16 @@ for (const [language, details] of Object.entries(manifest.languages)) {
   test(testName, () => {
     const fixture = JSON.parse(read(details.file));
     assert.equal(fixture.language, language);
+    const recovery = nativeRecovery('generative', language);
     const failures = [];
     const fail = (entry, where, problems, source = entry.source) => {
       if (problems.length) failures.push(`${entry.id}${where} ${JSON.stringify(source)}: ${problems.join('; ')}`);
     };
     for (const entry of fixture.cases) {
-      const base = parseProblems(language, entry.source, entry.cst);
+      const base = caseProblems(recovery, language, entry.id, entry.source, entry.cst);
       fail(entry, '', base.problems);
       if (entry.kind === 'metamorphic') {
-        const variant = parseProblems(language, entry.variant, entry.variantCst);
+        const variant = caseProblems(recovery, language, `${entry.id} (variant)`, entry.variant, entry.variantCst);
         fail(entry, ' (variant)', variant.problems, entry.variant);
         if (relationHolds(entry.relation, base.text, variant.text) !== entry.relationHolds) {
           fail(entry, ' (relation)', [`${entry.relation} holds for the public trees iff it holds for the oracle`]);
@@ -130,11 +142,12 @@ for (const [language, details] of Object.entries(manifest.languages)) {
         let source = entry.source;
         entry.steps.forEach((step, position) => {
           source = applyEdit(source, step);
-          fail(entry, ` step ${position}`, parseProblems(language, source, step.cst).problems, source);
+          fail(entry, ` step ${position}`, caseProblems(recovery, language, `${entry.id} step ${position}`, source, step.cst).problems, source);
         });
       }
     }
     assert.deepEqual(failures, []);
+    assert.deepEqual(recovery.unused(), [], `${language} recovery records without a generative case`);
 
     // Every family is present, and each exercises what it claims.
     const byKind = (kind) => fixture.cases.filter((entry) => entry.kind === kind);

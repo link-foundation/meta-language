@@ -1,0 +1,1808 @@
+{
+  "description": "Conformance and generative cases whose native recovery differs from the tree-sitter oracle, each with a justified category; written by js/scripts/generate-native-recovery.mjs and checked by js/tests/support/native-recovery.js and rust/tests/unit/native_recovery_records.rs.",
+  "categories": {
+    "same-repair-sites": "Both trees skip the same spans as ERROR and insert MISSING leaves at the same points, but differ in what they hold: an ERROR node of tree-sitter holds the tokens its error-mode lexer read in the skipped span, the native ERROR is one leaf over the skipped bytes; tree-sitter inserts the missing token with the lowest symbol id its parse state accepts, the native executor the element its grammar expects first at the repair point, and the nodes around a repair follow from that choice.",
+    "oracle-skips-more": "tree-sitter covers more of the input with ERROR. Its recovery works on the LR stack: where no state accepts the next token it skips tokens or, at the end of the input above all, reduces what the stack holds into an ERROR node. The native executor repairs only where an element failed farthest, with the cheaper of MISSING leaves (cost 2 each) and skipped bytes (cost 1 each), so it often completes a construct with MISSING leaves, the elements its grammar expects there, where tree-sitter skips the tokens, and the input it keeps stays in the grammar's nodes.",
+    "native-skips-more": "The native executor covers more of the input with ERROR. It repairs where an element failed farthest, one repair point per round, with the cheaper of a MISSING leaf (cost 2) and a skip to the first later offset where the failing element matches (cost 1 per byte). So it may skip a short stray token that tree-sitter, whose costs (110 per missing tree against 100 per skipped tree, 1 per byte and 30 per line) and parse states differ, keeps in a node with MISSING leaves, or skip up to where the element matches again a region in which tree-sitter, which can also pop its LR stack, makes several smaller repairs.",
+    "same-skipped-bytes": "Both trees cover as many bytes with ERROR, but place or nest the ERROR nodes or the MISSING leaves differently: tree-sitter hoists skipped tokens into an ERROR node at the level of its LR stack, often as a sibling of the next node, and may wrap an ERROR node in another over the same span, while the native executor keeps one ERROR leaf in the rule whose element skipped it."
+  },
+  "cases": [
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "corpus/error.txt/0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "1bbeb1f1b7d8259824eeef65fdf00e7c396868387fb281aa42b785fcff3af503",
+        "errors": [
+          "2:4-2:5",
+          "3:4-3:5",
+          "4:4-4:5",
+          "5:4-5:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "29ef050f165fba70c221d931d81fd04e8c62385572a097d2c2b7a8966d88a2d4",
+        "errors": [],
+        "missing": [
+          "\"]\" 1:21",
+          "\";\" 2:4",
+          "identifier 2:4",
+          "\"!\" 2:4",
+          "\"[\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "corpus/error.txt/1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "063bab00b8fd2e0edac7f19db902b66766c46a59f36c6c966e62f4fb90f26105",
+        "errors": [
+          "1:3-1:38"
+        ],
+        "missing": [
+          "\";\" 1:48"
+        ]
+      },
+      "native": {
+        "cstSha256": "9fd2753c663b33ee4415ec5da183e6b26fefc5ed7ea254761937ad17bea96efa",
+        "errors": [
+          "1:47-1:48"
+        ],
+        "missing": [
+          "\"}\" 1:15",
+          "\")\" 1:15",
+          "\";\" 1:15",
+          "identifier 1:15",
+          "\"!\" 1:15",
+          "\"{\" 1:15"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "corpus/error.txt/2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "2095da74357ebb11191e87a3db5d10b9dbd3e7217f9f317c39f6511d8ffada63",
+        "errors": [
+          "2:4-4:19",
+          "4:33-4:34",
+          "6:4-7:14",
+          "8:4-9:1"
+        ],
+        "missing": [
+          "\";\" 9:2"
+        ]
+      },
+      "native": {
+        "cstSha256": "f1b48ae7f5e1c00c1a0dd94c1196dfc969266acfffab6f61f1a5ece183be314c",
+        "errors": [
+          "9:1-9:2"
+        ],
+        "missing": [
+          "\"}\" 2:9",
+          "\")\" 2:9",
+          "\";\" 2:9",
+          "identifier 2:9",
+          "\"!\" 2:9",
+          "\"{\" 2:9"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "rust-missing-semicolon-and-brace",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d99bec2ca80060ac0630da9bd164480fcd553dea940e6cffbc64b7935cfc4afc",
+        "errors": [
+          "0:0-2:22",
+          "1:12-1:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "87c2ec5ec52f6479f2b1d2488fec254f1a62852651bb03eed2e91b37027fd69c",
+        "errors": [],
+        "missing": [
+          "\";\" 1:13",
+          "\"}\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "rust-stray-tokens",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "70ec4d2f02187d59ab85252251024f0743d8715555bbbee614cd22a9cd9c16bf",
+        "errors": [
+          "0:17-0:18",
+          "1:40-1:41"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "c06a590f29f1e95c40218c2baecc68c6b476989f8e6c12181d176540bb74da1e",
+        "errors": [
+          "0:17-0:18",
+          "1:40-1:41"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "rust-truncated-generic",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "6a2f31b742530d0b53b592bc7ae643be6b6c269aad03f7e72dbf02262effeebb",
+        "errors": [
+          "0:0-0:29"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "9a91891530a838f0d44f977e851108780682b744b925c64363e21edb058787f8",
+        "errors": [],
+        "missing": [
+          "\">\" 0:29",
+          "\";\" 0:29"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "rust-bad-match-arm-with-unicode",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "8e7cea09cba201951a88b31195483b33ea033b5cce3380079415d086fc71efc0",
+        "errors": [],
+        "missing": [
+          "identifier 0:51"
+        ]
+      },
+      "native": {
+        "cstSha256": "96d8207f2664cdfb5eda9e0d4b5e674bc1575e21a2cf01663cbd4a0085522be1",
+        "errors": [],
+        "missing": [
+          "char_literal 0:51"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "error-recovery/rust-bare-extern",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "da657366d9404c2f7a639a2deb2b0e0fb23daf9f11c1a64a9c5c11ca0fdf6ed6",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "decaf7fb5f8c8881967e3c6509c330590b8f84d4aa5dfbed175a64e27bc91cb8",
+        "errors": [],
+        "missing": [
+          "\";\" 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "error-recovery/rust-extern-abi-without-item",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "dface46182c1f4bc85e19a63479bfe834ece21d83f38667a783a9e666c243d50",
+        "errors": [
+          "1:0-1:10"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "9e5754cdf3db9be063f1ee88ffbdfb15108f989b46cca6b62183bec4eb1b5f7c",
+        "errors": [],
+        "missing": [
+          "\";\" 1:10"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "conformance",
+      "case": "mixed/markdown-fences-with-malformed-code/1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "69fd61c1d6f80b611514e9916a10f45d4d14ceb72b572f63d17f403105059bae",
+        "errors": [
+          "7:0-7:7"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "c0b7c010b76f028273a0dc0b3ff01dd0c6d03076a70f6b7a0bff60d5eabcedc3",
+        "errors": [
+          "7:6-7:7"
+        ],
+        "missing": [
+          "\")\" 7:5",
+          "\";\" 7:6"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "property/1",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "20789c3715d8426166d3116b304d6e99dc53150bf4123da8463adbe6fcbb170e",
+        "errors": [
+          "13:0-13:2",
+          "13:0-13:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "112d14dc77e24d8766324264da3db78397c324571655443f17bf07b3bf02b43d",
+        "errors": [
+          "13:0-13:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "property/2",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "b4c7cace59fa763de6be10d12c30f825df1f734a39662fda53e8724a3c52c69a",
+        "errors": [
+          "14:0-14:3",
+          "14:0-14:3"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "212f7ffd5f830cdee010e404cc95c6fe4f6d06dcba4de08cb9cec4c0abcc7048",
+        "errors": [
+          "14:0-14:3"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "property/6",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "731bb62d0be7ce5d7c74430b85ba92b33e30c89d9ae3a002c5bdf1dddb029e90",
+        "errors": [
+          "9:0-9:2",
+          "9:0-9:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "fcbb6dd1717016bd4af50e9c5384a3ddf01a4841cb58504833b5b9e08f594928",
+        "errors": [
+          "9:0-9:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "property/10",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "99cc1ecadab39d220ae37ebf211f301e72ee318bb0a86ada46f12c40f02d5615",
+        "errors": [
+          "13:0-13:2",
+          "13:0-13:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "135f9df874ee038a13bd0bf38ca5479bfe5b54961514e4b3798709a11a6c752f",
+        "errors": [
+          "13:0-13:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "property/13",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "fa758499d8523818d0330a9f269271a5580d1b1ea4549f55b7f73915e1423b78",
+        "errors": [],
+        "missing": [
+          "identifier 0:51"
+        ]
+      },
+      "native": {
+        "cstSha256": "a57e5dba2bfaf16b5221a69ffe5d949bbd3b3103e21843e6b61466d4467151b7",
+        "errors": [],
+        "missing": [
+          "char_literal 0:51"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "property/15",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "35459214b25a200a65ee6e9547f2b0aca1eda211d6d1f40376c65cd47b91597d",
+        "errors": [
+          "9:0-10:1",
+          "9:0-9:3"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "bff0cf074897bd3a1f25b76a452de4f6fe67412d29b5a6a4b37743d4027258ec",
+        "errors": [
+          "9:0-9:3"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "673089483e07e95ba0cad3a0c14ebf63eabb62476ae674e2cfef75b2862f0209",
+        "errors": [
+          "1:0-2:14"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "4cbb13566ce154641b4de674baec6672bec2fecaf01a3517e0e4425ef5dc41e7",
+        "errors": [],
+        "missing": [
+          "\"=>\" 2:14",
+          "\"return\" 2:15",
+          "\"}\" 2:15"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/1",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "9eea9d6ee9e424295bc817a62360e54e4cc16a02815bb4a3b64a3917c95b6fd7",
+        "errors": [
+          "4:1-4:5",
+          "5:1-5:3"
+        ],
+        "missing": [
+          "\";\" 4:1",
+          "\";\" 5:1"
+        ]
+      },
+      "native": {
+        "cstSha256": "25932362e0a66b4f9fd7f01c415ad44623e497dbc123e9098ccb94ab1f754560",
+        "errors": [
+          "4:1-5:3"
+        ],
+        "missing": [
+          "\"&&\" 4:1"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "0ac9ea3fea7f78c9c38abd9161b1faf624e942ca784d6415c7b1b216a5fcfcf1",
+        "errors": [
+          "1:11-1:12",
+          "1:13-1:15",
+          "2:0-3:11",
+          "2:0-2:3",
+          "2:9-3:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "b5cd2c5450df6d579655732d2c29be6c14ad0eb7053f80f7113d8b5cbc34d580",
+        "errors": [
+          "1:11-1:14",
+          "2:0-3:8"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "ec363b270725e7fa9ead97691cfa2cc341f41bf52b973810a8362e79f2ee855c",
+        "errors": [
+          "1:11-1:12",
+          "2:4-2:9",
+          "2:11-2:13",
+          "4:4-4:5",
+          "5:4-5:5"
+        ],
+        "missing": [
+          "\">\" 5:11"
+        ]
+      },
+      "native": {
+        "cstSha256": "63224c93ca3f2edd2add5059440724dc778e5d6c48f37ad818627394b2654426",
+        "errors": [
+          "1:11-1:14"
+        ],
+        "missing": [
+          "identifier 1:10",
+          "\"!\" 1:11"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/5",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "f00a1ad7b86e548a61c1f19a3643face4ed97db0ef1a5f6324b871a85404c000",
+        "errors": [
+          "1:0-5:8",
+          "4:7-4:24"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "c64f96afa27bc9758f2a49f850a48855143e9ec09703793798e742fe9f48979d",
+        "errors": [
+          "4:22-5:8"
+        ],
+        "missing": [
+          "\")\" 4:8",
+          "\"=>\" 4:8",
+          "\"}\" 4:21"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/6",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "f56c8a5768c99851a5ed0b6629c16737606d3c63d725a91dc987456395410dcc",
+        "errors": [
+          "1:4-1:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "eff2c21362862a42d697c5e6524c89e7eb53b6dc69db40e95c12bfbfe25838d7",
+        "errors": [],
+        "missing": [
+          "\"=\" 1:5",
+          "\"&\" 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/7",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "03436c8667b8473380afb956cfe1e320198ca97b76df73ec0cb5ca7aef57fa28",
+        "errors": [
+          "1:36-1:38",
+          "4:0-5:9",
+          "4:15-4:22",
+          "4:17-4:19"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "e0a4c0152ba1a7e36ba66090a2fb3788cdca5f4ffeaeb2842ef05a5e685b8382",
+        "errors": [
+          "1:36-1:38",
+          "4:0-5:9"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/8",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "cf67af7d2dbc9f2d26b5cf9fcf0499080deac3a6bcd990fe46787644a619e07a",
+        "errors": [
+          "1:5-1:29",
+          "1:24-1:28",
+          "5:35-5:38",
+          "5:35-5:37"
+        ],
+        "missing": [
+          "type_identifier 1:32"
+        ]
+      },
+      "native": {
+        "cstSha256": "a66db29007a9d205ebb407c99ad3ccb01d0738cf9049df4ef5724594e6868f5e",
+        "errors": [
+          "1:17-5:38",
+          "6:0-6:1"
+        ],
+        "missing": [
+          "\">\" 1:16",
+          "metavariable 1:17",
+          "\";\" 1:17",
+          "\"{\" 1:17",
+          "\"return\" 1:17"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/9",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "7cf7e2dabddd6f55acb212510ff1948f461f3c2ffdfeafa4c25c4488b37fe5db",
+        "errors": [
+          "2:0-3:4"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "fb9b309a00e93f23bf78534eca48d305a62c8d865f3aba3e441c3dde2d827701",
+        "errors": [
+          "3:0-3:4"
+        ],
+        "missing": [
+          "\";\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/11",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "deaa831e6804a53a8bdffd732ab2b8ce005a861fd8803aeb91fc3604474da910",
+        "errors": [
+          "0:0-0:9",
+          "0:6-0:7"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "5f5dec3d280368943146983407cebe386c45b6954c88af308e5ad14de12da17e",
+        "errors": [
+          "0:7-0:9"
+        ],
+        "missing": [
+          "\"return\" 0:7",
+          "\";\" 0:7"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/13",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "e124ebf182fa41f765d12091b1f50ed6304c5f2307d4bb08f21cf5a393d7f182",
+        "errors": [
+          "2:16-2:17"
+        ],
+        "missing": [
+          "\";\" 2:1",
+          "identifier 3:2",
+          "identifier 5:2"
+        ]
+      },
+      "native": {
+        "cstSha256": "4a5ec6c94e5f3bedf595699857cf0101d63f220fa103a6db68edc946be84ca3e",
+        "errors": [
+          "3:0-3:2",
+          "5:0-5:2"
+        ],
+        "missing": [
+          "\"as\" 2:1"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/14",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "f0c52b1543e2738b96b5bb93eb78cb34b0ee1cf90a09cd326af290862679e0e8",
+        "errors": [
+          "2:4-5:22",
+          "2:6-2:11",
+          "2:15-2:16"
+        ],
+        "missing": [
+          "\";\" 2:3"
+        ]
+      },
+      "native": {
+        "cstSha256": "d9e89d888dbdf47fa251c2ca4d42544a0e33813fe833d61826773faaab59b8a3",
+        "errors": [],
+        "missing": [
+          "\";\" 2:3",
+          "\"impl\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/15",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "ec93a0e81f349cac71bfd04ef2948cb6d3d91900ec64eb808e85c5cf01f7320f",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "a92f6b99f65e4e5eb9cf7270a78768c77c43f7910ef59d20ee27eb86c7455802",
+        "errors": [],
+        "missing": [
+          "\";\" 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/16",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "2d3d12124a18684f7fd0cc01f4fd6afefb8784ff96d829ec6489480b69f7cc0b",
+        "errors": [
+          "3:9-3:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "1e96afd0c93c4a2605462294f00a44cd9bf48fe2f4af62d7033b40795add2d92",
+        "errors": [
+          "3:15-3:16"
+        ],
+        "missing": [
+          "\"+\" 3:15"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/17",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "47883306bdfd9e16c9fde0cca74bca2ec9a5d5db94a3d87960eeef02719e33a7",
+        "errors": [
+          "2:1-2:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "08017c887d9ba18a6d20f6391b8bbce237fbb7507e8b4132854d33151f263f05",
+        "errors": [
+          "2:1-2:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/18",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "47c990f0a213ca0bba99f2714528b5e3b943bb786501120d971bea90b543f45a",
+        "errors": [
+          "2:25-2:26"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "d31ad5dc946f478b152330b46b145d19aa3f15961cbce8104d25086d5f3482e1",
+        "errors": [
+          "2:25-2:26"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/19",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "c8e1ec3d0a1ec7e265774ffc5c536929063dd714ea6865da221953e9061d1ab0",
+        "errors": [
+          "2:17-2:18",
+          "7:5-7:8",
+          "10:0-10:27",
+          "10:3-10:4",
+          "10:5-10:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "ff6dbd4aeba9fe0e4091f2da360957cd67494da5751cca9b022aa67ce95d1f9d",
+        "errors": [
+          "10:0-10:27"
+        ],
+        "missing": [
+          "\":\" 2:16",
+          "metavariable 2:17",
+          "\";\" 2:17",
+          "identifier 2:17",
+          "\"!\" 2:17",
+          "\"{\" 2:17",
+          "\"}\" 8:1"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/20",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "df6ad6beb96ef5301b19fcb613963eaf43ead406aaecf7939418b562eb37eff3",
+        "errors": [
+          "5:1-5:12",
+          "5:1-5:4"
+        ],
+        "missing": [
+          "\";\" 1:6"
+        ]
+      },
+      "native": {
+        "cstSha256": "ba2294539a31affbbf1d1095b2070378775a9983ff747184876d759f1902577e",
+        "errors": [
+          "2:0-5:4"
+        ],
+        "missing": [
+          "\";\" 1:6",
+          "\"&\" 2:0"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/21",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "a1c0e0142daba01105fba4dbc99c5bfaa0a1e110256c48c294d7c68ae968393f",
+        "errors": [
+          "2:0-2:12"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "55894c692fe7643f9c003fdbd262d8960b009ebb0612652792442cd0c3d62afe",
+        "errors": [],
+        "missing": [
+          "\">\" 2:12",
+          "metavariable 2:12",
+          "\";\" 2:12"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/23",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "18e7ae8ce1563c3a984b911f995a4a7849dac2c2ef2afc0fc1eef9028131498f",
+        "errors": [
+          "1:0-1:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "bc6998601c4d69979602a52093b877f7e1dad3a450726c8967d1871939d40284",
+        "errors": [],
+        "missing": [
+          "\";\" 1:2"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/25",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "e4fa228ba27649316004058e138ff018ea8d3deb7d4ad4acb47fcad7d987eb52",
+        "errors": [
+          "1:0-4:0",
+          "2:12-2:13",
+          "3:33-3:34",
+          "3:61-3:62"
+        ],
+        "missing": [
+          "\")\" 2:35",
+          "\";\" 2:47",
+          "\")\" 3:58"
+        ]
+      },
+      "native": {
+        "cstSha256": "03b678832c0c8d616799c0d9545948b657f10a9b634c89c9ba7350cbc6a97b5d",
+        "errors": [
+          "2:12-3:58"
+        ],
+        "missing": [
+          "\"}\" 2:11",
+          "\"[\" 2:12",
+          "\"return\" 2:12"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/26",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "1c51c00d5a83ac99c6786de228d3c663b91a3b063a83afeb1267cc0d4336bd29",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "f3b3fd30c900a057d519e5a1969b3e126ab233b6305fe02affefb46a8fbe249c",
+        "errors": [],
+        "missing": [
+          "\"(\" 1:6",
+          "\")\" 1:6",
+          "\";\" 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/27",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "cf95f1b5b2dac070fba3972eec1ee4dd8f455e005a7706a62c42713dde63cf22",
+        "errors": [
+          "3:9-3:13"
+        ],
+        "missing": [
+          "\";\" 5:3"
+        ]
+      },
+      "native": {
+        "cstSha256": "dee841fa18a847064a71e166b2d3c87b19171697deaf683268f351a0c2806530",
+        "errors": [
+          "3:9-3:13",
+          "5:0-5:1"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/28",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "780c92b9c1f58139a49f1751900e4fa4599b5f2917f1e834517854501c6ff0c7",
+        "errors": [
+          "1:14-1:21",
+          "1:30-1:41"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "02d4c3fb46133aaf997e4fe94e96e89d8caea8a9c2a756c4c5303510daa1a720",
+        "errors": [
+          "1:19-1:41"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/29",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "f79d236d54413569323e55a93800554d9ddb877ddc95c3d235f32888e7e5c4ee",
+        "errors": [
+          "1:9-1:15",
+          "3:12-3:17",
+          "5:13-5:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "2a76f17323e9b2c60764f2df40686b194beb9ede3c44de6db66d5b05873c2b47",
+        "errors": [
+          "1:9-5:15"
+        ],
+        "missing": [
+          "\";\" 1:8",
+          "\"{\" 1:9"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "fuzz/31",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "1d49d8fd61fedb2a5500a50c11af21f3fa80570a7f62db8948e2a30fbbd9e5d1",
+        "errors": [
+          "2:3-2:4",
+          "4:5-4:8",
+          "4:5-4:8",
+          "11:15-11:20",
+          "13:0-13:30"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "e37616f4d6d7265d2617daa115e6f97f2f1612179dc234f79d1c67741c1755c2",
+        "errors": [
+          "2:3-2:4",
+          "4:5-4:16",
+          "13:0-13:30"
+        ],
+        "missing": [
+          "\"(\" 4:5",
+          "\")\" 11:23",
+          "\"]\" 13:0"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "metamorphic/1/prepend-blank-lines",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "1bbeb1f1b7d8259824eeef65fdf00e7c396868387fb281aa42b785fcff3af503",
+        "errors": [
+          "2:4-2:5",
+          "3:4-3:5",
+          "4:4-4:5",
+          "5:4-5:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "29ef050f165fba70c221d931d81fd04e8c62385572a097d2c2b7a8966d88a2d4",
+        "errors": [],
+        "missing": [
+          "\"]\" 1:21",
+          "\";\" 2:4",
+          "identifier 2:4",
+          "\"!\" 2:4",
+          "\"[\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "metamorphic/1/prepend-blank-lines (variant)",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "054b398af7632855be0144ded1c884cf2c2117f6ae0f31cae17a9db979e46063",
+        "errors": [
+          "4:4-4:5",
+          "5:4-5:5",
+          "6:4-6:5",
+          "7:4-7:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "0a0c6a4c7c9d8dafd495f6bbb9d718d2fbe7b6ec4e438a92b28b939a6c900fb3",
+        "errors": [],
+        "missing": [
+          "\"]\" 3:21",
+          "\";\" 4:4",
+          "identifier 4:4",
+          "\"!\" 4:4",
+          "\"[\" 4:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "metamorphic/1/crlf",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "1bbeb1f1b7d8259824eeef65fdf00e7c396868387fb281aa42b785fcff3af503",
+        "errors": [
+          "2:4-2:5",
+          "3:4-3:5",
+          "4:4-4:5",
+          "5:4-5:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "29ef050f165fba70c221d931d81fd04e8c62385572a097d2c2b7a8966d88a2d4",
+        "errors": [],
+        "missing": [
+          "\"]\" 1:21",
+          "\";\" 2:4",
+          "identifier 2:4",
+          "\"!\" 2:4",
+          "\"[\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "metamorphic/1/crlf (variant)",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "1bbeb1f1b7d8259824eeef65fdf00e7c396868387fb281aa42b785fcff3af503",
+        "errors": [
+          "2:4-2:5",
+          "3:4-3:5",
+          "4:4-4:5",
+          "5:4-5:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "29ef050f165fba70c221d931d81fd04e8c62385572a097d2c2b7a8966d88a2d4",
+        "errors": [],
+        "missing": [
+          "\"]\" 1:21",
+          "\";\" 2:4",
+          "identifier 2:4",
+          "\"!\" 2:4",
+          "\"[\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/0 step 0",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "f744b30d61e04a52a9d1ca670d7d0366a9d5d49a67a71cc3654e6bc4b3ea437d",
+        "errors": [
+          "8:4-8:7"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "609329ef57450c0c994890ebc3a8d4a10720096ce84b503d681db08902a24aaa",
+        "errors": [
+          "8:4-8:7"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/0 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "3576c31a6aa6c9178b75b37b36e9051b973e22ae985089adbd742cb811910f15",
+        "errors": [
+          "3:1-3:6",
+          "8:4-8:7"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "fafb964459f91dfb69c2a85fcd8a4ddad13d2a0d55d1743bdd803e08ba7beaac",
+        "errors": [],
+        "missing": [
+          "\"(\" 3:2",
+          "\"(\" 3:2"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/0 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "0418699376e723d9b9d7651420f1dbb74313ee18b03a0c3641067f5b430a4a9a",
+        "errors": [
+          "3:1-3:6",
+          "8:4-8:7"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "d29be38512728e877faa9439a92c42d1b8c471857224d8299f9cb27144e18cce",
+        "errors": [],
+        "missing": [
+          "\"(\" 3:2",
+          "\"(\" 3:2"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/0 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "000827a8ab0e0ef8328d092ea97d7441f8b430bee17164b950fa0d7b88147a9f",
+        "errors": [
+          "3:1-3:6",
+          "8:4-8:7"
+        ],
+        "missing": [
+          "identifier 14:18"
+        ]
+      },
+      "native": {
+        "cstSha256": "8641e9caa7485c5f51244e073e7d2f3151cd48b1b07b50988121f57bbff17e0d",
+        "errors": [
+          "14:17-14:18"
+        ],
+        "missing": [
+          "\"(\" 3:2",
+          "\"(\" 3:2"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/1 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "bb016596c252a562a7a69eafd52b74dea4d03fabccc81bd427c604e476214c1f",
+        "errors": [
+          "1:0-1:22"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "dba9a727d22a9343e247aad96cd1a8d9e123181ff8a398516093d6a9a5328248",
+        "errors": [],
+        "missing": [
+          "\"{\" 1:22",
+          "\"}\" 1:23"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/1 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d4394e62079b4a55f2c97323e3157127c6bce21aa3a454da324f1c4991dcbde2",
+        "errors": [
+          "1:0-1:3"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "038a4a04c0b81408c8a9b1cf29db08548033cf294902e76cb17384bca968c7b7",
+        "errors": [],
+        "missing": [
+          "\";\" 1:3"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/1 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "cdbce2d5cb2eb41b295d1261e72b703beb1bf6367c11fd3c95440e54a8b9da4b",
+        "errors": [
+          "1:0-1:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "f0b183c15b70d98152283a21c30f54968fc18973d5d3ba8fddf8ade3bfae6abb",
+        "errors": [],
+        "missing": [
+          "\";\" 1:5"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/1 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "7b0c87198b626aa698cbe027af217174a5e86112d54095f9507e8ee5a486e8eb",
+        "errors": [
+          "1:0-1:1"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "69df4dd5869f0d48decf85f88008fa8b3d6cb295f89a71db25251e0f088ff9bc",
+        "errors": [],
+        "missing": [
+          "\";\" 1:1"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/2 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "68689f477dab8729c55fc5036795886edec776cf5343f5823b51acd8e16dc6c7",
+        "errors": [
+          "2:14-2:20"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "11b61ff732c7b0c5119990bf3fa0fc98e546cf41e002b4ccefa2d56d160352ca",
+        "errors": [],
+        "missing": [
+          "\"=\" 2:13"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/2 step 1",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "b90cb0e501b8e846f7009d17bee799ca0ca40290074298763c9143018ac96684",
+        "errors": [
+          "2:14-2:20",
+          "3:32-3:33"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "94685149e051a02b3bd40b9ff64e47c08ca4aaeb1cbb518e9a6a9b2865e33322",
+        "errors": [
+          "2:14-3:26"
+        ],
+        "missing": [
+          "\";\" 2:13",
+          "identifier 2:14",
+          "\"!\" 2:14"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/2 step 2",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "b1395a0c0b693db80010dc95a2d16fa3d61fa1e197afa18ff53cdef24b62822c",
+        "errors": [
+          "2:14-2:20",
+          "3:6-3:15",
+          "3:34-3:35"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "6240f483e91a59814eec6b74ac1941491ccce4f141b904205da19a64dede5424",
+        "errors": [
+          "2:14-3:28"
+        ],
+        "missing": [
+          "\";\" 2:13",
+          "identifier 2:14",
+          "\"!\" 2:14"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/2 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "87f3aef091bdc276f5aea2a1332906b8307181d12f0e639d7b7bfe5a67a19538",
+        "errors": [
+          "2:14-2:20",
+          "3:0-3:23",
+          "3:6-3:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "30e087a81a3142f3aca26e8172e24836d934d5bab792abed4abb2e59dd1de225",
+        "errors": [
+          "3:0-3:23"
+        ],
+        "missing": [
+          "\"=\" 2:13"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/3 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "02a08d9c3ec3a8ba565367fb2e61d4f53a074561b34c3d694e1885562f29f0c8",
+        "errors": [
+          "2:0-2:7",
+          "3:16-3:18",
+          "4:4-4:8",
+          "5:0-5:1"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "19fac5f52a63e88be947905098d9712462a96a66772f6c13461f3cd1e1dddfa5",
+        "errors": [
+          "2:4-2:9"
+        ],
+        "missing": [
+          "\"use\" 2:3",
+          "self 2:4",
+          "\";\" 2:4",
+          "\"if\" 2:4",
+          "\"return\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/3 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d3819e5812666676be789402c6490499d631a4299ad3f411d993baab5dcd9770",
+        "errors": [
+          "2:0-4:9",
+          "3:16-3:18",
+          "4:4-4:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "29b4dbc84e88b08e688b6a6f1ca70b5c3fe8a2545c5bf8e05cadb4774eac9475",
+        "errors": [
+          "2:4-2:9",
+          "4:4-4:9"
+        ],
+        "missing": [
+          "\"use\" 2:3",
+          "self 2:4",
+          "\";\" 2:4",
+          "\"if\" 2:4",
+          "\"return\" 2:4",
+          "\"}\" 3:19"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/3 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "dc332e1a25a423d01f3b2c2f37ec83b03dd0e9cdbffc66147d6dbe053cecdd22",
+        "errors": [
+          "2:0-4:9"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "ec629d3754dfa730c2bac614257379db1fa5d1ec2f345560cdc3cb5b6a881b12",
+        "errors": [
+          "2:4-2:9",
+          "4:4-4:9"
+        ],
+        "missing": [
+          "\"use\" 2:3",
+          "self 2:4",
+          "\";\" 2:4",
+          "\"}\" 3:19"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/3 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "5b8a1fc909bf5a6ee67b74cbb7e53bef81b1488d283d5067cc292a90e0e63535",
+        "errors": [
+          "2:0-4:11"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "798ea386d42126455fec84f4ff36eea710149c4b5060bf33a87741101367ff86",
+        "errors": [
+          "2:4-2:9",
+          "4:4-4:11"
+        ],
+        "missing": [
+          "\"use\" 2:3",
+          "self 2:4",
+          "\";\" 2:4",
+          "\"}\" 3:19"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/4 step 1",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "90d3062ae22bbbafaf68251ef8cef50a24c9d91d1823c2a9aa667cf2fe63d1c1",
+        "errors": [
+          "6:12-6:19"
+        ],
+        "missing": [
+          "\";\" 8:17"
+        ]
+      },
+      "native": {
+        "cstSha256": "6146bcbc4078c73e15d17e6d18233e2e6a59dc92040dd7310cab3305ed0a536d",
+        "errors": [
+          "6:12-6:14",
+          "8:0-8:17"
+        ],
+        "missing": [
+          "\"=\" 6:11"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/4 step 3",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "bdb464dd4abcb1fa5666e203f9076d15e736e7eab3e394ee84aab5675342f4a6",
+        "errors": [
+          "6:6-6:8"
+        ],
+        "missing": [
+          "\";\" 6:11"
+        ]
+      },
+      "native": {
+        "cstSha256": "436590abcce78e03ad2dd3bbe2fc5a2dc0f5ddbfa72fd4f5b1bb8f035f4bd1d5",
+        "errors": [
+          "6:7-6:11"
+        ],
+        "missing": [
+          "\";\" 6:7"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/5",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "1bbeb1f1b7d8259824eeef65fdf00e7c396868387fb281aa42b785fcff3af503",
+        "errors": [
+          "2:4-2:5",
+          "3:4-3:5",
+          "4:4-4:5",
+          "5:4-5:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "29ef050f165fba70c221d931d81fd04e8c62385572a097d2c2b7a8966d88a2d4",
+        "errors": [],
+        "missing": [
+          "\"]\" 1:21",
+          "\";\" 2:4",
+          "identifier 2:4",
+          "\"!\" 2:4",
+          "\"[\" 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/5 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "f51b4ce55642eb2d63c1a0c43ce344818f4927f57fb9e222fd6a63a883cacfcf",
+        "errors": [
+          "1:17-1:19",
+          "2:4-2:5",
+          "3:4-3:5",
+          "4:4-4:5",
+          "5:4-5:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "cd47d402624e97c0c7ab3a96abe87da80535b1a0c26ad03d1d51c6a98c953c00",
+        "errors": [
+          "1:18-1:23"
+        ],
+        "missing": [
+          "identifier 1:18",
+          "\"!\" 1:18"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/5 step 1",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "d547a67db5684cd652b9d1661d8241e816216bef338a0c75e1af764c4dfd2305",
+        "errors": [
+          "1:17-1:19",
+          "2:4-2:5",
+          "3:4-3:5",
+          "4:4-4:5",
+          "5:4-5:14"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "59234cd955f813240c96485d67f1b933d4e6dbe3415800236a8ace0ca04eb5ed",
+        "errors": [
+          "1:18-6:1"
+        ],
+        "missing": [
+          "\"return\" 1:18"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/5 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "dcd5720de5681cad3137835a8c5e44f5bc55111f429e72cd29a22575aa094a15",
+        "errors": [
+          "1:0-6:2",
+          "1:17-1:19",
+          "2:4-2:5",
+          "3:4-3:5",
+          "4:4-4:5",
+          "5:4-5:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "e1b772b0b801b5572fd975bc3400b5e859b9face67f92d90c3350ba266824710",
+        "errors": [
+          "1:20-6:2"
+        ],
+        "missing": [
+          "\"[\" 1:18",
+          "\";\" 1:19"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/5 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "5d8472f9cd1ef8148be6c631da8659c46e220409336f486cbfd4e0f4fddf0d36",
+        "errors": [
+          "1:0-5:2",
+          "1:17-1:19",
+          "1:27-1:28",
+          "2:4-2:5",
+          "2:11-2:12",
+          "4:4-4:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3f0b68be63b5558f5fdddd250196f12d1fa04ef48ae5a988e610ed437f3679f6",
+        "errors": [
+          "1:20-5:2"
+        ],
+        "missing": [
+          "\"[\" 1:18",
+          "\";\" 1:19"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/6 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "07ae94abd9b8fb0178b0078fce696670344e59c3456c811025400f68ce36caa7",
+        "errors": [
+          "2:0-2:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "0fb0d31e2ddbf1298cda5b0faa0d5794f0ee522e199459b6174d9607ca5bccc2",
+        "errors": [],
+        "missing": [
+          "type_identifier 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/6 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "a43eca3ed78f922909197bbe9b07e81749fa253a46b0ff93cac1ba883f5d923b",
+        "errors": [
+          "2:0-2:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "80486aa744621296a5ba71a2dd41e024fd5231ad0d6b100640e34d4d8a9d9089",
+        "errors": [],
+        "missing": [
+          "type_identifier 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/6 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "4d3bd83f94e8f73a2c1c2e6bbc319ecd75d56aff08dd9aca062967ddd4ab2e1f",
+        "errors": [
+          "2:0-3:3",
+          "2:9-2:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "8b791f63aadc5f0d8c79c98ebfac341d35588ba17cbfdb5160a06196ef45178e",
+        "errors": [],
+        "missing": [
+          "type_identifier 2:4"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/6 step 3",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "41d9fe1b784168ff1bdfed25c0a3cb8aec6f9d4ec5bbc7b2cc8a4fabf53c1a60",
+        "errors": [
+          "2:0-3:3",
+          "2:9-2:15",
+          "4:8-4:14"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "eef5f1f2297568958e98e87a8aee980b071057fd522dccb040692e3241af9af0",
+        "errors": [
+          "2:5-4:10"
+        ],
+        "missing": [
+          "type_identifier 2:4",
+          "\";\" 2:5",
+          "\"&\" 2:5"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/7 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d75cc513c289090a96414054eae34a56e166541cb80f40055ae5dac57472cb72",
+        "errors": [
+          "9:0-9:1"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "4f926aeb809305112a5389b9b164a3318caa4f689e2020fee0ad4d698a066c31",
+        "errors": [],
+        "missing": [
+          "\")\" 9:1",
+          "\";\" 9:1"
+        ]
+      }
+    },
+    {
+      "language": "Rust",
+      "suite": "generative",
+      "case": "edit/7 step 3",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "eaae9706418c94f1d6130189339bafeb1d9c566bafbcbb251431ce3434d651af",
+        "errors": [
+          "5:3-5:4",
+          "9:0-9:1"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "90f41c50859c542106dbf8cc9aa3d9442cf598f5ea2fe05d1472c44374e79193",
+        "errors": [
+          "5:3-5:4",
+          "9:0-9:1"
+        ],
+        "missing": []
+      }
+    }
+  ]
+}
