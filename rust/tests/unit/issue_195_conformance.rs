@@ -5,7 +5,10 @@
 //! (`js/scripts/generate-issue-195-conformance.mjs`): structure, kinds,
 //! fields, spans, error and missing nodes, trivia, diagnostics and exact
 //! reconstruction. Where the upstream authors' expected tree agrees with the
-//! CLI, the public tree must equal it too. Mirrors
+//! CLI, the public tree must equal it too. Where a language parses with its
+//! native grammar, a malformed case whose native recovery differs from
+//! tree-sitter's must instead match its justified record in
+//! `parity/fixtures/native-recovery.json` (`native_recovery_records`). Mirrors
 //! `js/tests/issue-195-conformance.test.js`.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -22,6 +25,7 @@ use super::cst_lines::{
 };
 use super::cst_sexpression::{CorpusCase, normalize, parse_corpus, strip_fields};
 use super::issue_195_observations::{CONFORMANCE_FIXTURE, Observation, record};
+use super::native_recovery_records::NativeRecovery;
 
 const ASSERTIONS: [&str; 7] = [
     "claimedConstructInventoryMapped",
@@ -104,13 +108,14 @@ fn case_sources(details: &Value) -> HashMap<String, CorpusCase> {
     sources
 }
 
-/// Problems of the public tree of one non-mixed case against its oracle tree.
+/// Problems of the public tree of one non-mixed case against its oracle
+/// tree, and that tree.
 fn document_problems(
     language: &str,
     entry: &Value,
     source: &str,
     corpus_case: Option<&CorpusCase>,
-) -> Vec<String> {
+) -> (Vec<String>, String) {
     let network = parse(source, language);
     let (mut problems, tree) =
         document_oracle_problems(&network, language, source, text(entry, "cst"));
@@ -132,11 +137,12 @@ fn document_problems(
             "the upstream corpus expects an error, but the network verifies clean".to_string(),
         );
     }
-    problems
+    (problems, tree)
 }
 
-/// Problems of the public region tree of one mixed-language case against its oracle tree.
-fn region_problems(language: &str, entry: &Value, host: &Value) -> Vec<String> {
+/// Problems of the public region tree of one mixed-language case against its
+/// oracle tree, and that tree.
+fn region_problems(language: &str, entry: &Value, host: &Value) -> (Vec<String>, String) {
     let source = text(host, "source");
     let network = parse(source, text(host, "host"));
     let index = NetworkIndex::new(&network);
@@ -148,10 +154,13 @@ fn region_problems(language: &str, entry: &Value, host: &Value) -> Vec<String> {
                 span.byte_range().start() == start && span.byte_range().end() == end
             })
     }) else {
-        return vec![format!(
-            "no {language} region at {start}..{end} of the {} host",
-            text(host, "host")
-        )];
+        return (
+            vec![format!(
+                "no {language} region at {start}..{end} of the {} host",
+                text(host, "host")
+            )],
+            String::new(),
+        );
     };
     let (tree, rendered) = render_cst_lines(&region);
     let oracle = text(entry, "cst");
@@ -172,7 +181,7 @@ fn region_problems(language: &str, entry: &Value, host: &Value) -> Vec<String> {
         Some((start, end)),
     ));
     problems.extend(diagnostic_problems(&network, &rendered, oracle, false));
-    problems
+    (problems, tree)
 }
 
 #[test]
@@ -247,13 +256,13 @@ fn issue_195_conformance_comparison_rejects_a_tree_that_differs_from_the_oracle(
     };
     let clean = cst.replace('•', "").replacen("ERROR ", "program ", 1);
     assert_ne!(
-        document_problems("JavaScript", &with_cst(clean), source, None),
+        document_problems("JavaScript", &with_cst(clean), source, None).0,
         [] as [String; 0]
     );
     let (head, last) = cst.rsplit_once(':').expect("an end point");
     let shifted = format!("{head}:{}", last.parse::<usize>().expect("column") + 1);
     assert_ne!(
-        document_problems("JavaScript", &with_cst(shifted), source, None),
+        document_problems("JavaScript", &with_cst(shifted), source, None).0,
         [] as [String; 0]
     );
 }
@@ -279,6 +288,15 @@ fn check_language(language: &str) {
         .map(|host| (text(host, "id"), host))
         .collect();
     let cases = oracle["cases"].as_array().expect("oracle cases");
+    let recovery = NativeRecovery::new("conformance", language);
+    let with_cst = |entry: &Value, cst: &str, upstream: bool| {
+        let mut entry = entry.clone();
+        entry["cst"] = Value::String(cst.to_string());
+        if !upstream {
+            entry["upstream"] = Value::Null;
+        }
+        entry
+    };
     let mut counts: BTreeMap<String, u64> = BTreeMap::new();
     let mut failures = Vec::new();
     for entry in cases {
@@ -292,7 +310,15 @@ fn check_language(language: &str) {
                 text(entry, "sourceSha256"),
                 "{id}"
             );
-            region_problems(language, entry, host)
+            let (problems, tree) = region_problems(language, entry, host);
+            recovery.resolve(
+                id,
+                text(host, "source"),
+                text(entry, "cst"),
+                &tree,
+                problems,
+                |cst| region_problems(language, &with_cst(entry, cst, true), host).0,
+            )
         } else {
             let corpus_case = sources.get(id);
             let source = entry["source"].as_str().map_or_else(
@@ -300,7 +326,13 @@ fn check_language(language: &str) {
                 str::to_string,
             );
             assert_eq!(sha256(&source), text(entry, "sourceSha256"), "{id}");
-            document_problems(language, entry, &source, corpus_case)
+            let (problems, tree) = document_problems(language, entry, &source, corpus_case);
+            // The upstream tree of a recorded case is the oracle's, whose
+            // difference the record justifies; the native tree is checked as
+            // malformed instead.
+            recovery.resolve(id, &source, text(entry, "cst"), &tree, problems, |cst| {
+                document_problems(language, &with_cst(entry, cst, false), &source, corpus_case).0
+            })
         };
         if !problems.is_empty() {
             let name = entry["name"]
@@ -310,6 +342,11 @@ fn check_language(language: &str) {
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert_eq!(
+        recovery.unused(),
+        [] as [String; 0],
+        "{language} recovery records without a conformance case"
+    );
     let expected_counts: BTreeMap<String, u64> = details["cases"]
         .as_object()
         .expect("case counts")

@@ -98,6 +98,7 @@ mod lino_compatibility_matrix;
 mod lino_grammar;
 mod lino_grammar_scaling;
 mod lino_serialization;
+mod native_recovery_records;
 mod natural_language_grammar;
 mod parity_corpora;
 mod parity_manifest;

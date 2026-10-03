@@ -397,7 +397,23 @@ recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
   [`issue_195_grammar_native_recovery.rs`](../../rust/tests/unit/issue_195_grammar_native_recovery.rs)
   check. The default parse uses these repairs, so the ERROR and MISSING
   nodes of an invalid input are placed where the native executor repairs it,
-  not where tree-sitter's LR recovery places them; the two are not compared.
+  not where tree-sitter's LR recovery places them. Each conformance and
+  generative case whose native tree differs from the tree-sitter oracle for
+  that reason is recorded in
+  [`native-recovery.json`](../../parity/fixtures/native-recovery.json)
+  (written by
+  [`generate-native-recovery.mjs`](../../js/scripts/generate-native-recovery.mjs))
+  with the digests and repair sites of both trees and one of four categories,
+  whose justification the file gives: `oracle-skips-more` (tree-sitter covers
+  more bytes with ERROR, mostly where the native executor completes a construct
+  with MISSING leaves), `native-skips-more`, `same-skipped-bytes` and
+  `same-repair-sites` (an ERROR node of tree-sitter holds the tokens its
+  error-mode lexer read, the native ERROR is one leaf). Both suites in both
+  runtimes accept such a case only if it matches its record, both trees are
+  malformed, the native tree is lossless and consistent with its diagnostics,
+  and the category follows from the two trees; a stale record fails them.
+  For Rust 75 cases are recorded: 49 `oracle-skips-more`, 14
+  `native-skips-more`, 5 `same-skipped-bytes` and 7 `same-repair-sites`.
 - tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
   tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket,
   tree-sitter-c and tree-sitter-rust no longer back a default parse, so they

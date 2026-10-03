@@ -9,7 +9,10 @@
 //! `ISSUE_195_GENERATIVE_SEED`, default the fixture seed; count
 //! `ISSUE_195_GENERATIVE_CASES`, default 48) checks the properties, the
 //! blank-line relation of clean trees and incremental edits on inputs no
-//! fixture contains. Mirrors `js/tests/issue-195-generative.test.js`.
+//! fixture contains. Where a language parses with its native grammar, a
+//! malformed case whose native recovery differs from tree-sitter's must
+//! instead match its justified record in `parity/fixtures/native-recovery.json`
+//! (`native_recovery_records`). Mirrors `js/tests/issue-195-generative.test.js`.
 
 use std::fs;
 use std::path::PathBuf;
@@ -28,6 +31,7 @@ use super::generative_support::{
     relation_holds, relation_transform, seed_sources,
 };
 use super::issue_195_observations::{GENERATIVE_FIXTURE, Observation, record};
+use super::native_recovery_records::NativeRecovery;
 
 const ASSERTIONS: [&str; 8] = [
     "propertyBasedCasesExecuted",
@@ -97,6 +101,21 @@ fn parse_problems(language: &str, source: &str, cst: &str) -> (Vec<String>, Stri
     let network = parse(source, language);
     let (mut problems, tree) = document_oracle_problems(&network, language, source, cst);
     problems.extend(property_problems(&network, source));
+    (problems, tree)
+}
+
+/// `parse_problems` of case `id`, those of its recovery record where it has one.
+fn case_problems(
+    recovery: &NativeRecovery,
+    language: &str,
+    id: &str,
+    source: &str,
+    cst: &str,
+) -> (Vec<String>, String) {
+    let (problems, tree) = parse_problems(language, source, cst);
+    let problems = recovery.resolve(id, source, cst, &tree, problems, |text| {
+        parse_problems(language, source, text).0
+    });
     (problems, tree)
 }
 
@@ -243,7 +262,8 @@ fn issue_195_generative_property_checks_reject_a_network_that_breaks_them() {
 
 /// Applies the steps of an edit case through the incremental path, checking
 /// each against its oracle, the properties and a fresh parse.
-fn edit_sequence_problems(language: &str, entry: &Value) -> Vec<String> {
+fn edit_sequence_problems(recovery: &NativeRecovery, language: &str, entry: &Value) -> Vec<String> {
+    let id = text(entry, "id");
     let mut failures = Vec::new();
     let mut source = text(entry, "source").to_string();
     let mut network = parse(&source, language);
@@ -254,9 +274,21 @@ fn edit_sequence_problems(language: &str, entry: &Value) -> Vec<String> {
             failures.push(format!("step {position}: apply_edit refused {edit:?}"));
             break;
         }
-        let (mut problems, tree) =
-            document_oracle_problems(&network, language, &source, text(step, "cst"));
-        problems.extend(property_problems(&network, &source));
+        let step_problems = |cst: &str| {
+            let (mut problems, tree) = document_oracle_problems(&network, language, &source, cst);
+            problems.extend(property_problems(&network, &source));
+            (problems, tree)
+        };
+        let oracle = text(step, "cst");
+        let (problems, tree) = step_problems(oracle);
+        let mut problems = recovery.resolve(
+            &format!("{id} step {position}"),
+            &source,
+            oracle,
+            &tree,
+            problems,
+            |cst| step_problems(cst).0,
+        );
         if tree != public_tree(&parse(&source, language), language) {
             problems.push("the incremental tree differs from a fresh parse".to_string());
         }
@@ -370,19 +402,25 @@ fn check_language(language: &str) {
     let fixture = read_json(text(&manifest["languages"][language], "file"));
     assert_eq!(fixture["language"], language);
     let cases = fixture["cases"].as_array().expect("cases");
+    let recovery = NativeRecovery::new("generative", language);
     let mut failures = Vec::new();
     for entry in cases {
         let id = text(entry, "id");
         let source = text(entry, "source");
-        let (problems, tree) = parse_problems(language, source, text(entry, "cst"));
+        let (problems, tree) = case_problems(&recovery, language, id, source, text(entry, "cst"));
         if !problems.is_empty() {
             failures.push(format!("{id} {source:?}: {}", problems.join("; ")));
         }
         match text(entry, "kind") {
             "metamorphic" => {
                 let variant = text(entry, "variant");
-                let (problems, variant_tree) =
-                    parse_problems(language, variant, text(entry, "variantCst"));
+                let (problems, variant_tree) = case_problems(
+                    &recovery,
+                    language,
+                    &format!("{id} (variant)"),
+                    variant,
+                    text(entry, "variantCst"),
+                );
                 if !problems.is_empty() {
                     failures.push(format!(
                         "{id} (variant) {variant:?}: {}",
@@ -399,7 +437,7 @@ fn check_language(language: &str) {
                 }
             }
             "edit" => failures.extend(
-                edit_sequence_problems(language, entry)
+                edit_sequence_problems(&recovery, language, entry)
                     .into_iter()
                     .map(|problem| format!("{id} {problem}")),
             ),
@@ -407,6 +445,11 @@ fn check_language(language: &str) {
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert_eq!(
+        recovery.unused(),
+        [] as [String; 0],
+        "{language} recovery records without a generative case"
+    );
 
     // Every family is present, and each exercises what it claims.
     let of_kind = |kind: &str| -> Vec<&Value> {
