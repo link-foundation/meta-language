@@ -14,14 +14,14 @@ grammar is checked against the pinned tree-sitter grammar it replaced as its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: nine catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme, Racket,
-C and Rust, have a native merged grammar, and it is their default parser in
+Status: ten catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme, Racket,
+C, Rust and JavaScript, have a native merged grammar, and it is their default parser in
 both runtimes; see [default parse](#default-parse). The C grammar is the first
 that the [automatic import pipeline](#imported-grammars) writes, and the Rust
 grammar the first with a ported native scanner. tree-sitter-json,
 tree-sitter-ini, tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard,
-tree-sitter-scheme, tree-sitter-racket, tree-sitter-c and tree-sitter-rust
-remain as pinned oracles; see [current limits](#current-limits).
+tree-sitter-scheme, tree-sitter-racket, tree-sitter-c, tree-sitter-rust and
+tree-sitter-javascript remain as pinned oracles; see [current limits](#current-limits).
 
 ## Format
 
@@ -259,6 +259,29 @@ For C the source is the `src/grammar.json` of
 - Whitespace, line continuations, comments, string text and the line breaks
   of preprocessor directives are leaves, so the tree keeps every byte.
 
+For JavaScript the source is the `src/grammar.json` of
+[tree-sitter-javascript 0.25.0](https://github.com/tree-sitter/tree-sitter-javascript/blob/44c892e0be055ac465d5eeddae6d3e194424e7de/src/grammar.json)
+(crates.io tree-sitter-javascript 0.25.0, revision
+`44c892e0be055ac465d5eeddae6d3e194424e7de`, MIT):
+
+- [`parity/grammars/native/javascript.lino`](../../parity/grammars/native/javascript.lino)
+  has 143 rules, 49 keywords and the 18 conflicts tree-sitter-javascript
+  declares. The [merge report](../../parity/grammars/merge-reports/javascript.json)
+  lists 25 renamed rules and 2 expanded words (`lhs` and `regex`), and no
+  approximated or unsupported construct.
+- [`parity/grammars/scanners/javascript.lino`](../../parity/grammars/scanners/javascript.lino),
+  which [`build-javascript-scanner.mjs`](../../js/experiments/build-javascript-scanner.mjs)
+  writes, ports the external scanner `src/scanner.c` to five native
+  scanners: the automatic semicolon at a line break, the characters of a
+  template up to a substitution, the ternary question mark, the HTML-like
+  comment of ECMA-262 annex B.1.1 and JSX text.
+- [`parity/fixtures/native-grammars/javascript.json`](../../parity/fixtures/native-grammars/javascript.json)
+  holds 146 matches (the 115 cases of the upstream `test/corpus` at the same
+  revision that the oracle accepts and 31 more, Unicode white space and line
+  terminators included), no divergence and 24 rejections: the one corpus case
+  the oracle recovers from (two object literals in a row) and 23 broken
+  sources.
+
 ## Concepts
 
 Every rule has a readable English name and names a canonical concept record
@@ -347,6 +370,7 @@ rows, and a Rust suite. Both record evidence for the language's ledger row:
 | Racket | [`issue-195-grammar-native-racket.test.js`](../../js/tests/issue-195-grammar-native-racket.test.js) | [`issue_195_grammar_native_racket.rs`](../../rust/tests/unit/issue_195_grammar_native_racket.rs) | `I195-GRAMMAR-NATIVE-RACKET` |
 | C | [`issue-195-grammar-native-c.test.js`](../../js/tests/issue-195-grammar-native-c.test.js) | [`issue_195_grammar_native_c.rs`](../../rust/tests/unit/issue_195_grammar_native_c.rs) | `I195-GRAMMAR-NATIVE-C` |
 | Rust | [`issue-195-grammar-native-rust.test.js`](../../js/tests/issue-195-grammar-native-rust.test.js) | [`issue_195_grammar_native_rust.rs`](../../rust/tests/unit/issue_195_grammar_native_rust.rs) | `I195-GRAMMAR-NATIVE-RUST` |
+| JavaScript | [`issue-195-grammar-native-javascript.test.js`](../../js/tests/issue-195-grammar-native-javascript.test.js) | [`issue_195_grammar_native_javascript.rs`](../../rust/tests/unit/issue_195_grammar_native_javascript.rs) | `I195-GRAMMAR-NATIVE-JAVASCRIPT` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -419,7 +443,9 @@ recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
   malformed, the native tree is lossless and consistent with its diagnostics,
   and the category follows from the two trees; a stale record fails them.
   For Rust 75 cases are recorded: 49 `oracle-skips-more`, 14
-  `native-skips-more`, 5 `same-skipped-bytes` and 7 `same-repair-sites`.
+  `native-skips-more`, 5 `same-skipped-bytes` and 7 `same-repair-sites`; for
+  JavaScript 61: 39 `oracle-skips-more`, 10 `native-skips-more`, 2
+  `same-skipped-bytes` and 10 `same-repair-sites`.
 - tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
   tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket,
   tree-sitter-c and tree-sitter-rust no longer back a default parse, so they

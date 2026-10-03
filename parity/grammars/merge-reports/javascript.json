@@ -16,7 +16,7 @@
   ],
   "scanner": {
     "file": "parity/grammars/scanners/javascript.lino",
-    "sha256": "1c9eb0eb70d8946e04ddfe6e24b0d2d0ee381437f5b4a64b251b5877551e2594",
+    "sha256": "6b382526289adf9b6f17690081931db3e0fc81ad4f5f3e8187935cb105de1c1e",
     "ports": {
       "path": "src/scanner.c",
       "sha256": "b3d3f64284d97bf80749c026862427782cf7ecc0b7dc094e6698ab311c9a42c7"

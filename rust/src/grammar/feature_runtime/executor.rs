@@ -49,10 +49,12 @@ const MISSING_COST: usize = 2;
 
 // The kind of the MISSING leaf of a failed terminal or token: the literal
 // text for a literal or a keyword (a literal and the lookaheads after it, as
-// tree-sitter names its keyword token), else none.
+// tree-sitter names its keyword token), also under a lexical precedence (the
+// closing `/` of a JavaScript regular expression), else none.
 fn missing_of(expr: &Expr) -> (Option<Name>, bool) {
     match expr {
         Expr::Seq(items) if is_keyword(expr) => missing_of(&items[0]),
+        Expr::LexicalPrecedence { item, .. } => missing_of(item),
         Expr::Terminal {
             matcher: Matcher::Literal(literal),
             ..

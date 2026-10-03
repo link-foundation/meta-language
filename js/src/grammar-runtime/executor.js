@@ -852,7 +852,8 @@ function renamed(child, kind) {
 
 // The kind of the MISSING leaf of a failed terminal or token: the literal
 // text for a literal or a keyword (a literal and the lookaheads after it, as
-// tree-sitter names its keyword token), else none.
+// tree-sitter names its keyword token), also under a lexical precedence (the
+// closing `/` of a JavaScript regular expression), else none.
 // A literal that took the separators after it (see `beforeSeparator`) is
 // still that literal, as a tree-sitter lexer names it: its leaf is an
 // anonymous alias of the literal (`'\n` over `\n\n`). Any other terminal
@@ -863,6 +864,7 @@ function separatorRunKind(expression, start, end) {
 
 function missingOf(expression) {
   if (isKeyword(expression)) return missingOf(expression.items[0]);
+  if (expression.kind === 'lexicalPrecedence') return missingOf(expression.item);
   return expression.kind === 'literal' ? { kind: expression.value, literal: true } : { kind: null };
 }
 

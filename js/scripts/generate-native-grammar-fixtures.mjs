@@ -57,9 +57,14 @@ const SCHEME_DATUM_LABEL = 'R7RS small section 2.4 (Datum labels) reads #<n>=<da
 const RACKET_CHARACTER_NEWLINE = 'Racket Reference section 1.3.14 (Reading Characters) reads #\\ followed by any character c as the character c, a line feed included; tree-sitter-racket 0.25.0 reads no line feed after #\\ and recovers from it.';
 const RACKET_SYMBOL_NEWLINE = 'Racket Reference section 1.3.1 (Delimiters and Dispatch) and section 1.3.2 (Reading Symbols) read a backslash outside a | pair as quoting the next character, a line feed included; tree-sitter-racket 0.25.0 quotes any character but a line feed and recovers from it.';
 
-// The cases of the upstream test corpus pinned with a native grammar's source.
+// The case of the pinned tree-sitter-javascript corpus the oracle recovers
+// from: two object literals in a row are no expression.
+const JAVASCRIPT_ORACLE_ERROR = 'Extra complex literals in expressions';
+
+// The cases of the upstream test corpus pinned with a native grammar's source
+// whose file and title `keep` holds.
 const upstreamCorpus = (native, keep = () => true) =>
-  corpusCases(grammarSourceOf(native)).filter(({ file }) => keep(file)).map(({ source }) => source);
+  corpusCases(grammarSourceOf(native)).filter(({ file, title }) => keep(file, title)).map(({ source }) => source);
 
 export const NATIVE_GRAMMARS = Object.freeze([
   {
@@ -602,6 +607,41 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'fn f() -> {}', '1 +',
       // tree-sitter's `\s` is ASCII white space: a no-break or ideographic space is an error.
       'fn a() {}\u00a0fn b() {}', '\u3000fn f() {}', 'fn f() {}\u2028',
+    ],
+  },
+  {
+    id: 'javascript',
+    language: 'JavaScript',
+    grammar: 'parity/grammars/native/javascript.lino',
+    oracle: 'tree-sitter-javascript 0.25.0',
+    sources: [
+      `${grammarSourceOf('native-javascript').repository}/blob/${grammarSourceOf('native-javascript').revision}/src/grammar.json`,
+      `${grammarSourceOf('native-javascript').repository}/tree/${grammarSourceOf('native-javascript').revision}/test/corpus`,
+    ],
+    // The grammar is the import of the pinned tree-sitter-javascript
+    // grammar.json with its native scanner (js/scripts/import-native-grammars.mjs);
+    // the matches are every case of its upstream corpus at the same revision
+    // but the one the oracle recovers from, and a few sources more.
+    ...nativeGrammar('native-javascript'),
+    matches: [
+      ...upstreamCorpus('native-javascript', (_file, title) => title !== JAVASCRIPT_ORACLE_ERROR),
+      '', 'x;', 'let x = 1;', 'const f = (a, b) => a + b;', 'function f(a, ...b) { return a; }',
+      'class A extends B { #x = 1; static m() {} }', 'import { a as b } from "c";', 'export default function () {}', 'a?.b ?? c;',
+      'x = `a${b}c`;', 'async function f() { await g(); }', 'for (const [k, v] of m) {}', 'label: while (true) break label;',
+      'x = /ab+c/gi;', 'let { a, ...rest } = o;', 'x = a ? b : c;', '// c\nlet x = 1 /* d */;\n', 'a\nb\n', '<!-- c\nx;',
+      'x = <div className="a">{b}</div>;', 'function* g() { yield* h(); }', 'try { a(); } catch { b(); } finally { c(); }',
+      'x = 0x1fn + 1_000 + .5e3;', 'switch (x) { case 1: break; default: }', 'new.target;', 'export', 'f(a,,);',
+      // ECMA-262 section 12.2 (White Space) and 12.3 (Line Terminators): a
+      // no-break or ideographic space, the byte order mark and a line separator
+      // separate tokens, as tree-sitter-javascript's extras read them.
+      'let x = 1;\u3000let y;', 'let a;\u00a0let b;', 'x;\u2028y;', 'x;\ufeff',
+    ],
+    divergences: [],
+    rejections: [
+      ...upstreamCorpus('native-javascript', (_file, title) => title === JAVASCRIPT_ORACLE_ERROR),
+      'const = 1;', 'if (ready { go(); }', 'function', 'function f(', 'function f() {', '}', '{', 'let x = ;', 'class A {', '"abc',
+      "'a", '/* abc', 'x = 1 +;', 'if (x', 'import {', 'x = = 1;', 'a[;', 'switch (x) {', '`abc', 'x.;', 'for (;;', 'new',
+      'x = <div>;',
     ],
   },
 ]);

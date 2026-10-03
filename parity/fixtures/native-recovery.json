@@ -8,6 +8,1407 @@
   },
   "cases": [
     {
+      "language": "JavaScript",
+      "suite": "conformance",
+      "case": "corpus/destructuring.txt/4",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "0e3aba67120a69088e82bd63f85261b2f9f6e5ed383808e0e5521537f9e6d51f",
+        "errors": [
+          "1:4-1:12"
+        ],
+        "missing": [
+          "\";\" 2:24"
+        ]
+      },
+      "native": {
+        "cstSha256": "4a3df8cc2bfd3f4b12d90537627ae744ed1850801c170029ec5d2ccdba3f7414",
+        "errors": [
+          "1:13-2:14",
+          "3:0-3:1"
+        ],
+        "missing": [
+          "\")\" 1:12",
+          "\"if\" 1:13"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "conformance",
+      "case": "javascript-missing-initializer",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "fb680d17a1ec0689945536299aed778637a1bc8272f203666fb837003fc13a52",
+        "errors": [
+          "1:6-1:7"
+        ],
+        "missing": [
+          "\")\" 0:12"
+        ]
+      },
+      "native": {
+        "cstSha256": "9b47d11cae46938b0f130feb11ac141d9b162f1cde9be01d4beded6202642f75",
+        "errors": [
+          "0:13-1:7"
+        ],
+        "missing": [
+          "\")\" 0:12"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "conformance",
+      "case": "javascript-stray-closing-brace",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "8273ae0461cf630a7b9c5edb6271b8a2106ae342be69c61893189c00a5726615",
+        "errors": [
+          "0:27-0:28"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "a0c7661a498fb9d4cd43b4669b69041895893bc62bf7703fbc1864afff0eeda3",
+        "errors": [
+          "0:27-0:28"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "conformance",
+      "case": "javascript-truncated-arrow",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "af46fce4d918e1ef42840858507f8c250252614f81218b2a6209f9e670074341",
+        "errors": [
+          "0:0-0:21"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3fee635d2c1cc7fe8b02c429e489e53ab872ff5536f1ada8719c73c7c9af8283",
+        "errors": [],
+        "missing": [
+          "undefined 0:21"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "conformance",
+      "case": "javascript-unterminated-template-with-unicode",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "cddad4b84b49c72bfb4e78b894e7299a49447eb63533676e67c4e6c18f3420a8",
+        "errors": [
+          "0:0-0:20"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "fbc1c3cdc5db10ff96406d202e6e3fc902a3c04803952779f4eff4ca8cbbea56",
+        "errors": [],
+        "missing": [
+          "\"}\" 0:20",
+          "\"`\" 1:0"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "conformance",
+      "case": "error-recovery/javascript-if-object-without-paren",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "cf9af35b3a50f4ef9f41505e368dfe4f294dfd74c55675ed383025f02fa370ee",
+        "errors": [
+          "1:0-1:16",
+          "1:4-1:12"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "a29433b55450a0f887f28b25022b8048dd0f664aafdb1f6095d9295ec385369b",
+        "errors": [
+          "1:13-1:16"
+        ],
+        "missing": [
+          "\")\" 1:12",
+          "\";\" 1:13"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "conformance",
+      "case": "mixed/markdown-fences-with-malformed-code/0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "4aec82dba7d4489f52ebd5f68ea0dbff29b3e22d0dc81fe9d4f8de14ac530045",
+        "errors": [
+          "3:6-3:7"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "d2a21374d3bdbafef67a2573074db025f190f9a46b710b6e05a71fcc01d5acc4",
+        "errors": [],
+        "missing": [
+          "undefined 3:7"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "conformance",
+      "case": "mixed/html-script-elements/1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "7652cb8311003eef0efa1fe130057dade81066f8b0de520b2455298848cd4fd9",
+        "errors": [
+          "6:46-6:48"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "8622e2289d0d3ac8c914163f6f1840786b5d4d07b3bcec4a539b7985809947b5",
+        "errors": [],
+        "missing": [
+          "\")\" 6:48"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "property/2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "e21ab55f61a7d250e2f6b0669b6523690c7bf9fd551513c0fd1d82b1ac98f7e3",
+        "errors": [
+          "17:0-17:16",
+          "17:4-17:12"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "f5daa96c520184d027742036fa9ac266dc3b208c6a7b3319b2fac8d1f5e82a19",
+        "errors": [
+          "17:13-17:16"
+        ],
+        "missing": [
+          "\")\" 17:12",
+          "\";\" 17:13"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "property/3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "53f17a4b4ce38376b6524d59084ac78f03616a5df4ddd6d1c432528627be4993",
+        "errors": [
+          "13:3-13:24"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "5f5f3674c74160a2700e1dbce3c25f1a5b7a1062722a64f03024fc7615a008f5",
+        "errors": [],
+        "missing": [
+          "undefined 13:24"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "property/14",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "30d255f7f9dadcf6035718dd676a562ca755fabc720972e47b9fb9015e199b1c",
+        "errors": [
+          "15:30-15:31"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "2c2157b67cdb390f609727079032d8d3723ae7ccbcbea566c0a9070fc17baf86",
+        "errors": [
+          "15:30-15:31"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "e46c2609490e7c551141df2b9c92603a780061f3cce8f941360c2748913acf67",
+        "errors": [
+          "4:0-4:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "528ec28c0a8106ee8e648d4d48e996bea35f531a46bf8ac228cac3f041e69083",
+        "errors": [],
+        "missing": [
+          "\"\" 4:2"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "fd0172d30b60b479ed8cf1ed49f0d1635ba2393ae7985a91cf117ce9fd419816",
+        "errors": [
+          "1:0-1:23"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "525f9c255159832af1ec1ef5d75afb08ecb6b99677f71757b39e565c7b1945cd",
+        "errors": [
+          "1:2-1:12"
+        ],
+        "missing": [
+          "\"(\" 1:2",
+          "undefined 1:2",
+          "\")\" 1:2",
+          "\"{\" 1:2"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "eab0d8be6bd47e23dcc50a8942722d7d54e3a2ac3134af2336b83d5a795069ff",
+        "errors": [
+          "1:0-2:14",
+          "1:12-1:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "a21398e514bbd2eef89207f710a808a368d9c51950adc444bb136ac2c6af1908",
+        "errors": [
+          "1:12-2:14"
+        ],
+        "missing": [
+          "\";\" 1:11"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/4",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "1875b0e9ac53aed5b39d02e809250dabe3b529b6f61e88e40f82f7980d76f370",
+        "errors": [
+          "1:0-4:12",
+          "4:1-4:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "b05227527bcef2ee52288bb422553da0c76f783079eaab3ff036b2449884f82b",
+        "errors": [
+          "4:1-4:12"
+        ],
+        "missing": [
+          "\";\" 3:5",
+          "\"}\" 4:1"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/5",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "270a2511ca514ffcc083f9f35c4ce39000baf8dca33a0b013d9115383138b483",
+        "errors": [
+          "4:3-7:20",
+          "6:0-7:7",
+          "9:15-9:19",
+          "10:6-10:8"
+        ],
+        "missing": [
+          "\")\" 8:19"
+        ]
+      },
+      "native": {
+        "cstSha256": "cd52c31f30eaa1e6f3e89b3c7af9c976ced84f65dcdf4a6de4be616b05563c8f",
+        "errors": [
+          "6:0-10:8"
+        ],
+        "missing": [
+          "\"</\" 6:0",
+          "\">\" 6:0",
+          "\")\" 6:0"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/6",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "7e495c5fc4ddb927892be5ed95517ac10bd8ac3d0af70ef297aff07b822deedf",
+        "errors": [
+          "1:0-1:18"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "a9a813e31ac64972a6595c89a8d3885e348dce6fba0e5e258b5a0fa79ff3ca50",
+        "errors": [
+          "1:13-1:14"
+        ],
+        "missing": [
+          "\"{\" 1:12",
+          "\"}\" 1:13"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/7",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "61caac6cfc92462b3083d6a9d6d58055738252f71debb56cb1c0f2704ca34c30",
+        "errors": [
+          "1:0-1:4"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "b70dbfef7b9e0813a05b6001a5a755e9562a6b959cb6b9e41cecf4f6ae9606a2",
+        "errors": [
+          "1:3-1:4"
+        ],
+        "missing": [
+          "\"(\" 1:2",
+          "undefined 1:3",
+          "\")\" 1:3",
+          "\";\" 1:3"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/8",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "808a0d8800e75e7321e60a9f18bb3b47cd309f2a2a55064524322e47c73e91b9",
+        "errors": [
+          "1:20-1:23"
+        ],
+        "missing": [
+          "\";\" 1:5"
+        ]
+      },
+      "native": {
+        "cstSha256": "541f13728ef7f0a2b0164690ed6e2c6a794937f8951b09949438969f4b6a62f5",
+        "errors": [
+          "1:6-1:23"
+        ],
+        "missing": [
+          "\";\" 1:5",
+          "\"(\" 1:6"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/9",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "44baae0a4e793fea91b9229588d57c8902ed5f66b3ff3c7a509c974b0306d6ff",
+        "errors": [
+          "0:0-1:2",
+          "0:9-0:10"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "d16fdbda98de91b6d5659f4120a39c4e413e55442de36e6cc146df57baff89f5",
+        "errors": [
+          "0:9-1:2"
+        ],
+        "missing": [
+          "\";\" 0:8"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/10",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "cab315448ddc02bb900003467457197cf465b3d9c70d3d606bac5a0a095f4a3e",
+        "errors": [
+          "3:23-3:30",
+          "4:6-4:7"
+        ],
+        "missing": [
+          "\";\" 1:12"
+        ]
+      },
+      "native": {
+        "cstSha256": "b7c7ee0a0a24938fdae3a2d15df29139eee7d62e0bf5582db2f2c0705d469620",
+        "errors": [
+          "1:13-4:29"
+        ],
+        "missing": [
+          "\";\" 1:12",
+          "\"if\" 1:13"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/11",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "77c25df6721bc378f6514f31e27497ee4157312ba13ea97a1cbf1b6c086c95bc",
+        "errors": [
+          "15:1-15:2",
+          "15:4-16:1"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "054849f64e71d93d7c08717799085429a37e8b7508e63cea5f9f2515a5ba18da",
+        "errors": [],
+        "missing": [
+          "unnamed_token 15:1",
+          "\"{\" 15:1",
+          "\"{\" 15:1"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/12",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "e74ce838446a297880b1cb9f286b8d3282459124b8561154db42211f106b445d",
+        "errors": [
+          "9:1-9:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "5537f330a48a471ddc097389df88fe7c2f732b2add431d9f04b8b486c2902d3a",
+        "errors": [],
+        "missing": [
+          "\",\" 9:1"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/13",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "76b20e9b75806bad34853478288ff43c261f9eaf3b05f5a418ef9b42558573de",
+        "errors": [
+          "2:8-2:9",
+          "3:0-3:1"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "fa405620e83928267700f6dcac64c60e66930c08a1482904f266271bbdee656b",
+        "errors": [],
+        "missing": [
+          "\"`\" 2:9",
+          "\"}\" 2:9",
+          "unnamed_token 2:9",
+          "\"{\" 2:9",
+          "\"{\" 2:9"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/14",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d510af87203926f9ea154f5c2500e2dbdbd484e6916c14328108d960bf6b0b8a",
+        "errors": [
+          "2:0-2:14",
+          "2:6-2:7"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "66c29a7c2b80f68535d74b5ab5fa0bb99132e04265d131d00446ebfdbf5de3d0",
+        "errors": [],
+        "missing": [
+          "\"[\" 2:6",
+          "\"[\" 2:6"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/15",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "42c626438693c9de7676dcdcf93df764bd4d1bb2446362050be81f3f86876027",
+        "errors": [
+          "4:0-4:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "37ab6fa5ce243ddb18d2e80257a506c6b3885af7bb05b77c7610a4afda066eee",
+        "errors": [],
+        "missing": [
+          "identifier 4:5"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/16",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d0a52770638d1200b3ec195ea9e72d01935e08bda04fd31767b266b06923a3b3",
+        "errors": [
+          "1:0-1:27",
+          "1:9-1:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "1ef211c2541633814e05a1d4cbba08fbda81edeb58d7d3c13c6c18f43cd4ea6b",
+        "errors": [],
+        "missing": [
+          "\",\" 1:12",
+          "\"\" 1:12",
+          "\"]\" 1:27",
+          "\"}\" 1:27",
+          "\")\" 1:27",
+          "\"debugger\" 1:27"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/17",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "0f65668d244ef621e5438c097d36e91207231fb94d61c46b0485b1ad6287b7a8",
+        "errors": [
+          "3:12-3:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "76b47fc67d55c6f94451dd47a1233b189efdd58fbd848ffd3b36c9cbfb62bca0",
+        "errors": [
+          "3:12-3:13"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/18",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "9fc2da116e31bee69c8f121e465df72d600a839dac9c39d752461767f46833a8",
+        "errors": [
+          "3:2-3:4"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "6ccfc9d98c5c7ddd6dfbf0a18866a783aea83d9a779d072549f0bac7eea069f9",
+        "errors": [],
+        "missing": [
+          "\")\" 3:4"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/19",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d2375365e7b4bebd0e00a33a15e3e98bc8c98c51cbea1a7203b59bc6de664508",
+        "errors": [
+          "19:0-19:11"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "5e2aa741a19aafcb0141c6790e741c3dfda6495a9a383975e6ce02c1ff99804e",
+        "errors": [
+          "19:9-19:11"
+        ],
+        "missing": [
+          "\";\" 19:8",
+          "\";\" 19:9",
+          "\")\" 19:9"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/20",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "a4165bfdee1150a74e11000206bc4f0b7cb4cfc0385f684f97349ad93efa2b73",
+        "errors": [
+          "5:3-5:4"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "8ddd6672f93b8ae4d6109c95b7639ef34647c17122b27ab5ecff87a0fcdaf95a",
+        "errors": [
+          "5:3-5:4"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/21",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "42f0d52848ab74a3c6bc5636682f765e22ee280209acb0f1c257aebd26ae7993",
+        "errors": [
+          "12:26-12:27"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "a14ac23412646dd23834088eae2d563ba97072778681dcdc9d15ac6d9b705ba0",
+        "errors": [
+          "12:26-12:27"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/22",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "9abf192a591c07a72e741847caf184f79a0e56edcb26d027bd39eaf0002df356",
+        "errors": [
+          "3:0-3:1",
+          "5:7-5:8"
+        ],
+        "missing": [
+          "\";\" 6:1"
+        ]
+      },
+      "native": {
+        "cstSha256": "a211f60119b62378779a20a4af6a53eb959be9c3a355727004f173a7a0b393cc",
+        "errors": [
+          "3:0-7:1"
+        ],
+        "missing": [
+          "undefined 2:7"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/23",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "348fccbdf3b611dc47a4e2c4b2dc8d1d910c99f725e61b0421e68d0284c58dd6",
+        "errors": [
+          "1:0-2:1",
+          "3:2-6:4",
+          "6:9-6:10",
+          "9:2-12:6",
+          "11:1-11:5",
+          "12:11-18:3",
+          "14:6-14:7",
+          "16:1-16:2",
+          "20:1-20:3",
+          "22:1-22:14",
+          "22:13-22:14"
+        ],
+        "missing": [
+          "\";\" 8:3",
+          "\";\" 18:11"
+        ]
+      },
+      "native": {
+        "cstSha256": "19e6953a7d4e621e4b0ac24b37b6d5beabe0c2e3f07f71369c2aa7550954ba13",
+        "errors": [],
+        "missing": [
+          "\"`\" 0:0"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/24",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "29db43535d1f6e90080091a8642a824465e0ba0d48b21e2a2cfbc221dd5fd287",
+        "errors": [
+          "4:1-4:22",
+          "8:1-8:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "2b16d4c0aa7222da55e0ad8062cf66107406116f767d2aebcd515a5b733538e7",
+        "errors": [
+          "4:21-4:22",
+          "8:1-8:2"
+        ],
+        "missing": [
+          "unnamed_token 4:21"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/25",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "b6af423309cd83911506a20efd632a49fbeadd99815f4b9a8963f0e3e5bdf471",
+        "errors": [
+          "1:11-1:12",
+          "8:0-8:9"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "44dfd0f1c193f5d0713d560ed5e4094e3a8b3479235ffc2639fa58cc4231ad76",
+        "errors": [
+          "0:0-8:9"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/26",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "da0adfc84ea35629f443f41f931ceeed7c30564db60796a661fc81f685fa685d",
+        "errors": [
+          "0:0-0:23"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "04b5f889f9120254cfbf4f5fa05686cc333cd5b60797fa95bc39276ec6c8eecc",
+        "errors": [],
+        "missing": [
+          "undefined 0:23",
+          "\")\" 0:23",
+          "\")\" 0:23"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/27",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "252a7ff25abc6e2f7af2a4f91fe7ebfbd422242af43f13e7fb9b55e0c7e6dd8b",
+        "errors": [
+          "5:0-5:1"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "90692e295c5e3f8e5e1378800ff966e6f4453a5c306ba2ac50f507461c3fc04a",
+        "errors": [],
+        "missing": [
+          "\"`\" 5:1",
+          "\".\" 5:1"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/29",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "be32bd23ebe7c2a1646f867939c2e91091c311389332949c180cc84e5415c4a9",
+        "errors": [
+          "1:0-1:70",
+          "1:52-1:57",
+          "1:59-1:63",
+          "1:65-1:67"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "15cf54e45507d32147075130d926e53e277331fdf3c7209a1b9b041b78f81b1c",
+        "errors": [
+          "1:28-1:70"
+        ],
+        "missing": [
+          "\"(\" 1:28",
+          "\")\" 1:28",
+          "\"{\" 1:28",
+          "\"}\" 1:28"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/30",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "b17502a88782379ce4c786e0e70ef497c61d6f5b3269fb80ea57f1b2053a44e6",
+        "errors": [
+          "8:0-10:8"
+        ],
+        "missing": [
+          "\")\" 9:14",
+          "\"}\" 10:3"
+        ]
+      },
+      "native": {
+        "cstSha256": "12d3cd32181d28d04a398bfeb179c5157a295c58dca8e3eccf1c45e9427c579f",
+        "errors": [
+          "9:14-9:17"
+        ],
+        "missing": [
+          "\")\" 9:14",
+          "\",\" 9:14",
+          "undefined 10:8",
+          "\"]\" 11:0",
+          "\"}\" 11:1"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "fuzz/31",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "8901f7ae59413818111a0e5e5590ae7c4e64922430f7f0a6796b16bed34912fc",
+        "errors": [
+          "1:8-1:14",
+          "1:21-1:26"
+        ],
+        "missing": [
+          "\";\" 1:33"
+        ]
+      },
+      "native": {
+        "cstSha256": "1c344376c755834a35dbe33c78bf45abe9c25af098f5d4eef0dec7b15a47d983",
+        "errors": [
+          "1:8-1:33"
+        ],
+        "missing": [
+          "\"=>\" 1:7"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/0 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "4d002e92ee5cde94adb4c0aa419cb81c7c21f29dc2588506c63bcaa0ba0da69d",
+        "errors": [
+          "1:0-1:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "4b954490b8efcc1312be2ea62df5c42b05005053f37667729ebf91f40251d0f7",
+        "errors": [],
+        "missing": [
+          "\"(\" 1:5",
+          "undefined 1:5",
+          "\")\" 1:5",
+          "\"debugger\" 1:5"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/1 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "53fee1d8171c5caa48b92e53d4261091bb20e61059ae526a9faf8bbeb71c6249",
+        "errors": [
+          "5:10-5:11",
+          "5:17-6:5"
+        ],
+        "missing": [
+          "identifier 5:16"
+        ]
+      },
+      "native": {
+        "cstSha256": "9e85153eb730a3c1ad07ded8c77072faaee21dc3d13bda25cd381d244d974d20",
+        "errors": [],
+        "missing": [
+          "\"/\" 5:9"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/1 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "395e5fb983a7cf2aae476bcb9df9d6906670510855a493d357e96638c410e93b",
+        "errors": [
+          "5:10-5:11",
+          "5:17-6:5",
+          "15:6-15:14"
+        ],
+        "missing": [
+          "identifier 5:16",
+          "\"}\" 15:5"
+        ]
+      },
+      "native": {
+        "cstSha256": "1353b710a86f0dd866d80082c51b55eb13c23553d9d32d3eb0af31566e5f09c1",
+        "errors": [
+          "15:6-15:10"
+        ],
+        "missing": [
+          "\"/\" 5:9",
+          "\"}\" 15:5"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/1 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "0b15a6585c64b698bf6799823517005233bde0a09ee0cd50e89d9c33a1ec925b",
+        "errors": [
+          "1:0-1:4"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "e50aed66830cd1d879363e485cb0db735c1bc1b264d6847ba5b00550273c2662",
+        "errors": [],
+        "missing": [
+          "\"/\" 1:4"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/2 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "b85e01d6ffc5fe93b70dfa501fb7306d04fda42759e00ad8259bc7339c56b15e",
+        "errors": [
+          "6:0-6:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "77450a6f47f023726de367bfc0912e196b509789758040d129ec42b13b5c6c3f",
+        "errors": [],
+        "missing": [
+          "\"{\" 6:5",
+          "\"}\" 6:5"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/2 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "353134297db26ae4f219d67e80bd1ce79e759803ba94b563afed41854d63ece1",
+        "errors": [
+          "5:7-5:10"
+        ],
+        "missing": [
+          "\";\" 5:12"
+        ]
+      },
+      "native": {
+        "cstSha256": "e2fd26a1d404ac1b2ba5ce9a3b71d37e741edc0e8daf54b43733c610d5c8e36d",
+        "errors": [],
+        "missing": [
+          "\";\" 5:6",
+          "\"function\" 5:7"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/3 step 0",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "7c9e18230bd630078c9e06d669c012dbf97b48897a7751c2abd7efe8427ea0d8",
+        "errors": [
+          "2:2-2:3"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "59f2ea6c4bb9c017881f510ef299a833b762426a4b02343c7a55f3364bba02b2",
+        "errors": [
+          "2:2-2:3"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/3 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "ba0c749bb2e058af60f79c48a197e12be66948d23ab58cc328528f33a535d622",
+        "errors": [
+          "2:0-7:7"
+        ],
+        "missing": [
+          "\")\" 8:5"
+        ]
+      },
+      "native": {
+        "cstSha256": "52ba91c425359777ab250983cac948ed7d270d9a44f0544a5e1e781ceaf87e0d",
+        "errors": [
+          "2:2-2:3"
+        ],
+        "missing": [
+          "\")\" 2:1"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/4 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "32fb88edab25cd202f84bd348aa4862ff915b8cbcb3611a3eb32b348e7fe8ccf",
+        "errors": [
+          "4:0-4:16"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "69fadbc606e32fe0a135f7e3d2d1b469a6e19df72381187c181cc05c39582f31",
+        "errors": [],
+        "missing": [
+          "undefined 4:16"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/4 step 1",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "eb80cfa590b3f9393494fc0dc8ee66c549abbf76305bda093dbabe5a5faf85f6",
+        "errors": [
+          "3:0-3:16"
+        ],
+        "missing": [
+          "\")\" 2:29"
+        ]
+      },
+      "native": {
+        "cstSha256": "618251931a4b279272e56a35bca4b9dbac105e6d23b1c3338f3db3ad1be11347",
+        "errors": [
+          "3:0-3:16"
+        ],
+        "missing": [
+          "\")\" 2:29"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/4 step 2",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "b927ef201aef55c6bf0580e3715227392ebca6a43dbf0bc884cc2257cc623c8f",
+        "errors": [
+          "2:8-2:9",
+          "3:0-3:16"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "132a29796630848f97ca538768510a1fff086916579263d3a94a59d107b87589",
+        "errors": [
+          "0:0-3:16"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/4 step 3",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "ceb352d1e5c046d40d0cf8580c04407d86ae09192fcc2e2dfc8584a5a77e7c2c",
+        "errors": [
+          "2:8-2:9",
+          "2:21-2:22",
+          "3:0-3:16"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "132a29796630848f97ca538768510a1fff086916579263d3a94a59d107b87589",
+        "errors": [
+          "0:0-3:16"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/5 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "e6bc6f387f0adb55bb52b545841ad674ff995df599ea99d903be38d83e9683d2",
+        "errors": [
+          "1:4-1:5"
+        ],
+        "missing": [
+          "\";\" 1:19"
+        ]
+      },
+      "native": {
+        "cstSha256": "51b5451151feab9ecfe5260c9a8eb982695b0971ff9b127006bd415ef56d866c",
+        "errors": [],
+        "missing": [
+          "\";\" 1:3",
+          "\"function\" 1:4"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/5 step 1",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "431bd18930c575d17caf0b15dfd07f5e6a30810b27eb91a54d1b1c9b03202099",
+        "errors": [
+          "1:4-1:10"
+        ],
+        "missing": [
+          "\";\" 1:24"
+        ]
+      },
+      "native": {
+        "cstSha256": "d6b9fd9ff5f4b2fae3a2ad184f85c51658e216e2c89624bf574a151104ac62c2",
+        "errors": [
+          "1:4-1:10"
+        ],
+        "missing": [
+          "\";\" 1:3",
+          "\"if\" 1:4"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/5 step 2",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "f6925791b537582da6357e3a33cb149edd82fc02ad2f060684b51c9a3209f74f",
+        "errors": [
+          "1:4-1:10"
+        ],
+        "missing": [
+          "\";\" 1:30"
+        ]
+      },
+      "native": {
+        "cstSha256": "4e39c3cd37288b3e5bd1a3ac74a1e51fb68b37e9eda9d37836270588459aa103",
+        "errors": [
+          "1:4-1:10"
+        ],
+        "missing": [
+          "\";\" 1:3",
+          "\"if\" 1:4"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/5 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "0e913e7f25b0043aec5884f2ef402f34326a25ff74532819f12aa802eec6a0ff",
+        "errors": [
+          "1:0-1:40"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "10f71468fc673468d4041f5d2fcf39acc587822453ad07fe63ef132b434b5b35",
+        "errors": [
+          "1:4-1:24"
+        ],
+        "missing": [
+          "\";\" 1:3",
+          "\"for\" 1:4",
+          "\"(\" 1:4",
+          "\";\" 1:4",
+          "\";\" 1:4",
+          "\"{\" 1:4"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/7 step 0",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "37fdf0a9a277b7bccdccbfa748badb8b9d0280aa90bd15f9a6179daad638dd3d",
+        "errors": [
+          "3:33-3:37"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "1315fd4f49f2148f352d34d016e3aa8f5691aa993e1a1015b97e046ba18f9504",
+        "errors": [
+          "3:33-3:37"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/7 step 1",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "58ffe9b415c4938463af7d3e6031306e46bacb0463b514a061dce901aa4fbd28",
+        "errors": [
+          "3:37-3:41"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "4bcaafab7d9d4151929f83a1a6b73240141478b28e090205e6c4a6cfe76aa7ae",
+        "errors": [
+          "3:37-3:41"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/7 step 2",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "d8fbc49444d48dccd00d17f5e1a367abe5be50b803a138a9221ffeca7449ba9b",
+        "errors": [
+          "4:28-4:32"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "d07a1c73397254cf68dcd7b78f773446654aefa2f75f077b5f7f9a38f4002368",
+        "errors": [
+          "4:28-4:32"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
+      "case": "edit/7 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "b86ec2bb7b35b56ce25760a9d14ad989289f1a693c6f2a1996ae04f8f4d03321",
+        "errors": [
+          "4:28-4:32",
+          "5:0-5:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "1fadc54b727d077a51f1453ef940e9d2583092f2da1da219a0e701aed60bf4b9",
+        "errors": [
+          "4:28-4:32",
+          "5:0-5:14"
+        ],
+        "missing": []
+      }
+    },
+    {
       "language": "Rust",
       "suite": "conformance",
       "case": "corpus/error.txt/0",

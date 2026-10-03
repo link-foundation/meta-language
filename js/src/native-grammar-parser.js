@@ -19,7 +19,8 @@
 // kind (`oracleKinds`, from the rule's `(source-names (tree-sitter NAME))`).
 // A kind `'TEXT`, an imported anonymous alias, is an anonymous node TEXT.
 // An ERROR leaf is a named `ERROR` node and a MISSING leaf an empty
-// MISSING node, named unless it stands for a literal.
+// MISSING node, named unless it stands for a literal; a MISSING leaf of no
+// kind is a named `MISSING` node.
 import { readFileSync } from 'node:fs';
 
 import { compileGrammar } from './grammar.js';
@@ -104,7 +105,7 @@ function projectNativeTree(tree, length, { hidden, anonymous, extras, oracleKind
       return { term: 'ERROR', named: true, start, end, isError: true, isMissing: false, isExtra: false, hasError: true, children: [] };
     }
     if (node.type === 'missing') {
-      return { term: term(node.kind), named: !node.literal && !anonymousAlias(node.kind), start, end, isError: false, isMissing: true, isExtra: false, hasError: true, children: [] };
+      return { term: node.kind ? term(node.kind) : 'MISSING', named: !node.literal && !anonymousAlias(node.kind), start, end, isError: false, isMissing: true, isExtra: false, hasError: true, children: [] };
     }
     return {
       term: node.kind ? term(node.kind) : node.text, named: Boolean(node.kind) && !anonymousAlias(node.kind), start, end, isError: false, isMissing: false,

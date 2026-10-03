@@ -397,13 +397,30 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/precedence.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-JAVASCRIPT',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/javascript.json',
+    construct: 'native merged JavaScript grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/javascript.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-javascript 0.25.0, with every rule renamed to its English name, its external scanner src/scanner.c ported to the five native scanners of parity/grammars/scanners/javascript.lino (automatic semicolons, template characters, the ternary question mark, HTML-like comments and JSX text), and every hand decision recorded in parity/grammars/merge-reports/javascript.json. Both executors build, for every source of the upstream test/corpus the oracle accepts and the added cases, exactly the concrete syntax tree rows of the tree-sitter-javascript oracle with no ambiguity: modules, classes, functions, generators, destructuring, automatic semicolon insertion, template strings with substitutions, regular expressions, JSX and HTML-like comments included. Both executors reject invalid input the oracle recovers from, repair it into the recorded tree, and keep every source byte, comments and white space included, in the tree.',
+    assertions: [
+      'nativeJavaScriptGrammarIsCanonicalLinks',
+      'nativeJavaScriptTreesMatchOracle',
+      'nativeJavaScriptRejectsInvalidInput',
+      'nativeJavaScriptTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/operations.js', 'js/src/grammar-runtime/executor.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/rules.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',
     fixture: 'parity/fixtures/native-grammars/json.json',
     construct: 'automatic error recovery of the native executor for every native grammar',
     expectedBehavior:
-      'With errorRecovery (error_recovery in Rust) both executors repair a parse the grammar rejects, without recovery rules in the grammar: at the farthest failing element they insert a zero-width MISSING leaf or skip to the next match of the element behind an ERROR leaf, choose the repair of least cost, and cover input no repair reaches with an ERROR leaf. For every rejection of the nine native grammar fixtures (JSON, INI, diff, CSV, JSON5, Scheme, Racket, C, Rust) both executors build the same recorded tree, which keeps every source byte and is reported as a recovered rejection; without the option the parse is still rejected, and inputs the grammar accepts parse to the same tree with and without it.',
+      'With errorRecovery (error_recovery in Rust) both executors repair a parse the grammar rejects, without recovery rules in the grammar: at the farthest failing element they insert a zero-width MISSING leaf or skip to the next match of the element behind an ERROR leaf, choose the repair of least cost, and cover input no repair reaches with an ERROR leaf. For every rejection of the ten native grammar fixtures (JSON, INI, diff, CSV, JSON5, Scheme, Racket, C, Rust, JavaScript) both executors build the same recorded tree, which keeps every source byte and is reported as a recovered rejection; without the option the parse is still rejected, and inputs the grammar accepts parse to the same tree with and without it.',
     assertions: [
       'nativeRecoveryTreesMatchFixtures',
       'nativeRecoveryTreesLossless',
