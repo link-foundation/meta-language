@@ -80,6 +80,7 @@ fn remap_reparsed_network(
         };
         id_map.insert(link.id(), target);
     }
+    keep_tied_sibling_order(reparsed, &mut id_map, &mut used_targets, &mut next_id);
 
     let mut links = BTreeMap::new();
     for link in reparsed.links() {
@@ -335,6 +336,41 @@ fn apply_text_edit(old_text: &str, range: ByteRange, replacement: &str) -> Optio
     edited.push_str(replacement);
     edited.push_str(&old_text[range.end()..]);
     Some(edited)
+}
+
+/// Siblings that share a span keep their order by identifier (a zero-width
+/// MISSING leaf before another at the same point), as the network orders
+/// siblings by span, then identifier. Where the kept identifiers would reverse
+/// two of them, the later one gets a fresh identifier.
+fn keep_tied_sibling_order(
+    reparsed: &LinkNetwork,
+    id_map: &mut BTreeMap<LinkId, LinkId>,
+    used_targets: &mut BTreeSet<LinkId>,
+    next_id: &mut u64,
+) {
+    let mut ties: BTreeMap<(Vec<LinkId>, usize, usize), Vec<LinkId>> = BTreeMap::new();
+    for link in reparsed.links() {
+        if let Some(span) = link.metadata().span() {
+            let range = span.byte_range();
+            ties.entry((link.references().to_vec(), range.start(), range.end()))
+                .or_default()
+                .push(link.id());
+        }
+    }
+    for group in ties.values().filter(|group| group.len() > 1) {
+        let mut last: Option<LinkId> = None;
+        for id in group {
+            let target = id_map[id];
+            if last.is_some_and(|last| target <= last) {
+                let fresh = next_unused_id(next_id, used_targets);
+                used_targets.insert(fresh);
+                id_map.insert(*id, fresh);
+                last = Some(fresh);
+            } else {
+                last = Some(target);
+            }
+        }
+    }
 }
 
 fn next_unused_id(next_id: &mut u64, used_targets: &BTreeSet<LinkId>) -> LinkId {

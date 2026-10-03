@@ -311,6 +311,39 @@ fn apply_edit_keeps_ids_stable_when_new_links_shift_the_fresh_parse_order() {
 }
 
 #[test]
+fn apply_edit_keeps_the_order_of_siblings_that_share_a_span() {
+    // The network orders siblings by span and then by identifier, so two
+    // zero-width MISSING leaves at one point keep their order only if the
+    // remapped identifiers do: the class body of a JavaScript `class` at the
+    // end of the input is a MISSING `{` and a MISSING `}` there.
+    let missing = |network: &LinkNetwork| {
+        let mut leaves: Vec<(usize, LinkId, String)> = network
+            .links()
+            .filter(|link| link.metadata().flags().is_missing())
+            .map(|link| {
+                let span = link.metadata().span().expect("a MISSING leaf has a span");
+                let term = link.metadata().term().unwrap_or_default().to_string();
+                (span.byte_range().start(), link.id(), term)
+            })
+            .collect();
+        leaves.sort();
+        leaves
+            .into_iter()
+            .map(|(_, _, term)| term)
+            .collect::<Vec<_>>()
+    };
+    let source = "\n/*\n * @return {void}\n */\nfunction foo() {}\n";
+    let mut network = LinkNetwork::parse(source, "JavaScript", ParseConfiguration::default());
+    assert!(network.apply_edit(ByteRange::new(25, 25), "\nfunc"));
+    assert!(network.apply_edit(ByteRange::new(49, 49), "class"));
+    let edited = "\n/*\n * @return {void}\n */\nfunc\nfunction foo() {}\nclass";
+    assert_eq!(network.reconstruct_text(), edited);
+    let fresh = LinkNetwork::parse(edited, "JavaScript", ParseConfiguration::default());
+    assert_eq!(missing(&fresh), ["{", "}"]);
+    assert_eq!(missing(&network), ["{", "}"]);
+}
+
+#[test]
 fn snapshot_diff_reports_structural_changes_from_an_edited_fork() {
     let source = "let alpha = 1;\nlet beta = 2;\n";
     let network = LinkNetwork::parse(source, "JavaScript", ParseConfiguration::default());
