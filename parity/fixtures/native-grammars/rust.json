@@ -8676,6 +8676,18 @@
     {
       "source": "1 +",
       "recovered": "(source_file (expression_statement (binary_expression left:(integer_literal \"1\") ~\" \" operator:\"+\" right:(return_expression (MISSING@3))) (MISSING@3 \";\")))"
+    },
+    {
+      "source": "fn a() {}\u00a0fn b() {}",
+      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"a\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" \"}\")) (function_item (ERROR@9..11 \"\u00a0\") \"fn\" ~\" \" name:(identifier \"b\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" \"}\")))"
+    },
+    {
+      "source": "　fn f() {}",
+      "recovered": "(source_file (function_item (ERROR@0..3 \"　\") \"fn\" ~\" \" name:(identifier \"f\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" \"}\")))"
+    },
+    {
+      "source": "fn f() {}\u2028",
+      "recovered": "(source_file (function_item \"fn\" ~\" \" name:(identifier \"f\") parameters:(parameters \"(\" \")\") body:(block ~\" \" \"{\" \"}\")) (ERROR@9..12 \"\u2028\"))"
     }
   ]
 }

@@ -556,6 +556,8 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'int x', 'int x = ;', '{', '}', 'int f() {', ')', '(', '"abc', "'a", '/* abc', 'int x = 1 +;', 'if (x',
       'struct {', '#include', '#define', 'int [;', 'x = = 1;', 'return', 'int f(int a,) {}', 'a[;', '#if X', '#endif',
       'for (;;', 'int main() { return 0 }', 'x->;', 'L"a', 'typedef;', 'if;', 'struct;', 'while;',
+      // tree-sitter's `\s` is ASCII white space: a no-break or ideographic space is an error.
+      'int a;\u00a0int b;', '\u3000int x;', 'int x;\ufeff',
     ],
   },
   {
@@ -586,6 +588,8 @@ export const NATIVE_GRAMMARS = Object.freeze([
       'impl {', 'use ;', 'mod', 'x = = 1;', 'fn f(a,,) {}', 'a[;', 'match x {', 'enum E { A,, }', 'fn main() { let }',
       'trait T {', 'r#"abc', 'b"abc', 'x.;', 'let x: = 1;', 'pub', '#[derive(', 'macro_rules! m {', 'where',
       'fn f() -> {}', '1 +',
+      // tree-sitter's `\s` is ASCII white space: a no-break or ideographic space is an error.
+      'fn a() {}\u00a0fn b() {}', '\u3000fn f() {}', 'fn f() {}\u2028',
     ],
   },
 ]);

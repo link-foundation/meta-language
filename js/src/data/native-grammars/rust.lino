@@ -1,5 +1,5 @@
 (grammar (start source_file) (matching longest))
-(extra (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B) (char %C2%A0) (char %EF%BB%BF) (char %E2%80%A8) (char %E2%80%A9) (category Zs)))
+(extra (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B)))
 (extra (ref line_comment))
 (extra (ref block_comment))
 (conflict type pattern)

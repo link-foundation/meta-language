@@ -454,7 +454,7 @@
       "grammars": {
         "native-c": {
           "version": "1.0.0",
-          "parserSha256": "f7c768bd04550979828c73c605f40b84fc36d6a9fdf20e0395c55c6365d469c6"
+          "parserSha256": "187163fa29b9c38be87d295623372df5bec5a86aa6f0f65de94d9b765201ad5c"
         }
       },
       "oracleGrammars": {
@@ -546,7 +546,7 @@
       "grammars": {
         "native-rust": {
           "version": "1.0.0",
-          "parserSha256": "1abfd19363cd5ce641276dccd5e5d763fcdac67780ac9c15415c6185fdda8d69"
+          "parserSha256": "cb37355ed1d0ff4ed1e68e8eea0e4da83e57496ea20e1fb163c461a23b5834eb"
         }
       },
       "oracleGrammars": {

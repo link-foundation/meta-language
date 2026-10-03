@@ -1651,12 +1651,12 @@
     "planned:repository-directive:i195-grammar-native-c": {
       "path": "parity/fixtures/native-grammars/c.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged C grammar imported from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "de2e76c9a0be66c3c4ebbbb1991de6a9ad0ec73801c4e206b7d589f7a2dee2a1"
+      "sha256": "f1747acb2fe19cd69bf8250573fb535736cc594b3e3f19370548c2458361bc35"
     },
     "planned:repository-directive:i195-grammar-native-rust": {
       "path": "parity/fixtures/native-grammars/rust.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Rust grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "8078451ab68ab9168ecd99760cec8f7bf0491d819a80b2a08475938de5be5dd9"
+      "sha256": "264de33c4f8baecd27eb2bea017940db131750d1cc190eda4de0b0b68c9500fc"
     },
     "planned:repository-directive:i195-grammar-native-recovery": {
       "path": "parity/fixtures/native-grammars/json.json",

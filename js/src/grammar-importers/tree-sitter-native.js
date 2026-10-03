@@ -74,8 +74,10 @@ const SCRIPTS = new Set([
   'Arabic', 'Armenian', 'Bengali', 'Cyrillic', 'Devanagari', 'Georgian', 'Greek', 'Han', 'Hangul', 'Hebrew', 'Hiragana',
   'Katakana', 'Latin', 'Thai',
 ]);
-const SPACE_ITEMS = [...' \t\n\r\f\v ﻿  '].map((c) => ({ kind: 'char', value: c }))
-  .concat([{ kind: 'category', value: 'Zs' }]);
+// tree-sitter compiles `\s` to ASCII white space only, not the Unicode set of
+// JavaScript: the pinned Rust and C parsers report an ERROR on a no-break space
+// (js/experiments/tree-sitter-whitespace-class.mjs).
+const SPACE_ITEMS = [...' \t\n\r\f\v'].map((c) => ({ kind: 'char', value: c }));
 const DIGIT_ITEMS = [{ kind: 'range', start: '0', end: '9' }];
 const WORD_ITEMS = [{ kind: 'range', start: 'a', end: 'z' }, { kind: 'range', start: 'A', end: 'Z' }, ...DIGIT_ITEMS, { kind: 'char', value: '_' }];
 

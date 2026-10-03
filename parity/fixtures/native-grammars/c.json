@@ -6081,6 +6081,18 @@
     {
       "source": "while;",
       "recovered": "(translation_unit (while_statement \"while\" condition:(parenthesized_expression (MISSING@5 \"(\") (MISSING@5 identifier) (MISSING@5 \")\")) body:(expression_statement \";\")))"
+    },
+    {
+      "source": "int a;\u00a0int b;",
+      "recovered": "(translation_unit (declaration type:(primitive_type \"int\") ~\" \" declarator:(identifier \"a\") \";\") (declaration (ERROR@6..8 \"\u00a0\") type:(primitive_type \"int\") ~\" \" declarator:(identifier \"b\") \";\"))"
+    },
+    {
+      "source": "　int x;",
+      "recovered": "(translation_unit (declaration (ERROR@0..3 \"　\") type:(primitive_type \"int\") ~\" \" declarator:(identifier \"x\") \";\"))"
+    },
+    {
+      "source": "int x;\ufeff",
+      "recovered": "(translation_unit (declaration type:(primitive_type \"int\") ~\" \" declarator:(identifier \"x\") \";\") (ERROR@6..9 \"\ufeff\"))"
     }
   ]
 }
