@@ -400,15 +400,15 @@ function chainPair(a, b) {
   return null;
 }
 
-// Which of two results an LR parser keeps when two nodes from one offset have
-// no node kind in common along their leftmost chains (Rust's closure `|a| b`
-// and or-pattern `|a|b` in a tuple pattern): the two parses part at the first
-// end only one chain has, where one reduced the innermost node ending there
-// (the or-pattern `|a` of level -2) and the other shifted on in the innermost
-// node going past it (the closure parameters `|a|`), as in `shiftPreferred`,
-// when the reduced node's children begin the other node's, so the two parses
-// agree up to that end. 1 when `a`'s result is kept, -1 when `b`'s is, 0 when
-// neither.
+// Which of two results an LR parser keeps when two nodes from one offset end
+// their leftmost chains apart and nothing else decides them (Rust's closure
+// `|a| b` and or-pattern `|a|b` in a tuple pattern): the two parses part at
+// the first end only one chain has, where one reduced the innermost node
+// ending there (the or-pattern `|a` of level -2) and the other shifted on in
+// the innermost node going past it (the closure parameters `|a|`), as in
+// `shiftPreferred`, when the reduced node's children begin the other node's,
+// so the two parses agree up to that end. 1 when `a`'s result is kept, -1 when
+// `b`'s is, 0 when neither.
 function chainConflict(a, b) {
   const first = leftmostChain(a);
   const second = leftmostChain(b);

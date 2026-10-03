@@ -580,6 +580,10 @@ export const NATIVE_GRAMMARS = Object.freeze([
       '', 'fn main() {}', 'let x = 1;', 'struct S { a: i32 }', '// c\nfn f() {}\n', '/* a /* b */ c */ fn f() {}',
       'fn f() -> i32 { 1 + 2 * 3 }', 'const R: &str = r#"a"#;', 'x.await?;', '//! i\n/// d\nfn f() {}\n',
       'fn f() { m!(x); }', 'm!(a +.);',
+      // Shifts and reductions an LR parser settles by precedence: a closure
+      // over an or-pattern, and bare, prefix and postfix ranges in a row.
+      'fn f() { |(|a|b)| c; }', 'fn f() { a ..= ..; }', 'fn f() { .. ..=.. ..; }', 'fn f() { ..=.. ..=..; }',
+      'fn f() { ..=..=.. .. ..=.. }',
     ],
     divergences: [],
     rejections: [

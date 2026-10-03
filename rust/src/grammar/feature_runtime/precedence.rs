@@ -1,6 +1,7 @@
 //! Precedence and associativity of the native executor, as the precedence
 //! filter of `js/src/grammar-runtime/executor.js`.
 
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
@@ -19,12 +20,24 @@ pub(super) struct Operands {
 
 /// A precedence filter: the level, the associativity, the operand kinds and
 /// the address of the precedence's item, by which its rule is known (see
-/// `reaches_owner`).
+/// `reaches_owner`), with the results whose right operand is of one part,
+/// which wait for the others (see `lone_pending`).
 pub(super) struct Keep {
     level: i64,
     associativity: Associativity,
     operands: Rc<Operands>,
     item: usize,
+    pending: RefCell<Vec<Res>>,
+}
+
+/// The verdict of the precedence filter on an operand.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum Conflict {
+    No,
+    Yes,
+    /// A right operand of one part: valid unless a result ends before it
+    /// (see `lone_pending`).
+    Lone,
 }
 
 /// Whether an expression may match nothing, as far as its shape tells.
@@ -64,38 +77,91 @@ impl Executor<'_> {
             .filter(|child| !child.trivia)
             .cloned()
             .collect();
-        let allowed = meaningful.len() < 2
-            || !(self.conflicts(keep, &meaningful[0], Associativity::Left)
-                || self.conflicts(
-                    keep,
-                    &meaningful[meaningful.len() - 1],
-                    Associativity::Right,
-                ));
-        if !allowed {
-            self.fail(result.end, &Name::from("precedence"));
+        let verdict = if meaningful.len() < 2 {
+            Conflict::No
+        } else if self.conflicts(keep, &meaningful[0], Associativity::Left) == Conflict::Yes {
+            Conflict::Yes
+        } else {
+            self.conflicts(
+                keep,
+                &meaningful[meaningful.len() - 1],
+                Associativity::Right,
+            )
+        };
+        match verdict {
+            Conflict::No => true,
+            Conflict::Lone => {
+                keep.pending.borrow_mut().push(result.clone());
+                false
+            }
+            Conflict::Yes => {
+                self.fail(result.end, &Name::from("precedence"));
+                false
+            }
         }
-        allowed
+    }
+
+    // The `results` of a precedence expression with the `pending` ones whose
+    // right operand is a node of one part (Rust's bare range `..`) that an
+    // LR parser shifts: where a result of the expression ends before that
+    // operand (`..` in `.. ..`, `a..` in `a .. ..`), the parser reduces it
+    // there first, as the operand's level is not above the operator's
+    // (`a ..= ..` stands).
+    fn lone_pending(&mut self, results: Vec<Res>, pending: Vec<Res>) -> Vec<Res> {
+        let ends: HashSet<usize> = results.iter().map(|result| result.end).collect();
+        let mut found = ResultSet::new(self.longest_tokens);
+        for result in results {
+            found.set(result);
+        }
+        for result in pending {
+            let meaningful: Vec<&Rc<Tree>> = result
+                .children
+                .iter()
+                .filter(|child| !child.trivia)
+                .collect();
+            if ends.contains(&meaningful[meaningful.len() - 2].end) {
+                self.fail(result.end, &Name::from("precedence"));
+                continue;
+            }
+            found.add(result);
+        }
+        found.items
     }
 
     // Whether the operand `child` on `side` conflicts with the precedence of
     // `keep` (see `precedence_valid`).
-    pub(super) fn conflicts(&mut self, keep: &Keep, child: &Tree, side: Associativity) -> bool {
+    pub(super) fn conflicts(&mut self, keep: &Keep, child: &Tree, side: Associativity) -> Conflict {
         let Some((inner, _)) = child.precedence else {
-            return false;
+            return Conflict::No;
         };
         if child.ty != TreeType::Node
             || inner > keep.level
             || (inner == keep.level && keep.associativity == side)
         {
-            return false;
+            return Conflict::No;
         }
         if let Some(kind) = &child.rule {
             if side == Associativity::Right && self.lexed_shift(kind) {
-                return false;
+                return Conflict::No;
             }
             if !self.reaches_owner(keep.item, kind, side) {
-                return false;
+                return Conflict::No;
             }
+        }
+        // A child of one part (Rust's bare range `..` in `a ..= ..`) has no
+        // operand of its own the operator could have taken instead; on the
+        // right, the parse before it could still have been reduced first.
+        let facing: Vec<&Rc<Tree>> = child
+            .children
+            .iter()
+            .filter(|grandchild| !grandchild.trivia)
+            .collect();
+        if facing.len() < 2 {
+            return if side == Associativity::Right {
+                Conflict::Lone
+            } else {
+                Conflict::No
+            };
         }
         let kinds = if side == Associativity::Left {
             &keep.operands.left
@@ -103,19 +169,21 @@ impl Executor<'_> {
             &keep.operands.right
         };
         let Some(kinds) = kinds else {
-            return true;
+            return Conflict::Yes;
         };
-        let mut facing = child
-            .children
-            .iter()
-            .filter(|grandchild| !grandchild.trivia);
         let edge = if side == Associativity::Left {
-            facing.next_back()
+            facing.last()
         } else {
-            facing.next()
+            facing.first()
         };
-        edge.and_then(|edge| edge.kind.as_ref())
+        if edge
+            .and_then(|edge| edge.kind.as_ref())
             .is_some_and(|kind| kinds.contains(kind))
+        {
+            Conflict::Yes
+        } else {
+            Conflict::No
+        }
     }
 
     // The rule a node of `kind` is built by under its own name, if any.
@@ -330,8 +398,15 @@ impl Executor<'_> {
                 associativity,
                 operands: self.operand_kinds(item),
                 item: std::ptr::from_ref(item) as usize,
+                pending: RefCell::new(Vec::new()),
             };
-            self.filtered(item, position, state, &keep)?
+            let results = self.filtered(item, position, state, &keep)?;
+            let pending = keep.pending.take();
+            if pending.is_empty() {
+                results
+            } else {
+                self.lone_pending(results, pending)
+            }
         };
         let tag = Some((level, associativity));
         for result in &mut results {

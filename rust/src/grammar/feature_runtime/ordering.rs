@@ -4,6 +4,7 @@
 //! precedence, and the reductions of extras and lone nodes.
 
 use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use super::program::{Associativity, TokenRank};
@@ -153,6 +154,17 @@ pub(super) fn preferred_tokens(
                     left.pop();
                     right.pop();
                     skipped = [Vec::new(), Vec::new()];
+                } else if a_node && b_node && (nests_first(&a, &b) || nests_first(&b, &a)) {
+                    // A node one parse wraps deeper (Rust's `.. ..` as the
+                    // left operand of `..=` or of an assignment) is the first
+                    // part of the other parse's node: that one is entered
+                    // alone until the two line up, so the node meets its
+                    // match, not a leaf of it.
+                    if nests_first(&a, &b) {
+                        open_node(&mut left, false);
+                    } else {
+                        open_node(&mut right, false);
+                    }
                 } else if a_node || b_node {
                     let lone = if a_node { &b } else { &a };
                     if lone.ty != TreeType::Node && !lone.trivia {
@@ -275,6 +287,12 @@ pub(super) fn shift_order(result: &Children, existing: &Children) -> Ordering {
                     .then_with(|| extra_reduction(&b, &a, &left).reverse());
                 if reduced != Ordering::Equal {
                     return reduced;
+                }
+                if a_node && b_node && a.start == b.start {
+                    let parted = chain_conflict(&a, &b);
+                    if parted != Ordering::Equal {
+                        return parted;
+                    }
                 }
                 if !a_node && !b_node {
                     return Ordering::Equal;
@@ -500,6 +518,61 @@ fn chain_pair(a: &Rc<Tree>, b: &Rc<Tree>) -> Option<(Rc<Tree>, Rc<Tree>)> {
             .find(|candidate| candidate.kind == node.kind && candidate.start == node.start)
             .map(|found| (node.clone(), found.clone()))
     })
+}
+
+/// Whether a node of the kind and span of `inner` is on the leftmost chain of
+/// the longer node `outer`. It mirrors nestsFirst in
+/// js/src/grammar-runtime/executor.js.
+fn nests_first(outer: &Rc<Tree>, inner: &Rc<Tree>) -> bool {
+    outer.end > inner.end
+        && leftmost_chain(outer).iter().any(|node| {
+            node.kind == inner.kind && node.start == inner.start && node.end == inner.end
+        })
+}
+
+/// Which of two results an LR parser keeps when two nodes from one offset end
+/// their leftmost chains apart and nothing else decides them (Rust's closure
+/// `|a| b` and or-pattern `|a|b` in a tuple pattern): the two parses part at
+/// the first end only one chain has, where one reduced the innermost node
+/// ending there (the or-pattern `|a` of level -2) and the other shifted on in
+/// the innermost node going past it (the closure parameters `|a|`), as in
+/// `shift_preferred`, when the reduced node's children begin the other
+/// node's, so the two parses agree up to that end. Greater when `a`'s result
+/// is kept, Less when `b`'s is, Equal when neither. It mirrors chainConflict
+/// in js/src/grammar-runtime/executor.js.
+fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>) -> Ordering {
+    let (first, second) = (leftmost_chain(a), leftmost_chain(b));
+    let ends = |chain: &[Rc<Tree>]| {
+        chain
+            .iter()
+            .map(|node| node.end)
+            .collect::<HashSet<usize>>()
+    };
+    let (mine, theirs) = (ends(&first), ends(&second));
+    let Some(&end) = mine.symmetric_difference(&theirs).min() else {
+        return Ordering::Equal;
+    };
+    let (reducing, shifting, kept) = if mine.contains(&end) {
+        (&first, &second, Ordering::Less)
+    } else {
+        (&second, &first, Ordering::Greater)
+    };
+    let (Some(short), Some(long)) = (
+        reducing.iter().rev().find(|node| node.end == end),
+        shifting.iter().rev().find(|node| node.end > end),
+    ) else {
+        return Ordering::Equal;
+    };
+    let (own, next) = (meaningful(&short.children), meaningful(&long.children));
+    if own.len() >= next.len() || own.iter().zip(&next).any(|(x, y)| !same_tree(x, y)) {
+        return Ordering::Equal;
+    }
+    let order = shift_preferred(long, short);
+    if kept == Ordering::Greater {
+        order
+    } else {
+        order.reverse()
+    }
 }
 
 /// Greater when the shift that built `long` is preferred to the reduction
