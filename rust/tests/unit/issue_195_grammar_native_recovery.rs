@@ -216,3 +216,51 @@ fn a_repair_inserts_a_missing_leaf_or_skips_input_as_an_error_leaf() {
             .is_none()
     );
 }
+
+#[test]
+fn a_long_repetition_repaired_near_its_end_keeps_every_item_in_order() {
+    // A join links its parts instead of copying the children before it, so a
+    // repetition of n items costs O(n) and not O(n²); the tree is unchanged.
+    let json = parser(GRAMMARS[0].1);
+    let count = 10_000;
+    let items: Vec<String> = (0..count).map(|index| (index % 10).to_string()).collect();
+    let source = format!("[{} 7]", items.join(","));
+    let outcome = parse(&json, &source, &recover());
+    assert_eq!(
+        outcome.rejection.as_ref().map(|rejection| rejection.reason),
+        Some("recovered")
+    );
+    let tree = outcome.tree.as_ref().expect("a tree");
+    let SyntaxTree::Node { children, .. } = tree else {
+        panic!("a document node");
+    };
+    let Some(SyntaxTree::Node {
+        children: array, ..
+    }) = children.first()
+    else {
+        panic!("an array node");
+    };
+    let numbers: Vec<(usize, usize)> = array
+        .iter()
+        .filter_map(|child| match child {
+            SyntaxTree::Node {
+                kind, start, end, ..
+            }
+            | SyntaxTree::Token {
+                kind: Some(kind),
+                start,
+                end,
+                ..
+            } if kind == "number" => Some((*start, *end)),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(numbers.len(), count);
+    for (index, (start, end)) in numbers.iter().enumerate() {
+        assert_eq!(&source[*start..*end], (index % 10).to_string());
+    }
+    assert!(matches!(array[array.len() - 2], SyntaxTree::Error { .. }));
+    let mut bytes = Vec::new();
+    leaf_bytes(tree, source.as_bytes(), &mut bytes);
+    assert_eq!(bytes, source.as_bytes());
+}

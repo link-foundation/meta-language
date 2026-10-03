@@ -355,6 +355,14 @@ alternative that has any. An unordered choice under `peg` returns the longest
 first result among the alternatives (the first on a tie); under
 `generalized` it returns the union of all alternatives.
 
+**Joined children.** A join does not copy the children before it: it links
+its two parts with their child count, and the list is flattened once, when
+it is first read. A node built from a result shares the unflattened list.
+Copying made a repetition of n items cost O(n²) time and memory, since every
+iteration, and every prefix a generalized repetition keeps, copied all the
+children before it. `experiments/issue-195-native-scale.mjs` and
+`experiments/issue-195-native-recovery-scale.mjs` measure the linear growth.
+
 **Repetition.** Under `peg` a repetition is greedy and possessive, and a
 zero-width iteration ends it. Under `generalized` it is a breadth-first
 frontier by iteration count: once `min` is met each new end and state is a

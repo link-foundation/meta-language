@@ -94,3 +94,19 @@ test('a repair inserts a MISSING leaf or skips input as an ERROR leaf, whichever
   // Without the option the parse is rejected with no tree.
   assert.equal(json.parseTree('[1, 2 3]').tree, null);
 });
+
+test('a long repetition, repaired near its end, keeps every item in order', () => {
+  // A join links its parts instead of copying the children before it, so a
+  // repetition of n items costs O(n) and not O(n²); the tree is unchanged.
+  const json = grammars.find(({ entry }) => entry.id === 'json').parser;
+  const count = 10_000;
+  const source = `[${Array.from({ length: count }, (_, index) => String(index % 10)).join(',')} 7]`;
+  const outcome = json.parseTree(source, RECOVER);
+  assert.equal(outcome.rejection.reason, 'recovered');
+  const [array] = outcome.tree.children;
+  const numbers = array.children.filter((child) => child.kind === 'number');
+  assert.equal(numbers.length, count);
+  assert.ok(numbers.every((child, index) => source.slice(child.start, child.end) === String(index % 10)));
+  assert.equal(leafText(outcome.tree, source), source);
+  assert.equal(array.children.at(-2).type, 'error');
+});

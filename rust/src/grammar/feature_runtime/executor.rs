@@ -18,7 +18,7 @@ use super::operations::{Abort, Machine, OpError, OpResult, State, Working, evalu
 use super::program::{Associativity, Compiled, Expr, Matcher, Name, Program, Target};
 use super::results::{
     Children, Entry, MemoKey, Outcome, Res, ResultSet, Scanned, Shared, Skipped, Tree, TreeType,
-    concat, content_start, longest_result, no_children, with_leaf,
+    children_of, concat, content_start, longest_result, no_children, with_leaf,
 };
 use super::text::{column_of, decode_at, text_of};
 
@@ -249,7 +249,7 @@ impl<'c> Executor<'c> {
         }
         let skipped = Rc::new(Skipped {
             end: cursor,
-            leaves: Rc::new(leaves),
+            leaves: children_of(leaves),
         });
         self.trivia_memo.insert(key, skipped.clone());
         Ok(skipped)
@@ -391,7 +391,7 @@ impl<'c> Executor<'c> {
                 let mut results = self.evaluate(item, position, state, in_token)?;
                 if !in_token {
                     for result in &mut results {
-                        result.children = Rc::new(
+                        result.children = children_of(
                             result
                                 .children
                                 .iter()
@@ -482,7 +482,7 @@ impl<'c> Executor<'c> {
                 let children = if in_token {
                     no_children()
                 } else {
-                    Rc::new(vec![Rc::new(node)])
+                    children_of(vec![Rc::new(node)])
                 };
                 Ok(vec![Res::new(position, state.clone(), children, 0)])
             }
@@ -684,14 +684,14 @@ impl<'c> Executor<'c> {
                         })
                         .collect();
                     return Res {
-                        children: Rc::new(children),
+                        children: children_of(children),
                         ..result
                     };
                 }
                 let mut node = Tree::node(name, position, result.end, result.children.clone());
                 node.ambiguous = result.ambiguous;
                 Res {
-                    children: Rc::new(vec![Rc::new(node)]),
+                    children: children_of(vec![Rc::new(node)]),
                     ambiguous: false,
                     ..result
                 }

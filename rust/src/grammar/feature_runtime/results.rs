@@ -2,8 +2,10 @@
 //! one way an expression matches, the deduplicating result set, and the
 //! memo entries and shared resource counters of one parse.
 
-use std::cell::Cell;
+use std::cell::{Cell, OnceCell, RefCell};
 use std::collections::{BTreeMap, HashMap};
+use std::fmt;
+use std::ops::Deref;
 use std::rc::Rc;
 
 use super::operations::{OperationValue, State};
@@ -20,7 +22,90 @@ pub(super) enum TreeType {
 }
 
 /// The children of a node, shared between results.
-pub(super) type Children = Rc<Vec<Rc<Tree>>>;
+pub(super) type Children = Rc<ChildList>;
+
+/// A list of children. Copying them on every join made a repetition of n
+/// items cost O(n²) time and memory, as each iteration (and every prefix the
+/// generalized repetition keeps) copied all the children before it. A join
+/// instead links its two parts with their child count, and the list is
+/// flattened, once, when it is first read; the link is then dropped. A node
+/// built from a result shares its list, so the nodes of the prefixes of a
+/// repetition are not flattened either.
+#[derive(Default)]
+pub(super) struct ChildList {
+    count: usize,
+    flat: OnceCell<Vec<Rc<Tree>>>,
+    link: RefCell<Option<(Children, Children)>>,
+}
+
+impl ChildList {
+    fn flatten(&self) -> Vec<Rc<Tree>> {
+        let Some((left, right)) = self.link.borrow_mut().take() else {
+            return Vec::new();
+        };
+        let mut flat = Vec::with_capacity(self.count);
+        let mut pending = vec![right, left];
+        while let Some(part) = pending.pop() {
+            if let Some(items) = part.flat.get() {
+                flat.extend_from_slice(items);
+            } else if let Some((before, after)) = part.link.borrow().clone() {
+                pending.push(after);
+                pending.push(before);
+            }
+        }
+        flat
+    }
+}
+
+impl Deref for ChildList {
+    type Target = [Rc<Tree>];
+
+    fn deref(&self) -> &[Rc<Tree>] {
+        self.flat.get_or_init(|| self.flatten())
+    }
+}
+
+impl fmt::Debug for ChildList {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.debug_list().entries(self.iter()).finish()
+    }
+}
+
+// Unlinks a long chain one link at a time instead of recursively.
+impl Drop for ChildList {
+    fn drop(&mut self) {
+        let mut next = self.link.get_mut().take();
+        while let Some((left, _)) = next {
+            next = Rc::try_unwrap(left)
+                .ok()
+                .and_then(|mut list| list.link.get_mut().take());
+        }
+    }
+}
+
+/// A flat list of children.
+pub(super) fn children_of(items: Vec<Rc<Tree>>) -> Children {
+    Rc::new(ChildList {
+        count: items.len(),
+        flat: OnceCell::from(items),
+        link: RefCell::new(None),
+    })
+}
+
+/// The children of `left` followed by those of `right`, linked.
+fn join_children(left: &Children, right: &Children) -> Children {
+    if right.count == 0 {
+        return left.clone();
+    }
+    if left.count == 0 {
+        return right.clone();
+    }
+    Rc::new(ChildList {
+        count: left.count + right.count,
+        flat: OnceCell::new(),
+        link: RefCell::new(Some((left.clone(), right.clone()))),
+    })
+}
 
 /// One node of the executor's syntax tree.
 #[derive(Clone, Debug)]
@@ -79,7 +164,7 @@ impl Tree {
 }
 
 pub(super) fn no_children() -> Children {
-    Rc::new(Vec::new())
+    children_of(Vec::new())
 }
 
 /// `[...left, ...right]`.
@@ -87,7 +172,7 @@ pub(super) fn concat(left: &[Rc<Tree>], right: &[Rc<Tree>]) -> Children {
     let mut joined = Vec::with_capacity(left.len() + right.len());
     joined.extend_from_slice(left);
     joined.extend_from_slice(right);
-    Rc::new(joined)
+    children_of(joined)
 }
 
 /// `[...leaves, leaf]`.
@@ -128,7 +213,7 @@ impl Res {
             children: if in_token {
                 no_children()
             } else {
-                concat(&left.children, &right.children)
+                join_children(&left.children, &right.children)
             },
             dynamic: left.dynamic + right.dynamic,
             precedence: None,

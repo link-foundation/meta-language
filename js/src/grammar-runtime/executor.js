@@ -54,19 +54,88 @@ function addResult(results, result) {
   if (!existing || result.cost < existing.cost) results.set(key, result);
   else if (result.cost > existing.cost) return;
   else if (result.dynamic > existing.dynamic) results.set(key, result);
-  else if (result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous) results.set(key, { ...existing, ambiguous: true });
+  else if (result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous) results.set(key, copyResult(existing, { ambiguous: true }));
+}
+
+// The children of a joined result are the children of its left part followed
+// by those of its right part. Copying them on every join made a repetition of
+// n items cost O(n²) time and memory, as each iteration (and every prefix the
+// generalized repetition keeps) copied all the children before it. A join
+// instead links its two parts with their child count, and the children are
+// flattened, once, when they are first read; the links are then dropped. A
+// node built from a result shares its chain, so the nodes of the prefixes of
+// a repetition are not flattened either.
+const CHAIN = Symbol('children chain');
+
+function partOf(result) {
+  return result[CHAIN] ?? result.children;
+}
+
+function childCount(result) {
+  return result[CHAIN]?.length ?? result.children.length;
+}
+
+function flattenChain(chain) {
+  if (chain.flat) return chain.flat;
+  const flat = [];
+  const pending = [chain];
+  while (pending.length > 0) {
+    const part = pending.pop();
+    if (Array.isArray(part)) for (const child of part) flat.push(child);
+    else if (part.flat) for (const child of part.flat) flat.push(child);
+    else pending.push(part.right, part.left);
+  }
+  chain.flat = flat;
+  chain.left = null;
+  chain.right = null;
+  return flat;
+}
+
+// Gives `target` the children of `source`, shared and still unflattened.
+function shareChildren(target, source) {
+  const chain = source[CHAIN];
+  if (!chain) {
+    target.children = source.children;
+    return target;
+  }
+  target[CHAIN] = chain;
+  Object.defineProperty(target, 'children', {
+    configurable: true,
+    enumerable: true,
+    get() { return flattenChain(chain); },
+  });
+  return target;
+}
+
+// A copy of a result with `changes`, its children still shared and lazy (a
+// spread would flatten them).
+function copyResult(result, changes) {
+  const copy = {
+    end: result.end, state: result.state, dynamic: result.dynamic,
+    precedence: result.precedence, ambiguous: result.ambiguous, cost: result.cost,
+  };
+  if (!('children' in changes)) shareChildren(copy, result);
+  return Object.assign(copy, changes);
 }
 
 function joinResults(left, right, inToken) {
-  return {
+  const joined = {
     end: right.end,
     state: right.state,
-    children: inToken ? NO_CHILDREN : left.children.concat(right.children),
     dynamic: left.dynamic + right.dynamic,
     precedence: null,
     ambiguous: left.ambiguous || right.ambiguous,
     cost: left.cost + right.cost,
   };
+  if (inToken) {
+    joined.children = NO_CHILDREN;
+    return joined;
+  }
+  const leftCount = childCount(left);
+  const rightCount = childCount(right);
+  if (rightCount === 0) return shareChildren(joined, left);
+  if (leftCount === 0) return shareChildren(joined, right);
+  return shareChildren(joined, { [CHAIN]: { left: partOf(left), right: partOf(right), length: leftCount + rightCount, flat: null } });
 }
 
 function longestResult(results) {
@@ -173,7 +242,7 @@ export class Executor {
       if (found.length === 0) continue;
       const error = { type: 'error', start, end: cursor };
       for (const result of found) {
-        results.push({ ...result, children: [...leaves, error, ...result.children], cost: result.cost + cursor - start });
+        results.push(copyResult(result, { children: [...leaves, error, ...result.children], cost: result.cost + cursor - start }));
       }
       break;
     }
@@ -277,15 +346,14 @@ export class Executor {
         return matched ? [] : [makeResult(position, state)];
       }
       case 'capture':
-        return this.evaluate(expression.item, position, state, inToken).map((result) => (inToken ? result : {
-          ...result,
+        return this.evaluate(expression.item, position, state, inToken).map((result) => (inToken ? result : copyResult(result, {
           children: result.children.map((child) => (isTrivia(child) ? child : { ...child, field: expression.label })),
-        }));
+        })));
       case 'alias': return this.alias(expression, position, state, inToken);
       case 'precedence': return this.precedence(expression, position, state, inToken);
       case 'dynamicPrecedence':
         return this.evaluate(expression.item, position, state, inToken)
-          .map((result) => ({ ...result, dynamic: result.dynamic + expression.level }));
+          .map((result) => copyResult(result, { dynamic: result.dynamic + expression.level }));
       case 'lexicalPrecedence': return this.evaluate(expression.item, position, state, inToken);
       case 'longest': return this.longest(expression, position, state, inToken);
       case 'token': case 'immediateToken': {
@@ -410,13 +478,13 @@ export class Executor {
       if (inToken) return result;
       const meaningful = result.children.filter((child) => !isTrivia(child));
       if (meaningful.length === 1) {
-        return { ...result, children: result.children.map((child) => (child === meaningful[0] ? renamed(child, expression.name) : child)) };
+        return copyResult(result, { children: result.children.map((child) => (child === meaningful[0] ? renamed(child, expression.name) : child)) });
       }
-      const node = {
+      const node = shareChildren({
         type: 'node', kind: expression.name, rule: expression.name, start: position, end: result.end,
-        children: result.children, ambiguous: result.ambiguous,
-      };
-      return { ...result, children: [node], ambiguous: false };
+        ambiguous: result.ambiguous,
+      }, result);
+      return copyResult(result, { children: [node], ambiguous: false });
     });
   }
 
@@ -449,7 +517,7 @@ export class Executor {
     const results = inToken
       ? this.evaluate(expression.item, position, state, inToken)
       : this.filtered(expression.item, position, state, valid);
-    return results.map((result) => ({ ...result, precedence: tag }));
+    return results.map((result) => copyResult(result, { precedence: tag }));
   }
 
   // The results of `expression` that `keep` accepts, filtered before a
@@ -650,7 +718,7 @@ export class Executor {
         const leaf = { type: 'token', kind: rule.nodeKind, start, end: result.end };
         const acted = this.runAction(rule, result, leaf, start);
         if (!acted) continue;
-        built.push({ ...acted, children: inToken ? NO_CHILDREN : [...leaves, leaf], precedence: null, ambiguous: false });
+        built.push(copyResult(acted, { children: inToken ? NO_CHILDREN : [...leaves, leaf], precedence: null, ambiguous: false }));
       }
       if (built.length > 0) return built;
       this.fail(start, rule.nodeKind);
@@ -666,12 +734,12 @@ export class Executor {
         if (acted) built.push(acted);
         continue;
       }
-      const node = {
+      const node = shareChildren({
         type: 'node', kind: rule.nodeKind, rule: rule.nodeKind, start: position, end: result.end,
-        children: result.children, precedence: result.precedence, ambiguous: result.ambiguous,
-      };
+        precedence: result.precedence, ambiguous: result.ambiguous,
+      }, result);
       const acted = this.runAction(rule, result, node, position);
-      if (acted) built.push({ ...acted, children: [node], ambiguous: false });
+      if (acted) built.push(copyResult(acted, { children: [node], ambiguous: false }));
     }
     return built;
   }
@@ -696,7 +764,7 @@ export class Executor {
       return value;
     };
     const machine = {
-      ...this.valueMachine({ ...result, children }, start, working),
+      ...this.valueMachine(copyResult(result, { children }), start, working),
       matched: () => this.text(start, result.end),
       column: () => columnOf(this.bytes, start, this.begin),
       attribute: (field, name) => {
@@ -723,7 +791,7 @@ export class Executor {
       if (error instanceof OperationFailed) return null;
       throw error;
     }
-    return { ...result, state: settleState(working) };
+    return copyResult(result, { state: settleState(working) });
   }
 
   // An external scanner run for one requested token: a cursor over the
@@ -816,7 +884,7 @@ export class Executor {
       this.fail(trailing.end, 'end of input');
       if (!this.repairPoints) continue;
       const rest = [...trailing.leaves, { type: 'error', start: trailing.end, end: this.end }];
-      const repaired = { result: { ...result, cost: result.cost + this.end - trailing.end }, trailing: rest };
+      const repaired = { result: copyResult(result, { cost: result.cost + this.end - trailing.end }), trailing: rest };
       if (this.repairPoints.has(trailing.end)) complete.push(repaired);
       else {
         if (trailing.end > this.elementFarthest) this.elementFarthest = trailing.end;

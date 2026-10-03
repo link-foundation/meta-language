@@ -12,8 +12,8 @@ use super::operations::{
 };
 use super::program::{Expr, Name, Rule, Target};
 use super::results::{
-    Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, concat, content_start,
-    longest_result, no_children, with_leaf,
+    Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, concat,
+    content_start, longest_result, no_children, with_leaf,
 };
 use super::text::{column_of, decode_at};
 use crate::grammar::RuleKind;
@@ -222,7 +222,7 @@ impl Executor<'_> {
             node.ambiguous = result.ambiguous;
             if let Some(acted) = self.run_action(rule, result, &mut node, position)? {
                 built.push(Res {
-                    children: Rc::new(vec![Rc::new(node)]),
+                    children: children_of(vec![Rc::new(node)]),
                     ambiguous: false,
                     ..acted
                 });
@@ -427,7 +427,7 @@ impl Executor<'_> {
 
     fn root(&self, start_rule: usize, result: &Res, trailing: &[Rc<Tree>], several: bool) -> Tree {
         let ambiguous = several || result.ambiguous;
-        match result.children.as_slice() {
+        match &result.children[..] {
             [only] if only.ty == TreeType::Node => {
                 let mut root = (**only).clone();
                 root.end = self.end;
@@ -448,7 +448,12 @@ impl Executor<'_> {
     fn error_root(&self, start_rule: usize) -> Tree {
         let kind = &self.program.rules[start_rule].node_kind;
         let error = Tree::new(TreeType::Error, None, self.begin, self.end);
-        Tree::node(kind, self.begin, self.end, Rc::new(vec![Rc::new(error)]))
+        Tree::node(
+            kind,
+            self.begin,
+            self.end,
+            children_of(vec![Rc::new(error)]),
+        )
     }
 }
 
@@ -457,7 +462,7 @@ impl Executor<'_> {
 struct ActionMachine<'e, 'c, 'n> {
     executor: &'e mut Executor<'c>,
     node: &'n mut Tree,
-    children: Rc<Vec<Rc<Tree>>>,
+    children: Children,
     working: Working,
     start: usize,
     end: usize,
