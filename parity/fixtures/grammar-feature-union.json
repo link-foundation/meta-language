@@ -247,7 +247,7 @@
     {
       "id": "ambiguity",
       "title": "ambiguity and conflicts",
-      "listing": "start s\nmatching longest\nextra class(char(\"\\n\"))\nextra ref(note)\nconflict declared\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)), seq(literal(\"k:\"), ref(key)), seq(literal(\"n:\"), ref(lines)), seq(literal(\"i:\"), ref(name), immediateToken(literal(\"!\"))), seq(literal(\"w:\"), ref(statement)))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\nrule key = normal choice(literal(\"if\"), dynamicPrecedence(1, ref(name)))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule statement = normal choice(seq(token(seq(literal(\"do\"), not(range(\"a\", \"z\")))), ref(name), literal(\";\")), seq(ref(name), optional(seq(literal(\"=\"), ref(name))), literal(\";\")))\nrule lines = normal repeat1(ref(line))\nrule line = normal seq(ref(n), optional(ref(n)), optional(literal(\"\\n\")))\nrule note = token seq(literal(\"{\"), repeat0(notClass(char(\"}\"))), literal(\"}\"))\n",
+      "listing": "start s\nmatching longest\nextra class(char(\"\\n\"))\nextra ref(note)\nconflict declared\nconflict item\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)), seq(literal(\"k:\"), ref(key)), seq(literal(\"n:\"), ref(lines)), seq(literal(\"i:\"), ref(name), immediateToken(literal(\"!\"))), seq(literal(\"w:\"), ref(statement)), seq(literal(\"c:\"), repeat1(ref(item))), seq(literal(\"p:\"), choice(ref(condition), repeat1(ref(call)))), seq(literal(\"g:\"), repeat1(choice(ref(group), ref(n)))))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\nrule key = normal choice(literal(\"if\"), dynamicPrecedence(1, ref(name)))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule statement = normal choice(seq(token(seq(literal(\"do\"), not(range(\"a\", \"z\")))), ref(name), literal(\";\")), seq(ref(name), optional(seq(literal(\"=\"), ref(name))), literal(\";\")))\nrule item = silent choice(ref(use), ref(declaration))\nrule use = normal seq(ref(name), literal(\";\"))\nrule declaration = normal seq(ref(name), literal(\";\"))\nrule condition = normal seq(ref(hashif), optional(ref(name)))\nrule hashif = token seq(literal(\"#\"), literal(\"if\"))\nrule call = normal seq(ref(directive), literal(\"\\n\"))\nrule directive = token seq(literal(\"#\"), repeat1(range(\"a\", \"z\")))\nrule group = normal precedence(0, right, seq(literal(\"+\"), repeat0(ref(n))))\nrule lines = normal repeat1(ref(line))\nrule line = normal seq(ref(n), optional(ref(n)), optional(literal(\"\\n\")))\nrule note = token seq(literal(\"{\"), repeat0(notClass(char(\"}\"))), literal(\"}\"))\n",
       "options": {
         "ambiguity": "reject"
       },
@@ -303,6 +303,22 @@
         {
           "input": "w:x=do;",
           "tree": "(s \"w:\" (statement (name \"x\") \"=\" (name \"do\") \";\"))"
+        },
+        {
+          "input": "c:a;b;",
+          "tree": "(s \"c:\" (use (name \"a\") \";\") (use (name \"b\") \";\"))"
+        },
+        {
+          "input": "p:#if\n",
+          "tree": "(s \"p:\" (condition (hashif \"#if\")) ~\"\\n\")"
+        },
+        {
+          "input": "p:#ifx",
+          "tree": "(s \"p:\" (condition (hashif \"#if\") (name \"x\")))"
+        },
+        {
+          "input": "g:+12+3",
+          "tree": "(s \"g:\" (group \"+\" (n \"1\") (n \"2\")) (group \"+\" (n \"3\")))"
         }
       ],
       "negative": [
@@ -397,6 +413,65 @@
         }
       },
       "mutations": [
+        {
+          "from": "conflict item\n",
+          "to": "",
+          "input": "c:a;",
+          "before": {
+            "tree": "(s \"c:\" (use (name \"a\") \";\"))"
+          },
+          "after": {
+            "tree": "(s \"c:\" (use (name \"a\") \";\"))",
+            "ambiguities": [
+              {
+                "rule": "s",
+                "start": 0,
+                "end": 4
+              }
+            ],
+            "rejection": {
+              "reason": "ambiguity",
+              "offset": 0,
+              "line": 1,
+              "column": 1
+            }
+          }
+        },
+        {
+          "from": "precedence(0, right, seq(literal(\"+\")",
+          "to": "precedence(0, left, seq(literal(\"+\")",
+          "input": "g:+12",
+          "before": {
+            "tree": "(s \"g:\" (group \"+\" (n \"1\") (n \"2\")))"
+          },
+          "after": {
+            "tree": "(s \"g:\" (group \"+\") (n \"1\") (n \"2\"))"
+          }
+        },
+        {
+          "from": "precedence(0, right, seq(literal(\"+\")",
+          "to": "precedence(0, none, seq(literal(\"+\")",
+          "input": "g:+12",
+          "before": {
+            "tree": "(s \"g:\" (group \"+\" (n \"1\") (n \"2\")))"
+          },
+          "after": {
+            "tree": "(s \"g:\" (group \"+\" (n \"1\") (n \"2\")))",
+            "ambiguities": [
+              {
+                "rule": "s",
+                "start": 0,
+                "end": 5
+              }
+            ],
+            "rejection": {
+              "reason": "ambiguity",
+              "offset": 0,
+              "line": 1,
+              "column": 1
+            }
+          }
+        },
         {
           "from": "matching longest\n",
           "to": "",

@@ -3,6 +3,7 @@
 //! `js/src/grammar-runtime/executor.js`.
 
 use std::cell::RefCell;
+use std::cmp::Ordering;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -12,8 +13,8 @@ use super::operations::{
 };
 use super::program::{Expr, Name, Rule, Target};
 use super::results::{
-    Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, concat,
-    content_start, longest_result, no_children, with_leaf,
+    Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, complete_order,
+    concat, content_start, longest_result, no_children, with_leaf,
 };
 use super::text::{column_of, decode_at};
 use crate::grammar::RuleKind;
@@ -207,6 +208,10 @@ impl Executor<'_> {
                 |this, cursor| this.rule_body(rule, cursor, state, false),
             );
         }
+        // A silent rule builds no node to carry an ambiguity, so one inside a
+        // silent rule a conflict declares is expected there, as on a node.
+        let expected = matches!(rule.kind, RuleKind::Silent)
+            && self.program.conflicts.contains(&*rule.node_kind);
         for result in self.evaluate(&rule.expression, position, state, in_token)? {
             if matches!(rule.kind, RuleKind::Silent) || in_token {
                 let mut scratch = Tree::new(
@@ -217,7 +222,10 @@ impl Executor<'_> {
                 );
                 scratch.children = result.children.clone();
                 if let Some(acted) = self.run_action(rule, result, &mut scratch, position)? {
-                    built.push(acted);
+                    built.push(Res {
+                        ambiguous: acted.ambiguous && !expected,
+                        ..acted
+                    });
                 }
                 continue;
             }
@@ -421,15 +429,28 @@ impl Executor<'_> {
                 partial,
             });
         }
-        let several = complete.len() > 1;
+        // The complete results end apart, before their trailing trivia, so they
+        // are ranked here as ResultSet::add ranks results with one end: the
+        // lower cost, then the tokens a lexer prefers and the shift or
+        // reduction an LR parser keeps, then the higher dynamic precedence.
+        // Repaired results of equal cost are not ambiguities.
         let mut chosen = &complete[0];
-        for candidate in &complete {
-            if candidate.0.cost < chosen.0.cost {
-                chosen = candidate;
+        let mut tied = false;
+        for candidate in &complete[1..] {
+            match complete_order(
+                (&candidate.0, &candidate.1),
+                (&chosen.0, &chosen.1),
+                self.longest_tokens,
+            ) {
+                Ordering::Greater => {
+                    chosen = candidate;
+                    tied = false;
+                }
+                Ordering::Equal => tied = true,
+                Ordering::Less => {}
             }
         }
-        // Repaired results of equal cost are not ambiguities.
-        let several = several && chosen.0.cost == 0;
+        let several = tied && chosen.0.cost == 0;
         let root = self.root(start_rule, &chosen.0, &chosen.1, several);
         Ok(Outcome::Parsed(Rc::new(root)))
     }

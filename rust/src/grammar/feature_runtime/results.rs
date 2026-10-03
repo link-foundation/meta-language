@@ -259,8 +259,8 @@ impl<'c> ResultSet<'c> {
 
     /// Of two results with the same end and state, the lower repair cost
     /// wins, then, under `(matching longest)`, the tokens a lexer prefers (a
-    /// lexer decides them before any parse does), then the higher dynamic
-    /// precedence; on a tie the first stays and, without repairs, is marked
+    /// lexer decides them before any parse does) and the shift or reduction
+    /// an LR parser keeps by precedence, then the higher dynamic precedence; on a tie the first stays and, without repairs, is marked
     /// ambiguous. True when `result` was kept.
     pub(super) fn add(&mut self, result: Res) -> bool {
         match self.index.get(&result.key()) {
@@ -274,7 +274,8 @@ impl<'c> ResultSet<'c> {
                     let order = self
                         .tokens
                         .map_or(Ordering::Equal, |tokens| {
-                            preferred_tokens(&result, existing, tokens)
+                            preferred_tokens(&result.children, &existing.children, tokens)
+                                .then_with(|| shift_order(&result.children, &existing.children))
                         })
                         .then(result.dynamic.cmp(&existing.dynamic));
                     if order != Ordering::Greater {
@@ -348,9 +349,9 @@ fn open_node(walk: &mut Vec<Walk>) {
 /// `existing` has, Equal when neither (a pair without ranks that ends alike
 /// but differs in kind, or every leaf alike). It mirrors preferredTokens in
 /// js/src/grammar-runtime/executor.js.
-fn preferred_tokens(result: &Res, existing: &Res, tokens: TokenOrder<'_>) -> Ordering {
-    let mut left = vec![Walk::Part(result.children.clone())];
-    let mut right = vec![Walk::Part(existing.children.clone())];
+fn preferred_tokens(result: &Children, existing: &Children, tokens: TokenOrder<'_>) -> Ordering {
+    let mut left = vec![Walk::Part(result.clone())];
+    let mut right = vec![Walk::Part(existing.clone())];
     // The trivia each side skipped since the last leaf both share.
     let mut skipped: [Vec<Rc<Tree>>; 2] = [Vec::new(), Vec::new()];
     let covers = |leaf: &Tree, trivia: &[Rc<Tree>]| {
@@ -407,6 +408,148 @@ fn preferred_tokens(result: &Res, existing: &Res, tokens: TokenOrder<'_>) -> Ord
             }
         }
     }
+}
+
+/// Which of two results over the same text an LR parser keeps when it decides
+/// a shift-reduce conflict by precedence, as tree-sitter does when the grammar
+/// is generated: they are walked in order, skipping the subtrees both share,
+/// to the first node that the two build from one offset but end apart. The
+/// shorter one was reduced where the longer one shifted on, and as the item in
+/// progress is the node's own rule, its precedence in the two decides: the
+/// higher level wins and, on equal levels, the associativity of the reduced
+/// node, right to shift and left to reduce. Greater when `result` is kept,
+/// Less when `existing` is, Equal when neither. It mirrors shiftOrder in
+/// js/src/grammar-runtime/executor.js.
+fn shift_order(result: &Children, existing: &Children) -> Ordering {
+    let mut left = vec![Walk::Part(result.clone())];
+    let mut right = vec![Walk::Part(existing.clone())];
+    loop {
+        match (left.last(), right.last()) {
+            (None, _) | (_, None) => return Ordering::Equal,
+            (Some(Walk::Part(a)), Some(Walk::Part(b))) if Rc::ptr_eq(a, b) => {
+                left.pop();
+                right.pop();
+            }
+            (Some(Walk::Part(_)), _) => open_part(&mut left),
+            (_, Some(Walk::Part(_))) => open_part(&mut right),
+            (Some(Walk::Item(a)), _) if a.trivia => {
+                left.pop();
+            }
+            (_, Some(Walk::Item(b))) if b.trivia => {
+                right.pop();
+            }
+            (Some(Walk::Item(a)), Some(Walk::Item(b))) => {
+                let (a, b) = (a.clone(), b.clone());
+                let (a_node, b_node) = (a.ty == TreeType::Node, b.ty == TreeType::Node);
+                if Rc::ptr_eq(&a, &b)
+                    || (!a_node && !b_node && a.start == b.start && a.end == b.end)
+                {
+                    left.pop();
+                    right.pop();
+                    continue;
+                }
+                if a_node
+                    && b_node
+                    && a.start == b.start
+                    && let Some((x, y)) = chain_pair(&a, &b)
+                    && x.end != y.end
+                {
+                    return if x.end > y.end {
+                        shift_preferred(&x, &y)
+                    } else {
+                        shift_preferred(&y, &x).reverse()
+                    };
+                }
+                if !a_node && !b_node {
+                    return Ordering::Equal;
+                }
+                if a_node {
+                    open_node(&mut left);
+                }
+                if b_node {
+                    open_node(&mut right);
+                }
+            }
+        }
+    }
+}
+
+/// The first child of a list that is not trivia, without flattening it.
+fn first_meaningful(children: &Children) -> Option<Rc<Tree>> {
+    let mut walk = vec![Walk::Part(children.clone())];
+    loop {
+        match walk.last()? {
+            Walk::Part(_) => open_part(&mut walk),
+            Walk::Item(item) if item.trivia => {
+                walk.pop();
+            }
+            Walk::Item(item) => return Some(item.clone()),
+        }
+    }
+}
+
+/// The nodes along the leftmost chain of a node: itself, then its first
+/// meaningful child while that is a node.
+fn leftmost_chain(node: &Rc<Tree>) -> Vec<Rc<Tree>> {
+    let mut chain = Vec::new();
+    let mut current = Some(node.clone());
+    while let Some(next) = current.filter(|next| next.ty == TreeType::Node) {
+        current = first_meaningful(&next.children);
+        chain.push(next);
+    }
+    chain
+}
+
+/// The outermost node kind on the leftmost chains of two nodes that start at
+/// one offset, as the pair of its nodes.
+fn chain_pair(a: &Rc<Tree>, b: &Rc<Tree>) -> Option<(Rc<Tree>, Rc<Tree>)> {
+    let other = leftmost_chain(b);
+    leftmost_chain(a).into_iter().find_map(|node| {
+        other
+            .iter()
+            .find(|candidate| candidate.kind == node.kind && candidate.start == node.start)
+            .map(|found| (node.clone(), found.clone()))
+    })
+}
+
+/// Greater when the shift that built `long` is preferred to the reduction
+/// that ended `short` (the same node kind from the same offset), Less when
+/// the reduction is, Equal when the precedences cannot tell.
+fn shift_preferred(long: &Tree, short: &Tree) -> Ordering {
+    let none = (0, Associativity::None);
+    let (shifted, _) = long.precedence.unwrap_or(none);
+    let (reduced, associativity) = short.precedence.unwrap_or(none);
+    if shifted != reduced {
+        return shifted.cmp(&reduced);
+    }
+    match associativity {
+        Associativity::Right => Ordering::Greater,
+        Associativity::Left => Ordering::Less,
+        Associativity::None => Ordering::Equal,
+    }
+}
+
+/// Of two complete results, each with its trailing trivia, Greater when `a`
+/// is preferred, Less when `b` is, Equal on a tie: they end apart before the
+/// trailing trivia, so they are ranked as `ResultSet::add` ranks results with
+/// one end.
+pub(super) fn complete_order(
+    a: (&Res, &Children),
+    b: (&Res, &Children),
+    tokens: Option<TokenOrder<'_>>,
+) -> Ordering {
+    if a.0.cost != b.0.cost {
+        return b.0.cost.cmp(&a.0.cost);
+    }
+    let (left, right) = (
+        join_children(&a.0.children, a.1),
+        join_children(&b.0.children, b.1),
+    );
+    tokens
+        .map_or(Ordering::Equal, |tokens| {
+            preferred_tokens(&left, &right, tokens).then_with(|| shift_order(&left, &right))
+        })
+        .then(a.0.dynamic.cmp(&b.0.dynamic))
 }
 
 /// The rank of a token leaf, or None for another leaf or an unranked token.

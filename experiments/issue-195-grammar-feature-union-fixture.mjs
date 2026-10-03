@@ -95,7 +95,8 @@ const features = [
       'extra class(char("\\n"))',
       'extra ref(note)',
       'conflict declared',
-      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)), seq(literal("k:"), ref(key)), seq(literal("n:"), ref(lines)), seq(literal("i:"), ref(name), immediateToken(literal("!"))), seq(literal("w:"), ref(statement)))',
+      'conflict item',
+      'rule s = normal choice(seq(literal("d:"), ref(declared)), seq(literal("u:"), ref(undeclared)), seq(literal("r:"), ref(resolved)), seq(literal("l:"), ref(signed)), seq(literal("k:"), ref(key)), seq(literal("n:"), ref(lines)), seq(literal("i:"), ref(name), immediateToken(literal("!"))), seq(literal("w:"), ref(statement)), seq(literal("c:"), repeat1(ref(item))), seq(literal("p:"), choice(ref(condition), repeat1(ref(call)))), seq(literal("g:"), repeat1(choice(ref(group), ref(n)))))',
       'rule declared = normal choice(seq(ref(declared), literal("-"), ref(declared)), ref(n))',
       'rule undeclared = normal choice(seq(ref(undeclared), literal("-"), ref(undeclared)), ref(n))',
       'rule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal("-"), ref(n))), seq(ref(resolved), literal("-"), ref(resolved)), ref(n))',
@@ -106,6 +107,14 @@ const features = [
       'rule key = normal choice(literal("if"), dynamicPrecedence(1, ref(name)))',
       'rule name = token repeat1(range("a", "z"))',
       'rule statement = normal choice(seq(token(seq(literal("do"), not(range("a", "z")))), ref(name), literal(";")), seq(ref(name), optional(seq(literal("="), ref(name))), literal(";")))',
+      'rule item = silent choice(ref(use), ref(declaration))',
+      'rule use = normal seq(ref(name), literal(";"))',
+      'rule declaration = normal seq(ref(name), literal(";"))',
+      'rule condition = normal seq(ref(hashif), optional(ref(name)))',
+      'rule hashif = token seq(literal("#"), literal("if"))',
+      'rule call = normal seq(ref(directive), literal("\\n"))',
+      'rule directive = token seq(literal("#"), repeat1(range("a", "z")))',
+      'rule group = normal precedence(0, right, seq(literal("+"), repeat0(ref(n))))',
       'rule lines = normal repeat1(ref(line))',
       'rule line = normal seq(ref(n), optional(ref(n)), optional(literal("\\n")))',
       'rule note = token seq(literal("{"), repeat0(notClass(char("}"))), literal("}"))',
@@ -122,16 +131,27 @@ const features = [
     // separator before the immediate `!`, but lexes the note before it as
     // before any token. A lexer lexes the keyword `do` wherever a statement
     // may start, so `do;` is no statement `;` after the name `do`; where no
-    // keyword may come, after `=`, `do` is a name.
-    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2', 'n:1\n\n2', 'n:1\n2\n3', 'i:a{b}!', 'w:do\nx;', 'w:dox;', 'w:x=do;'],
+    // keyword may come, after `=`, `do` is a name. A silent rule builds no
+    // node, so a conflict naming it, `item`, settles the use and the
+    // declaration `a;` it chooses between. Two parses that end apart before
+    // the trailing trivia are ranked as two that end alike: `#if` outranks
+    // the directive `#if` by order, so `p:#if\n` is a condition and the
+    // line break after it trivia, not a call. A right-associative group
+    // keeps the digits after it, as an LR parser shifts on.
+    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2', 'n:1\n\n2', 'n:1\n2\n3', 'i:a{b}!', 'w:do\nx;', 'w:dox;', 'w:x=do;', 'c:a;b;', 'p:#if\n', 'p:#ifx', 'g:+12+3'],
     negative: [{ input: 'u:1-2-3' }, { input: 'd:1--2' }, { input: 'i:a\n!' }, { input: 'i:a{b}\n!' }, { input: 'w:do;' }],
     mutation: { replace: ['conflict declared', 'conflict undeclared'], input: 'u:1-2-3' },
     // Without longest matching, "-" "1" and "-1" are two parses alike in cost
     // and dynamic precedence, as are the line break as a token and as a
     // separator: ambiguities; the name `if` wins by its dynamic precedence;
     // no trivia comes before an immediate token; and the name `do` makes a
-    // statement.
+    // statement. Without the conflict `item`, `a;` is ambiguous; a
+    // left-associative group reduces before the digits; with neither
+    // associativity the groups are ambiguous.
     mutations: [
+      { replace: ['conflict item\n', ''], input: 'c:a;' },
+      { replace: ['precedence(0, right, seq(literal("+")', 'precedence(0, left, seq(literal("+")'], input: 'g:+12' },
+      { replace: ['precedence(0, right, seq(literal("+")', 'precedence(0, none, seq(literal("+")'], input: 'g:+12' },
       { replace: ['matching longest\n', ''], input: 'l:-1' },
       { replace: ['matching longest\n', ''], input: 'i:a{b}!' },
       { replace: ['matching longest\n', ''], input: 'k:if' },

@@ -56,14 +56,15 @@ Each bullet of the vision's feature list is one fixture feature. The forms
 column names the representation the fixture grammar for that feature must use
 (the test checks their presence); the cases column counts the positive and the
 negative cases of the fixture (load-error negatives in parentheses). Every
-feature also carries one grammar mutation whose outcome must differ.
+feature also carries one grammar mutation whose outcome must differ (the
+`ambiguity` feature carries eight more).
 
 | Fixture id | Vision feature | Forms exercised | Positive | Negative |
 | --- | --- | --- | --- | --- |
 | `alternatives` | ordered and unordered alternatives | `choice` ordered and unordered | 3 | 2 |
 | `recursion` | recursion, including left recursion | direct and indirect left recursion | 3 | 4 |
-| `precedence` | precedence and associativity | `precedence` | 5 | 2 |
-| `ambiguity` | ambiguity and conflicts | `conflict` declaration, `dynamicPrecedence` | 3 | 2 |
+| `precedence` | precedence and associativity | `precedence` | 9 | 2 |
+| `ambiguity` | ambiguity and conflicts | `conflict` declaration, `dynamicPrecedence` | 17 | 5 |
 | `lexical` | lexical priority and longest-match rules | `longest`, `lexicalPrecedence` | 2 | 2 |
 | `unicode` | Unicode and byte classes | class `category` and `script` items, `byteClass` | 2 | 3 |
 | `trivia` | token boundaries and trivia | `extra` declaration, `token`, `immediateToken` | 2 | 3 |
@@ -344,8 +345,20 @@ a literal, an inline token or an alias of either where it is used). Two
 leaves at different offsets compare by length only. A token wins, too, where
 the other result skipped an anonymous trivia leaf (a separator such as
 whitespace) that starts where the token starts and that the token covers.
-When the pair ties, or no pair differs, the first is marked ambiguous. Under
-`matching peg` a sequence keeps only its first result.
+When the pair ties, or no pair differs, the shift or reduction an LR parser
+keeps by precedence decides, as tree-sitter decides a shift-reduce conflict
+when it generates its parser: both results are walked in order, skipping
+trivia, the subtrees they share and equal leaves, to the first two nodes that
+start at one offset; the outermost node kind on both their leftmost chains (a
+node, then its first non-trivia child while that is a node) gives the pair of
+nodes compared. When the pair ends apart, the shorter one was reduced where
+the longer one shifted on, and the precedence of the two nodes decides, as
+the item in progress is the node's own rule (a node without one counts as
+level 0 with no associativity): the higher level wins and, on equal levels,
+the associativity of the shorter node, `right` keeping the longer node and
+`left` the shorter. When that cannot tell either, the higher `dynamic` wins,
+and on a tie the first is marked ambiguous. Under `matching peg` a sequence
+keeps only its first result.
 
 **Terminals.** In syntactic context a terminal first skips trivia; in token
 context it does not. Matchers: `literal` compares UTF-8 bytes;
@@ -499,8 +512,13 @@ and the leaves are the skipped trivia followed by the token leaf.
 
 **Whole parse.** The start rule is called at offset 0 in the initial state.
 Each result skips trailing trivia and must reach the end of the input, or it
-records `end of input`. The first complete result is the tree; the parse is
-ambiguous when several results complete or that result is ambiguous. The root
+records `end of input`. The complete results end apart before their trailing
+trivia, so they are ranked as a result set ranks results with one end, over
+their children followed by the trailing trivia: the lower repair cost, then,
+under `matching longest`, the tokens a lexer prefers and the shift or
+reduction an LR parser keeps, then the higher `dynamic`. The first complete
+result that ranks highest is the tree; the parse is ambiguous when another
+complete result ties with it without repairs, or that result is ambiguous. The root
 is the result's single node, or else a node of the start rule's kind around
 its children; trailing trivia is appended to it. A failed parse reports the
 farthest offset any expectation was recorded at and the expectations recorded
@@ -560,7 +578,10 @@ trivia and ERROR leaves in order reproduces the input bytes.
 
 `text` is `null` and `hex` holds lower-case hexadecimal when the bytes are not
 well-formed UTF-8. Ambiguities are reported as `{rule, start, end}` for each
-ambiguous node, in preorder, outside the rules named by `conflicts`.
+ambiguous node, in preorder, outside the rules named by `conflicts`. A
+silent rule builds no node to carry an ambiguity, so the results of a silent
+rule named by `conflicts` are not ambiguous: the ambiguity it chooses between
+is expected there, as on a node of a declared rule.
 
 ## Tree notation
 

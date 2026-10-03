@@ -48,7 +48,8 @@ function resultKey(result) {
 // and state, the lower repair cost wins, then, under `(matching longest)`
 // (when `tokens` holds the token ranks and the input bytes), the tokens a
 // lexer prefers (a lexer decides them before any parse does), then the
-// higher dynamic precedence; on a tie the first stays and,
+// shift or reduction an LR parser keeps by precedence, then the higher
+// dynamic precedence; on a tie the first stays and,
 // without repairs, is marked ambiguous (as a copy, since results are shared
 // through the memo).
 function addResult(results, result, tokens = null) {
@@ -59,7 +60,7 @@ function addResult(results, result, tokens = null) {
     return;
   }
   if (result.cost > existing.cost) return;
-  const order = tokens ? preferredTokens(result, existing, tokens) : 0;
+  const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing) : 0;
   if (order > 0 || (order === 0 && result.dynamic > existing.dynamic)) results.set(key, result);
   else if (order === 0 && result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous) results.set(key, copyResult(existing, { ambiguous: true }));
 }
@@ -141,6 +142,90 @@ function tokenConflict(a, b, tokens) {
   if (!first || !second || first === second) return 0;
   if (first.specificity !== second.specificity) return first.specificity > second.specificity ? 1 : -1;
   return first.order < second.order ? 1 : -1;
+}
+
+// Which of two results over the same text an LR parser keeps when it decides
+// a shift-reduce conflict by precedence, as tree-sitter does when the grammar
+// is generated: they are walked in order, skipping the subtrees both share,
+// to the first node that the two build from one offset but end apart. The
+// shorter one was reduced where the longer one shifted on, and as the item in
+// progress is the node's own rule, its precedence in the two decides: the
+// higher level wins and, on equal levels, the associativity of the reduced
+// node, right to shift and left to reduce. 1 when `result` is kept, -1 when
+// `existing` is, 0 when neither.
+function shiftOrder(result, existing) {
+  const left = [[result.children, 0]];
+  const right = [[existing.children, 0]];
+  const peek = (stack) => {
+    while (stack.length > 0) {
+      const top = stack[stack.length - 1];
+      if (top[1] < top[0].length) {
+        const child = top[0][top[1]];
+        if (!isTrivia(child)) return child;
+        top[1] += 1;
+      } else {
+        stack.pop();
+      }
+    }
+    return null;
+  };
+  const skip = (stack) => { stack[stack.length - 1][1] += 1; };
+  const enter = (stack, node) => {
+    skip(stack);
+    stack.push([node.children, 0]);
+  };
+  for (;;) {
+    const a = peek(left);
+    const b = peek(right);
+    if (a === null || b === null) return 0;
+    if (a === b || (a.type !== 'node' && b.type !== 'node' && a.start === b.start && a.end === b.end)) {
+      skip(left);
+      skip(right);
+      continue;
+    }
+    if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
+      const pair = chainPair(a, b);
+      if (pair && pair[0].end !== pair[1].end) {
+        const [long, short, sign] = pair[0].end > pair[1].end ? [...pair, 1] : [pair[1], pair[0], -1];
+        return sign * shiftPreferred(long, short);
+      }
+    }
+    if (a.type !== 'node' && b.type !== 'node') return 0;
+    if (a.type === 'node') enter(left, a);
+    if (b.type === 'node') enter(right, b);
+  }
+}
+
+// The nodes along the leftmost chain of a node: itself, then its first
+// meaningful child while that is a node.
+function leftmostChain(node) {
+  const chain = [];
+  for (let current = node; current?.type === 'node'; current = current.children.find((child) => !isTrivia(child))) chain.push(current);
+  return chain;
+}
+
+// The outermost node kind on the leftmost chains of two nodes that start at
+// one offset, as the pair of its nodes, or null.
+function chainPair(a, b) {
+  const other = leftmostChain(b);
+  for (const node of leftmostChain(a)) {
+    const match = other.find((candidate) => candidate.kind === node.kind && candidate.start === node.start);
+    if (match) return [node, match];
+  }
+  return null;
+}
+
+// 1 when the shift that built `long` is preferred to the reduction that
+// ended `short` (the same node kind from the same offset), -1 when the
+// reduction is, 0 when the precedences cannot tell.
+function shiftPreferred(long, short) {
+  const none = { level: 0, associativity: 'none' };
+  const shifted = long.precedence ?? none;
+  const reduced = short.precedence ?? none;
+  if (shifted.level !== reduced.level) return shifted.level > reduced.level ? 1 : -1;
+  if (reduced.associativity === 'right') return 1;
+  if (reduced.associativity === 'left') return -1;
+  return 0;
 }
 
 // The children of a joined result are the children of its left part followed
@@ -955,11 +1040,14 @@ export class Executor {
     }
     const results = this.evaluate(rule.expression, position, state, inToken);
     const built = [];
+    // A silent rule builds no node to carry an ambiguity, so one inside a
+    // silent rule a conflict declares is expected there, as on a node.
+    const expected = rule.kind === 'silent' && this.program.conflicts.has(rule.nodeKind);
     for (const result of results) {
       if (rule.kind === 'silent' || inToken) {
         const scratch = { type: 'node', kind: rule.nodeKind, start: position, end: result.end, children: result.children };
         const acted = this.runAction(rule, result, scratch, position);
-        if (acted) built.push(acted);
+        if (acted) built.push(expected && acted.ambiguous ? copyResult(acted, { ambiguous: false }) : acted);
         continue;
       }
       const node = shareChildren({
@@ -1126,10 +1214,31 @@ export class Executor {
       if (this.repairPoints) failed.partial = partial ? this.root(startRule, partial.repaired, false) : this.errorRoot(startRule);
       return failed;
     }
+    // The complete results end apart, before their trailing trivia, so they
+    // are ranked here as addResult ranks results with one end: the lower
+    // cost, then the tokens a lexer prefers and the shift or reduction an LR
+    // parser keeps, then the higher dynamic precedence. Repaired results of equal cost are not ambiguities.
     let chosen = complete[0];
-    for (const candidate of complete) if (candidate.result.cost < chosen.result.cost) chosen = candidate;
-    // Repaired results of equal cost are not ambiguities.
-    return { ok: true, root: this.root(startRule, chosen, chosen.result.cost === 0 && complete.length > 1) };
+    let tied = false;
+    for (const candidate of complete.slice(1)) {
+      const order = this.completeOrder(candidate, chosen);
+      if (order > 0) {
+        chosen = candidate;
+        tied = false;
+      } else if (order === 0) {
+        tied = true;
+      }
+    }
+    return { ok: true, root: this.root(startRule, chosen, tied && chosen.result.cost === 0) };
+  }
+
+  // 1 when the complete result `a` is preferred to `b`, -1 when `b` is, 0 on a tie.
+  completeOrder(a, b) {
+    if (a.result.cost !== b.result.cost) return a.result.cost < b.result.cost ? 1 : -1;
+    const whole = ({ result, trailing }) => ({ children: [...result.children, ...trailing] });
+    const order = this.longestTokens ? preferredTokens(whole(a), whole(b), this.longestTokens) || shiftOrder(whole(a), whole(b)) : 0;
+    if (order !== 0) return order;
+    return Math.sign(a.result.dynamic - b.result.dynamic);
   }
 
   root(startRule, { result, trailing }, several) {
