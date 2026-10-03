@@ -904,7 +904,9 @@ jobs:
 
       # A release created with GITHUB_TOKEN does not emit a new release workflow
       # run. Dispatch the one canonical package publisher explicitly so its trusted-
-      # publishing identity remains .github/workflows/js.yml.
+      # publishing identity remains .github/workflows/js.yml. The dispatch runs on
+      # the release tag, so npm receives the merged commit the crate came from even
+      # when main has moved on.
       - name: Dispatch JavaScript publisher
         if: |
           steps.check.outputs.should_release == 'true' && (
@@ -914,7 +916,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.current_version.outputs.version }}
-        run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
+        run: gh workflow run js.yml --ref "v$RELEASE_VERSION" -f release_version="$RELEASE_VERSION"
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
@@ -1084,7 +1086,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
-        run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
+        run: gh workflow run js.yml --ref "v$RELEASE_VERSION" -f release_version="$RELEASE_VERSION"
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}

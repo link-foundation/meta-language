@@ -357,6 +357,18 @@ jobs:
             echo "already_published=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # npm treats a refused trusted-publisher exchange as "no credential" and
+      # reports only ENEEDAUTH. Perform the same exchange first so the log shows
+      # the registry's answer, the OIDC claims it compared, and the exact
+      # settings docs/ci-cd/npm-trusted-publishing.md asks for.
+      - name: Verify the trusted-publisher exchange
+        if: steps.npm.outputs.already_published != 'true' && steps.npm_auth.outputs.auth_mode == 'oidc'
+        env:
+          PACKAGE_NAME: meta-language
+          PUBLISH_WORKFLOW_FILE: .github/workflows/js.yml
+        run: node scripts/prepare-npm-auth.mjs --verify-exchange
+        working-directory: js
+
       - name: Publish to npm
         if: steps.npm.outputs.already_published != 'true'
         # Optional NPM_TOKEN bootstrap fallback. OIDC trusted publishing is the
@@ -374,10 +386,10 @@ jobs:
         run: |
           echo "::error::npm publish failed with auth mode '$AUTH_MODE'."
           if [ "$AUTH_MODE" = "oidc" ]; then
-            echo "An E404 on PUT https://registry.npmjs.org/meta-language means the registry"
-            echo "treated the request as anonymous. Confirm that meta-language has a trusted"
-            echo "publisher on npmjs.com pointing at ${{ github.repository }} and workflow file"
-            echo ".github/workflows/js.yml, or set an NPM_TOKEN secret to bootstrap the publish."
+            echo "An E404 on PUT or an ENEEDAUTH means the registry treated the request as"
+            echo "anonymous. The trusted publisher of meta-language on npmjs.com must name"
+            echo "${{ github.repository }} and the workflow filename js.yml with no environment;"
+            echo "see docs/ci-cd/npm-trusted-publishing.md. An NPM_TOKEN secret bootstraps the publish."
           fi
 
       - name: Verify published package

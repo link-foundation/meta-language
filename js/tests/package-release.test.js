@@ -153,7 +153,7 @@ test('Rust release pipeline delegates npm publishing to the canonical JavaScript
     const dispatchPublisher = job.indexOf('- name: Dispatch JavaScript publisher');
 
     assert.match(job, /actions:\s+write/);
-    assert.match(job, /gh workflow run js\.yml --ref main/);
+    assert.match(job, /gh workflow run js\.yml --ref "v\$RELEASE_VERSION"/);
     assert.match(job, /release_version="\$RELEASE_VERSION"/);
     assert.ok(createRelease >= 0 && dispatchPublisher > createRelease);
   }

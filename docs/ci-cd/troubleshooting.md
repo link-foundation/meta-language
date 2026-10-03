@@ -269,10 +269,13 @@ The publish job runs `js/scripts/prepare-npm-auth.mjs` between `setup-node` and
 
 ### Solution
 
-If the job reports auth mode `oidc` and the publish still fails, the trusted
-publisher is not configured. On npmjs.com open the package settings and add a
-trusted publisher for repository `link-foundation/meta-language` with workflow file
-`.github/workflows/js.yml` — the filename must match exactly. Keep
+If the job reports auth mode `oidc`, the step **Verify the trusted-publisher
+exchange** performs the exchange `npm publish` would perform and prints the
+registry's answer. A refused exchange means the trusted publisher is missing or
+does not match. The exact settings are in
+[npm Trusted Publishing](npm-trusted-publishing.md): organization
+`link-foundation`, repository `meta-language`, workflow filename `js.yml` (the
+bare filename, not the path) and an empty environment. Keep
 `permissions: id-token: write` on the publish job and npm >= 11.5.1.
 
 As a bootstrap, before trusted publishing is configured, add an `NPM_TOKEN`
