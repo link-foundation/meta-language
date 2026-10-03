@@ -29,20 +29,14 @@ import {
   collectDependencies,
   compareAudits,
   refreshInventory,
+  registryHttp,
   releaseResolvers,
   renderAuditDocument,
 } from './dependency-inventory.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-async function http(url, headers = {}) {
-  for (let attempt = 1; ; attempt += 1) {
-    const response = await fetch(url, { headers: { 'user-agent': 'meta-language-dependency-audit', ...headers } });
-    if (response.ok) return response.text();
-    if (attempt >= 3 || response.status < 500) throw new Error(`${url}: HTTP ${response.status}`);
-    await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-  }
-}
+const http = registryHttp();
 
 function github(route) {
   return Promise.resolve(JSON.parse(execFileSync('gh', ['api', route], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] })));

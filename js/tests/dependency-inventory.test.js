@@ -17,6 +17,7 @@ import {
   collectDependencies,
   ownStatus,
   refreshInventory,
+  registryHttp,
   renderAuditDocument,
   statuses,
 } from '../scripts/dependency-inventory.mjs';
@@ -138,4 +139,36 @@ test('a refresh dates the audit, keeps a reason only for the unchanged pin and f
   assert.deepEqual(byId.get(generator.id).dependsOn, [bumped.id], 'the generator follows the tool to its new pin');
   assert.deepEqual(kinds(checkInventory(refreshed, collected, { today: TODAY })), ['behind-without-reason']);
   observe(['staleDependencyRejected', 'auditDateRecorded'], 'a refresh dates the audit, keeps a reason only for the unchanged pin and follows a moved tool');
+});
+
+test('the registry client retries dropped connections and transient answers, and names the URL when it gives up', async () => {
+  const dropped = () => Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' }) });
+  const answer = (status, body = '') => ({ ok: status < 400, status, text: async () => body });
+  const scripted = (outcomes) => {
+    const calls = [];
+    const fetch = async (url, options) => {
+      calls.push({ url, options });
+      const outcome = outcomes.shift();
+      if (outcome instanceof Error) throw outcome;
+      return outcome;
+    };
+    return { calls, fetch };
+  };
+  const delays = [];
+  const sleep = async (ms) => void delays.push(ms);
+
+  const recovering = scripted([dropped(), answer(503), answer(429), answer(200, 'ok')]);
+  assert.equal(await registryHttp({ fetch: recovering.fetch, sleep })('https://registry.example/a', { accept: 'x' }), 'ok');
+  assert.equal(recovering.calls.length, 4, 'a dropped connection, a 503 and a 429 are retried');
+  assert.equal(recovering.calls[0].options.headers.accept, 'x');
+  assert.equal(recovering.calls[0].options.headers['user-agent'], 'meta-language-dependency-audit');
+  assert.deepEqual(delays, [1000, 2000, 3000]);
+
+  const missing = scripted([answer(404)]);
+  await assert.rejects(registryHttp({ fetch: missing.fetch, sleep })('https://registry.example/missing'), { message: 'https://registry.example/missing: HTTP 404' });
+  assert.equal(missing.calls.length, 1, 'a definite answer is not retried');
+
+  const offline = scripted([dropped(), dropped(), dropped(), dropped()]);
+  await assert.rejects(registryHttp({ fetch: offline.fetch, sleep })('https://registry.example/b'), { message: 'https://registry.example/b: fetch failed (ECONNRESET)' });
+  assert.equal(offline.calls.length, 4, 'the client gives up after its attempts');
 });

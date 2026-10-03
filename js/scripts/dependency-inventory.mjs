@@ -820,6 +820,33 @@ async function mapLimit(values, limit, task) {
   return results;
 }
 
+/**
+ * The `http(url, headers)` of the refresh. A live comparison issues hundreds
+ * of registry requests, so one dropped connection must not fail it: fetch
+ * rejects with `TypeError: fetch failed` on network errors (reset, DNS,
+ * timeout), and those are retried like HTTP 429 and 5xx answers. The final
+ * error names the URL and the underlying cause.
+ */
+export function registryHttp({ fetch = globalThis.fetch, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), attempts = 4, delayMs = 1000 } = {}) {
+  return async function http(url, headers = {}) {
+    for (let attempt = 1; ; attempt += 1) {
+      let failure;
+      try {
+        const response = await fetch(url, { headers: { 'user-agent': 'meta-language-dependency-audit', ...headers } });
+        if (response.ok) return await response.text();
+        failure = new Error(`${url}: HTTP ${response.status}`);
+        if (response.status !== 429 && response.status < 500) throw failure;
+      } catch (error) {
+        if (error === failure) throw error;
+        const cause = error?.cause?.code ?? error?.cause?.message;
+        failure = new Error(`${url}: ${error?.message ?? error}${cause ? ` (${cause})` : ''}`, { cause: error });
+      }
+      if (attempt >= attempts) throw failure;
+      await sleep(delayMs * attempt);
+    }
+  };
+}
+
 function crateIndexPath(name) {
   const lower = name.toLowerCase();
   if (lower.length <= 2) return `${lower.length}/${lower}`;
