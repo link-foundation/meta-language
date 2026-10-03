@@ -31,6 +31,10 @@ const JSON5_WHITESPACE = 'JSON5 1.0.0 section 8 (White Space) skips NBSP, LS, PS
 const JSON5_IDENTIFIER = 'JSON5 1.0.0 section 3 (Objects) reads a member name as an ECMAScript 5.1 IdentifierName, with Nl letters, \\u escapes and Mn, Mc, Nd, Pc, ZWNJ and ZWJ parts; tree-sitter-json5-orchard 0.1.0 reads only [$_\\p{L}][$_\\p{L}0-9]* and recovers from them.';
 const JSON5_ESCAPE = 'JSON5 1.0.0 section 5.1 (Escapes) reads \\0 before a non-digit, any other character that is not a digit, x or u as itself (NonEscapeCharacter), and a CR, LS or PS line continuation; tree-sitter-json5-orchard 0.1.0 recovers from them.';
 
+// The R7RS small datum syntax tree-sitter-scheme 0.24.7 recovers from.
+const SCHEME_BYTEVECTOR = 'R7RS small section 6.9 (Bytevectors) and section 7.1.2 (External representations) read a bytevector as #u8( followed by its bytes and ); tree-sitter-scheme 0.24.7 reads only the R6RS #vu8( form and recovers from it.';
+const SCHEME_DATUM_LABEL = 'R7RS small section 2.4 (Datum labels) reads #<n>=<datum> as a labelled datum and #<n># as a reference to it; tree-sitter-scheme 0.24.7 recovers from them.';
+
 export const NATIVE_GRAMMARS = Object.freeze([
   {
     id: 'json',
@@ -363,6 +367,78 @@ export const NATIVE_GRAMMARS = Object.freeze([
       '', '1 2', '[,]', '{,}', '[1,,]', '{a:1,,}', '[0x]', '[01]', '[1e]', '"\\01"', '"\\x4"', '"\\u12"', '{9a:1}',
       '[nullx]', '[Infinityx]', '"\\1"', '{a}', '{a:}', '[', ']', '{', '"a', '\'a', '/* x', '{a:1 b:2}', '[1 2]',
       'undefined', '[1,]]', '{"a" 1}', '{1:1}', '[.e]', '[--1]', '[0x.1]', '//c', '/**/', '\u0085 1',
+    ],
+  },
+  {
+    id: 'scheme',
+    language: 'Scheme',
+    grammar: 'parity/grammars/native/scheme.lino',
+    oracle: 'tree-sitter-scheme 0.24.7',
+    sources: [
+      'https://small.r7rs.org/attachment/r7rs.pdf',
+      'https://docs.rs/crate/tree-sitter-scheme/0.24.7/source/grammar.js',
+    ],
+    // The oracle has no extras: white space, comment text and string text are
+    // tokens it keeps inside their node without a row.
+    hidden: [],
+    anonymous: ['whitespace', 'comment_text', 'string_text', 'directive_name'],
+    extras: [],
+    matches: [
+      '', 'a', ' a', 'a ', '(a b c)', '(define (f x) (+ x 1))', '[a]', '{a}', '()', '#t', '#f', '#true', '#false',
+      '#tRuE', '#truex', '#\\a', '#\\space', '#\\spacex', '#\\x41', '#\\newline', '#\\NEWLINE', '#\\(', '#\\ ',
+      '"abc"', '"a\\nb"', '"\\x41;"', '"\\x"', '""', '"a\\\\b"', '"a\\"b"', '"a\\\n  b"', '; c', '; c\n', 'a ; c\nb',
+      '#| a |#', '#| a #| b |# c |#', '#||#', '#;a', '#; a b', '#;#;a b c', '#!r6rs', '#! r6rs', '#!fold-case a',
+      '1', '-1', '+1', '1.5', '.5', '1e5', '1/2', '1+2i', '+i', '-i', '+inf.0', '-nan.0', '+inf.0i', '#e1.5', '#x1F',
+      '#b101', '#o17', '#d10', '#x#i1F', '1#', '1#.#', '1.5|53', '1@2', '+1@2', '1abc', '1#a', '.', '...', '1/', '+',
+      '-', '->x', '|a b|', 'a|b c|d', '|a\\x41;b|', '|a\\|b|', '#:key', '\'a', '\' a', '`a', ',a', ',@a', ', @a',
+      '#\'a', '#`a', '#,a', '#,@a', '#(1 2)', '#vu8(1 2)', '(a . b)', '(quote a)', '`(a ,b ,@c)', '(let ((x 1)) x)',
+      'a\tb\nc\rd\fe\vf', 'a\u00a0b', 'a\u2028b', 'a\u2029b', 'λ', '(λ (x) x)', '日本', '#\\λ', '"λ"', '#| x\n y |#',
+      '; c\r\n', ';\u2028x\n', '#;(a b) c', '#; ; c\n a b', '#!/usr/bin/env', 'a#t', '#tx', '#\\xyz', '#\\u41',
+      '#\\nul', '#\\alarm', '#\\escape', '#\\rubout', '#\\SPACE', '#b', '#x', '#x+i', '#b|5', '#b+', '#e#x', '#b1/',
+      '#\\x', '+.5e3', '1s5', '1.e5', '1#.#e5', '#D#E1', '1/2/3', '+INF.0', '1+inf.0i', '1@-2', '1#/2#', '#i1/2',
+      '1.5e-3', '-0.0', '1.5f2', '1l2', '#e1e10', '1.5|53e2', '+nan.0i', '1-i', '1+i', '1-2.5i', '#x-ff', '#XFF',
+      '#B1', '#O7', '#I1', '#E1', '1|2', '1.|2', '.5|2', '1+1/2i', '1@+inf.0', '1#e5', '#x1.5', '#b2', '#o8', '+-1',
+      '1..', '1.2.3', '1e', '1e+', 'e5', '1e5x', '#\\x1F600', '#\\X41', '#\\U41', '#\\u', '#\\delete', '#\\vtab',
+      '#\\page', '#\\linefeed', '#\\esc', '#\\backspace', '#\\tab', '#\\return', '#\\null', '#\\bel', '#\\ls',
+      '#\\nel', '#\\vt', '#\\Space', '#\\nEwLiNe', '#\\Tab', '#\\\n', '#\\\t', '#\\"', '#\\#', '#\\|', '#\\\\',
+      '"\\a\\b\\t\\n\\r\\v\\f"', '"\\X41;"', '"\\x41"', '"\\ \n "', '"\\\t\n\t"', '"\\\r\n"', '"\\\r"', '"\\\u2028"',
+      '"\\\u0085"', '"\\\u2029"', '"\\  \n"', '"\\ x"', '"\\q"', '"\\λ"', '"a\nb"', '"\\\r\u0085"', '#| | # |#',
+      '#|||#', '#| a |##| b |#', '#|\n|#', '; a\n; b', ';', ';\n', '#;  #| c |# a', '#! #| c |# r6rs', '#!\nx',
+      '#;\n1 2', '|a|', '||', '|\\x41;|', '|\\t|', '|a\nb|', '#:|a b|', '#:a#b', 'a#b', 'a.b', '#(a #(b))', '#vu8()',
+      '( a )', '( )', '(\n)', '(a\tb)', '[(a)]', '{[()]}', '\'()', '\'#(1)', '`#(1 ,a)', '#\'(a)', '#`(a #,b #,@c)',
+      ',\'a', '\'\'a', '\' ; c\n a', '\'#;b a', '\'#|c|#a', '#t#f', '#t(a)', 'a"b"', '"a"b', '1"a"', 'a(b)c', 'a\'b',
+      'a`b', 'a,b', '#f5', '#fa', '#falsey', '#FALSE',
+    ],
+    divergences: [
+      { source: '#u8()', reason: SCHEME_BYTEVECTOR },
+      { source: '#u8(1 2 255)', reason: SCHEME_BYTEVECTOR },
+      { source: '(#u8(0))', reason: SCHEME_BYTEVECTOR },
+      { source: '#u8( 1 )', reason: SCHEME_BYTEVECTOR },
+      { source: '#u8(#u8())', reason: SCHEME_BYTEVECTOR },
+      { source: '#u8(a)', reason: SCHEME_BYTEVECTOR },
+      { source: '#u8(1 #u8(2))', reason: SCHEME_BYTEVECTOR },
+      { source: '[#u8(1)]', reason: SCHEME_BYTEVECTOR },
+      { source: '#u8(; c\n1)', reason: SCHEME_BYTEVECTOR },
+      { source: '#u8(#;1 2)', reason: SCHEME_BYTEVECTOR },
+      { source: '#0=a', reason: SCHEME_DATUM_LABEL },
+      { source: '#0#', reason: SCHEME_DATUM_LABEL },
+      { source: '#12=(a . #12#)', reason: SCHEME_DATUM_LABEL },
+      { source: '(#1=x #1#)', reason: SCHEME_DATUM_LABEL },
+      { source: '#0= a', reason: SCHEME_DATUM_LABEL },
+      { source: '#0=#;c a', reason: SCHEME_DATUM_LABEL },
+      { source: '\'#0#', reason: SCHEME_DATUM_LABEL },
+      { source: '#0=#1=a', reason: SCHEME_DATUM_LABEL },
+      { source: '(#0# #0#)', reason: SCHEME_DATUM_LABEL },
+      { source: '#123#', reason: SCHEME_DATUM_LABEL },
+      { source: '#0=(#0#)', reason: SCHEME_DATUM_LABEL },
+      { source: '`#0#', reason: SCHEME_DATUM_LABEL },
+      { source: '#0=#| c |#a', reason: SCHEME_DATUM_LABEL },
+    ],
+    rejections: [
+      ')', '(', ']', '}', '(]', '[)', '{)', '(a', 'a)', '"a', '"', '"\\', '#|', '#| a', '#|#|a|#', '|#', '#', '#\\',
+      '#e', '#q', '#:', '#;', '#!', '\'', '`', ',', ',@', '#\'', '#`', '#,', '#,@', '#(', '#vu8(', '#vu8', '#U8(1)',
+      '#0=', '#0', '#u8', '|a', 'a|b', '#;)', '\' )', '#u8 (1)', '#vu8 (1)', '#t#', '(a))', '((a)', '#|#|#||#|#',
+      '#\\x41 )', '#e#',
     ],
   },
 ]);

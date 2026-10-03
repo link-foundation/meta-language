@@ -1,7 +1,8 @@
 //! Shared helpers of the native merged grammar suites
 //! (`issue_195_grammar_native_json.rs`, `issue_195_grammar_native_ini.rs`,
 //! `issue_195_grammar_native_diff.rs`, `issue_195_grammar_native_csv.rs`,
-//! `issue_195_grammar_native_json5.rs`): they read a fixture of parity/fixtures/native-grammars/, parse with the Rust
+//! `issue_195_grammar_native_json5.rs`, `issue_195_grammar_native_scheme.rs`): they read a fixture of
+//! parity/fixtures/native-grammars/, parse with the Rust
 //! executor and project its trees to the rows of the tree-sitter oracle the
 //! way js/scripts/native-grammar-rows.mjs projects the JavaScript ones.
 
