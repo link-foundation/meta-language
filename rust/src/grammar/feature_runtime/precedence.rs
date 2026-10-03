@@ -343,19 +343,26 @@ impl Executor<'_> {
             // one its rule reduces with (see `reduction` in results.rs).
             result.tail = result.tail.or(tag);
             // A token reduced alone keeps the precedence on its leaf, for the
-            // conflict with a shift after it (see `lone_reduction`).
+            // conflict with a shift after it (see `lone_reduction`), and a
+            // node reduced alone keeps it as the precedence it was reduced
+            // with, for the conflict with another reduction of it (see
+            // `shift_order`).
             let mut meaningful = result
                 .children
                 .iter()
                 .enumerate()
                 .filter(|(_, child)| !child.trivia);
             if let (Some((at, only)), None) = (meaningful.next(), meaningful.next())
-                && only.ty == TreeType::Token
+                && matches!(only.ty, TreeType::Token | TreeType::Node)
             {
-                let mut leaf = (**only).clone();
-                leaf.precedence = tag;
+                let mut tagged = (**only).clone();
+                if only.ty == TreeType::Token {
+                    tagged.precedence = tag;
+                } else {
+                    tagged.reduced = tag;
+                }
                 let mut children = result.children.to_vec();
-                children[at] = Rc::new(leaf);
+                children[at] = Rc::new(tagged);
                 result.children = children_of(children);
             }
         }

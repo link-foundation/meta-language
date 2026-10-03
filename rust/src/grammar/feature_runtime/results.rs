@@ -11,7 +11,7 @@ use std::rc::Rc;
 
 use super::operations::{OperationValue, State};
 pub(super) use super::ordering::{complete_order, preferred_tokens, same_children};
-use super::ordering::{shift_order, token_conflict};
+use super::ordering::{same_output, shift_order, token_conflict};
 use super::program::{Associativity, Name, TokenRanks};
 
 /// The type of a syntax tree node.
@@ -130,7 +130,8 @@ pub(super) struct Tree {
     /// (see `token_rank`).
     pub(super) priority: Option<i64>,
     /// The precedence a token leaf ending a silent rule was reduced with
-    /// (see `lone_reduction`).
+    /// (see `lone_reduction`), or a node reduced alone under one (see
+    /// `shift_order`).
     pub(super) reduced: Option<(i64, Associativity)>,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
@@ -285,8 +286,9 @@ impl<'c> ResultSet<'c> {
     /// Of two results with the same end and state, the lower repair cost
     /// wins, then, under `(matching longest)`, the tokens a lexer prefers (a
     /// lexer decides them before any parse does) and the shift or reduction
-    /// an LR parser keeps by precedence, then the higher dynamic precedence; on a tie the first stays and, without repairs, is marked
-    /// ambiguous. True when `result` was kept.
+    /// an LR parser keeps by precedence, then the higher dynamic precedence;
+    /// on a tie the first stays and, without repairs and unless both build
+    /// the same trees, is marked ambiguous. True when `result` was kept.
     pub(super) fn add(&mut self, result: Res) -> bool {
         match self.index.get(&result.key()) {
             None => self.push(result),
@@ -304,7 +306,10 @@ impl<'c> ResultSet<'c> {
                         })
                         .then(result.dynamic.cmp(&existing.dynamic));
                     if order != Ordering::Greater {
-                        if order == Ordering::Equal && existing.cost == 0 {
+                        if order == Ordering::Equal
+                            && existing.cost == 0
+                            && !same_output(&result.children, &existing.children)
+                        {
                             existing.ambiguous = true;
                         }
                         return false;

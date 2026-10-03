@@ -50,8 +50,8 @@ function resultKey(result) {
 // lexer prefers (a lexer decides them before any parse does), then the
 // shift or reduction an LR parser keeps by precedence, then the higher
 // dynamic precedence; on a tie the first stays and,
-// without repairs, is marked ambiguous (as a copy, since results are shared
-// through the memo).
+// without repairs and unless both build the same trees, is marked ambiguous
+// (as a copy, since results are shared through the memo).
 function addResult(results, result, tokens = null) {
   const key = resultKey(result);
   const existing = results.get(key);
@@ -62,7 +62,37 @@ function addResult(results, result, tokens = null) {
   if (result.cost > existing.cost) return;
   const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing) : 0;
   if (order > 0 || (order === 0 && result.dynamic > existing.dynamic)) results.set(key, result);
-  else if (order === 0 && result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous) results.set(key, copyResult(existing, { ambiguous: true }));
+  else if (order === 0 && result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous && !sameOutput(result.children, existing.children)) {
+    // A trace, off unless a probe sets the array (see
+    // experiments/native-rust-ambiguity-pair.mjs): the two results it ties.
+    globalThis.__ambiguityPairs?.push([result, existing]);
+    results.set(key, copyResult(existing, { ambiguous: true }));
+  }
+}
+
+// Whether two child lists build the same trees, trivia, fields and
+// attributes included: two results that reach them in different ways (Rust's
+// `+.` in a token tree, one run of `(precedence 0 right (repeat1 ...))` or two,
+// both flattened by the silent rule) are one parse, not an ambiguity.
+function sameOutput(a, b) {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  return a.every((first, index) => {
+    const second = b[index];
+    if (first === second) return true;
+    if (first.type !== second.type || first.kind !== second.kind || first.start !== second.start || first.end !== second.end) return false;
+    if (Boolean(first.trivia) !== Boolean(second.trivia) || (first.field ?? null) !== (second.field ?? null) || (first.language ?? null) !== (second.language ?? null)) return false;
+    if (!sameValue(first.attributes ?? null, second.attributes ?? null)) return false;
+    return first.type !== 'node' || sameOutput(first.children, second.children);
+  });
+}
+
+// Whether two attribute values are equal, objects whatever their key order.
+function sameValue(a, b) {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null || Array.isArray(a) !== Array.isArray(b)) return false;
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((key) => Object.hasOwn(b, key) && sameValue(a[key], b[key]));
 }
 
 // Which of two results over the same text has the tokens a lexer prefers:
@@ -220,6 +250,16 @@ function shiftOrder(result, existing) {
       if (pair && pair[0].end !== pair[1].end) {
         const [long, short, sign] = pair[0].end > pair[1].end ? [...pair, 1] : [pair[1], pair[0], -1];
         return sign * shiftPreferred(long, short);
+      }
+      // The same node reduced on in two ways (Rust's `m!(x);` in a block, a
+      // macro invocation that `_expression_except_range` reduces under
+      // `(precedence 1 none (ref macro_invocation))` and
+      // `_declaration_statement` of level 0) conflicts at its end: the higher
+      // level it was reduced with wins.
+      if (pair) {
+        const first = pair[0].reduced?.level ?? 0;
+        const second = pair[1].reduced?.level ?? 0;
+        if (first !== second) return first > second ? 1 : -1;
       }
     }
     const lone = loneReduction(a, b) || -loneReduction(b, a);
@@ -452,6 +492,13 @@ function shareChildren(target, source) {
     get() { return flattenChain(chain); },
   });
   return target;
+}
+
+// A copy of a node with `changes`, its children still shared and lazy.
+function copyNode(node, changes) {
+  const copy = {};
+  for (const key of Object.keys(node)) if (key !== 'children') copy[key] = node[key];
+  return Object.assign(shareChildren(copy, node), changes);
 }
 
 // A copy of a result with `changes`, its children still shared and lazy (a
@@ -1029,10 +1076,15 @@ export class Executor {
       // its rule reduces with (see `reduction`).
       const tail = result.tail ?? tag;
       // A token reduced alone keeps the precedence on its leaf, for the
-      // conflict with a shift after it (see `loneReduction`).
+      // conflict with a shift after it (see `loneReduction`), and a node
+      // reduced alone keeps it as the precedence it was reduced with, for the
+      // conflict with another reduction of it (see `shiftOrder`).
       const meaningful = result.children.filter((child) => !isTrivia(child));
-      if (meaningful.length !== 1 || meaningful[0].type !== 'token') return copyResult(result, { precedence: tag, tail });
-      const children = result.children.map((child) => (child === meaningful[0] ? { ...child, precedence: tag } : child));
+      if (meaningful.length !== 1) return copyResult(result, { precedence: tag, tail });
+      const only = meaningful[0];
+      const tagged = only.type === 'token' ? { ...only, precedence: tag } : only.type === 'node' ? copyNode(only, { reduced: tag }) : null;
+      if (tagged === null) return copyResult(result, { precedence: tag, tail });
+      const children = result.children.map((child) => (child === only ? tagged : child));
       return copyResult(result, { precedence: tag, tail, children });
     });
   }

@@ -251,6 +251,22 @@ pub(super) fn shift_order(result: &Children, existing: &Children) -> Ordering {
                         shift_preferred(&y, &x).reverse()
                     };
                 }
+                // The same node reduced on in two ways (Rust's `m!(x);` in a
+                // block, a macro invocation that `_expression_except_range`
+                // reduces under `(precedence 1 none (ref macro_invocation))`
+                // and `_declaration_statement` of level 0) conflicts at its
+                // end: the higher level it was reduced with wins.
+                if a_node
+                    && b_node
+                    && a.start == b.start
+                    && let Some((x, y)) = chain_pair(&a, &b)
+                {
+                    let level = |node: &Tree| node.reduced.map_or(0, |(level, _)| level);
+                    let order = level(&x).cmp(&level(&y));
+                    if order != Ordering::Equal {
+                        return order;
+                    }
+                }
                 let lone = lone_reduction(&a, &b).then_with(|| lone_reduction(&b, &a).reverse());
                 if lone != Ordering::Equal {
                     return lone;
@@ -420,6 +436,29 @@ pub(super) fn same_children(a: &Children, b: &Children) -> bool {
     }
     let (first, second) = (meaningful(a), meaningful(b));
     first.len() == second.len() && first.iter().zip(&second).all(|(x, y)| same_tree(x, y))
+}
+
+/// Whether two child lists build the same trees, trivia, fields and
+/// attributes included: two results that reach them in different ways (Rust's
+/// `+.` in a token tree, one run of `(precedence 0 right (repeat1 ...))` or
+/// two, both flattened by the silent rule) are one parse, not an ambiguity.
+/// It mirrors sameOutput in js/src/grammar-runtime/executor.js.
+pub(super) fn same_output(a: &Children, b: &Children) -> bool {
+    Rc::ptr_eq(a, b)
+        || (a.len() == b.len()
+            && a.iter().zip(b.iter()).all(|(first, second)| {
+                Rc::ptr_eq(first, second)
+                    || (first.ty == second.ty
+                        && first.kind == second.kind
+                        && first.start == second.start
+                        && first.end == second.end
+                        && first.trivia == second.trivia
+                        && first.field == second.field
+                        && first.language == second.language
+                        && first.attributes == second.attributes
+                        && (first.ty != TreeType::Node
+                            || same_output(&first.children, &second.children)))
+            }))
 }
 
 /// The first child of a list that is not trivia, without flattening it.
