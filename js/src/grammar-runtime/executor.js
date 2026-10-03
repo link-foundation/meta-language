@@ -16,7 +16,7 @@ import {
   settleState,
   workingState,
 } from './operations.js';
-import { columnOf, decodeAt, quoteText, textOf, utf16View } from './text.js';
+import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './text.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -253,6 +253,14 @@ function renamed(child, kind) {
 
 // The kind of the MISSING leaf of a failed terminal or token: the literal
 // text for a literal, else none.
+// A literal that took the separators after it (see `beforeSeparator`) is
+// still that literal, as a tree-sitter lexer names it: its leaf is an
+// anonymous alias of the literal (`'\n` over `\n\n`). Any other terminal
+// leaf is named by its text.
+function separatorRunKind(expression, start, end) {
+  return expression.kind === 'literal' && end - start > encodeText(expression.value).length ? `'${expression.value}` : null;
+}
+
 function missingOf(expression) {
   return expression.kind === 'literal' ? { kind: expression.value, literal: true } : { kind: null };
 }
@@ -426,7 +434,7 @@ export class Executor {
       if (inToken) return [];
       return this.elementFailed(start, leaves, state, missingOf(expression), (cursor) => this.terminal(expression, cursor, state, false));
     }
-    const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind: null, start, end }];
+    const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind: separatorRunKind(expression, start, end), start, end }];
     return [makeResult(end, state, children)];
   }
 

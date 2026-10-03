@@ -274,6 +274,10 @@
         {
           "input": "n:1\n2",
           "tree": "(s \"n:\" (lines (line (n \"1\") \"\\n\") (line (n \"2\"))))"
+        },
+        {
+          "input": "n:1\n\n2",
+          "tree": "(s \"n:\" (lines (line (n \"1\") (\"'\\n\" \"\\n\\n\")) (line (n \"2\"))))"
         }
       ],
       "negative": [

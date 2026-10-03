@@ -1656,7 +1656,7 @@
     "planned:repository-directive:i195-grammar-feature-union": {
       "path": "parity/fixtures/grammar-feature-union.json",
       "selector": "docs/vision.md#grammar-feature-union: grammar representation covering the union of all source grammar features",
-      "sha256": "d6c4aab6db9ccb74c2b568d2ec47d8a732885c69ed3e5835a183a85e94642a9d"
+      "sha256": "c21a3374611e0652fe51ff6e7018b5471186f4b59ed3333c34f08217aa56231d"
     },
     "planned:repository-directive:i195-grammar-concept-distinctions": {
       "path": "parity/fixtures/concept-distinctions.json",

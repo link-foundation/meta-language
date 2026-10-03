@@ -107,8 +107,9 @@ const features = [
     options: { ambiguity: 'reject' },
     // Longest matching decides as a lexer does: `if` is the literal, more
     // specific than a name of one length, and a line break that ends a line
-    // is the token, not the separator.
-    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2'],
+    // is the token, not the separator; a token that also takes the line
+    // breaks after it is still the `\n` token.
+    positive: ['d:1-2-3', 'u:1-2', 'r:1-2-3', 'l:-1', 'k:if', 'k:iffy', 'n:1\n2', 'n:1\n\n2'],
     negative: [{ input: 'u:1-2-3' }, { input: 'd:1--2' }],
     mutation: { replace: ['conflict declared', 'conflict undeclared'], input: 'u:1-2-3' },
     // Without longest matching, "-" "1" and "-1" are two parses alike in cost

@@ -69,6 +69,19 @@ fn missing_of(expr: &Expr) -> (Option<Name>, bool) {
     }
 }
 
+// A literal that took the separators after it (see `before_separator`) is
+// still that literal, as a tree-sitter lexer names it: its leaf is an
+// anonymous alias of the literal (`'\n` over `\n\n`). Any other terminal
+// leaf is named by its text.
+fn separator_run_kind(matcher: &Matcher, start: usize, end: usize) -> Option<Name> {
+    match matcher {
+        Matcher::Literal(literal) if end - start > literal.len() => {
+            Some(Name::from(format!("'{}", String::from_utf8_lossy(literal))))
+        }
+        _ => None,
+    }
+}
+
 /// Interprets one program over `bytes[begin, end)`.
 pub(super) struct Executor<'c> {
     pub(super) compiled: &'c Compiled,
@@ -354,7 +367,8 @@ impl<'c> Executor<'c> {
         let children = if in_token {
             no_children()
         } else {
-            with_leaf(leaves, Tree::new(TreeType::Token, None, start, end))
+            let kind = separator_run_kind(matcher, start, end);
+            with_leaf(leaves, Tree::new(TreeType::Token, kind, start, end))
         };
         Ok(vec![Res::new(end, state.clone(), children, 0)])
     }
