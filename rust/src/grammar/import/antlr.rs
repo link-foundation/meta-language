@@ -177,11 +177,27 @@ impl Parser {
 
     fn parse_choice(&mut self, notes: &mut Vec<String>) -> Result<GrammarExpr, GrammarImportError> {
         let mut alternatives = Vec::new();
-        push_choice_alternative(&mut alternatives, self.parse_sequence(notes)?);
+        push_choice_alternative(&mut alternatives, self.parse_alternative(notes)?);
         while self.try_consume_pipe() {
-            push_choice_alternative(&mut alternatives, self.parse_sequence(notes)?);
+            push_choice_alternative(&mut alternatives, self.parse_alternative(notes)?);
         }
         Ok(finish_choice(alternatives))
+    }
+
+    // An alternative and its `# Label`, which names the context class ANTLR
+    // generates for it, not syntax: the label joins the rule's doc.
+    fn parse_alternative(
+        &mut self,
+        notes: &mut Vec<String>,
+    ) -> Result<GrammarExpr, GrammarImportError> {
+        let sequence = self.parse_sequence(notes)?;
+        if matches!(self.peek_kind(), Some(TokenKind::Hash)) {
+            self.advance();
+            let label = self.expect_ident("alternative label")?;
+            notes.push(format!("alternative {label}"));
+            self.skip_inline_comments();
+        }
+        Ok(sequence)
     }
 
     fn parse_sequence(
@@ -377,7 +393,13 @@ impl Parser {
         self.is_end()
             || matches!(
                 self.peek_kind(),
-                Some(TokenKind::Pipe | TokenKind::Semicolon | TokenKind::Arrow | TokenKind::RParen)
+                Some(
+                    TokenKind::Pipe
+                        | TokenKind::Semicolon
+                        | TokenKind::Arrow
+                        | TokenKind::RParen
+                        | TokenKind::Hash
+                )
             )
     }
 

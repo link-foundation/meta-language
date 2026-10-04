@@ -40,6 +40,7 @@ impl Token {
             TokenKind::Arrow => "->".to_string(),
             TokenKind::Range => "..".to_string(),
             TokenKind::Comma => ",".to_string(),
+            TokenKind::Hash => "#".to_string(),
         }
     }
 }
@@ -66,6 +67,7 @@ pub(super) enum TokenKind {
     Arrow,
     Range,
     Comma,
+    Hash,
 }
 
 #[derive(Clone, Debug)]
@@ -168,6 +170,10 @@ impl<'text> Lexer<'text> {
             ',' => {
                 self.advance_char();
                 Ok(TokenKind::Comma)
+            }
+            '#' => {
+                self.advance_char();
+                Ok(TokenKind::Hash)
             }
             character if is_ident_start(character) => Ok(TokenKind::Ident(self.identifier())),
             character => Err(error_at(

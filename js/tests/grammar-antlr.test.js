@@ -157,7 +157,7 @@ test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
   const errors = [
     ['grammar Bad; start : ( missing ;', 'antlr import parse error: expected \')\' at byte 31'],
     ['grammar Bad; start : \'ab\'..\'z\' ;', 'antlr import parse error: range start "ab" must contain one character at byte 21'],
-    ['grammar Bad; start : # ;', 'antlr import parse error: unexpected character \'#\' at byte 21'],
+    ['grammar Bad; start : \'x\' # ;', 'antlr import parse error: expected alternative label at byte 27'],
     ['grammar Empty;', 'antlr import parse error: ANTLR grammar does not contain rules'],
     ['grammar Bad; rule [int x] : \'x\' ;', 'antlr import unsupported construct: rule arguments'],
     ['grammar Bad; start : \'é日\' § ;', 'antlr import parse error: unexpected character \'§\' at byte 29'],
@@ -172,7 +172,7 @@ test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
 
 test('imports the lexer features the grammars-v4 grammars use', async () => {
   const grammar = importAntlr(fixture('lexer-features.g4'));
-  assert.equal(grammar.rule('doc').doc, '// read up to the end');
+  assert.equal(grammar.rule('doc').doc, '// read up to the end; alternative Items');
   assert.deepEqual(grammar.rule('doc').expression, G.seq(G.repeat1(G.ref('ITEM')), G.not(G.any())));
   assert.deepEqual(grammar.rule('ITEM').expression.items, [
     range('A', 'Z'),

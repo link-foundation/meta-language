@@ -23,6 +23,7 @@ const PUNCTUATION = [
   ['=', null, 'equal'],
   ['-', '>', 'arrow'],
   [',', null, 'comma'],
+  ['#', null, 'hash'],
 ];
 
 const TOKEN_TEXT = {
@@ -41,6 +42,7 @@ const TOKEN_TEXT = {
   arrow: '->',
   range: '..',
   comma: ',',
+  hash: '#',
 };
 
 const SIMPLE_ESCAPES = { n: '\n', r: '\r', t: '\t', b: '\u0008', f: '\u000c' };

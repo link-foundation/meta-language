@@ -236,7 +236,7 @@ fn imports_the_lexer_features_the_grammars_v4_grammars_use() {
     let grammar =
         import_antlr(include_str!("../fixtures/grammar/antlr/lexer-features.g4")).expect("imports");
     let doc = grammar.rule("doc").expect("doc");
-    assert_eq!(doc.doc(), Some("// read up to the end"));
+    assert_eq!(doc.doc(), Some("// read up to the end; alternative Items"));
     assert_eq!(
         doc.expr(),
         &GrammarExpr::Sequence(vec![
@@ -284,4 +284,9 @@ fn imports_the_lexer_features_the_grammars_v4_grammars_use() {
             "{source}: {error}"
         );
     }
+    let error = import_antlr("grammar Bad; start : 'x' # ;").expect_err("label");
+    assert_eq!(
+        error.to_string(),
+        "antlr import parse error: expected alternative label at byte 27"
+    );
 }

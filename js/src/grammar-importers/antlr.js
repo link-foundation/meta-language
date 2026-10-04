@@ -11,7 +11,7 @@ import {
 import { parseError, unsupportedError } from './common.js';
 import { decorateGrammar } from '../grammar-decorators.js';
 
-const SEQUENCE_END = new Set(['pipe', 'semicolon', 'arrow', 'rparen']);
+const SEQUENCE_END = new Set(['pipe', 'semicolon', 'arrow', 'rparen', 'hash']);
 const SUFFIXES = {
   question: GrammarBuilder.optional,
   star: GrammarBuilder.repeat0,
@@ -131,9 +131,20 @@ class AntlrParser {
 
   parseChoice(notes) {
     const alternatives = [];
-    pushChoiceAlternative(alternatives, this.parseSequence(notes));
-    while (this.tryConsume('pipe')) pushChoiceAlternative(alternatives, this.parseSequence(notes));
+    pushChoiceAlternative(alternatives, this.parseAlternative(notes));
+    while (this.tryConsume('pipe')) pushChoiceAlternative(alternatives, this.parseAlternative(notes));
     return finishChoice(alternatives);
+  }
+
+  // An alternative and its `# Label`, which names the context class ANTLR
+  // generates for it, not syntax: the label joins the rule's doc.
+  parseAlternative(notes) {
+    const sequence = this.parseSequence(notes);
+    if (this.tryConsume('hash')) {
+      notes.push(`alternative ${this.expectIdent('alternative label')}`);
+      this.skipInlineComments();
+    }
+    return sequence;
   }
 
   parseSequence(notes) {
