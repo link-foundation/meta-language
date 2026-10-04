@@ -1549,8 +1549,11 @@ export class Executor {
         return matched ? [] : [makeResult(position, state)];
       }
       case 'capture':
+        // A child a silent rule captured keeps its field: tree-sitter names a
+        // child by the innermost field over it (Lean's `type` of `Nat` in the
+        // `binders` of `∀ x : Nat, p`).
         return this.evaluate(expression.item, position, state, inToken).map((result) => (inToken ? result : copyResult(result, {
-          children: result.children.map((child) => (isTrivia(child) ? child : { ...child, field: expression.label })),
+          children: result.children.map((child) => (isTrivia(child) || child.field != null ? child : { ...child, field: expression.label })),
         })));
       case 'alias': return this.alias(expression, position, state, inToken);
       case 'precedence': case 'namedPrecedence': return this.precedence(expression, position, state, inToken);
