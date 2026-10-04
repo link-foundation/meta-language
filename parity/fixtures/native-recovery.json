@@ -430,13 +430,13 @@
         ]
       },
       "native": {
-        "cstSha256": "541f13728ef7f0a2b0164690ed6e2c6a794937f8951b09949438969f4b6a62f5",
+        "cstSha256": "6d6f1aaff3b382d8828ae6468bcf69b6bbc2ede0bc8d7b3fdfcfc16ae57d2ea8",
         "errors": [
-          "1:6-1:23"
+          "1:6-1:32"
         ],
         "missing": [
-          "\";\" 1:5",
-          "\"(\" 1:6"
+          "\"=\" 1:5",
+          "\"import\" 1:6"
         ]
       }
     },
@@ -815,7 +815,7 @@
       "language": "JavaScript",
       "suite": "generative",
       "case": "fuzz/25",
-      "category": "native-skips-more",
+      "category": "oracle-skips-more",
       "oracle": {
         "cstSha256": "b6af423309cd83911506a20efd632a49fbeadd99815f4b9a8963f0e3e5bdf471",
         "errors": [
@@ -825,11 +825,14 @@
         "missing": []
       },
       "native": {
-        "cstSha256": "44dfd0f1c193f5d0713d560ed5e4094e3a8b3479235ffc2639fa58cc4231ad76",
+        "cstSha256": "e8e2e263f03a55f8eb44864b9cce1416c440f001ef3ad1058ff167b6415d579c",
         "errors": [
-          "0:0-8:9"
+          "8:0-8:9"
         ],
-        "missing": []
+        "missing": [
+          "undefined 1:12",
+          "\"]\" 1:12"
+        ]
       }
     },
     {
@@ -919,7 +922,7 @@
         ]
       },
       "native": {
-        "cstSha256": "12d3cd32181d28d04a398bfeb179c5157a295c58dca8e3eccf1c45e9427c579f",
+        "cstSha256": "771cb3863d63fcb4f7b34c96519c4e4f0ed2a492bccf516b619951da9231d429",
         "errors": [
           "9:14-9:17"
         ],
@@ -1197,18 +1200,22 @@
         "missing": []
       },
       "native": {
-        "cstSha256": "132a29796630848f97ca538768510a1fff086916579263d3a94a59d107b87589",
+        "cstSha256": "3ed35740784f7ea08b785cfb4973af377747a096f668cdc582761258bb460e71",
         "errors": [
-          "0:0-3:16"
+          "2:10-2:12",
+          "3:0-3:16"
         ],
-        "missing": []
+        "missing": [
+          "undefined 2:9",
+          "\":\" 2:10"
+        ]
       }
     },
     {
       "language": "JavaScript",
       "suite": "generative",
       "case": "edit/4 step 3",
-      "category": "native-skips-more",
+      "category": "oracle-skips-more",
       "oracle": {
         "cstSha256": "ceb352d1e5c046d40d0cf8580c04407d86ae09192fcc2e2dfc8584a5a77e7c2c",
         "errors": [
@@ -1219,11 +1226,17 @@
         "missing": []
       },
       "native": {
-        "cstSha256": "132a29796630848f97ca538768510a1fff086916579263d3a94a59d107b87589",
+        "cstSha256": "c4fa075dc12b26583fff931c0fc3474868103886115b51c2fb3a62de84227ca4",
         "errors": [
-          "0:0-3:16"
+          "3:0-3:16"
         ],
-        "missing": []
+        "missing": [
+          "undefined 2:9",
+          "\":\" 2:10",
+          "\"\\\"\" 2:10",
+          "\"\\\"\" 2:28",
+          "unnamed_token 3:0"
+        ]
       }
     },
     {
@@ -1329,6 +1342,26 @@
     {
       "language": "JavaScript",
       "suite": "generative",
+      "case": "edit/6 step 3",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "5a94326476f09c6df41c2b4f0b353a256a9217f4db67cb02107d750012e3d8c8",
+        "errors": [],
+        "missing": [
+          "\"}\" 7:41"
+        ]
+      },
+      "native": {
+        "cstSha256": "70198e56148917a7666a3e42736414a2ec95b804bc4e80278930709fa20a17c0",
+        "errors": [],
+        "missing": [
+          "\"}\" 7:41"
+        ]
+      }
+    },
+    {
+      "language": "JavaScript",
+      "suite": "generative",
       "case": "edit/7 step 0",
       "category": "same-repair-sites",
       "oracle": {
@@ -1406,6 +1439,2343 @@
           "5:0-5:14"
         ],
         "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/application.txt/5",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "c80fdd9d257173ff9e7b0e643eba2efdab47d12ae47a9194d78a208f14b49322",
+        "errors": [
+          "1:14-1:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "bec74039de899bd6c515508b4afc6e5fbfa842798eb13792aecfc8375c9029e9",
+        "errors": [
+          "1:14-1:15"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/atoms.txt/9",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "96d321f9469234d49429e7ac821f0e06550148bab6f91aa68a273675ffe78198",
+        "errors": [
+          "1:20-1:21",
+          "2:20-2:21",
+          "3:20-3:21",
+          "3:23-3:24"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "a932b16e38318bcef4f6480ab447523d9547f2a6eceddaccce8a92547991ea16",
+        "errors": [
+          "1:20-2:21",
+          "3:0-3:24"
+        ],
+        "missing": [
+          "\"⟨\" 2:26"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/atoms.txt/10",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "c77f3cd24299cb1e5436845f0a23706f7c73b8166be498aa25050309e0af9349",
+        "errors": [
+          "1:9-1:12",
+          "1:9-1:12",
+          "5:6-5:10",
+          "5:6-5:10"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "7dde41d583a0ec571196b18482efb4335c5ab7f4f9297c52a4490d190fc88c7b",
+        "errors": [
+          "1:9-1:12",
+          "5:6-5:10"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/atoms.txt/11",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "179e6cb639b26ccd8dde9d8435e632f29a84e0d600aa2570f30a2112f1acc405",
+        "errors": [
+          "1:6-1:9",
+          "1:6-1:9",
+          "2:6-2:8"
+        ],
+        "missing": [
+          "identifier 4:10"
+        ]
+      },
+      "native": {
+        "cstSha256": "e2e55aa643ed6dbb0528d99488bbfd3dd4674bc5b379c40d7245366941eb2d47",
+        "errors": [
+          "1:6-2:5",
+          "4:9-4:10"
+        ],
+        "missing": [
+          "\"\" 1:5",
+          "unnamed_token 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/commands.txt/6",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "8961e37f88fe38e47afa78ecf6367339e63305973b0aac9abd02f1f420fe4209",
+        "errors": [
+          "1:0-1:4"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "dc6c9a6d517546d05f9511ddebe2d7e883f2ea85c156c97776bedfe4829ef232",
+        "errors": [],
+        "missing": [
+          "identifier 1:4"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/commands.txt/9",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "c1e3c825d3efb7baa1145207c2af5b313773aba1266c568852ef893613a0dc9c",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "020afa340a46dcecb65393e93e4b3f8506cbfe0db480755339f115068dced57e",
+        "errors": [],
+        "missing": [
+          "identifier 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/commands.txt/12",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "15022230049aa261f2f06c522c5e763e8ee260fe64d88f4c24030d9a38656829",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "611bbeb36d8065c023e5db67b5bf2ff149c4c3f717361954bde5c8e4ae61d5c9",
+        "errors": [],
+        "missing": [
+          "identifier 1:6",
+          "\"(\" 2:0",
+          "\")\" 2:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/commands.txt/14",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "96b260ed9fcdf53c017023608ab7e5695cce4c412a6284b7b6a86d4fa0352c3a",
+        "errors": [
+          "1:0-1:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "364c0b06d405cb3425ca01ca68697ee209d6f92fbda64164355ef99323943912",
+        "errors": [],
+        "missing": [
+          "identifier 1:8"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_attrs.txt/2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "980c4074cb57c4c333c23b38af9d886be7413ef434d86a59465863e0510c7afc",
+        "errors": [
+          "1:26-1:28"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "4f19af44f6e5a94bb01374fcf12c72f6a5653f6ff95a02009cd4db04162f6fae",
+        "errors": [
+          "1:26-1:27"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_attrs.txt/3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "efdf7020e720a9d12b8a672d33b4e134b2cfea47e4293a1f61282a0cd51aebab",
+        "errors": [
+          "1:10-1:12"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "55bb666085931531ec428f997cc9d6a4c1d5d0daadd63a7373b512c093f0054c",
+        "errors": [
+          "1:10-1:11"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_attrs.txt/6",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "3768421bab4abe8f31df7340845849481fcf85ce87f4b9e663064336e3512bae",
+        "errors": [
+          "1:11-1:12",
+          "2:17-2:18",
+          "2:26-2:27"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "824e57ee8d3b1de680b46d2fa7a1eb6cd084241103eb8638c2e6dbacd275f933",
+        "errors": [
+          "1:11-2:9"
+        ],
+        "missing": [
+          "identifier 1:11",
+          "\"]\" 1:11"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_attrs.txt/7",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "adcd12cceca722d11510d25e3b259bdfcbbf7fe1b8037f805dde664d79495360",
+        "errors": [
+          "1:0-1:14",
+          "1:11-1:12"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "7923364ac64261296b2c9f980a122bc957c6f1fe7fb4795212295ba1dbb9ef6f",
+        "errors": [],
+        "missing": [
+          "identifier 1:11"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_attrs.txt/17",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "e50c52a83659b5a12592be223c3d9c4effc88b627d0b0bbd95aca727afe46ea1",
+        "errors": [
+          "1:0-3:13",
+          "4:4-4:5",
+          "7:4-7:5",
+          "9:19-9:20",
+          "10:4-10:6",
+          "12:32-12:33",
+          "12:40-12:42",
+          "14:14-14:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "d13c98a8130fc125e34376961e96fc26635e462824bfaaeed9ea41ff230926bb",
+        "errors": [
+          "3:13-14:13"
+        ],
+        "missing": [
+          "\"inductive\" 3:13",
+          "identifier 3:13"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_let.txt/6",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "f71f16f5325b05b7031bf23e4ca43f0b08be00e39551f12ea3337179d8cc700c",
+        "errors": [
+          "2:2-2:9"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "6cae4007547b7e119f7ebeb3ede7ae35686cb0e8693b05959ebfa716d83ae3f0",
+        "errors": [],
+        "missing": [
+          "\":=\" 2:9"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_let.txt/11",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "9c0fc87f7483935440f14d9a0de26826d28d4e0dbfaed3cc85e72af333363128",
+        "errors": [
+          "1:0-1:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "d8c0f47dabcec6953ce2ca41745d0660d94dc128831ef0d5ae26f4888f22b500",
+        "errors": [],
+        "missing": [
+          "identifier 1:8"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_let.txt/12",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "20c36b8f1bae66c58b96ef56708b07272625529491f792e666a2f99b190893ad",
+        "errors": [
+          "2:0-2:1",
+          "2:4-2:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "b8e3d82a4c2480f4f91e3a8a66789ea0751b004b6e0d047592acc275e5a8329c",
+        "errors": [
+          "2:0-2:1"
+        ],
+        "missing": [
+          "\"fun\" 1:26"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_let.txt/14",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "3abdb81af6cbb3ed013a3aa2d866f0fbb26268eae9beddb019afe3824d984b4e",
+        "errors": [],
+        "missing": [
+          "identifier 1:5"
+        ]
+      },
+      "native": {
+        "cstSha256": "d4a59c62758ea32883104d9d14d03695ececc2ac3f1227a7749e938d1757ef1f",
+        "errors": [],
+        "missing": [
+          "identifier 1:5"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/declarations_let.txt/17",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "df3b9b6a85e916255d42f8611a23e5892b970efec823e189e5b7dcef6775bdeb",
+        "errors": [
+          "3:0-3:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "2748e61cb664fa8699248b1c55a19b2b3745e69de80f9c4cd1d885faa82a3495",
+        "errors": [],
+        "missing": [
+          "identifier 3:8"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/do_basics.txt/6",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "30fb89bf5874e03ff0b05d1d953a43edfad8581c3c12a186568ed1306660420d",
+        "errors": [
+          "2:2-2:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "50af6d4263ec63f363c0bf5be2c196094f6c44765bf700dc1f77e0f7c1f0478d",
+        "errors": [
+          "2:6-2:16"
+        ],
+        "missing": [
+          "identifier 2:5"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/functions.txt/2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "b812e9d2295cb040abef668be0b0ebe842bdab0391df78536ca2b3e6aa8a04a5",
+        "errors": [
+          "1:7-1:9",
+          "1:36-1:38"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "407676da0e395ca10525360c7301070029a520aa063f8764800741bce65de9fb",
+        "errors": [],
+        "missing": [
+          "identifier 1:9",
+          "\"=>\" 1:10",
+          "unnamed_token 1:10",
+          "identifier 1:10",
+          "\"notation\" 1:10"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/organization.txt/12",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "dc4dca6203f1f8742bb95b7005fb21e8ef8bd2bde03a530a966c3e5697ee1ca2",
+        "errors": [
+          "1:0-1:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "8799f2e934e96508fd3f331605e2ad0fb2bfce6119d48cfe27d73dbad520d376",
+        "errors": [],
+        "missing": [
+          "\"(\" 1:8",
+          "identifier 3:0",
+          "\")\" 3:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/organization.txt/13",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "b2214e087c6a7e58394283dc17e4a681f66b069656ace8901a5a6273135d8ac5",
+        "errors": [
+          "1:0-1:10"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "6c4d1547d271df713eb56ced99a2f8672f7dd6150baa373de5627ad8c9f01c00",
+        "errors": [
+          "1:9-1:10"
+        ],
+        "missing": [
+          "\"[\" 1:8",
+          "escaped_identifier 1:9",
+          "\"]\" 1:9"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/strings.txt/6",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "f4fe819e5f9dd59953bbce3c98e775824ecef0651291282437866ac54248a94f",
+        "errors": [
+          "1:6-1:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "e647ecf1ea8886ef7906951818841394f16705c781318fb5a0256b95032a3d3f",
+        "errors": [
+          "1:8-1:9"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/structures.txt/3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "76e7979a94ebfab4130387ac390398556a3fb6796663d35f31ac78c10d04c56a",
+        "errors": [
+          "1:34-1:35"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "7099b668e63f6c2e22928aaee624fc45459a5962d6f9da5f77e03e0c69c0c603",
+        "errors": [],
+        "missing": [
+          "identifier 1:35"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/structures.txt/4",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "ef4268f6d818286f9ef1fbe324b960f454a8f50679e5e80a7ab5b677a49a653d",
+        "errors": [
+          "4:25-4:28",
+          "5:21-5:23",
+          "6:8-6:9",
+          "6:13-6:15",
+          "6:18-6:19",
+          "6:23-6:25"
+        ],
+        "missing": [
+          "identifier 1:16",
+          "identifier 2:16",
+          "identifier 3:17",
+          "identifier 5:11",
+          "\"⟩\" 6:27"
+        ]
+      },
+      "native": {
+        "cstSha256": "aac909b5ebfb8ce55d4326907ab6c5475fd8b75421573c9e1d487eea3ad79515",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 1:16",
+          "\"\\\"\" 7:0",
+          "\")\" 7:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/syntax.txt/1",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "a611866cb642db7fd1da081d7cac82869d97783846fe4fb64d0c481bf297aa1f",
+        "errors": [
+          "2:2-2:3",
+          "3:2-3:3"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "914d57e5e7b29b2fa3c4194fed719c8f8cdcf53071d75fd552a61ed9b405bdcd",
+        "errors": [
+          "2:2-2:3",
+          "3:2-3:3"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/syntax.txt/3",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "6b531b6825f46c45ab4f6577d233db46744858df13920c0076f27fb213d02cdd",
+        "errors": [
+          "1:12-1:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "79cdcf44032e544375963d6c68d541502876923ef90e73631ae0591f2fecd501",
+        "errors": [
+          "1:12-1:13"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/syntax.txt/4",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "180ae2e847ef8fa0102514beb8052a85ebe4cb383f7e7542f15446e669410bfa",
+        "errors": [
+          "1:12-1:13",
+          "1:18-1:19"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "08fea698d248a2073842ae6b3c80f37f365aea538d8237ea36eaa1ca46a8636c",
+        "errors": [
+          "1:12-1:24"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/syntax.txt/5",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "c89ca3dec1f91256cb2e36eb70b1f2b11087cd551715cd5c9eb9ce49d22d3432",
+        "errors": [
+          "1:6-1:7",
+          "2:5-2:6",
+          "3:6-3:7",
+          "4:6-4:7",
+          "5:7-5:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "c2278dfe40e1db9af9e0fbfc32f6fcd54fff38c4571666f31c4de763735f6031",
+        "errors": [
+          "1:7-4:23",
+          "5:7-5:8"
+        ],
+        "missing": [
+          "unnamed_token 1:7"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "corpus/syntax.txt/6",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "df0560d7f98ebd2d09a13747f3a8700c44b90882ee96fe1890133d5ed8ba6d20",
+        "errors": [
+          "1:19-1:20",
+          "1:25-1:26",
+          "2:18-2:19",
+          "2:24-2:25",
+          "4:20-4:21",
+          "5:19-5:20",
+          "11:0-11:1",
+          "13:0-13:1",
+          "18:13-18:14",
+          "19:12-19:13",
+          "20:13-20:14",
+          "21:13-21:14",
+          "22:14-22:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "9dc6050a5d80a6ecf5a7981a70541c2a94302ed1ea5a1fc6f2db3538452861e9",
+        "errors": [
+          "1:19-22:6",
+          "22:14-22:15"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "project/Dvd.lean",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "4a83666312c30a96878db61634727c73022fa452f54c73861873a754c697b476",
+        "errors": [
+          "25:44-25:47",
+          "25:44-25:47",
+          "25:61-25:64",
+          "25:61-25:64",
+          "26:9-26:12",
+          "26:9-26:12",
+          "26:15-26:18",
+          "26:15-26:18",
+          "27:12-27:15",
+          "27:12-27:15",
+          "27:41-27:44",
+          "27:41-27:44",
+          "28:44-28:48",
+          "28:44-28:47",
+          "28:49-28:53",
+          "28:49-28:52",
+          "33:0-34:15",
+          "39:0-40:15",
+          "43:2-43:5",
+          "43:18-43:20",
+          "43:22-43:23",
+          "46:46-46:49",
+          "46:46-46:49",
+          "48:42-48:45",
+          "48:42-48:45",
+          "48:59-48:62",
+          "48:59-48:62",
+          "49:2-49:30",
+          "49:18-49:20",
+          "49:22-49:25",
+          "49:43-49:45",
+          "49:47-49:51",
+          "49:47-49:50",
+          "52:18-54:43",
+          "54:25-54:28",
+          "69:19-69:20",
+          "72:11-72:13",
+          "76:14-76:17",
+          "76:14-76:17",
+          "76:46-76:49",
+          "76:46-76:49",
+          "77:11-77:14",
+          "77:11-77:14",
+          "77:47-77:50",
+          "77:47-77:50",
+          "78:15-78:18",
+          "78:15-78:18",
+          "78:21-78:24",
+          "78:21-78:24",
+          "78:69-78:72",
+          "78:69-78:72",
+          "78:99-78:102",
+          "78:99-78:102",
+          "81:78-81:81",
+          "81:78-81:81",
+          "87:68-88:5",
+          "88:17-88:19",
+          "88:21-88:25",
+          "113:40-114:6",
+          "114:18-114:20",
+          "119:54-120:5",
+          "120:17-120:19",
+          "127:32-127:35",
+          "127:32-127:35",
+          "127:49-127:52",
+          "127:49-127:52",
+          "129:27-129:30",
+          "129:27-129:30",
+          "131:47-131:50",
+          "131:47-131:50",
+          "134:28-135:5",
+          "135:18-135:20",
+          "138:18-138:20",
+          "139:10-139:11",
+          "139:28-139:30",
+          "142:11-142:14",
+          "142:11-142:14",
+          "159:40-159:43",
+          "159:40-159:43",
+          "161:82-162:33"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "4cef4316d664490b7a477443de4f47b6a0f4693d7ca8d2327207d261d11fdcd1",
+        "errors": [
+          "0:0-178:0"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "lean-unicode-lambda-and-arrows",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "e9c36d28d7a43fbd2d9d36b1f6d9430c74501456b9dabd7a44fa29ca7e3e3898",
+        "errors": [
+          "0:23-0:36",
+          "0:29-0:32",
+          "0:29-0:32"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "e078fd8a9b516a091d692ba592bae39f7eea9e8b0283ee43de8dd5a1fd612a02",
+        "errors": [
+          "0:29-0:32"
+        ],
+        "missing": [
+          "\"=>\" 0:28",
+          "unnamed_token 0:29"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "lean-missing-body",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d092a6658c27e973192dadd506bf0c391871a871263affd772087c121152f556",
+        "errors": [
+          "1:6-1:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3ace16a3fd706c6b7e4a3793092acce2737c5b80e9b677b30c343af4e6161260",
+        "errors": [
+          "1:6-1:7"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "lean-stray-token-with-unicode",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "3a2c0ddcf43c32d56d669a3c903b180ac4a009c5a4b63a9e8ccfb1d7872de313",
+        "errors": [
+          "0:12-0:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "d20bb1a9b27f334c2f7f0e23efd03796ab763569c6504b79fbf6c017d5868cdc",
+        "errors": [],
+        "missing": [
+          "\"⟨\" 0:11"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "lean-truncated-match",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "385b93e37fc3e695599ac5c5da62c75d01eea94cb77bae7d6ec1734d78619351",
+        "errors": [],
+        "missing": [
+          "identifier 1:8"
+        ]
+      },
+      "native": {
+        "cstSha256": "5c18f46a831e5a27cf6e73f42d2bda0e26ad7750f7e3f800ff9e91be99573dd3",
+        "errors": [],
+        "missing": [
+          "unnamed_token 1:8",
+          "identifier 1:8"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "error-recovery/lean-import-without-module",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "cac430864c14e47f58f9d1dd307d7908787fbcef685c281cb19bba18e7d04571",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "ddf97eb5a1a5707e5c12d34d7727623d42523e8e78243ad937c1437954283c8d",
+        "errors": [],
+        "missing": [
+          "identifier 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "error-recovery/lean-prelude-import-without-module",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "378428eb7a47e4ab89a82b30387d6a71696b730c1969966521c77e3119a01aa8",
+        "errors": [
+          "2:0-2:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "7a20cc63a30c45a02b84739ffe3e8b8e2db4f81173d1e395b990500ea21a1cad",
+        "errors": [],
+        "missing": [
+          "identifier 2:6"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "conformance",
+      "case": "mixed/markdown-fences-with-malformed-code/2",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "f2a3aaf27a3432c8eef7b307c14dbc3b9dc0e987cebeadfc7ed69ab70d30a646",
+        "errors": [],
+        "missing": [
+          "identifier 12:0"
+        ]
+      },
+      "native": {
+        "cstSha256": "be6763987a1a8f9afcc3be7ccf7013c54083d06bb67a05152458df042c8950aa",
+        "errors": [],
+        "missing": [
+          "identifier 12:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/1",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "4d7e4a11d8399b260bbd2c3b8120dd2cbfadbe34c6c613d53f7d57134ea516f5",
+        "errors": [
+          "8:0-10:3",
+          "8:0-8:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "390a99e6d1706d4bcabcb7ed2888b72538141660b50d6eab36f0091a6dafe97a",
+        "errors": [
+          "8:0-10:3"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/2",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "448159e911564f734cd0a885f9ab26a2a59e64947d679c467bf37e403611f189",
+        "errors": [
+          "7:19-7:20",
+          "7:25-7:26",
+          "8:18-8:19",
+          "8:24-8:25",
+          "10:20-10:21",
+          "11:19-11:20",
+          "17:0-17:1",
+          "19:0-19:1",
+          "24:13-24:14",
+          "25:12-25:13",
+          "26:13-26:14",
+          "27:13-27:14",
+          "28:14-28:15"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "c8cab9aa8f0b357120975c6498681859959fc20f624b79d99ff9e194b0c5087a",
+        "errors": [
+          "7:19-28:6",
+          "28:14-28:15"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/3",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "99de8ecb73c5b92556ccfb22c007143a99c1fe897a622c9a49cdcf3c5e2e3a92",
+        "errors": [
+          "1:7-1:9",
+          "1:36-1:38",
+          "8:0-8:2",
+          "8:0-8:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "2906759df23bb1b65a69abab734699ec7bc5865be105679b1cb3d1f326d25f36",
+        "errors": [
+          "1:10-8:2"
+        ],
+        "missing": [
+          "identifier 1:9",
+          "\"=>\" 1:10",
+          "unnamed_token 1:10",
+          "identifier 1:10"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/4",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "b681b416ce38b625d4e9ebde2960e37ae6cf3a4b59bda7487d8396a92a4ff06f",
+        "errors": [
+          "5:0-5:3",
+          "5:0-5:3"
+        ],
+        "missing": [
+          "identifier 6:5"
+        ]
+      },
+      "native": {
+        "cstSha256": "a9268afbdc6ebb3ff11f35010f4d01cab8a481407e9b9de19be3e02e0fa9c524",
+        "errors": [
+          "5:0-6:1"
+        ],
+        "missing": [
+          "\"constant\" 3:37"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/6",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "e729aed4465c05bbb73b1137f75ac70671f110f417266dbecb8655cbe09caa79",
+        "errors": [
+          "1:26-1:28",
+          "3:9-3:10",
+          "5:2-5:3",
+          "5:6-5:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "b3ad6b4fbf84fc3c93523d7f0ab2beb5eb464d9757b7819d2ef0c1182af66178",
+        "errors": [
+          "1:26-5:3"
+        ],
+        "missing": [
+          "\"fun\" 1:25"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/7",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "a4c6c740fe4a30302ef6ae93d2f7538595ae50152e85d9e591934cb5cbe7231a",
+        "errors": [
+          "4:0-4:1",
+          "4:4-4:6",
+          "5:0-5:2",
+          "5:0-5:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "686c89d4f645318385f8a073986534a3ef243c9cd809ee4a20ee989a2aeb7533",
+        "errors": [
+          "4:0-5:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/10",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "1fc334aad718292577231746762e5b77747256bbdedbc0d0c9c246fd359fa72b",
+        "errors": [
+          "4:0-4:3",
+          "4:0-4:3"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "49b121ada2ef6718c455343d2221c15fa407b11c95c0e1ad358d86651248eaa5",
+        "errors": [
+          "4:0-4:3"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/11",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "37a371793a9e116a89860bfed925c4b06950624729b58b8718652ca9f2c55821",
+        "errors": [
+          "1:7-1:13",
+          "2:7-2:16",
+          "3:7-3:23",
+          "4:7-4:15",
+          "7:6-7:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3421ce88b6fb59adec307982b119a298c3d46d41de60720ed651afdc075a5cee",
+        "errors": [
+          "7:8-7:9"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/13",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "2cb619ce8413fb24b47274f62f1bd78a038c7b6ed57037251a3410b9c44f3dd1",
+        "errors": [
+          "37:12-37:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "0dcbb6739bb47cc3e5459dceb2b5aea863cc5fcf75bd672682b869819f58472f",
+        "errors": [
+          "37:12-37:13"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/14",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "2e9e0d04bed25dc1498bd70ad3b46fe9729eaf01477e09034f1e23da2e122aeb",
+        "errors": [
+          "2:0-2:2",
+          "2:0-2:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "94395a8a61d66211948045d04beb5f227eddfac68774df4cd53e8a72a33166cf",
+        "errors": [
+          "2:0-2:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "property/15",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "0f157ab76691f9247a2df2e0eec73e4e23ba555be08cb51c410d4d69cb3f7c1b",
+        "errors": [
+          "3:0-3:2",
+          "3:0-3:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "0be3dd7e0abcdb0b5a59e43aadb7cf4e55696d55ffd969da0bfd14c3febaad1b",
+        "errors": [
+          "3:0-3:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/0",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "f81791090de8837e5ea262e780f4fe3d41568c602623c6bbe939f833a32e5081",
+        "errors": [
+          "1:4-1:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "bbacaf7b363697238f8593e43c0706c0c1045fc5555bb5f1555a0a0f9b99afc9",
+        "errors": [
+          "1:4-1:5"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "e33361eaa378ed4efec098460f9d3aa3dc65850cbd8edc95c05c3cf8155115f8",
+        "errors": [
+          "1:7-1:9",
+          "1:14-3:2",
+          "1:17-1:19",
+          "2:0-2:1",
+          "2:4-2:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "47c9fcafbcc6ebe1f1ce6e773aac68d409dc227c25749ede99a433a9d827f57b",
+        "errors": [
+          "1:8-2:1",
+          "3:0-3:1"
+        ],
+        "missing": [
+          "\"fun\" 1:8"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "753750d166d00cbf12c3b4c5b8f46c02e7a582f20598a4b4bffd7701561d4cf0",
+        "errors": [
+          "1:0-1:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "78c2dc400e83211404d82ebb811adc66a2da7256215078ce8fe88633703f8c77",
+        "errors": [],
+        "missing": [
+          "\":=\" 1:5",
+          "identifier 1:5"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/4",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "16fcf75618c7508ce65556d6e82304d264e47d17d46acb753bd283810a85f3c5",
+        "errors": [
+          "5:0-16:0"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "1b395296fe775b36286dd6edcdd31b514d163b116f0438f54d3bd7c2e683d326",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 16:0",
+          "\":=\" 16:0",
+          "unnamed_token 16:0",
+          "identifier 16:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/5",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "8f147e42fcc310e37f93082dfa7e3ad174c281b1c911b99dfd95f10b2e7f146d",
+        "errors": [
+          "1:9-1:10",
+          "2:7-2:16",
+          "3:5-3:17",
+          "4:7-4:16"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "30c77a9a5502c93bfc0c5fef5230bffc85ace6161d877571dd98a7875a47f5fb",
+        "errors": [
+          "1:9-4:12"
+        ],
+        "missing": [
+          "unnamed_token 1:9",
+          "identifier 1:9"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/8",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "555da0d89c849459911fe754b94142bc111db4607c4a5e8bd53baf310a568ace",
+        "errors": [
+          "1:3-1:4"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3a35edadc18321808e381c36ba119c6df822bd5bbf85b723d668e55c432a1bdb",
+        "errors": [
+          "1:3-1:4"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/9",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "8d71f402f297db963acc74406e22139f806bdf475ddf3f03310922ae35f8280b",
+        "errors": [
+          "3:12-3:13",
+          "3:16-3:18",
+          "4:12-4:13",
+          "4:16-4:18"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "c03ed7b0829dff69b70f9ead65d5a082a468f1572b0cf1352fe0e3e3d9100775",
+        "errors": [],
+        "missing": [
+          "\"have\" 3:11",
+          "\"have\" 4:11"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/12",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "aab436401de60e4a7af8dc09513785e172c7fed4d9f5cf59f87ebc4ca65ca00f",
+        "errors": [
+          "1:21-1:39",
+          "1:21-1:39",
+          "1:44-1:45"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "932514d6c88094bd10a4cd1cdc814685c2d383cdd84743d099013547e99491bf",
+        "errors": [
+          "1:21-1:39"
+        ],
+        "missing": [
+          "\"extends\" 1:21"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/13",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "5df8e26ff2acd07e1c532711a2b5ea0fab3829d164290591a6fc259dbd01432b",
+        "errors": [
+          "3:2-3:5",
+          "4:9-4:12"
+        ],
+        "missing": [
+          "identifier 5:14"
+        ]
+      },
+      "native": {
+        "cstSha256": "c112ba36eff6ddecdc7ab58218772f3a5dba349924a9ad326f0d36d19ff3b8c6",
+        "errors": [
+          "4:1-4:4"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/15",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "064e9892bbf15b1f5ee9da29317c2c4a448337cf7740c07a4d42436438446ecd",
+        "errors": [
+          "0:4-0:5",
+          "0:12-0:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "113ca14693cd288eeb5d9fa0c886b9f946a1141e11274381363f542c1a1da4e0",
+        "errors": [
+          "0:4-0:33"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/16",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "4b05de16e8b7d8905141fbedf36e4a8c5fccc6ce7b7f3a8dc577260d97fa0a19",
+        "errors": [
+          "1:0-1:29"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "1ae9e4754b6919d1303a5825e4c6613bcebae6582d359a6e6728d875d80d74ad",
+        "errors": [],
+        "missing": [
+          "\"constant\" 1:23"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/17",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "b31dea76eb04e58fdef3aeae4611d6795a1a82688c351a5d9b1346cf8e04ce04",
+        "errors": [
+          "1:7-1:9"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "4685db84da2fb39f17c50712f471a437df77b0b714de390eb042520505e600f7",
+        "errors": [
+          "1:7-1:8"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/18",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "6dba04086274eb2f1db6ec512bcaedd00bba70c339ab586e7bee2a5abc0b0cfa",
+        "errors": [
+          "2:9-2:18",
+          "2:9-2:11",
+          "3:7-6:27",
+          "3:17-3:18",
+          "4:5-4:6",
+          "4:11-4:13",
+          "4:22-4:25",
+          "5:23-5:25",
+          "6:8-6:9",
+          "6:13-6:15",
+          "6:18-6:19",
+          "6:23-6:25"
+        ],
+        "missing": [
+          "identifier 1:16"
+        ]
+      },
+      "native": {
+        "cstSha256": "aac909b5ebfb8ce55d4326907ab6c5475fd8b75421573c9e1d487eea3ad79515",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 1:16",
+          "\"\\\"\" 7:0",
+          "\")\" 7:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/19",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "0851ac036e646083dc869e87ffd7c96b93f1d3489718e0a2f8fd351913ec158d",
+        "errors": [
+          "1:13-1:14"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "275b198665f92038cbc3b19fd556690b415e3c6c3ae7ee88ed1464a930a40b2d",
+        "errors": [
+          "1:13-1:14"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/20",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "08cb4f8808c89bba3d664c43823acdf3fcaba7cdce28254bedb946dcadd980e8",
+        "errors": [
+          "2:18-2:24"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "6c2a6938c319ec761c06337e5c32b8f708a79af2b5d45436f5f6f4947643b5d4",
+        "errors": [
+          "2:18-2:19",
+          "2:23-2:24"
+        ],
+        "missing": [
+          "\"constant\" 2:17"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/21",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "1b9c7d1aa962fdddecffd17f0495172b8ca7ca8bd38cf5dbb026e6cd16207fb3",
+        "errors": [
+          "0:0-0:1",
+          "0:5-0:6",
+          "1:6-1:11"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "16b0f378f9d1740d0346888eb752aab19e18b51ce3ef2dbd3e4b6073130f4485",
+        "errors": [
+          "0:0-1:8"
+        ],
+        "missing": [
+          "\"⟨\" 0:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/22",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "dc7343c54738ecb83409119340deee4fd42afe3cd61419cb969febf14d916df2",
+        "errors": [
+          "4:25-4:28",
+          "5:21-5:23",
+          "6:8-6:9",
+          "6:13-6:15",
+          "6:18-6:19",
+          "6:23-6:25"
+        ],
+        "missing": [
+          "identifier 1:20",
+          "identifier 2:16",
+          "identifier 3:17",
+          "identifier 5:11",
+          "\"⟩\" 6:27"
+        ]
+      },
+      "native": {
+        "cstSha256": "b244a130e19f5c14ebd6524a70e20e339d6b1b615febe6afd76ebd99a054980e",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 1:20",
+          "\"\\\"\" 7:0",
+          "\")\" 7:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/24",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "3f946d9dcb7e328a1f1e32458a5afab3b5ea4a499e2947cca3251e7734067d21",
+        "errors": [
+          "1:0-1:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "ec8ed8a3deac5ef794919833a2e533d07f461581b8ccf13593d4ce20e3666e58",
+        "errors": [
+          "1:0-1:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/25",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "895629a172761e207007706e5907674334b76a1ee5668f00ae42812c8b9b55c9",
+        "errors": [
+          "1:8-1:10",
+          "1:14-1:18",
+          "1:22-1:23",
+          "2:8-2:9",
+          "2:19-2:20",
+          "3:8-3:9",
+          "3:20-3:21",
+          "3:23-3:24"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "884824dfc647a31392c118102a89e27c5568d216c5dd6f3cd363559f094a27ea",
+        "errors": [
+          "1:8-3:13",
+          "3:17-3:21",
+          "3:23-3:24"
+        ],
+        "missing": [
+          "\"⟨\" 3:23"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/26",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "be871abf549489624c919ab76876fc96c27ed5717190197fa146bedf874521e2",
+        "errors": [
+          "2:13-2:16"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "e42b605a8a2772b20d0288f02aac874419e93c6cf18a3ba5bac0355f2c3d5d0b",
+        "errors": [
+          "2:13-2:18"
+        ],
+        "missing": [
+          "\"(\" 2:12"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/27",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "8920cf175b5841807fb594d1b93a1fc20aef00cf3c8a3256d49027b15eba2911",
+        "errors": [
+          "0:0-0:1"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "1612566c89c0d0eb5b95f60f35d78e295673bd8c1939d8abac54bb66bd8191b8",
+        "errors": [],
+        "missing": [
+          "\")\" 0:1"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "fuzz/29",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "1877253fbacc47dccbcaf5a67c90c6f98170726ca9243588ee9ca9e60ebf0141",
+        "errors": [
+          "1:15-2:0"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "0f2da98bc2df1130f024c2999f9a33154f08ffb413763332bad412e0e590e5ed",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 2:0",
+          "\"}\" 2:0",
+          "\"\\\"\" 2:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "metamorphic/0/prepend-blank-lines",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d092a6658c27e973192dadd506bf0c391871a871263affd772087c121152f556",
+        "errors": [
+          "1:6-1:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3ace16a3fd706c6b7e4a3793092acce2737c5b80e9b677b30c343af4e6161260",
+        "errors": [
+          "1:6-1:7"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "metamorphic/0/prepend-blank-lines (variant)",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d420bca18fe4cefe4e31fdd60dab6c2c073c6ef0092d6e60690b04c1b9d346fe",
+        "errors": [
+          "3:6-3:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "dc2ade37f20ab8e9985343a184e759ca5cb4a78a9ba6002a717c0b4e3f005ba4",
+        "errors": [
+          "3:6-3:7"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "metamorphic/0/crlf",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d092a6658c27e973192dadd506bf0c391871a871263affd772087c121152f556",
+        "errors": [
+          "1:6-1:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3ace16a3fd706c6b7e4a3793092acce2737c5b80e9b677b30c343af4e6161260",
+        "errors": [
+          "1:6-1:7"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "metamorphic/0/crlf (variant)",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "d092a6658c27e973192dadd506bf0c391871a871263affd772087c121152f556",
+        "errors": [
+          "1:6-1:8"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3ace16a3fd706c6b7e4a3793092acce2737c5b80e9b677b30c343af4e6161260",
+        "errors": [
+          "1:6-1:7"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/0 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "643256bb45b1e164728dbf831ce354a33a55bdf1fdb19d5d0eda10062d1951c7",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3c58f33a68fd6e69113820e93d64e48e2312c287b834e275a70c8d4680766132",
+        "errors": [],
+        "missing": [
+          "\"notation\" 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/0 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "643256bb45b1e164728dbf831ce354a33a55bdf1fdb19d5d0eda10062d1951c7",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "3c58f33a68fd6e69113820e93d64e48e2312c287b834e275a70c8d4680766132",
+        "errors": [],
+        "missing": [
+          "\"notation\" 1:6"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/1 step 1",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "374d78f2c8884e813543a5e92bb0161556f38ad4301fc5272e76af7c47d46829",
+        "errors": [
+          "1:15-1:33",
+          "1:15-1:33"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "9c6525829df5cf8b51e88032a2dbbc9f9dee93e17955ab32aef707d72d812061",
+        "errors": [
+          "1:15-1:33"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/1 step 3",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "86ba4c749e4d4f5c3169b98484da31e4be2678200ffdefeba30091f03413b167",
+        "errors": [
+          "1:15-1:16"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "8d1a4cd496620238c389e35ccb8745e152b7f2146a836f22b7a87383c00b92bc",
+        "errors": [
+          "1:15-1:16"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/2 step 0",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "d1760bdf279e982150fe62f61a3571d43e715fe39b01a74e43b273372e9c97e7",
+        "errors": [
+          "1:7-1:13",
+          "1:7-1:13"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "af12ce5c89a2c4e7379cfb672a01a591fcec7dcc7b8d7d13d2f326b39101f09d",
+        "errors": [
+          "1:7-1:13"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/2 step 3",
+      "category": "same-skipped-bytes",
+      "oracle": {
+        "cstSha256": "67ef9c45606baf30a6364e443a61202653006471459f9c87816512d46e5a5155",
+        "errors": [
+          "1:4-1:6",
+          "1:4-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "adf63329e9da28eba91d1a39e8cf88b6d948ad7ee10e8c03f40212fe109df54a",
+        "errors": [
+          "1:4-1:6"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "ef4268f6d818286f9ef1fbe324b960f454a8f50679e5e80a7ab5b677a49a653d",
+        "errors": [
+          "4:25-4:28",
+          "5:21-5:23",
+          "6:8-6:9",
+          "6:13-6:15",
+          "6:18-6:19",
+          "6:23-6:25"
+        ],
+        "missing": [
+          "identifier 1:16",
+          "identifier 2:16",
+          "identifier 3:17",
+          "identifier 5:11",
+          "\"⟩\" 6:27"
+        ]
+      },
+      "native": {
+        "cstSha256": "aac909b5ebfb8ce55d4326907ab6c5475fd8b75421573c9e1d487eea3ad79515",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 1:16",
+          "\"\\\"\" 7:0",
+          "\")\" 7:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/3 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "4b2c0d977326dd7f6db50fa3beb0b024983e2fc2526582a0a53a4a0135527912",
+        "errors": [
+          "2:7-2:18",
+          "4:25-4:28",
+          "5:21-5:23",
+          "6:8-6:9",
+          "6:13-6:15",
+          "6:18-6:19",
+          "6:23-6:25"
+        ],
+        "missing": [
+          "identifier 1:16",
+          "identifier 3:17",
+          "identifier 5:11",
+          "\"⟩\" 6:27"
+        ]
+      },
+      "native": {
+        "cstSha256": "aac909b5ebfb8ce55d4326907ab6c5475fd8b75421573c9e1d487eea3ad79515",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 1:16",
+          "\"\\\"\" 7:0",
+          "\")\" 7:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/3 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "b5062c958561b80f5662acad1be75f26b2bdab84e12d4e811c21bc536068eba9",
+        "errors": [
+          "2:7-2:18",
+          "4:25-4:28",
+          "5:5-5:6",
+          "5:16-5:18",
+          "6:8-6:9",
+          "6:13-6:15",
+          "6:18-6:19",
+          "6:23-6:25"
+        ],
+        "missing": [
+          "identifier 1:16",
+          "identifier 3:17",
+          "\"⟩\" 6:27"
+        ]
+      },
+      "native": {
+        "cstSha256": "aac909b5ebfb8ce55d4326907ab6c5475fd8b75421573c9e1d487eea3ad79515",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 1:16",
+          "\"\\\"\" 7:0",
+          "\")\" 7:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/3 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "99a9b2f6c5cd36eae92a392807803c426338b4bff6398d29e049e27e1f9e097d",
+        "errors": [
+          "2:7-2:17",
+          "2:10-2:14",
+          "3:25-3:28",
+          "4:5-4:6",
+          "4:16-4:18",
+          "5:8-5:9",
+          "5:13-5:15",
+          "5:18-5:19",
+          "5:23-5:25"
+        ],
+        "missing": [
+          "identifier 1:16",
+          "identifier 2:28",
+          "\"⟩\" 5:27"
+        ]
+      },
+      "native": {
+        "cstSha256": "e5072e0017c88739a1f2ad4851b95169df9cc594f9a9d8a72d64fb627c750897",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 1:16",
+          "\"\\\"\" 6:0",
+          "\")\" 6:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/3 step 3",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "80004f414a588fda840d0910361d0dd95adc8f749f0a4f7bb24ad853bddddab0",
+        "errors": [
+          "1:0-5:0",
+          "1:17-1:20",
+          "2:8-2:9",
+          "2:14-2:16",
+          "2:25-2:28",
+          "3:5-3:6",
+          "3:16-3:18",
+          "4:8-4:9",
+          "4:13-4:15",
+          "4:18-4:19",
+          "4:23-4:25"
+        ],
+        "missing": [
+          "identifier 1:38"
+        ]
+      },
+      "native": {
+        "cstSha256": "e589b0b085c1882d6cd958aa478d33876b8bb4d1e9c5235c365230aa5af79447",
+        "errors": [
+          "1:20-4:19",
+          "4:21-4:24"
+        ],
+        "missing": [
+          "\"=>\" 4:21",
+          "unnamed_token 4:21",
+          "identifier 4:21",
+          "\")\" 4:21"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/4 step 1",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "3819c0ed61be0de46531fba64ab74de453ea4cf7042b9da31447039a49d948d7",
+        "errors": [
+          "2:3-2:5"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "f58d9e6077a410a76dcda9f3e4f9bdf408d306d8d7b0745dbfce59e7d6abe134",
+        "errors": [
+          "2:3-2:5"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/5 step 0",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "69bf7f0018b2039b596a8ba4d182b4fe5aaf79b4cdebc0ffa0f6c21bbd103a46",
+        "errors": [
+          "1:11-1:12"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "e796b74ebfba2b0ab83d3058df332ecca49202a7eb15bf24478da363c30432b2",
+        "errors": [
+          "1:11-1:12"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/5 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "240929f62219bbf92f18b8aaa02a52ec0f21f78e5f9ff3dc0292a85b6a00ca65",
+        "errors": [
+          "1:0-1:4"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "687a062cb781edd85e91839b030630644408726fc03e17b93717622035e326cd",
+        "errors": [],
+        "missing": [
+          "\"constant\" 1:4"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/5 step 2",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "406a96f99e4a76055e79a417e640dab3fb53eae3dbb85aba0706ad5ec64bf944",
+        "errors": [
+          "1:1-1:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "1ee1741d010ec32c34bc81e43096bd67b537cd3a2b61994f2e5439a0edc11b2c",
+        "errors": [
+          "1:1-1:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/5 step 3",
+      "category": "same-repair-sites",
+      "oracle": {
+        "cstSha256": "53f050f9f702e637b21b0b0b50b520dceeb1bb46adcaff90052561ba65e0f19a",
+        "errors": [
+          "1:1-1:2"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "75f167a469d6d3f53689a86ed9d832e3c4e82e1258f6e29c1b179ca939ed08be",
+        "errors": [
+          "1:1-1:2"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/7 step 0",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "6e15fd5a3329173f884ac54c073b14293ae84e0fa15e8b3316c30b21a3c48dec",
+        "errors": [
+          "21:0-21:10"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "2206cb75a535321767230422df976ee5fa8aa8dbcc017ec0374557cc4a4d39b8",
+        "errors": [],
+        "missing": [
+          "\"do\" 21:18",
+          "unnamed_token 21:19",
+          "\"have\" 21:19"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/7 step 1",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "4a62d9f73d37d3e5befb2f7b040d22848d94558de86c9bb238986496f8e478c4",
+        "errors": [
+          "7:0-27:35",
+          "7:27-7:28",
+          "11:30-11:31",
+          "13:28-13:29",
+          "15:19-15:20",
+          "15:34-15:36",
+          "17:23-17:24",
+          "17:37-17:39",
+          "19:20-19:21",
+          "19:28-19:30",
+          "21:19-21:20",
+          "21:27-21:29",
+          "23:22-23:23",
+          "23:30-23:32",
+          "25:26-25:27",
+          "27:30-27:31"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "877af08711349b517163aa6f9cb976d32c72db310be930127e1604af631fa35f",
+        "errors": [],
+        "missing": [
+          "\"\\\"\" 7:26",
+          "\"\\\"\" 28:0",
+          "\":=\" 28:0",
+          "unnamed_token 28:0",
+          "identifier 28:0"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/7 step 2",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "fbc8ae362cdd92c297bfdd3205a6928d1d4c75d4fa16a60afa30476e97104d9b",
+        "errors": [
+          "3:0-3:11",
+          "3:4-3:8",
+          "7:0-27:35",
+          "7:27-7:28",
+          "11:30-11:31",
+          "13:28-13:29",
+          "15:19-15:20",
+          "15:34-15:36",
+          "17:23-17:24",
+          "17:37-17:39",
+          "19:20-19:21",
+          "19:28-19:30",
+          "21:19-21:20",
+          "21:27-21:29",
+          "23:22-23:23",
+          "23:30-23:32",
+          "25:26-25:27",
+          "27:30-27:31"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "562266c811348658f56571eb590a69389b7a4dc08d6c9b38a31a4da250dfa179",
+        "errors": [
+          "3:4-9:20",
+          "11:0-15:36"
+        ],
+        "missing": [
+          "\"fun\" 3:4",
+          "\"=>\" 9:26",
+          "unnamed_token 11:0",
+          "\"do\" 21:18",
+          "unnamed_token 21:19",
+          "\"have\" 21:19"
+        ]
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "edit/7 step 3",
+      "category": "native-skips-more",
+      "oracle": {
+        "cstSha256": "3c78094b8a1eacedad7d66a09f3353b0af6ffb797524f9d439324fe6023888a4",
+        "errors": [
+          "3:0-3:11",
+          "3:4-3:8",
+          "7:0-11:19",
+          "7:27-7:28"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "c8e39f48ced97cc80dd6628466d3bfd2f6e6d135394a9d93dee4936048100632",
+        "errors": [
+          "0:0-11:19"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "language": "Lean",
+      "suite": "generative",
+      "case": "reproducer/lean-import-without-module",
+      "category": "oracle-skips-more",
+      "oracle": {
+        "cstSha256": "cac430864c14e47f58f9d1dd307d7908787fbcef685c281cb19bba18e7d04571",
+        "errors": [
+          "1:0-1:6"
+        ],
+        "missing": []
+      },
+      "native": {
+        "cstSha256": "ddf97eb5a1a5707e5c12d34d7727623d42523e8e78243ad937c1437954283c8d",
+        "errors": [],
+        "missing": [
+          "identifier 1:6"
+        ]
       }
     },
     {

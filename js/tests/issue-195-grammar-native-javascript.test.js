@@ -123,6 +123,13 @@ test('the native JavaScript grammar rejects invalid input the oracle recovers fr
     assert.equal(outcome.ok, false, JSON.stringify(source));
     assert.ok(outcome.rejection, JSON.stringify(source));
   }
+  // The zero-width automatic semicolon before a line break is scanned in the
+  // parse state the keyword `class` after it is lexed in, so a bare `class` is
+  // not read as an identifier.
+  for (const source of ['x\nclass', '\nfunction foo() {}\nclass']) {
+    assert.ok(oracleRecovers(source, 'JavaScript'), JSON.stringify(source));
+    assert.equal(parser.parseTree(source).ok, false, JSON.stringify(source));
+  }
   observe(['nativeJavaScriptRejectsInvalidInput'], context.name);
 });
 

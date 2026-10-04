@@ -227,6 +227,15 @@ fn native_javascript_grammar_rejects_invalid_input() {
         assert!(!outcome.ok, "{:?}", source(case));
         assert!(outcome.rejection.is_some(), "{:?}", source(case));
     }
+    // The zero-width automatic semicolon before a line break is scanned in the
+    // parse state the keyword `class` after it is lexed in, so a bare `class`
+    // is not read as an identifier.
+    for source in ["x\nclass", "\nfunction foo() {}\nclass"] {
+        let outcome = parser
+            .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+            .expect("the parse runs");
+        assert!(!outcome.ok, "{source:?}");
+    }
     observe(
         &["nativeJavaScriptRejectsInvalidInput"],
         "native JavaScript grammar rejects invalid input",

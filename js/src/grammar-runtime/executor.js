@@ -2884,7 +2884,10 @@ export class KeywordLexing {
 }
 
 // The starts of the leaves of a tree that are not trivia, in order, and for
-// each the farthest end of a node that begins with that leaf.
+// each the farthest end of a node that begins with that leaf. A token the
+// external scanner scanned of no width does not count: the parser scanned it
+// before its lexer, in the parse state the next leaf is lexed in (JavaScript's
+// automatic semicolon before a line break and a keyword `class`).
 function treeReach(root) {
   const starts = [];
   const ends = new Map();
@@ -2892,7 +2895,7 @@ function treeReach(root) {
   const pending = [root];
   while (pending.length > 0) {
     const node = pending.pop();
-    if (isTrivia(node)) continue;
+    if (isTrivia(node) || (node.type !== 'node' && node.start === node.end && scannedToken(node) === 1)) continue;
     if (node.type === 'node') {
       open.push(node.end);
       for (let index = node.children.length - 1; index >= 0; index -= 1) pending.push(node.children[index]);

@@ -599,7 +599,11 @@ impl KeywordLexing {
 }
 
 /// The starts of the leaves of a tree that are not trivia, in order, and for
-/// each the farthest end of a node that begins with that leaf.
+/// each the farthest end of a node that begins with that leaf. A token the
+/// external scanner scanned of no width does not count: the parser scanned it
+/// before its lexer, in the parse state the next leaf is lexed in
+/// (JavaScript's automatic semicolon before a line break and a keyword
+/// `class`). It mirrors treeReach in js/src/grammar-runtime/executor.js.
 struct TreeReach {
     starts: Vec<usize>,
     ends: HashMap<usize, usize>,
@@ -612,7 +616,8 @@ impl TreeReach {
         let mut open: Option<usize> = None;
         let mut pending = vec![root];
         while let Some(node) = pending.pop() {
-            if node.trivia {
+            if node.trivia || (node.ty != TreeType::Node && node.start == node.end && node.scanned)
+            {
                 continue;
             }
             if node.ty == TreeType::Node {
