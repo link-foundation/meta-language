@@ -26,7 +26,7 @@ export const TEST_GROUPS = Object.freeze({
   downstream:
     /^(?:downstream-|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:
-    /^(?:cache-|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|dependency-inventory$|dependency-upgrades$|test-groups$)/u,
+    /^(?:cache-|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-inventory$|dependency-upgrades$|test-groups$)/u,
 });
 
 export function testFiles(root = packageRoot) {
