@@ -749,14 +749,17 @@ function extraReduction(a, b, stack, orders, owner = null) {
 // A result whose one meaningful item records that the silent rule `name`
 // reduced it alone: a token as `alone`, and any item, when the precedence
 // orders name the rule (`ranked`), the rule after the inner ones it was
-// reduced to (`reducedTo`); any other result as it is.
-function reducedAlone(result, name, ranked) {
+// reduced to (`reducedTo`), and when a declared conflict names it
+// (`forked`), the rule as one it was reduced to there (`forkedTo`, see
+// `forkedOrder`); any other result as it is.
+function reducedAlone(result, name, ranked, forked = false) {
   const meaningful = result.children.filter((child) => !isTrivia(child));
   if (meaningful.length !== 1) return result;
   const only = meaningful[0];
   const changes = {};
   if (only.type === 'token' && !only.alone) changes.alone = true;
   if (ranked && !only.reducedTo?.includes(name)) changes.reducedTo = [...(only.reducedTo ?? []), name];
+  if (forked && !only.forkedTo?.includes(name)) changes.forkedTo = [...(only.forkedTo ?? []), name];
   if (Object.keys(changes).length === 0) return result;
   const tagged = only.type === 'node' ? copyNode(only, changes) : { ...only, ...changes };
   return copyResult(result, { children: result.children.map((child) => (child === only ? tagged : child)) });
@@ -829,8 +832,22 @@ function forkedOrder(a, b, grammar, bytes = null) {
   let at = 0;
   while (at < first.length && at < second.length && same(first[at], second[at])) at += 1;
   if (at === 0 || at === first.length || at === second.length) return null;
+  // An item one parse reduces to a silent rule a conflict declares and the
+  // other shifts on in its node (Lean's `let x := 2`, whose `x` a `do_let`
+  // reduces to a `pattern` and a `let` takes as its name): the parses fork
+  // there, between that rule and the node's.
+  const enclosing = (list, index) => list.slice(index + 1).find((step) => step.type === 'node' && step.start <= list[index].start && step.end >= list[index].end);
+  for (let index = 0; index < at; index += 1) {
+    const [mine, theirs] = [[first, second], [second, first]].map(([own, other]) => (own[index].forkedTo ?? []).filter((name) => !other[index].forkedTo?.includes(name)));
+    if (mine.length === theirs.length) continue;
+    if (mine.length === 0) mine.push(enclosing(first, index)?.rule);
+    else theirs.push(enclosing(second, index)?.rule);
+    if (grammar.conflicts.some((group) => mine.some((name) => group.has(name)) && theirs.some((name) => group.has(name)))) {
+      return Math.sign((grammar.ranks.get(b.rule) ?? 0) - (grammar.ranks.get(a.rule) ?? 0));
+    }
+  }
   const reductions = (before, other, next) => {
-    const names = (before.reducedTo ?? []).filter((name) => !other.reducedTo?.includes(name));
+    const names = [...(before.reducedTo ?? []), ...(before.forkedTo ?? [])].filter((name) => !other.reducedTo?.includes(name) && !other.forkedTo?.includes(name));
     if (next.type === 'node' && next.end === before.end) names.push(next.rule);
     return names;
   };
@@ -2346,7 +2363,7 @@ export class Executor {
         // An item a silent rule reduces alone records it, for the conflict
         // with a shift where the item is not reduced (see `preferredTokens`
         // and `childParting`).
-        if (!inToken) acted = reducedAlone(acted, rule.nodeKind, this.program.rankedSilent?.has(rule.nodeKind));
+        if (!inToken) acted = reducedAlone(acted, rule.nodeKind, this.program.rankedSilent?.has(rule.nodeKind), this.program.conflicts.has(rule.nodeKind));
         if (!(expected && acted.ambiguous) && !acted.tail) {
           built.push(acted);
           continue;
@@ -2437,6 +2454,9 @@ export class Executor {
     if (scanned === undefined) {
       scanned = this.runScanner(name, start, state, context);
       this.scannerMemo.set(key, scanned);
+      // A trace, off unless a probe sets the array: every scanner run, the
+      // token it was asked for and what it scanned.
+      globalThis.__scanTrace?.push([name, start, context, scanned]);
     }
     if (!scanned) {
       this.fail(start, name);

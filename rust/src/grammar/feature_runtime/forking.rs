@@ -336,11 +336,55 @@ pub(super) fn forked_order(
     if at == 0 || at == first.len() || at == second.len() {
         return None;
     }
+    // An item one parse reduces to a silent rule a conflict declares and the
+    // other shifts on in its node (Lean's `let x := 2`, whose `x` a `do_let`
+    // reduces to a `pattern` and a `let` takes as its name): the parses fork
+    // there, between that rule and the node's.
+    let enclosing = |list: &[Rc<Tree>], index: usize| {
+        list[index + 1..]
+            .iter()
+            .find(|step| {
+                step.ty == TreeType::Node
+                    && step.start <= list[index].start
+                    && step.end >= list[index].end
+            })
+            .and_then(|step| step.rule.clone())
+    };
+    let forks = |own: &Tree, other: &Tree| -> Vec<Name> {
+        own.forked_to
+            .iter()
+            .filter(|name| !other.forked_to.contains(name))
+            .cloned()
+            .collect()
+    };
+    for index in 0..at {
+        let mut mine = forks(&first[index], &second[index]);
+        let mut theirs = forks(&second[index], &first[index]);
+        if mine.len() == theirs.len() {
+            continue;
+        }
+        if mine.is_empty() {
+            mine.extend(enclosing(&first, index));
+        } else {
+            theirs.extend(enclosing(&second, index));
+        }
+        if grammar.conflicts.iter().any(|group| {
+            mine.iter().any(|name| group.contains(name))
+                && theirs.iter().any(|name| group.contains(name))
+        }) {
+            return Some(
+                grammar
+                    .rank(b.rule.as_ref())
+                    .cmp(&grammar.rank(a.rule.as_ref())),
+            );
+        }
+    }
     let reductions = |before: &Tree, other: &Tree, next: &Tree| {
         let mut names: Vec<Name> = before
             .reduced_to
             .iter()
-            .filter(|name| !other.reduced_to.contains(name))
+            .chain(&before.forked_to)
+            .filter(|name| !other.reduced_to.contains(name) && !other.forked_to.contains(name))
             .cloned()
             .collect();
         if next.ty == TreeType::Node

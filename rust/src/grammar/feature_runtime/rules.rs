@@ -371,7 +371,8 @@ impl Executor<'_> {
                 // `preferred_tokens` and `child_parting`).
                 if !in_token {
                     let ranked = self.program.ranked_silent.contains(&*rule.node_kind);
-                    acted = reduced_alone(acted, &rule.node_kind, ranked);
+                    let forked = self.program.conflicts.contains(&*rule.node_kind);
+                    acted = reduced_alone(acted, &rule.node_kind, ranked, forked);
                 }
                 let Some(tail) = acted.tail.clone() else {
                     built.push(Res {

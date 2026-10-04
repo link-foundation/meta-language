@@ -142,6 +142,9 @@ pub(super) struct Tree {
     /// The silent rules the precedence orders name that reduced the item
     /// alone, innermost first (see `child_parting`).
     pub(super) reduced_to: Vec<Name>,
+    /// The silent rules a declared conflict names that reduced the item
+    /// alone, innermost first (see `forked_order`).
+    pub(super) forked_to: Vec<Name>,
     /// A token leaf a silent rule reduced alone (see `preferred_tokens`).
     pub(super) alone: bool,
     pub(super) ambiguous: bool,
@@ -175,6 +178,7 @@ impl Tree {
             reduced: None,
             closes: None,
             reduced_to: Vec::new(),
+            forked_to: Vec::new(),
             alone: false,
             ambiguous: false,
             literal: false,
@@ -581,9 +585,11 @@ fn outranks_at(leaf: &Tree, tokens: TokenOrder<'_>) -> bool {
 /// `result` with its one meaningful item recording that the silent rule
 /// `name` reduced it alone: a token as `alone`, and any item, when the
 /// precedence orders name the rule (`ranked`), the rule after the inner ones
-/// it was reduced to (`reduced_to`); any other result as it is. It mirrors
-/// reducedAlone in js/src/grammar-runtime/executor.js.
-pub(super) fn reduced_alone(result: Res, name: &Name, ranked: bool) -> Res {
+/// it was reduced to (`reduced_to`), and when a declared conflict names it
+/// (`forked`), the rule as one it was reduced to there (`forked_to`, see
+/// `forked_order`); any other result as it is. It mirrors reducedAlone in
+/// js/src/grammar-runtime/executor.js.
+pub(super) fn reduced_alone(result: Res, name: &Name, ranked: bool, forked: bool) -> Res {
     let mut children = result.children.to_vec();
     let mut meaningful = children
         .iter()
@@ -594,13 +600,17 @@ pub(super) fn reduced_alone(result: Res, name: &Name, ranked: bool) -> Res {
     };
     let alone = only.ty == TreeType::Token && !only.alone;
     let reduced = ranked && !only.reduced_to.contains(name);
-    if !alone && !reduced {
+    let fork = forked && !only.forked_to.contains(name);
+    if !alone && !reduced && !fork {
         return result;
     }
     let mut tagged = (**only).clone();
     tagged.alone |= alone;
     if reduced {
         tagged.reduced_to.push(name.clone());
+    }
+    if fork {
+        tagged.forked_to.push(name.clone());
     }
     children[at] = Rc::new(tagged);
     Res {
