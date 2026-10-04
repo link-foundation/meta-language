@@ -212,6 +212,7 @@
     },
     "javascript": {
       "id": "javascript",
+      "oracle": true,
       "crate": "tree-sitter-javascript",
       "directory": ".",
       "version": "0.25.0",

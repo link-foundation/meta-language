@@ -17,7 +17,9 @@ use meta_language::{
 };
 use serde_json::{Value, json};
 
-use super::issue_195_native_grammar_rows::{Rows, cases, leaves, parse, rebuilt, source, text};
+use super::issue_195_native_grammar_rows::{
+    Rows, cases, leaves, oracle_agrees, parse, rebuilt, source, text,
+};
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE_FILE: &str = "parity/fixtures/native-grammars/javascript.json";
@@ -308,4 +310,11 @@ fn native_javascript_trees_keep_every_byte() {
         &["nativeJavaScriptTreesLossless"],
         "native JavaScript trees keep every byte",
     );
+}
+
+#[test]
+fn pinned_javascript_oracle_gives_the_fixture() {
+    // The oracle is a development dependency since the native grammar
+    // replaced it as the default JavaScript parse.
+    oracle_agrees(&tree_sitter_javascript::LANGUAGE.into(), &fixture());
 }

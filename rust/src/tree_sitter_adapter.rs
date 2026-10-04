@@ -465,7 +465,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "hcl" => tree_sitter_hcl::LANGUAGE.into(),
         "html" => tree_sitter_html::LANGUAGE.into(),
         "java" => tree_sitter_java::LANGUAGE.into(),
-        "javascript" => tree_sitter_javascript::LANGUAGE.into(),
         "kotlin" => tree_sitter_kotlin_ng::LANGUAGE.into(),
         "lean" => lean_grammar::LANGUAGE.into(),
         "lua" => tree_sitter_lua::LANGUAGE.into(),

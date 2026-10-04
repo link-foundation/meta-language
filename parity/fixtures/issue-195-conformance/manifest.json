@@ -22,7 +22,7 @@
         "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
         "tag": "v0.25.0",
         "parserSha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
-        "license": "js/src/vendor/grammars/javascript.LICENSE"
+        "license": "js/oracles/grammars/javascript.LICENSE"
       },
       "corpus": {
         "directory": "javascript/corpus",

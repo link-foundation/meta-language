@@ -448,10 +448,11 @@ recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
   `same-skipped-bytes` and 10 `same-repair-sites`.
 - tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
   tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket,
-  tree-sitter-c and tree-sitter-rust no longer back a default parse, so they
-  are development files only: the Rust crates are `[dev-dependencies]` that the
-  `pinned_*_oracle_gives_the_fixture` tests load, the vendored and patched CSV
-  and Rust parsers are no longer compiled into or published with the crate,
+  tree-sitter-c, tree-sitter-rust and tree-sitter-javascript no longer back a
+  default parse, so they are development files only: the Rust crates are
+  `[dev-dependencies]` that the `pinned_*_oracle_gives_the_fixture` tests
+  load, the vendored and patched CSV and Rust parsers are no longer compiled
+  into or published with the crate,
   and their WebAssembly builds and licenses are in
   [`js/oracles/grammars`](../../js/oracles/grammars/NOTICE.md), outside the npm
   package, where the fixture generator and the oracle checks load them. Their
