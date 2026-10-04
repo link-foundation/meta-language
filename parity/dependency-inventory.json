@@ -6813,7 +6813,7 @@
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/tsx.wasm.gz",
       "declaredIn": [
-        "js/oracles/grammars/grammar-lock.json"
+        "js/src/vendor/grammars/grammar-lock.json"
       ],
       "pinned": "0.23.2",
       "compare": "derived",
@@ -6830,7 +6830,7 @@
       "category": "vendored-grammar",
       "name": "js/oracles/grammars/typescript.wasm.gz",
       "declaredIn": [
-        "js/oracles/grammars/grammar-lock.json"
+        "js/src/vendor/grammars/grammar-lock.json"
       ],
       "pinned": "0.23.2",
       "compare": "derived",
