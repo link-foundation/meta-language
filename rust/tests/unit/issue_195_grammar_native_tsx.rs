@@ -149,7 +149,7 @@ fn native_tsx_grammar_is_canonical_links_notation() {
             && !generator.is_match(&foreign)
     );
     observe(
-        &["nativeTSXGrammarIsCanonicalLinks"],
+        &["nativeTsxGrammarIsCanonicalLinks"],
         "native TSX grammar is canonical Links Notation",
     );
 }
@@ -204,7 +204,7 @@ fn native_tsx_grammar_builds_the_oracle_rows() {
         ])
     );
     observe(
-        &["nativeTSXTreesMatchOracle"],
+        &["nativeTsxTreesMatchOracle"],
         "native TSX grammar builds the oracle rows",
     );
 }
@@ -226,7 +226,7 @@ fn native_tsx_grammar_rejects_invalid_input() {
         assert!(outcome.rejection.is_some(), "{:?}", source(case));
     }
     observe(
-        &["nativeTSXRejectsInvalidInput"],
+        &["nativeTsxRejectsInvalidInput"],
         "native TSX grammar rejects invalid input",
     );
 }
@@ -285,7 +285,7 @@ fn native_tsx_trees_keep_every_byte() {
         ]
     );
     observe(
-        &["nativeTSXTreesLossless"],
+        &["nativeTsxTreesLossless"],
         "native TSX trees keep every byte",
     );
 }
