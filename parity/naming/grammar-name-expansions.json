@@ -91,6 +91,46 @@
         "false": "grammar.false-value",
         "undefined": "grammar.undefined-value"
       }
+    },
+    "typescript": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice",
+        "_call_signature": "call_signature_parts",
+        "_number": "signed_number",
+        "_module": "module_name_and_body",
+        "_type_identifier": "type_identifier_alias"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value"
+      }
+    },
+    "tsx": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice",
+        "_call_signature": "call_signature_parts",
+        "_number": "signed_number",
+        "_module": "module_name_and_body",
+        "_type_identifier": "type_identifier_alias"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value"
+      }
     }
   },
   "concepts": {
