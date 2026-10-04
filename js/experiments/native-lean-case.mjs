@@ -1,7 +1,7 @@
 // Prints the native Lean tree and the oracle rows of each source given on
 // the command line, with the rows that differ marked, to study one case of
 // experiments/native-lean-corpus.mjs.
-//   node experiments/native-lean-case.mjs '#check foo 2 3'
+//   [LINO=file] node experiments/native-lean-case.mjs '#check foo 2 3'
 import { readFileSync } from 'node:fs';
 
 import { compileGrammar } from '../src/grammar.js';
@@ -9,7 +9,8 @@ import { parseGrammarLinks } from '../src/grammar-links.js';
 import { nativeOracleKinds } from '../scripts/build-language-catalog.mjs';
 import { nativeRows, oracleRows } from '../scripts/native-grammar-rows.mjs';
 
-const text = readFileSync(new URL('../../parity/grammars/native/lean.lino', import.meta.url), 'utf8');
+// LINO names another grammar file, as a variant of the scanner to try.
+const text = readFileSync(process.env.LINO ?? new URL('../../parity/grammars/native/lean.lino', import.meta.url), 'utf8');
 const compiled = compileGrammar(parseGrammarLinks(text));
 const options = { hidden: [], anonymous: ['unnamed_token'], extras: ['comment'], oracleKinds: nativeOracleKinds(text) };
 for (const source of process.argv.slice(2)) {

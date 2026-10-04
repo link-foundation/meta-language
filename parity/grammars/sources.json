@@ -191,7 +191,7 @@
       "licenseFile": "parity/grammars/sources/tree-sitter-lean4-0.3.0.LICENSE",
       "scanner": {
         "file": "parity/grammars/scanners/lean.lino",
-        "sha256": "a99fcb9a6bb88d540bbf31e01e03f13ccf057ad1ab7e993557219e1495a15739",
+        "sha256": "1e9147fd8b9ff6b038319683d2a40834006ce18ba63c978b435066a2cee211a7",
         "ports": {
           "path": "src/scanner.c",
           "sha256": "6927b5de4e9818befd7f040b20ec14c0b87f7f7524cf2bb3fb4a5ad75d63e2c5"

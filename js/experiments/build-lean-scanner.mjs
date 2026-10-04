@@ -81,8 +81,12 @@ const newline = [
   'fail))',
 ].join(' ');
 
+// The C function first returns false where all three layout tokens are
+// valid, as only tree-sitter's error recovery asks for them together. The
+// native parse asks for one token at a time, and `expected` is the union over
+// the parses in progress, which may expect all three where no one parse does
+// (`do do` in a definition), so the port has no such step.
 const operations = [
-  `(if (all ${START} ${SEMICOLON} ${END}) (then fail))`,
   `(if ${valid('syntax_quotation_body')} (then ${syntaxQuotationBody}))`,
   `(if ${START} (then ${pushLayoutIndent} (emit layout_start)))`,
   `(if ${valid('match_body_start')} (then ${pushLayoutIndent} (emit match_body_start)))`,
