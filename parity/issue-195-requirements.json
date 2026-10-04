@@ -1988,7 +1988,7 @@
     "planned:repository-directive:i195-grammar-bulk-pipeline": {
       "path": "docs/grammar/bulk-pipeline.md",
       "selector": "docs/vision.md#native-merged-grammars: bulk import of every catalog grammar with a published matrix",
-      "sha256": "9bfee21faf3ef3da91266485b0faa88d21bf72b536c28d75bba17f714dd41ae8"
+      "sha256": "2c53539da3b3780ef9686118d4ad085393eab4f4d817aeb6b489614be20ad5dd"
     },
     "planned:repository-directive:i195-grammar-declared-settling": {
       "path": "docs/grammar/feature-union.md",

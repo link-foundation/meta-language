@@ -109,7 +109,7 @@ class AntlrParser {
     this.expectKind('colon', "':'");
 
     const notes = [];
-    const expression = this.parseChoice(notes);
+    const expression = precedenceClimbing(name, this.parseAlternatives(notes));
     const command = this.tryConsume('arrow') ? this.parseLexerCommand() : null;
     this.expectKind('semicolon', "';'");
 
@@ -131,20 +131,52 @@ class AntlrParser {
 
   parseChoice(notes) {
     const alternatives = [];
-    pushChoiceAlternative(alternatives, this.parseAlternative(notes));
-    while (this.tryConsume('pipe')) pushChoiceAlternative(alternatives, this.parseAlternative(notes));
+    for (const { expression } of this.parseAlternatives(notes)) pushChoiceAlternative(alternatives, expression);
     return finishChoice(alternatives);
   }
 
-  // An alternative and its `# Label`, which names the context class ANTLR
-  // generates for it, not syntax: the label joins the rule's doc.
+  parseAlternatives(notes) {
+    const alternatives = [this.parseAlternative(notes)];
+    while (this.tryConsume('pipe')) alternatives.push(this.parseAlternative(notes));
+    return alternatives;
+  }
+
+  // An alternative with its `<key = value, ...>` options and its `# Label`,
+  // which names the context class ANTLR generates for it, not syntax: the
+  // label joins the rule's doc. `assoc` is kept for the precedence of a
+  // left-recursive rule; any other option joins the doc.
   parseAlternative(notes) {
-    const sequence = this.parseSequence(notes);
+    this.skipInlineComments();
+    const options = this.tryConsume('langle') ? this.parseElementOptions() : new Map();
+    for (const [key, value] of options) {
+      if (key !== 'assoc') notes.push(`alternative option ${key}=${value}`);
+    }
+    const expression = this.parseSequence(notes);
     if (this.tryConsume('hash')) {
       notes.push(`alternative ${this.expectIdent('alternative label')}`);
       this.skipInlineComments();
     }
-    return sequence;
+    const assoc = options.get('assoc');
+    if (assoc !== undefined && assoc !== 'left' && assoc !== 'right') {
+      throw unsupportedError(FORMAT, `associativity ${assoc}`);
+    }
+    return { expression, associativity: assoc ?? 'left' };
+  }
+
+  parseElementOptions() {
+    const options = new Map();
+    do {
+      const key = this.expectIdent('element option');
+      let value = 'true';
+      if (this.tryConsume('equal')) {
+        const token = this.peek();
+        if (token?.kind !== 'ident' && token?.kind !== 'string') throw this.expected('element option value');
+        value = this.advance().value;
+      }
+      options.set(key, value);
+    } while (this.tryConsume('comma'));
+    this.expectKind('rangle', "'>'");
+    return options;
   }
 
   parseSequence(notes) {
@@ -349,25 +381,33 @@ function lowerCharSet(content, offset) {
   const scanner = new ClassScanner(content, offset);
   const negated = scanner.tryConsume('^');
   const items = [];
+  let read = false;
   while (!scanner.isEnd()) {
     const property = scanner.tryReadProperty();
     if (property !== null) {
       items.push(property);
+      read = true;
       continue;
     }
     const start = scanner.readChar();
-    if (scanner.tryConsumeRangeSeparator()) {
-      const end = scanner.readChar();
-      if (start.codePointAt(0) > end.codePointAt(0)) {
-        throw errorAt(offset, 'character class range start exceeds end');
-      }
-      items.push({ kind: 'range', start, end });
-    } else {
-      items.push({ kind: 'char', value: start });
-    }
+    const end = scanner.tryConsumeRangeSeparator() ? scanner.readChar() : start;
+    if (start > end) throw errorAt(offset, 'character class range start exceeds end');
+    pushScalarRange(items, start, end);
+    read = true;
   }
-  if (items.length === 0) throw errorAt(offset, 'character class must not be empty');
+  if (!read) throw errorAt(offset, 'character class must not be empty');
   return GrammarBuilder.charClass(items, negated);
+}
+
+// ANTLR reads `\uD800`-`\uDFFF` in a set as UTF-16 surrogates, which Java
+// grammars name to match the halves of a pair. Text here is code points, so
+// no surrogate is ever matched and a set keeps the scalars it names.
+function pushScalarRange(items, start, end) {
+  const push = (from, to) => items.push(from === to
+    ? { kind: 'char', value: String.fromCodePoint(from) }
+    : { kind: 'range', start: String.fromCodePoint(from), end: String.fromCodePoint(to) });
+  if (start < 0xd800) push(start, Math.min(end, 0xd7ff));
+  if (end > 0xdfff) push(Math.max(start, 0xe000), end);
 }
 
 // Reads the raw text between `[` and `]`: `\uXXXX` and `\u{X...}` escape a
@@ -380,17 +420,19 @@ class ClassScanner {
     this.offset = offset;
   }
 
+  // The code point of the next item, which may be a surrogate.
   readChar() {
     if (this.isEnd()) throw errorAt(this.offset, 'unexpected end of character class');
     const character = this.advanceChar();
-    return character === '\\' ? this.readEscape() : character;
+    return character === '\\' ? this.readEscape() : character.codePointAt(0);
   }
 
   readEscape() {
     if (this.isEnd()) throw errorAt(this.offset, 'unterminated character class escape');
     const character = this.advanceChar();
     if (character === 'u') return this.readCodePoint();
-    return ({ n: '\n', r: '\r', t: '\t', b: '\u0008', f: '\u000c' })[character] ?? character;
+    const escaped = ({ n: '\n', r: '\r', t: '\t', b: '\u0008', f: '\u000c' })[character] ?? character;
+    return escaped.codePointAt(0);
   }
 
   // The code point of `\uXXXX` or `\u{X...}`, after the `u`.
@@ -403,10 +445,8 @@ class ClassScanner {
       for (let count = 0; count < 4 && !this.isEnd(); count += 1) digits += this.advanceChar();
     }
     const value = /^[0-9A-Fa-f]{1,6}$/u.test(digits) ? Number.parseInt(digits, 16) : -1;
-    if (value < 0 || value > 0x10ffff || (value >= 0xd800 && value <= 0xdfff)) {
-      throw errorAt(this.offset, 'invalid unicode escape');
-    }
-    return String.fromCodePoint(value);
+    if (value < 0 || value > 0x10ffff) throw errorAt(this.offset, 'invalid unicode escape');
+    return value;
   }
 
   // A `\p{NAME}` item at the cursor, or null.
@@ -470,6 +510,30 @@ function setItems(expression) {
   }
 }
 
+// ANTLR rewrites a rule with an alternative that starts with the rule
+// itself into precedence climbing: an earlier alternative binds tighter, and
+// a binary alternative groups to the left unless it is `<assoc = right>`.
+// Every alternative with the rule at an edge gets that precedence.
+function precedenceClimbing(name, alternatives) {
+  const leftRecursive = alternatives.some(({ expression }) => edgeRef(expression, 'left') === name);
+  const expressions = alternatives.map(({ expression, associativity }, index) => (
+    leftRecursive && (edgeRef(expression, 'left') === name || edgeRef(expression, 'right') === name)
+      ? { kind: 'precedence', level: alternatives.length - index, associativity, item: expression }
+      : expression));
+  const choice = [];
+  for (const expression of expressions) pushChoiceAlternative(choice, expression);
+  return finishChoice(choice);
+}
+
+function edgeRef(expression, side) {
+  switch (expression.kind) {
+    case 'ref': return expression.name;
+    case 'capture': return edgeRef(expression.item, side);
+    case 'seq': return edgeRef(expression.items[side === 'left' ? 0 : expression.items.length - 1], side);
+    default: return null;
+  }
+}
+
 function finishSequence(items) {
   if (items.length === 0) return GrammarBuilder.empty();
   if (items.length === 1) return items[0];
@@ -519,7 +583,7 @@ function commandChannel(command) {
   if (command === null) return null;
   const parts = command.slice('->'.length).split(',').map((part) => part.trim());
   for (const part of parts) {
-    const channel = /^channel\(([A-Za-z_][A-Za-z_0-9]*)\)$/u.exec(part);
+    const channel = /^channel\(([A-Za-z_][A-Za-z_0-9]*|[1-9][0-9]*)\)$/u.exec(part);
     if (channel !== null) return channel[1];
   }
   return parts.includes('skip') ? 'skip' : null;

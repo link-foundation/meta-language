@@ -208,3 +208,28 @@ test('imports the lexer features the grammars-v4 grammars use', async () => {
     assert.throws(() => importAntlr(source), (error) => error.message === message, source);
   }
 });
+
+test('left-recursive alternatives climb by precedence, with surrogate sets and numeric channels', async () => {
+  const grammar = importAntlr(fixture('precedence.g4'));
+  const binary = (operator) => G.seq(G.ref('expr'), G.literal(operator), G.ref('expr'));
+  assert.deepEqual(grammar.rule('expr').expression.items, [
+    { kind: 'precedence', level: 4, associativity: 'right', item: binary('^') },
+    { kind: 'precedence', level: 3, associativity: 'left', item: binary('*') },
+    { kind: 'precedence', level: 2, associativity: 'left', item: binary('+') },
+    G.ref('ID'),
+  ]);
+  assert.deepEqual(grammar.rule('ID').expression, G.repeat1(G.charClass([range('\u0000', '@')], true)));
+  assert.deepEqual(grammar.rule('LONE').expression, G.charClass([]));
+  assert.equal(grammar.rule('NL').channel, '2');
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('a^b^c*d+é').ok, true);
+  assert.equal(parser.parseTree('a+').ok, false);
+
+  for (const [source, message] of [
+    ['grammar P; e : <assoc=up> e \'x\' e | \'y\' ;', 'antlr import unsupported construct: associativity up'],
+    ['grammar P; e : [] ;', 'antlr import parse error: character class must not be empty at byte 15'],
+  ]) {
+    assert.throws(() => importAntlr(source), (error) => error.message === message, source);
+  }
+});

@@ -21,7 +21,9 @@ impl Token {
 
     pub(super) fn text(&self) -> String {
         match &self.kind {
-            TokenKind::Ident(value) | TokenKind::Comment(value) => value.clone(),
+            TokenKind::Ident(value) | TokenKind::Int(value) | TokenKind::Comment(value) => {
+                value.clone()
+            }
             TokenKind::String(value) => format!("'{}'", escape_literal(value)),
             TokenKind::CharSet(value) => format!("[{value}]"),
             TokenKind::Action(value) => format!("{{{value}}}"),
@@ -41,6 +43,8 @@ impl Token {
             TokenKind::Range => "..".to_string(),
             TokenKind::Comma => ",".to_string(),
             TokenKind::Hash => "#".to_string(),
+            TokenKind::LAngle => "<".to_string(),
+            TokenKind::RAngle => ">".to_string(),
         }
     }
 }
@@ -48,6 +52,7 @@ impl Token {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) enum TokenKind {
     Ident(String),
+    Int(String),
     String(String),
     CharSet(String),
     Action(String),
@@ -68,6 +73,8 @@ pub(super) enum TokenKind {
     Range,
     Comma,
     Hash,
+    LAngle,
+    RAngle,
 }
 
 #[derive(Clone, Debug)]
@@ -175,7 +182,22 @@ impl<'text> Lexer<'text> {
                 self.advance_char();
                 Ok(TokenKind::Hash)
             }
+            '<' => {
+                self.advance_char();
+                Ok(TokenKind::LAngle)
+            }
+            '>' => {
+                self.advance_char();
+                Ok(TokenKind::RAngle)
+            }
             character if is_ident_start(character) => Ok(TokenKind::Ident(self.identifier())),
+            character if character.is_ascii_digit() => {
+                let start = self.cursor;
+                while self.peek_char().is_some_and(|next| next.is_ascii_digit()) {
+                    self.advance_char();
+                }
+                Ok(TokenKind::Int(self.text[start..self.cursor].to_string()))
+            }
             character => Err(error_at(
                 self.cursor,
                 format!("unexpected character {character:?}"),

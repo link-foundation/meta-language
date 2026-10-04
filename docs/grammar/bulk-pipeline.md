@@ -77,3 +77,18 @@ checks two things without downloading anything:
   grammars-v4 CSV `STRING` rule rejected every quoted field. The shared fixture
   [`set-complement.g4`](../../rust/tests/fixtures/grammar/antlr/set-complement.g4)
   checks this in both importers.
+- **ANTLR left recursion, surrogates and numbered channels.**
+  - *Left recursion.* ANTLR resolves a left-recursive rule by alternative
+    order. The importers give each alternative that starts or ends with the
+    rule a `precedence` form, where earlier alternatives bind tighter.
+    `<assoc=right>` makes an alternative right-associative. Other alternative
+    options join the rule's doc.
+  - *Surrogates.* ANTLR reads `\uD800`-`\uDFFF` in a set as UTF-16
+    surrogates. Text here is code points, so a set keeps only the scalar
+    values it names.
+  - *Numbered channels.* `-> channel(2)` puts a token on a numbered channel.
+  - *Before this,* the JavaScript, Java, TypeScript, PHP, Lua and Solidity
+    grammars failed to import.
+  - *Coverage.* The shared fixture
+    [`precedence.g4`](../../rust/tests/fixtures/grammar/antlr/precedence.g4)
+    checks all three in both importers.

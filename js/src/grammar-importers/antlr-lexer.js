@@ -24,6 +24,8 @@ const PUNCTUATION = [
   ['-', '>', 'arrow'],
   [',', null, 'comma'],
   ['#', null, 'hash'],
+  ['<', null, 'langle'],
+  ['>', null, 'rangle'],
 ];
 
 const TOKEN_TEXT = {
@@ -43,6 +45,8 @@ const TOKEN_TEXT = {
   range: '..',
   comma: ',',
   hash: '#',
+  langle: '<',
+  rangle: '>',
 };
 
 const SIMPLE_ESCAPES = { n: '\n', r: '\r', t: '\t', b: '\u0008', f: '\u000c' };
@@ -60,7 +64,7 @@ export function tokenizeAntlr(text) {
 /** Renders a token back to ANTLR source text, as used by lexer commands. */
 export function tokenText(token) {
   switch (token.kind) {
-    case 'ident': case 'comment': return token.value;
+    case 'ident': case 'int': case 'comment': return token.value;
     case 'string': return `'${escapeLiteral(token.value)}'`;
     case 'charSet': return `[${token.value}]`;
     case 'action': return `{${token.value}}`;
@@ -124,6 +128,11 @@ class AntlrLexer {
       return { kind };
     }
     if (isIdentStart(character)) return { kind: 'ident', value: this.identifier() };
+    if (/^[0-9]$/u.test(character)) {
+      const start = this.cursor;
+      while (/^[0-9]$/u.test(this.peekChar() ?? '')) this.cursor += 1;
+      return { kind: 'int', value: this.chars.slice(start, this.cursor).join('') };
+    }
     throw errorAt(this.byteOffset(), `unexpected character ${debugChar(character)}`);
   }
 

@@ -343,3 +343,87 @@ fn complements_a_set_of_characters_and_matches_one_character_outside_it() {
     assert!(accepts("\"café, é\"\"x\"\"\""));
     assert!(!accepts("\"open"));
 }
+
+#[test]
+fn left_recursive_alternatives_climb_by_precedence_with_surrogate_sets_and_numeric_channels() {
+    use meta_language::grammar::feature::{FeatureExpr, FeatureForm, FieldValue};
+    use meta_language::{FeatureParseOptions, compile_feature_grammar};
+
+    let grammar =
+        import_antlr(include_str!("../fixtures/grammar/antlr/precedence.g4")).expect("imports");
+    let binary = |operator: &str| {
+        GrammarExpr::Sequence(vec![
+            GrammarExpr::NonTerminal("expr".to_string()),
+            GrammarExpr::Terminal(operator.to_string()),
+            GrammarExpr::NonTerminal("expr".to_string()),
+        ])
+    };
+    let precedence = |level: i64, associativity: &str, operator: &str| {
+        GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+            "precedence",
+            vec![
+                FieldValue::Integer(level),
+                FieldValue::Word(associativity.to_string()),
+                FieldValue::Expression(binary(operator)),
+            ],
+        )))
+    };
+    assert_eq!(
+        grammar.rule("expr").expect("expr").expr(),
+        &GrammarExpr::Choice {
+            ordered: false,
+            alternatives: vec![
+                precedence(4, "right", "^"),
+                precedence(3, "left", "*"),
+                precedence(2, "left", "+"),
+                GrammarExpr::NonTerminal("ID".to_string()),
+            ],
+        }
+    );
+    assert_eq!(
+        grammar.rule("ID").expect("ID").expr(),
+        &GrammarExpr::OneOrMore(Box::new(GrammarExpr::CharClass {
+            negated: true,
+            items: vec![CharClassItem::Range('\u{0}', '@')],
+        }))
+    );
+    assert_eq!(
+        grammar.rule("LONE").expect("LONE").expr(),
+        &GrammarExpr::CharClass {
+            negated: false,
+            items: Vec::new(),
+        }
+    );
+    assert_eq!(
+        grammar
+            .rule("NL")
+            .expect("NL")
+            .attributes
+            .channel
+            .as_deref(),
+        Some("2")
+    );
+    let options = FeatureParseOptions::default();
+    let parser = compile_feature_grammar(&grammar, None, options.clone()).expect("compiles");
+    let accepts = |text: &str| {
+        parser
+            .parse_tree(text.as_bytes(), &options)
+            .is_ok_and(|outcome| outcome.tree.is_some())
+    };
+    assert!(accepts("a^b^c*d+é"));
+    assert!(!accepts("a+"));
+
+    for (source, message) in [
+        (
+            "grammar P; e : <assoc=up> e 'x' e | 'y' ;",
+            "antlr import unsupported construct: associativity up",
+        ),
+        (
+            "grammar P; e : [] ;",
+            "antlr import parse error: character class must not be empty at byte 15",
+        ),
+    ] {
+        let error = import_antlr(source).expect_err(source);
+        assert_eq!(error.to_string(), message, "{source}");
+    }
+}

@@ -3,7 +3,7 @@ mod lexer;
 use lexer::{Lexer, Token, TokenKind};
 
 use super::{GrammarImportError, parse_error, unsupported_error};
-use crate::grammar::feature::{FeatureExpr, class_expression};
+use crate::grammar::feature::{FeatureExpr, FeatureForm, FieldValue, class_expression};
 use crate::grammar::{
     CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind,
     UnicodeClassItem,
@@ -131,7 +131,8 @@ impl Parser {
         self.expect_colon()?;
 
         let mut notes = Vec::new();
-        let expr = self.parse_choice(&mut notes)?;
+        let alternatives = self.parse_alternatives(&mut notes)?;
+        let expr = precedence_climbing(&name, alternatives);
         let command = if self.try_consume_arrow() {
             Some(self.parse_lexer_command()?)
         } else {
@@ -178,19 +179,46 @@ impl Parser {
 
     fn parse_choice(&mut self, notes: &mut Vec<String>) -> Result<GrammarExpr, GrammarImportError> {
         let mut alternatives = Vec::new();
-        push_choice_alternative(&mut alternatives, self.parse_alternative(notes)?);
-        while self.try_consume_pipe() {
-            push_choice_alternative(&mut alternatives, self.parse_alternative(notes)?);
+        for (expr, _) in self.parse_alternatives(notes)? {
+            push_choice_alternative(&mut alternatives, expr);
         }
         Ok(finish_choice(alternatives))
     }
 
-    // An alternative and its `# Label`, which names the context class ANTLR
-    // generates for it, not syntax: the label joins the rule's doc.
+    fn parse_alternatives(
+        &mut self,
+        notes: &mut Vec<String>,
+    ) -> Result<Vec<(GrammarExpr, &'static str)>, GrammarImportError> {
+        let mut alternatives = vec![self.parse_alternative(notes)?];
+        while self.try_consume_pipe() {
+            alternatives.push(self.parse_alternative(notes)?);
+        }
+        Ok(alternatives)
+    }
+
+    // An alternative with its `<key = value, ...>` options and its `# Label`,
+    // which names the context class ANTLR generates for it, not syntax: the
+    // label joins the rule's doc. `assoc` is kept for the precedence of a
+    // left-recursive rule; any other option joins the doc.
     fn parse_alternative(
         &mut self,
         notes: &mut Vec<String>,
-    ) -> Result<GrammarExpr, GrammarImportError> {
+    ) -> Result<(GrammarExpr, &'static str), GrammarImportError> {
+        self.skip_inline_comments();
+        let options = if matches!(self.peek_kind(), Some(TokenKind::LAngle)) {
+            self.advance();
+            self.parse_element_options()?
+        } else {
+            Vec::new()
+        };
+        let mut assoc = None;
+        for (key, value) in options {
+            if key == "assoc" {
+                assoc = Some(value);
+            } else {
+                notes.push(format!("alternative option {key}={value}"));
+            }
+        }
         let sequence = self.parse_sequence(notes)?;
         if matches!(self.peek_kind(), Some(TokenKind::Hash)) {
             self.advance();
@@ -198,7 +226,42 @@ impl Parser {
             notes.push(format!("alternative {label}"));
             self.skip_inline_comments();
         }
-        Ok(sequence)
+        let associativity = match assoc.as_deref() {
+            None | Some("left") => "left",
+            Some("right") => "right",
+            Some(other) => {
+                return Err(unsupported_error(FORMAT, format!("associativity {other}")));
+            }
+        };
+        Ok((sequence, associativity))
+    }
+
+    fn parse_element_options(&mut self) -> Result<Vec<(String, String)>, GrammarImportError> {
+        let mut options: Vec<(String, String)> = Vec::new();
+        loop {
+            let key = self.expect_ident("element option")?;
+            let mut value = "true".to_owned();
+            if matches!(self.peek_kind(), Some(TokenKind::Equal)) {
+                self.advance();
+                value = match self.peek_kind() {
+                    Some(TokenKind::Ident(text) | TokenKind::String(text)) => text.clone(),
+                    _ => return Err(self.expected("element option value")),
+                };
+                self.advance();
+            }
+            options.retain(|(existing, _)| *existing != key);
+            options.push((key, value));
+            if matches!(self.peek_kind(), Some(TokenKind::Comma)) {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+        if !matches!(self.peek_kind(), Some(TokenKind::RAngle)) {
+            return Err(self.expected("'>'"));
+        }
+        self.advance();
+        Ok(options)
     }
 
     fn parse_sequence(
@@ -579,26 +642,49 @@ fn lower_char_set(content: &str, offset: usize) -> Result<GrammarExpr, GrammarIm
     let mut scanner = ClassScanner::new(content, offset);
     let negated = scanner.try_consume('^');
     let mut items = Vec::new();
+    let mut read = false;
     while !scanner.is_end() {
+        read = true;
         if let Some(property) = scanner.try_read_property()? {
             items.push(property);
             continue;
         }
         let start = scanner.read_char()?;
-        if scanner.try_consume_range_separator() {
-            let end = scanner.read_char()?;
-            if start > end {
-                return Err(error_at(offset, "character class range start exceeds end"));
-            }
-            items.push(UnicodeClassItem::Range(start, end));
+        let end = if scanner.try_consume_range_separator() {
+            scanner.read_char()?
         } else {
-            items.push(UnicodeClassItem::Char(start));
+            start
+        };
+        if start > end {
+            return Err(error_at(offset, "character class range start exceeds end"));
         }
+        push_scalar_range(&mut items, start, end);
     }
-    if items.is_empty() {
+    if !read {
         return Err(error_at(offset, "character class must not be empty"));
     }
     Ok(class_expression(negated, items))
+}
+
+// ANTLR reads `\uD800`-`\uDFFF` in a set as UTF-16 surrogates, which Java
+// grammars name to match the halves of a pair. Text here is code points, so
+// no surrogate is ever matched and a set keeps the scalars it names.
+fn push_scalar_range(items: &mut Vec<UnicodeClassItem>, start: u32, end: u32) {
+    let mut push = |from: u32, to: u32| {
+        if let (Some(from), Some(to)) = (char::from_u32(from), char::from_u32(to)) {
+            items.push(if from == to {
+                UnicodeClassItem::Char(from)
+            } else {
+                UnicodeClassItem::Range(from, to)
+            });
+        }
+    };
+    if start < 0xD800 {
+        push(start, end.min(0xD7FF));
+    }
+    if end > 0xDFFF {
+        push(start.max(0xE000), end);
+    }
 }
 
 /// The channel a lexer command puts its token on: `skip` and `channel(NAME)`
@@ -615,7 +701,7 @@ fn command_channel(command: &str) -> Option<String> {
             .strip_prefix("channel(")
             .and_then(|rest| rest.strip_suffix(')'));
         if let Some(name) = name
-            && is_identifier(name)
+            && (is_identifier(name) || is_channel_number(name))
         {
             return Some(name.to_owned());
         }
@@ -629,6 +715,11 @@ fn is_identifier(text: &str) -> bool {
         .next()
         .is_some_and(|first| first.is_ascii_alphabetic() || first == '_')
         && chars.all(|next| next.is_ascii_alphanumeric() || next == '_')
+}
+
+// A numbered channel such as `channel(2)`; channel 0 is the default one.
+fn is_channel_number(text: &str) -> bool {
+    !text.starts_with('0') && !text.is_empty() && text.chars().all(|digit| digit.is_ascii_digit())
 }
 
 const UNICODE_SCRIPTS: [&str; 14] = [
@@ -693,34 +784,36 @@ impl<'text> ClassScanner<'text> {
         }
     }
 
-    fn read_char(&mut self) -> Result<char, GrammarImportError> {
+    /// The code point of the next item, which may be a surrogate.
+    fn read_char(&mut self) -> Result<u32, GrammarImportError> {
         let Some(character) = self.advance_char() else {
             return Err(error_at(self.offset, "unexpected end of character class"));
         };
         if character == '\\' {
             self.read_escape()
         } else {
-            Ok(character)
+            Ok(u32::from(character))
         }
     }
 
-    fn read_escape(&mut self) -> Result<char, GrammarImportError> {
+    fn read_escape(&mut self) -> Result<u32, GrammarImportError> {
         let Some(character) = self.advance_char() else {
             return Err(error_at(self.offset, "unterminated character class escape"));
         };
-        match character {
-            'n' => Ok('\n'),
-            'r' => Ok('\r'),
-            't' => Ok('\t'),
-            'b' => Ok('\u{08}'),
-            'f' => Ok('\u{0c}'),
-            'u' => self.read_code_point(),
-            character => Ok(character),
-        }
+        let escaped = match character {
+            'n' => '\n',
+            'r' => '\r',
+            't' => '\t',
+            'b' => '\u{08}',
+            'f' => '\u{0c}',
+            'u' => return self.read_code_point(),
+            character => character,
+        };
+        Ok(u32::from(escaped))
     }
 
     /// The code point of `\uXXXX` or `\u{X...}`, after the `u`.
-    fn read_code_point(&mut self) -> Result<char, GrammarImportError> {
+    fn read_code_point(&mut self) -> Result<u32, GrammarImportError> {
         let mut digits = String::new();
         if self.try_consume('{') {
             while let Some(character) = self.peek_char().filter(|&character| character != '}') {
@@ -743,7 +836,7 @@ impl<'text> ClassScanner<'text> {
         valid
             .then(|| u32::from_str_radix(&digits, 16).ok())
             .flatten()
-            .and_then(char::from_u32)
+            .filter(|&value| value <= 0x10_FFFF)
             .ok_or_else(|| error_at(self.offset, "invalid unicode escape"))
     }
 
@@ -813,10 +906,10 @@ impl<'text> ClassScanner<'text> {
 // or an alternation of those) and matches one character outside it. Any
 // other operand stays a negative lookahead.
 fn negate_expr(expr: GrammarExpr) -> GrammarExpr {
-    match set_items(&expr) {
-        Some(items) => class_expression(true, items),
-        None => GrammarExpr::not(expr),
-    }
+    set_items(&expr).map_or_else(
+        || GrammarExpr::not(expr),
+        |items| class_expression(true, items),
+    )
 }
 
 fn set_items(expr: &GrammarExpr) -> Option<Vec<UnicodeClassItem>> {
@@ -855,6 +948,56 @@ fn set_items(expr: &GrammarExpr) -> Option<Vec<UnicodeClassItem>> {
             } => Some(items.clone()),
             _ => None,
         },
+        _ => None,
+    }
+}
+
+// In a left-recursive rule, ANTLR gives each alternative that starts or ends
+// with the rule a precedence: earlier alternatives bind tighter, and
+// `<assoc=right>` makes one right-associative.
+fn precedence_climbing(name: &str, alternatives: Vec<(GrammarExpr, &'static str)>) -> GrammarExpr {
+    let left_recursive = alternatives
+        .iter()
+        .any(|(expr, _)| edge_ref(expr, Edge::Left) == Some(name));
+    let count = alternatives.len();
+    let mut choice = Vec::new();
+    for (index, (expr, associativity)) in alternatives.into_iter().enumerate() {
+        let climbs = left_recursive
+            && (edge_ref(&expr, Edge::Left) == Some(name)
+                || edge_ref(&expr, Edge::Right) == Some(name));
+        let expr = if climbs {
+            let level = i64::try_from(count - index).unwrap_or(i64::MAX);
+            GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+                "precedence",
+                vec![
+                    FieldValue::Integer(level),
+                    FieldValue::Word(associativity.into()),
+                    FieldValue::Expression(expr),
+                ],
+            )))
+        } else {
+            expr
+        };
+        push_choice_alternative(&mut choice, expr);
+    }
+    finish_choice(choice)
+}
+
+#[derive(Clone, Copy)]
+enum Edge {
+    Left,
+    Right,
+}
+
+fn edge_ref(expr: &GrammarExpr, edge: Edge) -> Option<&str> {
+    match expr {
+        GrammarExpr::NonTerminal(name) => Some(name),
+        GrammarExpr::Capture { expr, .. } => edge_ref(expr, edge),
+        GrammarExpr::Sequence(items) => match edge {
+            Edge::Left => items.first(),
+            Edge::Right => items.last(),
+        }
+        .and_then(|item| edge_ref(item, edge)),
         _ => None,
     }
 }
