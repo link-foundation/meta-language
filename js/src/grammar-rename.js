@@ -106,6 +106,7 @@ export function renamedRule(rule, rename) {
 export function mapDeclarations(declarations, rename) {
   return {
     ...(declarations.matching === null ? {} : { matching: declarations.matching }),
+    ...(declarations.settling === null ? {} : { settling: [...declarations.settling] }),
     imports: [...declarations.imports],
     modes: [...declarations.modes],
     extras: declarations.extras.map((extra) => mapReferences(extra, rename)),

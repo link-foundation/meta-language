@@ -137,6 +137,9 @@ list of the [operation language](#operation-language).
   and greedy; the default when `sourceFormat` is `peg`) or `longest`
   (generalized, and of two parses alike in precedence the one whose first
   differing token is longer wins, as a lexer takes the longest token);
+- `settling`: the steps, in order, that settle two parses of one text that
+  end alike (see Settling under [Executor](#executor)); without it the grammar settles by
+  its matching's default;
 - `imports`: names of grammars whose rules and declarations this one inherits;
 - `modes`: the lexer modes beyond `default`;
 - `extras`: trivia expressions allowed between any two tokens;
@@ -152,7 +155,7 @@ list of the [operation language](#operation-language).
 
 The line listing of `renderNativeGrammar` and `parseNativeGrammar` writes, in
 this order: an optional `format TAG` line, `start NAME`, then the declaration
-lines `matching M`, `import NAME`, `mode NAME`, `extra EXPRESSION`,
+lines `matching M`, `settling STEP...`, `import NAME`, `mode NAME`, `extra EXPRESSION`,
 `conflict NAME NAME...`, `precedences name(N) rule(R) ...`,
 `macro NAME(P, ...) = EXPRESSION` and
 `scanner NAME tokens(T, ...) operations(OPERATION, ...)`, then one rule line
@@ -185,7 +188,7 @@ rule space = token repeat1(literal(" ")) channel(hidden) modes(default)
 ## Links form
 
 `renderGrammarLinks` and `parseGrammarLinks` write one link per line. The
-header is `(grammar (format F) (start N) (matching M))`, each part only when
+header is `(grammar (format F) (start N) (matching M) (settling STEP...))`, each part only when
 set. Declaration links follow, before the first rule (a declaration after a
 rule is rejected), in the listing order:
 
@@ -334,7 +337,10 @@ steps, in order:
    (`parameter`).
 8. Conflicts, and the `rule` entries of `precedences`, must name rules
    (`declaration`). `matching` is the declared one,
-   else `peg` for a `peg` source format, else `generalized`.
+   else `peg` for a `peg` source format, else `generalized`. `settling` is
+   the declared one, else the matching's default; an empty settling, an
+   unknown or repeated step, or a tie step that is not exactly the last is
+   `declaration`.
 9. Checks over every expression and operation: an `expand` or `parameter`
    that survives is `macro`; a `recover` without `synchronize`, a mode
    operation or rule `modes` naming an undeclared mode is `declaration`; an
@@ -360,11 +366,37 @@ in syntactic or token context yields a list of results
 `{end, state, children, dynamic, precedence, tail, ambiguous}`; `tail` is
 the innermost precedence over the result's last part (see Precedence).
 
-**Result sets.** Results are deduplicated by `end` and state key. Of two equal
-results the one with the higher `dynamic` stays; on a tie the first stays and
-is marked ambiguous. Under `matching longest` the result with the tokens a
-lexer prefers stays before `dynamic` is compared, as a lexer decides its
-tokens before any parse does: both results' leaves are walked in order,
+**Settling.** How two results of one text that end alike are settled is the
+grammar's `settling` declaration, the same data for every grammar whatever
+format it was imported from: its steps are tried in order until one prefers
+a result, and its last step settles a tie. The steps are:
+
+| Step | Prefers |
+| --- | --- |
+| `tokens` | the result with the tokens a lexer prefers (below) |
+| `precedence` | the shift or reduction an LR parser keeps by precedence (below) |
+| `dynamic` | the higher `dynamic` |
+| `first` | on a tie, the first result, silently |
+| `ambiguity` | on a tie, the first result, marked ambiguous |
+
+Without a declaration the matching's default applies: `dynamic ambiguity`
+for `generalized`, `first` for `peg` and
+`tokens precedence dynamic ambiguity` for `longest`. The tree-sitter importer
+declares `(settling tokens precedence dynamic ambiguity)` with
+`(matching longest)`; the ANTLR, pest and other importers take their
+matching's default. The lexing of a tree-sitter lexer (extras before the
+longest, immediate tokens after a comment, tokens over separators and
+keyword lexing, below) follows the `tokens` step, and the reductions an LR
+parser makes before a marked token follow the `precedence` step. A merged
+grammar settles as the source of its matching declares, else as the first
+source that declares a settling.
+
+**Result sets.** Results are deduplicated by `end` and state key. Of two
+equal results the grammar's settling decides; under the default
+`dynamic ambiguity` the one with the higher `dynamic` stays and on a tie the
+first stays and is marked ambiguous. The `tokens` step keeps the result with
+the tokens a lexer prefers, as a lexer decides its tokens before any parse
+does: both results' leaves are walked in order,
 skipping trivia and the subtrees they share, and the first leaf pair that
 differs decides as a tree-sitter lexer decides between two tokens at one
 offset: the higher lexical precedence, then the longer token, then the more
@@ -462,8 +494,8 @@ leftmost chain and the children of the innermost such node are, subtree for
 subtree, the next children of the other result's node in progress, the two
 reductions conflict at the end of that node: the higher level wins and, on
 equal levels where the other node goes on, the associativity of the reduced
-node. When that cannot tell either, the higher `dynamic` wins,
-and on a tie the first is marked ambiguous. Under `matching peg` a sequence
+node (the `precedence` step). When those cannot tell either, the higher
+`dynamic` wins, and on a tie the first is marked ambiguous. Under `matching peg` a sequence
 keeps only its first result.
 
 **Terminals.** In syntactic context a terminal first skips trivia; in token
@@ -679,9 +711,8 @@ and the leaves are the skipped trivia followed by the token leaf.
 Each result skips trailing trivia and must reach the end of the input, or it
 records `end of input`. The complete results end apart before their trailing
 trivia, so they are ranked as a result set ranks results with one end, over
-their children followed by the trailing trivia: the lower repair cost, then,
-under `matching longest`, the tokens a lexer prefers and the shift or
-reduction an LR parser keeps, then the higher `dynamic`. The first complete
+their children followed by the trailing trivia: the lower repair cost, then
+the grammar's settling steps. The first complete
 result that ranks highest is the tree; the parse is ambiguous when another
 complete result ties with it without repairs, or that result is ambiguous. The root
 is the result's single node, or else a node of the start rule's kind around

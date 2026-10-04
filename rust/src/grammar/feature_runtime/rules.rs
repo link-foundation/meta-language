@@ -193,7 +193,7 @@ impl Executor<'_> {
         if first.is_empty() {
             return Ok(first);
         }
-        let mut current = ResultSet::new(self.longest_tokens);
+        let mut current = ResultSet::new(self.longest_tokens, self.settling);
         for result in first {
             current.set(result);
         }
@@ -658,15 +658,16 @@ impl Executor<'_> {
         }
         // The complete results end apart, before their trailing trivia, so they
         // are ranked here as ResultSet::add ranks results with one end: the
-        // lower cost, then the tokens a lexer prefers and the shift or
-        // reduction an LR parser keeps, then the higher dynamic precedence.
-        // Repaired results of equal cost are not ambiguities.
+        // lower cost, then the grammar's settling steps. A tie is an
+        // ambiguity when the settling ends in `ambiguity`; repaired results
+        // of equal cost are not ambiguities.
         let mut chosen = &complete[0];
         let mut tied = false;
         for candidate in &complete[1..] {
             match complete_order(
                 (&candidate.0, &candidate.1),
                 (&chosen.0, &chosen.1),
+                self.settling,
                 self.longest_tokens,
             ) {
                 Ordering::Greater => {
@@ -677,7 +678,7 @@ impl Executor<'_> {
                 Ordering::Less => {}
             }
         }
-        let several = tied && chosen.0.cost == 0;
+        let several = tied && self.settling.ambiguity() && chosen.0.cost == 0;
         let root = Rc::new(self.root(start_rule, &chosen.0, &chosen.1, several));
         // When the cheapest complete result takes the rest of the input as
         // ERROR at a repair point, a result that reached past that point

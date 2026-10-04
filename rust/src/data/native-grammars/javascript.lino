@@ -1,4 +1,4 @@
-(grammar (start program) (matching longest))
+(grammar (start program) (matching longest) (settling tokens precedence dynamic ambiguity))
 (extra (ref comment))
 (extra (ref html_comment))
 (extra (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B) (category Zs) (char %EF%BB%BF) (char %E2%80%A8) (char %E2%80%A9) (char %E2%81%A0) (char %E2%80%8B)))

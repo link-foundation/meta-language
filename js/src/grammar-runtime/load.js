@@ -4,6 +4,7 @@
 // checked against the context it runs in, and the terminals are compiled to
 // byte matchers. The result is the immutable program executor.js runs.
 // docs/grammar/feature-union.md specifies each step.
+import { DEFAULT_SETTLING, settlingProblem } from '../grammar-feature-forms.js';
 import { OPERATION_CONTEXTS } from './operations.js';
 import { decodeAt, encodeText, foldCase, unicodePropertyMatcher } from './text.js';
 
@@ -263,8 +264,20 @@ function loadInContext(grammar, context) {
   }
 
   const matching = parts.declarations.matching ?? (parts.sourceFormat === 'peg' ? 'peg' : 'generalized');
+  // How two parses of one text that end alike are settled: the steps the
+  // grammar declares, or its matching's default (see SETTLING_STEPS).
+  const steps = parts.declarations.settling ?? DEFAULT_SETTLING[matching];
+  const problem = settlingProblem(steps);
+  if (problem) loadError('declaration', problem);
   const program = {
     matching,
+    settling: Object.freeze({
+      steps: Object.freeze([...steps]),
+      tokens: steps.includes('tokens'),
+      precedence: steps.includes('precedence'),
+      dynamic: steps.includes('dynamic'),
+      ambiguity: steps.at(-1) === 'ambiguity',
+    }),
     start,
     rules,
     externalTokens,
@@ -372,7 +385,7 @@ function loadInContext(grammar, context) {
       });
     }
   }
-  if (matching === 'longest') program.tokenRanks = { ...tokenRanks(rules), immediate: immediateLiterals(rules) };
+  if (program.settling.tokens || program.settling.precedence) program.tokenRanks = { ...tokenRanks(rules), immediate: immediateLiterals(rules) };
 
   for (const language of embedded) {
     if (context.languages.has(language)) continue;

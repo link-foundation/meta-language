@@ -10,12 +10,13 @@ use std::sync::Arc;
 
 use super::compile::Compiler;
 use super::forking::GrammarFacts;
-use super::program::{Compiled, Program, Rule, Scanner, Target, Trivia};
+use super::program::{Compiled, Program, Rule, Scanner, Settling, SettlingStep, Target, Trivia};
 use super::token_ranks::token_ranks;
 use crate::grammar::interchange::render_native_expression;
 use crate::grammar::{
     FeatureExpr, FeatureForm, FieldValue, Grammar, GrammarExpr, GrammarFormat, GrammarMacro,
-    GrammarScanner, Operation, PrecedenceEntry, RuleAttributes, RuleKind,
+    GrammarScanner, Operation, PrecedenceEntry, RuleAttributes, RuleKind, default_settling,
+    settling_problem,
 };
 
 /// A grammar that cannot be loaded or a parse that cannot run; `reason`
@@ -191,6 +192,7 @@ struct Resolved {
     start: Option<String>,
     peg_source: bool,
     matching: Option<String>,
+    settling: Option<Vec<String>>,
     rules: Ordered<(RuleKind, GrammarExpr, RuleAttributes)>,
     modes: Vec<String>,
     extras: Vec<GrammarExpr>,
@@ -217,6 +219,7 @@ fn resolve_imports(
             .or_else(|| grammar.rules().first().map(|rule| rule.name.clone())),
         peg_source: grammar.source_format() == Some(GrammarFormat::Peg),
         matching: declarations.matching.clone(),
+        settling: declarations.settling.clone(),
         rules: Ordered::new(),
         modes: Vec::new(),
         extras: Vec::new(),
@@ -633,7 +636,21 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         .matching
         .as_deref()
         .map_or(resolved.peg_source, |matching| matching == "peg");
-    let longest = resolved.matching.as_deref() == Some("longest");
+    let matching = resolved
+        .matching
+        .as_deref()
+        .unwrap_or(if peg { "peg" } else { "generalized" });
+    // How two parses of one text that end alike are settled: the steps the
+    // grammar declares, or its matching's default (see `SETTLING_STEPS`).
+    let settling = match &resolved.settling {
+        Some(steps) => {
+            if let Some(problem) = settling_problem(steps) {
+                return refuse("declaration", problem);
+            }
+            Settling::new(steps)
+        }
+        None => Settling::new(default_settling(matching)),
+    };
     let instances = instantiator.rules;
     let rule_index: HashMap<String, usize> = instances
         .items
@@ -773,7 +790,9 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
     let embedded = compiler.into_embedded();
 
     let index = context.programs.len();
-    let token_ranks = longest.then(|| token_ranks(&rules));
+    let token_ranks = (settling.has(SettlingStep::Tokens)
+        || settling.has(SettlingStep::Precedence))
+    .then(|| token_ranks(&rules));
     let ranked_silent = resolved
         .precedences
         .iter()
@@ -792,6 +811,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
     let grammar = GrammarFacts::new(&rules, &resolved.conflicts);
     context.programs.push(Program {
         peg,
+        settling,
         token_ranks,
         start,
         rules,

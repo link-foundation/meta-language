@@ -95,16 +95,35 @@ function resultKey(result) {
   return `${result.end}|${result.state.key}`;
 }
 
+// The settling of a program loaded before grammars declared one: every step.
+const ALL_SETTLING = Object.freeze({ steps: Object.freeze(['tokens', 'precedence', 'dynamic', 'ambiguity']), tokens: true, precedence: true, dynamic: true, ambiguity: true });
+
+// The order of two results of one text that end alike by the grammar's
+// settling steps (see SETTLING_STEPS): 1 when `a` is preferred, -1 when `b`
+// is, 0 on a tie. `tokens` holds the token ranks, the input bytes and the
+// precedence orders the `tokens` step (the tokens a lexer prefers, as a
+// lexer decides them before any parse does) and the `precedence` step (the
+// shift or reduction an LR parser keeps by precedence) read; `dynamic`
+// prefers the higher dynamic precedence.
+function settledOrder(a, b, settling, tokens) {
+  for (const step of settling.steps) {
+    let order = 0;
+    if (step === 'tokens') order = tokens ? preferredTokens(a, b, tokens) : 0;
+    else if (step === 'precedence') order = tokens ? shiftOrder(a, b, tokens.orders, tokens.grammar, tokens.bytes, tokens.owner) : 0;
+    else if (step === 'dynamic') order = Math.sign(a.dynamic - b.dynamic);
+    else break;
+    if (order !== 0) return order;
+  }
+  return 0;
+}
+
 // Adds a result to a deduplicating map: of two results with the same end
-// and state, the lower repair cost wins, then, under `(matching longest)`
-// (when `tokens` holds the token ranks, the input bytes and the precedence
-// orders), the tokens a
-// lexer prefers (a lexer decides them before any parse does), then the
-// shift or reduction an LR parser keeps by precedence, then the higher
-// dynamic precedence; on a tie the first stays and,
-// without repairs and unless both build the same trees, is marked ambiguous
-// (as a copy, since results are shared through the memo).
-function addResult(results, result, tokens = null) {
+// and state, the lower repair cost wins, then the one the grammar's settling
+// steps prefer (see settledOrder); on a tie the first stays and, when the
+// settling ends in `ambiguity`, without repairs and unless both build the
+// same trees, is marked ambiguous (as a copy, since results are shared
+// through the memo).
+function addResult(results, result, tokens = null, settling = ALL_SETTLING) {
   const key = resultKey(result);
   const existing = results.get(key);
   if (!existing || result.cost < existing.cost) {
@@ -112,12 +131,12 @@ function addResult(results, result, tokens = null) {
     return;
   }
   if (result.cost > existing.cost) return;
-  const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing, tokens.orders, tokens.grammar, tokens.bytes, tokens.owner) : 0;
+  const order = settledOrder(result, existing, settling, tokens);
   // A trace, off unless a probe sets the array (see
   // experiments/native-order-trace.mjs): every decided pair and its order.
   globalThis.__orderTrace?.push([result, existing, order]);
-  if (order > 0 || (order === 0 && result.dynamic > existing.dynamic)) results.set(key, result);
-  else if (order === 0 && result.dynamic === existing.dynamic && existing.cost === 0 && !existing.ambiguous && !sameOutput(result.children, existing.children)) {
+  if (order > 0) results.set(key, result);
+  else if (order === 0 && settling.ambiguity && existing.cost === 0 && !existing.ambiguous && !sameOutput(result.children, existing.children)) {
     // A trace, off unless a probe sets the array (see
     // experiments/native-rust-ambiguity-pair.mjs): the two results it ties.
     globalThis.__ambiguityPairs?.push([result, existing]);
@@ -1619,6 +1638,12 @@ export class Executor {
     // `(matching longest)`: the token ranks and the input, by which addResult
     // orders two parses that differ in their tokens.
     this.longestTokens = program.tokenRanks ? { ...program.tokenRanks, bytes, orders: program.precedenceOrders ?? [], grammar: grammarFacts(program) } : null;
+    // The grammar's settling steps (see SETTLING_STEPS); the lexing of a
+    // tree-sitter lexer follows its `tokens` step, the LR reductions its
+    // `precedence` step.
+    this.settling = program.settling ?? ALL_SETTLING;
+    this.lexing = this.settling.tokens ? this.longestTokens : null;
+    this.reducing = this.settling.precedence ? this.longestTokens : null;
     this.depth = 0;
     this.memo = new Map();
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
@@ -1794,11 +1819,11 @@ export class Executor {
         .filter((result) => result.cost === 0 && result.children.some((child) => child.type === 'node'));
       let best = null;
       for (const result of results) {
-        if (!this.longestTokens) {
+        if (!this.lexing) {
           if (result.end === end) best ??= result;
           continue;
         }
-        const order = best === null ? 1 : preferredTokens(result, best, this.longestTokens);
+        const order = best === null ? 1 : preferredTokens(result, best, this.lexing);
         if (order > 0 || (order === 0 && result.end > best.end)) best = result;
       }
       const node = best?.children.find((child) => child.type === 'node');
@@ -1819,7 +1844,7 @@ export class Executor {
   // but lexes an extra token before it as before any other.
   immediateStarts(position, state, inToken) {
     const starts = [{ end: position, leaves: NO_CHILDREN }];
-    if (inToken || !this.longestTokens) return starts;
+    if (inToken || !this.lexing) return starts;
     const { leaves } = this.skipTrivia(position, state);
     leaves.forEach((leaf, index) => {
       if (leaf.kind !== null) starts.push({ end: leaf.end, leaves: leaves.slice(0, index + 1) });
@@ -1865,7 +1890,7 @@ export class Executor {
     if (!inToken) this.requestItem(expression, position);
     let { end: start, leaves } = this.terminalStart(position, state, inToken);
     let end = -1;
-    if (this.longestTokens && leaves.length > 0) ({ start, end, leaves } = this.beforeSeparator(expression, start, leaves));
+    if (this.lexing && leaves.length > 0) ({ start, end, leaves } = this.beforeSeparator(expression, start, leaves));
     if (end < 0) end = this.matchTerminal(expression, start);
     // A literal the grammar also takes as an immediate token (see
     // `KeywordLexing`) is not lexed plainly where the immediate one outranks it.
@@ -1958,7 +1983,7 @@ export class Executor {
           for (const { end, leaves } of starts) {
             for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
               if (keyword || immediate) this.keywords.match(`${end}|${result.end}`, this.callStack[this.callStack.length - 1] ?? null, immediate);
-              addResult(found, result, this.longestTokens);
+              addResult(found, result, this.longestTokens, this.settling);
             }
             if (scanned && found.size > 0) break;
           }
@@ -2006,7 +2031,7 @@ export class Executor {
   // precedence, the one the sequence's parts are in progress under.
   sequence(items, position, state, inToken, keep = null, owner = null) {
     const tokens = owner && this.longestTokens ? { ...this.longestTokens, owner } : this.longestTokens;
-    const reductions = this.longestTokens && !inToken ? reductionFacts(this.longestTokens.grammar) : null;
+    const reductions = this.reducing && !inToken ? reductionFacts(this.reducing.grammar) : null;
     const split = reductions?.splits.get(items) ?? null;
     // The offset each result's optional parts begin at, where its rule
     // could have been reduced (see `reductionFacts`).
@@ -2033,7 +2058,7 @@ export class Executor {
             }
           }
           if (last && keep && !keep(joined)) continue;
-          addResult(next, joined, tokens);
+          addResult(next, joined, tokens, this.settling);
         }
       }
       current = [...next.values()];
@@ -2088,7 +2113,7 @@ export class Executor {
     }
     const results = new Map();
     for (const item of expression.items) {
-      for (const result of this.evaluate(item, position, state, inToken)) addResult(results, result, this.longestTokens);
+      for (const result of this.evaluate(item, position, state, inToken)) addResult(results, result, this.longestTokens, this.settling);
     }
     return [...results.values()];
   }
@@ -2121,14 +2146,14 @@ export class Executor {
     const results = new Map();
     // A rule reduced before a token the next iteration may begin with ends
     // no iteration (see `reducedEarly`).
-    const reductions = this.longestTokens && !inToken ? reductionFacts(this.longestTokens.grammar) : null;
+    const reductions = this.reducing && !inToken ? reductionFacts(this.reducing.grammar) : null;
     const rest = reductions ? this.iterationKeys(reductions, item) : null;
     let frontier = [makeResult(position, state)];
     for (let count = 0; frontier.length > 0; count += 1) {
       if (count >= min) {
         const fresh = [];
         for (const result of frontier) {
-          addResult(results, result, this.longestTokens);
+          addResult(results, result, this.longestTokens, this.settling);
           if (results.get(resultKey(result)) === result) fresh.push(result);
         }
         frontier = fresh;
@@ -2153,10 +2178,10 @@ export class Executor {
             // takes a token the external scanner scanned of no width (Lean's
             // layout semicolon between two structure fields) is a result too,
             // as the parser shifts that token, though it is not extended again.
-            if (count < min || right.children.some((child) => child.scanned === true)) addResult(results, join(left, right), this.longestTokens);
+            if (count < min || right.children.some((child) => child.scanned === true)) addResult(results, join(left, right), this.longestTokens, this.settling);
             continue;
           }
-          addResult(next, join(left, right), this.longestTokens);
+          addResult(next, join(left, right), this.longestTokens, this.settling);
         }
       }
       frontier = [...next.values()];
@@ -2264,7 +2289,7 @@ export class Executor {
         this.fail(result.end, 'precedence');
         continue;
       }
-      addResult(found, result, this.longestTokens);
+      addResult(found, result, this.longestTokens, this.settling);
     }
     return [...found.values()];
   }
@@ -2498,7 +2523,7 @@ export class Executor {
       const results = new Map();
       const tokens = owner && this.longestTokens ? { ...this.longestTokens, owner } : this.longestTokens;
       for (const item of expression.items) {
-        for (const result of this.filtered(item, position, state, keep, owner)) addResult(results, result, tokens);
+        for (const result of this.filtered(item, position, state, keep, owner)) addResult(results, result, tokens, this.settling);
       }
       return [...results.values()];
     }
@@ -2709,7 +2734,7 @@ export class Executor {
           merged.set(key, result);
           continue;
         }
-        addResult(merged, result, this.longestTokens);
+        addResult(merged, result, this.longestTokens, this.settling);
         const kept = merged.get(key);
         if (kept === existing) continue;
         // A tie with a tree of an earlier pass is the ambiguity the rule body
@@ -2967,8 +2992,9 @@ export class Executor {
     }
     // The complete results end apart, before their trailing trivia, so they
     // are ranked here as addResult ranks results with one end: the lower
-    // cost, then the tokens a lexer prefers and the shift or reduction an LR
-    // parser keeps, then the higher dynamic precedence. Repaired results of equal cost are not ambiguities.
+    // cost, then the grammar's settling steps. A tie is an ambiguity when the
+    // settling ends in `ambiguity`; repaired results of equal cost are not
+    // ambiguities.
     let chosen = complete[0];
     let tied = false;
     for (const candidate of complete.slice(1)) {
@@ -2980,7 +3006,7 @@ export class Executor {
         tied = true;
       }
     }
-    const root = this.root(startRule, chosen, tied && chosen.result.cost === 0);
+    const root = this.root(startRule, chosen, tied && this.settling.ambiguity && chosen.result.cost === 0);
     // When the cheapest complete result takes the rest of the input as ERROR
     // at a repair point, a result that reached past that point without
     // completing costs at least one more repair, at its end. While that could
@@ -3011,9 +3037,7 @@ export class Executor {
   completeOrder(a, b) {
     if (a.result.cost !== b.result.cost) return a.result.cost < b.result.cost ? 1 : -1;
     const whole = ({ result, trailing }) => ({ children: [...result.children, ...trailing] });
-    const order = this.longestTokens ? preferredTokens(whole(a), whole(b), this.longestTokens) || shiftOrder(whole(a), whole(b), this.longestTokens.orders, this.longestTokens.grammar, this.longestTokens.bytes) : 0;
-    if (order !== 0) return order;
-    return Math.sign(a.result.dynamic - b.result.dynamic);
+    return settledOrder({ ...whole(a), dynamic: a.result.dynamic }, { ...whole(b), dynamic: b.result.dynamic }, this.settling, this.longestTokens);
   }
 
   root(startRule, { result, trailing }, several) {

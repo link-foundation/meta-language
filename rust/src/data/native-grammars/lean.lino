@@ -1,4 +1,4 @@
-(grammar (start module) (matching longest))
+(grammar (start module) (matching longest) (settling tokens precedence dynamic ambiguity))
 (extra (ref comment))
 (extra (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B)))
 (conflict where_declaration)

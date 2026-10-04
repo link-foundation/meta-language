@@ -112,7 +112,8 @@ function ruleFields(rule, label) {
 // The declarations of one grammar as one line of links.
 function declarationsText(declarations) {
   const matching = declarations.matching === null ? [] : [`(matching ${declarations.matching})`];
-  return [...matching, ...renderDeclarationLinks(declarations)].join(' ');
+  const settling = declarations.settling === null ? [] : [`(settling ${declarations.settling.join(' ')})`];
+  return [...matching, ...settling, ...renderDeclarationLinks(declarations)].join(' ');
 }
 
 function prepareSources(sources) {
@@ -400,9 +401,13 @@ function refine(nodes, index) {
 // Merges the declarations of the sources in precedence order, with each
 // source's rule names renamed to their canonical names. Imports, modes,
 // extras, conflict groups and precedence orders are united; the first declared matching, macro
-// or scanner of a name wins, and a later different one is a conflict.
+// or scanner of a name wins, and a later different one is a conflict. The
+// settling is the one the source of the matching declares (none: its
+// matching's default), else the first declared: a merged grammar settles
+// its parses as the source it matches like.
 function mergeDeclarations(sources, canonical) {
-  const declarations = { matching: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [] };
+  const settlings = [];
+  const declarations = { matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [] };
   const conflicts = [];
   const seen = { extras: new Set(), conflicts: new Set(), precedences: new Set(), macros: new Map(), scanners: new Map() };
   let matchingOwner = null;
@@ -410,6 +415,7 @@ function mergeDeclarations(sources, canonical) {
     renderDeclarationLinks({ imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [], ...entry })[0];
   for (const source of sources) {
     const own = mapDeclarations(grammarDeclarations(source.grammar), (name) => canonical(source, name));
+    settlings.push({ owner: source.id, settling: own.settling ? [...own.settling] : null });
     if (own.matching !== undefined) {
       if (declarations.matching === null) {
         declarations.matching = own.matching;
@@ -441,7 +447,11 @@ function mergeDeclarations(sources, canonical) {
       }
     }
   }
+  declarations.settling = matchingOwner === null
+    ? settlings.find(({ settling }) => settling !== null)?.settling ?? null
+    : settlings.find(({ owner }) => owner === matchingOwner).settling;
   if (declarations.matching === null) delete declarations.matching;
+  if (declarations.settling === null) delete declarations.settling;
   return { declarations, conflicts };
 }
 

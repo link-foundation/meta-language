@@ -1359,12 +1359,13 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-GRAMMAR-DECLARED-SETTLING',
     area: 'native-grammar',
     specification: 'native-merged-grammars',
+    fixture: 'docs/grammar/feature-union.md',
     construct: 'declared, data-driven conflict and precedence settling',
     expectedBehavior:
       'The LR-style conflict, fork and associativity settling is declared grammar data the tree-sitter, ANTLR and PEG imports share, not executor host code for tree-sitter alone, in both runtimes.',
     assertions: ['settlingDeclaredInGrammar', 'sharedByEveryImporter', 'noHostCodeSettling'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/src/grammar-feature-forms.js', 'js/src/grammar-runtime/load.js', 'js/src/grammar-runtime/executor.js'],
+    rust: ['rust/src/grammar/feature.rs', 'rust/src/grammar/feature_runtime/load.rs', 'rust/src/grammar/feature_runtime/ordering.rs'],
   },
   {
     id: 'I195-CACHE-CLEANUP-GRAMMAR-CACHES',

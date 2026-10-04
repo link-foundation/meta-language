@@ -39,6 +39,7 @@ import {
   readLineOperation,
   renderFeatureExpression,
   renderOperation,
+  settlingProblem,
 } from './grammar-feature-forms.js';
 
 const IMPORTERS = {
@@ -107,6 +108,7 @@ export function renderNativeGrammar(grammar) {
   const codec = lineCodec(renderNativeExpression, renderName);
   const parameters = (names) => (names?.length > 0 ? `(${names.map(renderName).join(', ')})` : '');
   if (declarations.matching) lines.push(`matching ${declarations.matching}`);
+  if (declarations.settling) lines.push(`settling ${declarations.settling.join(' ')}`);
   for (const name of declarations.imports) lines.push(`import ${renderName(name)}`);
   for (const name of declarations.modes) lines.push(`mode ${renderName(name)}`);
   for (const extra of declarations.extras) lines.push(`extra ${renderNativeExpression(extra)}`);
@@ -187,7 +189,7 @@ export function parseNativeGrammar(source) {
   let startLine = 0;
   let sourceFormat = null;
   const declarations = {
-    matching: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [],
+    matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [],
   };
   for (const [index, text] of source.split('\n').entries()) {
     const line = index + 1;
@@ -223,6 +225,13 @@ export function parseNativeGrammar(source) {
       if (declarations.matching !== null) cursor.fail('the matching is given twice');
       declarations.matching = cursor.word();
       if (!MATCHING_MODES.includes(declarations.matching)) cursor.fail(`unknown matching ${declarations.matching}`);
+    } else if (directive === 'settling') {
+      if (declarations.settling !== null) cursor.fail('the settling is given twice');
+      const steps = [cursor.word()];
+      for (cursor.skipSpaces(); !cursor.done(); cursor.skipSpaces()) steps.push(cursor.word());
+      const problem = settlingProblem(steps);
+      if (problem) cursor.fail(problem);
+      declarations.settling = steps;
     } else if (directive === 'import') {
       declarations.imports.push(cursor.name());
     } else if (directive === 'mode') {

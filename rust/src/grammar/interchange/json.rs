@@ -282,6 +282,9 @@ fn declarations_json(declarations: &GrammarDeclarations) -> Json {
     if let Some(matching) = &declarations.matching {
         entries.push(("matching", Json::str(matching)));
     }
+    if let Some(settling) = &declarations.settling {
+        entries.push(("settling", Json::strings(settling)));
+    }
     if !declarations.imports.is_empty() {
         entries.push(("imports", Json::strings(&declarations.imports)));
     }
@@ -630,6 +633,10 @@ fn read_declarations(value: &Value) -> Result<GrammarDeclarations, GrammarImport
     let what = "declarations";
     let mut declarations = GrammarDeclarations {
         matching: optional_string(value, "matching", what)?,
+        settling: value
+            .get("settling")
+            .map(|steps| strings(Some(steps), what))
+            .transpose()?,
         imports: strings(value.get("imports"), what)?,
         modes: strings(value.get("modes"), what)?,
         ..GrammarDeclarations::default()

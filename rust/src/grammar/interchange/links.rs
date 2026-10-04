@@ -12,7 +12,7 @@
 //! `(repeat0 ITEM)`, `(repeat1 ITEM)`, `(repeat MIN MAX|unbounded ITEM)`,
 //! `(and ITEM)`, `(not ITEM)` and `(capture labeled LABEL ITEM)` or
 //! `(capture unlabeled ITEM)`. The grammar feature union adds an optional
-//! `(matching MODE)` header field, declaration links before the first rule,
+//! `(matching MODE)` and `(settling STEP...)` header fields, declaration links before the first rule,
 //! rule fields before the doc and feature expressions (see the
 //! `feature_links` module). The metadata `(kind NAME (source-names (SOURCE
 //! NAME)...))` links after the declarations keep the source names of the
@@ -28,6 +28,7 @@ use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 use super::super::{
     CharClassItem, FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat,
     GrammarImportError, GrammarKind, GrammarRule, GrammarSourceName, MATCHING_MODES, RuleKind,
+    settling_problem,
 };
 use super::feature_links::{
     read_class, read_declaration, read_feature, read_rule_fields, read_source_names,
@@ -119,6 +120,9 @@ pub fn render_grammar_links(grammar: &Grammar) -> String {
     let declarations = grammar.declarations();
     if let Some(matching) = &declarations.matching {
         header.push(format!("(matching {matching})"));
+    }
+    if let Some(settling) = &declarations.settling {
+        header.push(format!("(settling {})", settling.join(" ")));
     }
     let mut lines = vec![format!("({})", header.join(" "))];
     lines.extend(render_declaration_links(declarations));
@@ -491,6 +495,17 @@ pub fn parse_grammar_links(source: &str) -> Result<Grammar, GrammarImportError> 
     let mut declarations = GrammarDeclarations::default();
     for field in header_args {
         let (key, values) = parts(field)?;
+        if key == "settling" && declarations.settling.is_none() {
+            let steps = values
+                .iter()
+                .map(|value| word(Some(value), "a settling step").map(str::to_owned))
+                .collect::<Result<Vec<_>, _>>()?;
+            if let Some(problem) = settling_problem(&steps) {
+                return Err(links_error(problem));
+            }
+            declarations.settling = Some(steps);
+            continue;
+        }
         arity(key, values, 1)?;
         if key == "format" && source_format.is_none() {
             let tag = word(values.first(), "a format")?;

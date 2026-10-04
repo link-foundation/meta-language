@@ -21,7 +21,8 @@ use super::operations::{Abort, OpError, State, ValueMachine, evaluate_condition}
 use super::parting::{ends_missing, starts_widthless};
 use super::precedence::{Keep, Operands};
 use super::program::{
-    Associativity, Compiled, Expr, Matcher, Name, PrecedenceTag, Program, Target,
+    Associativity, Compiled, Expr, Matcher, Name, PrecedenceTag, Program, Settling, SettlingStep,
+    Target,
 };
 use super::results::{
     ChildList, Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned,
@@ -89,6 +90,12 @@ pub(super) struct Executor<'c> {
     pub(super) max_depth: usize,
     pub(super) peg: bool,
     pub(super) longest_tokens: Option<TokenOrder<'c>>,
+    /// The grammar's settling steps; the lexing of a tree-sitter lexer
+    /// (`lexing`) follows its `tokens` step, the LR reductions (`reducing`)
+    /// its `precedence` step.
+    pub(super) settling: Settling,
+    pub(super) lexing: Option<TokenOrder<'c>>,
+    pub(super) reducing: bool,
     pub(super) depth: usize,
     pub(super) memo: HashMap<MemoKey, Rc<RefCell<Entry>>>,
     pub(super) call_stack: Vec<Rc<RefCell<Entry>>>,
@@ -162,6 +169,12 @@ impl<'c> Executor<'c> {
         max_depth: usize,
     ) -> Self {
         let program = &compiled.programs[program_index];
+        let longest_tokens = program.token_ranks.as_ref().map(|ranks| TokenOrder {
+            ranks,
+            bytes,
+            orders: &program.precedence_orders,
+            grammar: &program.grammar,
+        });
         Self {
             compiled,
             program,
@@ -172,12 +185,10 @@ impl<'c> Executor<'c> {
             shared,
             max_depth,
             peg: program.peg,
-            longest_tokens: program.token_ranks.as_ref().map(|ranks| TokenOrder {
-                ranks,
-                bytes,
-                orders: &program.precedence_orders,
-                grammar: &program.grammar,
-            }),
+            longest_tokens,
+            settling: program.settling,
+            lexing: longest_tokens.filter(|_| program.settling.has(SettlingStep::Tokens)),
+            reducing: program.settling.has(SettlingStep::Precedence),
             depth: 0,
             memo: HashMap::new(),
             call_stack: Vec::new(),
@@ -450,7 +461,7 @@ impl<'c> Executor<'c> {
                 } else {
                     self.immediate_starts(position, state, in_token)?
                 };
-                let mut found = ResultSet::new(self.longest_tokens);
+                let mut found = ResultSet::new(self.longest_tokens, self.settling);
                 let immediate = matches!(expr, Expr::ImmediateToken(_))
                     && matches!(&**item, Expr::Terminal { matcher, .. } if matches!(matcher, Matcher::Literal(_)));
                 let keywords = self
@@ -609,7 +620,8 @@ impl<'c> Executor<'c> {
         let mut boundaries: HashMap<*const ChildList, usize> = HashMap::new();
         let mut current = vec![Res::new(position, state.clone(), no_children(), 0)];
         for (index, item) in items.iter().enumerate() {
-            let mut next = ResultSet::new(self.longest_tokens).owned(keep.map(Keep::owner));
+            let mut next =
+                ResultSet::new(self.longest_tokens, self.settling).owned(keep.map(Keep::owner));
             let last = index == items.len() - 1;
             let rest = match reductions {
                 Some(reductions) if !last => self.rest_keys(reductions, items, index),
@@ -673,10 +685,10 @@ impl<'c> Executor<'c> {
     }
 
     /// The reductions before a following token (see `reduction_facts`) the
-    /// results are checked against: under `(matching longest)`, outside a
-    /// token.
+    /// results are checked against: under a settling with `precedence`,
+    /// outside a token.
     fn reductions(&self, in_token: bool) -> Option<&'c Reductions> {
-        let tokens = self.longest_tokens.filter(|_| !in_token)?;
+        let tokens = self.longest_tokens.filter(|_| self.reducing && !in_token)?;
         Some(tokens.grammar.reductions(&self.program.rules))
     }
 
@@ -744,7 +756,7 @@ impl<'c> Executor<'c> {
             }
             return Ok(best.into_iter().collect());
         }
-        let mut results = ResultSet::new(self.longest_tokens);
+        let mut results = ResultSet::new(self.longest_tokens, self.settling);
         for item in items {
             for result in self.evaluate(item, position, state, in_token)? {
                 results.add(result);
@@ -797,7 +809,7 @@ impl<'c> Executor<'c> {
         // not extended again (it is the same continuation) but marks ambiguity,
         // unless it replaces the result reached before: then the continuations
         // of the replaced one are replaced too, by extending it.
-        let mut results = ResultSet::new(self.longest_tokens);
+        let mut results = ResultSet::new(self.longest_tokens, self.settling);
         // A rule reduced before a token the next iteration may begin with
         // ends no iteration (see `reduced_early`).
         let rest = self
@@ -818,7 +830,7 @@ impl<'c> Executor<'c> {
             if !below_max(count) {
                 break;
             }
-            let mut next = ResultSet::new(self.longest_tokens);
+            let mut next = ResultSet::new(self.longest_tokens, self.settling);
             let continued = self.continued(item, &frontier, in_token)?;
             let pruned = self.preempted(&continued, in_token);
             for ((left, rights), pruned) in continued.into_iter().zip(pruned) {

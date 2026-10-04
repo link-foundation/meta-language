@@ -81,6 +81,41 @@ export const OPERATION_FORMS = Object.freeze({
  */
 export const MATCHING_MODES = Object.freeze(['generalized', 'peg', 'longest']);
 
+/**
+ * The steps that settle two parses of one text that end alike, as a
+ * grammar's `(settling STEP ...)` declares them, in order (the lower repair
+ * cost always decides first): `tokens`, the tokens a lexer prefers (higher
+ * lexical precedence, longer, a literal over a pattern, earlier), with the
+ * lexing that goes with it (keywords, separators, immediate tokens);
+ * `precedence`, the shift or reduction an LR parser keeps by precedence and
+ * associativity, forking where a declared conflict asks; `dynamic`, the
+ * higher dynamic precedence. The last step settles a tie: `first` keeps the
+ * parse reached first, `ambiguity` keeps it and reports the ambiguity.
+ */
+export const SETTLING_STEPS = Object.freeze(['tokens', 'precedence', 'dynamic', 'first', 'ambiguity']);
+
+/** The settling of a grammar that declares none, by its matching. */
+export const DEFAULT_SETTLING = Object.freeze({
+  generalized: Object.freeze(['dynamic', 'ambiguity']),
+  peg: Object.freeze(['first']),
+  longest: Object.freeze(['tokens', 'precedence', 'dynamic', 'ambiguity']),
+});
+
+/**
+ * Why `steps` is no settling, or null: every step is known and given once,
+ * and exactly the last one settles a tie.
+ */
+export function settlingProblem(steps) {
+  if (steps.length === 0) return 'the settling names no step';
+  for (const [index, step] of steps.entries()) {
+    if (!SETTLING_STEPS.includes(step)) return `unknown settling step ${step}`;
+    if (steps.indexOf(step) !== index) return `the settling step ${step} is given twice`;
+    const tie = step === 'first' || step === 'ambiguity';
+    if (tie !== (index === steps.length - 1)) return 'the settling ends with exactly one of first and ambiguity';
+  }
+  return null;
+}
+
 /** The rule attributes, in the order both serializations write them. */
 export const RULE_ATTRIBUTES = Object.freeze(['channel', 'modes', 'action']);
 
@@ -91,6 +126,7 @@ export function grammarDeclarations(grammar) {
   const declarations = grammar.declarations ?? {};
   return {
     matching: declarations.matching ?? null,
+    settling: declarations.settling ?? null,
     imports: declarations.imports ?? [],
     modes: declarations.modes ?? [],
     extras: declarations.extras ?? [],

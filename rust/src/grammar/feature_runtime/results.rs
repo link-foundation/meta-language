@@ -12,8 +12,8 @@ use std::rc::Rc;
 use super::forking::{GrammarFacts, Lead};
 use super::operations::{OperationValue, State};
 pub(super) use super::ordering::{complete_order, preferred_tokens, same_children};
-use super::ordering::{same_output, shift_order, token_conflict};
-use super::program::{Name, PrecedenceTag, TokenRanks};
+use super::ordering::{same_output, settled_order, token_conflict};
+use super::program::{Name, PrecedenceTag, Settling, TokenRanks};
 use crate::grammar::PrecedenceEntry;
 
 /// The type of a syntax tree node.
@@ -318,17 +318,20 @@ pub(super) struct TokenOrder<'c> {
 pub(super) struct ResultSet<'c> {
     pub(super) items: Vec<Res>,
     index: HashMap<(usize, State), usize>,
-    /// `(matching longest)`: a tie goes to the tokens a lexer prefers.
+    /// The token ranks the `tokens` and `precedence` settling steps read.
     tokens: Option<TokenOrder<'c>>,
+    /// The grammar's settling steps.
+    settling: Settling,
     /// The precedence the results are parts of, when a precedence
     /// expression holds them (see `shift_order`).
     owner: Option<PrecedenceTag>,
 }
 
 impl<'c> ResultSet<'c> {
-    pub(super) fn new(tokens: Option<TokenOrder<'c>>) -> Self {
+    pub(super) fn new(tokens: Option<TokenOrder<'c>>, settling: Settling) -> Self {
         Self {
             tokens,
+            settling,
             ..Self::default()
         }
     }
@@ -340,11 +343,10 @@ impl<'c> ResultSet<'c> {
     }
 
     /// Of two results with the same end and state, the lower repair cost
-    /// wins, then, under `(matching longest)`, the tokens a lexer prefers (a
-    /// lexer decides them before any parse does) and the shift or reduction
-    /// an LR parser keeps by precedence, then the higher dynamic precedence;
-    /// on a tie the first stays and, without repairs and unless both build
-    /// the same trees, is marked ambiguous. True when `result` was kept.
+    /// wins, then the one the grammar's settling steps prefer (see
+    /// `settled_order`); on a tie the first stays and, when the settling ends
+    /// in `ambiguity`, without repairs and unless both build the same trees,
+    /// is marked ambiguous. True when `result` was kept.
     pub(super) fn add(&mut self, result: Res) -> bool {
         match self.index.get(&result.key()) {
             None => self.push(result),
@@ -354,24 +356,16 @@ impl<'c> ResultSet<'c> {
                     return false;
                 }
                 if result.cost == existing.cost {
-                    let order = self
-                        .tokens
-                        .map_or(Ordering::Equal, |tokens| {
-                            preferred_tokens(&result.children, &existing.children, tokens)
-                                .then_with(|| {
-                                    shift_order(
-                                        &result.children,
-                                        &existing.children,
-                                        tokens.orders,
-                                        tokens.grammar,
-                                        tokens.bytes,
-                                        self.owner.as_ref(),
-                                    )
-                                })
-                        })
-                        .then(result.dynamic.cmp(&existing.dynamic));
+                    let order = settled_order(
+                        (&result.children, result.dynamic),
+                        (&existing.children, existing.dynamic),
+                        self.settling,
+                        self.tokens,
+                        self.owner.as_ref(),
+                    );
                     if order != Ordering::Greater {
                         if order == Ordering::Equal
+                            && self.settling.ambiguity()
                             && existing.cost == 0
                             && !same_output(&result.children, &existing.children)
                         {

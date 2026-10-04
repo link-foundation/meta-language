@@ -58,7 +58,8 @@ pub use emit::{
 pub use feature::{
     ByteClassItem, FEATURE_EXPRESSION_FORMS, FeatureExpr, FeatureForm, FieldType, FieldValue,
     GrammarDeclarations, GrammarMacro, GrammarScanner, MATCHING_MODES, OPERATION_FORMS, Operation,
-    OperationCategory, PrecedenceEntry, RuleAttributes, UnicodeClassItem,
+    OperationCategory, PrecedenceEntry, RuleAttributes, SETTLING_STEPS, UnicodeClassItem,
+    default_settling, settling_problem,
 };
 pub use fidelity::{
     FORMER_GRAMMAR_CONSTRUCTS, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS, GrammarFidelityLevel,
@@ -741,6 +742,7 @@ impl Grammar {
             source_format: None,
             declarations: GrammarDeclarations {
                 matching: None,
+                settling: None,
                 imports: Vec::new(),
                 modes: Vec::new(),
                 extras: Vec::new(),

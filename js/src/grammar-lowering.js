@@ -460,12 +460,17 @@ export function lowerGrammar(grammar, format, {
 // The steps whose content the executable grammar does not honor.
 const UNHONORED_STEPS = new Set(['declarations', 'attributes']);
 
-// The declarations as native links (a grammar link with the matching, then
-// one link per declaration), or null for a grammar without declarations.
+// The declarations as native links (a grammar link with the matching and
+// the settling, then one link per declaration), or null for a grammar
+// without declarations.
 function renderDeclarationsText(declarations) {
   const lines = renderDeclarationLinks(declarations);
-  if (declarations.matching === null && lines.length === 0) return null;
-  const header = declarations.matching === null ? '(grammar)' : `(grammar (matching ${declarations.matching}))`;
+  if (declarations.matching === null && declarations.settling === null && lines.length === 0) return null;
+  const fields = [
+    ...(declarations.matching === null ? [] : [`(matching ${declarations.matching})`]),
+    ...(declarations.settling === null ? [] : [`(settling ${declarations.settling.join(' ')})`]),
+  ];
+  const header = `(grammar${fields.map((field) => ` ${field}`).join('')})`;
   return [header, ...lines].map((line) => `${line}\n`).join('');
 }
 

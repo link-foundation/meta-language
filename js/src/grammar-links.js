@@ -40,6 +40,7 @@ import {
   readLinksOperation,
   renderFeatureExpression,
   renderOperation,
+  settlingProblem,
 } from './grammar-feature-forms.js';
 import { ruleDoc } from './grammar-emitters/structural.js';
 import { GrammarImportError } from './grammar-importers.js';
@@ -96,6 +97,7 @@ export function renderGrammarLinks(grammar) {
   if (start) header.push(`(start ${percentEncodeLinksText(start.name)})`);
   const declarations = grammarDeclarations(grammar);
   if (declarations.matching) header.push(`(matching ${declarations.matching})`);
+  if (declarations.settling) header.push(`(settling ${declarations.settling.join(' ')})`);
   const lines = [`(${header.join(' ')})`];
   lines.push(...renderDeclarationLinks(declarations));
   for (const kind of grammar.kinds ?? []) {
@@ -436,10 +438,16 @@ export function parseGrammarLinks(source) {
   let sourceFormat = null;
   let start = null;
   const declarations = {
-    matching: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [],
+    matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [],
   };
   for (const field of headerArgs) {
     const [key, values] = parts(field);
+    if (key === 'settling' && declarations.settling === null) {
+      declarations.settling = values.map((value) => word(value, 'a settling step'));
+      const problem = settlingProblem(declarations.settling);
+      if (problem) throw linksError(problem);
+      continue;
+    }
     arity(key, values, 1);
     if (key === 'format' && sourceFormat === null) {
       sourceFormat = word(values[0], 'a format');

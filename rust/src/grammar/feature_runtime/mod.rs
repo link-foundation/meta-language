@@ -38,7 +38,7 @@ use super::decorators::{decorate_grammar, decorate_syntax_tree};
 use crate::decorators::{DecoratorError, DecoratorLevel, DecoratorSet};
 use executor::Executor;
 use operations::Abort;
-use program::Compiled;
+use program::{Compiled, SettlingStep};
 use results::{Expectations, KeywordLexing, Outcome, Shared, TokenOrder};
 
 /// The default bound on nested rule calls.
@@ -417,6 +417,11 @@ fn parse_program(
     let tokens = compiled.programs[compiled.main]
         .token_ranks
         .as_ref()
+        .filter(|_| {
+            compiled.programs[compiled.main]
+                .settling
+                .has(SettlingStep::Tokens)
+        })
         .map(|ranks| TokenOrder {
             ranks,
             bytes,

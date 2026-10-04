@@ -185,6 +185,7 @@ pub(super) fn map_declarations(
 ) -> GrammarDeclarations {
     GrammarDeclarations {
         matching: declarations.matching.clone(),
+        settling: declarations.settling.clone(),
         imports: declarations.imports.clone(),
         modes: declarations.modes.clone(),
         extras: declarations

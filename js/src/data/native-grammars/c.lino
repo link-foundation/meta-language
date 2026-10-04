@@ -1,4 +1,4 @@
-(grammar (start translation_unit) (matching longest))
+(grammar (start translation_unit) (matching longest) (settling tokens precedence dynamic ambiguity))
 (extra (choice unordered (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B)) (seq (literal %5C) (optional (literal %0D)) (literal %0A))))
 (extra (ref comment))
 (conflict type_specifier declarator)

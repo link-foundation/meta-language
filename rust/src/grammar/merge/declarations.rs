@@ -33,6 +33,12 @@ pub(super) fn declarations_text(declarations: &GrammarDeclarations) -> String {
         .matching
         .iter()
         .map(|matching| format!("(matching {matching})"))
+        .chain(
+            declarations
+                .settling
+                .iter()
+                .map(|settling| format!("(settling {})", settling.join(" "))),
+        )
         .collect();
     parts.extend(render_declaration_links(declarations));
     parts.join(" ")
@@ -59,7 +65,9 @@ fn single_line(declarations: &GrammarDeclarations) -> String {
 /// source's rule names renamed by `canonical`. Imports, modes, extras,
 /// conflict groups and precedence orders are united; the first declared
 /// matching, macro or scanner of a name wins, and a later different one is a
-/// conflict.
+/// conflict. The settling is the one the source of the matching declares
+/// (none: its matching's default), else the first declared: a merged grammar
+/// settles its parses as the source it matches like.
 pub(super) fn merge_declarations(
     entry: &[&Prepared<'_>],
     canonical: &dyn Fn(&Prepared<'_>, &str) -> String,
@@ -67,6 +75,7 @@ pub(super) fn merge_declarations(
     let mut merged = GrammarDeclarations::default();
     let mut conflicts = Vec::new();
     let mut matching_owner = "";
+    let mut settlings: Vec<(&str, Option<Vec<String>>)> = Vec::new();
     let mut seen_extras = BTreeSet::new();
     let mut seen_conflicts = BTreeSet::new();
     let mut seen_precedences = BTreeSet::new();
@@ -76,6 +85,7 @@ pub(super) fn merge_declarations(
         let own = map_declarations(source.grammar.declarations(), &|name| {
             canonical(source, name)
         });
+        settlings.push((source.id, own.settling));
         if let Some(matching) = own.matching {
             match &merged.matching {
                 None => {
@@ -160,5 +170,13 @@ pub(super) fn merge_declarations(
             }
         }
     }
+    merged.settling = if merged.matching.is_none() {
+        settlings.into_iter().find_map(|(_, settling)| settling)
+    } else {
+        settlings
+            .into_iter()
+            .find(|(owner, _)| *owner == matching_owner)
+            .and_then(|(_, settling)| settling)
+    };
     (merged, conflicts)
 }

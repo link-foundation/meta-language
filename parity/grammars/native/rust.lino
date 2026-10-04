@@ -1,4 +1,4 @@
-(grammar (start source_file) (matching longest))
+(grammar (start source_file) (matching longest) (settling tokens precedence dynamic ambiguity))
 (extra (class plain (char %20) (char %09) (char %0A) (char %0D) (char %0C) (char %0B)))
 (extra (ref line_comment))
 (extra (ref block_comment))

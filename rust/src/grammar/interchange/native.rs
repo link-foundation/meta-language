@@ -11,7 +11,7 @@ use super::super::feature::class_expression;
 use super::super::{
     CharClassItem, FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat,
     GrammarImportError, GrammarMacro, GrammarRule, GrammarScanner, MATCHING_MODES, Operation,
-    PrecedenceEntry, RuleAttributes, RuleKind, UnicodeClassItem,
+    PrecedenceEntry, RuleAttributes, RuleKind, UnicodeClassItem, settling_problem,
 };
 use super::feature_forms::{FormCodec, render_feature_form, render_operation};
 
@@ -65,6 +65,9 @@ pub fn render_native_grammar(grammar: &Grammar) -> String {
     };
     if let Some(matching) = &declarations.matching {
         lines.push(format!("matching {matching}"));
+    }
+    if let Some(settling) = &declarations.settling {
+        lines.push(format!("settling {}", settling.join(" ")));
     }
     for name in &declarations.imports {
         lines.push(format!("import {}", render_name(name)));
@@ -354,6 +357,20 @@ pub fn parse_native_grammar(source: &str) -> Result<Grammar, GrammarImportError>
                     return Err(cursor.fail(format!("unknown matching {matching}")));
                 }
                 declarations.matching = Some(matching);
+            }
+            "settling" => {
+                if declarations.settling.is_some() {
+                    return Err(cursor.fail("the settling is given twice"));
+                }
+                let mut steps = Vec::new();
+                while !cursor.done() {
+                    steps.push(cursor.word()?);
+                    cursor.skip_spaces();
+                }
+                if let Some(problem) = settling_problem(&steps) {
+                    return Err(cursor.fail(problem));
+                }
+                declarations.settling = Some(steps);
             }
             "import" => declarations.imports.push(cursor.name()?),
             "mode" => declarations.modes.push(cursor.name()?),

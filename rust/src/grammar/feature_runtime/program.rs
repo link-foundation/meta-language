@@ -294,6 +294,84 @@ pub(super) struct Rule {
     pub(super) lexical_priority: i64,
 }
 
+/// A step of a grammar's settling (see `SETTLING_STEPS`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum SettlingStep {
+    /// The tokens a lexer prefers, as a lexer decides them before any parse.
+    Tokens,
+    /// The shift or reduction an LR parser keeps by precedence.
+    Precedence,
+    /// The higher dynamic precedence.
+    Dynamic,
+    /// A tie keeps the first parse.
+    First,
+    /// A tie keeps the first parse and is reported as an ambiguity.
+    Ambiguity,
+}
+
+/// How two parses of one text that end alike are settled: the steps in
+/// order, the last a tie step (see `settling_problem`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct Settling {
+    steps: [SettlingStep; 5],
+    count: usize,
+}
+
+impl Settling {
+    /// The settling of a program loaded before grammars declared one: every
+    /// step, the tie reported.
+    pub(super) const ALL: Self = Self {
+        steps: [
+            SettlingStep::Tokens,
+            SettlingStep::Precedence,
+            SettlingStep::Dynamic,
+            SettlingStep::Ambiguity,
+            SettlingStep::Ambiguity,
+        ],
+        count: 4,
+    };
+
+    /// The settling of the steps `names`, which `settling_problem` accepts.
+    pub(super) fn new<S: AsRef<str>>(names: &[S]) -> Self {
+        let mut settling = Self {
+            steps: [SettlingStep::Ambiguity; 5],
+            count: 0,
+        };
+        for name in names.iter().take(5) {
+            settling.steps[settling.count] = match name.as_ref() {
+                "tokens" => SettlingStep::Tokens,
+                "precedence" => SettlingStep::Precedence,
+                "dynamic" => SettlingStep::Dynamic,
+                "first" => SettlingStep::First,
+                _ => SettlingStep::Ambiguity,
+            };
+            settling.count += 1;
+        }
+        settling
+    }
+
+    /// The steps in order.
+    pub(super) fn steps(&self) -> &[SettlingStep] {
+        &self.steps[..self.count]
+    }
+
+    /// Whether the settling has `step`.
+    pub(super) fn has(&self, step: SettlingStep) -> bool {
+        self.steps().contains(&step)
+    }
+
+    /// Whether a tie is reported as an ambiguity.
+    pub(super) fn ambiguity(&self) -> bool {
+        self.steps().last() == Some(&SettlingStep::Ambiguity)
+    }
+}
+
+impl Default for Settling {
+    fn default() -> Self {
+        Self::ALL
+    }
+}
+
 /// The rank of a token of a `(matching longest)` grammar: its lexical
 /// precedence, its specificity (2 for a literal, 0 for a pattern, one more
 /// for an immediate token) and its order in the grammar.
@@ -337,8 +415,10 @@ pub(super) struct Trivia {
 #[derive(Debug)]
 pub(super) struct Program {
     pub(super) peg: bool,
-    /// `(matching longest)`: the token ranks by which a tie between results
-    /// goes to the tokens a lexer prefers.
+    /// How two parses of one text that end alike are settled.
+    pub(super) settling: Settling,
+    /// A settling with `tokens` or `precedence`: the token ranks by which a
+    /// tie between results goes to the tokens a lexer prefers.
     pub(super) token_ranks: Option<TokenRanks>,
     pub(super) start: Option<String>,
     pub(super) rules: Vec<Rule>,

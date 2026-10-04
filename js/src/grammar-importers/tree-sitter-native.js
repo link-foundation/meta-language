@@ -704,7 +704,7 @@ export function importTreeSitterNative(source, options = {}) {
 export function renderTreeSitterNative(imported, { annotate } = {}) {
   const fields = annotate ?? ((rule) => (rule.sourceName !== null && rule.sourceName !== rule.name
     ? [`(source-names (tree-sitter ${enc(rule.sourceName)}))`] : []));
-  const lines = [`(grammar (start ${enc(imported.start)}) (matching longest))`];
+  const lines = [`(grammar (start ${enc(imported.start)}) (matching longest) (settling tokens precedence dynamic ambiguity))`];
   for (const extra of imported.extras) lines.push(`(extra ${extra})`);
   for (const group of imported.conflicts) lines.push(`(conflict ${group.map(enc).join(' ')})`);
   for (const order of imported.precedences ?? []) lines.push(`(precedences ${order.map((entry) => `(${entry.kind} ${enc(entry.value)})`).join(' ')})`);

@@ -123,7 +123,7 @@ impl Executor<'_> {
     // (`a ..= ..` stands).
     fn lone_pending(&mut self, results: Vec<Res>, pending: Vec<Res>) -> Vec<Res> {
         let ends: HashSet<usize> = results.iter().map(|result| result.end).collect();
-        let mut found = ResultSet::new(self.longest_tokens);
+        let mut found = ResultSet::new(self.longest_tokens, self.settling);
         for result in results {
             found.set(result);
         }
@@ -725,7 +725,8 @@ impl Executor<'_> {
                 items,
             } if !self.peg => {
                 self.step()?;
-                let mut results = ResultSet::new(self.longest_tokens).owned(Some(keep.owner()));
+                let mut results =
+                    ResultSet::new(self.longest_tokens, self.settling).owned(Some(keep.owner()));
                 for item in items {
                     for result in self.filtered(item, position, state, keep)? {
                         results.add(result);

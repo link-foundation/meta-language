@@ -91,17 +91,25 @@ pub fn render_lowering_metadata(metadata: &GrammarLoweringMetadata) -> String {
     })
 }
 
-/// The declarations as native links (a grammar link with the matching, then
-/// one link per declaration), or `None` for a grammar without declarations.
+/// The declarations as native links (a grammar link with the matching and
+/// the settling, then one link per declaration), or `None` for a grammar without declarations.
 pub(super) fn render_declarations_text(declarations: &GrammarDeclarations) -> Option<String> {
     let lines = render_declaration_links(declarations);
-    if declarations.matching.is_none() && lines.is_empty() {
+    if declarations.matching.is_none() && declarations.settling.is_none() && lines.is_empty() {
         return None;
     }
-    let header = declarations.matching.as_ref().map_or_else(
-        || "(grammar)".to_owned(),
-        |matching| format!("(grammar (matching {matching}))"),
-    );
+    let fields = declarations
+        .matching
+        .iter()
+        .map(|matching| format!(" (matching {matching})"))
+        .chain(
+            declarations
+                .settling
+                .iter()
+                .map(|settling| format!(" (settling {})", settling.join(" "))),
+        )
+        .collect::<String>();
+    let header = format!("(grammar{fields})");
     Some(
         std::iter::once(header)
             .chain(lines)

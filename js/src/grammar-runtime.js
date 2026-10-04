@@ -98,7 +98,7 @@ function parseProgram(program, source, options) {
   let outcome;
   // Under `(matching longest)` the input is parsed again while the tree takes
   // a token rule's leaf where a keyword a lexer prefers matched.
-  const keywords = program.tokenRanks ? new KeywordLexing({ ...program.tokenRanks, bytes }) : null;
+  const keywords = program.tokenRanks && program.settling?.tokens !== false ? new KeywordLexing({ ...program.tokenRanks, bytes }) : null;
   const expectations = new Expectations();
   try {
     do {

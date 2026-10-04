@@ -13,7 +13,9 @@ use super::parting::{
     chain_conflict, child_parting, has_node, holds_first, one_token, parting_end, reduced_first,
     same_tokens, shifted_past, silent_parting,
 };
-use super::program::{Associativity, PrecedenceTag, TokenRank, compare_precedence};
+use super::program::{
+    Associativity, PrecedenceTag, Settling, SettlingStep, TokenRank, compare_precedence,
+};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
 use crate::grammar::PrecedenceEntry;
 
@@ -902,6 +904,39 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
     closing.unwrap_or_else(|| reduction(short))
 }
 
+/// The order of two results of one text that end alike, each its children
+/// and dynamic precedence, by the grammar's settling steps: Greater when `a`
+/// is preferred, Less when `b` is, Equal on a tie. `tokens` holds the token
+/// ranks, the input bytes and the precedence orders the `tokens` step (the
+/// tokens a lexer prefers, as a lexer decides them before any parse does)
+/// and the `precedence` step (the shift or reduction an LR parser keeps by
+/// precedence, under `owner`) read; `dynamic` prefers the higher dynamic
+/// precedence. It mirrors settledOrder in js/src/grammar-runtime/executor.js.
+pub(super) fn settled_order(
+    a: (&Children, i64),
+    b: (&Children, i64),
+    settling: Settling,
+    tokens: Option<TokenOrder<'_>>,
+    owner: Option<&PrecedenceTag>,
+) -> Ordering {
+    for step in settling.steps() {
+        let order = match step {
+            SettlingStep::Tokens => {
+                tokens.map_or(Ordering::Equal, |tokens| preferred_tokens(a.0, b.0, tokens))
+            }
+            SettlingStep::Precedence => tokens.map_or(Ordering::Equal, |tokens| {
+                shift_order(a.0, b.0, tokens.orders, tokens.grammar, tokens.bytes, owner)
+            }),
+            SettlingStep::Dynamic => a.1.cmp(&b.1),
+            SettlingStep::First | SettlingStep::Ambiguity => break,
+        };
+        if order != Ordering::Equal {
+            return order;
+        }
+    }
+    Ordering::Equal
+}
+
 /// Of two complete results, each with its trailing trivia, Greater when `a`
 /// is preferred, Less when `b` is, Equal on a tie: they end apart before the
 /// trailing trivia, so they are ranked as `ResultSet::add` ranks results with
@@ -909,29 +944,19 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
 pub(super) fn complete_order(
     a: (&Res, &Children),
     b: (&Res, &Children),
+    settling: Settling,
     tokens: Option<TokenOrder<'_>>,
 ) -> Ordering {
     if a.0.cost != b.0.cost {
         return b.0.cost.cmp(&a.0.cost);
     }
-    let (left, right) = (
-        join_children(&a.0.children, a.1),
-        join_children(&b.0.children, b.1),
-    );
-    tokens
-        .map_or(Ordering::Equal, |tokens| {
-            preferred_tokens(&left, &right, tokens).then_with(|| {
-                shift_order(
-                    &left,
-                    &right,
-                    tokens.orders,
-                    tokens.grammar,
-                    tokens.bytes,
-                    None,
-                )
-            })
-        })
-        .then(a.0.dynamic.cmp(&b.0.dynamic))
+    settled_order(
+        (&join_children(&a.0.children, a.1), a.0.dynamic),
+        (&join_children(&b.0.children, b.1), b.0.dynamic),
+        settling,
+        tokens,
+        None,
+    )
 }
 
 /// The rank of a token leaf, or None for another leaf or an unranked token.

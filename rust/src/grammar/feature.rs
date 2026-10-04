@@ -229,6 +229,51 @@ pub const OPERATION_FORMS: &[(&str, OperationCategory, FormFields)] = &[
 /// and greedy) or longest (generalized, ties going to the longer token).
 pub const MATCHING_MODES: &[&str] = &["generalized", "peg", "longest"];
 
+/// The steps that settle two parses of one text that end alike, as a
+/// grammar's `(settling STEP ...)` declares them.
+///
+/// In order (the lower repair cost always decides first): `tokens`, the tokens a lexer prefers (higher
+/// lexical precedence, longer, a literal over a pattern, earlier), with the
+/// lexing that goes with it (keywords, separators, immediate tokens);
+/// `precedence`, the shift or reduction an LR parser keeps by precedence and
+/// associativity, forking where a declared conflict asks; `dynamic`, the
+/// higher dynamic precedence. The last step settles a tie: `first` keeps the
+/// parse reached first, `ambiguity` keeps it and reports the ambiguity.
+pub const SETTLING_STEPS: &[&str] = &["tokens", "precedence", "dynamic", "first", "ambiguity"];
+
+/// The settling of a grammar that declares none, by its matching.
+#[must_use]
+pub fn default_settling(matching: &str) -> &'static [&'static str] {
+    match matching {
+        "peg" => &["first"],
+        "longest" => &["tokens", "precedence", "dynamic", "ambiguity"],
+        _ => &["dynamic", "ambiguity"],
+    }
+}
+
+/// Why `steps` is no settling, or `None`: every step is known and given
+/// once, and exactly the last one settles a tie.
+#[must_use]
+pub fn settling_problem<S: AsRef<str>>(steps: &[S]) -> Option<String> {
+    if steps.is_empty() {
+        return Some("the settling names no step".to_owned());
+    }
+    for (index, step) in steps.iter().enumerate() {
+        let step = step.as_ref();
+        if !SETTLING_STEPS.contains(&step) {
+            return Some(format!("unknown settling step {step}"));
+        }
+        if steps.iter().position(|other| other.as_ref() == step) != Some(index) {
+            return Some(format!("the settling step {step} is given twice"));
+        }
+        let tie = step == "first" || step == "ambiguity";
+        if tie != (index == steps.len() - 1) {
+            return Some("the settling ends with exactly one of first and ambiguity".to_owned());
+        }
+    }
+    None
+}
+
 /// The longest integer a form may spell, in decimal digits.
 pub const MAX_INTEGER_DIGITS: usize = 15;
 
@@ -631,8 +676,10 @@ impl PrecedenceEntry {
 /// The grammar-level declarations of the feature union.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct GrammarDeclarations {
-    /// `generalized` or `peg`, when given.
+    /// `generalized`, `peg` or `longest`, when given.
     pub matching: Option<String>,
+    /// The settling steps (see [`SETTLING_STEPS`]), when given.
+    pub settling: Option<Vec<String>>,
     /// Names of grammars this one inherits from.
     pub imports: Vec<String>,
     /// The lexer modes beyond `default`.
@@ -671,6 +718,9 @@ impl GrammarDeclarations {
         let mut present = Vec::new();
         if self.matching.is_some() {
             present.push("matching");
+        }
+        if self.settling.is_some() {
+            present.push("settling");
         }
         for (name, empty) in [
             ("imports", self.imports.is_empty()),

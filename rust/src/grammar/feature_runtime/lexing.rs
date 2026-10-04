@@ -157,8 +157,8 @@ impl Executor<'_> {
             {
                 continue;
             }
-            let better = match (self.longest_tokens, &best) {
-                (_, None) if self.longest_tokens.is_some() => true,
+            let better = match (self.lexing, &best) {
+                (_, None) if self.lexing.is_some() => true,
                 (None, best) => best.is_none() && result.end == end,
                 (Some(tokens), Some(best)) => {
                     let order = preferred_tokens(&result.children, &best.children, tokens);
@@ -214,7 +214,7 @@ impl Executor<'_> {
             end: position,
             leaves: no_children(),
         })];
-        if in_token || self.longest_tokens.is_none() {
+        if in_token || self.lexing.is_none() {
             return Ok(starts);
         }
         let skipped = self.skip_trivia(position, state)?;
@@ -248,7 +248,7 @@ impl Executor<'_> {
         let skipped = self.terminal_start(position, state, in_token)?;
         let mut start = skipped.end;
         let mut leaves: &[Rc<Tree>] = &skipped.leaves;
-        let found = if self.longest_tokens.is_some()
+        let found = if self.lexing.is_some()
             && let Some((at, from, end)) = self.before_separator(matcher, leaves)
         {
             start = from;
