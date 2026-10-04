@@ -129,6 +129,24 @@ impl Grammar {
     }
 }
 
+/// The name of every diagnostic kind, in the order [`validate`] reports
+/// kinds that share a rule, as the JavaScript `GRAMMAR_DIAGNOSTIC_KINDS`.
+pub const GRAMMAR_DIAGNOSTIC_KINDS: [&str; 6] = [
+    "duplicate-rule",
+    "undefined-non-terminal",
+    "left-recursion",
+    "unreachable-rule",
+    "nullable-repetition",
+    "unused-capture",
+];
+
+/// Renders a grammar expression the way diagnostics quote it, as the
+/// JavaScript `displayGrammarExpression` does.
+#[must_use]
+pub fn display_grammar_expression(expr: &GrammarExpr) -> String {
+    expr.to_string()
+}
+
 /// Runs every grammar validation checker and returns deterministic diagnostics.
 #[must_use]
 pub fn validate(grammar: &Grammar) -> Vec<GrammarDiagnostic> {

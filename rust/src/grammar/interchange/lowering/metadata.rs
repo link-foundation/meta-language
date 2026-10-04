@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 
-use super::super::super::round_trip::rule_definition;
+use super::super::super::round_trip::canonical_rule_definition;
 use super::super::super::runtime::GrammarParser;
 use super::super::super::{
     Grammar, GrammarDeclarations, GrammarExpr, GrammarFormat, GrammarImportError, GrammarRule,
@@ -467,7 +467,10 @@ pub struct GrammarLoweringReport {
 }
 
 fn body(expr: &GrammarExpr) -> Result<String, GrammarLoweringError> {
-    Ok(rule_definition(&GrammarRule::new("", expr.clone()))?)
+    Ok(canonical_rule_definition(&GrammarRule::new(
+        "",
+        expr.clone(),
+    ))?)
 }
 
 fn accepts(grammar: &Grammar, text: &str) -> bool {
@@ -639,7 +642,7 @@ pub fn dropped_grammar_features(
                 original.name
             ));
         }
-        if rule_definition(other)? != rule_definition(original)? {
+        if canonical_rule_definition(other)? != canonical_rule_definition(original)? {
             details.push(format!("rule {} changed its definition", original.name));
         }
         if other.doc != original.doc {

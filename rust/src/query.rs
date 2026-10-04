@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 
 use crate::link_network::{Link, LinkId, LinkNetwork, LinkType};
@@ -220,7 +221,10 @@ pub trait QueryPredicateHost {
     ) -> bool;
 }
 
-pub(crate) struct RejectPredicateHost;
+/// Predicate host that rejects every predicate: the host of a query run
+/// without one, as the JavaScript `rejectPredicateHost`.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct RejectPredicateHost;
 
 impl QueryPredicateHost for RejectPredicateHost {
     fn evaluate(
@@ -230,6 +234,108 @@ impl QueryPredicateHost for RejectPredicateHost {
         _network: &LinkNetwork,
     ) -> bool {
         false
+    }
+}
+
+/// A query for the concept link spelled `term`, as the JavaScript
+/// `queryByConceptTerm`.
+#[must_use]
+pub fn query_by_concept_term(term: &str) -> LinkQuery {
+    LinkQuery::by_type(LinkType::Concept).with_term(term)
+}
+
+/// Structural child and field lookups for one network state, as the
+/// JavaScript `QueryIndex`: built once, so matching does not rescan every
+/// link for every node.
+///
+/// A tree stored bottom-up, every child referencing its parent first, and a
+/// tree stored top-down, a `Syntax` link referencing its children tokens
+/// included, hold the same children.
+#[derive(Clone, Debug)]
+pub struct QueryIndex<'a> {
+    network: &'a LinkNetwork,
+    children: HashMap<LinkId, Vec<LinkId>>,
+    fields: HashMap<LinkId, Vec<(LinkId, LinkId)>>,
+}
+
+impl<'a> QueryIndex<'a> {
+    /// Indexes the structural children and fields of `network`.
+    #[must_use]
+    pub fn new(network: &'a LinkNetwork) -> Self {
+        let link_type = |id: &LinkId| {
+            network
+                .link(*id)
+                .and_then(|link| link.metadata().link_type())
+        };
+        let top_down = network.links().any(|link| {
+            link.metadata().link_type() == Some(LinkType::Syntax)
+                && link
+                    .references()
+                    .iter()
+                    .any(|reference| link_type(reference) == Some(LinkType::Token))
+        });
+        let mut children: HashMap<LinkId, Vec<LinkId>> = HashMap::new();
+        let mut fields: HashMap<LinkId, Vec<(LinkId, LinkId)>> = HashMap::new();
+        for link in network.links() {
+            let references = link.references();
+            let Some(first) = references.first() else {
+                continue;
+            };
+            let kind = link.metadata().link_type();
+            if kind == Some(LinkType::Field) {
+                if let [parent, label, child] = references {
+                    fields.entry(*parent).or_default().push((*label, *child));
+                }
+            } else if top_down {
+                if kind == Some(LinkType::Syntax) {
+                    for reference in references {
+                        if !matches!(
+                            link_type(reference),
+                            Some(LinkType::Field | LinkType::Trivia)
+                        ) {
+                            children.entry(link.id()).or_default().push(*reference);
+                        }
+                    }
+                }
+            } else if kind != Some(LinkType::Trivia) {
+                children.entry(*first).or_default().push(link.id());
+            }
+        }
+        Self {
+            network,
+            children,
+            fields,
+        }
+    }
+
+    /// The link `id` names.
+    #[must_use]
+    pub fn link(&self, id: LinkId) -> Option<&'a Link> {
+        self.network.link(id)
+    }
+
+    /// The structural children of `parent`, in network order, without field
+    /// and trivia links.
+    #[must_use]
+    pub fn structural_children(&self, parent: LinkId) -> &[LinkId] {
+        self.children.get(&parent).map_or(&[], Vec::as_slice)
+    }
+
+    /// The children `parent` holds under field `label`.
+    #[must_use]
+    pub fn field_targets(&self, parent: LinkId, label: &str) -> Vec<LinkId> {
+        self.fields
+            .get(&parent)
+            .into_iter()
+            .flatten()
+            .filter(|(label_id, _)| {
+                self.network
+                    .link(*label_id)
+                    .and_then(|link| link.metadata().term())
+                    == Some(label)
+            })
+            .map(|(_, child)| *child)
+            .collect()
     }
 }
 

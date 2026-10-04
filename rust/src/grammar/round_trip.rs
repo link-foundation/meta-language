@@ -376,7 +376,7 @@ fn compare_rules(
     }
     for rule in expected.rules() {
         if let Some(other) = actual.rule(&rule.name)
-            && rule_definition(other)? != rule_definition(rule)?
+            && canonical_rule_definition(other)? != canonical_rule_definition(rule)?
         {
             failures.push(failure(
                 GrammarRoundTripFailureKind::RulesChanged,
@@ -392,14 +392,27 @@ fn definitions(grammar: &Grammar) -> Result<Vec<String>, GrammarRoundTripError> 
     grammar
         .rules()
         .iter()
-        .map(|rule| Ok(format!("{}={}", rule.name, rule_definition(rule)?)))
+        .map(|rule| {
+            Ok(format!(
+                "{}={}",
+                rule.name,
+                canonical_rule_definition(rule)?
+            ))
+        })
         .collect()
 }
 
-/// The meaning-aware definition of a rule, after spelling every set of single
-/// characters as one unordered choice: a character class, a choice of its
-/// ranges and an ordered choice of them all consume the same one character.
-pub(crate) fn rule_definition(rule: &GrammarRule) -> Result<String, GrammarRoundTripError> {
+/// The meaning-aware definition of a rule.
+///
+/// Every set of single characters is spelled as one unordered choice first: a
+/// character class, a choice of its ranges and an ordered choice of them all
+/// consume the same one character. Mirrors the JavaScript
+/// `canonicalRuleDefinition`.
+///
+/// # Errors
+///
+/// A [`GrammarRoundTripError`] when the rule does not normalize.
+pub fn canonical_rule_definition(rule: &GrammarRule) -> Result<String, GrammarRoundTripError> {
     let canonical = GrammarRule {
         expr: canonical_characters(&rule.expr),
         ..rule.clone()
@@ -498,6 +511,18 @@ fn check_samples(
             ));
         }
     }
+}
+
+/// Whether `text` parses with `grammar` on the native executor, as the
+/// JavaScript `acceptsText` does.
+#[must_use]
+pub fn accepts_text(grammar: &Grammar, text: &str) -> bool {
+    super::feature_runtime::parse_with_grammar(
+        grammar,
+        text.as_bytes(),
+        &super::feature_runtime::FeatureParseOptions::default(),
+    )
+    .is_ok()
 }
 
 fn accepts(grammar: &Grammar, text: &str) -> bool {

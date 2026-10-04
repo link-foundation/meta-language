@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "test": "node --test --test-concurrency=1 tests/*.test.js",
-    "check": "npm run check:parity && npm run check:default-cst && npm run check:lino-grammar && npm run check:pdf-grammar && npm run check:native-imports && npm run check:native-grammars && npm run check:builtin-cst && npm run check:language-catalog && npm run check:concept-records && npm run check:concept-reuse && npm run check:merge-quality && npm run check:foundations && npm run check:issue-195 && npm run check:issue-195:sources && npm run check:downstream-consumers && npm run check:dependencies && npm run check:naming && npm run check:documentation",
+    "check": "npm run check:parity && npm run check:export-parity && npm run check:default-cst && npm run check:lino-grammar && npm run check:pdf-grammar && npm run check:native-imports && npm run check:native-grammars && npm run check:builtin-cst && npm run check:language-catalog && npm run check:concept-records && npm run check:concept-reuse && npm run check:merge-quality && npm run check:foundations && npm run check:issue-195 && npm run check:issue-195:sources && npm run check:downstream-consumers && npm run check:dependencies && npm run check:naming && npm run check:documentation",
     "check:parity": "node scripts/check-js-rust-parity.mjs",
     "check:parity:manifest": "node scripts/check-js-rust-parity.mjs --manifest-only",
     "check:issue-195": "node scripts/check-issue-195-acceptance.mjs",
@@ -43,6 +43,7 @@
     "check:concept-reuse": "node scripts/build-native-grammar-concept-reuse.mjs --check",
     "check:merge-quality": "node scripts/build-merge-quality-evidence.mjs --check",
     "check:foundations": "node scripts/build-foundation-models.mjs --check",
+    "check:export-parity": "node scripts/generate-export-parity.mjs --check",
     "check:issue-195:runtime-parity": "node scripts/check-issue-195-runtime-parity.mjs",
     "acceptance:issue-195": "node scripts/check-issue-195-acceptance.mjs --produce-gate-results issue-195-results/gate-faults.json --evaluate --checkpoint all",
     "acceptance:issue-195:refresh": "node scripts/check-issue-195-acceptance.mjs --refresh-manifest"

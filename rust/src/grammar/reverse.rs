@@ -12,7 +12,9 @@
 
 use super::Grammar;
 use super::interchange::{parse_grammar_links, render_grammar_links};
-use super::round_trip::{GrammarEmitFn, GrammarImportFn, GrammarRoundTripError, rule_definition};
+use super::round_trip::{
+    GrammarEmitFn, GrammarImportFn, GrammarRoundTripError, canonical_rule_definition,
+};
 use super::runtime::GrammarParser;
 
 /// The importer/emitter pair under test and the independent samples.
@@ -255,7 +257,7 @@ fn compare_grammars(
         let Some(other) = actual.rule(&rule.name) else {
             continue;
         };
-        if rule_definition(other)? != rule_definition(rule)? {
+        if canonical_rule_definition(other)? != canonical_rule_definition(rule)? {
             failures.push(failure(
                 GrammarReverseFailureKind::RulesChanged,
                 GrammarReverseStage::Reimported,

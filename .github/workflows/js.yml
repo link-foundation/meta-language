@@ -130,6 +130,11 @@ jobs:
         run: npm run check:parity
         working-directory: js
 
+      - name: Check that every JavaScript export maps to a public Rust item
+        if: ${{ !cancelled() }}
+        run: npm run check:export-parity
+        working-directory: js
+
       - name: Check grammar-derived default CST expectations
         if: ${{ !cancelled() }}
         run: npm run check:default-cst

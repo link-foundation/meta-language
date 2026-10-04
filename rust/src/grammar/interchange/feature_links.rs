@@ -113,6 +113,7 @@ fn render_operations(head: &str, operations: &[Operation]) -> String {
 }
 
 /// The declaration links between the grammar link and the first rule.
+#[must_use]
 pub fn render_declaration_links(declarations: &GrammarDeclarations) -> Vec<String> {
     let mut lines = Vec::new();
     for name in &declarations.imports {
@@ -160,6 +161,7 @@ pub fn render_declaration_links(declarations: &GrammarDeclarations) -> Vec<Strin
 }
 
 /// The rule fields before the `(doc TEXT)` field.
+#[must_use]
 pub fn render_rule_fields(attributes: &RuleAttributes) -> Vec<String> {
     let mut fields = Vec::new();
     if !attributes.parameters.is_empty() {

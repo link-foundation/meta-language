@@ -73,46 +73,7 @@ pub(super) fn strip_line_comment(line: &str, marker: char, backslash_escapes: bo
     line
 }
 
-/// Flattens nested sequences and drops empty items, as the JavaScript
-/// `sequence` builder does.
-pub(super) fn sequence(items: Vec<GrammarExpr>) -> GrammarExpr {
-    let mut flattened = Vec::with_capacity(items.len());
-    for item in items {
-        match item {
-            GrammarExpr::Empty => {}
-            GrammarExpr::Sequence(nested) => flattened.extend(nested),
-            item => flattened.push(item),
-        }
-    }
-    match flattened.len() {
-        0 => GrammarExpr::Empty,
-        1 => flattened.remove(0),
-        _ => GrammarExpr::Sequence(flattened),
-    }
-}
-
-/// Flattens nested choices of the same ordering, as the JavaScript `choice`
-/// builder does.
-pub(super) fn choice(alternatives: Vec<GrammarExpr>, ordered: bool) -> GrammarExpr {
-    let mut flattened = Vec::with_capacity(alternatives.len());
-    for alternative in alternatives {
-        match alternative {
-            GrammarExpr::Choice {
-                ordered: nested_ordered,
-                alternatives: nested,
-            } if nested_ordered == ordered => flattened.extend(nested),
-            alternative => flattened.push(alternative),
-        }
-    }
-    match flattened.len() {
-        0 => GrammarExpr::Empty,
-        1 => flattened.remove(0),
-        _ => GrammarExpr::Choice {
-            ordered,
-            alternatives: flattened,
-        },
-    }
-}
+pub(super) use crate::grammar::builder::{choice, sequence};
 
 /// An unordered choice, or [`GrammarExpr::Empty`] when every alternative is
 /// empty, as the JavaScript BNF and EBNF importers build alternatives.
@@ -145,20 +106,8 @@ pub(super) fn canonical_repeat(
     min: u64,
     max: Option<u64>,
 ) -> Result<GrammarExpr, GrammarImportError> {
-    let invalid = || {
-        let max = max.map_or_else(String::new, |max| max.to_string());
-        parse_error(format, format!("invalid repetition bounds {min}..{max}"))
-    };
-    if min > MAX_SAFE_INTEGER || max.is_some_and(|max| max > MAX_SAFE_INTEGER || max < min) {
-        return Err(invalid());
-    }
-    let bound = |value: u64| usize::try_from(value).map_err(|_| invalid());
-    Ok(match (min, max) {
-        (0, None) => GrammarExpr::zero_or_more(expr),
-        (1, None) => GrammarExpr::one_or_more(expr),
-        (0, Some(1)) => GrammarExpr::optional(expr),
-        (min, max) => GrammarExpr::repeat(expr, bound(min)?, max.map(bound).transpose()?),
-    })
+    crate::grammar::builder::canonical_repeat(expr, min, max)
+        .map_err(|error| parse_error(format, error.to_string()))
 }
 
 /// Parses ASCII decimal digits, saturating past the JavaScript safe-integer

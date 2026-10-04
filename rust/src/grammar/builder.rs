@@ -1,6 +1,11 @@
 //! The ergonomic expression builder of [`Grammar::expr`](super::Grammar::expr).
 
+use std::fmt;
+
 use super::{CharClassItem, GrammarExpr};
+
+/// Largest integer a JavaScript number holds exactly (`Number.MAX_SAFE_INTEGER`).
+const MAX_SAFE_INTEGER: u64 = (1 << 53) - 1;
 
 /// Ergonomic constructor for grammar expressions.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -156,4 +161,96 @@ impl ExprBuilder {
     pub fn capture_unlabeled(self, expr: GrammarExpr) -> GrammarExpr {
         GrammarExpr::capture_unlabeled(expr)
     }
+}
+
+/// Flattens nested sequences and drops empty items, as the JavaScript
+/// `sequence` builder does: no items build [`GrammarExpr::Empty`] and one item
+/// builds itself.
+#[must_use]
+pub fn sequence(items: Vec<GrammarExpr>) -> GrammarExpr {
+    let mut flattened = Vec::with_capacity(items.len());
+    for item in items {
+        match item {
+            GrammarExpr::Empty => {}
+            GrammarExpr::Sequence(nested) => flattened.extend(nested),
+            item => flattened.push(item),
+        }
+    }
+    match flattened.len() {
+        0 => GrammarExpr::Empty,
+        1 => flattened.remove(0),
+        _ => GrammarExpr::Sequence(flattened),
+    }
+}
+
+/// Flattens nested choices of the same ordering, as the JavaScript `choice`
+/// builder does: no alternatives build [`GrammarExpr::Empty`] and one
+/// alternative builds itself.
+#[must_use]
+pub fn choice(alternatives: Vec<GrammarExpr>, ordered: bool) -> GrammarExpr {
+    let mut flattened = Vec::with_capacity(alternatives.len());
+    for alternative in alternatives {
+        match alternative {
+            GrammarExpr::Choice {
+                ordered: nested_ordered,
+                alternatives: nested,
+            } if nested_ordered == ordered => flattened.extend(nested),
+            alternative => flattened.push(alternative),
+        }
+    }
+    match flattened.len() {
+        0 => GrammarExpr::Empty,
+        1 => flattened.remove(0),
+        _ => GrammarExpr::Choice {
+            ordered,
+            alternatives: flattened,
+        },
+    }
+}
+
+/// Counted repetition bounds [`canonical_repeat`] rejects: an upper bound
+/// below the lower one, or a bound past the JavaScript safe-integer range.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RepetitionBoundsError {
+    /// The lower bound.
+    pub min: u64,
+    /// The upper bound, `None` when unbounded.
+    pub max: Option<u64>,
+}
+
+impl fmt::Display for RepetitionBoundsError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let max = self.max.map_or_else(String::new, |max| max.to_string());
+        write!(formatter, "invalid repetition bounds {}..{max}", self.min)
+    }
+}
+
+impl std::error::Error for RepetitionBoundsError {}
+
+/// Lowers counted repetition to its most specific expression variant.
+///
+/// As the JavaScript `canonicalRepeat` builder does, `0..` is zero-or-more,
+/// `1..` is one-or-more, `0..1` is optional, and every other range is a
+/// counted repeat.
+///
+/// # Errors
+///
+/// Returns [`RepetitionBoundsError`] when `max` is below `min` or either
+/// bound exceeds the JavaScript safe-integer range.
+pub fn canonical_repeat(
+    expr: GrammarExpr,
+    min: u64,
+    max: Option<u64>,
+) -> Result<GrammarExpr, RepetitionBoundsError> {
+    let invalid = RepetitionBoundsError { min, max };
+    if min > MAX_SAFE_INTEGER || max.is_some_and(|max| max > MAX_SAFE_INTEGER || max < min) {
+        return Err(invalid);
+    }
+    let bound = |value: u64| usize::try_from(value).map_err(|_| invalid);
+    Ok(match (min, max) {
+        (0, None) => GrammarExpr::zero_or_more(expr),
+        (1, None) => GrammarExpr::one_or_more(expr),
+        (0, Some(1)) => GrammarExpr::optional(expr),
+        (min, max) => GrammarExpr::repeat(expr, bound(min)?, max.map(bound).transpose()?),
+    })
 }

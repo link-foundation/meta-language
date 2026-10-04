@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::configuration::RegionDetectionPolicy;
+use crate::configuration::{ParseConfiguration, RegionDetectionPolicy};
 use crate::language_catalog::canonical_language_name;
 use crate::line_index::LineIndex;
 use crate::link_network::{LinkId, LinkNetwork, LinkType};
@@ -33,10 +33,12 @@ impl EmbeddedRegion {
     }
 }
 
-/// Embedded regions a host document delimits, in source order: the whole
-/// buffer of a `txt` document, and for HTML and Markdown hosts the regions
-/// their grammar CST (the host's `Syntax` links below `document`) delimits.
-/// Mirrors `detectEmbeddedRegionsInTree` in `js/src/regions.js`.
+/// Embedded regions a host document delimits, in source order.
+///
+/// The whole buffer of a `txt` document is one region, and for HTML and
+/// Markdown hosts the regions are those their grammar CST (the host's
+/// `Syntax` links below `document`) delimits. Mirrors `detectEmbeddedRegionsInTree` in `js/src/regions.js`; `document`
+/// is the host's `Document` link in `network`.
 ///
 /// - HTML: the `raw_text` of a `script_element` in the language its `type`
 ///   attribute names (JavaScript when absent), the `raw_text` of a
@@ -46,7 +48,8 @@ impl EmbeddedRegion {
 ///   language `policy` selects from its info-string `language` and content,
 ///   every `html_block` as HTML, and every inline `html_tag` as HTML, spanning
 ///   from an opening tag to the matching closing tag among its siblings.
-pub(crate) fn detect_embedded_regions(
+#[must_use]
+pub fn detect_embedded_regions_in_tree(
     network: &LinkNetwork,
     document: LinkId,
     text: &str,
@@ -77,6 +80,37 @@ pub(crate) fn detect_embedded_regions(
         .into_iter()
         .map(|(language, start, end)| region_for(&lines, language, start, end))
         .collect()
+}
+
+/// Embedded regions of `text` in host `language`, in source order.
+///
+/// The host is parsed with its registered grammar and its CST read by
+/// [`detect_embedded_regions_in_tree`]. Mirrors `detectEmbeddedRegions` in
+/// `js/src/regions.js`: a `txt` document is one region, and a host other than
+/// HTML or Markdown has none.
+#[must_use]
+pub fn detect_embedded_regions(
+    text: &str,
+    language: &str,
+    policy: RegionDetectionPolicy,
+) -> Vec<EmbeddedRegion> {
+    let host = canonical_language_name(language);
+    if host == Some(TXT_LANGUAGE) {
+        let lines = LineIndex::new(text);
+        return vec![region_for(&lines, TXT_LANGUAGE.to_string(), 0, text.len())];
+    }
+    let Some(host @ ("HTML" | "Markdown")) = host else {
+        return Vec::new();
+    };
+    let configuration = ParseConfiguration::default().with_region_detection_policy(policy);
+    let network = LinkNetwork::parse(text, host, configuration);
+    let document = network.links().find(|link| {
+        link.metadata().link_type() == Some(LinkType::Document)
+            && link.metadata().language() == Some(host)
+    });
+    document.map_or_else(Vec::new, |document| {
+        detect_embedded_regions_in_tree(&network, document.id(), text, host, policy)
+    })
 }
 
 type FoundRegion = (String, usize, usize);
@@ -370,7 +404,10 @@ fn fence_language(tag: &str, content: &str, policy: RegionDetectionPolicy) -> Op
     }
 }
 
-fn sniff_language(content: &str) -> Option<&'static str> {
+/// The language a fenced block without an info string most likely holds,
+/// from the start of its content, as the JavaScript `sniffLanguage`.
+#[must_use]
+pub fn sniff_language(content: &str) -> Option<&'static str> {
     let trimmed = content.trim_start();
     let upper = trimmed.to_ascii_uppercase();
 
