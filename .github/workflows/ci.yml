@@ -1,0 +1,104 @@
+name: CI
+
+# The JavaScript workflow runs first; the Rust workflow runs only after every
+# JavaScript job passes. When a JavaScript job fails, the Rust jobs show as
+# skipped, not failed or missing. js.yml and rust.yml keep their release and
+# dispatch triggers, so a release still runs them standalone.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'js/**'
+      - 'rust/**'
+      - 'parity/**'
+      - 'docs/**'
+      - 'scripts/**'
+      - '.githooks/**'
+      - '.github/workflows/**'
+      - '.pre-commit-config.yaml'
+      - '.gitignore'
+      - '.secretlintrc.json'
+      - 'CONTRIBUTING.md'
+      - 'experiments/**/Cargo.toml'
+      - '**/lean-toolchain'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'js/**'
+      - 'rust/**'
+      - 'parity/**'
+      - 'docs/**'
+      - 'scripts/**'
+      - '.githooks/**'
+      - '.github/workflows/**'
+      - '.pre-commit-config.yaml'
+      - '.gitignore'
+      - '.secretlintrc.json'
+      - 'CONTRIBUTING.md'
+      - 'experiments/**/Cargo.toml'
+      - '**/lean-toolchain'
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels that pull request's older run; push runs
+# are grouped by their own run id, so a release on main is never cancelled.
+# The called workflows use their own literal js- and rust- prefixes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  # The Rust workflow used to run only for the paths below; a change outside
+  # them (for example js/** alone) runs the JavaScript workflow and skips Rust.
+  changes:
+    name: Changed Paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      rust: ${{ steps.paths.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect whether the Rust workflow is needed
+        id: paths
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          rust_paths='^(rust/|parity/|docs/|scripts/|\.github/workflows/(ci|rust)\.yml$|\.secretlintrc\.json$)'
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            rust=true
+          elif git diff --name-only "$BASE_SHA" HEAD | grep -Eq "$rust_paths"; then
+            rust=true
+          else
+            rust=false
+          fi
+          echo "rust=$rust" >> "$GITHUB_OUTPUT"
+          echo "Rust workflow needed: $rust"
+
+  js:
+    name: JavaScript
+    uses: ./.github/workflows/js.yml
+    secrets: inherit
+    # A called workflow gets at most the caller's permissions; publish asks for
+    # id-token although it runs only on a release or a dispatch of js.yml.
+    permissions:
+      contents: read
+      id-token: write
+
+  rust:
+    name: Rust
+    needs: [changes, js]
+    if: ${{ needs.changes.outputs.rust == 'true' }}
+    uses: ./.github/workflows/rust.yml
+    secrets: inherit
+    # The release and website jobs run on a push to main and ask for these.
+    permissions:
+      contents: write
+      actions: write
+      pull-requests: write
+      pages: write
+      id-token: write

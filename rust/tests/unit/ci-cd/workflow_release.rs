@@ -704,8 +704,15 @@ fn rust_test_suites_partition_the_tests_by_name() {
         skipped,
         earlier.iter().map(String::as_str).collect::<Vec<_>>()
     );
-    assert!(test.contains("cargo test --all-features --tests --verbose -- $SUITE_FILTERS"));
+    assert!(
+        test.contains(
+            "cargo test --no-fail-fast --all-features --tests --verbose -- $SUITE_FILTERS"
+        )
+    );
     for step in ["Run doc tests", "Check examples"] {
-        assert!(step_block(test, step).contains("if: matrix.suite == 'remaining'"));
+        assert!(
+            step_block(test, step)
+                .contains("if: ${{ !cancelled() && matrix.suite == 'remaining' }}")
+        );
     }
 }

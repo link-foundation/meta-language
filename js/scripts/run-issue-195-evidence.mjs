@@ -209,7 +209,7 @@ async function runJavaScriptSuite(failures) {
  */
 async function runRustSuite(failures) {
   const record = await runCommand('suite-rust', 'cargo', [
-    'test', '--locked', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--tests',
+    'test', '--no-fail-fast', '--locked', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--tests',
   ], { allowFailure: true });
   if (!record.ok) failures.push(`Rust tests failed; see ${record.artifacts[0]}`);
   return bundle(record);
@@ -853,7 +853,7 @@ async function validateDownstreamRml(npmCandidate, crateCandidate, kind = 'candi
     cwd: rustDirectory,
   });
   const rustTest = await runCommand(`${label}-rust-test`, 'cargo', [
-    'test', '--offline', '--test', 'meta_language_support_tests',
+    'test', '--no-fail-fast', '--offline', '--test', 'meta_language_support_tests',
   ], { cwd: rustDirectory, allowFailure: true });
   return {
     javascript: { ...bundle(clone, checkout, javascriptInstall, javascriptTest), ok: javascriptTest.ok },

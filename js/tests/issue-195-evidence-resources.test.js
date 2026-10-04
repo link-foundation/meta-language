@@ -39,7 +39,7 @@ test('the Rust workflow checks all targets and features first and the compiling 
 test('CI splits the Rust and JavaScript tests into matrix jobs with their own timeouts', () => {
   const rust = job(read(`${WORKFLOWS}/rust.yml`), 'test');
   assert.match(rust, /suite: \[grammar, inference, translation, remaining\]/u);
-  assert.match(rust, /cargo test --all-features --tests --verbose -- \$SUITE_FILTERS/u);
+  assert.match(rust, /cargo test --no-fail-fast --all-features --tests --verbose -- \$SUITE_FILTERS/u);
   // The remaining suite skips every filter another suite runs, so each test runs in one job.
   const filters = Object.fromEntries([...rust.matchAll(/- suite: (\w+)\n\s+filters: ([^\n]+)/gu)]
     .map(([, suite, line]) => [suite, line]));
@@ -61,7 +61,10 @@ test('every workflow cancels the runs a newer push supersedes', () => {
   assert.ok(workflows.length >= 3);
   for (const name of workflows) {
     const text = read(`${WORKFLOWS}/${name}`);
-    assert.match(text, /^concurrency:\n {2}group: \$\{\{ github\.workflow \}\}-[^\n]*github\.ref[^\n]*\n {2}cancel-in-progress: true$/mu, name);
+    // A workflow ci.yml calls sees the caller's github.workflow, so it uses its own literal prefix instead.
+    const prefix = /^ {2}workflow_call:/mu.test(text) ? name.replace(/\.ya?ml$/u, '') : '${{ github.workflow }}';
+    assert.ok(text.includes(`\nconcurrency:\n  group: ${prefix}-`), `${name} groups its runs under ${prefix}-`);
+    assert.match(text, /^concurrency:\n {2}group: [^\n]*github\.ref[^\n]*\n {2}cancel-in-progress: true$/mu, name);
   }
   observe('I195-RESOURCE-CI-CONCURRENCY', ['everyWorkflowHasConcurrencyGroup', 'supersededRunsCancelled'],
     'every workflow cancels the runs a newer push supersedes');

@@ -203,24 +203,38 @@ test('CI runs each stage as its own job and the aggregate only merges and evalua
     return workflow.slice(start, end < 0 ? undefined : start + 1 + end);
   };
   assert.match(job('runtime-parity'), /--stage runtime-parity/u);
-  assert.match(job('native-translations'), /target: \[javascript, rust, lean, rocq\]/u);
-  assert.match(job('native-translations'), /--stage "\$TARGET"/u);
-  assert.match(job('evidence-stages'), /\["javascript-suite","rust-suite","delivery"\]/u);
-  assert.doesNotMatch(job('evidence-stages'), /merge-enforcement|RULESET_TOKEN|pull-requests: read/u);
+  // The JavaScript stages run before the Rust stages; Lean and Rocq share one matrix.
+  assert.match(job('native-translations'), /target: \[lean, rocq\]/u);
+  for (const target of ['javascript', 'rust']) {
+    assert.match(job(`native-${target}`), /TARGET: native-/u);
+  }
+  assert.match(job('native-rust'), /needs: \[runtime-parity, native-javascript\]/u);
+  assert.match(job('rust-suite'), /needs: \[[^\]]*javascript-suite\]/u);
+  for (const id of ['native-javascript', 'native-rust', 'native-translations']) {
+    assert.match(job(id), /--stage "\$TARGET"/u, id);
+  }
+  for (const stage of ['javascript-suite', 'rust-suite', 'delivery']) {
+    assert.match(job(stage), new RegExp(`STAGE: ${stage}\n`, 'u'), stage);
+    assert.doesNotMatch(job(stage), /merge-enforcement|RULESET_TOKEN|pull-requests: read/u, stage);
+  }
   // The post-merge report runs on main only and never blocks.
   const postMerge = job('post-merge');
   assert.match(postMerge, /if: \$\{\{ github\.event_name == 'push' \}\}/u);
   assert.match(postMerge, /continue-on-error: true/u);
   assert.match(postMerge, /--checkpoint post-merge/u);
   assert.doesNotMatch(job('acceptance'), /post-merge/u);
-  assert.match(job('evidence-stages'), /'\["delivery"\]'/u);
-  for (const id of ['runtime-parity', 'native-translations', 'evidence-stages']) {
+  // A release reruns only the delivery stage.
+  for (const stage of ['native-javascript', 'native-rust', 'native-translations', 'javascript-suite', 'rust-suite']) {
+    assert.match(job(stage), /github\.event_name != 'release'/u, stage);
+  }
+  assert.doesNotMatch(job('delivery'), /github\.event_name != 'release'/u);
+  for (const id of ['runtime-parity', 'native-javascript', 'native-rust', 'native-translations', 'javascript-suite', 'rust-suite', 'delivery']) {
     assert.match(job(id), /name: issue-195-stage-[^\n]*-\$\{\{ github\.sha \}\}/u, id);
     assert.match(job(id), /issue-195-results\/work\/stage-\*/u, id);
   }
   const aggregate = job('acceptance');
   assert.match(aggregate, /name: Full Requirements Aggregate/u);
-  assert.match(aggregate, /needs: \[[^\]]*runtime-parity, native-translations, evidence-stages\]/u);
+  assert.match(aggregate, /needs: \[[^\]]*runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery\]/u);
   assert.match(aggregate, /pattern: issue-195-stage-\*-\$\{\{ github\.sha \}\}/u);
   assert.match(aggregate, /merge-multiple: true/u);
   assert.match(aggregate, /--aggregate/u);

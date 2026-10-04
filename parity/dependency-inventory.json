@@ -8245,6 +8245,7 @@
       "category": "action",
       "name": "actions/checkout",
       "declaredIn": [
+        ".github/workflows/ci.yml",
         ".github/workflows/dependency-refresh.yml",
         ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",
@@ -8588,6 +8589,7 @@
       "category": "runner",
       "name": "ubuntu-latest",
       "declaredIn": [
+        ".github/workflows/ci.yml",
         ".github/workflows/dependency-refresh.yml",
         ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/js.yml",

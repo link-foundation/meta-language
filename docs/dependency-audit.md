@@ -565,7 +565,7 @@ they are.
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
 | `actions/cache` | `.github/workflows/rust.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
-| `actions/checkout` | `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/checkout) | major | current |  |
+| `actions/checkout` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/checkout) | major | current |  |
 | `actions/configure-pages` | `.github/workflows/rust.yml` | `v6` | v6.0.0 (GitHub release, actions/configure-pages) | major | current |  |
 | `actions/deploy-pages` | `.github/workflows/rust.yml` | `v5` | v5.0.1 (GitHub release, actions/deploy-pages) | major | current |  |
 | `actions/download-artifact` | `.github/workflows/issue-195-acceptance.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
@@ -596,7 +596,7 @@ they are.
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
 | `macos-latest` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
-| `ubuntu-latest` | `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
+| `ubuntu-latest` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `windows-latest` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 
 ## Published artifact contents

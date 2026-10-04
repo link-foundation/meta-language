@@ -1,25 +1,12 @@
 name: Rust
 
+# .github/workflows/ci.yml calls this workflow on pushes to main and on pull
+# requests after the JavaScript workflow passes, so a JavaScript failure shows
+# every Rust job as skipped. A manual dispatch runs it standalone for releases.
+# The dispatch inputs are absent when called; the jobs that read them run only
+# on workflow_dispatch.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'rust/**'
-      - 'parity/**'
-      - 'docs/**'
-      - '.github/workflows/rust.yml'
-      - 'scripts/**'
-      - '.secretlintrc.json'
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'rust/**'
-      - 'parity/**'
-      - 'docs/**'
-      - '.github/workflows/rust.yml'
-      - 'scripts/**'
-      - '.secretlintrc.json'
+  workflow_call:
   workflow_dispatch:
     inputs:
       release_mode:
@@ -49,9 +36,11 @@ permissions:
 
 # A newer push to a pull request cancels the run of its older head. Push,
 # release and dispatch runs are grouped by their own run id, so they never
-# cancel each other; their write jobs queue in the release write group.
+# cancel each other; their write jobs queue in the release write group. The
+# group has its own literal prefix: called from ci.yml, github.workflow names
+# the caller, and a group equal to the caller's would deadlock with it.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: rust-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -75,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
+      group: rust-${{ github.ref }}-detect-changes
       cancel-in-progress: true
     if: github.event_name != 'workflow_dispatch'
     outputs:
@@ -110,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-changelog
+      group: rust-${{ github.ref }}-changelog
       cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
@@ -138,7 +127,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-version-check
+      group: rust-${{ github.ref }}-version-check
       cancel-in-progress: true
     if: github.event_name == 'pull_request'
     steps:
@@ -166,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-secrets-scan
+      group: rust-${{ github.ref }}-secrets-scan
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -185,7 +174,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-fresh-merge
+      group: rust-${{ github.ref }}-fresh-merge
       cancel-in-progress: true
     needs: [detect-changes, check]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true' && needs.check.result == 'success'
@@ -221,7 +210,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-cargo-lock
+      group: rust-${{ github.ref }}-cargo-lock
       cancel-in-progress: true
     needs: [detect-changes]
     defaults:
@@ -258,7 +247,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-check
+      group: rust-${{ github.ref }}-check
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     defaults:
@@ -306,7 +295,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-msrv
+      group: rust-${{ github.ref }}-msrv
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock, check]
     defaults:
@@ -359,7 +348,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-lint
+      group: rust-${{ github.ref }}-lint
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     defaults:
@@ -406,19 +395,23 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Reject tests in src
+        if: ${{ !cancelled() }}
         run: rust-script scripts/check-no-src-tests.rs
 
       - name: Run Clippy
+        if: ${{ !cancelled() }}
         run: cargo clippy --all-targets --all-features
 
       # docs.rs honors package.metadata.docs.rs and builds this feature set.
       # Keep it free of optional native/build-script dependencies.
       - name: Check docs.rs feature set
+        if: ${{ !cancelled() }}
         env:
           DOCS_RS: 1
         run: cargo check --no-default-features
 
       - name: Collect changed files
+        if: ${{ !cancelled() }}
         id: changed-files
         env:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
@@ -434,11 +427,13 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Build documentation with warnings denied
+        if: ${{ !cancelled() }}
         env:
           RUSTDOCFLAGS: -D warnings
         run: cargo doc --no-deps --all-features
 
       - name: Check file size limit
+        if: ${{ !cancelled() }}
         env:
           CHANGED_FILES: ${{ steps.changed-files.outputs.files }}
         run: rust-script scripts/check-file-size.rs
@@ -446,6 +441,7 @@ jobs:
       # Enforce the Rust <-> JavaScript feature parity manifest. The Rust pipeline
       # fails if a feature is not mirrored in both languages (see ../parity).
       - name: Check Rust/JavaScript parity manifest
+        if: ${{ !cancelled() }}
         working-directory: ${{ github.workspace }}
         run: node js/scripts/check-js-rust-parity.mjs --manifest-only
 
@@ -464,7 +460,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}
+      group: rust-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}
       cancel-in-progress: true
     needs: [detect-changes, changelog, cargo-lock, check]
     defaults:
@@ -592,17 +588,20 @@ jobs:
         env:
           SUITE_FILTERS: ${{ matrix.filters }}
         # The filters are word-split on purpose: they are separate arguments.
-        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --tests --verbose -- $SUITE_FILTERS
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests --verbose -- $SUITE_FILTERS
 
       - name: Run doc tests
-        if: matrix.suite == 'remaining'
+        if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash
+        # Both feature sets run even when the first fails; the step fails if either did.
         run: |
-          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --doc --verbose
-          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --doc --verbose
+          status=0
+          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --doc --verbose || status=1
+          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --doc --verbose || status=1
+          exit "$status"
 
       - name: Check examples
-        if: matrix.suite == 'remaining'
+        if: ${{ !cancelled() && matrix.suite == 'remaining' }}
         shell: bash
         run: cargo check --examples --all-features
 
@@ -618,7 +617,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-coverage
+      group: rust-${{ github.ref }}-coverage
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock, check]
     defaults:
@@ -656,7 +655,7 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Generate code coverage
-        run: node ../scripts/with-cache-cleanup.mjs --event coverage --protect lcov.info -- cargo llvm-cov --all-features --lcov --output-path lcov.info --fail-under-lines 84.30
+        run: node ../scripts/with-cache-cleanup.mjs --event coverage --protect lcov.info -- cargo llvm-cov --all-features --lcov --output-path lcov.info --fail-under-lines 84.30 --no-fail-fast
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
@@ -683,7 +682,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-build
+      group: rust-${{ github.ref }}-build
       cancel-in-progress: true
     needs: [lint, test]
     defaults:
@@ -714,9 +713,11 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo build --release --verbose
 
       - name: Check package
+        if: ${{ !cancelled() }}
         run: node ../scripts/with-cache-cleanup.mjs --event package -- cargo package --list --allow-dirty
 
       - name: Check crate package size
+        if: ${{ !cancelled() }}
         run: rust-script scripts/check-crate-size.rs
 
       - name: Clean regenerable caches
