@@ -70,3 +70,10 @@ checks two things without downloading anything:
   keep the alternative and add `alternative Label` to the rule's doc. Before
   this, every grammars-v4 grammar that labels its alternatives (Rust among
   them) failed to import.
+- **ANTLR `~` over a set.** `~` complements a set and matches one character
+  outside it. The set can be a character class, a one-character literal, a
+  range, or an alternation of these. `~` over anything else stays a negative
+  lookahead. Before this, `~'"'` imported as a zero-width lookahead, so the
+  grammars-v4 CSV `STRING` rule rejected every quoted field. The shared fixture
+  [`set-complement.g4`](../../rust/tests/fixtures/grammar/antlr/set-complement.g4)
+  checks this in both importers.

@@ -445,11 +445,29 @@ class ClassScanner {
   }
 }
 
+// `~` complements a set (a character class, a one-character literal, a range,
+// or an alternation of those) and matches one character outside it. Any
+// other operand stays a negative lookahead.
 function negateExpression(expression) {
-  if (expression.kind === 'charClass' && !expression.negated) {
-    return GrammarBuilder.charClass(expression.items, true);
+  const items = setItems(expression);
+  return items ? GrammarBuilder.charClass(items, true) : GrammarBuilder.not(expression);
+}
+
+function setItems(expression) {
+  switch (expression.kind) {
+    case 'charClass':
+      return expression.negated ? null : expression.items;
+    case 'literal':
+      return [...expression.value].length === 1 ? [{ kind: 'char', value: expression.value }] : null;
+    case 'charRange':
+      return [{ kind: 'range', start: expression.start, end: expression.end }];
+    case 'choice': {
+      const parts = expression.items.map(setItems);
+      return parts.every(Boolean) ? parts.flat() : null;
+    }
+    default:
+      return null;
   }
-  return GrammarBuilder.not(expression);
 }
 
 function finishSequence(items) {

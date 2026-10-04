@@ -3,9 +3,10 @@ mod lexer;
 use lexer::{Lexer, Token, TokenKind};
 
 use super::{GrammarImportError, parse_error, unsupported_error};
-use crate::grammar::feature::class_expression;
+use crate::grammar::feature::{FeatureExpr, class_expression};
 use crate::grammar::{
-    Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind, UnicodeClassItem,
+    CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind,
+    UnicodeClassItem,
 };
 
 const FORMAT: GrammarFormat = GrammarFormat::Antlr;
@@ -808,16 +809,53 @@ impl<'text> ClassScanner<'text> {
     }
 }
 
+// `~` complements a set (a character class, a one-character literal, a range,
+// or an alternation of those) and matches one character outside it. Any
+// other operand stays a negative lookahead.
 fn negate_expr(expr: GrammarExpr) -> GrammarExpr {
+    match set_items(&expr) {
+        Some(items) => class_expression(true, items),
+        None => GrammarExpr::not(expr),
+    }
+}
+
+fn set_items(expr: &GrammarExpr) -> Option<Vec<UnicodeClassItem>> {
     match expr {
         GrammarExpr::CharClass {
             negated: false,
             items,
-        } => GrammarExpr::CharClass {
-            negated: true,
-            items,
+        } => Some(
+            items
+                .iter()
+                .map(|item| match item {
+                    CharClassItem::Char(value) => UnicodeClassItem::Char(*value),
+                    CharClassItem::Range(start, end) => UnicodeClassItem::Range(*start, *end),
+                })
+                .collect(),
+        ),
+        GrammarExpr::Terminal(value) => {
+            let mut characters = value.chars();
+            match (characters.next(), characters.next()) {
+                (Some(character), None) => Some(vec![UnicodeClassItem::Char(character)]),
+                _ => None,
+            }
+        }
+        GrammarExpr::CharRange(start, end) => Some(vec![UnicodeClassItem::Range(*start, *end)]),
+        GrammarExpr::Choice { alternatives, .. } => {
+            let parts = alternatives
+                .iter()
+                .map(set_items)
+                .collect::<Option<Vec<_>>>()?;
+            Some(parts.into_iter().flatten().collect())
+        }
+        GrammarExpr::Feature(feature) => match feature.as_ref() {
+            FeatureExpr::UnicodeClass {
+                negated: false,
+                items,
+            } => Some(items.clone()),
+            _ => None,
         },
-        expr => GrammarExpr::not(expr),
+        _ => None,
     }
 }
 

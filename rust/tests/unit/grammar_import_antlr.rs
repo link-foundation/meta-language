@@ -142,7 +142,10 @@ fn lowers_covering_antlr_constructs() {
                     negated: true,
                     items: vec![CharClassItem::Char(';')],
                 },
-                GrammarExpr::Not(Box::new(GrammarExpr::Terminal("x".to_string()))),
+                GrammarExpr::CharClass {
+                    negated: true,
+                    items: vec![CharClassItem::Char('x')],
+                },
             ],
         }
     );
@@ -289,4 +292,54 @@ fn imports_the_lexer_features_the_grammars_v4_grammars_use() {
         error.to_string(),
         "antlr import parse error: expected alternative label at byte 27"
     );
+}
+
+#[test]
+fn complements_a_set_of_characters_and_matches_one_character_outside_it() {
+    use meta_language::grammar::UnicodeClassItem;
+    use meta_language::grammar::feature::class_expression;
+    use meta_language::{FeatureParseOptions, compile_feature_grammar};
+
+    let grammar =
+        import_antlr(include_str!("../fixtures/grammar/antlr/set-complement.g4")).expect("imports");
+    let GrammarExpr::Sequence(string) = grammar.rule("STRING").expect("STRING").expr() else {
+        panic!("STRING is a sequence");
+    };
+    assert_eq!(
+        string[1],
+        GrammarExpr::ZeroOrMore(Box::new(GrammarExpr::Choice {
+            ordered: false,
+            alternatives: vec![
+                GrammarExpr::Terminal("\"\"".to_string()),
+                GrammarExpr::CharClass {
+                    negated: true,
+                    items: vec![CharClassItem::Char('"')],
+                },
+            ],
+        }))
+    );
+    assert_eq!(
+        grammar.rule("SET").expect("SET").expr(),
+        &GrammarExpr::Sequence(vec![
+            class_expression(
+                true,
+                vec![
+                    UnicodeClassItem::Char('a'),
+                    UnicodeClassItem::Range('b', 'c'),
+                    UnicodeClassItem::Char('d'),
+                    UnicodeClassItem::Category("Nd".to_string()),
+                ]
+            ),
+            GrammarExpr::Not(Box::new(GrammarExpr::Terminal("xy".to_string()))),
+        ])
+    );
+    let options = FeatureParseOptions::default();
+    let parser = compile_feature_grammar(&grammar, None, options.clone()).expect("compiles");
+    let accepts = |text: &str| {
+        parser
+            .parse_tree(text.as_bytes(), &options)
+            .is_ok_and(|outcome| outcome.tree.is_some())
+    };
+    assert!(accepts("\"café, é\"\"x\"\"\""));
+    assert!(!accepts("\"open"));
 }

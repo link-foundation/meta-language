@@ -79,7 +79,7 @@ test('lowers covering ANTLR constructs', () => {
   });
   assert.deepEqual(grammar.rule('item').expression, {
     kind: 'choice',
-    items: [G.any(), G.charClass([character(';')], true), G.not(G.literal('x'))],
+    items: [G.any(), G.charClass([character(';')], true), G.charClass([character('x')], true)],
     ordered: false,
   });
 });
@@ -146,7 +146,7 @@ test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
   const grammar = importAntlr(fixture('covering.g4'));
   assert.deepEqual(grammar.ruleNames().map((name) => renderGrammarRule(grammar.rule(name))), [
     'normal seq(capture("name", ref(ID)), capture("values", capture("non_greedy", repeat0(ref(item)))), ref(literalRange), ref(item))',
-    'normal choice(any, notClass(char(";")), not(literal("x")))',
+    'normal choice(any, notClass(char(";")), notClass(char("x")))',
     'normal range("a", "z")',
     'token class(range("a", "z"), range("0", "9"), char("_"))',
     'silent class(range("0", "9"))',
@@ -168,6 +168,22 @@ test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
   for (const [source, message] of errors) {
     assert.throws(() => importAntlr(source), (error) => error.message === message, source);
   }
+});
+
+test('~ complements a set of characters and matches one character outside it', async () => {
+  const grammar = importAntlr(fixture('set-complement.g4'));
+  assert.deepEqual(
+    grammar.rule('STRING').expression.items[1],
+    G.repeat0({ kind: 'choice', items: [G.literal('""'), G.charClass([character('"')], true)], ordered: false }),
+  );
+  assert.deepEqual(grammar.rule('SET').expression, G.seq(
+    G.charClass([character('a'), range('b', 'c'), character('d'), { kind: 'category', value: 'Nd' }], true),
+    G.not(G.literal('xy')),
+  ));
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('"café, é""x"""').ok, true);
+  assert.equal(parser.parseTree('"open').ok, false);
 });
 
 test('imports the lexer features the grammars-v4 grammars use', async () => {

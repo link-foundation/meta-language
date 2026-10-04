@@ -224,7 +224,13 @@ fn antlr_emits_native_constructs_verbatim() {
          fragment DIGIT : [0-9] -> skip ;\n"
     );
     assert!(report.lossy.is_empty(), "{:#?}", report.lossy);
-    assert_eq!(structure(&reimported), structure(&g));
+    // ANTLR's `~'x'` complements the one-character set {x}, so it comes back
+    // as the class that matches one character other than x.
+    let mut expected = structure(&g);
+    if let GrammarExpr::Choice { alternatives, .. } = &mut expected[1].2 {
+        alternatives[0] = class(true, vec![CharClassItem::Char('x')]);
+    }
+    assert_eq!(structure(&reimported), expected);
     assert_eq!(reimported.start(), Some("entry"));
     assert_eq!(
         reimported.rule("DIGIT").and_then(GrammarRule::doc),
