@@ -384,6 +384,23 @@ impl<'c> ResultSet<'c> {
         self.index.get(key).map(|&position| &self.items[position])
     }
 
+    /// Removes `result` itself, if it is the result of its end and state
+    /// (not one that replaced it), keeping the order of the rest.
+    pub(super) fn remove(&mut self, result: &Res) {
+        let key = result.key();
+        if let Some(&position) = self.index.get(&key)
+            && Rc::ptr_eq(&self.items[position].children, &result.children)
+        {
+            self.index.remove(&key);
+            self.items.remove(position);
+            for slot in self.index.values_mut() {
+                if *slot > position {
+                    *slot -= 1;
+                }
+            }
+        }
+    }
+
     /// Replaces the result of the same end and state in place, or appends.
     pub(super) fn set(&mut self, result: Res) {
         match self.index.get(&result.key()) {

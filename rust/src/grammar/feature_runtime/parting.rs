@@ -6,13 +6,14 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
+use super::executor::{Executor, Run};
 use super::forking::GrammarFacts;
 use super::ordering::{
     by_associativity, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful,
     same_tree, shift_preferred,
 };
-use super::program::{Name, PrecedenceTag, compare_precedence};
-use super::results::{Children, Tree, TreeType};
+use super::program::{Expr, Name, PrecedenceTag, compare_precedence};
+use super::results::{Children, Res, Tree, TreeType};
 use crate::grammar::PrecedenceEntry;
 
 /// Whether a parse that has `leaf` alone and one that has `node`, which
@@ -42,6 +43,130 @@ pub(super) fn holds_first(outer: &Rc<Tree>, inner: &Tree) -> bool {
 /// `shorthand_property_identifier`).
 pub(super) fn one_token(a: &Tree, b: &Tree) -> bool {
     a.kind == b.kind || (a.start == b.start && a.lexed.is_some() && a.lexed == b.lexed)
+}
+
+/// Whether a leaf is a token the external scanner scanned of no width.
+fn widthless(leaf: &Tree) -> bool {
+    leaf.ty != TreeType::Node && leaf.start == leaf.end && leaf.scanned
+}
+
+/// Whether two leaves are one token: of one span, and of one kind or built by
+/// one token rule.
+fn one_leaf(leaf: &Tree, other: &Tree) -> bool {
+    leaf.ty == other.ty
+        && leaf.start == other.start
+        && leaf.end == other.end
+        && one_token(leaf, other)
+}
+
+/// The first value `visit` gives for the leaves under `children` that are
+/// not white space, last first.
+fn leaves_backward<T>(
+    children: &Children,
+    visit: &mut impl FnMut(&Rc<Tree>) -> Option<T>,
+) -> Option<T> {
+    children
+        .iter()
+        .rev()
+        .filter(|child| !child.trivia)
+        .find_map(|child| {
+            if child.ty == TreeType::Node {
+                leaves_backward(&child.children, visit)
+            } else {
+                visit(child)
+            }
+        })
+}
+
+/// Whether the first leaf of `children` that is not white space is a token
+/// the external scanner scanned of no width.
+pub(super) fn starts_widthless(children: &Children) -> bool {
+    let mut first = first_meaningful(children);
+    while let Some(node) = first.clone().filter(|node| node.ty == TreeType::Node) {
+        first = first_meaningful(&node.children);
+    }
+    first.is_some_and(|leaf| widthless(&leaf))
+}
+
+/// Whether `children` hold the token `last` and go on past it with a token
+/// the lexer lexed, not one the external scanner scanned of no width.
+fn lexed_past(children: &Children, last: &Tree) -> bool {
+    let mut after: Option<Rc<Tree>> = None;
+    leaves_backward(children, &mut |leaf| {
+        if leaf.start >= last.end && (leaf.end > last.end || widthless(leaf)) {
+            after = Some(leaf.clone());
+            None
+        } else {
+            Some(after.as_ref().is_some_and(|after| !widthless(after)) && one_leaf(leaf, last))
+        }
+    })
+    .unwrap_or(false)
+}
+
+/// Which of the results in `continued`, each paired with the results of the
+/// next item after it, a token the external scanner scans of no width
+/// preempts: where the next item after a result begins with such a token
+/// (Lean's layout end after `12` in `def foo := 12` before a line break), an
+/// LR parser in the state of that result runs the scanner there before its
+/// lexer, and the token it scans is its lookahead, so another result in the
+/// same state that holds the same last token and goes on past it with a token
+/// the lexer lexed (`12 partial`, an application across the line break) is no
+/// parse. A result in another state has another scanner state, which may scan
+/// nothing there (a layout end one parse has queued and the other has not).
+fn preempted(continued: &[(&Res, Vec<Res>)]) -> Vec<bool> {
+    let mut pruned = vec![false; continued.len()];
+    for (left, rights) in continued {
+        if !rights.iter().any(|right| starts_widthless(&right.children)) {
+            continue;
+        }
+        let Some(last) = leaves_backward(&left.children, &mut |leaf| {
+            (!widthless(leaf)).then(|| leaf.clone())
+        }) else {
+            continue;
+        };
+        for (index, (other, _)) in continued.iter().enumerate() {
+            if other.end > left.end
+                && other.state == left.state
+                && !pruned[index]
+                && lexed_past(&other.children, &last)
+            {
+                pruned[index] = true;
+            }
+        }
+    }
+    pruned
+}
+
+impl Executor<'_> {
+    /// Each of `lefts` with the results of `item` after it.
+    pub(super) fn continued<'r>(
+        &mut self,
+        item: &Expr,
+        lefts: &'r [Res],
+        in_token: bool,
+    ) -> Run<Vec<(&'r Res, Vec<Res>)>> {
+        let mut continued = Vec::with_capacity(lefts.len());
+        for left in lefts {
+            continued.push((left, self.continuation(item, left, in_token)?));
+        }
+        Ok(continued)
+    }
+
+    /// Whether the external scanner may scan a token of no width here: outside
+    /// a token, in a grammar that has one.
+    pub(super) fn scans_widthless(&self, in_token: bool) -> bool {
+        !in_token && !self.program.external.is_empty()
+    }
+
+    /// Which of `continued` a token the external scanner scans of no width
+    /// preempts, as `preempted` tells, where it may scan one.
+    pub(super) fn preempted(&self, continued: &[(&Res, Vec<Res>)], in_token: bool) -> Vec<bool> {
+        if self.scans_widthless(in_token) {
+            preempted(continued)
+        } else {
+            vec![false; continued.len()]
+        }
+    }
 }
 
 /// Whether two subtrees hold the same tokens: leaves of one span each, of one

@@ -877,6 +877,81 @@ function holdsFirst(outer, inner) {
   return leftmostChain(outer).some((node) => node.kind === inner.kind && node.start === inner.start && node.end === inner.end);
 }
 
+// Whether a leaf is a token the external scanner scanned of no width.
+function widthless(leaf) {
+  return leaf.type !== 'node' && leaf.start === leaf.end && scannedToken(leaf) === 1;
+}
+
+// Whether two leaves are one token: of one span, and of one kind or built by
+// one token rule.
+function oneLeaf(leaf, other) {
+  return leaf.type === other.type && leaf.start === other.start && leaf.end === other.end
+    && (leaf.kind === other.kind || (leaf.lexed !== undefined && leaf.lexed === other.lexed));
+}
+
+// The leaves under `children` that are not white space, last first.
+function* leavesBackward(children) {
+  for (let index = children.length - 1; index >= 0; index -= 1) {
+    const child = children[index];
+    if (isTrivia(child)) continue;
+    if (child.type === 'node') yield* leavesBackward(child.children);
+    else yield child;
+  }
+}
+
+// Whether the first leaf of `result` that is not white space is a token the
+// external scanner scanned of no width.
+function startsWidthless(result) {
+  let first = result.children.find((child) => !isTrivia(child));
+  while (first?.type === 'node') first = first.children.find((child) => !isTrivia(child));
+  return first !== undefined && widthless(first);
+}
+
+// Whether `result` holds the token `last` and goes on past it with a token
+// its lexer lexed, not one the external scanner scanned of no width.
+function lexedPast(result, last) {
+  let after = null;
+  for (const leaf of leavesBackward(result.children)) {
+    if (leaf.start >= last.end && (leaf.end > last.end || widthless(leaf))) after = leaf;
+    else return after !== null && !widthless(after) && oneLeaf(leaf, last);
+  }
+  return false;
+}
+
+// The results among `continued`, each paired with the results of the next
+// item after it, that a token the external scanner scans of no width
+// preempts: where the next item after a result begins with such a token
+// (Lean's layout end after `12` in `def foo := 12` before a line break), an
+// LR parser in the state of that result runs the scanner there before its
+// lexer, and the token it scans is its lookahead, so another result in the
+// same state that holds the same last token and goes on past it with a token
+// the lexer lexed (`12 partial`, an application across the line break) is no
+// parse. A result in another state has another scanner state, which may scan
+// nothing there (a layout end one parse has queued and the other has not).
+// Null when none is; `globalThis.__preemptTrace`, when set, is called with
+// each pair.
+function preempted(continued) {
+  let pruned = null;
+  for (const [left, rights] of continued) {
+    if (!rights.some(startsWidthless)) continue;
+    let last;
+    for (const leaf of leavesBackward(left.children)) {
+      if (!widthless(leaf)) {
+        last = leaf;
+        break;
+      }
+    }
+    if (last === undefined) continue;
+    for (const [other] of continued) {
+      if (other.end > left.end && other.state.key === left.state.key && !pruned?.has(other) && lexedPast(other, last)) {
+        (pruned ??= new Set()).add(other);
+        globalThis.__preemptTrace?.(left, other);
+      }
+    }
+  }
+  return pruned;
+}
+
 // Whether two subtrees hold the same tokens: leaves of one span each, of one
 // kind or built by one token rule. A token the external scanner scanned of
 // no width does not count: where one subtree holds it (Lean's layout
@@ -1329,6 +1404,13 @@ export class Executor {
     this.keywords = null;
   }
 
+  // Whether the results of a part are to be pruned by the tokens the external
+  // scanner scans of no width (see `preempted`): outside a token, in a
+  // grammar with an external scanner.
+  scansWidthless(inToken) {
+    return !inToken && this.program.externalTokens.size > 0;
+  }
+
   step() {
     this.budget.steps += 1;
     if (this.budget.steps > this.budget.limit) throw new StepLimitReached();
@@ -1669,8 +1751,11 @@ export class Executor {
     for (const [index, item] of items.entries()) {
       const next = new Map();
       const last = index === items.length - 1;
-      for (const left of current) {
-        for (const right of this.continuation(item, left, inToken)) {
+      const continued = current.map((left) => [left, this.continuation(item, left, inToken)]);
+      const pruned = this.scansWidthless(inToken) ? preempted(continued) : null;
+      for (const [left, rights] of continued) {
+        if (pruned?.has(left)) continue;
+        for (const right of rights) {
           const joined = joinResults(left, right, inToken);
           if (last && keep && !keep(joined)) continue;
           addResult(next, joined, tokens);
@@ -1745,8 +1830,18 @@ export class Executor {
       }
       if (max !== null && count >= max) break;
       const next = new Map();
-      for (const left of frontier) {
-        for (const right of this.continuation(item, left, inToken)) {
+      const continued = frontier.map((left) => [left, this.continuation(item, left, inToken)]);
+      const scans = this.scansWidthless(inToken);
+      const pruned = scans ? preempted(continued) : null;
+      for (const [left, rights] of continued) {
+        // A result an iteration goes on from with a token the external
+        // scanner scanned of no width is no parse itself (the optional layout
+        // end after `def foo := 12` is taken where the scanner scans it, as
+        // the token is the lookahead), and neither is one that token
+        // preempts (see `preempted`).
+        if (scans && (pruned?.has(left) || rights.some(startsWidthless)) && results.get(resultKey(left)) === left) results.delete(resultKey(left));
+        if (pruned?.has(left)) continue;
+        for (const right of rights) {
           if (zeroWidth(left, right)) {
             // Zero-width iterations can pad up to the minimum once; one that
             // takes a token the external scanner scanned of no width (Lean's

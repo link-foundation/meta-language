@@ -16,17 +16,18 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use super::lexing::is_keyword;
-use super::operations::{Abort, Machine, OpError, OpResult, State, Working, evaluate_condition};
+use super::operations::{Abort, OpError, State, ValueMachine, evaluate_condition};
+use super::parting::starts_widthless;
 use super::precedence::{Keep, Operands};
 use super::program::{
     Associativity, Compiled, Expr, Matcher, Name, PrecedenceTag, Program, Target,
 };
 use super::results::{
     Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared,
-    Skipped, TokenOrder, Tree, TreeType, children_of, concat, content_start, is_separator,
-    longest_result, no_children, with_leaf,
+    Skipped, TokenOrder, Tree, TreeType, children_of, concat, is_separator, longest_result,
+    no_children, with_leaf,
 };
-use super::text::{column_of, decode_at, text_of};
+use super::text::{decode_at, text_of};
 use crate::grammar::RuleKind;
 
 /// The outcome of a step that a resource limit may end.
@@ -543,7 +544,12 @@ impl<'c> Executor<'c> {
     // continuation there is matched quietly. Chains of zero-width MISSING
     // leaves, which would make every rule left-recursive at that offset, are
     // so never built.
-    fn continuation(&mut self, item: &Expr, left: &Res, in_token: bool) -> Run<Vec<Res>> {
+    pub(super) fn continuation(
+        &mut self,
+        item: &Expr,
+        left: &Res,
+        in_token: bool,
+    ) -> Run<Vec<Res>> {
         let repaired = self
             .repair_points
             .as_ref()
@@ -583,8 +589,13 @@ impl<'c> Executor<'c> {
         for (index, item) in items.iter().enumerate() {
             let mut next = ResultSet::new(self.longest_tokens).owned(keep.map(Keep::owner));
             let last = index == items.len() - 1;
-            for left in &current {
-                for right in self.continuation(item, left, in_token)? {
+            let continued = self.continued(item, &current, in_token)?;
+            let pruned = self.preempted(&continued, in_token);
+            for ((left, rights), pruned) in continued.into_iter().zip(pruned) {
+                if pruned {
+                    continue;
+                }
+                for right in rights {
                     let joined = Res::join(left, right, in_token);
                     if last
                         && let Some(keep) = keep
@@ -708,8 +719,24 @@ impl<'c> Executor<'c> {
                 break;
             }
             let mut next = ResultSet::new(self.longest_tokens);
-            for left in &frontier {
-                for right in self.continuation(item, left, in_token)? {
+            let continued = self.continued(item, &frontier, in_token)?;
+            let pruned = self.preempted(&continued, in_token);
+            for ((left, rights), pruned) in continued.into_iter().zip(pruned) {
+                // A result an iteration goes on from with a token the
+                // external scanner scanned of no width is no parse itself
+                // (the optional layout end after `def foo := 12` is taken
+                // where the scanner scans it, as the token is the
+                // lookahead), and neither is one that token preempts.
+                if pruned
+                    || self.scans_widthless(in_token)
+                        && rights.iter().any(|right| starts_widthless(&right.children))
+                {
+                    results.remove(left);
+                }
+                if pruned {
+                    continue;
+                }
+                for right in rights {
                     if zero_width(left, &right) {
                         // Zero-width iterations can pad up to the minimum
                         // once; one that takes a token the external scanner
@@ -941,46 +968,5 @@ impl<'c> Executor<'c> {
             }
         }
         Ok(results)
-    }
-}
-
-/// The read-only machine conditions see over one result.
-pub(super) struct ValueMachine<'e, 'c> {
-    executor: &'e mut Executor<'c>,
-    working: Working,
-    start: usize,
-    end: usize,
-}
-
-impl<'e, 'c> ValueMachine<'e, 'c> {
-    fn new(executor: &'e mut Executor<'c>, result: &Res, from: usize) -> Self {
-        Self {
-            start: content_start(&result.children, from),
-            end: result.end,
-            working: result.state.working(),
-            executor,
-        }
-    }
-}
-
-impl Machine for ValueMachine<'_, '_> {
-    fn state(&mut self) -> &mut Working {
-        &mut self.working
-    }
-
-    fn step(&mut self) -> Result<(), Abort> {
-        self.executor.step()
-    }
-
-    fn column(&mut self) -> usize {
-        column_of(self.executor.bytes, self.start, self.executor.begin)
-    }
-
-    fn at_end(&mut self) -> bool {
-        self.end == self.executor.end
-    }
-
-    fn matched(&mut self) -> OpResult<String> {
-        Ok(self.executor.text(self.start, self.end))
     }
 }

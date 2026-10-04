@@ -9,7 +9,10 @@ use std::collections::BTreeMap;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use super::executor::Executor;
 use super::program::Expr;
+use super::results::{Res, content_start};
+use super::text::column_of;
 
 /// The largest integer the operation language computes, as `Number.MAX_SAFE_INTEGER`.
 const SAFE_INTEGER: i64 = (1 << 53) - 1;
@@ -451,5 +454,46 @@ pub(super) fn allowed_in(context: &str, operation: &str) -> bool {
         "scanner" => COMMON.contains(&operation) || SCANNER.contains(&operation),
         "action" => COMMON.contains(&operation) || ACTION.contains(&operation),
         _ => PREDICATE.contains(&operation),
+    }
+}
+
+/// The read-only machine conditions see over one result.
+pub(super) struct ValueMachine<'e, 'c> {
+    executor: &'e mut Executor<'c>,
+    working: Working,
+    start: usize,
+    end: usize,
+}
+
+impl<'e, 'c> ValueMachine<'e, 'c> {
+    pub(super) fn new(executor: &'e mut Executor<'c>, result: &Res, from: usize) -> Self {
+        Self {
+            start: content_start(&result.children, from),
+            end: result.end,
+            working: result.state.working(),
+            executor,
+        }
+    }
+}
+
+impl Machine for ValueMachine<'_, '_> {
+    fn state(&mut self) -> &mut Working {
+        &mut self.working
+    }
+
+    fn step(&mut self) -> Result<(), Abort> {
+        self.executor.step()
+    }
+
+    fn column(&mut self) -> usize {
+        column_of(self.executor.bytes, self.start, self.executor.begin)
+    }
+
+    fn at_end(&mut self) -> bool {
+        self.end == self.executor.end
+    }
+
+    fn matched(&mut self) -> OpResult<String> {
+        Ok(self.executor.text(self.start, self.end))
     }
 }
