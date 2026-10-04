@@ -491,8 +491,6 @@ pub fn grammar_by_id(id: &str) -> Option<Language> {
         "sql" => tree_sitter_sequel::LANGUAGE.into(),
         "swift" => tree_sitter_swift::LANGUAGE.into(),
         "toml" => tree_sitter_toml_ng::LANGUAGE.into(),
-        "tsx" => tree_sitter_typescript::LANGUAGE_TSX.into(),
-        "typescript" => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
         "vb" => tree_sitter_vb_dotnet::LANGUAGE.into(),
         "xml" => tree_sitter_xml::LANGUAGE_XML.into(),
         "yaml" => tree_sitter_yaml::LANGUAGE.into(),

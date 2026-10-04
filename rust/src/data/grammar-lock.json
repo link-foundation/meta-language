@@ -508,6 +508,7 @@
     },
     "tsx": {
       "id": "tsx",
+      "oracle": true,
       "crate": "tree-sitter-typescript",
       "directory": "tsx",
       "version": "0.23.2",
@@ -517,6 +518,7 @@
     },
     "typescript": {
       "id": "typescript",
+      "oracle": true,
       "crate": "tree-sitter-typescript",
       "directory": "typescript",
       "version": "0.23.2",

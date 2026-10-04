@@ -25,6 +25,8 @@ listed patch, if any).
 | `racket.wasm.gz` | crate `tree-sitter-racket` 0.25.0 | `3cbab79ab9bd99684a7de4cb93a0aafd6773bb3ecf6720c59f1b7cdb0ceddd9c` | `5affec93f88d8b9e66aee6ad9a385d04f6af07dfc55bc6944993b02af1fa21b2` | [`racket.LICENSE`](racket.LICENSE) |
 | `rust.wasm.gz` | `tree-sitter/tree-sitter-rust` v0.24.2 with [`meta-language.patch`](../../../rust/vendor/tree-sitter-rust/meta-language.patch) (vendored in `rust/vendor/tree-sitter-rust`) | `555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3` | `9e42546db0d259b49f09ce1170528b57d97453f19824ca27197016c330dcae03` | [`rust.LICENSE`](rust.LICENSE) |
 | `scheme.wasm.gz` | crate `tree-sitter-scheme` 0.24.7 | `5d4c1786eb70c3be05f395e5a26edbb7cca12e7547f7a1d8cdb94e092ee74d0d` | `f138334dfc4d3df3c85c3e0d675e154f2bd6b1a8d4325f04c53512eef099241e` | [`scheme.LICENSE`](scheme.LICENSE) |
+| `tsx.wasm.gz` | crate `tree-sitter-typescript` 0.23.2 (`tsx`) | `1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885` | `3c6cb1c86cecc6d8c99b3a7dfc0aba8b838e2adf036bb23f384d6d8be395ae30` | [`tsx.LICENSE`](tsx.LICENSE) |
+| `typescript.wasm.gz` | crate `tree-sitter-typescript` 0.23.2 (`typescript`) | `74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa` | `d24392183c75c103feafb827c9c086de00c30198e27f362cc971fbca6e91a87f` | [`typescript.LICENSE`](typescript.LICENSE) |
 
 Every grammar is distributed under its upstream license (MIT unless the
 linked license file states otherwise).
