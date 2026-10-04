@@ -296,10 +296,16 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
     ['CARGO_INCREMENTAL', '0'],
     ['CARGO_PROFILE_DEV_DEBUG', '0'],
     ['CARGO_PROFILE_TEST_DEBUG', '0'],
+    ['RUST_TEST_THREADS', '2'],
   ]) {
     assert.match(defaults, new RegExp(`${name}: '${value}'`, 'u'), `RUST_BUILD_DEFAULTS sets ${name}=${value}`);
   }
   assert.match(runner, /\.\.\.RUST_BUILD_DEFAULTS,\s*\.\.\.childEnvironment\(\),\s*CARGO_TARGET_DIR/u);
   assert.match(runner, /\] start: .*resources\(\)/u);
   assert.match(runner, /\] exit .*resources\(\)/u);
+  // It was still shut down, silently, inside the patched `cargo test`: a running command
+  // prints a heartbeat, and is killed as a failure before memory runs out.
+  assert.match(runner, /\] running for .*resources\(\).*last output/u);
+  assert.match(runner, /os\.freemem\(\) >= MEMORY_FLOOR_BYTES/u);
+  assert.match(runner, /process\.kill\(-child\.pid, 'SIGKILL'\)/u);
 });

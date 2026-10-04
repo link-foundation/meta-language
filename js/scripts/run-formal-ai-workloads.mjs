@@ -36,7 +36,11 @@
 // (exit 143) without a line of output. So the Rust builds default to
 // RUST_BUILD_DEFAULTS (bounded jobs, no debuginfo; an inherited value wins), and
 // every command prints when it starts and ends, with the elapsed time and the
-// free disk and memory, so a runner that dies still shows where and why.
+// free disk and memory, so a runner that dies still shows where and why. The
+// runner was still shut down 25 minutes into the patched `cargo test`, silent
+// because the output is kept for the log, so a running command now also prints
+// a heartbeat with its last output line, and is killed (as a failed command)
+// when free memory falls below MEMORY_FLOOR_BYTES.
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
@@ -87,7 +91,13 @@ const RUST_BUILD_DEFAULTS = Object.freeze({
   CARGO_INCREMENTAL: '0',
   CARGO_PROFILE_DEV_DEBUG: '0',
   CARGO_PROFILE_TEST_DEBUG: '0',
+  RUST_TEST_THREADS: '2',
 });
+// While a command runs, a progress line every HEARTBEAT_MS shows its last output and the free
+// memory; below MEMORY_FLOOR_BYTES free the command's process group is killed, so the job ends
+// with a report and a reason instead of the runner being shut down.
+const HEARTBEAT_MS = 60_000;
+const MEMORY_FLOOR_BYTES = 1.5 * 2 ** 30;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const skipRust = process.argv.includes('--skip-rust');
@@ -608,23 +618,51 @@ async function run(label, command, args, { cwd = workDirectory, env = childEnvir
   const started = Date.now();
   console.log(`[${label}] start: ${rendered} (${await resources()})`);
   const { code, stdout, stderr, combined } = await new Promise((resolve, reject) => {
+    const windows = process.platform === 'win32';
     const child = spawn(command, args, {
       cwd,
       env,
-      shell: process.platform === 'win32' && ['npm', 'cargo'].includes(command),
+      shell: windows && ['npm', 'cargo'].includes(command),
+      // Its own process group, so the memory guard stops rustc and the test binaries too.
+      detached: !windows,
     });
     const out = [];
     const err = [];
     const both = [];
-    child.stdout.on('data', (chunk) => { out.push(chunk); both.push(chunk); });
-    child.stderr.on('data', (chunk) => { err.push(chunk); both.push(chunk); });
-    child.once('error', reject);
-    child.once('close', (exit) => resolve({
-      code: exit,
-      stdout: Buffer.concat(out).toString('utf8'),
-      stderr: Buffer.concat(err).toString('utf8'),
-      combined: Buffer.concat(both).toString('utf8'),
-    }));
+    let lastLine = '';
+    let killedForMemory = null;
+    const remember = (chunk) => {
+      const lines = chunk.toString('utf8').split('\n').map((line) => line.trim()).filter(Boolean);
+      if (lines.length > 0) lastLine = lines.at(-1).slice(0, 200);
+    };
+    child.stdout.on('data', (chunk) => { out.push(chunk); both.push(chunk); remember(chunk); });
+    child.stderr.on('data', (chunk) => { err.push(chunk); both.push(chunk); remember(chunk); });
+    const heartbeat = setInterval(async () => {
+      console.log(`[${label}] running for ${Math.round((Date.now() - started) / 1000)} s (${await resources()}); last output: ${lastLine || '(none)'}`);
+    }, HEARTBEAT_MS);
+    const guard = setInterval(() => {
+      if (killedForMemory || os.freemem() >= MEMORY_FLOOR_BYTES) return;
+      killedForMemory = `free memory ${(os.freemem() / 2 ** 30).toFixed(1)} GiB fell below ${(MEMORY_FLOOR_BYTES / 2 ** 30).toFixed(1)} GiB; last output: ${lastLine || '(none)'}`;
+      console.log(`[${label}] killed: ${killedForMemory}`);
+      try {
+        if (windows) child.kill('SIGKILL');
+        else process.kill(-child.pid, 'SIGKILL');
+      } catch {
+        // The command may have ended between the check and the kill.
+      }
+    }, 1_000);
+    const stop = () => { clearInterval(heartbeat); clearInterval(guard); };
+    child.once('error', (error) => { stop(); reject(error); });
+    child.once('close', (exit) => {
+      stop();
+      if (killedForMemory) both.push(Buffer.from(`\nkilled by the memory guard: ${killedForMemory}\n`));
+      resolve({
+        code: killedForMemory ? 137 : exit,
+        stdout: Buffer.concat(out).toString('utf8'),
+        stderr: Buffer.concat(err).toString('utf8'),
+        combined: Buffer.concat(both).toString('utf8'),
+      });
+    });
   });
   await writeFile(log, `command: ${rendered}\ncwd: ${cwd}\n\n${combined}\nexit: ${code}\n`);
   logs.push({ label, command: rendered, log, exit: code });
