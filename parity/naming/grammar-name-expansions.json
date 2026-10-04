@@ -101,7 +101,9 @@
         "_call_signature": "call_signature_parts",
         "_number": "signed_number",
         "_module": "module_name_and_body",
-        "_type_identifier": "type_identifier_alias"
+        "_type_identifier": "type_identifier_alias",
+        "omitting_type_annotation": "required_type_annotation",
+        "asserts": "assertion_signature"
       },
       "concepts": {
         "_expressions": "grammar.expression-or-sequence",
@@ -109,7 +111,9 @@
         "formal_parameters": "grammar.formal-parameter-list",
         "true": "grammar.true-value",
         "false": "grammar.false-value",
-        "undefined": "grammar.undefined-value"
+        "undefined": "grammar.undefined-value",
+        "type_arguments": "grammar.type-argument-list",
+        "type_parameters": "grammar.type-parameter-list"
       }
     },
     "tsx": {
@@ -121,7 +125,9 @@
         "_call_signature": "call_signature_parts",
         "_number": "signed_number",
         "_module": "module_name_and_body",
-        "_type_identifier": "type_identifier_alias"
+        "_type_identifier": "type_identifier_alias",
+        "omitting_type_annotation": "required_type_annotation",
+        "asserts": "assertion_signature"
       },
       "concepts": {
         "_expressions": "grammar.expression-or-sequence",
@@ -129,13 +135,16 @@
         "formal_parameters": "grammar.formal-parameter-list",
         "true": "grammar.true-value",
         "false": "grammar.false-value",
-        "undefined": "grammar.undefined-value"
+        "undefined": "grammar.undefined-value",
+        "type_arguments": "grammar.type-argument-list",
+        "type_parameters": "grammar.type-parameter-list"
       }
     }
   },
   "concepts": {
     "definitions": {},
     "distinctFrom": {
+      "grammar.type-assertion": [{ "id": "grammar.case-statement", "reason": "A type assertion <T>x tells the type checker to treat an expression as a type, while a case statement is one branch of a switch statement." }],
       "grammar.function-declaration": [{ "id": "grammar.use-declaration", "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope." }],
       "grammar.preprocessor-argument": [{ "id": "grammar.preprocessor-parameters", "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares." }],
       "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }],

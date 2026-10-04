@@ -289,12 +289,20 @@
       "native": "parameter_name"
     },
     {
+      "source": "omitting_type_annotation",
+      "native": "required_type_annotation"
+    },
+    {
       "source": "_type_query_member_expression_in_type_annotation",
       "native": "type_query_member_expression_in_type_annotation"
     },
     {
       "source": "_type_query_call_expression_in_type_annotation",
       "native": "type_query_call_expression_in_type_annotation"
+    },
+    {
+      "source": "asserts",
+      "native": "assertion_signature"
     },
     {
       "source": "_tuple_type_member",

@@ -8399,12 +8399,20 @@
       "role": "concept",
       "definition": "A rule for a type parameter list, the construct the upstream grammar names type_parameters.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:rust",
+          "name": "type_parameters"
+        },
+        {
+          "source": "native:tsx",
+          "name": "type_parameters"
+        },
+        {
+          "source": "native:typescript",
           "name": "type_parameters"
         }
       ],
@@ -8929,12 +8937,20 @@
       "role": "concept",
       "definition": "A rule for a type argument list, the construct the upstream grammar names type_arguments.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
         {
           "source": "native:rust",
+          "name": "type_arguments"
+        },
+        {
+          "source": "native:tsx",
+          "name": "type_arguments"
+        },
+        {
+          "source": "native:typescript",
           "name": "type_arguments"
         }
       ],
@@ -13349,7 +13365,13 @@
           "name": "type_assertion"
         }
       ],
-      "formerNames": []
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.case-statement",
+          "reason": "A type assertion <T>x tells the type checker to treat an expression as a type, while a case statement is one branch of a switch statement."
+        }
+      ]
     },
     {
       "id": "grammar.as-expression",
@@ -13877,10 +13899,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.omitting-type-annotation",
-      "phrase": "omitting type annotation",
+      "id": "grammar.required-type-annotation",
+      "phrase": "required type annotation",
       "role": "concept",
-      "definition": "A rule for an omitting type annotation, the construct the upstream grammar names omitting_type_annotation.",
+      "definition": "A rule for a required type annotation, the construct the upstream grammar names omitting_type_annotation.",
       "constraints": [
         "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -13888,11 +13910,11 @@
       "sourceAliases": [
         {
           "source": "native:tsx",
-          "name": "omitting_type_annotation"
+          "name": "required_type_annotation"
         },
         {
           "source": "native:typescript",
-          "name": "omitting_type_annotation"
+          "name": "required_type_annotation"
         }
       ],
       "formerNames": []
@@ -14003,10 +14025,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.asserts",
-      "phrase": "asserts",
+      "id": "grammar.assertion-signature",
+      "phrase": "assertion signature",
       "role": "concept",
-      "definition": "A rule for an asserts, the construct the upstream grammar names asserts.",
+      "definition": "A rule for an assertion signature, the construct the upstream grammar names asserts.",
       "constraints": [
         "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -14014,11 +14036,11 @@
       "sourceAliases": [
         {
           "source": "native:tsx",
-          "name": "asserts"
+          "name": "assertion_signature"
         },
         {
           "source": "native:typescript",
-          "name": "asserts"
+          "name": "assertion_signature"
         }
       ],
       "formerNames": []
@@ -14612,27 +14634,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.type-arguments",
-      "phrase": "type arguments",
-      "role": "concept",
-      "definition": "A rule for a type arguments, the construct the upstream grammar names type_arguments.",
-      "constraints": [
-        "Native grammars share this concept only where the construct means the same in each language.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:tsx",
-          "name": "type_arguments"
-        },
-        {
-          "source": "native:typescript",
-          "name": "type_arguments"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.object-type",
       "phrase": "object type",
       "role": "concept",
@@ -14670,27 +14671,6 @@
         {
           "source": "native:typescript",
           "name": "property_signature"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.type-parameters",
-      "phrase": "type parameters",
-      "role": "concept",
-      "definition": "A rule for a type parameters, the construct the upstream grammar names type_parameters.",
-      "constraints": [
-        "Native grammars share this concept only where the construct means the same in each language.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:tsx",
-          "name": "type_parameters"
-        },
-        {
-          "source": "native:typescript",
-          "name": "type_parameters"
         }
       ],
       "formerNames": []

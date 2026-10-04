@@ -294,7 +294,7 @@ For TypeScript and TSX the sources are the `typescript/src/grammar.json` and
   have 230 rules and 80 keywords each, and the 48 and 49 conflicts the two
   upstream grammars declare. Their merge reports,
   [`typescript.json`](../../parity/grammars/merge-reports/typescript.json) and
-  [`tsx.json`](../../parity/grammars/merge-reports/tsx.json), list 42 renamed
+  [`tsx.json`](../../parity/grammars/merge-reports/tsx.json), list 44 renamed
   rules and 3 expanded words (`enum`, `lhs` and `regex`), and no approximated
   or unsupported construct.
 - [`parity/grammars/scanners/typescript.lino`](../../parity/grammars/scanners/typescript.lino),

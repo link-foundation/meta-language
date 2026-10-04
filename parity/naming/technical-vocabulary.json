@@ -244,6 +244,24 @@
       "partsOfSpeech": ["adjective"],
       "definition": "Written without an escape sequence, as the plain characters of a string literal are.",
       "source": "ECMA-262 16th edition (ECMAScript 2025), section 12.9.4 String Literals"
+    },
+    {
+      "word": "mapped",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Built from another type by applying one transformation to each of its property keys, as a TypeScript mapped type is.",
+      "source": "TypeScript Handbook, Type Manipulation, Mapped Types"
+    },
+    {
+      "word": "predefined",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Built into the language rather than declared by a program, as the TypeScript primitive types number, string and boolean are.",
+      "source": "TypeScript Language Specification 1.8, section 3.8.1 Predefined Types"
+    },
+    {
+      "word": "readonly",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Able to be read but not assigned after initialization, as a TypeScript readonly property or array is.",
+      "source": "TypeScript Handbook, Object Types, readonly Properties"
     }
   ]
 }
