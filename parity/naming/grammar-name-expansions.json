@@ -139,6 +139,11 @@
         "type_arguments": "grammar.type-argument-list",
         "type_parameters": "grammar.type-parameter-list"
       }
+    },
+    "lean": {
+      "names": {
+        "_declaration": "declaration_choice"
+      }
     }
   },
   "concepts": {

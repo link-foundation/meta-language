@@ -124,3 +124,20 @@ test('a renamed node kind that only an alias names keeps its tree-sitter name', 
     /upstream names read the same natively: documentation_comment \(doc_comment, documentation_comment\)/u,
   );
 });
+
+test('a hidden immediate token is a token tree-sitter leaves unnamed', () => {
+  // tree-sitter-lean's `_string_content`: token.immediate of a hidden rule.
+  const hidden = (name) => ({
+    name: 'immediate',
+    rules: {
+      source: { type: 'REPEAT', content: { type: 'SYMBOL', name: 'string' } },
+      string: { type: 'SEQ', members: [{ type: 'STRING', value: '"' }, { type: 'SYMBOL', name }, { type: 'STRING', value: '"' }] },
+      [name]: { type: 'IMMEDIATE_TOKEN', content: { type: 'PATTERN', value: '[^"]+' } },
+    },
+    extras: [{ type: 'PATTERN', value: '[ ]' }],
+  });
+  const kinds = (name) => tokens(compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(hidden(name))))).parseTree('" a"').tree);
+  assert.deepEqual(kinds('_text'), [[null, '"'], ['unnamed_token', ' a'], [null, '"']]);
+  // A visible one keeps its name.
+  assert.deepEqual(kinds('text'), [[null, '"'], ['text', ' a'], [null, '"']]);
+});

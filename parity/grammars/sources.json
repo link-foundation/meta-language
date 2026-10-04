@@ -170,6 +170,47 @@
         "language": "tsx"
       },
       "oracle": "tsx"
+    },
+    {
+      "id": "tree-sitter-lean",
+      "language": "lean",
+      "native": "native-lean",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-lean4 0.3.0",
+      "repository": "https://github.com/wvhulle/tree-sitter-lean",
+      "revision": "bd942cd2795016239be02b3b3d5ef635645ddd38",
+      "path": "grammar.js",
+      "generated": {
+        "reason": "the repository commits grammar.js and the generated parser.c, not src/grammar.json; the bytes are the grammar.json tree-sitter CLI 0.27.0 writes from grammar.js, every symbol of the committed parser.c, the one the oracle compiles, is a rule of it, and of its rules only do_try and do_catch, which no rule reaches, are not in parser.c",
+        "generator": "js/experiments/generate-tree-sitter-grammar-json.mjs",
+        "dsl": "https://github.com/tree-sitter/tree-sitter/blob/v0.27.0/crates/generate/src/dsl.js"
+      },
+      "file": "parity/grammars/sources/tree-sitter-lean4-0.3.0.grammar.json.gz",
+      "sha256": "b9ba543fe131d18f1c69b9026b06963b7efa408136c3932709a32b88628d0886",
+      "license": "MIT",
+      "licenseFile": "parity/grammars/sources/tree-sitter-lean4-0.3.0.LICENSE",
+      "scanner": {
+        "file": "parity/grammars/scanners/lean.lino",
+        "sha256": "a99fcb9a6bb88d540bbf31e01e03f13ccf057ad1ab7e993557219e1495a15739",
+        "ports": {
+          "path": "src/scanner.c",
+          "sha256": "6927b5de4e9818befd7f040b20ec14c0b87f7f7524cf2bb3fb4a5ad75d63e2c5"
+        },
+        "generator": "js/experiments/build-lean-scanner.mjs",
+        "immediate": [
+          "_layout_start",
+          "_layout_semicolon",
+          "_layout_end",
+          "_match_body_start",
+          "_syntax_quotation_body"
+        ]
+      },
+      "corpus": {
+        "path": "test/corpus",
+        "file": "parity/grammars/sources/tree-sitter-lean4-0.3.0.corpus.json.gz",
+        "sha256": "5ccd9107c465322f9ebec794dd125f70fc5b9ac8ad5ce24938ccbd9364638cd0"
+      },
+      "oracle": "lean"
     }
   ]
 }

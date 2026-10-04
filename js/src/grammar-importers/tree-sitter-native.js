@@ -637,8 +637,9 @@ export function importTreeSitterNative(source, options = {}) {
         const bare = unwrapPrecedence(node);
         const wrapped = node !== bare && node.type.startsWith('PREC') ? node.value : null;
         if (bare.type === 'IMMEDIATE_TOKEN') {
+          // tree-sitter hides a hidden token, as it does under a hidden alias.
           kind = 'silent';
-          body = `(alias ${enc(nameOf(name))} (immediateToken ${expr(bare.content, true, keywords)}))`;
+          body = `(alias ${enc(name.startsWith('_') ? unnamedToken : nameOf(name))} (immediateToken ${expr(bare.content, true, keywords)}))`;
         } else {
           kind = 'token';
           body = expr(bare.type === 'TOKEN' ? bare.content : bare, true, keywords);
