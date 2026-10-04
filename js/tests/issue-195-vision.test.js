@@ -57,6 +57,9 @@ const DIRECTIVE_SECTIONS = [
   'acceptance-and-evidence',
   'what-finite-tests-establish',
   'cache-cleanup',
+  // Required by the next-phase audit (comment 5971613170).
+  'javascript-first-and-self-translation',
+  'continuous-integration',
   // Required by the resource audit (comment 5956284229).
   'resource-limits',
   'packages-and-publication',
@@ -110,6 +113,24 @@ test('the entry documents link to the vision and the subsystem documents defer t
     'linkedFromAgentInstructions',
     'subordinateDocumentsDeferToSpecification',
   ], 'the entry documents link to the vision and the subsystem documents defer to it');
+});
+
+test('the vision, AGENTS.md and CONTRIBUTING.md state the development and CI rules', () => {
+  // The rules of the next-phase audit (comment 5971613170), section 7.
+  const rules = {
+    javascriptFirstDocumented: /JavaScript first/u,
+    selfTranslationDocumented: /self-translation/iu,
+    decoratorsDocumented: /decorators?/iu,
+    bulkWorkDocumented: /\bbulk\b/iu,
+    ciOrderDocumented: /Rust (?:workflow|jobs?)[^.]*(?:only )?after[^.]*JavaScript/iu,
+    failLateDocumented: /--no-fail-fast/u,
+  };
+  for (const document of ['docs/vision.md', 'AGENTS.md', 'CONTRIBUTING.md']) {
+    const text = read(document).replace(/\s+/gu, ' ');
+    for (const [assertion, pattern] of Object.entries(rules)) assert.match(text, pattern, `${document}: ${assertion}`);
+  }
+  observe('I195-DEVELOPMENT-RULES-DOCUMENTED', Object.keys(rules),
+    'the vision, AGENTS.md and CONTRIBUTING.md state the development and CI rules');
 });
 
 test('docs/vision.md states what finite tests establish', () => {

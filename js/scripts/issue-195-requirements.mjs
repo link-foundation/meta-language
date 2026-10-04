@@ -35,6 +35,10 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229',
   greenPathAudit:
     'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606',
+  nextPhaseAudit:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170',
+  remainingWorkAudit:
+    'https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773',
 });
 
 const FOUR_LANGUAGE_DETAILS = Object.freeze({
@@ -913,6 +917,14 @@ export async function buildIssue195Manifest(root) {
         'I195-NAMING-NATIVE-GRAMMARS': ISSUE_195_SOURCES.greenPathAudit,
         ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'resource-limits')
           .map(({ id }) => [id, ISSUE_195_SOURCES.resourceAudit])),
+        // The next-phase audit asks for JavaScript first, self-translation, decorators and bulk
+        // grammar work; the audit of fe9b6ff1 makes the CI order and declared settling binding.
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'javascript-first')
+          .map(({ id }) => [id, ISSUE_195_SOURCES.nextPhaseAudit])),
+        ...Object.fromEntries(VISION_REQUIREMENTS.filter(({ area }) => area === 'continuous-integration')
+          .map(({ id }) => [id, ISSUE_195_SOURCES.remainingWorkAudit])),
+        'I195-GRAMMAR-BULK-PIPELINE': ISSUE_195_SOURCES.nextPhaseAudit,
+        'I195-GRAMMAR-DECLARED-SETTLING': ISSUE_195_SOURCES.remainingWorkAudit,
       },
     }),
   ];

@@ -1247,6 +1247,122 @@ export const VISION_REQUIREMENTS = Object.freeze([
     tooling: ['js/scripts/run-issue-195-evidence.mjs', 'js/scripts/issue-195-evidence-stages.mjs'],
   },
   {
+    id: 'I195-CI-RUST-AFTER-JAVASCRIPT',
+    area: 'continuous-integration',
+    specification: 'continuous-integration',
+    construct: 'Rust jobs gated on every JavaScript job',
+    expectedBehavior:
+      'One CI workflow calls the JavaScript workflow and then the Rust workflow, which needs it: no Rust job starts before every JavaScript job passed, and the Rust jobs show as skipped when JavaScript fails. The required check names stay valid.',
+    assertions: ['rustWorkflowNeedsJavaScript', 'calledWorkflowsHaveNoOwnPushOrPullRequestTriggers', 'skippedWhenJavaScriptFails'],
+    tooling: ['.github/workflows/ci.yml', '.github/workflows/js.yml', '.github/workflows/rust.yml'],
+  },
+  {
+    id: 'I195-CI-ACCEPTANCE-STAGE-ORDER',
+    area: 'continuous-integration',
+    specification: 'continuous-integration',
+    construct: 'Rust acceptance stages after the JavaScript stages',
+    expectedBehavior:
+      'In the acceptance workflow the Rust suite stage and the Rust native translations are separate jobs that need the matching JavaScript jobs and run only when those succeeded; no matrix runs a JavaScript and a Rust stage side by side.',
+    assertions: ['rustStagesNeedJavaScriptStages'],
+    tooling: ['.github/workflows/issue-195-acceptance.yml'],
+  },
+  {
+    id: 'I195-CI-REPORT-EVERY-FAILURE',
+    area: 'continuous-integration',
+    specification: 'continuous-integration',
+    construct: 'every failure of a job reported in one run',
+    expectedBehavior:
+      'Every cargo test run uses --no-fail-fast, every check step after the first of a job runs unless the run was cancelled, and cargo fmt, clippy and doc are independent steps, so one failure does not hide the others.',
+    assertions: ['cargoTestNoFailFast', 'checkStepsRunUnlessCancelled', 'lintStepsIndependent'],
+    tooling: ['.github/workflows/js.yml', '.github/workflows/rust.yml', '.github/workflows/issue-195-acceptance.yml'],
+  },
+  {
+    id: 'I195-DEVELOPMENT-RULES-DOCUMENTED',
+    area: 'javascript-first',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'JavaScript-first development rules',
+    expectedBehavior:
+      'docs/vision.md, AGENTS.md and CONTRIBUTING.md state the development rules: JavaScript first and Rust ported in one batch, by self-translation; lossless round trips; the automated grammar pipeline instead of hand work; tree-sitter only as a test oracle; decorators at every level; bulk changes without idle waiting; resource limits; the JavaScript → Rust CI order; and CI that reports every failure.',
+    assertions: ['javascriptFirstDocumented', 'selfTranslationDocumented', 'decoratorsDocumented', 'bulkWorkDocumented', 'ciOrderDocumented', 'failLateDocumented'],
+    tooling: ['docs/vision.md', 'AGENTS.md', 'CONTRIBUTING.md'],
+  },
+  {
+    id: 'I195-SELF-TRANSLATION-TOOL',
+    area: 'javascript-first',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'JavaScript/TypeScript ↔ Rust self-translation library API and CLI',
+    expectedBehavior:
+      'Both packages expose a library API and a CLI command that read JavaScript or TypeScript into meta-language links and write Rust, and read Rust and write JavaScript or TypeScript; translated meta-language modules pass cargo check and clippy.',
+    assertions: ['libraryApiInBothPackages', 'cliInBothPackages', 'javascriptToRust', 'rustToJavaScript', 'generatedRustCompiles'],
+    javascript: null,
+    rust: null,
+  },
+  {
+    id: 'I195-SELF-TRANSLATION-ROUND-TRIP',
+    area: 'javascript-first',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'lossless self-translation round trips',
+    expectedBehavior:
+      'JavaScript → links → JavaScript and Rust → links → Rust are byte-identical on meta-language\'s own sources, and JavaScript → Rust → JavaScript and Rust → JavaScript → Rust preserve behavior, keeping comments, layout and names through provenance where the target can express them.',
+    assertions: ['sameLanguageByteIdentical', 'crossLanguageBehaviorPreserved', 'provenanceKeepsCommentsAndNames'],
+    javascript: null,
+    rust: null,
+  },
+  {
+    id: 'I195-SELF-TRANSLATION-SHARED-CORPUS',
+    area: 'javascript-first',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'shared Links Notation corpus checked in both runtimes',
+    expectedBehavior:
+      'As in relative-meta-logic PR #184, every translated module has shared corpus cases whose expected outputs are written in Links Notation and checked in both runtimes, and the translated Rust of each module is measured against the hand-written source with the difference published per module.',
+    assertions: ['expectedOutputsInLinksNotation', 'checkedInBothRuntimes', 'differencePerModulePublished'],
+    javascript: null,
+    rust: null,
+  },
+  {
+    id: 'I195-DECORATORS-EVERY-LEVEL',
+    area: 'javascript-first',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'one decorator API at every level',
+    expectedBehavior:
+      'One decorator API extends the importer, grammar rules, merge decisions, concept mappings, the executor and recovery, CST → AST, transformations, emitters and translation rules; decorators compose in a defined order, are stored as links data both runtimes share, and can be removed.',
+    assertions: ['decoratorAtEveryLevel', 'compositionOrderDeterministic', 'storedAsLinksData', 'removable'],
+    javascript: null,
+    rust: null,
+  },
+  {
+    id: 'I195-PARITY-FEATURE-COMPLETENESS',
+    area: 'javascript-first',
+    specification: 'javascript-first-and-self-translation',
+    construct: 'every public JavaScript feature listed and present in Rust',
+    expectedBehavior:
+      'parity/language-features.json lists every public JavaScript export, and a test fails when Rust lacks one or when the two runtimes produce different observable output for one.',
+    assertions: ['everyPublicExportListed', 'rustHasEveryFeature', 'observableOutputEqual'],
+    javascript: null,
+    rust: null,
+  },
+  {
+    id: 'I195-GRAMMAR-BULK-PIPELINE',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    construct: 'bulk import of every catalog grammar with a published matrix',
+    expectedBehavior:
+      'One pipeline run imports the grammar.json and ANTLR grammars-v4 sources of every catalog language, merges them, and publishes a matrix of which languages import, execute and match their oracle and which executor or scanner features each one is missing.',
+    assertions: ['everyCatalogLanguageImported', 'matrixPublished', 'missingFeaturesListed'],
+    tooling: null,
+  },
+  {
+    id: 'I195-GRAMMAR-DECLARED-SETTLING',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    construct: 'declared, data-driven conflict and precedence settling',
+    expectedBehavior:
+      'The LR-style conflict, fork and associativity settling is declared grammar data the tree-sitter, ANTLR and PEG imports share, not executor host code for tree-sitter alone, in both runtimes.',
+    assertions: ['settlingDeclaredInGrammar', 'sharedByEveryImporter', 'noHostCodeSettling'],
+    javascript: null,
+    rust: null,
+  },
+  {
     id: 'I195-CACHE-CLEANUP-GRAMMAR-CACHES',
     area: 'cache-cleanup',
     specification: 'cache-cleanup',

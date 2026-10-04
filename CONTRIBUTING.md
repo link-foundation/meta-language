@@ -112,6 +112,38 @@ and conformance oracle gates are
 [`js/scripts/issue-195-proof-obligations.mjs`](js/scripts/issue-195-proof-obligations.mjs)
 and [`js/scripts/issue-195-oracle-mapping.mjs`](js/scripts/issue-195-oracle-mapping.mjs).
 
+## Development Order
+
+Work JavaScript first: draft and debug a whole batch of changes in JavaScript,
+then port the batch to Rust, by self-translation wherever the translator can do
+it. Grammars come from the automated pipeline, in bulk over every catalog
+language. Extend behavior through decorators stored as shared links data, not
+through special cases in host code. Make bulk changes and push once per batch.
+See [AGENTS.md](AGENTS.md#development-order) for the full rules.
+
+## CI Order and Failure Reporting
+
+The Rust workflow runs only after every JavaScript job passes.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) calls `js.yml` first,
+then `rust.yml`, which needs it. When JavaScript fails, the Rust jobs show as
+skipped rather than failed. `js.yml` and `rust.yml` have
+no push or pull request triggers of their own; they still run standalone for a
+release or a manual dispatch. The issue #195 acceptance workflow follows the
+same order: `native-rust` needs `native-javascript`, and `rust-suite` needs
+`javascript-suite`.
+
+Each job reports every failure in one run, not just the first:
+
+- `cargo test` always runs with `--no-fail-fast`, in the workflows and in the
+  scripts they call.
+- Every check or test step after a job's first check has
+  `if: ${{ !cancelled() }}`. Setup and publish steps keep the default, so they
+  still stop at a failure.
+- `cargo fmt`, `cargo clippy` and `cargo doc` run as separate steps.
+
+[`js/tests/ci-workflow-structure.test.js`](js/tests/ci-workflow-structure.test.js)
+enforces this order and these rules.
+
 ## Changelog
 
 User-facing changes need a fragment in `changelog.d/`:

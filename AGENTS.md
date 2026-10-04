@@ -42,6 +42,29 @@ changes this repository. Human contributors follow them too; see
   descriptions or releases while any ledger row fails. Do not add an
   issue-closing directive until every requirement is verified and delivered.
 
+## Development order
+
+See [JavaScript first and self-translation](docs/vision.md#javascript-first-and-self-translation)
+and [continuous integration](docs/vision.md#continuous-integration).
+
+- JavaScript first: draft and debug a whole batch of changes in JavaScript,
+  then port it to Rust in one batch, by self-translation wherever the tool can
+  do it, and check that Rust behaves the same. Do not mirror fixes into Rust
+  commit by commit.
+- Self-translation and lossless round trips: code the translator cannot port
+  yet is a gap in the translator, not something to write by hand.
+- Grammars come from the automated pipeline, in bulk over every catalog
+  language; adjustments are recorded data-driven rules, never hand edits of
+  generated grammars. Tree-sitter is only a test oracle.
+- Extend behavior through decorators, stored as links data both packages
+  share, rather than special cases in host code.
+- Bulk changes and no idle waiting: push once per batch and keep working while
+  CI runs.
+- CI runs the Rust workflow only after the JavaScript workflow passed, and
+  every job reports all of its failures (`cargo test --no-fail-fast`, check
+  steps that run unless the run was cancelled).
+- Resource limits: see [local checks and resources](#local-checks-and-resources).
+
 ## Code
 
 - Both runtime packages (`js/` and `rust/`) implement every feature with the

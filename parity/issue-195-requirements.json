@@ -15,7 +15,9 @@
     "consolidatedChecklist": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5895896874",
     "currentHeadAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5906611497",
     "resourceAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5956284229",
-    "greenPathAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606"
+    "greenPathAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5965533606",
+    "nextPhaseAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+    "remainingWorkAudit": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773"
   },
   "checkpoints": {
     "pre-merge": "All implementation and candidate-artifact requirements must pass on the exact merge candidate. Every PR check must pass. A red check is a defect to fix now; unfinished requirements are work to implement, not a reason for red CI.",
@@ -1551,17 +1553,17 @@
     "planned:repository-directive:i195-vision-specification": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: one authoritative vision and architecture specification",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-vision-source-register": {
       "path": "parity/issue-195-sources.json",
       "selector": "docs/vision.md#sources-of-truth: register of every requirement source with its revision and content hash",
-      "sha256": "b8381f1249b83f5948d51395d80956aac2de86792cfb7a9fe2f273781dfc7646"
+      "sha256": "5b99bf1e5c5f176d7dd3d0c15edf006db01a369f02fd45110a5e6f181f35405f"
     },
     "planned:repository-directive:i195-vision-requirement-traceability": {
       "path": "docs/vision.md",
       "selector": "#sources-of-truth: traceability from each atomic requirement to its evidence chain",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-vision-contradiction-audit": {
       "path": "parity/documentation/claim-fixtures.json",
@@ -1576,17 +1578,17 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "86fd98b010ac41a569b7b24c155145f35122c3ddbdb6f3d7ede67b804955b0b7"
+      "sha256": "419d2f67b4882ba1085752053f043525bf1ad7936816d196e74bacdaadc5aa74"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
       "selector": "#dependencies: external parser engines removed from the production packages",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "86fd98b010ac41a569b7b24c155145f35122c3ddbdb6f3d7ede67b804955b0b7"
+      "sha256": "419d2f67b4882ba1085752053f043525bf1ad7936816d196e74bacdaadc5aa74"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1656,7 +1658,7 @@
     "planned:repository-directive:i195-grammar-native-rust": {
       "path": "parity/fixtures/native-grammars/rust.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Rust grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "b9a87877a8000325945b4c1922da633c2690546dbe814e36246b8d0587f64c45"
+      "sha256": "c529c94240d7d067a5a9521871a07839479803718c1e032f60ac9efca6f86089"
     },
     "planned:repository-directive:i195-grammar-native-javascript": {
       "path": "parity/fixtures/native-grammars/javascript.json",
@@ -1676,7 +1678,7 @@
     "planned:repository-directive:i195-grammar-native-lean": {
       "path": "parity/fixtures/native-grammars/lean.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged Lean grammar imported with its native layout scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "8f41afc7464abab0469c76e56eeadca8c6a143719f2804a0cf1ce2d1626b9aeb"
+      "sha256": "2c83e797fbd1c7dc93b4b2b9307f71207854b3babe3b8c37d4f2cb98ba25c686"
     },
     "planned:repository-directive:i195-grammar-native-recovery": {
       "path": "parity/fixtures/native-grammars/json.json",
@@ -1716,7 +1718,7 @@
     "planned:repository-directive:i195-grammar-dependency-boundary": {
       "path": "docs/vision.md",
       "selector": "#native-merged-grammars: native dependency boundary of the installed packages",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-interchange-api-cli": {
       "path": "parity/fixtures/grammar-importers.json",
@@ -1846,7 +1848,7 @@
     "planned:repository-directive:i195-downstream-formal-ai-published": {
       "path": "docs/vision.md",
       "selector": "#packages-and-publication: formal-ai consuming the published packages",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-acceptance-independent-oracles": {
       "path": "parity/language-grammar-inventory.json",
@@ -1856,87 +1858,142 @@
     "planned:repository-directive:i195-acceptance-gate-mutations": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: gate-mutation tests for the directive obligations",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-acceptance-required-merge-check": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: enforced full requirements merge check on the default branch",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-acceptance-pr-checks-passable": {
       "path": "docs/vision.md",
       "selector": "#acceptance-and-evidence: pull request checks that can all pass before merge",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-acceptance-finite-claims-documented": {
       "path": "docs/vision.md",
       "selector": "#what-finite-tests-establish: documented limits of finite test evidence",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-ci-compile-gate": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: fast compile gate ahead of every compiling CI job",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-ci-test-matrix": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: test execution split into bounded matrix jobs",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-ci-evidence-stages": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: checkpoint evidence produced by separate stage jobs",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-ci-concurrency": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: superseded workflow runs cancelled",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-agent-rules": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: targeted local checks and resource rules for agents and contributors",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-bounded-sequential-evidence": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: evidence suites run one at a time with bounded build parallelism",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-lazy-grammars": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: WebAssembly grammars loaded on first use",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-grammar-tiering-budget": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: grammar code kept off the optimizing compiler",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-inline-parser-reuse": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: one Markdown inline parser for every inline region",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-source-boundaries": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: source offset index with interval checkpoints",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-parity-digests": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: runtime parity evidence as entry digests",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-cache-cleanup-wrapper": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: cache cleanup wrapper as the documented way to run long local commands",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-resource-native-output-cleanup": {
       "path": "docs/vision.md",
       "selector": "#resource-limits: native compiler outputs deleted once each cell is recorded",
-      "sha256": "27fe755624bbbf528df22df94231cea84fef560e157cfe60afe0fad46923403f"
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-ci-rust-after-javascript": {
+      "path": "docs/vision.md",
+      "selector": "#continuous-integration: Rust jobs gated on every JavaScript job",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-ci-acceptance-stage-order": {
+      "path": "docs/vision.md",
+      "selector": "#continuous-integration: Rust acceptance stages after the JavaScript stages",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-ci-report-every-failure": {
+      "path": "docs/vision.md",
+      "selector": "#continuous-integration: every failure of a job reported in one run",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-development-rules-documented": {
+      "path": "docs/vision.md",
+      "selector": "#javascript-first-and-self-translation: JavaScript-first development rules",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-self-translation-tool": {
+      "path": "docs/vision.md",
+      "selector": "#javascript-first-and-self-translation: JavaScript/TypeScript ↔ Rust self-translation library API and CLI",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-self-translation-round-trip": {
+      "path": "docs/vision.md",
+      "selector": "#javascript-first-and-self-translation: lossless self-translation round trips",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-self-translation-shared-corpus": {
+      "path": "docs/vision.md",
+      "selector": "#javascript-first-and-self-translation: shared Links Notation corpus checked in both runtimes",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-decorators-every-level": {
+      "path": "docs/vision.md",
+      "selector": "#javascript-first-and-self-translation: one decorator API at every level",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-parity-feature-completeness": {
+      "path": "docs/vision.md",
+      "selector": "#javascript-first-and-self-translation: every public JavaScript feature listed and present in Rust",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-grammar-bulk-pipeline": {
+      "path": "docs/vision.md",
+      "selector": "#native-merged-grammars: bulk import of every catalog grammar with a published matrix",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+    },
+    "planned:repository-directive:i195-grammar-declared-settling": {
+      "path": "docs/vision.md",
+      "selector": "#native-merged-grammars: declared, data-driven conflict and precedence settling",
+      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-cache-cleanup-grammar-caches": {
       "path": "scripts/lib/cache-classes.mjs",
@@ -2877,6 +2934,197 @@
           "currentHeadAudit",
           "resourceAudit",
           "greenPathAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-CI-ACCEPTANCE-STAGE-ORDER",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773",
+      "area": "continuous-integration",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "Rust acceptance stages after the JavaScript stages",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "In the acceptance workflow the Rust suite stage and the Rust native translations are separate jobs that need the matching JavaScript jobs and run only when those succeeded; no matrix runs a JavaScript and a Rust stage side by side.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          ".github/workflows/issue-195-acceptance.yml"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-ci-acceptance-stage-order-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-ci-acceptance-stage-order"
+          ],
+          "assertions": [
+            "rustStagesNeedJavaScriptStages"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-ci-acceptance-stage-order-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#continuous-integration",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "remainingWorkAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-CI-REPORT-EVERY-FAILURE",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773",
+      "area": "continuous-integration",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "every failure of a job reported in one run",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Every cargo test run uses --no-fail-fast, every check step after the first of a job runs unless the run was cancelled, and cargo fmt, clippy and doc are independent steps, so one failure does not hide the others.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          ".github/workflows/js.yml",
+          ".github/workflows/rust.yml",
+          ".github/workflows/issue-195-acceptance.yml"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-ci-report-every-failure-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-ci-report-every-failure"
+          ],
+          "assertions": [
+            "cargoTestNoFailFast",
+            "checkStepsRunUnlessCancelled",
+            "lintStepsIndependent"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-ci-report-every-failure-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#continuous-integration",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "remainingWorkAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-CI-RUST-AFTER-JAVASCRIPT",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773",
+      "area": "continuous-integration",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "Rust jobs gated on every JavaScript job",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "One CI workflow calls the JavaScript workflow and then the Rust workflow, which needs it: no Rust job starts before every JavaScript job passed, and the Rust jobs show as skipped when JavaScript fails. The required check names stay valid.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/js.yml",
+          ".github/workflows/rust.yml"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-ci-rust-after-javascript-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-ci-rust-after-javascript"
+          ],
+          "assertions": [
+            "rustWorkflowNeedsJavaScript",
+            "calledWorkflowsHaveNoOwnPushOrPullRequestTriggers",
+            "skippedWhenJavaScriptFails"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-ci-rust-after-javascript-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#continuous-integration",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "remainingWorkAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -15336,6 +15584,88 @@
       }
     },
     {
+      "id": "I195-DECORATORS-EVERY-LEVEL",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+      "area": "javascript-first",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "one decorator API at every level",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "One decorator API extends the importer, grammar rules, merge decisions, concept mappings, the executor and recovery, CST → AST, transformations, emitters and translation rules; decorators compose in a defined order, are stored as links data both runtimes share, and can be removed.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": null,
+        "rust": null
+      },
+      "verifications": [
+        {
+          "testId": "i195-decorators-every-level-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-decorators-every-level"
+          ],
+          "assertions": [
+            "decoratorAtEveryLevel",
+            "compositionOrderDeterministic",
+            "storedAsLinksData",
+            "removable"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-decorators-every-level-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-decorators-every-level-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-decorators-every-level"
+          ],
+          "assertions": [
+            "decoratorAtEveryLevel",
+            "compositionOrderDeterministic",
+            "storedAsLinksData",
+            "removable"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-decorators-every-level-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#javascript-first-and-self-translation",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "nextPhaseAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
       "id": "I195-DELIVERY-CRATE-CANDIDATE",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "package-delivery",
@@ -16094,6 +16424,74 @@
           "currentHeadAudit",
           "resourceAudit",
           "greenPathAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-DEVELOPMENT-RULES-DOCUMENTED",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+      "area": "javascript-first",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "JavaScript-first development rules",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "docs/vision.md, AGENTS.md and CONTRIBUTING.md state the development rules: JavaScript first and Rust ported in one batch, by self-translation; lossless round trips; the automated grammar pipeline instead of hand work; tree-sitter only as a test oracle; decorators at every level; bulk changes without idle waiting; resource limits; the JavaScript → Rust CI order; and CI that reports every failure.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": [
+          "docs/vision.md",
+          "AGENTS.md",
+          "CONTRIBUTING.md"
+        ]
+      },
+      "verifications": [
+        {
+          "testId": "i195-development-rules-documented-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-development-rules-documented"
+          ],
+          "assertions": [
+            "javascriptFirstDocumented",
+            "selfTranslationDocumented",
+            "decoratorsDocumented",
+            "bulkWorkDocumented",
+            "ciOrderDocumented",
+            "failLateDocumented"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-development-rules-documented-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#javascript-first-and-self-translation",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "nextPhaseAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -18322,6 +18720,68 @@
       }
     },
     {
+      "id": "I195-GRAMMAR-BULK-PIPELINE",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+      "area": "native-grammar",
+      "scope": {
+        "language": "repository tooling (Node.js scripts, documentation and CI workflows)",
+        "version": "Node.js 22 or later",
+        "edition": "every checkout and CI job of this repository",
+        "construct": "bulk import of every catalog grammar with a published matrix",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "One pipeline run imports the grammar.json and ANTLR grammars-v4 sources of every catalog language, merges them, and publishes a matrix of which languages import, execute and match their oracle and which executor or scanner features each one is missing.",
+      "requiredRuntimes": [
+        "tooling"
+      ],
+      "implementationEntryPoints": {
+        "tooling": null
+      },
+      "verifications": [
+        {
+          "testId": "i195-grammar-bulk-pipeline-tooling-behavior",
+          "runtime": "tooling",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-bulk-pipeline"
+          ],
+          "assertions": [
+            "everyCatalogLanguageImported",
+            "matrixPublished",
+            "missingFeaturesListed"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-bulk-pipeline-tooling-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#native-merged-grammars",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "repositoryDirective",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "nextPhaseAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript"
+        ],
+        "packages": [
+          "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
       "id": "I195-GRAMMAR-CONCEPT-DISTINCTIONS",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5885245090",
       "area": "native-grammar",
@@ -18571,6 +19031,87 @@
           "currentHeadAudit",
           "resourceAudit",
           "greenPathAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-GRAMMAR-DECLARED-SETTLING",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773",
+      "area": "native-grammar",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "declared, data-driven conflict and precedence settling",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "The LR-style conflict, fork and associativity settling is declared grammar data the tree-sitter, ANTLR and PEG imports share, not executor host code for tree-sitter alone, in both runtimes.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": null,
+        "rust": null
+      },
+      "verifications": [
+        {
+          "testId": "i195-grammar-declared-settling-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-declared-settling"
+          ],
+          "assertions": [
+            "settlingDeclaredInGrammar",
+            "sharedByEveryImporter",
+            "noHostCodeSettling"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-declared-settling-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-grammar-declared-settling-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-grammar-declared-settling"
+          ],
+          "assertions": [
+            "settlingDeclaredInGrammar",
+            "sharedByEveryImporter",
+            "noHostCodeSettling"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-grammar-declared-settling-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#native-merged-grammars",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "repositoryDirective",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "remainingWorkAudit"
         ],
         "workflow": ".github/workflows/issue-195-acceptance.yml",
         "evidenceGroups": [
@@ -23136,6 +23677,87 @@
       }
     },
     {
+      "id": "I195-PARITY-FEATURE-COMPLETENESS",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+      "area": "javascript-first",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "every public JavaScript feature listed and present in Rust",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "parity/language-features.json lists every public JavaScript export, and a test fails when Rust lacks one or when the two runtimes produce different observable output for one.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": null,
+        "rust": null
+      },
+      "verifications": [
+        {
+          "testId": "i195-parity-feature-completeness-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-parity-feature-completeness"
+          ],
+          "assertions": [
+            "everyPublicExportListed",
+            "rustHasEveryFeature",
+            "observableOutputEqual"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-parity-feature-completeness-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-parity-feature-completeness-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-parity-feature-completeness"
+          ],
+          "assertions": [
+            "everyPublicExportListed",
+            "rustHasEveryFeature",
+            "observableOutputEqual"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-parity-feature-completeness-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#javascript-first-and-self-translation",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "issue",
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "nextPhaseAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
       "id": "I195-PARITY-SEMANTICS",
       "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5798732287",
       "area": "runtime-parity",
@@ -24644,6 +25266,250 @@
         ],
         "packages": [
           "repository tooling, not packaged"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-SELF-TRANSLATION-ROUND-TRIP",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+      "area": "javascript-first",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "lossless self-translation round trips",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "JavaScript → links → JavaScript and Rust → links → Rust are byte-identical on meta-language's own sources, and JavaScript → Rust → JavaScript and Rust → JavaScript → Rust preserve behavior, keeping comments, layout and names through provenance where the target can express them.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": null,
+        "rust": null
+      },
+      "verifications": [
+        {
+          "testId": "i195-self-translation-round-trip-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-self-translation-round-trip"
+          ],
+          "assertions": [
+            "sameLanguageByteIdentical",
+            "crossLanguageBehaviorPreserved",
+            "provenanceKeepsCommentsAndNames"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-self-translation-round-trip-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-self-translation-round-trip-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-self-translation-round-trip"
+          ],
+          "assertions": [
+            "sameLanguageByteIdentical",
+            "crossLanguageBehaviorPreserved",
+            "provenanceKeepsCommentsAndNames"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-self-translation-round-trip-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#javascript-first-and-self-translation",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "nextPhaseAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-SELF-TRANSLATION-SHARED-CORPUS",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+      "area": "javascript-first",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "shared Links Notation corpus checked in both runtimes",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "As in relative-meta-logic PR #184, every translated module has shared corpus cases whose expected outputs are written in Links Notation and checked in both runtimes, and the translated Rust of each module is measured against the hand-written source with the difference published per module.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": null,
+        "rust": null
+      },
+      "verifications": [
+        {
+          "testId": "i195-self-translation-shared-corpus-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-self-translation-shared-corpus"
+          ],
+          "assertions": [
+            "expectedOutputsInLinksNotation",
+            "checkedInBothRuntimes",
+            "differencePerModulePublished"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-self-translation-shared-corpus-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-self-translation-shared-corpus-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-self-translation-shared-corpus"
+          ],
+          "assertions": [
+            "expectedOutputsInLinksNotation",
+            "checkedInBothRuntimes",
+            "differencePerModulePublished"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-self-translation-shared-corpus-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#javascript-first-and-self-translation",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "nextPhaseAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
+        ],
+        "downstream": []
+      }
+    },
+    {
+      "id": "I195-SELF-TRANSLATION-TOOL",
+      "source": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+      "area": "javascript-first",
+      "scope": {
+        "language": "meta-language runtime packages",
+        "version": "the npm package and the Rust crate of the same release",
+        "edition": "every catalog language, grammar format and edition",
+        "construct": "JavaScript/TypeScript ↔ Rust self-translation library API and CLI",
+        "aliases": [],
+        "extensions": []
+      },
+      "expectedBehavior": "Both packages expose a library API and a CLI command that read JavaScript or TypeScript into meta-language links and write Rust, and read Rust and write JavaScript or TypeScript; translated meta-language modules pass cargo check and clippy.",
+      "requiredRuntimes": [
+        "javascript",
+        "rust"
+      ],
+      "implementationEntryPoints": {
+        "javascript": null,
+        "rust": null
+      },
+      "verifications": [
+        {
+          "testId": "i195-self-translation-tool-javascript-behavior",
+          "runtime": "javascript",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-self-translation-tool"
+          ],
+          "assertions": [
+            "libraryApiInBothPackages",
+            "cliInBothPackages",
+            "javascriptToRust",
+            "rustToJavaScript",
+            "generatedRustCompiles"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-self-translation-tool-javascript-behavior.json"
+        },
+        {
+          "testId": "i195-self-translation-tool-rust-behavior",
+          "runtime": "rust",
+          "kind": "positive",
+          "checkpoint": "pre-merge",
+          "fixtureIds": [
+            "planned:repository-directive:i195-self-translation-tool"
+          ],
+          "assertions": [
+            "libraryApiInBothPackages",
+            "cliInBothPackages",
+            "javascriptToRust",
+            "rustToJavaScript",
+            "generatedRustCompiles"
+          ],
+          "evidenceArtifact": "issue-195-results/i195-self-translation-tool-rust-behavior.json"
+        }
+      ],
+      "traceability": {
+        "specification": "docs/vision.md#javascript-first-and-self-translation",
+        "inventories": [
+          "docs/vision.md"
+        ],
+        "sources": [
+          "acceptanceGate",
+          "completeScope",
+          "fullDelivery",
+          "consolidatedChecklist",
+          "currentHeadAudit",
+          "resourceAudit",
+          "greenPathAudit",
+          "nextPhaseAudit"
+        ],
+        "workflow": ".github/workflows/issue-195-acceptance.yml",
+        "evidenceGroups": [
+          "suite:javascript",
+          "suite:rust"
+        ],
+        "packages": [
+          "npm:meta-language",
+          "crates.io:meta-language"
         ],
         "downstream": []
       }

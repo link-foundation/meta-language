@@ -31,6 +31,8 @@ const SOURCE_LABELS = Object.freeze({
   currentHeadAudit: 'Audit of PR head 7489adfb and remaining delivery work',
   resourceAudit: 'Audit of PR head d2407c18: green CI and bounded resource use',
   greenPathAudit: 'Path to a green PR and a release: post-merge checks, native grammars and shared concepts',
+  nextPhaseAudit: 'Next phase: JavaScript first, automated grammars, self-translation to Rust',
+  remainingWorkAudit: 'Audit of fe9b6ff1: the JavaScript → Rust CI order, fail-late CI and declared settling',
 });
 
 function allKeys(value, prefix = '') {

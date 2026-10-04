@@ -31,6 +31,7 @@ export const AUTOMATION_MARKERS = Object.freeze([
   '## 🚨 Solution Draft Failed',
   '## ✅ Ready to merge',
   '## 📎 Intermediate working-session log',
+  '## 🛑 Automation stopped',
 ]);
 
 export function contentHash(body) {

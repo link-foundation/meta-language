@@ -598,6 +598,59 @@ It never deletes:
 Cleaning regenerable caches is separate from removing obsolete production
 architecture.
 
+## JavaScript first and self-translation
+
+Every feature is developed and debugged in JavaScript first, where builds and
+test runs are cheap. Only a feature that is complete and green in JavaScript is
+ported to Rust, in one batch, and the Rust version must then behave exactly the
+same. A fix is not mirrored into Rust commit by commit.
+
+The port is done by meta-language itself. A self-translation tool, a library
+API and a CLI command in both packages, reads JavaScript or TypeScript into
+meta-language links and writes Rust, and reads Rust and writes JavaScript or
+TypeScript. Code it cannot translate yet is a gap in the translator, not
+something to write by hand. Meta-language's own source is its main acceptance
+corpus:
+
+- JavaScript → links → JavaScript and Rust → links → Rust are byte-identical;
+- JavaScript → Rust → JavaScript and Rust → JavaScript → Rust preserve
+  behavior;
+- comments, layout and names survive through provenance wherever the target
+  can express them;
+- as in
+  [relative-meta-logic PR #184](https://github.com/link-foundation/relative-meta-logic/pull/184),
+  every translated module has shared corpus cases whose expected outputs are
+  written in Links Notation and checked in both runtimes;
+- `parity/language-features.json` lists every public JavaScript feature, and a
+  test fails when Rust lacks one or the two produce different output.
+
+Everything is extensible with decorators: one decorator API for the importer,
+grammar rules, merge decisions, concept mappings, the executor and recovery,
+CST → AST, transformations, emitters and translation rules. Decorators compose
+in a defined order and are stored as links data that both packages share.
+They also make translated output match the existing hand-written source.
+
+Grammar work runs in bulk through the automated pipeline: import, merging and
+transformation of every catalog language in one batch, adjustments recorded as
+data-driven rules, never hand edits of generated grammars. Tree-sitter is only
+a test oracle. Changes are drafted and debugged as a batch and pushed once;
+nobody waits idle on CI.
+
+## Continuous integration
+
+CI follows the same order as development. One workflow
+([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) runs the
+JavaScript workflow first and the Rust workflow after it: no Rust job starts
+before every JavaScript job passed, and the Rust jobs show as skipped when
+JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
+the Rust native translations and the Rust consumers likewise need the
+JavaScript stages.
+
+Every job reports all of its failures in one run, not only the first: `cargo
+test` runs with `--no-fail-fast`, every check step after the first runs unless
+the run was cancelled, and `cargo fmt`, clippy and `cargo doc` are independent
+steps. A repository test checks this structure.
+
 ## Resource limits
 
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling

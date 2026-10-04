@@ -4,7 +4,7 @@
   "issue": 195,
   "pullRequest": 196,
   "hashAlgorithm": "sha256 of the exact UTF-8 body returned by the GitHub REST API",
-  "reconciledAt": "2026-10-03",
+  "reconciledAt": "2026-10-04",
   "classificationRule": "Every comment is a requirement source, a status report, or automation output recognized by AUTOMATION_MARKERS in js/scripts/issue-195-sources.mjs.",
   "requirementSources": [
     {
@@ -254,6 +254,43 @@
       "updatedAt": "2026-10-03T04:39:36Z",
       "bytes": 20498,
       "sha256": "a49ceecd4156069e9fbcdabcf8c6de55f60236c4525dd35dfbbc378ac4021633"
+    },
+    {
+      "key": "nextPhaseAudit",
+      "id": 5971613170,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5971613170",
+      "title": "Next phase: JavaScript first, automated grammars, self-translation to Rust (audit of 11d87be7, 2026-10-04)",
+      "role": "JavaScript-first development with Rust ported by meta-language's own self-translation tool, lossless round trips, decorators at every level, complete feature parity, the bulk grammar pipeline over every catalog language, the JavaScript → Rust CI order and fail-late CI, and their documentation; preserves all earlier scope",
+      "ledgerCoverage": [
+        "I195-DEVELOPMENT-",
+        "I195-SELF-TRANSLATION-",
+        "I195-DECORATORS-",
+        "I195-PARITY-FEATURE-",
+        "I195-GRAMMAR-BULK-"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-03T17:23:08Z",
+      "updatedAt": "2026-10-03T17:30:18Z",
+      "bytes": 14207,
+      "sha256": "1c6c8ca6ba8eefa9dc0f35bba3b82b3fd2a7df465a3d7c5fbf21d7427634acad"
+    },
+    {
+      "key": "remainingWorkAudit",
+      "id": 5979473773,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5979473773",
+      "title": "What is left — audit of fe9b6ff1 against the next-phase requirements (2026-10-04)",
+      "role": "Binding CI order (no Rust job before every JavaScript job passed, the same in the acceptance stages, skipped when JavaScript fails), every failure reported in one run, declared data-driven conflict and precedence settling, and the batch workflow; keeps 5971613170 and 5965533606 in force",
+      "ledgerCoverage": [
+        "I195-CI-",
+        "I195-GRAMMAR-DECLARED-SETTLING"
+      ],
+      "author": "konard",
+      "createdAt": "2026-10-04T11:30:39Z",
+      "updatedAt": "2026-10-04T11:30:39Z",
+      "bytes": 11394,
+      "sha256": "48cac3e8e9e3f95cd5d00f3ec5ed15dbe35274e91f37f25a2982abb786e146aa"
     }
   ],
   "statusReports": [
@@ -376,6 +413,18 @@
       "updatedAt": "2026-10-03T00:19:34Z",
       "bytes": 1381,
       "sha256": "22f888206680d84e926a8bec415989544ab14f4a434161919e0c8c1a33d11ac4"
+    },
+    {
+      "id": 5978217690,
+      "kind": "comment",
+      "url": "https://github.com/link-foundation/meta-language/pull/196#issuecomment-5978217690",
+      "title": "Progress on the green-path audit: Lean native by default, and the JavaScript class keyword fix (fe9b6ff)",
+      "role": "Solver status report; carries no requirements",
+      "author": "konard",
+      "createdAt": "2026-10-04T08:44:18Z",
+      "updatedAt": "2026-10-04T08:44:18Z",
+      "bytes": 2090,
+      "sha256": "6f8a9346b88c076d5f4e55cdbec5d2bfbd261c8b340586e2e31623be935409b3"
     }
   ]
 }
