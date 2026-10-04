@@ -8,7 +8,9 @@
 //! is malformed and is the recorded one, that the native tree is the recorded
 //! one, malformed, lossless and consistent with its diagnostics, and that the
 //! category follows from the two trees; a case that matches the oracle, or a
-//! clean oracle, may not be recorded. Mirrors
+//! clean oracle, may not be recorded. A clean native tree is recorded only as
+//! a merged extension: a source a native grammar fixture records as a
+//! divergence of its merged sources. Mirrors
 //! `js/tests/support/native-recovery.js`.
 
 use std::cell::RefCell;
@@ -39,6 +41,32 @@ pub fn read_native_recovery() -> Value {
         .join(NATIVE_RECOVERY_FILE);
     serde_json::from_slice(&fs::read(&path).expect("native recovery records"))
         .expect("native recovery JSON")
+}
+
+/// The sources a native grammar reads as a merged source extends its
+/// oracle's (the `divergences` of `parity/fixtures/native-grammars/*.json`,
+/// each with its reason): the native tree of such a source is clean where the
+/// oracle recovers.
+pub fn merged_extensions() -> BTreeSet<String> {
+    let directory = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("parity/fixtures/native-grammars");
+    let mut sources = BTreeSet::new();
+    for entry in fs::read_dir(&directory).expect("native grammar fixtures") {
+        let path = entry.expect("native grammar fixture").path();
+        if path.extension().is_none_or(|extension| extension != "json") {
+            continue;
+        }
+        let fixture: Value =
+            serde_json::from_slice(&fs::read(&path).expect("native grammar fixture"))
+                .expect("native grammar fixture JSON");
+        for divergence in fixture["divergences"].as_array().into_iter().flatten() {
+            if let Some(source) = divergence["source"].as_str() {
+                sources.insert(source.to_string());
+            }
+        }
+    }
+    sources
 }
 
 /// Whether canonical CST lines hold an ERROR or MISSING node.
@@ -90,6 +118,9 @@ pub fn repair_sites(text: &str, source: &str) -> RepairSites {
 /// The category of a recovery discrepancy, from the repair sites of the
 /// oracle and the native tree.
 pub fn recovery_category(oracle: &RepairSites, native: &RepairSites) -> &'static str {
+    if native.errors.is_empty() && native.missing.is_empty() {
+        return "merged-extension";
+    }
     let at = |missing: &[String]| -> Vec<String> {
         missing
             .iter()
@@ -189,10 +220,16 @@ impl NativeRecovery {
                 "a clean oracle tree may not be recorded as a recovery discrepancy".to_string(),
             );
         }
-        if !is_malformed(text) {
+        let category = record["category"].as_str().unwrap_or_default();
+        if !is_malformed(text) && category != "merged-extension" {
             found.push("the native tree is clean, so it is no recovery".to_string());
         }
-        let category = record["category"].as_str().unwrap_or_default();
+        if category == "merged-extension" && !merged_extensions().contains(source) {
+            found.push(
+                "the native tree is clean, but no native grammar fixture records the source as a divergence of its merged sources"
+                    .to_string(),
+            );
+        }
         if self.categories.get(category).is_none() {
             found.push(format!("category {category} has no justification"));
         }
@@ -269,4 +306,11 @@ fn native_recovery_category_compares_the_repair_sites() {
     assert_eq!(inserted.skipped, 0);
     assert!(is_malformed(missing));
     assert!(!is_malformed("source_file 0:0-0:0"));
+    let clean = repair_sites("source_file 0:0-2:0", source);
+    assert_eq!(recovery_category(&narrow, &clean), "merged-extension");
+    assert!(
+        merged_extensions()
+            .iter()
+            .any(|source| source.contains("#check @ident"))
+    );
 }

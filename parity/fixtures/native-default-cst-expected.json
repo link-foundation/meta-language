@@ -982,7 +982,7 @@
       "grammars": {
         "native-lean": {
           "version": "1.0.0",
-          "parserSha256": "30e5c99b95de94e0ba97e1c756a05a90b54c87b397f2db2bd985f6dc2d1153ee"
+          "parserSha256": "5b37f347030c63b6b6326a7a526dab19f99a09d73c5db1d49567cbdc5d822a81"
         }
       },
       "oracleGrammars": {

@@ -15,6 +15,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
+use super::forking::{Lead, Reductions, lookahead_after, reduced_early};
 use super::lexing::is_keyword;
 use super::operations::{Abort, OpError, State, ValueMachine, evaluate_condition};
 use super::parting::{ends_missing, starts_widthless};
@@ -23,8 +24,8 @@ use super::program::{
     Associativity, Compiled, Expr, Matcher, Name, PrecedenceTag, Program, Target,
 };
 use super::results::{
-    Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared,
-    Skipped, TokenOrder, Tree, TreeType, children_of, concat, is_separator, longest_result,
+    ChildList, Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned,
+    Shared, Skipped, TokenOrder, Tree, TreeType, children_of, concat, is_separator, longest_result,
     no_children, with_leaf,
 };
 use super::text::{decode_at, text_of};
@@ -70,6 +71,10 @@ fn missing_of(expr: &Expr) -> (Option<Name>, bool) {
 /// the scanner asks what the parse expects, and the state.
 pub(super) type ScanKey = (Name, usize, Option<usize>, State);
 
+/// The marked tokens the rest of a sequence or an iteration may begin with
+/// (see `rest_keys`), shared between the memo and its readers.
+pub(super) type RestKeys = Option<Rc<HashSet<Lead>>>;
+
 /// Interprets one program over `bytes[begin, end)`.
 pub(super) struct Executor<'c> {
     pub(super) compiled: &'c Compiled,
@@ -100,6 +105,11 @@ pub(super) struct Executor<'c> {
     /// the precedence's item, the operand's rule and the part's kind (see
     /// `shifts_below`).
     pub(super) below_memo: HashMap<(usize, Name, Name), Option<PrecedenceTag>>,
+    /// The marked tokens (see `Reductions`) the parts after each item of a
+    /// sequence, by the address of its items and the item's index, and each
+    /// iteration of a repetition, by the address of its item, may begin
+    /// with (see `rest_keys` and `iteration_keys`).
+    pub(super) rest_memo: HashMap<(usize, Option<usize>), RestKeys>,
     /// Whether an extra that builds a node is being parsed (see `extra_node`).
     pub(super) in_extra: bool,
     /// The scans of each scanner token at an offset, by the context offset
@@ -177,6 +187,7 @@ impl<'c> Executor<'c> {
             owners: None,
             edge_memo: HashMap::new(),
             below_memo: HashMap::new(),
+            rest_memo: HashMap::new(),
             in_extra: false,
             scanner_memo: HashMap::new(),
             scan_context: None,
@@ -589,10 +600,21 @@ impl<'c> Executor<'c> {
         in_token: bool,
         keep: Option<&Keep>,
     ) -> Run<Vec<Res>> {
+        let reductions = self.reductions(in_token);
+        let split =
+            reductions.and_then(|reductions| reductions.splits.get(&Reductions::key(items)));
+        // The offset each result's optional parts begin at, where its rule
+        // could have been reduced (see `reduction_facts`), by the result's
+        // children.
+        let mut boundaries: HashMap<*const ChildList, usize> = HashMap::new();
         let mut current = vec![Res::new(position, state.clone(), no_children(), 0)];
         for (index, item) in items.iter().enumerate() {
             let mut next = ResultSet::new(self.longest_tokens).owned(keep.map(Keep::owner));
             let last = index == items.len() - 1;
+            let rest = match reductions {
+                Some(reductions) if !last => self.rest_keys(reductions, items, index),
+                _ => None,
+            };
             let continued = self.continued(item, &current, in_token)?;
             let pruned = self.preempted(&continued, in_token);
             for ((left, rights), pruned) in continued.into_iter().zip(pruned) {
@@ -600,7 +622,36 @@ impl<'c> Executor<'c> {
                     continue;
                 }
                 for right in rights {
-                    let joined = Res::join(left, right, in_token);
+                    if rest
+                        .as_ref()
+                        .is_some_and(|rest| reduced_early(&right.children, rest))
+                    {
+                        continue;
+                    }
+                    let mut joined = Res::join(left, right, in_token);
+                    if let Some(split) = split
+                        && index >= split.optional_from
+                    {
+                        let boundary = if index == split.optional_from {
+                            Some(left.end)
+                        } else {
+                            boundaries.get(&Rc::as_ptr(&left.children)).copied()
+                        };
+                        if !last {
+                            if let Some(boundary) = boundary {
+                                boundaries.insert(Rc::as_ptr(&joined.children), boundary);
+                            }
+                        } else if let Some(lookahead) = boundary.and_then(|boundary| {
+                            lookahead_after(&joined.children, boundary, self.bytes)
+                        }) {
+                            if split.always.contains(&lookahead) {
+                                continue;
+                            }
+                            if split.marked.contains(&lookahead) {
+                                joined.before = Some(lookahead);
+                            }
+                        }
+                    }
                     if last
                         && let Some(keep) = keep
                         && !self.precedence_valid(keep, &joined)
@@ -619,6 +670,46 @@ impl<'c> Executor<'c> {
             }
         }
         Ok(current)
+    }
+
+    /// The reductions before a following token (see `reduction_facts`) the
+    /// results are checked against: under `(matching longest)`, outside a
+    /// token.
+    fn reductions(&self, in_token: bool) -> Option<&'c Reductions> {
+        let tokens = self.longest_tokens.filter(|_| !in_token)?;
+        Some(tokens.grammar.reductions(&self.program.rules))
+    }
+
+    /// The marked tokens (see `Reductions`) an iteration of `item` may begin
+    /// with, or None when it begins with none. It mirrors iterationKeys in
+    /// js/src/grammar-runtime/executor.js.
+    fn iteration_keys(&mut self, reductions: &Reductions, item: &Expr) -> RestKeys {
+        if reductions.keys.is_empty() {
+            return None;
+        }
+        let rules = &self.program.rules;
+        self.rest_memo
+            .entry((std::ptr::from_ref(item).addr(), None))
+            .or_insert_with(|| {
+                reductions
+                    .marked(std::slice::from_ref(item), rules)
+                    .map(Rc::new)
+            })
+            .clone()
+    }
+
+    /// The marked tokens (see `Reductions`) the parts of `items` after the
+    /// one at `index` may begin with, or None when they begin with none. It
+    /// mirrors restKeys in js/src/grammar-runtime/executor.js.
+    fn rest_keys(&mut self, reductions: &Reductions, items: &[Expr], index: usize) -> RestKeys {
+        if reductions.keys.is_empty() {
+            return None;
+        }
+        let rules = &self.program.rules;
+        self.rest_memo
+            .entry((items.as_ptr().addr(), Some(index)))
+            .or_insert_with(|| reductions.marked(&items[index + 1..], rules).map(Rc::new))
+            .clone()
     }
 
     fn choice(
@@ -707,6 +798,11 @@ impl<'c> Executor<'c> {
         // unless it replaces the result reached before: then the continuations
         // of the replaced one are replaced too, by extending it.
         let mut results = ResultSet::new(self.longest_tokens);
+        // A rule reduced before a token the next iteration may begin with
+        // ends no iteration (see `reduced_early`).
+        let rest = self
+            .reductions(in_token)
+            .and_then(|reductions| self.iteration_keys(reductions, item));
         let mut frontier = vec![Res::new(position, state.clone(), no_children(), 0)];
         let mut count = 0;
         while !frontier.is_empty() {
@@ -741,6 +837,12 @@ impl<'c> Executor<'c> {
                     continue;
                 }
                 for right in rights {
+                    if rest
+                        .as_ref()
+                        .is_some_and(|rest| reduced_early(&right.children, rest))
+                    {
+                        continue;
+                    }
                     if zero_width(left, &right) {
                         // Zero-width iterations can pad up to the minimum
                         // once; one that takes a token the external scanner

@@ -8,14 +8,14 @@
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 
 use super::ordering::{first_meaningful, meaningful, same_tree};
 use super::precedence::nullable;
 use super::program::{
     Associativity, Expr, Matcher, Name, PrecedenceTag, Rule, Target, compare_precedence,
 };
-use super::results::{Tree, TreeType};
+use super::results::{ChildList, Children, Tree, TreeType};
 use crate::grammar::{PrecedenceEntry, RuleKind};
 
 /// The rules each rule takes directly as its first part, by rule name (see
@@ -34,6 +34,9 @@ pub(super) struct GrammarFacts {
     items: HashMap<Name, Vec<ShiftItem>>,
     /// The verdicts of `declared_fork`, by rule and lookahead.
     forks: Mutex<HashMap<(Name, Lead), bool>>,
+    /// The reductions before a following token, found once asked for (see
+    /// `reduction_facts`).
+    reductions: OnceLock<Reductions>,
 }
 
 /// A token a parser may see first, as tree-sitter's FIRST sets name it: a
@@ -116,6 +119,7 @@ impl GrammarFacts {
             tails,
             items,
             forks: Mutex::default(),
+            reductions: OnceLock::new(),
         }
     }
 
@@ -123,6 +127,13 @@ impl GrammarFacts {
         rule.and_then(|rule| self.ranks.get(rule))
             .copied()
             .unwrap_or(0)
+    }
+
+    /// The reductions an LR parser makes before a token their rule could go
+    /// on with (see `reduction_facts`), by the program's `rules`.
+    pub(super) fn reductions(&self, rules: &[Rule]) -> &Reductions {
+        self.reductions
+            .get_or_init(|| reduction_facts(&self.conflicts, rules))
     }
 
     /// Whether a declared conflict names both rules.
@@ -491,6 +502,364 @@ fn first_of(expr: &Expr, rules: &[Rule], sets: &[HashSet<Lead>], found: &mut Has
     }
 }
 
+/// Adds to `found` the tokens the sequence `items` can begin with, by the
+/// FIRST sets `sets` (see `first_of`).
+fn first_of_items(
+    items: &[Expr],
+    rules: &[Rule],
+    sets: &[HashSet<Lead>],
+    found: &mut HashSet<Lead>,
+) {
+    for item in items {
+        first_of(item, rules, sets, found);
+        if !nullable(item) {
+            break;
+        }
+    }
+}
+
+/// The tokens that may follow each of the `rules`, by rule index, as the
+/// FOLLOW sets of an LR parser's lookaheads, by the FIRST sets `first` (see
+/// `first_sets`). It mirrors followSets in
+/// js/src/grammar-runtime/executor.js.
+fn follow_sets(rules: &[Rule], first: &[HashSet<Lead>]) -> Vec<HashSet<Lead>> {
+    let mut sets = vec![HashSet::new(); rules.len()];
+    let mut changed = true;
+    while changed {
+        changed = false;
+        for (index, rule) in rules.iter().enumerate() {
+            if matches!(rule.kind, RuleKind::Token | RuleKind::Atomic) {
+                continue;
+            }
+            let after = sets[index].clone();
+            changed |= follow_walk(&rule.expression, &after, rules, first, &mut sets);
+        }
+    }
+    sets
+}
+
+/// Adds `after`, the tokens that may follow `expr`, to the FOLLOW sets of
+/// the rules within it (see `follow_sets`); true when any set grew.
+fn follow_walk(
+    expr: &Expr,
+    after: &HashSet<Lead>,
+    rules: &[Rule],
+    first: &[HashSet<Lead>],
+    sets: &mut [HashSet<Lead>],
+) -> bool {
+    match expr {
+        Expr::Ref(Target::Rule(index)) => {
+            if matches!(rules[*index].kind, RuleKind::Token | RuleKind::Atomic) {
+                return false;
+            }
+            let size = sets[*index].len();
+            sets[*index].extend(after.iter().cloned());
+            sets[*index].len() != size
+        }
+        Expr::Seq(items) => {
+            let mut changed = false;
+            let mut rest = after.clone();
+            for item in items.iter().rev() {
+                changed |= follow_walk(item, &rest, rules, first, sets);
+                let mut own = HashSet::new();
+                first_of(item, rules, first, &mut own);
+                if nullable(item) {
+                    own.extend(rest);
+                }
+                rest = own;
+            }
+            changed
+        }
+        Expr::Repeat {
+            item, max: Some(1), ..
+        }
+        | Expr::Alias { item, .. }
+        | Expr::Capture { item, .. }
+        | Expr::Precedence { item, .. }
+        | Expr::DynamicPrecedence { item, .. } => follow_walk(item, after, rules, first, sets),
+        Expr::Repeat { item, .. } => {
+            let mut next = HashSet::new();
+            first_of(item, rules, first, &mut next);
+            next.extend(after.iter().cloned());
+            follow_walk(item, &next, rules, first, sets)
+        }
+        Expr::Choice { items, .. } => items.iter().fold(false, |changed, item| {
+            follow_walk(item, after, rules, first, sets) | changed
+        }),
+        _ => false,
+    }
+}
+
+/// The rules `expr` is a unit chain over (a choice, a precedence, a field or
+/// an alias over a rule), by rule index (see `left_corner_follow`).
+fn units(expr: &Expr, found: &mut Vec<usize>) {
+    match expr {
+        Expr::Ref(Target::Rule(index)) => found.push(*index),
+        Expr::Choice { items, .. } => {
+            for item in items {
+                units(item, found);
+            }
+        }
+        Expr::Capture { item, .. }
+        | Expr::Precedence { item, .. }
+        | Expr::DynamicPrecedence { item, .. }
+        | Expr::Alias { item, .. } => units(item, found),
+        _ => {}
+    }
+}
+
+/// The tokens that follow each of the `rules`, by rule index, where it is
+/// the first part of a production, through its unit chains (a choice, a
+/// precedence, a field or an alias over it): the lookaheads its reduction
+/// has in every LR state it begins in, whatever the context (Rust's `-`,
+/// `(` or `[` after `break_expression`, the left operand of a binary, call
+/// or index expression), by the FIRST sets `first`. It mirrors
+/// leftCornerFollow in js/src/grammar-runtime/executor.js.
+fn left_corner_follow(rules: &[Rule], first: &[HashSet<Lead>]) -> Vec<HashSet<Lead>> {
+    let mut chains: HashMap<usize, HashSet<usize>> = HashMap::new();
+    let mut chain = |start: usize| -> HashSet<usize> {
+        chains
+            .entry(start)
+            .or_insert_with(|| {
+                let mut found = HashSet::from([start]);
+                let mut pending = vec![start];
+                while let Some(index) = pending.pop() {
+                    let rule = &rules[index];
+                    if matches!(rule.kind, RuleKind::Token | RuleKind::Atomic) {
+                        continue;
+                    }
+                    let mut next = Vec::new();
+                    units(&rule.expression, &mut next);
+                    for unit in next {
+                        if found.insert(unit) {
+                            pending.push(unit);
+                        }
+                    }
+                }
+                found
+            })
+            .clone()
+    };
+    let mut sets = vec![HashSet::new(); rules.len()];
+    let mut pending: Vec<&Expr> = rules
+        .iter()
+        .filter(|rule| !matches!(rule.kind, RuleKind::Token | RuleKind::Atomic))
+        .map(|rule| &rule.expression)
+        .collect();
+    while let Some(expr) = pending.pop() {
+        match expr {
+            Expr::Seq(items) => {
+                for (index, item) in items.iter().enumerate() {
+                    let mut rest = HashSet::new();
+                    first_of_items(&items[index + 1..], rules, first, &mut rest);
+                    let mut heads = Vec::new();
+                    units(item, &mut heads);
+                    for unit in heads {
+                        for name in chain(unit) {
+                            sets[name].extend(rest.iter().cloned());
+                        }
+                    }
+                    if !nullable(item) {
+                        break;
+                    }
+                }
+                pending.extend(items);
+            }
+            Expr::Choice { items, .. } => pending.extend(items),
+            Expr::Repeat { item, .. }
+            | Expr::Capture { item, .. }
+            | Expr::Precedence { item, .. }
+            | Expr::DynamicPrecedence { item, .. }
+            | Expr::Alias { item, .. } => pending.push(item),
+            _ => {}
+        }
+    }
+    sets
+}
+
+/// The reductions an LR parser makes before a token its rule could go on
+/// with (see `reduction_facts`): `splits` holds, by the address and length
+/// of the items of each such sequence, where its optional parts begin and
+/// the tokens it is reduced before; `keys` all the marked tokens.
+#[derive(Debug, Default)]
+pub(super) struct Reductions {
+    first: Vec<HashSet<Lead>>,
+    pub(super) splits: HashMap<(usize, usize), Split>,
+    pub(super) keys: HashSet<Lead>,
+}
+
+/// A sequence of a left-associative precedence that ends in optional parts
+/// (see `reduction_facts`): the index its optional parts begin at, the
+/// tokens that follow its rule in every context (`always`, reduced before
+/// wherever the parts begin with them) and the tokens that follow it in some
+/// (`marked`, reduced before where the enclosing parts may go on with them,
+/// see `reduced_early`).
+#[derive(Debug)]
+pub(super) struct Split {
+    pub(super) optional_from: usize,
+    pub(super) always: HashSet<Lead>,
+    pub(super) marked: HashSet<Lead>,
+}
+
+impl Reductions {
+    /// The key of the sequence `items` in `splits`.
+    pub(super) fn key(items: &[Expr]) -> (usize, usize) {
+        (items.as_ptr().addr(), items.len())
+    }
+
+    /// The marked tokens (see `Split`) the sequence `items` may begin with,
+    /// or None when it begins with none. It mirrors the sets restKeys and
+    /// iterationKeys in js/src/grammar-runtime/executor.js compute.
+    pub(super) fn marked(&self, items: &[Expr], rules: &[Rule]) -> Option<HashSet<Lead>> {
+        let mut keys = HashSet::new();
+        first_of_items(items, rules, &self.first, &mut keys);
+        keys.retain(|key| self.keys.contains(key));
+        (!keys.is_empty()).then_some(keys)
+    }
+}
+
+/// Adds to `found` the sequences of a left-associative precedence `expr`
+/// is, through a choice, a field or an alias (see `reduction_facts`).
+fn left_sequences<'e>(expr: &'e Expr, found: &mut Vec<&'e [Expr]>) {
+    match expr {
+        Expr::Choice { items, .. } => {
+            for item in items {
+                left_sequences(item, found);
+            }
+        }
+        Expr::Capture { item, .. } | Expr::Alias { item, .. } => left_sequences(item, found),
+        Expr::Precedence {
+            associativity: Associativity::Left,
+            item,
+            ..
+        } => {
+            if let Expr::Seq(items) = &**item {
+                found.push(items);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// The reductions an LR parser makes before a token its rule could go on
+/// with, as tree-sitter settles a shift-reduce conflict by precedence: a
+/// rule of a left-associative precedence whose sequence ends in optional
+/// parts (Lean's `hash_command`, `#check` and any expressions, of level 0
+/// left; Rust's `break_expression`) is complete before them, and a token
+/// they may begin with that may also follow the rule is shifted by the
+/// rule's own item of that precedence and reduced by its completed one, of
+/// the same precedence: left associativity reduces (see `Split`). A
+/// conflict the grammar declares (`conflicts`) of the rule and a rule that
+/// begins with the token keeps both parses (Lean's `hash_command` and
+/// `explicit`). It mirrors reductionFacts in
+/// js/src/grammar-runtime/executor.js.
+fn reduction_facts(conflicts: &[HashSet<Name>], rules: &[Rule]) -> Reductions {
+    let first = first_sets(rules);
+    let (mut follow, mut corner, mut shared) = (None, None, None);
+    let mut splits = HashMap::new();
+    let mut keys = HashSet::new();
+    let begins = |name: &Name, key: &Lead| match rules.iter().position(|rule| rule.name == *name) {
+        Some(index) if !matches!(rules[index].kind, RuleKind::Token | RuleKind::Atomic) => {
+            first[index].contains(key)
+        }
+        _ => *key == Lead::Ref(name.clone()),
+    };
+    let forked = |name: &Name, key: &Lead| {
+        conflicts.iter().any(|group| {
+            group.contains(name)
+                && group
+                    .iter()
+                    .any(|other| other != name && begins(other, key))
+        })
+    };
+    for (index, rule) in rules.iter().enumerate() {
+        if !matches!(rule.kind, RuleKind::Normal) {
+            continue;
+        }
+        let mut sequences = Vec::new();
+        left_sequences(&rule.expression, &mut sequences);
+        for items in sequences {
+            let mut split = items.len();
+            while split > 0 && nullable(&items[split - 1]) {
+                split -= 1;
+            }
+            if split == 0 || split == items.len() {
+                continue;
+            }
+            let follow = follow.get_or_insert_with(|| follow_sets(rules, &first));
+            let corner = corner.get_or_insert_with(|| left_corner_follow(rules, &first));
+            let shared = shared.get_or_insert_with(|| shared_aliases(rules));
+            let mut parts = HashSet::new();
+            first_of_items(&items[split..], rules, &first, &mut parts);
+            parts.retain(|key| {
+                follow[index].contains(key) && !shared.contains(key) && !forked(&rule.name, key)
+            });
+            if parts.is_empty() {
+                continue;
+            }
+            let (always, marked): (HashSet<Lead>, HashSet<Lead>) = parts
+                .into_iter()
+                .partition(|key| corner[index].contains(key));
+            keys.extend(marked.iter().cloned());
+            splits.insert(
+                Reductions::key(items),
+                Split {
+                    optional_from: split,
+                    always,
+                    marked,
+                },
+            );
+        }
+    }
+    Reductions {
+        first,
+        splits,
+        keys,
+    }
+}
+
+/// The keys of the aliases that name tokens of different content (Lean's
+/// `unnamed_token`, a number and the `#` of a command alike): the token an
+/// LR parser sees is the aliased one, so such a key names no one lookahead.
+/// It mirrors sharedAliases in js/src/grammar-runtime/executor.js.
+fn shared_aliases(rules: &[Rule]) -> HashSet<Lead> {
+    let mut contents: HashMap<&Name, HashSet<String>> = HashMap::new();
+    let mut pending: Vec<&Expr> = rules.iter().map(|rule| &rule.expression).collect();
+    while let Some(expr) = pending.pop() {
+        match expr {
+            Expr::Alias { name, item } => {
+                contents
+                    .entry(name)
+                    .or_default()
+                    .insert(format!("{item:?}"));
+                pending.push(item);
+            }
+            Expr::Seq(items) | Expr::Choice { items, .. } | Expr::Longest(items) => {
+                pending.extend(items);
+            }
+            Expr::Repeat { item, .. }
+            | Expr::And(item)
+            | Expr::Not(item)
+            | Expr::Capture { item, .. }
+            | Expr::Precedence { item, .. }
+            | Expr::DynamicPrecedence { item, .. }
+            | Expr::LexicalPrecedence { item, .. }
+            | Expr::Token(item)
+            | Expr::ImmediateToken(item)
+            | Expr::Predicate { item, .. }
+            | Expr::Recover { item, .. }
+            | Expr::Missing { item, .. }
+            | Expr::Embed { item, .. } => pending.push(item),
+            _ => {}
+        }
+    }
+    contents
+        .into_iter()
+        .filter(|(_, seen)| seen.len() > 1)
+        .map(|(name, _)| Lead::Ref(name.clone()))
+        .collect()
+}
+
 /// Adds to `items` the productions of the rule `owner` within `expr`, each
 /// by its first part (see `ShiftItem`), where `rest` is what follows `expr`
 /// in the production and `tag` the precedence over it. It mirrors the walk
@@ -625,6 +994,42 @@ pub(super) fn token_at(tree: &Rc<Tree>, offset: usize) -> Option<Rc<Tree>> {
         }
         token_at(child, offset)
     })
+}
+
+/// Whether a rule on the right edge of `children` was reduced before its
+/// optional parts in the parse that goes on with one of the tokens `keys`
+/// (Lean's `#check` before `@`, which may begin the next command's
+/// attributes): an LR parser decides by that lookahead alone, so the rule
+/// never took the parts that begin with it (see `reduction_facts`). It
+/// mirrors reducedEarly in js/src/grammar-runtime/executor.js.
+pub(super) fn reduced_early(children: &Children, keys: &HashSet<Lead>) -> bool {
+    let mut children = children.clone();
+    loop {
+        let Some(last) = children.iter().rev().find(|child| !child.trivia).cloned() else {
+            return false;
+        };
+        if last.ty != TreeType::Node {
+            return false;
+        }
+        if last
+            .before
+            .as_ref()
+            .is_some_and(|before| keys.contains(before))
+        {
+            return true;
+        }
+        children = last.children.clone();
+    }
+}
+
+/// The token a parser sees first among `children` at or after `offset`, as
+/// `lookahead_of` names it, or None. It mirrors lookaheadAfter in
+/// js/src/grammar-runtime/executor.js.
+pub(super) fn lookahead_after(children: &ChildList, offset: usize, bytes: &[u8]) -> Option<Lead> {
+    children
+        .iter()
+        .find_map(|child| token_at(child, offset))
+        .and_then(|found| lookahead_of(Some(&found), bytes))
 }
 
 /// Whether a generated parser forks where the left operand `child` ends

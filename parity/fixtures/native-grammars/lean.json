@@ -6421,6 +6421,44 @@
         [2,"value","true",1,18,22,""],
         [3,null,"true",0,18,22,""]
       ]
+    },
+    {
+      "source": "def f := x[i]! + 1\n",
+      "rows": [
+        [0,null,"module",1,0,19,""],
+        [1,null,"definition",1,0,18,""],
+        [2,"kind","def",0,0,3,""],
+        [2,"name","identifier",1,4,5,""],
+        [2,null,":=",0,6,8,""],
+        [2,"body","binary_expression",1,9,18,""],
+        [3,"left","subscript",1,9,14,""],
+        [4,"object","identifier",1,9,10,""],
+        [4,null,"[",0,10,11,""],
+        [4,"index","identifier",1,11,12,""],
+        [4,null,"]",0,12,13,""],
+        [4,"modifier","!",0,13,14,""],
+        [3,"operator","+",0,15,16,""],
+        [3,"right","number",1,17,18,""]
+      ]
+    },
+    {
+      "source": "example := by\n  apply f a.b\n",
+      "rows": [
+        [0,null,"module",1,0,28,""],
+        [1,null,"example",1,0,27,""],
+        [2,null,"example",0,0,7,""],
+        [2,null,":=",0,8,10,""],
+        [2,"body","by",1,11,27,""],
+        [3,null,"by",0,11,13,""],
+        [3,null,"tactic_apply",1,16,27,""],
+        [4,"tactic","identifier",1,16,21,""],
+        [4,"arg","projection",1,22,27,""],
+        [5,"term","application",1,22,25,""],
+        [6,"name","identifier",1,22,23,""],
+        [6,"arguments","identifier",1,24,25,""],
+        [5,null,".",0,25,26,""],
+        [5,"name","identifier",1,26,27,""]
+      ]
     }
   ],
   "divergences": [
@@ -6621,6 +6659,10 @@
     {
       "source": "inductive\n",
       "recovered": "(module (inductive \"inductive\" (MISSING@9 identifier) ~\"\\n\"))"
+    },
+    {
+      "source": "#eval x[i]!\n",
+      "recovered": "(module (hash_command (unnamed_token \"#eval\") (subscript ~\" \" object:(identifier \"x\") \"[\" index:(identifier \"i\") \"]\") (unary_expression operator:\"!\" (MISSING@11 identifier) ~\"\\n\")))"
     }
   ]
 }

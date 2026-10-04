@@ -190,7 +190,13 @@
         "application": "grammar.function-application",
         "parameters": "grammar.parameter-binders",
         "range": "grammar.index-range"
-      }
+      },
+      "conflicts": [
+        {
+          "rules": ["hash_command", "explicit"],
+          "reason": "Theorem Proving in Lean 4 section 2.9 (Implicit Arguments) checks `@foo`, the function with all its arguments made explicit (`#check @ident`, `#check @List.cons`); tree-sitter-lean4 0.3.0 reduces the command before an `@`, which may open the attributes of a next declaration (`@[simp] def`), and recovers from it. The merged grammar keeps both parses there: the attributes need the `[` that follows, the explicit term does not."
+        }
+      ]
     }
   },
   "concepts": {

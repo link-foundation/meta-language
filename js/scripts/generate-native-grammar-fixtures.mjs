@@ -640,6 +640,10 @@ export const NATIVE_GRAMMARS = Object.freeze([
       // quote in a macro's token tree read as a char literal) does not make
       // the comment lexed there an error (formal-ai's matches!('"')).
       'fn a(){m!(\'"\')} //"\ntype A = _;',
+      // A `break` before a token that cannot begin its value but follows an
+      // expression is reduced there, as an LR parser reduces on a lookahead
+      // its left-corner context follows; a block or a label is shifted.
+      'fn f(){ loop { break -1; } }', 'fn f(){ loop { break {1}; } }', "fn f(){ 'a: loop { break 'a; } }",
     ],
     divergences: [],
     rejections: [
@@ -753,6 +757,10 @@ export const NATIVE_GRAMMARS = Object.freeze([
       // A dotted option name: its silent rule of level 0 right shifts on over
       // the `.` where a projection of level 90 may reduce `pp` first.
       'set_option pp.all true\n',
+      // A `!` after a subscript is the subscript's own where an expression
+      // follows, and an application whose argument is reduced alone where the
+      // other parse shifts its first token is projected (`f a.b`).
+      'def f := x[i]! + 1\n', 'example := by\n  apply f a.b\n',
     ],
     divergences: [
       {
@@ -764,6 +772,8 @@ export const NATIVE_GRAMMARS = Object.freeze([
       ...leanCorpus(true),
       'def f :=', 'def', 'theorem t : := rfl\n', 'structure P where\n  x :\n', 'def f (x : Nat := x\n', '#eval (1 +\n', 'def s := "abc\n',
       '/- abc\n', 'def x := [1, 2\n', 'namespace\n', 'inductive\n',
+      // The command ends before `!`, which a subscript reduces first.
+      '#eval x[i]!\n',
     ],
   },
 ]);

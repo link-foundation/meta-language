@@ -409,7 +409,7 @@ function grammarFacts(program) {
       heads.set(name, new Set(directEdge(rule.expression, 'right', name).map(([ref]) => ref)));
       ranks.set(name, rule.index);
     }
-    facts = { heads, ranks, conflicts: (program.conflictGroups ?? []).map((group) => new Set(group)), rules: program.rules, first: null, forks: new Map() };
+    facts = { heads, ranks, conflicts: (program.conflictGroups ?? []).map((group) => new Set(group)), rules: program.rules, first: null, forks: new Map(), reductions: null };
     GRAMMAR_FACTS.set(program, facts);
   }
   return facts;
@@ -457,6 +457,195 @@ function firstOf(expression, rules, sets, found = new Set()) {
       firstOf(expression.item, rules, sets, found);
   }
   return found;
+}
+
+// The tokens that may follow each of the `rules`, as the FOLLOW sets of an
+// LR parser's lookaheads, by the FIRST sets `first` (see `firstSets`).
+function followSets(rules, first) {
+  const sets = new Map([...rules.keys()].map((name) => [name, new Set()]));
+  const walk = (expression, after) => {
+    switch (expression.kind) {
+      case 'ref': {
+        const set = sets.get(expression.name);
+        const rule = rules.get(expression.name);
+        if (!set || rule.kind === 'token' || rule.kind === 'atomic') break;
+        for (const key of after) if (!set.has(key)) { set.add(key); walk.changed = true; }
+        break;
+      }
+      case 'seq': {
+        let rest = after;
+        for (const item of [...expression.items].reverse()) {
+          walk(item, rest);
+          const own = firstOf(item, rules, first);
+          rest = nullable(item) ? new Set([...own, ...rest]) : own;
+        }
+        break;
+      }
+      case 'repeat0': case 'repeat1': case 'repeat':
+        walk(expression.item, new Set([...firstOf(expression.item, rules, first), ...after]));
+        break;
+      case 'choice': for (const item of expression.items) walk(item, after); break;
+      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
+        walk(expression.item, after);
+    }
+  };
+  do {
+    walk.changed = false;
+    for (const [name, rule] of rules) {
+      if (rule.kind !== 'token' && rule.kind !== 'atomic') walk(rule.expression, sets.get(name));
+    }
+  } while (walk.changed);
+  return sets;
+}
+
+// The tokens that follow each of the `rules` where it is the first part of a
+// production, through its unit chains (a choice, a precedence, a field or an
+// alias over it): the lookaheads its reduction has in every LR state it
+// begins in, whatever the context (Rust's `-`, `(` or `[` after
+// `break_expression`, the left operand of a binary, call or index
+// expression), by the FIRST sets `first`.
+function leftCornerFollow(rules, first) {
+  const units = (expression) => {
+    switch (expression.kind) {
+      case 'ref': return [expression.name];
+      case 'choice': return expression.items.flatMap(units);
+      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': return units(expression.item);
+      default: return [];
+    }
+  };
+  const chains = new Map();
+  const chain = (name) => {
+    let found = chains.get(name);
+    if (found) return found;
+    found = new Set([name]);
+    const pending = [name];
+    while (pending.length > 0) {
+      const rule = rules.get(pending.pop());
+      if (!rule || rule.kind === 'token' || rule.kind === 'atomic') continue;
+      for (const unit of units(rule.expression)) if (!found.has(unit)) { found.add(unit); pending.push(unit); }
+    }
+    chains.set(name, found);
+    return found;
+  };
+  const sets = new Map([...rules.keys()].map((name) => [name, new Set()]));
+  const walk = (expression) => {
+    switch (expression.kind) {
+      case 'seq':
+        for (const [index, item] of expression.items.entries()) {
+          const rest = firstOf({ kind: 'seq', items: expression.items.slice(index + 1) }, rules, first);
+          for (const unit of units(item)) for (const name of chain(unit)) for (const key of rest) sets.get(name)?.add(key);
+          if (!nullable(item)) break;
+        }
+        expression.items.forEach(walk);
+        break;
+      case 'choice': expression.items.forEach(walk); break;
+      case 'repeat0': case 'repeat1': case 'repeat': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'optional':
+        walk(expression.item);
+    }
+  };
+  for (const rule of rules.values()) if (rule.kind !== 'token' && rule.kind !== 'atomic') walk(rule.expression);
+  return sets;
+}
+
+// The reductions an LR parser makes before a token its rule could go on
+// with, as tree-sitter settles a shift-reduce conflict by precedence: a rule
+// of a left-associative precedence whose sequence ends in optional parts
+// (Lean's `hash_command`, `#check` and any expressions, of level 0 left;
+// Rust's `break_expression`) is complete before them, and a token they may
+// begin with that may also follow the rule is shifted by the rule's own
+// item of that precedence and reduced by its completed one, of the same
+// precedence: left associativity reduces. `splits` holds, by the items of
+// each such sequence, the index its optional parts begin at, the tokens that
+// follow the rule in every context (`always`, reduced before wherever the
+// parts begin with them) and the tokens that follow it in some (`marked`,
+// reduced before where the enclosing parts may go on with them, see
+// `reducedEarly`); `keys` all the marked tokens.
+function reductionFacts(grammar) {
+  if (grammar.reductions) return grammar.reductions;
+  grammar.first ??= firstSets(grammar.rules);
+  const { rules, first } = grammar;
+  let follow = null;
+  let corner = null;
+  let shared = null;
+  const splits = new Map();
+  // A conflict the grammar declares of the rule and a rule that begins with
+  // the token keeps both parses (Lean's `hash_command` and `explicit`).
+  const forked = (name, key) => grammar.conflicts.some((group) => group.has(name)
+    && [...group].some((other) => other !== name && firstOf({ kind: 'ref', name: other }, rules, first).has(key)));
+  const keys = new Set();
+  const visit = (name, expression) => {
+    switch (expression.kind) {
+      case 'choice': expression.items.forEach((item) => visit(name, item)); return;
+      case 'capture': case 'alias': visit(name, expression.item); return;
+      case 'precedence': case 'namedPrecedence': break;
+      default: return;
+    }
+    if (expression.associativity !== 'left' || expression.item.kind !== 'seq') return;
+    const { items } = expression.item;
+    let split = items.length;
+    while (split > 0 && nullable(items[split - 1])) split -= 1;
+    if (split === 0 || split === items.length) return;
+    follow ??= followSets(rules, first);
+    corner ??= leftCornerFollow(rules, first);
+    shared ??= sharedAliases(rules);
+    const parts = [...firstOf({ kind: 'seq', items: items.slice(split) }, rules, first)]
+      .filter((key) => follow.get(name).has(key) && !shared.has(key) && !forked(name, key));
+    if (parts.length === 0) return;
+    const always = new Set(parts.filter((key) => corner.get(name).has(key)));
+    const marked = new Set(parts.filter((key) => !always.has(key)));
+    for (const key of marked) keys.add(key);
+    splits.set(items, { split, always, marked });
+  };
+  for (const [name, rule] of rules) if (rule.kind === 'normal') visit(name, rule.expression);
+  grammar.reductions = { splits, keys, rests: new Map() };
+  return grammar.reductions;
+}
+
+// The keys of the aliases that name tokens of different content (Lean's
+// `unnamed_token`, a number and the `#` of a command alike): the token an
+// LR parser sees is the aliased one, so such a key names no one lookahead.
+function sharedAliases(rules) {
+  const contents = new Map();
+  const walk = (expression) => {
+    if (!expression || typeof expression !== 'object') return;
+    if (expression.kind === 'alias') {
+      const content = JSON.stringify(expression.item);
+      const seen = contents.get(expression.name) ?? new Set();
+      contents.set(expression.name, seen.add(content));
+    }
+    if (expression.item) walk(expression.item);
+    if (expression.items) expression.items.forEach(walk);
+  };
+  for (const rule of rules.values()) walk(rule.expression);
+  return new Set([...contents].filter(([, seen]) => seen.size > 1).map(([name]) => `ref ${name}`));
+}
+
+// Whether a rule on the right edge of `result` was reduced before its
+// optional parts in the parse that goes on with one of the tokens `keys`
+// (Lean's `#check` before `@`, which may begin the next command's
+// attributes): an LR parser decides by that lookahead alone, so the rule
+// never took the parts that begin with it (see `reductionFacts`).
+function reducedEarly(result, keys) {
+  let children = result.children;
+  for (;;) {
+    let last = null;
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      if (!isTrivia(children[index])) { last = children[index]; break; }
+    }
+    if (last?.type !== 'node') return false;
+    if (last.before !== undefined && keys.has(last.before)) return true;
+    children = last.children;
+  }
+}
+
+// The token a parser sees first among `children` at or after `offset`, as
+// `lookaheadOf` names it, or null.
+function lookaheadAfter(children, offset, bytes) {
+  for (const child of children) {
+    const found = tokenAt(child, offset);
+    if (found) return lookaheadOf(found, bytes);
+  }
+  return null;
 }
 
 // The token a parser sees first in `tree`, as its FIRST sets name it (see
@@ -652,6 +841,13 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
       // the other, conflict where both are reduced: the higher precedence
       // they are reduced with wins.
       if (a.end === b.end && a.kind !== b.kind && !holdsFirst(a, b) && !holdsFirst(b, a) && sameTokens(a, b)) {
+        // Unless one of them reduced their first token alone where the other
+        // shifted it (Lean's `f a.b`, a projection of the application `f a`
+        // and a `tactic_apply` of `f` to `a.b`): they part there, on that
+        // token, before either is reduced.
+        const [x, y] = [leftmostChain(a).at(-1).children.find((child) => !isTrivia(child)), leftmostChain(b).at(-1).children.find((child) => !isTrivia(child))];
+        const lone = x?.type === 'token' && y?.type === 'token' && x.alone !== y.alone ? (x.alone ? -loneReduction(b, x, orders) : loneReduction(a, y, orders)) : 0;
+        if (lone !== 0) return lone;
         const forked = forkedOrder(a, b, grammar, bytes);
         if (forked !== null) return forked;
         const order = comparePrecedence(reduction(a), reduction(b), orders);
@@ -1224,7 +1420,15 @@ function reducedBefore(short, progress) {
     const meaningful = node.children.filter((child) => !isTrivia(child));
     const last = meaningful[meaningful.length - 1];
     if (!last) break;
-    if (sameTree(last, first)) return (last.type === 'token' && last.reduced) || reduction(node);
+    if (sameTree(last, first)) {
+      if (last.type === 'token' && last.reduced) return last.reduced;
+      // A token a silent rule reduced alone where the shift takes it as the
+      // first part of its node (Lean's `c` in `fun x c s`, a `_pattern` of
+      // level 0 in one parse and the constructor of `c s`, of level 80, in
+      // the other) is that rule's reduction, not the node's it ends.
+      if (last.type === 'token' && last.alone && !first.alone) return last.precedence ?? unranked();
+      return reduction(node);
+    }
     node = last;
     closing = (node.type === 'token' ? node.reduced ?? node.precedence : node.closes) ?? closing;
   }
@@ -1307,6 +1511,7 @@ function copyResult(result, changes) {
     end: result.end, state: result.state, dynamic: result.dynamic,
     precedence: result.precedence, tail: result.tail, ambiguous: result.ambiguous, cost: result.cost,
   };
+  if (result.before !== undefined) copy.before = result.before;
   if (!('children' in changes)) shareChildren(copy, result);
   return Object.assign(copy, changes);
 }
@@ -1801,16 +2006,32 @@ export class Executor {
   // precedence, the one the sequence's parts are in progress under.
   sequence(items, position, state, inToken, keep = null, owner = null) {
     const tokens = owner && this.longestTokens ? { ...this.longestTokens, owner } : this.longestTokens;
+    const reductions = this.longestTokens && !inToken ? reductionFacts(this.longestTokens.grammar) : null;
+    const split = reductions?.splits.get(items) ?? null;
+    // The offset each result's optional parts begin at, where its rule
+    // could have been reduced (see `reductionFacts`).
+    const boundaries = split ? new Map() : null;
     let current = [makeResult(position, state)];
     for (const [index, item] of items.entries()) {
       const next = new Map();
       const last = index === items.length - 1;
+      const rest = reductions && !last ? this.restKeys(reductions, items, index) : null;
       const continued = current.map((left) => [left, this.continuation(item, left, inToken)]);
       const pruned = this.scansWidthless(inToken) ? preempted(continued) : null;
       for (const [left, rights] of continued) {
         if (pruned?.has(left)) continue;
         for (const right of rights) {
-          const joined = joinResults(left, right, inToken);
+          if (rest && reducedEarly(right, rest)) continue;
+          let joined = joinResults(left, right, inToken);
+          if (split && index >= split.split) {
+            const boundary = index === split.split ? left.end : boundaries.get(left);
+            if (!last) boundaries.set(joined, boundary);
+            else {
+              const lookahead = lookaheadAfter(joined.children, boundary, this.bytes);
+              if (split.always.has(lookahead)) continue;
+              if (split.marked.has(lookahead)) joined = Object.assign(joined, { before: lookahead });
+            }
+          }
           if (last && keep && !keep(joined)) continue;
           addResult(next, joined, tokens);
         }
@@ -1820,6 +2041,32 @@ export class Executor {
       if (current.length === 0) return current;
     }
     return current;
+  }
+
+  // The marked tokens (see `reductionFacts`) an iteration of `item` may begin
+  // with, or null when it begins with none.
+  iterationKeys(reductions, item) {
+    if (reductions.keys.size === 0) return null;
+    if (!reductions.rests.has(item)) {
+      const keys = firstOf(item, this.program.rules, this.longestTokens.grammar.first);
+      const marked = new Set([...keys].filter((key) => reductions.keys.has(key)));
+      reductions.rests.set(item, marked.size > 0 ? marked : null);
+    }
+    return reductions.rests.get(item);
+  }
+
+  // The marked tokens (see `reductionFacts`) the parts of `items` after the
+  // one at `index` may begin with, or null when they begin with none.
+  restKeys(reductions, items, index) {
+    if (reductions.keys.size === 0) return null;
+    let rests = reductions.rests.get(items);
+    if (!rests) reductions.rests.set(items, rests = []);
+    if (rests[index] === undefined) {
+      const keys = firstOf({ kind: 'seq', items: items.slice(index + 1) }, this.program.rules, this.longestTokens.grammar.first);
+      const marked = new Set([...keys].filter((key) => reductions.keys.has(key)));
+      rests[index] = marked.size > 0 ? marked : null;
+    }
+    return rests[index];
   }
 
   choice(expression, position, state, inToken) {
@@ -1872,6 +2119,10 @@ export class Executor {
     // unless it replaces the result reached before: then the continuations
     // of the replaced one are replaced too, by extending it.
     const results = new Map();
+    // A rule reduced before a token the next iteration may begin with ends
+    // no iteration (see `reducedEarly`).
+    const reductions = this.longestTokens && !inToken ? reductionFacts(this.longestTokens.grammar) : null;
+    const rest = reductions ? this.iterationKeys(reductions, item) : null;
     let frontier = [makeResult(position, state)];
     for (let count = 0; frontier.length > 0; count += 1) {
       if (count >= min) {
@@ -1896,6 +2147,7 @@ export class Executor {
         if (scans && (pruned?.has(left) || rights.some(startsWidthless)) && results.get(resultKey(left)) === left) results.delete(resultKey(left));
         if (pruned?.has(left)) continue;
         for (const right of rights) {
+          if (rest && reducedEarly(right, rest)) continue;
           if (zeroWidth(left, right)) {
             // Zero-width iterations can pad up to the minimum once; one that
             // takes a token the external scanner scanned of no width (Lean's
@@ -2545,6 +2797,7 @@ export class Executor {
         type: 'node', kind: rule.nodeKind, rule: rule.nodeKind, start: position, end: result.end,
         precedence: result.precedence, tail: result.tail, ambiguous: result.ambiguous,
       }, result);
+      if (result.before !== undefined) node.before = result.before;
       const acted = this.runAction(rule, result, node, position);
       if (acted) built.push(copyResult(acted, { children: [node], tail: null, ambiguous: false }));
     }

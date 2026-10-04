@@ -150,8 +150,15 @@ export function importSource(entry, expansions, decisions = {}) {
     immediate: entry.scanner?.immediate ?? [],
   });
   const rules = imported.rules.map((rule) => ({ ...rule, concept: ruleConcept(rule, decisions) }));
+  // A decided conflict keeps both parses where the source's precedences
+  // reduce one rule before a token another rule of the group shifts (Lean's
+  // `#check @foo`, see `reductionFacts` in the executor).
+  const decided = (decisions.conflicts ?? []).map(({ rules: group }) => group);
+  for (const group of decided) {
+    for (const name of group) if (!rules.some((rule) => rule.name === name)) throw new Error(`the decided conflict ${group.join(' ')} names no rule ${name} of ${entry.language}`);
+  }
   const text = renderTreeSitterNative(
-    { ...imported, rules },
+    { ...imported, conflicts: [...imported.conflicts, ...decided], rules },
     {
       annotate: (rule) => [
         `(concept ${rule.concept})`,
@@ -159,7 +166,7 @@ export function importSource(entry, expansions, decisions = {}) {
       ],
     },
   );
-  return { entry, grammar, imported, rules, text };
+  return { entry, grammar, imported, rules, text, decisions };
 }
 
 const nativeSource = (entry) => `native:${entry.language}`;
@@ -262,6 +269,7 @@ export function mergeReport(result, register, words) {
       shared: rules.filter((rule) => !generated.has(rule.concept)).map((rule) => ({ rule: rule.name, concept: rule.concept })),
       generated: rules.filter((rule) => generated.has(rule.concept)).length,
     },
+    ...(result.decisions?.conflicts?.length ? { decidedConflicts: result.decisions.conflicts } : {}),
     approximations: imported.report.approximations,
     unsupported: imported.report.unsupported,
   };

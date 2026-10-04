@@ -9,7 +9,7 @@ use std::fmt;
 use std::ops::Deref;
 use std::rc::Rc;
 
-use super::forking::GrammarFacts;
+use super::forking::{GrammarFacts, Lead};
 use super::operations::{OperationValue, State};
 pub(super) use super::ordering::{complete_order, preferred_tokens, same_children};
 use super::ordering::{same_output, shift_order, token_conflict};
@@ -147,6 +147,9 @@ pub(super) struct Tree {
     pub(super) forked_to: Vec<Name>,
     /// A token leaf a silent rule reduced alone (see `preferred_tokens`).
     pub(super) alone: bool,
+    /// The token a node's rule was reduced before, where its optional parts
+    /// could begin with it (see `reduced_early`).
+    pub(super) before: Option<Lead>,
     pub(super) ambiguous: bool,
     pub(super) literal: bool,
     /// A token of an external scanner, whatever an alias names it (see
@@ -183,6 +186,7 @@ impl Tree {
             reduced_to: Vec::new(),
             forked_to: Vec::new(),
             alone: false,
+            before: None,
             ambiguous: false,
             literal: false,
             scanned: false,
@@ -246,6 +250,10 @@ pub(super) struct Res {
     pub(super) ambiguous: bool,
     /// The repair cost: 2 per MISSING leaf, the skipped bytes per ERROR leaf.
     pub(super) cost: usize,
+    /// The token the result's rule was reduced before, where its optional
+    /// parts could begin with it (see `reduction_facts`), which the node
+    /// built of it keeps.
+    pub(super) before: Option<Lead>,
 }
 
 impl Res {
@@ -259,6 +267,7 @@ impl Res {
             tail: None,
             ambiguous: false,
             cost: 0,
+            before: None,
         }
     }
 
@@ -282,6 +291,7 @@ impl Res {
             },
             ambiguous: left.ambiguous || right.ambiguous,
             cost: left.cost + right.cost,
+            before: None,
         }
     }
 

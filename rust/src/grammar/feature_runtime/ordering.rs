@@ -440,6 +440,30 @@ pub(super) fn shift_order(
                     && !holds_first(&b, &a)
                     && same_tokens(&a, &b)
                 {
+                    // Unless one of them reduced their first token alone
+                    // where the other shifted it (Lean's `f a.b`, a
+                    // projection of the application `f a` and a
+                    // `tactic_apply` of `f` to `a.b`): they part there, on
+                    // that token, before either is reduced.
+                    let head = |node: &Rc<Tree>| {
+                        leftmost_chain(node)
+                            .last()
+                            .and_then(|last| first_meaningful(&last.children))
+                    };
+                    if let (Some(x), Some(y)) = (head(&a), head(&b))
+                        && x.ty == TreeType::Token
+                        && y.ty == TreeType::Token
+                        && x.alone != y.alone
+                    {
+                        let lone = if x.alone {
+                            lone_reduction(&b, &x, orders).reverse()
+                        } else {
+                            lone_reduction(&a, &y, orders)
+                        };
+                        if lone != Ordering::Equal {
+                            return lone;
+                        }
+                    }
                     if let Some(forked) = forked_order(&a, &b, grammar, bytes) {
                         return forked;
                     }
@@ -846,10 +870,23 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
                 break;
             };
             if same_tree(&last, &first) {
-                return match &last.reduced {
-                    Some(reduced) if last.ty == TreeType::Token => reduced.clone(),
-                    _ => reduction(&node),
-                };
+                if last.ty == TreeType::Token
+                    && let Some(reduced) = &last.reduced
+                {
+                    return reduced.clone();
+                }
+                // A token a silent rule reduced alone where the shift takes
+                // it as the first part of its node (Lean's `c` in `fun x c
+                // s`, a `_pattern` of level 0 in one parse and the
+                // constructor of `c s`, of level 80, in the other) is that
+                // rule's reduction, not the node's it ends.
+                if last.ty == TreeType::Token && last.alone && !first.alone {
+                    return last
+                        .precedence
+                        .clone()
+                        .unwrap_or(PrecedenceTag::unranked(None));
+                }
+                return reduction(&node);
             }
             node = last;
             let closes = if node.ty == TreeType::Token {
