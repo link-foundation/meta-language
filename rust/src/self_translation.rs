@@ -18,6 +18,8 @@ use std::sync::LazyLock;
 use regex::Regex;
 use sha2::{Digest, Sha256};
 
+use crate::decorators::DecoratorSet;
+use crate::grammar::decorate_emitted;
 use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::Emitted;
@@ -155,6 +157,29 @@ pub fn self_translate(
     source_language: &str,
     target_language: &str,
 ) -> Result<SelfTranslation, SelfTranslationError> {
+    self_translate_decorated(
+        source,
+        source_language,
+        target_language,
+        &DecoratorSet::default(),
+    )
+}
+
+/// [`self_translate`] with the emitter `decorators` applied.
+///
+/// They decorate the code each translated item writes before its provenance
+/// marker is hashed, so the decorated translation still translates back to
+/// `source`.
+///
+/// # Errors
+///
+/// As [`self_translate`].
+pub fn self_translate_decorated(
+    source: &str,
+    source_language: &str,
+    target_language: &str,
+    decorators: &DecoratorSet,
+) -> Result<SelfTranslation, SelfTranslationError> {
     let from = required(source_language)?;
     let to = required(target_language)?;
     let reconstructed =
@@ -188,7 +213,7 @@ pub fn self_translate(
     let mut recorded = Vec::new();
     let mut gap = String::new();
     for group in group_items(&items, source) {
-        let out = translate_group(&group, from, to);
+        let out = translate_group(&group, from, to, decorators);
         for prelude in out.preludes {
             if !preludes.contains(&prelude) {
                 preludes.push(prelude);
@@ -455,7 +480,12 @@ struct Translated {
     reason: Option<String>,
 }
 
-fn translate_group(group: &Group<'_>, from: &str, to: &str) -> Translated {
+fn translate_group(
+    group: &Group<'_>,
+    from: &str,
+    to: &str,
+    decorators: &DecoratorSet,
+) -> Translated {
     let done = |code: String, status: &'static str| Translated {
         code: Some(code),
         preludes: Vec::new(),
@@ -509,7 +539,7 @@ fn translate_group(group: &Group<'_>, from: &str, to: &str) -> Translated {
         } else {
             JAVASCRIPT_EXPORT.is_match(text)
         };
-    let code = emitted
+    let generic = emitted
         .definitions
         .iter()
         .map(|definition| {
@@ -521,6 +551,10 @@ fn translate_group(group: &Group<'_>, from: &str, to: &str) -> Translated {
         })
         .collect::<Vec<_>>()
         .join("\n\n");
+    let code = decorate_emitted(to, &generic, decorators);
+    if code.trim().is_empty() {
+        return carry(text, term, from, "dropped by a decorator");
+    }
     let marker = format!(
         "{TRANSLATED}{from} {term} items={} sha256={}",
         emitted.definitions.len(),

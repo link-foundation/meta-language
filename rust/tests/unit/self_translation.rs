@@ -11,7 +11,8 @@ use std::process::Command;
 
 use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 use meta_language::{
-    SELF_TRANSLATION_LANGUAGES, SelfTranslationItem, self_translate, self_translation_language,
+    DecoratorSet, SELF_TRANSLATION_LANGUAGES, SelfTranslationItem, self_translate,
+    self_translate_decorated, self_translation_language,
 };
 
 use super::issue_195_observations::{Observation, record};
@@ -66,15 +67,18 @@ impl Tree {
 
     /// The values after the head of the link `name` inside this one.
     fn field(&self, name: &str) -> &[Self] {
-        self.values()
-            .iter()
-            .find_map(|value| match value {
-                Self::Link(values) if values.first().map(Self::word) == Some(name) => {
-                    Some(&values[1..])
-                }
-                _ => None,
-            })
+        self.optional_field(name)
             .unwrap_or_else(|| panic!("the link has a {name} field"))
+    }
+
+    /// [`Self::field`], or `None` where this link has no `name` field.
+    fn optional_field(&self, name: &str) -> Option<&[Self]> {
+        self.values().iter().find_map(|value| match value {
+            Self::Link(values) if values.first().map(Self::word) == Some(name) => {
+                Some(&values[1..])
+            }
+            _ => None,
+        })
     }
 }
 
@@ -103,6 +107,36 @@ struct Case {
     from: String,
     to: String,
     expected: String,
+    decorators: Option<String>,
+}
+
+impl Case {
+    /// The emitter decorators the case is translated with, or none.
+    fn decorators(&self) -> DecoratorSet {
+        self.decorators
+            .as_ref()
+            .map_or_else(DecoratorSet::default, |file| {
+                DecoratorSet::from_lino(&read(file))
+                    .unwrap_or_else(|error| panic!("{}: {error}", self.id))
+            })
+    }
+
+    fn translate(&self) -> meta_language::SelfTranslation {
+        self_translate_decorated(
+            &read(&self.source),
+            &self.from,
+            &self.to,
+            &self.decorators(),
+        )
+        .unwrap_or_else(|error| panic!("{}: {error}", self.id))
+    }
+}
+
+/// A case whose decorated translation matches hand-written Rust.
+struct HandWritten {
+    case: String,
+    rust: String,
+    functions: Vec<String>,
 }
 
 struct Call {
@@ -113,6 +147,11 @@ struct Call {
 }
 
 fn corpus() -> (Vec<Case>, Vec<Call>) {
+    let (cases, calls, _) = full_corpus();
+    (cases, calls)
+}
+
+fn full_corpus() -> (Vec<Case>, Vec<Call>, Vec<HandWritten>) {
     let statements = links(&read("cases.lino"));
     let head = |statement: &Tree| statement.values()[0].word().to_owned();
     let first = |statement: &Tree, name: &str| statement.field(name)[0].word().to_owned();
@@ -125,6 +164,10 @@ fn corpus() -> (Vec<Case>, Vec<Call>) {
             from: first(statement, "from"),
             to: first(statement, "to"),
             expected: first(statement, "expected"),
+            decorators: statement
+                .optional_field("decorators")
+                .and_then(<[Tree]>::first)
+                .map(|file| file.word().to_owned()),
         })
         .collect();
     let calls = statements
@@ -144,7 +187,20 @@ fn corpus() -> (Vec<Case>, Vec<Call>) {
             result: first(statement, "result"),
         })
         .collect();
-    (cases, calls)
+    let hand_written = statements
+        .iter()
+        .filter(|statement| head(statement) == "hand-written")
+        .map(|statement| HandWritten {
+            case: statement.values()[1].word().to_owned(),
+            rust: first(statement, "rust"),
+            functions: statement
+                .field("functions")
+                .iter()
+                .map(|name| name.word().to_owned())
+                .collect(),
+        })
+        .collect();
+    (cases, calls, hand_written)
 }
 
 /// The items of an expected `.items.lino` file.
@@ -181,8 +237,7 @@ const SELF_TRANSLATION_STATUSES: [&str; 6] = [
 fn every_shared_case_translates_to_its_expected_output_and_items() {
     let (cases, _) = corpus();
     for case in &cases {
-        let translation = self_translate(&read(&case.source), &case.from, &case.to)
-            .unwrap_or_else(|error| panic!("{}: {error}", case.id));
+        let translation = case.translate();
         assert_eq!(translation.source_language, case.from);
         assert_eq!(translation.target_language, case.to);
         assert_eq!(translation.code, read(&case.expected), "{}", case.id);
@@ -250,6 +305,77 @@ fn an_unedited_translation_translates_back_to_its_source_byte_for_byte() {
         "I195-SELF-TRANSLATION-ROUND-TRIP",
         &["provenanceKeepsCommentsAndNames"],
         "an_unedited_translation_translates_back_to_its_source_byte_for_byte",
+    );
+}
+
+/// The top-level functions of Rust `text` by name, whitespace normalized.
+fn rust_functions(text: &str) -> BTreeMap<String, String> {
+    let function = regex::Regex::new(r"(?m)^(?:pub )?fn ([a-z_0-9]+)[^\n]*\{\n(?:[^\n]*\n)*?\}$")
+        .expect("the function pattern compiles");
+    let space = regex::Regex::new(r"\s+").expect("the space pattern compiles");
+    function
+        .captures_iter(text)
+        .map(|found| {
+            (
+                found[1].to_owned(),
+                space.replace_all(&found[0], " ").into_owned(),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn decorators_bring_a_translation_to_the_hand_written_rust_and_still_restore_its_source() {
+    let (cases, _, hand_written) = full_corpus();
+    assert!(!hand_written.is_empty());
+    for HandWritten {
+        case: id,
+        rust,
+        functions,
+    } in &hand_written
+    {
+        let case = cases
+            .iter()
+            .find(|candidate| &candidate.id == id)
+            .expect("the hand-written case");
+        let decorators = case.decorators();
+        assert!(!decorators.decorators().is_empty(), "{id}");
+        let expected = rust_functions(&read(rust));
+        let decorated = rust_functions(&case.translate().code);
+        let generic_code = self_translate(&read(&case.source), &case.from, &case.to)
+            .expect("translates")
+            .code;
+        let generic = rust_functions(&generic_code);
+        for name in functions {
+            assert_eq!(decorated.get(name), expected.get(name), "{id} {name}");
+            assert_ne!(generic.get(name), expected.get(name), "{id} {name}");
+        }
+        // Removing every decorator gives exactly the generic translation.
+        let removed = decorators
+            .ids()
+            .iter()
+            .fold(decorators.clone(), |set, decorator| {
+                set.remove(decorator).expect("the decorator is removed")
+            });
+        assert_eq!(
+            self_translate_decorated(&read(&case.source), &case.from, &case.to, &removed)
+                .expect("translates")
+                .code,
+            generic_code
+        );
+        // The decorated code is the provenance, so the translation back restores the source.
+        assert_eq!(
+            self_translate(&read(&case.expected), &case.to, &case.from)
+                .expect("translates back")
+                .code,
+            read(&case.source),
+            "{id}"
+        );
+    }
+    observe(
+        "I195-SELF-TRANSLATION-SHARED-CORPUS",
+        &["decoratorsMatchHandWritten"],
+        "decorators_bring_a_translation_to_the_hand_written_rust_and_still_restore_its_source",
     );
 }
 
