@@ -6,6 +6,7 @@ import {
   rule,
   unsupportedError,
 } from './common.js';
+import { decorateGrammar } from '../grammar-decorators.js';
 
 const FORMAT = 'peg';
 const PEST_BUILTINS = [
@@ -18,7 +19,11 @@ const PEST_BUILTINS = [
 ];
 
 /** Imports pest PEG grammar source into the shared grammar representation. */
-export function importPest(source) {
+export function importPest(source, options = {}) {
+  return decorateGrammar(readPest(source), options.decorators, 'importer');
+}
+
+function readPest(source) {
   const parser = new PestParser(String(source));
   return grammarFromRules(FORMAT, parser.parseRules(), null, PEST_BUILTINS);
 }

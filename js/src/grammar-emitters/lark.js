@@ -3,7 +3,7 @@
 // to the Rust `emit_lark` for the same grammar.
 
 import { importLark } from '../grammar-importers/lark.js';
-import { codePoint, emitReport, finishLines, unsupportedError } from './common.js';
+import { codePoint, decorateEmitted, emitReport, finishLines, unsupportedError } from './common.js';
 import {
   NamePlan,
   Precedence,
@@ -56,7 +56,11 @@ const USIZE_MAX = 18446744073709551615n;
  * character ranges, repetitions whose maximum is below their minimum, and
  * regexes that Lark cannot delimit.
  */
-export function emitLark(grammar) {
+export function emitLark(grammar, options = {}) {
+  return decorateEmitted('lark', writeLark(grammar), options.decorators);
+}
+
+function writeLark(grammar) {
   return new LarkEmitter(grammar).emit();
 }
 

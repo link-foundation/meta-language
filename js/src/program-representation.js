@@ -1,3 +1,4 @@
+import { decoratorSet } from './decorators.js';
 import { languageSupport } from './language-support.js';
 import {
   applyBindingExtents,
@@ -37,14 +38,18 @@ export class ProgramTransformationError extends Error {}
 /**
  * Parses source into a CST-backed program model with scopes, bindings, source
  * mappings, language-specific constructs, and project provenance.
+ * `options.decorators` holds `cst-to-ast` decorators, which see each syntax
+ * node the model is built from as `{ term, text }`: setting `term` changes
+ * the construct the semantics read it as, and `drop` leaves it out of the
+ * model. The network keeps the parsed tree either way.
  */
-export function analyzeProgram(source, language, project = {}) {
-  return new ProgramRepresentation(source, language, project);
+export function analyzeProgram(source, language, project = {}, options = {}) {
+  return new ProgramRepresentation(source, language, project, options);
 }
 
 /** Constructs a program and rejects syntax that cannot be represented cleanly. */
-export function constructProgram(source, language, project = {}) {
-  const program = new ProgramRepresentation(source, language, project);
+export function constructProgram(source, language, project = {}, options = {}) {
+  const program = new ProgramRepresentation(source, language, project, options);
   if (!program.network.verifyFullMatch().isClean()) {
     throw new ProgramTransformationError('constructed program does not parse cleanly');
   }
@@ -68,7 +73,7 @@ export class ProgramRepresentation {
     return constructProgram(source, language, project);
   }
 
-  constructor(source, language, project = {}) {
+  constructor(source, language, project = {}, options = {}) {
     const support = languageSupport(language);
     if (!support) {
       throw new TypeError(`program semantics are not registered for ${language}`);
@@ -79,7 +84,7 @@ export class ProgramRepresentation {
     this.project = normalizeProject(project);
     this.network = LinkNetwork.parse(this.source, this.language);
 
-    const syntax = syntaxFacts(this.network, this.source);
+    const syntax = decorateSyntaxFacts(syntaxFacts(this.network, this.source), this.source, options.decorators);
     const tokens = semanticTokens(this.source, this.language, syntax);
     const resolution = resolveBindings(tokens, syntax, this.source, this.language);
     this.scopes = Object.freeze(resolution.scopes.map(freezeRecord));
@@ -344,6 +349,16 @@ function syntaxFacts(network, source) {
       };
     })
     .filter(({ start, end }) => start !== undefined && end !== undefined);
+}
+
+// The syntax facts the `cst-to-ast` decorators leave, with the terms they set.
+function decorateSyntaxFacts(facts, source, decorators) {
+  const set = decoratorSet(decorators);
+  if (!set.has('cst-to-ast')) return facts;
+  return facts.flatMap((fact) => {
+    const decorated = set.decorate('cst-to-ast', { term: fact.term, text: source.slice(fact.start, fact.end) });
+    return decorated === null ? [] : [{ ...fact, term: decorated.term }];
+  });
 }
 
 function semanticTokens(source, language, syntax) {

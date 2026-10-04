@@ -7,6 +7,7 @@
 // docs/grammar/feature-union.md is the specification the Rust port follows.
 import { Executor, Expectations, KeywordLexing, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
 import { GrammarRuntimeError, loadProgram } from './grammar-runtime/load.js';
+import { decorateGrammar, decorateSyntaxTree } from './grammar-decorators.js';
 import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
 import { inputBytes, lineAndColumn } from './grammar-runtime/text.js';
 
@@ -121,7 +122,7 @@ function parseProgram(program, source, options) {
   if (!outcome.ok) {
     return { ok: false, tree: null, ambiguities: [], rejection: positioned('syntax', bytes, outcome.farthest, { expected: outcome.expected }) };
   }
-  const tree = publicTree(outcome.root, bytes);
+  const tree = decorateSyntaxTree(publicTree(outcome.root, bytes), options.decorators);
   const ambiguities = collectAmbiguities(outcome.root, program);
   let rejection = null;
   const recovery = firstRecovery(tree);
@@ -139,9 +140,13 @@ function parseProgram(program, source, options) {
  * `errorRecovery: true` repairs a failed parse into such a tree (at most
  * `maxRepairs` repair points) instead of rejecting it without one.
  * Each parse may override the options and choose a `startRule`.
+ * `options.decorators` (a DecoratorSet) decorates the grammar's rules at the
+ * `grammar-rule` level before it is loaded and every tree at the `executor`
+ * and `recovery` levels (see `decorateSyntaxTree`).
  */
 export function createGrammarParser(grammar, options = {}) {
-  const program = loadProgram(grammar, options);
+  const decorated = grammar?.rules instanceof Map ? decorateGrammar(grammar, options.decorators) : grammar;
+  const program = loadProgram(decorated, options);
   const parseTree = (source, parseOptions = {}) => parseProgram(program, source, { ...options, ...parseOptions });
   return {
     parseTree,

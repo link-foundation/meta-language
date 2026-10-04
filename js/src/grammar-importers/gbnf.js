@@ -1,5 +1,6 @@
 import { Grammar, GrammarBuilder } from '../grammar.js';
 import { parseError } from './common.js';
+import { decorateGrammar } from '../grammar-decorators.js';
 
 const FORMAT = 'gbnf';
 const START = 'root';
@@ -17,7 +18,11 @@ const HEX_ESCAPE_DIGITS = { x: 2, u: 4, U: 8 };
  * `doc`, and the grammar must define the `root` start rule. Error messages and
  * their UTF-8 byte offsets match the Rust `import_gbnf`.
  */
-export function importGbnf(source) {
+export function importGbnf(source, options = {}) {
+  return decorateGrammar(readGbnf(source), options.decorators, 'importer');
+}
+
+function readGbnf(source) {
   const tokens = new Lexer(String(source)).tokenize();
   return new Parser(tokens).parseGrammar();
 }

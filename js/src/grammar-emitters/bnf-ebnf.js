@@ -1,13 +1,14 @@
 import {
   BNF_RULE_TEMPLATE,
-  EBNF_RULE_TEMPLATE,
-  HelperRules,
   charClassItems,
   codePoint,
   debugString,
+  decorateEmitted,
+  EBNF_RULE_TEMPLATE,
   emitReport,
   expandedChars,
   finishLines,
+  HelperRules,
   orderedRules,
   renderRuleLine,
   reportCaptureLoss,
@@ -26,7 +27,11 @@ const ATOM = 2;
  * repetition, range, or class operators, so deterministic helper productions
  * are synthesized whenever a faithful expansion is possible.
  */
-export function emitBnf(grammar) {
+export function emitBnf(grammar, options = {}) {
+  return decorateEmitted('bnf', writeBnf(grammar), options.decorators);
+}
+
+function writeBnf(grammar) {
   const emitter = new BnfEmitter(grammar);
   const lines = orderedRules(grammar).map((rule) =>
     renderRuleLine(BNF_RULE_TEMPLATE, rule.name, emitter.emit(rule.expression, PRODUCTION)));
@@ -40,7 +45,11 @@ export function emitBnf(grammar) {
  * Emits ISO/IEC 14977-style EBNF text. Optional and repetition operators are
  * native; character ranges and classes expand through helper productions.
  */
-export function emitEbnf(grammar) {
+export function emitEbnf(grammar, options = {}) {
+  return decorateEmitted('ebnf', writeEbnf(grammar), options.decorators);
+}
+
+function writeEbnf(grammar) {
   const emitter = new EbnfEmitter(grammar);
   const lines = orderedRules(grammar).map((rule) =>
     renderRuleLine(EBNF_RULE_TEMPLATE, rule.name, emitter.emit(rule.expression, CHOICE)));

@@ -1,5 +1,6 @@
 import { Parser } from 'links-notation';
 
+import { decoratorSet } from './decorators.js';
 import { LinkMetadata, LinkType } from './primitives.js';
 import { LinkQuery } from './query.js';
 import { renderRuleSet } from './translation-renderer.js';
@@ -78,8 +79,32 @@ export class TranslationRuleSet {
     return this.withLanguageFallback(language, fallback);
   }
 
-  render(targetLanguage, network, rootLinkId = undefined) {
-    return renderRuleSet(this, network, targetLanguage, rootLinkId);
+  /**
+   * Renders `network` in `targetLanguage`. `options.decorators` holds
+   * `translation-rule` decorators, applied as `decorated` applies them.
+   */
+  render(targetLanguage, network, rootLinkId = undefined, options = {}) {
+    return renderRuleSet(this.decorated(options.decorators), network, targetLanguage, rootLinkId);
+  }
+
+  /**
+   * The rule set the `translation-rule` decorators of `decorators` make of
+   * this one, which is not changed. They see each template as `{ rule,
+   * language, text }`: setting `text` rewrites the template and `drop`
+   * removes it, so the language falls back as if the rule had no template.
+   */
+  decorated(decorators) {
+    const set = decoratorSet(decorators);
+    if (!set.has('translation-rule')) return this;
+    const rules = this.rules.map((rule) => {
+      const copy = new TranslationRule(rule.name, rule.query, rule.referenceCaptures);
+      for (const template of rule.templates) {
+        const decorated = set.decorate('translation-rule', { rule: rule.name, language: template.language, text: template.text });
+        if (decorated !== null) copy.withTemplate(template.language, decorated.text);
+      }
+      return copy;
+    });
+    return new TranslationRuleSet(this.name, rules, this.languageFallbacks);
   }
 
   toLino() {

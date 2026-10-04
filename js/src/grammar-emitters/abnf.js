@@ -2,6 +2,7 @@ import {
   ABNF_RULE_TEMPLATE,
   charClassItems,
   codePoint,
+  decorateEmitted,
   emitReport,
   finishLines,
   hex4,
@@ -21,7 +22,11 @@ const ATOM = 2;
  * optional expressions, counted repetition, numeric ranges, and RFC 7405
  * case-sensitive string prefixes.
  */
-export function emitAbnf(grammar) {
+export function emitAbnf(grammar, options = {}) {
+  return decorateEmitted('abnf', writeAbnf(grammar), options.decorators);
+}
+
+function writeAbnf(grammar) {
   const report = emitReport();
   const lines = orderedRules(grammar).map((rule) =>
     renderRuleLine(ABNF_RULE_TEMPLATE, rule.name, emitExpression(rule.expression, CHOICE, report)));

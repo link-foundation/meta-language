@@ -7,6 +7,7 @@
 // grammar to another through its concept record alone, with no rule for the
 // pair of languages. rust/src/grammar_concepts.rs is the Rust port.
 import { CONCEPT_RECORDS } from './concept-records.js';
+import { decoratorSet } from './decorators.js';
 import { compileGrammar } from './grammar.js';
 import { parseGrammarLinks } from './grammar-links.js';
 import { LANGUAGE_CATALOG } from './language-catalog.js';
@@ -139,9 +140,27 @@ export function nativeGrammarConceptReuse(options = {}) {
  * the pair of languages takes part. The relation is `translated` (one target
  * rule), `untranslatable` (the target names no rule with the concept),
  * `ambiguous` (several records or target rules) or `unknown` (no record names
- * the rule).
+ * the rule). `options.decorators` holds `concept-mapping` decorators, which
+ * see the result as `{ from, to, rule, relation, concept, rules }` (rules
+ * joined by spaces): they may change the concept or the target rules, whose
+ * relation then follows from their number unless a decorator set it, and
+ * `drop` makes the construct `unknown`.
  */
 export function translateNativeConstruct(from, rule, to, options = {}) {
+  const found = findNativeConstruct(from, rule, to, options);
+  const decorators = decoratorSet(options.decorators);
+  if (!decorators.has('concept-mapping')) return found;
+  const record = { from, to, rule, relation: found.relation, concept: found.concept ?? '', rules: found.rules.join(' ') };
+  const decorated = decorators.decorate('concept-mapping', record);
+  if (decorated === null) return { relation: 'unknown', concept: null, rules: [] };
+  const rules = decorated.rules.split(' ').filter((name) => name !== '');
+  const relation = decorated.relation !== record.relation || decorated.rules === record.rules ? decorated.relation : relationOf(rules);
+  return { relation, concept: decorated.concept === '' ? null : decorated.concept, rules };
+}
+
+const relationOf = (rules) => (rules.length === 1 ? 'translated' : rules.length === 0 ? 'untranslatable' : 'ambiguous');
+
+function findNativeConstruct(from, rule, to, options) {
   const { records = CONCEPT_RECORDS } = options;
   const source = nativeGrammarSource(from);
   const target = nativeGrammarSource(to);
@@ -150,8 +169,7 @@ export function translateNativeConstruct(from, rule, to, options = {}) {
   if (meanings.length > 1) return { relation: 'ambiguous', concept: null, rules: [] };
   const [record] = meanings;
   const rules = record.sourceAliases.filter((alias) => alias.source === target).map(({ name }) => name);
-  const relation = rules.length === 1 ? 'translated' : rules.length === 0 ? 'untranslatable' : 'ambiguous';
-  return { relation, concept: record.id, rules };
+  return { relation: relationOf(rules), concept: record.id, rules };
 }
 
 // Each native grammar is compiled on its first use and kept for the process.

@@ -1323,12 +1323,13 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-DECORATORS-EVERY-LEVEL',
     area: 'javascript-first',
     specification: 'javascript-first-and-self-translation',
+    fixture: 'parity/decorators/cases.json',
     construct: 'one decorator API at every level',
     expectedBehavior:
       'One decorator API extends the importer, grammar rules, merge decisions, concept mappings, the executor and recovery, CST → AST, transformations, emitters and translation rules; decorators compose in a defined order, are stored as links data both runtimes share, and can be removed.',
     assertions: ['decoratorAtEveryLevel', 'compositionOrderDeterministic', 'storedAsLinksData', 'removable'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/src/decorators.js', 'js/src/grammar-decorators.js'],
+    rust: ['rust/src/decorators.rs', 'rust/src/grammar/decorators.rs'],
   },
   {
     id: 'I195-PARITY-FEATURE-COMPLETENESS',

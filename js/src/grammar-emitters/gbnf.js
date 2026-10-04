@@ -1,6 +1,7 @@
 import {
   charClassItems,
   codePoint,
+  decorateEmitted,
   emitReport,
   finishLines,
   hex4,
@@ -31,7 +32,11 @@ const ATOM = 3;
  * documentation is written as `#` comment lines above the rule, as
  * `importGbnf` reads it, with a note when it would not read back verbatim.
  */
-export function emitGbnf(grammar) {
+export function emitGbnf(grammar, options = {}) {
+  return decorateEmitted('gbnf', writeGbnf(grammar), options.decorators);
+}
+
+function writeGbnf(grammar) {
   const report = emitReport();
   const rules = [...grammar.rules.values()];
   if (rules.length === 0) return { source: '', report };

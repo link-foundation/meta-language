@@ -7,9 +7,14 @@ import {
   stripLineComment,
   unsupportedError,
 } from './common.js';
+import { decorateGrammar } from '../grammar-decorators.js';
 
 /** Imports classic angle-bracket Backus-Naur Form. */
-export function importBnf(source) {
+export function importBnf(source, options = {}) {
+  return decorateGrammar(readBnf(source), options.decorators, 'importer');
+}
+
+function readBnf(source) {
   const rules = [];
   for (const rawLine of String(source).split(/\r?\n/)) {
     const line = stripLineComment(rawLine, ';', { escapes: false }).trim();
@@ -63,7 +68,11 @@ class BnfExpressionParser extends Cursor {
 }
 
 /** Imports ISO-style EBNF with groups, options, repetitions, and postfixes. */
-export function importEbnf(source) {
+export function importEbnf(source, options = {}) {
+  return decorateGrammar(readEbnf(source), options.decorators, 'importer');
+}
+
+function readEbnf(source) {
   const parser = new EbnfGrammarParser(removeEbnfComments(String(source)));
   return grammarFromRules('ebnf', parser.parse());
 }

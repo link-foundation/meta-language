@@ -5,11 +5,16 @@ import {
   rule,
   unsupportedError,
 } from './common.js';
+import { decorateGrammar } from '../grammar-decorators.js';
 
 const FORMAT = 'tree-sitter';
 
 /** Imports the declarative grammar.json form emitted by tree-sitter generate. */
-export function importTreeSitterJson(source) {
+export function importTreeSitterJson(source, options = {}) {
+  return decorateGrammar(readTreeSitterJson(source), options.decorators, 'importer');
+}
+
+function readTreeSitterJson(source) {
   let root;
   try {
     root = typeof source === 'string' ? JSON.parse(source) : source;

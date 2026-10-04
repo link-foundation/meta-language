@@ -23,6 +23,7 @@ import {
   rejectPredicateHost,
   sourceTextPredicateHost,
 } from './query.js';
+import { decoratorSet } from './decorators.js';
 import { LinkCliSubstitution, SubstitutionReport } from './substitution.js';
 import { ReplacementReport, ReplacementRule, TextReplacement } from './transform.js';
 import { EmbeddedRegion, detectEmbeddedRegions, detectEmbeddedRegionsInTree } from './regions.js';
@@ -551,10 +552,17 @@ export class LinkNetwork {
     return matches;
   }
 
-  replace(matches, rule) {
+  /**
+   * Replaces the captured text of every match. `options.decorators` holds
+   * `transformation` decorators, which see each replacement as `{ capture,
+   * old, new }`: setting `new` changes the text written, and `drop` leaves
+   * the match as it is.
+   */
+  replace(matches, rule, options = {}) {
     const normalized = rule instanceof ReplacementRule
       ? rule
       : ReplacementRule.capturedText(rule.captureName, rule.replacementText);
+    const decorators = decoratorSet(options.decorators);
     const replacements = [];
 
     for (const match of matches) {
@@ -563,8 +571,12 @@ export class LinkNetwork {
         continue;
       }
       const oldText = this.capturedText(captured);
-      if (this._replaceCapturedText(captured, normalized.replacementText)) {
-        replacements.push(new TextReplacement(captured, oldText, normalized.replacementText));
+      const decorated = decorators.decorate('transformation', { capture: normalized.captureName, old: oldText, new: normalized.replacementText });
+      if (decorated === null) {
+        continue;
+      }
+      if (this._replaceCapturedText(captured, decorated.new)) {
+        replacements.push(new TextReplacement(captured, oldText, decorated.new));
       }
     }
 

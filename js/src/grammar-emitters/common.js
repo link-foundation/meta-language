@@ -1,3 +1,5 @@
+import { decoratorSet } from '../decorators.js';
+
 export const BNF_RULE_TEMPLATE = '<{name}> ::= {body}';
 export const EBNF_RULE_TEMPLATE = '{name} = {body} ;';
 export const ABNF_RULE_TEMPLATE = '{name} = {body}';
@@ -179,4 +181,22 @@ function literalYield(expression) {
 
 function utf8Length(value) {
   return new TextEncoder().encode(value).length;
+}
+
+/**
+ * The emitted grammar `{ source, report }` after the `emitter` decorators of
+ * `decorators`, which see each line of the source as `{ format, number, line }`
+ * (`number` counts from 1): setting `line` rewrites it and `drop` removes it.
+ * The report is kept as it is.
+ */
+export function decorateEmitted(format, emitted, decorators) {
+  const set = decoratorSet(decorators);
+  if (!set.has('emitter')) return emitted;
+  const ending = emitted.source.endsWith('\n') ? '\n' : '';
+  const lines = (ending ? emitted.source.slice(0, -1) : emitted.source).split('\n');
+  const kept = lines.flatMap((line, index) => {
+    const decorated = set.decorate('emitter', { format, number: String(index + 1), line });
+    return decorated === null ? [] : [decorated.line];
+  });
+  return { ...emitted, source: kept.length === 0 ? '' : `${kept.join('\n')}${ending}` };
 }

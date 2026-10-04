@@ -9,6 +9,7 @@ import {
   tokenizeAntlr,
 } from './antlr-lexer.js';
 import { parseError, unsupportedError } from './common.js';
+import { decorateGrammar } from '../grammar-decorators.js';
 
 const SEQUENCE_END = new Set(['pipe', 'semicolon', 'arrow', 'rparen']);
 const SUFFIXES = {
@@ -26,7 +27,11 @@ const SUFFIXES = {
  * `doc`. `options`, `tokens`, `channels`, `import` and `mode` declarations are
  * skipped, and references to undefined rules stay visible on the grammar.
  */
-export function importAntlr(source) {
+export function importAntlr(source, options = {}) {
+  return decorateGrammar(readAntlr(source), options.decorators, 'importer');
+}
+
+function readAntlr(source) {
   return new AntlrParser(tokenizeAntlr(String(source))).parseGrammar();
 }
 

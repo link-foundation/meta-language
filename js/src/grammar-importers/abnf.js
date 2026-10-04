@@ -12,11 +12,16 @@ import {
   stripLineComment,
   unsupportedError,
 } from './common.js';
+import { decorateGrammar } from '../grammar-decorators.js';
 
 const FORMAT = 'abnf';
 
 /** Imports RFC 5234 ABNF, including core rules and incremental alternatives. */
-export function importAbnf(source) {
+export function importAbnf(source, options = {}) {
+  return decorateGrammar(readAbnf(source), options.decorators, 'importer');
+}
+
+function readAbnf(source) {
   const parsed = [];
   for (const line of logicalLines(source)) {
     const match = /^([A-Za-z][A-Za-z0-9-]*)\s*(=\/|=)\s*(.*)$/.exec(line);

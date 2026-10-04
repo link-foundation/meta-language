@@ -1,6 +1,7 @@
 import {
   charClassItems,
   debugString,
+  decorateEmitted,
   emitReport,
   orderedRules,
   unsupportedError,
@@ -20,7 +21,11 @@ const PRECEDENCE_TYPES = [
  * `importTreeSitterJson`. Captures produced by the importer map back to their
  * FIELD, ALIAS, PREC*, TOKEN, IMMEDIATE_TOKEN, RESERVED, and PATTERN nodes.
  */
-export function emitTreeSitterJson(grammar) {
+export function emitTreeSitterJson(grammar, options = {}) {
+  return decorateEmitted('tree-sitter-json', writeTreeSitterJson(grammar), options.decorators);
+}
+
+function writeTreeSitterJson(grammar) {
   const report = emitReport();
   const rules = {};
   const inline = [];

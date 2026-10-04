@@ -7,6 +7,7 @@ import {
   readEscape,
   tokenizeLark,
 } from './lark-lexer.js';
+import { decorateGrammar } from '../grammar-decorators.js';
 
 const SEQUENCE_ENDS = new Set(['newline', 'comment', 'pipe', 'rparen', 'rbracket']);
 
@@ -23,7 +24,11 @@ const SEQUENCE_ENDS = new Set(['newline', 'comment', 'pipe', 'rparen', 'rbracket
  * Throws GrammarImportError when the source is not the supported Lark subset
  * or uses an unsupported directive such as `%import`.
  */
-export function importLark(source) {
+export function importLark(source, options = {}) {
+  return decorateGrammar(readLark(source), options.decorators, 'importer');
+}
+
+function readLark(source) {
   return new LarkParser(tokenizeLark(String(source))).parseGrammar();
 }
 

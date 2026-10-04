@@ -3,7 +3,7 @@
 // to the Rust `emit_antlr` for the same grammar.
 
 import { importAntlr } from '../grammar-importers/antlr.js';
-import { codePoint, emitReport, finishLines, unsupportedError } from './common.js';
+import { codePoint, decorateEmitted, emitReport, finishLines, unsupportedError } from './common.js';
 import {
   NamePlan,
   Precedence,
@@ -57,7 +57,11 @@ const RESERVED_TOKENS = ['EOF'];
  * character ranges, repetitions whose maximum is below their minimum, and
  * counted repetitions that would expand to more than 256 copies.
  */
-export function emitAntlr(grammar) {
+export function emitAntlr(grammar, options = {}) {
+  return decorateEmitted('antlr', writeAntlr(grammar), options.decorators);
+}
+
+function writeAntlr(grammar) {
   return new AntlrEmitter(grammar).emit();
 }
 

@@ -1,13 +1,14 @@
 import {
-  PEST_RULE_TEMPLATE,
   charClassItems,
   codePoint,
   debugString,
+  decorateEmitted,
   emitReport,
   finishLines,
   hex4,
   orderedRules,
   pegChoiceAlternatives,
+  PEST_RULE_TEMPLATE,
   renderRuleLine,
   unsupportedError,
 } from './common.js';
@@ -24,7 +25,11 @@ const MODIFIERS = { normal: '', atomic: '@', silent: '_', token: '$' };
  * Emits pest PEG text: ordered choice uses `|`, sequences use `~`, predicates
  * use `&`/`!`, and token rules use pest's compound-atomic `$` modifier.
  */
-export function emitPest(grammar) {
+export function emitPest(grammar, options = {}) {
+  return decorateEmitted('pest', writePest(grammar), options.decorators);
+}
+
+function writePest(grammar) {
   const report = emitReport();
   const lines = [];
   for (const rule of orderedRules(grammar)) {

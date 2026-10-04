@@ -1,0 +1,5 @@
+(decorator second (level emitter) (order 2) (replace line b c))
+(decorator first (level emitter) (order 1) (replace line a b))
+(decorator tie-b (level emitter) (order 3) (when (line c)) (set line tie-b))
+(decorator tie-a (level emitter) (order 3) (when (line c)) (set line tie-a))
+(decorator drop-comment (level emitter) (order 4) (when (line %23)) (drop))

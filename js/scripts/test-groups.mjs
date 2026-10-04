@@ -22,7 +22,7 @@ export const TEST_GROUPS = Object.freeze({
   translation:
     /^(?:translation|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$)/u,
   conformance:
-    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|access$|query-|graphql-adapter$|concept-distinctions$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
+    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
   downstream:
     /^(?:downstream-|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:

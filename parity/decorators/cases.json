@@ -1,0 +1,26 @@
+{
+  "description": "Decorator cases both runtimes check: levels.lino holds one decorator per pipeline level and composition.lino decorators of one level that compose by order and then by id. A record case decorates one record; a hook case runs one pipeline hook with the whole levels set and compares a runtime-neutral view of its output.",
+  "records": [
+    { "set": "composition", "level": "emitter", "record": { "line": "a" }, "expected": { "line": "tie-a" } },
+    { "set": "composition", "level": "emitter", "record": { "line": "x a" }, "expected": { "line": "x c" } },
+    { "set": "composition", "level": "emitter", "record": { "line": "#" }, "expected": null },
+    { "set": "composition", "level": "importer", "record": { "line": "a" }, "expected": { "line": "a" } },
+    { "set": "levels", "level": "importer", "record": { "format": "gbnf", "name": "item", "kind": "normal" }, "expected": { "format": "gbnf", "name": "letter", "kind": "normal" } },
+    { "set": "levels", "level": "importer", "record": { "format": "pest", "name": "item", "kind": "normal" }, "expected": { "format": "pest", "name": "item", "kind": "normal" } },
+    { "set": "levels", "level": "transformation", "record": { "capture": "target", "old": "oldName", "new": "newName" }, "expected": { "capture": "target", "old": "oldName", "new": "newTitle" } }
+  ],
+  "removal": { "set": "composition", "remove": "first", "level": "emitter", "record": { "line": "a" }, "expected": { "line": "a" } },
+  "hooks": {
+    "grammar": "root ::= item item\nitem ::= \"a\" | \"b\"\n",
+    "importer": { "ruleNames": ["root", "letter"] },
+    "grammarRule": { "source": "ab", "kinds": ["document", "item", "item"] },
+    "mergeDecision": { "bases": ["reviewed", "reviewed"] },
+    "conceptMapping": { "from": "native-json", "rule": "pair", "to": "native-json5", "relation": "translated", "rules": ["property"] },
+    "executor": { "source": "ab", "kinds": ["document", "glyph", "glyph"] },
+    "recovery": { "source": "a", "missing": ["absent"] },
+    "cstToAst": { "source": "const a = 1;\n", "language": "JavaScript", "terms": ["const", "identifier", "=", "numeral", "variable_declarator", ";", "lexical_declaration", "program"] },
+    "transformation": { "source": "const oldName = call(oldName);\n", "language": "JavaScript", "query": "(identifier) @target (#eq? @target \"oldName\")", "capture": "target", "replacement": "newName", "text": "const newTitle = call(newTitle);\n" },
+    "emitter": { "format": "gbnf", "source": "root ::=  letter letter\nletter ::=  \"a\" | \"b\"\n" },
+    "translationRule": { "token": "ls", "template": "await $`{body}`;", "text": " $`ls`;" }
+  }
+}
