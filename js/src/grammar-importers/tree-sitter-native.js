@@ -516,6 +516,13 @@ export function importTreeSitterNative(source, options = {}) {
       }
       case 'FIELD': return `(capture labeled ${enc(node.name)} ${expr(node.content, inToken, keywords)})`;
       case 'ALIAS': {
+        // tree-sitter aliases each step of an aliased sequence, so
+        // TypeScript's `unique symbol` is two leaves of that kind, no node
+        // over them.
+        if (!inToken && node.content.type === 'SEQ') {
+          const members = node.content.members.map((member) => ({ ...node, content: member }));
+          return expr({ ...node.content, members }, inToken, keywords, aliased);
+        }
         const inner = node.content.type === 'SYMBOL' && !inToken ? aliasedRule(node.content, keywords) : expr(node.content, inToken, keywords, true);
         // An anonymous alias is a leaf whose kind is its text.
         if (!node.named) return `(alias ${enc(`'${node.value}`)} ${inner})`;
