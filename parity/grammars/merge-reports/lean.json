@@ -1,0 +1,305 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "lean",
+  "native": "native-lean",
+  "sources": [
+    {
+      "id": "tree-sitter-lean",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-lean4 0.3.0",
+      "repository": "https://github.com/wvhulle/tree-sitter-lean",
+      "revision": "bd942cd2795016239be02b3b3d5ef635645ddd38",
+      "path": "grammar.js",
+      "sha256": "b9ba543fe131d18f1c69b9026b06963b7efa408136c3932709a32b88628d0886",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/lean.lino",
+    "sha256": "1e9147fd8b9ff6b038319683d2a40834006ce18ba63c978b435066a2cee211a7",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "6927b5de4e9818befd7f040b20ec14c0b87f7f7524cf2bb3fb4a5ad75d63e2c5"
+    },
+    "scanners": [
+      {
+        "name": "layout",
+        "tokens": [
+          "layout_start",
+          "layout_semicolon",
+          "layout_end",
+          "match_body_start",
+          "syntax_quotation_body"
+        ]
+      }
+    ],
+    "immediate": [
+      "_layout_start",
+      "_layout_semicolon",
+      "_layout_end",
+      "_match_body_start",
+      "_syntax_quotation_body"
+    ]
+  },
+  "rules": 147,
+  "keywords": [
+    "False",
+    "True",
+    "_",
+    "abbrev",
+    "all",
+    "at",
+    "attribute",
+    "axiom",
+    "break",
+    "builtin_initialize",
+    "by",
+    "calc",
+    "case",
+    "catch",
+    "class",
+    "constant",
+    "continue",
+    "dbg_trace",
+    "def",
+    "deriving",
+    "do",
+    "elab",
+    "else",
+    "end",
+    "example",
+    "exists",
+    "export",
+    "extends",
+    "false",
+    "for",
+    "forall",
+    "fun",
+    "have",
+    "hiding",
+    "if",
+    "import",
+    "in",
+    "include",
+    "inductive",
+    "infix",
+    "infixl",
+    "infixr",
+    "initialize",
+    "instance",
+    "lemma",
+    "let",
+    "local",
+    "m!",
+    "macro",
+    "macro_rules",
+    "match",
+    "meta",
+    "module",
+    "mut",
+    "name",
+    "namespace",
+    "next",
+    "noncomputable",
+    "notation",
+    "obtain",
+    "omit",
+    "opaque",
+    "open",
+    "partial",
+    "postfix",
+    "prefix",
+    "prelude",
+    "priority",
+    "private",
+    "protected",
+    "public",
+    "r!",
+    "return",
+    "rewrite",
+    "rw",
+    "s!",
+    "scoped",
+    "section",
+    "set_option",
+    "show",
+    "sorry",
+    "structure",
+    "suffices",
+    "syntax",
+    "then",
+    "theorem",
+    "true",
+    "try",
+    "universe",
+    "universes",
+    "unless",
+    "unsafe",
+    "variable",
+    "where",
+    "while",
+    "with",
+    "λ"
+  ],
+  "renamed": [
+    {
+      "source": "_fragment_element",
+      "native": "fragment_element"
+    },
+    {
+      "source": "_command",
+      "native": "command"
+    },
+    {
+      "source": "_modifier",
+      "native": "modifier"
+    },
+    {
+      "source": "_syntax_atom",
+      "native": "syntax_atom"
+    },
+    {
+      "source": "_declaration",
+      "native": "declaration_choice"
+    },
+    {
+      "source": "_declaration_body",
+      "native": "declaration_body"
+    },
+    {
+      "source": "_instance_decl",
+      "native": "instance_decl"
+    },
+    {
+      "source": "_quantifier_binders",
+      "native": "quantifier_binders"
+    },
+    {
+      "source": "_bracketed_binder",
+      "native": "bracketed_binder"
+    },
+    {
+      "source": "_type_spec",
+      "native": "type_spec"
+    },
+    {
+      "source": "_expression",
+      "native": "expression"
+    },
+    {
+      "source": "_atom",
+      "native": "atom"
+    },
+    {
+      "source": "_name",
+      "native": "name"
+    },
+    {
+      "source": "_quantifier_tail",
+      "native": "quantifier_tail"
+    },
+    {
+      "source": "_binding_body",
+      "native": "binding_body"
+    },
+    {
+      "source": "_tactic_seq",
+      "native": "tactic_seq"
+    },
+    {
+      "source": "_tactic",
+      "native": "tactic"
+    },
+    {
+      "source": "_then_else",
+      "native": "then_else"
+    },
+    {
+      "source": "_pattern",
+      "native": "pattern"
+    },
+    {
+      "source": "_do_seq",
+      "native": "do_seq"
+    },
+    {
+      "source": "_do_element",
+      "native": "do_element"
+    },
+    {
+      "source": "let_mut",
+      "native": "let_mutable"
+    },
+    {
+      "source": "_for_binding",
+      "native": "for_binding"
+    },
+    {
+      "source": "_do_then_else",
+      "native": "do_then_else"
+    },
+    {
+      "source": "_structure_body",
+      "native": "structure_body"
+    },
+    {
+      "source": "_range_spec",
+      "native": "range_spec"
+    },
+    {
+      "source": "_string_content",
+      "native": "string_content"
+    },
+    {
+      "source": "char",
+      "native": "character"
+    },
+    {
+      "source": "_boolean",
+      "native": "boolean"
+    }
+  ],
+  "expandedWords": [
+    "char",
+    "mut"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "name",
+        "concept": "grammar.name"
+      },
+      {
+        "rule": "list",
+        "concept": "grammar.list"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "number",
+        "concept": "grammar.number"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      }
+    ],
+    "generated": 139
+  },
+  "approximations": [],
+  "unsupported": []
+}
