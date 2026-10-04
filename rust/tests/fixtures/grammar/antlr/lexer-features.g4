@@ -5,6 +5,6 @@ grammar Doc;
 doc
   // read up to the end
   : ITEM+ EOF ;
-ITEM : [A-\u{5A}\p{Nd}\p{Greek}] ;
+ITEM : [\u0041-\u{5A}\p{Nd}\p{Greek}] ;
 WS : [ ]+ -> skip ;
 COMMENT : '#' ~[\n]* -> channel(HIDDEN) ;
