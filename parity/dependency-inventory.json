@@ -4868,7 +4868,7 @@
       "evidence": "crates.io, tree-sitter-solidity"
     },
     {
-      "id": "crate rust/Cargo.lock tree-sitter-swift@0.7.3",
+      "id": "crate rust/Cargo.lock tree-sitter-swift@0.7.4",
       "category": "crate",
       "scope": "rust/Cargo.lock",
       "name": "tree-sitter-swift",
@@ -4876,18 +4876,17 @@
         "rust/Cargo.lock",
         "rust/Cargo.toml"
       ],
-      "pinned": "0.7.3",
+      "pinned": "0.7.4",
       "compare": "version",
       "source": {
         "type": "crate",
         "crate": "tree-sitter-swift"
       },
       "role": "direct",
-      "requirement": "=0.7.3",
+      "requirement": "=0.7.4",
       "kind": "runtime",
       "current": "0.7.4",
-      "evidence": "crates.io, tree-sitter-swift",
-      "reason": "Held at 0.7.3: the 0.7.4 external scanner (src/scanner.c) calls fprintf(stderr, ...) and exit(1) when allocating its state fails, symbols a Wasm parser cannot import, so `tree-sitter build --wasm` 0.27.0 refuses it and the vendored web-tree-sitter grammar cannot follow; it moves when upstream drops those calls (reproduced with experiments/issue-195-swift-wasm.sh)."
+      "evidence": "crates.io, tree-sitter-swift"
     },
     {
       "id": "crate rust/Cargo.lock tree-sitter-toml-ng@0.7.0",
@@ -7558,19 +7557,19 @@
       ]
     },
     {
-      "id": "vendored-grammar js/src/vendor/grammars/swift.wasm.gz@0.7.3",
+      "id": "vendored-grammar js/src/vendor/grammars/swift.wasm.gz@0.7.4",
       "category": "vendored-grammar",
       "name": "js/src/vendor/grammars/swift.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
-      "pinned": "0.7.3",
+      "pinned": "0.7.4",
       "compare": "derived",
       "source": {
         "type": "none"
       },
       "dependsOn": [
-        "crate rust/Cargo.lock tree-sitter-swift@0.7.3",
+        "crate rust/Cargo.lock tree-sitter-swift@0.7.4",
         "toolchain tree-sitter-cli@0.27.0"
       ]
     },

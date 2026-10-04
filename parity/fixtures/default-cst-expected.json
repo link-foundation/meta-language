@@ -1730,9 +1730,9 @@
     "Swift": {
       "grammars": {
         "swift": {
-          "version": "0.7.3",
-          "parserSha256": "d3edff6effe31b9a507f496577407987343b101b23eb7bee7a9b050e8ab5d27a",
-          "symbolNamesSha256": "79f39fb7a799e5fa11c18983c9f8a86ab93bafb099cb147082dcb8d1e6e242b5"
+          "version": "0.7.4",
+          "parserSha256": "1d332e60ec28e6b398db36e06bf05414061dfbbd3e981b33ff1edfd5159e3e08",
+          "symbolNamesSha256": "b99fea09a196de1faca3602dd3df984c42b3a4602bd64ca06378e3dcf53f373c"
         }
       },
       "sourceSha256": "764225d7164473132d008abbf05d6a3334311b020e60fa6ca70d08910c9ffadf",

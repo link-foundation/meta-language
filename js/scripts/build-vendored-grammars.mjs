@@ -35,7 +35,9 @@ const rustLockPath = join(root, 'rust/src/data/grammar-lock.json');
  * generated parser vendored under rust/vendor (compiled by rust/build.rs).
  * `oracle` marks the tree-sitter oracle of a language a native grammar parses:
  * a Rust development dependency (the CSV parser is not compiled at all) whose
- * WebAssembly build the npm package does not ship.
+ * WebAssembly build the npm package does not ship. `wasmPatch` changes only
+ * the hand-written scanner of the WebAssembly build of a crate, never its
+ * generated parser or the Rust build.
  */
 export const GRAMMAR_SOURCES = Object.freeze({
   agda: { crate: 'tree-sitter-agda', dir: '.' },
@@ -142,7 +144,9 @@ export const GRAMMAR_SOURCES = Object.freeze({
   scheme: { crate: 'tree-sitter-scheme', dir: '.', oracle: true },
   solidity: { crate: 'tree-sitter-solidity', dir: '.' },
   sql: { crate: 'tree-sitter-sequel', dir: '.' },
-  swift: { crate: 'tree-sitter-swift', dir: '.' },
+  // The 0.7.4 scanner exits through stderr when allocation fails, which a
+  // Wasm parser cannot import; the Wasm build traps instead.
+  swift: { crate: 'tree-sitter-swift', dir: '.', wasmPatch: 'js/scripts/grammar-patches/tree-sitter-swift-wasm.patch' },
   toml: { crate: 'tree-sitter-toml-ng', dir: '.' },
   tsx: { crate: 'tree-sitter-typescript', dir: 'tsx', oracle: true },
   typescript: { crate: 'tree-sitter-typescript', dir: 'typescript', oracle: true },
@@ -329,6 +333,17 @@ async function refreshLicenses(lock, versions) {
   }
 }
 
+// Applies a crate's WebAssembly-only patch to the scratch copy; it may touch
+// only the hand-written scanner, so the parser stays the one Rust compiles.
+async function applyWasmPatch(source, crate) {
+  const patch = await readFile(join(root, source.wasmPatch), 'utf8');
+  const touched = [...patch.matchAll(/^\+\+\+ b\/(.+)$/gmu)].map((match) => match[1]);
+  if (touched.length === 0 || !touched.every((path) => path === join(source.dir, 'src/scanner.c').replace(/^\.\//u, ''))) {
+    throw new Error(`${source.wasmPatch} may patch only ${source.dir}/src/scanner.c, not ${touched.join(', ')}`);
+  }
+  await run('git', ['apply', join(root, source.wasmPatch)], { cwd: crate });
+}
+
 async function buildOne(id, versions, treeSitter, options) {
   const source = await grammarSource(id, versions);
   // Build from a scratch copy so the cargo registry sources stay untouched.
@@ -340,6 +355,7 @@ async function buildOne(id, versions, treeSitter, options) {
       await checkoutUpstream(source, join(work, 'crate'), treeSitter, options);
     } else {
       await cp(source.crateDir, join(work, 'crate'), { recursive: true });
+      if (source.wasmPatch) await applyWasmPatch(source, join(work, 'crate'));
     }
     const grammarDir = join(work, 'crate', source.dir);
     await localizeSharedIncludes(grammarDir);
@@ -368,7 +384,7 @@ async function buildOne(id, versions, treeSitter, options) {
             vendored: source.vendored,
             ...(source.patch ? { patch: source.patch } : {}),
           }
-        : { crate: source.crate, directory: source.dir }),
+        : { crate: source.crate, directory: source.dir, ...(source.wasmPatch ? { wasmPatch: source.wasmPatch } : {}) }),
       version: source.version,
       parserSha256: sha256(source.parser),
       wasmSha256: sha256(wasm),
@@ -398,6 +414,9 @@ async function checkLock(lock, versions) {
     if (Boolean(entry.oracle) !== Boolean(source.oracle)) {
       problems.push(`${id}: lock records oracle ${Boolean(entry.oracle)}, the source has ${Boolean(source.oracle)}`);
     }
+    if ((entry.wasmPatch ?? null) !== (source.wasmPatch ?? null)) {
+      problems.push(`${id}: lock records wasm patch ${entry.wasmPatch ?? 'none'}, the source has ${source.wasmPatch ?? 'none'}`);
+    }
     if ((entry.patch ?? null) !== (source.patch ?? null)) {
       problems.push(`${id}: lock records patch ${entry.patch ?? 'none'}, the source has ${source.patch ?? 'none'}`);
     }
@@ -414,7 +433,7 @@ async function checkLock(lock, versions) {
 function noticeRows(entries) {
   return entries.map((entry) => {
     const source = entry.crate
-      ? `crate \`${entry.crate}\` ${entry.version}${entry.directory === '.' ? '' : ` (\`${entry.directory}\`)`}`
+      ? `crate \`${entry.crate}\` ${entry.version}${entry.directory === '.' ? '' : ` (\`${entry.directory}\`)`}${entry.wasmPatch ? ` with [\`${entry.wasmPatch.split('/').pop()}\`](../../../../${entry.wasmPatch})` : ''}`
       : `\`${entry.upstream}\` ${entry.version}${entry.patch ? ` with [\`${entry.patch.split('/').pop()}\`](${entry.oracle ? '../../..' : '../../../..'}/${entry.patch})` : ''} (vendored in \`${entry.vendored}\`)`;
     const license = entry.license ? `[\`${entry.license}\`](${entry.license})` : 'see upstream';
     return `| \`${entry.id}.wasm.gz\` | ${source} | \`${entry.parserSha256}\` | \`${entry.wasmSha256}\` | ${license} |`;

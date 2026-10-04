@@ -1,0 +1,15 @@
+diff --git a/src/scanner.c b/src/scanner.c
+index 6d53d68..84a35d5 100644
+--- a/src/scanner.c
++++ b/src/scanner.c
+@@ -282,8 +282,8 @@ struct ScannerState {
+ void *tree_sitter_swift_external_scanner_create() {
+     void *payload = calloc(1, sizeof(struct ScannerState));
+     if (!payload) {
+-        fprintf(stderr, "tree-sitter-swift: out of memory allocating scanner state\n");
+-        exit(1);
++        // A Wasm parser imports no stderr or exit, so it traps instead.
++        __builtin_trap();
+     }
+     return payload;
+ }

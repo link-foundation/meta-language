@@ -369,7 +369,7 @@ reconstructs while exposing error/missing diagnostics.
 | Language | Labels (case-insensitive) | Crate | Version | License | Grammar root |
 |---|---|---|---|---|---|
 | PHP | `PHP` | [`tree-sitter-php`](https://github.com/tree-sitter/tree-sitter-php) | 0.24.2 | MIT | `program` |
-| Swift | `Swift` | [`tree-sitter-swift`](https://github.com/alex-pinkus/tree-sitter-swift) | 0.7.3 | MIT | `source_file` |
+| Swift | `Swift` | [`tree-sitter-swift`](https://github.com/alex-pinkus/tree-sitter-swift) | 0.7.4 | MIT | `source_file` |
 | Kotlin | `Kotlin`, `kt` | [`tree-sitter-kotlin-ng`](https://github.com/tree-sitter-grammars/tree-sitter-kotlin) | 1.1.0 | MIT | `source_file` |
 | Scala | `Scala` | [`tree-sitter-scala`](https://github.com/tree-sitter/tree-sitter-scala) | 0.25.1 | MIT | `compilation_unit` |
 | Lua | `Lua` | [`tree-sitter-lua`](https://github.com/tree-sitter-grammars/tree-sitter-lua) | 0.2.0 | MIT | `chunk` |

@@ -60,11 +60,11 @@ they are.
 | JavaScript engines | 1 | 1 | 0 | 0 |
 | npm packages | 17 | 17 | 0 | 0 |
 | Rust package settings | 6 | 6 | 0 | 0 |
-| Rust crates | 306 | 281 | 25 | 0 |
+| Rust crates | 306 | 282 | 24 | 0 |
 | Experiment manifests | 6 | 6 | 0 | 0 |
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
-| Vendored WebAssembly grammars | 60 | 59 | 1 | 0 |
+| Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
 | Generators | 23 | 22 | 1 | 0 |
 | Toolchains and tools | 16 | 14 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
@@ -344,7 +344,7 @@ they are.
 | `tree-sitter-scheme` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.24.7` | direct, development | `=0.24.7` | 0.24.7 (crates.io, tree-sitter-scheme) | version | current |  |
 | `tree-sitter-sequel` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.3.11` | direct, runtime | `=0.3.11` | 0.3.11 (crates.io, tree-sitter-sequel) | version | current |  |
 | `tree-sitter-solidity` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `1.2.13` | direct, runtime | `=1.2.13` | 1.2.13 (crates.io, tree-sitter-solidity) | version | current |  |
-| `tree-sitter-swift` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.3` | direct, runtime | `=0.7.3` | 0.7.4 (crates.io, tree-sitter-swift) | version | behind | Held at 0.7.3: the 0.7.4 external scanner (src/scanner.c) calls fprintf(stderr, ...) and exit(1) when allocating its state fails, symbols a Wasm parser cannot import, so `tree-sitter build --wasm` 0.27.0 refuses it and the vendored web-tree-sitter grammar cannot follow; it moves when upstream drops those calls (reproduced with experiments/issue-195-swift-wasm.sh). |
+| `tree-sitter-swift` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.4` | direct, runtime | `=0.7.4` | 0.7.4 (crates.io, tree-sitter-swift) | version | current |  |
 | `tree-sitter-toml-ng` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.7.0` | direct, runtime | `=0.7.0` | 0.7.0 (crates.io, tree-sitter-toml-ng) | version | current |  |
 | `tree-sitter-typescript` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.23.2` | direct, development | `=0.23.2` | 0.23.2 (crates.io, tree-sitter-typescript) | version | current |  |
 | `tree-sitter-vb-dotnet` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `0.1.0` | direct, runtime | `=0.1.0` | 0.1.0 (crates.io, tree-sitter-vb-dotnet) | version | current |  |
@@ -507,7 +507,7 @@ they are.
 | `js/src/vendor/grammars/scala.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.26.2` |  | derived | current |  |
 | `js/src/vendor/grammars/solidity.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `1.2.13` |  | derived | current |  |
 | `js/src/vendor/grammars/sql.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.3.11` |  | derived | current |  |
-| `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.3` |  | derived | behind | Built from `crate rust/Cargo.lock tree-sitter-swift@0.7.3`, which is behind (see its reason). |
+| `js/src/vendor/grammars/swift.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.4` |  | derived | current |  |
 | `js/src/vendor/grammars/toml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
 | `js/src/vendor/grammars/vb.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.1.0` |  | derived | current |  |
 | `js/src/vendor/grammars/xml.wasm.gz` | `js/src/vendor/grammars/grammar-lock.json` | `0.7.0` |  | derived | current |  |
@@ -627,9 +627,9 @@ they are.
 
 ## Behind the current stable release
 
-27 retained items are behind their current stable release on 2026-10-04, each for the recorded reason.
+26 retained items are behind their current stable release on 2026-10-04, each for the recorded reason.
 26 of them are at their newest compatible release, verified against the requirements that hold them;
-1 are stale and fail the delivery check.
+0 are stale and fail the delivery check.
 
 - `allocator-api2` `0.2.21` → `0.4.0` (`rust/Cargo.lock`): Held by the requirement of `hashbrown` 0.15.5 (`^0.2.9`), which does not admit 0.4.0; it moves when that dependent does. Delivered at its newest compatible release `0.2.21`, held by `crate rust/Cargo.lock hashbrown@0.15.5` (`^0.2.9`).
 - `cc` `1.2.67` → `1.6.0` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held by the requirement of `tree-sitter-sequel` 0.3.11 (`~1.2.1`), which does not admit 1.6.0; it moves when that dependent does. Delivered at its newest compatible release `1.2.67`, held by `crate rust/Cargo.lock tree-sitter-sequel@0.3.11` (`~1.2.1`).
@@ -643,7 +643,6 @@ they are.
 - `strum_macros` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. Delivered at its newest compatible release `0.27.2`, held by `crate rust/Cargo.lock lingua@1.8.0` (`^0.27.2`).
 - `strum` `0.27.2` → `0.28.0` (`rust/Cargo.lock`): Held by the requirement of `lingua` 1.8.0 (`^0.27.2`), which does not admit 0.28.0; it moves when that dependent does. Delivered at its newest compatible release `0.27.2`, held by `crate rust/Cargo.lock lingua@1.8.0` (`^0.27.2`).
 - `syn` `2.0.119` → `3.0.6` (`rust/Cargo.lock`): Held by the requirement of `munge_macro` 0.4.7 (`^2`), `pest_generator` 2.9.2 (`^2.0`), `strum_macros` 0.27.2 (`^2.0`), `strum_macros` 0.28.0 (`^2.0`), which does not admit 3.0.6; it moves when that dependent does. Delivered at its newest compatible release `2.0.119`, held by `crate rust/Cargo.lock munge_macro@0.4.7` (`^2`), `crate rust/Cargo.lock pest_generator@2.9.2` (`^2.0`), `crate rust/Cargo.lock strum_macros@0.27.2` (`^2.0`), `crate rust/Cargo.lock strum_macros@0.28.0` (`^2.0`).
-- `tree-sitter-swift` `0.7.3` → `0.7.4` (`rust/Cargo.lock`, `rust/Cargo.toml`): Held at 0.7.3: the 0.7.4 external scanner (src/scanner.c) calls fprintf(stderr, ...) and exit(1) when allocating its state fails, symbols a Wasm parser cannot import, so `tree-sitter build --wasm` 0.27.0 refuses it and the vendored web-tree-sitter grammar cannot follow; it moves when upstream drops those calls (reproduced with experiments/issue-195-swift-wasm.sh). Stale: no newest compatible release is recorded.
 - `wasi` `0.11.1+wasi-snapshot-preview1` → `0.14.7+wasi-0.2.4` (`rust/Cargo.lock`): Held by the requirement of `getrandom` 0.2.17 (`^0.11`), which does not admit 0.14.7+wasi-0.2.4; it moves when that dependent does. Delivered at its newest compatible release `0.11.1+wasi-snapshot-preview1`, held by `crate rust/Cargo.lock getrandom@0.2.17` (`^0.11`).
 - `windows_aarch64_gnullvm` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).
 - `windows_aarch64_msvc` `0.52.6` → `0.53.1` (`rust/Cargo.lock`): Held by the requirement of `windows-targets` 0.52.6 (`^0.52.6`), which does not admit 0.53.1; it moves when that dependent does. Delivered at its newest compatible release `0.52.6`, held by `crate rust/Cargo.lock windows-targets@0.52.6` (`^0.52.6`).

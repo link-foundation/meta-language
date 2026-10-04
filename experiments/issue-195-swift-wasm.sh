@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
-# Reproduces why tree-sitter-swift is held at 0.7.3: the 0.7.4 scanner uses
-# fprintf/stderr/exit, which `tree-sitter build --wasm` (CLI 0.27.0) rejects.
-# Needs the crates in ~/.cargo/registry (cargo fetch) and the tree-sitter CLI.
+# Shows why tree-sitter-swift 0.7.4 needs a Wasm-only scanner patch: its
+# scanner uses fprintf/stderr/exit, which `tree-sitter build --wasm` (CLI
+# 0.27.0) rejects; js/scripts/grammar-patches/tree-sitter-swift-wasm.patch
+# makes the Wasm build trap instead. Needs the crate in ~/.cargo/registry
+# (cargo fetch) and the tree-sitter CLI.
 set -u
-for version in 0.7.3 0.7.4; do
-  src=$(ls -d ~/.cargo/registry/src/*/tree-sitter-swift-$version 2>/dev/null | head -1)
-  [ -n "$src" ] || { echo "$version: not fetched"; continue; }
+src=$(ls -d ~/.cargo/registry/src/*/tree-sitter-swift-0.7.4 2>/dev/null | head -1)
+[ -n "$src" ] || { echo "0.7.4: not fetched"; exit 1; }
+patch=$(cd "$(dirname "$0")/.." && pwd)/js/scripts/grammar-patches/tree-sitter-swift-wasm.patch
+for variant in upstream patched; do
   work=$(mktemp -d); cp -r "$src"/. "$work"
-  echo "== $version"; grep -n 'fprintf\|exit(' "$work/src/scanner.c"
-  (cd "$work" && tree-sitter build --wasm -o out.wasm . 2>&1 | grep -v '^    ' | head -3)
+  [ "$variant" = patched ] && (cd "$work" && git apply "$patch")
+  echo "== $variant"; grep -n 'fprintf\|exit(\|__builtin_trap' "$work/src/scanner.c"
+  (cd "$work" && tree-sitter build --wasm -o out.wasm . 2>&1 | grep -v '^    ' | head -3; ls out.wasm 2>/dev/null)
   rm -rf "$work"
 done
