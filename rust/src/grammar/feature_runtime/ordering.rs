@@ -7,7 +7,9 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::forking::{GrammarFacts, forked_order, shift_reduction};
+use super::forking::{
+    GrammarFacts, declared_fork, forked_order, lookahead_of, shift_reduction, token_at,
+};
 use super::parting::{child_parting, holds_first, one_token, reduced_first, same_tokens};
 use super::program::{Associativity, PrecedenceTag, TokenRank, compare_precedence};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
@@ -245,6 +247,7 @@ pub(super) fn shift_order(
     existing: &Children,
     orders: &[Vec<PrecedenceEntry>],
     grammar: &GrammarFacts,
+    bytes: &[u8],
 ) -> Ordering {
     let mut left = vec![Walk::Part(result.clone())];
     let mut right = vec![Walk::Part(existing.clone())];
@@ -290,6 +293,20 @@ pub(super) fn shift_order(
                         let inner = child_parting(&x, &y, orders);
                         if inner != Ordering::Equal {
                             return inner;
+                        }
+                        let (long, short) = if x.end > y.end { (&x, &y) } else { (&y, &x) };
+                        let lookahead = token_at(long, short.end);
+                        if declared_fork(
+                            grammar,
+                            short,
+                            lookahead_of(lookahead.as_ref(), bytes),
+                            orders,
+                        ) {
+                            return if x.end > y.end {
+                                Ordering::Less
+                            } else {
+                                Ordering::Greater
+                            };
                         }
                         return if x.end > y.end {
                             shift_preferred(&x, &y, orders, grammar)
@@ -805,8 +822,9 @@ pub(super) fn complete_order(
     );
     tokens
         .map_or(Ordering::Equal, |tokens| {
-            preferred_tokens(&left, &right, tokens)
-                .then_with(|| shift_order(&left, &right, tokens.orders, tokens.grammar))
+            preferred_tokens(&left, &right, tokens).then_with(|| {
+                shift_order(&left, &right, tokens.orders, tokens.grammar, tokens.bytes)
+            })
         })
         .then(a.0.dynamic.cmp(&b.0.dynamic))
 }

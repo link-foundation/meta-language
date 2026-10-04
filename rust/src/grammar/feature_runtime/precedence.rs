@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use super::executor::{Executor, Run};
-use super::forking::{direct_edge, edge_names};
+use super::forking::{declared_fork, direct_edge, edge_names, lookahead_of};
 use super::operations::State;
 use super::ordering::first_meaningful;
 use super::program::{Associativity, Expr, Name, PrecedenceTag, Target, compare_precedence};
@@ -44,7 +44,7 @@ pub(super) enum Conflict {
 }
 
 /// Whether an expression may match nothing, as far as its shape tells.
-fn nullable(expr: &Expr) -> bool {
+pub(super) fn nullable(expr: &Expr) -> bool {
     match expr {
         Expr::Empty | Expr::And(_) | Expr::Not(_) => true,
         Expr::Repeat { item, min, .. } => *min == 0 || nullable(item),
@@ -82,13 +82,16 @@ impl Executor<'_> {
             .collect();
         let verdict = if meaningful.len() < 2 {
             Conflict::No
-        } else if self.conflicts(keep, &meaningful[0], Associativity::Left) == Conflict::Yes {
+        } else if self.conflicts(keep, &meaningful[0], Associativity::Left, meaningful.get(1))
+            == Conflict::Yes
+        {
             Conflict::Yes
         } else {
             self.conflicts(
                 keep,
                 &meaningful[meaningful.len() - 1],
                 Associativity::Right,
+                None,
             )
         };
         match verdict {
@@ -133,7 +136,13 @@ impl Executor<'_> {
 
     // Whether the operand `child` on `side` conflicts with the precedence of
     // `keep` (see `precedence_valid`).
-    pub(super) fn conflicts(&mut self, keep: &Keep, child: &Tree, side: Associativity) -> Conflict {
+    pub(super) fn conflicts(
+        &mut self,
+        keep: &Keep,
+        child: &Tree,
+        side: Associativity,
+        next: Option<&Rc<Tree>>,
+    ) -> Conflict {
         let Some(inner) = &child.precedence else {
             return Conflict::No;
         };
@@ -154,6 +163,16 @@ impl Executor<'_> {
                 return Conflict::No;
             }
             if !self.reaches_owner(keep.item, kind, side) {
+                return Conflict::No;
+            }
+            if next.is_some()
+                && declared_fork(
+                    &self.program.grammar,
+                    child,
+                    lookahead_of(next, self.bytes),
+                    &self.program.precedence_orders,
+                )
+            {
                 return Conflict::No;
             }
         }

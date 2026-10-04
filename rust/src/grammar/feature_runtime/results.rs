@@ -337,6 +337,7 @@ impl<'c> ResultSet<'c> {
                                         &existing.children,
                                         tokens.orders,
                                         tokens.grammar,
+                                        tokens.bytes,
                                     )
                                 })
                         })
