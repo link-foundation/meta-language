@@ -14,6 +14,7 @@ use super::{
     GrammarMergeNominationBasis, GrammarMergeNominationOutcome, GrammarMergeSource,
     MergedGrammarGroup,
 };
+use crate::decorators::{DecoratorLevel, DecoratorSet};
 use crate::grammar::{Grammar, GrammarFormat, GrammarRule};
 
 pub(super) struct Prepared<'a> {
@@ -117,6 +118,7 @@ pub(super) fn group_fingerprint(
     entry: &[&Prepared<'_>],
     required: &[&(String, String)],
     samples: &BTreeMap<String, Vec<String>>,
+    decorators: &DecoratorSet,
 ) -> Result<String, GrammarMergeError> {
     let mut lines = vec![
         "grammar-merge v1".to_owned(),
@@ -170,6 +172,12 @@ pub(super) fn group_fingerprint(
             let values: Vec<String> = values.iter().map(|value| quote(value)).collect();
             lines.push(format!("samples {} {}", quote(alias), values.join(",")));
         }
+    }
+    // A group is reused only under the same merge-decision decorators.
+    for decorator in decorators.for_level(DecoratorLevel::MergeDecision) {
+        let set =
+            DecoratorSet::new(vec![decorator.clone()]).expect("one decorator has a unique id");
+        lines.push(format!("decorator {}", quote(set.to_lino().trim())));
     }
     let mut text = lines.join("\n");
     text.push('\n');

@@ -9,6 +9,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use crate::decorators::{
+    DecoratorError, DecoratorLevel, DecoratorSet, decorator_record, record_field,
+};
 use crate::language_catalog::{native_grammar, native_grammars};
 use crate::native_grammar_parser::{native_grammar_text, native_parser};
 use crate::{ConceptRecord, FeatureParseOptions, SyntaxTree, concept_records, parse_grammar_links};
@@ -362,6 +365,19 @@ impl ConstructTranslationRelation {
             Self::Unknown => "unknown",
         }
     }
+
+    /// The relation the JavaScript runtime names `name`.
+    #[must_use]
+    pub fn parse(name: &str) -> Option<Self> {
+        [
+            Self::Translated,
+            Self::Untranslatable,
+            Self::Ambiguous,
+            Self::Unknown,
+        ]
+        .into_iter()
+        .find(|relation| relation.as_str() == name)
+    }
 }
 
 /// The translation of one construct between native grammars.
@@ -427,16 +443,78 @@ pub fn translate_native_construct_in(
         .filter(|alias| alias.source == target)
         .map(|alias| alias.name.clone())
         .collect();
-    let relation = match rules.len() {
-        1 => ConstructTranslationRelation::Translated,
-        0 => ConstructTranslationRelation::Untranslatable,
-        _ => ConstructTranslationRelation::Ambiguous,
-    };
     ConstructTranslation {
-        relation,
+        relation: relation_of(&rules),
         concept: Some(record.id.clone()),
         rules,
     }
+}
+
+const fn relation_of(rules: &[String]) -> ConstructTranslationRelation {
+    match rules.len() {
+        1 => ConstructTranslationRelation::Translated,
+        0 => ConstructTranslationRelation::Untranslatable,
+        _ => ConstructTranslationRelation::Ambiguous,
+    }
+}
+
+/// [`translate_native_construct`] after the `concept-mapping` decorators of
+/// `decorators`.
+///
+/// They see the result as `{ from, to, rule, relation,
+/// concept, rules }` (rules joined by spaces): they may change the concept or
+/// the target rules, whose relation then follows from their number unless a
+/// decorator set it, and `drop` makes the construct `unknown`.
+///
+/// # Errors
+///
+/// A [`DecoratorError`] when a decorator sets an unknown relation.
+pub fn translate_native_construct_decorated(
+    from: &str,
+    rule: &str,
+    to: &str,
+    decorators: &DecoratorSet,
+) -> Result<ConstructTranslation, DecoratorError> {
+    let found = translate_native_construct(from, rule, to);
+    if !decorators.has(DecoratorLevel::ConceptMapping) {
+        return Ok(found);
+    }
+    let joined = found.rules.join(" ");
+    let record = decorator_record([
+        ("from", from),
+        ("to", to),
+        ("rule", rule),
+        ("relation", found.relation.as_str()),
+        ("concept", found.concept.as_deref().unwrap_or_default()),
+        ("rules", &joined),
+    ]);
+    let Some(decorated) = decorators.decorate(DecoratorLevel::ConceptMapping, &record) else {
+        return Ok(ConstructTranslation {
+            relation: ConstructTranslationRelation::Unknown,
+            concept: None,
+            rules: Vec::new(),
+        });
+    };
+    let rules: Vec<String> = record_field(&decorated, "rules")
+        .split(' ')
+        .filter(|name| !name.is_empty())
+        .map(str::to_owned)
+        .collect();
+    let relation = record_field(&decorated, "relation");
+    let relation =
+        if relation != found.relation.as_str() || record_field(&decorated, "rules") == joined {
+            ConstructTranslationRelation::parse(relation).ok_or_else(|| {
+                DecoratorError::new(format!("a decorator set the unknown relation {relation:?}"))
+            })?
+        } else {
+            relation_of(&rules)
+        };
+    let concept = record_field(&decorated, "concept");
+    Ok(ConstructTranslation {
+        relation,
+        concept: (!concept.is_empty()).then(|| concept.to_owned()),
+        rules,
+    })
 }
 
 /// A node of a construct tree: a node of a native parse tree whose kind is a

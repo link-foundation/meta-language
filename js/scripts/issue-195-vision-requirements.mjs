@@ -1339,8 +1339,8 @@ export const VISION_REQUIREMENTS = Object.freeze([
     expectedBehavior:
       'parity/language-features.json lists every public JavaScript export, and a test fails when Rust lacks one or when the two runtimes produce different observable output for one.',
     assertions: ['everyPublicExportListed', 'rustHasEveryFeature', 'observableOutputEqual'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/tests/export-parity.test.js', 'js/scripts/generate-export-parity.mjs'],
+    rust: ['rust/tests/unit/javascript_export_parity.rs', 'rust/tests/unit/export_parity_corpus.rs'],
   },
   {
     id: 'I195-GRAMMAR-BULK-PIPELINE',

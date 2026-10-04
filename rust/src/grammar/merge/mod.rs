@@ -25,6 +25,7 @@ use std::fmt;
 use serde::Serialize;
 
 use super::{Grammar, GrammarRule};
+use crate::decorators::{DecoratorLevel, DecoratorSet, decorator_record, record_field};
 
 /// How an accepted equivalence is justified.
 pub const GRAMMAR_MERGE_METHOD: &str = "recursive-structural-bisimulation";
@@ -83,6 +84,11 @@ pub struct GrammarMergeOptions<'a> {
     /// An earlier result: unchanged groups are reused and established
     /// canonical names are kept.
     pub previous: Option<&'a GrammarMergeResult>,
+    /// `merge-decision` decorators, which see each decision as `{ kind,
+    /// name, members, basis, definition }` (members joined by spaces): they
+    /// may change the kind or the basis, and `drop` removes the decision.
+    /// They change the reported decisions only, never the merged grammar.
+    pub decorators: DecoratorSet,
 }
 
 /// What the merge decided about one class of rules.
@@ -116,6 +122,21 @@ impl GrammarMergeDecisionKind {
             Self::Uncertain => "uncertain",
             Self::DeclarationConflict => "declaration-conflict",
         }
+    }
+
+    /// The kind whose textual form is `text`.
+    #[must_use]
+    pub fn parse(text: &str) -> Option<Self> {
+        [
+            Self::Merged,
+            Self::KeptUnique,
+            Self::RenamedForCollision,
+            Self::HomonymKeptDistinct,
+            Self::Uncertain,
+            Self::DeclarationConflict,
+        ]
+        .into_iter()
+        .find(|kind| kind.as_str() == text)
     }
 }
 
@@ -473,7 +494,14 @@ pub fn merge_grammars(
                 ids.contains(source_of(first)) || ids.contains(source_of(second))
             })
             .collect();
-        let fingerprint = group_fingerprint(language, edition, &entry, &group_required, &samples)?;
+        let fingerprint = group_fingerprint(
+            language,
+            edition,
+            &entry,
+            &group_required,
+            &samples,
+            &options.decorators,
+        )?;
         let previous = previous_groups.get(key.as_str()).copied();
         if let Some(previous) = previous.filter(|previous| previous.fingerprint == fingerprint) {
             groups.push(previous.clone());
@@ -482,14 +510,16 @@ pub fn merge_grammars(
         }
         let empty = BTreeMap::new();
         let previous_identities = previous.map_or(&empty, |previous| &previous.identities);
-        groups.push(merge_group(
+        let mut group = merge_group(
             language,
             edition,
             &entry,
             fingerprint,
             &samples,
             previous_identities,
-        )?);
+        )?;
+        group.decisions = decorate_decisions(group.decisions, &options.decorators)?;
+        groups.push(group);
         recomputed.push(key);
     }
 
@@ -502,6 +532,40 @@ pub fn merge_grammars(
         reused,
         recomputed,
     })
+}
+
+fn decorate_decisions(
+    decisions: Vec<GrammarMergeDecision>,
+    decorators: &DecoratorSet,
+) -> Result<Vec<GrammarMergeDecision>, GrammarMergeError> {
+    if !decorators.has(DecoratorLevel::MergeDecision) {
+        return Ok(decisions);
+    }
+    let mut kept = Vec::with_capacity(decisions.len());
+    for mut decision in decisions {
+        let record = decorator_record([
+            ("kind", decision.kind.as_str()),
+            ("name", &decision.name),
+            ("members", &decision.members.join(" ")),
+            ("basis", &decision.basis),
+            (
+                "definition",
+                decision.definition.as_deref().unwrap_or_default(),
+            ),
+        ]);
+        let Some(decorated) = decorators.decorate(DecoratorLevel::MergeDecision, &record) else {
+            continue;
+        };
+        let kind = record_field(&decorated, "kind");
+        decision.kind = GrammarMergeDecisionKind::parse(kind).ok_or_else(|| {
+            GrammarMergeError::new(format!(
+                "a decorator set the unknown decision kind {kind:?}"
+            ))
+        })?;
+        record_field(&decorated, "basis").clone_into(&mut decision.basis);
+        kept.push(decision);
+    }
+    Ok(kept)
 }
 
 /// Fails when a merge left a required equivalence unresolved.

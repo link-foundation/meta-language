@@ -81,7 +81,7 @@ function runHooks(decorators) {
     conceptMapping: { from, rule, to, relation: mapping.relation, rules: mapping.rules },
     executor: { source: hooks.executor.source, kinds: kinds(parser.parse(hooks.executor.source)) },
     recovery: { source: hooks.recovery.source, missing: missing(recovering.parseTree(hooks.recovery.source).tree) },
-    cstToAst: { ...hooks.cstToAst, terms: program.sourceMappings.map(({ term }) => term) },
+    cstToAst: { ...hooks.cstToAst, terms: program.sourceMappings.map(({ term }) => term).sort() },
     transformation: { ...hooks.transformation, text: network.reconstructText() },
     emitter: { format: 'gbnf', source: emitGbnf(imported, options).source },
     translationRule: { ...hooks.translationRule, text: rules.render('JavaScript', shell, command, options) },

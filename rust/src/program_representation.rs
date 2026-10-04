@@ -16,6 +16,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt;
 
+use crate::decorators::{DecoratorLevel, DecoratorSet, decorator_record, record_field};
 use crate::{LinkNetwork, LinkType, ParseConfiguration, language_support};
 use analysis::{
     SemanticToken, effect_markers, extension_markers, module_markers, proof_markers,
@@ -405,10 +406,19 @@ impl ProgramRepresentation {
         language: &str,
         project: ProgramProjectContext,
     ) -> Result<Self, ProgramRepresentationError> {
+        Self::analyze_decorated(source, language, project, &DecoratorSet::empty())
+    }
+
+    fn analyze_decorated(
+        source: &str,
+        language: &str,
+        project: ProgramProjectContext,
+        decorators: &DecoratorSet,
+    ) -> Result<Self, ProgramRepresentationError> {
         let support = language_support(language)
             .ok_or_else(|| ProgramRepresentationError::UnsupportedLanguage(language.to_string()))?;
         let network = LinkNetwork::parse(source, support.name, ParseConfiguration::default());
-        let source_mappings = syntax_facts(&network);
+        let source_mappings = decorate_syntax_facts(syntax_facts(&network), source, decorators);
         let tokens = semantic_tokens(source, support.name, &source_mappings);
         let (scopes, bindings, unresolved_references) =
             resolve_bindings(&tokens, &source_mappings, source.len(), support.name);
@@ -587,6 +597,43 @@ pub fn analyze_program(
     project: ProgramProjectContext,
 ) -> Result<ProgramRepresentation, ProgramRepresentationError> {
     ProgramRepresentation::analyze(source, language, project)
+}
+
+/// [`analyze_program`] after the `cst-to-ast` decorators of `decorators`.
+///
+/// They see each syntax node the model is built from as `{ term, text }`:
+/// setting `term` changes the construct the semantics read it as, and `drop`
+/// leaves it out of the model. The network keeps the parsed tree either way.
+pub fn analyze_program_decorated(
+    source: &str,
+    language: &str,
+    project: ProgramProjectContext,
+    decorators: &DecoratorSet,
+) -> Result<ProgramRepresentation, ProgramRepresentationError> {
+    ProgramRepresentation::analyze_decorated(source, language, project, decorators)
+}
+
+// The syntax facts the `cst-to-ast` decorators leave, with the terms they set.
+fn decorate_syntax_facts(
+    facts: Vec<ProgramSourceMapping>,
+    source: &str,
+    decorators: &DecoratorSet,
+) -> Vec<ProgramSourceMapping> {
+    if !decorators.has(DecoratorLevel::CstToAst) {
+        return facts;
+    }
+    facts
+        .into_iter()
+        .filter_map(|mut fact| {
+            let text = source
+                .get(fact.range.start..fact.range.end)
+                .unwrap_or_default();
+            let record = decorator_record([("term", fact.term.as_str()), ("text", text)]);
+            let decorated = decorators.decorate(DecoratorLevel::CstToAst, &record)?;
+            record_field(&decorated, "term").clone_into(&mut fact.term);
+            Some(fact)
+        })
+        .collect()
 }
 
 /// Constructs a program and rejects syntax that cannot be represented cleanly.

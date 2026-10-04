@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
+use crate::decorators::{DecoratorLevel, DecoratorSet, decorator_record, record_field};
 use crate::language_profile::LanguageProfile;
 use crate::link_network::{Link, LinkId, LinkNetwork, LinkType};
 use crate::query::{LinkQuery, QueryCaptures, QueryMatch, QueryPredicate, QueryPredicateHost};
@@ -338,12 +339,30 @@ impl LinkNetwork {
 
     /// Applies a replacement rule to links selected by [`LinkNetwork::find`].
     pub fn replace(&mut self, matches: &[QueryMatch], rule: &ReplacementRule) -> ReplacementReport {
+        self.replace_decorated(matches, rule, &DecoratorSet::empty())
+    }
+
+    /// [`LinkNetwork::replace`] with the `transformation` decorators of
+    /// `decorators`, which see each captured-text replacement as
+    /// `{ capture, old, new }`: setting `new` changes the text written, and
+    /// `drop` leaves the match as it is.
+    pub fn replace_decorated(
+        &mut self,
+        matches: &[QueryMatch],
+        rule: &ReplacementRule,
+        decorators: &DecoratorSet,
+    ) -> ReplacementReport {
         match &rule.kind {
             ReplacementKind::CapturedText {
                 capture_name,
                 replacement,
             } => ReplacementReport {
-                text_replacements: self.replace_captured_text(matches, capture_name, replacement),
+                text_replacements: self.replace_captured_text(
+                    matches,
+                    capture_name,
+                    replacement,
+                    decorators,
+                ),
                 template_errors: Vec::new(),
                 substitution: SubstitutionReport::default(),
                 profile_diagnostics: Vec::new(),
@@ -430,6 +449,7 @@ impl LinkNetwork {
         matches: &[QueryMatch],
         capture_name: &str,
         replacement: &str,
+        decorators: &DecoratorSet,
     ) -> Vec<TextReplacement> {
         let mut touched_tokens = BTreeSet::new();
         let mut replacements = Vec::new();
@@ -450,6 +470,16 @@ impl LinkNetwork {
                 }
 
                 let old_text = text_for_tokens(self, &token_ids);
+                let record = decorator_record([
+                    ("capture", capture_name),
+                    ("old", old_text.as_str()),
+                    ("new", replacement),
+                ]);
+                let Some(decorated) = decorators.decorate(DecoratorLevel::Transformation, &record)
+                else {
+                    continue;
+                };
+                let replacement = record_field(&decorated, "new");
                 if old_text == replacement {
                     continue;
                 }

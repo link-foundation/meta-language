@@ -1,5 +1,73 @@
 export * from './query-algebra.js';
 
+export type DecoratorLevel =
+  | 'importer'
+  | 'grammar-rule'
+  | 'merge-decision'
+  | 'concept-mapping'
+  | 'executor'
+  | 'recovery'
+  | 'cst-to-ast'
+  | 'transformation'
+  | 'emitter'
+  | 'translation-rule';
+
+export const DECORATOR_LEVELS: readonly DecoratorLevel[];
+
+export type DecoratorRecord = Record<string, string>;
+
+export type DecoratorAction =
+  | { op: 'set'; field: string; value: string }
+  | { op: 'replace'; field: string; from: string; to: string }
+  | { op: 'drop' };
+
+export interface Decorator {
+  readonly id: string;
+  readonly level: DecoratorLevel;
+  readonly order: number;
+  readonly when: ReadonlyArray<readonly [string, string]>;
+  readonly actions: readonly DecoratorAction[];
+}
+
+export interface DecoratorSpec {
+  id: string;
+  level: DecoratorLevel;
+  order?: number;
+  when?: Array<[string, string]>;
+  actions: DecoratorAction[];
+}
+
+export class DecoratorError extends Error {}
+
+export function decorator(spec: DecoratorSpec): Decorator;
+
+export class DecoratorSet {
+  constructor(decorators?: Array<Decorator | DecoratorSpec>);
+  readonly decorators: readonly Decorator[];
+  readonly size: number;
+  static empty(): DecoratorSet;
+  static fromLino(text: string): DecoratorSet;
+  ids(): string[];
+  add(...decorators: Array<Decorator | DecoratorSpec>): DecoratorSet;
+  remove(id: string): DecoratorSet;
+  forLevel(level: DecoratorLevel): Decorator[];
+  has(level: DecoratorLevel): boolean;
+  decorate(level: DecoratorLevel, record: DecoratorRecord): DecoratorRecord | null;
+  decorateAll(level: DecoratorLevel, records: DecoratorRecord[]): DecoratorRecord[];
+  toLino(): string;
+}
+
+export type DecoratorInput = DecoratorSet | Array<Decorator | DecoratorSpec> | null | undefined;
+
+/** The options every decorated hook takes. */
+export interface DecoratorOptions {
+  decorators?: DecoratorInput;
+}
+
+export function decoratorSet(decorators: DecoratorInput): DecoratorSet;
+export function decorateGrammar(grammar: Grammar, decorators: DecoratorInput, level?: 'importer' | 'grammar-rule'): Grammar;
+export function decorateSyntaxTree(tree: SyntaxTreeNode | null, decorators: DecoratorInput): SyntaxTreeNode | null;
+
 export type LinkTypeValue =
   | 'Concept'
   | 'Document'
@@ -450,7 +518,7 @@ export function translateNativeConstruct(
   from: string,
   rule: string,
   to: string,
-  options?: { records?: readonly ConceptRecord[] },
+  options?: { records?: readonly ConceptRecord[] } & DecoratorOptions,
 ): ConstructTranslation;
 export function nativeConstructTree(id: string, source: string): ConstructTree;
 export function translateNativeConstructTree(
@@ -860,6 +928,7 @@ export function analyzeProgram(
   source: string,
   language: string,
   project?: ProgramProjectContext,
+  options?: DecoratorOptions,
 ): ProgramRepresentation;
 export const analyze_program: typeof analyzeProgram;
 export function constructProgram(
@@ -940,7 +1009,7 @@ export class LinkNetwork {
   len(): number;
   queryLinks(query: LinkQuery): Link[];
   find(query: LinkQuery): QueryMatch[];
-  replace(matches: QueryMatch[], rule: ReplacementRule): ReplacementReport;
+  replace(matches: QueryMatch[], rule: ReplacementRule, options?: DecoratorOptions): ReplacementReport;
   applySubstitution(rule: SubstitutionRule): SubstitutionReport;
   applyLinkCliSubstitutionText(source: string): SubstitutionReport;
   toLino(): string;
@@ -1065,7 +1134,8 @@ export class TranslationRuleSet {
   withRule(rule: TranslationRule): TranslationRuleSet;
   withLanguageFallback(language: string, fallback: string): TranslationRuleSet;
   with_language_fallback(language: string, fallback: string): TranslationRuleSet;
-  render(targetLanguage: string, network: LinkNetwork, rootLinkId?: LinkIdValue): string;
+  render(targetLanguage: string, network: LinkNetwork, rootLinkId?: LinkIdValue, options?: DecoratorOptions): string;
+  decorated(decorators: DecoratorInput): TranslationRuleSet;
   toLino(): string;
   toJson(): string;
   static fromLino(source: string): TranslationRuleSet;
@@ -1214,7 +1284,7 @@ export class GrammarBuilder {
 
 export const ExprBuilder: typeof GrammarBuilder;
 export function emitPeggy(grammar: Grammar): string;
-export interface GrammarParserOptions {
+export interface GrammarParserOptions extends DecoratorOptions {
   /** Returns the grammar an import or an embedded language names. */
   resolveGrammar?: (name: string) => Grammar | NormalizedGrammar | null | undefined;
   startRule?: string;
@@ -1315,21 +1385,21 @@ export class GrammarImportError extends Error {
   kind: 'parse' | 'unsupported';
   construct?: string;
 }
-export function importAbnf(source: string): Grammar;
+export function importAbnf(source: string, options?: DecoratorOptions): Grammar;
 export const import_abnf: typeof importAbnf;
-export function importAntlr(source: string): Grammar;
+export function importAntlr(source: string, options?: DecoratorOptions): Grammar;
 export const import_antlr: typeof importAntlr;
-export function importBnf(source: string): Grammar;
+export function importBnf(source: string, options?: DecoratorOptions): Grammar;
 export const import_bnf: typeof importBnf;
-export function importEbnf(source: string): Grammar;
+export function importEbnf(source: string, options?: DecoratorOptions): Grammar;
 export const import_ebnf: typeof importEbnf;
-export function importGbnf(source: string): Grammar;
+export function importGbnf(source: string, options?: DecoratorOptions): Grammar;
 export const import_gbnf: typeof importGbnf;
-export function importLark(source: string): Grammar;
+export function importLark(source: string, options?: DecoratorOptions): Grammar;
 export const import_lark: typeof importLark;
-export function importPest(source: string): Grammar;
+export function importPest(source: string, options?: DecoratorOptions): Grammar;
 export const import_pest: typeof importPest;
-export function importTreeSitterJson(source: string | unknown): Grammar;
+export function importTreeSitterJson(source: string | unknown, options?: DecoratorOptions): Grammar;
 export const import_tree_sitter_json: typeof importTreeSitterJson;
 
 export class GrammarEmitError extends Error {
@@ -1344,21 +1414,21 @@ export interface GrammarEmitResult {
   source: string;
   report: GrammarEmitReport;
 }
-export function emitAbnf(grammar: Grammar): GrammarEmitResult;
+export function emitAbnf(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
 export const emit_abnf: typeof emitAbnf;
-export function emitAntlr(grammar: Grammar): GrammarEmitResult;
+export function emitAntlr(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
 export const emit_antlr: typeof emitAntlr;
-export function emitBnf(grammar: Grammar): GrammarEmitResult;
+export function emitBnf(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
 export const emit_bnf: typeof emitBnf;
-export function emitEbnf(grammar: Grammar): GrammarEmitResult;
+export function emitEbnf(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
 export const emit_ebnf: typeof emitEbnf;
-export function emitGbnf(grammar: Grammar): GrammarEmitResult;
+export function emitGbnf(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
 export const emit_gbnf: typeof emitGbnf;
-export function emitLark(grammar: Grammar): GrammarEmitResult;
+export function emitLark(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
 export const emit_lark: typeof emitLark;
-export function emitPest(grammar: Grammar): GrammarEmitResult;
+export function emitPest(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
 export const emit_pest: typeof emitPest;
-export function emitTreeSitterJson(grammar: Grammar): GrammarEmitResult;
+export function emitTreeSitterJson(grammar: Grammar, options?: DecoratorOptions): GrammarEmitResult;
 export const emit_tree_sitter_json: typeof emitTreeSitterJson;
 
 export const GRAMMAR_MERGE_METHOD: 'recursive-structural-bisimulation';
@@ -1411,7 +1481,7 @@ export interface GrammarMergeResult {
   reused: string[];
   recomputed: string[];
 }
-export interface GrammarMergeOptions {
+export interface GrammarMergeOptions extends DecoratorOptions {
   samples?: Record<string, string[]>;
   requiredEquivalences?: Array<[string, string]>;
   previous?: GrammarMergeResult | null;

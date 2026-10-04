@@ -1578,7 +1578,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "419d2f67b4882ba1085752053f043525bf1ad7936816d196e74bacdaadc5aa74"
+      "sha256": "5a9d8dc735184527ed93c8850e3602e1bc9d8c6b9cddbc796d42506aa7837503"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1588,7 +1588,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "419d2f67b4882ba1085752053f043525bf1ad7936816d196e74bacdaadc5aa74"
+      "sha256": "5a9d8dc735184527ed93c8850e3602e1bc9d8c6b9cddbc796d42506aa7837503"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1783,7 +1783,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "15704c2a3d0c37d7ef51a47b09834ee059285a1bcedf8b4b79083b2bd2a3fc02"
+      "sha256": "ca6cc207d57e672a95747b42d09c2681bf0672c86febe626923d8dffea80479e"
     },
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
@@ -1976,9 +1976,9 @@
       "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-decorators-every-level": {
-      "path": "docs/vision.md",
-      "selector": "#javascript-first-and-self-translation: one decorator API at every level",
-      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+      "path": "parity/decorators/cases.json",
+      "selector": "docs/vision.md#javascript-first-and-self-translation: one decorator API at every level",
+      "sha256": "044a465edacc87fa36d7f8c86860edb22fc83ec00a69910b90a95e859c3f162e"
     },
     "planned:repository-directive:i195-parity-feature-completeness": {
       "path": "docs/vision.md",
@@ -15601,8 +15601,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/decorators.js",
+          "js/src/grammar-decorators.js"
+        ],
+        "rust": [
+          "rust/src/decorators.rs",
+          "rust/src/grammar/decorators.rs"
+        ]
       },
       "verifications": [
         {
@@ -15641,7 +15647,7 @@
       "traceability": {
         "specification": "docs/vision.md#javascript-first-and-self-translation",
         "inventories": [
-          "docs/vision.md"
+          "parity/decorators/cases.json"
         ],
         "sources": [
           "acceptanceGate",
@@ -23694,8 +23700,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/tests/export-parity.test.js",
+          "js/scripts/generate-export-parity.mjs"
+        ],
+        "rust": [
+          "rust/tests/unit/javascript_export_parity.rs",
+          "rust/tests/unit/export_parity_corpus.rs"
+        ]
       },
       "verifications": [
         {

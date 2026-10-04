@@ -34,6 +34,8 @@ pub use operations::OperationValue;
 pub use tree::{Ambiguity, LeafText, SyntaxAttributes, SyntaxTree};
 
 use super::Grammar;
+use super::decorators::{decorate_grammar, decorate_syntax_tree};
+use crate::decorators::{DecoratorError, DecoratorLevel, DecoratorSet};
 use executor::Executor;
 use operations::Abort;
 use program::Compiled;
@@ -69,6 +71,11 @@ pub struct FeatureParseOptions {
     pub error_recovery: Option<bool>,
     /// The bound on repair points of automatic recovery (default 32).
     pub max_repairs: Option<usize>,
+    /// Decorators of the `grammar-rule` level, applied to the grammar a
+    /// parser is compiled from, and of the `executor` and `recovery` levels,
+    /// applied to every tree (see [`decorate_syntax_tree`]). An empty set
+    /// keeps the decorators the parser was compiled with.
+    pub decorators: DecoratorSet,
 }
 
 impl FeatureParseOptions {
@@ -82,6 +89,11 @@ impl FeatureParseOptions {
             accept_recovery: self.accept_recovery.or(base.accept_recovery),
             error_recovery: self.error_recovery.or(base.error_recovery),
             max_repairs: self.max_repairs.or(base.max_repairs),
+            decorators: if self.decorators.is_empty() {
+                base.decorators.clone()
+            } else {
+                self.decorators.clone()
+            },
         }
     }
 }
@@ -207,8 +219,10 @@ pub fn compile_feature_grammar(
     resolve_grammar: Option<GrammarResolver<'_>>,
     options: FeatureParseOptions,
 ) -> Result<FeatureGrammarParser, GrammarRuntimeError> {
+    let decorated = decorate_grammar(grammar, &options.decorators, DecoratorLevel::GrammarRule)
+        .map_err(decorator_error)?;
     Ok(FeatureGrammarParser {
-        compiled: load::load(grammar, resolve_grammar)?,
+        compiled: load::load(&decorated, resolve_grammar)?,
         options,
     })
 }
@@ -240,7 +254,7 @@ impl FeatureGrammarParser {
             });
         };
         let compiled = &self.compiled;
-        Ok(std::thread::scope(|scope| {
+        let mut outcome = std::thread::scope(|scope| {
             std::thread::Builder::new()
                 .stack_size(PARSE_STACK)
                 .spawn_scoped(scope, || {
@@ -254,7 +268,13 @@ impl FeatureGrammarParser {
                             .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
                     },
                 )
-        }))
+        });
+        if let Some(tree) = &outcome.tree {
+            outcome.tree = Some(
+                decorate_syntax_tree(tree, &options.decorators, source).map_err(decorator_error)?,
+            );
+        }
+        Ok(outcome)
     }
 
     /// Parses `source` into its concrete syntax tree.
@@ -280,6 +300,52 @@ impl FeatureGrammarParser {
                     .unwrap_or_else(|| ParseRejection::positioned("syntax", source, 0)),
             }),
         }
+    }
+}
+
+/// Why [`parse_with_grammar`] produced no tree: the grammar did not compile,
+/// or the source did not parse.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ParseWithGrammarError {
+    /// The grammar did not load for the native executor.
+    Runtime(GrammarRuntimeError),
+    /// The source was rejected.
+    Parse(GrammarParseError),
+}
+
+impl fmt::Display for ParseWithGrammarError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Runtime(error) => error.fmt(formatter),
+            Self::Parse(error) => error.fmt(formatter),
+        }
+    }
+}
+
+impl std::error::Error for ParseWithGrammarError {}
+
+/// Compiles `grammar` with `options` and parses `source` with the same
+/// options, as the JavaScript `parseWithGrammar` does.
+///
+/// # Errors
+///
+/// [`ParseWithGrammarError::Runtime`] when the grammar does not compile and
+/// [`ParseWithGrammarError::Parse`] when the source is rejected.
+pub fn parse_with_grammar(
+    grammar: &Grammar,
+    source: &[u8],
+    options: &FeatureParseOptions,
+) -> Result<SyntaxTree, ParseWithGrammarError> {
+    compile_feature_grammar(grammar, None, options.clone())
+        .map_err(ParseWithGrammarError::Runtime)?
+        .parse(source, options)
+        .map_err(ParseWithGrammarError::Parse)
+}
+
+fn decorator_error(error: DecoratorError) -> GrammarRuntimeError {
+    GrammarRuntimeError {
+        reason: "decorator",
+        message: error.message,
     }
 }
 

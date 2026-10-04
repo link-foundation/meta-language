@@ -1,5 +1,5 @@
 {
-  "description": "Decorator cases both runtimes check: levels.lino holds one decorator per pipeline level and composition.lino decorators of one level that compose by order and then by id. A record case decorates one record; a hook case runs one pipeline hook with the whole levels set and compares a runtime-neutral view of its output.",
+  "description": "Decorator cases both runtimes check: levels.lino holds one decorator per pipeline level and composition.lino decorators of one level that compose by order and then by id. A record case decorates one record; a hook case runs one pipeline hook with the whole levels set and compares a runtime-neutral view of its output (the cst-to-ast terms sorted, since the runtimes list source mappings in different orders).",
   "records": [
     { "set": "composition", "level": "emitter", "record": { "line": "a" }, "expected": { "line": "tie-a" } },
     { "set": "composition", "level": "emitter", "record": { "line": "x a" }, "expected": { "line": "x c" } },
@@ -18,7 +18,7 @@
     "conceptMapping": { "from": "native-json", "rule": "pair", "to": "native-json5", "relation": "translated", "rules": ["property"] },
     "executor": { "source": "ab", "kinds": ["document", "glyph", "glyph"] },
     "recovery": { "source": "a", "missing": ["absent"] },
-    "cstToAst": { "source": "const a = 1;\n", "language": "JavaScript", "terms": ["const", "identifier", "=", "numeral", "variable_declarator", ";", "lexical_declaration", "program"] },
+    "cstToAst": { "source": "const a = 1;\n", "language": "JavaScript", "terms": [";", "=", "const", "identifier", "lexical_declaration", "numeral", "program", "variable_declarator"] },
     "transformation": { "source": "const oldName = call(oldName);\n", "language": "JavaScript", "query": "(identifier) @target (#eq? @target \"oldName\")", "capture": "target", "replacement": "newName", "text": "const newTitle = call(newTitle);\n" },
     "emitter": { "format": "gbnf", "source": "root ::=  letter letter\nletter ::=  \"a\" | \"b\"\n" },
     "translationRule": { "token": "ls", "template": "await $`{body}`;", "text": " $`ls`;" }

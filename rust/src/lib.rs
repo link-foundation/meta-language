@@ -7,6 +7,7 @@ mod concept_distinctions;
 mod concept_ontology;
 mod concept_records;
 pub mod configuration;
+pub mod decorators;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
@@ -81,6 +82,10 @@ pub use configuration::{
     AccessMode, FormalizationLevel, LanguageIdentificationDetector, NaturalizationDirection,
     ParseConfiguration, RegionDetectionPolicy, TriviaAttachmentPolicy,
 };
+pub use decorators::{
+    DECORATOR_LEVELS, Decorator, DecoratorAction, DecoratorError, DecoratorLevel, DecoratorRecord,
+    DecoratorSet, decorator_record, record_field,
+};
 pub use document_formatting::{
     BlockNode, CROSS_FORMAT_CONCEPT_IDS, CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS,
     DocumentFormatInstance, DocumentFormatMatch, DocumentFormattingSeedReport, FormattingDocument,
@@ -97,8 +102,9 @@ pub use foundation_models::{
 };
 pub use grammar::feature_runtime::{
     Ambiguity, FeatureGrammarParser, FeatureParseOptions, GrammarParseError, GrammarResolver,
-    GrammarRuntimeError, LeafText, OperationValue, ParseOutcome, ParseRejection, SyntaxAttributes,
-    SyntaxTree, compile_feature_grammar,
+    GrammarRuntimeError, LeafText, OperationValue, ParseOutcome, ParseRejection,
+    ParseWithGrammarError, SyntaxAttributes, SyntaxTree, compile_feature_grammar,
+    parse_with_grammar,
 };
 pub use grammar::interchange::{
     GRAMMAR_LOWERING_FORMATS, GrammarLowering, GrammarLoweringEncoding, GrammarLoweringError,
@@ -152,6 +158,11 @@ pub use grammar::{
     split_grammar_source,
 };
 pub use grammar::{
+    GRAMMAR_DIAGNOSTIC_KINDS, RepetitionBoundsError, accepts_text, canonical_repeat,
+    canonical_rule_definition, carry_rule_docs, choice, display_grammar_expression,
+    render_declaration_links, render_rule_fields, sequence,
+};
+pub use grammar::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
     GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,
     GrammarMergeFailureKind, GrammarMergeFailureReason, GrammarMergeNomination,
@@ -173,6 +184,7 @@ pub use grammar::{
 };
 #[cfg(feature = "llm-assist")]
 pub use grammar::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
+pub use grammar::{decorate_emitted, decorate_grammar, decorate_syntax_tree};
 pub use grammar_concepts::{
     ConceptReuse, ConstructTranslation, ConstructTranslationProblem, ConstructTranslationRelation,
     ConstructTree, ConstructTreeTranslation, GrammarConceptReuse, NativeConceptProblem,
@@ -180,7 +192,8 @@ pub use grammar_concepts::{
     check_native_grammar_concepts, check_native_grammar_concepts_in, native_construct_tree,
     native_grammar_concept_reuse, native_grammar_ids, native_grammar_language,
     native_grammar_rule_concepts, native_grammar_source, translate_native_construct,
-    translate_native_construct_in, translate_native_construct_tree,
+    translate_native_construct_decorated, translate_native_construct_in,
+    translate_native_construct_tree,
 };
 pub use graphql_adapter::{
     GraphQlAdapterError, GraphQlArgumentRole, GraphQlOperationType, GraphQlRootMapping,
@@ -203,7 +216,10 @@ pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
 pub use lino_parser::LinksNotationReading;
 pub use lino_serialization::LinoSerializationError;
-pub use mixed_regions::{EmbeddedRegion, script_language};
+pub use mixed_regions::{
+    EmbeddedRegion, detect_embedded_regions, detect_embedded_regions_in_tree, script_language,
+    sniff_language,
+};
 pub use natural_language_grammar::{
     NATURAL_LANGUAGE_GRAMMAR_FIXTURES, NaturalLanguageGrammarFixture,
 };
@@ -220,16 +236,17 @@ pub use program_representation::{
     ProgramConstruct, ProgramConstructStatus, ProgramDiagnostic, ProgramExpansion, ProgramFact,
     ProgramProjectContext, ProgramProjectModule, ProgramProjectReference, ProgramProjectSource,
     ProgramRange, ProgramRepresentation, ProgramRepresentationError, ProgramScope,
-    ProgramSourceMapping, SEMANTIC_CONSTRUCTS, analyze_program, construct_program,
-    construct_program_from_fragments,
+    ProgramSourceMapping, SEMANTIC_CONSTRUCTS, analyze_program, analyze_program_decorated,
+    construct_program, construct_program_from_fragments,
 };
 pub use program_translation::{
     DecodedProgramTranslation, ProgramTranslation, ProgramTranslationError,
     decode_program_translation, read_translation_provenance, translate_program,
 };
 pub use query::{
-    LinkQuery, QueryCapture, QueryCaptures, QueryMatch, QueryParseError, QueryPredicate,
-    QueryPredicateArgument, QueryPredicateHost,
+    LinkQuery, QueryCapture, QueryCaptures, QueryIndex, QueryMatch, QueryParseError,
+    QueryPredicate, QueryPredicateArgument, QueryPredicateHost, RejectPredicateHost,
+    query_by_concept_term,
 };
 pub use query_algebra::{
     LinkRule, LinkRuleCapture, LinkRuleCaptures, LinkRuleMatch, LinkRuleParseError,

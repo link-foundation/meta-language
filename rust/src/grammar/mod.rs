@@ -25,6 +25,7 @@
 
 mod builder;
 pub mod concepts;
+pub mod decorators;
 pub mod emit;
 pub mod feature;
 pub mod feature_runtime;
@@ -42,11 +43,12 @@ pub mod surface;
 pub mod translate;
 pub mod validate;
 
-pub use builder::ExprBuilder;
+pub use builder::{ExprBuilder, RepetitionBoundsError, canonical_repeat, choice, sequence};
 pub use concepts::{
     GRAMMAR_CONCEPTS, GrammarConcept, annotate_grammar_concepts, grammar_expr_concept_id,
     rule_concept_id,
 };
+pub use decorators::{decorate_emitted, decorate_grammar, decorate_syntax_tree};
 pub use emit::{
     EmitReport, GrammarEmitError, JsParserArtifacts, RustParserArtifacts, emit_abnf, emit_antlr,
     emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser, emit_lark, emit_peggy, emit_pest,
@@ -114,10 +116,10 @@ pub use interchange::{
     deserialize_grammar, emit_grammar_lossless, grammar_emitter, grammar_importer,
     import_grammar_lossless, parse_grammar_layout_links, parse_grammar_links,
     parse_links_expression, parse_native_grammar, percent_decode_links_text,
-    percent_encode_links_text, render_grammar_layout_links, render_grammar_links,
-    render_links_expression, render_native_expression, render_native_feature,
-    render_native_grammar, render_rule_link, run_grammar_command, serialize_grammar,
-    split_grammar_source,
+    percent_encode_links_text, render_declaration_links, render_grammar_layout_links,
+    render_grammar_links, render_links_expression, render_native_expression, render_native_feature,
+    render_native_grammar, render_rule_fields, render_rule_link, run_grammar_command,
+    serialize_grammar, split_grammar_source,
 };
 pub use merge::{
     GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
@@ -137,8 +139,8 @@ pub use reverse::{
 pub use round_trip::{
     GRAMMAR_ROUND_TRIP_MARKER, GrammarEmitFn, GrammarImportFn, GrammarRoundTrip,
     GrammarRoundTripError, GrammarRoundTripFailure, GrammarRoundTripFailureKind,
-    GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus,
-    check_grammar_round_trip, mutate_grammar_start_rule,
+    GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus, accepts_text,
+    canonical_rule_definition, check_grammar_round_trip, mutate_grammar_start_rule,
 };
 pub use runtime::{GrammarParser, register_grammar, with_grammar};
 pub use surface::{
@@ -148,7 +150,10 @@ pub use surface::{
 pub use translate::{
     GrammarTranslateError, grammar_concept_translation_rules, translate_grammar_surface,
 };
-pub use validate::{DiagnosticKind, GrammarDiagnostic, RuleSpan, Severity, validate};
+pub use validate::{
+    DiagnosticKind, GRAMMAR_DIAGNOSTIC_KINDS, GrammarDiagnostic, RuleSpan, Severity,
+    display_grammar_expression, validate,
+};
 
 use std::collections::BTreeSet;
 use std::fmt;
@@ -903,6 +908,33 @@ impl Grammar {
             .cloned()
             .collect()
     }
+}
+
+/// Copies the documentation of every rule of `source` onto the rule of
+/// `target` that `rename` names it.
+///
+/// As the JavaScript `carryRuleDocs` does, a rule of `source` without
+/// documentation, or one `target` lacks, changes nothing.
+#[must_use]
+pub fn carry_rule_docs(
+    mut target: Grammar,
+    source: &Grammar,
+    rename: &dyn Fn(&str) -> String,
+) -> Grammar {
+    for rule in source.rules() {
+        let Some(doc) = &rule.doc else {
+            continue;
+        };
+        let name = rename(&rule.name);
+        for carried in target
+            .rules
+            .iter_mut()
+            .filter(|carried| carried.name == name)
+        {
+            carried.doc = Some(doc.clone());
+        }
+    }
+    target
 }
 
 /// Fluent builder for order-preserving grammars.
