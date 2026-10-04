@@ -136,6 +136,9 @@ fn natives() -> Vec<Native> {
             "json5",
             Some(|| tree_sitter_json5_orchard::LANGUAGE.into())
         ),
+        // The Lean oracle is a vendored grammar private to the crate, not a
+        // development dependency, so its Rust row measures the native side.
+        native!("native-lean", "lean", None),
         native!(
             "native-racket",
             "racket",

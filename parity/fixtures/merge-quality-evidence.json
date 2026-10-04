@@ -91,7 +91,7 @@
       "coverage": {"rules": {"normal": 94, "atomic": 0, "silent": 34, "token": 15}, "visibleRules": 94, "exercisedRules": 90, "checkedKinds": 113, "checkedFields": 36, "renamed": 25, "expandedWords": 2, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 5, "conflict": 18, "precedences": 9, "extra": 3, "kind": 0},
       "correctness": {"matches": 146, "rows": 5816, "bytes": 12130, "divergences": 0, "rejections": 24},
-      "recovery": {"repaired": 24, "errorNodes": 4, "missingNodes": 34, "categories": {"native-skips-more": 10, "oracle-skips-more": 39, "same-repair-sites": 10, "same-skipped-bytes": 2}},
+      "recovery": {"repaired": 24, "errorNodes": 4, "missingNodes": 34, "categories": {"native-skips-more": 8, "oracle-skips-more": 41, "same-repair-sites": 11, "same-skipped-bytes": 2}},
       "reuse": {"shared": 142, "specific": 1}
     },
     {
@@ -132,6 +132,24 @@
       "reuse": {"shared": 11, "specific": 1}
     },
     {
+      "grammar": "native-lean",
+      "language": "Lean",
+      "links": "parity/grammars/native/lean.lino",
+      "fixture": "parity/fixtures/native-grammars/lean.json",
+      "oracle": "tree-sitter-lean4 0.3.0",
+      "sources": [
+        "https://github.com/wvhulle/tree-sitter-lean/blob/bd942cd2795016239be02b3b3d5ef635645ddd38/grammar.js",
+        "https://github.com/wvhulle/tree-sitter-lean/tree/bd942cd2795016239be02b3b3d5ef635645ddd38/test/corpus"
+      ],
+      "corpus": "https://github.com/wvhulle/tree-sitter-lean/tree/bd942cd2795016239be02b3b3d5ef635645ddd38/test/corpus",
+      "mergeReport": "parity/grammars/merge-reports/lean.json",
+      "coverage": {"rules": {"normal": 106, "atomic": 0, "silent": 28, "token": 13}, "visibleRules": 106, "exercisedRules": 86, "checkedKinds": 97, "checkedFields": 50, "renamed": 35, "expandedWords": 8, "approximations": 0, "unsupported": 0},
+      "features": {"scanner": 1, "conflict": 11, "precedences": 0, "extra": 2, "kind": 0},
+      "correctness": {"matches": 251, "rows": 5152, "bytes": 13446, "divergences": 1, "rejections": 42},
+      "recovery": {"repaired": 42, "errorNodes": 25, "missingNodes": 51, "categories": {"merged-extension": 1, "native-skips-more": 20, "oracle-skips-more": 52, "same-repair-sites": 15, "same-skipped-bytes": 9}},
+      "reuse": {"shared": 26, "specific": 121}
+    },
+    {
       "grammar": "native-racket",
       "language": "Racket",
       "links": "parity/grammars/native/racket.lino",
@@ -163,9 +181,9 @@
       "mergeReport": "parity/grammars/merge-reports/rust.json",
       "coverage": {"rules": {"normal": 147, "atomic": 0, "silent": 26, "token": 11}, "visibleRules": 147, "exercisedRules": 142, "checkedKinds": 163, "checkedFields": 31, "renamed": 45, "expandedWords": 12, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 6, "conflict": 9, "precedences": 0, "extra": 3, "kind": 3},
-      "correctness": {"matches": 179, "rows": 7829, "bytes": 15707, "divergences": 0, "rejections": 38},
+      "correctness": {"matches": 182, "rows": 7903, "bytes": 15796, "divergences": 0, "rejections": 38},
       "recovery": {"repaired": 38, "errorNodes": 15, "missingNodes": 58, "categories": {"native-skips-more": 14, "oracle-skips-more": 49, "same-repair-sites": 7, "same-skipped-bytes": 5}},
-      "reuse": {"shared": 40, "specific": 144}
+      "reuse": {"shared": 46, "specific": 138}
     },
     {
       "grammar": "native-scheme",
