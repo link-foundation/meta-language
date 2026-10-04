@@ -108,7 +108,7 @@ function addResult(results, result, tokens = null) {
     return;
   }
   if (result.cost > existing.cost) return;
-  const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing, tokens.orders, tokens.grammar, tokens.bytes) : 0;
+  const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing, tokens.orders, tokens.grammar, tokens.bytes, tokens.owner) : 0;
   // A trace, off unless a probe sets the array (see
   // experiments/native-order-trace.mjs): every decided pair and its order.
   globalThis.__orderTrace?.push([result, existing, order]);
@@ -194,7 +194,30 @@ function preferredTokens(result, existing, tokens) {
   for (;;) {
     const a = peek(left);
     const b = peek(right);
-    if (a === null || b === null) return 0;
+    if (a === null || b === null) {
+      // One parse ends where the other goes on with a token of the external
+      // scanner, which then scans it, of no width, in the state both share
+      // (TypeScript's automatic semicolon after `namespace A {}` before a
+      // line break, which the expression statement takes and the
+      // declaration cannot): the lexer took it before any parse decided, if
+      // the two did not part before it (`declare module "m" {}` before a line
+      // break, whose `{` one parse shifts as the module's body where the
+      // other reduced the module, decides first), and if the node the ended
+      // parse closes with is one the other reduced too (where `{}` after a
+      // line break is a statement block in one and an object in the other,
+      // the two reduced apart, and the block could take the token itself).
+      const rest = a === null ? right : left;
+      if (a === null && b === null) return 0;
+      const ended = (a === null ? result : existing).children.filter((child) => !isTrivia(child)).at(-1);
+      if (ended?.type !== 'node' || !hasNode((a === null ? existing : result).children, ended)) return 0;
+      for (let next = peek(rest); next !== null; next = peek(rest)) {
+        if (isTrivia(next)) skip(rest);
+        else if (next.type === 'node') enter(rest, next);
+        else if (next.start !== next.end || !scannedToken(next) || next.start > decided) return 0;
+        else return next.start <= partingEnd(result.children, existing.children) ? (a === null ? -1 : 1) : 0;
+      }
+      return 0;
+    }
     if (a === b) {
       lookahead(a);
       skip(left);
@@ -246,6 +269,36 @@ function preferredTokens(result, existing, tokens) {
       skipped = [[], []];
     }
   }
+}
+
+// Whether `children`, or a node below them, is a node of the kind and span of
+// `node`.
+function hasNode(children, node) {
+  return children.some((child) => child.type === 'node' && ((child.kind === node.kind && child.start === node.start && child.end === node.end) || hasNode(child.children, node)));
+}
+
+// The first end where two parses part, a node of one kind from one offset
+// that one of them ends there and the other goes on past (the `module` of
+// `declare module "m" {}`, which ends before the body in one), or Infinity.
+function partingEnd(first, second) {
+  const spans = (children, found = new Map()) => {
+    for (const child of children) {
+      if (child.type !== 'node') continue;
+      const key = `${child.kind}@${child.start}`;
+      if (!found.has(key)) found.set(key, new Set());
+      found.get(key).add(child.end);
+      spans(child.children, found);
+    }
+    return found;
+  };
+  const [mine, theirs] = [spans(first), spans(second)];
+  let end = Infinity;
+  for (const [key, ends] of mine) {
+    const other = theirs.get(key);
+    if (!other) continue;
+    for (const at of ends) if (!other.has(at)) end = Math.min(end, at, ...other);
+  }
+  return end;
 }
 
 // Whether a parse that has `leaf` alone and one that has `node`, which begins
@@ -517,9 +570,11 @@ function comparePrecedence(a, b, orders) {
 // shorter one was reduced where the longer one shifted on, and as the item in
 // progress is the node's own rule, its precedence in the two decides: the
 // higher level wins and, on equal levels, the associativity of the reduced
-// node, right to shift and left to reduce. 1 when `result` is kept, -1 when
-// `existing` is, 0 when neither.
-function shiftOrder(result, existing, orders, grammar, bytes) {
+// node, right to shift and left to reduce. `owner` is the precedence the two
+// results are parts of, when a precedence expression holds them (see
+// `extraReduction`). 1 when `result` is kept, -1 when `existing` is, 0 when
+// neither.
+function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
   const left = [[result.children, 0, null]];
   const right = [[existing.children, 0, null]];
   const peek = (stack) => {
@@ -565,9 +620,15 @@ function shiftOrder(result, existing, orders, grammar, bytes) {
       // macro invocation that `_expression_except_range` reduces under
       // `(precedence 1 none (ref macro_invocation))` and
       // `_declaration_statement` of level 0) conflicts at its end: the higher
-      // level it was reduced with wins.
+      // level it was reduced with wins. A node reduced under none is ranked
+      // by the first rule only it was reduced to (TypeScript's
+      // `namespace N {}`, an `internal_module` that `declaration` reduces
+      // under the name `declaration` and `expression` under none, which the
+      // order ranks below).
       if (pair) {
-        const order = comparePrecedence(pair[0].reduced ?? unranked(), pair[1].reduced ?? unranked(), orders);
+        const [x, y] = pair;
+        const own = (node, other) => node.reduced ?? unranked(node.reducedTo?.find((name) => !other.reducedTo?.includes(name)) ?? null);
+        const order = comparePrecedence(own(x, y), own(y, x), orders);
         if (order !== 0) return order;
       }
       // Two nodes of different kinds over the same tokens (JavaScript's
@@ -583,7 +644,7 @@ function shiftOrder(result, existing, orders, grammar, bytes) {
     }
     const lone = loneReduction(a, b, orders) || -loneReduction(b, a, orders);
     if (lone !== 0) return lone;
-    const reduced = extraReduction(a, b, right, orders) || -extraReduction(b, a, left, orders);
+    const reduced = extraReduction(a, b, right, orders, owner) || -extraReduction(b, a, left, orders, owner);
     if (reduced !== 0) return reduced;
     if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
       const parted = chainConflict(a, b, orders, grammar);
@@ -632,9 +693,14 @@ function loneReduction(a, b, orders) {
 // reductions of the same text then conflict at the end of that node, which
 // one result reduces where the other reduces or shifts in its own node: the
 // higher precedence level wins and, on equal levels where the other node
-// goes on, the associativity of the reduced node. 1 when `a`'s result is
-// kept, -1 when the other is, 0 when neither.
-function extraReduction(a, b, stack, orders) {
+// goes on, the associativity of the reduced node. The results themselves
+// are in progress under `owner`, the precedence a precedence expression
+// holds them with (TypeScript's `extends A<X>`, whose
+// `_extends_clause_single` takes `A` and `<X>` under the name `extends` where
+// an `instantiation_expression` reduces them under `instantiation`, which the
+// order ranks below), else under none. 1 when `a`'s result is kept, -1 when
+// the other is, 0 when neither.
+function extraReduction(a, b, stack, orders, owner = null) {
   if (a.type !== 'node') return 0;
   let parent = a;
   for (;;) {
@@ -649,7 +715,7 @@ function extraReduction(a, b, stack, orders) {
   const own = parent.children.filter((child) => !isTrivia(child));
   if (own.length > next.length || own.some((child, at) => !sameTree(child, next[at]))) return 0;
   const mine = reduction(parent);
-  const other = container?.precedence ?? unranked(container?.rule ?? null);
+  const other = container ? container.precedence ?? unranked(container.rule) : owner ?? unranked();
   const order = comparePrecedence(mine, other, orders);
   if (order !== 0) return order;
   if (!container || container.end > parent.end) {
@@ -939,17 +1005,23 @@ function reduction(node) {
 // parser completes at the conflict (Rust's `let bar = || baz && quux`, where
 // the closure of level -1 ends with `baz`, not the `let` condition), or the
 // precedence a token ending a silent rule keeps (see `loneReduction`); else
-// the precedence `short` reduces with.
+// the precedence of the innermost silent rule on the chain that the chain's
+// token or node ends (TypeScript's `namespace N {}` and `module "m" {}`,
+// whose `module_name_and_body` of level 0 right ends with the name where the
+// body is left out, so the body shifts); else the precedence `short` reduces
+// with.
 function reducedBefore(short, progress) {
   const first = progress.children.find((child) => !isTrivia(child));
+  let closing = null;
   for (let node = short; first && node.type === 'node';) {
     const meaningful = node.children.filter((child) => !isTrivia(child));
     const last = meaningful[meaningful.length - 1];
     if (!last) break;
     if (sameTree(last, first)) return (last.type === 'token' && last.reduced) || reduction(node);
     node = last;
+    closing = (node.type === 'token' ? node.reduced ?? node.precedence : node.closes) ?? closing;
   }
-  return reduction(short);
+  return closing ?? reduction(short);
 }
 
 // The offset of the first leaf under a node that is not white space.
@@ -1498,8 +1570,10 @@ export class Executor {
 
   // `keep`, when given, filters the complete sequences before they are
   // deduplicated, so a precedence filter never loses a valid parse to an
-  // invalid one that reached the same end first.
-  sequence(items, position, state, inToken, keep = null) {
+  // invalid one that reached the same end first; `owner` is that filter's
+  // precedence, the one the sequence's parts are in progress under.
+  sequence(items, position, state, inToken, keep = null, owner = null) {
+    const tokens = owner && this.longestTokens ? { ...this.longestTokens, owner } : this.longestTokens;
     let current = [makeResult(position, state)];
     for (const [index, item] of items.entries()) {
       const next = new Map();
@@ -1508,7 +1582,7 @@ export class Executor {
         for (const right of this.continuation(item, left, inToken)) {
           const joined = joinResults(left, right, inToken);
           if (last && keep && !keep(joined)) continue;
-          addResult(next, joined, this.longestTokens);
+          addResult(next, joined, tokens);
         }
       }
       current = [...next.values()];
@@ -1660,7 +1734,7 @@ export class Executor {
     };
     let results = inToken
       ? this.evaluate(expression.item, position, state, inToken)
-      : this.filtered(expression.item, position, state, valid);
+      : this.filtered(expression.item, position, state, valid, tag);
     if (pending.length > 0) results = this.lonePending(results, pending);
     return results.map((result) => {
       if (inToken) return copyResult(result, { precedence: tag });
@@ -1920,14 +1994,16 @@ export class Executor {
   }
 
   // The results of `expression` that `keep` accepts, filtered before a
-  // sequence or an unordered choice merges results of the same end and state.
-  filtered(expression, position, state, keep) {
-    if (expression.kind === 'seq' && expression.items.length > 0) return this.sequence(expression.items, position, state, false, keep);
+  // sequence or an unordered choice merges results of the same end and state
+  // under `owner`, the precedence of the filter.
+  filtered(expression, position, state, keep, owner = null) {
+    if (expression.kind === 'seq' && expression.items.length > 0) return this.sequence(expression.items, position, state, false, keep, owner);
     if (expression.kind === 'choice' && !expression.ordered && !this.peg) {
       this.step();
       const results = new Map();
+      const tokens = owner && this.longestTokens ? { ...this.longestTokens, owner } : this.longestTokens;
       for (const item of expression.items) {
-        for (const result of this.filtered(item, position, state, keep)) addResult(results, result, this.longestTokens);
+        for (const result of this.filtered(item, position, state, keep, owner)) addResult(results, result, tokens);
       }
       return [...results.values()];
     }
