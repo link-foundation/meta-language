@@ -6,10 +6,13 @@ import {
   GRAMMARS_V4_SOURCES,
   bulkLanguageRow,
   bulkLanguages,
+  descEntryPoint,
   missingFeatures,
   renderMatrix,
+  startingAt,
 } from '../scripts/run-grammar-bulk-pipeline.mjs';
 import { GRAMMAR_SOURCES } from '../scripts/build-vendored-grammars.mjs';
+import { compileGrammar, importAntlr } from '../src/index.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 // The pipeline over all 57 languages runs in CI (the grammar-bulk-pipeline
@@ -74,6 +77,23 @@ test('a bulk row imports, compiles, parses and merges a pinned grammar and lists
   assert.deepEqual(failing.missing.map(({ stage }) => stage), ['tree-sitter sample']);
   assert.match(failing.missing[0].feature, /^\w+ at \d+:\d+/u);
   observe(['everyCatalogLanguageImported', 'missingFeaturesListed'], 'bulk row on a pinned grammar');
+});
+
+test('a grammars-v4 grammar starts at the entry point its desc.xml names', () => {
+  const desc = '<desc>\n   <targets>Java</targets>\n   <entry-point>program</entry-point>\n</desc>\n';
+  assert.equal(descEntryPoint(desc), 'program');
+  assert.equal(descEntryPoint('<desc><targets>Java</targets></desc>'), null);
+  // Like TypeScriptParser.g4, the first rule is not the one the tests parse from.
+  const imported = importAntlr("grammar G; initializer : '=' NUMBER ; program : initializer? NUMBER EOF ; NUMBER : [0-9]+ ; WS : ' ' -> skip ;");
+  assert.equal(imported.startRule().name, 'initializer');
+  const grammar = startingAt(imported, descEntryPoint(desc));
+  assert.equal(grammar.startRule().name, 'program');
+  assert.deepEqual(grammar.ruleNames(), imported.ruleNames());
+  assert.ok(compileGrammar(grammar).parseTree('= 1 2').tree);
+  assert.equal(compileGrammar(imported).parseTree('= 1 2').tree ?? null, null);
+  assert.equal(startingAt(imported, null), imported);
+  assert.equal(startingAt(imported, 'missing'), imported);
+  observe(['everyCatalogLanguageImported'], 'bulk grammars-v4 entry point');
 });
 
 test('missing features name the stage and feature of every failure and the matrix lists them', () => {

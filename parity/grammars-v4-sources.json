@@ -1,5 +1,5 @@
 {
-  "description": "The pinned antlr/grammars-v4 grammars js/scripts/run-grammar-bulk-pipeline.mjs imports beside the tree-sitter grammar of each inventory language. Files are concatenated in order: parser grammars first, so the first parser rule is the start rule. A language absent from languages has no grammars-v4 grammar at the revision; notes say why a near match is not used.",
+  "description": "The pinned antlr/grammars-v4 grammars js/scripts/run-grammar-bulk-pipeline.mjs imports beside the tree-sitter grammar of each inventory language. Files are concatenated in order, parser grammars first. The start rule is the entry point named in the desc.xml beside the first file; without one, it is the first parser rule. A language absent from languages has no grammars-v4 grammar at the revision; notes say why a near match is not used.",
   "repository": "https://github.com/antlr/grammars-v4",
   "revision": "7df52be94698550d219d299d04105c6bafadd9c3",
   "license": "Each grammar carries its own license header (most BSD or MIT).",

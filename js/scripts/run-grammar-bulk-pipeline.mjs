@@ -22,6 +22,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Grammar } from '../src/grammar.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
@@ -68,13 +69,31 @@ export async function treeSitterGrammarJson(id) {
   return { origin: `crates.io ${source.crate} ${version}`, text: readFileSync(join(crateDir, source.dir, 'src/grammar.json'), 'utf8') };
 }
 
-/** The concatenated pinned grammars-v4 text of `language`, or null. */
+/**
+ * The concatenated pinned grammars-v4 text of `language` and its entry point,
+ * or null. ANTLR has no start rule: grammars-v4 names the rule its tests
+ * parse from in the `desc.xml` beside the grammar. Without one, the first
+ * parser rule is the start rule.
+ */
 export async function grammarsV4Text(language) {
   const { revision, languages } = readJson(GRAMMARS_V4_SOURCES);
   const files = languages[language];
   if (!files) return null;
-  const texts = await Promise.all(files.map((file) => fetchCached(`https://raw.githubusercontent.com/antlr/grammars-v4/${revision}/${file}`)));
-  return { files, text: texts.join('\n') };
+  const url = (file) => `https://raw.githubusercontent.com/antlr/grammars-v4/${revision}/${file}`;
+  const texts = await Promise.all(files.map((file) => fetchCached(url(file))));
+  const desc = await fetchCached(url(`${dirname(files[0])}/desc.xml`)).catch(() => null);
+  return { files, text: texts.join('\n'), entryPoint: desc === null ? null : descEntryPoint(desc) };
+}
+
+/** The first `<entry-point>` of a grammars-v4 `desc.xml`, or null. */
+export function descEntryPoint(xml) {
+  return /<entry-point>\s*([A-Za-z_][A-Za-z0-9_]*)\s*<\/entry-point>/u.exec(xml)?.[1] ?? null;
+}
+
+/** `grammar` started at `name`, or `grammar` itself when it has no such rule. */
+export function startingAt(grammar, name) {
+  if (name === null || name === grammar.startRule()?.name || !grammar.rule(name)) return grammar;
+  return new Grammar(name, grammar.rules, grammar.sourceFormat, grammar.declarations);
 }
 
 const message = (error) => String(error?.message ?? error).split('\n')[0].slice(0, 300);
@@ -156,7 +175,8 @@ export async function bulkLanguageRow(entry, report = () => {}) {
     if (v4) {
       row.grammarsV4 = { files: v4.files, stage: 'import' };
       report(row);
-      const grammar = importAntlr(v4.text);
+      const grammar = startingAt(importAntlr(v4.text), v4.entryPoint);
+      row.grammarsV4.start = grammar.startRule()?.name;
       row.grammarsV4.rules = grammar.rules.size;
       row.grammarsV4.undefinedRules = grammar.undefinedNonterminals();
       row.grammarsV4.stage = 'compile';

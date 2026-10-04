@@ -18,7 +18,10 @@ stages:
 2. **grammars-v4 import.** The pipeline imports the pinned
    [antlr/grammars-v4](https://github.com/antlr/grammars-v4) grammar listed in
    [`parity/grammars-v4-sources.json`](../../parity/grammars-v4-sources.json).
-   A language without one has a note there instead.
+   A language without one has a note there instead. ANTLR has no start rule,
+   so the import starts at the `<entry-point>` that the `desc.xml` beside the
+   grammar names. grammars-v4 runs its own tests from that rule. Without a
+   `desc.xml`, the first parser rule is the start rule.
 3. **compile and parse.** Both grammars are compiled on the native executor
    and parse the catalog's sample source. The rows of the tree-sitter tree are
    compared with the oracle rows in
@@ -105,3 +108,8 @@ checks two things without downloading anything:
   - *Coverage.* The shared fixture
     [`case-insensitive.g4`](../../rust/tests/fixtures/grammar/antlr/case-insensitive.g4)
     checks both in both importers.
+- **grammars-v4 entry points.** The pipeline once started each grammar at its
+  first parser rule. TypeScriptParser.g4 begins with
+  `initializer : '=' singleExpression`, so the TypeScript sample was rejected
+  at its end, where `=` was expected. Starting at the `desc.xml` entry point
+  (`program`) lets the sample parse.
