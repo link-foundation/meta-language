@@ -7747,6 +7747,20 @@
       ]
     },
     {
+      "id": "generator js/scripts/build-merge-quality-evidence.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/build-merge-quality-evidence.mjs",
+      "declaredIn": [
+        "js/scripts/build-merge-quality-evidence.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": []
+    },
+    {
       "id": "generator js/scripts/build-native-grammar-concept-reuse.mjs@script",
       "category": "generator",
       "name": "js/scripts/build-native-grammar-concept-reuse.mjs",

@@ -414,6 +414,13 @@ node scripts/generate-native-grammar-fixtures.mjs
 `npm run check:native-grammars` runs the generator with `--check`. It fails
 when a fixture is stale, and CI runs it.
 
+The [merge quality evidence](merge-quality-evidence.md) compares every native
+grammar with its oracle on these corpora: coverage, preserved features,
+correctness, recovery, shared reuse, and time and memory in both runtimes.
+[`js/scripts/build-merge-quality-evidence.mjs`](../../js/scripts/build-merge-quality-evidence.mjs)
+writes it, and with `--measure` measures both executors again.
+`npm run check:merge-quality` fails when it is stale, and CI runs it.
+
 ## Default parse
 
 The language catalog lists the native grammar first in a native language's

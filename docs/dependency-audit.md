@@ -65,7 +65,7 @@ they are.
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 19 | 18 | 1 | 0 |
+| Generators | 20 | 19 | 1 | 0 |
 | Toolchains and tools | 16 | 14 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -524,6 +524,7 @@ they are.
 | `js/scripts/build-language-catalog.mjs` | `js/scripts/build-language-catalog.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-language-identification.mjs` | `js/scripts/build-language-identification.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-lean-root-names.mjs` | `js/scripts/build-lean-root-names.mjs` | `script` |  | derived | current |  |
+| `js/scripts/build-merge-quality-evidence.mjs` | `js/scripts/build-merge-quality-evidence.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-native-grammar-concept-reuse.mjs` | `js/scripts/build-native-grammar-concept-reuse.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-translation-stage-fixtures.mjs` | `js/scripts/build-translation-stage-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/build-vendored-grammars.mjs` | `js/scripts/build-vendored-grammars.mjs` | `script` |  | derived | current |  |

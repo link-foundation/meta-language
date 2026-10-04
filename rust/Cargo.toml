@@ -171,6 +171,12 @@ path = "tests/unit/mod.rs"
 name = "integration"
 path = "tests/integration/mod.rs"
 
+# The merge quality measurement counts heap bytes with a global allocator,
+# so it is a binary of its own.
+[[test]]
+name = "merge_quality"
+path = "tests/merge_quality.rs"
+
 # Lean debug and test builds (docs/cache-cleanup.md): line tables keep
 # backtraces readable at a fraction of the size, and incremental state is not
 # kept, since it is the largest part of a debug target. `[profile.test]`

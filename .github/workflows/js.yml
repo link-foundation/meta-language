@@ -210,6 +210,10 @@ jobs:
         run: npm run check:concept-reuse
         working-directory: js
 
+      - name: Check the native grammar merge quality evidence
+        run: npm run check:merge-quality
+        working-directory: js
+
       - name: Check the foundation models are neutral data
         run: npm run check:foundations
         working-directory: js

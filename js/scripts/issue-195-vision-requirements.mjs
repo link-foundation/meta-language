@@ -764,12 +764,13 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-MERGE-QUALITY-EVIDENCE',
     area: 'automatic-merge',
     specification: 'automatic-merging-concept-recognition-deduplication-and-renaming',
+    fixture: 'parity/fixtures/merge-quality-evidence.json',
     construct: 'published merge quality comparison against the source grammars',
     expectedBehavior:
       'A published comparison against every inventoried source grammar measures construct coverage and correctness, preserved unique features and shared reuse, recovery quality, execution time and memory on independent corpora, never on self-generated fixtures alone.',
     assertions: ['coverageMeasured', 'correctnessMeasured', 'recoveryMeasured', 'timeAndMemoryMeasured', 'comparisonPublished'],
-    javascript: null,
-    rust: null,
+    javascript: ['js/scripts/build-merge-quality-evidence.mjs', 'js/src/grammar-concepts.js'],
+    rust: ['rust/tests/merge_quality.rs', 'rust/src/grammar_concepts.rs'],
   },
   {
     id: 'I195-NAMING-CONVENTION',
