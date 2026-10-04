@@ -377,3 +377,15 @@ export function orderDeclarations(program, { requireContiguousModules = false } 
   }
   return order;
 }
+
+/**
+ * `emitted` with its `preludes` (the helper definitions its text starts with)
+ * and `definitions` (its translated top-level definitions, without header,
+ * preludes and entry point), kept out of its serialised contract.
+ */
+export function withParts(emitted, preludes, definitions) {
+  return Object.defineProperties(emitted, {
+    preludes: { value: preludes },
+    definitions: { value: definitions },
+  });
+}

@@ -44,6 +44,7 @@ pub mod query_algebra;
 pub mod query_plan;
 mod reconstruction;
 pub mod rust_codec;
+mod self_translation;
 mod semantic_translation;
 pub mod semantics;
 pub mod snapshots;
@@ -261,6 +262,10 @@ pub use query_plan::{
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
     RustTypeKind, RustTypeShape, ToLinks,
+};
+pub use self_translation::{
+    SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError, SelfTranslationItem,
+    self_translate, self_translation_language,
 };
 pub use semantic_translation::{
     ReadTranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION, SemanticTranslation,

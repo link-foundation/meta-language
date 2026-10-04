@@ -948,3 +948,34 @@ impl<'a> ConvertContext<'a> {
         self.source_len < self.text.len()
     }
 }
+
+/// The top-level nodes of `text` in `language`'s default grammar as
+/// `(kind, start, end)` byte ranges, or `None` when no grammar parses it.
+pub fn top_level_nodes(text: &str, language: &str) -> Option<Vec<(String, usize, usize)>> {
+    if let Some(id) = native_grammar_for_language(language) {
+        let root = parse_native(id, text);
+        return Some(
+            root.children
+                .iter()
+                .map(|(child, _)| (child.term.clone(), child.start, child.end))
+                .collect(),
+        );
+    }
+    let grammar = grammar_for_language(language)?;
+    let mut parser = Parser::new();
+    parser.set_language(&grammar).ok()?;
+    let parsed = parser.parse(text, None)?;
+    let root = parsed.root_node();
+    let mut cursor = root.walk();
+    Some(
+        root.children(&mut cursor)
+            .map(|child| {
+                (
+                    child.kind().to_owned(),
+                    child.start_byte(),
+                    child.end_byte(),
+                )
+            })
+            .collect(),
+    )
+}

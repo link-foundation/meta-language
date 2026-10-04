@@ -217,9 +217,9 @@ impl RustEmitter<'_> {
             | BinaryOp::Gt
             | BinaryOp::Ge => Ok(format!(
                 "({} {} {})",
-                self.borrow(left)?,
+                self.compared(left)?,
                 comparison_operator(*op),
-                self.borrow(right)?
+                self.compared(right)?
             )),
             _ if *semantics == Some(Semantics::Ieee) => self.float_arithmetic(*op, left, right),
             _ if matches!(expr.ty, Type::Fixed { .. }) => self.fixed_arithmetic(expr),

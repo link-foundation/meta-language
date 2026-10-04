@@ -51,7 +51,7 @@ and [continuous integration](docs/vision.md#continuous-integration).
   then port it to Rust in one batch, by self-translation wherever the tool can
   do it, and check that Rust behaves the same. Do not mirror fixes into Rust
   commit by commit.
-- Self-translation and lossless round trips: code the translator cannot port
+- Self-translation and lossless round trips ([docs/self-translation.md](docs/self-translation.md)): code the translator cannot port
   yet is a gap in the translator, not something to write by hand.
 - Grammars come from the automated pipeline, in bulk over every catalog
   language; adjustments are recorded data-driven rules, never hand edits of

@@ -3,9 +3,9 @@
 use std::collections::BTreeSet;
 
 use super::{
-    ARRAY_PRELUDE, Binder, Decl, Emitted, Expr, MATH_PRELUDE, ModuleTree, NUMBER_PRELUDE, PRELUDE,
-    Prelude, Prop, Result, RustEmitter, TheoremCheck, Type, block, comparison_operator,
-    format_escape, indent, own, rename_function, rename_theorem, snake, tail_loop,
+    ARRAY_PRELUDE, Binder, Decl, Emitted, Expr, MATH_PRELUDE, ModuleTree, NUMBER_PRELUDE, Node,
+    PRELUDE, Prelude, Prop, Result, RustEmitter, TheoremCheck, Type, block, comparison_operator,
+    format_escape, indent, own, rename_function, rename_theorem, rust_string, snake, tail_loop,
 };
 
 impl<'p> RustEmitter<'p> {
@@ -43,26 +43,35 @@ impl<'p> RustEmitter<'p> {
                 .to_owned(),
             String::new(),
         ];
-        for prelude in &self.preludes {
-            lines.push(
+        let preludes: Vec<String> = self
+            .preludes
+            .iter()
+            .map(|prelude| {
                 match prelude {
                     Prelude::Big => PRELUDE,
                     Prelude::Number => NUMBER_PRELUDE,
                     Prelude::Math => MATH_PRELUDE,
                     Prelude::Array => ARRAY_PRELUDE,
                 }
-                .to_owned(),
-            );
+                .to_owned()
+            })
+            .collect();
+        for prelude in &preludes {
+            lines.push(prelude.clone());
             lines.push(String::new());
         }
         let has_main = main.is_some();
+        let definitions = body.clone();
         for block in body.into_iter().chain(main).chain(runner).chain([entry]) {
             lines.push(block);
             lines.push(String::new());
         }
-        Ok(self
+        let mut emitted = self
             .state
-            .finish(lines.join("\n"), has_main.then(|| "main".to_owned())))
+            .finish(lines.join("\n"), has_main.then(|| "main".to_owned()));
+        emitted.preludes = preludes;
+        emitted.definitions = definitions;
+        Ok(emitted)
     }
 
     pub(super) fn module_body(
@@ -454,11 +463,12 @@ impl<'p> RustEmitter<'p> {
                         format!("!{same}")
                     });
                 }
+                // Comparisons take their operands by reference, so they read them in place.
                 format!(
                     "({} {} {})",
-                    self.borrow(&comparison.left)?,
+                    self.compared(&comparison.left)?,
                     comparison_operator(op),
-                    self.borrow(&comparison.right)?
+                    self.compared(&comparison.right)?
                 )
             }
         })
@@ -473,6 +483,14 @@ impl<'p> RustEmitter<'p> {
             Some(name) => Ok(format!("&{name}")),
             None => Ok(format!("&{}", self.expr(expr)?)),
         }
+    }
+
+    /// A comparison operand: read in place, a string literal as a `&str`.
+    pub(super) fn compared(&mut self, expr: &Expr) -> Result<String> {
+        if let (Node::Lit { value }, Type::String) = (&expr.node, &expr.ty) {
+            return Ok(rust_string(&value.text()));
+        }
+        self.receiver(expr)
     }
 
     /// A method receiver: `&self` methods borrow a variable in place.

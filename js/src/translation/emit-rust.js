@@ -12,7 +12,7 @@ import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
-import { EmitState } from './emit-common.js';
+import { EmitState, withParts } from './emit-common.js';
 
 const KEYWORDS = new Set([
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
@@ -588,7 +588,13 @@ class RustEmitter {
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
-    return {
+    const preludes = [
+      ...(this.usesBig ? [PRELUDE] : []),
+      ...(this.usesNumber ? [NUMBER_PRELUDE] : []),
+      ...(this.usesMath ? [MATH_PRELUDE] : []),
+      ...(this.usesArray ? [ARRAY_PRELUDE] : []),
+    ];
+    return withParts({
       language: 'Rust',
       text,
       mappings: this.state.mappings,
@@ -596,7 +602,7 @@ class RustEmitter {
       encodings: this.state.encodingList(),
       theorems: this.state.theorems,
       entry: main ? 'main' : null,
-    };
+    }, preludes, body);
   }
 
   moduleBody(node, path) {
@@ -801,7 +807,8 @@ class RustEmitter {
           return prop.p === 'eq' ? same : `!${same}`;
         }
         const operator = { eq: '==', ne: '!=', lt: '<', le: '<=', gt: '>', ge: '>=' }[prop.p];
-        return `(${this.borrow(prop.left)} ${operator} ${this.borrow(prop.right)})`;
+        // Comparisons take their operands by reference, so they read them in place.
+        return `(${this.compared(prop.left)} ${operator} ${this.compared(prop.right)})`;
       }
     }
   }
@@ -815,6 +822,12 @@ class RustEmitter {
   borrow(e) {
     if (e.type?.kind === 'float') return this.expr(e);
     return e.k === 'var' ? `&${e.name}` : `&${this.expr(e)}`;
+  }
+
+  /** A comparison operand: read in place, a string literal as a `&str`. */
+  compared(e) {
+    if (e.k === 'lit' && e.type.kind === 'string') return rustString(String(e.value));
+    return this.receiver(e);
   }
 
   /** A method receiver: `&self` methods borrow a variable in place. */
@@ -977,7 +990,7 @@ class RustEmitter {
       case 'gt':
       case 'ge': {
         const operator = { eq: '==', ne: '!=', lt: '<', le: '<=', gt: '>', ge: '>=' }[e.op];
-        return `(${this.borrow(e.left)} ${operator} ${this.borrow(e.right)})`;
+        return `(${this.compared(e.left)} ${operator} ${this.compared(e.right)})`;
       }
       default:
         if (e.semantics === 'ieee') return this.floatArithmetic(e);

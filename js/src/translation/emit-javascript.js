@@ -10,7 +10,7 @@ import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { unsupported } from './diagnostics.js';
 import { fixedBounds, typeKey } from './types.js';
 import { renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
-import { EmitState } from './emit-common.js';
+import { EmitState, withParts } from './emit-common.js';
 
 const KEYWORDS = new Set([
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum',
@@ -144,7 +144,7 @@ class JavaScriptEmitter {
     ].join('\n');
     this.state.encode('numbers', 'every natural, integer and machine integer is a BigInt; machine-integer results are range-checked and throw RangeError where Rust would panic');
     if (this.usesFloat) this.state.encode('floats', 'a Number is a JavaScript Number, an IEEE-754 double, with its own arithmetic, comparisons and String conversion');
-    return {
+    return withParts({
       language: 'JavaScript',
       text,
       mappings: this.state.mappings,
@@ -152,7 +152,7 @@ class JavaScriptEmitter {
       encodings: this.state.encodingList(),
       theorems: this.state.theorems,
       entry: main ? 'main' : null,
-    };
+    }, helperOrder.filter((name) => this.helpers.has(name)).map((name) => HELPERS[name]), blocks);
   }
 
   moduleObject(node, path) {

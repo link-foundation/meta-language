@@ -11,7 +11,8 @@ use meta_language::{
     emit_lark, emit_pest, emit_tree_sitter_grammar_js, evaluate, grammar_concept_translation_rules,
     grammar_from_lino, grammar_to_lino, import_abnf, import_antlr, import_bnf, import_ebnf,
     import_gbnf, import_lark, import_pest, import_tree_sitter_json, infer_cfg,
-    parse_grammar_surface, run_grammar_command, translate_grammar_surface, write_grammar_surface,
+    parse_grammar_surface, run_grammar_command, self_translate, self_translation_language,
+    translate_grammar_surface, write_grammar_surface,
 };
 
 #[derive(Parser, Debug)]
@@ -35,6 +36,21 @@ enum Command {
         /// The grammar command and its arguments.
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
+    },
+    /// Translate a module between JavaScript, TypeScript and Rust; `--from`
+    /// defaults to the file's extension.
+    Translate {
+        /// The module to translate.
+        file: PathBuf,
+        /// Source language; defaults to the file's extension.
+        #[arg(long)]
+        from: Option<String>,
+        /// Target language.
+        #[arg(long)]
+        to: String,
+        /// Print each top-level item's status instead of the translation.
+        #[arg(long)]
+        items: bool,
     },
     /// Parse text into a lossless token network and verify it is clean.
     Verify {
@@ -215,6 +231,12 @@ fn main() {
     match cli.command {
         Command::Describe => describe(),
         Command::Grammar { args } => grammar(&args),
+        Command::Translate {
+            file,
+            from,
+            to,
+            items,
+        } => translate(&file, from.as_deref(), &to, items),
         Command::Verify { language, text } => verify(&language, &text),
         Command::Infer {
             examples,
@@ -246,6 +268,40 @@ fn grammar(args: &[String]) {
     print!("{}", output.stdout);
     eprint!("{}", output.stderr);
     std::process::exit(output.exit_code);
+}
+
+fn translate(file: &Path, from: Option<&str>, to: &str, items: bool) {
+    let extension = file.extension().and_then(|extension| extension.to_str());
+    let Some(from) = from.or_else(|| extension.and_then(self_translation_language)) else {
+        eprintln!(
+            "error: pass --from; the extension of {} names no language",
+            file.display()
+        );
+        std::process::exit(2);
+    };
+    let source = fs::read_to_string(file).unwrap_or_else(|error| {
+        eprintln!("error: cannot read {}: {error}", file.display());
+        std::process::exit(1);
+    });
+    match self_translate(&source, from, to) {
+        Ok(result) if items => {
+            for item in result.items {
+                let reason = item
+                    .reason
+                    .map(|reason| format!(" ({reason})"))
+                    .unwrap_or_default();
+                println!(
+                    "{}..{} {} {}{reason}",
+                    item.start, item.end, item.term, item.status
+                );
+            }
+        }
+        Ok(result) => print!("{}", result.code),
+        Err(error) => {
+            eprintln!("error: {error}");
+            std::process::exit(1);
+        }
+    }
 }
 
 fn describe() {

@@ -118,10 +118,12 @@ mod items {
     use meta_language::ReplacementReport as _;
     use meta_language::ReplacementRule as _;
     use meta_language::RepresentationLevel as _;
+    use meta_language::SELF_TRANSLATION_LANGUAGES as _;
     use meta_language::SEMANTIC_CONSTRUCTS as _;
     use meta_language::SEMANTIC_ENCODING as _;
     use meta_language::SEMANTIC_OBSERVATION as _;
     use meta_language::SQL_DIALECT_PROFILES as _;
+    use meta_language::SelfTranslationError as _;
     use meta_language::SourceSpan as _;
     use meta_language::SourceTextPredicateHost as _;
     use meta_language::SqlAdapterError as _;
@@ -239,6 +241,8 @@ mod items {
     use meta_language::run_api_style_fixture as _;
     use meta_language::run_grammar_command as _;
     use meta_language::script_language as _;
+    use meta_language::self_translate as _;
+    use meta_language::self_translation_language as _;
     use meta_language::sequence as _;
     use meta_language::serialize_grammar as _;
     use meta_language::sniff_language as _;
@@ -419,10 +423,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("ReplacementReport", "ReplacementReport", "type"),
     ("ReplacementRule", "ReplacementRule", "type"),
     ("RepresentationLevel", "RepresentationLevel", "type"),
+    (
+        "SELF_TRANSLATION_LANGUAGES",
+        "SELF_TRANSLATION_LANGUAGES",
+        "constant",
+    ),
     ("SEMANTIC_CONSTRUCTS", "SEMANTIC_CONSTRUCTS", "constant"),
     ("SEMANTIC_ENCODING", "SEMANTIC_ENCODING", "constant"),
     ("SEMANTIC_OBSERVATION", "SEMANTIC_OBSERVATION", "constant"),
     ("SQL_DIALECT_PROFILES", "SQL_DIALECT_PROFILES", "constant"),
+    ("SelfTranslationError", "SelfTranslationError", "type"),
     ("SourceSpan", "SourceSpan", "type"),
     ("SqlAdapterError", "SqlAdapterError", "type"),
     ("SqlAdapterErrorKind", "SqlAdapterErrorKind", "type"),
@@ -729,6 +739,12 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("runApiStyleFixture", "run_api_style_fixture", "function"),
     ("runGrammarCommand", "run_grammar_command", "function"),
     ("scriptLanguage", "script_language", "function"),
+    ("selfTranslate", "self_translate", "function"),
+    (
+        "selfTranslationLanguage",
+        "self_translation_language",
+        "function",
+    ),
     ("sequence", "sequence", "function"),
     ("serializeGrammar", "serialize_grammar", "function"),
     ("sniffLanguage", "sniff_language", "function"),

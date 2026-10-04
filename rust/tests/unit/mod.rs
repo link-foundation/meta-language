@@ -120,6 +120,7 @@ mod query_plan;
 mod query_transform;
 mod rust_codec;
 mod self_description;
+mod self_translation;
 mod source_generation;
 mod source_points;
 mod storage;

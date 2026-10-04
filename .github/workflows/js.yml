@@ -231,6 +231,28 @@ jobs:
         run: npm run check:documentation
         working-directory: js
 
+      - name: Check the shared self-translation cases
+        if: ${{ !cancelled() }}
+        run: npm run check:self-translation
+        working-directory: js
+
+      # Publishes, per module, how far the self-translation of each JavaScript
+      # module is from its hand-written Rust.
+      - name: Report self-translation against the hand-written Rust
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/generate-self-translation-report.mjs --out-dir ../self-translation-report > /dev/null
+          cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"
+        working-directory: js
+
+      - name: Upload the self-translation report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-translation-report-${{ github.sha }}
+          path: self-translation-report
+          if-no-files-found: error
+
       # The pull request description and the release reports are live texts
       # outside the commit; they are compared on main as a non-blocking report.
       - name: Compare the pull request description and the release reports with the requirement ledger (post-merge report)

@@ -65,7 +65,7 @@ they are.
 | Vendored generated parsers | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Vendored WebAssembly grammars | 60 | 59 | 1 | 0 |
-| Generators | 21 | 20 | 1 | 0 |
+| Generators | 23 | 22 | 1 | 0 |
 | Toolchains and tools | 16 | 14 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -538,6 +538,8 @@ they are.
 | `js/scripts/generate-native-grammar-fixtures.mjs` | `js/scripts/generate-native-grammar-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-recovery.mjs` | `js/scripts/generate-native-recovery.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
@@ -571,7 +573,7 @@ they are.
 | `actions/deploy-pages` | `.github/workflows/rust.yml` | `v5` | v5.0.1 (GitHub release, actions/deploy-pages) | major | current |  |
 | `actions/download-artifact` | `.github/workflows/issue-195-acceptance.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
 | `actions/setup-node` | `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.0 (GitHub release, actions/setup-node) | major | current |  |
-| `actions/upload-artifact` | `.github/workflows/issue-195-acceptance.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
+| `actions/upload-artifact` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
 | `actions/upload-pages-artifact` | `.github/workflows/rust.yml` | `v5` | v5.0.0 (GitHub release, actions/upload-pages-artifact) | major | current |  |
 | `codecov/codecov-action` | `.github/workflows/rust.yml` | `v7` | v7.1.1 (GitHub release, codecov/codecov-action) | major | current |  |
 | `docker/build-push-action` | `.github/workflows/rust.yml` | `v7` | v7.4.0 (GitHub release, docker/build-push-action) | major | current |  |

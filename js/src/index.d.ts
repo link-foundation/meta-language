@@ -68,6 +68,41 @@ export function decoratorSet(decorators: DecoratorInput): DecoratorSet;
 export function decorateGrammar(grammar: Grammar, decorators: DecoratorInput, level?: 'importer' | 'grammar-rule'): Grammar;
 export function decorateSyntaxTree(tree: SyntaxTreeNode | null, decorators: DecoratorInput): SyntaxTreeNode | null;
 
+export type SelfTranslationLanguage = 'JavaScript' | 'TypeScript' | 'Rust';
+
+/** The languages self-translation reads and writes. */
+export const SELF_TRANSLATION_LANGUAGES: readonly SelfTranslationLanguage[];
+
+export class SelfTranslationError extends Error {}
+
+/** The self-translation language `language` (a name or file extension) names, or `null`. */
+export function selfTranslationLanguage(language: string): SelfTranslationLanguage | null;
+
+export type SelfTranslationStatus = 'kept' | 'translated' | 'restored' | 'comment' | 'provenance' | 'carried';
+
+/** One top-level source item and what self-translation did with it. */
+export interface SelfTranslationItem {
+  readonly term: string;
+  readonly start: number;
+  readonly end: number;
+  readonly status: SelfTranslationStatus;
+  readonly reason: string | null;
+}
+
+export interface SelfTranslation {
+  readonly sourceLanguage: SelfTranslationLanguage;
+  readonly targetLanguage: SelfTranslationLanguage;
+  readonly code: string;
+  readonly items: readonly SelfTranslationItem[];
+}
+
+/**
+ * Translates one of meta-language's own modules between JavaScript,
+ * TypeScript and Rust through links: same-language translation is byte for
+ * byte, and translating an unedited translation back restores the source.
+ */
+export function selfTranslate(source: string, from: string, to: string): SelfTranslation;
+
 export type LinkTypeValue =
   | 'Concept'
   | 'Document'

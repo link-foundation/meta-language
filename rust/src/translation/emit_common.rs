@@ -72,6 +72,15 @@ pub struct TheoremRecord {
 pub struct Emitted {
     pub language: Language,
     pub text: String,
+    /// The helper definitions `text` starts with, in order. Not part of the
+    /// serialised contract.
+    #[serde(skip)]
+    pub preludes: Vec<String>,
+    /// The translated top-level definitions of `text`, in order, without the
+    /// header, the preludes and the entry point. Not part of the serialised
+    /// contract.
+    #[serde(skip)]
+    pub definitions: Vec<String>,
     pub mappings: Vec<Mapping>,
     pub assumptions: Vec<Assumption>,
     pub encodings: Vec<Encoding>,
@@ -453,6 +462,8 @@ impl<'p> EmitState<'p> {
         Emitted {
             language: self.language,
             text,
+            preludes: Vec::new(),
+            definitions: Vec::new(),
             mappings: self.mappings.clone(),
             assumptions: self.assumption_list(),
             encodings: self.encoding_list(),

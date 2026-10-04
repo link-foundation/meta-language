@@ -20,7 +20,7 @@ export const TEST_GROUPS = Object.freeze({
   grammar:
     /^(?:grammar-|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|error-recovery-|parse-scaling$|parser-memory$|unicode-input-|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
   translation:
-    /^(?:translation|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$)/u,
+    /^(?:translation|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation$)/u,
   conformance:
     /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
   downstream:

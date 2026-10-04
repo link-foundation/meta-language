@@ -1961,19 +1961,19 @@
       "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
     },
     "planned:repository-directive:i195-self-translation-tool": {
-      "path": "docs/vision.md",
-      "selector": "#javascript-first-and-self-translation: JavaScript/TypeScript ↔ Rust self-translation library API and CLI",
-      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+      "path": "parity/self-translation/cases.lino",
+      "selector": "docs/vision.md#javascript-first-and-self-translation: JavaScript/TypeScript ↔ Rust self-translation library API and CLI",
+      "sha256": "a7e9ac33bc82ed0f628b4ac79b2e52355486775a345430df680c9f5959624f0a"
     },
     "planned:repository-directive:i195-self-translation-round-trip": {
-      "path": "docs/vision.md",
-      "selector": "#javascript-first-and-self-translation: lossless self-translation round trips",
-      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+      "path": "parity/self-translation/cases.lino",
+      "selector": "docs/vision.md#javascript-first-and-self-translation: lossless self-translation round trips",
+      "sha256": "a7e9ac33bc82ed0f628b4ac79b2e52355486775a345430df680c9f5959624f0a"
     },
     "planned:repository-directive:i195-self-translation-shared-corpus": {
-      "path": "docs/vision.md",
-      "selector": "#javascript-first-and-self-translation: shared Links Notation corpus checked in both runtimes",
-      "sha256": "522c4db253eea8775659a7d1a520c5cfe05cede107579cbaff044b34600d5499"
+      "path": "parity/self-translation/cases.lino",
+      "selector": "docs/vision.md#javascript-first-and-self-translation: shared Links Notation corpus checked in both runtimes",
+      "sha256": "a7e9ac33bc82ed0f628b4ac79b2e52355486775a345430df680c9f5959624f0a"
     },
     "planned:repository-directive:i195-decorators-every-level": {
       "path": "parity/decorators/cases.json",
@@ -25300,8 +25300,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/self-translation.js",
+          "js/tests/self-translation.test.js"
+        ],
+        "rust": [
+          "rust/src/self_translation.rs",
+          "rust/tests/unit/self_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -25338,7 +25344,7 @@
       "traceability": {
         "specification": "docs/vision.md#javascript-first-and-self-translation",
         "inventories": [
-          "docs/vision.md"
+          "parity/self-translation/cases.lino"
         ],
         "sources": [
           "acceptanceGate",
@@ -25380,8 +25386,14 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/scripts/generate-self-translation-cases.mjs",
+          "js/scripts/generate-self-translation-report.mjs",
+          "js/tests/self-translation.test.js"
+        ],
+        "rust": [
+          "rust/tests/unit/self_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -25418,7 +25430,7 @@
       "traceability": {
         "specification": "docs/vision.md#javascript-first-and-self-translation",
         "inventories": [
-          "docs/vision.md"
+          "parity/self-translation/cases.lino"
         ],
         "sources": [
           "acceptanceGate",
@@ -25460,8 +25472,16 @@
         "rust"
       ],
       "implementationEntryPoints": {
-        "javascript": null,
-        "rust": null
+        "javascript": [
+          "js/src/self-translation.js",
+          "js/src/cli.js",
+          "js/tests/self-translation.test.js"
+        ],
+        "rust": [
+          "rust/src/self_translation.rs",
+          "rust/src/main.rs",
+          "rust/tests/unit/self_translation.rs"
+        ]
       },
       "verifications": [
         {
@@ -25502,7 +25522,7 @@
       "traceability": {
         "specification": "docs/vision.md#javascript-first-and-self-translation",
         "inventories": [
-          "docs/vision.md"
+          "parity/self-translation/cases.lino"
         ],
         "sources": [
           "acceptanceGate",

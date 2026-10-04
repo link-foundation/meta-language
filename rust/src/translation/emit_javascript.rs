@@ -298,10 +298,16 @@ impl<'p> JavaScriptEmitter<'p> {
             "'use strict';".to_owned(),
             String::new(),
         ];
-        for helper in &self.helpers {
-            lines.push(helper.text().to_owned());
+        let preludes: Vec<String> = self
+            .helpers
+            .iter()
+            .map(|helper| helper.text().to_owned())
+            .collect();
+        for prelude in &preludes {
+            lines.push(prelude.clone());
             lines.push(String::new());
         }
+        let definitions = blocks.clone();
         for block in blocks.into_iter().chain(entry) {
             lines.push(block);
             lines.push(String::new());
@@ -310,9 +316,12 @@ impl<'p> JavaScriptEmitter<'p> {
         if self.uses_float {
             self.state.encode("floats", "a Number is a JavaScript Number, an IEEE-754 double, with its own arithmetic, comparisons and String conversion");
         }
-        Ok(self
+        let mut emitted = self
             .state
-            .finish(lines.join("\n"), main.map(|_| "main".to_owned())))
+            .finish(lines.join("\n"), main.map(|_| "main".to_owned()));
+        emitted.preludes = preludes;
+        emitted.definitions = definitions;
+        Ok(emitted)
     }
 
     fn module_name(&self, path: &[String]) -> String {

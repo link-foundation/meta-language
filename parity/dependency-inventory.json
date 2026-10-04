@@ -7967,6 +7967,34 @@
       ]
     },
     {
+      "id": "generator js/scripts/generate-self-translation-cases.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/generate-self-translation-cases.mjs",
+      "declaredIn": [
+        "js/scripts/generate-self-translation-cases.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": []
+    },
+    {
+      "id": "generator js/scripts/generate-self-translation-report.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/generate-self-translation-report.mjs",
+      "declaredIn": [
+        "js/scripts/generate-self-translation-report.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": []
+    },
+    {
       "id": "generator rust/scripts/build-site.rs@script",
       "category": "generator",
       "name": "rust/scripts/build-site.rs",
@@ -8348,7 +8376,8 @@
       "category": "action",
       "name": "actions/upload-artifact",
       "declaredIn": [
-        ".github/workflows/issue-195-acceptance.yml"
+        ".github/workflows/issue-195-acceptance.yml",
+        ".github/workflows/js.yml"
       ],
       "pinned": "v7",
       "compare": "major",

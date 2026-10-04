@@ -624,6 +624,10 @@ corpus:
 - `parity/language-features.json` lists every public JavaScript feature, and a
   test fails when Rust lacks one or the two produce different output.
 
+[Self-translation](self-translation.md) describes the tool, its output format,
+the round trips, the shared corpus and the per-module report against the
+hand-written Rust.
+
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
 CST → AST, transformations, emitters and translation rules. Decorators compose
