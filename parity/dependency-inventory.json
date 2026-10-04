@@ -8229,6 +8229,7 @@
       "category": "action",
       "name": "actions/cache",
       "declaredIn": [
+        ".github/workflows/issue-195-acceptance.yml",
         ".github/workflows/rust.yml"
       ],
       "pinned": "v6",

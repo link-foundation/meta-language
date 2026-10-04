@@ -263,7 +263,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.99.0
 
-      # The runner was shut down (exit 143) without output while cargo built
+      # The runner was shut down (signal 15, status 143) without output while cargo built
       # formal-ai's test targets from scratch. The workload runner bounds the
       # build (two jobs, no debuginfo; see js/scripts/run-formal-ai-workloads.mjs);
       # this frees the disk the preinstalled SDKs the job never uses take, and
