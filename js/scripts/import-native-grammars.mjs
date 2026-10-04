@@ -122,7 +122,8 @@ export function corpusCases(entry) {
  * its source name keeps the upstream spelling.
  */
 export function nativeName(name, expansions, decisions = {}) {
-  if (decisions.names?.[name] !== undefined) return decisions.names[name];
+  // Own decisions only: an upstream rule may be named `constructor`.
+  if (Object.hasOwn(decisions.names ?? {}, name)) return decisions.names[name];
   const words = name.replace(/^_+/u, '').replace(/([a-z0-9])([A-Z])/gu, '$1_$2').toLowerCase().split('_');
   return words.flatMap((word) => (expansions.get(word) ?? word).split('_')).join('_');
 }
@@ -134,7 +135,8 @@ const article = (phrase) => (/^[aeiou]/u.test(phrase) ? 'an' : 'a');
 
 /** The concept identity of a native rule: a reviewed decision or `grammar.<phrase>`. */
 export function ruleConcept(rule, decisions = {}) {
-  const decided = decisions.concepts?.[rule.sourceName ?? rule.name];
+  const source = rule.sourceName ?? rule.name;
+  const decided = Object.hasOwn(decisions.concepts ?? {}, source) ? decisions.concepts[source] : undefined;
   return decided ?? `grammar.${rulePhrase(rule.name).split(' ').join('-')}`;
 }
 

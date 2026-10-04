@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { corpusFileCases } from '../scripts/import-native-grammars.mjs';
+import { corpusFileCases, nativeName, ruleConcept } from '../scripts/import-native-grammars.mjs';
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
 
@@ -48,6 +48,15 @@ test('of equally long lines of dashes, the last divides, and a case without one 
     { title: 'Twice', source: 'a\n---\nb' },
     { title: 'Open', source: 'c\n' },
   ]);
+});
+
+test('an upstream rule named like an object member is named from its words', () => {
+  // tree-sitter-lean has a rule `constructor`; only reviewed decisions rename it.
+  const decisions = { names: { _declaration: 'declaration_choice' } };
+  assert.equal(nativeName('constructor', new Map(), decisions), 'constructor');
+  assert.equal(nativeName('toString', new Map(), {}), 'to_string');
+  assert.equal(nativeName('_declaration', new Map(), decisions), 'declaration_choice');
+  assert.equal(ruleConcept({ name: 'constructor', sourceName: 'constructor' }, { concepts: {} }), 'grammar.constructor');
 });
 
 // A string whose text and closing quote an external scanner reads, as
