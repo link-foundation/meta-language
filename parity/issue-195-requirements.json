@@ -896,7 +896,7 @@
     "planned:generative:JavaScript": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "JavaScript property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "9ef40ee61eedd12b617ef4997fe26d45198fdb4c8267c67ed930956da3cb63d0"
+      "sha256": "86c1eb0bc184054a521da630c1e12c7042fdc4cd63ff50a231686ff41293d90f"
     },
     "planned:conformance:Rust": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -906,7 +906,7 @@
     "planned:generative:Rust": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Rust property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "9ef40ee61eedd12b617ef4997fe26d45198fdb4c8267c67ed930956da3cb63d0"
+      "sha256": "86c1eb0bc184054a521da630c1e12c7042fdc4cd63ff50a231686ff41293d90f"
     },
     "planned:conformance:Lean": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -916,7 +916,7 @@
     "planned:generative:Lean": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Lean property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "9ef40ee61eedd12b617ef4997fe26d45198fdb4c8267c67ed930956da3cb63d0"
+      "sha256": "86c1eb0bc184054a521da630c1e12c7042fdc4cd63ff50a231686ff41293d90f"
     },
     "planned:conformance:Rocq": {
       "path": "parity/fixtures/issue-195-conformance/manifest.json",
@@ -926,7 +926,7 @@
     "planned:generative:Rocq": {
       "path": "parity/fixtures/issue-195-generative/manifest.json",
       "selector": "Rocq property-based, fuzz, and metamorphic coverage for round trips, recovery, Unicode spans, and edit sequences",
-      "sha256": "9ef40ee61eedd12b617ef4997fe26d45198fdb4c8267c67ed930956da3cb63d0"
+      "sha256": "86c1eb0bc184054a521da630c1e12c7042fdc4cd63ff50a231686ff41293d90f"
     },
     "planned:semantic:JavaScript:modules-and-imports": {
       "path": "parity/fixtures/four-language-conformance.json",
