@@ -57,7 +57,7 @@ test('lowers covering ANTLR constructs', () => {
   assert.equal(grammar.startRule()?.name, 'entry');
   assert.deepEqual(
     grammar.ruleNames(),
-    ['entry', 'item', 'literalRange', 'TOKEN', 'DIGIT', 'COMMENT', 'ACTIONED'],
+    ['entry', 'item', 'literalRange', 'TOKEN', 'DIGIT', 'COMMENT', 'ACTIONED', 'ID'],
   );
   assert.equal(grammar.rule('DIGIT').kind, 'silent');
   assert.deepEqual(
@@ -152,6 +152,7 @@ test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
     'silent class(range("0", "9"))',
     'token seq(literal("//"), repeat0(notClass(char("\\r"), char("\\n"))))',
     'token literal("a")',
+    'token ref(ACTIONED)',
   ]);
 
   const errors = [
@@ -254,4 +255,22 @@ test('caseInsensitive options match either case, and rule preludes join the doc'
   ]) {
     assert.throws(() => importAntlr(source), (error) => error.message === message, source);
   }
+});
+
+test('a -> type(NAME) command lets a rule match where NAME does, in both runtimes', async () => {
+  const grammar = importAntlr(fixture('retype.g4'));
+  assert.deepEqual(grammar.rule('NL').expression, G.choice(
+    G.seq(G.optional(G.literal('\r')), G.literal('\n')),
+    G.ref('COMMENT'),
+  ));
+  assert.equal(grammar.rule('NL').doc, 'also COMMENT, which -> type(NL) retypes');
+  assert.equal(grammar.rule('COMMENT').doc, '-> type(NL)');
+  assert.deepEqual(grammar.rule('WORD').expression, G.choice(G.ref('NAME'), G.ref('NUMBER')));
+  assert.equal(grammar.rule('WORD').kind, 'token');
+  assert.equal(grammar.ruleNames().at(-1), 'WORD');
+  assert.equal(grammar.rule('HIDDEN_NOTE').channel, 'HIDDEN');
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('ab 12 # note\ncd\n').ok, true);
+  assert.equal(parser.parseTree('ab ; cd\n').ok, false);
 });

@@ -82,6 +82,7 @@ fn lowers_covering_antlr_constructs() {
             "DIGIT",
             "COMMENT",
             "ACTIONED",
+            "ID",
         ]
     );
     assert_eq!(
@@ -489,4 +490,56 @@ fn case_insensitive_options_match_either_case_and_rule_preludes_join_the_doc() {
         let error = import_antlr(source).expect_err(source);
         assert_eq!(error.to_string(), message, "{source}");
     }
+}
+
+#[test]
+fn type_commands_let_a_rule_match_where_the_type_does() {
+    use meta_language::{FeatureParseOptions, compile_feature_grammar};
+
+    let grammar =
+        import_antlr(include_str!("../fixtures/grammar/antlr/retype.g4")).expect("imports");
+    let rule = |name: &str| grammar.rule(name).expect(name);
+    assert_eq!(
+        rule("NL").expr(),
+        &GrammarExpr::Choice {
+            ordered: false,
+            alternatives: vec![
+                GrammarExpr::Sequence(vec![
+                    GrammarExpr::Optional(Box::new(GrammarExpr::Terminal("\r".to_string()))),
+                    GrammarExpr::Terminal("\n".to_string()),
+                ]),
+                GrammarExpr::NonTerminal("COMMENT".to_string()),
+            ],
+        }
+    );
+    assert_eq!(
+        rule("NL").doc(),
+        Some("also COMMENT, which -> type(NL) retypes")
+    );
+    assert_eq!(rule("COMMENT").doc(), Some("-> type(NL)"));
+    assert_eq!(
+        rule("WORD").expr(),
+        &GrammarExpr::Choice {
+            ordered: false,
+            alternatives: vec![
+                GrammarExpr::NonTerminal("NAME".to_string()),
+                GrammarExpr::NonTerminal("NUMBER".to_string()),
+            ],
+        }
+    );
+    assert_eq!(rule("WORD").kind(), RuleKind::Token);
+    assert_eq!(grammar.rule_names().last(), Some(&"WORD"));
+    assert_eq!(
+        rule("HIDDEN_NOTE").attributes.channel.as_deref(),
+        Some("HIDDEN")
+    );
+    let options = FeatureParseOptions::default();
+    let parser = compile_feature_grammar(&grammar, None, options.clone()).expect("compiles");
+    let accepts = |text: &str| {
+        parser
+            .parse_tree(text.as_bytes(), &options)
+            .is_ok_and(|outcome| outcome.tree.is_some())
+    };
+    assert!(accepts("ab 12 # note\ncd\n"));
+    assert!(!accepts("ab ; cd\n"));
 }

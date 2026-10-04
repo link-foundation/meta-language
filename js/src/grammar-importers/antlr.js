@@ -25,7 +25,8 @@ const SUFFIXES = {
  * token rules and `fragment` rules become silent rules. Lexer commands, dropped
  * actions and predicates, and comments before a rule or its `:` are kept in
  * the rule's `doc`; `-> skip` and `-> channel(NAME)` also put the rule on that
- * channel, which makes it trivia. `EOF` is the end of the input, and character
+ * channel, which makes it trivia, and `-> type(NAME)` lets the rule match
+ * where NAME does. `EOF` is the end of the input, and character
  * sets read `\uXXXX`, `\u{X...}` and `\p{NAME}` for a general category or
  * script. `options`, `tokens`, `channels`, `import` and `mode` declarations are
  * skipped, and references to undefined rules stay visible on the grammar.
@@ -57,6 +58,7 @@ class AntlrParser {
       if (this.parseHeader() || this.parseSkippedDirective()) continue;
       rules.push(this.parseRule());
     }
+    applyRetypes(rules);
 
     const startRule = rules.find((rule) => rule.kind === 'normal') ?? rules[0];
     if (!startRule) throw parseError(FORMAT, 'ANTLR grammar does not contain rules');
@@ -124,7 +126,9 @@ class AntlrParser {
     let kind = 'normal';
     if (fragment) kind = 'silent';
     else if (/^[A-Z]/.test(name)) kind = 'token';
-    return { name, kind, expression, doc: ruleDoc(comments, notes, command), channel: commandChannel(command) };
+    const channel = commandChannel(command);
+    const retype = channel === null ? commandType(command) : null;
+    return { name, kind, expression, doc: ruleDoc(comments, notes, command), channel, retype };
   }
 
   // `returns [...]`, `throws ...` and `locals [...]` declare target-language
@@ -675,6 +679,34 @@ function commandChannel(command) {
     if (channel !== null) return channel[1];
   }
   return parts.includes('skip') ? 'skip' : null;
+}
+
+// The token type `-> type(NAME)` gives a rule's tokens, or null.
+function commandType(command) {
+  if (command === null) return null;
+  for (const part of command.slice('->'.length).split(',')) {
+    const type = /^type\(([A-Za-z_][A-Za-z_0-9]*)\)$/u.exec(part.trim());
+    if (type !== null) return type[1];
+  }
+  return null;
+}
+
+// A rule whose `-> type(X)` command retypes its tokens matches where X does:
+// X gains a reference to it. An X that only `tokens {...}` declares becomes a
+// token rule of the rules that retype to it.
+function applyRetypes(rules) {
+  for (const rule of [...rules]) {
+    if (rule.retype === null || rule.retype === undefined || rule.retype === rule.name) continue;
+    let target = rules.find(({ name }) => name === rule.retype);
+    if (target === undefined) {
+      target = { name: rule.retype, kind: 'token', expression: null, doc: null, channel: null, retype: null };
+      rules.push(target);
+    }
+    const reference = GrammarBuilder.ref(rule.name);
+    target.expression = target.expression === null ? reference : GrammarBuilder.choice(target.expression, reference);
+    const note = `also ${rule.name}, which -> type(${target.name}) retypes`;
+    target.doc = target.doc === null ? note : `${target.doc}; ${note}`;
+  }
 }
 
 const UNICODE_SCRIPTS = new Set([

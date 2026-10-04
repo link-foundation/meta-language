@@ -113,3 +113,11 @@ checks two things without downloading anything:
   `initializer : '=' singleExpression`, so the TypeScript sample was rejected
   at its end, where `=` was expected. Starting at the `desc.xml` entry point
   (`program`) lets the sample parse.
+- **ANTLR `-> type(NAME)`.** The command gives a lexer rule's tokens the type
+  `NAME`, so a parser rule that asks for `NAME` also takes them. Both
+  importers add the rule as one more alternative of `NAME`; if `NAME` is only
+  declared in `tokens { ... }`, they define it from the retyped rules. The
+  doc of `NAME` lists each rule that retypes into it. Before this, the R
+  grammar named tokens that no rule defined. The shared fixture
+  [`retype.g4`](../../rust/tests/fixtures/grammar/antlr/retype.g4) checks this
+  in both importers.

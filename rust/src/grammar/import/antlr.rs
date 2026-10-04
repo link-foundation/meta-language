@@ -54,6 +54,7 @@ impl Parser {
 
     fn parse_grammar(&mut self) -> Result<Grammar, GrammarImportError> {
         let mut grammar = Grammar::new().with_source_format(FORMAT);
+        let mut rules = Vec::new();
         while !self.is_end() {
             self.collect_comments();
             if self.is_end() {
@@ -62,7 +63,10 @@ impl Parser {
             if self.parse_header()? || self.parse_skipped_directive()? {
                 continue;
             }
-            grammar.add_rule(self.parse_rule()?);
+            rules.push(self.parse_rule()?);
+        }
+        for rule in apply_retypes(rules) {
+            grammar.add_rule(rule);
         }
 
         let Some(start) = grammar
@@ -134,7 +138,8 @@ impl Parser {
         Ok(false)
     }
 
-    fn parse_rule(&mut self) -> Result<GrammarRule, GrammarImportError> {
+    /// A rule and the token type its `-> type(NAME)` command gives it.
+    fn parse_rule(&mut self) -> Result<(GrammarRule, Option<String>), GrammarImportError> {
         let comments = std::mem::take(&mut self.pending_comments);
         let fragment = self.try_consume_keyword("fragment");
         let name = self.expect_ident("rule name")?;
@@ -164,6 +169,11 @@ impl Parser {
         };
 
         let channel = command.as_deref().and_then(command_channel);
+        let retype = if channel.is_none() {
+            command.as_deref().and_then(command_type)
+        } else {
+            None
+        };
         let mut rule = GrammarRule::new(name, expr).with_kind(kind);
         if channel.is_some() {
             rule = rule.with_attributes(RuleAttributes {
@@ -174,7 +184,7 @@ impl Parser {
         if let Some(doc) = rule_doc(comments, notes, command) {
             rule = rule.with_doc(doc);
         }
-        Ok(rule)
+        Ok((rule, retype))
     }
 
     // `returns [...]`, `throws ...` and `locals [...]` declare target-language
@@ -847,6 +857,55 @@ fn command_channel(command: &str) -> Option<String> {
         }
     }
     parts.contains(&"skip").then(|| "skip".to_owned())
+}
+
+/// The token type `-> type(NAME)` gives a rule's tokens.
+fn command_type(command: &str) -> Option<String> {
+    command
+        .strip_prefix("->")
+        .unwrap_or(command)
+        .split(',')
+        .filter_map(|part| part.trim().strip_prefix("type(")?.strip_suffix(')'))
+        .find(|name| is_identifier(name))
+        .map(str::to_owned)
+}
+
+/// A rule whose `-> type(X)` command retypes its tokens matches where X does:
+/// X gains a reference to it. An X that only `tokens {...}` declares becomes
+/// a token rule of the rules that retype to it.
+fn apply_retypes(parsed: Vec<(GrammarRule, Option<String>)>) -> Vec<GrammarRule> {
+    let mut retypes = Vec::new();
+    let mut rules = Vec::with_capacity(parsed.len());
+    for (rule, retype) in parsed {
+        if let Some(target) = retype.filter(|target| *target != rule.name) {
+            retypes.push((rule.name.clone(), target));
+        }
+        rules.push(rule);
+    }
+    for (source, target) in retypes {
+        let reference = GrammarExpr::NonTerminal(source.clone());
+        let note = format!("also {source}, which -> type({target}) retypes");
+        let Some(rule) = rules.iter_mut().find(|rule| rule.name == target) else {
+            rules.push(
+                GrammarRule::new(target, reference)
+                    .with_kind(RuleKind::Token)
+                    .with_doc(note),
+            );
+            continue;
+        };
+        let mut alternatives = Vec::new();
+        push_choice_alternative(
+            &mut alternatives,
+            std::mem::replace(&mut rule.expr, GrammarExpr::Empty),
+        );
+        push_choice_alternative(&mut alternatives, reference);
+        rule.expr = finish_choice(alternatives);
+        rule.doc = Some(match rule.doc.take() {
+            Some(doc) => format!("{doc}; {note}"),
+            None => note,
+        });
+    }
+    rules
 }
 
 fn is_identifier(text: &str) -> bool {
