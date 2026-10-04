@@ -43,6 +43,10 @@ class AntlrParser {
     this.tokens = tokens;
     this.cursor = 0;
     this.pendingComments = [];
+    // `options { caseInsensitive = true; }` of the current grammar, and of
+    // the current rule, which may override it.
+    this.caseInsensitive = false;
+    this.ruleCaseInsensitive = false;
   }
 
   parseGrammar() {
@@ -72,14 +76,18 @@ class AntlrParser {
     this.expectIdent('grammar name');
     this.expectKind('semicolon', "';'");
     this.pendingComments = [];
+    this.caseInsensitive = false;
     return true;
   }
 
   parseSkippedDirective() {
     if (this.checkAnyKeyword(['options', 'tokens', 'channels'])) {
-      this.advance();
+      const keyword = this.advance().value;
       if (this.peekKind() === 'action') {
-        this.advance();
+        const options = this.advance().value;
+        if (keyword === 'options') {
+          this.caseInsensitive = parseOptions(options).get('caseInsensitive') === 'true';
+        }
         this.tryConsume('semicolon');
       } else {
         this.skipUntilSemicolon();
@@ -105,10 +113,10 @@ class AntlrParser {
     this.collectComments();
     comments.push(...this.pendingComments);
     this.pendingComments = [];
-    this.rejectRulePrelude();
+    const notes = [];
+    this.parseRulePrelude(notes);
     this.expectKind('colon', "':'");
 
-    const notes = [];
     const expression = precedenceClimbing(name, this.parseAlternatives(notes));
     const command = this.tryConsume('arrow') ? this.parseLexerCommand() : null;
     this.expectKind('semicolon', "';'");
@@ -119,14 +127,32 @@ class AntlrParser {
     return { name, kind, expression, doc: ruleDoc(comments, notes, command), channel: commandChannel(command) };
   }
 
-  rejectRulePrelude() {
-    if (this.peekKind() === 'colon') return;
-    const keyword = this.peekKind() === 'ident' ? this.peek().value : null;
-    if (['locals', 'returns', 'throws', 'options'].includes(keyword)) {
-      throw unsupportedError(FORMAT, `rule prelude ${keyword}`);
-    }
+  // `returns [...]`, `throws ...` and `locals [...]` declare target-language
+  // values, which join the rule's doc like actions. `options {...}` may set
+  // `caseInsensitive` for the rule; other options join the doc.
+  parseRulePrelude(notes) {
+    this.ruleCaseInsensitive = this.caseInsensitive;
     if (this.peekKind() === 'charSet') throw unsupportedError(FORMAT, 'rule arguments');
-    throw this.expected("':' before rule body");
+    while (this.peekKind() !== 'colon') {
+      if ((this.checkKeyword('returns') || this.checkKeyword('locals')) && this.peekNextKind() === 'charSet') {
+        const keyword = this.advance().value;
+        notes.push(`dropped ${keyword} [${this.advance().value}]`);
+      } else if (this.checkKeyword('throws')) {
+        this.advance();
+        const names = [this.expectIdent('exception name')];
+        while (this.tryConsume('comma')) names.push(this.expectIdent('exception name'));
+        notes.push(`dropped throws ${names.join(', ')}`);
+      } else if (this.checkKeyword('options') && this.peekNextKind() === 'action') {
+        this.advance();
+        for (const [key, value] of parseOptions(this.advance().value)) {
+          if (key === 'caseInsensitive') this.ruleCaseInsensitive = value === 'true';
+          else notes.push(`rule option ${key}=${value}`);
+        }
+      } else {
+        throw this.expected("':' before rule body");
+      }
+      this.skipInlineComments();
+    }
   }
 
   parseChoice(notes) {
@@ -223,18 +249,26 @@ class AntlrParser {
         return GrammarBuilder.ref(token.value);
       case 'string': {
         this.advance();
-        if (!this.tryConsume('range')) return GrammarBuilder.literal(token.value);
+        if (!this.tryConsume('range')) {
+          return this.ruleCaseInsensitive && hasCase(token.value)
+            ? GrammarBuilder.literalInsensitive(token.value)
+            : GrammarBuilder.literal(token.value);
+        }
         const endText = this.expectString('range end');
         const start = singleChar(token.value, 'range start', token.offset);
         const end = singleChar(endText, 'range end', token.offset);
         if (start.codePointAt(0) > end.codePointAt(0)) {
           throw errorAt(token.offset, 'literal range start exceeds end');
         }
+        if (this.ruleCaseInsensitive) {
+          const items = withCaseVariants([{ kind: 'range', start, end }]);
+          if (items.length > 1) return GrammarBuilder.charClass(items);
+        }
         return GrammarBuilder.charRange(start, end);
       }
       case 'charSet':
         this.advance();
-        return lowerCharSet(token.value, token.offset);
+        return lowerCharSet(token.value, token.offset, this.ruleCaseInsensitive);
       case 'dot':
         this.advance();
         return GrammarBuilder.any();
@@ -353,6 +387,10 @@ class AntlrParser {
     return this.tokens[this.cursor]?.kind;
   }
 
+  peekNextKind() {
+    return this.tokens[this.cursor + 1]?.kind;
+  }
+
   advance() {
     const token = this.tokens[this.cursor];
     this.cursor += 1;
@@ -377,7 +415,7 @@ function isKeyword(token, keyword) {
   return token?.kind === 'ident' && token.value === keyword;
 }
 
-function lowerCharSet(content, offset) {
+function lowerCharSet(content, offset, caseInsensitive) {
   const scanner = new ClassScanner(content, offset);
   const negated = scanner.tryConsume('^');
   const items = [];
@@ -396,7 +434,57 @@ function lowerCharSet(content, offset) {
     read = true;
   }
   if (!read) throw errorAt(offset, 'character class must not be empty');
-  return GrammarBuilder.charClass(items, negated);
+  return GrammarBuilder.charClass(caseInsensitive ? withCaseVariants(items) : items, negated);
+}
+
+// The `key = value;` pairs of an `options {...}` block.
+function parseOptions(text) {
+  const options = new Map();
+  for (const [, key, value] of text.matchAll(/([A-Za-z_][A-Za-z_0-9]*)\s*=\s*([^;]*?)\s*;/gu)) {
+    options.set(key, value);
+  }
+  return options;
+}
+
+function hasCase(text) {
+  return text.toLowerCase() !== text.toUpperCase();
+}
+
+// Under `caseInsensitive`, ANTLR matches each character in either case. The
+// items gain the other case of each character, and of the ASCII letters in
+// each range.
+function withCaseVariants(items) {
+  const result = [...items];
+  const key = (item) => JSON.stringify(item);
+  const seen = new Set(result.map(key));
+  const add = (item) => {
+    if (!seen.has(key(item))) {
+      seen.add(key(item));
+      result.push(item);
+    }
+  };
+  const swap = (from, to, low, high, shift) => {
+    const start = Math.max(from, low);
+    const end = Math.min(to, high);
+    if (start > end) return;
+    const item = start === end
+      ? { kind: 'char', value: String.fromCodePoint(start + shift) }
+      : { kind: 'range', start: String.fromCodePoint(start + shift), end: String.fromCodePoint(end + shift) };
+    add(item);
+  };
+  for (const item of items) {
+    if (item.kind === 'char') {
+      for (const variant of [item.value.toLowerCase(), item.value.toUpperCase()]) {
+        if (variant !== item.value && Array.from(variant).length === 1) add({ kind: 'char', value: variant });
+      }
+    } else if (item.kind === 'range') {
+      const from = item.start.codePointAt(0);
+      const to = item.end.codePointAt(0);
+      swap(from, to, 0x61, 0x7a, -0x20);
+      swap(from, to, 0x41, 0x5a, 0x20);
+    }
+  }
+  return result;
 }
 
 // ANTLR reads `\uD800`-`\uDFFF` in a set as UTF-16 surrogates, which Java

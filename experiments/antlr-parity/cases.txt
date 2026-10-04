@@ -7,13 +7,13 @@ grammar Comments;
              ;
 ### unit: malformed parse error
 grammar Bad; start : ( missing ;
-### unit: rule prelude locals
+### unit: rule prelude locals joins the doc
 grammar Bad; rule locals [int value] : 'x' ;
-### rule prelude returns
+### rule prelude returns joins the doc
 grammar Bad; rule returns [int value] : 'x' ;
-### rule prelude throws
+### rule prelude throws joins the doc
 grammar Bad; rule throws Foo : 'x' ;
-### rule prelude options
+### rule prelude options join the doc
 grammar Bad; rule options { k = 1; } : 'x' ;
 ### rule arguments
 grammar Bad; rule [int x] : 'x' ;
@@ -235,3 +235,12 @@ grammar CR;
 // crlf comment
 r : 'a'
   | 'b' ;
+### caseInsensitive grammar option with rule override
+lexer grammar K;
+options { caseInsensitive = true; }
+ECHO : 'echo' | 'é' | '1' ;
+R : 'a'..'f' | 'X'..'Z' | 'a'..'a' ;
+S : [a-cK_é] ;
+fragment N options { caseInsensitive = false; } : 'x' [a-z] ;
+### throws list
+grammar T; r throws A, B : 'x' ;

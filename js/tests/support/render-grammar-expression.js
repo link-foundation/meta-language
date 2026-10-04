@@ -21,7 +21,8 @@ export function renderGrammarExpression(expression) {
       return `${expression.negated ? 'notClass' : 'class'}(${expression.items.map((item) =>
         item.kind === 'range'
           ? `range(${quote(item.start)}, ${quote(item.end)})`
-          : `char(${quote(item.value)})`).join(', ')})`;
+          // `category` and `script` items name Unicode properties.
+          : `${item.kind}(${quote(item.value)})`).join(', ')})`;
     case 'ref': return `ref(${expression.name})`;
     case 'choice': return `${expression.ordered ? 'orderedChoice' : 'choice'}(${list(expression.items)})`;
     case 'seq': return `seq(${list(expression.items)})`;

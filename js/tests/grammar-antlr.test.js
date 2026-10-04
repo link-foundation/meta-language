@@ -125,9 +125,9 @@ test('malformed ANTLR reports parse error', () => {
 
 test('unsupported rule prelude reports unsupported error', () => {
   assert.throws(
-    () => importAntlr('grammar Bad; rule locals [int value] : \'x\' ;'),
+    () => importAntlr('grammar Bad; rule [int value] : \'x\' ;'),
     (error) => error instanceof GrammarImportError && error.kind === 'unsupported' &&
-      error.format === 'antlr' && error.construct === 'rule prelude locals',
+      error.format === 'antlr' && error.construct === 'rule arguments',
   );
 });
 
@@ -229,6 +229,28 @@ test('left-recursive alternatives climb by precedence, with surrogate sets and n
   for (const [source, message] of [
     ['grammar P; e : <assoc=up> e \'x\' e | \'y\' ;', 'antlr import unsupported construct: associativity up'],
     ['grammar P; e : [] ;', 'antlr import parse error: character class must not be empty at byte 15'],
+  ]) {
+    assert.throws(() => importAntlr(source), (error) => error.message === message, source);
+  }
+});
+
+test('caseInsensitive options match either case, and rule preludes join the doc', async () => {
+  const grammar = importAntlr(fixture('case-insensitive.g4'));
+  assert.deepEqual(grammar.rule('ECHO').expression, G.literalInsensitive('echo'));
+  assert.deepEqual(grammar.rule('WORD').expression, G.seq(
+    G.charClass([range('a', 'c'), range('A', 'C')]),
+    G.repeat1(G.charClass([range('x', 'z'), character('_'), range('X', 'Z')])),
+  ));
+  assert.deepEqual(grammar.rule('NAME').expression, G.repeat1(G.charClass([range('a', 'z')])));
+  assert.equal(grammar.rule('TAGGED').doc, 'dropped returns [int count]; dropped locals [int indexBefore = -1]');
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('EcHo Bx_Z <abc>').ok, true);
+  assert.equal(parser.parseTree('<ABC>').ok, false);
+
+  for (const [source, message] of [
+    ['grammar P; r throws : \'x\' ;', 'antlr import parse error: expected exception name at byte 20'],
+    ['grammar P; r locals : \'x\' ;', 'antlr import parse error: expected \':\' before rule body at byte 13'],
   ]) {
     assert.throws(() => importAntlr(source), (error) => error.message === message, source);
   }

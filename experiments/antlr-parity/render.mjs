@@ -7,7 +7,7 @@ import { renderGrammarRule } from '../../js/tests/support/render-grammar-express
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-const cases = ['arithmetic.g4', 'covering.g4', 'lexer-mode.g4'].map((file) =>
+const cases = ['arithmetic.g4', 'covering.g4', 'lexer-mode.g4', 'case-insensitive.g4'].map((file) =>
   [`fixture ${file}`, read(`../../rust/tests/fixtures/grammar/antlr/${file}`)]);
 let current = null;
 for (const line of read('./cases.txt').split('\n')) {

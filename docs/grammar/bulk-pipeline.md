@@ -92,3 +92,16 @@ checks two things without downloading anything:
   - *Coverage.* The shared fixture
     [`precedence.g4`](../../rust/tests/fixtures/grammar/antlr/precedence.g4)
     checks all three in both importers.
+- **ANTLR `caseInsensitive` and rule preludes.**
+  - *Case.* `options { caseInsensitive = true; }` makes the lexer match
+    literals, ranges and sets in either case. A rule's own `options` block can
+    turn it off for that rule. A literal becomes a case-insensitive terminal.
+    A range or set also gets the other case of each character it lists, and
+    of the ASCII letters in its ranges.
+  - *Preludes.* `returns [...]`, `locals [...]` and `throws A, B` declare
+    target-language values. Like actions, they are added to the rule's doc.
+    Other rule options are added to the doc too.
+  - *Before this,* the PHP and Swift grammars failed to import.
+  - *Coverage.* The shared fixture
+    [`case-insensitive.g4`](../../rust/tests/fixtures/grammar/antlr/case-insensitive.g4)
+    checks both in both importers.

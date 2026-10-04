@@ -28,7 +28,7 @@ fn main() {
 fn cases(root: &Path) -> Vec<(String, String)> {
     let fixtures = root.join("../../rust/tests/fixtures/grammar/antlr");
     let mut result = Vec::new();
-    for file in ["arithmetic.g4", "covering.g4", "lexer-mode.g4"] {
+    for file in ["arithmetic.g4", "covering.g4", "lexer-mode.g4", "case-insensitive.g4"] {
         let source = fs::read_to_string(fixtures.join(file)).expect("fixture reads");
         result.push((format!("fixture {file}"), source));
     }
@@ -64,6 +64,7 @@ fn render_rule(rule: &GrammarRule) -> String {
 
 fn render_expr(expr: &GrammarExpr) -> String {
     match expr {
+        GrammarExpr::Feature(_) => meta_language::render_native_expression(expr),
         GrammarExpr::Empty => "empty".to_string(),
         GrammarExpr::AnyChar => "any".to_string(),
         GrammarExpr::Terminal(value) => format!("literal({})", quote(value)),

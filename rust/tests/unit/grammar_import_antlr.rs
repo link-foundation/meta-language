@@ -218,15 +218,15 @@ fn malformed_antlr_reports_parse_error() {
 
 #[test]
 fn unsupported_rule_prelude_reports_unsupported_error() {
-    let error = import_antlr("grammar Bad; rule locals [int value] : 'x' ;")
-        .expect_err("locals unsupported");
+    let error =
+        import_antlr("grammar Bad; rule [int value] : 'x' ;").expect_err("arguments unsupported");
 
     assert!(matches!(
         error,
         GrammarImportError::Unsupported {
             format: GrammarFormat::Antlr,
             construct
-        } if construct == "rule prelude locals"
+        } if construct == "rule arguments"
     ));
 }
 
@@ -421,6 +421,69 @@ fn left_recursive_alternatives_climb_by_precedence_with_surrogate_sets_and_numer
         (
             "grammar P; e : [] ;",
             "antlr import parse error: character class must not be empty at byte 15",
+        ),
+    ] {
+        let error = import_antlr(source).expect_err(source);
+        assert_eq!(error.to_string(), message, "{source}");
+    }
+}
+
+#[test]
+fn case_insensitive_options_match_either_case_and_rule_preludes_join_the_doc() {
+    use meta_language::{FeatureParseOptions, compile_feature_grammar};
+
+    let grammar = import_antlr(include_str!(
+        "../fixtures/grammar/antlr/case-insensitive.g4"
+    ))
+    .expect("imports");
+    let class = |items: Vec<CharClassItem>| GrammarExpr::CharClass {
+        negated: false,
+        items,
+    };
+    assert_eq!(
+        grammar.rule("ECHO").expect("ECHO").expr(),
+        &GrammarExpr::TerminalInsensitive("echo".to_string())
+    );
+    assert_eq!(
+        grammar.rule("WORD").expect("WORD").expr(),
+        &GrammarExpr::Sequence(vec![
+            class(vec![
+                CharClassItem::Range('a', 'c'),
+                CharClassItem::Range('A', 'C')
+            ]),
+            GrammarExpr::OneOrMore(Box::new(class(vec![
+                CharClassItem::Range('x', 'z'),
+                CharClassItem::Char('_'),
+                CharClassItem::Range('X', 'Z'),
+            ]))),
+        ])
+    );
+    assert_eq!(
+        grammar.rule("NAME").expect("NAME").expr(),
+        &GrammarExpr::OneOrMore(Box::new(class(vec![CharClassItem::Range('a', 'z')])))
+    );
+    assert_eq!(
+        grammar.rule("TAGGED").expect("TAGGED").doc(),
+        Some("dropped returns [int count]; dropped locals [int indexBefore = -1]")
+    );
+    let options = FeatureParseOptions::default();
+    let parser = compile_feature_grammar(&grammar, None, options.clone()).expect("compiles");
+    let accepts = |text: &str| {
+        parser
+            .parse_tree(text.as_bytes(), &options)
+            .is_ok_and(|outcome| outcome.tree.is_some())
+    };
+    assert!(accepts("EcHo Bx_Z <abc>"));
+    assert!(!accepts("<ABC>"));
+
+    for (source, message) in [
+        (
+            "grammar P; r throws : 'x' ;",
+            "antlr import parse error: expected exception name at byte 20",
+        ),
+        (
+            "grammar P; r locals : 'x' ;",
+            "antlr import parse error: expected ':' before rule body at byte 13",
         ),
     ] {
         let error = import_antlr(source).expect_err(source);

@@ -35,6 +35,10 @@ struct Parser {
     tokens: Vec<Token>,
     cursor: usize,
     pending_comments: Vec<String>,
+    // `options { caseInsensitive = true; }` of the current grammar, and of
+    // the current rule, which may override it.
+    case_insensitive: bool,
+    rule_case_insensitive: bool,
 }
 
 impl Parser {
@@ -43,6 +47,8 @@ impl Parser {
             tokens,
             cursor: 0,
             pending_comments: Vec::new(),
+            case_insensitive: false,
+            rule_case_insensitive: false,
         }
     }
 
@@ -92,13 +98,22 @@ impl Parser {
         self.expect_ident("grammar name")?;
         self.expect_semicolon()?;
         self.pending_comments.clear();
+        self.case_insensitive = false;
         Ok(true)
     }
 
     fn parse_skipped_directive(&mut self) -> Result<bool, GrammarImportError> {
         if self.check_any_keyword(&["options", "tokens", "channels"]) {
+            let is_options = self.check_keyword("options");
             self.advance();
-            if matches!(self.peek_kind(), Some(TokenKind::Action(_))) {
+            if let Some(TokenKind::Action(options)) = self.peek_kind() {
+                if is_options {
+                    self.case_insensitive = parse_options(options)
+                        .iter()
+                        .rev()
+                        .find(|(key, _)| key == "caseInsensitive")
+                        .is_some_and(|(_, value)| value == "true");
+                }
                 self.advance();
                 self.try_consume_semicolon();
                 self.pending_comments.clear();
@@ -127,10 +142,10 @@ impl Parser {
         self.collect_comments();
         let mut comments = comments;
         comments.append(&mut self.pending_comments);
-        self.reject_rule_prelude()?;
+        let mut notes = Vec::new();
+        self.parse_rule_prelude(&mut notes)?;
         self.expect_colon()?;
 
-        let mut notes = Vec::new();
         let alternatives = self.parse_alternatives(&mut notes)?;
         let expr = precedence_climbing(&name, alternatives);
         let command = if self.try_consume_arrow() {
@@ -162,19 +177,52 @@ impl Parser {
         Ok(rule)
     }
 
-    fn reject_rule_prelude(&self) -> Result<(), GrammarImportError> {
-        if self.check_colon() {
-            return Ok(());
-        }
-        if let Some(keyword) = self.peek().and_then(Token::ident)
-            && matches!(keyword, "locals" | "returns" | "throws" | "options")
-        {
-            return Err(unsupported_error(FORMAT, format!("rule prelude {keyword}")));
-        }
+    // `returns [...]`, `throws ...` and `locals [...]` declare target-language
+    // values, which join the rule's doc like actions. `options {...}` may set
+    // `caseInsensitive` for the rule; other options join the doc.
+    fn parse_rule_prelude(&mut self, notes: &mut Vec<String>) -> Result<(), GrammarImportError> {
+        self.rule_case_insensitive = self.case_insensitive;
         if matches!(self.peek_kind(), Some(TokenKind::CharSet(_))) {
             return Err(unsupported_error(FORMAT, "rule arguments"));
         }
-        Err(self.expected("':' before rule body"))
+        while !self.check_colon() {
+            if (self.check_keyword("returns") || self.check_keyword("locals"))
+                && let Some(TokenKind::CharSet(text)) = self.peek_next_kind()
+            {
+                let note = format!(
+                    "dropped {} [{text}]",
+                    self.peek().map(Token::text).unwrap_or_default()
+                );
+                self.advance();
+                self.advance();
+                notes.push(note);
+            } else if self.check_keyword("throws") {
+                self.advance();
+                let mut names = vec![self.expect_ident("exception name")?];
+                while matches!(self.peek_kind(), Some(TokenKind::Comma)) {
+                    self.advance();
+                    names.push(self.expect_ident("exception name")?);
+                }
+                notes.push(format!("dropped throws {}", names.join(", ")));
+            } else if self.check_keyword("options")
+                && let Some(TokenKind::Action(text)) = self.peek_next_kind()
+            {
+                let options = parse_options(text);
+                self.advance();
+                self.advance();
+                for (key, value) in options {
+                    if key == "caseInsensitive" {
+                        self.rule_case_insensitive = value == "true";
+                    } else {
+                        notes.push(format!("rule option {key}={value}"));
+                    }
+                }
+            } else {
+                return Err(self.expected("':' before rule body"));
+            }
+            self.skip_inline_comments();
+        }
+        Ok(())
     }
 
     fn parse_choice(&mut self, notes: &mut Vec<String>) -> Result<GrammarExpr, GrammarImportError> {
@@ -335,14 +383,22 @@ impl Parser {
                     if start > end {
                         return Err(error_at(token.offset, "literal range start exceeds end"));
                     }
+                    if self.rule_case_insensitive {
+                        let items = with_case_variants(&[UnicodeClassItem::Range(start, end)]);
+                        if items.len() > 1 {
+                            return Ok(class_expression(false, items));
+                        }
+                    }
                     Ok(GrammarExpr::CharRange(start, end))
+                } else if self.rule_case_insensitive && has_case(&value) {
+                    Ok(GrammarExpr::TerminalInsensitive(value))
                 } else {
                     Ok(GrammarExpr::Terminal(value))
                 }
             }
             TokenKind::CharSet(content) => {
                 self.advance();
-                lower_char_set(&content, token.offset)
+                lower_char_set(&content, token.offset, self.rule_case_insensitive)
             }
             TokenKind::Dot => {
                 self.advance();
@@ -624,6 +680,10 @@ impl Parser {
         self.peek().map(|token| &token.kind)
     }
 
+    fn peek_next_kind(&self) -> Option<&TokenKind> {
+        self.tokens.get(self.cursor + 1).map(|token| &token.kind)
+    }
+
     fn advance(&mut self) -> &Token {
         let token = &self.tokens[self.cursor];
         self.cursor += 1;
@@ -638,7 +698,11 @@ enum Suffix {
     OneOrMore,
 }
 
-fn lower_char_set(content: &str, offset: usize) -> Result<GrammarExpr, GrammarImportError> {
+fn lower_char_set(
+    content: &str,
+    offset: usize,
+    case_insensitive: bool,
+) -> Result<GrammarExpr, GrammarImportError> {
     let mut scanner = ClassScanner::new(content, offset);
     let negated = scanner.try_consume('^');
     let mut items = Vec::new();
@@ -663,7 +727,83 @@ fn lower_char_set(content: &str, offset: usize) -> Result<GrammarExpr, GrammarIm
     if !read {
         return Err(error_at(offset, "character class must not be empty"));
     }
+    if case_insensitive {
+        items = with_case_variants(&items);
+    }
     Ok(class_expression(negated, items))
+}
+
+/// The `key = value;` pairs of an `options {...}` block.
+fn parse_options(text: &str) -> Vec<(String, String)> {
+    // Like the JavaScript importer, a pair counts only when `;` ends it.
+    let pairs = text.rsplit_once(';').map_or("", |(pairs, _)| pairs);
+    pairs
+        .split(';')
+        .filter_map(|part| {
+            let (key, value) = part.split_once('=')?;
+            let key = key.trim_end();
+            let start = key
+                .rfind(|character: char| !(character.is_ascii_alphanumeric() || character == '_'))
+                .map_or(0, |index| index + 1);
+            let key = &key[start..];
+            is_identifier(key).then(|| (key.to_owned(), value.trim().to_owned()))
+        })
+        .collect()
+}
+
+fn has_case(text: &str) -> bool {
+    text.to_lowercase() != text.to_uppercase()
+}
+
+// Under `caseInsensitive`, ANTLR matches each character in either case. The
+// items gain the other case of each character, and of the ASCII letters in
+// each range.
+fn with_case_variants(items: &[UnicodeClassItem]) -> Vec<UnicodeClassItem> {
+    let mut result = items.to_vec();
+    let mut add = |item: UnicodeClassItem| {
+        if !result.contains(&item) {
+            result.push(item);
+        }
+    };
+    for item in items {
+        match *item {
+            UnicodeClassItem::Char(value) => {
+                for variant in [
+                    value.to_lowercase().to_string(),
+                    value.to_uppercase().to_string(),
+                ] {
+                    let mut chars = variant.chars();
+                    if let (Some(variant), None) = (chars.next(), chars.next())
+                        && variant != value
+                    {
+                        add(UnicodeClassItem::Char(variant));
+                    }
+                }
+            }
+            UnicodeClassItem::Range(from, to) => {
+                for (low, high, upper) in [('a', 'z', false), ('A', 'Z', true)] {
+                    let (start, end) = (from.max(low), to.min(high));
+                    if start > end {
+                        continue;
+                    }
+                    let swap = |character: char| {
+                        if upper {
+                            character.to_ascii_lowercase()
+                        } else {
+                            character.to_ascii_uppercase()
+                        }
+                    };
+                    add(if start == end {
+                        UnicodeClassItem::Char(swap(start))
+                    } else {
+                        UnicodeClassItem::Range(swap(start), swap(end))
+                    });
+                }
+            }
+            UnicodeClassItem::Category(_) | UnicodeClassItem::Script(_) => {}
+        }
+    }
+    result
 }
 
 // ANTLR reads `\uD800`-`\uDFFF` in a set as UTF-16 surrogates, which Java

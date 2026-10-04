@@ -4,7 +4,7 @@ Checks that the JavaScript ANTLR v4 importer
 (`js/src/grammar-importers/antlr.js`) produces the same grammar as the Rust
 importer (`rust/src/grammar/import/antlr.rs`).
 
-Both programs import the three Rust fixtures in
+Both programs import four Rust fixtures in
 `rust/tests/fixtures/grammar/antlr/` and every case of `cases.txt` (a case
 starts with a `### name` line), then print the start rule and every rule as
 `rule <name>: <kind> <expression> | doc: <doc>` in the runtime-neutral
