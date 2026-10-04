@@ -4,7 +4,9 @@
 //! `issue_195_grammar_native_json5.rs`, `issue_195_grammar_native_racket.rs`,
 //! `issue_195_grammar_native_scheme.rs`, `issue_195_grammar_native_c.rs`,
 //! `issue_195_grammar_native_rust.rs`,
-//! `issue_195_grammar_native_javascript.rs`):
+//! `issue_195_grammar_native_javascript.rs`,
+//! `issue_195_grammar_native_typescript.rs`,
+//! `issue_195_grammar_native_tsx.rs`):
 //! they read a fixture of
 //! parity/fixtures/native-grammars/, parse with the Rust
 //! executor and project its trees to the rows of the tree-sitter oracle the

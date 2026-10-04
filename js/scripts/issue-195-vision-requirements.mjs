@@ -414,13 +414,47 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/rules.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-TYPESCRIPT',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/typescript.json',
+    construct: 'native merged TypeScript grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/typescript.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned typescript/src/grammar.json of tree-sitter-typescript 0.23.2, with every rule renamed to its English name, its external scanner common/scanner.h ported to the seven native scanners of parity/grammars/scanners/typescript.lino (automatic semicolons, template characters, the ternary question mark, HTML-like comments and JSX text, and the automatic semicolon after a function signature and the error recovery sentinel, which fail as their C scanner never returns them), and every hand decision recorded in parity/grammars/merge-reports/typescript.json. Both executors build, for every source of the upstream test/corpus the oracle accepts and the added cases, exactly the concrete syntax tree rows of the tree-sitter-typescript oracle with no ambiguity: interfaces, type aliases, enums, namespaces, ambient declarations, generics, union, intersection, conditional, mapped and template literal types, decorators, as, satisfies and non-null expressions, instantiation expressions and the type assertion `<T>x` included. Both executors reject invalid input the oracle recovers from, repair it into the recorded tree, and keep every source byte, comments and white space included, in the tree.',
+    assertions: [
+      'nativeTypeScriptGrammarIsCanonicalLinks',
+      'nativeTypeScriptTreesMatchOracle',
+      'nativeTypeScriptRejectsInvalidInput',
+      'nativeTypeScriptTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/operations.js', 'js/src/grammar-runtime/executor.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/precedence.rs'],
+  },
+  {
+    id: 'I195-GRAMMAR-NATIVE-TSX',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/tsx.json',
+    construct: 'native merged TSX grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/tsx.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned tsx/src/grammar.json of tree-sitter-typescript 0.23.2, with every rule renamed to its English name, its external scanner common/scanner.h ported to the seven native scanners of parity/grammars/scanners/typescript.lino (automatic semicolons, template characters, the ternary question mark, HTML-like comments and JSX text, and the automatic semicolon after a function signature and the error recovery sentinel, which fail as their C scanner never returns them), and every hand decision recorded in parity/grammars/merge-reports/tsx.json. Both executors build, for every source of the upstream test/corpus the oracle accepts and the added cases, exactly the concrete syntax tree rows of the tree-sitter-typescript oracle with no ambiguity: interfaces, type aliases, enums, namespaces, ambient declarations, generics, union, intersection, conditional, mapped and template literal types, decorators, as, satisfies and non-null expressions, instantiation expressions and JSX elements in place of the type assertion included. Both executors reject invalid input the oracle recovers from, repair it into the recorded tree, and keep every source byte, comments and white space included, in the tree.',
+    assertions: [
+      'nativeTsxGrammarIsCanonicalLinks',
+      'nativeTsxTreesMatchOracle',
+      'nativeTsxRejectsInvalidInput',
+      'nativeTsxTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/operations.js', 'js/src/grammar-runtime/executor.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/precedence.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',
     fixture: 'parity/fixtures/native-grammars/json.json',
     construct: 'automatic error recovery of the native executor for every native grammar',
     expectedBehavior:
-      'With errorRecovery (error_recovery in Rust) both executors repair a parse the grammar rejects, without recovery rules in the grammar: at the farthest failing element they insert a zero-width MISSING leaf or skip to the next match of the element behind an ERROR leaf, choose the repair of least cost, and cover input no repair reaches with an ERROR leaf. For every rejection of the ten native grammar fixtures (JSON, INI, diff, CSV, JSON5, Scheme, Racket, C, Rust, JavaScript) both executors build the same recorded tree, which keeps every source byte and is reported as a recovered rejection; without the option the parse is still rejected, and inputs the grammar accepts parse to the same tree with and without it.',
+      'With errorRecovery (error_recovery in Rust) both executors repair a parse the grammar rejects, without recovery rules in the grammar: at the farthest failing element they insert a zero-width MISSING leaf or skip to the next match of the element behind an ERROR leaf, choose the repair of least cost, and cover input no repair reaches with an ERROR leaf. For every rejection of the twelve native grammar fixtures (JSON, INI, diff, CSV, JSON5, Scheme, Racket, C, Rust, JavaScript, TypeScript, TSX) both executors build the same recorded tree, which keeps every source byte and is reported as a recovered rejection; without the option the parse is still rejected, and inputs the grammar accepts parse to the same tree with and without it.',
     assertions: [
       'nativeRecoveryTreesMatchFixtures',
       'nativeRecoveryTreesLossless',

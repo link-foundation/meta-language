@@ -13,7 +13,7 @@ use serde_json::Value;
 use super::issue_195_native_grammar_rows::{cases, parser, source};
 use super::issue_195_observations::{Observation, record};
 
-const GRAMMARS: [(&str, &str, &str); 10] = [
+const GRAMMARS: [(&str, &str, &str); 12] = [
     (
         "json",
         include_str!("../../../parity/grammars/native/json.lino"),
@@ -63,6 +63,16 @@ const GRAMMARS: [(&str, &str, &str); 10] = [
         "javascript",
         include_str!("../../../parity/grammars/native/javascript.lino"),
         include_str!("../../../parity/fixtures/native-grammars/javascript.json"),
+    ),
+    (
+        "typescript",
+        include_str!("../../../parity/grammars/native/typescript.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/typescript.json"),
+    ),
+    (
+        "tsx",
+        include_str!("../../../parity/grammars/native/tsx.lino"),
+        include_str!("../../../parity/fixtures/native-grammars/tsx.json"),
     ),
 ];
 

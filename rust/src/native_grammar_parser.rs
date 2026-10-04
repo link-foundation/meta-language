@@ -72,6 +72,14 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         "native-grammars/scheme.lino",
         include_str!("data/native-grammars/scheme.lino"),
     ),
+    (
+        "native-grammars/tsx.lino",
+        include_str!("data/native-grammars/tsx.lino"),
+    ),
+    (
+        "native-grammars/typescript.lino",
+        include_str!("data/native-grammars/typescript.lino"),
+    ),
 ];
 
 /// One node of a projected native tree; offsets are UTF-8 byte offsets. The

@@ -61,6 +61,39 @@ const RACKET_SYMBOL_NEWLINE = 'Racket Reference section 1.3.1 (Delimiters and Di
 // from: two object literals in a row are no expression.
 const JAVASCRIPT_ORACLE_ERROR = 'Extra complex literals in expressions';
 
+// The sources the TypeScript and TSX fixtures share past their upstream
+// corpus: what each grammar accepts as tree-sitter-typescript does, and what
+// both reject. TypeScript's `!g<T>()` calls `!g` and `await g<T>;`
+// instantiates `await g`, where the generated parser forks at a declared
+// conflict.
+const TYPESCRIPT_MATCHES = Object.freeze([
+  '', 'x;', 'let x: number = 1;', 'const f = (a: string, b?: number): void => {};', 'function f<T extends object>(a: T, ...b: T[]): T { return a; }',
+  'interface A extends B { x: number; readonly y?: string; [k: string]: unknown }', 'type U = A | B & C;', 'type F = (a: number) => string;',
+  'enum E { A = 1, B, C = "c" }', 'const enum E { A }', 'namespace N { export const x = 1; }', 'declare module "m" { export function f(): void; }',
+  'abstract class A<T> implements I { private x: T; protected abstract m(): void; constructor(public y: number) { super(); } }',
+  'let x = y as unknown as string;', 'let x = y satisfies Z;', 'let x = y!;', 'type K = keyof typeof o;', 'type M = { [P in keyof T]?: T[P] };',
+  'type C<T> = T extends string ? "s" : never;', 'type L = `a${B}c`;', 'type T = [a: number, b?: string, ...rest: boolean[]];',
+  'import type { A } from "a";', 'export type { B };', 'import x = require("x");', 'export = x;', 'declare global { interface Window { a: 1 } }',
+  'function assert(x: unknown): asserts x is string {}', 'function f(this: Window) {}', '@dec class A { @prop() x = 1; }',
+  '!g<T>();', 'await g<T>;', 'typeof g<number>(x);', 'for (const [k, v] of m) {}', 'a?.b ?? c;', 'x = `a${b}c`;',
+  'async function f(): Promise<void> { await g<number>(); }', '// c\nlet x = 1 /* d */;\n',
+  // ECMA-262 section 12.2 (White Space) and 12.3 (Line Terminators): a
+  // no-break or ideographic space, the byte order mark and a line separator
+  // separate tokens, as tree-sitter-typescript's extras read them.
+  'let x = 1;\u3000let y;', 'let a;\u00a0let b;', 'x;\u2028y;', 'x;\ufeff',
+]);
+const TYPESCRIPT_REJECTIONS = Object.freeze([
+  'const = 1;', 'let x: = 1;', 'interface A {', 'function f(', 'function f(): {', 'class A {', 'enum E {', 'let x = <;', 'namespace {',
+  'type T = [;', '}', 'x = 1 +;', 'if (x', 'import {', 'let x: number[;',
+]);
+
+// The sources of the pinned tree-sitter-typescript repository a native
+// grammar of it is imported from.
+const typescriptSources = (native) => {
+  const { repository, revision, path: grammarPath, corpus } = grammarSourceOf(native);
+  return [`${repository}/blob/${revision}/${grammarPath}`, `${repository}/tree/${revision}/${corpus.path}`];
+};
+
 // The cases of the upstream test corpus pinned with a native grammar's source
 // whose file and title `keep` holds.
 const upstreamCorpus = (native, keep = () => true) =>
@@ -643,6 +676,44 @@ export const NATIVE_GRAMMARS = Object.freeze([
       "'a", '/* abc', 'x = 1 +;', 'if (x', 'import {', 'x = = 1;', 'a[;', 'switch (x) {', '`abc', 'x.;', 'for (;;', 'new',
       'x = <div>;',
     ],
+  },
+  {
+    id: 'typescript',
+    language: 'TypeScript',
+    grammar: 'parity/grammars/native/typescript.lino',
+    oracle: 'tree-sitter-typescript 0.23.2',
+    sources: typescriptSources('native-typescript'),
+    // The grammar is the import of the pinned tree-sitter-typescript
+    // typescript/src/grammar.json with its native scanner
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision, and a few sources more.
+    ...nativeGrammar('native-typescript'),
+    matches: [
+      ...upstreamCorpus('native-typescript'), ...TYPESCRIPT_MATCHES,
+      // A type assertion and an arrow function with type parameters, which
+      // TSX reads as JSX.
+      'let x = <string>y;', 'const f = <T>(a: T) => a;', 'x = a < b > c;',
+    ],
+    divergences: [],
+    rejections: TYPESCRIPT_REJECTIONS,
+  },
+  {
+    id: 'tsx',
+    language: 'TSX',
+    grammar: 'parity/grammars/native/tsx.lino',
+    oracle: 'tree-sitter-typescript 0.23.2 (tsx)',
+    sources: typescriptSources('native-tsx'),
+    // The grammar is the import of the pinned tree-sitter-typescript
+    // tsx/src/grammar.json with its native scanner; the matches are every case
+    // of the upstream corpus at the same revision the TSX oracle runs, and a
+    // few sources more.
+    ...nativeGrammar('native-tsx'),
+    matches: [
+      ...upstreamCorpus('native-tsx'), ...TYPESCRIPT_MATCHES,
+      'x = <div className="a">{b}</div>;', 'const C = <T,>(a: T) => <span>{a}</span>;', 'x = <A.B c={1} {...d} />;', 'x = <></>;', 'x = <a></b>;',
+    ],
+    divergences: [],
+    rejections: [...TYPESCRIPT_REJECTIONS, 'x = <div>;'],
   },
 ]);
 

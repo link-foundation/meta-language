@@ -14,14 +14,15 @@ grammar is checked against the pinned tree-sitter grammar it replaced as its
 language's default parse. That grammar is an oracle; the native grammar does
 not embed it, and no foreign grammar text is stored in the native file.
 
-Status: ten catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme, Racket,
-C, Rust and JavaScript, have a native merged grammar, and it is their default parser in
+Status: twelve catalog languages, JSON, INI, Diff, CSV, JSON5, Scheme, Racket,
+C, Rust, JavaScript, TypeScript and TSX, have a native merged grammar, and it is their default parser in
 both runtimes; see [default parse](#default-parse). The C grammar is the first
 that the [automatic import pipeline](#imported-grammars) writes, and the Rust
 grammar the first with a ported native scanner. tree-sitter-json,
 tree-sitter-ini, tree-sitter-diff, tree-sitter-csv, tree-sitter-json5-orchard,
-tree-sitter-scheme, tree-sitter-racket, tree-sitter-c, tree-sitter-rust and
-tree-sitter-javascript remain as pinned oracles; see [current limits](#current-limits).
+tree-sitter-scheme, tree-sitter-racket, tree-sitter-c, tree-sitter-rust,
+tree-sitter-javascript and tree-sitter-typescript remain as pinned oracles; see
+[current limits](#current-limits).
 
 ## Format
 
@@ -282,6 +283,35 @@ For JavaScript the source is the `src/grammar.json` of
   the oracle recovers from (two object literals in a row) and 23 broken
   sources.
 
+For TypeScript and TSX the sources are the `typescript/src/grammar.json` and
+`tsx/src/grammar.json` of
+[tree-sitter-typescript 0.23.2](https://github.com/tree-sitter/tree-sitter-typescript/tree/f975a621f4e7f532fe322e13c4f79495e0a7b2e7)
+(crates.io tree-sitter-typescript 0.23.2, revision
+`f975a621f4e7f532fe322e13c4f79495e0a7b2e7`, MIT):
+
+- [`parity/grammars/native/typescript.lino`](../../parity/grammars/native/typescript.lino)
+  and [`parity/grammars/native/tsx.lino`](../../parity/grammars/native/tsx.lino)
+  have 230 rules and 80 keywords each, and the 48 and 49 conflicts the two
+  upstream grammars declare. Their merge reports,
+  [`typescript.json`](../../parity/grammars/merge-reports/typescript.json) and
+  [`tsx.json`](../../parity/grammars/merge-reports/tsx.json), list 42 renamed
+  rules and 3 expanded words (`enum`, `lhs` and `regex`), and no approximated
+  or unsupported construct.
+- [`parity/grammars/scanners/typescript.lino`](../../parity/grammars/scanners/typescript.lino),
+  which [`build-typescript-scanner.mjs`](../../js/experiments/build-typescript-scanner.mjs)
+  writes, ports the external scanner `common/scanner.h`, which both upstream
+  grammars include, to seven native scanners: the five of JavaScript, and the
+  automatic semicolon after a function signature and the error recovery
+  sentinel, which fail because the C scanner never returns them.
+- [`parity/fixtures/native-grammars/typescript.json`](../../parity/fixtures/native-grammars/typescript.json)
+  holds 155 matches (the 111 cases of the upstream `test/corpus` at the same
+  revision for TypeScript and 44 more), no divergence and 15 rejections;
+  [`parity/fixtures/native-grammars/tsx.json`](../../parity/fixtures/native-grammars/tsx.json)
+  holds 157 matches (the 111 corpus cases for TSX and 46 more, JSX elements
+  included), no divergence and 16 rejections. Where TypeScript reads
+  `<string>y` as a type assertion, TSX reads JSX, and `x = <div>;` is a TSX
+  rejection.
+
 ## Concepts
 
 Every rule has a readable English name and names a canonical concept record
@@ -371,6 +401,8 @@ rows, and a Rust suite. Both record evidence for the language's ledger row:
 | C | [`issue-195-grammar-native-c.test.js`](../../js/tests/issue-195-grammar-native-c.test.js) | [`issue_195_grammar_native_c.rs`](../../rust/tests/unit/issue_195_grammar_native_c.rs) | `I195-GRAMMAR-NATIVE-C` |
 | Rust | [`issue-195-grammar-native-rust.test.js`](../../js/tests/issue-195-grammar-native-rust.test.js) | [`issue_195_grammar_native_rust.rs`](../../rust/tests/unit/issue_195_grammar_native_rust.rs) | `I195-GRAMMAR-NATIVE-RUST` |
 | JavaScript | [`issue-195-grammar-native-javascript.test.js`](../../js/tests/issue-195-grammar-native-javascript.test.js) | [`issue_195_grammar_native_javascript.rs`](../../rust/tests/unit/issue_195_grammar_native_javascript.rs) | `I195-GRAMMAR-NATIVE-JAVASCRIPT` |
+| TypeScript | [`issue-195-grammar-native-typescript.test.js`](../../js/tests/issue-195-grammar-native-typescript.test.js) | [`issue_195_grammar_native_typescript.rs`](../../rust/tests/unit/issue_195_grammar_native_typescript.rs) | `I195-GRAMMAR-NATIVE-TYPESCRIPT` |
+| TSX | [`issue-195-grammar-native-tsx.test.js`](../../js/tests/issue-195-grammar-native-tsx.test.js) | [`issue_195_grammar_native_tsx.rs`](../../rust/tests/unit/issue_195_grammar_native_tsx.rs) | `I195-GRAMMAR-NATIVE-TSX` |
 
 Regenerate the fixtures after changing a grammar or a corpus:
 
@@ -445,7 +477,9 @@ recovery fixture, `fn answer() -> u32 { 42`, is repaired with a MISSING `}`.
   For Rust 75 cases are recorded: 49 `oracle-skips-more`, 14
   `native-skips-more`, 5 `same-skipped-bytes` and 7 `same-repair-sites`; for
   JavaScript 61: 39 `oracle-skips-more`, 10 `native-skips-more`, 2
-  `same-skipped-bytes` and 10 `same-repair-sites`.
+  `same-skipped-bytes` and 10 `same-repair-sites`. The conformance and
+  generative corpora have no TypeScript or TSX case, so those two languages
+  have no record.
 - tree-sitter-json, tree-sitter-ini, tree-sitter-diff, tree-sitter-csv,
   tree-sitter-json5-orchard, tree-sitter-scheme, tree-sitter-racket,
   tree-sitter-c, tree-sitter-rust and tree-sitter-javascript no longer back a
