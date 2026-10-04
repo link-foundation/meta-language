@@ -29,11 +29,20 @@
 // --skip-rust is for local runs only: the report then has no Rust run, the Rust
 // assertions stay unobserved and the comparison fails for want of Rust outputs.
 // CI runs both runtimes.
+//
+// The run has to fit a standard hosted runner: formal-ai's test targets each link
+// meta-language and its grammar crates, and with cargo's defaults (one job per
+// core, full debuginfo) the build exhausted the runner and it was shut down
+// (exit 143) without a line of output. So the Rust builds default to
+// RUST_BUILD_DEFAULTS (bounded jobs, no debuginfo; an inherited value wins), and
+// every command prints when it starts and ends, with the elapsed time and the
+// free disk and memory, so a runner that dies still shows where and why.
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, statfs, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -71,6 +80,14 @@ import {
   workloadFiles,
 } from './issue-195-formal-ai-workloads.mjs';
 import { satisfies } from './semver-range.mjs';
+
+// Cargo settings that keep formal-ai's build within a standard runner; see the header.
+const RUST_BUILD_DEFAULTS = Object.freeze({
+  CARGO_BUILD_JOBS: '2',
+  CARGO_INCREMENTAL: '0',
+  CARGO_PROFILE_DEV_DEBUG: '0',
+  CARGO_PROFILE_TEST_DEBUG: '0',
+});
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const skipRust = process.argv.includes('--skip-rust');
@@ -327,6 +344,7 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   await writeFile(path.join(directory, 'tests', `${RUST_PROBE_TARGET}.rs`), RUST_PROBE);
   await mkdir(probeDirectory, { recursive: true });
   const environment = {
+    ...RUST_BUILD_DEFAULTS,
     ...childEnvironment(),
     CARGO_TARGET_DIR: target,
     // CI exports CARGO_TERM_COLOR=always; plain output keeps the libtest transcript parseable.
@@ -587,6 +605,8 @@ function childEnvironment() {
 async function run(label, command, args, { cwd = workDirectory, env = childEnvironment(), allowFailure = false } = {}) {
   const log = path.join(workDirectory, `${label}.log`);
   const rendered = [command, ...args].join(' ');
+  const started = Date.now();
+  console.log(`[${label}] start: ${rendered} (${await resources()})`);
   const { code, stdout, stderr, combined } = await new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
@@ -608,11 +628,25 @@ async function run(label, command, args, { cwd = workDirectory, env = childEnvir
   });
   await writeFile(log, `command: ${rendered}\ncwd: ${cwd}\n\n${combined}\nexit: ${code}\n`);
   logs.push({ label, command: rendered, log, exit: code });
+  console.log(`[${label}] exit ${code} after ${Math.round((Date.now() - started) / 1000)} s (${await resources()})`);
   if (code !== 0 && !allowFailure) {
     const tail = combined.trim().split('\n').slice(-40).join('\n');
     throw new Error(`${label} failed with exit ${code}; see ${log}\n${tail}`);
   }
   return { code, stdout, stderr, combined, log };
+}
+
+// The free disk of the work directory and the free memory, for the progress lines.
+async function resources() {
+  const gib = (bytes) => `${(bytes / 2 ** 30).toFixed(1)} GiB`;
+  let disk = 'unknown';
+  try {
+    const { bavail, bsize } = await statfs(workDirectory);
+    disk = gib(bavail * bsize);
+  } catch {
+    // The work directory may not exist before the first command creates it.
+  }
+  return `disk free ${disk}, memory free ${gib(os.freemem())} of ${gib(os.totalmem())}`;
 }
 
 function sha256(bytes) {

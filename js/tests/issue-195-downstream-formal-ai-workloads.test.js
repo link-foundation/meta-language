@@ -284,3 +284,22 @@ test('the self-AST census refresh may change only the lossless link totals', () 
     { file, line: null, before: 'present', after: 'absent' },
   ]);
 });
+
+// The CI job was shut down (exit 143) without output while cargo built formal-ai
+// with one job per core and full debuginfo; the runner now bounds the build and
+// reports its progress and resources on every command.
+test('the workload runner bounds the formal-ai cargo build and reports its progress', () => {
+  const runner = readFileSync(new URL('../scripts/run-formal-ai-workloads.mjs', import.meta.url), 'utf8');
+  const defaults = /const RUST_BUILD_DEFAULTS = Object\.freeze\(\{([^}]*)\}\)/u.exec(runner)?.[1] ?? '';
+  for (const [name, value] of [
+    ['CARGO_BUILD_JOBS', '2'],
+    ['CARGO_INCREMENTAL', '0'],
+    ['CARGO_PROFILE_DEV_DEBUG', '0'],
+    ['CARGO_PROFILE_TEST_DEBUG', '0'],
+  ]) {
+    assert.match(defaults, new RegExp(`${name}: '${value}'`, 'u'), `RUST_BUILD_DEFAULTS sets ${name}=${value}`);
+  }
+  assert.match(runner, /\.\.\.RUST_BUILD_DEFAULTS,\s*\.\.\.childEnvironment\(\),\s*CARGO_TARGET_DIR/u);
+  assert.match(runner, /\] start: .*resources\(\)/u);
+  assert.match(runner, /\] exit .*resources\(\)/u);
+});
