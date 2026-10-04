@@ -8,8 +8,8 @@ use super::executor::{Element, Executor, Run};
 use super::operations::State;
 use super::program::{Expr, Matcher, Name, Target};
 use super::results::{
-    Res, Skipped, Tree, TreeType, children_of, longest_result, no_children, preferred_tokens,
-    with_leaf,
+    Res, Skipped, Tree, TreeType, children_of, is_separator, longest_result, no_children,
+    preferred_tokens, with_leaf,
 };
 use crate::grammar::RuleKind;
 
@@ -312,20 +312,25 @@ impl Executor<'_> {
     // back to the start of every token, the token then also takes each next
     // separator it matches the same way (`\n\n` is one `\n` token). The
     // index of the first such leaf, its start and the end of the match, or
-    // None when no such separator precedes the terminal.
+    // None when no such separator precedes the terminal. A token of an extra
+    // of a silent rule that builds no node (INI's newline `_blank`) is taken
+    // over the same way, but only once: tree-sitter shifts a valid token
+    // before it reduces the same token to an extra.
     pub(super) fn before_separator(
         &self,
         matcher: &Matcher,
         leaves: &[Rc<Tree>],
     ) -> Option<(usize, usize, usize)> {
-        let covers = |leaf: &Tree, from: usize| {
-            leaf.kind.is_none()
-                && leaf.start == from
-                && matcher
-                    .matches(self.bytes, from, self.end)
-                    .is_some_and(|end| end >= leaf.end)
+        let reaches = |leaf: &Tree| {
+            matcher
+                .matches(self.bytes, leaf.start, self.end)
+                .is_some_and(|end| end >= leaf.end)
         };
-        let at = leaves.iter().position(|leaf| covers(leaf, leaf.start))?;
+        let covers =
+            |leaf: &Tree, from: usize| leaf.kind.is_none() && leaf.start == from && reaches(leaf);
+        let at = leaves.iter().position(|leaf| {
+            covers(leaf, leaf.start) || (self.silent_extra(leaf) && reaches(leaf))
+        })?;
         let from = leaves[at].start;
         let mut end = matcher.matches(self.bytes, from, self.end)?;
         for leaf in &leaves[at + 1..] {
@@ -335,6 +340,43 @@ impl Executor<'_> {
             end = matcher.matches(self.bytes, end, self.end)?;
         }
         Some((at, from, end))
+    }
+
+    /// Whether `leaf` is the token of an extra of a silent rule.
+    fn silent_extra(&self, leaf: &Tree) -> bool {
+        leaf.ty == TreeType::Token
+            && leaf.trivia
+            && leaf
+                .kind
+                .as_ref()
+                .and_then(|kind| self.program.rule_index.get(&**kind))
+                .is_some_and(|&index| matches!(self.program.rules[index].kind, RuleKind::Silent))
+    }
+
+    /// The start of a token under `(matching longest)` after `skipped`, the
+    /// trivia before its end: at the first separator or extra of a silent
+    /// rule (see `before_separator`) whose text the token's item also
+    /// matches, at least as far, and without the trivia from it on (CSV's row
+    /// ends with a `\n` token where `\s` is trivia); otherwise `skipped`.
+    pub(super) fn token_before_extra(
+        &mut self,
+        item: &Expr,
+        skipped: Rc<Skipped>,
+        state: &State,
+    ) -> Run<Rc<Skipped>> {
+        for (at, leaf) in skipped.leaves.iter().enumerate() {
+            if !(is_separator(leaf) || self.silent_extra(leaf)) {
+                continue;
+            }
+            let results = self.quietly(|this| this.evaluate(item, leaf.start, state, true))?;
+            if longest_result(results).is_some_and(|result| result.end >= leaf.end) {
+                return Ok(Rc::new(Skipped {
+                    end: leaf.start,
+                    leaves: children_of(skipped.leaves[..at].to_vec()),
+                }));
+            }
+        }
+        Ok(skipped)
     }
 
     // A leaf over the longest match of `item` in token context: token(),

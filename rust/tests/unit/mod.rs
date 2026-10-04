@@ -42,6 +42,7 @@ mod grammar_parsing;
 mod grammar_render;
 mod grammar_runtime;
 mod grammar_surface;
+mod grammar_token_over_extra;
 mod grammar_translate;
 mod grammar_validate;
 mod graphql_adapter;

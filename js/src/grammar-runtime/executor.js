@@ -1860,13 +1860,32 @@ export class Executor {
   // start of every token, the token then also takes each next separator it
   // matches the same way (`\n\n` is one `\n` token). The end is -1 when no
   // such separator precedes `start`.
+  // A token of an extra of a silent rule that builds no node (INI's newline
+  // `_blank`) is taken over the same way, but only once: tree-sitter shifts
+  // a valid token before it reduces the same token to an extra.
   beforeSeparator(expression, start, leaves) {
     const covers = (leaf, from) => leaf.kind === null && leaf.start === from && this.matchTerminal(expression, from) >= leaf.end;
-    const at = leaves.findIndex((leaf) => covers(leaf, leaf.start));
+    const at = leaves.findIndex((leaf) => (covers(leaf, leaf.start) || (this.silentExtra(leaf) && this.matchTerminal(expression, leaf.start) >= leaf.end)));
     if (at < 0) return { start, end: -1, leaves };
     let end = this.matchTerminal(expression, leaves[at].start);
     for (let index = at + 1; index < leaves.length && covers(leaves[index], end); index += 1) end = this.matchTerminal(expression, end);
     return { start: leaves[at].start, end, leaves: leaves.slice(0, at) };
+  }
+
+  // Whether `leaf` is the token of an extra of a silent rule.
+  silentExtra(leaf) {
+    return leaf.type === 'token' && leaf.trivia === true && leaf.kind !== null && this.program.rules.get(leaf.kind)?.kind === 'silent';
+  }
+
+  // The start of a token under `(matching longest)` after `leaves`, the
+  // trivia before `start`: at the first separator or extra of a silent rule
+  // (see `beforeSeparator`) whose text the token's item also matches, at
+  // least as far, and without the trivia from it on (CSV's row ends with a
+  // `\n` token where `\s` is trivia); otherwise `start` after them.
+  tokenBeforeExtra(item, start, leaves, state) {
+    const at = leaves.findIndex((leaf) => (isSeparator(leaf) || this.silentExtra(leaf))
+      && this.quietly(() => longestResult(this.evaluate(item, leaf.start, state, true))?.end ?? -1) >= leaf.end);
+    return at < 0 ? { end: start, leaves } : { end: leaves[at].start, leaves: leaves.slice(0, at) };
   }
 
   matcher(expression) {
@@ -1961,9 +1980,12 @@ export class Executor {
       case 'lexicalPrecedence': return this.evaluate(expression.item, position, state, inToken);
       case 'longest': return this.longest(expression, position, state, inToken);
       case 'token': case 'immediateToken': {
-        const starts = expression.kind === 'token'
+        let starts = expression.kind === 'token'
           ? [this.terminalStart(position, state, inToken)]
           : this.immediateStarts(position, state, inToken);
+        if (expression.kind === 'token' && this.lexing && starts[0].leaves.length > 0) {
+          starts = [this.tokenBeforeExtra(expression.item, starts[0].end, starts[0].leaves, state)];
+        }
         const found = new Map();
         const keyword = this.keywords !== null && !inToken && isKeyword(expression.item);
         const immediate = this.keywords !== null && !inToken && expression.kind === 'immediateToken' && expression.item.kind === 'literal';

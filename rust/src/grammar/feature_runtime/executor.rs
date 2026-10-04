@@ -457,7 +457,12 @@ impl<'c> Executor<'c> {
             Expr::Longest(items) => self.longest(items, position, state, in_token),
             Expr::Token(item) | Expr::ImmediateToken(item) => {
                 let starts = if matches!(expr, Expr::Token(_)) {
-                    vec![self.terminal_start(position, state, in_token)?]
+                    let skipped = self.terminal_start(position, state, in_token)?;
+                    if self.lexing.is_some() && !skipped.leaves.is_empty() {
+                        vec![self.token_before_extra(item, skipped, state)?]
+                    } else {
+                        vec![skipped]
+                    }
                 } else {
                     self.immediate_starts(position, state, in_token)?
                 };
