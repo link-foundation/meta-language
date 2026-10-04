@@ -9,6 +9,7 @@ use std::fmt;
 use std::sync::Arc;
 
 use super::compile::Compiler;
+use super::forking::GrammarFacts;
 use super::program::{Compiled, Program, Rule, Scanner, Target, Trivia};
 use super::token_ranks::token_ranks;
 use crate::grammar::interchange::render_native_expression;
@@ -788,6 +789,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
             _ => None,
         })
         .collect();
+    let grammar = GrammarFacts::new(&rules, &resolved.conflicts);
     context.programs.push(Program {
         peg,
         token_ranks,
@@ -801,6 +803,7 @@ fn load_in_context(grammar: &Grammar, context: &mut Context<'_>) -> LoadResult<u
         ranked_silent,
         trivia,
         expected_references,
+        grammar,
     });
     for language in embedded {
         if context.languages.contains_key(&language) {

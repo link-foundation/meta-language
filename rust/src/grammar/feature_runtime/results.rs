@@ -9,6 +9,7 @@ use std::fmt;
 use std::ops::Deref;
 use std::rc::Rc;
 
+use super::forking::GrammarFacts;
 use super::operations::{OperationValue, State};
 pub(super) use super::ordering::{complete_order, preferred_tokens, same_children};
 use super::ordering::{same_output, shift_order, token_conflict};
@@ -289,6 +290,9 @@ pub(super) struct TokenOrder<'c> {
     pub(super) bytes: &'c [u8],
     /// The precedence orders by which `shift_order` ranks named precedences.
     pub(super) orders: &'c [Vec<PrecedenceEntry>],
+    /// What the conflicts of two results ask of the rules (see
+    /// `GrammarFacts`).
+    pub(super) grammar: &'c GrammarFacts,
 }
 
 /// A deduplicating, insertion-ordered set of results keyed by end and state.
@@ -328,7 +332,12 @@ impl<'c> ResultSet<'c> {
                         .map_or(Ordering::Equal, |tokens| {
                             preferred_tokens(&result.children, &existing.children, tokens)
                                 .then_with(|| {
-                                    shift_order(&result.children, &existing.children, tokens.orders)
+                                    shift_order(
+                                        &result.children,
+                                        &existing.children,
+                                        tokens.orders,
+                                        tokens.grammar,
+                                    )
                                 })
                         })
                         .then(result.dynamic.cmp(&existing.dynamic));

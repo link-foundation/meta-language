@@ -18,7 +18,9 @@ use std::rc::Rc;
 use super::lexing::is_keyword;
 use super::operations::{Abort, Machine, OpError, OpResult, State, Working, evaluate_condition};
 use super::precedence::{Keep, Operands};
-use super::program::{Associativity, Compiled, Expr, Matcher, Name, Program, Target};
+use super::program::{
+    Associativity, Compiled, Expr, Matcher, Name, PrecedenceTag, Program, Target,
+};
 use super::results::{
     Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned, Shared,
     Skipped, TokenOrder, Tree, TreeType, children_of, concat, content_start, is_separator,
@@ -93,6 +95,10 @@ pub(super) struct Executor<'c> {
     pub(super) owners: Option<HashMap<usize, usize>>,
     /// The rules at the edge of a kind's node facing an operator.
     pub(super) edge_memo: HashMap<(Name, Associativity), Rc<HashSet<usize>>>,
+    /// The reduction below a right operand's first part, by the address of
+    /// the precedence's item, the operand's rule and the part's kind (see
+    /// `shifts_below`).
+    pub(super) below_memo: HashMap<(usize, Name, Name), Option<PrecedenceTag>>,
     /// Whether an extra that builds a node is being parsed (see `extra_node`).
     pub(super) in_extra: bool,
     /// The scans of each scanner token at an offset, by the context offset
@@ -159,6 +165,7 @@ impl<'c> Executor<'c> {
                 ranks,
                 bytes,
                 orders: &program.precedence_orders,
+                grammar: &program.grammar,
             }),
             depth: 0,
             memo: HashMap::new(),
@@ -168,6 +175,7 @@ impl<'c> Executor<'c> {
             shift_memo: HashMap::new(),
             owners: None,
             edge_memo: HashMap::new(),
+            below_memo: HashMap::new(),
             in_extra: false,
             scanner_memo: HashMap::new(),
             scan_context: None,
@@ -432,6 +440,14 @@ impl<'c> Executor<'c> {
                 // before it lexes an extra: after a comment only where it
                 // fails before it.
                 let scanned = matches!(**item, Expr::Ref(Target::External(_)));
+                // The token is requested where the parse asks for it, though
+                // its item is evaluated in token context (TypeScript's
+                // function signature ends with `(immediateToken (ref
+                // function_signature_automatic_semicolon))`, which the
+                // automatic semicolon scanner asks about).
+                if !in_token {
+                    self.request_item(item, position);
+                }
                 let context = self.scan_context;
                 if !in_token {
                     self.scan_context = Some(position);

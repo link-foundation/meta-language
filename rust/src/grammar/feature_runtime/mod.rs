@@ -11,6 +11,7 @@
 
 mod compile;
 mod executor;
+mod forking;
 mod lexing;
 mod load;
 mod operations;
@@ -347,6 +348,7 @@ fn parse_program(
             ranks,
             bytes,
             orders: &compiled.programs[compiled.main].precedence_orders,
+            grammar: &compiled.programs[compiled.main].grammar,
         });
     let keywords = tokens.map(|_| RefCell::new(KeywordLexing::default()));
     let expectations = RefCell::new(Expectations::default());

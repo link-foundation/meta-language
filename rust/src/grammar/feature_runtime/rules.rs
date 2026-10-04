@@ -9,6 +9,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use super::executor::{Element, Executor, Run};
+use super::forking::target_name;
 use super::operations::{
     Abort, Machine, OpError, OpResult, OperationValue, State, Working, run_statements,
 };
@@ -22,6 +23,27 @@ use super::text::{column_of, decode_at};
 use crate::grammar::RuleKind;
 
 impl Executor<'_> {
+    /// Records that the parse requests `item`, a literal or a rule a
+    /// scanner's `expected` may ask about, at `position` (see
+    /// `Expectations`).
+    pub(super) fn request_item(&self, item: &Expr, position: usize) {
+        let program = self.program;
+        let id = match item {
+            Expr::Ref(target) => program
+                .expected_references
+                .get(&**target_name(target, &program.rules))
+                .copied(),
+            Expr::Terminal { expected, .. } => *expected,
+            _ => None,
+        };
+        if let Some(id) = id {
+            self.shared
+                .expectations
+                .borrow_mut()
+                .request(position, (self.program_index, id));
+        }
+    }
+
     /// A rule call or an external token, memoized with left-recursion growth.
     pub(super) fn reference(
         &mut self,

@@ -6,6 +6,7 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
+use super::forking::GrammarFacts;
 use super::operations::{Condition, Statement};
 use super::text::{decode_at, fold_case, quote_text};
 use crate::grammar::{ByteClassItem, PrecedenceEntry, RuleKind};
@@ -351,6 +352,9 @@ pub(super) struct Program {
     /// by the id of its item, which the parse requests where it calls them
     /// (see `Expectations` in executor.rs).
     pub(super) expected_references: HashMap<String, usize>,
+    /// What the conflicts of two results ask of the rules (see
+    /// `GrammarFacts`).
+    pub(super) grammar: GrammarFacts,
 }
 
 /// A grammar with every language it embeds.

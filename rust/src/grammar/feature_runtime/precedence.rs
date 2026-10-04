@@ -6,7 +6,9 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use super::executor::{Executor, Run};
+use super::forking::{direct_edge, edge_names};
 use super::operations::State;
+use super::ordering::first_meaningful;
 use super::program::{Associativity, Expr, Name, PrecedenceTag, Target, compare_precedence};
 use super::results::{Res, ResultSet, Tree, TreeType, children_of};
 use crate::grammar::RuleKind;
@@ -16,6 +18,9 @@ use crate::grammar::RuleKind;
 pub(super) struct Operands {
     left: Option<HashSet<Name>>,
     right: Option<HashSet<Name>>,
+    /// The rules the expression takes directly as its last part (see
+    /// `reduction_below`).
+    last: Vec<Name>,
 }
 
 /// A precedence filter: the precedence, the operand kinds and the address of the precedence's item, by which its rule is known (see
@@ -142,6 +147,9 @@ impl Executor<'_> {
             return Conflict::No;
         }
         if let Some(kind) = &child.rule {
+            if side == Associativity::Right && self.shifts_below(keep, child, kind) {
+                return Conflict::No;
+            }
             if side == Associativity::Right && self.lexed_shift(kind) {
                 return Conflict::No;
             }
@@ -185,6 +193,115 @@ impl Executor<'_> {
         } else {
             Conflict::No
         }
+    }
+
+    // Whether a generated parser shifts into the right operand `child`, of
+    // the rule `rule`, before it could reduce the operand's first part up to
+    // the operator's operand, as tree-sitter's handle_conflict decides: where
+    // the child's rule takes a part at its edge directly (`primary_expression`
+    // of TypeScript's member expression), the shift into the child conflicts
+    // with the reduction of that part into the rule above it on the way to
+    // the operand (`expression`), not with the operator's own reduction, and
+    // the shift wins when the child's precedence is higher than that
+    // reduction's (`member` ranks above the rule `expression`), so that
+    // `<C>e.f` asserts the type of `e.f`. It mirrors shiftsBelow in
+    // js/src/grammar-runtime/executor.js.
+    fn shifts_below(&mut self, keep: &Keep, child: &Tree, rule: &Name) -> bool {
+        let Some(kind) = first_meaningful(&child.children).and_then(|first| first.kind.clone())
+        else {
+            return false;
+        };
+        let Some(&index) = self.program.rule_index.get(&**rule) else {
+            return false;
+        };
+        let key = (keep.item, rule.clone(), kind);
+        let reduction = if let Some(reduction) = self.below_memo.get(&key) {
+            reduction.clone()
+        } else {
+            let reduction = self.reduction_below(&keep.operands.last, index, &key.2);
+            self.below_memo.insert(key, reduction.clone());
+            reduction
+        };
+        let (Some(reduction), Some(inner)) = (reduction, &child.precedence) else {
+            return false;
+        };
+        compare_precedence(inner, &reduction, &self.program.precedence_orders)
+            == std::cmp::Ordering::Greater
+    }
+
+    // The precedence of the deepest reduction of a part that the rule at
+    // `index` takes directly at its start, made on the way from the right
+    // operand of a precedence, whose last part takes the rules `last`
+    // directly, down to a node of `kind`, or None when none is.
+    fn reduction_below(&self, last: &[Name], index: usize, kind: &Name) -> Option<PrecedenceTag> {
+        let rules = &self.program.rules;
+        let rule = &rules[index];
+        let mut direct = Vec::new();
+        direct_edge(
+            &rule.expression,
+            Associativity::Right,
+            Some(&rule.name),
+            rules,
+            &mut direct,
+            None,
+        );
+        let direct: HashSet<Name> = direct.into_iter().map(|(name, _)| name).collect();
+        let derives = |name: &Name| {
+            let mut names = HashSet::new();
+            let target = self.program.rule_index.get(&**name).map_or_else(
+                || Target::External(name.clone()),
+                |&index| Target::Rule(index),
+            );
+            edge_names(&Expr::Ref(target), Associativity::Right, rules, &mut names);
+            names.iter().any(|each| {
+                each == kind
+                    || self
+                        .program
+                        .rule_index
+                        .get(&**each)
+                        .is_some_and(|&at| rules[at].node_kind == *kind)
+            })
+        };
+        let mut found = None;
+        let mut seen = HashSet::new();
+        let mut level = last.to_vec();
+        while !level.is_empty() {
+            let mut deeper = Vec::new();
+            for name in &level {
+                let Some(&at) = self.program.rule_index.get(&**name) else {
+                    continue;
+                };
+                if !seen.insert(name.clone()) {
+                    continue;
+                }
+                let mut parts = Vec::new();
+                direct_edge(
+                    &rules[at].expression,
+                    Associativity::Right,
+                    Some(name),
+                    rules,
+                    &mut parts,
+                    None,
+                );
+                for (part, tag) in parts {
+                    if direct.contains(&part) && derives(&part) {
+                        found = Some(
+                            tag.unwrap_or_else(|| PrecedenceTag::unranked(Some(name.clone()))),
+                        );
+                    }
+                    if self
+                        .program
+                        .rule_index
+                        .get(&*part)
+                        .is_some_and(|&at| matches!(rules[at].kind, RuleKind::Silent))
+                    {
+                        deeper.push(part);
+                    }
+                }
+            }
+            level = deeper;
+        }
+        found
     }
 
     // The rule a node of `kind` is built by under its own name, if any.
@@ -471,9 +588,19 @@ impl Executor<'_> {
         if let Some(operands) = self.operand_memo.get(&key) {
             return Rc::clone(operands);
         }
+        let mut last = Vec::new();
+        direct_edge(
+            item,
+            Associativity::Left,
+            None,
+            &self.program.rules,
+            &mut last,
+            None,
+        );
         let operands = Rc::new(Operands {
             left: self.edge_kinds(item, Associativity::Left),
             right: self.edge_kinds(item, Associativity::Right),
+            last: last.into_iter().map(|(name, _)| name).collect(),
         });
         self.operand_memo.insert(key, Rc::clone(&operands));
         operands

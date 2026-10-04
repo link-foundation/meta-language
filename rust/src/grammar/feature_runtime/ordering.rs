@@ -7,6 +7,7 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+use super::forking::{GrammarFacts, forked_order, shift_reduction};
 use super::parting::{child_parting, holds_first, one_token, reduced_first, same_tokens};
 use super::program::{Associativity, PrecedenceTag, TokenRank, compare_precedence};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
@@ -243,6 +244,7 @@ pub(super) fn shift_order(
     result: &Children,
     existing: &Children,
     orders: &[Vec<PrecedenceEntry>],
+    grammar: &GrammarFacts,
 ) -> Ordering {
     let mut left = vec![Walk::Part(result.clone())];
     let mut right = vec![Walk::Part(existing.clone())];
@@ -290,9 +292,9 @@ pub(super) fn shift_order(
                             return inner;
                         }
                         return if x.end > y.end {
-                            shift_preferred(&x, &y, orders)
+                            shift_preferred(&x, &y, orders, grammar)
                         } else {
-                            shift_preferred(&y, &x, orders).reverse()
+                            shift_preferred(&y, &x, orders, grammar).reverse()
                         };
                     }
                 }
@@ -329,6 +331,9 @@ pub(super) fn shift_order(
                     && !holds_first(&b, &a)
                     && same_tokens(&a, &b)
                 {
+                    if let Some(forked) = forked_order(&a, &b, grammar) {
+                        return forked;
+                    }
                     let order = compare_precedence(&reduction(&a), &reduction(&b), orders);
                     if order != Ordering::Equal {
                         return order;
@@ -345,7 +350,7 @@ pub(super) fn shift_order(
                     return reduced;
                 }
                 if a_node && b_node && a.start == b.start {
-                    let parted = chain_conflict(&a, &b, orders);
+                    let parted = chain_conflict(&a, &b, orders, grammar);
                     if parted != Ordering::Equal {
                         return parted;
                     }
@@ -658,7 +663,12 @@ fn nests_first(outer: &Rc<Tree>, inner: &Rc<Tree>) -> bool {
 /// node's, so the two parses agree up to that end. Greater when `a`'s result
 /// is kept, Less when `b`'s is, Equal when neither. It mirrors chainConflict
 /// in js/src/grammar-runtime/executor.js.
-fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -> Ordering {
+fn chain_conflict(
+    a: &Rc<Tree>,
+    b: &Rc<Tree>,
+    orders: &[Vec<PrecedenceEntry>],
+    grammar: &GrammarFacts,
+) -> Ordering {
     let (first, second) = (leftmost_chain(a), leftmost_chain(b));
     let ends = |chain: &[Rc<Tree>]| {
         chain
@@ -685,7 +695,7 @@ fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -
     if own.len() >= next.len() || own.iter().zip(&next).any(|(x, y)| !same_tree(x, y)) {
         return Ordering::Equal;
     }
-    let order = shift_preferred(long, short, orders);
+    let order = shift_preferred(long, short, orders, grammar);
     if kept == Ordering::Greater {
         order
     } else {
@@ -701,7 +711,12 @@ fn chain_conflict(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -
 /// is the expression a statement is of, the long result reduced that operand
 /// to a silent rule where the short one reduced its node: the two reductions
 /// conflict instead, and a silent rule's reduction is of level 0.
-fn shift_preferred(long: &Rc<Tree>, short: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -> Ordering {
+fn shift_preferred(
+    long: &Rc<Tree>,
+    short: &Rc<Tree>,
+    orders: &[Vec<PrecedenceEntry>],
+    grammar: &GrammarFacts,
+) -> Ordering {
     let begin = first_leaf_start(short);
     let mut progress = long.clone();
     while let Some(inner) = items(&progress.children).find(|child| {
@@ -718,6 +733,12 @@ fn shift_preferred(long: &Rc<Tree>, short: &Rc<Tree>, orders: &[Vec<PrecedenceEn
         .clone()
         .unwrap_or_else(|| PrecedenceTag::unranked(progress.rule.clone()));
     let reduced = reduced_before(short, &progress);
+    if let Some(before) = shift_reduction(short, &progress, grammar) {
+        let order = compare_precedence(&PrecedenceTag::unranked(Some(before)), &reduced, orders);
+        if order != Ordering::Equal {
+            return order;
+        }
+    }
     compare_precedence(&shifted, &reduced, orders)
         .then_with(|| by_associativity(reduced.associativity))
 }
@@ -785,7 +806,7 @@ pub(super) fn complete_order(
     tokens
         .map_or(Ordering::Equal, |tokens| {
             preferred_tokens(&left, &right, tokens)
-                .then_with(|| shift_order(&left, &right, tokens.orders))
+                .then_with(|| shift_order(&left, &right, tokens.orders, tokens.grammar))
         })
         .then(a.0.dynamic.cmp(&b.0.dynamic))
 }
