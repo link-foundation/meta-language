@@ -29,10 +29,18 @@ reports a different later one as a `declaration-conflict`), and a lowering
 carries them as `declarations` and `attributes` metadata steps, which makes it
 `approximate` because no lowered executable honors them.
 
-Known gaps: the merge of both packages refuses rule bodies that use the
-feature forms (`unsupported grammar expression kind`). In the Rust crate,
+A merge compares a rule body that uses a feature form (and a Unicode or byte
+class, or a call of a parameterized rule) by its native listing over
+equivalent references, written `feature(...)` in the merge decision: two
+such bodies merge only when they are the same form over rules the merge
+proves equivalent
+([`parity/fixtures/grammar-merge-features.json`](../../parity/fixtures/grammar-merge-features.json)).
+
+Known gaps: the merge does not normalize inside a feature form, so
+`alias(x, choice(a, b))` and `alias(x, choice(b, a))` stay apart. In the Rust crate,
 grammar inference, sampling and recognition do not evaluate the feature forms,
-the link-network codec does not carry rule fields or declarations, and the
+the link-network codec carries rule attributes but not rule fields or
+grammar declarations, and the
 older pest-based `GrammarParser` only diagnoses the feature forms instead of
 running them.
 

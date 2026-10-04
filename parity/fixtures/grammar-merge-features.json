@@ -1,0 +1,83 @@
+{
+  "description": "Grammars whose rules use feature union expressions (alias, precedence, a Unicode class, a call of a parameterized rule): the merge compares each by its native listing over equivalent references. js/tests/grammar-merge.test.js and rust/tests/unit/grammar_merge.rs both check these decisions.",
+  "language": "Numbers",
+  "sources": [
+    {
+      "id": "tree-sitter",
+      "text": "start document\nrule document = normal repeat0(alias(item, ref(number)))\nrule number = token class(category(\"Nd\"), char(\"_\"))\nrule sum = normal precedence(2, left, seq(ref(number), literal(\"+\"), ref(number)))\nrule call = normal ref(list, ref(number))\nrule list(element) = normal repeat1(ref(element))\n"
+    },
+    {
+      "id": "grammars-v4",
+      "text": "start file\nrule file = normal repeat0(alias(item, ref(digits)))\nrule digits = token class(category(\"Nd\"), char(\"_\"))\nrule sum = normal precedence(3, left, seq(ref(digits), literal(\"+\"), ref(digits)))\n"
+    }
+  ],
+  "decisions": [
+    {
+      "kind": "merged",
+      "name": "document",
+      "members": [
+        "tree-sitter:document",
+        "grammars-v4:file"
+      ],
+      "definition": "normal:many(feature(alias(item, ref(ref(\"number\")))))"
+    },
+    {
+      "kind": "merged",
+      "name": "number",
+      "members": [
+        "tree-sitter:number",
+        "grammars-v4:digits"
+      ],
+      "definition": "token:feature(class(category(\"Nd\"), char(\"_\")))"
+    },
+    {
+      "kind": "kept-unique",
+      "name": "sum",
+      "members": [
+        "tree-sitter:sum"
+      ],
+      "definition": "normal:feature(precedence(2, left, seq(ref(ref(\"number\")), literal(\"+\"), ref(ref(\"number\")))))"
+    },
+    {
+      "kind": "kept-unique",
+      "name": "call",
+      "members": [
+        "tree-sitter:call"
+      ],
+      "definition": "normal:feature(ref(ref(\"list\"), ref(ref(\"number\"))))"
+    },
+    {
+      "kind": "kept-unique",
+      "name": "list",
+      "members": [
+        "tree-sitter:list"
+      ],
+      "definition": "normal:some(ref(\"element\")) (parameters element)"
+    },
+    {
+      "kind": "kept-unique",
+      "name": "sum_from_grammars_v4",
+      "members": [
+        "grammars-v4:sum"
+      ],
+      "definition": "normal:feature(precedence(3, left, seq(ref(ref(\"number\")), literal(\"+\"), ref(ref(\"number\")))))"
+    },
+    {
+      "kind": "renamed-for-collision",
+      "name": "sum_from_grammars_v4",
+      "members": [
+        "grammars-v4:sum"
+      ],
+      "definition": null
+    },
+    {
+      "kind": "homonym-kept-distinct",
+      "name": "sum",
+      "members": [
+        "sum",
+        "sum_from_grammars_v4"
+      ],
+      "definition": null
+    }
+  ]
+}

@@ -16,8 +16,8 @@ use meta_language::{
     GrammarMergeDecisionKind, GrammarMergeFailureReason, GrammarMergeOptions, GrammarMergeResult,
     GrammarMergeSource, GrammarRenameErrorKind, GrammarRule, MergedGrammarGroup, RenamedGrammar,
     RuleAlias, RuleKind, assert_merge_complete, grammar_from_lino, grammar_to_lino, import_bnf,
-    import_pest, merge_grammars, normalized_rule_definition, rename_grammar_rule,
-    restore_source_names,
+    import_pest, merge_grammars, normalized_rule_definition, parse_native_grammar,
+    rename_grammar_rule, restore_source_names,
 };
 use serde_json::{Value, json};
 
@@ -952,4 +952,44 @@ fn malformed_merge_input_is_rejected() {
         GrammarExpr::repeat(GrammarExpr::terminal("x"), 3, Some(1)),
     ));
     reject(&[bounds]);
+}
+
+#[test]
+fn feature_union_expressions_merge_by_their_native_listing_over_equivalent_references() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../parity/fixtures/grammar-merge-features.json");
+    let features: Value =
+        serde_json::from_str(&fs::read_to_string(path).expect("feature merge fixture"))
+            .expect("valid feature merge fixture");
+    let language = text(&features["language"]);
+    let sources: Vec<GrammarMergeSource> = features["sources"]
+        .as_array()
+        .expect("sources")
+        .iter()
+        .enumerate()
+        .map(|(precedence, entry)| {
+            let mut source = GrammarMergeSource::new(
+                text(&entry["id"]),
+                language,
+                parse_native_grammar(text(&entry["text"])).expect("fixture native grammar"),
+            );
+            source.precedence = u32::try_from(precedence).expect("small precedence");
+            source
+        })
+        .collect();
+    let result = merge_grammars(&sources, &GrammarMergeOptions::default()).expect("merge runs");
+    let decisions: Vec<Value> = result.groups[0]
+        .decisions
+        .iter()
+        .map(|decision| {
+            let value = to_json(decision);
+            json!({
+                "kind": value["kind"],
+                "name": value["name"],
+                "members": value["members"],
+                "definition": value["definition"],
+            })
+        })
+        .collect();
+    assert_eq!(Value::Array(decisions), features["decisions"]);
 }

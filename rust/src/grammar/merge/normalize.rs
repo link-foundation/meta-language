@@ -3,6 +3,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::GrammarMergeError;
+use super::rename::map_references;
+use crate::grammar::interchange::render_native_expression;
 use crate::grammar::{CharClassItem, GrammarExpr};
 
 // Meaning-aware normalization. Each form carries its canonical text and its
@@ -152,13 +154,32 @@ pub(super) fn normalize(
                 },
             }
         }
-        GrammarExpr::Feature(feature) => {
-            return Err(GrammarMergeError::new(format!(
-                "unsupported grammar expression kind: {}",
-                feature.head()
-            )));
-        }
+        GrammarExpr::Feature(_) => feature_form(expr, label),
     })
+}
+
+// A feature union expression (precedence, alias, token, a Unicode or byte
+// class, a call of a parameterized rule, ...) is equivalent only to the same
+// expression over equivalent references: its text is its native listing with
+// every reference labelled. References are listed as NUL-delimited indexes,
+// which no quoted listing text contains, and then replaced by their labels.
+fn feature_form(expr: &GrammarExpr, label: &dyn Fn(&str) -> String) -> Form {
+    let names = std::cell::RefCell::new(Vec::new());
+    let listed = render_native_expression(&map_references(expr, &|name| {
+        let mut names = names.borrow_mut();
+        names.push(name.to_owned());
+        format!("\0{}\0", names.len() - 1)
+    }));
+    let names = names.into_inner();
+    let mut text = String::from("feature(");
+    let mut parts = listed.split('\0');
+    text.push_str(parts.next().unwrap_or_default());
+    while let (Some(index), Some(rest)) = (parts.next(), parts.next()) {
+        text.push_str(&label(&names[index.parse::<usize>().unwrap_or_default()]));
+        text.push_str(rest);
+    }
+    text.push(')');
+    Form::leaf(expr.clone(), text)
 }
 
 fn literal(value: &str) -> Form {

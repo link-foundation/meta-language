@@ -22,6 +22,7 @@ import {
   importPest,
   mergeGrammars,
   normalizedRuleDefinition,
+  parseNativeGrammar,
   parseWithGrammar,
   renameGrammarRule,
   restoreSourceNames,
@@ -340,4 +341,12 @@ test('malformed merge input is rejected', () => {
   assert.throws(() => mergeGrammars([{ ...a, language: '' }]), GrammarMergeError);
   assert.throws(() => mergeGrammars([{ ...a, grammar: renameCase.grammar }]), GrammarMergeError);
   assert.throws(() => mergeGrammars([a], { requiredEquivalences: [['upstream-a:number']] }), GrammarMergeError);
+});
+
+test('feature union expressions merge by their native listing over equivalent references', () => {
+  const features = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/grammar-merge-features.json'), 'utf8'));
+  const result = mergeGrammars(features.sources.map(({ id, text }, precedence) => ({ id, language: features.language, precedence, grammar: parseNativeGrammar(text) })));
+  assert.deepEqual(result.groups[0].decisions.map(({ kind, name, members, definition }) => ({ kind, name, members, definition })), features.decisions);
+  // The merged grammar keeps each feature expression over the canonical names.
+  assert.deepEqual(result.groups[0].grammar.rule('document').expression.item, { kind: 'alias', name: 'item', item: { kind: 'ref', name: 'number' } });
 });

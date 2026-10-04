@@ -6,7 +6,8 @@
 import { createHash } from 'node:crypto';
 
 import { Grammar } from './grammar.js';
-import { grammarDeclarations } from './grammar-feature-forms.js';
+import { FEATURE_EXPRESSION_FORMS, grammarDeclarations } from './grammar-feature-forms.js';
+import { renderNativeExpression } from './grammar-interchange.js';
 import { renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from './grammar-links.js';
 import { DecoratorSet, decoratorSet } from './decorators.js';
 import { mapDeclarations, mapReferences, renamedRule } from './grammar-rename.js';
@@ -539,10 +540,12 @@ function normalize(expression, label) {
         ? { expr: { kind: 'literalInsensitive', value: expression.value }, text: `ilit(${q(expression.value)})` }
         : literal(expression.value);
     case 'charRange': return charRange(expression.start, expression.end);
-    case 'charClass': return charClass(expression);
+    case 'charClass': return charClass(expression, label);
     case 'regex': return { expr: { kind: 'regex', value: expression.value }, text: `regex(${q(expression.value)})` };
     case 'any': return { expr: { kind: 'any' }, text: 'any' };
-    case 'ref': return { expr: { kind: 'ref', name: expression.name }, text: label(expression.name) };
+    case 'ref':
+      if (expression.arguments?.length > 0) return featureForm(expression, label);
+      return { expr: { kind: 'ref', name: expression.name }, text: label(expression.name) };
     case 'seq': return sequenceForm(expression.items.map((item) => normalize(item, label)));
     case 'choice': return choiceForm(expression.items.map((item) => normalize(item, label)), expression.ordered === true);
     case 'repeat0': return repeatForm(normalize(expression.item, label), 0, null);
@@ -563,8 +566,21 @@ function normalize(expression, label) {
         inner,
       };
     }
-    default: throw new GrammarMergeError(`unsupported grammar expression kind: ${expression.kind}`);
+    default:
+      if (FEATURE_EXPRESSION_FORMS[expression.kind] || expression.kind === 'byteClass') return featureForm(expression, label);
+      throw new GrammarMergeError(`unsupported grammar expression kind: ${expression.kind}`);
   }
+}
+
+// A feature union expression (precedence, alias, token, a Unicode or byte
+// class, a call of a parameterized rule, ...) is equivalent only to the same
+// expression over equivalent references: its text is its native listing with
+// every reference labelled. References are listed as NUL-delimited indexes,
+// which no quoted listing text contains, and then replaced by their labels.
+function featureForm(expression, label) {
+  const names = [];
+  const listed = renderNativeExpression(mapReferences(expression, (name) => `\0${names.push(name) - 1}\0`));
+  return { expr: expression, text: `feature(${listed.replace(/\0(\d+)\0/gu, (_, index) => label(names[Number(index)]))})` };
 }
 
 function literal(value) {
@@ -576,8 +592,9 @@ function charRange(start, end) {
   return { expr: { kind: 'charRange', start, end }, text: `range(${q(start)},${q(end)})` };
 }
 
-function charClass(expression) {
+function charClass(expression, label) {
   const negated = expression.negated === true;
+  if (expression.items?.some(({ kind }) => kind === 'category' || kind === 'script')) return featureForm(expression, label);
   if (typeof expression.value === 'string') {
     return {
       expr: { kind: 'charClass', value: expression.value, negated },
