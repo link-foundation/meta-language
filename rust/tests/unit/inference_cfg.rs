@@ -1,6 +1,6 @@
 use meta_language::{
-    infer_cfg, GrammarExpr, GrammarFormat, GrammarOracle, InferenceOptions, MembershipOracle,
-    Oracle, PositiveOnlyOracle,
+    GrammarExpr, GrammarFormat, GrammarOracle, InferenceOptions, MembershipOracle, Oracle,
+    PositiveOnlyOracle, infer_cfg,
 };
 
 #[test]
@@ -76,9 +76,11 @@ fn membership_oracle_can_tighten_over_general_recursive_candidate() {
 
     assert!(GrammarOracle::new(&loose.grammar).accepts("[a,b,a]"));
     assert!(!GrammarOracle::new(&strict.grammar).accepts("[a,b,a]"));
-    assert!(examples
-        .iter()
-        .all(|example| GrammarOracle::new(&strict.grammar).accepts(example)));
+    assert!(
+        examples
+            .iter()
+            .all(|example| GrammarOracle::new(&strict.grammar).accepts(example))
+    );
     assert!(strict.report.merges_rejected >= loose.report.merges_rejected);
 }
 
@@ -90,7 +92,7 @@ fn empty_input_returns_empty_inferred_grammar_without_panicking() {
         result.grammar.source_format(),
         Some(GrammarFormat::Inferred)
     );
-    assert!(result.grammar.rules().is_empty());
+    assert_eq!(result.grammar.rules(), []);
     assert_eq!(result.report.rules, 0);
 }
 
@@ -132,6 +134,7 @@ fn contains_terminal(expr: &GrammarExpr, expected: &str) -> bool {
         GrammarExpr::Empty
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar
         | GrammarExpr::NonTerminal(_) => false,
     }
@@ -153,6 +156,7 @@ fn contains_non_terminal(expr: &GrammarExpr) -> bool {
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
+        | GrammarExpr::Feature(_)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar => false,
     }
@@ -174,6 +178,7 @@ fn references_rule(expr: &GrammarExpr, expected: &str) -> bool {
         | GrammarExpr::Capture { expr: inner, .. } => references_rule(inner, expected),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
+        | GrammarExpr::Feature(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }

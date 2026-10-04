@@ -1,0 +1,234 @@
+========
+Notation
+========
+
+notation " ♔ " => Foo.bar
+
+---
+
+(module
+  (notation
+    (string)
+    (projection
+      (identifier)
+      (identifier))))
+
+===========
+Macro Rules
+===========
+
+macro_rules
+  | `(tactic| foo) => `(tactic|trivial)
+  | `(tactic| bar) => `(tactic|apply foo bar)
+
+---
+
+(module
+  (macro_rules
+    (match_arm
+      (quoted_tactic
+        (identifier))
+      (quoted_tactic
+        (trivial)))
+    (match_arm
+      (quoted_tactic
+        (identifier))
+      (quoted_tactic
+        (tactic_apply
+          (application
+            (identifier)
+            (identifier)))))))
+
+======
+Syntax
+======
+
+syntax "foo" : tactic
+syntax str : tactic
+
+---
+
+(module
+  (syntax
+    (string)
+    (identifier))
+  (syntax
+    (identifier)
+    (identifier)))
+
+=====
+Macro
+=====
+
+macro "foo" : tactic => `(trivial)
+
+---
+
+(module
+  (macro
+    (string)
+    (trivial)))
+
+========================
+Elab Optional Left Arrow
+========================
+
+elab "foo" x:term : term <= bar => Lean.Elab.Term.elabTerm x none
+
+---
+
+(module
+  (elab
+    (string)
+    (identifier)
+    (identifier)
+    (identifier)
+    (identifier)
+    (application
+      (identifier)
+      (identifier)
+      (identifier))))
+
+======
+Mixfix
+======
+
+prefix:max "↑" => coe
+infix:max "↑" => coe
+infixl:max "↑" => coe
+infixr:max "↑" => coe
+postfix:max "↑" => coe
+
+---
+
+(module
+  (mixfix
+    (string)
+    (identifier))
+  (mixfix
+    (string)
+    (identifier))
+  (mixfix
+    (string)
+    (identifier))
+  (mixfix
+    (string)
+    (identifier))
+  (mixfix
+    (string)
+    (identifier)))
+
+==============
+Scoped / Local
+==============
+
+scoped elab "foo" x:term : term => Lean.Elab.Term.elabTerm x none
+local elab "bar" x:term : term => Lean.Elab.Term.elabTerm x none
+
+scoped syntax "baz" : tactic
+local syntax "baz" : tactic
+
+scoped notation " ♔ " => 12
+local notation " ♔ " => 12
+
+scoped macro_rules
+| `(tactic| foo) => `(tactic|trivial)
+local macro_rules
+| `(tactic| foo) => `(tactic|trivial)
+
+@[scoped simp] def f := 12
+@[local simp] def g := 12
+
+scoped prefix:max "↑" => coe
+scoped infix:max "↑" => coe
+scoped infixl:max "↑" => coe
+scoped infixr:max "↑" => coe
+scoped postfix:max "↑" => coe
+
+---
+
+(module
+  (elab
+    (string)
+    (identifier)
+    (identifier)
+    (identifier)
+    (application
+      (identifier)
+      (identifier)
+      (identifier)))
+  (elab
+    (string)
+    (identifier)
+    (identifier)
+    (identifier)
+    (application
+      (identifier)
+      (identifier)
+      (identifier)))
+  (syntax
+    (string)
+    (identifier))
+  (syntax
+    (string)
+    (identifier))
+  (notation
+    (string)
+    (number))
+  (notation
+    (string)
+    (number))
+  (macro_rules
+    (match_arm
+      (quoted_tactic
+        (identifier))
+      (quoted_tactic
+        (trivial))))
+  (macro_rules
+    (match_arm
+      (quoted_tactic
+        (identifier))
+      (quoted_tactic
+        (trivial))))
+  (declaration
+    (attributes
+      (identifier))
+    (definition
+      (identifier)
+      (number)))
+  (declaration
+    (attributes
+      (identifier))
+    (definition
+      (identifier)
+      (number)))
+  (mixfix
+    (string)
+    (identifier))
+  (mixfix
+    (string)
+    (identifier))
+  (mixfix
+    (string)
+    (identifier))
+  (mixfix
+    (string)
+    (identifier))
+  (mixfix
+    (string)
+    (identifier)))
+
+==================
+Builtin Initialize
+==================
+
+builtin_initialize foo : bar ←
+  baz
+
+---
+
+(module
+  (initialize
+    (identifier)
+    (identifier)
+    (identifier)))

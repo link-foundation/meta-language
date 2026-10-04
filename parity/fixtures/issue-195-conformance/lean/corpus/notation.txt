@@ -1,0 +1,30 @@
+===================
+Single French Quote
+===================
+
+theorem ex3 (p q : Prop) : p → q → p ∧ q :=
+  fun _ _ => ⟨p, q⟩
+
+---
+
+(module
+  (definition
+    (identifier)
+    (binders
+      (explicit_binder
+        (identifier)
+        (identifier)
+        (identifier)))
+    (arrow
+      (identifier)
+      (arrow
+        (identifier)
+        (binary_expression
+          (identifier)
+          (identifier))))
+    (fun
+      (hole)
+      (hole)
+      (anonymous_constructor
+        (identifier)
+        (identifier)))))

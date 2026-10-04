@@ -1,7 +1,6 @@
 use super::{
-    validate_name_candidate, AdviceSource, ConceptNamingAdvisor, MdlMergeAdvisor, MergeAdvisor,
-    MergeRequest, MergeScore, NameCandidate, NamingAdvisor, NamingRequest,
-    INFERENCE_NAMING_CONCEPTS,
+    AdviceSource, ConceptNamingAdvisor, INFERENCE_NAMING_CONCEPTS, MdlMergeAdvisor, MergeAdvisor,
+    MergeRequest, MergeScore, NameCandidate, NamingAdvisor, NamingRequest, validate_name_candidate,
 };
 
 /// Provider-agnostic LLM boundary for optional inference acceleration.

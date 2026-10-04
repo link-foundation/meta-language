@@ -205,7 +205,7 @@ impl RuleParser {
         self.tokens.get(self.position)
     }
 
-    fn is_at_end(&self) -> bool {
+    const fn is_at_end(&self) -> bool {
         self.position >= self.tokens.len()
     }
 }

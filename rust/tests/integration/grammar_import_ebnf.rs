@@ -1,4 +1,4 @@
-use meta_language::{import_ebnf, FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks};
+use meta_language::{FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks, import_ebnf};
 
 const ARITHMETIC: &str = include_str!("../fixtures/grammar/ebnf/arithmetic.ebnf");
 

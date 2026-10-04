@@ -2,9 +2,9 @@
 //!
 //! Parsers report a `(row, column)` point for every span they emit. Resolving
 //! those points through a shared line index instead of rescanning the source
-//! (issue #193) must not move a single point, so these tests pin both
-//! conventions the parsers use: columns counted in bytes over program source,
-//! and columns counted in characters over prose and region boundaries.
+//! (issue #193) must not move a single point. Every parser counts columns in
+//! UTF-8 bytes, the tree-sitter convention, so program source, prose and
+//! region boundaries share one convention in both runtimes (issue #195).
 
 use meta_language::{LinkNetwork, LinkType, ParseConfiguration, Point};
 
@@ -118,32 +118,32 @@ fn program_source_points_count_columns_in_bytes() {
     );
 }
 
-/// Prose keeps character columns, so a two-byte character advances the column
-/// by one.
+/// Prose counts columns in bytes too, so a two-byte character advances the
+/// column by two.
 #[test]
-fn natural_language_points_count_columns_in_characters() {
+fn natural_language_points_count_columns_in_bytes() {
     let source = "El niño lee.\nLa señora escribe.\n";
     let network = LinkNetwork::parse(source, "Spanish", ParseConfiguration::default());
 
     assert_eq!(
         token_points(&network, "lee"),
-        (Point::new(0, 8), Point::new(0, 11))
+        (Point::new(0, 9), Point::new(0, 12))
     );
     assert_eq!(
         token_points(&network, "escribe"),
-        (Point::new(1, 10), Point::new(1, 17))
+        (Point::new(1, 11), Point::new(1, 18))
     );
 }
 
-/// A region boundary keeps character columns, while the parse of the embedded
-/// source continues to report byte columns relative to that boundary.
+/// A region boundary and the parse of its embedded source both report byte
+/// columns.
 #[test]
 fn embedded_region_points_keep_the_boundary_and_inner_conventions() {
     let source = "# Título\n\nTexto aquí.\n\n```rust\nfn ítem() {}\n```\n";
     let network = LinkNetwork::parse(source, "Markdown", ParseConfiguration::default());
 
     assert_eq!(
-        region_points(&network, "rust"),
+        region_points(&network, "Rust"),
         (Point::new(5, 0), Point::new(6, 0))
     );
     // `ítem` starts one column into the embedded line and spans five bytes.

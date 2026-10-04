@@ -1,9 +1,13 @@
 export const LinkType = Object.freeze({
   Concept: 'Concept',
+  Document: 'Document',
   Dynamic: 'Dynamic',
   Field: 'Field',
+  Grammar: 'Grammar',
   Language: 'Language',
   Object: 'Object',
+  Reference: 'Reference',
+  Region: 'Region',
   Relation: 'Relation',
   Semantic: 'Semantic',
   SourceToken: 'SourceToken',
@@ -11,6 +15,7 @@ export const LinkType = Object.freeze({
   Token: 'SourceToken',
   Syntax: 'Syntax',
   Trivia: 'Trivia',
+  Type: 'Type',
 });
 
 export const NetworkProjection = Object.freeze({
@@ -120,6 +125,21 @@ export class LinkFlags {
 
   static clean() {
     return new LinkFlags();
+  }
+
+  /** Flags for an error link, which also reports that it has an error. */
+  static error() {
+    return new LinkFlags({ isError: true, hasError: true });
+  }
+
+  /** Flags for a link that contains an error below it. */
+  static containingError() {
+    return new LinkFlags({ hasError: true });
+  }
+
+  /** Flags for a missing link, which also reports that it has an error. */
+  static missing() {
+    return new LinkFlags({ isMissing: true, hasError: true });
   }
 
   withError(value = true) {
@@ -243,9 +263,11 @@ export class Link {
 export class ParseConfiguration {
   constructor({
     triviaAttachmentPolicy = TriviaAttachmentPolicy.Combined,
+    regionDetectionPolicy = 'Both',
     accessMode = 'mutable',
   } = {}) {
     this.triviaAttachmentPolicy = triviaAttachmentPolicy;
+    this.regionDetectionPolicy = regionDetectionPolicy;
     this.accessMode = accessMode;
   }
 
@@ -255,6 +277,14 @@ export class ParseConfiguration {
 
   withTriviaAttachmentPolicy(triviaAttachmentPolicy) {
     return new ParseConfiguration({ ...this, triviaAttachmentPolicy });
+  }
+
+  withRegionDetectionPolicy(regionDetectionPolicy) {
+    return new ParseConfiguration({ ...this, regionDetectionPolicy });
+  }
+
+  with_region_detection_policy(regionDetectionPolicy) {
+    return this.withRegionDetectionPolicy(regionDetectionPolicy);
   }
 
   withAccessMode(accessMode) {

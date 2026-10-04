@@ -1,0 +1,807 @@
+================================================================================
+Module functor with module type constraint and include
+================================================================================
+
+Module Type OrderedType.
+  Include EqLe <+ HasLt.
+End OrderedType.
+Module Make (Import X : Typ) (E : Eq X) <: S with Definition t := X.t := Impl X <+ Facts.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (module_command
+      (ident)))
+  (sentence
+    (include_command
+      (module_type_expr
+        (ident))
+      (module_type_expr
+        (ident))))
+  (sentence
+    (end_command
+      (ident)))
+  (sentence
+    (module_command
+      (ident)
+      (module_binder
+        (ident)
+        (module_type_expr
+          (ident)))
+      (module_binder
+        (ident)
+        (module_type_expr
+          (ident)
+          (ident)))
+      (module_type_expr
+        (ident)
+        (ident)
+        (dotted_qualid))
+      (module_type_expr
+        (ident)
+        (ident))
+      (module_type_expr
+        (ident)))))
+
+================================================================================
+Declare Module and Register
+================================================================================
+
+Declare Module M : T.
+Register bool as core.bool.type.
+Register Inline id.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (declare_command
+      (ident)
+      (module_type_expr
+        (ident))))
+  (sentence
+    (register_command
+      (ident)
+      (dotted_qualid)))
+  (sentence
+    (register_command
+      (ident))))
+
+================================================================================
+Record Class Instance and Existing Instance
+================================================================================
+
+Record prod (A B : Type) : Type := pair { fst : A ; snd :> B }.
+Class Eq (A : Type) := eqb : A -> A -> bool.
+#[global] Instance eq_nat : Eq nat | 2 := { eqb := Nat.eqb }.
+Existing Instance eq_nat.
+Existing Class Eq.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (record_command
+      (ident_decl
+        (ident))
+      (binder
+        (ident)
+        (ident)
+        (type
+          (ident)))
+      (type
+        (ident))
+      (ident)
+      (record_field
+        (ident_decl
+          (ident))
+        (type
+          (ident)))
+      (record_field
+        (ident_decl
+          (ident))
+        (type
+          (ident)))))
+  (sentence
+    (record_command
+      (ident_decl
+        (ident))
+      (binder
+        (ident)
+        (type
+          (ident)))
+      (record_field
+        (ident_decl
+          (ident))
+        (type
+          (arrow_term
+            (ident)
+            (arrow_term
+              (ident)
+              (ident)))))))
+  (sentence
+    (attributes
+      (attribute
+        (ident)))
+    (instance_command
+      (ident_decl
+        (ident))
+      (type
+        (application
+          (ident)
+          (ident)))
+      (hint_priority
+        (decnat))
+      (record_fields_literal
+        (field_definition
+          (ident)
+          (dotted_qualid)))))
+  (sentence
+    (existing_command
+      (ident)))
+  (sentence
+    (existing_command
+      (ident))))
+
+================================================================================
+Schemes
+================================================================================
+
+Scheme Equality for nat.
+Scheme even_ind' := Induction for even Sort Prop with odd_ind' := Induction for odd Sort Prop.
+Combined Scheme even_odd_ind from even_ind', odd_ind'.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (scheme_command
+      (ident)))
+  (sentence
+    (scheme_command
+      (ident)
+      (ident)
+      (ident)
+      (ident)
+      (ident)
+      (ident)))
+  (sentence
+    (combined_scheme_command
+      (ident)
+      (ident)
+      (ident))))
+
+================================================================================
+Arguments with scopes and implicit status
+================================================================================
+
+Arguments pair {A B}%_type_scope _ _ / : assert.
+Arguments app [A] & l1 l2%list : simpl never.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (arguments_command
+      (reference
+        (ident))
+      (ident)
+      (ident)
+      (scope_key
+        (ident))
+      (wildcard)
+      (wildcard)
+      (arguments_modifier
+        (ident))))
+  (sentence
+    (arguments_command
+      (reference
+        (ident))
+      (ident)
+      (ident)
+      (ident)
+      (scope_key
+        (ident))
+      (arguments_modifier
+        (ident)
+        (ident)))))
+
+================================================================================
+Hints and scopes
+================================================================================
+
+Hint Resolve -> iff_lemma : core.
+Hint Mode Eq ! : typeclass_instances.
+Hint Constants Opaque : db.
+Delimit Scope nat_scope with nat.
+Bind Scope nat_scope with nat.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (hint_command
+      (ident)
+      (ident)))
+  (sentence
+    (hint_command
+      (ident)
+      (ident)))
+  (sentence
+    (hint_command
+      (ident)))
+  (sentence
+    (delimit_scope_command
+      (ident)
+      (ident)))
+  (sentence
+    (bind_scope_command
+      (ident)
+      (coercion_class
+        (reference
+          (ident))))))
+
+================================================================================
+Context generalized binders and implicit types
+================================================================================
+
+Context `{Eq A} {B : Type}.
+Implicit Types n m : nat.
+Generalizable All Variables.
+Typeclasses Opaque eqb.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (context_command
+      (binder
+        (generalized_binder
+          (application
+            (ident)
+            (ident))))
+      (binder
+        (implicit_binders
+          (ident)
+          (type
+            (ident))))))
+  (sentence
+    (implicit_types_command
+      (ident)
+      (ident)
+      (type
+        (ident))))
+  (sentence
+    (generalizable_command))
+  (sentence
+    (typeclasses_command
+      (ident))))
+
+================================================================================
+Obligations and Let CoInductive Variant
+================================================================================
+
+Obligation Tactic := idtac.
+Next Obligation.
+Solve All Obligations with auto.
+Let x := 1.
+CoInductive stream := Cons : nat -> stream -> stream.
+Variant unit' := tt'.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (obligation_tactic_command
+      (tactic_invocation
+        (generic_tactic
+          (ident)))))
+  (sentence
+    (obligation_command))
+  (sentence
+    (obligation_command
+      (tactic_invocation
+        (generic_tactic
+          (ident)))))
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (number)))
+  (sentence
+    (inductive_command
+      (inductive_definition
+        (ident)
+        (constructor_block
+          (constructor
+            (ident)
+            (of_type_inst
+              (type
+                (arrow_term
+                  (ident)
+                  (arrow_term
+                    (ident)
+                    (ident))))))))))
+  (sentence
+    (inductive_command
+      (inductive_definition
+        (ident)
+        (constructor_block
+          (constructor
+            (ident)))))))
+
+================================================================================
+Infix and abbreviation
+================================================================================
+
+Infix "++" := app (right associativity, at level 60) : list_scope.
+Notation compose f g := (fun x => f (g x)).
+Notation id := (fun x => x) (only parsing).
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (infix_command
+      (notation_declaration
+        (string)
+        (ident)
+        (syntax_modifier_list
+          (syntax_modifier
+            (associativity_modifier))
+          (syntax_modifier
+            (level_modifier
+              (at_level_num
+                (decnat)))))
+        (notation_scope
+          (ident)))))
+  (sentence
+    (abbreviation_command
+      (ident)
+      (ident)
+      (ident)
+      (parenthesized_term
+        (lambda_function
+          (open_binders
+            (binder
+              (ident)))
+          (application
+            (ident)
+            (parenthesized_term
+              (application
+                (ident)
+                (ident))))))))
+  (sentence
+    (abbreviation_command
+      (ident)
+      (parenthesized_term
+        (lambda_function
+          (open_binders
+            (binder
+              (ident)))
+          (ident)))
+      (syntax_modifier_list
+        (syntax_modifier
+          (parsing_modifier))))))
+
+================================================================================
+Subset, projection, rew and quotation terms
+================================================================================
+
+Definition f (s : {x : nat | x > 0}) := s.1.
+Definition g := {A} + {B}.
+Definition h r := r.(fst).
+Definition k := rew <- H in x.
+Definition q := ltac:(exact 0).
+Definition c := constr:(1 + 1).
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (binder
+        (ident)
+        (type
+          (subset_term
+            (ident)
+            (type
+              (ident))
+            (comparison_operation
+              (ident)
+              (number)))))
+      (projection_term
+        (ident))))
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (additive_operation
+        (subset_term
+          (ident))
+        (subset_term
+          (ident)))))
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (binder
+        (ident))
+      (projection_term
+        (ident)
+        (ident))))
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (rew_term
+        (ident)
+        (ident))))
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (ltac_quotation
+        (tactic_invocation
+          (generic_tactic
+            (ident)
+            (generic_tactic_body
+              (atomic_term_with_bindings
+                (number))))))))
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (term_quotation
+        (additive_operation
+          (number)
+          (number))))))
+
+================================================================================
+Quantifier notations
+================================================================================
+
+Definition u := exists! x, x = 0.
+Definition v := ∀ x, ∃ y, x = y.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (quantifier_term
+        (open_binders
+          (binder
+            (ident)))
+        (type
+          (comparison_operation
+            (ident)
+            (number))))))
+  (sentence
+    (definition_command
+      (ident_decl
+        (ident))
+      (quantifier_term
+        (open_binders
+          (binder
+            (ident)))
+        (type
+          (quantifier_term
+            (open_binders
+              (binder
+                (ident)))
+            (type
+              (comparison_operation
+                (ident)
+                (ident)))))))))
+
+================================================================================
+Ltac term match fun eval and tryif
+================================================================================
+
+Ltac t m := match m with | ?f ?x => idtac | _ => fail 1 end.
+Ltac s := lazymatch goal with |- _ => idtac end.
+Ltac k := let rec go a b := idtac in let v := eval compute in n in tryif go then idtac else fail.
+Ltac u := solve_respectful ltac:(fun RA => Ltac.Internal.head RA).
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (ltac_definition
+      (ident)
+      (ident)
+      (match_ltac_term
+        (ident)
+        (match_ltac_case
+          (match_pattern
+            (application
+              (metavariable)
+              (metavariable)))
+          (tactic_invocation
+            (generic_tactic
+              (ident))))
+        (match_ltac_case
+          (match_pattern
+            (ident))
+          (tactic_invocation
+            (generic_tactic
+              (ident)
+              (generic_tactic_body
+                (atomic_term_with_bindings
+                  (number)))))))))
+  (sentence
+    (ltac_definition
+      (ident)
+      (match_goal
+        (match_goal_case
+          (goal_pattern
+            (match_pattern
+              (ident)))
+          (tactic_invocation
+            (generic_tactic
+              (ident)))))))
+  (sentence
+    (ltac_definition
+      (ident)
+      (ltac_let
+        (ident)
+        (ident)
+        (ident)
+        (tactic_invocation
+          (generic_tactic
+            (ident)))
+        (ltac_let
+          (ident)
+          (ltac_eval
+            (reduction_expr
+              (ident))
+            (ident))
+          (tryif_tactic
+            (tactic_invocation
+              (generic_tactic
+                (ident)))
+            (tactic_invocation
+              (generic_tactic
+                (ident)))
+            (tactic_invocation
+              (generic_tactic
+                (ident))))))))
+  (sentence
+    (ltac_definition
+      (ident)
+      (tactic_invocation
+        (generic_tactic
+          (ident)
+          (generic_tactic_body
+            (atomic_term_with_bindings
+              (ltac_quotation
+                (ltac_fun
+                  (ident)
+                  (tactic_invocation
+                    (generic_tactic
+                      (dotted_qualid)
+                      (generic_tactic_body
+                        (atomic_term_with_bindings
+                          (ident))))))))))))))
+
+================================================================================
+Tacticals
+================================================================================
+
+Goal True.
+  once (do 2 progress now auto).
+  abstract (time exactly_once idtac).
+Qed.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (tactic_invocation
+      (generic_tactic
+        (ident)
+        (generic_tactic_body
+          (atomic_term_with_bindings
+            (ident))))))
+  (sentence
+    (tactic_invocation
+      (tactical
+        (parenthesized_tactic
+          (tactic_invocation
+            (tactical
+              (decnat)
+              (tactic_invocation
+                (tactical
+                  (tactic_invocation
+                    (tactical
+                      (tactic_invocation
+                        (generic_tactic
+                          (ident)))))))))))))
+  (sentence
+    (tactic_invocation
+      (tactical
+        (parenthesized_tactic
+          (tactic_invocation
+            (tactical
+              (tactic_invocation
+                (tactical
+                  (tactic_invocation
+                    (generic_tactic
+                      (ident)))))))))))
+  (sentence
+    (qed_command)))
+
+================================================================================
+Tactic clauses and occurrences
+================================================================================
+
+Goal True.
+  rewrite 2 app_assoc at 1 in H |- *.
+  rewrite <- 2 H in * |-.
+  induction l in x |- *.
+  apply -> iff_lemma.
+  autorewrite with list using simpl.
+  auto with *.
+  2:{ exact I. }
+Qed.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (tactic_invocation
+      (generic_tactic
+        (ident)
+        (generic_tactic_body
+          (atomic_term_with_bindings
+            (ident))))))
+  (sentence
+    (tactic_invocation
+      (rewrite_tactic
+        (oriented_rewriter
+          (decnat)
+          (atomic_term_with_bindings
+            (ident))
+          (at_clause
+            (decnat)))
+        (in_clause
+          (ident)))))
+  (sentence
+    (tactic_invocation
+      (rewrite_tactic
+        (oriented_rewriter
+          (decnat)
+          (atomic_term_with_bindings
+            (ident)))
+        (in_clause))))
+  (sentence
+    (tactic_invocation
+      (generic_tactic
+        (ident)
+        (generic_tactic_body
+          (atomic_term_with_bindings
+            (ident))
+          (in_clause
+            (ident))))))
+  (sentence
+    (tactic_invocation
+      (generic_tactic
+        (ident)
+        (generic_tactic_body
+          (oriented_term
+            (atomic_term_with_bindings
+              (ident)))))))
+  (sentence
+    (tactic_invocation
+      (generic_tactic
+        (ident)
+        (generic_tactic_body
+          (with_clause
+            (ident))
+          (using_clause
+            (ident))))))
+  (sentence
+    (tactic_invocation
+      (generic_tactic
+        (ident)
+        (generic_tactic_body
+          (with_clause)))))
+  (sentence
+    (proof_block
+      (selector
+        (goal_selector
+          (range_selector
+            (decnat))))
+      (sentence
+        (tactic_invocation
+          (generic_tactic
+            (ident)
+            (generic_tactic_body
+              (atomic_term_with_bindings
+                (ident))))))))
+  (sentence
+    (qed_command)))
+
+================================================================================
+Mutual and qualified Ltac definitions
+================================================================================
+
+Ltac a := idtac with b := auto with arith.
+Ltac Tauto.intuition_solver ::= auto with bool.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (ltac_definition
+      (ident)
+      (tactic_invocation
+        (generic_tactic
+          (ident)))
+      (ident)
+      (tactic_invocation
+        (generic_tactic
+          (ident)
+          (generic_tactic_body
+            (with_clause
+              (ident)))))))
+  (sentence
+    (ltac_definition
+      (dotted_qualid)
+      (tactic_invocation
+        (generic_tactic
+          (ident)
+          (generic_tactic_body
+            (with_clause
+              (ident))))))))
+
+================================================================================
+Intro patterns with views and injections
+================================================================================
+
+Goal True.
+  intros [[-> H]|[x' [= -> H]]]%app_eq_cons (a & b & c) ? ?x *.
+Qed.
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (sentence
+    (tactic_invocation
+      (generic_tactic
+        (ident)
+        (generic_tactic_body
+          (atomic_term_with_bindings
+            (ident))))))
+  (sentence
+    (tactic_invocation
+      (intros_tactic
+        (intro_pattern
+          (bracketed_intro_pattern
+            (bracketed_intro_pattern
+              (ident))
+            (bracketed_intro_pattern
+              (ident)
+              (bracketed_intro_pattern
+                (ident))))
+          (ident))
+        (intro_pattern
+          (parenthesized_intro_pattern
+            (intro_pattern
+              (ident))
+            (intro_pattern
+              (ident))
+            (intro_pattern
+              (ident))))
+        (intro_pattern)
+        (intro_pattern
+          (metavariable))
+        (intro_pattern))))
+  (sentence
+    (qed_command)))

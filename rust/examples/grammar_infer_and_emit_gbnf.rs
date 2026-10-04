@@ -1,6 +1,6 @@
 mod grammar_pipeline_support;
 
-use grammar_pipeline_support::{assert_runtime_accepts_all, infer_valid_grammar, JSONISH_EXAMPLES};
+use grammar_pipeline_support::{JSONISH_EXAMPLES, assert_runtime_accepts_all, infer_valid_grammar};
 use meta_language::{emit_gbnf, import_gbnf, write_grammar_surface};
 
 fn main() -> Result<(), String> {

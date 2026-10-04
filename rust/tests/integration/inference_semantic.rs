@@ -1,5 +1,5 @@
 use meta_language::{
-    evaluate_constraint, mine_semantic_constraints, Grammar, SemanticInferenceConfig, TruthValue,
+    Grammar, SemanticInferenceConfig, TruthValue, evaluate_constraint, mine_semantic_constraints,
 };
 
 #[test]

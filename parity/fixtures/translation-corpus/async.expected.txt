@@ -1,0 +1,4 @@
+144n
+sum of squares = 25
+1.5
+7n

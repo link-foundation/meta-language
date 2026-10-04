@@ -28,7 +28,7 @@ class TranslationRenderer {
     this.matchesByLink = new Map();
 
     for (const rule of ruleSet.rules) {
-      for (const match of network.find(rule.query)) {
+      for (const match of network.queryMatches(rule.query)) {
         const key = idKey(match.linkId);
         if (!this.matchesByLink.has(key)) {
           this.matchesByLink.set(key, { match, rule });
@@ -273,6 +273,10 @@ function reconstructConcept(network, concept, language) {
   for (const candidate of [language, canonicalReconstructionLanguage(language)]) {
     if (!candidate) {
       continue;
+    }
+    const mapped = network.reconstructConcept?.(concept, candidate);
+    if (mapped !== undefined) {
+      return mapped;
     }
     const found = network.links().find((link) => (
       link.metadata().term === `concept:${concept}` && link.metadata().language === candidate

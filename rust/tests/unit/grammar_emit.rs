@@ -1,7 +1,7 @@
 use meta_language::{
-    emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_pest, import_abnf, import_bnf, import_ebnf,
-    import_gbnf, import_pest, CharClassItem, Grammar, GrammarEmitError, GrammarFormat, GrammarRule,
-    RuleKind,
+    CharClassItem, Grammar, GrammarEmitError, GrammarFormat, GrammarRule, RuleKind, emit_abnf,
+    emit_bnf, emit_ebnf, emit_gbnf, emit_pest, import_abnf, import_bnf, import_ebnf, import_gbnf,
+    import_pest,
 };
 
 const LIST_BNF: &str = include_str!("../fixtures/grammar/emit/list.bnf");
@@ -34,10 +34,12 @@ fn emits_bnf_golden_with_helpers_and_lossy_report() {
     let (text, report) = emit_bnf(&grammar).expect("BNF emits");
 
     assert_eq!(text, normalized_fixture(LIST_BNF));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("case-insensitive")));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("case-insensitive"))
+    );
     let reparsed = import_bnf(&text).expect("emitted BNF imports");
     assert_eq!(reparsed.source_format(), Some(GrammarFormat::Bnf));
     assert!(reparsed.undefined_nonterminals().is_empty());
@@ -73,18 +75,24 @@ fn emits_ebnf_golden_with_native_operators_helpers_and_lossy_report() {
     let (text, report) = emit_ebnf(&grammar).expect("EBNF emits");
 
     assert_eq!(text, normalized_fixture(LIST_EBNF));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("ordered choice")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("case-insensitive")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("capture label")));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("ordered choice"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("case-insensitive"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("capture label"))
+    );
 }
 
 #[test]
@@ -118,18 +126,24 @@ fn emits_abnf_golden_with_rfc7405_literals_and_native_repetition() {
     let (text, report) = emit_abnf(&grammar).expect("ABNF emits");
 
     assert_eq!(text, normalized_fixture(MESSAGE_ABNF));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("ordered choice")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("capture label")));
-    assert!(!report
-        .lossy
-        .iter()
-        .any(|note| note.contains("case-insensitive")));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("ordered choice"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("capture label"))
+    );
+    assert!(
+        !report
+            .lossy
+            .iter()
+            .any(|note| note.contains("case-insensitive"))
+    );
     let reparsed = import_abnf(&text).expect("emitted ABNF imports");
     assert!(reparsed.undefined_nonterminals().is_empty());
 }
@@ -186,18 +200,24 @@ fn emits_pest_golden_with_native_peg_operators_and_rule_modifiers() {
     let (text, report) = emit_pest(&grammar).expect("pest emits");
 
     assert_eq!(text, normalized_fixture(COVERING_PEST));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("unordered choice")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("capture label")));
-    assert!(!report
-        .lossy
-        .iter()
-        .any(|note| note.contains("anonymous capture")));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("unordered choice"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("capture label"))
+    );
+    assert!(
+        !report
+            .lossy
+            .iter()
+            .any(|note| note.contains("anonymous capture"))
+    );
 
     let reparsed = import_pest(&text).expect("emitted pest imports");
     assert_eq!(reparsed.source_format(), Some(GrammarFormat::Peg));
@@ -252,26 +272,36 @@ fn emits_gbnf_golden_with_root_mapping_native_operators_and_lossy_report() {
     let (text, report) = emit_gbnf(&grammar).expect("GBNF emits");
 
     assert_eq!(text, normalized_fixture(COVERING_GBNF));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("case-insensitive")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("ordered choice")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("capture label")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("renamed rule \"root\"")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("renamed rule \"bad name\"")));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("case-insensitive"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("ordered choice"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("capture label"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("renamed rule \"root\""))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("renamed rule \"bad name\""))
+    );
 
     let reparsed = import_gbnf(&text).expect("emitted GBNF imports");
     assert_eq!(reparsed.source_format(), Some(GrammarFormat::Gbnf));
@@ -395,11 +425,13 @@ fn emits_gbnf_json_object_fixture_for_llm_constraints() {
     let (text, report) = emit_gbnf(&grammar).expect("GBNF emits JSON object grammar");
 
     assert_eq!(text, normalized_fixture(JSON_OBJECT_GBNF));
-    assert!(report.lossy.is_empty());
-    assert!(import_gbnf(&text)
-        .expect("emitted JSON GBNF imports")
-        .undefined_nonterminals()
-        .is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
+    assert!(
+        import_gbnf(&text)
+            .expect("emitted JSON GBNF imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -412,7 +444,7 @@ fn gbnf_folds_single_char_negative_predicate_before_any_char() {
     let (text, report) = emit_gbnf(&grammar).expect("GBNF emits predicate peephole");
 
     assert_eq!(text, "root ::= [^,]\n");
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
 }
 
 #[test]
@@ -442,11 +474,13 @@ fn pest_escapes_literals_and_char_ranges() {
         text,
         "escaped = { \"\\\"\\\\\\n\\t\" ~ '\\n'..'\\n' ~ (\"\\\"\" | \"\\\\\" | '\\t'..'\\t') }\n"
     );
-    assert!(report.lossy.is_empty());
-    assert!(import_pest(&text)
-        .expect("escaped pest imports")
-        .undefined_nonterminals()
-        .is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
+    assert!(
+        import_pest(&text)
+            .expect("escaped pest imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -469,26 +503,36 @@ fn emitted_text_reimports_for_basic_smoke_cases() {
     let (pest, _) = emit_pest(&grammar).expect("pest emits");
     let (gbnf, _) = emit_gbnf(&grammar).expect("GBNF emits");
 
-    assert!(import_bnf(&bnf)
-        .expect("emitted BNF imports")
-        .undefined_nonterminals()
-        .is_empty());
-    assert!(import_ebnf(&ebnf)
-        .expect("emitted EBNF imports")
-        .undefined_nonterminals()
-        .is_empty());
-    assert!(import_abnf(&abnf)
-        .expect("emitted ABNF imports")
-        .undefined_nonterminals()
-        .is_empty());
-    assert!(import_pest(&pest)
-        .expect("emitted pest imports")
-        .undefined_nonterminals()
-        .is_empty());
-    assert!(import_gbnf(&gbnf)
-        .expect("emitted GBNF imports")
-        .undefined_nonterminals()
-        .is_empty());
+    assert!(
+        import_bnf(&bnf)
+            .expect("emitted BNF imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
+    assert!(
+        import_ebnf(&ebnf)
+            .expect("emitted EBNF imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
+    assert!(
+        import_abnf(&abnf)
+            .expect("emitted ABNF imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
+    assert!(
+        import_pest(&pest)
+            .expect("emitted pest imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
+    assert!(
+        import_gbnf(&gbnf)
+            .expect("emitted GBNF imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -526,18 +570,24 @@ fn bnf_emits_helpers_for_nested_choices_repetition_classes_and_captures() {
             "<mlclass4> ::= \"0\" | \"1\" | \"_\"\n",
         )
     );
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("ordered choice")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("capture label")));
-    assert!(import_bnf(&text)
-        .expect("emitted BNF imports")
-        .undefined_nonterminals()
-        .is_empty());
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("ordered choice"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("capture label"))
+    );
+    assert!(
+        import_bnf(&text)
+            .expect("emitted BNF imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -573,14 +623,18 @@ fn ebnf_emits_grouping_repetition_classes_quotes_and_captures() {
             "mlclass0 = \"x\" | \"y\" | \"z\" | '\"' ;\n",
         )
     );
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("anonymous capture")));
-    assert!(import_ebnf(&text)
-        .expect("emitted EBNF imports")
-        .undefined_nonterminals()
-        .is_empty());
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("anonymous capture"))
+    );
+    assert!(
+        import_ebnf(&text)
+            .expect("emitted EBNF imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -610,11 +664,13 @@ fn abnf_emits_numeric_literals_empty_and_repeat_prefix_forms() {
             "empty = \"\"\n",
         )
     );
-    assert!(report.lossy.is_empty());
-    assert!(import_abnf(&text)
-        .expect("emitted ABNF imports")
-        .undefined_nonterminals()
-        .is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
+    assert!(
+        import_abnf(&text)
+            .expect("emitted ABNF imports")
+            .undefined_nonterminals()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -735,7 +791,7 @@ fn unsupported_constructs_report_format_and_construct() {
             .build(),
     )
     .expect_err("GBNF has no positive lookahead");
-    assert_unsupported(gbnf_error, GrammarFormat::Gbnf, "and-predicate");
+    assert_unsupported(gbnf_error, GrammarFormat::Gbnf, "positive-predicate");
 
     let gbnf_error = emit_gbnf(
         &Grammar::builder()
@@ -743,7 +799,7 @@ fn unsupported_constructs_report_format_and_construct() {
             .build(),
     )
     .expect_err("GBNF rejects general negative lookahead");
-    assert_unsupported(gbnf_error, GrammarFormat::Gbnf, "not-predicate");
+    assert_unsupported(gbnf_error, GrammarFormat::Gbnf, "negative-predicate");
 
     let gbnf_error = emit_gbnf(
         &Grammar::builder()

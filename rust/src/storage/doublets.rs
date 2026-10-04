@@ -175,7 +175,7 @@ impl DoubletsLinkStore {
         for record in self.decode_all_records()? {
             let replace = latest
                 .get(&record.link.id())
-                .map_or(true, |existing| existing.sequence < record.sequence);
+                .is_none_or(|existing| existing.sequence < record.sequence);
             if replace {
                 latest.insert(record.link.id(), record);
             }
@@ -746,7 +746,7 @@ fn parse_link_type_code(code: u8) -> Result<Option<LinkType>, StorageError> {
         other => {
             return Err(StorageError::Corrupt(format!(
                 "unknown link type code {other}"
-            )))
+            )));
         }
     }))
 }

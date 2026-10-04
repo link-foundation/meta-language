@@ -1,0 +1,152 @@
+{
+  "description": "How the import pipeline (js/scripts/import-native-grammars.mjs) turns the rule names of an upstream grammar into readable English native rule names and concept records: the abbreviations and run-together keywords upstream names use with the words that replace them, and per grammar the names and concepts a reviewer decided by hand. Every entry is a reviewed merge decision; the merge report of each language lists where it applied.",
+  "words": [
+    { "word": "alignas", "replacement": "align_as", "reason": "The C keyword _Alignas (ISO/IEC 9899:2018 section 6.7.5) run together." },
+    { "word": "alignof", "replacement": "alignment_of", "reason": "The C operator _Alignof (ISO/IEC 9899:2018 section 6.5.3.4) gives the alignment of a type." },
+    { "word": "arg", "replacement": "argument", "reason": "An abbreviation of argument." },
+    { "word": "args", "replacement": "arguments", "reason": "An abbreviation of arguments." },
+    { "word": "asm", "replacement": "assembly", "reason": "The asm keyword introduces inline assembly." },
+    { "word": "async", "replacement": "asynchronous", "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)." },
+    { "word": "bitfield", "replacement": "bit_field", "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)." },
+    { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
+    { "word": "chars", "replacement": "characters", "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string." },
+    { "word": "const", "replacement": "constant", "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)." },
+    { "word": "declarators", "replacement": "declarator_list", "reason": "A comma-separated list of declarators." },
+    { "word": "declspec", "replacement": "declaration_specifier", "reason": "The Microsoft __declspec keyword run together." },
+    { "word": "def", "replacement": "definition", "reason": "An abbreviation of definition." },
+    { "word": "delim", "replacement": "delimited", "reason": "An abbreviation of delimited; a delimited token tree is enclosed in parentheses, brackets or braces (The Rust Reference, Macros, DelimTokenTree)." },
+    { "word": "doc", "replacement": "documentation", "reason": "An abbreviation of documentation; a doc comment is a documentation comment (The Rust Reference, Doc comments)." },
+    { "word": "elif", "replacement": "else_if", "reason": "The preprocessing directive #elif (ISO/IEC 9899:2018 section 6.10.1) is else if." },
+    { "word": "elifdef", "replacement": "else_if_defined", "reason": "The preprocessing directive #elifdef (ISO/IEC 9899:2024 section 6.10.2) is else if defined." },
+    { "word": "enum", "replacement": "enumeration", "reason": "An abbreviation of enumeration." },
+    { "word": "expr", "replacement": "expression", "reason": "An abbreviation of expression." },
+    { "word": "gen", "replacement": "generator", "reason": "The Rust 2024 keyword gen opens a generator block that yields the items of an iterator (RFC 3513, gen blocks)." },
+    { "word": "goto", "replacement": "go_to", "reason": "The goto keyword run together." },
+    { "word": "ifdef", "replacement": "if_defined", "reason": "The preprocessing directive #ifdef (ISO/IEC 9899:2018 section 6.10.1) is if defined." },
+    { "word": "impl", "replacement": "implementation", "reason": "The Rust keyword impl introduces an implementation (The Rust Reference, Implementations)." },
+    { "word": "init", "replacement": "initialized", "reason": "An init-declarator (ISO/IEC 9899:2018 section 6.7) declares with an initializer." },
+    { "word": "lhs", "replacement": "left_hand_side", "reason": "An abbreviation of left-hand side, the target of a JavaScript assignment or for-in head." },
+    { "word": "lib", "replacement": "library", "reason": "An abbreviation of library." },
+    { "word": "mod", "replacement": "module", "reason": "The Rust keyword mod declares a module (The Rust Reference, Modules)." },
+    { "word": "ms", "replacement": "microsoft", "reason": "Microsoft-specific syntax." },
+    { "word": "mut", "replacement": "mutable", "reason": "The Rust keyword mut makes a binding mutable (The Rust Reference, Identifier patterns)." },
+    { "word": "offsetof", "replacement": "offset_of", "reason": "The offsetof macro (ISO/IEC 9899:2018 section 7.19) run together." },
+    { "word": "params", "replacement": "parameters", "reason": "An abbreviation of parameters." },
+    { "word": "preproc", "replacement": "preprocessor", "reason": "An abbreviation of preprocessor." },
+    { "word": "ptr", "replacement": "pointer", "reason": "An abbreviation of pointer." },
+    { "word": "qmark", "replacement": "question_mark", "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression." },
+    { "word": "regex", "replacement": "regular_expression", "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags." },
+    { "word": "seh", "replacement": "structured_exception_handling", "reason": "Microsoft structured exception handling." },
+    { "word": "sizeof", "replacement": "size_of", "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together." },
+    { "word": "struct", "replacement": "structure", "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)." }
+  ],
+  "grammars": {
+    "c": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_statement_identifier": "statement_identifier_alias"
+      },
+      "concepts": {
+        "preproc_include": "grammar.preprocessor-include-directive",
+        "preproc_if": "grammar.preprocessor-if-directive",
+        "preproc_ifdef": "grammar.preprocessor-if-defined-directive",
+        "preproc_else": "grammar.preprocessor-else-branch",
+        "preproc_elif": "grammar.preprocessor-else-if-branch",
+        "preproc_elifdef": "grammar.preprocessor-else-if-defined-branch",
+        "preproc_defined": "grammar.preprocessor-defined-operator",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "attribute": "program.attributes"
+      }
+    },
+    "rust": {
+      "names": {
+        "_type_identifier": "type_identifier_alias",
+        "_field_identifier": "field_identifier_alias",
+        "_let_chain": "let_chain_alias",
+        "ref_pattern": "by_reference_pattern"
+      },
+      "concepts": {
+        "arguments": "grammar.argument-list",
+        "parameters": "grammar.parameter-list",
+        "parameter": "parameter",
+        "type_arguments": "grammar.type-argument-list",
+        "type_parameters": "grammar.type-parameter-list",
+        "attribute": "program.attributes"
+      }
+    },
+    "javascript": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value"
+      }
+    },
+    "typescript": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice",
+        "_call_signature": "call_signature_parts",
+        "_number": "signed_number",
+        "_module": "module_name_and_body",
+        "_type_identifier": "type_identifier_alias"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value"
+      }
+    },
+    "tsx": {
+      "names": {
+        "_identifier": "identifier_choice",
+        "_jsx_attribute": "jsx_attribute_choice",
+        "_jsx_element": "jsx_element_choice",
+        "_jsx_identifier": "jsx_identifier_choice",
+        "_call_signature": "call_signature_parts",
+        "_number": "signed_number",
+        "_module": "module_name_and_body",
+        "_type_identifier": "type_identifier_alias"
+      },
+      "concepts": {
+        "_expressions": "grammar.expression-or-sequence",
+        "arguments": "grammar.argument-list",
+        "formal_parameters": "grammar.formal-parameter-list",
+        "true": "grammar.true-value",
+        "false": "grammar.false-value",
+        "undefined": "grammar.undefined-value"
+      }
+    }
+  },
+  "concepts": {
+    "definitions": {},
+    "distinctFrom": {
+      "grammar.function-declaration": [{ "id": "grammar.use-declaration", "reason": "A function declaration binds a name to a function, while a use declaration brings the paths of another module into scope." }],
+      "grammar.preprocessor-argument": [{ "id": "grammar.preprocessor-parameters", "reason": "A preprocessor argument is the text after a directive or a macro name, while the preprocessor parameters are the names a function-like macro declares." }],
+      "grammar.argument-list": [{ "id": "grammar.parameter-list", "reason": "An argument list gives the values a call passes, while a parameter list declares the names a function takes." }],
+      "grammar.condition": [{ "id": "grammar.term", "reason": "A condition is the expression an if or while expression tests, while a term is an operand of addition or subtraction." }],
+      "grammar.pattern": [{ "id": "grammar.rule", "reason": "A pattern matches and destructures a value in a program, while a grammar rule binds a non-terminal to an expression." }],
+      "grammar.reference-expression": [{ "id": "grammar.extension-expression", "reason": "A reference expression borrows a place with & or &mut, while an extension expression marks a GNU C extension with __extension__." }],
+      "grammar.token-pattern": [{ "id": "grammar.token-rule", "reason": "A token pattern is the matcher of a macro rule, while a token rule is a grammar rule matched as one lexical token." }],
+      "grammar.tokens": [{ "id": "grammar.item", "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list." }],
+      "grammar.type": [{ "id": "grammar.value.character", "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value." }],
+      "grammar.yield-expression": [{ "id": "grammar.return-expression", "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function." }],
+      "grammar.type-argument-list": [{ "id": "grammar.type-parameter-list", "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes." }]
+    }
+  }
+}

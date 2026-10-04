@@ -1,11 +1,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use meta_language::{
-    grammar_from_lino, grammar_to_lino, import_bnf, Grammar, GrammarFormat, GrammarRule,
-    LinkNetwork, ParseConfiguration,
+    Grammar, GrammarFormat, GrammarRule, LinkNetwork, ParseConfiguration, grammar_from_lino,
+    grammar_to_lino, import_bnf,
 };
 
 const ARITHMETIC_BNF: &str = include_str!("../fixtures/grammar/bnf/arithmetic.bnf");
@@ -22,9 +23,11 @@ fn describe_cli_reports_self_description_roots() {
     assert!(stdout.contains("(link:"));
     assert!(stdout.contains("(reference:"));
     assert!(stdout.contains("(Type: Type Type)"));
-    assert!(stdout
-        .lines()
-        .all(|line| line.starts_with('(') && line.ends_with(')')));
+    assert!(
+        stdout
+            .lines()
+            .all(|line| line.starts_with('(') && line.ends_with(')'))
+    );
 
     let network = LinkNetwork::parse(&stdout, "LiNo", ParseConfiguration::default());
     assert_eq!(network.reconstruct_text(), stdout);
@@ -98,7 +101,7 @@ fn infer_cli_reads_example_directory_and_reports_metrics_to_stderr() {
     let grammar = grammar_from_lino(&stdout).expect("stdout is LiNo grammar");
 
     assert_eq!(grammar.source_format(), Some(GrammarFormat::Inferred));
-    assert!(!grammar.rules().is_empty());
+    assert_ne!(grammar.rules(), []);
     assert!(stderr.contains("precision="), "{stderr}");
     assert!(stderr.contains("recall="), "{stderr}");
     assert!(stderr.contains("f1="), "{stderr}");
@@ -131,19 +134,51 @@ fn translate_grammar_cli_translates_rule_surface_to_target_language() {
 }
 
 #[test]
-fn emit_grammar_cli_reports_unsupported_formats_without_panic() {
+fn emit_grammar_cli_emits_antlr_and_lark() {
     let grammar = import_bnf(ARITHMETIC_BNF).expect("BNF fixture imports");
-    let input = write_temp_file("unsupported-input", "lino", &grammar_to_lino(&grammar));
+    let input = write_temp_file("antlr-lark-input", "lino", &grammar_to_lino(&grammar));
+    for (format, expected) in [("antlr", "grammar Expr;"), ("lark", "expr: ")] {
+        let output = Command::new(env!("CARGO_BIN_EXE_meta-language"))
+            .args(["emit-grammar", "--format", format])
+            .arg(&input)
+            .output()
+            .expect("failed to execute binary");
+
+        assert_success(&output);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(stdout.contains(expected), "{format}: {stdout}");
+    }
+}
+
+#[test]
+fn import_grammar_cli_converts_to_antlr_and_lark() {
+    let fixture = fixture_path("tests/fixtures/grammar/bnf/arithmetic.bnf");
+    for (format, expected) in [("antlr", "grammar Expr;"), ("lark", "expr: ")] {
+        let output = Command::new(env!("CARGO_BIN_EXE_meta-language"))
+            .args(["import-grammar", "--format", "bnf", "--to", format])
+            .arg(&fixture)
+            .output()
+            .expect("failed to execute binary");
+
+        assert_success(&output);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(stdout.contains(expected), "{format}: {stdout}");
+    }
+}
+
+#[test]
+fn import_grammar_cli_reports_unsupported_formats_without_panic() {
+    let fixture = fixture_path("tests/fixtures/grammar/bnf/arithmetic.bnf");
     let output = Command::new(env!("CARGO_BIN_EXE_meta-language"))
-        .args(["emit-grammar", "--format", "antlr"])
-        .arg(&input)
+        .args(["import-grammar", "--format", "bnf", "--to", "inferred"])
+        .arg(fixture)
         .output()
         .expect("failed to execute binary");
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
-        stderr.contains("unsupported output format: antlr"),
+        stderr.contains("unsupported output format: inferred"),
         "{stderr}"
     );
     assert!(!stderr.contains("panicked"), "{stderr}");
@@ -171,13 +206,18 @@ fn write_temp_file(stem: &str, extension: &str, contents: &str) -> PathBuf {
     path
 }
 
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_PATHS: AtomicU64 = AtomicU64::new(0);
+
 fn unique_temp_path(stem: &str) -> PathBuf {
+    let sequence = TEMP_PATHS.fetch_add(1, Ordering::Relaxed);
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("system clock should be after Unix epoch")
         .as_nanos();
     std::env::temp_dir().join(format!(
-        "meta-language-{stem}-{}-{nanos}",
+        "meta-language-{stem}-{}-{nanos}-{sequence}",
         std::process::id()
     ))
 }

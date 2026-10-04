@@ -1,0 +1,564 @@
+{
+  "description": "Grammar crates pinned by rust/Cargo.lock and their WebAssembly builds used by the JavaScript runtime.",
+  "treeSitterCli": "tree-sitter 0.27.0",
+  "treeSitterRuntime": {
+    "rust": "0.27.0",
+    "javascript": "0.27.0"
+  },
+  "grammars": {
+    "agda": {
+      "id": "agda",
+      "crate": "tree-sitter-agda",
+      "directory": ".",
+      "version": "1.3.3",
+      "parserSha256": "ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980",
+      "wasmSha256": "9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a",
+      "license": "agda.LICENSE"
+    },
+    "bash": {
+      "id": "bash",
+      "crate": "tree-sitter-bash",
+      "directory": ".",
+      "version": "0.25.1",
+      "parserSha256": "5ad30bb1a260c76df5397490b8bd97e272e62ed9c99be36fa53da959d7667e7f",
+      "wasmSha256": "f0270796c32f9acfc180e6068d6bef6614b983107b679a247fb63b200c6346e7",
+      "license": "bash.LICENSE"
+    },
+    "c": {
+      "id": "c",
+      "oracle": true,
+      "crate": "tree-sitter-c",
+      "directory": ".",
+      "version": "0.24.2",
+      "parserSha256": "f2883ff9b21f4a5bd5553c1b10366c418947d17a7bc6bf256124a7542f079dd2",
+      "wasmSha256": "2030a766fa6c6fe18039524008e52fd4a4995bdd9ed07fc4a73ec892450d2f4a",
+      "license": "c.LICENSE"
+    },
+    "cmake": {
+      "id": "cmake",
+      "upstream": "uyha/tree-sitter-cmake",
+      "vendored": "rust/vendor/tree-sitter-cmake",
+      "patch": "rust/vendor/tree-sitter-cmake/scanner-state.patch",
+      "version": "v0.7.5",
+      "parserSha256": "ece92c2e3fbf15634fb90fab91d0af749348c069d27208eeb10dcdd4e77fe5a2",
+      "wasmSha256": "5925d5f08a726ebb9024ccae1e12165a56c35630c53d9dd7fc3eeb87434849c2",
+      "license": "cmake.LICENSE"
+    },
+    "cpp": {
+      "id": "cpp",
+      "crate": "tree-sitter-cpp",
+      "directory": ".",
+      "version": "0.23.4",
+      "parserSha256": "2a35a43b4af6c9f7b69624ac00c2c50808912591450dc79c05dea03ac1bae814",
+      "wasmSha256": "f5ff3ba7af054af846f37dfd2525bdfede95530d5747a8fe30df87d070ece607",
+      "license": "cpp.LICENSE"
+    },
+    "csharp": {
+      "id": "csharp",
+      "crate": "tree-sitter-c-sharp",
+      "directory": ".",
+      "version": "0.23.5",
+      "parserSha256": "0a2651e49de7c7237c535c41a132a7ec0424da79d12f197f1df3edd7d6ea4427",
+      "wasmSha256": "a4b053f6fdedfc9c94876b415441ea953c0046ef83d45e0cbc4d9b8938ae6cbc",
+      "license": "csharp.LICENSE"
+    },
+    "css": {
+      "id": "css",
+      "crate": "tree-sitter-css",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "2e5150071220012ee635ac9e2119f4f3a93e0b51a7a3b69ab0cd87c18cf5e51e",
+      "wasmSha256": "f0fa4c3171f3322560e3a56445989f2da9d77c38bae61e9f07ae0b3e01d88b36",
+      "license": "css.LICENSE"
+    },
+    "csv": {
+      "id": "csv",
+      "oracle": true,
+      "upstream": "tree-sitter-grammars/tree-sitter-csv",
+      "vendored": "rust/vendor/tree-sitter-csv",
+      "patch": "rust/vendor/tree-sitter-csv/rfc4180-quotes.patch",
+      "version": "f6bf6e35eb0b95fbadea4bb39cb9709507fcb181",
+      "parserSha256": "6a7ede804cb8ced3f9466cecf38872d175e6179e8ea951956a195b2d55add8bc",
+      "wasmSha256": "926e300e68fca1881734251e2b0b3a51cc56625c1afd3471f3102ce5274a1cd9",
+      "license": "csv.LICENSE"
+    },
+    "dart": {
+      "id": "dart",
+      "crate": "tree-sitter-dart",
+      "directory": ".",
+      "version": "0.2.0",
+      "parserSha256": "1894ef57f8e0ceb483ccf6d548429517dc42b0d983293ebdb5ff9ff9c612c4a9",
+      "wasmSha256": "e700b38561a3f1e641340fac8232dfca493dbc024d142d338a5075feca3e9efc",
+      "license": "dart.LICENSE"
+    },
+    "diff": {
+      "id": "diff",
+      "oracle": true,
+      "crate": "tree-sitter-diff",
+      "directory": ".",
+      "version": "0.1.0",
+      "parserSha256": "4c9e3e545073a7d93088f7d90b0ee89e56fb43ca751f25fa440c4a1906ecb3e6",
+      "wasmSha256": "8c32b60b7900e18ad10e2223e6311f4f1aff29b4d12226862a2a889a99596f29",
+      "license": "diff.LICENSE"
+    },
+    "dtd": {
+      "id": "dtd",
+      "crate": "tree-sitter-xml",
+      "directory": "dtd",
+      "version": "0.7.0",
+      "parserSha256": "79aa52e71ba9685115e2fc2742a3a30f91987f96fcf5ffbb7e34827155a6b932",
+      "wasmSha256": "2534944fea9484174b791535509c09a25fcd1c4099da9392056b009311dcfe81",
+      "license": "dtd.LICENSE"
+    },
+    "elixir": {
+      "id": "elixir",
+      "crate": "tree-sitter-elixir",
+      "directory": ".",
+      "version": "0.3.5",
+      "parserSha256": "d1c2000b477e873e44e485f55809e3af7e2bfce83fa4d58cfa3a9f83660e7d79",
+      "wasmSha256": "33f71c86131d02eab80841e4142005ccaa54bcc06bcc3a7e8dc6a9a8a0ca5e94",
+      "license": "elixir.LICENSE"
+    },
+    "elm": {
+      "id": "elm",
+      "crate": "tree-sitter-elm",
+      "directory": ".",
+      "version": "5.9.4",
+      "parserSha256": "7c993bdabb63c6c6424fc0b433073c9000446a0e3de189d8a2ab93b33636369d",
+      "wasmSha256": "30e2708c30704223fa0351428d4e81aef32acd9121a7ea35606ddc9fa45bc319",
+      "license": "elm.LICENSE"
+    },
+    "erlang": {
+      "id": "erlang",
+      "crate": "tree-sitter-erlang",
+      "directory": ".",
+      "version": "0.20.0",
+      "parserSha256": "c8c83443d536875c2f28f12ae4f0242f477cac82115073f4d9506c2bb188dbcc",
+      "wasmSha256": "345a2693219c24236afdbacf3af1082aaa59eef6c21c06371845690505ee3af3",
+      "license": "erlang.LICENSE"
+    },
+    "go": {
+      "id": "go",
+      "crate": "tree-sitter-go",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "3dbf6ed1238b5dfcf2be4d2f2d4cb27a14d34f34d7784eccccbfd532fd4a6d85",
+      "wasmSha256": "058a4f6c7cb7156c599c2ca07af9645f03b3f655b84bced9c72816e755c7030b",
+      "license": "go.LICENSE"
+    },
+    "graphql": {
+      "id": "graphql",
+      "crate": "tree-sitter-graphql",
+      "directory": ".",
+      "version": "0.3.0",
+      "parserSha256": "8b7ebff40dc5b802df9ec03b1570fd53d234300ac4705899643ae61dda77dc57",
+      "wasmSha256": "a9239652fcc467ec3bf9dbe7d5271ff3511c40c7dc9bba440667599dcfb608bc",
+      "license": "graphql.LICENSE"
+    },
+    "groovy": {
+      "id": "groovy",
+      "crate": "tree-sitter-groovy",
+      "directory": ".",
+      "version": "0.1.2",
+      "parserSha256": "786637c026add3b2112aa717fa17b34e3093ea291b3b46d60438ba84382fdb06",
+      "wasmSha256": "9c7236d8ab8c127a59644321213e479ab8ac0f53ac5720c1461ef406e46db4a6",
+      "license": "groovy.LICENSE"
+    },
+    "haskell": {
+      "id": "haskell",
+      "crate": "tree-sitter-haskell",
+      "directory": ".",
+      "version": "0.24.1",
+      "parserSha256": "a136b31118c6767f3a9fbbb245adc559370eabd914b72b90438395542327a089",
+      "wasmSha256": "ea89cb1199b1ca2102e273b27239e795baff17248128a9bcd3c3825ac17d8cc0",
+      "license": "haskell.LICENSE"
+    },
+    "hcl": {
+      "id": "hcl",
+      "crate": "tree-sitter-hcl",
+      "directory": ".",
+      "version": "1.1.0",
+      "parserSha256": "0c821e2979f54f8f460201eafe9464d5d3dae0076c5bdd51567a798fb7add543",
+      "wasmSha256": "c7fa4ff3cecbd8c9eba1b9643b511a5b226b47d29eb5ec38656a5bc7a216bfc5",
+      "license": "hcl.LICENSE"
+    },
+    "html": {
+      "id": "html",
+      "crate": "tree-sitter-html",
+      "directory": ".",
+      "version": "0.23.2",
+      "parserSha256": "65768172733b3bbe461cbdc14ea928f00fbfcc51d8ac68f0a5c72071c6a0bbf1",
+      "wasmSha256": "11960fcc4fe3a01930de6bbae9b2c5c4d0a6c16012a5d20cc2069fa5b78d3bbd",
+      "license": "html.LICENSE"
+    },
+    "ini": {
+      "id": "ini",
+      "oracle": true,
+      "crate": "tree-sitter-ini",
+      "directory": ".",
+      "version": "1.4.0",
+      "parserSha256": "3537bf540af5b3def849c4f15d4ba8a02b37f5414849140f1c139d2abb1e4123",
+      "wasmSha256": "49e4442e41b44226268a89d810a4a3d2b3dde810b539579c2acd4a55223d8548",
+      "license": "ini.LICENSE"
+    },
+    "java": {
+      "id": "java",
+      "crate": "tree-sitter-java",
+      "directory": ".",
+      "version": "0.23.5",
+      "parserSha256": "4add5150cf4531eb5dd97f3343dcf65cd11704c84711348b328582b83424a0e4",
+      "wasmSha256": "6476728734128931bd50de2d1e5e9c75c506b51e278f54eaf709836a0de35759",
+      "license": "java.LICENSE"
+    },
+    "javascript": {
+      "id": "javascript",
+      "oracle": true,
+      "crate": "tree-sitter-javascript",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "67209ca7ef6e1a4f74e29e48b5928455f892fe1821a3960fbcd62f4e972f7384",
+      "wasmSha256": "7ccbce5ba189363aee524c4be7f3a0bdb25b961d4c6d2472a8f3aeb526eecbfe",
+      "license": "javascript.LICENSE"
+    },
+    "json": {
+      "id": "json",
+      "oracle": true,
+      "crate": "tree-sitter-json",
+      "directory": ".",
+      "version": "0.24.8",
+      "parserSha256": "e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab",
+      "wasmSha256": "564e489724cbcf9b4563cd758a7fb7f355f896b11127819ae9e8ef71e7c15e60",
+      "license": "json.LICENSE"
+    },
+    "json5": {
+      "id": "json5",
+      "oracle": true,
+      "crate": "tree-sitter-json5-orchard",
+      "directory": ".",
+      "version": "0.1.0",
+      "parserSha256": "0024a5353393c7186a9a4f531f451279d301c7c3925ba292348176a83d3765b4",
+      "wasmSha256": "b726ecea6c05ff5b62b9a32563762d297e019c5eaaa7371d20b2245ca17421f4",
+      "license": "json5.LICENSE"
+    },
+    "kotlin": {
+      "id": "kotlin",
+      "crate": "tree-sitter-kotlin-ng",
+      "directory": ".",
+      "version": "1.1.0",
+      "parserSha256": "9ff65161845b9e9c9d62c12e9a4e4b8d8628bdc31c681ec7e6b4bd3bd6444cb3",
+      "wasmSha256": "5d44eef5c02b4546f01ddc376ed237294b18604f727b192a832a5ce08a040e8f",
+      "license": "kotlin.LICENSE"
+    },
+    "lean": {
+      "id": "lean",
+      "upstream": "wvhulle/tree-sitter-lean",
+      "vendored": "rust/vendor/tree-sitter-lean",
+      "version": "bd942cd2795016239be02b3b3d5ef635645ddd38",
+      "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b",
+      "wasmSha256": "7b58425afbe7f59e90fa9f01ebafe9241cdedbf1fe7e2daca4bec2f15122cc59",
+      "license": "lean.LICENSE"
+    },
+    "lua": {
+      "id": "lua",
+      "crate": "tree-sitter-lua",
+      "directory": ".",
+      "version": "0.5.0",
+      "parserSha256": "933206d96a78f7785c13b2600182f1527dcd755c200b1271bb5bc4d8da4b17b3",
+      "wasmSha256": "43db0f3e64ffd4ed1ada7a77e4489e54afa5afd7b5aa013679d8284d4ea0f074",
+      "license": "lua.LICENSE"
+    },
+    "make": {
+      "id": "make",
+      "crate": "tree-sitter-make",
+      "directory": ".",
+      "version": "1.1.1",
+      "parserSha256": "659bb2a3712bc6ecf77a96c82de2bc3062141f405c96d52582b2e01bd8722152",
+      "wasmSha256": "3cd0a9967c477e0cf3330d96ae79e2bbc8580119daf7e02266649fa6cd136e76",
+      "license": "make.LICENSE"
+    },
+    "markdown": {
+      "id": "markdown",
+      "crate": "tree-sitter-md-025",
+      "directory": "tree-sitter-markdown",
+      "version": "0.5.6",
+      "parserSha256": "0f51c93b5d79d08bc74088d91a9aafb7e40ad7e2f169164865c01d392277bb07",
+      "wasmSha256": "479b27880bce5dc9501d8cfa7f427eb2f5ffcb143ef5863fa02296da02c830e9",
+      "license": "markdown.LICENSE"
+    },
+    "markdown_inline": {
+      "id": "markdown_inline",
+      "crate": "tree-sitter-md-025",
+      "directory": "tree-sitter-markdown-inline",
+      "version": "0.5.6",
+      "parserSha256": "0c6aaec9097b10118b34601047c3b4d3d565defe48e95d133f714b592795fd2c",
+      "wasmSha256": "3e1db657850e83e19e2769157c24eac7b590d8bc869c2753201417c40298b388",
+      "license": "markdown_inline.LICENSE"
+    },
+    "matlab": {
+      "id": "matlab",
+      "crate": "tree-sitter-matlab",
+      "directory": ".",
+      "version": "1.3.1",
+      "parserSha256": "d13d9cfa1cead80c000e21ed37833df31d910fe531a5cb11165a850c384a4960",
+      "wasmSha256": "2fd8f9f251c59a0242a8899d6725a8edc47ff477371497ba2025f9ee8cc8a57c",
+      "license": "matlab.LICENSE"
+    },
+    "nix": {
+      "id": "nix",
+      "crate": "tree-sitter-nix",
+      "directory": ".",
+      "version": "0.3.0",
+      "parserSha256": "2b1d7945441b83e324cd225663481d35e51cd9ae84189cc7e69f58a11ecb85ad",
+      "wasmSha256": "98faa2e223fc3fe88c20c02c51fd739da8ebe1f1591b131d0964ede6cf320b08",
+      "license": "nix.LICENSE"
+    },
+    "ocaml": {
+      "id": "ocaml",
+      "crate": "tree-sitter-ocaml",
+      "directory": "grammars/ocaml",
+      "version": "0.26.0",
+      "parserSha256": "f76cc46f96f9ed152354743539cc642dcb6a67343795dd9d548fc4d0b0ebce74",
+      "wasmSha256": "bfa3eef92b9d3cc1117aa486d46ecb06c98a3a28c1747660aaa5851df5e4530c",
+      "license": "ocaml.LICENSE"
+    },
+    "ocaml_interface": {
+      "id": "ocaml_interface",
+      "crate": "tree-sitter-ocaml",
+      "directory": "grammars/interface",
+      "version": "0.26.0",
+      "parserSha256": "62634bd351247bd2152eb15438f5bea3f0a1ccce4291f318aa86a79d29bf111e",
+      "wasmSha256": "3ce03850c36618e3530292372aae9156a45b5a923210a87c285539d7f13b0354",
+      "license": "ocaml_interface.LICENSE"
+    },
+    "odin": {
+      "id": "odin",
+      "crate": "tree-sitter-odin",
+      "directory": ".",
+      "version": "1.3.0",
+      "parserSha256": "8f672d8d022d70eeae822796924f2e45e692d6b2acd2ddc79bfeb5f696fa24f0",
+      "wasmSha256": "8ce37ea03c3d565d1c4e922d357a82fd9aa5184c36f712509803a63fec8d3194",
+      "license": "odin.LICENSE"
+    },
+    "pascal": {
+      "id": "pascal",
+      "crate": "tree-sitter-pascal",
+      "directory": ".",
+      "version": "0.10.2",
+      "parserSha256": "d7a5f5c04880fac79e0eb1841cbbc00d7e305863efe56d83c9754fba70385329",
+      "wasmSha256": "e1ae02b62ce27ba86d202e77fa42f5e59d8e945b00ff64803cc275741ecca628",
+      "license": "pascal.LICENSE"
+    },
+    "perl": {
+      "id": "perl",
+      "crate": "ts-parser-perl",
+      "directory": ".",
+      "version": "2.0.0",
+      "parserSha256": "1317bdaae2f50f5f82b6dbc7176425e9cee64a0dbfbb82aa17959aaefc54f199",
+      "wasmSha256": "af4e99e2379e9ae0228357a15f0d3b6037846b8a328deafb70dfa7a13b58b140",
+      "license": "perl.LICENSE"
+    },
+    "php": {
+      "id": "php",
+      "crate": "tree-sitter-php",
+      "directory": "php",
+      "version": "0.24.2",
+      "parserSha256": "59ad8e5e4fde3fe60687a488ab8420612840cc966b83739af1b3a4317ed27ec6",
+      "wasmSha256": "a100e693f0133e5f559a5d90daf4ba9c12607162108c80368f2dfcbac0ec8bff",
+      "license": "php.LICENSE"
+    },
+    "powershell": {
+      "id": "powershell",
+      "crate": "tree-sitter-powershell",
+      "directory": ".",
+      "version": "0.26.4",
+      "parserSha256": "f39f67abaae4c488ccea5d9bbd003ef0b00c303779e0491950886a12a9305720",
+      "wasmSha256": "84555e38f85a391095b349a906b9790d319e3946ce12d9bc21dbec5cded5dad9",
+      "license": "powershell.LICENSE"
+    },
+    "proto": {
+      "id": "proto",
+      "crate": "tree-sitter-proto",
+      "directory": ".",
+      "version": "0.6.0",
+      "parserSha256": "ac481450c32e8fa52976075581701ecc63790fbab4c9c4f10d0901c9a39b61eb",
+      "wasmSha256": "2179ef77376c7c1a1c08c145915c8902436d6f08724cb055ce597879f107bf61",
+      "license": "proto.LICENSE"
+    },
+    "python": {
+      "id": "python",
+      "crate": "tree-sitter-python",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "a895f10b3cf7b2608f3283b43cd5cfed70971c7ee4a0136abbaaccbc4a7a25e0",
+      "wasmSha256": "3523e4dc3d12894bbb2f7ea4b86b50eec69aed321c3d9b49271d82ed9f5f79b0",
+      "license": "python.LICENSE"
+    },
+    "r": {
+      "id": "r",
+      "crate": "tree-sitter-r",
+      "directory": ".",
+      "version": "1.3.0",
+      "parserSha256": "43ec2413de8aec823c76e6994991fe07d9877e019ab2e1892534a76ce81a0771",
+      "wasmSha256": "8443d229942c1719c40fac5729e8d9252e48950aa2e0dbcf86c52bd38e875209",
+      "license": "r.LICENSE"
+    },
+    "racket": {
+      "id": "racket",
+      "oracle": true,
+      "crate": "tree-sitter-racket",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "3cbab79ab9bd99684a7de4cb93a0aafd6773bb3ecf6720c59f1b7cdb0ceddd9c",
+      "wasmSha256": "5affec93f88d8b9e66aee6ad9a385d04f6af07dfc55bc6944993b02af1fa21b2",
+      "license": "racket.LICENSE"
+    },
+    "regex": {
+      "id": "regex",
+      "crate": "tree-sitter-regex",
+      "directory": ".",
+      "version": "0.25.0",
+      "parserSha256": "ddf28eb5ad0dd0898b9ed0f2593852edac639a339a410d9e93350e472859700f",
+      "wasmSha256": "0b64ac3dc55cfb73a95da3ea3eb1ac89e0f8fafd6050aa32139988b8413c14f1",
+      "license": "regex.LICENSE"
+    },
+    "rocq": {
+      "id": "rocq",
+      "upstream": "aruzdh/tree-sitter-rocq",
+      "vendored": "rust/vendor/tree-sitter-rocq",
+      "patch": "rust/vendor/tree-sitter-rocq/meta-language.patch",
+      "version": "300fe33fc299c30f736fd56d8ef8a28b08acd4e6",
+      "parserSha256": "4f0807b15d47e4335c28ccb7be5eb8d01851baaab4843dfa24b2d8fb1966ecd2",
+      "wasmSha256": "9d0d3172500d14ee0d06d61b0d3a3a33e757003a94eb7f1c7221b11c740e0530",
+      "license": "rocq.LICENSE"
+    },
+    "ruby": {
+      "id": "ruby",
+      "crate": "tree-sitter-ruby",
+      "directory": ".",
+      "version": "0.23.1",
+      "parserSha256": "4ce468358b6f4e25a35c8cf6bc0eaf60665bc22d602f8c939323c2347255cd15",
+      "wasmSha256": "2a06cd2fa165a2913f6598b92c9d3d3132ecfbf3fa7ffa8ca93b31efb2bfb58d",
+      "license": "ruby.LICENSE"
+    },
+    "rust": {
+      "id": "rust",
+      "oracle": true,
+      "upstream": "tree-sitter/tree-sitter-rust",
+      "vendored": "rust/vendor/tree-sitter-rust",
+      "patch": "rust/vendor/tree-sitter-rust/meta-language.patch",
+      "version": "v0.24.2",
+      "parserSha256": "555eee81e8d1ab541d5c76ab5a17bc37abb3c37a43ae02a11d60aaef0cb765a3",
+      "wasmSha256": "9e42546db0d259b49f09ce1170528b57d97453f19824ca27197016c330dcae03",
+      "license": "rust.LICENSE"
+    },
+    "scala": {
+      "id": "scala",
+      "crate": "tree-sitter-scala",
+      "directory": ".",
+      "version": "0.26.2",
+      "parserSha256": "9f6d03fa6c63d2d855b6f9e0368046a58568587eefc38b5e38bdb001e8ec68db",
+      "wasmSha256": "c2d92c43913a24efa76528c6aff75c97c0964798c4d360c7dc1951b04058fe52",
+      "license": "scala.LICENSE"
+    },
+    "scheme": {
+      "id": "scheme",
+      "oracle": true,
+      "crate": "tree-sitter-scheme",
+      "directory": ".",
+      "version": "0.24.7",
+      "parserSha256": "5d4c1786eb70c3be05f395e5a26edbb7cca12e7547f7a1d8cdb94e092ee74d0d",
+      "wasmSha256": "f138334dfc4d3df3c85c3e0d675e154f2bd6b1a8d4325f04c53512eef099241e",
+      "license": "scheme.LICENSE"
+    },
+    "solidity": {
+      "id": "solidity",
+      "crate": "tree-sitter-solidity",
+      "directory": ".",
+      "version": "1.2.13",
+      "parserSha256": "e71971f6ddc0704e81f4af3f43ecc79793742bb5f1d256a5fdd718aa06d74acb",
+      "wasmSha256": "7ae2d8aff2ec119ff8706667f45f5ff0d4edea901acef86e227664de83c6df51",
+      "license": "solidity.LICENSE"
+    },
+    "sql": {
+      "id": "sql",
+      "crate": "tree-sitter-sequel",
+      "directory": ".",
+      "version": "0.3.11",
+      "parserSha256": "852e088fb8470952cdb2a1b78c1c58626c7d91562b26baa4672d51f9754bf580",
+      "wasmSha256": "e03fb5079e88cfe0807056c284fd2b0589cee35df9bbb3d07e72f2f4178de8de",
+      "license": "sql.LICENSE"
+    },
+    "swift": {
+      "id": "swift",
+      "crate": "tree-sitter-swift",
+      "directory": ".",
+      "version": "0.7.3",
+      "parserSha256": "d3edff6effe31b9a507f496577407987343b101b23eb7bee7a9b050e8ab5d27a",
+      "wasmSha256": "1fda79c994cb9cb6c7d6bc71520698742e9e88946c92186520a314bbeb45a4fd",
+      "license": "swift.LICENSE"
+    },
+    "toml": {
+      "id": "toml",
+      "crate": "tree-sitter-toml-ng",
+      "directory": ".",
+      "version": "0.7.0",
+      "parserSha256": "1991a2608e6f0214e563fe5f762e8df72954dc69a3dd9a1e22ea8a870e4052c3",
+      "wasmSha256": "057f48e81072cb0eb5969632a7cf032fc6d33cd4ba3198c3f58227346c012d97",
+      "license": "toml.LICENSE"
+    },
+    "tsx": {
+      "id": "tsx",
+      "crate": "tree-sitter-typescript",
+      "directory": "tsx",
+      "version": "0.23.2",
+      "parserSha256": "1902cb53fa7ff5179df89b2eea863165e84c8cc866226419dc26921d8c055885",
+      "wasmSha256": "3c6cb1c86cecc6d8c99b3a7dfc0aba8b838e2adf036bb23f384d6d8be395ae30",
+      "license": "tsx.LICENSE"
+    },
+    "typescript": {
+      "id": "typescript",
+      "crate": "tree-sitter-typescript",
+      "directory": "typescript",
+      "version": "0.23.2",
+      "parserSha256": "74fe453edd70f4eae9af0a1050cbd7943d8971d59165b6aaebbaa0a0b716d1aa",
+      "wasmSha256": "d24392183c75c103feafb827c9c086de00c30198e27f362cc971fbca6e91a87f",
+      "license": "typescript.LICENSE"
+    },
+    "vb": {
+      "id": "vb",
+      "crate": "tree-sitter-vb-dotnet",
+      "directory": ".",
+      "version": "0.1.0",
+      "parserSha256": "7e9e6275f9b83c1f6c79112fd2021effc8529e9d6b794bbd41e39d99db1214d8",
+      "wasmSha256": "4bc68c0fb1cbc42a44eb3199affe54173b6519f52ffdd173e31c9dc87b9099f8",
+      "license": "vb.LICENSE"
+    },
+    "xml": {
+      "id": "xml",
+      "crate": "tree-sitter-xml",
+      "directory": "xml",
+      "version": "0.7.0",
+      "parserSha256": "e41811d97cfd672a902924a3d99bdf696d6fcec08188a35404e4a3d2698ab844",
+      "wasmSha256": "2edd39d0ef194dc70878fe99b277180547fabf252f85b58e537db5a11e3027fa",
+      "license": "xml.LICENSE"
+    },
+    "yaml": {
+      "id": "yaml",
+      "crate": "tree-sitter-yaml",
+      "directory": ".",
+      "version": "0.7.2",
+      "parserSha256": "8a3baaab33fb63cf9a89f97ec61dbb3ab0d4ef69be9f0f229092c79d129617c9",
+      "wasmSha256": "f89cf2a8ccd4f29292e502f1c37efb4f1dead281246605e0a890c697d4db88c7",
+      "license": "yaml.LICENSE"
+    },
+    "zig": {
+      "id": "zig",
+      "crate": "tree-sitter-zig",
+      "directory": ".",
+      "version": "1.1.2",
+      "parserSha256": "5449f98eb876939fcb12be76891ecb0c99b78be3bfe843e140d64c680b66ae63",
+      "wasmSha256": "cc95fa4d69178617b19fe50b070dc871e315aea55107fcd1bcd238ae77811edd",
+      "license": "zig.LICENSE"
+    }
+  }
+}

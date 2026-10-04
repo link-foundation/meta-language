@@ -1,0 +1,1402 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "abnf:message",
+      "format": "abnf",
+      "source": "message = word SP number\nword = 1*ALPHA\nnumber = 1*DIGIT\n",
+      "start": "message",
+      "rules": ["message", "word", "number"],
+      "expressions": {
+        "message": "normal seq(ref(word), ref(SP), ref(number))",
+        "word": "normal repeat1(ref(ALPHA))",
+        "number": "normal repeat1(ref(DIGIT))"
+      },
+      "emitted": {
+        "source": "message = word SP number\nword = 1*( ALPHA )\nnumber = 1*( DIGIT )\nSP = %s\" \"\nALPHA = ( %x41-5A / %x61-7A )\nDIGIT = %x30-39\n",
+        "lossy": []
+      },
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "id": "bnf:message",
+      "format": "bnf",
+      "source": "<message> ::= <word> \" \" <number>\n<word> ::= <letter> <word> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit> ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+      "start": "message",
+      "rules": ["message", "word", "number", "letter", "digit"],
+      "expressions": {
+        "message": "normal seq(ref(word), literal(\" \"), ref(number))",
+        "word": "normal choice(seq(ref(letter), ref(word)), ref(letter))",
+        "number": "normal choice(seq(ref(digit), ref(number)), ref(digit))",
+        "letter": "normal choice(literal(\"M\"), literal(\"e\"), literal(\"t\"), literal(\"a\"), literal(\"A\"))",
+        "digit": "normal choice(literal(\"0\"), literal(\"1\"), literal(\"2\"), literal(\"3\"), literal(\"4\"), literal(\"5\"), literal(\"6\"), literal(\"7\"), literal(\"8\"), literal(\"9\"))"
+      },
+      "emitted": {
+        "source": "<message> ::= <word> \" \" <number>\n<word> ::= <letter> <word> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit> ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+        "lossy": []
+      },
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "id": "ebnf:message",
+      "format": "ebnf",
+      "source": "message = word, \" \", number ;\nword = letter, { letter } ;\nnumber = digit, { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "start": "message",
+      "rules": ["message", "word", "number", "letter", "digit"],
+      "expressions": {
+        "message": "normal seq(ref(word), literal(\" \"), ref(number))",
+        "word": "normal seq(ref(letter), repeat0(ref(letter)))",
+        "number": "normal seq(ref(digit), repeat0(ref(digit)))",
+        "letter": "normal choice(literal(\"M\"), literal(\"e\"), literal(\"t\"), literal(\"a\"), literal(\"A\"))",
+        "digit": "normal choice(literal(\"0\"), literal(\"1\"), literal(\"2\"), literal(\"3\"), literal(\"4\"), literal(\"5\"), literal(\"6\"), literal(\"7\"), literal(\"8\"), literal(\"9\"))"
+      },
+      "emitted": {
+        "source": "message = word , \" \" , number ;\nword = letter , { letter } ;\nnumber = digit , { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+        "lossy": []
+      },
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "id": "pest:message",
+      "format": "pest",
+      "source": "message = { word ~ \" \" ~ number }\nword = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit = _{ '0'..'9' }\n",
+      "start": "message",
+      "rules": ["message", "word", "number", "letter", "digit"],
+      "expressions": {
+        "message": "normal seq(ref(word), literal(\" \"), ref(number))",
+        "word": "atomic repeat1(ref(letter))",
+        "number": "atomic repeat1(ref(digit))",
+        "letter": "silent orderedChoice(range(\"A\", \"Z\"), range(\"a\", \"z\"))",
+        "digit": "silent range(\"0\", \"9\")"
+      },
+      "emitted": {
+        "source": "message = { word ~ \" \" ~ number }\nword = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit = _{ '0'..'9' }\n",
+        "lossy": []
+      },
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "id": "tree-sitter-json:message",
+      "format": "tree-sitter-json",
+      "source": "{\"name\":\"word_number\",\"rules\":{\"document\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"SYMBOL\",\"name\":\"word\"},{\"type\":\"STRING\",\"value\":\" \"},{\"type\":\"SYMBOL\",\"name\":\"number\"}]},\"word\":{\"type\":\"REPEAT1\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[A-Za-z]\"}},\"number\":{\"type\":\"TOKEN\",\"content\":{\"type\":\"REPEAT1\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[0-9]\"}}}}}",
+      "start": "document",
+      "rules": ["document", "word", "number"],
+      "expressions": {
+        "document": "normal seq(ref(word), literal(\" \"), ref(number))",
+        "word": "normal repeat1(class(range(\"A\", \"Z\"), range(\"a\", \"z\")))",
+        "number": "token repeat1(class(range(\"0\", \"9\")))"
+      },
+      "emitted": {
+        "source": "{\n  \"name\": \"document\",\n  \"rules\": {\n    \"document\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"word\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \" \"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"number\"\n        }\n      ]\n    },\n    \"word\": {\n      \"type\": \"REPEAT1\",\n      \"content\": {\n        \"type\": \"PATTERN\",\n        \"value\": \"[A-Za-z]\"\n      }\n    },\n    \"number\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"REPEAT1\",\n        \"content\": {\n          \"type\": \"PATTERN\",\n          \"value\": \"[0-9]\"\n        }\n      }\n    }\n  }\n}\n",
+        "lossy": []
+      },
+      "accepts": ["Meta 42", "A 0"],
+      "rejects": ["Meta x", " 42", "Meta 42!"]
+    },
+    {
+      "id": "abnf:constructs",
+      "format": "abnf",
+      "source": "assignment = %i\"let\" 1*SP name *SP %s\"=\" *SP value [ %x3B ]\nname = ALPHA *7( ALPHA / DIGIT / %s\"_\" )\nvalue = 1*3DIGIT / DQUOTE *( %x20-21 / %x23-7E ) DQUOTE\n",
+      "start": "assignment",
+      "rules": ["assignment", "name", "value"],
+      "expressions": {
+        "assignment": "normal seq(literalInsensitive(\"let\"), repeat1(ref(SP)), ref(name), repeat0(ref(SP)), literal(\"=\"), repeat0(ref(SP)), ref(value), optional(literal(\";\")))",
+        "name": "normal seq(ref(ALPHA), repeat(choice(ref(ALPHA), ref(DIGIT), literal(\"_\")), 0, 7))",
+        "value": "normal choice(repeat(ref(DIGIT), 1, 3), seq(ref(DQUOTE), repeat0(choice(range(\" \", \"!\"), range(\"#\", \"~\"))), ref(DQUOTE)))"
+      },
+      "emitted": {
+        "source": "assignment = %i\"let\" 1*( SP ) name *( SP ) %s\"=\" *( SP ) value [ %s\";\" ]\nname = ALPHA *7( ALPHA / DIGIT / %s\"_\" )\nvalue = 1*3( DIGIT ) / DQUOTE *( %x20-21 / %x23-7E ) DQUOTE\nSP = %s\" \"\nALPHA = ( %x41-5A / %x61-7A )\nDIGIT = %x30-39\nDQUOTE = %x22\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "LET ab_1=\"hi\"", "Let  q=7"],
+      "rejects": ["let 1x = 2;", "let x = 1234;", "letx = 1", "let abcdefghi = 1"]
+    },
+    {
+      "id": "bnf:constructs",
+      "format": "bnf",
+      "source": "<assignment> ::= \"let \" <name> <spaces> \"=\" <spaces> <value> <end>\n<name> ::= <letter> <name> | <letter>\n<spaces> ::= \" \" <spaces> | \"\"\n<value> ::= <digit> <value> | <digit> | '\"' <letters> '\"'\n<letters> ::= <letter> <letters> | \"\"\n<end> ::= \";\" | \"\"\n<letter> ::= \"a\" | \"b\" | \"x\" | \"q\"\n<digit> ::= \"1\" | \"2\" | \"7\"\n",
+      "start": "assignment",
+      "rules": ["assignment", "name", "spaces", "value", "letters", "end", "letter", "digit"],
+      "expressions": {
+        "assignment": "normal seq(literal(\"let \"), ref(name), ref(spaces), literal(\"=\"), ref(spaces), ref(value), ref(end))",
+        "name": "normal choice(seq(ref(letter), ref(name)), ref(letter))",
+        "spaces": "normal choice(seq(literal(\" \"), ref(spaces)), empty)",
+        "value": "normal choice(seq(ref(digit), ref(value)), ref(digit), seq(literal(\"\\\"\"), ref(letters), literal(\"\\\"\")))",
+        "letters": "normal choice(seq(ref(letter), ref(letters)), empty)",
+        "end": "normal choice(literal(\";\"), empty)",
+        "letter": "normal choice(literal(\"a\"), literal(\"b\"), literal(\"x\"), literal(\"q\"))",
+        "digit": "normal choice(literal(\"1\"), literal(\"2\"), literal(\"7\"))"
+      },
+      "emitted": {
+        "source": "<assignment> ::= \"let \" <name> <spaces> \"=\" <spaces> <value> <end>\n<name> ::= <letter> <name> | <letter>\n<spaces> ::= \" \" <spaces> | \n<value> ::= <digit> <value> | <digit> | '\"' <letters> '\"'\n<letters> ::= <letter> <letters> | \n<end> ::= \";\" | \n<letter> ::= \"a\" | \"b\" | \"x\" | \"q\"\n<digit> ::= \"1\" | \"2\" | \"7\"\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "let ab=\"ab\"", "let q=7"],
+      "rejects": ["let 1x = 2;", "letx = 1", "let x = \"a"]
+    },
+    {
+      "id": "ebnf:constructs",
+      "format": "ebnf",
+      "source": "assignment = \"let\", \" \", name, { \" \" }, \"=\", { \" \" }, value, [ \";\" ] ;\nname = letter, ( letter | digit | \"_\" )* ;\nvalue = digit, [ digit, [ digit ] ] | '\"', { letter }, '\"' ;\nletter = \"a\" | \"b\" | \"x\" | \"q\" ;\ndigit = \"1\" | \"2\" | \"7\" ;\n",
+      "start": "assignment",
+      "rules": ["assignment", "name", "value", "letter", "digit"],
+      "expressions": {
+        "assignment": "normal seq(literal(\"let\"), literal(\" \"), ref(name), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), ref(value), optional(literal(\";\")))",
+        "name": "normal seq(ref(letter), repeat0(choice(ref(letter), ref(digit), literal(\"_\"))))",
+        "value": "normal choice(seq(ref(digit), optional(seq(ref(digit), optional(ref(digit))))), seq(literal(\"\\\"\"), repeat0(ref(letter)), literal(\"\\\"\")))",
+        "letter": "normal choice(literal(\"a\"), literal(\"b\"), literal(\"x\"), literal(\"q\"))",
+        "digit": "normal choice(literal(\"1\"), literal(\"2\"), literal(\"7\"))"
+      },
+      "emitted": {
+        "source": "assignment = \"let\" , \" \" , name , { \" \" } , \"=\" , { \" \" } , value , [ \";\" ] ;\nname = letter , { letter | digit | \"_\" } ;\nvalue = digit , [ digit , [ digit ] ] | '\"' , { letter } , '\"' ;\nletter = \"a\" | \"b\" | \"x\" | \"q\" ;\ndigit = \"1\" | \"2\" | \"7\" ;\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "let ab_1=\"ab\"", "let q=777"],
+      "rejects": ["let 1x = 2;", "letx = 1", "let x = 1212"]
+    },
+    {
+      "id": "pest:constructs",
+      "format": "pest",
+      "source": "assignment = { ^\"let\" ~ \" \"+ ~ !keyword ~ name ~ \" \"* ~ \"=\" ~ \" \"* ~ value ~ \";\"? }\nkeyword = { \"let\" ~ !alnum }\nname = @{ alpha ~ (alnum | \"_\"){0,7} }\nvalue = ${ digit{1,3} ~ !digit | \"\\\"\" ~ (!\"\\\"\" ~ ANY)* ~ \"\\\"\" }\nalnum = _{ alpha | digit }\nalpha = _{ 'a'..'z' | 'A'..'Z' }\ndigit = _{ '0'..'9' }\n",
+      "start": "assignment",
+      "rules": ["assignment", "keyword", "name", "value", "alnum", "alpha", "digit"],
+      "expressions": {
+        "assignment": "normal seq(literalInsensitive(\"let\"), repeat1(literal(\" \")), not(ref(keyword)), ref(name), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), ref(value), optional(literal(\";\")))",
+        "keyword": "normal seq(literal(\"let\"), not(ref(alnum)))",
+        "name": "atomic seq(ref(alpha), repeat(orderedChoice(ref(alnum), literal(\"_\")), 0, 7))",
+        "value": "token orderedChoice(seq(repeat(ref(digit), 1, 3), not(ref(digit))), seq(literal(\"\\\"\"), repeat0(seq(not(literal(\"\\\"\")), any)), literal(\"\\\"\")))",
+        "alnum": "silent orderedChoice(ref(alpha), ref(digit))",
+        "alpha": "silent orderedChoice(range(\"a\", \"z\"), range(\"A\", \"Z\"))",
+        "digit": "silent range(\"0\", \"9\")"
+      },
+      "emitted": {
+        "source": "assignment = { ^\"let\" ~ \" \"+ ~ !keyword ~ name ~ \" \"* ~ \"=\" ~ \" \"* ~ value ~ \";\"? }\nkeyword = { \"let\" ~ !alnum }\nname = @{ alpha ~ (alnum | \"_\"){0,7} }\nvalue = ${ digit{1,3} ~ !digit | \"\\\"\" ~ (!\"\\\"\" ~ ANY)* ~ \"\\\"\" }\nalnum = _{ alpha | digit }\nalpha = _{ 'a'..'z' | 'A'..'Z' }\ndigit = _{ '0'..'9' }\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "LET ab_1=\"hi\"", "Let  q=7"],
+      "rejects": ["let let = 1", "let x = 1234;", "letx = 1", "let x = \"a"]
+    },
+    {
+      "id": "tree-sitter-json:constructs",
+      "format": "tree-sitter-json",
+      "source": "{\"name\":\"assignment\",\"rules\":{\"assignment\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"STRING\",\"value\":\"let\"},{\"type\":\"REPEAT1\",\"content\":{\"type\":\"STRING\",\"value\":\" \"}},{\"type\":\"FIELD\",\"name\":\"name\",\"content\":{\"type\":\"SYMBOL\",\"name\":\"identifier\"}},{\"type\":\"REPEAT\",\"content\":{\"type\":\"STRING\",\"value\":\" \"}},{\"type\":\"STRING\",\"value\":\"=\"},{\"type\":\"REPEAT\",\"content\":{\"type\":\"STRING\",\"value\":\" \"}},{\"type\":\"FIELD\",\"name\":\"value\",\"content\":{\"type\":\"SYMBOL\",\"name\":\"value\"}},{\"type\":\"CHOICE\",\"members\":[{\"type\":\"STRING\",\"value\":\";\"},{\"type\":\"BLANK\"}]}]},\"identifier\":{\"type\":\"TOKEN\",\"content\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"PATTERN\",\"value\":\"[a-z_]\"},{\"type\":\"REPEAT\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[a-z0-9_]\"}}]}},\"value\":{\"type\":\"CHOICE\",\"members\":[{\"type\":\"PREC\",\"value\":1,\"content\":{\"type\":\"ALIAS\",\"content\":{\"type\":\"SYMBOL\",\"name\":\"number\"},\"named\":true,\"value\":\"integer\"}},{\"type\":\"SYMBOL\",\"name\":\"string\"}]},\"number\":{\"type\":\"TOKEN\",\"content\":{\"type\":\"REPEAT1\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[0-9]\"}}},\"string\":{\"type\":\"SEQ\",\"members\":[{\"type\":\"STRING\",\"value\":\"\\\"\"},{\"type\":\"REPEAT\",\"content\":{\"type\":\"PATTERN\",\"value\":\"[^\\\"\\\\\\\\]\"}},{\"type\":\"IMMEDIATE_TOKEN\",\"content\":{\"type\":\"STRING\",\"value\":\"\\\"\"}}]}}}",
+      "start": "assignment",
+      "rules": ["assignment", "identifier", "value", "number", "string"],
+      "expressions": {
+        "assignment": "normal seq(literal(\"let\"), repeat1(literal(\" \")), capture(\"name\", ref(identifier)), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), capture(\"value\", ref(value)), optional(literal(\";\")))",
+        "identifier": "token seq(class(range(\"a\", \"z\"), char(\"_\")), repeat0(class(range(\"a\", \"z\"), range(\"0\", \"9\"), char(\"_\"))))",
+        "value": "normal choice(capture(\"prec=1\", capture(\"alias:integer\", ref(number))), ref(string))",
+        "number": "token repeat1(class(range(\"0\", \"9\")))",
+        "string": "normal seq(literal(\"\\\"\"), repeat0(notClass(char(\"\\\"\"), char(\"\\\\\"))), capture(\"immediate_token\", literal(\"\\\"\")))"
+      },
+      "emitted": {
+        "source": "{\n  \"name\": \"assignment\",\n  \"rules\": {\n    \"assignment\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"let\"\n        },\n        {\n          \"type\": \"REPEAT1\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \" \"\n          }\n        },\n        {\n          \"type\": \"FIELD\",\n          \"name\": \"name\",\n          \"content\": {\n            \"type\": \"SYMBOL\",\n            \"name\": \"identifier\"\n          }\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \" \"\n          }\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"=\"\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \" \"\n          }\n        },\n        {\n          \"type\": \"FIELD\",\n          \"name\": \"value\",\n          \"content\": {\n            \"type\": \"SYMBOL\",\n            \"name\": \"value\"\n          }\n        },\n        {\n          \"type\": \"CHOICE\",\n          \"members\": [\n            {\n              \"type\": \"STRING\",\n              \"value\": \";\"\n            },\n            {\n              \"type\": \"BLANK\"\n            }\n          ]\n        }\n      ]\n    },\n    \"identifier\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"SEQ\",\n        \"members\": [\n          {\n            \"type\": \"PATTERN\",\n            \"value\": \"[a-z_]\"\n          },\n          {\n            \"type\": \"REPEAT\",\n            \"content\": {\n              \"type\": \"PATTERN\",\n              \"value\": \"[a-z0-9_]\"\n            }\n          }\n        ]\n      }\n    },\n    \"value\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"PREC\",\n          \"value\": 1,\n          \"content\": {\n            \"type\": \"ALIAS\",\n            \"content\": {\n              \"type\": \"SYMBOL\",\n              \"name\": \"number\"\n            },\n            \"named\": true,\n            \"value\": \"integer\"\n          }\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"string\"\n        }\n      ]\n    },\n    \"number\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"REPEAT1\",\n        \"content\": {\n          \"type\": \"PATTERN\",\n          \"value\": \"[0-9]\"\n        }\n      }\n    },\n    \"string\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"\\\"\"\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"PATTERN\",\n            \"value\": \"[^\\\"\\\\\\\\]\"\n          }\n        },\n        {\n          \"type\": \"IMMEDIATE_TOKEN\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \"\\\"\"\n          }\n        }\n      ]\n    }\n  }\n}\n",
+        "lossy": []
+      },
+      "accepts": ["let x = 12;", "let ab_1=\"hi\"", "let  q=7"],
+      "rejects": ["let 1x = 2;", "letx = 1", "let x = \"a"]
+    }
+  ],
+  "malformed": [
+    {
+      "format": "abnf",
+      "reason": "unterminated literal",
+      "source": "message = \"unterminated\n"
+    },
+    {
+      "format": "abnf",
+      "reason": "undefined reference",
+      "source": "message = word\n"
+    },
+    {
+      "format": "bnf",
+      "reason": "unterminated literal",
+      "source": "<message> ::= \"unterminated"
+    },
+    {
+      "format": "bnf",
+      "reason": "undefined reference",
+      "source": "<message> ::= <word>"
+    },
+    {
+      "format": "ebnf",
+      "reason": "unterminated literal",
+      "source": "message = \"unterminated ;"
+    },
+    {
+      "format": "ebnf",
+      "reason": "undefined reference",
+      "source": "message = word ;"
+    },
+    {
+      "format": "pest",
+      "reason": "unterminated literal",
+      "source": "message = { \"unterminated }"
+    },
+    {
+      "format": "pest",
+      "reason": "undefined reference",
+      "source": "message = { word }"
+    },
+    {
+      "format": "tree-sitter-json",
+      "reason": "truncated JSON",
+      "source": "{\"rules\": {"
+    },
+    {
+      "format": "tree-sitter-json",
+      "reason": "missing rules",
+      "source": "{\"name\": \"message\"}"
+    },
+    {
+      "format": "tree-sitter-json",
+      "reason": "unknown rule type",
+      "source": "{\"name\": \"message\", \"rules\": {\"document\": {\"type\": \"UNKNOWN\"}}}"
+    }
+  ],
+  "commands": [
+    {
+      "id": "help",
+      "args": ["help"],
+      "files": {},
+      "exitCode": 0,
+      "stdout": "usage: meta-language grammar <command> [options]\n\ncommands:\n  formats\n      list the import and export formats\n  import --from FORMAT FILE\n      print the grammar as a native listing\n  validate --from FORMAT FILE\n      report grammar diagnostics; exit 1 when one is an error\n  convert --from FORMAT --to FORMAT FILE\n      translate a grammar to another format; lossy steps go to standard error\n  export --to FORMAT FILE\n      export a native listing to another format\n  merge --source FORMAT:FILE... [--language NAME] [--require A=B]... [--to FORMAT]\n      merge grammars of one language; earlier sources take precedence\n  rename --from FORMAT --rule OLD --name NEW [--namespace NS] [--to FORMAT] FILE\n      rename a rule and every reference to it\n  round-trip --from FORMAT [--accept TEXT]... [--reject TEXT]... FILE\n      export and re-import a mutated grammar; exit 1 when it is not preserved\n  help\n      print this help\n\nexit status: 0 success, 1 a problem was found, 2 a usage or input error\n",
+      "stderr": ""
+    },
+    {
+      "id": "usage-without-command",
+      "args": [],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "usage: meta-language grammar <command> [options]\n\ncommands:\n  formats\n      list the import and export formats\n  import --from FORMAT FILE\n      print the grammar as a native listing\n  validate --from FORMAT FILE\n      report grammar diagnostics; exit 1 when one is an error\n  convert --from FORMAT --to FORMAT FILE\n      translate a grammar to another format; lossy steps go to standard error\n  export --to FORMAT FILE\n      export a native listing to another format\n  merge --source FORMAT:FILE... [--language NAME] [--require A=B]... [--to FORMAT]\n      merge grammars of one language; earlier sources take precedence\n  rename --from FORMAT --rule OLD --name NEW [--namespace NS] [--to FORMAT] FILE\n      rename a rule and every reference to it\n  round-trip --from FORMAT [--accept TEXT]... [--reject TEXT]... FILE\n      export and re-import a mutated grammar; exit 1 when it is not preserved\n  help\n      print this help\n\nexit status: 0 success, 1 a problem was found, 2 a usage or input error\n"
+    },
+    {
+      "id": "formats",
+      "args": ["formats"],
+      "files": {},
+      "exitCode": 0,
+      "stdout": "import: abnf antlr bnf ebnf gbnf lark native pest tree-sitter-json\nexport: abnf antlr bnf ebnf gbnf lark native pest tree-sitter-json\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:abnf:message",
+      "args": ["import", "--from", "abnf", "message.abnf"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format abnf\nstart message\nrule message = normal seq(ref(word), ref(SP), ref(number))\nrule word = normal repeat1(ref(ALPHA))\nrule number = normal repeat1(ref(DIGIT))\nrule SP = normal literal(\" \")\nrule ALPHA = normal class(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule DIGIT = normal range(\"0\", \"9\")\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:bnf:message",
+      "args": ["import", "--from", "bnf", "message.bnf"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format bnf\nstart message\nrule message = normal seq(ref(word), literal(\" \"), ref(number))\nrule word = normal choice(seq(ref(letter), ref(word)), ref(letter))\nrule number = normal choice(seq(ref(digit), ref(number)), ref(digit))\nrule letter = normal choice(literal(\"M\"), literal(\"e\"), literal(\"t\"), literal(\"a\"), literal(\"A\"))\nrule digit = normal choice(literal(\"0\"), literal(\"1\"), literal(\"2\"), literal(\"3\"), literal(\"4\"), literal(\"5\"), literal(\"6\"), literal(\"7\"), literal(\"8\"), literal(\"9\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:ebnf:message",
+      "args": ["import", "--from", "ebnf", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format ebnf\nstart message\nrule message = normal seq(ref(word), literal(\" \"), ref(number))\nrule word = normal seq(ref(letter), repeat0(ref(letter)))\nrule number = normal seq(ref(digit), repeat0(ref(digit)))\nrule letter = normal choice(literal(\"M\"), literal(\"e\"), literal(\"t\"), literal(\"a\"), literal(\"A\"))\nrule digit = normal choice(literal(\"0\"), literal(\"1\"), literal(\"2\"), literal(\"3\"), literal(\"4\"), literal(\"5\"), literal(\"6\"), literal(\"7\"), literal(\"8\"), literal(\"9\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:pest:message",
+      "args": ["import", "--from", "pest", "message.pest"],
+      "files": {
+        "message.pest": {
+          "case": "pest:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format peg\nstart message\nrule message = normal seq(ref(word), literal(\" \"), ref(number))\nrule word = atomic repeat1(ref(letter))\nrule number = atomic repeat1(ref(digit))\nrule letter = silent orderedChoice(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule digit = silent range(\"0\", \"9\")\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:tree-sitter-json:message",
+      "args": ["import", "--from", "tree-sitter-json", "message.json"],
+      "files": {
+        "message.json": {
+          "case": "tree-sitter-json:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format tree-sitter\nstart document\nrule document = normal seq(ref(word), literal(\" \"), ref(number))\nrule word = normal repeat1(class(range(\"A\", \"Z\"), range(\"a\", \"z\")))\nrule number = token repeat1(class(range(\"0\", \"9\")))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:abnf:constructs",
+      "args": ["import", "--from", "abnf", "constructs.abnf"],
+      "files": {
+        "constructs.abnf": {
+          "case": "abnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format abnf\nstart assignment\nrule assignment = normal seq(literalInsensitive(\"let\"), repeat1(ref(SP)), ref(name), repeat0(ref(SP)), literal(\"=\"), repeat0(ref(SP)), ref(value), optional(literal(\";\")))\nrule name = normal seq(ref(ALPHA), repeat(choice(ref(ALPHA), ref(DIGIT), literal(\"_\")), 0, 7))\nrule value = normal choice(repeat(ref(DIGIT), 1, 3), seq(ref(DQUOTE), repeat0(choice(range(\" \", \"!\"), range(\"#\", \"~\"))), ref(DQUOTE)))\nrule SP = normal literal(\" \")\nrule ALPHA = normal class(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule DIGIT = normal range(\"0\", \"9\")\nrule DQUOTE = normal literal(\"\\\"\")\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:bnf:constructs",
+      "args": ["import", "--from", "bnf", "constructs.bnf"],
+      "files": {
+        "constructs.bnf": {
+          "case": "bnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format bnf\nstart assignment\nrule assignment = normal seq(literal(\"let \"), ref(name), ref(spaces), literal(\"=\"), ref(spaces), ref(value), ref(end))\nrule name = normal choice(seq(ref(letter), ref(name)), ref(letter))\nrule spaces = normal choice(seq(literal(\" \"), ref(spaces)), empty)\nrule value = normal choice(seq(ref(digit), ref(value)), ref(digit), seq(literal(\"\\\"\"), ref(letters), literal(\"\\\"\")))\nrule letters = normal choice(seq(ref(letter), ref(letters)), empty)\nrule end = normal choice(literal(\";\"), empty)\nrule letter = normal choice(literal(\"a\"), literal(\"b\"), literal(\"x\"), literal(\"q\"))\nrule digit = normal choice(literal(\"1\"), literal(\"2\"), literal(\"7\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:ebnf:constructs",
+      "args": ["import", "--from", "ebnf", "constructs.ebnf"],
+      "files": {
+        "constructs.ebnf": {
+          "case": "ebnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format ebnf\nstart assignment\nrule assignment = normal seq(literal(\"let\"), literal(\" \"), ref(name), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), ref(value), optional(literal(\";\")))\nrule name = normal seq(ref(letter), repeat0(choice(ref(letter), ref(digit), literal(\"_\"))))\nrule value = normal choice(seq(ref(digit), optional(seq(ref(digit), optional(ref(digit))))), seq(literal(\"\\\"\"), repeat0(ref(letter)), literal(\"\\\"\")))\nrule letter = normal choice(literal(\"a\"), literal(\"b\"), literal(\"x\"), literal(\"q\"))\nrule digit = normal choice(literal(\"1\"), literal(\"2\"), literal(\"7\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:pest:constructs",
+      "args": ["import", "--from", "pest", "constructs.pest"],
+      "files": {
+        "constructs.pest": {
+          "case": "pest:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format peg\nstart assignment\nrule assignment = normal seq(literalInsensitive(\"let\"), repeat1(literal(\" \")), not(ref(keyword)), ref(name), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), ref(value), optional(literal(\";\")))\nrule keyword = normal seq(literal(\"let\"), not(ref(alnum)))\nrule name = atomic seq(ref(alpha), repeat(orderedChoice(ref(alnum), literal(\"_\")), 0, 7))\nrule value = token orderedChoice(seq(repeat(ref(digit), 1, 3), not(ref(digit))), seq(literal(\"\\\"\"), repeat0(seq(not(literal(\"\\\"\")), any)), literal(\"\\\"\")))\nrule alnum = silent orderedChoice(ref(alpha), ref(digit))\nrule alpha = silent orderedChoice(range(\"a\", \"z\"), range(\"A\", \"Z\"))\nrule digit = silent range(\"0\", \"9\")\n",
+      "stderr": ""
+    },
+    {
+      "id": "import:tree-sitter-json:constructs",
+      "args": ["import", "--from", "tree-sitter-json", "constructs.json"],
+      "files": {
+        "constructs.json": {
+          "case": "tree-sitter-json:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "format tree-sitter\nstart assignment\nrule assignment = normal seq(literal(\"let\"), repeat1(literal(\" \")), capture(\"name\", ref(identifier)), repeat0(literal(\" \")), literal(\"=\"), repeat0(literal(\" \")), capture(\"value\", ref(value)), optional(literal(\";\")))\nrule identifier = token seq(class(range(\"a\", \"z\"), char(\"_\")), repeat0(class(range(\"a\", \"z\"), range(\"0\", \"9\"), char(\"_\"))))\nrule value = normal choice(capture(\"prec=1\", capture(\"alias:integer\", ref(number))), ref(string))\nrule number = token repeat1(class(range(\"0\", \"9\")))\nrule string = normal seq(literal(\"\\\"\"), repeat0(notClass(char(\"\\\"\"), char(\"\\\\\"))), capture(\"immediate_token\", literal(\"\\\"\")))\n",
+      "stderr": ""
+    },
+    {
+      "id": "validate:abnf:message",
+      "args": ["validate", "--from", "abnf", "message.abnf"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "0 error(s), 0 warning(s)\n",
+      "stderr": ""
+    },
+    {
+      "id": "validate:problems",
+      "args": ["validate", "--from", "native", "problems.grammar"],
+      "files": {
+        "problems.grammar": "start expr\nrule expr = normal choice(seq(ref(expr), literal(\"+\"), ref(term)), ref(term))\nrule term = normal seq(ref(missing), repeat0(optional(literal(\"x\"))), capture(\"lbl\", literal(\"y\")))\nrule orphan = normal literal(\"z\")\nrule a = normal seq(ref(b), literal(\"1\"))\nrule b = normal choice(ref(a), empty)\n"
+      },
+      "exitCode": 1,
+      "stdout": "error left-recursion expr: rule `expr` is left-recursive (`expr -> expr`); a recursive-descent/PEG parser may not terminate. Rewrite using repetition or factor the common prefix.\nerror undefined-non-terminal term: rule `term` references undefined non-terminal `missing`; define it or fix the spelling.\nwarning nullable-repetition term: rule `term` uses a zero-or-more repetition has nullable inner expression `(\"x\")?`; make the repeated expression consume input or move the optional part outside the repetition.\nwarning unused-capture term: capture label `lbl` in rule `term` is not used by grammar semantics; remove the label or wire it to a consumer.\nwarning unreachable-rule orphan: rule `orphan` is not reachable from start rule `expr`; remove it or reference it from a reachable rule.\nerror left-recursion a: rule `a` is left-recursive (`a -> b -> a`); a recursive-descent/PEG parser may not terminate. Rewrite using repetition or factor the common prefix.\nwarning unreachable-rule a: rule `a` is not reachable from start rule `expr`; remove it or reference it from a reachable rule.\nwarning unreachable-rule b: rule `b` is not reachable from start rule `expr`; remove it or reference it from a reachable rule.\nwarning nullable-repetition b: rule `b` can match empty; add a required terminal/non-terminal or document the rule as intentional.\n3 error(s), 6 warning(s)\n",
+      "stderr": ""
+    },
+    {
+      "id": "convert:abnf-to-pest",
+      "args": ["convert", "--from", "abnf", "--to", "pest", "message.abnf"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "message = { word ~ SP ~ number }\nword = { ALPHA+ }\nnumber = { DIGIT+ }\nSP = { \" \" }\nALPHA = { ('A'..'Z' | 'a'..'z') }\nDIGIT = { '0'..'9' }\n",
+      "stderr": ""
+    },
+    {
+      "id": "convert:bnf-to-tree-sitter-json",
+      "args": ["convert", "--from", "bnf", "--to", "tree-sitter-json", "message.bnf"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"word\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \" \"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"number\"\n        }\n      ]\n    },\n    \"word\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"SEQ\",\n          \"members\": [\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"letter\"\n            },\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"word\"\n            }\n          ]\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"letter\"\n        }\n      ]\n    },\n    \"number\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"SEQ\",\n          \"members\": [\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"digit\"\n            },\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"number\"\n            }\n          ]\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"digit\"\n        }\n      ]\n    },\n    \"letter\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"M\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"e\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"t\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"a\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"A\"\n        }\n      ]\n    },\n    \"digit\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"0\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"1\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"2\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"3\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"4\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"5\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"6\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"7\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"8\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"9\"\n        }\n      ]\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "convert:pest-to-ebnf",
+      "args": ["convert", "--from", "pest", "--to", "ebnf", "message.pest"],
+      "files": {
+        "message.pest": {
+          "case": "pest:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "message = word , \" \" , number ;\nword = letter , { letter } ;\nnumber = digit , { digit } ;\nletter = mlrange0 | mlrange1 ;\ndigit = mlrange2 ;\nmlrange0 = \"A\" | \"B\" | \"C\" | \"D\" | \"E\" | \"F\" | \"G\" | \"H\" | \"I\" | \"J\" | \"K\" | \"L\" | \"M\" | \"N\" | \"O\" | \"P\" | \"Q\" | \"R\" | \"S\" | \"T\" | \"U\" | \"V\" | \"W\" | \"X\" | \"Y\" | \"Z\" ;\nmlrange1 = \"a\" | \"b\" | \"c\" | \"d\" | \"e\" | \"f\" | \"g\" | \"h\" | \"i\" | \"j\" | \"k\" | \"l\" | \"m\" | \"n\" | \"o\" | \"p\" | \"q\" | \"r\" | \"s\" | \"t\" | \"u\" | \"v\" | \"w\" | \"x\" | \"y\" | \"z\" ;\nmlrange2 = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "stderr": "lossy: EBNF treats ordered choice as unordered choice\n"
+    },
+    {
+      "id": "convert:abnf-constructs-to-gbnf",
+      "args": ["convert", "--from", "abnf", "--to", "gbnf", "constructs.abnf"],
+      "files": {
+        "constructs.abnf": {
+          "case": "abnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "root ::= [Ll][Ee][Tt] (SP)+ name (SP)* \"=\" (SP)* value (\";\")?\nname ::= ALPHA (ALPHA | DIGIT | \"_\"){0,7}\nvalue ::= (DIGIT){1,3} | DQUOTE ([ -!] | [#-~])* DQUOTE\nSP ::= \" \"\nALPHA ::= [A-Za-z]\nDIGIT ::= [0-9]\nDQUOTE ::= \"\\\"\"\n",
+      "stderr": "lossy: GBNF expands case-insensitive terminal \"let\" to character classes\n"
+    },
+    {
+      "id": "convert:tree-sitter-json-constructs-to-bnf-unsupported",
+      "args": ["convert", "--from", "tree-sitter-json", "--to", "bnf", "constructs.json"],
+      "files": {
+        "constructs.json": {
+          "case": "tree-sitter-json:constructs"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot export as bnf\nbnf emit unsupported construct: negated CharClass\n"
+    },
+    {
+      "id": "convert:pest-constructs-to-abnf-unsupported",
+      "args": ["convert", "--from", "pest", "--to", "abnf", "constructs.pest"],
+      "files": {
+        "constructs.pest": {
+          "case": "pest:constructs"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot export as abnf\nabnf emit unsupported construct: Not\n"
+    },
+    {
+      "id": "convert:ebnf-to-antlr",
+      "args": ["convert", "--from", "ebnf", "--to", "antlr", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "grammar Message;\n\nmessage : word ' ' number ;\nword : letter letter* ;\nnumber : digit digit* ;\nletter : 'M' | 'e' | 't' | 'a' | 'A' ;\ndigit : '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;\n",
+      "stderr": ""
+    },
+    {
+      "id": "convert:ebnf-constructs-to-lark",
+      "args": ["convert", "--from", "ebnf", "--to", "lark", "constructs.ebnf"],
+      "files": {
+        "constructs.ebnf": {
+          "case": "ebnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "assignment: \"let\" \" \" name \" \"* \"=\" \" \"* value [\";\"]\nname: letter (letter | digit | \"_\")*\nvalue: digit [digit [digit]] | \"\\\"\" letter* \"\\\"\"\nletter: \"a\" | \"b\" | \"x\" | \"q\"\ndigit: \"1\" | \"2\" | \"7\"\n",
+      "stderr": ""
+    },
+    {
+      "id": "export:native-to-abnf",
+      "args": ["export", "--to", "abnf", "sum.grammar"],
+      "files": {
+        "sum.grammar": "# a native listing\nformat abnf\nstart sum\nrule sum = normal seq(ref(digit), repeat(seq(literal(\"+\"), ref(digit)), 0, unbounded))\nrule digit = token class(range(\"0\", \"9\"))\n"
+      },
+      "exitCode": 0,
+      "stdout": "sum = digit *( %s\"+\" digit )\ndigit = ( %x30-39 )\n",
+      "stderr": ""
+    },
+    {
+      "id": "export:native-to-native",
+      "args": ["export", "--to", "native", "sum.grammar"],
+      "files": {
+        "sum.grammar": "# a native listing\nformat abnf\nstart sum\nrule sum = normal seq(ref(digit), repeat(seq(literal(\"+\"), ref(digit)), 0, unbounded))\nrule digit = token class(range(\"0\", \"9\"))\n"
+      },
+      "exitCode": 0,
+      "stdout": "format abnf\nstart sum\nrule sum = normal seq(ref(digit), repeat(seq(literal(\"+\"), ref(digit)), 0, unbounded))\nrule digit = token class(range(\"0\", \"9\"))\n",
+      "stderr": ""
+    },
+    {
+      "id": "merge:bnf-and-ebnf",
+      "args": ["merge", "--language", "message", "--source", "bnf:message.bnf", "--source", "ebnf:message.ebnf", "--to", "ebnf"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        },
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "message = word , \" \" , number ;\nword = letter , word | letter ;\nnumber = digit , number | digit ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\nmessage_from_message_ebnf = word_from_message_ebnf , \" \" , number_from_message_ebnf ;\nword_from_message_ebnf = letter , { letter } ;\nnumber_from_message_ebnf = digit , { digit } ;\n",
+      "stderr": "kept-unique message: message.bnf:message (no-equivalent-rule)\nkept-unique word: message.bnf:word (no-equivalent-rule)\nkept-unique number: message.bnf:number (no-equivalent-rule)\nmerged letter: message.bnf:letter message.ebnf:letter (recursive-structural-bisimulation)\nmerged digit: message.bnf:digit message.ebnf:digit (recursive-structural-bisimulation)\nkept-unique message_from_message_ebnf: message.ebnf:message (no-equivalent-rule)\nrenamed-for-collision message_from_message_ebnf: message.ebnf:message (precedence)\nkept-unique word_from_message_ebnf: message.ebnf:word (no-equivalent-rule)\nrenamed-for-collision word_from_message_ebnf: message.ebnf:word (precedence)\nkept-unique number_from_message_ebnf: message.ebnf:number (no-equivalent-rule)\nrenamed-for-collision number_from_message_ebnf: message.ebnf:number (precedence)\nhomonym-kept-distinct message: message message_from_message_ebnf (different-definitions)\nhomonym-kept-distinct number: number number_from_message_ebnf (different-definitions)\nhomonym-kept-distinct word: word word_from_message_ebnf (different-definitions)\nalternative start-rule message: message_from_message_ebnf\nalternative distinct-meaning message: message message_from_message_ebnf\nalternative distinct-meaning number: number number_from_message_ebnf\nalternative distinct-meaning word: word word_from_message_ebnf\n"
+    },
+    {
+      "id": "merge:required-equivalence-unresolved",
+      "args": ["merge", "--source", "abnf:message.abnf", "--source", "pest:message.pest", "--require", "message.abnf:message=message.pest:word"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        },
+        "message.pest": {
+          "case": "pest:message"
+        }
+      },
+      "exitCode": 1,
+      "stdout": "format meta-language\nstart message\nrule message = normal seq(ref(word), ref(SP), ref(number))\nrule word = normal repeat1(ref(ALPHA))\nrule number = normal repeat1(ref(DIGIT))\nrule SP = normal literal(\" \")\nrule ALPHA = normal class(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule DIGIT = normal range(\"0\", \"9\")\nrule message_from_message_pest = normal seq(ref(word_from_message_pest), literal(\" \"), ref(number_from_message_pest))\nrule word_from_message_pest = atomic repeat1(ref(letter))\nrule number_from_message_pest = atomic repeat1(ref(digit))\nrule letter = silent orderedChoice(range(\"A\", \"Z\"), range(\"a\", \"z\"))\nrule digit = silent range(\"0\", \"9\")\n",
+      "stderr": "kept-unique message: message.abnf:message (no-equivalent-rule)\nkept-unique word: message.abnf:word (no-equivalent-rule)\nkept-unique number: message.abnf:number (no-equivalent-rule)\nkept-unique SP: message.abnf:SP (no-equivalent-rule)\nkept-unique ALPHA: message.abnf:ALPHA (no-equivalent-rule)\nkept-unique DIGIT: message.abnf:DIGIT (no-equivalent-rule)\nkept-unique message_from_message_pest: message.pest:message (no-equivalent-rule)\nrenamed-for-collision message_from_message_pest: message.pest:message (precedence)\nkept-unique word_from_message_pest: message.pest:word (no-equivalent-rule)\nrenamed-for-collision word_from_message_pest: message.pest:word (precedence)\nkept-unique number_from_message_pest: message.pest:number (no-equivalent-rule)\nrenamed-for-collision number_from_message_pest: message.pest:number (precedence)\nkept-unique letter: message.pest:letter (no-equivalent-rule)\nkept-unique digit: message.pest:digit (no-equivalent-rule)\nhomonym-kept-distinct message: message message_from_message_pest (different-definitions)\nhomonym-kept-distinct number: number number_from_message_pest (different-definitions)\nhomonym-kept-distinct word: word word_from_message_pest (different-definitions)\nuncertain DIGIT: message.abnf:DIGIT message.pest:digit (name-similarity)\nalternative start-rule message: message_from_message_pest\nalternative distinct-meaning message: message message_from_message_pest\nalternative distinct-meaning number: number number_from_message_pest\nalternative distinct-meaning word: word word_from_message_pest\nalternative uncertain-match name-similarity: DIGIT digit\nunresolved message.abnf:message = message.pest:word: not-proven\n"
+    },
+    {
+      "id": "rename:referenced-rule",
+      "args": ["rename", "--from", "ebnf", "--rule", "word", "--name", "name", "--to", "ebnf", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "message = name , \" \" , number ;\nname = letter , { letter } ;\nnumber = digit , { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "stderr": "alias name = word\n"
+    },
+    {
+      "id": "rename:unknown-rule",
+      "args": ["rename", "--from", "ebnf", "--rule", "nothing", "--name", "name", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: grammar has no rule nothing\n"
+    },
+    {
+      "id": "round-trip:abnf:message",
+      "args": ["round-trip", "--from", "abnf", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.abnf"],
+      "files": {
+        "message.abnf": {
+          "case": "abnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:bnf:message",
+      "args": ["round-trip", "--from", "bnf", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.bnf"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:ebnf:message",
+      "args": ["round-trip", "--from", "ebnf", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.ebnf"],
+      "files": {
+        "message.ebnf": {
+          "case": "ebnf:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:pest:message",
+      "args": ["round-trip", "--from", "pest", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.pest"],
+      "files": {
+        "message.pest": {
+          "case": "pest:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:tree-sitter-json:message",
+      "args": ["round-trip", "--from", "tree-sitter-json", "--accept", "Meta 42", "--accept", "A 0", "--reject", "Meta x", "--reject", " 42", "--reject", "Meta 42!", "message.json"],
+      "files": {
+        "message.json": {
+          "case": "tree-sitter-json:message"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:abnf:constructs",
+      "args": ["round-trip", "--from", "abnf", "--accept", "let x = 12;", "--accept", "LET ab_1=\"hi\"", "--accept", "Let  q=7", "--reject", "let 1x = 2;", "--reject", "let x = 1234;", "--reject", "letx = 1", "--reject", "let abcdefghi = 1", "constructs.abnf"],
+      "files": {
+        "constructs.abnf": {
+          "case": "abnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:bnf:constructs",
+      "args": ["round-trip", "--from", "bnf", "--accept", "let x = 12;", "--accept", "let ab=\"ab\"", "--accept", "let q=7", "--reject", "let 1x = 2;", "--reject", "letx = 1", "--reject", "let x = \"a", "constructs.bnf"],
+      "files": {
+        "constructs.bnf": {
+          "case": "bnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:ebnf:constructs",
+      "args": ["round-trip", "--from", "ebnf", "--accept", "let x = 12;", "--accept", "let ab_1=\"ab\"", "--accept", "let q=777", "--reject", "let 1x = 2;", "--reject", "letx = 1", "--reject", "let x = 1212", "constructs.ebnf"],
+      "files": {
+        "constructs.ebnf": {
+          "case": "ebnf:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:pest:constructs",
+      "args": ["round-trip", "--from", "pest", "--accept", "let x = 12;", "--accept", "LET ab_1=\"hi\"", "--accept", "Let  q=7", "--reject", "let let = 1", "--reject", "let x = 1234;", "--reject", "letx = 1", "--reject", "let x = \"a", "constructs.pest"],
+      "files": {
+        "constructs.pest": {
+          "case": "pest:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:tree-sitter-json:constructs",
+      "args": ["round-trip", "--from", "tree-sitter-json", "--accept", "let x = 12;", "--accept", "let ab_1=\"hi\"", "--accept", "let  q=7", "--reject", "let 1x = 2;", "--reject", "letx = 1", "--reject", "let x = \"a", "constructs.json"],
+      "files": {
+        "constructs.json": {
+          "case": "tree-sitter-json:constructs"
+        }
+      },
+      "exitCode": 0,
+      "stdout": "preserved\n",
+      "stderr": ""
+    },
+    {
+      "id": "round-trip:native-wrong-samples",
+      "args": ["round-trip", "--from", "native", "--accept", "1+x", "--reject", "1+2", "sum.grammar"],
+      "files": {
+        "sum.grammar": "# a native listing\nformat abnf\nstart sum\nrule sum = normal seq(ref(digit), repeat(seq(literal(\"+\"), ref(digit)), 0, unbounded))\nrule digit = token class(range(\"0\", \"9\"))\n"
+      },
+      "exitCode": 1,
+      "stdout": "broken\nsample-rejected imported: 1+x\nsample-accepted imported: 1+2\nsample-rejected reimported: 1+x\nsample-accepted reimported: 1+2\n",
+      "stderr": ""
+    },
+    {
+      "id": "error:unknown-command",
+      "args": ["compile"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unknown command compile; run meta-language grammar help\n"
+    },
+    {
+      "id": "error:unknown-option",
+      "args": ["import", "--form", "bnf", "a.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unknown option --form for grammar import\n"
+    },
+    {
+      "id": "error:option-needs-value",
+      "args": ["import", "a.bnf", "--from"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: option --from needs a value\n"
+    },
+    {
+      "id": "error:option-given-twice",
+      "args": ["convert", "--from", "bnf", "--from", "ebnf", "--to", "pest", "a.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: option --from is given twice\n"
+    },
+    {
+      "id": "error:missing-option",
+      "args": ["convert", "--from", "bnf", "a.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: grammar convert needs --to\n"
+    },
+    {
+      "id": "error:missing-file",
+      "args": ["validate", "--from", "bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: grammar validate needs a grammar file\n"
+    },
+    {
+      "id": "error:unexpected-argument",
+      "args": ["import", "--from", "bnf", "a.bnf", "b.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unexpected argument b.bnf\n"
+    },
+    {
+      "id": "error:unknown-import-format",
+      "args": ["import", "--from", "yacc", "a.y"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unknown import format yacc (expected one of: abnf, antlr, bnf, ebnf, gbnf, lark, native, pest, tree-sitter-json)\n"
+    },
+    {
+      "id": "error:unknown-export-format",
+      "args": ["convert", "--from", "bnf", "--to", "yacc", "a.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: unknown export format yacc (expected one of: abnf, antlr, bnf, ebnf, gbnf, lark, native, pest, tree-sitter-json)\n"
+    },
+    {
+      "id": "error:cannot-read",
+      "args": ["import", "--from", "bnf", "absent.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot read absent.bnf\n"
+    },
+    {
+      "id": "error:merge-source-without-format",
+      "args": ["merge", "--source", "message.bnf"],
+      "files": {},
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: a merge source is FORMAT:FILE, not message.bnf\n"
+    },
+    {
+      "id": "error:merge-duplicate-file-names",
+      "args": ["merge", "--source", "bnf:a/message.bnf", "--source", "bnf:b/message.bnf"],
+      "files": {
+        "a/message.bnf": {
+          "case": "bnf:message"
+        },
+        "b/message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: merge sources need distinct file names, message.bnf is given twice\n"
+    },
+    {
+      "id": "error:merge-required-equivalence-without-equals",
+      "args": ["merge", "--source", "bnf:message.bnf", "--require", "message.bnf:word"],
+      "files": {
+        "message.bnf": {
+          "case": "bnf:message"
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: a required equivalence is SOURCE:RULE=SOURCE:RULE, not message.bnf:word\n"
+    },
+    {
+      "id": "error:malformed:abnf:unterminated-literal",
+      "args": ["import", "--from", "abnf", "malformed.abnf"],
+      "files": {
+        "malformed.abnf": {
+          "malformed": 0
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.abnf as abnf (parse error)"
+    },
+    {
+      "id": "error:malformed:abnf:undefined-reference",
+      "args": ["import", "--from", "abnf", "malformed.abnf"],
+      "files": {
+        "malformed.abnf": {
+          "malformed": 1
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import malformed.abnf as abnf (parse error)\nabnf import parse error: undefined non-terminal word\n"
+    },
+    {
+      "id": "error:malformed:bnf:unterminated-literal",
+      "args": ["import", "--from", "bnf", "malformed.bnf"],
+      "files": {
+        "malformed.bnf": {
+          "malformed": 2
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.bnf as bnf (parse error)"
+    },
+    {
+      "id": "error:malformed:bnf:undefined-reference",
+      "args": ["import", "--from", "bnf", "malformed.bnf"],
+      "files": {
+        "malformed.bnf": {
+          "malformed": 3
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.bnf as bnf (parse error)"
+    },
+    {
+      "id": "error:malformed:ebnf:unterminated-literal",
+      "args": ["import", "--from", "ebnf", "malformed.ebnf"],
+      "files": {
+        "malformed.ebnf": {
+          "malformed": 4
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.ebnf as ebnf (parse error)"
+    },
+    {
+      "id": "error:malformed:ebnf:undefined-reference",
+      "args": ["import", "--from", "ebnf", "malformed.ebnf"],
+      "files": {
+        "malformed.ebnf": {
+          "malformed": 5
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import malformed.ebnf as ebnf (parse error)\nebnf import parse error: undefined non-terminal word\n"
+    },
+    {
+      "id": "error:malformed:pest:unterminated-literal",
+      "args": ["import", "--from", "pest", "malformed.pest"],
+      "files": {
+        "malformed.pest": {
+          "malformed": 6
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.pest as pest (parse error)"
+    },
+    {
+      "id": "error:malformed:pest:undefined-reference",
+      "args": ["import", "--from", "pest", "malformed.pest"],
+      "files": {
+        "malformed.pest": {
+          "malformed": 7
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.pest as pest (parse error)"
+    },
+    {
+      "id": "error:malformed:tree-sitter-json:truncated-JSON",
+      "args": ["import", "--from", "tree-sitter-json", "malformed.json"],
+      "files": {
+        "malformed.json": {
+          "malformed": 8
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderrHead": "error: cannot import malformed.json as tree-sitter-json (parse error)"
+    },
+    {
+      "id": "error:malformed:tree-sitter-json:missing-rules",
+      "args": ["import", "--from", "tree-sitter-json", "malformed.json"],
+      "files": {
+        "malformed.json": {
+          "malformed": 9
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import malformed.json as tree-sitter-json (parse error)\ntree-sitter import parse error: grammar.json must contain object rules\n"
+    },
+    {
+      "id": "error:malformed:tree-sitter-json:unknown-rule-type",
+      "args": ["import", "--from", "tree-sitter-json", "malformed.json"],
+      "files": {
+        "malformed.json": {
+          "malformed": 10
+        }
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import malformed.json as tree-sitter-json (unsupported construct)\ntree-sitter import unsupported construct: UNKNOWN\n"
+    },
+    {
+      "id": "error:native:no-rules",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "# nothing\n\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: the listing defines no rules\n"
+    },
+    {
+      "id": "error:native:unknown-directive",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rules a = normal empty\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unknown directive rules\n"
+    },
+    {
+      "id": "error:native:unknown-expression",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal lit(\"x\")\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unknown expression lit\n"
+    },
+    {
+      "id": "error:native:unterminated-string",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal literal(\"x)\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unterminated string\n"
+    },
+    {
+      "id": "error:native:reversed-bounds",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal repeat(any, 3, 2)\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: repetition bounds 3, 2 are reversed\n"
+    },
+    {
+      "id": "error:native:bound-too-large",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal repeat(any, 1234567890, unbounded)\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: repetition bound 1234567890 is too large\n"
+    },
+    {
+      "id": "error:native:wide-character",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal class(char(\"ab\"))\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: a character must be one code point\n"
+    },
+    {
+      "id": "error:native:unknown-kind",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = loud empty\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unknown rule kind loud\n"
+    },
+    {
+      "id": "error:native:duplicate-rule",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal empty\nrule a = normal any\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 2: rule a is defined twice\n"
+    },
+    {
+      "id": "error:native:undefined-start",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "start b\nrule a = normal empty\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: start rule b is not defined\n"
+    },
+    {
+      "id": "error:native:trailing-text",
+      "args": ["import", "--from", "native", "bad.grammar"],
+      "files": {
+        "bad.grammar": "rule a = normal empty empty\n"
+      },
+      "exitCode": 2,
+      "stdout": "",
+      "stderr": "error: cannot import bad.grammar as native (parse error)\nmeta-language import parse error: line 1: unexpected text at the end of the line\n"
+    }
+  ],
+  "reverse": [
+    {
+      "id": "abnf:reverse",
+      "format": "abnf",
+      "source": "; a greeting: a word, one space and a number\nmessage   =  word SP number   ; the start rule\n\nword = 1*ALPHA\n; digits only\nnumber=1*DIGIT\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format abnf) (start message))\n(rule message normal (seq (ref word) (ref SP) (ref number)))\n(rule word normal (repeat1 (ref ALPHA)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule SP normal (literal %20))\n(rule ALPHA normal (class plain (range A Z) (range a z)))\n(rule DIGIT normal (range 0 9))\n",
+      "exported": "message = word SP number\nword = 1*( ALPHA )\nnumber = 1*( DIGIT )\nSP = %s\" \"\nALPHA = ( %x41-5A / %x61-7A )\nDIGIT = %x30-39\n",
+      "reimportedLinks": "(grammar (format abnf) (start message))\n(rule message normal (seq (ref word) (ref SP) (ref number)))\n(rule word normal (repeat1 (ref ALPHA)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule SP normal (literal %20))\n(rule ALPHA normal (choice unordered (range A Z) (range a z)))\n(rule DIGIT normal (range 0 9))\n",
+      "layout": "(layout abnf %3B%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%0A)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28ref%20SP%29%20%28ref%20number%29%29%29 message%20%20%20%3D%20%20word%20SP%20number%20%20%20%3B%20the%20start%20rule %0A%0A)\n(define word %28rule%20word%20normal%20%28repeat1%20%28ref%20ALPHA%29%29%29 word%20%3D%201%2AALPHA %0A%3B%20digits%20only%0A)\n(define number %28rule%20number%20normal%20%28repeat1%20%28ref%20DIGIT%29%29%29 number%3D1%2ADIGIT %0A)\n(implicit SP %28rule%20SP%20normal%20%28literal%20%2520%29%29)\n(implicit ALPHA %28rule%20ALPHA%20normal%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29)\n(implicit DIGIT %28rule%20DIGIT%20normal%20%28range%200%209%29%29)\n",
+      "mutated": {
+        "links": "(grammar (format abnf) (start message))\n(rule message normal (choice unordered (seq (ref word) (ref SP) (ref number)) (literal round-trip-mutation)))\n(rule word normal (repeat1 (ref ALPHA)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule SP normal (literal %20))\n(rule ALPHA normal (class plain (range A Z) (range a z)))\n(rule DIGIT normal (range 0 9))\n",
+        "source": "; a greeting: a word, one space and a number\nmessage = word SP number / %s\"round-trip-mutation\"\n\nword = 1*ALPHA\n; digits only\nnumber=1*DIGIT\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format abnf) (start message))\n(rule message normal (seq (ref term) (ref SP) (ref number)))\n(rule term normal (repeat1 (ref ALPHA)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule SP normal (literal %20))\n(rule ALPHA normal (class plain (range A Z) (range a z)))\n(rule DIGIT normal (range 0 9))\n",
+        "source": "; a greeting: a word, one space and a number\nmessage = term SP number\n\nterm = 1*( ALPHA )\n; digits only\nnumber=1*DIGIT\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "antlr:reverse",
+      "format": "antlr",
+      "source": "// a greeting grammar\ngrammar Message;\n\n/* the start rule */\nmessage : word ' ' number ;\n\nword   : LETTER+ ;\nnumber : DIGIT+ ;   // one or more digits\n\nLETTER : [A-Za-z] ;\nDIGIT  : [0-9] ;\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format antlr) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)) (doc %2F%2A%20the%20start%20rule%20%2A%2F))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)) (doc %2F%2F%20one%20or%20more%20digits))\n(rule DIGIT token (class plain (range 0 9)))\n",
+      "exported": "grammar Message;\n\n/* the start rule */\nmessage : word ' ' number ;\nword : LETTER+ ;\nnumber : DIGIT+ ;\n// one or more digits\nLETTER : [A-Za-z] ;\nDIGIT : [0-9] ;\n",
+      "reimportedLinks": "(grammar (format antlr) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)) (doc %2F%2A%20the%20start%20rule%20%2A%2F))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)) (doc %2F%2F%20one%20or%20more%20digits))\n(rule DIGIT token (class plain (range 0 9)))\n",
+      "layout": "(layout antlr %2F%2F%20a%20greeting%20grammar%0Agrammar%20Message%3B%0A%0A)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%20%28doc%20%252F%252A%2520the%2520start%2520rule%2520%252A%252F%29%29 %2F%2A%20the%20start%20rule%20%2A%2F%0Amessage%20%3A%20word%20%27%20%27%20number%20%3B %0A%0A)\n(define word %28rule%20word%20normal%20%28repeat1%20%28ref%20LETTER%29%29%29 word%20%20%20%3A%20LETTER%2B%20%3B %0A)\n(define number %28rule%20number%20normal%20%28repeat1%20%28ref%20DIGIT%29%29%29 number%20%3A%20DIGIT%2B%20%3B%20%20%20%2F%2F%20one%20or%20more%20digits %0A%0A)\n(define LETTER %28rule%20LETTER%20token%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%20%28doc%20%252F%252F%2520one%2520or%2520more%2520digits%29%29 LETTER%20%3A%20%5BA-Za-z%5D%20%3B %0A)\n(define DIGIT %28rule%20DIGIT%20token%20%28class%20plain%20%28range%200%209%29%29%29 DIGIT%20%20%3A%20%5B0-9%5D%20%3B %0A)\n",
+      "mutated": {
+        "links": "(grammar (format antlr) (start message))\n(rule message normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)) (doc %2F%2A%20the%20start%20rule%20%2A%2F))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)) (doc %2F%2F%20one%20or%20more%20digits))\n(rule DIGIT token (class plain (range 0 9)))\n",
+        "source": "// a greeting grammar\ngrammar Message;\n\n/* the start rule */\nmessage : word ' ' number | 'round-trip-mutation' ;\n\nword   : LETTER+ ;\nnumber : DIGIT+ ;   // one or more digits\n\nLETTER : [A-Za-z] ;\nDIGIT  : [0-9] ;\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format antlr) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)) (doc %2F%2A%20the%20start%20rule%20%2A%2F))\n(rule term normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)) (doc %2F%2F%20one%20or%20more%20digits))\n(rule DIGIT token (class plain (range 0 9)))\n",
+        "source": "// a greeting grammar\ngrammar Message;\n\n/* the start rule */\nmessage : term ' ' number ;\n\nterm : LETTER+ ;\nnumber : DIGIT+ ;   // one or more digits\n\nLETTER : [A-Za-z] ;\nDIGIT  : [0-9] ;\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "bnf:reverse",
+      "format": "bnf",
+      "source": "<message> ::= <word> \" \" <number>\n\n<word>   ::=   <letter> <word>|<letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit>  ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format bnf) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (choice unordered (seq (ref letter) (ref word)) (ref letter)))\n(rule number normal (choice unordered (seq (ref digit) (ref number)) (ref digit)))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+      "exported": "<message> ::= <word> \" \" <number>\n<word> ::= <letter> <word> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit> ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+      "reimportedLinks": "(grammar (format bnf) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (choice unordered (seq (ref letter) (ref word)) (ref letter)))\n(rule number normal (choice unordered (seq (ref digit) (ref number)) (ref digit)))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+      "layout": "(layout bnf %)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%29 %3Cmessage%3E%20%3A%3A%3D%20%3Cword%3E%20%22%20%22%20%3Cnumber%3E %0A%0A)\n(define word %28rule%20word%20normal%20%28choice%20unordered%20%28seq%20%28ref%20letter%29%20%28ref%20word%29%29%20%28ref%20letter%29%29%29 %3Cword%3E%20%20%20%3A%3A%3D%20%20%20%3Cletter%3E%20%3Cword%3E%7C%3Cletter%3E %0A)\n(define number %28rule%20number%20normal%20%28choice%20unordered%20%28seq%20%28ref%20digit%29%20%28ref%20number%29%29%20%28ref%20digit%29%29%29 %3Cnumber%3E%20%3A%3A%3D%20%3Cdigit%3E%20%3Cnumber%3E%20%7C%20%3Cdigit%3E %0A)\n(define letter %28rule%20letter%20normal%20%28choice%20unordered%20%28literal%20M%29%20%28literal%20e%29%20%28literal%20t%29%20%28literal%20a%29%20%28literal%20A%29%29%29 %3Cletter%3E%20%3A%3A%3D%20%22M%22%20%7C%20%22e%22%20%7C%20%22t%22%20%7C%20%22a%22%20%7C%20%22A%22 %0A)\n(define digit %28rule%20digit%20normal%20%28choice%20unordered%20%28literal%200%29%20%28literal%201%29%20%28literal%202%29%20%28literal%203%29%20%28literal%204%29%20%28literal%205%29%20%28literal%206%29%20%28literal%207%29%20%28literal%208%29%20%28literal%209%29%29%29 %3Cdigit%3E%20%20%3A%3A%3D%20%220%22%20%7C%20%221%22%20%7C%20%222%22%20%7C%20%223%22%20%7C%20%224%22%20%7C%20%225%22%20%7C%20%226%22%20%7C%20%227%22%20%7C%20%228%22%20%7C%20%229%22 %0A)\n",
+      "mutated": {
+        "links": "(grammar (format bnf) (start message))\n(rule message normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)))\n(rule word normal (choice unordered (seq (ref letter) (ref word)) (ref letter)))\n(rule number normal (choice unordered (seq (ref digit) (ref number)) (ref digit)))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+        "source": "<message> ::= <word> \" \" <number> | \"round-trip-mutation\"\n\n<word>   ::=   <letter> <word>|<letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit>  ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format bnf) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)))\n(rule term normal (choice unordered (seq (ref letter) (ref term)) (ref letter)))\n(rule number normal (choice unordered (seq (ref digit) (ref number)) (ref digit)))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+        "source": "<message> ::= <term> \" \" <number>\n\n<term> ::= <letter> <term> | <letter>\n<number> ::= <digit> <number> | <digit>\n<letter> ::= \"M\" | \"e\" | \"t\" | \"a\" | \"A\"\n<digit>  ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "ebnf:reverse",
+      "format": "ebnf",
+      "source": "(* a greeting: a word, one space and a number *)\nmessage = word , \" \" , number ;\n\n(* letters and digits *)\nword   = letter , { letter } ;\nnumber = digit, {digit};\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit  = \"0\" | \"1\" | \"2\" | \"3\" | \"4\"\n       | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format ebnf) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (seq (ref letter) (repeat0 (ref letter))))\n(rule number normal (seq (ref digit) (repeat0 (ref digit))))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+      "exported": "message = word , \" \" , number ;\nword = letter , { letter } ;\nnumber = digit , { digit } ;\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+      "reimportedLinks": "(grammar (format ebnf) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (seq (ref letter) (repeat0 (ref letter))))\n(rule number normal (seq (ref digit) (repeat0 (ref digit))))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+      "layout": "(layout ebnf %28%2A%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%20%2A%29%0A)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%29 message%20%3D%20word%20%2C%20%22%20%22%20%2C%20number%20%3B %0A%0A%28%2A%20letters%20and%20digits%20%2A%29%0A)\n(define word %28rule%20word%20normal%20%28seq%20%28ref%20letter%29%20%28repeat0%20%28ref%20letter%29%29%29%29 word%20%20%20%3D%20letter%20%2C%20%7B%20letter%20%7D%20%3B %0A)\n(define number %28rule%20number%20normal%20%28seq%20%28ref%20digit%29%20%28repeat0%20%28ref%20digit%29%29%29%29 number%20%3D%20digit%2C%20%7Bdigit%7D%3B %0A)\n(define letter %28rule%20letter%20normal%20%28choice%20unordered%20%28literal%20M%29%20%28literal%20e%29%20%28literal%20t%29%20%28literal%20a%29%20%28literal%20A%29%29%29 letter%20%3D%20%22M%22%20%7C%20%22e%22%20%7C%20%22t%22%20%7C%20%22a%22%20%7C%20%22A%22%20%3B %0A)\n(define digit %28rule%20digit%20normal%20%28choice%20unordered%20%28literal%200%29%20%28literal%201%29%20%28literal%202%29%20%28literal%203%29%20%28literal%204%29%20%28literal%205%29%20%28literal%206%29%20%28literal%207%29%20%28literal%208%29%20%28literal%209%29%29%29 digit%20%20%3D%20%220%22%20%7C%20%221%22%20%7C%20%222%22%20%7C%20%223%22%20%7C%20%224%22%0A%20%20%20%20%20%20%20%7C%20%225%22%20%7C%20%226%22%20%7C%20%227%22%20%7C%20%228%22%20%7C%20%229%22%20%3B %0A)\n",
+      "mutated": {
+        "links": "(grammar (format ebnf) (start message))\n(rule message normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)))\n(rule word normal (seq (ref letter) (repeat0 (ref letter))))\n(rule number normal (seq (ref digit) (repeat0 (ref digit))))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+        "source": "(* a greeting: a word, one space and a number *)\nmessage = word , \" \" , number | \"round-trip-mutation\" ;\n\n(* letters and digits *)\nword   = letter , { letter } ;\nnumber = digit, {digit};\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit  = \"0\" | \"1\" | \"2\" | \"3\" | \"4\"\n       | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format ebnf) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)))\n(rule term normal (seq (ref letter) (repeat0 (ref letter))))\n(rule number normal (seq (ref digit) (repeat0 (ref digit))))\n(rule letter normal (choice unordered (literal M) (literal e) (literal t) (literal a) (literal A)))\n(rule digit normal (choice unordered (literal 0) (literal 1) (literal 2) (literal 3) (literal 4) (literal 5) (literal 6) (literal 7) (literal 8) (literal 9)))\n",
+        "source": "(* a greeting: a word, one space and a number *)\nmessage = term , \" \" , number ;\n\n(* letters and digits *)\nterm = letter , { letter } ;\nnumber = digit, {digit};\nletter = \"M\" | \"e\" | \"t\" | \"a\" | \"A\" ;\ndigit  = \"0\" | \"1\" | \"2\" | \"3\" | \"4\"\n       | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "gbnf:reverse",
+      "format": "gbnf",
+      "source": "# a greeting: a word, one space and a number\nroot   ::= word \" \" number\n\nword   ::= [A-Za-z]+   # letters\nnumber ::= [0-9]+\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format gbnf) (start root))\n(rule root normal (seq (ref word) (literal %20) (ref number)) (doc %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number normal (repeat1 (class plain (range 0 9))))\n",
+      "exported": "# a greeting: a word, one space and a number\nroot ::= word \" \" number\nword ::= ([A-Za-z])+\nnumber ::= ([0-9])+\n",
+      "reimportedLinks": "(grammar (format gbnf) (start root))\n(rule root normal (seq (ref word) (literal %20) (ref number)) (doc %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number normal (repeat1 (class plain (range 0 9))))\n",
+      "layout": "(layout gbnf %)\n(define root %28rule%20root%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%20%28doc%20%2523%2520a%2520greeting%253A%2520a%2520word%252C%2520one%2520space%2520and%2520a%2520number%29%29 %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%0Aroot%20%20%20%3A%3A%3D%20word%20%22%20%22%20number %0A%0A)\n(define word %28rule%20word%20normal%20%28repeat1%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29%29 word%20%20%20%3A%3A%3D%20%5BA-Za-z%5D%2B%20%20%20%23%20letters %0A)\n(define number %28rule%20number%20normal%20%28repeat1%20%28class%20plain%20%28range%200%209%29%29%29%29 number%20%3A%3A%3D%20%5B0-9%5D%2B %0A)\n",
+      "mutated": {
+        "links": "(grammar (format gbnf) (start root))\n(rule root normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)) (doc %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number normal (repeat1 (class plain (range 0 9))))\n",
+        "source": "# a greeting: a word, one space and a number\nroot ::= word \" \" number | \"round-trip-mutation\"\n\nword   ::= [A-Za-z]+   # letters\nnumber ::= [0-9]+\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format gbnf) (start root))\n(rule root normal (seq (ref term) (literal %20) (ref number)) (doc %23%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule term normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number normal (repeat1 (class plain (range 0 9))))\n",
+        "source": "# a greeting: a word, one space and a number\nroot ::= term \" \" number\n\nterm ::= ([A-Za-z])+\nnumber ::= [0-9]+\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "lark:reverse",
+      "format": "lark",
+      "source": "// a greeting: a word, one space and a number\nstart: word \" \" number\n\nword: LETTER+\nnumber : DIGIT+   // digits\n\nLETTER: /[A-Za-z]/\nDIGIT: /[0-9]/\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format lark) (start start))\n(rule start normal (seq (ref word) (literal %20) (ref number)) (doc %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)))\n(rule DIGIT token (class plain (range 0 9)))\n",
+      "exported": "// a greeting: a word, one space and a number\nstart: word \" \" number\nword: LETTER+\nnumber: DIGIT+\nLETTER: /[A-Za-z]/\nDIGIT: /[0-9]/\n",
+      "reimportedLinks": "(grammar (format lark) (start start))\n(rule start normal (seq (ref word) (literal %20) (ref number)) (doc %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)))\n(rule DIGIT token (class plain (range 0 9)))\n",
+      "layout": "(layout lark %)\n(define start %28rule%20start%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%20%28doc%20%252F%252F%2520a%2520greeting%253A%2520a%2520word%252C%2520one%2520space%2520and%2520a%2520number%29%29 %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%0Astart%3A%20word%20%22%20%22%20number %0A%0A)\n(define word %28rule%20word%20normal%20%28repeat1%20%28ref%20LETTER%29%29%29 word%3A%20LETTER%2B %0A)\n(define number %28rule%20number%20normal%20%28repeat1%20%28ref%20DIGIT%29%29%29 number%20%3A%20DIGIT%2B%20%20%20%2F%2F%20digits %0A%0A)\n(define LETTER %28rule%20LETTER%20token%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29 LETTER%3A%20%2F%5BA-Za-z%5D%2F %0A)\n(define DIGIT %28rule%20DIGIT%20token%20%28class%20plain%20%28range%200%209%29%29%29 DIGIT%3A%20%2F%5B0-9%5D%2F %0A)\n",
+      "mutated": {
+        "links": "(grammar (format lark) (start start))\n(rule start normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)) (doc %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule word normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)))\n(rule DIGIT token (class plain (range 0 9)))\n",
+        "source": "// a greeting: a word, one space and a number\nstart: word \" \" number | \"round-trip-mutation\"\n\nword: LETTER+\nnumber : DIGIT+   // digits\n\nLETTER: /[A-Za-z]/\nDIGIT: /[0-9]/\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format lark) (start start))\n(rule start normal (seq (ref term) (literal %20) (ref number)) (doc %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number))\n(rule term normal (repeat1 (ref LETTER)))\n(rule number normal (repeat1 (ref DIGIT)))\n(rule LETTER token (class plain (range A Z) (range a z)))\n(rule DIGIT token (class plain (range 0 9)))\n",
+        "source": "// a greeting: a word, one space and a number\nstart: term \" \" number\n\nterm: LETTER+\nnumber : DIGIT+   // digits\n\nLETTER: /[A-Za-z]/\nDIGIT: /[0-9]/\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "pest:reverse",
+      "format": "pest",
+      "source": "// a greeting: a word, one space and a number\nmessage = { word ~ \" \" ~ number }\n\nword   = @{ letter+ }   // letters\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit  = _{ '0'..'9' }\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format peg) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word atomic (repeat1 (ref letter)))\n(rule number atomic (repeat1 (ref digit)))\n(rule letter silent (choice ordered (range A Z) (range a z)))\n(rule digit silent (range 0 9))\n",
+      "exported": "message = { word ~ \" \" ~ number }\nword = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit = _{ '0'..'9' }\n",
+      "reimportedLinks": "(grammar (format peg) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word atomic (repeat1 (ref letter)))\n(rule number atomic (repeat1 (ref digit)))\n(rule letter silent (choice ordered (range A Z) (range a z)))\n(rule digit silent (range 0 9))\n",
+      "layout": "(layout pest %2F%2F%20a%20greeting%3A%20a%20word%2C%20one%20space%20and%20a%20number%0A)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%29 message%20%3D%20%7B%20word%20%7E%20%22%20%22%20%7E%20number%20%7D %0A%0A)\n(define word %28rule%20word%20atomic%20%28repeat1%20%28ref%20letter%29%29%29 word%20%20%20%3D%20%40%7B%20letter%2B%20%7D%20%20%20%2F%2F%20letters %0A)\n(define number %28rule%20number%20atomic%20%28repeat1%20%28ref%20digit%29%29%29 number%20%3D%20%40%7B%20digit%2B%20%7D %0A)\n(define letter %28rule%20letter%20silent%20%28choice%20ordered%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29 letter%20%3D%20_%7B%20%27A%27..%27Z%27%20%7C%20%27a%27..%27z%27%20%7D %0A)\n(define digit %28rule%20digit%20silent%20%28range%200%209%29%29 digit%20%20%3D%20_%7B%20%270%27..%279%27%20%7D %0A)\n",
+      "mutated": {
+        "links": "(grammar (format peg) (start message))\n(rule message normal (choice ordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)))\n(rule word atomic (repeat1 (ref letter)))\n(rule number atomic (repeat1 (ref digit)))\n(rule letter silent (choice ordered (range A Z) (range a z)))\n(rule digit silent (range 0 9))\n",
+        "source": "// a greeting: a word, one space and a number\nmessage = { word ~ \" \" ~ number | \"round-trip-mutation\" }\n\nword   = @{ letter+ }   // letters\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit  = _{ '0'..'9' }\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format peg) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)))\n(rule term atomic (repeat1 (ref letter)))\n(rule number atomic (repeat1 (ref digit)))\n(rule letter silent (choice ordered (range A Z) (range a z)))\n(rule digit silent (range 0 9))\n",
+        "source": "// a greeting: a word, one space and a number\nmessage = { term ~ \" \" ~ number }\n\nterm = @{ letter+ }\nnumber = @{ digit+ }\nletter = _{ 'A'..'Z' | 'a'..'z' }\ndigit  = _{ '0'..'9' }\n",
+        "lossy": []
+      }
+    },
+    {
+      "id": "tree-sitter-json:reverse",
+      "format": "tree-sitter-json",
+      "source": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\"type\": \"SEQ\", \"members\": [\n      {\"type\": \"SYMBOL\", \"name\": \"word\"},\n      {\"type\": \"STRING\", \"value\": \" \"},\n      {\"type\": \"SYMBOL\", \"name\": \"number\"}\n    ]},\n    \"word\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[A-Za-z]\"}},\n    \"number\": {\"type\": \"TOKEN\", \"content\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[0-9]\"}}}\n  },\n  \"extras\": []\n}\n",
+      "accepts": ["Meta 42", "a 7"],
+      "rejects": ["Meta", "42 Meta", "Meta  42", "Meta 4x"],
+      "links": "(grammar (format tree-sitter) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number token (repeat1 (class plain (range 0 9))))\n",
+      "exported": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"word\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \" \"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"number\"\n        }\n      ]\n    },\n    \"word\": {\n      \"type\": \"REPEAT1\",\n      \"content\": {\n        \"type\": \"PATTERN\",\n        \"value\": \"[A-Za-z]\"\n      }\n    },\n    \"number\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"REPEAT1\",\n        \"content\": {\n          \"type\": \"PATTERN\",\n          \"value\": \"[0-9]\"\n        }\n      }\n    }\n  }\n}\n",
+      "reimportedLinks": "(grammar (format tree-sitter) (start message))\n(rule message normal (seq (ref word) (literal %20) (ref number)))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number token (repeat1 (class plain (range 0 9))))\n",
+      "layout": "(layout tree-sitter-json %7B%0A%20%20%22name%22%3A%20%22message%22%2C%0A%20%20%22rules%22%3A%20%7B%0A%20%20%20%20)\n(define message %28rule%20message%20normal%20%28seq%20%28ref%20word%29%20%28literal%20%2520%29%20%28ref%20number%29%29%29 %22message%22%3A%20%7B%22type%22%3A%20%22SEQ%22%2C%20%22members%22%3A%20%5B%0A%20%20%20%20%20%20%7B%22type%22%3A%20%22SYMBOL%22%2C%20%22name%22%3A%20%22word%22%7D%2C%0A%20%20%20%20%20%20%7B%22type%22%3A%20%22STRING%22%2C%20%22value%22%3A%20%22%20%22%7D%2C%0A%20%20%20%20%20%20%7B%22type%22%3A%20%22SYMBOL%22%2C%20%22name%22%3A%20%22number%22%7D%0A%20%20%20%20%5D%7D %2C%0A%20%20%20%20)\n(define word %28rule%20word%20normal%20%28repeat1%20%28class%20plain%20%28range%20A%20Z%29%20%28range%20a%20z%29%29%29%29 %22word%22%3A%20%7B%22type%22%3A%20%22REPEAT1%22%2C%20%22content%22%3A%20%7B%22type%22%3A%20%22PATTERN%22%2C%20%22value%22%3A%20%22%5BA-Za-z%5D%22%7D%7D %2C%0A%20%20%20%20)\n(define number %28rule%20number%20token%20%28repeat1%20%28class%20plain%20%28range%200%209%29%29%29%29 %22number%22%3A%20%7B%22type%22%3A%20%22TOKEN%22%2C%20%22content%22%3A%20%7B%22type%22%3A%20%22REPEAT1%22%2C%20%22content%22%3A%20%7B%22type%22%3A%20%22PATTERN%22%2C%20%22value%22%3A%20%22%5B0-9%5D%22%7D%7D%7D %0A%20%20%7D%2C%0A%20%20%22extras%22%3A%20%5B%5D%0A%7D%0A)\n",
+      "mutated": {
+        "links": "(grammar (format tree-sitter) (start message))\n(rule message normal (choice unordered (seq (ref word) (literal %20) (ref number)) (literal round-trip-mutation)))\n(rule word normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number token (repeat1 (class plain (range 0 9))))\n",
+        "source": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"SEQ\",\n          \"members\": [\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"word\"\n            },\n            {\n              \"type\": \"STRING\",\n              \"value\": \" \"\n            },\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"number\"\n            }\n          ]\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"round-trip-mutation\"\n        }\n      ]\n    },\n    \"word\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[A-Za-z]\"}},\n    \"number\": {\"type\": \"TOKEN\", \"content\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[0-9]\"}}}\n  },\n  \"extras\": []\n}\n",
+        "lossy": []
+      },
+      "renamed": {
+        "from": "word",
+        "to": "term",
+        "links": "(grammar (format tree-sitter) (start message))\n(rule message normal (seq (ref term) (literal %20) (ref number)))\n(rule term normal (repeat1 (class plain (range A Z) (range a z))))\n(rule number token (repeat1 (class plain (range 0 9))))\n",
+        "source": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"term\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \" \"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"number\"\n        }\n      ]\n    },\n    \"term\": {\n      \"type\": \"REPEAT1\",\n      \"content\": {\n        \"type\": \"PATTERN\",\n        \"value\": \"[A-Za-z]\"\n      }\n    },\n    \"number\": {\"type\": \"TOKEN\", \"content\": {\"type\": \"REPEAT1\", \"content\": {\"type\": \"PATTERN\", \"value\": \"[0-9]\"}}}\n  },\n  \"extras\": []\n}\n",
+        "lossy": []
+      }
+    }
+  ],
+  "lowering": [
+    {
+      "id": "features:lowering",
+      "links": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (class plain (char %20) (char %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (range a z))\n(rule digit atomic (class plain (range 0 9)))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n",
+      "accepts": ["hello,abc1", "hi xyz123!!", "helloq7?OK??", "hiab12?oK???"],
+      "rejects": ["hello", "hi abc1234", "hey abc1", "hiabc1?ok?", "hi;abc1"],
+      "targets": [
+        {
+          "format": "abnf",
+          "status": "exact",
+          "executable": "message = greeting [ sep ] name 1*3( digit ) *( %s\"!\" ) [ shout ]\ngreeting = %s\"hello\" / %s\"hi\"\nsep = ( %x20 / %x2C )\nname = lowered1\nletter = %x61-7A\ndigit = ( %x30-39 )\nshout = %s\"?\" %i\"ok\" 2*( %s\"?\" )\nlowered1 = 1*( letter )\n",
+          "metadata": "(lowering abnf exact)\n(source peg)\n(start message)\n(rules message greeting sep name letter digit shout)\n(helper lowered1 name labeledCapture exact a%20capture%20as%20a%20rule%20of%20its%20own (capture labeled who (repeat1 (ref letter))))\n(doc message the%20start%20rule)\n(kind sep token)\n(kind digit atomic)\n",
+          "reconstructed": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (choice unordered (literal %20) (literal %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (range a z))\n(rule digit atomic (range 0 9))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n"
+        },
+        {
+          "format": "antlr",
+          "status": "exact",
+          "executable": "grammar Message;\n\nmessage : greeting sep? name lowered1 '!'* shout? ;\ngreeting : 'hello' | 'hi' ;\nsep : LOWERED2 ;\nname : who=letter+ ;\nletter : LOWERED3 ;\ndigit : LOWERED4 ;\nshout : '?' LOWERED5 lowered7 ;\nlowered1 : digit (digit digit?)? ;\nLOWERED2 : [ ,] ;\nLOWERED3 : 'a'..'z' ;\nLOWERED4 : [0-9] ;\nLOWERED5 : LOWERED6 ;\nLOWERED6 : [oO] [kK] ;\nlowered7 : '?' '?' '?'* ;\n",
+          "metadata": "(lowering antlr exact)\n(source peg)\n(start message)\n(rules message greeting sep name letter digit shout)\n(helper lowered1 message countedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 1 3 (ref digit)))\n(helper LOWERED2 sep parserCharacters exact a%20character-level%20construct%20as%20a%20lexer%20rule%20of%20its%20own (class plain (char %20) (char %2C)))\n(helper LOWERED3 letter parserCharacters exact a%20character-level%20construct%20as%20a%20lexer%20rule%20of%20its%20own (range a z))\n(helper LOWERED4 digit parserCharacters exact a%20character-level%20construct%20as%20a%20lexer%20rule%20of%20its%20own (class plain (range 0 9)))\n(helper LOWERED5 shout parserCharacters exact a%20character-level%20construct%20as%20a%20lexer%20rule%20of%20its%20own (literalInsensitive ok))\n(helper LOWERED6 LOWERED5 literalInsensitive exact a%20case-insensitive%20literal%20as%20per-letter%20character%20sets (literalInsensitive ok))\n(helper lowered7 shout unboundedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 2 unbounded (literal %3F)))\n(doc message the%20start%20rule)\n(kind sep token)\n(kind digit atomic)\n",
+          "reconstructed": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (class plain (char %20) (char %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (range a z))\n(rule digit atomic (class plain (range 0 9)))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n"
+        },
+        {
+          "format": "bnf",
+          "status": "exact",
+          "executable": "<message> ::= <greeting> <lowered1> <name> <lowered2> <lowered5> <lowered6>\n<greeting> ::= \"hello\" | \"hi\"\n<sep> ::= <lowered7>\n<name> ::= <lowered8>\n<letter> ::= <lowered10>\n<digit> ::= <lowered11>\n<shout> ::= \"?\" <lowered12> <lowered15>\n<lowered1> ::= <sep> | \n<lowered2> ::= <digit> <lowered3>\n<lowered3> ::= <digit> <lowered4> | \n<lowered4> ::= <digit> | \n<lowered5> ::= \"!\" <lowered5> | \n<lowered6> ::= <shout> | \n<lowered7> ::= \" \" | \",\"\n<lowered8> ::= <lowered9>\n<lowered9> ::= <letter> <lowered9> | <letter>\n<lowered10> ::= \"a\" | \"b\" | \"c\" | \"d\" | \"e\" | \"f\" | \"g\" | \"h\" | \"i\" | \"j\" | \"k\" | \"l\" | \"m\" | \"n\" | \"o\" | \"p\" | \"q\" | \"r\" | \"s\" | \"t\" | \"u\" | \"v\" | \"w\" | \"x\" | \"y\" | \"z\"\n<lowered11> ::= \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\"\n<lowered12> ::= <lowered13> <lowered14>\n<lowered13> ::= \"O\" | \"o\"\n<lowered14> ::= \"K\" | \"k\"\n<lowered15> ::= \"?\" \"?\" <lowered16>\n<lowered16> ::= \"?\" <lowered16> | \n",
+          "metadata": "(lowering bnf exact)\n(source peg)\n(start message)\n(rules message greeting sep name letter digit shout)\n(helper lowered1 message optional exact an%20optional%20item%20as%20a%20choice%20with%20the%20empty%20expression (optional (ref sep)))\n(helper lowered2 message countedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 1 3 (ref digit)))\n(helper lowered3 lowered2 optional exact an%20optional%20item%20as%20a%20choice%20with%20the%20empty%20expression (optional (seq (ref digit) (optional (ref digit)))))\n(helper lowered4 lowered3 optional exact an%20optional%20item%20as%20a%20choice%20with%20the%20empty%20expression (optional (ref digit)))\n(helper lowered5 message repeat0 exact a%20repetition%20as%20a%20right-recursive%20rule (repeat0 (literal %21)))\n(helper lowered6 message optional exact an%20optional%20item%20as%20a%20choice%20with%20the%20empty%20expression (optional (ref shout)))\n(helper lowered7 sep charClass exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (class plain (char %20) (char %2C)))\n(helper lowered8 name labeledCapture exact a%20capture%20as%20a%20rule%20of%20its%20own (capture labeled who (repeat1 (ref letter))))\n(helper lowered9 lowered8 repeat1 exact a%20repetition%20as%20a%20right-recursive%20rule (repeat1 (ref letter)))\n(helper lowered10 letter charRange exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (range a z))\n(helper lowered11 digit charClass exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (class plain (range 0 9)))\n(helper lowered12 shout literalInsensitive exact a%20case-insensitive%20literal%20as%20per-letter%20character%20sets (literalInsensitive ok))\n(helper lowered13 lowered12 charClass exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (class plain (char o) (char O)))\n(helper lowered14 lowered12 charClass exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (class plain (char k) (char K)))\n(helper lowered15 shout unboundedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 2 unbounded (literal %3F)))\n(helper lowered16 lowered15 repeat0 exact a%20repetition%20as%20a%20right-recursive%20rule (repeat0 (literal %3F)))\n(doc message the%20start%20rule)\n(kind sep token)\n(kind digit atomic)\n",
+          "reconstructed": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (class plain (char %20) (char %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (range a z))\n(rule digit atomic (class plain (range 0 9)))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n"
+        },
+        {
+          "format": "ebnf",
+          "status": "exact",
+          "executable": "message = greeting , [ sep ] , name , lowered1 , { \"!\" } , [ shout ] ;\ngreeting = \"hello\" | \"hi\" ;\nsep = lowered2 ;\nname = lowered3 ;\nletter = lowered4 ;\ndigit = lowered5 ;\nshout = \"?\" , lowered6 , lowered9 ;\nlowered1 = digit , [ digit , [ digit ] ] ;\nlowered2 = \" \" | \",\" ;\nlowered3 = letter , { letter } ;\nlowered4 = \"a\" | \"b\" | \"c\" | \"d\" | \"e\" | \"f\" | \"g\" | \"h\" | \"i\" | \"j\" | \"k\" | \"l\" | \"m\" | \"n\" | \"o\" | \"p\" | \"q\" | \"r\" | \"s\" | \"t\" | \"u\" | \"v\" | \"w\" | \"x\" | \"y\" | \"z\" ;\nlowered5 = \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" ;\nlowered6 = lowered7 , lowered8 ;\nlowered7 = \"O\" | \"o\" ;\nlowered8 = \"K\" | \"k\" ;\nlowered9 = \"?\" , \"?\" , { \"?\" } ;\n",
+          "metadata": "(lowering ebnf exact)\n(source peg)\n(start message)\n(rules message greeting sep name letter digit shout)\n(helper lowered1 message countedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 1 3 (ref digit)))\n(helper lowered2 sep charClass exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (class plain (char %20) (char %2C)))\n(helper lowered3 name labeledCapture exact a%20capture%20as%20a%20rule%20of%20its%20own (capture labeled who (repeat1 (ref letter))))\n(helper lowered4 letter charRange exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (range a z))\n(helper lowered5 digit charClass exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (class plain (range 0 9)))\n(helper lowered6 shout literalInsensitive exact a%20case-insensitive%20literal%20as%20per-letter%20character%20sets (literalInsensitive ok))\n(helper lowered7 lowered6 charClass exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (class plain (char o) (char O)))\n(helper lowered8 lowered6 charClass exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (class plain (char k) (char K)))\n(helper lowered9 shout unboundedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 2 unbounded (literal %3F)))\n(doc message the%20start%20rule)\n(kind sep token)\n(kind digit atomic)\n",
+          "reconstructed": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (class plain (char %20) (char %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (range a z))\n(rule digit atomic (class plain (range 0 9)))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n"
+        },
+        {
+          "format": "gbnf",
+          "status": "exact",
+          "executable": "root ::= greeting (sep)? name (digit){1,3} (\"!\")* (shout)?\ngreeting ::= \"hello\" | \"hi\"\nsep ::= [ ,]\nname ::= lowered1\nletter ::= [a-z]\ndigit ::= [0-9]\nshout ::= \"?\" lowered2 (\"?\"){2,}\nlowered1 ::= (letter)+\nlowered2 ::= [oO] [kK]\n",
+          "metadata": "(lowering gbnf exact)\n(source peg)\n(start message)\n(rules message greeting sep name letter digit shout)\n(rename message root)\n(helper lowered1 name labeledCapture exact a%20capture%20as%20a%20rule%20of%20its%20own (capture labeled who (repeat1 (ref letter))))\n(helper lowered2 shout literalInsensitive exact a%20case-insensitive%20literal%20as%20per-letter%20character%20sets (literalInsensitive ok))\n(doc message the%20start%20rule)\n(kind sep token)\n(kind digit atomic)\n",
+          "reconstructed": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (class plain (char %20) (char %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (class plain (range a z)))\n(rule digit atomic (class plain (range 0 9)))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n"
+        },
+        {
+          "format": "lark",
+          "status": "exact",
+          "executable": "message: greeting [sep] name digit ~ 1..3 \"!\"* [shout]\ngreeting: \"hello\" | \"hi\"\nsep: /[ ,]/\nname: lowered1\nletter: lowered2\ndigit: /[0-9]/\nshout: \"?\" lowered3 lowered4\nlowered1: letter+\nlowered2: /[a-z]/\nlowered3: /[oO]/ /[kK]/\nlowered4: \"?\" \"?\" \"?\"*\n",
+          "metadata": "(lowering lark exact)\n(source peg)\n(start message)\n(rules message greeting sep name letter digit shout)\n(helper lowered1 name labeledCapture exact a%20capture%20as%20a%20rule%20of%20its%20own (capture labeled who (repeat1 (ref letter))))\n(helper lowered2 letter charRange exact a%20character%20set%20as%20the%20characters%20or%20ranges%20it%20holds (range a z))\n(helper lowered3 shout literalInsensitive exact a%20case-insensitive%20literal%20as%20per-letter%20character%20sets (literalInsensitive ok))\n(helper lowered4 shout unboundedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 2 unbounded (literal %3F)))\n(doc message the%20start%20rule)\n(kind sep token)\n(kind digit atomic)\n",
+          "reconstructed": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (class plain (char %20) (char %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (range a z))\n(rule digit atomic (class plain (range 0 9)))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n"
+        },
+        {
+          "format": "pest",
+          "status": "exact",
+          "executable": "message = { greeting ~ sep? ~ name ~ digit{1,3} ~ \"!\"* ~ shout? }\ngreeting = { lowered1 }\nsep = ${ (\" \" | \",\") }\nname = { lowered2 }\nletter = { 'a'..'z' }\ndigit = @{ ('0'..'9') }\nshout = { \"?\" ~ ^\"ok\" ~ \"?\"{2,} }\nlowered1 = { \"hello\" | \"hi\" }\nlowered2 = { letter+ }\n",
+          "metadata": "(lowering pest exact)\n(source peg)\n(start message)\n(rules message greeting sep name letter digit shout)\n(helper lowered1 greeting unorderedChoice exact a%20choice%20of%20literals%20none%20of%20which%20starts%20another%2C%20whose%20order%20is%20irrelevant (choice unordered (literal hello) (literal hi)))\n(helper lowered2 name labeledCapture exact a%20capture%20as%20a%20rule%20of%20its%20own (capture labeled who (repeat1 (ref letter))))\n(doc message the%20start%20rule)\n",
+          "reconstructed": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (choice ordered (literal %20) (literal %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (range a z))\n(rule digit atomic (range 0 9))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n"
+        },
+        {
+          "format": "tree-sitter-json",
+          "status": "exact",
+          "executable": "{\n  \"name\": \"message\",\n  \"rules\": {\n    \"message\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"greeting\"\n        },\n        {\n          \"type\": \"CHOICE\",\n          \"members\": [\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"sep\"\n            },\n            {\n              \"type\": \"BLANK\"\n            }\n          ]\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"name\"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"lowered1\"\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \"!\"\n          }\n        },\n        {\n          \"type\": \"CHOICE\",\n          \"members\": [\n            {\n              \"type\": \"SYMBOL\",\n              \"name\": \"shout\"\n            },\n            {\n              \"type\": \"BLANK\"\n            }\n          ]\n        }\n      ]\n    },\n    \"greeting\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"hello\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"hi\"\n        }\n      ]\n    },\n    \"sep\": {\n      \"type\": \"TOKEN\",\n      \"content\": {\n        \"type\": \"PATTERN\",\n        \"value\": \"[ ,]\"\n      }\n    },\n    \"name\": {\n      \"type\": \"FIELD\",\n      \"name\": \"who\",\n      \"content\": {\n        \"type\": \"REPEAT1\",\n        \"content\": {\n          \"type\": \"SYMBOL\",\n          \"name\": \"letter\"\n        }\n      }\n    },\n    \"letter\": {\n      \"type\": \"PATTERN\",\n      \"value\": \"[a-z]\"\n    },\n    \"digit\": {\n      \"type\": \"PATTERN\",\n      \"value\": \"[0-9]\"\n    },\n    \"shout\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"?\"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"lowered2\"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"lowered3\"\n        }\n      ]\n    },\n    \"lowered1\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"digit\"\n        },\n        {\n          \"type\": \"CHOICE\",\n          \"members\": [\n            {\n              \"type\": \"SEQ\",\n              \"members\": [\n                {\n                  \"type\": \"SYMBOL\",\n                  \"name\": \"digit\"\n                },\n                {\n                  \"type\": \"CHOICE\",\n                  \"members\": [\n                    {\n                      \"type\": \"SYMBOL\",\n                      \"name\": \"digit\"\n                    },\n                    {\n                      \"type\": \"BLANK\"\n                    }\n                  ]\n                }\n              ]\n            },\n            {\n              \"type\": \"BLANK\"\n            }\n          ]\n        }\n      ]\n    },\n    \"lowered2\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"PATTERN\",\n          \"value\": \"[oO]\"\n        },\n        {\n          \"type\": \"PATTERN\",\n          \"value\": \"[kK]\"\n        }\n      ]\n    },\n    \"lowered3\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"?\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"?\"\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"STRING\",\n            \"value\": \"?\"\n          }\n        }\n      ]\n    }\n  }\n}\n",
+          "metadata": "(lowering tree-sitter-json exact)\n(source peg)\n(start message)\n(rules message greeting sep name letter digit shout)\n(helper lowered1 message countedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 1 3 (ref digit)))\n(helper lowered2 shout literalInsensitive exact a%20case-insensitive%20literal%20as%20per-letter%20character%20sets (literalInsensitive ok))\n(helper lowered3 shout unboundedRepeat exact a%20counted%20repetition%20as%20copies%20and%20nested%20optional%20items (repeat 2 unbounded (literal %3F)))\n(doc message the%20start%20rule)\n(kind digit atomic)\n",
+          "reconstructed": "(grammar (format peg) (start message))\n(rule message normal (seq (ref greeting) (optional (ref sep)) (ref name) (repeat 1 3 (ref digit)) (repeat0 (literal %21)) (optional (ref shout))) (doc the%20start%20rule))\n(rule greeting normal (choice unordered (literal hello) (literal hi)))\n(rule sep token (class plain (char %20) (char %2C)))\n(rule name normal (capture labeled who (repeat1 (ref letter))))\n(rule letter normal (class plain (range a z)))\n(rule digit atomic (class plain (range 0 9)))\n(rule shout normal (seq (literal %3F) (literalInsensitive ok) (repeat 2 unbounded (literal %3F))))\n"
+        }
+      ]
+    },
+    {
+      "id": "lookahead:lowering",
+      "links": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n",
+      "accepts": ["ab", "a,ab", "q"],
+      "rejects": ["x", "ab,"],
+      "targets": [
+        {
+          "format": "abnf",
+          "status": "approximate",
+          "executable": "list = item *( %s\",\" item )\nitem = lowered1\nother = lowered2 lowered3\nlowered1 = %s\"ab\" / %s\"a\" / other\nlowered2 = \"\"\nlowered3 = ( %x00-10FFFF )\n",
+          "metadata": "(lowering abnf approximate)\n(source peg)\n(start list)\n(rules list item other)\n(helper lowered1 item orderedChoice approximate an%20ordered%20choice%20written%20as%20an%20unordered%20one (choice ordered (literal ab) (literal a) (ref other)))\n(helper lowered2 other not approximate a%20negative%20lookahead%20written%20as%20the%20empty%20expression (not (literal x)))\n(helper lowered3 other any exact any%20character%20as%20the%20range%20of%20every%20code%20point any)\n",
+          "reconstructed": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n"
+        },
+        {
+          "format": "antlr",
+          "status": "approximate",
+          "executable": "grammar List;\n\nlist : item (',' item)* ;\nitem : lowered1 ;\nother : lowered2 LOWERED3 ;\nlowered1 : 'ab' | 'a' | other ;\nlowered2 : ;\nLOWERED3 : . ;\n",
+          "metadata": "(lowering antlr approximate)\n(source peg)\n(start list)\n(rules list item other)\n(helper lowered1 item orderedChoice approximate an%20ordered%20choice%20written%20as%20an%20unordered%20one (choice ordered (literal ab) (literal a) (ref other)))\n(helper lowered2 other not approximate a%20negative%20lookahead%20written%20as%20the%20empty%20expression (not (literal x)))\n(helper LOWERED3 other parserCharacters exact a%20character-level%20construct%20as%20a%20lexer%20rule%20of%20its%20own any)\n",
+          "reconstructed": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n"
+        },
+        {
+          "format": "bnf",
+          "status": "approximate",
+          "executable": "<list> ::= <item> <lowered1>\n<item> ::= <lowered2>\n<other> ::= <lowered3> <lowered4>\n<lowered1> ::= \",\" <item> <lowered1> | \n<lowered2> ::= \"ab\" | \"a\" | <other>\n<lowered3> ::= \n<lowered4> ::= \" \" | \"!\" | '\"' | \"#\" | \"$\" | \"%\" | \"&\" | \"'\" | \"(\" | \")\" | \"*\" | \"+\" | \",\" | \"-\" | \".\" | \"/\" | \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" | \":\" | \";\" | \"<\" | \"=\" | \">\" | \"?\" | \"@\" | \"A\" | \"B\" | \"C\" | \"D\" | \"E\" | \"F\" | \"G\" | \"H\" | \"I\" | \"J\" | \"K\" | \"L\" | \"M\" | \"N\" | \"O\" | \"P\" | \"Q\" | \"R\" | \"S\" | \"T\" | \"U\" | \"V\" | \"W\" | \"X\" | \"Y\" | \"Z\" | \"[\" | \"\\\" | \"]\" | \"^\" | \"_\" | \"`\" | \"a\" | \"b\" | \"c\" | \"d\" | \"e\" | \"f\" | \"g\" | \"h\" | \"i\" | \"j\" | \"k\" | \"l\" | \"m\" | \"n\" | \"o\" | \"p\" | \"q\" | \"r\" | \"s\" | \"t\" | \"u\" | \"v\" | \"w\" | \"x\" | \"y\" | \"z\" | \"{\" | \"|\" | \"}\" | \"~\"\n",
+          "metadata": "(lowering bnf approximate)\n(source peg)\n(start list)\n(rules list item other)\n(helper lowered1 list repeat0 exact a%20repetition%20as%20a%20right-recursive%20rule (repeat0 (seq (literal %2C) (ref item))))\n(helper lowered2 item orderedChoice approximate an%20ordered%20choice%20written%20as%20an%20unordered%20one (choice ordered (literal ab) (literal a) (ref other)))\n(helper lowered3 other not approximate a%20negative%20lookahead%20written%20as%20the%20empty%20expression (not (literal x)))\n(helper lowered4 other any approximate any%20character%20limited%20to%20printable%20ASCII any)\n",
+          "reconstructed": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n"
+        },
+        {
+          "format": "ebnf",
+          "status": "approximate",
+          "executable": "list = item , { \",\" , item } ;\nitem = lowered1 ;\nother = lowered2 , lowered3 ;\nlowered1 = \"ab\" | \"a\" | other ;\nlowered2 =  ;\nlowered3 = \" \" | \"!\" | '\"' | \"#\" | \"$\" | \"%\" | \"&\" | \"'\" | \"(\" | \")\" | \"*\" | \"+\" | \",\" | \"-\" | \".\" | \"/\" | \"0\" | \"1\" | \"2\" | \"3\" | \"4\" | \"5\" | \"6\" | \"7\" | \"8\" | \"9\" | \":\" | \";\" | \"<\" | \"=\" | \">\" | \"?\" | \"@\" | \"A\" | \"B\" | \"C\" | \"D\" | \"E\" | \"F\" | \"G\" | \"H\" | \"I\" | \"J\" | \"K\" | \"L\" | \"M\" | \"N\" | \"O\" | \"P\" | \"Q\" | \"R\" | \"S\" | \"T\" | \"U\" | \"V\" | \"W\" | \"X\" | \"Y\" | \"Z\" | \"[\" | \"\\\\\" | \"]\" | \"^\" | \"_\" | \"`\" | \"a\" | \"b\" | \"c\" | \"d\" | \"e\" | \"f\" | \"g\" | \"h\" | \"i\" | \"j\" | \"k\" | \"l\" | \"m\" | \"n\" | \"o\" | \"p\" | \"q\" | \"r\" | \"s\" | \"t\" | \"u\" | \"v\" | \"w\" | \"x\" | \"y\" | \"z\" | \"{\" | \"|\" | \"}\" | \"~\" ;\n",
+          "metadata": "(lowering ebnf approximate)\n(source peg)\n(start list)\n(rules list item other)\n(helper lowered1 item orderedChoice approximate an%20ordered%20choice%20written%20as%20an%20unordered%20one (choice ordered (literal ab) (literal a) (ref other)))\n(helper lowered2 other not approximate a%20negative%20lookahead%20written%20as%20the%20empty%20expression (not (literal x)))\n(helper lowered3 other any approximate any%20character%20limited%20to%20printable%20ASCII any)\n",
+          "reconstructed": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n"
+        },
+        {
+          "format": "gbnf",
+          "status": "approximate",
+          "executable": "root ::= item (\",\" item)*\nitem ::= lowered1\nother ::= lowered2 lowered3\nlowered1 ::= \"ab\" | \"a\" | other\nlowered2 ::= \"\"\nlowered3 ::= [\\x00-􏿿]\n",
+          "metadata": "(lowering gbnf approximate)\n(source peg)\n(start list)\n(rules list item other)\n(rename list root)\n(helper lowered1 item orderedChoice approximate an%20ordered%20choice%20written%20as%20an%20unordered%20one (choice ordered (literal ab) (literal a) (ref other)))\n(helper lowered2 other not approximate a%20negative%20lookahead%20written%20as%20the%20empty%20expression (not (literal x)))\n(helper lowered3 other any exact any%20character%20as%20the%20range%20of%20every%20code%20point any)\n",
+          "reconstructed": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n"
+        },
+        {
+          "format": "lark",
+          "status": "approximate",
+          "executable": "list: item (\",\" item)*\nitem: lowered1\nother: lowered2 lowered3\nlowered1: \"ab\" | \"a\" | other\nlowered2:\nlowered3: /[\\x00-\\U0010FFFF]/\n",
+          "metadata": "(lowering lark approximate)\n(source peg)\n(start list)\n(rules list item other)\n(helper lowered1 item orderedChoice approximate an%20ordered%20choice%20written%20as%20an%20unordered%20one (choice ordered (literal ab) (literal a) (ref other)))\n(helper lowered2 other not approximate a%20negative%20lookahead%20written%20as%20the%20empty%20expression (not (literal x)))\n(helper lowered3 other any exact any%20character%20as%20the%20range%20of%20every%20code%20point any)\n",
+          "reconstructed": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n"
+        },
+        {
+          "format": "pest",
+          "status": "exact",
+          "executable": "list = { item ~ (\",\" ~ item)* }\nitem = { \"ab\" | \"a\" | other }\nother = { !\"x\" ~ ANY }\n",
+          "metadata": "(lowering pest exact)\n(source peg)\n(start list)\n(rules list item other)\n",
+          "reconstructed": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n"
+        },
+        {
+          "format": "tree-sitter-json",
+          "status": "approximate",
+          "executable": "{\n  \"name\": \"list\",\n  \"rules\": {\n    \"list\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"item\"\n        },\n        {\n          \"type\": \"REPEAT\",\n          \"content\": {\n            \"type\": \"SEQ\",\n            \"members\": [\n              {\n                \"type\": \"STRING\",\n                \"value\": \",\"\n              },\n              {\n                \"type\": \"SYMBOL\",\n                \"name\": \"item\"\n              }\n            ]\n          }\n        }\n      ]\n    },\n    \"item\": {\n      \"type\": \"SYMBOL\",\n      \"name\": \"lowered1\"\n    },\n    \"other\": {\n      \"type\": \"SEQ\",\n      \"members\": [\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"lowered2\"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"lowered3\"\n        }\n      ]\n    },\n    \"lowered1\": {\n      \"type\": \"CHOICE\",\n      \"members\": [\n        {\n          \"type\": \"STRING\",\n          \"value\": \"ab\"\n        },\n        {\n          \"type\": \"STRING\",\n          \"value\": \"a\"\n        },\n        {\n          \"type\": \"SYMBOL\",\n          \"name\": \"other\"\n        }\n      ]\n    },\n    \"lowered2\": {\n      \"type\": \"BLANK\"\n    },\n    \"lowered3\": {\n      \"type\": \"PATTERN\",\n      \"value\": \"[\\u0000-􏿿]\"\n    }\n  }\n}\n",
+          "metadata": "(lowering tree-sitter-json approximate)\n(source peg)\n(start list)\n(rules list item other)\n(helper lowered1 item orderedChoice approximate an%20ordered%20choice%20written%20as%20an%20unordered%20one (choice ordered (literal ab) (literal a) (ref other)))\n(helper lowered2 other not approximate a%20negative%20lookahead%20written%20as%20the%20empty%20expression (not (literal x)))\n(helper lowered3 other any exact any%20character%20as%20the%20range%20of%20every%20code%20point any)\n",
+          "reconstructed": "(grammar (format peg) (start list))\n(rule list normal (seq (ref item) (repeat0 (seq (literal %2C) (ref item)))))\n(rule item normal (choice ordered (literal ab) (literal a) (ref other)))\n(rule other normal (seq (not (literal x)) any))\n"
+        }
+      ]
+    }
+  ]
+}

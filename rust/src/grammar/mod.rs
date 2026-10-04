@@ -23,39 +23,55 @@
 //! assert_eq!(Grammar::from_links(&mut decoder, root).expect("grammar decodes"), grammar);
 //! ```
 
+mod builder;
 pub mod concepts;
 pub mod emit;
+pub mod feature;
+pub mod feature_runtime;
 pub mod fidelity;
 pub mod import;
 pub mod inference;
+pub mod interchange;
 mod links;
+pub mod merge;
+mod metadata;
+pub mod reverse;
+pub mod round_trip;
 pub mod runtime;
 pub mod surface;
 pub mod translate;
 pub mod validate;
 
+pub use builder::ExprBuilder;
 pub use concepts::{
-    annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, GrammarConcept,
-    GRAMMAR_CONCEPTS,
+    GRAMMAR_CONCEPTS, GrammarConcept, annotate_grammar_concepts, grammar_expr_concept_id,
+    rule_concept_id,
 };
 pub use emit::{
-    emit_abnf, emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser, emit_peggy, emit_pest,
+    EmitReport, GrammarEmitError, JsParserArtifacts, RustParserArtifacts, emit_abnf, emit_antlr,
+    emit_bnf, emit_ebnf, emit_gbnf, emit_javascript_parser, emit_lark, emit_peggy, emit_pest,
     emit_rust_parser, emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report,
-    render_rust_type, EmitReport, GrammarEmitError, JsParserArtifacts, RustParserArtifacts,
+    emit_tree_sitter_json, render_rust_type,
+};
+pub use feature::{
+    ByteClassItem, FEATURE_EXPRESSION_FORMS, FeatureExpr, FeatureForm, FieldType, FieldValue,
+    GrammarDeclarations, GrammarMacro, GrammarScanner, MATCHING_MODES, OPERATION_FORMS, Operation,
+    OperationCategory, PrecedenceEntry, RuleAttributes, UnicodeClassItem,
 };
 pub use fidelity::{
-    canonical_grammar_format, grammar_format_profile, GrammarFidelityLevel, GrammarFormatProfile,
-    GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS,
+    FORMER_GRAMMAR_CONSTRUCTS, GRAMMAR_CONSTRUCTS, GRAMMAR_FORMATS, GrammarFidelityLevel,
+    GrammarFormatProfile, canonical_grammar_format, current_grammar_construct,
+    grammar_format_profile,
 };
 pub use import::{
-    import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf, import_lark, import_pest,
-    import_tree_sitter_json, GrammarImportError,
+    GrammarImportError, import_abnf, import_antlr, import_bnf, import_ebnf, import_gbnf,
+    import_lark, import_pest, import_tree_sitter_json,
 };
 pub use inference::active::{
-    clean_structural_acceptance, learn_dfa, learn_grammar, ActiveLearningConfig,
-    ActiveLearningError, Dfa, GrammarAcceptorOracle, Oracle as ActiveLearningOracle,
-    ParserAcceptancePredicate, ParserMembershipOracle, SamplingEquivalenceOracle,
-    Symbol as ActiveSymbol,
+    ActiveLearningConfig, ActiveLearningError, Dfa, GrammarAcceptorOracle,
+    Oracle as ActiveLearningOracle, ParserAcceptancePredicate, ParserMembershipOracle,
+    SamplingEquivalenceOracle, Symbol as ActiveSymbol, clean_structural_acceptance, learn_dfa,
+    learn_grammar,
 };
 pub use inference::advisor::{
     AdviceDecision, AdviceDecisionKind, AdviceSource, ConceptNamingAdvisor, FallbackAdvisor,
@@ -65,40 +81,74 @@ pub use inference::advisor::{
 #[cfg(feature = "llm-assist")]
 pub use inference::advisor::{LlmClient, LlmError, LlmMergeAdvisor, LlmNamingAdvisor};
 pub use inference::cfg::{
-    infer_cfg, infer_cfg_with_advisors, InferenceOptions, InferenceReport, InferenceResult, Oracle,
-    PositiveOnlyOracle,
+    InferenceOptions, InferenceReport, InferenceResult, Oracle, PositiveOnlyOracle, infer_cfg,
+    infer_cfg_with_advisors,
 };
 pub use inference::eval::{
-    evaluate, mdl, run_corpus, run_named_corpus, sample, size_symbols, BenchmarkReport, EvalError,
-    GoldenCorpus, GrammarOracle, MembershipOracle, MetricScores, SampleConfig, ScoringMode,
-    GOLDEN_CORPORA,
+    BenchmarkReport, EvalError, GOLDEN_CORPORA, GoldenCorpus, GrammarOracle, MembershipOracle,
+    MetricScores, SampleConfig, ScoringMode, evaluate, mdl, run_corpus, run_named_corpus, sample,
+    size_symbols,
 };
 pub use inference::lexical::{
-    categorise, infer_lexical_classes, CharCategory, LexicalConfig, LexicalModel, Token,
+    CharCategory, LexicalConfig, LexicalModel, Token, categorise, infer_lexical_classes,
 };
 pub use inference::minimize::{
-    mdl_cost, minimize, Mdl, MinimizeOptions, MinimizeReport, MinimizeResult,
+    Mdl, MinimizeOptions, MinimizeReport, MinimizeResult, mdl_cost, minimize,
 };
 pub use inference::prior::{
-    build_structural_prior, ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, SeedTree,
-    StructuralPrior, WhitespacePolicy,
+    ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, SeedTree, StructuralPrior,
+    WhitespacePolicy, build_structural_prior,
 };
 pub use inference::semantic::{
-    default_pattern_catalog, evaluate_atom, evaluate_clause, evaluate_constraint,
-    evaluate_probabilistic, mine_semantic_constraints, ConstraintAtom, ConstraintClause,
-    ConstraintPattern, LengthUnit, NonTerminalRef, SemanticConstraint, SemanticInferenceConfig,
+    ConstraintAtom, ConstraintClause, ConstraintPattern, LengthUnit, NonTerminalRef,
+    SemanticConstraint, SemanticInferenceConfig, default_pattern_catalog, evaluate_atom,
+    evaluate_clause, evaluate_constraint, evaluate_probabilistic, mine_semantic_constraints,
 };
-pub use inference::sequitur::{run_sequitur, Symbol};
-pub use inference::state_merging::{infer_dfa, InferredAutomaton, MergeStrategy, Sample};
-pub use runtime::{register_grammar, with_grammar, GrammarParser};
+pub use inference::sequitur::{Symbol, run_sequitur};
+pub use inference::state_merging::{InferredAutomaton, MergeStrategy, Sample, infer_dfa};
+pub use interchange::{
+    GRAMMAR_COMMAND_USAGE, GRAMMAR_EXPORT_FORMATS, GRAMMAR_IMPORT_FORMATS,
+    GRAMMAR_LOSSLESS_FORMATS, GrammarCommandOutput, GrammarEmitter, GrammarFileReader,
+    GrammarImporter, GrammarLayout, GrammarLayoutDefinition, GrammarLayoutImplicit,
+    GrammarLosslessError, GrammarSourceDefinition, GrammarSourceSplit, capture_grammar_layout,
+    deserialize_grammar, emit_grammar_lossless, grammar_emitter, grammar_importer,
+    import_grammar_lossless, parse_grammar_layout_links, parse_grammar_links,
+    parse_links_expression, parse_native_grammar, percent_decode_links_text,
+    percent_encode_links_text, render_grammar_layout_links, render_grammar_links,
+    render_links_expression, render_native_expression, render_native_feature,
+    render_native_grammar, render_rule_link, run_grammar_command, serialize_grammar,
+    split_grammar_source,
+};
+pub use merge::{
+    GRAMMAR_MERGE_METHOD, GrammarMergeAlternative, GrammarMergeAlternativeReason,
+    GrammarMergeDecision, GrammarMergeDecisionKind, GrammarMergeError, GrammarMergeFailure,
+    GrammarMergeFailureKind, GrammarMergeFailureReason, GrammarMergeNomination,
+    GrammarMergeNominationBasis, GrammarMergeNominationOutcome, GrammarMergeOptions,
+    GrammarMergeResult, GrammarMergeSource, GrammarRenameError, GrammarRenameErrorKind,
+    MergedGrammarGroup, RenamedGrammar, RuleAlias, assert_merge_complete, merge_grammars,
+    normalized_rule_definition, rename_grammar_rule, restore_source_names,
+};
+pub use metadata::{GrammarKind, GrammarSourceName};
+pub use reverse::{
+    GrammarReverseConversion, GrammarReverseFailure, GrammarReverseFailureKind,
+    GrammarReverseReport, GrammarReverseStage, GrammarReverseStatus,
+    check_grammar_reverse_conversion,
+};
+pub use round_trip::{
+    GRAMMAR_ROUND_TRIP_MARKER, GrammarEmitFn, GrammarImportFn, GrammarRoundTrip,
+    GrammarRoundTripError, GrammarRoundTripFailure, GrammarRoundTripFailureKind,
+    GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus,
+    check_grammar_round_trip, mutate_grammar_start_rule,
+};
+pub use runtime::{GrammarParser, register_grammar, with_grammar};
 pub use surface::{
-    grammar_from_lino, grammar_to_lino, parse_grammar_surface, write_grammar_surface,
-    GrammarSurfaceError,
+    GrammarSurfaceError, grammar_from_lino, grammar_to_lino, parse_grammar_surface,
+    write_grammar_surface,
 };
 pub use translate::{
-    grammar_concept_translation_rules, translate_grammar_surface, GrammarTranslateError,
+    GrammarTranslateError, grammar_concept_translation_rules, translate_grammar_surface,
 };
-pub use validate::{validate, DiagnosticKind, GrammarDiagnostic, RuleSpan, Severity};
+pub use validate::{DiagnosticKind, GrammarDiagnostic, RuleSpan, Severity, validate};
 
 use std::collections::BTreeSet;
 use std::fmt;
@@ -160,6 +210,8 @@ pub enum GrammarExpr {
         /// Captured expression.
         expr: Box<Self>,
     },
+    /// A form of the grammar feature union (`docs/grammar/feature-union.md`).
+    Feature(Box<FeatureExpr>),
 }
 
 impl GrammarExpr {
@@ -291,8 +343,50 @@ impl GrammarExpr {
         }
     }
 
-    fn collect_nonterminals(&self, names: &mut BTreeSet<String>) {
+    /// Builds a feature union expression.
+    #[must_use]
+    pub fn feature(feature: FeatureExpr) -> Self {
+        Self::Feature(Box::new(feature))
+    }
+
+    /// Copies a feature form with every nested expression rewritten by `map`.
+    pub(crate) fn rewrite_feature(
+        feature: &FeatureExpr,
+        mut map: impl FnMut(&Self) -> Self,
+    ) -> Self {
+        let mut copy = feature.clone();
+        copy.map_expressions(&mut |expr| *expr = map(expr));
+        Self::Feature(Box::new(copy))
+    }
+
+    /// The first feature union form in this expression, in source order.
+    #[must_use]
+    pub fn first_feature(&self) -> Option<&FeatureExpr> {
         match self {
+            Self::Feature(feature) => Some(feature),
+            Self::Choice { alternatives, .. } | Self::Sequence(alternatives) => {
+                alternatives.iter().find_map(Self::first_feature)
+            }
+            Self::Optional(inner)
+            | Self::ZeroOrMore(inner)
+            | Self::OneOrMore(inner)
+            | Self::And(inner)
+            | Self::Not(inner)
+            | Self::Repeat { expr: inner, .. }
+            | Self::Capture { expr: inner, .. } => inner.first_feature(),
+            Self::Empty
+            | Self::Terminal(_)
+            | Self::TerminalInsensitive(_)
+            | Self::CharRange(_, _)
+            | Self::CharClass { .. }
+            | Self::AnyChar
+            | Self::NonTerminal(_) => None,
+        }
+    }
+
+    pub(crate) fn collect_nonterminals(&self, names: &mut BTreeSet<String>) {
+        match self {
+            Self::Feature(feature) => feature.collect_references(names),
             Self::NonTerminal(name) => {
                 names.insert(name.clone());
             }
@@ -361,6 +455,9 @@ impl fmt::Display for GrammarExpr {
                 Some(label) => write!(formatter, "{label}:({expr})"),
                 None => write!(formatter, "capture({expr})"),
             },
+            Self::Feature(feature) => {
+                formatter.write_str(&interchange::render_native_feature(feature))
+            }
         }
     }
 }
@@ -457,8 +554,12 @@ pub struct GrammarRule {
     pub kind: RuleKind,
     /// Optional concept-ontology alignment.
     pub concept: Option<String>,
+    /// The names the rule has in the grammars it was merged from.
+    pub source_names: Vec<GrammarSourceName>,
     /// Optional free-text documentation or comment.
     pub doc: Option<String>,
+    /// Parameters, channel, modes and action of the feature union.
+    pub attributes: RuleAttributes,
 }
 
 impl GrammarRule {
@@ -470,8 +571,17 @@ impl GrammarRule {
             expr,
             kind: RuleKind::Normal,
             concept: None,
+            source_names: Vec::new(),
             doc: None,
+            attributes: RuleAttributes::default(),
         }
+    }
+
+    /// Returns this rule with feature union attributes.
+    #[must_use]
+    pub fn with_attributes(mut self, attributes: RuleAttributes) -> Self {
+        self.attributes = attributes;
+        self
     }
 
     /// Returns this rule with a different rule kind.
@@ -485,6 +595,14 @@ impl GrammarRule {
     #[must_use]
     pub fn with_concept(mut self, concept: impl Into<String>) -> Self {
         self.concept = Some(concept.into());
+        self
+    }
+
+    /// Returns this rule with the names it has in the grammars it was merged
+    /// from.
+    #[must_use]
+    pub fn with_source_names(mut self, source_names: Vec<GrammarSourceName>) -> Self {
+        self.source_names = source_names;
         self
     }
 
@@ -517,6 +635,12 @@ impl GrammarRule {
     #[must_use]
     pub fn concept(&self) -> Option<&str> {
         self.concept.as_deref()
+    }
+
+    /// The names the rule has in the grammars it was merged from.
+    #[must_use]
+    pub fn source_names(&self) -> &[GrammarSourceName] {
+        &self.source_names
     }
 
     /// Rule documentation, when present.
@@ -598,6 +722,8 @@ pub struct Grammar {
     rules: Vec<GrammarRule>,
     start: Option<String>,
     source_format: Option<GrammarFormat>,
+    declarations: GrammarDeclarations,
+    kinds: Vec<GrammarKind>,
 }
 
 impl Grammar {
@@ -608,6 +734,17 @@ impl Grammar {
             rules: Vec::new(),
             start: None,
             source_format: None,
+            declarations: GrammarDeclarations {
+                matching: None,
+                imports: Vec::new(),
+                modes: Vec::new(),
+                extras: Vec::new(),
+                conflicts: Vec::new(),
+                precedences: Vec::new(),
+                macros: Vec::new(),
+                scanners: Vec::new(),
+            },
+            kinds: Vec::new(),
         }
     }
 
@@ -642,6 +779,35 @@ impl Grammar {
     pub const fn with_source_format(mut self, source_format: GrammarFormat) -> Self {
         self.source_format = Some(source_format);
         self
+    }
+
+    /// Returns this grammar with feature union declarations.
+    #[must_use]
+    pub fn with_declarations(mut self, declarations: GrammarDeclarations) -> Self {
+        self.declarations = declarations;
+        self
+    }
+
+    /// The feature union declarations.
+    #[must_use]
+    pub const fn declarations(&self) -> &GrammarDeclarations {
+        &self.declarations
+    }
+
+    /// Replaces the feature union declarations.
+    pub fn set_declarations(&mut self, declarations: GrammarDeclarations) {
+        self.declarations = declarations;
+    }
+
+    /// The node kinds no rule defines that keep their source names.
+    #[must_use]
+    pub fn kinds(&self) -> &[GrammarKind] {
+        &self.kinds
+    }
+
+    /// Replaces the node kinds no rule defines.
+    pub fn set_kinds(&mut self, kinds: Vec<GrammarKind>) {
+        self.kinds = kinds;
     }
 
     /// Adds a rule to the grammar.
@@ -709,6 +875,12 @@ impl Grammar {
         for rule in &self.rules {
             rule.expr.collect_nonterminals(&mut names);
         }
+        for extra in &self.declarations.extras {
+            extra.collect_nonterminals(&mut names);
+        }
+        for declared in &self.declarations.macros {
+            declared.expression.collect_nonterminals(&mut names);
+        }
         names
     }
 
@@ -719,6 +891,12 @@ impl Grammar {
             .rules
             .iter()
             .map(|rule| rule.name.clone())
+            .chain(
+                self.declarations
+                    .external_tokens()
+                    .into_iter()
+                    .map(str::to_owned),
+            )
             .collect::<BTreeSet<_>>();
         self.referenced_nonterminals()
             .difference(&defined)
@@ -788,162 +966,6 @@ impl GrammarBuilder {
     #[must_use]
     pub fn build(self) -> Grammar {
         self.grammar
-    }
-}
-
-/// Ergonomic constructor for grammar expressions.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct ExprBuilder;
-
-impl ExprBuilder {
-    /// Builds an empty-string expression.
-    #[must_use]
-    pub const fn empty(self) -> GrammarExpr {
-        GrammarExpr::Empty
-    }
-
-    /// Builds a literal terminal.
-    #[must_use]
-    pub fn term(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::terminal(value)
-    }
-
-    /// Builds a literal terminal.
-    #[must_use]
-    pub fn terminal(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::terminal(value)
-    }
-
-    /// Builds a case-insensitive literal terminal.
-    #[must_use]
-    pub fn terminal_insensitive(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::terminal_insensitive(value)
-    }
-
-    /// Builds a single-character range expression.
-    #[must_use]
-    pub const fn char(self, value: char) -> GrammarExpr {
-        GrammarExpr::CharRange(value, value)
-    }
-
-    /// Builds an inclusive character range expression.
-    #[must_use]
-    pub const fn char_range(self, start: char, end: char) -> GrammarExpr {
-        GrammarExpr::CharRange(start, end)
-    }
-
-    /// Builds a character class.
-    #[must_use]
-    pub fn char_class<I>(self, negated: bool, items: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = CharClassItem>,
-    {
-        GrammarExpr::char_class(negated, items)
-    }
-
-    /// Builds an any-character wildcard.
-    #[must_use]
-    pub const fn any(self) -> GrammarExpr {
-        GrammarExpr::AnyChar
-    }
-
-    /// Builds a non-terminal reference.
-    #[must_use]
-    pub fn nt(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::non_terminal(value)
-    }
-
-    /// Builds a non-terminal reference.
-    #[must_use]
-    pub fn non_terminal(self, value: impl Into<String>) -> GrammarExpr {
-        GrammarExpr::non_terminal(value)
-    }
-
-    /// Builds a choice expression.
-    #[must_use]
-    pub fn choice<I>(self, ordered: bool, alternatives: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = GrammarExpr>,
-    {
-        GrammarExpr::choice(ordered, alternatives)
-    }
-
-    /// Builds an ordered choice expression.
-    #[must_use]
-    pub fn choice_ordered<I>(self, alternatives: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = GrammarExpr>,
-    {
-        GrammarExpr::choice(true, alternatives)
-    }
-
-    /// Builds an unordered choice expression.
-    #[must_use]
-    pub fn choice_unordered<I>(self, alternatives: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = GrammarExpr>,
-    {
-        GrammarExpr::choice(false, alternatives)
-    }
-
-    /// Builds a sequence expression.
-    #[must_use]
-    pub fn seq<I>(self, items: I) -> GrammarExpr
-    where
-        I: IntoIterator<Item = GrammarExpr>,
-    {
-        GrammarExpr::sequence(items)
-    }
-
-    /// Builds an optional expression.
-    #[must_use]
-    pub fn opt(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::optional(expr)
-    }
-
-    /// Builds a zero-or-more repetition expression.
-    #[must_use]
-    pub fn rep0(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::zero_or_more(expr)
-    }
-
-    /// Builds a one-or-more repetition expression.
-    #[must_use]
-    pub fn rep1(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::one_or_more(expr)
-    }
-
-    /// Builds a counted repetition expression.
-    #[must_use]
-    pub fn repeat(self, expr: GrammarExpr, min: usize, max: Option<usize>) -> GrammarExpr {
-        GrammarExpr::repeat(expr, min, max)
-    }
-
-    /// Builds a positive lookahead expression.
-    #[must_use]
-    pub fn and(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::and(expr)
-    }
-
-    /// Builds a negative lookahead expression.
-    #[must_use]
-    pub fn not(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::not(expr)
-    }
-
-    /// Builds a labelled capture expression.
-    #[must_use]
-    pub fn capture(self, label: Option<impl Into<String>>, expr: GrammarExpr) -> GrammarExpr {
-        match label {
-            Some(label) => GrammarExpr::capture(label, expr),
-            None => GrammarExpr::capture_unlabeled(expr),
-        }
-    }
-
-    /// Builds an anonymous capture expression.
-    #[must_use]
-    pub fn capture_unlabeled(self, expr: GrammarExpr) -> GrammarExpr {
-        GrammarExpr::capture_unlabeled(expr)
     }
 }
 

@@ -1,9 +1,9 @@
 use std::collections::BTreeSet;
 
 use meta_language::{
-    annotate_grammar_concepts, grammar_expr_concept_id, rule_concept_id, CharClassItem, Grammar,
-    GrammarConcept, GrammarExpr, GrammarRule, Link, LinkId, LinkNetwork, LinkQuery, LinkType,
-    NetworkProjection, GRAMMAR_CONCEPTS,
+    CharClassItem, GRAMMAR_CONCEPTS, Grammar, GrammarConcept, GrammarExpr, GrammarRule, Link,
+    LinkId, LinkNetwork, LinkQuery, LinkType, NetworkProjection, annotate_grammar_concepts,
+    grammar_expr_concept_id, rule_concept_id,
 };
 
 #[test]
@@ -22,11 +22,13 @@ fn common_concept_ontology_imports_meta_expression_lexicon() {
 
     assert_eq!(state_link.references(), &[state]);
     assert_eq!(state_link.metadata().link_type(), Some(LinkType::Concept));
-    assert!(state_link
-        .metadata()
-        .definition()
-        .expect("QID definition")
-        .contains("Wikidata Q35657"));
+    assert!(
+        state_link
+            .metadata()
+            .definition()
+            .expect("QID definition")
+            .contains("Wikidata Q35657")
+    );
     assert_eq!(network.reconstruct_concept("Q35657", "ru"), Some("штат"));
     assert_eq!(
         network
@@ -52,9 +54,11 @@ fn same_meta_expression_concept_reuses_one_link_across_languages() {
         .map(|language| semantic_mapping_for(&network, apple, language))
         .collect::<Vec<_>>();
 
-    assert!(language_mappings
-        .iter()
-        .all(|mapping| mapping.references()[0] == apple));
+    assert!(
+        language_mappings
+            .iter()
+            .all(|mapping| mapping.references()[0] == apple)
+    );
     assert_eq!(network.reconstruct_concept("Q89", "en"), Some("apple"));
     assert_eq!(network.reconstruct_concept("Q89", "ru"), Some("яблоко"));
 }
@@ -261,7 +265,10 @@ fn grammar_rule_concepts_fall_back_to_expression_concepts() {
     let implicit = GrammarRule::new("items", expr.rep0(expr.nt("item")));
 
     assert_eq!(rule_concept_id(&explicit), Some("concept:keyword"));
-    assert_eq!(rule_concept_id(&implicit), Some("grammar.zero-or-more"));
+    assert_eq!(
+        rule_concept_id(&implicit),
+        Some("grammar.zero-or-more-repetition")
+    );
 
     let mut grammar = Grammar::builder()
         .grammar_rule(explicit)
@@ -280,7 +287,7 @@ fn grammar_rule_concepts_fall_back_to_expression_concepts() {
     );
     assert_eq!(
         grammar.rule("items").and_then(GrammarRule::concept),
-        Some("grammar.zero-or-more")
+        Some("grammar.zero-or-more-repetition")
     );
     assert_eq!(
         grammar.rule("choice").and_then(GrammarRule::concept),
@@ -366,27 +373,27 @@ fn grammar_concept_fixtures() -> Vec<(GrammarExpr, &'static str)> {
         ),
         (
             expr.repeat(expr.term("a"), 1, Some(3)),
-            "grammar.repetition",
+            "grammar.counted-repetition",
         ),
-        (expr.rep0(expr.term("a")), "grammar.zero-or-more"),
-        (expr.rep1(expr.term("a")), "grammar.one-or-more"),
-        (expr.opt(expr.term("a")), "grammar.optional"),
+        (expr.rep0(expr.term("a")), "grammar.zero-or-more-repetition"),
+        (expr.rep1(expr.term("a")), "grammar.one-or-more-repetition"),
+        (expr.opt(expr.term("a")), "grammar.optional-expression"),
         (expr.term("a"), "grammar.terminal"),
         (expr.terminal_insensitive("a"), "grammar.terminal"),
-        (expr.nt("name"), "grammar.non-terminal"),
+        (expr.nt("name"), "grammar.nonterminal"),
         (
             expr.char_class(false, [CharClassItem::range('a', 'z')]),
-            "grammar.char-class",
+            "grammar.character-class",
         ),
-        (expr.char_range('a', 'z'), "grammar.char-range"),
-        (expr.any(), "grammar.any-char"),
+        (expr.char_range('a', 'z'), "grammar.character-range"),
+        (expr.any(), "grammar.any-character"),
         (expr.and(expr.term("a")), "grammar.positive-predicate"),
         (expr.not(expr.term("a")), "grammar.negative-predicate"),
         (
             expr.capture(Some("name"), expr.term("a")),
             "grammar.capture",
         ),
-        (expr.empty(), "grammar.empty"),
+        (expr.empty(), "grammar.empty-expression"),
     ]
 }
 

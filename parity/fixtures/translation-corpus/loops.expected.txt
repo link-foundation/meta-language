@@ -1,0 +1,15 @@
+sumTo 5050
+fibonacci 2880067194370816120
+collatz 111
+digits 1 9
+divisor 7 97
+odd 36013 25010
+gcd 21
+list 42
+table 266
+5 4 3 2 1 liftoff
+classify 0/12
+shadowed 6
+grade 15 5 1 -1
+square 8
+long 5000050000 524

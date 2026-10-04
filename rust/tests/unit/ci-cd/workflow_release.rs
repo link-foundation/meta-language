@@ -128,8 +128,10 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("secrets-scan", 10),
         ("fresh-merge", 20),
         ("cargo-lock", 5),
+        ("check", 15),
+        ("msrv", 30),
         ("lint", 10),
-        ("test", 20),
+        ("test", 15),
         ("coverage", 15),
         ("build", 10),
         ("auto-release", 30),
@@ -163,6 +165,10 @@ fn cargo_cache_keys_are_scoped_by_job() {
         (
             "lint",
             "key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}",
+        ),
+        (
+            "check",
+            "key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}",
         ),
         (
             "coverage",
@@ -248,8 +254,10 @@ fn coverage_upload_requires_token_and_reports_missing_token_as_notice() {
 
     let skipped = step_block(coverage, "Report skipped Codecov upload");
     assert!(skipped.contains("if: env.CODECOV_TOKEN == ''"));
-    assert!(skipped
-        .contains("::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"));
+    assert!(
+        skipped
+            .contains("::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured")
+    );
 }
 
 #[test]
@@ -299,11 +307,13 @@ fn workflow_scans_secrets_and_simulates_fresh_merges() {
     ))
     .unwrap();
     assert!(helper.contains("cd \"${REPO_ROOT}/rust\""));
-    assert!(std::path::Path::new(&format!(
-        "{}/../.secretlintrc.json",
-        env!("CARGO_MANIFEST_DIR")
-    ))
-    .exists());
+    assert!(
+        std::path::Path::new(&format!(
+            "{}/../.secretlintrc.json",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .exists()
+    );
 }
 
 #[test]
@@ -323,12 +333,25 @@ fn binary_release_is_guarded_by_committed_cargo_lock() {
 }
 
 #[test]
+fn minimum_supported_rust_version_is_checked_with_the_declared_toolchain() {
+    let workflow = release_workflow();
+    let msrv = job_block(&workflow, "msrv");
+    let version = step_block(msrv, "Read the declared rust-version");
+    assert!(version.contains("rust-version"));
+    assert!(version.contains("Cargo.toml"));
+    assert!(msrv.contains("toolchain: ${{ steps.msrv.outputs.version }}"));
+    assert!(msrv.contains("cargo check --locked --all-features --all-targets"));
+}
+
+#[test]
 fn file_size_warnings_only_annotate_changed_files() {
     let workflow = release_workflow();
     let lint = job_block(&workflow, "lint");
     assert!(step_block(lint, "Collect changed files").contains("git diff --name-only"));
-    assert!(step_block(lint, "Check file size limit")
-        .contains("CHANGED_FILES: ${{ steps.changed-files.outputs.files }}"));
+    assert!(
+        step_block(lint, "Check file size limit")
+            .contains("CHANGED_FILES: ${{ steps.changed-files.outputs.files }}")
+    );
     assert!(lint.contains("fetch-depth: 0"));
 }
 
@@ -612,4 +635,77 @@ fn release_scripts_check_configured_release_artifacts() {
         release_script.contains("fn docker_hub_badge"),
         "GitHub release notes should include Docker Hub badge support"
     );
+}
+
+#[test]
+fn cargo_check_gates_every_compiling_job() {
+    let workflow = release_workflow();
+    let check = job_block(&workflow, "check");
+    assert!(check.contains("cargo check --locked --all-targets --all-features"));
+    assert!(check.contains("needs: [detect-changes, cargo-lock]"));
+    for job_name in ["fresh-merge", "msrv", "test", "coverage"] {
+        let job = job_block(&workflow, job_name);
+        let needs = job
+            .lines()
+            .find(|line| line.trim_start().starts_with("needs:"))
+            .unwrap_or_else(|| panic!("{job_name} declares its needs"));
+        assert!(
+            needs.contains("check"),
+            "{job_name} needs the cargo check gate"
+        );
+        assert!(
+            job.contains("needs.check.result == 'success'"),
+            "{job_name} runs only after the cargo check gate passed"
+        );
+    }
+}
+
+#[test]
+fn rust_test_suites_partition_the_tests_by_name() {
+    let workflow = release_workflow();
+    let test = job_block(&workflow, "test");
+    assert!(test.contains("suite: [grammar, inference, translation, remaining]"));
+    assert!(test.contains("os: [ubuntu-latest, macos-latest, windows-latest]"));
+    let filters = |suite: &str| {
+        let marker = format!("          - suite: {suite}\n            filters: ");
+        let start = test
+            .find(&marker)
+            .unwrap_or_else(|| panic!("the {suite} suite declares its filters"))
+            + marker.len();
+        test[start..].lines().next().unwrap().to_string()
+    };
+    // Each suite skips the filters of the suites before it, and `remaining`
+    // skips every filter, so each test runs in exactly one suite.
+    let mut earlier: Vec<String> = Vec::new();
+    for suite in ["grammar", "inference", "translation"] {
+        let line = filters(suite);
+        let (own, skipped) = line
+            .split_once("--skip")
+            .map_or((line.as_str(), ""), |(own, rest)| (own, rest));
+        let skipped: Vec<&str> = skipped
+            .split("--skip")
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .collect();
+        assert_eq!(
+            skipped,
+            earlier.iter().map(String::as_str).collect::<Vec<_>>(),
+            "{suite} skips the earlier suites"
+        );
+        earlier.extend(own.split_whitespace().map(str::to_string));
+    }
+    let remaining = filters("remaining");
+    let skipped: Vec<&str> = remaining
+        .split("--skip")
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .collect();
+    assert_eq!(
+        skipped,
+        earlier.iter().map(String::as_str).collect::<Vec<_>>()
+    );
+    assert!(test.contains("cargo test --all-features --tests --verbose -- $SUITE_FILTERS"));
+    for step in ["Run doc tests", "Check examples"] {
+        assert!(step_block(test, step).contains("if: matrix.suite == 'remaining'"));
+    }
 }

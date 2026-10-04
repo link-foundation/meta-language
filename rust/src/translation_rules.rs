@@ -625,7 +625,7 @@ fn parse_query_link_type(token: &str) -> Result<LinkType, QueryParseError> {
         other => {
             return Err(QueryParseError::new(format!(
                 "unknown query link type `{other}`"
-            )))
+            )));
         }
     })
 }

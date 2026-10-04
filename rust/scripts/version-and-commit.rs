@@ -32,9 +32,9 @@ use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 #[cfg(not(test))]
 use std::process::exit;
-use std::process::Command;
 
 #[path = "rust-paths.rs"]
 mod rust_paths;
@@ -384,9 +384,15 @@ fn ensure_version_exceeds_published(
         if (major, minor, patch) <= (pub_major, pub_minor, pub_patch) {
             println!(
                 "Version {}.{}.{} is not greater than max published {}.{}.{}, adjusting to {}.{}.{}",
-                major, minor, patch,
-                pub_major, pub_minor, pub_patch,
-                pub_major, pub_minor, pub_patch + 1
+                major,
+                minor,
+                patch,
+                pub_major,
+                pub_minor,
+                pub_patch,
+                pub_major,
+                pub_minor,
+                pub_patch + 1
             );
             major = pub_major;
             minor = pub_minor;
@@ -560,7 +566,9 @@ version = "1.12.3"
 
         let updated = fs::read_to_string(&cargo_lock).unwrap();
         assert!(updated.contains("name = \"example-sum-package-name\"\nversion = \"0.14.0\""));
-        assert!(updated.contains("name = \"example-sum-package-name-helper\"\nversion = \"9.9.9\""));
+        assert!(
+            updated.contains("name = \"example-sum-package-name-helper\"\nversion = \"9.9.9\"")
+        );
         assert!(updated.contains("name = \"regex\"\nversion = \"1.12.3\""));
     }
 
@@ -636,7 +644,9 @@ fn main() {
     let bump_type = match get_arg("bump-type") {
         Some(bt) => bt,
         None => {
-            eprintln!("Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>] [--release-label <label>]");
+            eprintln!(
+                "Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>] [--release-label <label>]"
+            );
             exit(1);
         }
     };

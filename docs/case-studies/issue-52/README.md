@@ -1,5 +1,10 @@
 # Case Study: Issue #52 - Track Parity for browser-commander Preview-Regeneration Pattern
 
+> **Historical case study.** This records the investigation of issue #52 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 Issue [#52](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/52) is a **tracking placeholder**, not a code change. The primary host for the pattern is [`link-foundation/js-ai-driven-development-pipeline-template#62`](https://github.com/link-foundation/js-ai-driven-development-pipeline-template/issues/62). The original real-world implementation lives in [`konard/vk-bot-desktop#52`](https://github.com/konard/vk-bot-desktop/pull/52), which closed [`konard/vk-bot-desktop#51`](https://github.com/konard/vk-bot-desktop/issues/51).

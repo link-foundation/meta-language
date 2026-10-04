@@ -1,0 +1,184 @@
+=============
+$ Application
+=============
+
+#eval foo bar (baz (1 + 1))
+#eval foo bar $ baz (1 + 1)
+#eval foo bar $ baz $ 1 + 1
+
+---
+
+(module
+  (hash_command
+    (application
+      (application
+        (identifier)
+        (identifier))
+      (parenthesized
+        (application
+          (identifier)
+          (parenthesized
+            (binary_expression
+              (number)
+              (number)))))))
+  (hash_command
+    (binary_expression
+      (application
+        (identifier)
+        (identifier))
+      (application
+        (identifier)
+        (parenthesized
+          (binary_expression
+            (number)
+            (number))))))
+  (hash_command
+    (binary_expression
+      (application
+        (identifier)
+        (identifier))
+      (binary_expression
+        (identifier)
+        (binary_expression
+          (number)
+          (number))))))
+
+=============
+Function Type
+=============
+
+#check foo → bar
+#check foo → bar → baz
+
+---
+
+(module
+  (hash_command
+    (arrow
+      (identifier)
+      (identifier)))
+  (hash_command
+    (arrow
+      (identifier)
+      (arrow
+        (identifier)
+        (identifier)))))
+
+============
+Product Type
+============
+
+#check A × B
+#check A × B × C
+#check (A × B) × C
+
+---
+
+(module
+  (hash_command
+    (binary_expression
+      (identifier)
+      (identifier)))
+  (hash_command
+    (binary_expression
+      (binary_expression
+        (identifier)
+        (identifier))
+      (identifier)))
+  (hash_command
+    (binary_expression
+      (parenthesized
+        (binary_expression
+          (identifier)
+          (identifier)))
+      (identifier))))
+
+=======================
+Product Type Precedence
+=======================
+
+#check f 3 × C
+
+---
+
+(module
+  (hash_command
+    (binary_expression
+      (application
+        (identifier)
+        (number))
+      (identifier))))
+
+=============================
+Pipeline Forward Operator |>
+=============================
+
+def pipeline1 := [1, 2] |> List.length
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (binary_expression
+      left: (list
+        (number)
+        (number))
+      right: (projection
+        term: (identifier)
+        name: (identifier)))))
+
+==============================
+Pipeline Reverse Operator <|
+==============================
+
+def pipeline2 := List.length <| [1, 2]
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (binary_expression
+      left: (projection
+        term: (identifier)
+        name: (identifier))
+      right: (list
+        (number)
+        (number)))))
+
+============================
+Pipeline Dot Operator |>.
+============================
+
+def pipeline3 := [1, 2] |>.length
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (binary_expression
+      left: (list
+        (number)
+        (number))
+      right: (identifier))))
+
+========================
+Dollar Operator $
+========================
+
+def dollar1 := List.length $ [1, 2]
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (binary_expression
+      left: (projection
+        term: (identifier)
+        name: (identifier))
+      right: (list
+        (number)
+        (number)))))

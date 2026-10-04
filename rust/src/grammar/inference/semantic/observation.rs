@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::grammar::{Grammar, GrammarExpr, GrammarRule};
 
-use super::{has_any, NonTerminalRef};
+use super::{NonTerminalRef, has_any};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(super) struct Observation {
@@ -126,6 +126,7 @@ fn collect_terminals(expr: &GrammarExpr, terminals: &mut Vec<String>) {
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar
+        | GrammarExpr::Feature(_)
         | GrammarExpr::NonTerminal(_) => {}
     }
 }
@@ -152,6 +153,7 @@ fn expr_contains_digit_range(expr: &GrammarExpr) -> bool {
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::AnyChar
+        | GrammarExpr::Feature(_)
         | GrammarExpr::NonTerminal(_) => false,
     }
 }
@@ -175,6 +177,7 @@ fn expr_contains_alpha_range(expr: &GrammarExpr) -> bool {
         | GrammarExpr::Repeat { expr: inner, .. }
         | GrammarExpr::Capture { expr: inner, .. } => expr_contains_alpha_range(inner),
         GrammarExpr::Empty
+        | GrammarExpr::Feature(_)
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::AnyChar
@@ -191,11 +194,11 @@ fn extract_after_keywords(input: &str, keywords: &[&str]) -> Vec<ObservedValue> 
         while let Some(relative) = lower[search_start..].find(keyword) {
             let position = search_start + relative;
             let after = position + keyword.len();
-            if has_word_boundary_before(&lower, position) && has_word_boundary_after(&lower, after)
+            if has_word_boundary_before(&lower, position)
+                && has_word_boundary_after(&lower, after)
+                && let Some(value) = next_identifier(input, after)
             {
-                if let Some(value) = next_identifier(input, after) {
-                    values.push(value);
-                }
+                values.push(value);
             }
             search_start = after;
         }
@@ -209,7 +212,7 @@ fn has_word_boundary_before(input: &str, position: usize) -> bool {
         || input[..position]
             .chars()
             .next_back()
-            .map_or(true, |character| !is_identifier_character(character))
+            .is_none_or(|character| !is_identifier_character(character))
 }
 
 fn has_word_boundary_after(input: &str, position: usize) -> bool {
@@ -217,7 +220,7 @@ fn has_word_boundary_after(input: &str, position: usize) -> bool {
         || input[position..]
             .chars()
             .next()
-            .map_or(true, |character| !is_identifier_character(character))
+            .is_none_or(|character| !is_identifier_character(character))
 }
 
 fn next_identifier(input: &str, start: usize) -> Option<ObservedValue> {
@@ -317,10 +320,10 @@ fn extract_bodies(input: &str) -> Vec<ObservedValue> {
     let mut values = Vec::new();
 
     for (position, character) in input.char_indices() {
-        if character == ':' {
-            if let Some(body) = body_after(input, position + character.len_utf8()) {
-                values.push(body);
-            }
+        if character == ':'
+            && let Some(body) = body_after(input, position + character.len_utf8())
+        {
+            values.push(body);
         }
     }
 

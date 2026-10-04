@@ -1,0 +1,619 @@
+{
+  "description": "Positive and negative cases of the readable-naming check. Each fixture is judged on its own: its records by the concept record check, its names by the vocabulary and abbreviation check; expected lists the problem kinds the check must report, empty when the fixture must pass.",
+  "fixtures": [
+    {
+      "name": "readable concept and operation",
+      "expected": [],
+      "records": [
+        {
+          "id": "grammar.character-class",
+          "phrase": "character class",
+          "role": "concept",
+          "definition": "A set of characters accepted at one input position.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "operation.parse",
+          "phrase": "parse",
+          "role": "operation",
+          "definition": "Parse source text into a links network.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "noun head after modifiers",
+      "expected": [],
+      "records": [
+        {
+          "id": "grammar.zero-or-more-repetition",
+          "phrase": "zero or more repetition",
+          "role": "concept",
+          "definition": "A repetition that accepts zero or more occurrences.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "line-break",
+          "phrase": "line break",
+          "role": "concept",
+          "definition": "Explicit inline line break inside a block.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "registered technical terms",
+      "expected": [],
+      "records": [
+        {
+          "id": "grammar.nonterminal",
+          "phrase": "nonterminal",
+          "role": "concept",
+          "definition": "A reference to another named grammar rule.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "strikethrough",
+          "phrase": "strikethrough",
+          "role": "concept",
+          "definition": "Inline strikethrough (deleted) text fragment.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "synonyms with a stated distinction",
+      "expected": [],
+      "records": [
+        {
+          "id": "parameter",
+          "phrase": "parameter",
+          "role": "concept",
+          "definition": "Named input accepted by a function abstraction.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": [],
+          "distinctFrom": [
+            {
+              "id": "argument",
+              "reason": "A parameter is declared by a function; an argument is supplied by an application."
+            }
+          ]
+        },
+        {
+          "id": "argument",
+          "phrase": "argument",
+          "role": "concept",
+          "definition": "Concrete input supplied to a function application.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "representation sharing the phrase of its concept",
+      "expected": [],
+      "records": [
+        {
+          "id": "grammar.string",
+          "phrase": "string",
+          "role": "concept",
+          "definition": "A rule for a quoted text literal.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "grammar.value.string",
+          "phrase": "string",
+          "role": "concept",
+          "definition": "A text value stored in a grammar link.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": [],
+          "represents": "grammar.string"
+        }
+      ]
+    },
+    {
+      "name": "former names kept as aliases",
+      "expected": [],
+      "records": [
+        {
+          "id": "grammar.character-range",
+          "phrase": "character range",
+          "role": "concept",
+          "definition": "An inclusive range between two character endpoints.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [
+            {
+              "source": "abnf",
+              "name": "%x30-39"
+            }
+          ],
+          "formerNames": [
+            "grammar.char-range",
+            "char-range"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "readable generated names",
+      "expected": [],
+      "names": [
+        "sequence_2",
+        "optional_digit",
+        "one_or_more_character_class",
+        "grammar::value::absent-value",
+        "external-identifier"
+      ]
+    },
+    {
+      "name": "abbreviation WordNet lists with another meaning",
+      "expected": [
+        "abbreviation"
+      ],
+      "records": [
+        {
+          "id": "grammar.char-class",
+          "phrase": "char class",
+          "role": "concept",
+          "definition": "A set of characters accepted at one input position.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "abbreviation in a namespace segment",
+      "expected": [
+        "abbreviation"
+      ],
+      "records": [
+        {
+          "id": "grammar.expr.sequence",
+          "phrase": "sequence",
+          "role": "concept",
+          "definition": "An ordered concatenation of grammar expressions.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "ambiguous abbreviation",
+      "expected": [
+        "abbreviation"
+      ],
+      "records": [
+        {
+          "id": "program.mod",
+          "phrase": "mod",
+          "role": "concept",
+          "definition": "A unit of program organization.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "letters that are not an English word",
+      "expected": [
+        "phrase-role",
+        "vocabulary"
+      ],
+      "records": [
+        {
+          "id": "grammar.frobnicator",
+          "phrase": "frobnicator",
+          "role": "concept",
+          "definition": "A rule nobody can read.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "concept that is not a noun phrase",
+      "expected": [
+        "phrase-role"
+      ],
+      "records": [
+        {
+          "id": "grammar.parse-quickly",
+          "phrase": "parse quickly",
+          "role": "concept",
+          "definition": "Parsing done fast.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "operation that is not a verb phrase",
+      "expected": [
+        "phrase-role"
+      ],
+      "records": [
+        {
+          "id": "operation.parser",
+          "phrase": "parser",
+          "role": "operation",
+          "definition": "A program that parses text.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "one phrase naming two concepts",
+      "expected": [
+        "ambiguous"
+      ],
+      "records": [
+        {
+          "id": "grammar.string",
+          "phrase": "string",
+          "role": "concept",
+          "definition": "A rule for a quoted text literal.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "text.string",
+          "phrase": "string",
+          "role": "concept",
+          "definition": "A sequence of characters in a document.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "inflected phrase naming a second concept",
+      "expected": [
+        "ambiguous"
+      ],
+      "records": [
+        {
+          "id": "grammar.rule",
+          "phrase": "rule",
+          "role": "concept",
+          "definition": "A named grammar production.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "policy.rules",
+          "phrase": "rules",
+          "role": "concept",
+          "definition": "The policies a repository follows.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "identity that is a former name",
+      "expected": [
+        "ambiguous"
+      ],
+      "records": [
+        {
+          "id": "sequential-composition",
+          "phrase": "sequential composition",
+          "role": "concept",
+          "definition": "Ordered execution of multiple operations.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": [
+            "sequence"
+          ]
+        },
+        {
+          "id": "sequence",
+          "phrase": "sequence",
+          "role": "concept",
+          "definition": "An ordered concatenation of grammar expressions.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "identity recorded twice",
+      "expected": [
+        "duplicate"
+      ],
+      "records": [
+        {
+          "id": "loop",
+          "phrase": "loop",
+          "role": "concept",
+          "definition": "Repeated execution over a condition.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "loop",
+          "phrase": "loop",
+          "role": "concept",
+          "definition": "Repeated execution over a condition.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "two names for one definition",
+      "expected": [
+        "duplicate"
+      ],
+      "records": [
+        {
+          "id": "grammar.optional-expression",
+          "phrase": "optional expression",
+          "role": "concept",
+          "definition": "An expression that may be present or absent.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "grammar.maybe-expression",
+          "phrase": "maybe expression",
+          "role": "concept",
+          "definition": "An expression that may be present or absent.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "semantic duplicate by WordNet synonym",
+      "expected": [
+        "duplicate"
+      ],
+      "records": [
+        {
+          "id": "grammar.item",
+          "phrase": "item",
+          "role": "concept",
+          "definition": "A rule for one element of a list.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "grammar.token",
+          "phrase": "token",
+          "role": "concept",
+          "definition": "A rule for one lexical unit.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "semantic duplicate across a compound phrase",
+      "expected": [
+        "duplicate"
+      ],
+      "records": [
+        {
+          "id": "program.function-argument",
+          "phrase": "function argument",
+          "role": "concept",
+          "definition": "A value passed to a function.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "program.function-statement",
+          "phrase": "function statement",
+          "role": "concept",
+          "definition": "A step inside a function body.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "distinction between names that are not synonyms",
+      "expected": [
+        "record"
+      ],
+      "records": [
+        {
+          "id": "branch",
+          "phrase": "branch",
+          "role": "concept",
+          "definition": "Conditional selection among alternative operations.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": [],
+          "distinctFrom": [
+            {
+              "id": "loop",
+              "reason": "A branch selects once; a loop repeats."
+            }
+          ]
+        },
+        {
+          "id": "loop",
+          "phrase": "loop",
+          "role": "concept",
+          "definition": "Repeated execution over a condition.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "representation naming its concept differently",
+      "expected": [
+        "duplicate"
+      ],
+      "records": [
+        {
+          "id": "grammar.string",
+          "phrase": "string",
+          "role": "concept",
+          "definition": "A rule for a quoted text literal.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": []
+        },
+        {
+          "id": "grammar.value.text",
+          "phrase": "text",
+          "role": "concept",
+          "definition": "A text value stored in a grammar link.",
+          "constraints": [
+            "The fixture record states one constraint."
+          ],
+          "sourceAliases": [],
+          "formerNames": [],
+          "represents": "grammar.string"
+        }
+      ]
+    },
+    {
+      "name": "record without constraints or a sentence definition",
+      "expected": [
+        "record"
+      ],
+      "records": [
+        {
+          "id": "table",
+          "phrase": "table",
+          "role": "concept",
+          "definition": "tabular data",
+          "constraints": [],
+          "sourceAliases": [],
+          "formerNames": []
+        }
+      ]
+    },
+    {
+      "name": "abbreviated generated names",
+      "expected": [
+        "abbreviation"
+      ],
+      "names": [
+        "seq_2",
+        "char_class",
+        "digit_opt"
+      ]
+    },
+    {
+      "name": "generated name with a word outside the vocabulary",
+      "expected": [
+        "vocabulary"
+      ],
+      "names": [
+        "xyzzy_rule"
+      ]
+    }
+  ]
+}

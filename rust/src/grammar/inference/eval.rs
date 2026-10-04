@@ -145,6 +145,12 @@ pub enum EvalError {
         /// Requested corpus name.
         corpus: String,
     },
+    /// A reachable expression is a grammar feature-union form the sampler and
+    /// recognizer do not evaluate; the native grammar executor runs it.
+    UnsupportedExpression {
+        /// Head word of the form, such as `precedence`.
+        construct: String,
+    },
 }
 
 impl fmt::Display for EvalError {
@@ -163,6 +169,12 @@ impl fmt::Display for EvalError {
                 write!(formatter, "invalid repetition bounds {min}..={max}")
             }
             Self::CorpusNotFound { corpus } => write!(formatter, "unknown corpus `{corpus}`"),
+            Self::UnsupportedExpression { construct } => {
+                write!(
+                    formatter,
+                    "sampling does not evaluate `{construct}` expressions"
+                )
+            }
         }
     }
 }

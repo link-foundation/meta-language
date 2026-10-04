@@ -83,7 +83,7 @@ fn encode_bytes(bytes: &[u8]) -> String {
 }
 
 fn decode_bytes(encoded: &str) -> Option<Vec<u8>> {
-    if encoded.len() % 2 != 0 {
+    if !encoded.len().is_multiple_of(2) {
         return None;
     }
     (0..encoded.len())

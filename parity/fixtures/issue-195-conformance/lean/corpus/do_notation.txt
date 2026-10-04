@@ -1,0 +1,272 @@
+=====================================
+Simple do with return
+=====================================
+
+def hello : IO Unit := do
+  return ()
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (return
+        value: (parenthesized)))))
+
+=====================================
+Do with let bind and return
+=====================================
+
+def readAndDouble : IO Nat := do
+  let n ← readNat
+  return n + n
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (let_bind
+        name: (identifier)
+        value: (identifier))
+      (return
+        value: (binary_expression
+          left: (identifier)
+          right: (identifier))))))
+
+=====================================
+Do with let mut and for loop
+=====================================
+
+def sumList (xs : List Nat) : IO Nat := do
+  let mut total := 0
+  for x in xs do
+    total := total + x
+  return total
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (identifier))))
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (let_mut
+        name: (identifier)
+        value: (number))
+      (for_in
+        var: (identifier)
+        iterable: (identifier)
+        body: (do
+          (reassign
+            name: (identifier)
+            value: (binary_expression
+              left: (identifier)
+              right: (identifier)))))
+      (return
+        value: (identifier)))))
+
+=====================================
+Do with if-let in loop
+=====================================
+
+def processOptions (xs : List (Option Nat)) : IO (List Nat) := do
+  let mut results : List Nat := []
+  for x in xs do
+    if let some n := x then
+      results := n :: results
+  return results
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (parenthesized
+            (application
+              name: (identifier)
+              arguments: (identifier))))))
+    type: (application
+      name: (identifier)
+      arguments: (parenthesized
+        (application
+          name: (identifier)
+          arguments: (identifier))))
+    body: (do
+      (let_mut
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (identifier))
+        value: (list))
+      (for_in
+        var: (identifier)
+        iterable: (identifier)
+        body: (do
+          (do_if
+            condition: (let
+              name: (identifier)
+              parameters: (parameters
+                (identifier))
+              value: (identifier))
+            then: (reassign
+              name: (identifier)
+              value: (binary_expression
+                left: (identifier)
+                right: (identifier))))))
+      (return
+        value: (identifier)))))
+
+=====================================
+Nested do blocks
+=====================================
+
+def nestedDo : IO Unit := do
+  for i in List.range 3 do
+    for j in List.range 3 do
+      IO.println s!"{i},{j}"
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (for_in
+        var: (identifier)
+        iterable: (application
+          name: (projection
+            term: (identifier)
+            name: (identifier))
+          arguments: (number))
+        body: (do
+          (for_in
+            var: (identifier)
+            iterable: (application
+              name: (projection
+                term: (identifier)
+                name: (identifier))
+              arguments: (number))
+            body: (do
+              (application
+                name: (projection
+                  term: (identifier)
+                  name: (identifier))
+                arguments: (interpolated_string
+                  (string
+                    (interpolation
+                      (identifier))
+                    (interpolation
+                      (identifier))))))))))))
+
+=====================================
+Do with match
+=====================================
+
+def describeList (xs : List Nat) : IO Unit := do
+  match xs with
+  | [] => IO.println "empty"
+  | _ => IO.println "non-empty"
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (identifier))))
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (do_match
+        scrutinees: (identifier)
+        (do_match_arm
+          patterns: (list)
+          body: (application
+            name: (projection
+              term: (identifier)
+              name: (identifier))
+            arguments: (string)))
+        (do_match_arm
+          patterns: (hole)
+          body: (application
+            name: (projection
+              term: (identifier)
+              name: (identifier))
+            arguments: (string)))))))
+
+=====================================
+Id.run do block
+=====================================
+
+def buildArray : Array Nat := Id.run do
+  let mut result : Array Nat := #[]
+  for i in List.range 5 do
+    result := result.push i
+  return result
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (application
+      name: (projection
+        term: (identifier)
+        name: (identifier))
+      arguments: (do
+        (let_mut
+          name: (identifier)
+          type: (application
+            name: (identifier)
+            arguments: (identifier))
+          value: (array))
+        (for_in
+          var: (identifier)
+          iterable: (application
+            name: (projection
+              term: (identifier)
+              name: (identifier))
+            arguments: (number))
+          body: (do
+            (reassign
+              name: (identifier)
+              value: (application
+                name: (projection
+                  term: (identifier)
+                  name: (identifier))
+                arguments: (identifier)))))
+        (return
+          value: (identifier))))))

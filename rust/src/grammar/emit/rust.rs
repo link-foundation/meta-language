@@ -100,10 +100,14 @@ fn enum_variants(alternatives: &[GrammarExpr]) -> Vec<RustFieldShape> {
 
 fn variant_name(expr: &GrammarExpr, index: usize) -> String {
     match expr {
-        GrammarExpr::NonTerminal(name) => rust_type_name(name),
-        GrammarExpr::Capture {
-            label: Some(label), ..
-        } => rust_type_name(label),
+        // Variants live in their enum's namespace, so only `Self` is reserved.
+        GrammarExpr::NonTerminal(name)
+        | GrammarExpr::Capture {
+            label: Some(name), ..
+        } => match rust_type_name_with_fallback(name, "Generated") {
+            variant if variant == "Self" => "SelfNode".to_string(),
+            variant => variant,
+        },
         GrammarExpr::Capture { expr, .. } => variant_name(expr, index),
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => {
             rust_type_name_with_fallback(value, &format!("Literal{}", index + 1))
@@ -120,6 +124,7 @@ fn variant_name(expr: &GrammarExpr, index: usize) -> String {
             format!("Repeated{}", index + 1)
         }
         GrammarExpr::And(_) | GrammarExpr::Not(_) => format!("Predicate{}", index + 1),
+        GrammarExpr::Feature(_) => format!("Feature{}", index + 1),
     }
 }
 
@@ -200,6 +205,7 @@ fn collect_fields(expr: &GrammarExpr, quantifier: Quantifier, fields: &mut Vec<A
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar => {}
     }
 }
@@ -290,7 +296,7 @@ fn is_terminal_only(expr: &GrammarExpr) -> bool {
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
         | GrammarExpr::AnyChar => true,
-        GrammarExpr::NonTerminal(_) => false,
+        GrammarExpr::NonTerminal(_) | GrammarExpr::Feature(_) => false,
         GrammarExpr::Choice { alternatives, .. } | GrammarExpr::Sequence(alternatives) => {
             alternatives.iter().all(is_terminal_only)
         }
@@ -434,8 +440,17 @@ fn parser_struct_name(grammar: &Grammar) -> String {
     format!("{}Parser", rust_type_name(base))
 }
 
+/// Type names the generated module already uses: prelude types named in
+/// field types, the `Rule` enum derived by `pest_derive`, and `Self`.
+const RESERVED_TYPE_NAMES: &[&str] = &["Box", "Option", "Result", "Rule", "Self", "String", "Vec"];
+
 fn rust_type_name(value: &str) -> String {
-    rust_type_name_with_fallback(value, "Generated")
+    let name = rust_type_name_with_fallback(value, "Generated");
+    if RESERVED_TYPE_NAMES.contains(&name.as_str()) {
+        format!("{name}Node")
+    } else {
+        name
+    }
 }
 
 fn rust_type_name_with_fallback(value: &str, fallback: &str) -> String {

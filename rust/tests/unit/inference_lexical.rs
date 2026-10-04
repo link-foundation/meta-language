@@ -1,6 +1,6 @@
 use meta_language::{
-    categorise, infer_lexical_classes, ByteRange, CharCategory, GrammarExpr, LexicalConfig,
-    RuleKind,
+    ByteRange, CharCategory, GrammarExpr, LexicalConfig, RuleKind, categorise,
+    infer_lexical_classes,
 };
 
 #[test]

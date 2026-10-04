@@ -9,6 +9,7 @@ on:
       - 'parity/**'
       - 'docs/**'
       - '.github/workflows/rust.yml'
+      - 'scripts/**'
       - '.secretlintrc.json'
   pull_request:
     types: [opened, synchronize, reopened]
@@ -17,6 +18,7 @@ on:
       - 'parity/**'
       - 'docs/**'
       - '.github/workflows/rust.yml'
+      - 'scripts/**'
       - '.secretlintrc.json'
   workflow_dispatch:
     inputs:
@@ -44,6 +46,13 @@ on:
 # Least-privilege default for every job; jobs that need more escalate explicitly.
 permissions:
   contents: read
+
+# A newer push to a pull request cancels the run of its older head. Push,
+# release and dispatch runs are grouped by their own run id, so they never
+# cancel each other; their write jobs queue in the release write group.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -76,7 +85,7 @@ jobs:
       workflow-changed: ${{ steps.changes.outputs.workflow-changed }}
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -106,7 +115,7 @@ jobs:
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -133,7 +142,7 @@ jobs:
       cancel-in-progress: true
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -160,10 +169,15 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}-secrets-scan
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Run secretlint
         run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === FRESH MERGE SIMULATION ===
   fresh-merge:
@@ -173,10 +187,10 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-fresh-merge
       cancel-in-progress: true
-    needs: [detect-changes]
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
+    needs: [detect-changes, check]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true' && needs.check.result == 'success'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -186,7 +200,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache cargo registry
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -223,7 +237,7 @@ jobs:
         needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -234,6 +248,108 @@ jobs:
       - name: Check committed Cargo.lock for binary crates
         working-directory: ${{ github.workspace }}
         run: rust-script rust/scripts/check-cargo-lock.rs
+
+  # === CARGO CHECK GATE ===
+  # Type-checks the library, binaries, tests, examples and benches once. The
+  # suites, MSRV, coverage and the fresh merge wait for it, so a compile error
+  # fails here in a few minutes instead of in every test job.
+  check:
+    name: Cargo Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-check
+      cancel-in-progress: true
+    needs: [detect-changes, cargo-lock]
+    defaults:
+      run:
+        working-directory: rust
+    if: |
+      !cancelled() && needs.cargo-lock.result == 'success' && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.any-code-changed == 'true' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-check-
+
+      - name: Check every target with every feature
+        run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo check --locked --all-targets --all-features
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  # === MINIMUM SUPPORTED RUST VERSION ===
+  # Builds the library, binaries and tests with the toolchain Cargo.toml declares
+  # as `rust-version`, so the declared minimum stays true as dependencies update.
+  msrv:
+    name: Minimum Supported Rust Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-msrv
+      cancel-in-progress: true
+    needs: [detect-changes, cargo-lock, check]
+    defaults:
+      run:
+        working-directory: rust
+    if: |
+      !cancelled() && needs.cargo-lock.result != 'failure' && needs.check.result == 'success' && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the declared rust-version
+        id: msrv
+        run: echo "version=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Rust ${{ steps.msrv.outputs.version }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+
+      - name: Cache cargo registry
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-msrv-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-msrv-
+
+      - name: Check with the minimum supported Rust version
+        run: cargo check --locked --all-features --all-targets
+
+      - name: Clean caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run
@@ -263,7 +379,7 @@ jobs:
         needs.detect-changes.outputs.any-code-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -276,7 +392,7 @@ jobs:
         run: ./scripts/install-rust-script.sh
 
       - name: Cache cargo registry
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -333,22 +449,31 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node js/scripts/check-js-rust-parity.mjs --manifest-only
 
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   # === TEST ===
-  # Test runs independently of changelog check
+  # The suites partition the tests by name: each later suite skips the
+  # filters of the earlier ones, and `remaining` skips all of them, so every
+  # test runs in exactly one suite. Doc tests and the example check run with
+  # `remaining`.
   test:
-    name: Test (${{ matrix.os }})
+    name: Test (${{ matrix.os }}, ${{ matrix.suite }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 15
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}
       cancel-in-progress: true
-    needs: [detect-changes, changelog, cargo-lock]
+    needs: [detect-changes, changelog, cargo-lock, check]
     defaults:
       run:
         working-directory: rust
     if: |
       !cancelled() &&
       needs.cargo-lock.result == 'success' &&
+      needs.check.result == 'success' &&
       (needs.changelog.result == 'success' || needs.changelog.result == 'skipped') && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
@@ -361,11 +486,26 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        suite: [grammar, inference, translation, remaining]
+        include:
+          - suite: grammar
+            filters: grammar_
+          - suite: inference
+            filters: inference_ --skip grammar_
+          - suite: translation
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_
+          - suite: remaining
+            filters: --skip grammar_ --skip inference_ --skip translation_ --skip issue_195_ --skip conformance
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js for translated JavaScript tests
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
 
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
@@ -383,14 +523,18 @@ jobs:
           }
 
           $vcvarsEnvironment = @{}
+          $existingPath = $env:Path -split ";" | Where-Object { $_ }
           cmd /s /c "`"$vcvars`" && set" | ForEach-Object {
             if ($_ -match "^(.*?)=(.*)$") {
               $name = $matches[1]
               $value = $matches[2]
               $vcvarsEnvironment[$name] = $value
               if ($name -eq "Path") {
-                "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Append
-                $value -split ";" | Where-Object { $_ } | ForEach-Object {
+                # GITHUB_PATH prepends to the existing PATH; a Path entry in GITHUB_ENV would add a
+                # second, differently cased variable that child processes may resolve instead.
+                # Only the directories vcvars added are prepended: re-prepending the runner's own
+                # entries would put WindowsApps (whose bash.exe is the WSL launcher) ahead of Git Bash.
+                $value -split ";" | Where-Object { $_ -and ($existingPath -notcontains $_) } | ForEach-Object {
                   $_ | Out-File -FilePath $env:GITHUB_PATH -Append
                 }
               } elseif ($name -match "^(INCLUDE|LIB|LIBPATH|VCINSTALLDIR|VCToolsInstallDir|VCToolsVersion|VSINSTALLDIR|WindowsSdkDir|WindowsSDKVersion|UniversalCRTSdkDir|UCRTVersion)$") {
@@ -420,7 +564,7 @@ jobs:
 
       - name: Cache cargo registry on Windows
         if: runner.os == 'Windows'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -431,7 +575,7 @@ jobs:
 
       - name: Cache cargo registry and target on Unix
         if: runner.os != 'Windows'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -441,11 +585,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-test-
 
+      # Tests and doc tests run through the cleanup wrapper; examples are
+      # only checked, not linked, so the target stays small.
       - name: Run tests
-        run: cargo test --all-features --verbose
+        shell: bash
+        env:
+          SUITE_FILTERS: ${{ matrix.filters }}
+        # The filters are word-split on purpose: they are separate arguments.
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --tests --verbose -- $SUITE_FILTERS
 
       - name: Run doc tests
-        run: cargo test --doc --verbose
+        if: matrix.suite == 'remaining'
+        shell: bash
+        run: |
+          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --all-features --doc --verbose
+          node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --doc --verbose
+
+      - name: Check examples
+        if: matrix.suite == 'remaining'
+        shell: bash
+        run: cargo check --examples --all-features
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === CODE COVERAGE ===
   # Generate and upload code coverage using cargo-llvm-cov
@@ -456,21 +620,21 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-coverage
       cancel-in-progress: true
-    needs: [detect-changes, cargo-lock]
+    needs: [detect-changes, cargo-lock, check]
     defaults:
       run:
         working-directory: rust
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     if: |
-      !cancelled() && needs.cargo-lock.result == 'success' && (
+      !cancelled() && needs.cargo-lock.result == 'success' && needs.check.result == 'success' && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.rs-changed == 'true' ||
         needs.detect-changes.outputs.toml-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -478,7 +642,7 @@ jobs:
           components: llvm-tools-preview
 
       - name: Cache cargo registry
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -492,7 +656,7 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Generate code coverage
-        run: cargo llvm-cov --all-features --lcov --output-path lcov.info --fail-under-lines 84.30
+        run: node ../scripts/with-cache-cleanup.mjs --event coverage --protect lcov.info -- cargo llvm-cov --all-features --lcov --output-path lcov.info --fail-under-lines 84.30
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
@@ -506,6 +670,11 @@ jobs:
       - name: Report skipped Codecov upload
         if: env.CODECOV_TOKEN == ''
         run: echo "::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === BUILD ===
   # Build package - only runs if lint and test pass
@@ -522,7 +691,7 @@ jobs:
         working-directory: rust
     if: ${{ !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -531,7 +700,7 @@ jobs:
         run: ./scripts/install-rust-script.sh
 
       - name: Cache cargo registry
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -542,13 +711,18 @@ jobs:
             ${{ runner.os }}-cargo-build-
 
       - name: Build release
-        run: cargo build --release --verbose
+        run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo build --release --verbose
 
       - name: Check package
-        run: cargo package --list --allow-dirty
+        run: node ../scripts/with-cache-cleanup.mjs --event package -- cargo package --list --allow-dirty
 
       - name: Check crate package size
         run: rust-script scripts/check-crate-size.rs
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === AUTO RELEASE ===
   # Automatic release on push to main using changelog fragments
@@ -577,7 +751,7 @@ jobs:
       contents: write
       actions: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -616,7 +790,7 @@ jobs:
 
       - name: Build release
         if: steps.check.outputs.should_release == 'true'
-        run: cargo build --release
+        run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo build --release
 
       - name: Check crate package size
         if: steps.check.outputs.should_release == 'true' && steps.check.outputs.crate_published != 'true'
@@ -730,7 +904,9 @@ jobs:
 
       # A release created with GITHUB_TOKEN does not emit a new release workflow
       # run. Dispatch the one canonical package publisher explicitly so its trusted-
-      # publishing identity remains .github/workflows/js.yml.
+      # publishing identity remains .github/workflows/js.yml. The dispatch runs on
+      # the release tag, so npm receives the merged commit the crate came from even
+      # when main has moved on.
       - name: Dispatch JavaScript publisher
         if: |
           steps.check.outputs.should_release == 'true' && (
@@ -740,7 +916,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.current_version.outputs.version }}
-        run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
+        run: gh workflow run js.yml --ref "v$RELEASE_VERSION" -f release_version="$RELEASE_VERSION"
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === MANUAL INSTANT RELEASE ===
   # Manual release via workflow_dispatch - only after CI passes
@@ -768,7 +949,7 @@ jobs:
       contents: write
       actions: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -794,7 +975,7 @@ jobs:
 
       - name: Build release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        run: cargo build --release
+        run: node ../scripts/with-cache-cleanup.mjs --event build -- cargo build --release
 
       - name: Check crate package size
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
@@ -905,7 +1086,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
-        run: gh workflow run js.yml --ref main -f release_version="$RELEASE_VERSION"
+        run: gh workflow run js.yml --ref "v$RELEASE_VERSION" -f release_version="$RELEASE_VERSION"
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
@@ -923,7 +1109,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -1005,7 +1191,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: main
 
@@ -1030,7 +1216,7 @@ jobs:
 
       - name: Build WebAssembly demo
         working-directory: rust/web
-        run: wasm-pack build --release --target web --out-dir pkg
+        run: node ../../scripts/with-cache-cleanup.mjs --event build --protect pkg -- wasm-pack build --release --target web --out-dir pkg
 
       - name: Assemble website
         working-directory: rust
@@ -1050,3 +1236,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown

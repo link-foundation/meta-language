@@ -1,5 +1,9 @@
 # Grammar-format round-trip fidelity matrix
 
+This matrix reports what the current implementation does; the lossy entries
+are unfinished requirements under [the vision](../vision.md#grammar-import-conversion-and-reverse-conversion).
+A profile or a diagnostic does not establish semantic preservation.
+
 `meta-language` imports external grammar notations into the shared
 [`Grammar` IR](architecture.md), emits that IR back to a target notation, and
 re-imports the emitted text to check what survived the trip. This page records
@@ -25,7 +29,7 @@ assert_eq!(
     Some(GrammarFidelityLevel::Lossless),
 );
 assert_eq!(
-    bnf.construct_fidelity("zero-or-more"),
+    bnf.construct_fidelity("zero-or-more-repetition"),
     Some(GrammarFidelityLevel::Lossy),
 );
 ```
@@ -49,26 +53,26 @@ fallback.
 
 | Construct | BNF |
 | --- | :---: |
-| empty | ✅ |
+| empty-expression | ✅ |
 | sequence | ✅ |
 | ordered-choice | ⚠️ |
 | unordered-choice | ✅ |
-| optional | ⚠️ |
-| zero-or-more | ⚠️ |
-| one-or-more | ⚠️ |
-| repeat-range | ⚠️ |
-| char-range | ⚠️ |
-| char-class | ⚠️ |
-| any-char | ⚠️ |
+| optional-expression | ⚠️ |
+| zero-or-more-repetition | ⚠️ |
+| one-or-more-repetition | ⚠️ |
+| counted-repetition | ⚠️ |
+| character-range | ⚠️ |
+| character-class | ⚠️ |
+| any-character | ⚠️ |
 | terminal | ✅ |
 | case-insensitive-terminal | ⚠️ |
-| non-terminal | ✅ |
-| and-predicate | ⚠️ |
-| not-predicate | ⚠️ |
+| nonterminal | ✅ |
+| positive-predicate | ⚠️ |
+| negative-predicate | ⚠️ |
 | capture | ⚠️ |
-| rule-kind-atomic | ⚠️ |
-| rule-kind-silent | ⚠️ |
-| rule-kind-token | ⚠️ |
+| atomic-rule | ⚠️ |
+| silent-rule | ⚠️ |
+| token-rule | ⚠️ |
 
 ✅ lossless · ≈ equivalent spelling or normalization · ⚠️ documented lossy fallback
 
@@ -77,20 +81,20 @@ fallback.
 | Format | Construct | Fallback |
 | --- | --- | --- |
 | bnf | ordered-choice | emitted as an unordered BNF alternative; priority semantics are not preserved |
-| bnf | optional | emitted through a synthetic helper production with an empty alternative |
-| bnf | zero-or-more | emitted through a recursive synthetic helper production with an empty alternative |
-| bnf | one-or-more | emitted through a recursive synthetic helper production plus one required item |
-| bnf | repeat-range | emitted as required occurrences plus optional or recursive synthetic helper productions |
-| bnf | char-range | expanded to a synthetic helper production enumerating each character when the range is bounded |
-| bnf | char-class | expanded to a synthetic helper production for finite non-negated classes; unsupported classes are rejected |
-| bnf | any-char | unsupported by BNF emission and rejected instead of silently broadening the language |
+| bnf | optional-expression | emitted through a synthetic helper production with an empty alternative |
+| bnf | zero-or-more-repetition | emitted through a recursive synthetic helper production with an empty alternative |
+| bnf | one-or-more-repetition | emitted through a recursive synthetic helper production plus one required item |
+| bnf | counted-repetition | emitted as required occurrences plus optional or recursive synthetic helper productions |
+| bnf | character-range | expanded to a synthetic helper production enumerating each character when the range is bounded |
+| bnf | character-class | expanded to a synthetic helper production for finite non-negated classes; unsupported classes are rejected |
+| bnf | any-character | unsupported by BNF emission and rejected instead of silently broadening the language |
 | bnf | case-insensitive-terminal | emitted as a case-sensitive literal and reported as lossy |
-| bnf | and-predicate | unsupported by BNF emission and rejected because lookahead has no BNF equivalent |
-| bnf | not-predicate | unsupported by BNF emission and rejected because lookahead has no BNF equivalent |
+| bnf | positive-predicate | unsupported by BNF emission and rejected because lookahead has no BNF equivalent |
+| bnf | negative-predicate | unsupported by BNF emission and rejected because lookahead has no BNF equivalent |
 | bnf | capture | emitted as the captured expression while dropping the capture label |
-| bnf | rule-kind-atomic | emitted as a normal BNF production; rule-kind metadata is dropped |
-| bnf | rule-kind-silent | emitted as a normal BNF production; rule-kind metadata is dropped |
-| bnf | rule-kind-token | emitted as a normal BNF production; rule-kind metadata is dropped |
+| bnf | atomic-rule | emitted as a normal BNF production; rule-kind metadata is dropped |
+| bnf | silent-rule | emitted as a normal BNF production; rule-kind metadata is dropped |
+| bnf | token-rule | emitted as a normal BNF production; rule-kind metadata is dropped |
 
 ## Round-trip guarantee
 
@@ -101,6 +105,6 @@ same rule list, that lossy helper fallbacks re-import without undefined
 non-terminals, and that unsupported BNF constructs return documented
 `GrammarEmitError::Unsupported` errors instead of silent output.
 
-Later importer/emitter issues can add rows by extending `GRAMMAR_FORMATS`,
-adding a `grammar_format_profile` branch, and adding same-format fixtures for
-that row.
+Complete coverage in this pull request requires extending `GRAMMAR_FORMATS`,
+adding a `grammar_format_profile` branch, and executing same-format and
+cross-format fixtures under independent target tools for every required format.

@@ -12,7 +12,7 @@ const LANGUAGE_FALLBACK_LANGUAGE = 'translation-rule-language-fallback';
 const TEMPLATE_DEFINITION = 'translation-rule-template';
 
 const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder('utf-8', { fatal: true });
+const textDecoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 export class TranslationTemplate {
   constructor(language, text) {
@@ -278,7 +278,7 @@ function loadRule(links, ruleLink) {
 
 function parseCanonicalNetwork(source) {
   const links = new Map();
-  for (const statement of new Parser().parse(source)) {
+  for (const statement of new Parser({ comments: false }).parse(source)) {
     const id = numericId(statement.id, 'top-level statement must be an identified link');
     const references = [];
     let metadata;
@@ -419,11 +419,15 @@ function parseLinkType(token) {
   const normalized = String(token).toLowerCase();
   const aliases = {
     concept: LinkType.Concept,
+    document: LinkType.Document,
     dynamic: LinkType.Dynamic,
     field: LinkType.Field,
+    grammar: LinkType.Grammar,
     language: LinkType.Language,
     link: LinkType.Dynamic,
     object: LinkType.Object,
+    reference: LinkType.Reference,
+    region: LinkType.Region,
     relation: LinkType.Relation,
     semantic: LinkType.Semantic,
     sourcetoken: LinkType.SourceToken,
@@ -431,6 +435,7 @@ function parseLinkType(token) {
     syntax: LinkType.Syntax,
     token: LinkType.Token,
     trivia: LinkType.Trivia,
+    type: LinkType.Type,
   };
   return aliases[normalized] ?? token;
 }

@@ -1,0 +1,15 @@
+step 1n: sum 1n
+step 2n: sum 3n
+step 3n: sum 6n
+step 4n: sum 10n
+total 10n done true
+-0 x%sy 2n
+answer=42n
+30n% of the whole and more 7n
+one %s %s
+%x stays, unknown
+ styled
+-0 and 1.5
+mean of 2 values: 3.5
+ 3.5
+1.5 2n false

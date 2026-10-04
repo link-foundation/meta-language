@@ -1,0 +1,212 @@
+==================
+Function with a Measure
+==================
+Function fact (n : N) {measure N.to_nat n} : N :=
+  (if N.eqb n 0%N then 1%N else N.mul n (fact (N.pred n))).
+Proof. all: lia. Defined.
+---
+
+(source_file
+  (sentence
+    (function_command
+      (ident_decl
+        (ident))
+      (binder
+        (ident)
+        (type
+          (ident)))
+      (fixannot
+        (dotted_qualid)
+        (ident))
+      (type
+        (ident))
+      (parenthesized_term
+        (if_expression
+          (application
+            (application
+              (dotted_qualid)
+              (ident))
+            (scoped_term
+              (number)
+              (ident)))
+          (scoped_term
+            (number)
+            (ident))
+          (application
+            (application
+              (dotted_qualid)
+              (ident))
+            (parenthesized_term
+              (application
+                (ident)
+                (parenthesized_term
+                  (application
+                    (dotted_qualid)
+                    (ident))))))))))
+  (sentence
+    (proof_command))
+  (sentence
+    (selector)
+    (tactic_invocation
+      (generic_tactic
+        (ident))))
+  (sentence
+    (defined_command)))
+
+==================
+Mutually Recursive Ltac Definitions
+==================
+Ltac ml_prove := first [ reflexivity | split; ml_prove ]
+with ml_refute H := first [ discriminate H | exact H ].
+---
+
+(source_file
+  (sentence
+    (ltac_definition
+      (ident)
+      (tactic_invocation
+        (first_tactic
+          (goal_branch
+            (tactic_invocation
+              (generic_tactic
+                (ident))))
+          (goal_branch
+            (tactic_sequence
+              (tactic_invocation
+                (generic_tactic
+                  (ident)))
+              (tactic_invocation
+                (generic_tactic
+                  (ident)))))))
+      (ident)
+      (ident)
+      (tactic_invocation
+        (first_tactic
+          (goal_branch
+            (tactic_invocation
+              (generic_tactic
+                (ident)
+                (generic_tactic_body
+                  (atomic_term_with_bindings
+                    (ident))))))
+          (goal_branch
+            (tactic_invocation
+              (generic_tactic
+                (ident)
+                (generic_tactic_body
+                  (atomic_term_with_bindings
+                    (ident)))))))))))
+
+==================
+Ltac Redefinition
+==================
+Ltac ml_close ::= solve [ reflexivity | lia ].
+---
+
+(source_file
+  (sentence
+    (ltac_definition
+      (ident)
+      (tactic_invocation
+        (first_tactic
+          (goal_branch
+            (tactic_invocation
+              (generic_tactic
+                (ident))))
+          (goal_branch
+            (tactic_invocation
+              (generic_tactic
+                (ident)))))))))
+
+==================
+First with Rewrite Alternatives
+==================
+Lemma closes : True.
+Proof.
+  first [ml_close | (rewrite ?ih; ml_close) | (rewrite <- ?ihl, ?ihr; ml_close)].
+Qed.
+---
+
+(source_file
+  (sentence
+    (theorem_command
+      (ident_decl
+        (ident))
+      (type
+        (ident))))
+  (sentence
+    (proof_command))
+  (sentence
+    (tactic_invocation
+      (first_tactic
+        (goal_branch
+          (tactic_invocation
+            (generic_tactic
+              (ident))))
+        (goal_branch
+          (parenthesized_tactic
+            (tactic_sequence
+              (tactic_invocation
+                (rewrite_tactic
+                  (oriented_rewriter
+                    (atomic_term_with_bindings
+                      (metavariable)))))
+              (tactic_invocation
+                (generic_tactic
+                  (ident))))))
+        (goal_branch
+          (parenthesized_tactic
+            (tactic_sequence
+              (tactic_invocation
+                (rewrite_tactic
+                  (oriented_rewriter
+                    (atomic_term_with_bindings
+                      (metavariable)))
+                  (oriented_rewriter
+                    (atomic_term_with_bindings
+                      (metavariable)))))
+              (tactic_invocation
+                (generic_tactic
+                  (ident)))))))))
+  (sentence
+    (qed_command)))
+
+==================
+Ltac Let In
+==================
+Ltac fresh_intro := let H := fresh "H" in intro H; first [ exact H | discriminate H ].
+---
+
+(source_file
+  (sentence
+    (ltac_definition
+      (ident)
+      (ltac_let
+        (ident)
+        (tactic_invocation
+          (generic_tactic
+            (ident)
+            (generic_tactic_body
+              (atomic_term_with_bindings
+                (string)))))
+        (tactic_sequence
+          (tactic_invocation
+            (intros_tactic
+              (intro_pattern
+                (ident))))
+          (tactic_invocation
+            (first_tactic
+              (goal_branch
+                (tactic_invocation
+                  (generic_tactic
+                    (ident)
+                    (generic_tactic_body
+                      (atomic_term_with_bindings
+                        (ident))))))
+              (goal_branch
+                (tactic_invocation
+                  (generic_tactic
+                    (ident)
+                    (generic_tactic_body
+                      (atomic_term_with_bindings
+                        (ident)))))))))))))

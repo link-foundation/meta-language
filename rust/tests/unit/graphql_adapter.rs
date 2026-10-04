@@ -1,8 +1,8 @@
 use meta_language::{
-    lower_graphql, ByteRange, GraphQlOperationType, GraphQlRootMapping, GraphQlSchemaRegistry,
-    LinkType, Point, QueryAggregate, QueryAggregateFunction, QueryComparisonOperator, QueryFilter,
-    QueryOperation, QueryOrder, QueryPlan, QuerySortDirection, QuerySourceEvidence, QueryValue,
-    SourceSpan,
+    ByteRange, GraphQlOperationType, GraphQlRootMapping, GraphQlSchemaRegistry, LinkType, Point,
+    QueryAggregate, QueryAggregateFunction, QueryComparisonOperator, QueryFilter, QueryOperation,
+    QueryOrder, QueryPlan, QuerySortDirection, QuerySourceEvidence, QueryValue, SourceSpan,
+    lower_graphql,
 };
 use serde_json::Value;
 
@@ -30,7 +30,7 @@ fn shared_graphql_fixtures_lower_to_canonical_query_plans() {
             serde_json::from_str(&lowered.plan().canonical_json()).expect("canonical plan is JSON");
 
         assert_eq!(actual, fixture["canonicalPlan"], "{}", fixture["name"]);
-        assert!(!lowered.plan().source_evidence().is_empty());
+        assert_ne!(lowered.plan().source_evidence(), []);
         let root = lowered
             .network()
             .link(lowered.root_link())
@@ -87,9 +87,11 @@ fn graphql_lowering_fails_closed_for_unmapped_or_ambiguous_input() {
         "user",
     )
     .with_field("id", "");
-    assert!(GraphQlSchemaRegistry::new()
-        .register_root(empty_field)
-        .is_err());
+    assert!(
+        GraphQlSchemaRegistry::new()
+            .register_root(empty_field)
+            .is_err()
+    );
 
     let ambiguous_field = GraphQlRootMapping::new(
         GraphQlOperationType::Query,
@@ -99,9 +101,11 @@ fn graphql_lowering_fails_closed_for_unmapped_or_ambiguous_input() {
     )
     .with_field("id", "user.id")
     .with_field("ID", "legacy.id");
-    assert!(GraphQlSchemaRegistry::new()
-        .register_root(ambiguous_field)
-        .is_err());
+    assert!(
+        GraphQlSchemaRegistry::new()
+            .register_root(ambiguous_field)
+            .is_err()
+    );
 }
 
 #[test]

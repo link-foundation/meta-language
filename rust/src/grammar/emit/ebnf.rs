@@ -1,8 +1,8 @@
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat};
 
 use super::{
-    expanded_chars, finish_lines, ordered_rules, render_rule_line, unsupported_error, EmitReport,
-    GrammarEmitError, HelperRules, EBNF_RULE_TEMPLATE,
+    EBNF_RULE_TEMPLATE, EmitReport, GrammarEmitError, HelperRules, expanded_chars, finish_lines,
+    ordered_rules, render_rule_line, unsupported_error,
 };
 
 const MAX_EBNF_EXPANSION: u32 = 256;
@@ -107,6 +107,9 @@ impl EbnfEmitter {
             ),
             GrammarExpr::And(_) => return Err(unsupported_error(GrammarFormat::Ebnf, "And")),
             GrammarExpr::Not(_) => return Err(unsupported_error(GrammarFormat::Ebnf, "Not")),
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Ebnf, feature.head()));
+            }
             GrammarExpr::Capture { label, expr } => {
                 report_capture_loss(&mut self.report, GrammarFormat::Ebnf, label.as_ref());
                 return self.emit_expr(expr, parent);
@@ -267,6 +270,21 @@ fn quote_terminal(value: &str) -> String {
     } else {
         '"'
     };
-    let escaped = value.replace(quote, &quote.to_string().repeat(2));
-    format!("{quote}{escaped}{quote}")
+    let mut output = String::with_capacity(value.len() + 2);
+    output.push(quote);
+    for character in value.chars() {
+        match character {
+            '\\' => output.push_str("\\\\"),
+            '\n' => output.push_str("\\n"),
+            '\r' => output.push_str("\\r"),
+            '\t' => output.push_str("\\t"),
+            other if other == quote => {
+                output.push('\\');
+                output.push(other);
+            }
+            other => output.push(other),
+        }
+    }
+    output.push(quote);
+    output
 }

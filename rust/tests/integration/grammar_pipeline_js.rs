@@ -1,7 +1,7 @@
 use meta_language::emit_javascript_parser;
 
 use super::grammar_pipeline_support::{
-    infer_valid_grammar_from_strings, load_fixture_corpus, run_javascript_parser, ExternalRun,
+    ExternalRun, infer_valid_grammar_from_strings, load_fixture_corpus, run_javascript_parser,
 };
 
 #[test]
@@ -11,7 +11,7 @@ fn infer_emit_js_reparses_examples() {
     let (artifacts, _report) =
         emit_javascript_parser(&grammar).expect("JavaScript parser codegen emits");
 
-    assert!(!artifacts.peggy_grammar.trim().is_empty());
+    assert_ne!(artifacts.peggy_grammar.trim(), "");
     assert!(artifacts.module.contains("peggy.generate"));
 
     match run_javascript_parser(&artifacts.module, &examples, Some("a,,"))

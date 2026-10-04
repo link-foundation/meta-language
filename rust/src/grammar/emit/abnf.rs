@@ -1,8 +1,8 @@
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat};
 
 use super::{
-    finish_lines, ordered_rules, render_rule_line, unsupported_error, EmitReport, GrammarEmitError,
-    ABNF_RULE_TEMPLATE,
+    ABNF_RULE_TEMPLATE, EmitReport, GrammarEmitError, finish_lines, ordered_rules,
+    render_rule_line, unsupported_error,
 };
 
 /// Emits Augmented Backus-Naur Form text from the grammar IR.
@@ -84,6 +84,9 @@ impl AbnfEmitter {
             }
             GrammarExpr::And(_) => return Err(unsupported_error(GrammarFormat::Abnf, "And")),
             GrammarExpr::Not(_) => return Err(unsupported_error(GrammarFormat::Abnf, "Not")),
+            GrammarExpr::Feature(feature) => {
+                return Err(unsupported_error(GrammarFormat::Abnf, feature.head()));
+            }
             GrammarExpr::Capture { label, expr } => {
                 report_capture_loss(&mut self.report, GrammarFormat::Abnf, label.as_ref());
                 return self.emit_expr(expr, parent);

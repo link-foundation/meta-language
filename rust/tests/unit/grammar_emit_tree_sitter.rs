@@ -1,6 +1,6 @@
 use meta_language::{
-    emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report, CharClassItem, Grammar,
-    GrammarEmitError, GrammarFormat, RuleKind,
+    CharClassItem, Grammar, GrammarEmitError, GrammarFormat, RuleKind, emit_tree_sitter_grammar_js,
+    emit_tree_sitter_grammar_js_with_report,
 };
 
 const SUM_GRAMMAR_JS: &str = include_str!("../fixtures/grammar/tree-sitter/sum.grammar.js");
@@ -28,7 +28,7 @@ fn emits_sum_tree_sitter_grammar_js_skeleton() {
 
     assert_eq!(text, normalized_fixture(SUM_GRAMMAR_JS));
     assert_eq!(reported_text, text);
-    assert!(report.lossy.is_empty());
+    assert_eq!(report.lossy, [] as [String; 0]);
 }
 
 #[test]
@@ -90,30 +90,42 @@ fn emits_covering_tree_sitter_grammar_js_with_reported_lossy_mappings() {
         emit_tree_sitter_grammar_js_with_report(&grammar).expect("tree-sitter grammar.js emits");
 
     assert_eq!(text, normalized_fixture(COVERING_GRAMMAR_JS));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("case-insensitive")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("ordered choice")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("Repeat with min 2")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("RuleKind::Silent")));
-    assert!(report
-        .lossy
-        .iter()
-        .any(|note| note.contains("anonymous capture")));
-    assert!(!report
-        .lossy
-        .iter()
-        .any(|note| note.contains("capture label")));
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("case-insensitive"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("ordered choice"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("Repeat with min 2"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("RuleKind::Silent"))
+    );
+    assert!(
+        report
+            .lossy
+            .iter()
+            .any(|note| note.contains("anonymous capture"))
+    );
+    assert!(
+        !report
+            .lossy
+            .iter()
+            .any(|note| note.contains("capture label"))
+    );
 }
 
 #[test]

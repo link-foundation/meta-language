@@ -1,0 +1,239 @@
+==================
+Anonymous Function
+==================
+
+#check fun x => x + 2
+
+---
+
+(module
+  (hash_command
+    (fun
+      (identifier)
+      (binary_expression
+        (identifier)
+        (number)))))
+
+=============================
+Anonymous Function via Lambda
+=============================
+
+#check λ x => x
+
+---
+
+(module
+  (hash_command
+    (fun
+      (identifier)
+      (identifier))))
+
+==========================================
+Anonymous Function With Destructuring Bind
+==========================================
+
+#check λ ⟨a⟩ v ⟨w, x, y⟩ z => a
+
+---
+
+(module
+  (hash_command
+    (fun
+      (parameters
+        (anonymous_constructor
+          (identifier))
+        name: (identifier)
+        (anonymous_constructor
+          (identifier)
+          (identifier)
+          (identifier))
+        name: (identifier))
+      (identifier))))
+
+==============================
+Anonymous Function Application
+==============================
+
+#eval (fun x => x + 2) 10
+
+---
+
+(module
+  (hash_command
+    (application
+      (parenthesized
+        (fun
+          (identifier)
+          (binary_expression
+            (identifier)
+            (number))))
+      (number))))
+
+=================================================
+Anonymous Function Match With Additional Argument
+=================================================
+
+#eval foo 0 fun
+  | 0 => 0
+  | n => 1
+  37
+
+---
+
+(module
+  (hash_command
+    (application
+      name: (application
+        name: (application
+          name: (identifier)
+          arguments: (number))
+        arguments: (fun
+          (match_arm
+            patterns: (number)
+            body: (number))
+          (match_arm
+            patterns: (identifier)
+            body: (number))))
+      arguments: (number))))
+
+==========================
+Sugared Anonymous Function
+==========================
+
+#check (· + 2)
+#eval twice (· + 2) 10
+
+---
+
+(module
+  (hash_command
+    (parenthesized
+      (binary_expression
+        (cdot)
+        (number))))
+  (hash_command
+    (application
+      (application
+        (identifier)
+        (parenthesized
+          (binary_expression
+            (cdot)
+            (number))))
+      (number))))
+
+=================
+Explicit Function
+=================
+
+#check @ident
+#check @ident α
+#check @ident Bool true
+#check @foo.bar
+
+---
+
+(module
+  (hash_command
+    (explicit
+      (identifier)))
+  (hash_command
+    (application
+      (explicit
+        (identifier))
+      (identifier)))
+  (hash_command
+    (application
+      (explicit
+        (identifier))
+      (identifier)
+      (true)))
+  (hash_command
+    (explicit
+      (identifier))))
+
+===============
+Match Style Fun
+===============
+
+def matchFun := fun | 0 => true | _ => false
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (fun
+      (match_arm
+        patterns: (number)
+        body: (true))
+      (match_arm
+        patterns: (hole)
+        body: (false)))))
+
+===========
+Quantifiers
+===========
+
+#check ∀ x, ∃ y, x + y = x
+#check ∃ (x y : Nat), ∀ w, w + x + y + z = x
+
+---
+
+(module
+  (hash_command
+    (quantifier
+      binders: (identifier)
+      body: (quantifier
+        binders: (identifier)
+        body: (binary_expression
+          left: (binary_expression
+            left: (identifier)
+            right: (identifier))
+          right: (identifier)))))
+  (hash_command
+    (quantifier
+      binders: (explicit_binder
+        name: (identifier)
+        name: (identifier)
+        type: (identifier))
+      body: (quantifier
+        binders: (identifier)
+        body: (binary_expression
+          left: (binary_expression
+            left: (binary_expression
+              left: (binary_expression
+                left: (identifier)
+                right: (identifier))
+              right: (identifier))
+            right: (identifier))
+          right: (identifier))))))
+
+===============
+Type Ascription
+===============
+
+#check (2 : Nat)
+#check (foo bar : Nat)
+#check (foo bar : baz quux)
+
+---
+
+(module
+  (hash_command
+    (parenthesized
+      (number)
+      type: (identifier)))
+  (hash_command
+    (parenthesized
+      (application
+        name: (identifier)
+        arguments: (identifier))
+      type: (identifier)))
+  (hash_command
+    (parenthesized
+      (application
+        name: (identifier)
+        arguments: (identifier))
+      type: (application
+        name: (identifier)
+        arguments: (identifier)))))

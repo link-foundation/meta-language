@@ -66,6 +66,32 @@ pub enum DiagnosticKind {
     },
 }
 
+impl DiagnosticKind {
+    /// Returns the stable textual form of the class, such as `left-recursion`.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::UndefinedNonTerminal { .. } => "undefined-non-terminal",
+            Self::LeftRecursion { .. } => "left-recursion",
+            Self::UnreachableRule { .. } => "unreachable-rule",
+            Self::NullableRepetition { .. } => "nullable-repetition",
+            Self::DuplicateRule { .. } => "duplicate-rule",
+            Self::UnusedCapture { .. } => "unused-capture",
+        }
+    }
+}
+
+impl Severity {
+    /// Returns the stable textual form, `error` or `warning`.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Error => "error",
+            Self::Warning => "warning",
+        }
+    }
+}
+
 /// One grammar validation finding.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GrammarDiagnostic {
@@ -393,6 +419,9 @@ fn collect_nullable_repetitions(
         | GrammarExpr::Capture { expr: inner, .. } => {
             collect_nullable_repetitions(rule_name, inner, nullability, diagnostics);
         }
+        GrammarExpr::Feature(feature) => feature.for_each_expression(&mut |inner| {
+            collect_nullable_repetitions(rule_name, inner, nullability, diagnostics);
+        }),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
@@ -476,6 +505,9 @@ fn collect_unused_captures(
                 collect_unused_captures(rule_name, item, diagnostics);
             }
         }
+        GrammarExpr::Feature(feature) => feature.for_each_expression(&mut |inner| {
+            collect_unused_captures(rule_name, inner, diagnostics);
+        }),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
@@ -546,6 +578,7 @@ fn collect_left_references(
         | GrammarExpr::TerminalInsensitive(_)
         | GrammarExpr::CharRange(_, _)
         | GrammarExpr::CharClass { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::AnyChar => {}
     }
 }
@@ -580,9 +613,10 @@ fn compute_nullability(grammar: &Grammar) -> BTreeMap<String, bool> {
 fn expr_is_nullable(expr: &GrammarExpr, nullability: &BTreeMap<String, bool>) -> bool {
     match expr {
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => value.is_empty(),
-        GrammarExpr::CharRange(_, _) | GrammarExpr::CharClass { .. } | GrammarExpr::AnyChar => {
-            false
-        }
+        GrammarExpr::CharRange(_, _)
+        | GrammarExpr::CharClass { .. }
+        | GrammarExpr::AnyChar
+        | GrammarExpr::Feature(_) => false,
         GrammarExpr::NonTerminal(name) => nullability.get(name).copied().unwrap_or(false),
         GrammarExpr::Choice { alternatives, .. } => alternatives
             .iter()
@@ -639,9 +673,10 @@ fn expr_is_suspicious_nullable(
 ) -> bool {
     match expr {
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => value.is_empty(),
-        GrammarExpr::CharRange(_, _) | GrammarExpr::CharClass { .. } | GrammarExpr::AnyChar => {
-            false
-        }
+        GrammarExpr::CharRange(_, _)
+        | GrammarExpr::CharClass { .. }
+        | GrammarExpr::AnyChar
+        | GrammarExpr::Feature(_) => false,
         GrammarExpr::NonTerminal(name) => suspicious.get(name).copied().unwrap_or(false),
         GrammarExpr::Choice { alternatives, .. } => alternatives
             .iter()
@@ -695,6 +730,7 @@ fn collect_nonterminals_into(expr: &GrammarExpr, names: &mut BTreeSet<String>) {
         | GrammarExpr::Not(expr)
         | GrammarExpr::Capture { expr, .. }
         | GrammarExpr::Repeat { expr, .. } => collect_nonterminals_into(expr, names),
+        GrammarExpr::Feature(feature) => feature.collect_references(names),
         GrammarExpr::Empty
         | GrammarExpr::Terminal(_)
         | GrammarExpr::TerminalInsensitive(_)
@@ -724,7 +760,7 @@ fn nearest_rule_name<'a>(name: &str, candidates: &'a [String]) -> Option<&'a str
             continue;
         }
 
-        let should_replace = best.map_or(true, |(best_name, best_distance)| {
+        let should_replace = best.is_none_or(|(best_name, best_distance)| {
             distance < best_distance
                 || (distance == best_distance && candidate.as_str() < best_name)
         });
@@ -768,10 +804,7 @@ fn canonical_cycle_key(cycle: &[String]) -> String {
             .map(|offset| nodes[(start + offset) % nodes.len()].as_str())
             .collect::<Vec<_>>()
             .join("\0");
-        if best
-            .as_ref()
-            .map_or(true, |candidate| rotation < *candidate)
-        {
+        if best.as_ref().is_none_or(|candidate| rotation < *candidate) {
             best = Some(rotation);
         }
     }

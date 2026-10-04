@@ -1,0 +1,260 @@
+=========
+Array Ref
+=========
+
+#check foo[bar 3]
+
+---
+
+(module
+  (hash_command
+    (subscript
+      object: (identifier)
+      index: (application
+        name: (identifier)
+        arguments: (number)))))
+
+========
+Subarray
+========
+
+#check foo[0:bar 3]
+
+---
+
+(module
+  (hash_command
+    (subscript
+      object: (identifier)
+      index: (number)
+      stop: (application
+        name: (identifier)
+        arguments: (number)))))
+
+================
+Subarray No Stop
+================
+
+#check foo[0:]
+
+---
+
+(module
+  (hash_command
+    (subscript
+      object: (identifier)
+      index: (number))))
+
+=================
+Subarray No Start
+=================
+
+#check foo[:3]
+
+---
+
+(module
+  (hash_command
+    (subscript
+      object: (identifier)
+      stop: (number))))
+
+======================
+Subarray of Expression
+======================
+
+#check (foo 37)[:3]
+
+---
+
+(module
+  (hash_command
+    (subscript
+      object: (parenthesized
+        (application
+          name: (identifier)
+          arguments: (number)))
+      stop: (number))))
+
+===========================
+Subarray Does Not Have Step
+===========================
+
+#check foo[1:2:3]
+
+---
+
+(module
+  (hash_command
+    (subscript
+      object: (identifier)
+      index: (number)
+      stop: (application
+        name: (number)
+        (ERROR)
+        arguments: (number)))))
+
+===========================
+Subarray Does Not Have Copy
+===========================
+
+#check foo[:]
+
+---
+
+(module
+  (hash_command
+    (subscript
+      object: (identifier))))
+
+==================
+Subarray vs. Range
+==================
+
+#check foo [1:2]
+
+---
+
+(module
+  (hash_command
+    (application
+      name: (identifier)
+      arguments: (range
+        start: (number)
+        end: (number)))))
+
+===========================
+Multiple Function Arguments
+===========================
+
+#check foo 2 3 4
+
+---
+
+(module
+  (hash_command
+    (application
+      (application
+        (application
+          (identifier)
+          (number))
+        (number))
+      (number))))
+
+===============
+Named Arguments
+===============
+
+#check foo (bar := 3)
+
+---
+
+(module
+  (hash_command
+    (application
+      (identifier)
+      (named_argument
+        (identifier)
+        (number)))))
+
+=====================
+Mixed Named Arguments
+=====================
+
+#check foo 1 (bar := 3) 2 (baz := 4)
+
+---
+
+(module
+  (hash_command
+    (application
+      (application
+        (application
+          (application
+            (identifier)
+            (number))
+          (named_argument
+            (identifier)
+            (number)))
+        (number))
+      (named_argument
+        (identifier)
+        (number)))))
+
+============
+Field Access
+============
+
+#check FooBar.foo
+#check foo.12
+
+---
+
+(module
+  (hash_command
+    (projection
+      term: (identifier)
+      name: (identifier)))
+  (hash_command
+    (projection
+      term: (identifier)
+      name: (number))))
+
+===================
+Nested Field Access
+===================
+
+#check Foo.bar.baz.quux
+
+---
+
+(module
+  (hash_command
+    (projection
+      (projection
+        (projection
+          (identifier)
+          (identifier))
+        (identifier))
+      (identifier))))
+
+=======================
+Expression Field Access
+=======================
+
+#check (Foo.bar baz).baz
+
+---
+
+(module
+  (hash_command
+    (projection
+      (parenthesized
+        (application
+          (projection
+            (identifier)
+            (identifier))
+          (identifier)))
+      (identifier))))
+
+=================================
+Application Across Multiple Lines
+=================================
+
+#eval f
+2
+3
+
+  4
+
+---
+
+(module
+  (hash_command
+    (application
+      name: (application
+        name: (application
+          name: (identifier)
+          arguments: (number))
+        arguments: (number))
+      arguments: (number))))

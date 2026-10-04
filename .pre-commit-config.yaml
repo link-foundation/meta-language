@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -37,7 +37,7 @@ repos:
 
       - id: cargo-test
         name: cargo test
-        entry: bash -c 'cd rust && cargo test'
+        entry: bash -c 'cd rust && node ../scripts/with-cache-cleanup.mjs --event test -- cargo test'
         language: system
         types: [rust]
         pass_filenames: false
@@ -45,7 +45,7 @@ repos:
       # The JavaScript package lives under ./js.
       - id: js-test
         name: javascript tests
-        entry: bash -c 'cd js && npm test'
+        entry: bash -c 'cd js && node ../scripts/with-cache-cleanup.mjs --event test -- npm test'
         language: system
         files: ^js/
         pass_filenames: false
@@ -57,4 +57,14 @@ repos:
         entry: node js/scripts/check-js-rust-parity.mjs --manifest-only
         language: system
         files: ^(rust/|js/|parity/)
+        pass_filenames: false
+
+      # Clean the regenerable caches (docs/cache-cleanup.md) on every commit,
+      # documentation-only commits included, so it is never restricted to
+      # some files.
+      - id: clean-caches
+        name: clean regenerable caches
+        entry: node scripts/clean-caches.mjs --event pre-commit --quiet
+        language: system
+        always_run: true
         pass_filenames: false

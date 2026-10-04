@@ -1,5 +1,10 @@
 # Issue 10: Visual Basic Grammar
 
+> **Historical case study.** This records the investigation of issue #10 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 Issue #10 asked for a Visual Basic grammar candidate evaluation and a
 grammar-backed parser path that can still reconstruct source byte-for-byte.
 

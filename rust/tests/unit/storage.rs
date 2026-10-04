@@ -57,9 +57,11 @@ fn in_memory_link_network_implements_link_store_crud_and_search() {
     assert_eq!(store.find_term("updated"), Some(child));
 
     assert!(LinkStore::delete(&mut store, child).expect("delete child"));
-    assert!(LinkStore::read(&store, child)
-        .expect("read deleted child")
-        .is_none());
+    assert!(
+        LinkStore::read(&store, child)
+            .expect("read deleted child")
+            .is_none()
+    );
 }
 
 #[test]

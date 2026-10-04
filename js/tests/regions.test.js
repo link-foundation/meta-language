@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 
 import {
   EmbeddedRegion,
   RegionDetectionPolicy,
   detectEmbeddedRegions,
+  scriptLanguage,
   sniffLanguage,
 } from '../src/regions.js';
+import { LinkNetwork } from '../src/network.js';
+import { LinkType, ParseConfiguration } from '../src/primitives.js';
 
 const encoder = new TextEncoder();
 
@@ -65,15 +69,17 @@ test('markdown name-driven detection captures fenced and HTML regions', () => {
   const regions = detectEmbeddedRegions(source, 'Markdown', RegionDetectionPolicy.Both);
   const langs = languages(regions);
 
-  assert.ok(langs.includes('rust'));
+  // Fence tags resolve to canonical language names.
+  assert.ok(langs.includes('Rust'));
   assert.ok(langs.includes('HTML'));
   assert.ok(regions.every((region) => region.span().byteRange.end <= byteLength(source)));
 
-  const rust = regions.find((region) => region.language() === 'rust');
+  const rust = regions.find((region) => region.language() === 'Rust');
   // Fence content starts right after the ```rust\n line and ends before closing fence line.
   assert.equal(rust.span().byteRange.start, byteFind(source, 'fn main'));
   assert.equal(rust.span().byteRange.end, byteRFind(source, '```\n'));
 
+  // Inline HTML spans from an opening tag to its matching closing tag.
   const html = regions.find((region) => region.language() === 'HTML');
   assert.equal(html.span().byteRange.start, byteFind(source, '<strong>'));
   assert.equal(html.span().byteRange.end, byteFind(source, '</strong>') + byteLength('</strong>'));
@@ -121,11 +127,11 @@ test('name-driven markdown keeps explicit language tag', () => {
   assert.ok(langs.includes('HTML'));
 
   const section = regions.find((region) => region.language() === 'HTML');
-  // Region spans from the outer <section> open to its matching </section>.
+  // The grammar's html_block spans the whole block, closing newline included.
   assert.equal(section.span().byteRange.start, byteFind(markdown, '<section>'));
   assert.equal(
     section.span().byteRange.end,
-    byteFind(markdown, '</section>') + byteLength('</section>'),
+    byteFind(markdown, '</section>') + byteLength('</section>\n'),
   );
 });
 
@@ -178,7 +184,7 @@ test('html element detection is case insensitive', () => {
 test('point rows and columns track newlines in fenced regions', () => {
   const source = 'Intro\n```rust\nfn main() {}\n```\n';
   const regions = detectEmbeddedRegions(source, 'Markdown', RegionDetectionPolicy.NameDriven);
-  const rust = regions.find((region) => region.language() === 'rust');
+  const rust = regions.find((region) => region.language() === 'Rust');
   // "fn main() {}" begins on the third line (row index 2), column 0.
   assert.equal(rust.span().start.row, 2);
   assert.equal(rust.span().start.column, 0);
@@ -198,4 +204,113 @@ test('sniffLanguage recognizes supported signatures', () => {
   assert.equal(sniffLanguage('let y = 2;'), 'JavaScript');
   assert.equal(sniffLanguage('SELECT 1;'), 'sql-ansi');
   assert.equal(sniffLanguage('plain prose'), null);
+});
+
+test('embedded regions own connected grammar CSTs with exact host-source boundaries', () => {
+  assert.equal(LinkType.Region, 'Region');
+  const html =
+    '<script>const value = "café";</script>' +
+    '<style>.x { color: red; }</style>' +
+    '<p style="color: blue">text</p>';
+  const htmlNetwork = LinkNetwork.parse(html, 'HTML', ParseConfiguration.default());
+  assert.equal(htmlNetwork.reconstructText(), html);
+  assert.equal(htmlNetwork.verifyFullMatch().isClean(), true);
+  assertConnectedRegion(htmlNetwork, html, 'JavaScript', 'program', 'const value = "café";');
+  assertConnectedRegion(htmlNetwork, html, 'CSS', 'stylesheet', '.x { color: red; }');
+  assertConnectedRegion(htmlNetwork, html, 'CSS', 'stylesheet', 'color: blue');
+
+  const markdown =
+    '# Embedded\n```JavaScript\nconst answer = 42;\n```\n<section><em>HTML</em></section>\n';
+  const markdownNetwork = LinkNetwork.parse(markdown, 'Markdown');
+  assert.equal(markdownNetwork.reconstructText(), markdown);
+  assertConnectedRegion(
+    markdownNetwork,
+    markdown,
+    'JavaScript',
+    'program',
+    'const answer = 42;\n',
+  );
+  assertConnectedRegion(
+    markdownNetwork,
+    markdown,
+    'HTML',
+    'document',
+    '<section><em>HTML</em></section>\n',
+  );
+
+  const invalid = '<script>const = ;</script>';
+  const invalidNetwork = LinkNetwork.parse(invalid, 'HTML');
+  assert.equal(invalidNetwork.reconstructText(), invalid);
+  assert.equal(invalidNetwork.verifyFullMatch().isClean(), false);
+});
+
+function assertConnectedRegion(network, source, language, rootTerm, regionSource) {
+  const start = byteFind(source, regionSource);
+  const end = start + byteLength(regionSource);
+  const region = network.links().find((link) =>
+    link.metadata().linkType === LinkType.Region &&
+    link.metadata().language === language &&
+    link.metadata().span?.byteRange.start === start &&
+    link.metadata().span?.byteRange.end === end
+  );
+  assert.ok(region, `${language} region ${start}..${end}`);
+  const root = region.references()
+    .map((reference) => network.link(reference))
+    .find((link) =>
+      link?.metadata().linkType === LinkType.Syntax &&
+      link.metadata().language === language &&
+      link.metadata().term === rootTerm
+    );
+  assert.ok(root, `${language} grammar root connected to region`);
+  assert.equal(root.metadata().span.byteRange.start, start);
+  assert.equal(root.metadata().span.byteRange.end, end);
+  assert.ok(network.links().some((link) =>
+    link.metadata().linkType === LinkType.SourceToken &&
+    link.metadata().language === language &&
+    link.metadata().span?.byteRange.start >= start &&
+    link.metadata().span?.byteRange.end <= end
+  ));
+}
+
+const regionCases = JSON.parse(
+  await readFile(new URL('../../parity/fixtures/embedded-region-cases.json', import.meta.url), 'utf8'),
+);
+
+test('host grammar CSTs delimit the shared embedded region cases in both APIs', () => {
+  for (const { host, policy, source, regions } of regionCases.cases) {
+    const bytes = encoder.encode(source);
+    const decode = (start, end) => new TextDecoder().decode(bytes.subarray(start, end));
+    const expected = regions.map(([language, start, end, text]) => {
+      assert.equal(decode(start, end), text, `${host} ${JSON.stringify(source)} fixture text`);
+      return [language, start, end];
+    });
+    const rows = (found) =>
+      found.map((region) => [
+        region.language(),
+        region.span().byteRange.start,
+        region.span().byteRange.end,
+      ]);
+    assert.deepEqual(rows(detectEmbeddedRegions(source, host, policy)), expected, source);
+    const network = LinkNetwork.parse(
+      source,
+      host,
+      ParseConfiguration.default().withRegionDetectionPolicy(policy),
+    );
+    assert.deepEqual(rows(network.embeddedRegions()), expected, source);
+    assert.equal(network.reconstructText(), source);
+  }
+});
+
+test('script types name the language of their element content', () => {
+  assert.equal(scriptLanguage(undefined), 'JavaScript');
+  assert.equal(scriptLanguage(' Text/JavaScript ; charset=utf-8'), 'JavaScript');
+  assert.equal(scriptLanguage('module'), 'JavaScript');
+  assert.equal(scriptLanguage('importmap'), 'JSON');
+  assert.equal(scriptLanguage('speculationrules'), 'JSON');
+  assert.equal(scriptLanguage('application/json'), 'JSON');
+  assert.equal(scriptLanguage('application/ld+json'), 'JSON');
+  assert.equal(scriptLanguage('text/typescript'), 'TypeScript');
+  assert.equal(scriptLanguage('text/x-python'), 'Python');
+  assert.equal(scriptLanguage('text/x-template'), null);
+  assert.equal(scriptLanguage('typescript'), null);
 });

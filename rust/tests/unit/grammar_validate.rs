@@ -1,5 +1,5 @@
 use meta_language::{
-    parse_grammar_surface, validate, DiagnosticKind, Grammar, GrammarDiagnostic, Severity,
+    DiagnosticKind, Grammar, GrammarDiagnostic, Severity, parse_grammar_surface, validate,
 };
 
 #[test]
@@ -74,9 +74,11 @@ fn right_recursion_and_terminal_guards_are_not_left_recursion() {
 
     let diagnostics = validate(&grammar);
 
-    assert!(!diagnostics
-        .iter()
-        .any(|diagnostic| matches!(diagnostic.kind, DiagnosticKind::LeftRecursion { .. })));
+    assert!(
+        !diagnostics
+            .iter()
+            .any(|diagnostic| matches!(diagnostic.kind, DiagnosticKind::LeftRecursion { .. }))
+    );
 }
 
 #[test]
@@ -126,9 +128,11 @@ fn nullable_repetition_flags_nullable_inner_expression_only() {
 
     let good_diagnostics = validate(&good);
 
-    assert!(!good_diagnostics
-        .iter()
-        .any(|diagnostic| matches!(diagnostic.kind, DiagnosticKind::NullableRepetition { .. })));
+    assert!(
+        !good_diagnostics
+            .iter()
+            .any(|diagnostic| matches!(diagnostic.kind, DiagnosticKind::NullableRepetition { .. }))
+    );
 }
 
 #[test]
@@ -192,7 +196,7 @@ fn valid_arithmetic_grammar_has_no_errors_and_validation_is_deterministic() {
 
 #[test]
 fn empty_grammar_and_single_rule_cycle_do_not_panic() {
-    assert!(validate(&Grammar::new()).is_empty());
+    assert_eq!(validate(&Grammar::new()), [] as [GrammarDiagnostic; 0]);
 
     let expr = Grammar::expr();
     let grammar = Grammar::builder()

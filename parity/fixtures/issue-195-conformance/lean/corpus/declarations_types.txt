@@ -1,0 +1,499 @@
+=========
+Structure
+=========
+
+structure Point (α : Type u) where
+  w : String := "foo"
+  x : α
+  y : Foo Bar Baz Quux
+  z := 0
+
+---
+
+(module
+  (structure
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (identifier))))
+    fields: (structure_field
+      name: (identifier)
+      type: (identifier)
+      default: (string))
+    fields: (structure_field
+      name: (identifier)
+      type: (identifier))
+    fields: (structure_field
+      name: (identifier)
+      type: (application
+        name: (application
+          name: (application
+            name: (identifier)
+            arguments: (identifier))
+          arguments: (identifier))
+        arguments: (identifier)))
+    fields: (structure_field
+      name: (identifier)
+      default: (number))))
+
+=================
+Structure Extends
+=================
+
+structure Bar extends Foo where
+  bit : Bool
+
+class Baz extends Quux where
+  bit : Bool
+
+---
+
+(module
+  (structure
+    name: (identifier)
+    extends: (identifier)
+    fields: (structure_field
+      name: (identifier)
+      type: (identifier)))
+  (structure
+    name: (identifier)
+    extends: (identifier)
+    fields: (structure_field
+      name: (identifier)
+      type: (identifier))))
+
+==========================
+Structure Multiple Extends
+==========================
+
+structure Bar extends Foo, Bar α where
+  bit : Bool
+
+---
+
+(module
+  (structure
+    name: (identifier)
+    extends: (identifier)
+    extends: (application
+      name: (identifier)
+      arguments: (identifier))
+    fields: (structure_field
+      name: (identifier)
+      type: (identifier))))
+
+===================
+Structure No Fields
+===================
+
+structure Foo where
+
+---
+
+(module
+  (structure
+    name: (identifier)))
+
+=====
+Class
+=====
+
+class Quux (a : Type) where
+  foo : String := "foo"
+  add : a -> a -> a
+  bar := 0
+  baz {x : String} : String
+
+---
+
+(module
+  (structure
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    fields: (structure_field
+      name: (identifier)
+      type: (identifier)
+      default: (string))
+    fields: (structure_field
+      name: (identifier)
+      type: (arrow
+        domain: (identifier)
+        codomain: (arrow
+          domain: (identifier)
+          codomain: (identifier))))
+    fields: (structure_field
+      name: (identifier)
+      default: (number))
+    fields: (structure_field
+      name: (identifier)
+      (implicit_binder
+        name: (identifier)
+        type: (identifier))
+      type: (identifier))))
+
+===============
+Class No Fields
+===============
+
+class Foo where
+
+---
+
+(module
+  (structure
+    name: (identifier)))
+
+========
+Instance
+========
+
+instance : ToString Foo where
+  toString (d : Foo) : String := "Foo"
+
+---
+
+(module
+  (definition
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (where_decl
+      name: (identifier)
+      binders: (explicit_binder
+        name: (identifier)
+        type: (identifier))
+      type: (identifier)
+      body: (string))))
+
+==============
+Named Instance
+==============
+
+instance toStringFoo : ToString Foo where
+  toString (d : Foo) : String := "Foo"
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (where_decl
+      name: (identifier)
+      binders: (explicit_binder
+        name: (identifier)
+        type: (identifier))
+      type: (identifier)
+      body: (string))))
+
+========================
+Instance With Parameters
+========================
+
+instance {f : Foo} (g : Bar 3) : Quux where
+  foo := f
+
+---
+
+(module
+  (definition
+    binders: (implicit_binder
+      name: (identifier)
+      type: (identifier))
+    binders: (explicit_binder
+      name: (identifier)
+      type: (application
+        name: (identifier)
+        arguments: (number)))
+    type: (identifier)
+    body: (where_decl
+      name: (identifier)
+      body: (identifier))))
+
+================
+Chained Instance
+================
+
+instance [Inhabited b] : Inhabited (a -> b) where
+  default := fun _ => arbitrary
+
+---
+
+(module
+  (definition
+    binders: (instance_binder
+      type: (application
+        name: (identifier)
+        arguments: (identifier)))
+    type: (application
+      name: (identifier)
+      arguments: (parenthesized
+        (arrow
+          domain: (identifier)
+          codomain: (identifier))))
+    body: (where_decl
+      name: (identifier)
+      body: (fun
+        binders: (hole)
+        body: (identifier)))))
+
+===================================
+Instance With Inductive Constructor
+===================================
+
+instance : Inhabited Nat := ⟨0⟩
+
+---
+
+(module
+  (definition
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (anonymous_constructor
+      (number))))
+
+==============================
+Instance With Field Definition
+==============================
+
+instance : Add Foo := Foo.add
+
+---
+
+(module
+  (definition
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (projection
+      term: (identifier)
+      name: (identifier))))
+
+========================================
+Instance Field With Function Return Type
+========================================
+
+instance : ToString Foo where
+  toString : Foo → String := λ f => s!"Foo"
+
+---
+
+(module
+  (definition
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (where_decl
+      name: (identifier)
+      type: (arrow
+        domain: (identifier)
+        codomain: (identifier))
+      body: (fun
+        binders: (identifier)
+        body: (interpolated_string
+          (string))))))
+
+==================================
+Instance Field Without Return Type
+==================================
+
+instance : ToString Foo where
+  toString d := "Foo"
+
+---
+
+(module
+  (definition
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (where_decl
+      name: (identifier)
+      binders: (identifier)
+      body: (string))))
+
+================================
+Instance With Match Syntax Sugar
+================================
+
+instance : ToString Foo where
+  toString
+  | _ => "foo"
+
+---
+
+(module
+  (definition
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (where_decl
+      name: (identifier)
+      (match_arm
+        patterns: (hole)
+        body: (string)))))
+
+=======
+Example
+=======
+
+example : (fun x => x * 2) 4 < 3 = false := rfl
+
+---
+
+(module
+  (example
+    (binary_expression
+      (binary_expression
+        (application
+          (parenthesized
+            (fun
+              (identifier)
+              (binary_expression
+                (identifier)
+                (number))))
+          (number))
+        (number))
+      (false))
+    (identifier)))
+
+=======================
+Example With Parameters
+=======================
+
+example {G : Type} [Add G] (g : G) : g + g = g + g := rfl
+
+---
+
+(module
+  (example
+    binders: (binders
+      (implicit_binder
+        name: (identifier)
+        type: (identifier))
+      (instance_binder
+        type: (application
+          name: (identifier)
+          arguments: (identifier)))
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    type: (binary_expression
+      left: (binary_expression
+        left: (identifier)
+        right: (identifier))
+      right: (binary_expression
+        left: (identifier)
+        right: (identifier)))
+    body: (identifier)))
+
+======================================================
+Noncomputable / Partial / Protected / Private / Unsafe
+======================================================
+
+partial def foo := 12
+
+partial def g x : Nat := g (x + 1)
+
+noncomputable def foo := 12
+
+protected unsafe def foo := 12
+
+unsafe inductive Foo | foo
+
+private structure Foo where x : Nat
+
+protected class Bar where x : Nat
+
+protected instance : Quux where x := 2
+
+noncomputable instance : Foo where x := 2
+
+private theorem bar : 2 = 2 := rfl
+
+protected example : 2 = 2 := rfl
+
+noncomputable example : 2 = 2 := rfl
+
+protected constant FooBar : Nat
+
+noncomputable constant FooBar : Nat
+
+---
+
+(module
+  (definition
+    (identifier)
+    (number))
+  (definition
+    (identifier)
+    (binders
+      (identifier))
+    (identifier)
+    (application
+      (identifier)
+      (parenthesized
+        (binary_expression
+          (identifier)
+          (number)))))
+  (definition
+    (identifier)
+    (number))
+  (definition
+    (identifier)
+    (number))
+  (inductive
+    (identifier)
+    (constructor
+      (identifier)))
+  (structure
+    (identifier)
+    (structure_field
+      (identifier)
+      (identifier)))
+  (structure
+    (identifier)
+    (structure_field
+      (identifier)
+      (identifier)))
+  (definition
+    (identifier)
+    (where_decl
+      (identifier)
+      (number)))
+  (definition
+    (identifier)
+    (where_decl
+      (identifier)
+      (number)))
+  (definition
+    (identifier)
+    (binary_expression
+      (number)
+      (number))
+    (identifier))
+  (example
+    (binary_expression
+      (number)
+      (number))
+    (identifier))
+  (example
+    (binary_expression
+      (number)
+      (number))
+    (identifier))
+  (constant
+    (identifier)
+    (identifier))
+  (constant
+    (identifier)
+    (identifier)))

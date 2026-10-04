@@ -1,10 +1,10 @@
 use meta_language::grammar::inference::active::{
-    learn_dfa, learn_grammar, ActiveLearningConfig, Dfa, GrammarAcceptorOracle, Oracle,
-    ParserMembershipOracle, SamplingEquivalenceOracle, Symbol,
+    ActiveLearningConfig, Dfa, GrammarAcceptorOracle, Oracle, ParserMembershipOracle,
+    SamplingEquivalenceOracle, Symbol, learn_dfa, learn_grammar,
 };
 use meta_language::{
-    register_grammar, FromLinks, Grammar, GrammarFormat, GrammarParser, LinksDecoder, LinksEncoder,
-    ParserRegistry, ToLinks,
+    FromLinks, Grammar, GrammarFormat, GrammarParser, LinksDecoder, LinksEncoder, ParserRegistry,
+    ToLinks, register_grammar,
 };
 
 #[test]

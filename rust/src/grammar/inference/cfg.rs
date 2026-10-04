@@ -11,8 +11,8 @@ use super::advisor::{
     MergeAdvisor, MergeCandidate, MergeRequest, NamingAdvisor, NamingRequest,
 };
 pub use super::eval::MembershipOracle;
-use super::eval::{sample, GrammarOracle, SampleConfig};
-use super::prior::{build_structural_prior, ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode};
+use super::eval::{GrammarOracle, SampleConfig, sample};
+use super::prior::{ByteSpan, Delimiter, LeafKind, PriorOptions, SeedNode, build_structural_prior};
 use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 
 const ROOT_RULE: &str = "Root";
@@ -602,7 +602,7 @@ fn seq_expr(items: Vec<GrammarExpr>) -> GrammarExpr {
     }
 }
 
-fn choice_len(expr: &GrammarExpr) -> usize {
+const fn choice_len(expr: &GrammarExpr) -> usize {
     match expr {
         GrammarExpr::Choice { alternatives, .. } => alternatives.len(),
         GrammarExpr::Empty => 0,

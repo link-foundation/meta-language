@@ -8,22 +8,30 @@ use crate::grammar::{Grammar, GrammarExpr, GrammarFormat, GrammarRule};
 use crate::translation_rules::TranslationTemplate;
 
 mod abnf;
+mod antlr;
 mod bnf;
 mod ebnf;
 mod gbnf;
 mod javascript;
+mod lark;
 mod pest;
 mod rust;
+mod structural;
 mod tree_sitter;
+mod tree_sitter_json;
 
 pub use abnf::emit_abnf;
+pub use antlr::emit_antlr;
 pub use bnf::emit_bnf;
 pub use ebnf::emit_ebnf;
 pub use gbnf::emit_gbnf;
-pub use javascript::{emit_javascript_parser, emit_peggy, JsParserArtifacts};
+pub use javascript::{JsParserArtifacts, emit_javascript_parser, emit_peggy};
+pub use lark::emit_lark;
 pub use pest::emit_pest;
-pub use rust::{emit_rust_parser, render_rust_type, RustParserArtifacts};
+pub use rust::{RustParserArtifacts, emit_rust_parser, render_rust_type};
+pub(crate) use structural::case_variants;
 pub use tree_sitter::{emit_tree_sitter_grammar_js, emit_tree_sitter_grammar_js_with_report};
+pub use tree_sitter_json::emit_tree_sitter_json;
 
 pub(super) const BNF_RULE_TEMPLATE: &str = "<{name}> ::= {body}";
 pub(super) const EBNF_RULE_TEMPLATE: &str = "{name} = {body} ;";
@@ -193,6 +201,7 @@ fn expr_required_width(expr: &GrammarExpr) -> usize {
         | GrammarExpr::And(_)
         | GrammarExpr::Not(_)
         | GrammarExpr::Optional(_)
+        | GrammarExpr::Feature(_)
         | GrammarExpr::ZeroOrMore(_) => 0,
         GrammarExpr::Terminal(value) | GrammarExpr::TerminalInsensitive(value) => value.len(),
         GrammarExpr::CharRange(_, _)
@@ -258,6 +267,7 @@ fn literal_yield(expr: &GrammarExpr) -> Option<String> {
         | GrammarExpr::ZeroOrMore(_)
         | GrammarExpr::OneOrMore(_)
         | GrammarExpr::Repeat { .. }
+        | GrammarExpr::Feature(_)
         | GrammarExpr::And(_)
         | GrammarExpr::Not(_) => None,
     }

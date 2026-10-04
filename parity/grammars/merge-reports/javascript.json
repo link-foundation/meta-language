@@ -1,0 +1,275 @@
+{
+  "generatedBy": "js/scripts/import-native-grammars.mjs",
+  "language": "javascript",
+  "native": "native-javascript",
+  "sources": [
+    {
+      "id": "tree-sitter-javascript",
+      "format": "tree-sitter grammar.json",
+      "package": "crates.io tree-sitter-javascript 0.25.0",
+      "repository": "https://github.com/tree-sitter/tree-sitter-javascript",
+      "revision": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+      "path": "src/grammar.json",
+      "sha256": "7d9364b824be9250ba023065784550475d277b9dc9a7d20f9bebe9e471c908c3",
+      "license": "MIT"
+    }
+  ],
+  "scanner": {
+    "file": "parity/grammars/scanners/javascript.lino",
+    "sha256": "6b382526289adf9b6f17690081931db3e0fc81ad4f5f3e8187935cb105de1c1e",
+    "ports": {
+      "path": "src/scanner.c",
+      "sha256": "b3d3f64284d97bf80749c026862427782cf7ecc0b7dc094e6698ab311c9a42c7"
+    },
+    "scanners": [
+      {
+        "name": "automatic_semicolon",
+        "tokens": [
+          "automatic_semicolon"
+        ]
+      },
+      {
+        "name": "template_characters",
+        "tokens": [
+          "template_characters"
+        ]
+      },
+      {
+        "name": "ternary_question_mark",
+        "tokens": [
+          "ternary_question_mark"
+        ]
+      },
+      {
+        "name": "html_comment",
+        "tokens": [
+          "html_comment"
+        ]
+      },
+      {
+        "name": "jsx_text",
+        "tokens": [
+          "jsx_text"
+        ]
+      }
+    ],
+    "immediate": [
+      "_automatic_semicolon",
+      "_template_chars",
+      "jsx_text"
+    ]
+  },
+  "rules": 143,
+  "keywords": [
+    "as",
+    "async",
+    "await",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "export",
+    "extends",
+    "false",
+    "finally",
+    "for",
+    "from",
+    "function",
+    "get",
+    "if",
+    "import",
+    "in",
+    "instanceof",
+    "let",
+    "meta",
+    "new",
+    "null",
+    "of",
+    "return",
+    "set",
+    "static",
+    "super",
+    "switch",
+    "target",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typeof",
+    "undefined",
+    "using",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield"
+  ],
+  "renamed": [
+    {
+      "source": "_module_export_name",
+      "native": "module_export_name"
+    },
+    {
+      "source": "_from_clause",
+      "native": "from_clause"
+    },
+    {
+      "source": "_for_header",
+      "native": "for_header"
+    },
+    {
+      "source": "_expressions",
+      "native": "expressions"
+    },
+    {
+      "source": "_jsx_element",
+      "native": "jsx_element_choice"
+    },
+    {
+      "source": "_jsx_child",
+      "native": "jsx_child"
+    },
+    {
+      "source": "_jsx_identifier",
+      "native": "jsx_identifier_choice"
+    },
+    {
+      "source": "_jsx_element_name",
+      "native": "jsx_element_name"
+    },
+    {
+      "source": "_jsx_attribute",
+      "native": "jsx_attribute_choice"
+    },
+    {
+      "source": "_jsx_attribute_name",
+      "native": "jsx_attribute_name"
+    },
+    {
+      "source": "_jsx_string",
+      "native": "jsx_string"
+    },
+    {
+      "source": "_jsx_attribute_value",
+      "native": "jsx_attribute_value"
+    },
+    {
+      "source": "_call_signature",
+      "native": "call_signature"
+    },
+    {
+      "source": "_formal_parameter",
+      "native": "formal_parameter"
+    },
+    {
+      "source": "_lhs_expression",
+      "native": "left_hand_side_expression"
+    },
+    {
+      "source": "_augmented_assignment_lhs",
+      "native": "augmented_assignment_left_hand_side"
+    },
+    {
+      "source": "_initializer",
+      "native": "initializer"
+    },
+    {
+      "source": "_destructuring_pattern",
+      "native": "destructuring_pattern"
+    },
+    {
+      "source": "regex",
+      "native": "regular_expression"
+    },
+    {
+      "source": "regex_pattern",
+      "native": "regular_expression_pattern"
+    },
+    {
+      "source": "regex_flags",
+      "native": "regular_expression_flags"
+    },
+    {
+      "source": "_identifier",
+      "native": "identifier_choice"
+    },
+    {
+      "source": "_property_name",
+      "native": "property_name"
+    },
+    {
+      "source": "_reserved_identifier",
+      "native": "reserved_identifier"
+    },
+    {
+      "source": "_semicolon",
+      "native": "semicolon"
+    }
+  ],
+  "expandedWords": [
+    "lhs",
+    "regex"
+  ],
+  "concepts": {
+    "shared": [
+      {
+        "rule": "program",
+        "concept": "grammar.program"
+      },
+      {
+        "rule": "statement",
+        "concept": "grammar.statement"
+      },
+      {
+        "rule": "expression",
+        "concept": "grammar.expression"
+      },
+      {
+        "rule": "object",
+        "concept": "grammar.object"
+      },
+      {
+        "rule": "string",
+        "concept": "grammar.string"
+      },
+      {
+        "rule": "escape_sequence",
+        "concept": "grammar.escape-sequence"
+      },
+      {
+        "rule": "comment",
+        "concept": "grammar.comment"
+      },
+      {
+        "rule": "number",
+        "concept": "grammar.number"
+      },
+      {
+        "rule": "identifier",
+        "concept": "grammar.identifier"
+      },
+      {
+        "rule": "true",
+        "concept": "grammar.true-value"
+      },
+      {
+        "rule": "false",
+        "concept": "grammar.false-value"
+      },
+      {
+        "rule": "null",
+        "concept": "grammar.null"
+      }
+    ],
+    "generated": 131
+  },
+  "approximations": [],
+  "unsupported": []
+}

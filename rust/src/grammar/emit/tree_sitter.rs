@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, RuleKind};
 
-use super::{ordered_rules, unsupported_error, EmitReport, GrammarEmitError};
+use super::{EmitReport, GrammarEmitError, ordered_rules, unsupported_error};
 
 const FORMAT: GrammarFormat = GrammarFormat::TreeSitter;
 
@@ -106,6 +106,7 @@ impl TreeSitterEmitter {
                 Err(unsupported_error(FORMAT, "predicate"))
             }
             GrammarExpr::Capture { label, expr } => self.emit_capture(label.as_deref(), expr),
+            GrammarExpr::Feature(feature) => Err(unsupported_error(FORMAT, feature.head())),
         }
     }
 

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "description": "Kept reproducers of the issue 195 generative and conformance suites: inputs on which a runtime once diverged from the native tree-sitter CLI or broke a generative property. The generator adds each with its CLI tree to <language>.json; both runtimes must match it. Add an input here whenever a generative run fails (the failure message prints the seed and the source).",
+  "cases": [
+    {
+      "id": "javascript-leading-blank-line",
+      "language": "JavaScript",
+      "source": "\n\nlet a = 1;\n",
+      "found": "issue 195 conformance (commit f5727b0)",
+      "defect": "The JavaScript runtime left whitespace before the grammar root without a trivia link."
+    },
+    {
+      "id": "javascript-word-joiner-and-zero-width-space",
+      "language": "JavaScript",
+      "source": "let\u2060x = 1;\u200b\nx\ufeff;\n",
+      "found": "issue 195 conformance (commit f5727b0)",
+      "defect": "Both runtimes kept U+200B, U+2060 and U+FEFF, which the JavaScript grammar lexes as extras, as non-trivia hidden text."
+    },
+    {
+      "id": "lean-import-without-module",
+      "language": "Lean",
+      "source": "\nimport",
+      "found": "issue 195 error-recovery parity (commit ba97e3c)",
+      "defect": "The JavaScript runtime parsed UTF-16 and charged error recovery per code unit, producing (import module: (MISSING identifier)) instead of the native ERROR node."
+    },
+    {
+      "id": "rocq-unterminated-nested-comment",
+      "language": "Rocq",
+      "source": "(* Outer (* Inner *)",
+      "found": "issue 195 error-recovery parity (commit ba97e3c)",
+      "defect": "UTF-16 error recovery closed the comment with a MISSING node instead of the native ERROR node."
+    },
+    {
+      "id": "rust-trailing-whitespace-after-item",
+      "language": "Rust",
+      "source": "fn main() {}\n\n  \t\n",
+      "found": "issue 195 conformance (commit f5727b0)",
+      "defect": "Whitespace after the grammar root had a source token but no trivia link in the JavaScript runtime."
+    },
+    {
+      "id": "rocq-malformed-blank-line-relation",
+      "language": "Rocq",
+      "source": ".\n  left. split; intros; invert_eval;\n    [permute_havoc (Y!-> n; st) | permute_havoc (X !-> n; st)].\n Qed.",
+      "found": "issue 195 run-time generative fuzz, seed issue-195-generative-v1, case 36",
+      "defect": "Not a runtime defect: two leading blank lines change the error recovery of this malformed input in the native CLI too, so the prepend-blank-lines relation is only required of clean trees."
+    },
+    {
+      "id": "rocq-leading-byte-order-mark",
+      "language": "Rocq",
+      "source": "\ufeffSearch nrch nat.",
+      "found": "issue 195 run-time generative fuzz, seed g, case 45",
+      "defect": "Not a runtime defect: the tree-sitter lexer skips U+FEFF only at byte 0, so after two leading blank lines the native CLI parses it as an error too, and the prepend-blank-lines relation excludes inputs that start with a byte-order mark."
+    }
+  ]
+}

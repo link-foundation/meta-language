@@ -56,10 +56,12 @@ fn self_description_definition_links_reference_only_roots() {
             .unwrap_or_else(|| panic!("missing structural definition link for {term}"));
 
         assert_eq!(definition_link.references()[0], root);
-        assert!(definition_link
-            .references()
-            .iter()
-            .all(|reference| root_ids.contains(reference)));
+        assert!(
+            definition_link
+                .references()
+                .iter()
+                .all(|reference| root_ids.contains(reference))
+        );
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::grammar::interchange::render_native_feature;
 use crate::grammar::{CharClassItem, Grammar, GrammarExpr};
 
 pub(super) fn write_surface(grammar: &Grammar) -> String {
@@ -36,6 +37,7 @@ fn write_expr(expr: &GrammarExpr, parent: Precedence) -> String {
             (write_char_class(*negated, items), Precedence::Atom)
         }
         GrammarExpr::AnyChar => (".".to_string(), Precedence::Atom),
+        GrammarExpr::Feature(feature) => (render_native_feature(feature), Precedence::Atom),
         GrammarExpr::NonTerminal(name) => (name.clone(), Precedence::Atom),
         GrammarExpr::Choice {
             ordered,
@@ -154,7 +156,7 @@ fn write_char_class_item(item: &CharClassItem) -> String {
     }
 }
 
-fn simple_class_char(value: char) -> bool {
+const fn simple_class_char(value: char) -> bool {
     !value.is_whitespace()
         && !matches!(
             value,

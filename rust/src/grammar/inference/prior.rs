@@ -2,7 +2,7 @@
 
 use std::collections::BTreeSet;
 
-use super::lexical::{categorise, CharCategory};
+use super::lexical::{CharCategory, categorise};
 use crate::{LinkNetwork, ParseConfiguration};
 
 const PRIOR_LANGUAGE: &str = "grammar-prior";
@@ -269,17 +269,17 @@ fn flat_leaves(text: &str, opts: PriorOptions) -> Vec<SeedNode> {
             .chars()
             .next()
             .expect("cursor is inside text");
-        if is_quote(character) {
-            if let Some(end) = quoted_end(text, cursor, character) {
-                leaves.extend(text_leaves(text, text_start, cursor, opts));
-                leaves.push(SeedNode::Leaf {
-                    span: ByteSpan::new(cursor, end),
-                    kind: quote_kind(character),
-                });
-                cursor = end;
-                text_start = cursor;
-                continue;
-            }
+        if is_quote(character)
+            && let Some(end) = quoted_end(text, cursor, character)
+        {
+            leaves.extend(text_leaves(text, text_start, cursor, opts));
+            leaves.push(SeedNode::Leaf {
+                span: ByteSpan::new(cursor, end),
+                kind: quote_kind(character),
+            });
+            cursor = end;
+            text_start = cursor;
+            continue;
         }
 
         cursor += character.len_utf8();

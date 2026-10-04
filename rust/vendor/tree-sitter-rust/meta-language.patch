@@ -1,0 +1,384 @@
+diff --git a/grammar.js b/grammar.js
+index 4a0ff4b..54fbe23 100644
+--- a/grammar.js
++++ b/grammar.js
+@@ -52,7 +52,7 @@ const TOKEN_TREE_NON_SPECIAL_PUNCTUATION = [
+   '+', '-', '*', '/', '%', '^', '!', '&', '|', '&&', '||', '<<',
+   '>>', '+=', '-=', '*=', '/=', '%=', '^=', '&=', '|=', '<<=',
+   '>>=', '=', '==', '!=', '>', '<', '>=', '<=', '@', '_', '.',
+-  '..', '...', '..=', ',', ';', ':', '::', '->', '=>', '#', '?',
++  '..', '...', '..=', ',', ';', ':', '::', '->', '=>', '#', '?', '~',
+ ];
+ 
+ const primitiveTypes = numericTypes.concat(['bool', 'str', 'char']);
+@@ -119,6 +119,7 @@ module.exports = grammar({
+   rules: {
+     source_file: $ => seq(
+       optional($.shebang),
++      optional($.frontmatter),
+       repeat($._statement),
+     ),
+ 
+@@ -192,6 +193,7 @@ module.exports = grammar({
+       $.token_binding_pattern,
+       $.metavariable,
+       $._non_special_token,
++      prec(-1, '$'),
+     ),
+ 
+     token_tree_pattern: $ => choice(
+@@ -220,6 +222,7 @@ module.exports = grammar({
+       $.token_repetition,
+       $.metavariable,
+       $._non_special_token,
++      prec(-1, '$'),
+     ),
+ 
+     token_tree: $ => choice(
+@@ -310,6 +313,7 @@ module.exports = grammar({
+           optional($.where_clause),
+           ';',
+         ),
++        seq($.where_clause, ';'),
+         ';',
+       ),
+     ),
+@@ -483,6 +487,7 @@ module.exports = grammar({
+         $.reference_type,
+         $.pointer_type,
+         $.tuple_type,
++        $.unit_type,
+         $.array_type,
+         $.higher_ranked_trait_bound,
+         alias(choice(...primitiveTypes), $.primitive_type),
+@@ -809,6 +814,7 @@ module.exports = grammar({
+     generic_function: $ => prec(1, seq(
+       field('function', choice(
+         $.identifier,
++        alias(choice(...primitiveTypes), $.identifier),
+         $.scoped_identifier,
+         $.field_expression,
+       )),
+@@ -980,6 +986,7 @@ module.exports = grammar({
+         $.scoped_identifier,
+         $.identifier,
+         $._reserved_identifier,
++        alias('try', $.identifier),
+       )),
+       '!',
+       alias($.delim_token_tree, $.token_tree),
+@@ -1065,7 +1072,7 @@ module.exports = grammar({
+         [PREC.bitand, '&'],
+         [PREC.bitor, '|'],
+         [PREC.bitxor, '^'],
+-        [PREC.comparative, choice('==', '!=', '<', '<=', '>', '>=')],
++        [PREC.comparative, choice('==', '!=', '<', token(prec(1, '<=')), '>', '>=')],
+         [PREC.shift, choice('<<', '>>')],
+         [PREC.additive, choice('+', '-')],
+         [PREC.multiplicative, choice('*', '/', '%')],
+@@ -1147,8 +1154,8 @@ module.exports = grammar({
+       '(',
+       repeat($.attribute_item),
+       seq($._expression, ','),
+-      repeat(seq($._expression, ',')),
+-      optional($._expression),
++      repeat(seq(repeat($.attribute_item), $._expression, ',')),
++      optional(seq(repeat($.attribute_item), $._expression)),
+       ')',
+     ),
+ 
+@@ -1440,6 +1447,7 @@ module.exports = grammar({
+     ),
+ 
+     field_pattern: $ => seq(
++      repeat($.attribute_item),
+       optional('ref'),
+       optional($.mutable_specifier),
+       choice(
+@@ -1649,6 +1657,14 @@ module.exports = grammar({
+ 
+     shebang: _ => /#![\r\f\t\v ]*([^\[\n].*)?\n/,
+ 
++    // Cargo script frontmatter: a `---` fence with an optional infostring,
++    // lines that do not start with `---`, and a closing `---` fence.
++    frontmatter: _ => token(seq(
++      /---[^\n]*\n/,
++      repeat(choice(/([^-\n]|-[^-\n]|--[^-\n])[^\n]*\n/, /-?-?\r?\n/)),
++      /---[ \t]*/,
++    )),
++
+     _reserved_identifier: $ => alias(choice(
+       'default',
+       'union',
+diff --git a/test/corpus/meta_language.txt b/test/corpus/meta_language.txt
+new file mode 100644
+index 0000000..288fe87
+--- /dev/null
++++ b/test/corpus/meta_language.txt
+@@ -0,0 +1,266 @@
++================================================================================
++Tilde tokens inside macro token trees
++================================================================================
++
++ensure!(~~ ~);
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (expression_statement
++    (macro_invocation
++      (identifier)
++      (token_tree))))
++
++================================================================================
++Bare dollar tokens in macro matchers and transcribers
++================================================================================
++
++macro_rules! punct {
++    ($mode:ident, $) => { 1 };
++    [$] => { $crate::token::Dollar };
++}
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (macro_definition
++    (identifier)
++    (macro_rule
++      (token_tree_pattern
++        (token_binding_pattern
++          (metavariable)
++          (fragment_specifier)))
++      (token_tree
++        (integer_literal)))
++    (macro_rule
++      (token_tree_pattern)
++      (token_tree
++        (metavariable)
++        (identifier)
++        (identifier)))))
++
++================================================================================
++Unit struct with a where clause
++================================================================================
++
++struct _Test
++where
++    Error: Send + Sync;
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (struct_item
++    (type_identifier)
++    (where_clause
++      (where_predicate
++        (type_identifier)
++        (trait_bounds
++          (type_identifier)
++          (type_identifier))))))
++
++================================================================================
++Attributes on struct pattern fields
++================================================================================
++
++fn f(t: T) {
++    match t {
++        S { #[cfg(a)] inner: x, .. } => {}
++    }
++}
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (function_item
++    (identifier)
++    (parameters
++      (parameter
++        (identifier)
++        (type_identifier)))
++    (block
++      (expression_statement
++        (match_expression
++          (identifier)
++          (match_block
++            (match_arm
++              (match_pattern
++                (struct_pattern
++                  (type_identifier)
++                  (field_pattern
++                    (attribute_item
++                      (attribute
++                        (identifier)
++                        (token_tree
++                          (identifier))))
++                    (field_identifier)
++                    (identifier))
++                  (remaining_field_pattern)))
++              (block))))))))
++
++================================================================================
++Less-or-equal after a cast type
++================================================================================
++
++while a.offset_from(b) as libc::c_long <= c as size_t {}
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (expression_statement
++    (while_expression
++      (binary_expression
++        (type_cast_expression
++          (call_expression
++            (field_expression
++              (identifier)
++              (field_identifier))
++            (arguments
++              (identifier)))
++          (scoped_type_identifier
++            (identifier)
++            (type_identifier)))
++        (type_cast_expression
++          (identifier)
++          (type_identifier)))
++      (block))))
++
++================================================================================
++Unit type on the left of a where predicate
++================================================================================
++
++impl<T> Div<T> for U
++where
++    (): PrivateDiv<T>,
++{
++}
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (impl_item
++    (type_parameters
++      (type_parameter
++        (type_identifier)))
++    (generic_type
++      (type_identifier)
++      (type_arguments
++        (type_identifier)))
++    (type_identifier)
++    (where_clause
++      (where_predicate
++        (unit_type)
++        (trait_bounds
++          (generic_type
++            (type_identifier)
++            (type_arguments
++              (type_identifier))))))
++    (declaration_list)))
++
++================================================================================
++Turbofish on a function named like a primitive type
++================================================================================
++
++let be_f32 = |s| f32::<_, (_, ErrorKind)>(Endianness::Big)(s);
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (let_declaration
++    (identifier)
++    (closure_expression
++      (closure_parameters
++        (identifier))
++      (call_expression
++        (call_expression
++          (generic_function
++            (identifier)
++            (type_arguments
++              (type_identifier)
++              (tuple_type
++                (type_identifier)
++                (type_identifier))))
++          (arguments
++            (scoped_identifier
++              (identifier)
++              (identifier))))
++        (arguments
++          (identifier))))))
++
++================================================================================
++The 2015 try macro
++================================================================================
++
++let version = try!(rustc.version());
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (let_declaration
++    (identifier)
++    (macro_invocation
++      (identifier)
++      (token_tree
++        (identifier)
++        (identifier)
++        (token_tree)))))
++
++================================================================================
++Attributes on later tuple elements
++================================================================================
++
++return Some((
++    first,
++    #[expect(clippy::unwrap_used)]
++    self.get(1).unwrap(),
++));
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (expression_statement
++    (return_expression
++      (call_expression
++        (identifier)
++        (arguments
++          (tuple_expression
++            (identifier)
++            (attribute_item
++              (attribute
++                (identifier)
++                (token_tree
++                  (identifier)
++                  (identifier))))
++            (call_expression
++              (field_expression
++                (call_expression
++                  (field_expression
++                    (self)
++                    (field_identifier))
++                  (arguments
++                    (integer_literal)))
++                (field_identifier))
++              (arguments))))))))
++
++================================================================================
++Cargo script frontmatter
++================================================================================
++
++#!/usr/bin/env -S cargo +nightly -Zscript
++---cargo
++[dependencies]
++clap = { version = "4.0.29", features = ["derive"] }
++---
++
++fn main() {}
++
++--------------------------------------------------------------------------------
++
++(source_file
++  (shebang)
++  (frontmatter)
++  (function_item
++    (identifier)
++    (parameters)
++    (block)))

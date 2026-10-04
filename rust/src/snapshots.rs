@@ -186,7 +186,7 @@ impl MutableNetworkSnapshot {
     }
 
     /// Mutable view of the editable network.
-    pub fn network_mut(&mut self) -> &mut LinkNetwork {
+    pub const fn network_mut(&mut self) -> &mut LinkNetwork {
         &mut self.network
     }
 

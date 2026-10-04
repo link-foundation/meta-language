@@ -133,13 +133,28 @@ fn workflows_default_to_read_only_permissions() {
 
 #[test]
 fn workflows_separate_cancellable_checks_from_serialized_writes() {
+    // A newer pull request run cancels the older one; every other run is
+    // grouped by its own run id, so a push, release or dispatch run (and its
+    // write jobs) is never cancelled by another run.
+    let pull_request_only = concat!(
+        "\nconcurrency:\n",
+        "  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}\n",
+        "  cancel-in-progress: true\n",
+    );
     for path in workflow_files() {
         let workflow = read_workflow(&path);
-        assert!(!workflow
-            .split("\njobs:\n")
-            .next()
-            .unwrap()
-            .contains("\nconcurrency:\n"));
+        let header = workflow.split("\njobs:\n").next().unwrap();
+        assert_eq!(
+            header.matches("\nconcurrency:\n").count(),
+            1,
+            "{} declares one workflow-level concurrency group",
+            path.display()
+        );
+        assert!(
+            header.contains(pull_request_only),
+            "{} cancels only superseded pull request runs",
+            path.display()
+        );
     }
 
     let rust = read_workflow(&repository_root().join(".github/workflows/rust.yml"));
@@ -150,6 +165,8 @@ fn workflows_separate_cancellable_checks_from_serialized_writes() {
         "secrets-scan",
         "fresh-merge",
         "cargo-lock",
+        "check",
+        "msrv",
         "lint",
         "coverage",
         "build",

@@ -1,0 +1,287 @@
+{
+  "description": "Embedded regions each host grammar CST delimits, asserted identically by js/tests/regions.test.js and rust/tests/unit/embedded_regions.rs. Regions are [language, startByte, endByte, text] in source order.",
+  "cases": [
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<script>let a = 1;</script>",
+      "regions": [
+        [
+          "JavaScript",
+          8,
+          18,
+          "let a = 1;"
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<SCRIPT type=\"module\">import x from \"y\";</SCRIPT>",
+      "regions": [
+        [
+          "JavaScript",
+          22,
+          40,
+          "import x from \"y\";"
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<script type=\"text/javascript; charset=utf-8\">a()</script>",
+      "regions": [
+        [
+          "JavaScript",
+          46,
+          49,
+          "a()"
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<script type=\"importmap\">{\"imports\": {}}</script>",
+      "regions": [
+        [
+          "JSON",
+          25,
+          40,
+          "{\"imports\": {}}"
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<script type=\"application/ld+json\">{\"@type\": \"Thing\"}</script>",
+      "regions": [
+        [
+          "JSON",
+          35,
+          53,
+          "{\"@type\": \"Thing\"}"
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<script type=\"text/typescript\">let a: number = 1;</script>",
+      "regions": [
+        [
+          "TypeScript",
+          31,
+          49,
+          "let a: number = 1;"
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<script type=\"text/x-template\"><div>{{ a }}</div></script>",
+      "regions": []
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<script src=\"app.js\"></script>",
+      "regions": [
+        [
+          "JavaScript",
+          21,
+          21,
+          ""
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<style media=\"screen\">p { color: red; }</style>",
+      "regions": [
+        [
+          "CSS",
+          22,
+          39,
+          "p { color: red; }"
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<style type=\"text/less\">@c: red;</style>",
+      "regions": []
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<p STYLE=color:red>a</p><p style=\"\">b</p><p style='margin: 0'>c</p>",
+      "regions": [
+        [
+          "CSS",
+          9,
+          18,
+          "color:red"
+        ],
+        [
+          "CSS",
+          51,
+          60,
+          "margin: 0"
+        ]
+      ]
+    },
+    {
+      "host": "HTML",
+      "policy": "Both",
+      "source": "<!-- <script>no()</script> --><div>ok</div>",
+      "regions": []
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "```js\nlet a = 1;\n```\n",
+      "regions": [
+        [
+          "JavaScript",
+          6,
+          17,
+          "let a = 1;\n"
+        ]
+      ]
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "~~~python\ndef f(): pass\n~~~\n",
+      "regions": [
+        [
+          "Python",
+          10,
+          24,
+          "def f(): pass\n"
+        ]
+      ]
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "```unknownlang\nx\n```\n",
+      "regions": [
+        [
+          "unknownlang",
+          15,
+          17,
+          "x\n"
+        ]
+      ]
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "```\nfn main() {}\n```\n",
+      "regions": [
+        [
+          "Rust",
+          4,
+          17,
+          "fn main() {}\n"
+        ]
+      ]
+    },
+    {
+      "host": "Markdown",
+      "policy": "NameDriven",
+      "source": "```\nfn main() {}\n```\n",
+      "regions": []
+    },
+    {
+      "host": "Markdown",
+      "policy": "ContentDriven",
+      "source": "```text\nSELECT 1;\n```\n",
+      "regions": [
+        [
+          "sql-ansi",
+          8,
+          18,
+          "SELECT 1;\n"
+        ]
+      ]
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "    fn indented() {}\n",
+      "regions": []
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "A <b>bold <i>nested</i></b> word.\n",
+      "regions": [
+        [
+          "HTML",
+          2,
+          27,
+          "<b>bold <i>nested</i></b>"
+        ]
+      ]
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "Break<br/>here and <img src=\"a.png\"> and </u> stray.\n",
+      "regions": [
+        [
+          "HTML",
+          5,
+          10,
+          "<br/>"
+        ],
+        [
+          "HTML",
+          19,
+          36,
+          "<img src=\"a.png\">"
+        ],
+        [
+          "HTML",
+          41,
+          45,
+          "</u>"
+        ]
+      ]
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "<div>\n<p>block</p>\n</div>\n\nAfter.\n",
+      "regions": [
+        [
+          "HTML",
+          0,
+          27,
+          "<div>\n<p>block</p>\n</div>\n\n"
+        ]
+      ]
+    },
+    {
+      "host": "Markdown",
+      "policy": "Both",
+      "source": "- item with <kbd>Ctrl</kbd>\n",
+      "regions": [
+        [
+          "HTML",
+          12,
+          27,
+          "<kbd>Ctrl</kbd>"
+        ]
+      ]
+    }
+  ]
+}

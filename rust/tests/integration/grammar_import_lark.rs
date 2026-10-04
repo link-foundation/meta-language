@@ -1,4 +1,4 @@
-use meta_language::{import_lark, FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks};
+use meta_language::{FromLinks, Grammar, LinksDecoder, LinksEncoder, ToLinks, import_lark};
 
 #[test]
 fn imported_lark_grammar_survives_links_round_trip() {

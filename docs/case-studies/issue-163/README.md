@@ -1,5 +1,10 @@
 # Issue 163 Case Study: JavaScript Meta-Language
 
+> **Historical case study.** This records the investigation of issue #163 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 Issue 163 asked for a JavaScript implementation of the meta-language feature
 surface, dependency research, CI/CD split by language, and a guard that keeps
 Rust and JavaScript behavior in sync.

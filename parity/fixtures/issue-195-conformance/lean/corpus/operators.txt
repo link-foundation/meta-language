@@ -1,0 +1,467 @@
+==========
+- Negation
+==========
+
+#eval -2
+#eval -2.0
+#eval -foo
+#eval - -2
+#eval - -foo
+#eval -(2 + 2)
+#eval - -(2 + 2)
+
+---
+
+(module
+  (hash_command
+    (unary_expression
+      (number)))
+  (hash_command
+    (unary_expression
+      (float)))
+  (hash_command
+    (unary_expression
+      (identifier)))
+  (hash_command
+    (unary_expression
+      (unary_expression
+        (number))))
+  (hash_command
+    (unary_expression
+      (unary_expression
+        (identifier))))
+  (hash_command
+    (unary_expression
+      (parenthesized
+        (binary_expression
+          (number)
+          (number)))))
+  (hash_command
+    (unary_expression
+      (unary_expression
+        (parenthesized
+          (binary_expression
+            (number)
+            (number)))))))
+
+=======================
+- Negation But Comments
+=======================
+
+#eval --2
+#eval --foo
+
+---
+
+(module
+  (hash_command)
+  (comment)
+  (hash_command)
+  (comment))
+
+==========
+! Negation
+==========
+
+#eval !true
+#eval !!!true
+#eval !foo
+
+---
+
+(module
+  (hash_command
+    (unary_expression
+      (true)))
+  (hash_command
+    (unary_expression
+      (unary_expression
+        (unary_expression
+          (true)))))
+  (hash_command
+    (unary_expression
+      (identifier))))
+
+==========
+¬ Negation
+==========
+
+#eval ¬true
+#eval ¬¬¬true
+#eval ¬foo
+
+---
+
+(module
+  (hash_command
+    (unary_expression
+      (true)))
+  (hash_command
+    (unary_expression
+      (unary_expression
+        (unary_expression
+          (true)))))
+  (hash_command
+    (unary_expression
+      (identifier))))
+
+==================
+Binary Expressions
+==================
+
+#eval 2 + 3
+#eval 2 - 3
+#eval 2 * 3
+#eval 2 / 3
+#eval 2 % 3
+#eval 2 ^ 3
+#eval 2 = 3
+#eval 2 ≠ 3
+#eval true ∧ true
+#eval true ∨ true
+#eval true ↔ true
+#eval true && true
+#eval true || true
+#eval "foo" ++ "bar"
+#eval [] :: [["foo"]]
+#eval 100 |> add1 |> times2
+#eval foo |>.map bar |>.baz.quux 7
+#eval times2 <| add1 <| 100
+#eval foo <|> bar
+#eval 'B' == 'B' || 'B' == 'C'
+#check f ∘ g ∘ h
+
+---
+
+(module
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (true)
+      (true)))
+  (hash_command
+    (binary_expression
+      (true)
+      (true)))
+  (hash_command
+    (binary_expression
+      (true)
+      (true)))
+  (hash_command
+    (binary_expression
+      (true)
+      (true)))
+  (hash_command
+    (binary_expression
+      (true)
+      (true)))
+  (hash_command
+    (binary_expression
+      (string)
+      (string)))
+  (hash_command
+    (binary_expression
+      (list)
+      (list
+        (list
+          (string)))))
+  (hash_command
+    (binary_expression
+      (binary_expression
+        (number)
+        (identifier))
+      (identifier)))
+  (hash_command
+    (application
+      (binary_expression
+        (application
+          (binary_expression
+            (identifier)
+            (identifier))
+          (identifier))
+        (projection
+          (identifier)
+          (identifier)))
+      (number)))
+  (hash_command
+    (binary_expression
+      (identifier)
+      (binary_expression
+        (identifier)
+        (number))))
+  (hash_command
+    (binary_expression
+      (identifier)
+      (identifier)))
+  (hash_command
+    (binary_expression
+      (binary_expression
+        (char)
+        (char))
+      (binary_expression
+        (char)
+        (char))))
+  (hash_command
+    (binary_expression
+      (identifier)
+      (binary_expression
+        (identifier)
+        (identifier)))))
+
+==========
+Precedence
+==========
+
+#eval 4 == 4 - 0
+#eval 4 == 3 + 1
+#eval 4 == 4 * 1
+#eval 4 == 4 / 1
+#eval 4 == 4 % 5
+example : 4 = 4 - 0 := rfl
+example : 4 = 3 + 1 := rfl
+example : 4 = 4 * 1 := rfl
+example : 4 = 4 / 1 := rfl
+example : 4 = 4 % 5 := rfl
+#eval false && false || true
+#eval true || false && false
+#eval 2 ^ 3 * 7 + 2
+#eval -2.0 ^ 3 * 7
+
+---
+
+(module
+  (hash_command
+    (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number))))
+  (hash_command
+    (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number))))
+  (hash_command
+    (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number))))
+  (hash_command
+    (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number))))
+  (hash_command
+    (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number))))
+  (example
+    type: (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number)))
+    body: (identifier))
+  (example
+    type: (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number)))
+    body: (identifier))
+  (example
+    type: (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number)))
+    body: (identifier))
+  (example
+    type: (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number)))
+    body: (identifier))
+  (example
+    type: (binary_expression
+      left: (number)
+      right: (binary_expression
+        left: (number)
+        right: (number)))
+    body: (identifier))
+  (hash_command
+    (binary_expression
+      left: (binary_expression
+        left: (false)
+        right: (false))
+      right: (true)))
+  (hash_command
+    (binary_expression
+      left: (true)
+      right: (binary_expression
+        left: (false)
+        right: (false))))
+  (hash_command
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (binary_expression
+          left: (number)
+          right: (number)))
+      right: (number)))
+  (hash_command
+    (binary_expression
+      left: (unary_expression
+        operand: (float))
+      right: (binary_expression
+        left: (number)
+        right: (number)))))
+
+==========
+Comparison
+==========
+
+#check 2 < 3
+#check 2 ≤ 3
+#check 2 <= 3
+#check 2 > 3
+#check 2 ≥ 3
+#check 2 >= 3
+
+---
+
+(module
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number)))
+  (hash_command
+    (binary_expression
+      (number)
+      (number))))
+
+=====================
+Comparison Precedence
+=====================
+
+example : id 2 < 3 = true := rfl
+example : 2 > id 3 = false := rfl
+example : id 2 ≤ 3 = true := rfl
+example : 2 ≥ id 3 = false := rfl
+
+---
+
+(module
+  (example
+    (binary_expression
+      (binary_expression
+        (application
+          (identifier)
+          (number))
+        (number))
+      (true))
+    (identifier))
+  (example
+    (binary_expression
+      (binary_expression
+        (number)
+        (application
+          (identifier)
+          (number)))
+      (false))
+    (identifier))
+  (example
+    (binary_expression
+      (binary_expression
+        (application
+          (identifier)
+          (number))
+        (number))
+      (true))
+    (identifier))
+  (example
+    (binary_expression
+      (binary_expression
+        (number)
+        (application
+          (identifier)
+          (number)))
+      (false))
+    (identifier)))
+
+==================================
+Unary Arrow In Expression Do Lift
+==================================
+
+def unaryLift : IO Nat := do
+  pure (← pure 1)
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (application
+      name: (identifier)
+      arguments: (identifier))
+    body: (do
+      (application
+        name: (identifier)
+        arguments: (parenthesized
+          (unary_expression
+            operand: (application
+              name: (identifier)
+              arguments: (number))))))))

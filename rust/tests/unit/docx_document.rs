@@ -3,13 +3,12 @@
 //! package round-trip, and `reconstruct_text_as`.
 
 use meta_language::{
-    docx_package_is_recognized, docx_profile_is_recognized, parse_docx_document,
-    parse_docx_package, parse_markup_document, render_docx_document, render_docx_package,
-    BlockNode, InlineNode, LinkNetwork, LinkType, ParseConfiguration,
+    BlockNode, InlineNode, LinkNetwork, LinkType, ParseConfiguration, docx_package_is_recognized,
+    docx_profile_is_recognized, parse_docx_document, parse_docx_package, parse_markup_document,
+    render_docx_document, render_docx_package,
 };
 
-const SAMPLE_MARKDOWN: &str =
-    "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
+const SAMPLE_MARKDOWN: &str = "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
 
 fn docx_from_markdown() -> String {
     let document = parse_markup_document("Markdown", SAMPLE_MARKDOWN).expect("Markdown parses");
@@ -57,7 +56,7 @@ fn docx_render_and_parse_are_inverses_on_the_concept_tree() {
     };
     assert!(children.iter().any(|node| matches!(
         node,
-        InlineNode::Wrapped { concept, .. } if concept == "strong"
+        InlineNode::Wrapped { concept, .. } if concept == "strong-emphasis"
     )));
     assert!(children.iter().any(|node| matches!(
         node,
@@ -120,7 +119,7 @@ fn docx_parser_preserves_bytes_and_tags_the_document_structure() {
         "paragraph",
         "bullet-list",
         "list-item",
-        "strong",
+        "strong-emphasis",
         "emphasis",
     ] {
         assert!(
@@ -171,7 +170,7 @@ fn docx_opc_package_is_a_valid_zip_carrying_the_same_concept_tree() {
 fn out_of_profile_docx_parses_to_an_empty_document_without_panicking() {
     // OOXML without recognizable paragraphs yields no blocks (graceful).
     let bare = "<?xml version=\"1.0\"?>\n<w:document><w:body><w:sectPr/></w:body></w:document>\n";
-    assert!(parse_docx_document(bare).blocks.is_empty());
+    assert_eq!(parse_docx_document(bare).blocks, [] as [BlockNode; 0]);
     assert!(!docx_profile_is_recognized(bare));
 
     // It still parses losslessly as a network.
@@ -180,5 +179,8 @@ fn out_of_profile_docx_parses_to_an_empty_document_without_panicking() {
 
     // A non-ZIP byte blob is not a recognized package.
     assert!(!docx_package_is_recognized(b"not a zip file"));
-    assert!(parse_docx_package(b"not a zip file").blocks.is_empty());
+    assert_eq!(
+        parse_docx_package(b"not a zip file").blocks,
+        [] as [BlockNode; 0]
+    );
 }

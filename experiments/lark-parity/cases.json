@@ -1,0 +1,294 @@
+[
+  [
+    "covering fixture",
+    "// entry rule for the covering fixture\nstart: item (\",\" item)* [trailer]\n?item: WORD | NUMBER ~ 2\ntrailer: /[a-z]+/\nWORD: /[A-Z]/\nNUMBER: /[0-9]/\nWS: /[ \\t]+/\n%ignore WS\n"
+  ],
+  [
+    "prefers start over first rule",
+    "\nother: \"x\"\nstart: other\n"
+  ],
+  [
+    "first rule is start without start",
+    "expr: term (\"+\" term)*\nterm: \"1\"\n"
+  ],
+  [
+    "malformed unterminated bracket",
+    "start: [unterminated"
+  ],
+  [
+    "import is unsupported",
+    "%import common.WS"
+  ],
+  [
+    "override is unsupported",
+    "start: \"a\"\n%override start: \"b\"\n"
+  ],
+  [
+    "unknown directive",
+    "%foo bar"
+  ],
+  [
+    "directive without name",
+    "% 1"
+  ],
+  [
+    "declare is skipped",
+    "%declare FOO BAR\nstart: FOO\n"
+  ],
+  [
+    "ignore rules",
+    "%ignore \" \"\n%ignore /\\s+/\n%ignore COMMENT\nstart: \"a\"\nCOMMENT: /#[^\\n]*/\n"
+  ],
+  [
+    "only directives",
+    "%ignore \" \"\n"
+  ],
+  [
+    "empty source",
+    ""
+  ],
+  [
+    "only comments",
+    "// nothing here\n\n"
+  ],
+  [
+    "rule priorities",
+    "start.2: a\n?inline.3: \"y\"\na: inline\nNAME.10: /[a-z]+/\n"
+  ],
+  [
+    "priority requires number",
+    "start.x: a\n"
+  ],
+  [
+    "missing colon",
+    "start \"x\"\n"
+  ],
+  [
+    "stray closing paren",
+    "start: a )\na: \"a\"\n"
+  ],
+  [
+    "templates are rejected",
+    "_sep{x, sep}: x (sep x)*\nstart: _sep{\"a\", \",\"}\n"
+  ],
+  [
+    "counted repetition",
+    "start: a ~ 3 b ~ 2..5 c ~ 0..1 d~0..0\na: \"a\"\nb: \"b\"\nc: \"c\"\nd: \"d\"\n"
+  ],
+  [
+    "counted repetition inverted",
+    "start: a ~ 5..2\na: \"a\"\n"
+  ],
+  [
+    "counted repetition missing count",
+    "start: a ~\n"
+  ],
+  [
+    "counted repetition huge",
+    "start: a ~ 18446744073709551615\na: \"a\"\n"
+  ],
+  [
+    "counted repetition overflow",
+    "start: a ~ 18446744073709551616\n"
+  ],
+  [
+    "postfix operators",
+    "start: a+ b* c? [d] e+* (f g)?\n"
+  ],
+  [
+    "string escapes",
+    "start: \"\\x41\\u00e9\\U0001F600\\n\\t\\r\\b\\f\\\\\\\"'\\q\" 'single \"q\" \\''\n"
+  ],
+  [
+    "string invalid hex digit",
+    "start: \"\\x4G\"\n"
+  ],
+  [
+    "string surrogate escape",
+    "start: \"\\uD800\"\n"
+  ],
+  [
+    "string escape beyond unicode",
+    "start: \"\\U00110000\"\n"
+  ],
+  [
+    "string truncated hex",
+    "start: \"\\u00"
+  ],
+  [
+    "string escape at eof",
+    "start: \"abc\\"
+  ],
+  [
+    "unterminated string",
+    "start: \"abc\n"
+  ],
+  [
+    "multiline string",
+    "start: \"a\nb\"\n"
+  ],
+  [
+    "unterminated regex",
+    "start: /abc\nnext: \"x\"\n"
+  ],
+  [
+    "regex with escaped slash",
+    "start: /a\\/b/ /\\d+/\n"
+  ],
+  [
+    "slash inside regex brackets ends the regex",
+    "start: /[/]/\n"
+  ],
+  [
+    "regex flags become references",
+    "start: /abc/i \"kw\"i\n"
+  ],
+  [
+    "char classes",
+    "A: /[^a-z0-9_\\-]/\nB: /[a-]/\nC: /[-a]/\nD: /[\\x41-\\x5A\\t]/\nE: /[\\u00e9-\\uffff]/\nF: /[é-ü]/\nG: /[\\]]/\n"
+  ],
+  [
+    "char class empty",
+    "A: /[]/\n"
+  ],
+  [
+    "char class negated empty",
+    "A: /[^]/\n"
+  ],
+  [
+    "char class inverted range",
+    "A: /[z-a]/\n"
+  ],
+  [
+    "char class trailing escape",
+    "A: /[a\\]/\n"
+  ],
+  [
+    "char class bad hex digit",
+    "start: \"é\"\nA: /[ab\\x4G]/\n"
+  ],
+  [
+    "char class truncated hex",
+    "A: /[\\u12]/\n"
+  ],
+  [
+    "char class surrogate",
+    "A: /[\\uDC00]/\n"
+  ],
+  [
+    "char class dangling range",
+    "A: /[a-\\]/\n"
+  ],
+  [
+    "inner closing bracket is a regex",
+    "A: /[a]b]/\nB: /[a-z]+/\nC: /a[b]/\n"
+  ],
+  [
+    "any character",
+    "start: . \"x\" .\n"
+  ],
+  [
+    "literal range operator",
+    "start: \"a\"..\"z\"\n"
+  ],
+  [
+    "unexpected character after unicode",
+    "start: \"é\" @\n"
+  ],
+  [
+    "unexpected brace",
+    "start: a {\n"
+  ],
+  [
+    "unexpected zero width space",
+    "start: a ​\n"
+  ],
+  [
+    "unexpected combining mark",
+    "start: a ́\n"
+  ],
+  [
+    "unexpected byte order mark",
+    "﻿start: a\n"
+  ],
+  [
+    "unexpected quote character",
+    "start: a `\n"
+  ],
+  [
+    "unexpected backslash",
+    "start: a \\\n"
+  ],
+  [
+    "unicode whitespace",
+    "start: ab　c\u000bd\na: \"a\"\nb: \"b\"\nc: \"c\"\nd: \"d\"\n"
+  ],
+  [
+    "crlf line endings",
+    "start: a\r\n    | b\r\na: \"a\"\rb: \"b\"\r\n"
+  ],
+  [
+    "multiline alternatives with comments",
+    "// doc one\n//   doc two  \nstart: a // trailing\n     | b\n     // between\n     | c\na: \"a\"\nb: \"b\"\nc: \"c\"\n"
+  ],
+  [
+    "comment before directive attaches to next rule",
+    "// kept\n%ignore \" \"\nstart: \"a\"\n"
+  ],
+  [
+    "empty alternatives",
+    "start: | \"x\"\nother: |\nnothing: ()\nboth: \"a\" | \n"
+  ],
+  [
+    "empty rule body",
+    "start:\nnext: \"x\"\n"
+  ],
+  [
+    "nested groups flatten",
+    "start: (a | (b | c)) d? (\"x\" (\"y\" \"z\")) (a | b)\na: \"a\"\nb: \"b\"\nc: \"c\"\nd: \"d\"\n"
+  ],
+  [
+    "alternative groups flatten into choice",
+    "start: (a | b) | c\na: \"a\"\nb: \"b\"\nc: \"c\"\n"
+  ],
+  [
+    "inline rule kinds",
+    "?expr: term | expr \"+\" term\n?Term: \"1\"\n_hidden: \"h\"\nterm: \"2\"\n"
+  ],
+  [
+    "undefined references are allowed",
+    "start: missing other\n"
+  ],
+  [
+    "duplicate rule keeps first lookup",
+    "start: \"a\"\nstart: \"b\"\n"
+  ],
+  [
+    "user rule named _ignore",
+    "%ignore \" \"\n_ignore: \"x\"\n"
+  ],
+  [
+    "unclosed group",
+    "start: (a | b\n"
+  ],
+  [
+    "unclosed optional over lines",
+    "start: [a\n]\n"
+  ],
+  [
+    "leading pipe",
+    "start: | a\n"
+  ],
+  [
+    "number as rule name",
+    "1: \"a\"\n"
+  ],
+  [
+    "question without rule",
+    "?\n"
+  ],
+  [
+    "priority on inline token",
+    "?TOKEN.5: \"t\"\n"
+  ]
+]

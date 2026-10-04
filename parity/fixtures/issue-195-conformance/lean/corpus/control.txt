@@ -1,0 +1,207 @@
+============
+If/Then/Else
+============
+
+#eval if true then "foo" else "bar"
+
+---
+
+(module
+  (hash_command
+    (if
+      (true)
+      (string)
+      (string))))
+
+=============
+If Needs Else
+=============
+
+#eval if true then "foo"
+
+---
+
+(module
+  (hash_command
+    (if
+      (true)
+      (string))))
+
+===================
+Nested If/Then/Else
+===================
+
+#eval if true then if false then "foo" else "bar" else "baz"
+
+---
+
+(module
+  (hash_command
+    (if
+      (true)
+      (if
+        (false)
+        (string)
+        (string))
+      (string))))
+
+======
+Unless
+======
+
+#check (unless true do PUnit.unit : PUnit)
+
+---
+
+(module
+  (hash_command
+    (parenthesized
+      (application
+        name: (application
+          name: (identifier)
+          arguments: (true))
+        arguments: (do
+          (projection
+            term: (identifier)
+            name: (identifier))))
+      type: (identifier))))
+
+=====
+Match
+=====
+
+def foo (d : Bar) : Baz :=
+  match d with
+  | quux => 1
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    type: (identifier)
+    body: (match
+      scrutinees: (identifier)
+      (match_arm
+        patterns: (identifier)
+        body: (number)))))
+
+==============
+Match Multiple
+==============
+
+def foo (a b c : Nat) :=
+  match a, b, c with
+  | _, _, _ => true
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        name: (identifier)
+        name: (identifier)
+        type: (identifier)))
+    body: (match
+      scrutinees: (identifier)
+      scrutinees: (identifier)
+      scrutinees: (identifier)
+      (match_arm
+        patterns: (hole)
+        patterns: (hole)
+        patterns: (hole)
+        body: (true)))))
+
+=========================
+Match Multiple With Apply
+=========================
+
+#eval match 0 with
+| 0 => id 2
+| _ => id 4
+
+---
+
+(module
+  (hash_command
+    (match
+      (number)
+      (match_arm
+        (number)
+        (application
+          (identifier)
+          (number)))
+      (match_arm
+        (hole)
+        (application
+          (identifier)
+          (number))))))
+
+================
+Match Expression
+================
+
+#eval match Nat.succ 3 with
+  | _ => true
+
+---
+
+(module
+  (hash_command
+    (match
+      scrutinees: (application
+        name: (projection
+          term: (identifier)
+          name: (identifier))
+        arguments: (number))
+      (match_arm
+        patterns: (hole)
+        body: (true)))))
+
+============================
+Match Multi-Line Arm Body
+============================
+
+def f (x : Option Nat) : Nat :=
+  match x with
+  | some n =>
+    let y := n + 1
+    y * 2
+  | none => 0
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    binders: (binders
+      (explicit_binder
+        name: (identifier)
+        type: (application
+          name: (identifier)
+          arguments: (identifier))))
+    type: (identifier)
+    body: (match
+      scrutinees: (identifier)
+      (match_arm
+        patterns: (application
+          name: (identifier)
+          arguments: (identifier))
+        body: (let
+          name: (identifier)
+          value: (binary_expression
+            left: (identifier)
+            right: (number))
+          body: (binary_expression
+            left: (identifier)
+            right: (number))))
+      (match_arm
+        patterns: (identifier)
+        body: (number)))))

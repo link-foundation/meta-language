@@ -176,3 +176,18 @@ test('snake_case aliases mirror camelCase methods', () => {
   const derived = LanguageProfile.from_rule_set('X', 'X', ruleSet);
   assert.ok(derived.supports_translation_rule('only'));
 });
+
+test('profile concept lookups resolve a former concept identity', () => {
+  const profile = LanguageProfile.new('Custom', 'custom')
+    .withConcept('strong-emphasis')
+    .withConceptFallback('hyperlink', 'text with url');
+
+  assert.equal(profile.supportsConcept('strong'), true);
+  assert.equal(profile.supportsConcept('strong-emphasis'), true);
+  assert.equal(profile.conceptFallback('hyperlink'), 'text with url');
+  assert.equal(profile.supportsConcept('unknown-concept'), false);
+  assert.equal(profile.conceptFallback('strong'), undefined);
+  const plain = LanguageProfile.new('Plain', 'plain').withConceptFallback('strong-emphasis', 'plain text');
+  assert.equal(plain.conceptFallback('strong'), 'plain text');
+  assert.equal(plain.supportsConcept('strong'), false);
+});

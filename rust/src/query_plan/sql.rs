@@ -751,7 +751,7 @@ impl Parser {
         token
     }
 
-    fn is_done(&self) -> bool {
+    const fn is_done(&self) -> bool {
         self.cursor == self.tokens.len()
     }
 

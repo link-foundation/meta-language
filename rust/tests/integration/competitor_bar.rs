@@ -1,12 +1,13 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use meta_language::benchmark::{
-    render_competitor_report, run_competitor_suite, run_competitor_suite_from_paths,
-    PUBLISHED_NATGI_AVG_F1,
-};
 use meta_language::SampleConfig;
+use meta_language::benchmark::{
+    PUBLISHED_NATGI_AVG_F1, render_competitor_report, run_competitor_suite,
+    run_competitor_suite_from_paths,
+};
 
 #[test]
 fn competitor_bar_runs_included_corpora_and_reports_skips() {
@@ -100,6 +101,10 @@ struct TempSuite {
     manifest: PathBuf,
 }
 
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_SUITES: AtomicU64 = AtomicU64::new(0);
+
 impl TempSuite {
     fn new(name: &str) -> Self {
         let stamp = SystemTime::now()
@@ -107,8 +112,9 @@ impl TempSuite {
             .expect("system time after epoch")
             .as_nanos();
         let root = std::env::temp_dir().join(format!(
-            "meta-language-{name}-{}-{stamp}",
-            std::process::id()
+            "meta-language-{name}-{}-{stamp}-{}",
+            std::process::id(),
+            TEMP_SUITES.fetch_add(1, Ordering::Relaxed)
         ));
         let corpora = root.join("corpora");
         let manifest = root.join("manifest.json");

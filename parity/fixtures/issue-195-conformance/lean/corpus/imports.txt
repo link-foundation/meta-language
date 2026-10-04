@@ -1,0 +1,150 @@
+=====================================
+Simple import
+=====================================
+
+import Lean
+
+---
+
+(module
+  (import
+    module: (identifier)))
+
+=====================================
+Dotted import path
+=====================================
+
+import LeanPrism.Protocol
+
+---
+
+(module
+  (import
+    module: (identifier)
+    module: (identifier)))
+
+=====================================
+Deep nested import path
+=====================================
+
+import LeanPrism.SemanticTableau.InfoTreeParser
+
+---
+
+(module
+  (import
+    module: (identifier)
+    module: (identifier)
+    module: (identifier)))
+
+=====================================
+Multiple imports
+=====================================
+
+import Lean
+import LeanPrism.Protocol
+import LeanPrism.SemanticTableau.InfoTreeParser
+
+---
+
+(module
+  (import
+    module: (identifier))
+  (import
+    module: (identifier)
+    module: (identifier))
+  (import
+    module: (identifier)
+    module: (identifier)
+    module: (identifier)))
+
+=====================================
+Module header keyword
+=====================================
+
+module
+
+import Foo
+
+---
+
+(module
+  (module_header)
+  (import
+    module: (identifier)))
+
+=====================================
+Public import
+=====================================
+
+public import Foo
+
+---
+
+(module
+  (import
+    module: (identifier)))
+
+=====================================
+Meta import
+=====================================
+
+meta import Foo
+
+---
+
+(module
+  (import
+    module: (identifier)))
+
+=====================================
+Public meta import
+=====================================
+
+public meta import Lean.Elab.Command
+
+---
+
+(module
+  (import
+    module: (identifier)
+    module: (identifier)
+    module: (identifier)))
+
+=====================================
+Public meta import all
+=====================================
+
+public meta import all Foo.Bar
+
+---
+
+(module
+  (import
+    module: (identifier)
+    module: (identifier)))
+
+=====================================
+Module header with mixed imports and public section
+=====================================
+
+module
+
+public meta import Lean.Elab.Command
+public meta import Lean.Server.InfoUtils
+
+public section
+
+---
+
+(module
+  (module_header)
+  (import
+    module: (identifier)
+    module: (identifier)
+    module: (identifier))
+  (import
+    module: (identifier)
+    module: (identifier)
+    module: (identifier))
+  (section))

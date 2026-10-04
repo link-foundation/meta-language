@@ -12,8 +12,8 @@
 //! showcased through pre-rendered example output on the website instead.
 
 use links_notation::format_config::FormatConfig;
-use links_notation::{parse_lino_to_links, LiNo};
-use serde_json::{json, Value};
+use links_notation::{LiNo, parse_lino_to_links};
+use serde_json::{Value, json};
 use wasm_bindgen::prelude::*;
 
 /// Parse links-notation `input` and return a JSON string describing the result.

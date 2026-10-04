@@ -1,0 +1,477 @@
+===
+Let
+===
+
+def foo :=
+  let foo := 12
+  foo
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (let
+      name: (identifier)
+      value: (number)
+      body: (identifier))))
+
+=============
+Let Annotated
+=============
+
+def foo :=
+  let foo : Nat := 12
+  foo
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (let
+      name: (identifier)
+      type: (identifier)
+      value: (number)
+      body: (identifier))))
+
+============
+Let Function
+============
+
+def foo : Nat :=
+  let val (x y : Nat) := x + y
+  return val 2 3
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    type: (identifier)
+    body: (let
+      name: (identifier)
+      parameters: (parameters
+        (explicit_binder
+          name: (identifier)
+          name: (identifier)
+          type: (identifier)))
+      value: (binary_expression
+        left: (identifier)
+        right: (identifier))
+      body: (return
+        value: (application
+          name: (application
+            name: (identifier)
+            arguments: (number))
+          arguments: (number))))))
+
+============================
+Let Function Bare Parameters
+============================
+
+def foo :=
+let f a b := 2
+f true false
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (let
+      name: (identifier)
+      parameters: (parameters
+        (identifier)
+        (identifier))
+      value: (number)
+      body: (application
+        name: (application
+          name: (identifier)
+          arguments: (true))
+        arguments: (false)))))
+
+==============
+Let Semicolons
+==============
+
+def foo :=
+let foo := 12
+let bar := 13
+let baz := 14
+foo + bar + baz
+
+def bar :=
+let foo := 12;
+let bar := 13;
+let baz := 14;
+foo + bar + baz
+
+def baz :=
+let foo := 12; let bar := 13; let baz := 14;
+foo + bar + baz
+
+def quux :=
+  let foo := 12
+  let bar := 13
+  let baz := 14
+  foo + bar + baz
+
+---
+
+(module
+  (definition
+    (identifier)
+    (let
+      (identifier)
+      (number)
+      (let
+        (identifier)
+        (number)
+        (let
+          (identifier)
+          (number)
+          (binary_expression
+            (binary_expression
+              (identifier)
+              (identifier))
+            (identifier))))))
+  (definition
+    (identifier)
+    (let
+      (identifier)
+      (number)
+      (let
+        (identifier)
+        (number)
+        (let
+          (identifier)
+          (number)
+          (binary_expression
+            (binary_expression
+              (identifier)
+              (identifier))
+            (identifier))))))
+  (definition
+    (identifier)
+    (let
+      (identifier)
+      (number)
+      (let
+        (identifier)
+        (number)
+        (let
+          (identifier)
+          (number)
+          (binary_expression
+            (binary_expression
+              (identifier)
+              (identifier))
+            (identifier))))))
+  (definition
+    (identifier)
+    (let
+      (identifier)
+      (number)
+      (let
+        (identifier)
+        (number)
+        (let
+          (identifier)
+          (number)
+          (binary_expression
+            (binary_expression
+              (identifier)
+              (identifier))
+            (identifier)))))))
+
+==========
+No Let Mut
+==========
+
+def foo :=
+  let mut foo := 12
+  foo
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (let
+      name: (identifier)
+      parameters: (parameters
+        (identifier))
+      value: (number)
+      body: (identifier))))
+
+============
+No Let Arrow
+============
+
+def foo :=
+  let foo <- 12
+  foo
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    (ERROR
+      (identifier))
+    body: (unary_expression
+      operand: (application
+        name: (number)
+        arguments: (identifier)))))
+
+====
+Have
+====
+
+example : Nat:=
+  have : Type := Nat;
+  2
+
+---
+
+(module
+  (example
+    (identifier)
+    (have
+      (identifier)
+      (identifier)
+      (number))))
+
+======
+Abbrev
+======
+
+abbrev Foo := Bar
+
+abbrev Bar : Nat → Nat := f
+
+abbrev Baz {N} [bar N] (h : foo) : Nat → Nat := f
+
+abbrev Baz
+| 2 => 2
+| _ => 3
+
+@[inline] protected abbrev Spam.Quux := Baz
+
+---
+
+(module
+  (definition
+    name: (identifier)
+    body: (identifier))
+  (definition
+    name: (identifier)
+    type: (arrow
+      domain: (identifier)
+      codomain: (identifier))
+    body: (identifier))
+  (definition
+    name: (identifier)
+    binders: (binders
+      (implicit_binder
+        name: (identifier))
+      (instance_binder
+        type: (application
+          name: (identifier)
+          arguments: (identifier)))
+      (explicit_binder
+        name: (identifier)
+        type: (identifier)))
+    type: (arrow
+      domain: (identifier)
+      codomain: (identifier))
+    body: (identifier))
+  (definition
+    name: (identifier)
+    (match_arm
+      patterns: (number)
+      body: (number))
+    (match_arm
+      patterns: (hole)
+      body: (number)))
+  (declaration
+    attributes: (attributes
+      (attribute_entry
+        name: (identifier)))
+    (definition
+      name: (identifier)
+      name: (identifier)
+      body: (identifier))))
+
+========
+Constant
+========
+
+constant A : Type
+constant B : Type -> Type
+constant C : Nat := 3
+
+---
+
+(module
+  (constant
+    name: (identifier)
+    type: (identifier))
+  (constant
+    name: (identifier)
+    type: (arrow
+      domain: (identifier)
+      codomain: (identifier)))
+  (constant
+    name: (identifier)
+    type: (identifier)
+    body: (number)))
+
+==========================
+Constant With Missing Type
+==========================
+
+constant B
+
+---
+
+(module
+  (constant
+    (identifier)))
+
+==========================
+Constant With Missing Name
+==========================
+
+constant
+
+---
+
+(module
+  (ERROR))
+
+=============================
+Constant With Non-Simple Body
+=============================
+
+constant Foo : Nat → Nat
+| _ => 3
+
+---
+
+(module
+  (constant
+    (identifier)
+    (application
+      (arrow
+        (identifier)
+        (identifier))
+      (ERROR)
+      (hole)
+      (ERROR)
+      (number))))
+
+=====
+Axiom
+=====
+
+axiom foo : 1 = 2
+
+---
+
+(module
+  (axiom
+    name: (identifier)
+    type: (binary_expression
+      left: (number)
+      right: (number))))
+
+=======================
+Axiom With Missing Name
+=======================
+
+axiom : 1 = 2
+
+---
+
+(module
+  (axiom
+    name: (identifier
+      (MISSING _identifier))
+    type: (binary_expression
+      (number)
+      (number))))
+
+========
+Deriving
+========
+
+inductive Foo
+| bar
+deriving Inhabited
+
+class inductive Foo
+| bar
+deriving Inhabited
+
+structure Foo where
+deriving Inhabited
+
+class Foo where
+deriving Inhabited
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier))
+    deriving: (identifier))
+  (class_inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier))
+    deriving: (identifier))
+  (structure
+    name: (identifier)
+    deriving: (identifier))
+  (structure
+    name: (identifier)
+    deriving: (identifier)))
+
+=================
+Multiple Deriving
+=================
+
+inductive Foo
+| bar
+deriving Baz, Quux
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier))
+    deriving: (identifier)
+    deriving: (identifier)))
+
+================
+Deriving Nothing
+================
+
+inductive Foo
+| bar
+deriving
+
+---
+
+(module
+  (inductive
+    name: (identifier)
+    constructors: (constructor
+      name: (identifier)))
+  (ERROR))

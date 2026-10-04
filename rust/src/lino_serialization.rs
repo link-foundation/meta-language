@@ -9,7 +9,7 @@
 //! languages, source spans, parse flags, and term registration.
 //!
 //! The emitted dialect is plain links-notation accepted by the
-//! [`links_notation`] 0.13 crate, so other ecosystem parsers can consume the
+//! [`links_notation`] 0.22 crate, so other ecosystem parsers can consume the
 //! output. Each statement has the shape:
 //!
 //! ```text
@@ -34,7 +34,7 @@ use std::fmt;
 use std::fmt::Write as _;
 use std::sync::Arc;
 
-use links_notation::{parse_lino_to_links, LiNo};
+use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 
 use crate::link_flags::LinkFlags;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
@@ -87,7 +87,7 @@ impl LinkNetwork {
     /// Returns [`LinoSerializationError`] when the text is not valid
     /// links-notation or does not match the serialization schema.
     pub fn from_lino(text: &str) -> Result<Self, LinoSerializationError> {
-        let statements = parse_lino_to_links(text)
+        let statements = parse_lino_to_links_with_config(text, &ParserConfig::without_comments())
             .map_err(|error| LinoSerializationError::Parse(error.to_string()))?;
         let mut network = Self::new();
         for statement in &statements {
@@ -113,7 +113,7 @@ impl LinkNetwork {
                     LiNo::Link { .. } => {
                         return Err(LinoSerializationError::Structure(
                             "statement values must be references or a meta sublink".to_string(),
-                        ))
+                        ));
                     }
                 }
             }
@@ -123,10 +123,8 @@ impl LinkNetwork {
                 )
             })?;
             let (metadata, registered) = decode_meta(meta_values)?;
-            if registered {
-                if let Some(term) = metadata.term() {
-                    network.terms.insert(Arc::from(term), link_id);
-                }
+            if registered && let Some(term) = metadata.term() {
+                network.terms.insert(Arc::from(term), link_id);
             }
             network.next_id = network.next_id.max(link_id.0 + 1);
             network.links.insert(
@@ -220,7 +218,7 @@ fn decode_meta(fields: &[LiNo<String>]) -> Result<(LinkMetadata, bool), LinoSeri
             other => {
                 return Err(LinoSerializationError::Structure(format!(
                     "unknown meta field `{other}`"
-                )))
+                )));
             }
         }
     }
@@ -307,7 +305,7 @@ fn parse_link_type(token: &str) -> Result<LinkType, LinoSerializationError> {
         other => {
             return Err(LinoSerializationError::Structure(format!(
                 "unknown link type `{other}`"
-            )))
+            )));
         }
     })
 }

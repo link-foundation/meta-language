@@ -1,0 +1,249 @@
+{
+  "description": "Words a canonical name may use besides the WordNet 3.1 lemmas: the function words that join the words of a phrase, and technical terms WordNet does not list, each with the reference that defines it and its parts of speech.",
+  "functionWords": {
+    "description": "Conjunctions, prepositions and articles; a phrase may use them between its words but never as the head of a concept.",
+    "words": ["a", "an", "and", "as", "at", "by", "for", "from", "if", "in", "into", "of", "on", "or", "the", "to", "with"]
+  },
+  "terms": [
+    {
+      "word": "nonterminal",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "A grammar symbol that a rule rewrites into other symbols.",
+      "source": "Aho, Lam, Sethi and Ullman, Compilers: Principles, Techniques, and Tools, 2nd edition (2006), section 2.2.1"
+    },
+    {
+      "word": "strikethrough",
+      "partsOfSpeech": ["noun"],
+      "definition": "Text marked as deleted by a horizontal line through it.",
+      "source": "GitHub Flavored Markdown Spec 0.29, section 6.5 Strikethrough (extension)"
+    },
+    {
+      "word": "inline",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Placed within a line of text rather than as a separate block.",
+      "source": "CommonMark Spec 0.31.2, section 6 Inlines"
+    },
+    {
+      "word": "statehood",
+      "partsOfSpeech": ["noun"],
+      "definition": "The status of being a state.",
+      "source": "Merriam-Webster Dictionary, statehood (noun)"
+    },
+    {
+      "word": "runtime",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "The period during which a program or parser executes.",
+      "source": "Merriam-Webster Dictionary, run-time (noun)"
+    },
+    {
+      "word": "snapshot",
+      "partsOfSpeech": ["noun", "verb"],
+      "definition": "To record the state of something at one moment.",
+      "source": "Merriam-Webster Dictionary, snapshot (verb)"
+    },
+    {
+      "word": "csv",
+      "partsOfSpeech": ["noun"],
+      "definition": "A plain text table format whose records are lines of fields separated by commas.",
+      "source": "RFC 4180, Common Format and MIME Type for Comma-Separated Values (CSV) Files (2005), section 2"
+    },
+    {
+      "word": "diff",
+      "partsOfSpeech": ["noun"],
+      "definition": "A text that lists the line differences between two files, as the diff utility writes it.",
+      "source": "POSIX.1-2017 (IEEE Std 1003.1-2017), diff utility"
+    },
+    {
+      "word": "ini",
+      "partsOfSpeech": ["noun"],
+      "definition": "A configuration file format of bracketed sections that hold key and value settings.",
+      "source": "Microsoft Win32 API documentation, GetPrivateProfileString function (initialization files)"
+    },
+    {
+      "word": "unquoted",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Not enclosed in quotation marks.",
+      "source": "RFC 4180, Common Format and MIME Type for Comma-Separated Values (CSV) Files (2005), section 2"
+    },
+    {
+      "word": "keyword",
+      "partsOfSpeech": ["noun"],
+      "definition": "A datum written with a hash-colon prefix that evaluates to itself and is never a variable.",
+      "source": "The Racket Reference, Reading Keywords"
+    },
+    {
+      "word": "quasiquote",
+      "partsOfSpeech": ["noun"],
+      "definition": "A template, written with a backquote, whose unquoted parts are evaluated.",
+      "source": "R7RS small (2013), section 4.2.8 Quasiquotation"
+    },
+    {
+      "word": "unquote",
+      "partsOfSpeech": ["noun"],
+      "definition": "A part of a quasiquote template, written with a comma, that is evaluated.",
+      "source": "R7RS small (2013), section 4.2.8 Quasiquotation"
+    },
+    {
+      "word": "quasisyntax",
+      "partsOfSpeech": ["noun"],
+      "definition": "A syntax template, written with a hash-backquote, whose unsyntax parts are evaluated.",
+      "source": "The Racket Reference, Reading Quotes"
+    },
+    {
+      "word": "unsyntax",
+      "partsOfSpeech": ["noun"],
+      "definition": "A part of a quasisyntax template, written with a hash-comma, that is evaluated.",
+      "source": "The Racket Reference, Reading Quotes"
+    },
+    {
+      "word": "anything",
+      "partsOfSpeech": ["noun"],
+      "definition": "A thing of any kind.",
+      "source": "Merriam-Webster Dictionary, anything (noun)"
+    },
+    {
+      "word": "newline",
+      "partsOfSpeech": ["noun"],
+      "definition": "The character or character pair that ends a line of text.",
+      "source": "The Unicode Standard, version 15.0, section 5.8 Newline Guidelines"
+    },
+    {
+      "word": "whitespace",
+      "partsOfSpeech": ["noun"],
+      "definition": "Characters such as spaces, tabs and line breaks that separate tokens and print as blank space.",
+      "source": "R7RS small (2013), section 2.1 Identifiers and section 7.1.1 Lexical structure"
+    },
+    {
+      "word": "declarator",
+      "partsOfSpeech": ["noun"],
+      "definition": "The part of a declaration that names what it declares and gives its pointer, array and function structure.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.6 Declarators"
+    },
+    {
+      "word": "designator",
+      "partsOfSpeech": ["noun"],
+      "definition": "The part of an initializer that names the member or element it initializes.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.9 Initialization"
+    },
+    {
+      "word": "initializer",
+      "partsOfSpeech": ["noun"],
+      "definition": "The expression or brace-enclosed list that gives an object its initial value.",
+      "source": "ISO/IEC 9899:2018 (C17), section 6.7.9 Initialization"
+    },
+    {
+      "word": "preprocessor",
+      "partsOfSpeech": ["noun"],
+      "definition": "The translation phase that runs directives and expands macros before a program is parsed.",
+      "source": "ISO/IEC 9899:2018 (C17), section 5.1.1.2 Translation phases and section 6.10 Preprocessing directives"
+    },
+    {
+      "word": "parenthesized",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Enclosed in parentheses.",
+      "source": "Merriam-Webster Dictionary, parenthesize (verb)"
+    },
+    {
+      "word": "variadic",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Taking a variable number of arguments.",
+      "source": "ISO/IEC 14882:2020 (C++20), section 13.7.4 Variadic templates [temp.variadic]"
+    },
+    {
+      "word": "unaligned",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Not guaranteed to sit at the alignment its type requires.",
+      "source": "Microsoft C/C++ language reference, __unaligned"
+    },
+    {
+      "word": "microsoft",
+      "partsOfSpeech": ["noun"],
+      "definition": "The company whose compilers define the Microsoft-specific C and C++ syntax.",
+      "source": "Microsoft C/C++ language reference, Microsoft-specific modifiers"
+    },
+    {
+      "word": "else",
+      "partsOfSpeech": ["adverb"],
+      "definition": "Otherwise; the branch taken when a condition fails.",
+      "source": "Merriam-Webster Dictionary, else (adverb); ISO/IEC 9899:2018 (C17), section 6.8.4.1 The if statement"
+    },
+    {
+      "word": "frontmatter",
+      "partsOfSpeech": ["noun"],
+      "definition": "Metadata at the start of a source file, set off by lines of three or more dashes.",
+      "source": "RFC 3503, frontmatter; The Rust Reference, Frontmatter"
+    },
+    {
+      "word": "metavariable",
+      "partsOfSpeech": ["noun"],
+      "definition": "A name in a macro matcher that binds a fragment of the input for the transcriber.",
+      "source": "The Rust Reference, Macros By Example, Metavariables"
+    },
+    {
+      "word": "turbofish",
+      "partsOfSpeech": ["noun"],
+      "definition": "The ::<> syntax that gives generic arguments in an expression path.",
+      "source": "The Rust Reference, Paths, Paths in expressions"
+    },
+    {
+      "word": "wildcard",
+      "partsOfSpeech": ["noun"],
+      "definition": "A placeholder that matches anything, such as the _ pattern or the * of a glob import.",
+      "source": "The Rust Reference, Patterns, Wildcard pattern"
+    },
+    {
+      "word": "scoped",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Qualified by the path of the module, type or trait that contains it.",
+      "source": "The Rust Reference, Paths, Qualified paths"
+    },
+    {
+      "word": "tuple",
+      "partsOfSpeech": ["noun"],
+      "definition": "A fixed-length ordered sequence of values of possibly different types.",
+      "source": "The Rust Reference, Tuple types"
+    },
+    {
+      "word": "where",
+      "partsOfSpeech": ["adverb"],
+      "definition": "Under which conditions; a where clause states the bounds a generic item requires.",
+      "source": "Merriam-Webster Dictionary, where (adverb); The Rust Reference, Generic parameters, Where clauses"
+    },
+    {
+      "word": "destructuring",
+      "partsOfSpeech": ["noun", "adjective"],
+      "definition": "Binding the parts of an array or object value to the names of a pattern.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.15.5 Destructuring Assignment"
+    },
+    {
+      "word": "jsx",
+      "partsOfSpeech": ["noun"],
+      "definition": "An XML-like syntax extension of ECMAScript whose elements and attributes describe a tree of components.",
+      "source": "JSX specification (facebook.github.io/jsx), Draft: JSX Specification"
+    },
+    {
+      "word": "meta",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Describing the running program itself rather than a value it computes, as new.target and import.meta do.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.3.12 Meta Properties"
+    },
+    {
+      "word": "namespace",
+      "partsOfSpeech": ["noun"],
+      "definition": "The object a module namespace import or export binds, whose properties are the exports of a module.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 16.2.2 Imports (NameSpaceImport) and section 10.4.6 Module Namespace Exotic Objects"
+    },
+    {
+      "word": "this",
+      "partsOfSpeech": ["noun"],
+      "definition": "The keyword that evaluates to the receiver of the current function call.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 13.2.1 The this Keyword"
+    },
+    {
+      "word": "unescaped",
+      "partsOfSpeech": ["adjective"],
+      "definition": "Written without an escape sequence, as the plain characters of a string literal are.",
+      "source": "ECMA-262 16th edition (ECMAScript 2025), section 12.9.4 String Literals"
+    }
+  ]
+}

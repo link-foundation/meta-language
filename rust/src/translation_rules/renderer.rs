@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use crate::{Link, LinkId, LinkNetwork, LinkType, ParseConfiguration, QueryMatch};
 
-use super::{canonical_reconstruction_language, TranslationRule, TranslationRuleSet};
+use super::{TranslationRule, TranslationRuleSet, canonical_reconstruction_language};
 
 pub(super) fn render_roots(
     rule_set: &TranslationRuleSet,

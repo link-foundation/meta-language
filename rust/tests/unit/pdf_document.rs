@@ -2,12 +2,11 @@
 //! cross-format concept bridge, concept-tagged parsing, and `reconstruct_text_as`.
 
 use meta_language::{
-    parse_markup_document, parse_pdf_document, pdf_profile_is_recognized, render_pdf_document,
-    BlockNode, InlineNode, LinkNetwork, LinkType, ParseConfiguration,
+    BlockNode, InlineNode, LinkNetwork, LinkType, ParseConfiguration, parse_markup_document,
+    parse_pdf_document, pdf_profile_is_recognized, render_pdf_document,
 };
 
-const SAMPLE_MARKDOWN: &str =
-    "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
+const SAMPLE_MARKDOWN: &str = "# Status Report\n\nThe system is **ready** for *launch*.\n\n- First item\n- Second **strong** item";
 
 fn pdf_from_markdown() -> String {
     let document = parse_markup_document("Markdown", SAMPLE_MARKDOWN).expect("Markdown parses");
@@ -51,7 +50,7 @@ fn pdf_render_and_parse_are_inverses_on_the_concept_tree() {
     };
     assert!(children.iter().any(|node| matches!(
         node,
-        InlineNode::Wrapped { concept, .. } if concept == "strong"
+        InlineNode::Wrapped { concept, .. } if concept == "strong-emphasis"
     )));
     assert!(children.iter().any(|node| matches!(
         node,
@@ -114,7 +113,7 @@ fn pdf_parser_preserves_bytes_and_tags_the_document_structure() {
         "paragraph",
         "bullet-list",
         "list-item",
-        "strong",
+        "strong-emphasis",
         "emphasis",
     ] {
         assert!(
@@ -150,7 +149,7 @@ fn reconstruct_text_as_pdf_renders_a_structurally_equivalent_pdf() {
 fn out_of_profile_pdf_parses_to_an_empty_document_without_panicking() {
     // A PDF without the profile's marked content yields no blocks (graceful).
     let bare = "%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n";
-    assert!(parse_pdf_document(bare).blocks.is_empty());
+    assert_eq!(parse_pdf_document(bare).blocks, [] as [BlockNode; 0]);
     assert!(!pdf_profile_is_recognized(bare));
 
     // It still parses losslessly as a network.

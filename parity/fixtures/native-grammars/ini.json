@@ -1,0 +1,912 @@
+{
+  "schemaVersion": 1,
+  "id": "ini",
+  "language": "INI",
+  "grammar": "parity/grammars/native/ini.lino",
+  "oracle": "tree-sitter-ini 1.4.0",
+  "sources": [
+    "https://github.com/justinmk/tree-sitter-ini/blob/v1.4.0/grammar.js",
+    "https://docs.python.org/3/library/configparser.html#supported-ini-file-structure"
+  ],
+  "hidden": [
+    "blank_space"
+  ],
+  "anonymous": [
+    "newline",
+    "comment_marker"
+  ],
+  "extras": [
+    "comment"
+  ],
+  "oracleKinds": {},
+  "matches": [
+    {
+      "source": "a=1\n",
+      "rows": [
+        [0,null,"document",1,0,4,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""]
+      ]
+    },
+    {
+      "source": "",
+      "rows": [
+        [0,null,"document",1,0,0,""]
+      ]
+    },
+    {
+      "source": "\n",
+      "rows": [
+        [0,null,"document",1,0,1,""]
+      ]
+    },
+    {
+      "source": "\n\n",
+      "rows": [
+        [0,null,"document",1,0,2,""]
+      ]
+    },
+    {
+      "source": "   ",
+      "rows": [
+        [0,null,"document",1,3,3,""]
+      ]
+    },
+    {
+      "source": "k = \n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"setting",1,0,5,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,4,""]
+      ]
+    },
+    {
+      "source": "k==v\n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"setting",1,0,5,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,4,""]
+      ]
+    },
+    {
+      "source": "k=v\n",
+      "rows": [
+        [0,null,"document",1,0,4,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""]
+      ]
+    },
+    {
+      "source": "a = b\nc = d\n",
+      "rows": [
+        [0,null,"document",1,0,12,""],
+        [1,null,"setting",1,0,6,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,5,""],
+        [1,null,"setting",1,6,12,""],
+        [2,null,"setting_name",1,6,7,""],
+        [2,null,"=",0,8,9,""],
+        [2,null,"setting_value",1,9,11,""]
+      ]
+    },
+    {
+      "source": "[x]\n# c\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"section",1,0,4,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [1,null,"comment",1,4,8,"X"],
+        [2,null,"text",1,5,7,""]
+      ]
+    },
+    {
+      "source": "[a]\n[b]\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"section",1,0,4,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [1,null,"section",1,4,8,""],
+        [2,null,"section_name",1,4,8,""],
+        [3,null,"[",0,4,5,""],
+        [3,null,"text",1,5,6,""],
+        [3,null,"]",0,6,7,""]
+      ]
+    },
+    {
+      "source": "k = v=w\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"setting",1,0,8,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,7,""]
+      ]
+    },
+    {
+      "source": "[s]\n\tk = v\n",
+      "rows": [
+        [0,null,"document",1,0,11,""],
+        [1,null,"section",1,0,11,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"setting",1,5,11,""],
+        [3,null,"setting_name",1,5,6,""],
+        [3,null,"=",0,7,8,""],
+        [3,null,"setting_value",1,8,10,""]
+      ]
+    },
+    {
+      "source": "k = \t v\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"setting",1,0,8,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,7,""]
+      ]
+    },
+    {
+      "source": "[s.t]\nk=v\n",
+      "rows": [
+        [0,null,"document",1,0,10,""],
+        [1,null,"section",1,0,10,""],
+        [2,null,"section_name",1,0,6,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,4,""],
+        [3,null,"]",0,4,5,""],
+        [2,null,"setting",1,6,10,""],
+        [3,null,"setting_name",1,6,7,""],
+        [3,null,"=",0,7,8,""],
+        [3,null,"setting_value",1,8,9,""]
+      ]
+    },
+    {
+      "source": "[s]\r\n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"section",1,0,5,""],
+        [2,null,"section_name",1,0,5,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "k=v\t\n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"setting",1,0,5,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,4,""]
+      ]
+    },
+    {
+      "source": "[s]\n# a\n# b\nk=v\n",
+      "rows": [
+        [0,null,"document",1,0,16,""],
+        [1,null,"section",1,0,16,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"comment",1,4,8,"X"],
+        [3,null,"text",1,5,7,""],
+        [2,null,"comment",1,8,12,"X"],
+        [3,null,"text",1,9,11,""],
+        [2,null,"setting",1,12,16,""],
+        [3,null,"setting_name",1,12,13,""],
+        [3,null,"=",0,13,14,""],
+        [3,null,"setting_value",1,14,15,""]
+      ]
+    },
+    {
+      "source": "[s]\nk = v\n",
+      "rows": [
+        [0,null,"document",1,0,10,""],
+        [1,null,"section",1,0,10,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"setting",1,4,10,""],
+        [3,null,"setting_name",1,4,5,""],
+        [3,null,"=",0,6,7,""],
+        [3,null,"setting_value",1,7,9,""]
+      ]
+    },
+    {
+      "source": "; c\n[s]\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"comment",1,0,4,"X"],
+        [2,null,"text",1,1,3,""],
+        [1,null,"section",1,4,8,""],
+        [2,null,"section_name",1,4,8,""],
+        [3,null,"[",0,4,5,""],
+        [3,null,"text",1,5,6,""],
+        [3,null,"]",0,6,7,""]
+      ]
+    },
+    {
+      "source": "# c\nk=\n",
+      "rows": [
+        [0,null,"document",1,0,7,""],
+        [1,null,"comment",1,0,4,"X"],
+        [2,null,"text",1,1,3,""],
+        [1,null,"setting",1,4,7,""],
+        [2,null,"setting_name",1,4,5,""],
+        [2,null,"=",0,5,6,""]
+      ]
+    },
+    {
+      "source": "#\n",
+      "rows": [
+        [0,null,"document",1,0,2,""],
+        [1,null,"comment",1,0,2,"X"],
+        [2,null,"text",1,1,1,""]
+      ]
+    },
+    {
+      "source": "#\r\n",
+      "rows": [
+        [0,null,"document",1,0,3,""],
+        [1,null,"comment",1,0,3,"X"],
+        [2,null,"text",1,1,1,""]
+      ]
+    },
+    {
+      "source": "\n; c\n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"comment",1,1,5,"X"],
+        [2,null,"text",1,2,4,""]
+      ]
+    },
+    {
+      "source": "[a b]\r\nk=v\r\n",
+      "rows": [
+        [0,null,"document",1,0,12,""],
+        [1,null,"section",1,0,12,""],
+        [2,null,"section_name",1,0,7,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,4,""],
+        [3,null,"]",0,4,5,""],
+        [2,null,"setting",1,7,12,""],
+        [3,null,"setting_name",1,7,8,""],
+        [3,null,"=",0,8,9,""],
+        [3,null,"setting_value",1,9,11,""]
+      ]
+    },
+    {
+      "source": "\r\n[s]\r\n",
+      "rows": [
+        [0,null,"document",1,0,7,""],
+        [1,null,"section",1,2,7,""],
+        [2,null,"section_name",1,2,7,""],
+        [3,null,"[",0,2,3,""],
+        [3,null,"text",1,3,4,""],
+        [3,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "k = v ; not comment\n",
+      "rows": [
+        [0,null,"document",1,0,20,""],
+        [1,null,"setting",1,0,20,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,19,""]
+      ]
+    },
+    {
+      "source": "a b = c = d\n",
+      "rows": [
+        [0,null,"document",1,0,12,""],
+        [1,null,"setting",1,0,12,""],
+        [2,null,"setting_name",1,0,3,""],
+        [2,null,"=",0,4,5,""],
+        [2,null,"setting_value",1,5,11,""]
+      ]
+    },
+    {
+      "source": "k v = w\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"setting",1,0,8,""],
+        [2,null,"setting_name",1,0,3,""],
+        [2,null,"=",0,4,5,""],
+        [2,null,"setting_value",1,5,7,""]
+      ]
+    },
+    {
+      "source": "k  v = w\n",
+      "rows": [
+        [0,null,"document",1,0,9,""],
+        [1,null,"setting",1,0,9,""],
+        [2,null,"setting_name",1,0,4,""],
+        [2,null,"=",0,5,6,""],
+        [2,null,"setting_value",1,6,8,""]
+      ]
+    },
+    {
+      "source": "  k=v\n",
+      "rows": [
+        [0,null,"document",1,2,6,""],
+        [1,null,"setting",1,2,6,""],
+        [2,null,"setting_name",1,2,3,""],
+        [2,null,"=",0,3,4,""],
+        [2,null,"setting_value",1,4,5,""]
+      ]
+    },
+    {
+      "source": "\tk\t=\tv\t\n",
+      "rows": [
+        [0,null,"document",1,1,8,""],
+        [1,null,"setting",1,1,8,""],
+        [2,null,"setting_name",1,1,2,""],
+        [2,null,"=",0,3,4,""],
+        [2,null,"setting_value",1,4,7,""]
+      ]
+    },
+    {
+      "source": "k\n=v\n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"setting",1,0,5,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,4,""]
+      ]
+    },
+    {
+      "source": "\n\n[x]\n\nk=v w \n",
+      "rows": [
+        [0,null,"document",1,0,14,""],
+        [1,null,"section",1,2,14,""],
+        [2,null,"section_name",1,2,6,""],
+        [3,null,"[",0,2,3,""],
+        [3,null,"text",1,3,4,""],
+        [3,null,"]",0,4,5,""],
+        [2,null,"setting",1,7,14,""],
+        [3,null,"setting_name",1,7,8,""],
+        [3,null,"=",0,8,9,""],
+        [3,null,"setting_value",1,9,13,""]
+      ]
+    },
+    {
+      "source": " \n[x]\n",
+      "rows": [
+        [0,null,"document",1,1,6,""],
+        [1,null,"section",1,2,6,""],
+        [2,null,"section_name",1,2,6,""],
+        [3,null,"[",0,2,3,""],
+        [3,null,"text",1,3,4,""],
+        [3,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "[ s ]\n",
+      "rows": [
+        [0,null,"document",1,0,6,""],
+        [1,null,"section",1,0,6,""],
+        [2,null,"section_name",1,0,6,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,4,""],
+        [3,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "[a\nb]\n",
+      "rows": [
+        [0,null,"document",1,0,6,""],
+        [1,null,"section",1,0,6,""],
+        [2,null,"section_name",1,0,6,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,4,""],
+        [3,null,"]",0,4,5,""]
+      ]
+    },
+    {
+      "source": "[s]  \n",
+      "rows": [
+        [0,null,"document",1,0,6,""],
+        [1,null,"section",1,0,6,""],
+        [2,null,"section_name",1,0,6,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "[s]\n\n",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"section",1,0,4,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "[s]\nk=v\n\n",
+      "rows": [
+        [0,null,"document",1,0,9,""],
+        [1,null,"section",1,0,8,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"setting",1,4,8,""],
+        [3,null,"setting_name",1,4,5,""],
+        [3,null,"=",0,5,6,""],
+        [3,null,"setting_value",1,6,7,""]
+      ]
+    },
+    {
+      "source": "k=v\r\n\r\n",
+      "rows": [
+        [0,null,"document",1,0,7,""],
+        [1,null,"setting",1,0,5,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,4,""]
+      ]
+    },
+    {
+      "source": "k = v\n\n\n",
+      "rows": [
+        [0,null,"document",1,0,8,""],
+        [1,null,"setting",1,0,6,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,5,""]
+      ]
+    },
+    {
+      "source": "k = v\n  j = w\n",
+      "rows": [
+        [0,null,"document",1,0,14,""],
+        [1,null,"setting",1,0,6,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,2,3,""],
+        [2,null,"setting_value",1,3,5,""],
+        [1,null,"setting",1,8,14,""],
+        [2,null,"setting_name",1,8,9,""],
+        [2,null,"=",0,10,11,""],
+        [2,null,"setting_value",1,11,13,""]
+      ]
+    },
+    {
+      "source": "[s]\n\nk=v\n\n\nj=w\n",
+      "rows": [
+        [0,null,"document",1,0,15,""],
+        [1,null,"section",1,0,15,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"setting",1,5,9,""],
+        [3,null,"setting_name",1,5,6,""],
+        [3,null,"=",0,6,7,""],
+        [3,null,"setting_value",1,7,8,""],
+        [2,null,"setting",1,11,15,""],
+        [3,null,"setting_name",1,11,12,""],
+        [3,null,"=",0,12,13,""],
+        [3,null,"setting_value",1,13,14,""]
+      ]
+    },
+    {
+      "source": "k=v\n[s]\n[t]\nx=1\n",
+      "rows": [
+        [0,null,"document",1,0,16,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""],
+        [1,null,"section",1,4,8,""],
+        [2,null,"section_name",1,4,8,""],
+        [3,null,"[",0,4,5,""],
+        [3,null,"text",1,5,6,""],
+        [3,null,"]",0,6,7,""],
+        [1,null,"section",1,8,16,""],
+        [2,null,"section_name",1,8,12,""],
+        [3,null,"[",0,8,9,""],
+        [3,null,"text",1,9,10,""],
+        [3,null,"]",0,10,11,""],
+        [2,null,"setting",1,12,16,""],
+        [3,null,"setting_name",1,12,13,""],
+        [3,null,"=",0,13,14,""],
+        [3,null,"setting_value",1,14,15,""]
+      ]
+    },
+    {
+      "source": "k=v\n  ; c\n",
+      "rows": [
+        [0,null,"document",1,0,10,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""],
+        [1,null,"comment",1,6,10,"X"],
+        [2,null,"text",1,7,9,""]
+      ]
+    },
+    {
+      "source": "[s]\n; c\nk=v\n",
+      "rows": [
+        [0,null,"document",1,0,12,""],
+        [1,null,"section",1,0,12,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"comment",1,4,8,"X"],
+        [3,null,"text",1,5,7,""],
+        [2,null,"setting",1,8,12,""],
+        [3,null,"setting_name",1,8,9,""],
+        [3,null,"=",0,9,10,""],
+        [3,null,"setting_value",1,10,11,""]
+      ]
+    },
+    {
+      "source": "[s]\n  ; c\n  k=v\n",
+      "rows": [
+        [0,null,"document",1,0,16,""],
+        [1,null,"section",1,0,16,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"comment",1,6,10,"X"],
+        [3,null,"text",1,7,9,""],
+        [2,null,"setting",1,12,16,""],
+        [3,null,"setting_name",1,12,13,""],
+        [3,null,"=",0,13,14,""],
+        [3,null,"setting_value",1,14,15,""]
+      ]
+    },
+    {
+      "source": "[a]\nk=v\n; c\n[b]\n",
+      "rows": [
+        [0,null,"document",1,0,16,""],
+        [1,null,"section",1,0,8,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"setting",1,4,8,""],
+        [3,null,"setting_name",1,4,5,""],
+        [3,null,"=",0,5,6,""],
+        [3,null,"setting_value",1,6,7,""],
+        [1,null,"comment",1,8,12,"X"],
+        [2,null,"text",1,9,11,""],
+        [1,null,"section",1,12,16,""],
+        [2,null,"section_name",1,12,16,""],
+        [3,null,"[",0,12,13,""],
+        [3,null,"text",1,13,14,""],
+        [3,null,"]",0,14,15,""]
+      ]
+    },
+    {
+      "source": "[s]\n; c\n[t]\n",
+      "rows": [
+        [0,null,"document",1,0,12,""],
+        [1,null,"section",1,0,4,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [1,null,"comment",1,4,8,"X"],
+        [2,null,"text",1,5,7,""],
+        [1,null,"section",1,8,12,""],
+        [2,null,"section_name",1,8,12,""],
+        [3,null,"[",0,8,9,""],
+        [3,null,"text",1,9,10,""],
+        [3,null,"]",0,10,11,""]
+      ]
+    },
+    {
+      "source": "k=v\n; c\nj=w\n[s]\n",
+      "rows": [
+        [0,null,"document",1,0,16,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""],
+        [1,null,"comment",1,4,8,"X"],
+        [2,null,"text",1,5,7,""],
+        [1,null,"setting",1,8,12,""],
+        [2,null,"setting_name",1,8,9,""],
+        [2,null,"=",0,9,10,""],
+        [2,null,"setting_value",1,10,11,""],
+        [1,null,"section",1,12,16,""],
+        [2,null,"section_name",1,12,16,""],
+        [3,null,"[",0,12,13,""],
+        [3,null,"text",1,13,14,""],
+        [3,null,"]",0,14,15,""]
+      ]
+    },
+    {
+      "source": "k=v\n\n; c\n\nj=w\n",
+      "rows": [
+        [0,null,"document",1,0,14,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""],
+        [1,null,"comment",1,5,9,"X"],
+        [2,null,"text",1,6,8,""],
+        [1,null,"setting",1,10,14,""],
+        [2,null,"setting_name",1,10,11,""],
+        [2,null,"=",0,11,12,""],
+        [2,null,"setting_value",1,12,13,""]
+      ]
+    },
+    {
+      "source": "ключ=значение\n",
+      "rows": [
+        [0,null,"document",1,0,26,""],
+        [1,null,"setting",1,0,26,""],
+        [2,null,"setting_name",1,0,8,""],
+        [2,null,"=",0,8,9,""],
+        [2,null,"setting_value",1,9,25,""]
+      ]
+    },
+    {
+      "source": "a=1\n[b]\nc=2\n; d\n\n[e]\n; f\n",
+      "rows": [
+        [0,null,"document",1,0,25,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""],
+        [1,null,"section",1,4,12,""],
+        [2,null,"section_name",1,4,8,""],
+        [3,null,"[",0,4,5,""],
+        [3,null,"text",1,5,6,""],
+        [3,null,"]",0,6,7,""],
+        [2,null,"setting",1,8,12,""],
+        [3,null,"setting_name",1,8,9,""],
+        [3,null,"=",0,9,10,""],
+        [3,null,"setting_value",1,10,11,""],
+        [1,null,"comment",1,12,16,"X"],
+        [2,null,"text",1,13,15,""],
+        [1,null,"section",1,17,21,""],
+        [2,null,"section_name",1,17,21,""],
+        [3,null,"[",0,17,18,""],
+        [3,null,"text",1,18,19,""],
+        [3,null,"]",0,19,20,""],
+        [1,null,"comment",1,21,25,"X"],
+        [2,null,"text",1,22,24,""]
+      ]
+    },
+    {
+      "source": "; meta-language settings\nroot = true\n\n[core]\neditor = vim\n  # indented comment\npath = C:\\Program Files\\meta\n\n[remote \"origin\"]\nurl = https://example.com/repo.git?a=1&b=2\nfetch = +refs/heads/*:refs/remotes/origin/*\n",
+      "rows": [
+        [0,null,"document",1,0,214,""],
+        [1,null,"comment",1,0,25,"X"],
+        [2,null,"text",1,1,24,""],
+        [1,null,"setting",1,25,37,""],
+        [2,null,"setting_name",1,25,29,""],
+        [2,null,"=",0,30,31,""],
+        [2,null,"setting_value",1,31,36,""],
+        [1,null,"section",1,38,108,""],
+        [2,null,"section_name",1,38,45,""],
+        [3,null,"[",0,38,39,""],
+        [3,null,"text",1,39,43,""],
+        [3,null,"]",0,43,44,""],
+        [2,null,"setting",1,45,58,""],
+        [3,null,"setting_name",1,45,51,""],
+        [3,null,"=",0,52,53,""],
+        [3,null,"setting_value",1,53,57,""],
+        [2,null,"comment",1,60,79,"X"],
+        [3,null,"text",1,61,78,""],
+        [2,null,"setting",1,79,108,""],
+        [3,null,"setting_name",1,79,83,""],
+        [3,null,"=",0,84,85,""],
+        [3,null,"setting_value",1,85,107,""],
+        [1,null,"section",1,109,214,""],
+        [2,null,"section_name",1,109,127,""],
+        [3,null,"[",0,109,110,""],
+        [3,null,"text",1,110,125,""],
+        [3,null,"]",0,125,126,""],
+        [2,null,"setting",1,127,170,""],
+        [3,null,"setting_name",1,127,130,""],
+        [3,null,"=",0,131,132,""],
+        [3,null,"setting_value",1,132,169,""],
+        [2,null,"setting",1,170,214,""],
+        [3,null,"setting_name",1,170,175,""],
+        [3,null,"=",0,176,177,""],
+        [3,null,"setting_value",1,177,213,""]
+      ]
+    }
+  ],
+  "divergences": [
+    {
+      "source": "; c",
+      "reason": "Python configparser reads a last line without a line break, and tree-sitter-ini 1.4.0 accepts a setting or a section header there but not a comment.",
+      "rows": [
+        [0,null,"document",1,0,3,""],
+        [1,null,"comment",1,0,3,"X"],
+        [2,null,"text",1,1,3,""]
+      ]
+    },
+    {
+      "source": "[s]\nk=v\n; c  ",
+      "reason": "Python configparser reads a comment on the last line without a line break; tree-sitter-ini 1.4.0 requires one after a comment.",
+      "rows": [
+        [0,null,"document",1,0,13,""],
+        [1,null,"section",1,0,8,""],
+        [2,null,"section_name",1,0,4,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""],
+        [2,null,"setting",1,4,8,""],
+        [3,null,"setting_name",1,4,5,""],
+        [3,null,"=",0,5,6,""],
+        [3,null,"setting_value",1,6,7,""],
+        [1,null,"comment",1,8,13,"X"],
+        [2,null,"text",1,9,13,""]
+      ]
+    },
+    {
+      "source": "a=1",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,3,""],
+        [1,null,"setting",1,0,3,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""]
+      ]
+    },
+    {
+      "source": "[s]",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,3,""],
+        [1,null,"section",1,0,3,""],
+        [2,null,"section_name",1,0,3,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "[s]  ",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,5,""],
+        [1,null,"section",1,0,3,""],
+        [2,null,"section_name",1,0,3,""],
+        [3,null,"[",0,0,1,""],
+        [3,null,"text",1,1,2,""],
+        [3,null,"]",0,2,3,""]
+      ]
+    },
+    {
+      "source": "k=",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,2,""],
+        [1,null,"setting",1,0,2,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""]
+      ]
+    },
+    {
+      "source": "k= ",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,3,""],
+        [1,null,"setting",1,0,3,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,3,""]
+      ]
+    },
+    {
+      "source": "k=v\t",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,4,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,4,""]
+      ]
+    },
+    {
+      "source": "k=v\r",
+      "reason": "Python configparser reads a last line without a line break; tree-sitter-ini 1.4.0 inserts a missing one there, which only the has-error flag of its root shows.",
+      "rows": [
+        [0,null,"document",1,0,4,""],
+        [1,null,"setting",1,0,4,""],
+        [2,null,"setting_name",1,0,1,""],
+        [2,null,"=",0,1,2,""],
+        [2,null,"setting_value",1,2,4,""]
+      ]
+    }
+  ],
+  "rejections": [
+    {
+      "source": "[s] ; c\nk=v\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\") \"]\" (MISSING@3 newline)) (comment ~\" \" (comment_marker \";\") (text \" c\") (newline \"\\n\")) (setting (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\"))))"
+    },
+    {
+      "source": "[s] k=v\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\") \"]\" (MISSING@3 newline)) (setting ~\" \" (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\"))))"
+    },
+    {
+      "source": "[s]\tx\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\") \"]\" (newline (ERROR@3..5 \"\\tx\") \"\\n\"))))"
+    },
+    {
+      "source": "[a]b\n",
+      "recovered": "(document (section (section_name \"[\" (text \"a\") \"]\" (newline (ERROR@3..4 \"b\") \"\\n\"))))"
+    },
+    {
+      "source": "[]\n",
+      "recovered": "(document (section (section_name \"[\" (MISSING@1 text) \"]\" (newline \"\\n\"))))"
+    },
+    {
+      "source": "[s\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\\n\") (MISSING@3 \"]\") (MISSING@3 newline))))"
+    },
+    {
+      "source": "[s]]\n",
+      "recovered": "(document (section (section_name \"[\" (text \"s\") \"]\" (newline (ERROR@3..4 \"]\") \"\\n\"))))"
+    },
+    {
+      "source": "[[s]\n",
+      "recovered": "(document (section (section_name \"[\" (text (ERROR@1..2 \"[\") \"s\") \"]\" (newline \"\\n\"))))"
+    },
+    {
+      "source": "k=v\n[",
+      "recovered": "(document (setting (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\")) (section (section_name \"[\" (MISSING@5 text) (MISSING@5 \"]\") (MISSING@5 newline))))"
+    },
+    {
+      "source": "k\n",
+      "recovered": "(document (setting (setting_name \"k\") (MISSING@1 \"=\") ~\"\\n\" (MISSING@2 newline)))"
+    },
+    {
+      "source": "=v\n",
+      "recovered": "(document (setting (MISSING@0 setting_name) \"=\" (setting_value \"v\") (newline \"\\n\")))"
+    },
+    {
+      "source": "k=v\n=x\n",
+      "recovered": "(document (setting (setting_name \"k\") \"=\" (setting_value \"v\") (newline \"\\n\")) (setting (MISSING@4 setting_name) \"=\" (setting_value \"x\") (newline \"\\n\")))"
+    },
+    {
+      "source": "k;=v\n",
+      "recovered": "(document (setting (setting_name \"k\") (ERROR@1..2 \";\") \"=\" (setting_value \"v\") (newline \"\\n\")))"
+    },
+    {
+      "source": "k#x=v\n",
+      "recovered": "(document (setting (setting_name \"k\") (MISSING@1 \"=\") (setting_value \"#x=v\") (newline \"\\n\")))"
+    },
+    {
+      "source": "k\tv=w\n",
+      "recovered": "(document (setting (setting_name \"k\") ~\"\\t\" (ERROR@2..3 \"v\") \"=\" (setting_value \"w\") (newline \"\\n\")))"
+    }
+  ]
+}

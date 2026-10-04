@@ -1,0 +1,164 @@
+use std::fs;
+use std::path::PathBuf;
+use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use meta_language::{TranslationSupport, decode_program_translation, translate_program};
+use serde_json::Value;
+
+// Clocks with microsecond resolution (macOS) give parallel tests the same
+// timestamp, so the per-process sequence keeps their directories apart.
+static TEMP_DIRECTORIES: AtomicU64 = AtomicU64::new(0);
+
+fn corpus() -> Value {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../parity/fixtures/four-language-conformance.json");
+    serde_json::from_str(&fs::read_to_string(path).expect("shared corpus is readable"))
+        .expect("shared corpus is valid JSON")
+}
+
+#[test]
+fn translated_javascript_print_executes_in_rust() {
+    let corpus = corpus();
+    let fixture = corpus["translationBehaviorCases"]
+        .as_array()
+        .expect("translation behavior cases")
+        .iter()
+        .find(|case| case["sourceLanguage"] == "JavaScript" && case["targetLanguage"] == "Rust")
+        .expect("JavaScript to Rust case");
+    let source_text = fixture["source"].as_str().expect("source");
+    let expected_stdout = fixture["expectedStdout"].as_str().expect("stdout");
+    let translated = translate_program(source_text, "JavaScript", "Rust")
+        .expect("JavaScript to Rust translation");
+    let directory = std::env::temp_dir().join(format!(
+        "meta-language-translation-{}-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("time")
+            .as_nanos(),
+        TEMP_DIRECTORIES.fetch_add(1, Ordering::Relaxed)
+    ));
+    fs::create_dir(&directory).expect("temporary directory");
+    let source = directory.join("translated.rs");
+    let executable = directory.join(format!("translated{}", std::env::consts::EXE_SUFFIX));
+    fs::write(&source, translated.code()).expect("translated source");
+    let mut rustc = Command::new("rustc");
+    rustc.args(["--edition", "2024", "--crate-type", "bin"]);
+    #[cfg(windows)]
+    if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+        rustc.arg("-C").arg(format!("linker={linker}"));
+    }
+    let compiler = rustc
+        .arg("-o")
+        .arg(&executable)
+        .arg(&source)
+        .output()
+        .expect("rustc available");
+    assert!(
+        compiler.status.success(),
+        "{}",
+        String::from_utf8_lossy(&compiler.stderr)
+    );
+    let output = Command::new(&executable)
+        .output()
+        .expect("translated program runs");
+    assert!(output.status.success());
+    assert_eq!(output.stdout, expected_stdout.as_bytes());
+    fs::remove_dir_all(directory).expect("temporary directory cleanup");
+}
+
+#[test]
+fn translated_rust_function_exports_javascript_behavior() {
+    let corpus = corpus();
+    let fixture = corpus["translationBehaviorCases"]
+        .as_array()
+        .expect("translation behavior cases")
+        .iter()
+        .find(|case| case["sourceLanguage"] == "Rust" && case["targetLanguage"] == "JavaScript")
+        .expect("Rust to JavaScript case");
+    let source_text = fixture["source"].as_str().expect("source");
+    let exported_name = fixture["export"].as_str().expect("exported name");
+    let expected_result = fixture["expectedResult"].as_u64().expect("expected result");
+    let translated = translate_program(source_text, "Rust", "JavaScript")
+        .expect("Rust to JavaScript translation");
+    assert!(
+        translated
+            .code()
+            .contains("export function answer() { return 42; }")
+    );
+    assert_eq!(
+        decode_program_translation(translated.code(), "JavaScript")
+            .expect("envelope still decodes")
+            .source(),
+        source_text
+    );
+    let directory = std::env::temp_dir().join(format!(
+        "meta-language-javascript-translation-{}-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("time")
+            .as_nanos(),
+        TEMP_DIRECTORIES.fetch_add(1, Ordering::Relaxed)
+    ));
+    fs::create_dir(&directory).expect("temporary directory");
+    fs::write(directory.join("translated.mjs"), translated.code()).expect("translated module");
+    let name = serde_json::to_string(exported_name).expect("export name is JSON-safe");
+    let script =
+        format!("const module = await import('./translated.mjs'); console.log(module[{name}]());");
+    let output = Command::new("node")
+        .args(["--input-type=module", "--eval", &script])
+        .current_dir(&directory)
+        .output()
+        .expect("Node.js available for translated JavaScript");
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(output.stdout, format!("{expected_result}\n").as_bytes());
+    fs::remove_dir_all(directory).expect("temporary directory cleanup");
+}
+
+#[test]
+fn rust_identifier_reserved_by_strict_javascript_stays_transport_only() {
+    let translated = translate_program("pub fn public() -> u32 { 42 }", "Rust", "JavaScript")
+        .expect("translation descriptor");
+    assert_eq!(
+        translated.contract().support,
+        TranslationSupport::PortableEncoding
+    );
+    assert!(!translated.code().contains("export function public"));
+}
+
+#[test]
+fn a_program_of_awaited_async_functions_is_a_semantic_translation_in_every_target() {
+    let source = "async function answer() { return 42; }\nconsole.log(await answer());\n";
+    for target in ["Rust", "Lean", "Rocq"] {
+        let translated =
+            translate_program(source, "JavaScript", target).expect("translation descriptor");
+        assert_eq!(
+            translated.contract().support,
+            TranslationSupport::SemanticTranslation,
+            "{target}"
+        );
+    }
+}
+
+#[test]
+fn recursion_rocq_cannot_check_terminates_is_a_definition_over_ml_fix() {
+    let source = "/** @param {bigint} a @param {bigint} b @returns {bigint} */\nfunction gcd(a, b) { if (b === 0n) return a; return gcd(b, a % b); }\nconsole.log(gcd(1071n, 462n));\n";
+    let translated =
+        translate_program(source, "JavaScript", "Rocq").expect("translation descriptor");
+    assert_eq!(
+        translated.contract().support,
+        TranslationSupport::SemanticTranslation
+    );
+    // `a % b` throws where b is 0n, so gcd threads that abort and the output before it as a value.
+    let gcd = regex::Regex::new(
+        r#"Definition gcd \(a : Z\) \(b : Z\) \(ml_out : list string\) : ml_io1 :=\n {2}ml_fix 64 \(fun \(ml_rec : Z \* Z \* list string -> ml_io1\) \(ml_args : Z \* Z \* list string\) =>\n {4}let '\(a, b, ml_out\) := ml_args in .*\(ml_io1_abort ml_out "Division by zero"%string\) else \(ml_io1_mk ml_out \(Z\.rem a b\)\).*\(ml_rec \(b, ml_v2, ml_o1\)\).*\n {4}\(fun _ => \(ml_io1_mk \(@nil string\) 0%Z\)\) \(a, b, ml_out\)\."#,
+    )
+    .expect("a valid pattern");
+    assert!(gcd.is_match(translated.code()), "{}", translated.code());
+}

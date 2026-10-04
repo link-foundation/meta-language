@@ -380,7 +380,7 @@ impl LinksEncoder {
     }
 
     /// Returns the underlying network mutably.
-    pub fn network_mut(&mut self) -> &mut LinkNetwork {
+    pub const fn network_mut(&mut self) -> &mut LinkNetwork {
         &mut self.network
     }
 

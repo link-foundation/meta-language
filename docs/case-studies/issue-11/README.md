@@ -1,5 +1,10 @@
 # Case Study: Issue #11 - Apply Best Practices from Other Repositories
 
+> **Historical case study.** This records the investigation of issue #11 as it
+> stood when it was written. It is not the current contract:
+> [docs/vision.md](../../vision.md) and the generated
+> [requirement ledger](../../issue-195-requirement-ledger.md) are.
+
 ## Summary
 
 This case study analyzes best practices discovered in several link-foundation repositories and applies them to the `rust-ai-driven-development-pipeline-template`. The goal is to improve the Rust CI/CD pipeline by incorporating lessons learned from real-world issues.
