@@ -711,8 +711,12 @@ impl<'c> Executor<'c> {
             for left in &frontier {
                 for right in self.continuation(item, left, in_token)? {
                     if zero_width(left, &right) {
-                        // Zero-width iterations can pad up to the minimum once.
-                        if count < min {
+                        // Zero-width iterations can pad up to the minimum
+                        // once; one that takes a token the external scanner
+                        // scanned of no width (Lean's layout semicolon between
+                        // two structure fields) is a result too, as the parser
+                        // shifts that token, though it is not extended again.
+                        if count < min || right.children.iter().any(|child| child.scanned) {
                             results.add(Res::join(left, right, in_token));
                         }
                         continue;

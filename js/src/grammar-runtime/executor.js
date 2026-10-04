@@ -206,10 +206,13 @@ function preferredTokens(result, existing, tokens) {
       // parse closes with is one the other reduced too (where `{}` after a
       // line break is a statement block in one and an object in the other,
       // the two reduced apart, and the block could take the token itself).
+      // Where the ended parse built nothing (an optional layout semicolon of
+      // Lean, taken or not), the two part at the token, which the scanner
+      // scans first.
       const rest = a === null ? right : left;
       if (a === null && b === null) return 0;
       const ended = (a === null ? result : existing).children.filter((child) => !isTrivia(child)).at(-1);
-      if (ended?.type !== 'node' || !hasNode((a === null ? existing : result).children, ended)) return 0;
+      if (ended !== undefined && (ended.type !== 'node' || !hasNode((a === null ? existing : result).children, ended))) return 0;
       for (let next = peek(rest); next !== null; next = peek(rest)) {
         if (isTrivia(next)) skip(rest);
         else if (next.type === 'node') enter(rest, next);
@@ -875,12 +878,15 @@ function holdsFirst(outer, inner) {
 }
 
 // Whether two subtrees hold the same tokens: leaves of one span each, of one
-// kind or built by one token rule.
+// kind or built by one token rule. A token the external scanner scanned of
+// no width does not count: where one subtree holds it (Lean's layout
+// semicolon in `let y := Foo` before a line break, which a `let` takes before
+// its body), the parser of the other scanned it there too, before its lexer.
 function sameTokens(a, b) {
   const leaves = (tree, out) => {
     if (isTrivia(tree)) return out;
-    if (tree.type !== 'node') out.push(tree);
-    else for (const child of tree.children) leaves(child, out);
+    if (tree.type === 'node') for (const child of tree.children) leaves(child, out);
+    else if (tree.start !== tree.end || scannedToken(tree) === 0) out.push(tree);
     return out;
   };
   const [first, second] = [leaves(a, []), leaves(b, [])];
@@ -1742,8 +1748,11 @@ export class Executor {
       for (const left of frontier) {
         for (const right of this.continuation(item, left, inToken)) {
           if (zeroWidth(left, right)) {
-            // Zero-width iterations can pad up to the minimum once.
-            if (count < min) addResult(results, join(left, right), this.longestTokens);
+            // Zero-width iterations can pad up to the minimum once; one that
+            // takes a token the external scanner scanned of no width (Lean's
+            // layout semicolon between two structure fields) is a result too,
+            // as the parser shifts that token, though it is not extended again.
+            if (count < min || right.children.some((child) => child.scanned === true)) addResult(results, join(left, right), this.longestTokens);
             continue;
           }
           addResult(next, join(left, right), this.longestTokens);

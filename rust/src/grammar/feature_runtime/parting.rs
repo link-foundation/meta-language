@@ -45,7 +45,11 @@ pub(super) fn one_token(a: &Tree, b: &Tree) -> bool {
 }
 
 /// Whether two subtrees hold the same tokens: leaves of one span each, of one
-/// kind or built by one token rule.
+/// kind or built by one token rule. A token the external scanner scanned of
+/// no width does not count: where one subtree holds it (Lean's layout
+/// semicolon in `let y := Foo` before a line break, which a `let` takes
+/// before its body), the parser of the other scanned it there too, before its
+/// lexer.
 pub(super) fn same_tokens(a: &Rc<Tree>, b: &Rc<Tree>) -> bool {
     fn leaves(tree: &Rc<Tree>, out: &mut Vec<Rc<Tree>>) {
         if tree.trivia {
@@ -55,7 +59,7 @@ pub(super) fn same_tokens(a: &Rc<Tree>, b: &Rc<Tree>) -> bool {
             for child in tree.children.iter() {
                 leaves(child, out);
             }
-        } else {
+        } else if tree.start != tree.end || !tree.scanned {
             out.push(tree.clone());
         }
     }

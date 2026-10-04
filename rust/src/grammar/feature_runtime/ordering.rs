@@ -246,7 +246,9 @@ pub(super) fn preferred_tokens(
 /// the other reduced the module, decides first), and if the node the ended
 /// parse closes with is one the other reduced too (where `{}` after a line
 /// break is a statement block in one and an object in the other, the two
-/// reduced apart, and the block could take the token itself). Less when
+/// reduced apart, and the block could take the token itself). Where the
+/// ended parse built nothing (an optional layout semicolon of Lean, taken or
+/// not), the two part at the token, which the scanner scans first. Less when
 /// `result` ended, Greater when `existing` did, Equal when the token does not
 /// decide. It mirrors the end of preferredTokens in
 /// js/src/grammar-runtime/executor.js.
@@ -262,10 +264,9 @@ fn scanned_after_end(
     } else {
         (existing, result)
     };
-    let Some(last) = meaningful(ended).pop() else {
-        return Ordering::Equal;
-    };
-    if last.ty != TreeType::Node || !has_node(other, &last) {
+    if let Some(last) = meaningful(ended).pop()
+        && (last.ty != TreeType::Node || !has_node(other, &last))
+    {
         return Ordering::Equal;
     }
     while let Some(step) = rest.last() {

@@ -6595,7 +6595,7 @@
   "rejections": [
     {
       "source": "\nif ({a: 'b'} {c: 'd'}) {\n  x = function(a) { b; } function(c) { d; }\n}\n",
-      "recovered": "(program (if_statement ~\"\\n\" \"if\" condition:(parenthesized_expression ~\" \" \"(\" (object \"{\" (pair key:(property_identifier \"a\") \":\" value:(string ~\" \" \"'\" (string_fragment \"b\") \"'\")) \"}\") (MISSING@13 \")\") ~\" \") consequence:(if_statement (MISSING@14 \"if\") condition:(parenthesized_expression (ERROR@14..40 \"{c: 'd'}) {\\n  x = function\") \"(\" (identifier \"a\") \")\") consequence:(statement_block ~\" \" \"{\" (expression_statement ~\" \" (identifier \"b\") \";\") ~\" \" \"}\"))) (expression_statement (function_expression ~\" \" \"function\" parameters:(formal_parameters \"(\" (identifier \"c\") \")\") body:(statement_block ~\" \" \"{\" (expression_statement ~\" \" (identifier \"d\") \";\") ~\" \" \"}\")) (unnamed_token \"\")) ~\"\\n\" (ERROR@70..71 \"}\") ~\"\\n\")"
+      "recovered": "(program (if_statement ~\"\\n\" \"if\" condition:(parenthesized_expression ~\" \" \"(\" (object \"{\" (pair key:(property_identifier \"a\") \":\" value:(string ~\" \" \"'\" (string_fragment \"b\") \"'\")) \"}\") (MISSING@13 \")\") ~\" \") consequence:(if_statement (MISSING@14 \"if\") condition:(parenthesized_expression (ERROR@14..40 \"{c: 'd'}) {\\n  x = function\") \"(\" (identifier \"a\") \")\") consequence:(statement_block ~\" \" \"{\" (expression_statement ~\" \" (identifier \"b\") \";\") ~\" \" \"}\"))) (expression_statement (function_expression ~\" \" \"function\" parameters:(formal_parameters \"(\" (identifier \"c\") \")\") body:(statement_block ~\" \" \"{\" (expression_statement ~\" \" (identifier \"d\") \";\") ~\" \" \"}\" (unnamed_token \"\"))) (unnamed_token \"\")) ~\"\\n\" (ERROR@70..71 \"}\") ~\"\\n\")"
     },
     {
       "source": "const = 1;",
@@ -6603,19 +6603,19 @@
     },
     {
       "source": "if (ready { go(); }",
-      "recovered": "(program (if_statement \"if\" condition:(parenthesized_expression ~\" \" \"(\" (identifier \"ready\") (MISSING@9 \")\") ~\" \") consequence:(statement_block \"{\" (expression_statement (call_expression ~\" \" function:(identifier \"go\") arguments:(arguments \"(\" \")\")) \";\") ~\" \" \"}\")))"
+      "recovered": "(program (if_statement \"if\" condition:(parenthesized_expression ~\" \" \"(\" (identifier \"ready\") (MISSING@9 \")\") ~\" \") consequence:(statement_block \"{\" (expression_statement (call_expression ~\" \" function:(identifier \"go\") arguments:(arguments \"(\" \")\")) \";\") ~\" \" \"}\" (unnamed_token \"\"))))"
     },
     {
       "source": "function",
-      "recovered": "(program (expression_statement (function_expression \"function\" parameters:(formal_parameters (MISSING@8 \"(\") (MISSING@8 \")\")) body:(statement_block (MISSING@8 \"{\") (MISSING@8 \"}\"))) (unnamed_token \"\")))"
+      "recovered": "(program (expression_statement (function_expression \"function\" parameters:(formal_parameters (MISSING@8 \"(\") (MISSING@8 \")\")) body:(statement_block (MISSING@8 \"{\") (MISSING@8 \"}\") (unnamed_token \"\"))) (unnamed_token \"\")))"
     },
     {
       "source": "function f(",
-      "recovered": "(program (function_declaration \"function\" ~\" \" name:(identifier \"f\") parameters:(formal_parameters \"(\" (MISSING@11 \")\")) body:(statement_block (MISSING@11 \"{\") (MISSING@11 \"}\"))))"
+      "recovered": "(program (function_declaration \"function\" ~\" \" name:(identifier \"f\") parameters:(formal_parameters \"(\" (MISSING@11 \")\")) body:(statement_block (MISSING@11 \"{\") (MISSING@11 \"}\") (unnamed_token \"\")) (unnamed_token \"\")))"
     },
     {
       "source": "function f() {",
-      "recovered": "(program (function_declaration \"function\" ~\" \" name:(identifier \"f\") parameters:(formal_parameters \"(\" \")\") body:(statement_block ~\" \" \"{\" (MISSING@14 \"}\"))))"
+      "recovered": "(program (function_declaration \"function\" ~\" \" name:(identifier \"f\") parameters:(formal_parameters \"(\" \")\") body:(statement_block ~\" \" \"{\" (MISSING@14 \"}\") (unnamed_token \"\")) (unnamed_token \"\")))"
     },
     {
       "source": "}",
@@ -6623,7 +6623,7 @@
     },
     {
       "source": "{",
-      "recovered": "(program (statement_block \"{\" (MISSING@1 \"}\")))"
+      "recovered": "(program (statement_block \"{\" (MISSING@1 \"}\") (unnamed_token \"\")))"
     },
     {
       "source": "let x = ;",
@@ -6631,7 +6631,7 @@
     },
     {
       "source": "class A {",
-      "recovered": "(program (class_declaration \"class\" ~\" \" name:(identifier \"A\") body:(class_body ~\" \" \"{\" (MISSING@9 \"}\"))))"
+      "recovered": "(program (class_declaration \"class\" ~\" \" name:(identifier \"A\") body:(class_body ~\" \" \"{\" (MISSING@9 \"}\")) (unnamed_token \"\")))"
     },
     {
       "source": "\"abc",

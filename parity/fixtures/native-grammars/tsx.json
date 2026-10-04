@@ -7398,7 +7398,7 @@
     },
     {
       "source": "class A {",
-      "recovered": "(program (class_declaration \"class\" ~\" \" name:(type_identifier \"A\") body:(class_body ~\" \" \"{\" (MISSING@9 \"}\"))))"
+      "recovered": "(program (class_declaration \"class\" ~\" \" name:(type_identifier \"A\") body:(class_body ~\" \" \"{\" (MISSING@9 \"}\")) (unnamed_token \"\")))"
     },
     {
       "source": "enum E {",
