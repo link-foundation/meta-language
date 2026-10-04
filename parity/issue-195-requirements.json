@@ -1576,7 +1576,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "8ffd4e722f53235e46433195a3ccfa29a5565648ddfc79f49d3c344aa2560c85"
+      "sha256": "63e837f9aa923013aab2f551d286cc9bb18b0d817ddd228bb5f109ea1b7191df"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1586,7 +1586,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "8ffd4e722f53235e46433195a3ccfa29a5565648ddfc79f49d3c344aa2560c85"
+      "sha256": "63e837f9aa923013aab2f551d286cc9bb18b0d817ddd228bb5f109ea1b7191df"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1666,12 +1666,12 @@
     "planned:repository-directive:i195-grammar-native-typescript": {
       "path": "parity/fixtures/native-grammars/typescript.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged TypeScript grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "ea90f24691289da5b90931f1b2ee4d671a0da80757838168aa243f19b0bed6e8"
+      "sha256": "e087fbfd15e3d00ae22f395d58d561a99c8cd9d0251b1d0aef2ed6aef0584eae"
     },
     "planned:repository-directive:i195-grammar-native-tsx": {
       "path": "parity/fixtures/native-grammars/tsx.json",
       "selector": "docs/vision.md#native-merged-grammars: native merged TSX grammar imported with its native scanner from its pinned source and checked against its tree-sitter oracle",
-      "sha256": "13b6cb0c7d5273f3abda055a63bf6bd804b950fb26c9eab979b04786d38cb891"
+      "sha256": "3ca6baca3d9ac07f36bfcd04f2fea125205af0a96916594e81375dd8151e0a12"
     },
     "planned:repository-directive:i195-grammar-native-recovery": {
       "path": "parity/fixtures/native-grammars/json.json",
@@ -1691,17 +1691,17 @@
     "planned:repository-directive:i195-grammar-shared-concepts": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
       "selector": "docs/vision.md#grammar-feature-union: a canonical concept record for every rule of every native grammar",
-      "sha256": "aed943d5c174476f2cbb4db3f32c61fe4915b44527aac7aa11e27a869b26ee7a"
+      "sha256": "606c9bab2e9e348923c4a422da11f3438cc256bd7c7984ba2ae6a182a65884ec"
     },
     "planned:repository-directive:i195-grammar-concept-reuse-report": {
       "path": "parity/fixtures/native-grammar-concept-reuse.json",
       "selector": "docs/vision.md#grammar-feature-union: per-language report of shared and language-specific native grammar rules",
-      "sha256": "e8d26ae885263c50db7de4550c97cd66185698f3421ae06dfbab9a12454296aa"
+      "sha256": "df41474e911d08886be303cea9e426e78355fafd84e574e84a9cba614a289c25"
     },
     "planned:repository-directive:i195-grammar-concept-translation": {
       "path": "parity/fixtures/grammar-shared-concepts.json",
       "selector": "docs/vision.md#grammar-feature-union: translation of shared constructs between native grammars through their concepts",
-      "sha256": "aed943d5c174476f2cbb4db3f32c61fe4915b44527aac7aa11e27a869b26ee7a"
+      "sha256": "606c9bab2e9e348923c4a422da11f3438cc256bd7c7984ba2ae6a182a65884ec"
     },
     "planned:repository-directive:i195-grammar-lossless-trees": {
       "path": "parity/language-grammar-inventory.json",
@@ -1781,12 +1781,12 @@
     "planned:repository-directive:i195-naming-convention": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: self-explanatory English noun and verb phrases for canonical names",
-      "sha256": "58a9941f5718865c4ec91fdf6ff43fe38e2dc98491ca00b285b2de5126d98a0e"
+      "sha256": "a3642fa92cac8610db52f4e878043a401889fa249dc47d90a21111bb79549197"
     },
     "planned:repository-directive:i195-naming-concept-records": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: concept records with identity, phrase, meaning, constraints and aliases",
-      "sha256": "58a9941f5718865c4ec91fdf6ff43fe38e2dc98491ca00b285b2de5126d98a0e"
+      "sha256": "a3642fa92cac8610db52f4e878043a401889fa249dc47d90a21111bb79549197"
     },
     "planned:repository-directive:i195-naming-ci-enforcement": {
       "path": "parity/naming/naming-fixtures.json",
@@ -1796,7 +1796,7 @@
     "planned:repository-directive:i195-naming-native-grammars": {
       "path": "parity/naming/canonical-concepts.json",
       "selector": "docs/vision.md#readable-english-names: readable English rule names in the native grammars",
-      "sha256": "58a9941f5718865c4ec91fdf6ff43fe38e2dc98491ca00b285b2de5126d98a0e"
+      "sha256": "a3642fa92cac8610db52f4e878043a401889fa249dc47d90a21111bb79549197"
     },
     "planned:repository-directive:i195-semantics-construct-inventory": {
       "path": "parity/fixtures/four-language-conformance.json",
