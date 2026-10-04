@@ -48,13 +48,14 @@ async function fetchCached(url) {
 
 /**
  * The tree-sitter grammar.json text of grammar `id` and where it came from: a
- * source pinned in parity/grammars/sources.json, the crate rust/Cargo.lock
- * pins, or the upstream revision of a vendored parser.
+ * source pinned in parity/grammars/sources.json (with its entry, `pinned`),
+ * the crate rust/Cargo.lock pins, or the upstream revision of a vendored
+ * parser.
  */
 export async function treeSitterGrammarJson(id) {
   const { sourceText } = await import('./import-native-grammars.mjs');
   const pinned = readJson('parity/grammars/sources.json').sources.find(({ language }) => language === id);
-  if (pinned) return { origin: `${pinned.repository}@${pinned.revision}`, text: sourceText(pinned) };
+  if (pinned) return { origin: `${pinned.repository}@${pinned.revision}`, text: sourceText(pinned), pinned };
   const { GRAMMAR_SOURCES, cargoLockVersions, grammarSource } = await import('./build-vendored-grammars.mjs');
   const source = GRAMMAR_SOURCES[id];
   if (!source) throw new Error(`no pinned tree-sitter grammar ${id}`);
@@ -79,6 +80,13 @@ export async function grammarsV4Text(language) {
 const message = (error) => String(error?.message ?? error).split('\n')[0].slice(0, 300);
 const elapsed = (start) => Math.round(performance.now() - start);
 
+// A rejection as `syntax at 3:1, expected "\n" or "\r"`.
+function rejectionText(rejection) {
+  if (!rejection?.reason) return message(rejection?.message ?? JSON.stringify(rejection));
+  const expected = rejection.expected?.length ? `, expected ${rejection.expected.join(' or ')}` : '';
+  return message(`${rejection.reason} at ${rejection.line}:${rejection.column}${expected}`);
+}
+
 // Compiles `grammar` and parses `source`, filling `row`.
 function compileAndParse(row, grammar, source, compileGrammar) {
   let start = performance.now();
@@ -89,8 +97,21 @@ function compileAndParse(row, grammar, source, compileGrammar) {
   const result = compiled.parseTree(source);
   row.parseMs = elapsed(start);
   row.sample = result.tree ? 'accepted' : 'rejected';
-  if (!result.tree) row.rejection = message(result.rejection?.message ?? JSON.stringify(result.rejection));
+  if (!result.tree) row.rejection = rejectionText(result.rejection);
   return result;
+}
+
+// The native import of a source pinned in parity/grammars/sources.json, as
+// js/scripts/import-native-grammars.mjs makes it, and the row projection of
+// its native grammar fixture.
+async function importPinned(pinned) {
+  const { NAME_EXPANSIONS, importSource } = await import('./import-native-grammars.mjs');
+  const { NATIVE_GRAMMARS } = await import('./generate-native-grammar-fixtures.mjs');
+  const naming = readJson(NAME_EXPANSIONS);
+  const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
+  const { imported, text } = importSource(pinned, words, naming.grammars[pinned.language]);
+  const { hidden, anonymous, extras, oracleKinds } = NATIVE_GRAMMARS.find(({ id }) => id === pinned.language);
+  return { imported, listing: text, projection: { hidden, anonymous, extras, oracleKinds } };
 }
 
 /** Runs every stage of one language, calling `report(row)` after each. */
@@ -104,24 +125,27 @@ export async function bulkLanguageRow(entry, report = () => {}) {
 
   const tree = row.treeSitter;
   try {
-    const { origin, text } = await treeSitterGrammarJson(entry.grammars[0]);
+    const { origin, text, pinned } = await treeSitterGrammarJson(entry.grammars[0]);
     tree.origin = origin;
     tree.stage = 'import';
     const json = JSON.parse(text);
-    const imported = importTreeSitterNative(json, { wordRule: 'word_characters' });
+    // A pinned source is imported as the shipped native grammar is, with its
+    // reviewed names and native scanner, and projected as its fixture is.
+    const { imported, listing, projection } = pinned ? await importPinned(pinned) : (() => {
+      const result = importTreeSitterNative(json, { wordRule: 'word_characters' });
+      const extras = (json.extras ?? []).filter(({ type }) => type === 'SYMBOL').map(({ name }) => name);
+      return { imported: result, listing: renderTreeSitterNative(result), projection: { extras, anonymous: ['unnamed_token'] } };
+    })();
     tree.rules = imported.rules.length;
     tree.approximations = imported.report.approximations.length;
     tree.unsupported = imported.report.unsupported.map((item) => (typeof item === 'string' ? item : JSON.stringify(item)));
     tree.stage = 'compile';
     report(row);
-    const grammar = parseGrammarLinks(renderTreeSitterNative(imported));
+    const grammar = parseGrammarLinks(listing);
     grammars.push({ id: 'tree-sitter', grammar });
     const result = compileAndParse(tree, grammar, entry.source, compileGrammar);
     tree.stage = 'done';
-    if (result.tree && oracle) {
-      const extras = (json.extras ?? []).filter(({ type }) => type === 'SYMBOL').map(({ name }) => name);
-      tree.rowsMatch = JSON.stringify(nativeRows(result.tree, entry.source, { extras })) === JSON.stringify(oracle);
-    }
+    if (result.tree && oracle) tree.rowsMatch = JSON.stringify(nativeRows(result.tree, entry.source, projection)) === JSON.stringify(oracle);
   } catch (error) {
     tree.error = message(error);
   }

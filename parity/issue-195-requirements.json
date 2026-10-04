@@ -1986,14 +1986,14 @@
       "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
     },
     "planned:repository-directive:i195-grammar-bulk-pipeline": {
-      "path": "docs/vision.md",
-      "selector": "#native-merged-grammars: bulk import of every catalog grammar with a published matrix",
-      "sha256": "81f2eaf651c63527ba28010784e4039b258f82f4d08972b0a90a73a88d152013"
+      "path": "docs/grammar/bulk-pipeline.md",
+      "selector": "docs/vision.md#native-merged-grammars: bulk import of every catalog grammar with a published matrix",
+      "sha256": "400b9fc70342861b238fd7c6fc0b40b2bbc3cc78342e10c049b3cf06364f2199"
     },
     "planned:repository-directive:i195-grammar-declared-settling": {
       "path": "docs/grammar/feature-union.md",
       "selector": "docs/vision.md#native-merged-grammars: declared, data-driven conflict and precedence settling",
-      "sha256": "7a664f6f7495318cfff5ea404f9f57a2efaef1997f815573c748acddfd6248ef"
+      "sha256": "80231d386382d7a72b3573067c8f41011df94ac32a5a405bd6f2fffcfa6853d5"
     },
     "planned:repository-directive:i195-cache-cleanup-grammar-caches": {
       "path": "scripts/lib/cache-classes.mjs",
@@ -18742,7 +18742,11 @@
         "tooling"
       ],
       "implementationEntryPoints": {
-        "tooling": null
+        "tooling": [
+          "js/scripts/run-grammar-bulk-pipeline.mjs",
+          "parity/grammars-v4-sources.json",
+          ".github/workflows/ci.yml"
+        ]
       },
       "verifications": [
         {
@@ -18764,7 +18768,7 @@
       "traceability": {
         "specification": "docs/vision.md#native-merged-grammars",
         "inventories": [
-          "docs/vision.md"
+          "docs/grammar/bulk-pipeline.md"
         ],
         "sources": [
           "acceptanceGate",

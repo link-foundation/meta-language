@@ -1349,11 +1349,12 @@ export const VISION_REQUIREMENTS = Object.freeze([
     id: 'I195-GRAMMAR-BULK-PIPELINE',
     area: 'native-grammar',
     specification: 'native-merged-grammars',
+    fixture: 'docs/grammar/bulk-pipeline.md',
     construct: 'bulk import of every catalog grammar with a published matrix',
     expectedBehavior:
       'One pipeline run imports the grammar.json and ANTLR grammars-v4 sources of every catalog language, merges them, and publishes a matrix of which languages import, execute and match their oracle and which executor or scanner features each one is missing.',
     assertions: ['everyCatalogLanguageImported', 'matrixPublished', 'missingFeaturesListed'],
-    tooling: null,
+    tooling: ['js/scripts/run-grammar-bulk-pipeline.mjs', 'parity/grammars-v4-sources.json', '.github/workflows/ci.yml'],
   },
   {
     id: 'I195-GRAMMAR-DECLARED-SETTLING',

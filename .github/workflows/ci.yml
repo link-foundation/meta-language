@@ -102,3 +102,52 @@ jobs:
       pull-requests: write
       pages: write
       id-token: write
+
+  # The bulk grammar pipeline (I195-GRAMMAR-BULK-PIPELINE) imports, compiles,
+  # parses and merges the tree-sitter and grammars-v4 grammars of every
+  # catalog language with a grammar and publishes the matrix in the job
+  # summary and as an artifact. A language that fails is a matrix row listing
+  # its missing features, not a failed job; the job fails only when the
+  # pipeline itself cannot run. It runs beside the JavaScript and Rust
+  # workflows and holds neither back.
+  grammar-bulk-pipeline:
+    name: Bulk Grammar Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Fetch the pinned grammar crates
+        run: cargo fetch --locked
+        working-directory: rust
+
+      - name: Run the bulk grammar pipeline
+        run: node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir grammar-bulk --jobs 4 --timeout 240
+
+      - name: Publish the matrix in the job summary
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.md') != '' }}
+        run: cat grammar-bulk/grammar-bulk-matrix.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the matrix
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.json') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-bulk-matrix
+          path: grammar-bulk/
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
