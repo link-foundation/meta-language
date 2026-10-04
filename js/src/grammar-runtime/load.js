@@ -270,6 +270,9 @@ function loadInContext(grammar, context) {
     externalTokens,
     scanners,
     conflicts,
+    // The groups of rules each conflict declares (see `forkedOrder` in
+    // executor.js).
+    conflictGroups: declarations.conflicts,
     precedenceOrders: declarations.precedences,
     // The silent rules a `rule` entry of the orders names, whose reduction
     // of one item alone the item records (see `childParting` in executor.js).

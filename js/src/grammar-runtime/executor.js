@@ -108,7 +108,7 @@ function addResult(results, result, tokens = null) {
     return;
   }
   if (result.cost > existing.cost) return;
-  const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing, tokens.orders, tokens.heads) : 0;
+  const order = tokens ? preferredTokens(result, existing, tokens) || shiftOrder(result, existing, tokens.orders, tokens.grammar) : 0;
   // A trace, off unless a probe sets the array (see
   // experiments/native-order-trace.mjs): every decided pair and its order.
   globalThis.__orderTrace?.push([result, existing, order]);
@@ -334,18 +334,25 @@ function directEdge(expression, side, owner, found = [], tag = null) {
   return found;
 }
 
-// The rules each rule of `program` takes directly as its first part (see
-// `shiftReduction`), by rule name, computed once per program.
-const RULE_HEADS = new WeakMap();
+// What the conflicts of two results ask of `program`'s rules, computed once
+// per program: the rules each rule takes directly as its first part, by rule
+// name (see `shiftReduction`), the order the rules are defined in, and the
+// groups of rules whose conflicts the grammar declares (see `forkedOrder`).
+const GRAMMAR_FACTS = new WeakMap();
 
-function ruleHeads(program) {
-  let heads = RULE_HEADS.get(program);
-  if (!heads) {
-    heads = new Map();
-    for (const [name, rule] of program.rules) heads.set(name, new Set(directEdge(rule.expression, 'right', name).map(([ref]) => ref)));
-    RULE_HEADS.set(program, heads);
+function grammarFacts(program) {
+  let facts = GRAMMAR_FACTS.get(program);
+  if (!facts) {
+    const heads = new Map();
+    const ranks = new Map();
+    for (const [name, rule] of program.rules) {
+      heads.set(name, new Set(directEdge(rule.expression, 'right', name).map(([ref]) => ref)));
+      ranks.set(name, rule.index);
+    }
+    facts = { heads, ranks, conflicts: (program.conflictGroups ?? []).map((group) => new Set(group)) };
+    GRAMMAR_FACTS.set(program, facts);
   }
-  return heads;
+  return facts;
 }
 
 // How precedence `a` compares with `b` (1 higher, -1 lower, 0 neither), as
@@ -376,7 +383,7 @@ function comparePrecedence(a, b, orders) {
 // higher level wins and, on equal levels, the associativity of the reduced
 // node, right to shift and left to reduce. 1 when `result` is kept, -1 when
 // `existing` is, 0 when neither.
-function shiftOrder(result, existing, orders, heads) {
+function shiftOrder(result, existing, orders, grammar) {
   const left = [[result.children, 0, null]];
   const right = [[existing.children, 0, null]];
   const peek = (stack) => {
@@ -415,7 +422,7 @@ function shiftOrder(result, existing, orders, heads) {
         const inner = childParting(first, second, orders);
         if (inner !== 0) return inner;
         const [long, short, sign] = first.end > second.end ? [first, second, 1] : [second, first, -1];
-        return sign * shiftPreferred(long, short, orders, heads);
+        return sign * shiftPreferred(long, short, orders, grammar);
       }
       // The same node reduced on in two ways (Rust's `m!(x);` in a block, a
       // macro invocation that `_expression_except_range` reduces under
@@ -431,6 +438,8 @@ function shiftOrder(result, existing, orders, heads) {
       // the other, conflict where both are reduced: the higher precedence
       // they are reduced with wins.
       if (a.end === b.end && a.kind !== b.kind && !holdsFirst(a, b) && !holdsFirst(b, a) && sameTokens(a, b)) {
+        const forked = forkedOrder(a, b, grammar);
+        if (forked !== null) return forked;
         const order = comparePrecedence(reduction(a), reduction(b), orders);
         if (order !== 0) return order;
       }
@@ -440,7 +449,7 @@ function shiftOrder(result, existing, orders, heads) {
     const reduced = extraReduction(a, b, right, orders) || -extraReduction(b, a, left, orders);
     if (reduced !== 0) return reduced;
     if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
-      const parted = chainConflict(a, b, orders, heads);
+      const parted = chainConflict(a, b, orders, grammar);
       if (parted !== 0) return parted;
     }
     if (a.type !== 'node' && b.type !== 'node') return 0;
@@ -573,6 +582,41 @@ function childParting(a, b, orders) {
   return 0;
 }
 
+// Which of two nodes of different kinds over the same tokens a generalized
+// LR parser keeps when their parses forked at a conflict the grammar
+// declares, or null when they did not: the two reduce alike up to the first
+// reduction they make apart (TypeScript's `<A>(a): T => a`, the `A` that the
+// arrow function's type parameters reduce to a `type_parameter` and the
+// type assertion's type arguments to a `primary_type`), and when a declared
+// conflict names a rule each reduced to there, both parses go on and
+// tree-sitter keeps the tree of the lower symbol where they merge, as its
+// `ts_subtree_compare` does: here, the rule defined first. 1 when `a` is
+// kept, -1 when `b` is.
+function forkedOrder(a, b, grammar) {
+  if (!grammar || grammar.conflicts.length === 0) return null;
+  const steps = (tree, out) => {
+    if (isTrivia(tree)) return out;
+    if (tree.type === 'node') for (const child of tree.children) steps(child, out);
+    out.push(tree);
+    return out;
+  };
+  const [first, second] = [steps(a, []), steps(b, [])];
+  const same = (x, y) => x.type === y.type && x.kind === y.kind && x.start === y.start && x.end === y.end;
+  let at = 0;
+  while (at < first.length && at < second.length && same(first[at], second[at])) at += 1;
+  if (at === 0 || at === first.length || at === second.length) return null;
+  const reductions = (before, other, next) => {
+    const names = (before.reducedTo ?? []).filter((name) => !other.reducedTo?.includes(name));
+    if (next.type === 'node' && next.end === before.end) names.push(next.rule);
+    return names;
+  };
+  const mine = reductions(first[at - 1], second[at - 1], first[at]);
+  const theirs = reductions(second[at - 1], first[at - 1], second[at]);
+  const declared = grammar.conflicts.some((group) => mine.some((name) => group.has(name)) && theirs.some((name) => group.has(name)));
+  if (!declared) return null;
+  return Math.sign((grammar.ranks.get(b.rule) ?? 0) - (grammar.ranks.get(a.rule) ?? 0));
+}
+
 // Whether a node of the kind and span of `inner` is on the leftmost chain of
 // `outer`, which ends with it.
 function holdsFirst(outer, inner) {
@@ -664,7 +708,7 @@ function partedPair(a, b) {
 // `shiftPreferred`, when the reduced node's children begin the other node's,
 // so the two parses agree up to that end. 1 when `a`'s result is kept, -1 when
 // `b`'s is, 0 when neither.
-function chainConflict(a, b, orders, heads) {
+function chainConflict(a, b, orders, grammar) {
   const first = leftmostChain(a);
   const second = leftmostChain(b);
   const ends = (chain) => new Set(chain.map((node) => node.end));
@@ -679,7 +723,7 @@ function chainConflict(a, b, orders, heads) {
   const own = short.children.filter((child) => !isTrivia(child));
   const next = long.children.filter((child) => !isTrivia(child));
   if (own.length >= next.length || own.some((child, at) => !sameTree(child, next[at]))) return 0;
-  return sign * shiftPreferred(long, short, orders, heads);
+  return sign * shiftPreferred(long, short, orders, grammar);
 }
 
 // 1 when the shift that built `long` is preferred to the reduction that
@@ -690,7 +734,7 @@ function chainConflict(a, b, orders, heads) {
 // expression a statement is of, the long result reduced that operand to a
 // silent rule where the short one reduced its node: the two reductions
 // conflict instead, and a silent rule's reduction is of level 0.
-function shiftPreferred(long, short, orders, heads) {
+function shiftPreferred(long, short, orders, grammar) {
   const begin = firstLeafStart(short);
   let progress = long;
   for (;;) {
@@ -703,7 +747,7 @@ function shiftPreferred(long, short, orders, heads) {
   }
   const shifted = progress.precedence ?? unranked(progress.rule);
   const reduced = reducedBefore(short, progress);
-  const before = shiftReduction(short, progress, heads);
+  const before = shiftReduction(short, progress, grammar);
   if (before !== null) {
     const order = comparePrecedence(unranked(before), reduced, orders);
     if (order !== 0) return order;
@@ -726,7 +770,7 @@ function shiftPreferred(long, short, orders, heads) {
 // rule it was reduced to (JavaScript's `new module.Klass()`, whose member
 // expression takes `module` as a `primary_expression`), the shift needs no
 // reduction and none conflicts.
-function shiftReduction(short, progress, heads) {
+function shiftReduction(short, progress, grammar) {
   const head = progress.children.find((child) => !isTrivia(child));
   if (!head || head.end !== short.end) return null;
   for (let node = short; node.type === 'node';) {
@@ -734,7 +778,7 @@ function shiftReduction(short, progress, heads) {
     const last = meaningful[meaningful.length - 1];
     if (!last) return null;
     if (sameTree(last, head)) {
-      const direct = heads?.get(progress.rule);
+      const direct = grammar?.heads.get(progress.rule);
       if (direct?.has(last.kind) || last.reducedTo?.some((name) => direct?.has(name))) return null;
       return head.reducedTo?.find((name) => !last.reducedTo?.includes(name)) ?? null;
     }
@@ -953,7 +997,7 @@ export class Executor {
     this.peg = program.matching === 'peg';
     // `(matching longest)`: the token ranks and the input, by which addResult
     // orders two parses that differ in their tokens.
-    this.longestTokens = program.tokenRanks ? { ...program.tokenRanks, bytes, orders: program.precedenceOrders ?? [], heads: ruleHeads(program) } : null;
+    this.longestTokens = program.tokenRanks ? { ...program.tokenRanks, bytes, orders: program.precedenceOrders ?? [], grammar: grammarFacts(program) } : null;
     this.depth = 0;
     this.memo = new Map();
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
@@ -1190,10 +1234,7 @@ export class Executor {
   }
 
   terminal(expression, position, state, inToken) {
-    if (!inToken && this.program.expectedTerminals.size > 0) {
-      const id = this.program.expectedTerminals.get(expression);
-      if (id !== undefined) this.expectations.request(position, id);
-    }
+    if (!inToken) this.requestItem(expression, position);
     let { end: start, leaves } = this.terminalStart(position, state, inToken);
     let end = -1;
     if (this.longestTokens && leaves.length > 0) ({ start, end, leaves } = this.beforeSeparator(expression, start, leaves));
@@ -1267,6 +1308,12 @@ export class Executor {
         // succeeds, as a lexer runs the external scanner before it lexes an
         // extra: after a comment only where it fails before it.
         const scanned = expression.item.kind === 'ref' && this.program.externalTokens.has(expression.item.name);
+        // The token is requested where the parse asks for it, though its
+        // item is evaluated in token context (TypeScript's function
+        // signature ends with `(immediateToken (ref
+        // function_signature_automatic_semicolon))`, which the automatic
+        // semicolon scanner asks about).
+        if (!inToken) this.requestItem(expression.item, position);
         const context = this.scanContext;
         if (!inToken) this.scanContext = position;
         try {
@@ -1858,6 +1905,13 @@ export class Executor {
     return results;
   }
 
+  // Records that the parse requests `item`, a literal or a rule a scanner's
+  // `expected` may ask about, at `position` (see `Expectations`).
+  requestItem(item, position) {
+    const id = item.kind === 'ref' ? this.program.expectedReferences.get(item.name) : this.program.expectedTerminals.get(item);
+    if (id !== undefined) this.expectations.request(position, id);
+  }
+
   /** A rule call or an external token, memoized with left-recursion growth. */
   reference(name, position, state, inToken) {
     if (!inToken && this.program.expectedReferences.size > 0) {
@@ -2244,7 +2298,7 @@ export class Executor {
   completeOrder(a, b) {
     if (a.result.cost !== b.result.cost) return a.result.cost < b.result.cost ? 1 : -1;
     const whole = ({ result, trailing }) => ({ children: [...result.children, ...trailing] });
-    const order = this.longestTokens ? preferredTokens(whole(a), whole(b), this.longestTokens) || shiftOrder(whole(a), whole(b), this.longestTokens.orders, this.longestTokens.heads) : 0;
+    const order = this.longestTokens ? preferredTokens(whole(a), whole(b), this.longestTokens) || shiftOrder(whole(a), whole(b), this.longestTokens.orders, this.longestTokens.grammar) : 0;
     if (order !== 0) return order;
     return Math.sign(a.result.dynamic - b.result.dynamic);
   }
