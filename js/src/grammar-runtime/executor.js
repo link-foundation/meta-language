@@ -75,9 +75,13 @@ export class Expectations {
   }
 }
 
-/** The step budget of one parse, shared with every embedded-language executor. */
+/**
+ * The step budget of one parse, shared with every embedded-language executor:
+ * by default twice as large with error recovery, whose rounds parse each
+ * repaired alternative too.
+ */
 export function stepBudget(options, length) {
-  return { steps: 0, limit: options.stepLimit ?? 100_000 + 1000 * length };
+  return { steps: 0, limit: options.stepLimit ?? (100_000 + 1000 * length) * (options.errorRecovery ? 2 : 1) };
 }
 
 // The repair cost of a MISSING leaf; an ERROR leaf costs the bytes it skips.
@@ -897,6 +901,19 @@ function* leavesBackward(children) {
     if (child.type === 'node') yield* leavesBackward(child.children);
     else yield child;
   }
+}
+
+// The last leaf under `children` a repair may have inserted: the last child
+// that is not a separator, unless tokens the external scanner scanned of no
+// width end `children` (a layout token opening an indented block): then the
+// last leaf before them, however deep in a node.
+function lastRepaired(children) {
+  let skipped = false;
+  for (const leaf of leavesBackward(children)) {
+    if (!widthless(leaf)) return skipped ? leaf : children.findLast((child) => !isSeparator(child));
+    skipped = true;
+  }
+  return skipped ? undefined : children.findLast((child) => !isSeparator(child));
 }
 
 // Whether the first leaf of `result` that is not white space is a token the
@@ -1727,10 +1744,13 @@ export class Executor {
   // but what follows may not do so again at that offset: a second
   // continuation there is matched quietly. Chains of zero-width MISSING
   // leaves, which would make every rule left-recursive at that offset, are so
-  // never built.
+  // never built. The MISSING leaf may end a node `left` holds when tokens the
+  // external scanner scanned of no width follow it, as a layout token opening
+  // an indented block does: each such repaired block would otherwise open
+  // another at the offset, up to the scanner's deepest indentation.
   continuation(item, left, inToken) {
     if (!this.repairPoints?.has(left.end)) return this.evaluate(item, left.end, left.state, inToken);
-    const last = left.children.findLast((child) => !isSeparator(child));
+    const last = lastRepaired(left.children);
     if (last?.type !== 'missing') return this.evaluate(item, left.end, left.state, inToken);
     if (this.chained.has(left.end)) return this.quietly(() => this.evaluate(item, left.end, left.state, inToken));
     this.chained.add(left.end);

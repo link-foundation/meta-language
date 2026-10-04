@@ -13,7 +13,7 @@ use super::ordering::{
     same_tree, shift_preferred,
 };
 use super::program::{Expr, Name, PrecedenceTag, compare_precedence};
-use super::results::{Children, Res, Tree, TreeType};
+use super::results::{Children, Res, Tree, TreeType, is_separator};
 use crate::grammar::PrecedenceEntry;
 
 /// Whether a parse that has `leaf` alone and one that has `node`, which
@@ -86,6 +86,32 @@ pub(super) fn starts_widthless(children: &Children) -> bool {
         first = first_meaningful(&node.children);
     }
     first.is_some_and(|leaf| widthless(&leaf))
+}
+
+/// Whether the last leaf under `children` a repair may have inserted is a
+/// MISSING leaf: the last child that is not a separator, unless tokens the
+/// external scanner scanned of no width end `children` (a layout token opening
+/// an indented block): then the last leaf before them, however deep in a node.
+/// It mirrors `lastRepaired` in js/src/grammar-runtime/executor.js.
+pub(super) fn ends_missing(children: &Children) -> bool {
+    let mut skipped = false;
+    let found = leaves_backward(children, &mut |leaf| {
+        if widthless(leaf) {
+            skipped = true;
+            None
+        } else {
+            Some(leaf.ty)
+        }
+    });
+    match found {
+        Some(ty) if skipped => ty == TreeType::Missing,
+        None if skipped => false,
+        _ => children
+            .iter()
+            .rev()
+            .find(|child| !is_separator(child))
+            .is_some_and(|last| last.ty == TreeType::Missing),
+    }
 }
 
 /// Whether `children` hold the token `last` and go on past it with a token

@@ -791,7 +791,7 @@ Rejections:
 
 Options, given to the parser and overridable per parse: `resolveGrammar`,
 `startRule`, `maxDepth` (default 1000), `stepLimit` (default
-100000 + 1000 per input byte, one step per expression evaluation and per
+100000 + 1000 per input byte, twice that with `errorRecovery`, one step per expression evaluation and per
 operation, shared with embedded parses), `memoLimit` (default 1000000 memo
 entries; past it new entries are dropped rather than kept), `ambiguity`,
 `recovery`, `errorRecovery` (default off) and `maxRepairs` (default 32). `compileGrammar` and `parseWithGrammar` run on this executor, and

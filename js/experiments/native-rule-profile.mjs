@@ -1,7 +1,7 @@
 // Counts the rule bodies a native grammar evaluates for a source: per rule,
 // and the (rule, offset) pairs evaluated more than once (memo misses for
 // another parse state, or calls a left recursion left unmemoized).
-// Usage: node experiments/native-rule-profile.mjs <grammar id> <source> [top]
+// Usage: [RECOVER=1] [STEPS=n] node experiments/native-rule-profile.mjs <grammar id> <source> [top]
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { compileGrammar, parseGrammarLinks } from '../src/index.js';
@@ -23,7 +23,8 @@ Executor.prototype.ruleBody = function ruleBody(rule, position, state, inToken) 
   states.get(call).add(state.key);
   return original.call(this, rule, position, state, inToken);
 };
-const out = parser.parseTree(source.replaceAll('\\n', '\n'), { stepLimit: 5e6 });
+// RECOVER=1 profiles the parse with error recovery, STEPS sets its step limit.
+const out = parser.parseTree(source.replaceAll('\\n', '\n'), { stepLimit: Number(process.env.STEPS ?? 5e6), errorRecovery: Boolean(process.env.RECOVER) });
 console.log('ok', out.ok, out.rejection?.reason ?? '');
 const sorted = (map) => [...map].sort((a, b) => b[1] - a[1]).slice(0, Number(top));
 console.log('rules:', sorted(byRule).map(([k, v]) => `${k}=${v}`).join(' '));

@@ -55,7 +55,8 @@ pub struct FeatureParseOptions {
     pub start_rule: Option<String>,
     /// The bound on nested rule calls (default 1000).
     pub max_depth: Option<usize>,
-    /// The bound on evaluation steps (default `100000 + 1000 * input length`).
+    /// The bound on evaluation steps (default `100000 + 1000 * input length`,
+    /// twice that with error recovery).
     pub step_limit: Option<usize>,
     /// The bound on memoized rule calls (default 1000000).
     pub memo_limit: Option<usize>,
@@ -330,9 +331,15 @@ fn parse_program(
     options: &FeatureParseOptions,
 ) -> ParseOutcome {
     let max_depth = options.max_depth.unwrap_or(DEFAULT_MAX_DEPTH);
-    let limit = options
-        .step_limit
-        .unwrap_or_else(|| 100_000 + 1000 * bytes.len());
+    // Error recovery parses each repaired alternative too: twice the budget.
+    let limit = options.step_limit.unwrap_or_else(|| {
+        (100_000 + 1000 * bytes.len())
+            * if options.error_recovery == Some(true) {
+                2
+            } else {
+                1
+            }
+    });
     let refused = |rejection, tree| ParseOutcome {
         ok: false,
         tree,

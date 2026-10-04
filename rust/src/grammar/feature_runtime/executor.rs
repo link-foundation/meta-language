@@ -17,7 +17,7 @@ use std::rc::Rc;
 
 use super::lexing::is_keyword;
 use super::operations::{Abort, OpError, State, ValueMachine, evaluate_condition};
-use super::parting::starts_widthless;
+use super::parting::{ends_missing, starts_widthless};
 use super::precedence::{Keep, Operands};
 use super::program::{
     Associativity, Compiled, Expr, Matcher, Name, PrecedenceTag, Program, Target,
@@ -543,7 +543,10 @@ impl<'c> Executor<'c> {
     // but what follows may not do so again at that offset: a second
     // continuation there is matched quietly. Chains of zero-width MISSING
     // leaves, which would make every rule left-recursive at that offset, are
-    // so never built.
+    // so never built. The MISSING leaf may end a node `left` holds when tokens
+    // the external scanner scanned of no width follow it, as a layout token
+    // opening an indented block does: each such repaired block would otherwise
+    // open another at the offset, up to the scanner's deepest indentation.
     pub(super) fn continuation(
         &mut self,
         item: &Expr,
@@ -554,12 +557,7 @@ impl<'c> Executor<'c> {
             .repair_points
             .as_ref()
             .is_some_and(|points| points.contains(&left.end))
-            && left
-                .children
-                .iter()
-                .rev()
-                .find(|child| !is_separator(child))
-                .is_some_and(|last| last.ty == TreeType::Missing);
+            && ends_missing(&left.children);
         if !repaired {
             return self.evaluate(item, left.end, &left.state, in_token);
         }
