@@ -169,3 +169,26 @@ test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
     assert.throws(() => importAntlr(source), (error) => error.message === message, source);
   }
 });
+
+test('imports the lexer features the grammars-v4 grammars use', async () => {
+  const grammar = importAntlr(fixture('lexer-features.g4'));
+  assert.equal(grammar.rule('doc').doc, '// read up to the end');
+  assert.deepEqual(grammar.rule('doc').expression, G.seq(G.repeat1(G.ref('ITEM')), G.not(G.any())));
+  assert.deepEqual(grammar.rule('ITEM').expression.items, [
+    range('A', 'Z'),
+    { kind: 'category', value: 'Nd' },
+    { kind: 'script', value: 'Greek' },
+  ]);
+  assert.deepEqual([...grammar.rules.values()].map((rule) => rule.channel ?? null), [null, null, 'skip', 'HIDDEN']);
+  const { compileGrammar } = await import('../src/index.js');
+  const parser = compileGrammar(grammar);
+  assert.equal(parser.parseTree('AB 1 α # a comment').ok, true);
+  assert.equal(parser.parseTree('AB a').ok, false);
+
+  for (const [source, message] of [
+    ['grammar P; a : [\\p{Emoji}] ;', 'antlr import unsupported construct: Unicode property Emoji'],
+    ['grammar P; a : [\\P{L}] ;', 'antlr import unsupported construct: negated Unicode property in character set'],
+  ]) {
+    assert.throws(() => importAntlr(source), (error) => error.message === message, source);
+  }
+});

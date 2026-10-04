@@ -23,8 +23,11 @@ const SUFFIXES = {
  *
  * Alternatives lower to unordered choices. Lexer rules (uppercase names) become
  * token rules and `fragment` rules become silent rules. Lexer commands, dropped
- * actions and predicates, and comments before a rule are kept in the rule's
- * `doc`. `options`, `tokens`, `channels`, `import` and `mode` declarations are
+ * actions and predicates, and comments before a rule or its `:` are kept in
+ * the rule's `doc`; `-> skip` and `-> channel(NAME)` also put the rule on that
+ * channel, which makes it trivia. `EOF` is the end of the input, and character
+ * sets read `\uXXXX`, `\u{X...}` and `\p{NAME}` for a general category or
+ * script. `options`, `tokens`, `channels`, `import` and `mode` declarations are
  * skipped, and references to undefined rules stay visible on the grammar.
  */
 export function importAntlr(source, options = {}) {
@@ -98,6 +101,10 @@ class AntlrParser {
     this.pendingComments = [];
     const fragment = this.tryConsumeKeyword('fragment');
     const name = this.expectIdent('rule name');
+    // A comment between the name and its ':' documents the rule too.
+    this.collectComments();
+    comments.push(...this.pendingComments);
+    this.pendingComments = [];
     this.rejectRulePrelude();
     this.expectKind('colon', "':'");
 
@@ -109,7 +116,7 @@ class AntlrParser {
     let kind = 'normal';
     if (fragment) kind = 'silent';
     else if (/^[A-Z]/.test(name)) kind = 'token';
-    return { name, kind, expression, doc: ruleDoc(comments, notes, command) };
+    return { name, kind, expression, doc: ruleDoc(comments, notes, command), channel: commandChannel(command) };
   }
 
   rejectRulePrelude() {
@@ -168,6 +175,8 @@ class AntlrParser {
     switch (token.kind) {
       case 'ident':
         this.advance();
+        // ANTLR reserves EOF for the end of the input.
+        if (token.value === 'EOF') return GrammarBuilder.not(GrammarBuilder.any());
         return GrammarBuilder.ref(token.value);
       case 'string': {
         this.advance();
@@ -330,6 +339,11 @@ function lowerCharSet(content, offset) {
   const negated = scanner.tryConsume('^');
   const items = [];
   while (!scanner.isEnd()) {
+    const property = scanner.tryReadProperty();
+    if (property !== null) {
+      items.push(property);
+      continue;
+    }
     const start = scanner.readChar();
     if (scanner.tryConsumeRangeSeparator()) {
       const end = scanner.readChar();
@@ -345,8 +359,9 @@ function lowerCharSet(content, offset) {
   return GrammarBuilder.charClass(items, negated);
 }
 
-// Reads the raw text between `[` and `]`. Unlike string literals, character
-// sets have no `\u` escape: an unknown escape stands for the escaped character.
+// Reads the raw text between `[` and `]`: `\uXXXX` and `\u{X...}` escape a
+// code point, `\p{NAME}` names a Unicode general category or script, and any
+// other unknown escape stands for the escaped character.
 class ClassScanner {
   constructor(text, offset) {
     this.chars = Array.from(text);
@@ -363,7 +378,37 @@ class ClassScanner {
   readEscape() {
     if (this.isEnd()) throw errorAt(this.offset, 'unterminated character class escape');
     const character = this.advanceChar();
+    if (character === 'u') return this.readCodePoint();
     return ({ n: '\n', r: '\r', t: '\t', b: '\u0008', f: '\u000c' })[character] ?? character;
+  }
+
+  // The code point of `\uXXXX` or `\u{X...}`, after the `u`.
+  readCodePoint() {
+    let digits = '';
+    if (this.tryConsume('{')) {
+      while (!this.isEnd() && this.chars[this.cursor] !== '}') digits += this.advanceChar();
+      if (!this.tryConsume('}')) throw errorAt(this.offset, 'unterminated unicode escape');
+    } else {
+      for (let count = 0; count < 4 && !this.isEnd(); count += 1) digits += this.advanceChar();
+    }
+    const value = /^[0-9A-Fa-f]{1,6}$/u.test(digits) ? Number.parseInt(digits, 16) : -1;
+    if (value < 0 || value > 0x10ffff || (value >= 0xd800 && value <= 0xdfff)) {
+      throw errorAt(this.offset, 'invalid unicode escape');
+    }
+    return String.fromCodePoint(value);
+  }
+
+  // A `\p{NAME}` item at the cursor, or null.
+  tryReadProperty() {
+    const [backslash, letter, open] = this.chars.slice(this.cursor, this.cursor + 3);
+    if (backslash !== '\\' || (letter !== 'p' && letter !== 'P')) return null;
+    if (letter === 'P') throw unsupportedError(FORMAT, 'negated Unicode property in character set');
+    if (open !== '{') throw errorAt(this.offset, 'Unicode property needs a {NAME}');
+    const close = this.chars.indexOf('}', this.cursor);
+    if (close < 0) throw errorAt(this.offset, 'unterminated Unicode property');
+    const name = this.chars.slice(this.cursor + 3, close).join('');
+    this.cursor = close + 1;
+    return unicodePropertyItem(name);
   }
 
   tryConsume(expected) {
@@ -437,6 +482,33 @@ function ruleDoc(comments, notes, command) {
   const parts = [...comments.filter((comment) => comment !== ''), ...notes];
   if (command !== null) parts.push(command);
   return parts.length === 0 ? null : parts.join('; ');
+}
+
+// The channel a lexer command puts its token on: `skip` and `channel(NAME)`
+// make the token trivia, which the runtime skips between tokens.
+function commandChannel(command) {
+  if (command === null) return null;
+  const parts = command.slice('->'.length).split(',').map((part) => part.trim());
+  for (const part of parts) {
+    const channel = /^channel\(([A-Za-z_][A-Za-z_0-9]*)\)$/u.exec(part);
+    if (channel !== null) return channel[1];
+  }
+  return parts.includes('skip') ? 'skip' : null;
+}
+
+const UNICODE_SCRIPTS = new Set([
+  'Arabic', 'Armenian', 'Bengali', 'Cyrillic', 'Devanagari', 'Georgian', 'Greek', 'Han', 'Hangul', 'Hebrew', 'Hiragana',
+  'Katakana', 'Latin', 'Thai',
+]);
+
+// The character class item `\p{NAME}` names: a general category such as `L` or
+// `Nd`, or a script such as `Greek` or `Script=Greek`.
+function unicodePropertyItem(name) {
+  const property = name.replace(/^(?:General_Category|gc)=/u, '');
+  if (/^[LMNPSZC][a-z]?$/u.test(property)) return { kind: 'category', value: property };
+  const script = property.replace(/^(?:Script|sc)=/u, '');
+  if (UNICODE_SCRIPTS.has(script)) return { kind: 'script', value: script };
+  throw unsupportedError(FORMAT, `Unicode property ${name}`);
 }
 
 function formatCommand(tokens) {

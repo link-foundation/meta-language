@@ -1,7 +1,11 @@
 use std::char;
 
-use crate::grammar::interchange::{parse_native_expression, render_native_expression};
-use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
+use crate::grammar::interchange::{
+    parse_native_expression, parse_native_grammar, render_native_expression, render_native_grammar,
+};
+use crate::grammar::{
+    CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind,
+};
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::rust_codec::{FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, ToLinks};
 
@@ -135,22 +139,52 @@ fn decode_grammar(network: &LinkNetwork, link: LinkId) -> Result<Grammar, LinksC
 
 fn encode_rule(network: &mut LinkNetwork, rule: &GrammarRule) -> LinkId {
     let expr = encode_expr(network, rule.expr());
-    let references = [
+    let mut references = vec![
         encode_string_value(network, rule.name()),
         expr,
         encode_rule_kind_value(network, rule.kind()),
         encode_option_string(network, rule.concept()),
         encode_option_string(network, rule.doc()),
     ];
+    // The feature union attributes, when the rule has any, as the native
+    // listing line of an empty rule with them.
+    if !rule.attributes.is_empty() {
+        let carrier = Grammar::new().with_start(ATTRIBUTE_CARRIER).with_rule(
+            GrammarRule::new(ATTRIBUTE_CARRIER, GrammarExpr::Empty)
+                .with_attributes(rule.attributes.clone()),
+        );
+        references.push(encode_string_value(
+            network,
+            &render_native_grammar(&carrier),
+        ));
+    }
     insert_grammar_node(network, RULE, &references)
+}
+
+/// The name of the empty rule whose native listing carries rule attributes.
+const ATTRIBUTE_CARRIER: &str = "attributes";
+
+fn decode_rule_attributes(
+    network: &LinkNetwork,
+    link: LinkId,
+) -> Result<RuleAttributes, LinksCodecError> {
+    let listing = decode_string_value(network, link)?;
+    parse_native_grammar(&listing)
+        .ok()
+        .and_then(|carrier| carrier.rules().first().map(|rule| rule.attributes.clone()))
+        .ok_or_else(|| malformed(link, "rule attributes must be a native rule listing"))
 }
 
 fn decode_rule(network: &LinkNetwork, link: LinkId) -> Result<GrammarRule, LinksCodecError> {
     let references = expect_tag(network, link, RULE)?;
-    let [name, expr, kind, concept, doc] = references else {
+    let (fields, attributes) = match references {
+        [fields @ .., attributes] if references.len() == 6 => (fields, Some(*attributes)),
+        fields => (fields, None),
+    };
+    let [name, expr, kind, concept, doc] = fields else {
         return Err(malformed(
             link,
-            "rule links must contain name, expression, kind, concept, and doc references",
+            "rule links must contain name, expression, kind, concept, and doc references, and may add attributes",
         ));
     };
     let mut rule = GrammarRule::new(
@@ -163,6 +197,9 @@ fn decode_rule(network: &LinkNetwork, link: LinkId) -> Result<GrammarRule, Links
     }
     if let Some(doc) = decode_option_string(network, *doc)? {
         rule = rule.with_doc(doc);
+    }
+    if let Some(attributes) = attributes {
+        rule = rule.with_attributes(decode_rule_attributes(network, attributes)?);
     }
     Ok(rule)
 }

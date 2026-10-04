@@ -3,7 +3,10 @@ mod lexer;
 use lexer::{Lexer, Token, TokenKind};
 
 use super::{GrammarImportError, parse_error, unsupported_error};
-use crate::grammar::{CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleKind};
+use crate::grammar::feature::class_expression;
+use crate::grammar::{
+    Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind, UnicodeClassItem,
+};
 
 const FORMAT: GrammarFormat = GrammarFormat::Antlr;
 
@@ -12,7 +15,10 @@ const FORMAT: GrammarFormat = GrammarFormat::Antlr;
 /// The importer is a clean-room parser for the structural ANTLR grammar subset
 /// needed by the grammar IR. ANTLR alternatives are lowered as unordered CFG
 /// choices, while lexer commands and dropped target-language actions are
-/// preserved in rule documentation.
+/// preserved in rule documentation; `-> skip` and `-> channel(NAME)` also put
+/// the rule on that channel, which makes it trivia. `EOF` is the end of the
+/// input, and character sets read `\uXXXX`, `\u{X...}` and `\p{NAME}` for a
+/// general category or script.
 ///
 /// # Errors
 ///
@@ -116,6 +122,10 @@ impl Parser {
         let comments = std::mem::take(&mut self.pending_comments);
         let fragment = self.try_consume_keyword("fragment");
         let name = self.expect_ident("rule name")?;
+        // A comment between the name and its ':' documents the rule too.
+        self.collect_comments();
+        let mut comments = comments;
+        comments.append(&mut self.pending_comments);
         self.reject_rule_prelude()?;
         self.expect_colon()?;
 
@@ -136,7 +146,14 @@ impl Parser {
             RuleKind::Normal
         };
 
+        let channel = command.as_deref().and_then(command_channel);
         let mut rule = GrammarRule::new(name, expr).with_kind(kind);
+        if channel.is_some() {
+            rule = rule.with_attributes(RuleAttributes {
+                channel,
+                ..RuleAttributes::default()
+            });
+        }
         if let Some(doc) = rule_doc(comments, notes, command) {
             rule = rule.with_doc(doc);
         }
@@ -223,6 +240,10 @@ impl Parser {
         match token.kind {
             TokenKind::Ident(name) => {
                 self.advance();
+                // ANTLR reserves EOF for the end of the input.
+                if name == "EOF" {
+                    return Ok(GrammarExpr::Not(Box::new(GrammarExpr::AnyChar)));
+                }
                 Ok(GrammarExpr::NonTerminal(name))
             }
             TokenKind::String(value) => {
@@ -536,21 +557,101 @@ fn lower_char_set(content: &str, offset: usize) -> Result<GrammarExpr, GrammarIm
     let negated = scanner.try_consume('^');
     let mut items = Vec::new();
     while !scanner.is_end() {
+        if let Some(property) = scanner.try_read_property()? {
+            items.push(property);
+            continue;
+        }
         let start = scanner.read_char()?;
         if scanner.try_consume_range_separator() {
             let end = scanner.read_char()?;
             if start > end {
                 return Err(error_at(offset, "character class range start exceeds end"));
             }
-            items.push(CharClassItem::Range(start, end));
+            items.push(UnicodeClassItem::Range(start, end));
         } else {
-            items.push(CharClassItem::Char(start));
+            items.push(UnicodeClassItem::Char(start));
         }
     }
     if items.is_empty() {
         return Err(error_at(offset, "character class must not be empty"));
     }
-    Ok(GrammarExpr::CharClass { negated, items })
+    Ok(class_expression(negated, items))
+}
+
+/// The channel a lexer command puts its token on: `skip` and `channel(NAME)`
+/// make the token trivia, which the runtime skips between tokens.
+fn command_channel(command: &str) -> Option<String> {
+    let parts: Vec<&str> = command
+        .strip_prefix("->")
+        .unwrap_or(command)
+        .split(',')
+        .map(str::trim)
+        .collect();
+    for part in &parts {
+        let name = part
+            .strip_prefix("channel(")
+            .and_then(|rest| rest.strip_suffix(')'));
+        if let Some(name) = name
+            && is_identifier(name)
+        {
+            return Some(name.to_owned());
+        }
+    }
+    parts.contains(&"skip").then(|| "skip".to_owned())
+}
+
+fn is_identifier(text: &str) -> bool {
+    let mut chars = text.chars();
+    chars
+        .next()
+        .is_some_and(|first| first.is_ascii_alphabetic() || first == '_')
+        && chars.all(|next| next.is_ascii_alphanumeric() || next == '_')
+}
+
+const UNICODE_SCRIPTS: [&str; 14] = [
+    "Arabic",
+    "Armenian",
+    "Bengali",
+    "Cyrillic",
+    "Devanagari",
+    "Georgian",
+    "Greek",
+    "Han",
+    "Hangul",
+    "Hebrew",
+    "Hiragana",
+    "Katakana",
+    "Latin",
+    "Thai",
+];
+
+/// The character class item `\p{NAME}` names: a general category such as `L`
+/// or `Nd`, or a script such as `Greek` or `Script=Greek`.
+fn unicode_property_item(name: &str) -> Result<UnicodeClassItem, GrammarImportError> {
+    let property = name
+        .strip_prefix("General_Category=")
+        .or_else(|| name.strip_prefix("gc="))
+        .unwrap_or(name);
+    let mut chars = property.chars();
+    let is_category = chars.next().is_some_and(|first| "LMNPSZC".contains(first))
+        && chars
+            .next()
+            .is_none_or(|second| second.is_ascii_lowercase())
+        && chars.next().is_none();
+    if is_category {
+        return Ok(UnicodeClassItem::Category(property.to_owned()));
+    }
+    let script = property
+        .strip_prefix("Script=")
+        .or_else(|| property.strip_prefix("sc="))
+        .unwrap_or(property);
+    if UNICODE_SCRIPTS.contains(&script) {
+        return Ok(UnicodeClassItem::Script(script.to_owned()));
+    }
+    Err(unsupported_error(
+        FORMAT,
+        format!("Unicode property {name}"),
+    ))
 }
 
 #[derive(Clone, Debug)]
@@ -590,9 +691,60 @@ impl<'text> ClassScanner<'text> {
             't' => Ok('\t'),
             'b' => Ok('\u{08}'),
             'f' => Ok('\u{0c}'),
-            '\\' | '\'' | '"' | '[' | ']' | '-' | '^' => Ok(character),
+            'u' => self.read_code_point(),
             character => Ok(character),
         }
+    }
+
+    /// The code point of `\uXXXX` or `\u{X...}`, after the `u`.
+    fn read_code_point(&mut self) -> Result<char, GrammarImportError> {
+        let mut digits = String::new();
+        if self.try_consume('{') {
+            while let Some(character) = self.peek_char().filter(|&character| character != '}') {
+                digits.push(character);
+                self.advance_char();
+            }
+            if !self.try_consume('}') {
+                return Err(error_at(self.offset, "unterminated unicode escape"));
+            }
+        } else {
+            for _ in 0..4 {
+                let Some(character) = self.advance_char() else {
+                    break;
+                };
+                digits.push(character);
+            }
+        }
+        let valid = (1..=6).contains(&digits.len())
+            && digits.chars().all(|digit| digit.is_ascii_hexdigit());
+        valid
+            .then(|| u32::from_str_radix(&digits, 16).ok())
+            .flatten()
+            .and_then(char::from_u32)
+            .ok_or_else(|| error_at(self.offset, "invalid unicode escape"))
+    }
+
+    /// A `\p{NAME}` item at the cursor, if one is there.
+    fn try_read_property(&mut self) -> Result<Option<UnicodeClassItem>, GrammarImportError> {
+        let rest = &self.text[self.cursor..];
+        if rest.starts_with("\\P") {
+            return Err(unsupported_error(
+                FORMAT,
+                "negated Unicode property in character set",
+            ));
+        }
+        let Some(after) = rest.strip_prefix("\\p") else {
+            return Ok(None);
+        };
+        let Some(body) = after.strip_prefix('{') else {
+            return Err(error_at(self.offset, "Unicode property needs a {NAME}"));
+        };
+        let Some(close) = body.find('}') else {
+            return Err(error_at(self.offset, "unterminated Unicode property"));
+        };
+        let name = body[..close].to_owned();
+        self.cursor += "\\p{".len() + close + 1;
+        unicode_property_item(&name).map(Some)
     }
 
     fn try_consume(&mut self, expected: char) -> bool {

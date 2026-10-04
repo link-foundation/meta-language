@@ -226,3 +226,62 @@ fn unsupported_rule_prelude_reports_unsupported_error() {
         } if construct == "rule prelude locals"
     ));
 }
+
+#[test]
+fn imports_the_lexer_features_the_grammars_v4_grammars_use() {
+    use meta_language::grammar::UnicodeClassItem;
+    use meta_language::grammar::feature::class_expression;
+    use meta_language::{FeatureParseOptions, compile_feature_grammar};
+
+    let grammar =
+        import_antlr(include_str!("../fixtures/grammar/antlr/lexer-features.g4")).expect("imports");
+    let doc = grammar.rule("doc").expect("doc");
+    assert_eq!(doc.doc(), Some("// read up to the end"));
+    assert_eq!(
+        doc.expr(),
+        &GrammarExpr::Sequence(vec![
+            GrammarExpr::OneOrMore(Box::new(GrammarExpr::NonTerminal("ITEM".to_string()))),
+            GrammarExpr::Not(Box::new(GrammarExpr::AnyChar)),
+        ])
+    );
+    assert_eq!(
+        grammar.rule("ITEM").expect("ITEM").expr(),
+        &class_expression(
+            false,
+            vec![
+                UnicodeClassItem::Range('A', 'Z'),
+                UnicodeClassItem::Category("Nd".to_string()),
+                UnicodeClassItem::Script("Greek".to_string()),
+            ]
+        )
+    );
+    let channels: Vec<Option<&str>> = grammar
+        .rules()
+        .iter()
+        .map(|rule| rule.attributes.channel.as_deref())
+        .collect();
+    assert_eq!(channels, vec![None, None, Some("skip"), Some("HIDDEN")]);
+    let options = FeatureParseOptions::default();
+    let parser = compile_feature_grammar(&grammar, None, options.clone()).expect("compiles");
+    let accepts = |text: &str| {
+        parser
+            .parse_tree(text.as_bytes(), &options)
+            .is_ok_and(|outcome| outcome.tree.is_some())
+    };
+    assert!(accepts("AB 1 α # a comment"));
+    assert!(!accepts("AB a"));
+
+    for (source, expected) in [
+        ("grammar P; a : [\\p{Emoji}] ;", "Unicode property Emoji"),
+        (
+            "grammar P; a : [\\P{L}] ;",
+            "negated Unicode property in character set",
+        ),
+    ] {
+        let error = import_antlr(source).expect_err(source);
+        assert!(
+            matches!(&error, GrammarImportError::Unsupported { format: GrammarFormat::Antlr, construct } if construct == expected),
+            "{source}: {error}"
+        );
+    }
+}
