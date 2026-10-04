@@ -1,5 +1,5 @@
 {
-  "auditDate": "2026-10-03",
+  "auditDate": "2026-10-04",
   "items": [
     {
       "id": "engine node@>=22",
@@ -4885,8 +4885,9 @@
       "role": "direct",
       "requirement": "=0.7.3",
       "kind": "runtime",
-      "current": "0.7.3",
-      "evidence": "crates.io, tree-sitter-swift"
+      "current": "0.7.4",
+      "evidence": "crates.io, tree-sitter-swift",
+      "reason": "Held at 0.7.3: the 0.7.4 external scanner (src/scanner.c) calls fprintf(stderr, ...) and exit(1) when allocating its state fails, symbols a Wasm parser cannot import, so `tree-sitter build --wasm` 0.27.0 refuses it and the vendored web-tree-sitter grammar cannot follow; it moves when upstream drops those calls (reproduced with experiments/issue-195-swift-wasm.sh)."
     },
     {
       "id": "crate rust/Cargo.lock tree-sitter-toml-ng@0.7.0",
@@ -6640,8 +6641,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/c.wasm.gz@0.24.2",
-      "name": "js/oracles/grammars/c.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/c.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6708,8 +6709,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/javascript.wasm.gz@0.25.0",
-      "name": "js/oracles/grammars/javascript.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/javascript.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -6776,8 +6777,8 @@
     },
     {
       "id": "vendored-grammar js/oracles/grammars/rust.wasm.gz@v0.24.2",
-      "name": "js/oracles/grammars/rust.wasm.gz",
       "category": "vendored-grammar",
+      "name": "js/oracles/grammars/rust.wasm.gz",
       "declaredIn": [
         "js/src/vendor/grammars/grammar-lock.json"
       ],
@@ -7856,6 +7857,20 @@
       ]
     },
     {
+      "id": "generator js/scripts/generate-export-parity.mjs@script",
+      "category": "generator",
+      "name": "js/scripts/generate-export-parity.mjs",
+      "declaredIn": [
+        "js/scripts/generate-export-parity.mjs"
+      ],
+      "pinned": "script",
+      "compare": "derived",
+      "source": {
+        "type": "none"
+      },
+      "dependsOn": []
+    },
+    {
       "id": "generator js/scripts/generate-issue-195-conformance.mjs@script",
       "category": "generator",
       "name": "js/scripts/generate-issue-195-conformance.mjs",
@@ -8541,7 +8556,7 @@
         "type": "github-release",
         "repository": "taiki-e/install-action"
       },
-      "current": "v2.87.22",
+      "current": "v2.87.24",
       "evidence": "GitHub release, taiki-e/install-action"
     },
     {
