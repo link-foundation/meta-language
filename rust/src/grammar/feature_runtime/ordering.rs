@@ -10,7 +10,9 @@ use std::rc::Rc;
 use super::forking::{
     GrammarFacts, declared_fork, forked_order, lookahead_of, shift_reduction, token_at,
 };
-use super::parting::{child_parting, holds_first, one_token, reduced_first, same_tokens};
+use super::parting::{
+    child_parting, has_node, holds_first, one_token, parting_end, reduced_first, same_tokens,
+};
 use super::program::{Associativity, PrecedenceTag, TokenRank, compare_precedence};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
 use crate::grammar::PrecedenceEntry;
@@ -51,7 +53,7 @@ fn open_node(walk: &mut Vec<Walk>, mark: bool) {
 }
 
 /// The items of a child list in order, without flattening it.
-struct Items(Vec<Walk>);
+pub(super) struct Items(Vec<Walk>);
 
 impl Iterator for Items {
     type Item = Rc<Tree>;
@@ -74,7 +76,7 @@ impl Iterator for Items {
     }
 }
 
-fn items(children: &Children) -> Items {
+pub(super) fn items(children: &Children) -> Items {
     Items(vec![Walk::Part(children.clone())])
 }
 
@@ -133,7 +135,9 @@ pub(super) fn preferred_tokens(
     };
     loop {
         match (left.last(), right.last()) {
-            (None, _) | (_, None) => return Ordering::Equal,
+            (None, None) => return Ordering::Equal,
+            (None, _) => return scanned_after_end(result, existing, &mut right, decided, true),
+            (_, None) => return scanned_after_end(result, existing, &mut left, decided, false),
             (Some(Walk::End(_)), _) => {
                 left.pop();
             }
@@ -232,6 +236,67 @@ pub(super) fn preferred_tokens(
     }
 }
 
+/// Of two results where one (`result` when `result_ended`) ended and the
+/// other goes on (`rest`) with a token of the external scanner, which then
+/// scans it, of no width, in the state both share (TypeScript's automatic
+/// semicolon after `namespace A {}` before a line break, which the expression
+/// statement takes and the declaration cannot): the lexer took it before any
+/// parse decided, if the two did not part before it (`declare module "m" {}`
+/// before a line break, whose `{` one parse shifts as the module's body where
+/// the other reduced the module, decides first), and if the node the ended
+/// parse closes with is one the other reduced too (where `{}` after a line
+/// break is a statement block in one and an object in the other, the two
+/// reduced apart, and the block could take the token itself). Less when
+/// `result` ended, Greater when `existing` did, Equal when the token does not
+/// decide. It mirrors the end of preferredTokens in
+/// js/src/grammar-runtime/executor.js.
+fn scanned_after_end(
+    result: &Children,
+    existing: &Children,
+    rest: &mut Vec<Walk>,
+    decided: usize,
+    result_ended: bool,
+) -> Ordering {
+    let (ended, other) = if result_ended {
+        (result, existing)
+    } else {
+        (existing, result)
+    };
+    let Some(last) = meaningful(ended).pop() else {
+        return Ordering::Equal;
+    };
+    if last.ty != TreeType::Node || !has_node(other, &last) {
+        return Ordering::Equal;
+    }
+    while let Some(step) = rest.last() {
+        match step {
+            Walk::End(_) => {
+                rest.pop();
+            }
+            Walk::Part(_) => open_part(rest),
+            Walk::Item(item) if item.trivia => {
+                rest.pop();
+            }
+            Walk::Item(item) if item.ty == TreeType::Node => open_node(rest, false),
+            Walk::Item(item) => {
+                if item.start != item.end
+                    || !item.scanned
+                    || item.start > decided
+                    || item.start > parting_end(result, existing)
+                {
+                    return Ordering::Equal;
+                }
+                return if result_ended {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                };
+            }
+        }
+    }
+    Ordering::Equal
+}
+
 /// Which of two results over the same text an LR parser keeps when it decides
 /// a shift-reduce conflict by precedence, as tree-sitter does when the grammar
 /// is generated: they are walked in order, skipping the subtrees both share,
@@ -239,8 +304,10 @@ pub(super) fn preferred_tokens(
 /// shorter one was reduced where the longer one shifted on, and as the item in
 /// progress is the node's own rule, its precedence in the two decides: the
 /// higher level wins and, on equal levels, the associativity of the reduced
-/// node, right to shift and left to reduce. Greater when `result` is kept,
-/// Less when `existing` is, Equal when neither. It mirrors shiftOrder in
+/// node, right to shift and left to reduce. `owner` is the precedence the
+/// two results are parts of, when a precedence expression holds them (see
+/// `extra_reduction`). Greater when `result` is kept, Less when `existing`
+/// is, Equal when neither. It mirrors shiftOrder in
 /// js/src/grammar-runtime/executor.js.
 pub(super) fn shift_order(
     result: &Children,
@@ -248,6 +315,7 @@ pub(super) fn shift_order(
     orders: &[Vec<PrecedenceEntry>],
     grammar: &GrammarFacts,
     bytes: &[u8],
+    owner: Option<&PrecedenceTag>,
 ) -> Ordering {
     let mut left = vec![Walk::Part(result.clone())];
     let mut right = vec![Walk::Part(existing.clone())];
@@ -325,12 +393,17 @@ pub(super) fn shift_order(
                     && a.start == b.start
                     && let Some((x, y)) = chain_pair(&a, &b, false)
                 {
-                    let reduced = |node: &Tree| {
-                        node.reduced
-                            .clone()
-                            .unwrap_or(PrecedenceTag::unranked(None))
+                    let own = |node: &Tree, other: &Tree| {
+                        node.reduced.clone().unwrap_or_else(|| {
+                            PrecedenceTag::unranked(
+                                node.reduced_to
+                                    .iter()
+                                    .find(|name| !other.reduced_to.contains(name))
+                                    .cloned(),
+                            )
+                        })
                     };
-                    let order = compare_precedence(&reduced(&x), &reduced(&y), orders);
+                    let order = compare_precedence(&own(&x, &y), &own(&y, &x), orders);
                     if order != Ordering::Equal {
                         return order;
                     }
@@ -361,8 +434,8 @@ pub(super) fn shift_order(
                 if lone != Ordering::Equal {
                     return lone;
                 }
-                let reduced = extra_reduction(&a, &b, &right, orders)
-                    .then_with(|| extra_reduction(&b, &a, &left, orders).reverse());
+                let reduced = extra_reduction(&a, &b, &right, orders, owner)
+                    .then_with(|| extra_reduction(&b, &a, &left, orders, owner).reverse());
                 if reduced != Ordering::Equal {
                     return reduced;
                 }
@@ -448,7 +521,12 @@ fn lone_reduction(a: &Rc<Tree>, b: &Rc<Tree>, orders: &[Vec<PrecedenceEntry>]) -
 /// reductions of the same text then conflict at the end of that node, which
 /// one result reduces where the other reduces or shifts in its own node: the
 /// higher precedence level wins and, on equal levels where the other node
-/// goes on, the associativity of the reduced node. Greater when `a`'s result
+/// goes on, the associativity of the reduced node. The results themselves
+/// are in progress under `owner`, the precedence a precedence expression
+/// holds them with (TypeScript's `extends A<X>`, whose
+/// `_extends_clause_single` takes `A` and `<X>` under the name `extends`
+/// where an `instantiation_expression` reduces them under `instantiation`,
+/// which the order ranks below), else under none. Greater when `a`'s result
 /// is kept, Less when the other is, Equal when neither. It mirrors
 /// extraReduction in js/src/grammar-runtime/executor.js.
 fn extra_reduction(
@@ -456,6 +534,7 @@ fn extra_reduction(
     b: &Rc<Tree>,
     walk: &[Walk],
     orders: &[Vec<PrecedenceEntry>],
+    owner: Option<&PrecedenceTag>,
 ) -> Ordering {
     if a.ty != TreeType::Node {
         return Ordering::Equal;
@@ -512,7 +591,7 @@ fn extra_reduction(
     }
     let mine = reduction(&parent);
     let other = container.as_ref().map_or_else(
-        || PrecedenceTag::unranked(None),
+        || owner.cloned().unwrap_or(PrecedenceTag::unranked(None)),
         |node| {
             node.precedence
                 .clone()
@@ -778,8 +857,13 @@ fn reduction(node: &Tree) -> PrecedenceTag {
 /// generated parser completes at the conflict (Rust's `let bar = || baz &&
 /// quux`, where the closure of level -1 ends with `baz`, not the `let`
 /// condition), or the precedence a token ending a silent rule keeps (see
-/// `lone_reduction`); else the precedence `short` reduces with.
+/// `lone_reduction`); else the precedence of the innermost silent rule on
+/// the chain that the chain's token or node ends (TypeScript's `namespace N
+/// {}` and `module "m" {}`, whose `module_name_and_body` of level 0 right
+/// ends with the name where the body is left out, so the body shifts); else
+/// the precedence `short` reduces with.
 fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
+    let mut closing = None;
     if let Some(first) = first_meaningful(&progress.children) {
         let mut node = short.clone();
         while node.ty == TreeType::Node {
@@ -799,9 +883,17 @@ fn reduced_before(short: &Rc<Tree>, progress: &Tree) -> PrecedenceTag {
                 };
             }
             node = last;
+            let closes = if node.ty == TreeType::Token {
+                node.reduced.as_ref().or(node.precedence.as_ref())
+            } else {
+                node.closes.as_ref()
+            };
+            if let Some(closes) = closes {
+                closing = Some(closes.clone());
+            }
         }
     }
-    reduction(short)
+    closing.unwrap_or_else(|| reduction(short))
 }
 
 /// Of two complete results, each with its trailing trivia, Greater when `a`
@@ -823,7 +915,14 @@ pub(super) fn complete_order(
     tokens
         .map_or(Ordering::Equal, |tokens| {
             preferred_tokens(&left, &right, tokens).then_with(|| {
-                shift_order(&left, &right, tokens.orders, tokens.grammar, tokens.bytes)
+                shift_order(
+                    &left,
+                    &right,
+                    tokens.orders,
+                    tokens.grammar,
+                    tokens.bytes,
+                    None,
+                )
             })
         })
         .then(a.0.dynamic.cmp(&b.0.dynamic))

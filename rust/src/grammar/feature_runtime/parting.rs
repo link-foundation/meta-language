@@ -3,13 +3,15 @@
 //! where the other shifted on, and two nodes over the same tokens.
 
 use std::cmp::Ordering;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use super::ordering::{
-    by_associativity, first_leaf_start, first_meaningful, leftmost_chain, meaningful, same_tree,
+    by_associativity, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful,
+    same_tree,
 };
-use super::program::{PrecedenceTag, compare_precedence};
-use super::results::{Tree, TreeType};
+use super::program::{Name, PrecedenceTag, compare_precedence};
+use super::results::{Children, Tree, TreeType};
 use crate::grammar::PrecedenceEntry;
 
 /// Whether a parse that has `leaf` alone and one that has `node`, which
@@ -148,4 +150,49 @@ pub(super) fn child_parting(
         };
     }
     Ordering::Equal
+}
+
+/// Whether `children`, or a node below them, is a node of the kind and span
+/// of `node`. It mirrors hasNode in js/src/grammar-runtime/executor.js.
+pub(super) fn has_node(children: &Children, node: &Tree) -> bool {
+    items(children).any(|child| {
+        child.ty == TreeType::Node
+            && ((child.kind == node.kind && child.start == node.start && child.end == node.end)
+                || has_node(&child.children, node))
+    })
+}
+
+/// The first end where two parses part, a node of one kind from one offset
+/// that one of them ends there and the other goes on past (the `module` of
+/// `declare module "m" {}`, which ends before the body in one), or
+/// `usize::MAX`. It mirrors partingEnd in js/src/grammar-runtime/executor.js.
+pub(super) fn parting_end(first: &Children, second: &Children) -> usize {
+    type Spans = HashMap<(Option<Name>, usize), HashSet<usize>>;
+    fn spans(children: &Children, found: &mut Spans) {
+        for child in items(children) {
+            if child.ty != TreeType::Node {
+                continue;
+            }
+            found
+                .entry((child.kind.clone(), child.start))
+                .or_default()
+                .insert(child.end);
+            spans(&child.children, found);
+        }
+    }
+    let (mut mine, mut theirs) = (Spans::new(), Spans::new());
+    spans(first, &mut mine);
+    spans(second, &mut theirs);
+    let mut end = usize::MAX;
+    for (key, ends) in &mine {
+        let Some(other) = theirs.get(key) else {
+            continue;
+        };
+        for at in ends {
+            if !other.contains(at) {
+                end = other.iter().fold(end.min(*at), |end, at| end.min(*at));
+            }
+        }
+    }
+    end
 }

@@ -302,6 +302,9 @@ pub(super) struct ResultSet<'c> {
     index: HashMap<(usize, State), usize>,
     /// `(matching longest)`: a tie goes to the tokens a lexer prefers.
     tokens: Option<TokenOrder<'c>>,
+    /// The precedence the results are parts of, when a precedence
+    /// expression holds them (see `shift_order`).
+    owner: Option<PrecedenceTag>,
 }
 
 impl<'c> ResultSet<'c> {
@@ -310,6 +313,12 @@ impl<'c> ResultSet<'c> {
             tokens,
             ..Self::default()
         }
+    }
+
+    /// The set with `owner` as the precedence its results are parts of.
+    pub(super) fn owned(mut self, owner: Option<&PrecedenceTag>) -> Self {
+        self.owner = owner.cloned();
+        self
     }
 
     /// Of two results with the same end and state, the lower repair cost
@@ -338,6 +347,7 @@ impl<'c> ResultSet<'c> {
                                         tokens.orders,
                                         tokens.grammar,
                                         tokens.bytes,
+                                        self.owner.as_ref(),
                                     )
                                 })
                         })

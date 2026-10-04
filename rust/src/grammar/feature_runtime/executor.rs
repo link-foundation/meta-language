@@ -564,7 +564,8 @@ impl<'c> Executor<'c> {
 
     // `keep`, when given, filters the complete sequences before they are
     // deduplicated, so a precedence filter never loses a valid parse to an
-    // invalid one that reached the same end first.
+    // invalid one that reached the same end first, and its precedence is the
+    // one the sequence's parts are in progress under.
     pub(super) fn sequence(
         &mut self,
         items: &[Expr],
@@ -575,7 +576,7 @@ impl<'c> Executor<'c> {
     ) -> Run<Vec<Res>> {
         let mut current = vec![Res::new(position, state.clone(), no_children(), 0)];
         for (index, item) in items.iter().enumerate() {
-            let mut next = ResultSet::new(self.longest_tokens);
+            let mut next = ResultSet::new(self.longest_tokens).owned(keep.map(Keep::owner));
             let last = index == items.len() - 1;
             for left in &current {
                 for right in self.continuation(item, left, in_token)? {

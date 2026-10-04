@@ -33,6 +33,14 @@ pub(super) struct Keep {
     pending: RefCell<Vec<Res>>,
 }
 
+impl Keep {
+    /// The precedence of the filter, the one its results are in progress
+    /// under.
+    pub(super) const fn owner(&self) -> &PrecedenceTag {
+        &self.tag
+    }
+}
+
 /// The verdict of the precedence filter on an operand.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Conflict {
@@ -700,7 +708,7 @@ impl Executor<'_> {
 
     // The results of `expr` that the precedence filter accepts, filtered
     // before a sequence or an unordered choice merges results of the same
-    // end and state.
+    // end and state under the filter's precedence.
     pub(super) fn filtered(
         &mut self,
         expr: &Expr,
@@ -717,7 +725,7 @@ impl Executor<'_> {
                 items,
             } if !self.peg => {
                 self.step()?;
-                let mut results = ResultSet::new(self.longest_tokens);
+                let mut results = ResultSet::new(self.longest_tokens).owned(Some(keep.owner()));
                 for item in items {
                     for result in self.filtered(item, position, state, keep)? {
                         results.add(result);
