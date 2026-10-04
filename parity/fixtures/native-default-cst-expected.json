@@ -454,7 +454,7 @@
       "grammars": {
         "native-c": {
           "version": "1.0.0",
-          "parserSha256": "187163fa29b9c38be87d295623372df5bec5a86aa6f0f65de94d9b765201ad5c"
+          "parserSha256": "072a86132b93eaf09b43b6176e5e2b7dfb53897bbdf020c46da6b19b797cf6e3"
         }
       },
       "oracleGrammars": {
@@ -546,7 +546,7 @@
       "grammars": {
         "native-rust": {
           "version": "1.0.0",
-          "parserSha256": "cb37355ed1d0ff4ed1e68e8eea0e4da83e57496ea20e1fb163c461a23b5834eb"
+          "parserSha256": "87ba0a835a77c550afdc82196de75da3fc6bc6b0fde5b17db4d3bd55783c69db"
         }
       },
       "oracleGrammars": {
@@ -672,7 +672,7 @@
       "grammars": {
         "native-javascript": {
           "version": "1.0.0",
-          "parserSha256": "b409ea49ceb2643c739e33fb45eec8e937577ba8a2e6839ae9b8d9e40d8b5d97"
+          "parserSha256": "6028ef294138760a3e05571f0375cd23f65b36972b04f0f23951fcd200136d27"
         }
       },
       "oracleGrammars": {
@@ -784,7 +784,7 @@
       "grammars": {
         "native-typescript": {
           "version": "1.0.0",
-          "parserSha256": "c463413c71f831fc9a5eec34b08ad4e37f95f65b7677791578391755faf43c20"
+          "parserSha256": "ea41cbf602fcb9b91a74d6b4fbbf3669165ea60beb81c58d81dbe561b6df4492"
         }
       },
       "oracleGrammars": {
@@ -880,7 +880,7 @@
       "grammars": {
         "native-tsx": {
           "version": "1.0.0",
-          "parserSha256": "b8aa0b3b1ffff2c407fa408336126924067d0d4b94a27bb6b45154852575ab60"
+          "parserSha256": "638a86ff97c12e68194be07225fdcb4b894c2c2f2c62785871f448926af018e2"
         }
       },
       "oracleGrammars": {
@@ -982,7 +982,7 @@
       "grammars": {
         "native-lean": {
           "version": "1.0.0",
-          "parserSha256": "5b37f347030c63b6b6326a7a526dab19f99a09d73c5db1d49567cbdc5d822a81"
+          "parserSha256": "029bf78de72314f0a1ba436f55b27641108d6989654a186a96cba2bb2822b2f5"
         }
       },
       "oracleGrammars": {
