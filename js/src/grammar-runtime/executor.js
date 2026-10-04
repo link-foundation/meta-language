@@ -607,7 +607,14 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
     if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
       const pair = chainPair(a, b);
       const split = chainPair(a, b, true);
-      const parting = split && split[0].end !== split[1].end ? split : pair;
+      // A node the other builds whole on its leftmost chain (Lean's
+      // `foo 2` in `#check foo 2 3`, an application both parses reduce, one
+      // to an argument of the command, the other to the function of the
+      // application `foo 2 3`) is reduced alike in both: they part above
+      // it, where one reduces on what the other shifts (see
+      // `extraReduction`).
+      const whole = !split && (leftmostChain(b).some((node) => sameTree(node, a)) || leftmostChain(a).some((node) => sameTree(node, b)));
+      const parting = split && split[0].end !== split[1].end ? split : whole ? null : pair;
       if (parting && parting[0].end !== parting[1].end) {
         const [first, second] = partedPair(parting[0], parting[1]);
         const inner = childParting(first, second, orders);
@@ -713,9 +720,23 @@ function extraReduction(a, b, stack, orders, owner = null) {
   const [siblings, index, container] = stack[stack.length - 1];
   const next = siblings.slice(index).filter((child) => !isTrivia(child));
   const own = parent.children.filter((child) => !isTrivia(child));
-  if (own.length > next.length || own.some((child, at) => !sameTree(child, next[at]))) return 0;
-  const mine = reduction(parent);
   const other = container ? container.precedence ?? unranked(container.rule) : owner ?? unranked();
+  if (own.length > next.length || own.some((child, at) => !sameTree(child, next[at]))) {
+    // Where the other result goes on past `b` in a node of its own (Lean's
+    // `(f x).y` in a command, the projection `.y` with no term after the
+    // command's `(f x)`, where the projection of level 90 takes `(f x)` as
+    // its term), it reduced `b` where `a`'s result shifted on in `parent`:
+    // the shift's precedence against the reduction's decides, as in
+    // `shiftPreferred`.
+    const [mine, theirs] = [own[1], next[1]];
+    if (!mine || !theirs || theirs.type !== 'node' || sameTree(mine, theirs) || firstLeafStart(mine) !== firstLeafStart(theirs) || theirs.end !== parent.end) return 0;
+    const order = comparePrecedence(parent.precedence ?? unranked(parent.rule), other, orders);
+    if (order !== 0) return order;
+    if (other.associativity === 'right') return 1;
+    if (other.associativity === 'left') return -1;
+    return 0;
+  }
+  const mine = reduction(parent);
   const order = comparePrecedence(mine, other, orders);
   if (order !== 0) return order;
   if (!container || container.end > parent.end) {
@@ -920,13 +941,44 @@ function chainConflict(a, b, orders, grammar) {
   if (parted.length === 0) return 0;
   const end = Math.min(...parted);
   const [reducing, shifting, sign] = mine.has(end) ? [first, second, -1] : [second, first, 1];
-  const short = reducing.findLast((node) => node.end === end);
-  const long = shifting.findLast((node) => node.end > end);
+  let short = reducing.findLast((node) => node.end === end);
+  let long = shifting.findLast((node) => node.end > end);
   if (!long) return 0;
-  const own = short.children.filter((child) => !isTrivia(child));
-  const next = long.children.filter((child) => !isTrivia(child));
-  if (own.length >= next.length || own.some((child, at) => !sameTree(child, next[at]))) return 0;
+  for (;;) {
+    const own = short.children.filter((child) => !isTrivia(child));
+    const next = long.children.filter((child) => !isTrivia(child));
+    if (own.length > next.length || own.length === 0) return 0;
+    const at = own.length - 1;
+    if (own.slice(0, at).some((child, index) => !sameTree(child, next[index]))) return 0;
+    const [last, other] = [own[at], next[at]];
+    if (own.length < next.length && sameTree(last, other)) break;
+    if (last.type !== 'node' || other.type !== 'node' || last.end !== short.end || other.end <= last.end) {
+      // The long node's part at the short one's last may go on past it, as
+      // a node that begins with it (Lean's `-x ^ 3 * 7`, where the power of
+      // level 60 right takes `3 * 7` as its right operand and the other
+      // parse ends it with `3`).
+      if (other?.type === 'node' && other.end > last.end && beginsWith(other, last)) break;
+      return 0;
+    }
+    // Two last parts of one kind from one offset part where the short one
+    // ends, inside it (Lean's `g do return x`, where one parse ends the
+    // `do`, and the `return` in it, before `x`): the conflict is theirs.
+    if (last.kind !== other.kind || last.start !== other.start) {
+      if (beginsWith(other, last)) break;
+      return 0;
+    }
+    [short, long] = [last, other];
+  }
   return sign * shiftPreferred(long, short, orders, grammar);
+}
+
+// Whether `child` is a subtree along the leftmost chain of `node`.
+function beginsWith(node, child) {
+  for (let current = node; current?.type === 'node';) {
+    current = current.children.find((item) => !isTrivia(item));
+    if (current && sameTree(current, child)) return true;
+  }
+  return false;
 }
 
 // 1 when the shift that built `long` is preferred to the reduction that
