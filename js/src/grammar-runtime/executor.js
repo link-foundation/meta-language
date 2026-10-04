@@ -607,6 +607,8 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
     const b = peek(right);
     if (a === null || b === null) return 0;
     if (a === b || (a.type !== 'node' && b.type !== 'node' && a.start === b.start && a.end === b.end)) {
+      const parted = a === b ? 0 : silentParting(a, b, right) || -silentParting(b, a, left);
+      if (parted !== 0) return parted;
       skip(left);
       skip(right);
       continue;
@@ -696,6 +698,31 @@ function loneReduction(a, b, orders) {
   if (order !== 0) return order;
   if (reduced.associativity === 'right') return 1;
   if (reduced.associativity === 'left') return -1;
+  return 0;
+}
+
+// Which of two results an LR parser keeps when one of them ended a silent
+// rule under a precedence with the token `a` (Lean's `pp` in `set_option
+// pp.all true`, a `name` of level 0 right before the projection `.all`) where
+// the other shifted on over the same token `b` in the same silent rule, which
+// a later item of the other result (`stack` holds its place) ends with that
+// precedence (the `all` of the name `pp.all`): the two are that rule reduced
+// from one offset and ending apart, and on its equal levels the
+// associativity of the rule decides, `right` to shift and `left` to reduce.
+// 1 when `a`'s result is kept, -1 when `b`'s is, 0 when neither.
+function silentParting(a, b, stack) {
+  const reduced = a.reduced ?? a.precedence;
+  if (!reduced?.rule || b.precedence || b.reduced) return 0;
+  const [siblings, index] = stack[stack.length - 1];
+  for (const child of siblings.slice(index + 1)) {
+    if (isTrivia(child)) continue;
+    const closes = child.type === 'node' ? child.closes : child.reduced ?? child.precedence;
+    if (!closes) continue;
+    if (closes.rule !== reduced.rule || !samePrecedence(closes, reduced)) return 0;
+    if (reduced.associativity === 'right') return -1;
+    if (reduced.associativity === 'left') return 1;
+    return 0;
+  }
   return 0;
 }
 

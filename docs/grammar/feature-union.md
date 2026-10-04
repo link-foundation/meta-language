@@ -449,7 +449,14 @@ $))`), where the other shifted on in a node that begins with the token
 (Rust's `$x:expr` binding of level 1); the innermost such node is the item in
 progress and its precedence against the token's decides, as above (a token
 or a node that ends a silent rule reduced under a precedence keeps that
-precedence, see Rule bodies, and such a node is reduced as such a token). Or one result may reduce a node the other does not build:
+precedence, see Rule bodies, and such a node is reduced as such a token).
+Where both results have the same token but one ended a silent rule under a
+precedence with it and the other shifted on in that rule, which a later item
+of the other's node in progress ends with the same precedence (Lean's `pp` in
+`set_option pp.all true`, a `name` of level 0 right that one result ends
+before a projection `.all` of level 90 and the other ends after `all`), the two
+are that rule reduced from one offset and ending apart: its associativity
+decides, right to shift and left to reduce. Or one result may reduce a node the other does not build:
 when a subtree at the same offset of the other result is on that node's
 leftmost chain and the children of the innermost such node are, subtree for
 subtree, the next children of the other result's node in progress, the two

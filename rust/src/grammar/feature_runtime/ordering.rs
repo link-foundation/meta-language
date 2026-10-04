@@ -11,7 +11,7 @@ use super::forking::{
 };
 use super::parting::{
     chain_conflict, child_parting, has_node, holds_first, one_token, parting_end, reduced_first,
-    same_tokens, shifted_past,
+    same_tokens, shifted_past, silent_parting,
 };
 use super::program::{Associativity, PrecedenceTag, TokenRank, compare_precedence};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
@@ -20,7 +20,7 @@ use crate::grammar::PrecedenceEntry;
 /// One step of a walk over the leaves of a result: a part of a child list,
 /// not yet opened, one tree, or the end of the children of a node the walk
 /// entered (the node in progress for the items above it).
-enum Walk {
+pub(super) enum Walk {
     Part(Children),
     Item(Rc<Tree>),
     End(Rc<Tree>),
@@ -347,6 +347,13 @@ pub(super) fn shift_order(
                 if Rc::ptr_eq(&a, &b)
                     || (!a_node && !b_node && a.start == b.start && a.end == b.end)
                 {
+                    if !Rc::ptr_eq(&a, &b) {
+                        let parted = silent_parting(&a, &b, &right)
+                            .then_with(|| silent_parting(&b, &a, &left).reverse());
+                        if parted != Ordering::Equal {
+                            return parted;
+                        }
+                    }
                     left.pop();
                     right.pop();
                     continue;

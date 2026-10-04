@@ -9,7 +9,7 @@ use std::rc::Rc;
 use super::executor::{Executor, Run};
 use super::forking::GrammarFacts;
 use super::ordering::{
-    by_associativity, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful,
+    Walk, by_associativity, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful,
     same_tree, shift_preferred,
 };
 use super::program::{Expr, Name, PrecedenceTag, compare_precedence};
@@ -486,4 +486,49 @@ pub(super) fn shifted_past(
         .clone()
         .unwrap_or_else(|| PrecedenceTag::unranked(parent.rule.clone()));
     compare_precedence(&shifted, other, orders).then_with(|| by_associativity(other.associativity))
+}
+
+/// Which of two results an LR parser keeps when one of them ended a silent
+/// rule under a precedence with the token `a` (Lean's `pp` in `set_option
+/// pp.all true`, a `name` of level 0 right before the projection `.all`)
+/// where the other shifted on over the same token `b` in the same silent
+/// rule, which a later item of the other result (`walk` holds its place) ends
+/// with that precedence (the `all` of the name `pp.all`): the two are that
+/// rule reduced from one offset and ending apart, and on its equal levels the
+/// associativity of the rule decides, right to shift and left to reduce.
+/// Greater when `a`'s result is kept, Less when `b`'s is, Equal when neither.
+/// It mirrors silentParting in js/src/grammar-runtime/executor.js.
+pub(super) fn silent_parting(a: &Tree, b: &Tree, walk: &[Walk]) -> Ordering {
+    let reduced = a.reduced.as_ref().or(a.precedence.as_ref());
+    let Some(reduced) = reduced.filter(|tag| tag.rule.is_some()) else {
+        return Ordering::Equal;
+    };
+    if b.precedence.is_some() || b.reduced.is_some() {
+        return Ordering::Equal;
+    }
+    let decide = |item: &Tree| {
+        let closes = if item.ty == TreeType::Node {
+            item.closes.as_ref()
+        } else {
+            item.reduced.as_ref().or(item.precedence.as_ref())
+        }?;
+        if closes.rule != reduced.rule || !PrecedenceTag::same(Some(closes), Some(reduced)) {
+            return Some(Ordering::Equal);
+        }
+        Some(by_associativity(reduced.associativity).reverse())
+    };
+    for step in walk.iter().rev().skip(1) {
+        let found = match step {
+            Walk::Item(item) if !item.trivia => decide(item),
+            Walk::Item(_) => None,
+            Walk::Part(part) => items(part)
+                .filter(|item| !item.trivia)
+                .find_map(|item| decide(&item)),
+            Walk::End(_) => return Ordering::Equal,
+        };
+        if let Some(order) = found {
+            return order;
+        }
+    }
+    Ordering::Equal
 }
