@@ -1578,7 +1578,7 @@
     "planned:repository-directive:i195-dependency-inventory": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: inventory of every dependency, toolchain, action and image at its current stable release",
-      "sha256": "b6d1c37a0f67a601a217ef7695b50f5faf8e512fb1c8e8dbe3e6c511af5023e8"
+      "sha256": "7a021a4e4e58713d9cf6d233cbff473146658ef7972078e0f77dee68875ddd57"
     },
     "planned:repository-directive:i195-dependency-production-parsers-removed": {
       "path": "docs/vision.md",
@@ -1588,7 +1588,7 @@
     "planned:repository-directive:i195-dependency-current-stable-delivery": {
       "path": "parity/dependency-inventory.json",
       "selector": "docs/vision.md#dependencies: current stable retained dependencies and build tools in delivered packages",
-      "sha256": "b6d1c37a0f67a601a217ef7695b50f5faf8e512fb1c8e8dbe3e6c511af5023e8"
+      "sha256": "7a021a4e4e58713d9cf6d233cbff473146658ef7972078e0f77dee68875ddd57"
     },
     "planned:repository-directive:i195-lino-upgrade": {
       "path": "parity/fixtures/lino-compatibility-matrix.json",
@@ -1963,17 +1963,17 @@
     "planned:repository-directive:i195-self-translation-tool": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: JavaScript/TypeScript ↔ Rust self-translation library API and CLI",
-      "sha256": "a7e9ac33bc82ed0f628b4ac79b2e52355486775a345430df680c9f5959624f0a"
+      "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
     },
     "planned:repository-directive:i195-self-translation-round-trip": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: lossless self-translation round trips",
-      "sha256": "a7e9ac33bc82ed0f628b4ac79b2e52355486775a345430df680c9f5959624f0a"
+      "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
     },
     "planned:repository-directive:i195-self-translation-shared-corpus": {
       "path": "parity/self-translation/cases.lino",
       "selector": "docs/vision.md#javascript-first-and-self-translation: shared Links Notation corpus checked in both runtimes",
-      "sha256": "a7e9ac33bc82ed0f628b4ac79b2e52355486775a345430df680c9f5959624f0a"
+      "sha256": "455ad1719cfa4727794a52ea0fb8941428265dc288d8c3fcd33b23d1b5fce37c"
     },
     "planned:repository-directive:i195-decorators-every-level": {
       "path": "parity/decorators/cases.json",
@@ -25388,7 +25388,7 @@
         "aliases": [],
         "extensions": []
       },
-      "expectedBehavior": "As in relative-meta-logic PR #184, every translated module has shared corpus cases whose expected outputs are written in Links Notation and checked in both runtimes, and the translated Rust of each module is measured against the hand-written source with the difference published per module.",
+      "expectedBehavior": "As in relative-meta-logic PR #184, every translated module has shared corpus cases whose expected outputs are written in Links Notation and checked in both runtimes, and the translated Rust of each module is measured against the hand-written source with the difference published per module, with and without the shared emitter decorators; a corpus case translated with its decorators matches its hand-written Rust function for function and still restores its source.",
       "requiredRuntimes": [
         "javascript",
         "rust"
@@ -25397,7 +25397,8 @@
         "javascript": [
           "js/scripts/generate-self-translation-cases.mjs",
           "js/scripts/generate-self-translation-report.mjs",
-          "js/tests/self-translation.test.js"
+          "js/tests/self-translation.test.js",
+          "parity/self-translation/decorators.lino"
         ],
         "rust": [
           "rust/tests/unit/self_translation.rs"
@@ -25415,7 +25416,8 @@
           "assertions": [
             "expectedOutputsInLinksNotation",
             "checkedInBothRuntimes",
-            "differencePerModulePublished"
+            "differencePerModulePublished",
+            "decoratorsMatchHandWritten"
           ],
           "evidenceArtifact": "issue-195-results/i195-self-translation-shared-corpus-javascript-behavior.json"
         },
@@ -25430,7 +25432,8 @@
           "assertions": [
             "expectedOutputsInLinksNotation",
             "checkedInBothRuntimes",
-            "differencePerModulePublished"
+            "differencePerModulePublished",
+            "decoratorsMatchHandWritten"
           ],
           "evidenceArtifact": "issue-195-results/i195-self-translation-shared-corpus-rust-behavior.json"
         }

@@ -1317,9 +1317,9 @@ export const VISION_REQUIREMENTS = Object.freeze([
     fixture: 'parity/self-translation/cases.lino',
     construct: 'shared Links Notation corpus checked in both runtimes',
     expectedBehavior:
-      'As in relative-meta-logic PR #184, every translated module has shared corpus cases whose expected outputs are written in Links Notation and checked in both runtimes, and the translated Rust of each module is measured against the hand-written source with the difference published per module.',
-    assertions: ['expectedOutputsInLinksNotation', 'checkedInBothRuntimes', 'differencePerModulePublished'],
-    javascript: ['js/scripts/generate-self-translation-cases.mjs', 'js/scripts/generate-self-translation-report.mjs', 'js/tests/self-translation.test.js'],
+      'As in relative-meta-logic PR #184, every translated module has shared corpus cases whose expected outputs are written in Links Notation and checked in both runtimes, and the translated Rust of each module is measured against the hand-written source with the difference published per module, with and without the shared emitter decorators; a corpus case translated with its decorators matches its hand-written Rust function for function and still restores its source.',
+    assertions: ['expectedOutputsInLinksNotation', 'checkedInBothRuntimes', 'differencePerModulePublished', 'decoratorsMatchHandWritten'],
+    javascript: ['js/scripts/generate-self-translation-cases.mjs', 'js/scripts/generate-self-translation-report.mjs', 'js/tests/self-translation.test.js', 'parity/self-translation/decorators.lino'],
     rust: ['rust/tests/unit/self_translation.rs'],
   },
   {

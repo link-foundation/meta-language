@@ -64,7 +64,11 @@ be brought to match hand-written source without editing the translator: a
 decorator rewrites the template or the emitted line that differs, and
 removing it restores the generic output. The `bare-await` and
 `spaced-definition` decorators of `parity/decorators/levels.lino` are
-minimal examples.
+minimal examples. Self-translation applies them too:
+`parity/self-translation/decorators.lino` brings the Rust translation of the
+corpus's `arithmetic.mjs` to `parity/self-translation/hand-written/arithmetic.rs`
+function by function, and the per-module report measures every module with
+and without that set ([self-translation](self-translation.md)).
 
 ## Tests
 

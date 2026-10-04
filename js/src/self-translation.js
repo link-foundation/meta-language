@@ -8,6 +8,8 @@
 // source byte for byte.
 import { createHash } from 'node:crypto';
 
+import { decoratorSet } from './decorators.js';
+import { decorateEmitted } from './grammar-emitters/common.js';
 import { LinkNetwork } from './network.js';
 import { parseProgrammingLanguage } from './programming-language-parser.js';
 import { checkProgram } from './translation/check.js';
@@ -69,10 +71,17 @@ const sha256 = (text) => createHash('sha256').update(Buffer.from(text, 'utf8')).
  * `restored` (provenance gave back its source), `comment`, `provenance` (a
  * self-translation header or prelude) or `carried`, with the reason it was
  * carried.
+ *
+ * `options.decorators` (a DecoratorSet or an array of decorators) decorates
+ * each translated item at the `emitter` level, one `{ format, number, line }`
+ * record per line of its definitions with the target language as `format`,
+ * before its provenance is recorded, so a translation can be brought to match
+ * hand-written code and still restores its source.
  */
-export function selfTranslate(source, sourceLanguage, targetLanguage) {
+export function selfTranslate(source, sourceLanguage, targetLanguage, { decorators } = {}) {
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
+  const set = decoratorSet(decorators);
   const text = String(source);
   const reconstructed = LinkNetwork.parse(text, from).reconstructText();
   if (reconstructed !== text) {
@@ -88,7 +97,7 @@ export function selfTranslate(source, sourceLanguage, targetLanguage) {
   const recorded = [];
   let gap = '';
   for (const group of groupItems(items, bytes)) {
-    const out = translateGroup(group, from, to);
+    const out = translateGroup(group, from, to, set);
     for (const prelude of out.preludes ?? []) if (!preludes.includes(prelude)) preludes.push(prelude);
     for (const { term, start, end } of group.items) recorded.push({ term, start, end, status: out.status, reason: out.reason ?? null });
     if (out.code !== null) {
@@ -209,7 +218,7 @@ function groupItems(items, bytes) {
 
 const isMarker = (item) => item.comment && [HEADER, CARRIED, TRANSLATED, PRELUDE_BEGIN].some((marker) => item.text.startsWith(marker));
 
-function translateGroup(group, from, to) {
+function translateGroup(group, from, to, decorators) {
   if (group.kind === 'provenance') return { code: null, status: 'provenance' };
   if (group.kind === 'carried') {
     if (family(group.language) === family(to)) return { code: group.lines.join('\n'), status: 'restored' };
@@ -236,7 +245,9 @@ function translateGroup(group, from, to) {
   }
   if (emitted.definitions.length === 0) return carry(text, term, from, 'no definition');
   const exported = family(to) === 'JavaScript' && (family(from) === 'Rust' ? /^pub(\([^)]*\))?\s/mu : /^export\s/mu).test(text);
-  const code = emitted.definitions.map((definition) => (exported ? `export ${definition}` : definition)).join('\n\n');
+  const generic = emitted.definitions.map((definition) => (exported ? `export ${definition}` : definition)).join('\n\n');
+  const code = decorateEmitted(to, { source: generic }, decorators).source;
+  if (code.trim() === '') return carry(text, term, from, 'dropped by a decorator');
   const count = emitted.definitions.length;
   const marker = `${TRANSLATED}${from} ${term} items=${count} sha256=${sha256(code)}`;
   return {

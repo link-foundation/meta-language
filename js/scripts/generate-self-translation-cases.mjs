@@ -4,7 +4,10 @@
 // the listing of its items (`start..end term status (reason)`, as the
 // `translate --items` command prints it). Both runtimes check their
 // self-translation against these files, translate each expected file back to
-// its source byte for byte, and run the case's calls on their own side.
+// its source byte for byte, and run the case's calls on their own side. A case
+// with `(decorators FILE)` translates with that decorator set, and a
+// `(hand-written CASE (rust FILE) (functions NAME...))` statement names the
+// hand-written Rust whose functions its translation matches.
 //
 //   node js/scripts/generate-self-translation-cases.mjs          # write
 //   node js/scripts/generate-self-translation-cases.mjs --check  # verify
@@ -14,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 import { Parser } from 'links-notation';
 
+import { DecoratorSet } from '../src/decorators.js';
 import { selfTranslate } from '../src/self-translation.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -22,7 +26,7 @@ const corpus = join(root, 'parity/self-translation');
 /** The links of `text` as nested arrays of reference names. */
 const tree = (link) => (link.values.length ? link.values.map(tree) : link.id);
 
-/** The cases and calls of cases.lino. */
+/** The cases, calls and hand-written counterparts of cases.lino. */
 export async function readSelfTranslationCorpus() {
   const statements = new Parser().parse(await readFile(join(corpus, 'cases.lino'), 'utf8')).map(tree);
   const field = (statement, name) => statement.find((entry) => Array.isArray(entry) && entry[0] === name)?.slice(1);
@@ -31,6 +35,7 @@ export async function readSelfTranslationCorpus() {
     source: field(statement, 'source')[0],
     from: field(statement, 'from')[0],
     to: field(statement, 'to')[0],
+    decorators: field(statement, 'decorators')?.[0] ?? null,
     expected: field(statement, 'expected')[0],
   }));
   const calls = statements.filter(([kind]) => kind === 'call').map((statement) => ({
@@ -40,7 +45,17 @@ export async function readSelfTranslationCorpus() {
     arguments: field(statement, 'arguments').map(([type, value]) => ({ type, value })),
     result: field(statement, 'result')[0],
   }));
-  return { cases, calls };
+  const handWritten = statements.filter(([kind]) => kind === 'hand-written').map((statement) => ({
+    case: statement[1],
+    rust: field(statement, 'rust')[0],
+    functions: field(statement, 'functions'),
+  }));
+  return { cases, calls, handWritten };
+}
+
+/** The decorator set a case translates with, read from the corpus. */
+export async function caseDecorators(entry) {
+  return entry.decorators ? DecoratorSet.fromLino(await readFile(join(corpus, entry.decorators), 'utf8')) : DecoratorSet.empty();
 }
 
 /** The items of a self-translation as Links Notation. */
@@ -53,7 +68,7 @@ async function main() {
   const { cases } = await readSelfTranslationCorpus();
   const stale = [];
   for (const entry of cases) {
-    const translation = selfTranslate(await readFile(join(corpus, entry.source), 'utf8'), entry.from, entry.to);
+    const translation = selfTranslate(await readFile(join(corpus, entry.source), 'utf8'), entry.from, entry.to, { decorators: await caseDecorators(entry) });
     for (const [file, text] of [[entry.expected, translation.code], [`${entry.expected}.items.lino`, itemLinks(translation)]]) {
       const path = join(corpus, file);
       if (check) {

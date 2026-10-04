@@ -96,7 +96,25 @@ them after an intended change.
 (`rust/src/<module>.rs` or `rust/src/<module>/mod.rs`): the items by status,
 the Rust functions written, how many the hand-written Rust defines under the
 same name and how many are identical up to whitespace, and how many translated
-code lines the hand-written Rust holds too. CI publishes the report in the job
-summary of the JavaScript package job and as the `self-translation-report`
-artifact. Decorators on the emitters
-([decorators](decorators.md)) close the remaining difference.
+code lines the hand-written Rust holds too. Each module is measured twice: by
+the generic translation and by the translation with the shared emitter
+[decorators](decorators.md) of `parity/self-translation/decorators.lino`
+(`--decorators` names another set), so the report shows how much of the
+difference the decorators close. CI publishes the report in the job summary of
+the JavaScript package job and as the `self-translation-report` artifact.
+
+Decorators edit emitted lines; they cannot add what the translator carries
+untranslated (imports, classes, exports the emitters do not cover), so for
+most modules the report shows the difference that is left honestly rather
+than hiding it.
+
+## Decorated translations
+
+`selfTranslate(source, from, to, { decorators })` (JavaScript) and
+`self_translate_decorated(source, from, to, &decorators)` (Rust) apply emitter
+decorators to the code they write before the provenance marker is hashed, so
+the decorated translation still translates back to its source. The corpus case
+`arithmetic-decorated-to-rust` translates `sources/arithmetic.mjs` with
+`decorators.lino` and is checked, function by function, against
+`hand-written/arithmetic.rs`; removing the decorators gives the generic
+translation again.

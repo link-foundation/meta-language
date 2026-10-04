@@ -7,21 +7,27 @@
 // measure a few modules).
 //
 //   node js/scripts/generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js]
+//     [--decorators parity/self-translation/decorators.lino]
 //
 // For each module the report lists its top-level items by status, the Rust
 // functions the translation writes, how many of them the hand-written Rust
 // defines under the same name and how many of those are identical up to
 // whitespace, and the code lines of the translation (no comments, preludes or
-// blank lines) the hand-written Rust holds too, counted as a multiset.
+// blank lines) the hand-written Rust holds too, counted as a multiset. Each
+// module is measured twice, by the generic translation and by the translation
+// with the shared emitter decorators (docs/decorators.md), so the report shows
+// how much of the difference the decorators close.
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { DecoratorSet } from '../src/decorators.js';
 import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
 import { selfTranslate } from '../src/self-translation.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
+const DEFAULT_DECORATORS = 'parity/self-translation/decorators.lino';
 
 function option(name) {
   const index = process.argv.indexOf(name);
@@ -68,18 +74,25 @@ function translatedCode(code) {
   return end === -1 ? code : code.slice(end);
 }
 
-function measure(module) {
+function measure(module, decorators) {
   const rust = counterpart(module);
   const source = readFileSync(join(root, module), 'utf8');
   const started = performance.now();
   const translation = selfTranslate(source, 'JavaScript', 'Rust');
   const items = Object.fromEntries(STATUSES.map((status) => [status, translation.items.filter((item) => item.status === status).length]));
-  const row = { module, rust, items, milliseconds: Math.round(performance.now() - started) };
-  const code = translatedCode(translation.code);
+  const milliseconds = Math.round(performance.now() - started);
+  const handWritten = rust ? readFileSync(join(root, rust), 'utf8') : null;
+  const generic = compare(translation.code, handWritten);
+  const decorated = decorators.size > 0 ? compare(selfTranslate(source, 'JavaScript', 'Rust', { decorators }).code, handWritten) : generic;
+  return { module, rust, items, milliseconds, ...generic, decorated };
+}
+
+/** How the Rust a translation writes compares with the hand-written Rust, or with none. */
+function compare(translated, handWritten) {
+  const code = translatedCode(translated);
   const written = functions(code);
-  row.functions = written.size;
-  if (!rust) return { ...row, matched: 0, identical: 0, codeLines: codeLines(code).length, sharedLines: 0, handWrittenLines: 0 };
-  const handWritten = readFileSync(join(root, rust), 'utf8');
+  const row = { functions: written.size };
+  if (handWritten === null) return { ...row, matched: 0, identical: 0, codeLines: codeLines(code).length, sharedLines: 0, handWrittenLines: 0 };
   const existing = functions(handWritten);
   let matched = 0;
   let identical = 0;
@@ -103,30 +116,33 @@ function measure(module) {
 function markdown(rows) {
   const total = (field) => rows.reduce((sum, row) => sum + row[field], 0);
   const items = (status) => rows.reduce((sum, row) => sum + row.items[status], 0);
+  const decorated = (field) => rows.reduce((sum, row) => sum + row.decorated[field], 0);
   const lines = [
     '# Self-translation of JavaScript modules against hand-written Rust',
     '',
     `${rows.length} modules; ${items('translated')} items translated, ${items('carried')} carried, ${items('comment')} comment groups copied.`,
     `${total('functions')} Rust functions written, ${total('matched')} named as in the hand-written Rust, ${total('identical')} identical to it up to whitespace;`,
     `${total('sharedLines')} of ${total('codeLines')} translated code lines appear in the hand-written Rust (${total('handWrittenLines')} code lines).`,
+    `With the shared decorators: ${decorated('identical')} functions identical, ${decorated('sharedLines')} of ${decorated('codeLines')} translated code lines shared.`,
     '',
-    '| JavaScript module | Rust module | translated | carried | functions | same name | identical | shared / translated lines | hand-written lines |',
-    '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
-    ...rows.map((row) => `| ${row.module} | ${row.rust ?? '—'} | ${row.items.translated} | ${row.items.carried} | ${row.functions} | ${row.matched} | ${row.identical} | ${row.sharedLines} / ${row.codeLines} | ${row.handWrittenLines} |`),
+    '| JavaScript module | Rust module | translated | carried | functions | same name | identical | identical, decorated | shared / translated lines | shared, decorated | hand-written lines |',
+    '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    ...rows.map((row) => `| ${row.module} | ${row.rust ?? '—'} | ${row.items.translated} | ${row.items.carried} | ${row.functions} | ${row.matched} | ${row.identical} | ${row.decorated.identical} | ${row.sharedLines} / ${row.codeLines} | ${row.decorated.sharedLines} / ${row.decorated.codeLines} | ${row.handWrittenLines} |`),
   ];
   return `${lines.join('\n')}\n`;
 }
 
 const outDir = option('--out-dir');
 if (!outDir) {
-  console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js]');
+  console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino]');
   process.exit(2);
 }
+const decorators = DecoratorSet.fromLino(readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8'));
 const rows = [];
 const failures = [];
 for (const module of modules()) {
   try {
-    rows.push(measure(module));
+    rows.push(measure(module, decorators));
   } catch (error) {
     failures.push({ module, error: String(error?.message ?? error) });
   }
@@ -134,6 +150,6 @@ for (const module of modules()) {
 mkdirSync(outDir, { recursive: true });
 const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
 writeFileSync(join(outDir, 'self-translation-report.md'), report);
-writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ modules: rows, failures }, null, 2)}\n`);
+writeFileSync(join(outDir, 'self-translation-report.json'), `${JSON.stringify({ decorators: decorators.ids(), modules: rows, failures }, null, 2)}\n`);
 // Refused modules are listed in the report; the tests hold self-translation to its contract.
 console.log(report);

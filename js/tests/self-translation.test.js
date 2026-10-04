@@ -14,13 +14,14 @@ import {
   selfTranslationLanguage,
   SelfTranslationError,
 } from '../src/index.js';
-import { readSelfTranslationCorpus } from '../scripts/generate-self-translation-cases.mjs';
+import { caseDecorators, readSelfTranslationCorpus } from '../scripts/generate-self-translation-cases.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const FIXTURE = 'parity/self-translation/cases.lino';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (name) => readFileSync(path.join(root, 'parity/self-translation', name), 'utf8');
-const { cases, calls } = await readSelfTranslationCorpus();
+const { cases, calls, handWritten } = await readSelfTranslationCorpus();
+const decoratorsOf = new Map(await Promise.all(cases.map(async (entry) => [entry.id, await caseDecorators(entry)])));
 const isJavaScript = (language) => language !== 'Rust';
 
 function observe(requirementId, assertions, testName) {
@@ -44,7 +45,7 @@ function expectedItems(file) {
 
 test('every shared case translates to its expected output and items', () => {
   for (const entry of cases) {
-    const translation = selfTranslate(read(entry.source), entry.from, entry.to);
+    const translation = selfTranslate(read(entry.source), entry.from, entry.to, { decorators: decoratorsOf.get(entry.id) });
     assert.equal(translation.sourceLanguage, entry.from);
     assert.equal(translation.targetLanguage, entry.to);
     assert.equal(translation.code, read(entry.expected), entry.id);
@@ -90,6 +91,35 @@ test('meta-language\'s own modules round-trip byte for byte', () => {
   observe('I195-SELF-TRANSLATION-ROUND-TRIP', ['sameLanguageByteIdentical'], 'meta-language\'s own modules round-trip byte for byte');
 });
 
+// The top-level `fn NAME` items of Rust `text`, by name, up to whitespace.
+function rustFunctions(text) {
+  const found = new Map();
+  for (const match of text.matchAll(/^(?:pub )?fn ([a-z_0-9]+)[^\n]*\{\n(?:[^\n]*\n)*?\}$/gmu)) found.set(match[1], match[0].replace(/\s+/gu, ' '));
+  return found;
+}
+
+test('decorators bring a translation to the hand-written Rust and still restore its source', () => {
+  assert.ok(handWritten.length > 0);
+  for (const { case: id, rust, functions } of handWritten) {
+    const entry = cases.find((candidate) => candidate.id === id);
+    const decorators = decoratorsOf.get(id);
+    assert.ok(decorators.size > 0, id);
+    const expected = rustFunctions(read(rust));
+    const decorated = rustFunctions(selfTranslate(read(entry.source), entry.from, entry.to, { decorators }).code);
+    const generic = rustFunctions(selfTranslate(read(entry.source), entry.from, entry.to).code);
+    for (const name of functions) {
+      assert.equal(decorated.get(name), expected.get(name), `${id} ${name} with its decorators`);
+      assert.notEqual(generic.get(name), expected.get(name), `${id} ${name} differs without them`);
+    }
+    // Removing every decorator gives exactly the generic translation.
+    const removed = decorators.ids().reduce((set, decoratorId) => set.remove(decoratorId), decorators);
+    assert.equal(selfTranslate(read(entry.source), entry.from, entry.to, { decorators: removed }).code, selfTranslate(read(entry.source), entry.from, entry.to).code);
+    // The decorated code is the provenance, so the translation back restores the source.
+    assert.equal(selfTranslate(read(entry.expected), entry.to, entry.from).code, read(entry.source), id);
+  }
+  observe('I195-SELF-TRANSLATION-SHARED-CORPUS', ['decoratorsMatchHandWritten'], 'decorators bring a translation to the hand-written Rust and still restore its source');
+});
+
 // The JavaScript value a corpus argument names.
 function value({ type, value: text }) {
   if (type === 'f64') return Number(text);
@@ -131,8 +161,9 @@ test('the report measures each translated module against its hand-written Rust',
   const outDir = mkdtempSync(path.join(tmpdir(), 'self-translation-report-'));
   try {
     execFileSync(process.execPath, [path.join(root, 'js/scripts/generate-self-translation-report.mjs'), '--out-dir', outDir, '--modules', 'language-support.js,self-translation.js'], { encoding: 'utf8' });
-    const { modules, failures } = JSON.parse(readFileSync(path.join(outDir, 'self-translation-report.json'), 'utf8'));
+    const { decorators, modules, failures } = JSON.parse(readFileSync(path.join(outDir, 'self-translation-report.json'), 'utf8'));
     assert.deepEqual(failures, []);
+    assert.deepEqual(decorators, ['borrowed-name', 'bare-sum', 'bare-comparison']);
     assert.deepEqual(modules.map(({ module, rust }) => [module, rust]), [
       ['js/src/language-support.js', 'rust/src/language_support.rs'],
       ['js/src/self-translation.js', 'rust/src/self_translation.rs'],
@@ -140,9 +171,12 @@ test('the report measures each translated module against its hand-written Rust',
     for (const row of modules) {
       assert.ok(row.items.translated > 0 && row.handWrittenLines > 0, row.module);
       assert.ok(row.sharedLines <= row.codeLines && row.identical <= row.matched && row.matched <= row.functions, row.module);
+      // The decorated translation is measured beside the generic one.
+      assert.ok(row.decorated.sharedLines <= row.decorated.codeLines && row.decorated.identical <= row.decorated.matched, row.module);
     }
     const report = readFileSync(path.join(outDir, 'self-translation-report.md'), 'utf8');
     for (const { module } of modules) assert.match(report, new RegExp(`\\| ${module} \\| `, 'u'));
+    assert.match(report, /\| identical, decorated \|/u);
   } finally {
     rmSync(outDir, { recursive: true, force: true });
   }
