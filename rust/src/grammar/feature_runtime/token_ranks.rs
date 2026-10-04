@@ -38,7 +38,49 @@ pub(super) fn token_ranks(rules: &[Rule]) -> TokenRanks {
             ranks.ranks.kinds.insert(name, rank);
         }
     }
+    for rule in rules {
+        immediate_literals(&rule.expression, &mut ranks.ranks.immediate);
+    }
     ranks.ranks
+}
+
+/// Adds the texts of the literals `expr` takes as an immediate token
+/// (`(immediateToken (literal [))`) to `texts`.
+fn immediate_literals(expr: &Expr, texts: &mut HashSet<Vec<u8>>) {
+    match expr {
+        Expr::ImmediateToken(item) => {
+            if let Expr::Terminal {
+                matcher: Matcher::Literal(literal),
+                ..
+            } = &**item
+            {
+                texts.insert(literal.clone());
+            }
+            immediate_literals(item, texts);
+        }
+        Expr::Seq(items) | Expr::Choice { items, .. } | Expr::Longest(items) => {
+            for item in items {
+                immediate_literals(item, texts);
+            }
+        }
+        Expr::Recover { item, synchronize } => {
+            immediate_literals(item, texts);
+            immediate_literals(synchronize, texts);
+        }
+        Expr::Repeat { item, .. }
+        | Expr::And(item)
+        | Expr::Not(item)
+        | Expr::Capture { item, .. }
+        | Expr::Alias { item, .. }
+        | Expr::Precedence { item, .. }
+        | Expr::DynamicPrecedence { item, .. }
+        | Expr::LexicalPrecedence { item, .. }
+        | Expr::Token(item)
+        | Expr::Predicate { item, .. }
+        | Expr::Missing { item, .. }
+        | Expr::Embed { item, .. } => immediate_literals(item, texts),
+        Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
+    }
 }
 
 /// The ranks assigned so far and the next order.

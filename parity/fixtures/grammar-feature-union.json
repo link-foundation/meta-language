@@ -270,7 +270,7 @@
     {
       "id": "ambiguity",
       "title": "ambiguity and conflicts",
-      "listing": "start s\nmatching longest\nextra class(char(\"\\n\"))\nextra ref(note)\nconflict declared\nconflict item\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)), seq(literal(\"k:\"), ref(key)), seq(literal(\"n:\"), ref(lines)), seq(literal(\"i:\"), ref(name), immediateToken(literal(\"!\"))), seq(literal(\"w:\"), ref(statement)), seq(literal(\"c:\"), repeat1(ref(item))), seq(literal(\"p:\"), choice(ref(condition), repeat1(ref(call)))), seq(literal(\"g:\"), repeat1(choice(ref(group), ref(n)))))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\nrule key = normal choice(literal(\"if\"), dynamicPrecedence(1, ref(name)))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule statement = normal choice(seq(token(seq(literal(\"do\"), not(range(\"a\", \"z\")))), ref(name), literal(\";\")), seq(ref(name), optional(seq(literal(\"=\"), ref(name))), literal(\";\")))\nrule item = silent choice(ref(use), ref(declaration))\nrule use = normal seq(ref(name), literal(\";\"))\nrule declaration = normal seq(ref(name), literal(\";\"))\nrule condition = normal seq(ref(hashif), optional(ref(name)))\nrule hashif = token seq(literal(\"#\"), literal(\"if\"))\nrule call = normal seq(ref(directive), literal(\"\\n\"))\nrule directive = token seq(literal(\"#\"), repeat1(range(\"a\", \"z\")))\nrule group = normal precedence(0, right, seq(literal(\"+\"), repeat0(ref(n))))\nrule lines = normal repeat1(ref(line))\nrule line = normal seq(ref(n), optional(ref(n)), optional(literal(\"\\n\")))\nrule note = token seq(literal(\"{\"), repeat0(notClass(char(\"}\"))), literal(\"}\"))\n",
+      "listing": "start s\nmatching longest\nextra class(char(\"\\n\"))\nextra ref(note)\nconflict declared\nconflict item\nrule s = normal choice(seq(literal(\"d:\"), ref(declared)), seq(literal(\"u:\"), ref(undeclared)), seq(literal(\"r:\"), ref(resolved)), seq(literal(\"l:\"), ref(signed)), seq(literal(\"k:\"), ref(key)), seq(literal(\"n:\"), ref(lines)), seq(literal(\"i:\"), ref(name), immediateToken(literal(\"!\"))), seq(literal(\"w:\"), ref(statement)), seq(literal(\"c:\"), repeat1(ref(item))), seq(literal(\"p:\"), choice(ref(condition), repeat1(ref(call)))), seq(literal(\"g:\"), repeat1(choice(ref(group), ref(n)))), seq(literal(\"j:\"), ref(access)))\nrule declared = normal choice(seq(ref(declared), literal(\"-\"), ref(declared)), ref(n))\nrule undeclared = normal choice(seq(ref(undeclared), literal(\"-\"), ref(undeclared)), ref(n))\nrule resolved = normal choice(dynamicPrecedence(1, seq(ref(resolved), literal(\"-\"), ref(n))), seq(ref(resolved), literal(\"-\"), ref(resolved)), ref(n))\nrule n = token range(\"0\", \"9\")\nrule signed = normal choice(seq(ref(minus), ref(n)), ref(number))\nrule minus = token literal(\"-\")\nrule number = token seq(literal(\"-\"), range(\"0\", \"9\"))\nrule key = normal choice(literal(\"if\"), dynamicPrecedence(1, ref(name)))\nrule name = token repeat1(range(\"a\", \"z\"))\nrule statement = normal choice(seq(token(seq(literal(\"do\"), not(range(\"a\", \"z\")))), ref(name), literal(\";\")), seq(ref(name), optional(seq(literal(\"=\"), ref(name))), literal(\";\")))\nrule item = silent choice(ref(use), ref(declaration))\nrule use = normal seq(ref(name), literal(\";\"))\nrule declaration = normal seq(ref(name), literal(\";\"))\nrule condition = normal seq(ref(hashif), optional(ref(name)))\nrule hashif = token seq(literal(\"#\"), literal(\"if\"))\nrule call = normal seq(ref(directive), literal(\"\\n\"))\nrule directive = token seq(literal(\"#\"), repeat1(range(\"a\", \"z\")))\nrule group = normal precedence(0, right, seq(literal(\"+\"), repeat0(ref(n))))\nrule lines = normal repeat1(ref(line))\nrule line = normal seq(ref(n), optional(ref(n)), optional(literal(\"\\n\")))\nrule note = token seq(literal(\"{\"), repeat0(notClass(char(\"}\"))), literal(\"}\"))\nrule access = normal choice(seq(ref(name), immediateToken(literal(\"[\")), ref(n), literal(\"]\")), seq(ref(name), repeat1(ref(range))))\nrule range = normal seq(literal(\"[\"), ref(n), literal(\":\"), ref(n), literal(\"]\"))\n",
       "options": {
         "ambiguity": "reject"
       },
@@ -342,6 +342,14 @@
         {
           "input": "g:+12+3",
           "tree": "(s \"g:\" (group \"+\" (n \"1\") (n \"2\")) (group \"+\" (n \"3\")))"
+        },
+        {
+          "input": "j:a[1]",
+          "tree": "(s \"j:\" (access (name \"a\") \"[\" (n \"1\") \"]\"))"
+        },
+        {
+          "input": "j:a\n[1:2]",
+          "tree": "(s \"j:\" (access (name \"a\") (range ~\"\\n\" \"[\" (n \"1\") \":\" (n \"2\") \"]\")))"
         }
       ],
       "negative": [
@@ -407,6 +415,18 @@
             "column": 5,
             "expected": [
               "name"
+            ]
+          }
+        },
+        {
+          "input": "j:a[1:2]",
+          "rejection": {
+            "reason": "syntax",
+            "offset": 5,
+            "line": 1,
+            "column": 6,
+            "expected": [
+              "\"]\""
             ]
           }
         }
@@ -590,6 +610,25 @@
           },
           "after": {
             "tree": "(s \"w:\" (statement (name \"do\") \";\"))"
+          }
+        },
+        {
+          "from": "matching longest\n",
+          "to": "",
+          "input": "j:a[1:2]",
+          "before": {
+            "rejection": {
+              "reason": "syntax",
+              "offset": 5,
+              "line": 1,
+              "column": 6,
+              "expected": [
+                "\"]\""
+              ]
+            }
+          },
+          "after": {
+            "tree": "(s \"j:\" (access (name \"a\") (range \"[\" (n \"1\") \":\" (n \"2\") \"]\")))"
           }
         }
       ]

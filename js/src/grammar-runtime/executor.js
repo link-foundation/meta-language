@@ -1635,12 +1635,18 @@ export class Executor {
     let end = -1;
     if (this.longestTokens && leaves.length > 0) ({ start, end, leaves } = this.beforeSeparator(expression, start, leaves));
     if (end < 0) end = this.matchTerminal(expression, start);
+    // A literal the grammar also takes as an immediate token (see
+    // `KeywordLexing`) is not lexed plainly where the immediate one outranks it.
+    const plain = !inToken && expression.kind === 'literal' && this.keywords?.tokens.immediate.has(expression.value);
+    if (plain && end >= 0 && this.keywords.immediateOnly(start, end)) end = -1;
     if (end < 0) {
       this.fail(start, expectationOf(expression));
       if (inToken) return [];
       return this.elementFailed(start, leaves, state, missingOf(expression), expression, (cursor) => this.terminal(expression, cursor, state, false));
     }
-    const children = inToken ? NO_CHILDREN : [...leaves, { type: 'token', kind: separatorRunKind(expression, start, end), start, end }];
+    const leaf = { type: 'token', kind: separatorRunKind(expression, start, end), start, end };
+    if (plain) leaf.plain = true;
+    const children = inToken ? NO_CHILDREN : [...leaves, leaf];
     return [makeResult(end, state, children)];
   }
 
@@ -1703,6 +1709,7 @@ export class Executor {
           : this.immediateStarts(position, state, inToken);
         const found = new Map();
         const keyword = this.keywords !== null && !inToken && isKeyword(expression.item);
+        const immediate = this.keywords !== null && !inToken && expression.kind === 'immediateToken' && expression.item.kind === 'literal';
         // A scanner token is lexed at the first start where its scanner
         // succeeds, as a lexer runs the external scanner before it lexes an
         // extra: after a comment only where it fails before it.
@@ -1718,7 +1725,7 @@ export class Executor {
         try {
           for (const { end, leaves } of starts) {
             for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
-              if (keyword) this.keywords.match(`${end}|${result.end}`, this.callStack[this.callStack.length - 1] ?? null);
+              if (keyword || immediate) this.keywords.match(`${end}|${result.end}`, this.callStack[this.callStack.length - 1] ?? null, immediate);
               addResult(found, result, this.longestTokens);
             }
             if (scanned && found.size > 0) break;
@@ -2779,19 +2786,35 @@ function isKeyword(expression) {
  * token tree also takes `'` alone and a string to the next `"`, where a later
  * `_` type is a keyword `_` token): the tree's parse never reached that state.
  * A call's result is shared by every call that made it, so every chain counts.
+ *
+ * An immediate token a literal (`(immediateToken (literal [))`) outranks the
+ * plain literal of the same text, which a lexer so lexes only where no
+ * immediate one is valid (Lean's `foo[1:2:3]`, whose `[` opens a subscript,
+ * not a range applied to `foo`): the spans where an immediate literal matched
+ * (`matchedImmediate`) become immediate-only (`immediates`) alike where the
+ * tree took the plain literal (a `plain` leaf), whose parse state the
+ * immediate one matched in.
  */
 export class KeywordLexing {
   constructor(tokens) {
     this.tokens = tokens;
     this.only = new Set();
     this.matched = new Map();
+    this.immediates = new Set();
+    this.matchedImmediate = new Map();
   }
 
-  /** Records a keyword token matched over `span` in the rule call `call`. */
-  match(span, call) {
-    const calls = this.matched.get(span);
-    if (!calls) this.matched.set(span, new Set([call]));
+  /** Records a keyword or `immediate` literal token matched over `span` in the rule call `call`. */
+  match(span, call, immediate = false) {
+    const matched = immediate ? this.matchedImmediate : this.matched;
+    const calls = matched.get(span);
+    if (!calls) matched.set(span, new Set([call]));
     else calls.add(call);
+  }
+
+  // Whether an immediate token outranks the plain literal over a span.
+  immediateOnly(start, end) {
+    return this.immediates.has(`${start}|${end}`);
   }
 
   // Whether a keyword-only span's keyword outranks a token rule's leaf over it.
@@ -2815,17 +2838,20 @@ export class KeywordLexing {
         for (let index = node.children.length - 1; index >= 0; index -= 1) pending.push(node.children[index]);
         continue;
       }
-      if (node.lexed === undefined) continue;
       const span = `${node.start}|${node.end}`;
-      if (!this.matched.has(span) || this.only.has(span)) continue;
-      if (!this.outranksAt({ type: 'token', kind: node.lexed, start: node.start, end: node.end })) continue;
+      let [matched, only] = [this.matched, this.only];
+      if (node.plain) [matched, only] = [this.matchedImmediate, this.immediates];
+      else if (node.lexed === undefined) continue;
+      if (!matched.has(span) || only.has(span)) continue;
+      if (!node.plain && !this.outranksAt({ type: 'token', kind: node.lexed, start: node.start, end: node.end })) continue;
       reach ??= treeReach(root);
       const seen = new Set();
-      if (![...this.matched.get(span)].some((call) => inParseState(call, node, reach, seen))) continue;
-      this.only.add(span);
+      if (![...matched.get(span)].some((call) => inParseState(call, node, reach, seen))) continue;
+      only.add(span);
       found = true;
     }
     this.matched = new Map();
+    this.matchedImmediate = new Map();
     return found;
   }
 }

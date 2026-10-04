@@ -257,7 +257,22 @@ impl Executor<'_> {
         } else {
             None
         };
-        let Some(end) = found.or_else(|| matcher.matches(self.bytes, start, self.end)) else {
+        // A literal the grammar also takes as an immediate token (see
+        // `KeywordLexing`) is not lexed plainly where the immediate one
+        // outranks it.
+        let plain = !in_token
+            && self.keywords.is_some()
+            && matches!(matcher, Matcher::Literal(literal)
+                if self.longest_tokens.is_some_and(|tokens| tokens.ranks.immediate.contains(literal)));
+        let Some(end) = found
+            .or_else(|| matcher.matches(self.bytes, start, self.end))
+            .filter(|end| {
+                !plain
+                    || !self
+                        .keywords
+                        .is_some_and(|keywords| keywords.borrow().immediate_only((start, *end)))
+            })
+        else {
             self.fail(start, expectation);
             if in_token {
                 return Ok(Vec::new());
@@ -282,7 +297,9 @@ impl Executor<'_> {
             no_children()
         } else {
             let kind = separator_run_kind(matcher, start, end);
-            with_leaf(leaves, Tree::new(TreeType::Token, kind, start, end))
+            let mut leaf = Tree::new(TreeType::Token, kind, start, end);
+            leaf.plain = plain;
+            with_leaf(leaves, leaf)
         };
         Ok(vec![Res::new(end, state.clone(), children, 0)])
     }

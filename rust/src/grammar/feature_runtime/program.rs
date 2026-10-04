@@ -310,6 +310,10 @@ pub(super) struct TokenRank {
 pub(super) struct TokenRanks {
     pub(super) kinds: HashMap<Name, TokenRank>,
     pub(super) literals: HashMap<Vec<u8>, TokenRank>,
+    /// The texts of the literals the grammar takes as an immediate token
+    /// (`(immediateToken (literal [))`), which a lexer prefers to the plain
+    /// literal of the same text where both are valid (see `KeywordLexing`).
+    pub(super) immediate: HashSet<Vec<u8>>,
 }
 
 /// One external scanner.

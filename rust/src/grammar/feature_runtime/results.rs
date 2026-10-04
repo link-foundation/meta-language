@@ -155,6 +155,9 @@ pub(super) struct Tree {
     /// Under keyword lexing, the kind of the token rule that built the leaf,
     /// which an alias keeps.
     pub(super) lexed: Option<Name>,
+    /// Under keyword lexing, a plain literal leaf whose text the grammar also
+    /// takes as an immediate token (see `KeywordLexing`).
+    pub(super) plain: bool,
     pub(super) language: Option<Name>,
     pub(super) root: Option<Rc<Self>>,
     pub(super) program: usize,
@@ -184,6 +187,7 @@ impl Tree {
             literal: false,
             scanned: false,
             lexed: None,
+            plain: false,
             language: None,
             root: None,
             program: 0,
@@ -439,11 +443,22 @@ impl<'c> ResultSet<'c> {
 /// `"`, where a later `_` type is a keyword `_` token): the tree's parse never
 /// reached that state. A call's result is shared by every call that made it,
 /// so every chain counts. The calls are kept in `calls`, their makers by
-/// index. It mirrors `KeywordLexing` in js/src/grammar-runtime/executor.js.
+/// index.
+///
+/// An immediate token a literal (`(immediateToken (literal [))`) outranks
+/// the plain literal of the same text, which a lexer so lexes only where no
+/// immediate one is valid (Lean's `foo[1:2:3]`, whose `[` opens a subscript,
+/// not a range applied to `foo`): the spans where an immediate literal
+/// matched (`matched_immediate`) become immediate-only (`immediates`) alike
+/// where the tree took the plain literal (a `plain` leaf), whose parse state
+/// the immediate one matched in. It mirrors `KeywordLexing` in
+/// js/src/grammar-runtime/executor.js.
 #[derive(Debug, Default)]
 pub(super) struct KeywordLexing {
     only: HashSet<(usize, usize)>,
     matched: HashMap<(usize, usize), HashSet<Option<usize>>>,
+    immediates: HashSet<(usize, usize)>,
+    matched_immediate: HashMap<(usize, usize), HashSet<Option<usize>>>,
     calls: Vec<Call>,
 }
 
@@ -472,9 +487,20 @@ impl KeywordLexing {
         self.calls[call].parents.insert(parent);
     }
 
-    /// Records a keyword token matched over `span` in the rule call `call`.
-    pub(super) fn matched(&mut self, span: (usize, usize), call: Option<usize>) {
-        self.matched.entry(span).or_default().insert(call);
+    /// Records a keyword or `immediate` literal token matched over `span` in
+    /// the rule call `call`.
+    pub(super) fn matched(&mut self, span: (usize, usize), call: Option<usize>, immediate: bool) {
+        let matched = if immediate {
+            &mut self.matched_immediate
+        } else {
+            &mut self.matched
+        };
+        matched.entry(span).or_default().insert(call);
+    }
+
+    /// Whether an immediate token outranks the plain literal over `span`.
+    pub(super) fn immediate_only(&self, span: (usize, usize)) -> bool {
+        self.immediates.contains(&span)
     }
 
     /// Whether a keyword-only span's keyword outranks a token rule's leaf over it.
@@ -493,19 +519,25 @@ impl KeywordLexing {
                 pending.extend(node.children.iter().rev().map(|child| &**child));
                 continue;
             }
-            let Some(kind) = &node.lexed else {
-                continue;
-            };
             let span = (node.start, node.end);
-            let Some(calls) = self.matched.get(&span) else {
+            let (matched, only) = if node.plain {
+                (&self.matched_immediate, &self.immediates)
+            } else if node.lexed.is_some() {
+                (&self.matched, &self.only)
+            } else {
                 continue;
             };
-            if self.only.contains(&span) {
+            let Some(calls) = matched.get(&span) else {
+                continue;
+            };
+            if only.contains(&span) {
                 continue;
             }
-            let leaf = Tree::new(TreeType::Token, Some(kind.clone()), node.start, node.end);
-            if !outranks_at(&leaf, tokens) {
-                continue;
+            if let Some(kind) = node.lexed.as_ref().filter(|_| !node.plain) {
+                let leaf = Tree::new(TreeType::Token, Some(kind.clone()), node.start, node.end);
+                if !outranks_at(&leaf, tokens) {
+                    continue;
+                }
             }
             let reach = reach.get_or_insert_with(|| TreeReach::of(root));
             let mut seen = HashSet::new();
@@ -515,10 +547,15 @@ impl KeywordLexing {
             {
                 continue;
             }
-            self.only.insert(span);
+            if node.plain {
+                self.immediates.insert(span);
+            } else {
+                self.only.insert(span);
+            }
             found = true;
         }
         self.matched.clear();
+        self.matched_immediate.clear();
         self.calls.clear();
         found
     }

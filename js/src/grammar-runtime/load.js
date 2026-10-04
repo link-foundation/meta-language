@@ -372,7 +372,7 @@ function loadInContext(grammar, context) {
       });
     }
   }
-  if (matching === 'longest') program.tokenRanks = tokenRanks(rules);
+  if (matching === 'longest') program.tokenRanks = { ...tokenRanks(rules), immediate: immediateLiterals(rules) };
 
   for (const language of embedded) {
     if (context.languages.has(language)) continue;
@@ -456,6 +456,20 @@ function tokenRanks(rules) {
     if (rule?.kind === 'token' && !kinds.has(alias.name)) kinds.set(alias.name, kinds.get(rule.nodeKind));
   }
   return { kinds, literals };
+}
+
+// The texts of the literals a `(matching longest)` grammar takes as an
+// immediate token (`(immediateToken (literal [))`), which a lexer prefers to
+// the plain literal of the same text where both are valid (see
+// `KeywordLexing`).
+function immediateLiterals(rules) {
+  const texts = new Set();
+  for (const rule of rules.values()) {
+    visitExpression(rule.expression, (expression) => {
+      if (expression.kind === 'immediateToken' && expression.item.kind === 'literal') texts.add(expression.item.value);
+    });
+  }
+  return texts;
 }
 
 function buildsNode(operation) {

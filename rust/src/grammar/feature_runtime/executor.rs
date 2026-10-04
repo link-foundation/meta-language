@@ -440,7 +440,11 @@ impl<'c> Executor<'c> {
                     self.immediate_starts(position, state, in_token)?
                 };
                 let mut found = ResultSet::new(self.longest_tokens);
-                let keywords = self.keywords.filter(|_| !in_token && is_keyword(item));
+                let immediate = matches!(expr, Expr::ImmediateToken(_))
+                    && matches!(&**item, Expr::Terminal { matcher, .. } if matches!(matcher, Matcher::Literal(_)));
+                let keywords = self
+                    .keywords
+                    .filter(|_| !in_token && (immediate || is_keyword(item)));
                 // A scanner token is lexed at the first start where its
                 // scanner succeeds, as a lexer runs the external scanner
                 // before it lexes an extra: after a comment only where it
@@ -464,9 +468,11 @@ impl<'c> Executor<'c> {
                             if let Some(keywords) = keywords {
                                 let call =
                                     self.call_stack.last().and_then(|frame| frame.borrow().call);
-                                keywords
-                                    .borrow_mut()
-                                    .matched((skipped.end, result.end), call);
+                                keywords.borrow_mut().matched(
+                                    (skipped.end, result.end),
+                                    call,
+                                    immediate,
+                                );
                             }
                             found.add(result);
                         }
