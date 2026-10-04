@@ -550,7 +550,7 @@ they are.
 | `cargo-llvm-cov` | `.github/workflows/rust.yml` | `latest` |  | floating | current |  |
 | `elan` | `.github/workflows/issue-195-acceptance.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
 | `lean` | `.github/workflows/issue-195-acceptance.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
-| `node` | `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
+| `node` | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
 | `node` | `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
 | `npm` | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
 | `ocaml` | `.github/workflows/issue-195-acceptance.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
@@ -572,8 +572,8 @@ they are.
 | `actions/configure-pages` | `.github/workflows/rust.yml` | `v6` | v6.0.0 (GitHub release, actions/configure-pages) | major | current |  |
 | `actions/deploy-pages` | `.github/workflows/rust.yml` | `v5` | v5.0.1 (GitHub release, actions/deploy-pages) | major | current |  |
 | `actions/download-artifact` | `.github/workflows/issue-195-acceptance.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
-| `actions/setup-node` | `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.0 (GitHub release, actions/setup-node) | major | current |  |
-| `actions/upload-artifact` | `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
+| `actions/setup-node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.0 (GitHub release, actions/setup-node) | major | current |  |
+| `actions/upload-artifact` | `.github/workflows/ci.yml`, `.github/workflows/issue-195-acceptance.yml`, `.github/workflows/js.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
 | `actions/upload-pages-artifact` | `.github/workflows/rust.yml` | `v5` | v5.0.0 (GitHub release, actions/upload-pages-artifact) | major | current |  |
 | `codecov/codecov-action` | `.github/workflows/rust.yml` | `v7` | v7.1.1 (GitHub release, codecov/codecov-action) | major | current |  |
 | `docker/build-push-action` | `.github/workflows/rust.yml` | `v7` | v7.4.0 (GitHub release, docker/build-push-action) | major | current |  |
