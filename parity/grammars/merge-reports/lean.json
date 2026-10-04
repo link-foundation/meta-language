@@ -168,7 +168,11 @@
     },
     {
       "source": "_instance_decl",
-      "native": "instance_decl"
+      "native": "instance_declaration"
+    },
+    {
+      "source": "where_decl",
+      "native": "where_declaration"
     },
     {
       "source": "_quantifier_binders",
@@ -180,7 +184,7 @@
     },
     {
       "source": "_type_spec",
-      "native": "type_spec"
+      "native": "type_specification"
     },
     {
       "source": "_expression",
@@ -204,11 +208,23 @@
     },
     {
       "source": "_tactic_seq",
-      "native": "tactic_seq"
+      "native": "tactic_sequence"
     },
     {
       "source": "_tactic",
       "native": "tactic"
+    },
+    {
+      "source": "tactic_config",
+      "native": "tactic_configuration"
+    },
+    {
+      "source": "tactic_calc",
+      "native": "tactic_calculation"
+    },
+    {
+      "source": "calc_step",
+      "native": "calculation_step"
     },
     {
       "source": "_then_else",
@@ -220,7 +236,7 @@
     },
     {
       "source": "_do_seq",
-      "native": "do_seq"
+      "native": "do_sequence"
     },
     {
       "source": "_do_element",
@@ -239,12 +255,16 @@
       "native": "do_then_else"
     },
     {
+      "source": "do_dbg_trace",
+      "native": "do_debug_trace"
+    },
+    {
       "source": "_structure_body",
       "native": "structure_body"
     },
     {
       "source": "_range_spec",
-      "native": "range_spec"
+      "native": "range_specification"
     },
     {
       "source": "_string_content",
@@ -255,16 +275,30 @@
       "native": "character"
     },
     {
+      "source": "cdot",
+      "native": "centered_dot"
+    },
+    {
       "source": "_boolean",
       "native": "boolean"
     }
   ],
   "expandedWords": [
+    "calc",
     "char",
-    "mut"
+    "config",
+    "dbg",
+    "decl",
+    "mut",
+    "seq",
+    "spec"
   ],
   "concepts": {
     "shared": [
+      {
+        "rule": "module",
+        "concept": "grammar.program"
+      },
       {
         "rule": "expression",
         "concept": "grammar.expression"
@@ -294,11 +328,19 @@
         "concept": "grammar.escape-sequence"
       },
       {
+        "rule": "character",
+        "concept": "grammar.character-literal"
+      },
+      {
+        "rule": "boolean",
+        "concept": "grammar.boolean-value"
+      },
+      {
         "rule": "comment",
         "concept": "grammar.comment"
       }
     ],
-    "generated": 139
+    "generated": 136
   },
   "approximations": [],
   "unsupported": []

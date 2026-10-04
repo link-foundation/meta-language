@@ -186,6 +186,8 @@ fn check_rejects_records_that_merge_or_fail_to_justify_a_required_distinction() 
             "grammar.identifier / grammar.identifier-name",
             "grammar.document / grammar.program",
             "grammar.boolean-value / grammar.true-value",
+            "grammar.program / grammar.module",
+            "grammar.true-constant / grammar.true-value",
             "grammar.symbol / grammar.keyword",
             "grammar.comment / grammar.block-comment",
         ]

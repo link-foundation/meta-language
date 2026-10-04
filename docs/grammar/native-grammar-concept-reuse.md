@@ -23,12 +23,13 @@ when only its own grammar names the concept.
 | `native-javascript` | 143 | 142 | 1 | 99% |
 | `native-json` | 11 | 11 | 0 | 100% |
 | `native-json5` | 12 | 11 | 1 | 92% |
+| `native-lean` | 147 | 26 | 121 | 18% |
 | `native-racket` | 39 | 23 | 16 | 59% |
-| `native-rust` | 184 | 40 | 144 | 22% |
+| `native-rust` | 184 | 46 | 138 | 25% |
 | `native-scheme` | 28 | 23 | 5 | 82% |
 | `native-tsx` | 230 | 230 | 0 | 100% |
 | `native-typescript` | 230 | 230 | 0 | 100% |
-| all | 1097 | 758 | 339 | 69% |
+| all | 1244 | 790 | 454 | 64% |
 
 ### `native-c`
 
@@ -65,6 +66,11 @@ when only its own grammar names the concept.
 - Shared: `file` → `grammar.document`, `value` → `grammar.value`, `object` → `grammar.object`, `member` → `grammar.member`, `array` → `grammar.list`, `string` → `grammar.string`, `number` → `grammar.number`, `null` → `grammar.null`, `true` → `grammar.true-value`, `false` → `grammar.false-value`, `comment` → `grammar.comment`.
 - Language-specific: `identifier` → `grammar.identifier-name`.
 
+### `native-lean`
+
+- Shared: `module` → `grammar.program`, `import` → `grammar.import`, `declaration` → `grammar.declaration`, `expression` → `grammar.expression`, `return` → `grammar.return-expression`, `binary_expression` → `grammar.binary-expression`, `unary_expression` → `grammar.unary-expression`, `if` → `grammar.if-expression`, `pattern` → `grammar.pattern`, `tuple_pattern` → `grammar.tuple-pattern`, `match` → `grammar.match-expression`, `match_arm` → `grammar.match-arm`, `parenthesized` → `grammar.parenthesized-expression`, `tuple` → `grammar.tuple-expression`, `array` → `grammar.array`, `list` → `grammar.list`, `identifier` → `grammar.identifier`, `number` → `grammar.number`, `string` → `grammar.string`, `interpolated_string` → `grammar.template-string`, `escape_sequence` → `grammar.escape-sequence`, `interpolation` → `grammar.template-substitution`, `character` → `grammar.character-literal`, `boolean` → `grammar.boolean-value`, `comment` → `grammar.comment`, `word_characters` → `grammar.word-characters`.
+- Language-specific: `module_header` → `grammar.module-header`, `fragment_element` → `grammar.fragment-element`, `prelude` → `grammar.prelude`, `command` → `grammar.command`, `set_option` → `grammar.set-option`, `modifier` → `grammar.modifier`, `namespace` → `grammar.namespace`, `section` → `grammar.section-command`, `end` → `grammar.end-command`, `syntax` → `grammar.syntax`, `syntax_atom` → `grammar.syntax-atom`, `syntax_group` → `grammar.syntax-group`, `initialize` → `grammar.initialization-command`, `open` → `grammar.open`, `export` → `grammar.export`, `variable` → `grammar.variable`, `universe` → `grammar.universe`, `include` → `grammar.include-command`, `omit` → `grammar.omit-command`, `attribute` → `grammar.attribute-command`, `notation` → `grammar.notation`, `hash_command` → `grammar.hash-command`, `example` → `grammar.example`, `declaration_choice` → `grammar.declaration-choice`, `attributes` → `grammar.attribute-list`, `attribute_entry` → `grammar.attribute-entry`, `definition` → `grammar.definition`, `declaration_body` → `grammar.declaration-body`, `instance_declaration` → `grammar.instance-declaration`, `where_declaration` → `grammar.where-declaration`, `constant` → `grammar.constant`, `opaque` → `grammar.opaque-declaration`, `axiom` → `grammar.axiom`, `structure` → `grammar.structure`, `structure_field` → `grammar.structure-field`, `inductive` → `grammar.inductive-declaration`, `class_inductive` → `grammar.class-inductive-declaration`, `constructor` → `grammar.constructor`, `binders` → `grammar.binders`, `quantifier_binders` → `grammar.quantifier-binders`, `bracketed_binder` → `grammar.bracketed-binder`, `explicit_binder` → `grammar.explicit-binder`, `implicit_binder` → `grammar.implicit-binder`, `instance_binder` → `grammar.instance-binder`, `type_specification` → `grammar.type-specification`, `try` → `grammar.try`, `as_pattern` → `grammar.as-pattern`, `atom` → `grammar.atom`, `application` → `grammar.function-application`, `subscript` → `grammar.subscript`, `name` → `grammar.name`, `projection` → `grammar.projection`, `arrow` → `grammar.arrow`, `explicit` → `grammar.explicit-term`, `fun` → `grammar.fun`, `quantifier` → `grammar.quantifier`, `quantifier_tail` → `grammar.quantifier-tail`, `have` → `grammar.have`, `binding_body` → `grammar.binding-body`, `by` → `grammar.tactic-proof`, `tactic_sequence` → `grammar.tactic-sequence`, `tactic` → `grammar.tactic`, `tactic_apply` → `grammar.apply-tactic`, `tactic_configuration` → `grammar.tactic-configuration`, `tactic_focus` → `grammar.tactic-focus`, `tactic_case` → `grammar.tactic-case`, `tactic_rewrite` → `grammar.tactic-rewrite`, `tactic_have` → `grammar.tactic-have`, `tactic_let` → `grammar.tactic-let`, `tactic_show` → `grammar.tactic-show`, `tactic_calculation` → `grammar.tactic-calculation`, `calculation_step` → `grammar.calculation-step`, `let` → `grammar.let`, `parameters` → `grammar.parameter-binders`, `then_else` → `grammar.then-else-branches`, `if_let` → `grammar.if-let`, `list_pattern` → `grammar.list-pattern`, `constructor_pattern` → `grammar.constructor-pattern`, `do` → `grammar.do`, `do_sequence` → `grammar.do-sequence`, `do_element` → `grammar.do-element`, `do_let` → `grammar.do-let`, `let_bind` → `grammar.let-bind`, `let_mutable` → `grammar.mutable-let-binding`, `reassign` → `grammar.reassignment`, `do_return` → `grammar.do-return`, `for_in` → `grammar.for-in-loop`, `for_binding` → `grammar.for-binding`, `do_if` → `grammar.do-if-statement`, `do_then_else` → `grammar.do-then-else-branches`, `do_if_let` → `grammar.do-if-let`, `do_match` → `grammar.do-match`, `do_match_arm` → `grammar.do-match-arm`, `do_while` → `grammar.do-while`, `do_unless` → `grammar.do-unless-statement`, `do_debug_trace` → `grammar.do-debug-trace`, `do_break` → `grammar.do-break`, `do_continue` → `grammar.do-continue-statement`, `do_try` → `grammar.do-try`, `do_catch` → `grammar.do-catch-clause`, `named_argument` → `grammar.named-argument`, `anonymous_constructor` → `grammar.anonymous-constructor`, `subtype` → `grammar.subtype`, `structure_instance` → `grammar.structure-instance`, `structure_body` → `grammar.structure-body`, `field_assignment` → `grammar.field-assignment`, `range` → `grammar.index-range`, `range_specification` → `grammar.range-specification`, `escaped_identifier` → `grammar.escaped-identifier`, `float` → `grammar.float`, `string_content` → `grammar.string-content`, `hole` → `grammar.hole`, `centered_dot` → `grammar.centered-dot`, `synthetic_hole` → `grammar.synthetic-hole`, `quoted_name` → `grammar.quoted-name`, `double_quoted_name` → `grammar.double-quoted-name`, `syntax_quotation` → `grammar.syntax-quotation`, `ellipsis` → `grammar.ellipsis`, `sorry` → `grammar.sorry-placeholder`, `true` → `grammar.true-constant`, `false` → `grammar.false-constant`.
+
 ### `native-racket`
 
 - Shared: `program` → `grammar.program`, `program_element` → `grammar.program-element`, `atmosphere` → `grammar.atmosphere`, `comment` → `grammar.comment`, `block_comment` → `grammar.block-comment`, `datum` → `grammar.datum`, `boolean` → `grammar.boolean-value`, `string` → `grammar.string`, `escape_sequence` → `grammar.escape-sequence`, `number` → `grammar.number`, `character` → `grammar.character-literal`, `symbol` → `grammar.symbol`, `keyword` → `grammar.keyword`, `list` → `grammar.linked-list`, `vector` → `grammar.list`, `quote` → `grammar.quote`, `quasiquote` → `grammar.quasiquote`, `syntax` → `grammar.syntax-quote`, `quasisyntax` → `grammar.quasisyntax`, `unquote` → `grammar.unquote`, `unquote_splicing` → `grammar.unquote-splicing`, `unsyntax` → `grammar.unsyntax`, `unsyntax_splicing` → `grammar.unsyntax-splicing`.
@@ -72,8 +78,8 @@ when only its own grammar names the concept.
 
 ### `native-rust`
 
-- Shared: `statement` → `grammar.statement`, `empty_statement` → `grammar.empty-statement`, `expression_statement` → `grammar.expression-statement`, `attribute` → `program.attributes`, `declaration_list` → `grammar.declaration-list`, `field_declaration_list` → `grammar.field-declaration-list`, `field_declaration` → `grammar.field-declaration`, `type_parameters` → `grammar.type-parameter-list`, `type_parameter` → `grammar.type-parameter`, `parameters` → `grammar.parameter-list`, `variadic_parameter` → `grammar.variadic-parameter`, `type` → `grammar.type`, `array_type` → `grammar.array-type`, `function_type` → `grammar.function-type`, `tuple_type` → `grammar.tuple-type`, `generic_type` → `grammar.generic-type`, `type_arguments` → `grammar.type-argument-list`, `expression` → `grammar.expression`, `unary_expression` → `grammar.unary-expression`, `binary_expression` → `grammar.binary-expression`, `assignment_expression` → `grammar.assignment-expression`, `yield_expression` → `grammar.yield-expression`, `call_expression` → `grammar.call-expression`, `arguments` → `grammar.argument-list`, `parenthesized_expression` → `grammar.parenthesized-expression`, `else_clause` → `grammar.else-clause`, `await_expression` → `grammar.await-expression`, `field_expression` → `grammar.field-expression`, `pattern` → `grammar.pattern`, `string_literal` → `grammar.string-literal`, `character_literal` → `grammar.character-literal`, `escape_sequence` → `grammar.escape-sequence`, `comment` → `grammar.comment`, `block_comment` → `grammar.block-comment`, `identifier` → `grammar.identifier`, `reserved_identifier` → `grammar.reserved-identifier`, `type_identifier_alias` → `grammar.type-identifier-alias`, `field_identifier_alias` → `grammar.field-identifier-alias`, `super` → `grammar.super`, `word_characters` → `grammar.word-characters`.
-- Language-specific: `source_file` → `grammar.source-file`, `declaration_statement` → `grammar.declaration-statement`, `macro_definition` → `grammar.macro-definition`, `macro_rule` → `grammar.macro-rule`, `token_pattern` → `grammar.token-pattern`, `token_tree_pattern` → `grammar.token-tree-pattern`, `token_binding_pattern` → `grammar.token-binding-pattern`, `token_repetition_pattern` → `grammar.token-repetition-pattern`, `fragment_specifier` → `grammar.fragment-specifier`, `tokens` → `grammar.tokens`, `token_tree` → `grammar.token-tree`, `token_repetition` → `grammar.token-repetition`, `non_special_token` → `grammar.non-special-token`, `attribute_item` → `grammar.attribute-item`, `inner_attribute_item` → `grammar.inner-attribute-item`, `module_item` → `grammar.module-item`, `foreign_module_item` → `grammar.foreign-module-item`, `structure_item` → `grammar.structure-item`, `union_item` → `grammar.union-item`, `enumeration_item` → `grammar.enumeration-item`, `enumeration_variant_list` → `grammar.enumeration-variant-list`, `enumeration_variant` → `grammar.enumeration-variant`, `ordered_field_declaration_list` → `grammar.ordered-field-declaration-list`, `extern_crate_declaration` → `grammar.extern-crate-declaration`, `constant_item` → `grammar.constant-item`, `static_item` → `grammar.static-item`, `type_item` → `grammar.type-item`, `function_item` → `grammar.function-item`, `function_signature_item` → `grammar.function-signature-item`, `function_modifiers` → `grammar.function-modifiers`, `where_clause` → `grammar.where-clause`, `where_predicate` → `grammar.where-predicate`, `implementation_item` → `grammar.implementation-item`, `trait_item` → `grammar.trait-item`, `associated_type` → `grammar.associated-type`, `trait_bounds` → `grammar.trait-bounds`, `higher_ranked_trait_bound` → `grammar.higher-ranked-trait-bound`, `removed_trait_bound` → `grammar.removed-trait-bound`, `constant_parameter` → `grammar.constant-parameter`, `lifetime_parameter` → `grammar.lifetime-parameter`, `let_declaration` → `grammar.let-declaration`, `use_declaration` → `grammar.use-declaration`, `use_clause` → `grammar.use-clause`, `scoped_use_list` → `grammar.scoped-use-list`, `use_list` → `grammar.use-list`, `use_as_clause` → `grammar.use-as-clause`, `use_wildcard` → `grammar.use-wildcard`, `self_parameter` → `grammar.self-parameter`, `parameter` → `parameter`, `extern_modifier` → `grammar.extern-modifier`, `visibility_modifier` → `grammar.visibility-modifier`, `bracketed_type` → `grammar.bracketed-type`, `qualified_type` → `grammar.qualified-type`, `lifetime` → `grammar.lifetime`, `for_lifetimes` → `grammar.for-lifetimes`, `unit_type` → `grammar.unit-type`, `generic_function` → `grammar.generic-function`, `generic_type_with_turbofish` → `grammar.generic-type-with-turbofish`, `bounded_type` → `grammar.bounded-type`, `use_bounds` → `grammar.use-bounds`, `type_binding` → `grammar.type-binding`, `reference_type` → `grammar.reference-type`, `pointer_type` → `grammar.pointer-type`, `never_type` → `grammar.never-type`, `abstract_type` → `grammar.abstract-type`, `dynamic_type` → `grammar.dynamic-type`, `mutable_specifier` → `grammar.mutable-specifier`, `expression_except_range` → `grammar.expression-except-range`, `expression_ending_with_block` → `grammar.expression-ending-with-block`, `macro_invocation` → `grammar.macro-invocation`, `delimited_token_tree` → `grammar.delimited-token-tree`, `delimited_tokens` → `grammar.delimited-tokens`, `non_delimited_token` → `grammar.non-delimited-token`, `scoped_identifier` → `grammar.scoped-identifier`, `scoped_type_identifier_in_expression_position` → `grammar.scoped-type-identifier-in-expression-position`, `scoped_type_identifier` → `grammar.scoped-type-identifier`, `range_expression` → `grammar.range-expression`, `try_expression` → `grammar.try-expression`, `reference_expression` → `grammar.reference-expression`, `compound_assignment_expression` → `grammar.compound-assignment-expression`, `type_cast_expression` → `grammar.type-cast-expression`, `return_expression` → `grammar.return-expression`, `array_expression` → `grammar.array-expression`, `tuple_expression` → `grammar.tuple-expression`, `unit_expression` → `grammar.unit-expression`, `structure_expression` → `grammar.structure-expression`, `field_initializer_list` → `grammar.field-initializer-list`, `shorthand_field_initializer` → `grammar.shorthand-field-initializer`, `field_initializer` → `grammar.field-initializer`, `base_field_initializer` → `grammar.base-field-initializer`, `if_expression` → `grammar.if-expression`, `let_condition` → `grammar.let-condition`, `let_chain_alias` → `grammar.let-chain-alias`, `condition` → `grammar.condition`, `match_expression` → `grammar.match-expression`, `match_block` → `grammar.match-block`, `match_arm` → `grammar.match-arm`, `last_match_arm` → `grammar.last-match-arm`, `match_pattern` → `grammar.match-pattern`, `while_expression` → `grammar.while-expression`, `loop_expression` → `grammar.loop-expression`, `for_expression` → `grammar.for-expression`, `constant_block` → `grammar.constant-block`, `closure_expression` → `grammar.closure-expression`, `closure_parameters` → `grammar.closure-parameters`, `label` → `grammar.label`, `break_expression` → `grammar.break-expression`, `continue_expression` → `grammar.continue-expression`, `index_expression` → `grammar.index-expression`, `unsafe_block` → `grammar.unsafe-block`, `asynchronous_block` → `grammar.asynchronous-block`, `generator_block` → `grammar.generator-block`, `try_block` → `grammar.try-block`, `block` → `grammar.block`, `generic_pattern` → `grammar.generic-pattern`, `tuple_pattern` → `grammar.tuple-pattern`, `slice_pattern` → `grammar.slice-pattern`, `tuple_structure_pattern` → `grammar.tuple-structure-pattern`, `structure_pattern` → `grammar.structure-pattern`, `field_pattern` → `grammar.field-pattern`, `remaining_field_pattern` → `grammar.remaining-field-pattern`, `mutable_pattern` → `grammar.mutable-pattern`, `range_pattern` → `grammar.range-pattern`, `by_reference_pattern` → `grammar.by-reference-pattern`, `captured_pattern` → `grammar.captured-pattern`, `reference_pattern` → `grammar.reference-pattern`, `or_pattern` → `grammar.or-pattern`, `literal` → `grammar.literal`, `literal_pattern` → `grammar.literal-pattern`, `negative_literal` → `grammar.negative-literal`, `integer_literal` → `grammar.integer-literal`, `raw_string_literal` → `grammar.raw-string-literal`, `boolean_literal` → `grammar.boolean-literal`, `line_comment` → `grammar.line-comment`, `line_documentation_comment_marker` → `grammar.line-documentation-comment-marker`, `inner_line_documentation_comment_marker` → `grammar.inner-line-documentation-comment-marker`, `outer_line_documentation_comment_marker` → `grammar.outer-line-documentation-comment-marker`, `block_documentation_comment_marker` → `grammar.block-documentation-comment-marker`, `path` → `grammar.path`, `shebang` → `grammar.shebang`, `frontmatter` → `grammar.frontmatter`, `self` → `grammar.self`, `crate` → `grammar.crate`, `metavariable` → `grammar.metavariable`.
+- Shared: `statement` → `grammar.statement`, `empty_statement` → `grammar.empty-statement`, `expression_statement` → `grammar.expression-statement`, `attribute` → `program.attributes`, `declaration_list` → `grammar.declaration-list`, `field_declaration_list` → `grammar.field-declaration-list`, `field_declaration` → `grammar.field-declaration`, `type_parameters` → `grammar.type-parameter-list`, `type_parameter` → `grammar.type-parameter`, `parameters` → `grammar.parameter-list`, `variadic_parameter` → `grammar.variadic-parameter`, `type` → `grammar.type`, `array_type` → `grammar.array-type`, `function_type` → `grammar.function-type`, `tuple_type` → `grammar.tuple-type`, `generic_type` → `grammar.generic-type`, `type_arguments` → `grammar.type-argument-list`, `expression` → `grammar.expression`, `unary_expression` → `grammar.unary-expression`, `binary_expression` → `grammar.binary-expression`, `assignment_expression` → `grammar.assignment-expression`, `return_expression` → `grammar.return-expression`, `yield_expression` → `grammar.yield-expression`, `call_expression` → `grammar.call-expression`, `arguments` → `grammar.argument-list`, `parenthesized_expression` → `grammar.parenthesized-expression`, `tuple_expression` → `grammar.tuple-expression`, `if_expression` → `grammar.if-expression`, `else_clause` → `grammar.else-clause`, `match_expression` → `grammar.match-expression`, `match_arm` → `grammar.match-arm`, `await_expression` → `grammar.await-expression`, `field_expression` → `grammar.field-expression`, `pattern` → `grammar.pattern`, `tuple_pattern` → `grammar.tuple-pattern`, `string_literal` → `grammar.string-literal`, `character_literal` → `grammar.character-literal`, `escape_sequence` → `grammar.escape-sequence`, `comment` → `grammar.comment`, `block_comment` → `grammar.block-comment`, `identifier` → `grammar.identifier`, `reserved_identifier` → `grammar.reserved-identifier`, `type_identifier_alias` → `grammar.type-identifier-alias`, `field_identifier_alias` → `grammar.field-identifier-alias`, `super` → `grammar.super`, `word_characters` → `grammar.word-characters`.
+- Language-specific: `source_file` → `grammar.source-file`, `declaration_statement` → `grammar.declaration-statement`, `macro_definition` → `grammar.macro-definition`, `macro_rule` → `grammar.macro-rule`, `token_pattern` → `grammar.token-pattern`, `token_tree_pattern` → `grammar.token-tree-pattern`, `token_binding_pattern` → `grammar.token-binding-pattern`, `token_repetition_pattern` → `grammar.token-repetition-pattern`, `fragment_specifier` → `grammar.fragment-specifier`, `tokens` → `grammar.tokens`, `token_tree` → `grammar.token-tree`, `token_repetition` → `grammar.token-repetition`, `non_special_token` → `grammar.non-special-token`, `attribute_item` → `grammar.attribute-item`, `inner_attribute_item` → `grammar.inner-attribute-item`, `module_item` → `grammar.module-item`, `foreign_module_item` → `grammar.foreign-module-item`, `structure_item` → `grammar.structure-item`, `union_item` → `grammar.union-item`, `enumeration_item` → `grammar.enumeration-item`, `enumeration_variant_list` → `grammar.enumeration-variant-list`, `enumeration_variant` → `grammar.enumeration-variant`, `ordered_field_declaration_list` → `grammar.ordered-field-declaration-list`, `extern_crate_declaration` → `grammar.extern-crate-declaration`, `constant_item` → `grammar.constant-item`, `static_item` → `grammar.static-item`, `type_item` → `grammar.type-item`, `function_item` → `grammar.function-item`, `function_signature_item` → `grammar.function-signature-item`, `function_modifiers` → `grammar.function-modifiers`, `where_clause` → `grammar.where-clause`, `where_predicate` → `grammar.where-predicate`, `implementation_item` → `grammar.implementation-item`, `trait_item` → `grammar.trait-item`, `associated_type` → `grammar.associated-type`, `trait_bounds` → `grammar.trait-bounds`, `higher_ranked_trait_bound` → `grammar.higher-ranked-trait-bound`, `removed_trait_bound` → `grammar.removed-trait-bound`, `constant_parameter` → `grammar.constant-parameter`, `lifetime_parameter` → `grammar.lifetime-parameter`, `let_declaration` → `grammar.let-declaration`, `use_declaration` → `grammar.use-declaration`, `use_clause` → `grammar.use-clause`, `scoped_use_list` → `grammar.scoped-use-list`, `use_list` → `grammar.use-list`, `use_as_clause` → `grammar.use-as-clause`, `use_wildcard` → `grammar.use-wildcard`, `self_parameter` → `grammar.self-parameter`, `parameter` → `parameter`, `extern_modifier` → `grammar.extern-modifier`, `visibility_modifier` → `grammar.visibility-modifier`, `bracketed_type` → `grammar.bracketed-type`, `qualified_type` → `grammar.qualified-type`, `lifetime` → `grammar.lifetime`, `for_lifetimes` → `grammar.for-lifetimes`, `unit_type` → `grammar.unit-type`, `generic_function` → `grammar.generic-function`, `generic_type_with_turbofish` → `grammar.generic-type-with-turbofish`, `bounded_type` → `grammar.bounded-type`, `use_bounds` → `grammar.use-bounds`, `type_binding` → `grammar.type-binding`, `reference_type` → `grammar.reference-type`, `pointer_type` → `grammar.pointer-type`, `never_type` → `grammar.never-type`, `abstract_type` → `grammar.abstract-type`, `dynamic_type` → `grammar.dynamic-type`, `mutable_specifier` → `grammar.mutable-specifier`, `expression_except_range` → `grammar.expression-except-range`, `expression_ending_with_block` → `grammar.expression-ending-with-block`, `macro_invocation` → `grammar.macro-invocation`, `delimited_token_tree` → `grammar.delimited-token-tree`, `delimited_tokens` → `grammar.delimited-tokens`, `non_delimited_token` → `grammar.non-delimited-token`, `scoped_identifier` → `grammar.scoped-identifier`, `scoped_type_identifier_in_expression_position` → `grammar.scoped-type-identifier-in-expression-position`, `scoped_type_identifier` → `grammar.scoped-type-identifier`, `range_expression` → `grammar.range-expression`, `try_expression` → `grammar.try-expression`, `reference_expression` → `grammar.reference-expression`, `compound_assignment_expression` → `grammar.compound-assignment-expression`, `type_cast_expression` → `grammar.type-cast-expression`, `array_expression` → `grammar.array-expression`, `unit_expression` → `grammar.unit-expression`, `structure_expression` → `grammar.structure-expression`, `field_initializer_list` → `grammar.field-initializer-list`, `shorthand_field_initializer` → `grammar.shorthand-field-initializer`, `field_initializer` → `grammar.field-initializer`, `base_field_initializer` → `grammar.base-field-initializer`, `let_condition` → `grammar.let-condition`, `let_chain_alias` → `grammar.let-chain-alias`, `condition` → `grammar.condition`, `match_block` → `grammar.match-block`, `last_match_arm` → `grammar.last-match-arm`, `match_pattern` → `grammar.match-pattern`, `while_expression` → `grammar.while-expression`, `loop_expression` → `grammar.loop-expression`, `for_expression` → `grammar.for-expression`, `constant_block` → `grammar.constant-block`, `closure_expression` → `grammar.closure-expression`, `closure_parameters` → `grammar.closure-parameters`, `label` → `grammar.label`, `break_expression` → `grammar.break-expression`, `continue_expression` → `grammar.continue-expression`, `index_expression` → `grammar.index-expression`, `unsafe_block` → `grammar.unsafe-block`, `asynchronous_block` → `grammar.asynchronous-block`, `generator_block` → `grammar.generator-block`, `try_block` → `grammar.try-block`, `block` → `grammar.block`, `generic_pattern` → `grammar.generic-pattern`, `slice_pattern` → `grammar.slice-pattern`, `tuple_structure_pattern` → `grammar.tuple-structure-pattern`, `structure_pattern` → `grammar.structure-pattern`, `field_pattern` → `grammar.field-pattern`, `remaining_field_pattern` → `grammar.remaining-field-pattern`, `mutable_pattern` → `grammar.mutable-pattern`, `range_pattern` → `grammar.range-pattern`, `by_reference_pattern` → `grammar.by-reference-pattern`, `captured_pattern` → `grammar.captured-pattern`, `reference_pattern` → `grammar.reference-pattern`, `or_pattern` → `grammar.or-pattern`, `literal` → `grammar.literal`, `literal_pattern` → `grammar.literal-pattern`, `negative_literal` → `grammar.negative-literal`, `integer_literal` → `grammar.integer-literal`, `raw_string_literal` → `grammar.raw-string-literal`, `boolean_literal` → `grammar.boolean-literal`, `line_comment` → `grammar.line-comment`, `line_documentation_comment_marker` → `grammar.line-documentation-comment-marker`, `inner_line_documentation_comment_marker` → `grammar.inner-line-documentation-comment-marker`, `outer_line_documentation_comment_marker` → `grammar.outer-line-documentation-comment-marker`, `block_documentation_comment_marker` → `grammar.block-documentation-comment-marker`, `path` → `grammar.path`, `shebang` → `grammar.shebang`, `frontmatter` → `grammar.frontmatter`, `self` → `grammar.self`, `crate` → `grammar.crate`, `metavariable` → `grammar.metavariable`.
 
 ### `native-scheme`
 
@@ -100,7 +106,7 @@ when only its own grammar names the concept.
 | `grammar.adding-type-annotation` | tsx, typescript |
 | `grammar.ambient-declaration` | tsx, typescript |
 | `grammar.argument-list` | c, javascript, rust, tsx, typescript |
-| `grammar.array` | javascript, tsx, typescript |
+| `grammar.array` | javascript, lean, tsx, typescript |
 | `grammar.array-pattern` | javascript, tsx, typescript |
 | `grammar.array-type` | rust, tsx, typescript |
 | `grammar.arrow-function` | javascript, tsx, typescript |
@@ -113,21 +119,21 @@ when only its own grammar names the concept.
 | `grammar.augmented-assignment-expression` | javascript, tsx, typescript |
 | `grammar.augmented-assignment-left-hand-side` | javascript, tsx, typescript |
 | `grammar.await-expression` | javascript, rust, tsx, typescript |
-| `grammar.binary-expression` | c, javascript, rust, tsx, typescript |
+| `grammar.binary-expression` | c, javascript, lean, rust, tsx, typescript |
 | `grammar.block-comment` | racket, rust, scheme |
-| `grammar.boolean-value` | csv, racket, scheme |
+| `grammar.boolean-value` | csv, lean, racket, scheme |
 | `grammar.break-statement` | c, javascript, tsx, typescript |
 | `grammar.call-expression` | c, javascript, rust, tsx, typescript |
 | `grammar.call-signature` | javascript, tsx, typescript |
 | `grammar.call-signature-parts` | tsx, typescript |
 | `grammar.catch-clause` | javascript, tsx, typescript |
-| `grammar.character-literal` | c, racket, rust, scheme |
+| `grammar.character-literal` | c, lean, racket, rust, scheme |
 | `grammar.class` | javascript, tsx, typescript |
 | `grammar.class-body` | javascript, tsx, typescript |
 | `grammar.class-declaration` | javascript, tsx, typescript |
 | `grammar.class-heritage` | javascript, tsx, typescript |
 | `grammar.class-static-block` | javascript, tsx, typescript |
-| `grammar.comment` | c, diff, ini, javascript, json, json5, racket, rust, scheme, tsx, typescript |
+| `grammar.comment` | c, diff, ini, javascript, json, json5, lean, racket, rust, scheme, tsx, typescript |
 | `grammar.computed-property-name` | javascript, tsx, typescript |
 | `grammar.conditional-type` | tsx, typescript |
 | `grammar.constraint` | tsx, typescript |
@@ -136,7 +142,7 @@ when only its own grammar names the concept.
 | `grammar.continue-statement` | c, javascript, tsx, typescript |
 | `grammar.datum` | racket, scheme |
 | `grammar.debugger-statement` | javascript, tsx, typescript |
-| `grammar.declaration` | c, javascript, tsx, typescript |
+| `grammar.declaration` | c, javascript, lean, tsx, typescript |
 | `grammar.declaration-list` | c, rust |
 | `grammar.decorator` | javascript, tsx, typescript |
 | `grammar.decorator-call-expression` | javascript, tsx, typescript |
@@ -151,12 +157,12 @@ when only its own grammar names the concept.
 | `grammar.enumeration-assignment` | tsx, typescript |
 | `grammar.enumeration-body` | tsx, typescript |
 | `grammar.enumeration-declaration` | tsx, typescript |
-| `grammar.escape-sequence` | c, javascript, racket, rust, scheme, tsx, typescript |
+| `grammar.escape-sequence` | c, javascript, lean, racket, rust, scheme, tsx, typescript |
 | `grammar.existential-type` | tsx, typescript |
 | `grammar.export-clause` | javascript, tsx, typescript |
 | `grammar.export-specifier` | javascript, tsx, typescript |
 | `grammar.export-statement` | javascript, tsx, typescript |
-| `grammar.expression` | c, javascript, rust, tsx, typescript |
+| `grammar.expression` | c, javascript, lean, rust, tsx, typescript |
 | `grammar.expression-or-sequence` | javascript, tsx, typescript |
 | `grammar.expression-statement` | c, javascript, rust, tsx, typescript |
 | `grammar.extends-clause` | tsx, typescript |
@@ -185,11 +191,12 @@ when only its own grammar names the concept.
 | `grammar.generic-type` | rust, tsx, typescript |
 | `grammar.hash-bang-line` | javascript, tsx, typescript |
 | `grammar.html-character-reference` | javascript, tsx, typescript |
-| `grammar.identifier` | c, javascript, rust, tsx, typescript |
+| `grammar.identifier` | c, javascript, lean, rust, tsx, typescript |
 | `grammar.identifier-choice` | javascript, tsx, typescript |
+| `grammar.if-expression` | lean, rust |
 | `grammar.if-statement` | c, javascript, tsx, typescript |
 | `grammar.implements-clause` | tsx, typescript |
-| `grammar.import` | javascript, tsx, typescript |
+| `grammar.import` | javascript, lean, tsx, typescript |
 | `grammar.import-alias` | tsx, typescript |
 | `grammar.import-attribute` | javascript, tsx, typescript |
 | `grammar.import-clause` | javascript, tsx, typescript |
@@ -227,10 +234,12 @@ when only its own grammar names the concept.
 | `grammar.left-hand-side-expression` | javascript, tsx, typescript |
 | `grammar.lexical-declaration` | javascript, tsx, typescript |
 | `grammar.linked-list` | racket, scheme |
-| `grammar.list` | json, json5, racket, scheme |
+| `grammar.list` | json, json5, lean, racket, scheme |
 | `grammar.literal-type` | tsx, typescript |
 | `grammar.lookup-type` | tsx, typescript |
 | `grammar.mapped-type-clause` | tsx, typescript |
+| `grammar.match-arm` | lean, rust |
+| `grammar.match-expression` | lean, rust |
 | `grammar.member` | json, json5 |
 | `grammar.member-expression` | javascript, tsx, typescript |
 | `grammar.meta-property` | javascript, tsx, typescript |
@@ -247,7 +256,7 @@ when only its own grammar names the concept.
 | `grammar.new-expression` | javascript, tsx, typescript |
 | `grammar.non-null-expression` | tsx, typescript |
 | `grammar.null` | c, javascript, json, json5, tsx, typescript |
-| `grammar.number` | javascript, json, json5, racket, scheme, tsx, typescript |
+| `grammar.number` | javascript, json, json5, lean, racket, scheme, tsx, typescript |
 | `grammar.object` | javascript, json, json5, tsx, typescript |
 | `grammar.object-assignment-pattern` | javascript, tsx, typescript |
 | `grammar.object-pattern` | javascript, tsx, typescript |
@@ -262,14 +271,14 @@ when only its own grammar names the concept.
 | `grammar.pair-pattern` | javascript, tsx, typescript |
 | `grammar.parameter-list` | c, rust |
 | `grammar.parameter-name` | tsx, typescript |
-| `grammar.parenthesized-expression` | c, javascript, rust, tsx, typescript |
+| `grammar.parenthesized-expression` | c, javascript, lean, rust, tsx, typescript |
 | `grammar.parenthesized-type` | tsx, typescript |
-| `grammar.pattern` | javascript, rust, tsx, typescript |
+| `grammar.pattern` | javascript, lean, rust, tsx, typescript |
 | `grammar.predefined-type` | tsx, typescript |
 | `grammar.primary-expression` | javascript, tsx, typescript |
 | `grammar.primary-type` | tsx, typescript |
 | `grammar.private-property-identifier` | javascript, tsx, typescript |
-| `grammar.program` | javascript, racket, scheme, tsx, typescript |
+| `grammar.program` | javascript, lean, racket, scheme, tsx, typescript |
 | `grammar.program-element` | racket, scheme |
 | `grammar.property-name` | javascript, tsx, typescript |
 | `grammar.property-signature` | tsx, typescript |
@@ -286,6 +295,7 @@ when only its own grammar names the concept.
 | `grammar.reserved-identifier` | javascript, rust, tsx, typescript |
 | `grammar.rest-pattern` | javascript, tsx, typescript |
 | `grammar.rest-type` | tsx, typescript |
+| `grammar.return-expression` | lean, rust |
 | `grammar.return-statement` | c, javascript, tsx, typescript |
 | `grammar.satisfies-expression` | tsx, typescript |
 | `grammar.semicolon` | javascript, tsx, typescript |
@@ -294,7 +304,7 @@ when only its own grammar names the concept.
 | `grammar.spread-element` | javascript, tsx, typescript |
 | `grammar.statement` | c, javascript, rust, tsx, typescript |
 | `grammar.statement-block` | javascript, tsx, typescript |
-| `grammar.string` | c, csv, javascript, json, json5, racket, scheme, tsx, typescript |
+| `grammar.string` | c, csv, javascript, json, json5, lean, racket, scheme, tsx, typescript |
 | `grammar.string-literal` | c, rust |
 | `grammar.subscript-expression` | c, javascript, tsx, typescript |
 | `grammar.super` | javascript, rust, tsx, typescript |
@@ -305,15 +315,17 @@ when only its own grammar names the concept.
 | `grammar.symbol` | racket, scheme |
 | `grammar.syntax-quote` | racket, scheme |
 | `grammar.template-literal-type` | tsx, typescript |
-| `grammar.template-string` | javascript, tsx, typescript |
-| `grammar.template-substitution` | javascript, tsx, typescript |
+| `grammar.template-string` | javascript, lean, tsx, typescript |
+| `grammar.template-substitution` | javascript, lean, tsx, typescript |
 | `grammar.template-type` | tsx, typescript |
 | `grammar.ternary-expression` | javascript, tsx, typescript |
 | `grammar.this` | javascript, tsx, typescript |
 | `grammar.throw-statement` | javascript, tsx, typescript |
 | `grammar.true-value` | c, javascript, json, json5, tsx, typescript |
 | `grammar.try-statement` | javascript, tsx, typescript |
+| `grammar.tuple-expression` | lean, rust |
 | `grammar.tuple-parameter` | tsx, typescript |
+| `grammar.tuple-pattern` | lean, rust |
 | `grammar.tuple-type` | rust, tsx, typescript |
 | `grammar.tuple-type-member` | tsx, typescript |
 | `grammar.type` | rust, tsx, typescript |
@@ -333,7 +345,7 @@ when only its own grammar names the concept.
 | `grammar.type-query-member-expression` | tsx, typescript |
 | `grammar.type-query-member-expression-in-type-annotation` | tsx, typescript |
 | `grammar.type-query-subscript-expression` | tsx, typescript |
-| `grammar.unary-expression` | c, javascript, rust, tsx, typescript |
+| `grammar.unary-expression` | c, javascript, lean, rust, tsx, typescript |
 | `grammar.undefined-value` | javascript, tsx, typescript |
 | `grammar.unescaped-double-jsx-string-fragment` | javascript, tsx, typescript |
 | `grammar.unescaped-double-string-fragment` | javascript, tsx, typescript |
@@ -351,6 +363,6 @@ when only its own grammar names the concept.
 | `grammar.variadic-parameter` | c, rust |
 | `grammar.while-statement` | c, javascript, tsx, typescript |
 | `grammar.with-statement` | javascript, tsx, typescript |
-| `grammar.word-characters` | c, javascript, rust, tsx, typescript |
+| `grammar.word-characters` | c, javascript, lean, rust, tsx, typescript |
 | `grammar.yield-expression` | javascript, rust, tsx, typescript |
 | `program.attributes` | c, rust |

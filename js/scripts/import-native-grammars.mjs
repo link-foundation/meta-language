@@ -190,8 +190,13 @@ export function mergeConcepts(register, imports, decisions = {}) {
     .map((record) => ({ ...record, sourceAliases: record.sourceAliases.filter(({ source }) => !sources.has(source)) }))
     .filter((record) => !(record.constraints.includes(GENERATED) && record.sourceAliases.length === 0));
   const byId = new Map(concepts.map((record) => [record.id, record]));
+  const former = new Map(concepts.flatMap((record) => record.formerNames.map((name) => [name, record.id])));
   for (const { entry, rules } of imports) {
     for (const rule of rules) {
+      // A former name stays retired: a rule that would revive it needs a reviewed decision.
+      if (former.has(rule.concept)) {
+        throw new Error(`the ${entry.language} rule ${rule.sourceName ?? rule.name} names ${rule.concept}, a former name of ${former.get(rule.concept)}; decide its concept in ${NAME_EXPANSIONS}`);
+      }
       const alias = { source: nativeSource(entry), name: rule.name };
       let record = byId.get(rule.concept);
       if (!record) {

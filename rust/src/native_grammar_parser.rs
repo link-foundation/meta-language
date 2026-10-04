@@ -61,6 +61,10 @@ const NATIVE_GRAMMAR_TEXTS: &[(&str, &str)] = &[
         include_str!("data/native-grammars/json5.lino"),
     ),
     (
+        "native-grammars/lean.lino",
+        include_str!("data/native-grammars/lean.lino"),
+    ),
+    (
         "native-grammars/racket.lino",
         include_str!("data/native-grammars/racket.lino"),
     ),

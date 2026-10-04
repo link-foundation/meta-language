@@ -73,6 +73,14 @@ pub const REQUIRED_CONCEPT_DISTINCTIONS: &[RequiredDistinction] = &[
         reason: "A boolean value rule accepts both truth values, while a true value rule accepts the literal true alone, so one cannot replace the other.",
     },
     RequiredDistinction {
+        concepts: ["grammar.program", "grammar.module"],
+        reason: "A program is source text the reader reads as code as a whole, while a TypeScript module declaration is one statement that opens a namespace inside a program.",
+    },
+    RequiredDistinction {
+        concepts: ["grammar.true-constant", "grammar.true-value"],
+        reason: "A Lean true constant accepts the proposition True as well as the Boolean literal true, while a true value rule accepts the literal true alone.",
+    },
+    RequiredDistinction {
         concepts: ["grammar.symbol", "grammar.keyword"],
         reason: "A symbol may name a variable, while a keyword evaluates to itself and is never a variable.",
     },

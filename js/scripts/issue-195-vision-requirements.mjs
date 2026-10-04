@@ -448,6 +448,24 @@ export const VISION_REQUIREMENTS = Object.freeze([
     rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/grammar/feature_runtime/precedence.rs'],
   },
   {
+    id: 'I195-GRAMMAR-NATIVE-LEAN',
+    area: 'native-grammar',
+    specification: 'native-merged-grammars',
+    fixture: 'parity/fixtures/native-grammars/lean.json',
+    construct: 'native merged Lean grammar imported with its native layout scanner from its pinned source and checked against its tree-sitter oracle',
+    expectedBehavior:
+      'parity/grammars/native/lean.lino is a canonical native Links Notation grammar that js/scripts/import-native-grammars.mjs imports from the pinned src/grammar.json of tree-sitter-lean4 0.3.0, with every rule renamed to its English name and its concept merged into the shared concepts, its external layout scanner src/scanner.c ported to the native layout scanner of parity/grammars/scanners/lean.lino, and every hand decision recorded in parity/grammars/merge-reports/lean.json. Both executors build, for every source of the upstream test/corpus the oracle accepts, exactly the concrete syntax tree rows of the tree-sitter-lean4 oracle with no ambiguity: commands, namespaces and sections, definitions, theorems, instances, structures and inductive types, binders, applications and projections, tactic blocks, calculations, do notation and its layout, match expressions, syntax quotations and string interpolation included. The merged grammar also reads the explicit function `@foo` of Theorem Proving in Lean 4, which the oracle recovers from. Both executors reject invalid input the oracle recovers from and keep every source byte, comments and white space included, in the tree; the default Lean parse keeps the public `file` root over the grammar\'s `module` root.',
+    assertions: [
+      'nativeLeanGrammarIsCanonicalLinks',
+      'nativeLeanTreesMatchOracle',
+      'nativeLeanAcceptsMergedSourceExtensions',
+      'nativeLeanRejectsInvalidInput',
+      'nativeLeanTreesLossless',
+    ],
+    javascript: ['js/src/grammar-importers/tree-sitter-native.js', 'js/src/grammar-runtime/operations.js', 'js/src/programming-language-parser.js'],
+    rust: ['rust/src/grammar/interchange/links.rs', 'rust/src/grammar/feature_runtime/ordering.rs', 'rust/src/tree_sitter_adapter.rs'],
+  },
+  {
     id: 'I195-GRAMMAR-NATIVE-RECOVERY',
     area: 'native-grammar',
     specification: 'grammar-feature-union',

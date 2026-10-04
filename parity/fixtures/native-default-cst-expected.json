@@ -784,7 +784,7 @@
       "grammars": {
         "native-typescript": {
           "version": "1.0.0",
-          "parserSha256": "50818ac45fe50151e8a693f8a161142cc1d3c975928e1c182eacae9982b00ac4"
+          "parserSha256": "c463413c71f831fc9a5eec34b08ad4e37f95f65b7677791578391755faf43c20"
         }
       },
       "oracleGrammars": {
@@ -880,7 +880,7 @@
       "grammars": {
         "native-tsx": {
           "version": "1.0.0",
-          "parserSha256": "7a9f9d0bb510e8cbba2de2f28e1454b08423cee7bb880fcef9efd548123de53b"
+          "parserSha256": "b8aa0b3b1ffff2c407fa408336126924067d0d4b94a27bb6b45154852575ab60"
         }
       },
       "oracleGrammars": {
@@ -975,6 +975,82 @@
         [4,"close_tag","jsx_closing_element",1,20,20,""],
         [5,null,"</",0,20,20,"M"],
         [5,null,">",0,20,20,"M"]
+      ],
+      "embedded": []
+    },
+    "Lean": {
+      "grammars": {
+        "native-lean": {
+          "version": "1.0.0",
+          "parserSha256": "30e5c99b95de94e0ba97e1c756a05a90b54c87b397f2db2bd985f6dc2d1153ee"
+        }
+      },
+      "oracleGrammars": {
+        "lean": {
+          "version": "bd942cd2795016239be02b3b3d5ef635645ddd38",
+          "parserSha256": "d04d21e8ad0132f9f3410296817a4317fc11d4f8cbd35c62dc3fe0b72f4f9a6b"
+        }
+      },
+      "sourceSha256": "54511cb66984cb58e1aed692fe18e511074cf45158c0642344e5cc324ef4cbe5",
+      "recoverySourceSha256": "44f18c42519b38cbf591f1ed6b00bbdf86e6c4762a108c13732c13df2e0b620a",
+      "positive": [
+        [0,null,"module",1,0,141,""],
+        [1,null,"comment",1,0,18,"X"],
+        [1,null,"comment",1,19,47,"X"],
+        [1,null,"definition",1,48,78,""],
+        [2,"kind","def",0,48,51,""],
+        [2,"name","identifier",1,52,57,""],
+        [2,"binders","binders",1,58,67,""],
+        [3,null,"explicit_binder",1,58,67,""],
+        [4,null,"(",0,58,59,""],
+        [4,"name","identifier",1,59,60,""],
+        [4,null,":",0,61,62,""],
+        [4,"type","identifier",1,63,66,""],
+        [4,null,")",0,66,67,""],
+        [2,null,":",0,68,69,""],
+        [2,"type","identifier",1,70,73,""],
+        [2,null,":=",0,74,76,""],
+        [2,"body","identifier",1,77,78,""],
+        [1,null,"definition",1,79,126,""],
+        [2,"kind","theorem",0,79,86,""],
+        [2,"name","identifier",1,87,95,""],
+        [2,"binders","binders",1,96,105,""],
+        [3,null,"explicit_binder",1,96,105,""],
+        [4,null,"(",0,96,97,""],
+        [4,"name","identifier",1,97,98,""],
+        [4,null,":",0,99,100,""],
+        [4,"type","identifier",1,101,104,""],
+        [4,null,")",0,104,105,""],
+        [2,null,":",0,106,107,""],
+        [2,"type","binary_expression",1,108,119,""],
+        [3,"left","application",1,108,115,""],
+        [4,"name","identifier",1,108,113,""],
+        [4,"arguments","identifier",1,114,115,""],
+        [3,"operator","=",0,116,117,""],
+        [3,"right","identifier",1,118,119,""],
+        [2,null,":=",0,120,122,""],
+        [2,"body","identifier",1,123,126,""],
+        [1,null,"hash_command",1,127,140,""],
+        [2,null,"application",1,133,140,""],
+        [3,"name","identifier",1,133,138,""],
+        [3,"arguments","number",1,139,140,""]
+      ],
+      "recovery": [
+        [0,null,"module",1,0,26,""],
+        [1,null,"definition",1,0,25,""],
+        [2,"kind","def",0,0,3,""],
+        [2,"name","identifier",1,4,5,""],
+        [2,"binders","binders",1,6,14,""],
+        [3,null,"explicit_binder",1,6,14,""],
+        [4,null,"(",0,6,7,""],
+        [4,"name","identifier",1,7,8,""],
+        [4,null,":",0,9,10,""],
+        [4,"type","identifier",1,11,14,""],
+        [4,null,")",0,14,14,"M"],
+        [2,null,":",0,15,16,""],
+        [2,"type","identifier",1,17,20,""],
+        [2,null,":=",0,21,23,""],
+        [2,"body","identifier",1,24,25,""]
       ],
       "embedded": []
     }

@@ -61,6 +61,11 @@ const RACKET_SYMBOL_NEWLINE = 'Racket Reference section 1.3.1 (Delimiters and Di
 // from: two object literals in a row are no expression.
 const JAVASCRIPT_ORACLE_ERROR = 'Extra complex literals in expressions';
 
+// The case of the pinned tree-sitter-lean corpus the oracle recovers from and
+// the native grammar reads as Lean does, and why.
+const LEAN_EXPLICIT_FUNCTION = 'Explicit Function';
+const LEAN_EXPLICIT_FUNCTION_REASON = 'Theorem Proving in Lean 4 section 2.9 (Implicit Arguments) checks `@foo`, the function with all its arguments made explicit, as in `#check @ident` and `#check @List.cons`; tree-sitter-lean4 0.3.0 ends a command before an `@`, which may open the attributes of a next declaration (`@[simp] def`), and recovers from it.';
+
 // The sources the TypeScript and TSX fixtures share past their upstream
 // corpus: what each grammar accepts as tree-sitter-typescript does, and what
 // both reject. TypeScript's `!g<T>()` calls `!g` and `await g<T>;`
@@ -98,6 +103,11 @@ const typescriptSources = (native) => {
 // whose file and title `keep` holds.
 const upstreamCorpus = (native, keep = () => true) =>
   corpusCases(grammarSourceOf(native)).filter(({ file, title }) => keep(file, title)).map(({ source }) => source);
+
+// The cases of the pinned tree-sitter-lean corpus the oracle recovers from
+// (`recovers`) or reads, but the one the native grammar reads as Lean does.
+const leanCorpus = (recovers) => upstreamCorpus('native-lean', (_file, title) => title !== LEAN_EXPLICIT_FUNCTION)
+  .filter((source) => oracleRecovers(source, 'Lean') === recovers);
 
 export const NATIVE_GRAMMARS = Object.freeze([
   {
@@ -714,6 +724,47 @@ export const NATIVE_GRAMMARS = Object.freeze([
     ],
     divergences: [],
     rejections: [...TYPESCRIPT_REJECTIONS, 'x = <div>;'],
+  },
+  {
+    id: 'lean',
+    language: 'Lean',
+    grammar: 'parity/grammars/native/lean.lino',
+    oracle: 'tree-sitter-lean4 0.3.0',
+    sources: [
+      `${grammarSourceOf('native-lean').repository}/blob/${grammarSourceOf('native-lean').revision}/${grammarSourceOf('native-lean').path}`,
+      `${grammarSourceOf('native-lean').repository}/tree/${grammarSourceOf('native-lean').revision}/${grammarSourceOf('native-lean').corpus.path}`,
+    ],
+    // The grammar is the import of the grammar.json the pinned tree-sitter-lean
+    // grammar.js generates, with its native scanner
+    // (js/scripts/import-native-grammars.mjs); the matches are every case of
+    // its upstream corpus at the same revision but those the oracle recovers
+    // from, which the native grammar rejects, and a few sources more.
+    ...nativeGrammar('native-lean'),
+    matches: [
+      ...leanCorpus(false),
+      '', 'def x := 1\n', 'def f (x : Nat) : Nat := x + 1\n', 'theorem t : 1 = 1 := rfl\n', '#eval 1 + 2\n', '#check Nat\n',
+      '-- c\ndef x := 1 /- d -/\n', '/-- doc -/\ndef x := 1\n', 'namespace N\ndef x := 1\nend N\n', 'open Nat\n', 'import Mathlib\n',
+      'structure P where\n  x : Nat\n  y : Nat\n', 'inductive T where\n  | a\n  | b : Nat → T\n', 'def f : Nat → Nat\n  | 0 => 1\n  | n + 1 => n\n',
+      'example : True := by\n  trivial\n', 'def s := "a\\nb"\n', "def c := 'a'\n", 'instance : Inhabited Nat := ⟨0⟩\n',
+      'variable {α : Type} (x : α)\n', 'def f := fun x => x\n', 'def f := λ x => x\n', 'def g := do\n  let x ← pure 1\n  return x\n',
+      'section\nvariable (n : Nat)\nend\n', 'def l := [1, 2, 3]\n', 'def t := (1, 2)\n',
+      'def f (x : Nat) : Nat :=\n  match x with\n  | 0 => 0\n  | _ => 1\n', 'abbrev N := Nat\n', '@[simp] theorem t : 1 = 1 := rfl\n',
+      'def x := if true then 1 else 2\n', 'universe u\n',
+      // A dotted option name: its silent rule of level 0 right shifts on over
+      // the `.` where a projection of level 90 may reduce `pp` first.
+      'set_option pp.all true\n',
+    ],
+    divergences: [
+      {
+        source: upstreamCorpus('native-lean', (_file, title) => title === LEAN_EXPLICIT_FUNCTION)[0],
+        reason: LEAN_EXPLICIT_FUNCTION_REASON,
+      },
+    ],
+    rejections: [
+      ...leanCorpus(true),
+      'def f :=', 'def', 'theorem t : := rfl\n', 'structure P where\n  x :\n', 'def f (x : Nat := x\n', '#eval (1 +\n', 'def s := "abc\n',
+      '/- abc\n', 'def x := [1, 2\n', 'namespace\n', 'inductive\n',
+    ],
   },
 ]);
 

@@ -8,9 +8,13 @@
     { "word": "asm", "replacement": "assembly", "reason": "The asm keyword introduces inline assembly." },
     { "word": "async", "replacement": "asynchronous", "reason": "The Rust keyword async marks an asynchronous function or block (The Rust Reference, Async blocks)." },
     { "word": "bitfield", "replacement": "bit_field", "reason": "The C standard writes bit-field (ISO/IEC 9899:2018 section 6.7.2.1)." },
+    { "word": "calc", "replacement": "calculation", "reason": "The Lean calc keyword opens a calculation, a chain of relations proved step by step (Theorem Proving in Lean 4, section Calculational Proofs)." },
     { "word": "char", "replacement": "character", "reason": "An abbreviation of character; the C type char holds a character." },
     { "word": "chars", "replacement": "characters", "reason": "An abbreviation of characters; JavaScript's _template_chars scans the characters of a template string." },
+    { "word": "config", "replacement": "configuration", "reason": "An abbreviation of configuration." },
     { "word": "const", "replacement": "constant", "reason": "The Rust keyword const declares a constant (The Rust Reference, Constant items)." },
+    { "word": "dbg", "replacement": "debug", "reason": "The Lean dbg_trace keyword prints a debugging message." },
+    { "word": "decl", "replacement": "declaration", "reason": "An abbreviation of declaration." },
     { "word": "declarators", "replacement": "declarator_list", "reason": "A comma-separated list of declarators." },
     { "word": "declspec", "replacement": "declaration_specifier", "reason": "The Microsoft __declspec keyword run together." },
     { "word": "def", "replacement": "definition", "reason": "An abbreviation of definition." },
@@ -37,7 +41,9 @@
     { "word": "qmark", "replacement": "question_mark", "reason": "An abbreviation of question mark; JavaScript's _ternary_qmark scans the ? of a conditional expression." },
     { "word": "regex", "replacement": "regular_expression", "reason": "An abbreviation of regular expression, JavaScript's regex literal and its pattern and flags." },
     { "word": "seh", "replacement": "structured_exception_handling", "reason": "Microsoft structured exception handling." },
+    { "word": "seq", "replacement": "sequence", "reason": "An abbreviation of sequence." },
     { "word": "sizeof", "replacement": "size_of", "reason": "The sizeof operator (ISO/IEC 9899:2018 section 6.5.3.4) run together." },
+    { "word": "spec", "replacement": "specification", "reason": "An abbreviation of specification." },
     { "word": "struct", "replacement": "structure", "reason": "The C standard calls a struct a structure (ISO/IEC 9899:2018 section 6.7.2.1)." }
   ],
   "grammars": {
@@ -142,7 +148,48 @@
     },
     "lean": {
       "names": {
-        "_declaration": "declaration_choice"
+        "_declaration": "declaration_choice",
+        "cdot": "centered_dot"
+      },
+      "concepts": {
+        "module": "grammar.program",
+        "_boolean": "grammar.boolean-value",
+        "char": "grammar.character-literal",
+        "parenthesized": "grammar.parenthesized-expression",
+        "tuple": "grammar.tuple-expression",
+        "if": "grammar.if-expression",
+        "match": "grammar.match-expression",
+        "return": "grammar.return-expression",
+        "interpolated_string": "grammar.template-string",
+        "interpolation": "grammar.template-substitution",
+        "initialize": "grammar.initialization-command",
+        "include": "grammar.include-command",
+        "omit": "grammar.omit-command",
+        "opaque": "grammar.opaque-declaration",
+        "inductive": "grammar.inductive-declaration",
+        "class_inductive": "grammar.class-inductive-declaration",
+        "explicit": "grammar.explicit-term",
+        "by": "grammar.tactic-proof",
+        "tactic_apply": "grammar.apply-tactic",
+        "_then_else": "grammar.then-else-branches",
+        "_do_then_else": "grammar.do-then-else-branches",
+        "let_mut": "grammar.mutable-let-binding",
+        "reassign": "grammar.reassignment",
+        "for_in": "grammar.for-in-loop",
+        "do_if": "grammar.do-if-statement",
+        "do_unless": "grammar.do-unless-statement",
+        "do_continue": "grammar.do-continue-statement",
+        "do_catch": "grammar.do-catch-clause",
+        "sorry": "grammar.sorry-placeholder",
+        "true": "grammar.true-constant",
+        "false": "grammar.false-constant",
+        "section": "grammar.section-command",
+        "end": "grammar.end-command",
+        "attribute": "grammar.attribute-command",
+        "attributes": "grammar.attribute-list",
+        "application": "grammar.function-application",
+        "parameters": "grammar.parameter-binders",
+        "range": "grammar.index-range"
       }
     }
   },
@@ -160,7 +207,9 @@
       "grammar.tokens": [{ "id": "grammar.item", "reason": "Tokens are the token trees a macro rule expands to, while an item is one element of a list." }],
       "grammar.type": [{ "id": "grammar.value.character", "reason": "A type classifies the values of an expression, while a character is one Unicode scalar value." }],
       "grammar.yield-expression": [{ "id": "grammar.return-expression", "reason": "A yield expression hands one value out of a generator and resumes after it, while a return expression leaves the function." }],
-      "grammar.type-argument-list": [{ "id": "grammar.type-parameter-list", "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes." }]
+      "grammar.type-argument-list": [{ "id": "grammar.type-parameter-list", "reason": "A type argument list gives the types a generic use supplies, while a type parameter list declares the names a generic item takes." }],
+      "grammar.command": [{ "id": "grammar.statement", "reason": "A Lean command is one top-level declaration or directive of a module, which the elaborator reads in order, while a statement is one step of a block that runs in order." }],
+      "grammar.syntax-quotation": [{ "id": "grammar.syntax-quote", "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form." }]
     }
   }
 }

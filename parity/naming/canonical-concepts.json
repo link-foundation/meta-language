@@ -1650,9 +1650,9 @@
       "role": "concept",
       "definition": "A rule for the literals true and false.",
       "constraints": [
+        "Native grammars share this concept only where the construct means the same in each language.",
         "Grammar inference and the grammar surface translation use this concept to name rules.",
-        "The English and Russian grammar surfaces translate the rule name through this concept.",
-        "Native grammars share this concept only where the construct means the same in each language."
+        "The English and Russian grammar surfaces translate the rule name through this concept."
       ],
       "sourceAliases": [
         {
@@ -1665,6 +1665,10 @@
         },
         {
           "source": "native:csv",
+          "name": "boolean"
+        },
+        {
+          "source": "native:lean",
           "name": "boolean"
         },
         {
@@ -1782,6 +1786,10 @@
         {
           "source": "native:c",
           "name": "character_literal"
+        },
+        {
+          "source": "native:lean",
+          "name": "character"
         },
         {
           "source": "native:racket",
@@ -2506,6 +2514,10 @@
         {
           "source": "native:javascript",
           "name": "program"
+        },
+        {
+          "source": "native:lean",
+          "name": "module"
         },
         {
           "source": "native:racket",
@@ -7446,6 +7458,10 @@
           "name": "parenthesized_expression"
         },
         {
+          "source": "native:lean",
+          "name": "parenthesized"
+        },
+        {
           "source": "native:rust",
           "name": "parenthesized_expression"
         },
@@ -9380,10 +9396,14 @@
       "role": "concept",
       "definition": "A rule for a return expression, the construct the upstream grammar names return_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:lean",
+          "name": "return"
+        },
         {
           "source": "native:rust",
           "name": "return_expression"
@@ -9449,10 +9469,14 @@
       "role": "concept",
       "definition": "A rule for a tuple expression, the construct the upstream grammar names tuple_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:lean",
+          "name": "tuple"
+        },
         {
           "source": "native:rust",
           "name": "tuple_expression"
@@ -9568,10 +9592,14 @@
       "role": "concept",
       "definition": "A rule for an if expression, the construct the upstream grammar names if_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:lean",
+          "name": "if"
+        },
         {
           "source": "native:rust",
           "name": "if_expression"
@@ -9642,10 +9670,14 @@
       "role": "concept",
       "definition": "A rule for a match expression, the construct the upstream grammar names match_expression.",
       "constraints": [
-        "Only the native Rust grammar defines this construct.",
+        "Native grammars share this concept only where the construct means the same in each language.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
+        {
+          "source": "native:lean",
+          "name": "match"
+        },
         {
           "source": "native:rust",
           "name": "match_expression"
@@ -12641,6 +12673,10 @@
           "name": "template_string"
         },
         {
+          "source": "native:lean",
+          "name": "interpolated_string"
+        },
+        {
           "source": "native:tsx",
           "name": "template_string"
         },
@@ -12664,6 +12700,10 @@
         {
           "source": "native:javascript",
           "name": "template_substitution"
+        },
+        {
+          "source": "native:lean",
+          "name": "interpolation"
         },
         {
           "source": "native:tsx",
@@ -13641,10 +13681,6 @@
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
       ],
       "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "module"
-        },
         {
           "source": "native:tsx",
           "name": "module"
@@ -14961,7 +14997,13 @@
           "name": "command"
         }
       ],
-      "formerNames": []
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.statement",
+          "reason": "A Lean command is one top-level declaration or directive of a module, which the elaborator reads in order, while a statement is one step of a block that runs in order."
+        }
+      ]
     },
     {
       "id": "grammar.set-option",
@@ -15015,10 +15057,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.section",
-      "phrase": "section",
+      "id": "grammar.section-command",
+      "phrase": "section command",
       "role": "concept",
-      "definition": "A rule for a section, the construct the upstream grammar names section.",
+      "definition": "A rule for a section command, the construct the upstream grammar names section.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15032,10 +15074,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.end",
-      "phrase": "end",
+      "id": "grammar.end-command",
+      "phrase": "end command",
       "role": "concept",
-      "definition": "A rule for an end, the construct the upstream grammar names end.",
+      "definition": "A rule for an end command, the construct the upstream grammar names end.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15100,10 +15142,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.initialize",
-      "phrase": "initialize",
+      "id": "grammar.initialization-command",
+      "phrase": "initialization command",
       "role": "concept",
-      "definition": "A rule for an initialize, the construct the upstream grammar names initialize.",
+      "definition": "A rule for an initialization command, the construct the upstream grammar names initialize.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15185,10 +15227,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.include",
-      "phrase": "include",
+      "id": "grammar.include-command",
+      "phrase": "include command",
       "role": "concept",
-      "definition": "A rule for an include, the construct the upstream grammar names include.",
+      "definition": "A rule for an include command, the construct the upstream grammar names include.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15202,10 +15244,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.omit",
-      "phrase": "omit",
+      "id": "grammar.omit-command",
+      "phrase": "omit command",
       "role": "concept",
-      "definition": "A rule for an omit, the construct the upstream grammar names omit.",
+      "definition": "A rule for an omit command, the construct the upstream grammar names omit.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15219,10 +15261,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.attribute",
-      "phrase": "attribute",
+      "id": "grammar.attribute-command",
+      "phrase": "attribute command",
       "role": "concept",
-      "definition": "A rule for an attribute, the construct the upstream grammar names attribute.",
+      "definition": "A rule for an attribute command, the construct the upstream grammar names attribute.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15304,10 +15346,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.attributes",
-      "phrase": "attributes",
+      "id": "grammar.attribute-list",
+      "phrase": "attribute list",
       "role": "concept",
-      "definition": "A rule for an attributes, the construct the upstream grammar names attributes.",
+      "definition": "A rule for an attribute list, the construct the upstream grammar names attributes.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15372,10 +15414,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.instance-decl",
-      "phrase": "instance decl",
+      "id": "grammar.instance-declaration",
+      "phrase": "instance declaration",
       "role": "concept",
-      "definition": "A rule for an instance decl, the construct the upstream grammar names _instance_decl.",
+      "definition": "A rule for an instance declaration, the construct the upstream grammar names _instance_decl.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15383,16 +15425,16 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "instance_decl"
+          "name": "instance_declaration"
         }
       ],
       "formerNames": []
     },
     {
-      "id": "grammar.where-decl",
-      "phrase": "where decl",
+      "id": "grammar.where-declaration",
+      "phrase": "where declaration",
       "role": "concept",
-      "definition": "A rule for a where decl, the construct the upstream grammar names where_decl.",
+      "definition": "A rule for a where declaration, the construct the upstream grammar names where_decl.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15400,7 +15442,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "where_decl"
+          "name": "where_declaration"
         }
       ],
       "formerNames": []
@@ -15423,10 +15465,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.opaque",
-      "phrase": "opaque",
+      "id": "grammar.opaque-declaration",
+      "phrase": "opaque declaration",
       "role": "concept",
-      "definition": "A rule for an opaque, the construct the upstream grammar names opaque.",
+      "definition": "A rule for an opaque declaration, the construct the upstream grammar names opaque.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15491,10 +15533,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.inductive",
-      "phrase": "inductive",
+      "id": "grammar.inductive-declaration",
+      "phrase": "inductive declaration",
       "role": "concept",
-      "definition": "A rule for an inductive, the construct the upstream grammar names inductive.",
+      "definition": "A rule for an inductive declaration, the construct the upstream grammar names inductive.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15508,10 +15550,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.class-inductive",
-      "phrase": "class inductive",
+      "id": "grammar.class-inductive-declaration",
+      "phrase": "class inductive declaration",
       "role": "concept",
-      "definition": "A rule for a class inductive, the construct the upstream grammar names class_inductive.",
+      "definition": "A rule for a class inductive declaration, the construct the upstream grammar names class_inductive.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15644,10 +15686,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.type-spec",
-      "phrase": "type spec",
+      "id": "grammar.type-specification",
+      "phrase": "type specification",
       "role": "concept",
-      "definition": "A rule for a type spec, the construct the upstream grammar names _type_spec.",
+      "definition": "A rule for a type specification, the construct the upstream grammar names _type_spec.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15655,7 +15697,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "type_spec"
+          "name": "type_specification"
         }
       ],
       "formerNames": []
@@ -15673,23 +15715,6 @@
         {
           "source": "native:lean",
           "name": "try"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.return",
-      "phrase": "return",
-      "role": "concept",
-      "definition": "A rule for a return, the construct the upstream grammar names return.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "return"
         }
       ],
       "formerNames": []
@@ -15729,10 +15754,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.application",
-      "phrase": "application",
+      "id": "grammar.function-application",
+      "phrase": "function application",
       "role": "concept",
-      "definition": "A rule for an application, the construct the upstream grammar names application.",
+      "definition": "A rule for a function application, the construct the upstream grammar names application.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15797,10 +15822,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.explicit",
-      "phrase": "explicit",
+      "id": "grammar.explicit-term",
+      "phrase": "explicit term",
       "role": "concept",
-      "definition": "A rule for an explicit, the construct the upstream grammar names explicit.",
+      "definition": "A rule for an explicit term, the construct the upstream grammar names explicit.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15899,10 +15924,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.by",
-      "phrase": "by",
+      "id": "grammar.tactic-proof",
+      "phrase": "tactic proof",
       "role": "concept",
-      "definition": "A rule for a by, the construct the upstream grammar names by.",
+      "definition": "A rule for a tactic proof, the construct the upstream grammar names by.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15916,10 +15941,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.tactic-seq",
-      "phrase": "tactic seq",
+      "id": "grammar.tactic-sequence",
+      "phrase": "tactic sequence",
       "role": "concept",
-      "definition": "A rule for a tactic seq, the construct the upstream grammar names _tactic_seq.",
+      "definition": "A rule for a tactic sequence, the construct the upstream grammar names _tactic_seq.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15927,7 +15952,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "tactic_seq"
+          "name": "tactic_sequence"
         }
       ],
       "formerNames": []
@@ -15950,10 +15975,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.tactic-apply",
-      "phrase": "tactic apply",
+      "id": "grammar.apply-tactic",
+      "phrase": "apply tactic",
       "role": "concept",
-      "definition": "A rule for a tactic apply, the construct the upstream grammar names tactic_apply.",
+      "definition": "A rule for an apply tactic, the construct the upstream grammar names tactic_apply.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15967,10 +15992,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.tactic-config",
-      "phrase": "tactic config",
+      "id": "grammar.tactic-configuration",
+      "phrase": "tactic configuration",
       "role": "concept",
-      "definition": "A rule for a tactic config, the construct the upstream grammar names tactic_config.",
+      "definition": "A rule for a tactic configuration, the construct the upstream grammar names tactic_config.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -15978,7 +16003,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "tactic_config"
+          "name": "tactic_configuration"
         }
       ],
       "formerNames": []
@@ -16086,10 +16111,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.tactic-calc",
-      "phrase": "tactic calc",
+      "id": "grammar.tactic-calculation",
+      "phrase": "tactic calculation",
       "role": "concept",
-      "definition": "A rule for a tactic calc, the construct the upstream grammar names tactic_calc.",
+      "definition": "A rule for a tactic calculation, the construct the upstream grammar names tactic_calc.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16097,16 +16122,16 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "tactic_calc"
+          "name": "tactic_calculation"
         }
       ],
       "formerNames": []
     },
     {
-      "id": "grammar.calc-step",
-      "phrase": "calc step",
+      "id": "grammar.calculation-step",
+      "phrase": "calculation step",
       "role": "concept",
-      "definition": "A rule for a calc step, the construct the upstream grammar names calc_step.",
+      "definition": "A rule for a calculation step, the construct the upstream grammar names calc_step.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16114,7 +16139,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "calc_step"
+          "name": "calculation_step"
         }
       ],
       "formerNames": []
@@ -16137,10 +16162,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.parameters",
-      "phrase": "parameters",
+      "id": "grammar.parameter-binders",
+      "phrase": "parameter binders",
       "role": "concept",
-      "definition": "A rule for a parameters, the construct the upstream grammar names parameters.",
+      "definition": "A rule for a parameter binders, the construct the upstream grammar names parameters.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16154,27 +16179,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.if",
-      "phrase": "if",
+      "id": "grammar.then-else-branches",
+      "phrase": "then else branches",
       "role": "concept",
-      "definition": "A rule for an if, the construct the upstream grammar names if.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "if"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.then-else",
-      "phrase": "then else",
-      "role": "concept",
-      "definition": "A rule for a then else, the construct the upstream grammar names _then_else.",
+      "definition": "A rule for a then else branches, the construct the upstream grammar names _then_else.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16239,23 +16247,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.match",
-      "phrase": "match",
-      "role": "concept",
-      "definition": "A rule for a match, the construct the upstream grammar names match.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "match"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.do",
       "phrase": "do",
       "role": "concept",
@@ -16273,10 +16264,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.do-seq",
-      "phrase": "do seq",
+      "id": "grammar.do-sequence",
+      "phrase": "do sequence",
       "role": "concept",
-      "definition": "A rule for a do seq, the construct the upstream grammar names _do_seq.",
+      "definition": "A rule for a do sequence, the construct the upstream grammar names _do_seq.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16284,7 +16275,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "do_seq"
+          "name": "do_sequence"
         }
       ],
       "formerNames": []
@@ -16341,10 +16332,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.let-mutable",
-      "phrase": "let mutable",
+      "id": "grammar.mutable-let-binding",
+      "phrase": "mutable let binding",
       "role": "concept",
-      "definition": "A rule for a let mutable, the construct the upstream grammar names let_mut.",
+      "definition": "A rule for a mutable let binding, the construct the upstream grammar names let_mut.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16358,10 +16349,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.reassign",
-      "phrase": "reassign",
+      "id": "grammar.reassignment",
+      "phrase": "reassignment",
       "role": "concept",
-      "definition": "A rule for a reassign, the construct the upstream grammar names reassign.",
+      "definition": "A rule for a reassignment, the construct the upstream grammar names reassign.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16392,10 +16383,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.for-in",
-      "phrase": "for in",
+      "id": "grammar.for-in-loop",
+      "phrase": "for in loop",
       "role": "concept",
-      "definition": "A rule for a for in, the construct the upstream grammar names for_in.",
+      "definition": "A rule for a for in loop, the construct the upstream grammar names for_in.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16426,10 +16417,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.do-if",
-      "phrase": "do if",
+      "id": "grammar.do-if-statement",
+      "phrase": "do if statement",
       "role": "concept",
-      "definition": "A rule for a do if, the construct the upstream grammar names do_if.",
+      "definition": "A rule for a do if statement, the construct the upstream grammar names do_if.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16443,10 +16434,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.do-then-else",
-      "phrase": "do then else",
+      "id": "grammar.do-then-else-branches",
+      "phrase": "do then else branches",
       "role": "concept",
-      "definition": "A rule for a do then else, the construct the upstream grammar names _do_then_else.",
+      "definition": "A rule for a do then else branches, the construct the upstream grammar names _do_then_else.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16528,10 +16519,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.do-unless",
-      "phrase": "do unless",
+      "id": "grammar.do-unless-statement",
+      "phrase": "do unless statement",
       "role": "concept",
-      "definition": "A rule for a do unless, the construct the upstream grammar names do_unless.",
+      "definition": "A rule for a do unless statement, the construct the upstream grammar names do_unless.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16545,10 +16536,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.do-dbg-trace",
-      "phrase": "do dbg trace",
+      "id": "grammar.do-debug-trace",
+      "phrase": "do debug trace",
       "role": "concept",
-      "definition": "A rule for a do dbg trace, the construct the upstream grammar names do_dbg_trace.",
+      "definition": "A rule for a do debug trace, the construct the upstream grammar names do_dbg_trace.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16556,7 +16547,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "do_dbg_trace"
+          "name": "do_debug_trace"
         }
       ],
       "formerNames": []
@@ -16579,10 +16570,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.do-continue",
-      "phrase": "do continue",
+      "id": "grammar.do-continue-statement",
+      "phrase": "do continue statement",
       "role": "concept",
-      "definition": "A rule for a do continue, the construct the upstream grammar names do_continue.",
+      "definition": "A rule for a do continue statement, the construct the upstream grammar names do_continue.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16613,10 +16604,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.do-catch",
-      "phrase": "do catch",
+      "id": "grammar.do-catch-clause",
+      "phrase": "do catch clause",
       "role": "concept",
-      "definition": "A rule for a do catch, the construct the upstream grammar names do_catch.",
+      "definition": "A rule for a do catch clause, the construct the upstream grammar names do_catch.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16625,23 +16616,6 @@
         {
           "source": "native:lean",
           "name": "do_catch"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.parenthesized",
-      "phrase": "parenthesized",
-      "role": "concept",
-      "definition": "A rule for a parenthesized, the construct the upstream grammar names parenthesized.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "parenthesized"
         }
       ],
       "formerNames": []
@@ -16659,23 +16633,6 @@
         {
           "source": "native:lean",
           "name": "named_argument"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.tuple",
-      "phrase": "tuple",
-      "role": "concept",
-      "definition": "A rule for a tuple, the construct the upstream grammar names tuple.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "tuple"
         }
       ],
       "formerNames": []
@@ -16766,10 +16723,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.range",
-      "phrase": "range",
+      "id": "grammar.index-range",
+      "phrase": "index range",
       "role": "concept",
-      "definition": "A rule for a range, the construct the upstream grammar names range.",
+      "definition": "A rule for an index range, the construct the upstream grammar names range.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16783,10 +16740,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.range-spec",
-      "phrase": "range spec",
+      "id": "grammar.range-specification",
+      "phrase": "range specification",
       "role": "concept",
-      "definition": "A rule for a range spec, the construct the upstream grammar names _range_spec.",
+      "definition": "A rule for a range specification, the construct the upstream grammar names _range_spec.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16794,7 +16751,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "range_spec"
+          "name": "range_specification"
         }
       ],
       "formerNames": []
@@ -16834,23 +16791,6 @@
       "formerNames": []
     },
     {
-      "id": "grammar.interpolated-string",
-      "phrase": "interpolated string",
-      "role": "concept",
-      "definition": "A rule for an interpolated string, the construct the upstream grammar names interpolated_string.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "interpolated_string"
-        }
-      ],
-      "formerNames": []
-    },
-    {
       "id": "grammar.string-content",
       "phrase": "string content",
       "role": "concept",
@@ -16863,40 +16803,6 @@
         {
           "source": "native:lean",
           "name": "string_content"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.interpolation",
-      "phrase": "interpolation",
-      "role": "concept",
-      "definition": "A rule for an interpolation, the construct the upstream grammar names interpolation.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "interpolation"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.character",
-      "phrase": "character",
-      "role": "concept",
-      "definition": "A rule for a character, the construct the upstream grammar names char.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "character"
         }
       ],
       "formerNames": []
@@ -16919,10 +16825,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.cdot",
-      "phrase": "cdot",
+      "id": "grammar.centered-dot",
+      "phrase": "centered dot",
       "role": "concept",
-      "definition": "A rule for a cdot, the construct the upstream grammar names cdot.",
+      "definition": "A rule for a centered dot, the construct the upstream grammar names cdot.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -16930,7 +16836,7 @@
       "sourceAliases": [
         {
           "source": "native:lean",
-          "name": "cdot"
+          "name": "centered_dot"
         }
       ],
       "formerNames": []
@@ -17001,7 +16907,13 @@
           "name": "syntax_quotation"
         }
       ],
-      "formerNames": []
+      "formerNames": [],
+      "distinctFrom": [
+        {
+          "id": "grammar.syntax-quote",
+          "reason": "A Lean syntax quotation `(…) builds the syntax tree of the Lean source between its parentheses, while a syntax quote is a hash-apostrophe before a datum, which reads as a syntax form."
+        }
+      ]
     },
     {
       "id": "grammar.ellipsis",
@@ -17021,10 +16933,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.sorry",
-      "phrase": "sorry",
+      "id": "grammar.sorry-placeholder",
+      "phrase": "sorry placeholder",
       "role": "concept",
-      "definition": "A rule for a sorry, the construct the upstream grammar names sorry.",
+      "definition": "A rule for a sorry placeholder, the construct the upstream grammar names sorry.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -17038,27 +16950,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.boolean",
-      "phrase": "boolean",
+      "id": "grammar.true-constant",
+      "phrase": "true constant",
       "role": "concept",
-      "definition": "A rule for a boolean, the construct the upstream grammar names _boolean.",
-      "constraints": [
-        "Only the native Lean grammar defines this construct.",
-        "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
-      ],
-      "sourceAliases": [
-        {
-          "source": "native:lean",
-          "name": "boolean"
-        }
-      ],
-      "formerNames": []
-    },
-    {
-      "id": "grammar.true",
-      "phrase": "true",
-      "role": "concept",
-      "definition": "A rule for a true, the construct the upstream grammar names true.",
+      "definition": "A rule for a true constant, the construct the upstream grammar names true.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."
@@ -17072,10 +16967,10 @@
       "formerNames": []
     },
     {
-      "id": "grammar.false",
-      "phrase": "false",
+      "id": "grammar.false-constant",
+      "phrase": "false constant",
       "role": "concept",
-      "definition": "A rule for a false, the construct the upstream grammar names false.",
+      "definition": "A rule for a false constant, the construct the upstream grammar names false.",
       "constraints": [
         "Only the native Lean grammar defines this construct.",
         "js/scripts/import-native-grammars.mjs generates this record from the rule names of the imported grammars."

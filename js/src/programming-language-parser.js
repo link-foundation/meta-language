@@ -211,7 +211,7 @@ function parseGrammarCst(text, canonical) {
     const tree = convertGrammarNode(root, adapter, canonical, text, boundaries, tokens);
     const trailing = [];
     pushGapNodes(trailing, adapter.endOffset(root), text.length, text, boundaries, tokens);
-    return { canonical, rootTerm: tree.term, tokens, tree, leading, trailing };
+    return publicRoot({ canonical, tokens, tree, leading, trailing }, text, boundaries);
   }
   const grammar = id === undefined ? undefined : grammarLanguage(id);
   if (!grammar) {
@@ -237,9 +237,13 @@ function parseGrammarCst(text, canonical) {
   const trailing = [];
   pushGapNodes(trailing, adapter.endOffset(root), text.length, text, boundaries, tokens);
   parsed.delete();
+  return publicRoot({ canonical, tokens, tree, leading, trailing }, text, boundaries);
+}
 
-  // Preserve the original public Lean root while retaining the grammar's
-  // `module` root immediately below it. Consumers can query either layer.
+// Preserves the original public Lean root while retaining the grammar's
+// `module` root immediately below it, whichever grammar parsed the source.
+// Consumers can query either layer.
+function publicRoot({ canonical, tokens, tree, leading, trailing }, text, boundaries) {
   if (canonical === 'Lean') {
     const file = {
       term: LEAN_PUBLIC_ROOT,

@@ -91,7 +91,8 @@ export function mergeQualityRecord(id, entry, { recovery = readJson(RECOVERY), r
 
   const rules = Object.fromEntries(RULE_KINDS.map((kind) => [kind, 0]));
   for (const rule of grammar.rules.values()) rules[rule.kind] += 1;
-  const oracleName = (name) => fixture.oracleKinds[name] ?? name;
+  // Own kinds only: a rule may be named `constructor`.
+  const oracleName = (name) => (Object.hasOwn(fixture.oracleKinds, name) ? fixture.oracleKinds[name] : name);
   const unseen = new Set([...fixture.hidden, ...fixture.anonymous]);
   const visible = [...grammar.rules.values()]
     .filter((rule) => rule.kind === 'normal' && !unseen.has(rule.name) && !oracleName(rule.name).startsWith('_'))

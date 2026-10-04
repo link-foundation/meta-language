@@ -221,7 +221,9 @@ test('native rule names are readable English and keep their tree-sitter names as
     for (const [name, { sourceNames }] of named) {
       assert.match(name, english, `${grammar} ${name}`);
       const original = sourceNames?.find(({ source }) => source === 'tree-sitter')?.name;
-      assert.equal(oracleKinds[name], original, `${grammar} ${name} keeps its tree-sitter kind`);
+      // Own kinds only: a rule may be named `constructor`.
+      const kind = Object.hasOwn(oracleKinds, name) ? oracleKinds[name] : undefined;
+      assert.equal(kind, original, `${grammar} ${name} keeps its tree-sitter kind`);
     }
     assert.equal(Object.keys(oracleKinds).length, named.filter(([, { sourceNames }]) => sourceNames?.length > 0).length);
   }

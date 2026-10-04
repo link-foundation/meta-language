@@ -91,6 +91,8 @@ test('checkConceptDistinctions rejects records that merge or fail to justify a r
       'grammar.identifier / grammar.identifier-name',
       'grammar.document / grammar.program',
       'grammar.boolean-value / grammar.true-value',
+      'grammar.program / grammar.module',
+      'grammar.true-constant / grammar.true-value',
       'grammar.symbol / grammar.keyword',
       'grammar.comment / grammar.block-comment',
     ],

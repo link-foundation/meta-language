@@ -72,6 +72,7 @@ mod issue_195_grammar_native_ini;
 mod issue_195_grammar_native_javascript;
 mod issue_195_grammar_native_json;
 mod issue_195_grammar_native_json5;
+mod issue_195_grammar_native_lean;
 mod issue_195_grammar_native_racket;
 mod issue_195_grammar_native_recovery;
 mod issue_195_grammar_native_rust;

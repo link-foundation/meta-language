@@ -124,9 +124,41 @@ fn network_from_native(
         SpanOffset::zero(),
         text.len(),
     );
-    convert_native_root(&mut network, document, &root, context);
+    let tree_parent = public_root(&mut network, document, context, native_flags(&root));
+    convert_native_root(&mut network, tree_parent, &root, context);
     network.attach_embedded_regions(document, text, language, configuration);
     network
+}
+
+/// Preserves the original public Lean root `file` above the grammar's
+/// `module` root, whichever grammar parsed the source, as `publicRoot` in
+/// `js/src/programming-language-parser.js` does. Consumers can query either
+/// layer; every other language's tree hangs from the document itself.
+fn public_root(
+    network: &mut LinkNetwork,
+    document: LinkId,
+    context: ConvertContext<'_>,
+    flags: LinkFlags,
+) -> LinkId {
+    let language = context.language;
+    if !language.eq_ignore_ascii_case("lean") && !language.eq_ignore_ascii_case("lean4") {
+        return document;
+    }
+    network.insert_link(
+        [document],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Syntax)
+            .with_named(true)
+            .with_term("file")
+            .with_language(language)
+            .with_span(span_for_range(
+                context.lines,
+                0,
+                context.source_len,
+                SpanOffset::zero(),
+            ))
+            .with_flags(flags),
+    )
 }
 
 fn network_from_tree(
@@ -146,21 +178,7 @@ fn network_from_tree(
         SpanOffset::zero(),
         text.len(),
     );
-    let tree_parent =
-        if language.eq_ignore_ascii_case("lean") || language.eq_ignore_ascii_case("lean4") {
-            network.insert_link(
-                [document],
-                LinkMetadata::new()
-                    .with_link_type(LinkType::Syntax)
-                    .with_named(true)
-                    .with_term("file")
-                    .with_language(language)
-                    .with_span(span_for_range(&lines, 0, text.len(), SpanOffset::zero()))
-                    .with_flags(flags_for_node(root)),
-            )
-        } else {
-            document
-        };
+    let tree_parent = public_root(&mut network, document, context, flags_for_node(root));
     convert_root(&mut network, tree_parent, root, context);
     network.attach_embedded_regions(document, text, language, configuration);
     network
