@@ -103,6 +103,51 @@ jobs:
       pages: write
       id-token: write
 
+  # Publishes, per module, how far the self-translation of each JavaScript
+  # module is from its hand-written Rust. The whole of js/src takes over an
+  # hour on one runner, so the modules are split into shards of about the same
+  # size. It runs beside the JavaScript and Rust workflows and holds neither
+  # back.
+  self-translation-report:
+    name: Self-Translation Report (${{ matrix.shard }}/8)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Report self-translation against the hand-written Rust
+        run: |
+          node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --out-dir ../self-translation-report > /dev/null
+          cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"
+        working-directory: js
+
+      - name: Upload the self-translation report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}
+          path: self-translation-report
+          if-no-files-found: error
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
   # The bulk grammar pipeline (I195-GRAMMAR-BULK-PIPELINE) imports, compiles,
   # parses and merges the tree-sitter and grammars-v4 grammars of every
   # catalog language with a grammar and publishes the matrix in the job

@@ -8378,8 +8378,7 @@
       "name": "actions/upload-artifact",
       "declaredIn": [
         ".github/workflows/ci.yml",
-        ".github/workflows/issue-195-acceptance.yml",
-        ".github/workflows/js.yml"
+        ".github/workflows/issue-195-acceptance.yml"
       ],
       "pinned": "v7",
       "compare": "major",

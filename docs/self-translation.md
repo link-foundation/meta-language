@@ -100,8 +100,12 @@ code lines the hand-written Rust holds too. Each module is measured twice: by
 the generic translation and by the translation with the shared emitter
 [decorators](decorators.md) of `parity/self-translation/decorators.lino`
 (`--decorators` names another set), so the report shows how much of the
-difference the decorators close. CI publishes the report in the job summary of
-the JavaScript package job and as the `self-translation-report` artifact.
+difference the decorators close. The whole of `js/src` takes over an hour on
+one runner, so `--shard K/N` measures one of N shards that hold about the same
+number of source bytes, and `--list` prints a shard's modules. CI's
+`Self-Translation Report` jobs in `ci.yml` run eight shards beside the
+JavaScript and Rust workflows. Each shard publishes its part of the report in
+its job summary and as a `self-translation-report-<sha>-<shard>` artifact.
 
 Decorators edit emitted lines; they cannot add what the translator carries
 untranslated (imports, classes, exports the emitters do not cover), so for

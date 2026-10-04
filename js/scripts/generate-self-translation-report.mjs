@@ -7,7 +7,11 @@
 // measure a few modules).
 //
 //   node js/scripts/generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js]
-//     [--decorators parity/self-translation/decorators.lino]
+//     [--decorators parity/self-translation/decorators.lino] [--shard K/N] [--list]
+//
+// The whole tree takes over an hour on one runner, so CI splits it: `--shard
+// K/N` measures the K-th of N shards, which hold about the same number of
+// source bytes each. `--list` prints the modules it would measure and stops.
 //
 // For each module the report lists its top-level items by status, the Rust
 // functions the translation writes, how many of them the hand-written Rust
@@ -43,6 +47,34 @@ function modules() {
     return entry.name.endsWith('.js') ? [path] : [];
   });
   return walk('js/src').sort();
+}
+
+/**
+ * The K-th of `count` shards of `files`: each file goes, largest first, to the
+ * shard with the fewest bytes so far, so the shards take about as long.
+ */
+function shardOf(files, index, count) {
+  const loads = Array(count).fill(0);
+  const shards = Array.from({ length: count }, () => []);
+  const sized = files.map((file) => ({ file, size: readFileSync(join(root, file)).length }));
+  sized.sort((a, b) => b.size - a.size || a.file.localeCompare(b.file));
+  for (const { file, size } of sized) {
+    const target = loads.indexOf(Math.min(...loads));
+    loads[target] += size;
+    shards[target].push(file);
+  }
+  return shards[index - 1].sort();
+}
+
+function selectedModules() {
+  const shard = option('--shard');
+  if (!shard) return modules();
+  const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/u.exec(shard);
+  if (!match || Number(match[1]) > Number(match[2])) {
+    console.error(`--shard takes K/N with 1 <= K <= N, not ${shard}`);
+    process.exit(2);
+  }
+  return shardOf(modules(), Number(match[1]), Number(match[2]));
 }
 
 /** The hand-written Rust module `module` corresponds to, or null. */
@@ -132,15 +164,19 @@ function markdown(rows) {
   return `${lines.join('\n')}\n`;
 }
 
+if (process.argv.includes('--list')) {
+  console.log(selectedModules().join('\n'));
+  process.exit(0);
+}
 const outDir = option('--out-dir');
 if (!outDir) {
-  console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino]');
+  console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino] [--shard K/N] [--list]');
   process.exit(2);
 }
 const decorators = DecoratorSet.fromLino(readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8'));
 const rows = [];
 const failures = [];
-for (const module of modules()) {
+for (const module of selectedModules()) {
   try {
     rows.push(measure(module, decorators));
   } catch (error) {

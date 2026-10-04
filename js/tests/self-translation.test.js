@@ -182,3 +182,19 @@ test('the report measures each translated module against its hand-written Rust',
   }
   observe('I195-SELF-TRANSLATION-SHARED-CORPUS', ['differencePerModulePublished'], 'the report measures each translated module against its hand-written Rust');
 });
+
+test('the report splits the modules into shards of about the same size', () => {
+  const script = path.join(root, 'js/scripts/generate-self-translation-report.mjs');
+  const list = (...args) => execFileSync(process.execPath, [script, '--list', ...args], { encoding: 'utf8' }).trim().split('\n');
+  const all = list();
+  const shards = [1, 2, 3].map((shard) => list('--shard', `${shard}/3`));
+  // Every module is in exactly one shard.
+  assert.deepEqual(shards.flat().sort(), [...all].sort());
+  const bytes = (modules) => modules.reduce((sum, module) => sum + readFileSync(path.join(root, module)).length, 0);
+  const largest = Math.max(...all.map((module) => bytes([module])));
+  const sizes = shards.map(bytes);
+  // Largest first to the lightest shard keeps the shards within one module of each other.
+  assert.ok(Math.max(...sizes) - Math.min(...sizes) <= largest, String(sizes));
+  assert.deepEqual(list('--modules', 'language-support.js,self-translation.js', '--shard', '2/2').length, 1);
+  assert.throws(() => list('--shard', '3/2'), /--shard takes K\/N/u);
+});
