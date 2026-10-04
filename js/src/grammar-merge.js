@@ -5,9 +5,13 @@
 // print the same canonical definitions, so their decisions agree.
 import { createHash } from 'node:crypto';
 
-import { carryRuleDocs, Grammar } from './grammar.js';
+import { Grammar } from './grammar.js';
 import { grammarDeclarations } from './grammar-feature-forms.js';
 import { renderDeclarationLinks, renderLinksExpression, renderRuleFieldLinks } from './grammar-links.js';
+import { DecoratorSet, decoratorSet } from './decorators.js';
+import { mapDeclarations, mapReferences, renamedRule } from './grammar-rename.js';
+
+export { GrammarRenameError, renameGrammarRule, restoreSourceNames } from './grammar-rename.js';
 
 /** How an accepted equivalence is justified. */
 export const GRAMMAR_MERGE_METHOD = 'recursive-structural-bisimulation';
@@ -18,15 +22,6 @@ export class GrammarMergeError extends Error {
     super(message);
     this.name = 'GrammarMergeError';
     this.failures = failures;
-  }
-}
-
-/** Raised when a rename is unknown, invalid or would capture another name. */
-export class GrammarRenameError extends Error {
-  constructor(kind, message) {
-    super(message);
-    this.name = 'GrammarRenameError';
-    this.kind = kind;
   }
 }
 
@@ -41,10 +36,15 @@ export class GrammarRenameError extends Error {
  * `sourceId:ruleName`) only nominate candidates. `options.requiredEquivalences`
  * lists `[aliasA, aliasB]` pairs that must end up merged, otherwise the result
  * is `incomplete`. `options.previous` is an earlier result: unchanged groups are
- * reused and established canonical names are kept.
+ * reused and established canonical names are kept. `options.decorators` holds
+ * `merge-decision` decorators, which see each decision as `{ kind, name,
+ * members, basis, definition }` (members joined by spaces): they may change
+ * its `kind` or `basis`, or drop it from the report. They never change the
+ * merged grammar, and a group is reused only under the same decorators.
  */
 export function mergeGrammars(sources, options = {}) {
   const prepared = prepareSources(sources);
+  const decorators = decoratorSet(options.decorators);
   const samples = normalizeSamples(options.samples ?? {});
   const required = normalizeRequired(options.requiredEquivalences ?? []);
   const previousGroups = new Map((options.previous?.groups ?? []).map((group) => [group.key, group]));
@@ -65,14 +65,14 @@ export function mergeGrammars(sources, options = {}) {
     const key = groupKey(entry.language, entry.edition);
     const ids = new Set(entry.sources.map(({ id }) => id));
     const groupRequired = required.filter((pair) => pair.some((alias) => ids.has(sourceOf(alias))));
-    const fingerprint = groupFingerprint(entry, groupRequired, samples);
+    const fingerprint = groupFingerprint(entry, groupRequired, samples, decorators);
     const previous = previousGroups.get(key);
     if (previous && previous.fingerprint === fingerprint) {
       groups.push(previous);
       reused.push(key);
       continue;
     }
-    groups.push(mergeGroup(entry, fingerprint, samples, previous?.identities ?? {}));
+    groups.push(mergeGroup(entry, fingerprint, samples, previous?.identities ?? {}, decorators));
     recomputed.push(key);
   }
 
@@ -95,132 +95,9 @@ export function assertMergeComplete(result) {
   throw new GrammarMergeError(`unresolved required equivalence: ${detail}`, result.failures);
 }
 
-/**
- * Renames one rule and every reference to it, including recursive references,
- * references inside captures and references qualified with `namespace` (as
- * `namespace.rule` or `namespace::rule`). Capture labels are a separate scope
- * and are never renamed. The returned aliases map canonical names back to the
- * original source names, so the grammar can be exported with them.
- */
-export function renameGrammarRule(grammar, from, to, { namespace = null, aliases = [] } = {}) {
-  if (typeof to !== 'string' || !/^\S+$/u.test(to)) {
-    throw new GrammarRenameError('invalid-name', `invalid rule name ${JSON.stringify(to)}`);
-  }
-  if (!grammar.rules.has(from)) {
-    throw new GrammarRenameError('unknown-rule', `grammar has no rule ${from}`);
-  }
-  if (from === to) return { grammar, aliases: [...aliases] };
-  const mapping = new Map([[from, to]]);
-  if (namespace !== null) {
-    mapping.set(`${namespace}.${from}`, `${namespace}.${to}`);
-    mapping.set(`${namespace}::${from}`, `${namespace}::${to}`);
-  }
-  const taken = new Set([...grammar.ruleNames(), ...grammar.referencedNonterminals()]);
-  for (const target of mapping.values()) {
-    if (taken.has(target)) {
-      throw new GrammarRenameError('collision', `renaming ${from} to ${to} would capture the existing name ${target}`);
-    }
-  }
-  let chained = false;
-  const nextAliases = aliases.map((alias) => {
-    if (alias.canonical !== from) return { ...alias };
-    chained = true;
-    return { canonical: to, original: alias.original };
-  });
-  if (!chained) nextAliases.push({ canonical: to, original: from });
-  return { grammar: renameAll(grammar, mapping), aliases: nextAliases };
-}
-
-/** Renames canonical rule names back to their source names for export. */
-export function restoreSourceNames(grammar, aliases, { namespace = null } = {}) {
-  const mapping = new Map();
-  for (const { canonical, original } of aliases) {
-    if (!grammar.rules.has(canonical) || canonical === original) continue;
-    mapping.set(canonical, original);
-    if (namespace !== null) {
-      mapping.set(`${namespace}.${canonical}`, `${namespace}.${original}`);
-      mapping.set(`${namespace}::${canonical}`, `${namespace}::${original}`);
-    }
-  }
-  const rename = (name) => mapping.get(name) ?? name;
-  const ruleNames = grammar.ruleNames().map(rename);
-  const externals = grammar.referencedNonterminals().filter((name) => !grammar.rules.has(name)).map(rename);
-  if (new Set(ruleNames).size !== ruleNames.length || externals.some((name) => ruleNames.includes(name))) {
-    throw new GrammarRenameError('collision', 'restoring source names would give two bindings the same name');
-  }
-  return renameAll(grammar, mapping);
-}
-
 /** The canonical text of a rule definition after meaning-aware normalization. */
 export function normalizedRuleDefinition(rule) {
   return `${rule.kind ?? 'normal'}:${normalize(rule.expression, nameLabel).text}`;
-}
-
-// Renames rules and every reference to them: in rule bodies, in rule actions
-// and in the declarations (extras, conflict groups, macro bodies and scanner
-// operations). Macro names, scanner names and tokens are separate scopes.
-function renameAll(grammar, mapping) {
-  const rename = (name) => mapping.get(name) ?? name;
-  const rules = new Map();
-  for (const rule of grammar.rules.values()) rules.set(rename(rule.name), renamedRule(rule, rename));
-  return carryRuleDocs(
-    new Grammar(
-      grammar.start === null ? null : rename(grammar.start),
-      rules,
-      grammar.sourceFormat,
-      mapDeclarations(grammarDeclarations(grammar), rename),
-    ),
-    grammar,
-    rename,
-  );
-}
-
-// A rule with its body and action references renamed. A parameter is used
-// through its own `(parameter name)` form, never through `ref`, so renaming
-// rule references never touches it.
-function renamedRule(rule, rename) {
-  const renamed = { kind: rule.kind, expression: mapReferences(rule.expression, rename) };
-  if (rule.parameters?.length > 0) renamed.parameters = [...rule.parameters];
-  if (rule.channel !== undefined) renamed.channel = rule.channel;
-  if (rule.modes !== undefined) renamed.modes = [...rule.modes];
-  if (rule.action !== undefined) renamed.action = mapReferences(rule.action, rename);
-  if (rule.concept !== undefined) renamed.concept = rule.concept;
-  if (rule.sourceNames !== undefined) renamed.sourceNames = rule.sourceNames;
-  return renamed;
-}
-
-function mapDeclarations(declarations, rename) {
-  return {
-    ...(declarations.matching === null ? {} : { matching: declarations.matching }),
-    imports: [...declarations.imports],
-    modes: [...declarations.modes],
-    extras: declarations.extras.map((extra) => mapReferences(extra, rename)),
-    conflicts: declarations.conflicts.map((group) => group.map(rename)),
-    precedences: declarations.precedences.map((order) => order.map((entry) => (entry.kind === 'rule' ? { kind: 'rule', value: rename(entry.value) } : { ...entry }))),
-    macros: declarations.macros.map((macro) => ({
-      name: macro.name,
-      parameters: [...(macro.parameters ?? [])],
-      expression: mapReferences(macro.expression, rename),
-    })),
-    scanners: declarations.scanners.map((scanner) => ({
-      name: scanner.name,
-      tokens: [...scanner.tokens],
-      operations: mapReferences(scanner.operations, rename),
-    })),
-  };
-}
-
-// Renames every rule reference (`ref`, with or without arguments) in an
-// expression, a feature form or an operation list, at any depth.
-function mapReferences(value, rename) {
-  if (Array.isArray(value)) return value.map((item) => mapReferences(item, rename));
-  if (value === null || typeof value !== 'object') return value;
-  const copy = {};
-  for (const [key, field] of Object.entries(value)) copy[key] = mapReferences(field, rename);
-  if (value.kind === 'ref' && value.operation === undefined && typeof value.name === 'string') {
-    copy.name = rename(value.name);
-  }
-  return copy;
 }
 
 // The rule fields (parameters, channel, modes and action) as they take part
@@ -294,7 +171,7 @@ function formatOf(source) {
   return source.grammar.sourceFormat ?? 'none';
 }
 
-function groupFingerprint(entry, required, samples) {
+function groupFingerprint(entry, required, samples, decorators) {
   const lines = ['grammar-merge v1', `group ${q(entry.language)} ${q(entry.edition)}`];
   const ids = new Set();
   for (const source of entry.sources) {
@@ -312,6 +189,7 @@ function groupFingerprint(entry, required, samples) {
   for (const [alias, values] of samples) {
     if (ids.has(sourceOf(alias))) lines.push(`samples ${q(alias)} ${values.map(q).join(',')}`);
   }
+  for (const entry of decorators.forLevel('merge-decision')) lines.push(`decorator ${q(new DecoratorSet([entry]).toLino().trim())}`);
   return createHash('sha256').update(`${lines.join('\n')}\n`).digest('hex');
 }
 
@@ -324,7 +202,7 @@ function nameLabel(name) {
   return `ref(${q(name)})`;
 }
 
-function mergeGroup(entry, fingerprint, samples, previousIdentities) {
+function mergeGroup(entry, fingerprint, samples, previousIdentities, decorators) {
   const nodes = [];
   const index = new Map();
   const externals = new Set();
@@ -476,10 +354,27 @@ function mergeGroup(entry, fingerprint, samples, previousIdentities) {
     sources: entry.sources.map(({ id }) => id),
     grammar,
     identities,
-    decisions,
+    decisions: decorateDecisions(decisions, decorators),
     nominations,
     alternatives,
   };
+}
+
+// The decisions the `merge-decision` decorators leave, with `kind` and
+// `basis` as they set them; the other fields describe the merged grammar and
+// stay as they are.
+function decorateDecisions(decisions, decorators) {
+  if (!decorators.has('merge-decision')) return decisions;
+  return decisions.flatMap((decision) => {
+    const decorated = decorators.decorate('merge-decision', {
+      kind: decision.kind,
+      name: decision.name,
+      members: decision.members.join(' '),
+      basis: decision.basis,
+      definition: decision.definition ?? '',
+    });
+    return decorated === null ? [] : [{ ...decision, kind: decorated.kind, basis: decorated.basis }];
+  });
 }
 
 // Greatest structural bisimulation by partition refinement: rules start in one
