@@ -643,7 +643,7 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
       // the other, conflict where both are reduced: the higher precedence
       // they are reduced with wins.
       if (a.end === b.end && a.kind !== b.kind && !holdsFirst(a, b) && !holdsFirst(b, a) && sameTokens(a, b)) {
-        const forked = forkedOrder(a, b, grammar);
+        const forked = forkedOrder(a, b, grammar, bytes);
         if (forked !== null) return forked;
         const order = comparePrecedence(reduction(a), reduction(b), orders);
         if (order !== 0) return order;
@@ -814,9 +814,9 @@ function childParting(a, b, orders) {
 // type assertion's type arguments to a `primary_type`), and when a declared
 // conflict names a rule each reduced to there, both parses go on and
 // tree-sitter keeps the tree of the lower symbol where they merge, as its
-// `ts_subtree_compare` does: here, the rule defined first. 1 when `a` is
-// kept, -1 when `b` is.
-function forkedOrder(a, b, grammar) {
+// `ts_subtree_compare` does: here, the rule defined first, unless the two
+// reduce one handle. 1 when `a` is kept, -1 when `b` is.
+function forkedOrder(a, b, grammar, bytes = null) {
   if (!grammar || grammar.conflicts.length === 0) return null;
   const steps = (tree, out) => {
     if (isTrivia(tree)) return out;
@@ -838,7 +838,17 @@ function forkedOrder(a, b, grammar) {
   const theirs = reductions(second[at - 1], first[at - 1], second[at]);
   const declared = grammar.conflicts.some((group) => mine.some((name) => group.has(name)) && theirs.some((name) => group.has(name)));
   if (!declared) return null;
-  return Math.sign((grammar.ranks.get(b.rule) ?? 0) - (grammar.ranks.get(a.rule) ?? 0));
+  const order = Math.sign((grammar.ranks.get(b.rule) ?? 0) - (grammar.ranks.get(a.rule) ?? 0));
+  // Two reductions of one handle (Lean's `do return x`, a `return` and a
+  // `do_return` of the same children) are two reduce actions of one table
+  // entry: the version of the last, of the rule defined later, is the one
+  // the parser goes on with, and the other merges into it where both shift
+  // the next token. With none left but zero-width ones (the `return x` that
+  // ends a file's last `do` block), both are accepted and the tree of the
+  // lower symbols is kept.
+  const handle = at === first.length - 1 && at === second.length - 1;
+  const follows = bytes?.subarray(a.end).some((byte) => !ASCII_WHITE_SPACE.has(byte));
+  return handle && follows ? -order : order;
 }
 
 // Whether a node of the kind and span of `inner` is on the leftmost chain of
@@ -962,8 +972,11 @@ function chainConflict(a, b, orders, grammar) {
     }
     // Two last parts of one kind from one offset part where the short one
     // ends, inside it (Lean's `g do return x`, where one parse ends the
-    // `do`, and the `return` in it, before `x`): the conflict is theirs.
-    if (last.kind !== other.kind || last.start !== other.start) {
+    // `do`, and the `return` in it, before `x`): the conflict is theirs. So
+    // do two of rules a conflict declares, reductions of one handle (Lean's
+    // `do_return` and `return`).
+    const forked = last.kind !== other.kind && grammar?.conflicts.some((group) => group.has(last.rule) && group.has(other.rule));
+    if ((last.kind !== other.kind && !forked) || last.start !== other.start) {
       if (beginsWith(other, last)) break;
       return 0;
     }

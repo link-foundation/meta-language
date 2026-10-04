@@ -124,6 +124,16 @@ impl GrammarFacts {
             .copied()
             .unwrap_or(0)
     }
+
+    /// Whether a declared conflict names both rules.
+    pub(super) fn conflicting(&self, a: Option<&Name>, b: Option<&Name>) -> bool {
+        let (Some(a), Some(b)) = (a, b) else {
+            return false;
+        };
+        self.conflicts
+            .iter()
+            .any(|group| group.contains(a) && group.contains(b))
+    }
 }
 
 /// The name a rule call calls: the rule's own or the external token's.
@@ -300,10 +310,15 @@ fn steps(tree: &Rc<Tree>, out: &mut Vec<Rc<Tree>>) {
 /// assertion's type arguments to a `primary_type`), and when a declared
 /// conflict names a rule each reduced to there, both parses go on and
 /// tree-sitter keeps the tree of the lower symbol where they merge, as its
-/// `ts_subtree_compare` does: here, the rule defined first. Greater when `a`
-/// is kept, Less when `b` is. It mirrors forkedOrder in
+/// `ts_subtree_compare` does: here, the rule defined first, unless the two
+/// reduce one handle. Greater when `a` is kept, Less when `b` is. It mirrors forkedOrder in
 /// js/src/grammar-runtime/executor.js.
-pub(super) fn forked_order(a: &Rc<Tree>, b: &Rc<Tree>, grammar: &GrammarFacts) -> Option<Ordering> {
+pub(super) fn forked_order(
+    a: &Rc<Tree>,
+    b: &Rc<Tree>,
+    grammar: &GrammarFacts,
+    bytes: &[u8],
+) -> Option<Ordering> {
     if grammar.conflicts.is_empty() {
         return None;
     }
@@ -342,10 +357,22 @@ pub(super) fn forked_order(a: &Rc<Tree>, b: &Rc<Tree>, grammar: &GrammarFacts) -
         mine.iter().any(|name| group.contains(name))
             && theirs.iter().any(|name| group.contains(name))
     });
+    // Two reductions of one handle (Lean's `do return x`, a `return` and a
+    // `do_return` of the same children) are two reduce actions of one table
+    // entry: the version of the last, of the rule defined later, is the one
+    // the parser goes on with, and the other merges into it where both shift
+    // the next token. With none left but zero-width ones (the `return x` that
+    // ends a file's last `do` block), both are accepted and the tree of the
+    // lower symbols is kept.
+    let follows = bytes
+        .get(a.end..)
+        .is_some_and(|rest| rest.iter().any(|byte| !matches!(byte, 9..=13 | 32)));
+    let handle = at == first.len() - 1 && at == second.len() - 1 && follows;
     declared.then(|| {
-        grammar
+        let order = grammar
             .rank(b.rule.as_ref())
-            .cmp(&grammar.rank(a.rule.as_ref()))
+            .cmp(&grammar.rank(a.rule.as_ref()));
+        if handle { order.reverse() } else { order }
     })
 }
 

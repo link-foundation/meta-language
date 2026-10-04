@@ -389,7 +389,12 @@ impl<'c> Executor<'c> {
                                 .children
                                 .iter()
                                 .map(|child| {
-                                    if child.trivia {
+                                    // A child a silent rule captured keeps
+                                    // its field: tree-sitter names a child by
+                                    // the innermost field over it (Lean's
+                                    // `type` of `Nat` in the `binders` of
+                                    // `∀ x : Nat, p`).
+                                    if child.trivia || child.field.is_some() {
                                         child.clone()
                                     } else {
                                         let mut copy = (**child).clone();

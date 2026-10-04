@@ -6,9 +6,10 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
+use super::forking::GrammarFacts;
 use super::ordering::{
     by_associativity, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful,
-    same_tree,
+    same_tree, shift_preferred,
 };
 use super::program::{Name, PrecedenceTag, compare_precedence};
 use super::results::{Children, Tree, TreeType};
@@ -195,4 +196,139 @@ pub(super) fn parting_end(first: &Children, second: &Children) -> usize {
         }
     }
     end
+}
+
+/// Which of two results an LR parser keeps when two nodes from one offset end
+/// their leftmost chains apart and nothing else decides them (Rust's closure
+/// `|a| b` and or-pattern `|a|b` in a tuple pattern): the two parses part at
+/// the first end only one chain has, where one reduced the innermost node
+/// ending there (the or-pattern `|a` of level -2) and the other shifted on in
+/// the innermost node going past it (the closure parameters `|a|`), as in
+/// `shift_preferred`, when the reduced node's children begin the other
+/// node's, so the two parses agree up to that end. Two last parts of one kind
+/// from one offset where the short node ends (Lean's `g do return x`, where
+/// one parse ends the `do`, and the `return` in it, before `x`), or of two
+/// rules a conflict declares, are where the conflict is. Greater when `a`'s result is kept, Less when `b`'s is, Equal
+/// when neither. It mirrors chainConflict in
+/// js/src/grammar-runtime/executor.js.
+pub(super) fn chain_conflict(
+    a: &Rc<Tree>,
+    b: &Rc<Tree>,
+    orders: &[Vec<PrecedenceEntry>],
+    grammar: &GrammarFacts,
+) -> Ordering {
+    let (first, second) = (leftmost_chain(a), leftmost_chain(b));
+    let ends = |chain: &[Rc<Tree>]| {
+        chain
+            .iter()
+            .map(|node| node.end)
+            .collect::<HashSet<usize>>()
+    };
+    let (mine, theirs) = (ends(&first), ends(&second));
+    let Some(&end) = mine.symmetric_difference(&theirs).min() else {
+        return Ordering::Equal;
+    };
+    let (reducing, shifting, kept) = if mine.contains(&end) {
+        (&first, &second, Ordering::Less)
+    } else {
+        (&second, &first, Ordering::Greater)
+    };
+    let (Some(mut short), Some(mut long)) = (
+        reducing.iter().rev().find(|node| node.end == end).cloned(),
+        shifting.iter().rev().find(|node| node.end > end).cloned(),
+    ) else {
+        return Ordering::Equal;
+    };
+    loop {
+        let (own, next) = (meaningful(&short.children), meaningful(&long.children));
+        if own.len() > next.len() || own.is_empty() {
+            return Ordering::Equal;
+        }
+        let at = own.len() - 1;
+        if own[..at].iter().zip(&next).any(|(x, y)| !same_tree(x, y)) {
+            return Ordering::Equal;
+        }
+        let (last, other) = (own[at].clone(), next[at].clone());
+        if own.len() < next.len() && same_tree(&last, &other) {
+            break;
+        }
+        if last.ty != TreeType::Node
+            || other.ty != TreeType::Node
+            || last.end != short.end
+            || other.end <= last.end
+        {
+            // The long node's part at the short one's last may go on past
+            // it, as a node that begins with it (Lean's `-x ^ 3 * 7`).
+            if other.ty == TreeType::Node && other.end > last.end && begins_with(&other, &last) {
+                break;
+            }
+            return Ordering::Equal;
+        }
+        // So do two of rules a conflict declares, reductions of one handle
+        // (Lean's `do_return` and `return`).
+        let forked =
+            last.kind != other.kind && grammar.conflicting(last.rule.as_ref(), other.rule.as_ref());
+        if (last.kind != other.kind && !forked) || last.start != other.start {
+            if begins_with(&other, &last) {
+                break;
+            }
+            return Ordering::Equal;
+        }
+        (short, long) = (last, other);
+    }
+    let order = shift_preferred(&long, &short, orders, grammar);
+    if kept == Ordering::Greater {
+        order
+    } else {
+        order.reverse()
+    }
+}
+
+/// Whether `child` is a subtree along the leftmost chain of `node`. It
+/// mirrors beginsWith in js/src/grammar-runtime/executor.js.
+fn begins_with(node: &Rc<Tree>, child: &Rc<Tree>) -> bool {
+    let mut current = node.clone();
+    while current.ty == TreeType::Node {
+        let Some(first) = first_meaningful(&current.children) else {
+            return false;
+        };
+        if same_tree(&first, child) {
+            return true;
+        }
+        current = first;
+    }
+    false
+}
+
+/// Of `extra_reduction`, where the other result goes on past `b` in a node
+/// of its own (Lean's `(f x).y` in a command, the projection `.y` with no term
+/// after the command's `(f x)`, where the projection of level 90 takes
+/// `(f x)` as its term): it reduced `b` where `parent` shifted on, and the
+/// shift's precedence against the reduction's decides, as in
+/// `shift_preferred`. `own` are the children of `parent`, `next` the ones
+/// that follow `b` in the other result, `other` the precedence it reduced
+/// with. It mirrors the fallback of extraReduction in
+/// js/src/grammar-runtime/executor.js.
+pub(super) fn shifted_past(
+    parent: &Tree,
+    own: &[Rc<Tree>],
+    next: &[Rc<Tree>],
+    other: &PrecedenceTag,
+    orders: &[Vec<PrecedenceEntry>],
+) -> Ordering {
+    let (Some(mine), Some(theirs)) = (own.get(1), next.get(1)) else {
+        return Ordering::Equal;
+    };
+    if theirs.ty != TreeType::Node
+        || same_tree(mine, theirs)
+        || first_leaf_start(mine) != first_leaf_start(theirs)
+        || theirs.end != parent.end
+    {
+        return Ordering::Equal;
+    }
+    let shifted = parent
+        .precedence
+        .clone()
+        .unwrap_or_else(|| PrecedenceTag::unranked(parent.rule.clone()));
+    compare_precedence(&shifted, other, orders).then_with(|| by_associativity(other.associativity))
 }

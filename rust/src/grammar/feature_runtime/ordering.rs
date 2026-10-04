@@ -4,14 +4,14 @@
 //! precedence, and the reductions of extras and lone nodes.
 
 use std::cmp::Ordering;
-use std::collections::HashSet;
 use std::rc::Rc;
 
 use super::forking::{
     GrammarFacts, declared_fork, forked_order, lookahead_of, shift_reduction, token_at,
 };
 use super::parting::{
-    child_parting, has_node, holds_first, one_token, parting_end, reduced_first, same_tokens,
+    chain_conflict, child_parting, has_node, holds_first, one_token, parting_end, reduced_first,
+    same_tokens, shifted_past,
 };
 use super::program::{Associativity, PrecedenceTag, TokenRank, compare_precedence};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
@@ -351,9 +351,20 @@ pub(super) fn shift_order(
                     continue;
                 }
                 if a_node && b_node && a.start == b.start {
-                    let parting = chain_pair(&a, &b, true)
-                        .filter(|(x, y)| x.end != y.end)
-                        .or_else(|| chain_pair(&a, &b, false));
+                    let split = chain_pair(&a, &b, true);
+                    // A node the other builds whole on its leftmost chain
+                    // (Lean's `foo 2` in `#check foo 2 3`) is reduced alike in
+                    // both: they part above it (see `extra_reduction`).
+                    let whole = split.is_none()
+                        && (leftmost_chain(&b).iter().any(|node| same_tree(node, &a))
+                            || leftmost_chain(&a).iter().any(|node| same_tree(node, &b)));
+                    let parting = split.filter(|(x, y)| x.end != y.end).or_else(|| {
+                        if whole {
+                            None
+                        } else {
+                            chain_pair(&a, &b, false)
+                        }
+                    });
                     if let Some((x, y)) = parting
                         && x.end != y.end
                     {
@@ -421,7 +432,7 @@ pub(super) fn shift_order(
                     && !holds_first(&b, &a)
                     && same_tokens(&a, &b)
                 {
-                    if let Some(forked) = forked_order(&a, &b, grammar) {
+                    if let Some(forked) = forked_order(&a, &b, grammar, bytes) {
                         return forked;
                     }
                     let order = compare_precedence(&reduction(&a), &reduction(&b), orders);
@@ -581,15 +592,6 @@ fn extra_reduction(
     {
         container = Some(node.clone());
     }
-    if own.len() > next.len()
-        || own
-            .iter()
-            .zip(&next)
-            .any(|(mine, theirs)| !same_tree(mine, theirs))
-    {
-        return Ordering::Equal;
-    }
-    let mine = reduction(&parent);
     let other = container.as_ref().map_or_else(
         || owner.cloned().unwrap_or(PrecedenceTag::unranked(None)),
         |node| {
@@ -598,6 +600,15 @@ fn extra_reduction(
                 .unwrap_or_else(|| PrecedenceTag::unranked(node.rule.clone()))
         },
     );
+    if own.len() > next.len()
+        || own
+            .iter()
+            .zip(&next)
+            .any(|(mine, theirs)| !same_tree(mine, theirs))
+    {
+        return shifted_past(&parent, &own, &next, &other, orders);
+    }
+    let mine = reduction(&parent);
     let order = compare_precedence(&mine, &other, orders);
     if order != Ordering::Equal {
         return order;
@@ -749,56 +760,6 @@ fn nests_first(outer: &Rc<Tree>, inner: &Rc<Tree>) -> bool {
         })
 }
 
-/// Which of two results an LR parser keeps when two nodes from one offset end
-/// their leftmost chains apart and nothing else decides them (Rust's closure
-/// `|a| b` and or-pattern `|a|b` in a tuple pattern): the two parses part at
-/// the first end only one chain has, where one reduced the innermost node
-/// ending there (the or-pattern `|a` of level -2) and the other shifted on in
-/// the innermost node going past it (the closure parameters `|a|`), as in
-/// `shift_preferred`, when the reduced node's children begin the other
-/// node's, so the two parses agree up to that end. Greater when `a`'s result
-/// is kept, Less when `b`'s is, Equal when neither. It mirrors chainConflict
-/// in js/src/grammar-runtime/executor.js.
-fn chain_conflict(
-    a: &Rc<Tree>,
-    b: &Rc<Tree>,
-    orders: &[Vec<PrecedenceEntry>],
-    grammar: &GrammarFacts,
-) -> Ordering {
-    let (first, second) = (leftmost_chain(a), leftmost_chain(b));
-    let ends = |chain: &[Rc<Tree>]| {
-        chain
-            .iter()
-            .map(|node| node.end)
-            .collect::<HashSet<usize>>()
-    };
-    let (mine, theirs) = (ends(&first), ends(&second));
-    let Some(&end) = mine.symmetric_difference(&theirs).min() else {
-        return Ordering::Equal;
-    };
-    let (reducing, shifting, kept) = if mine.contains(&end) {
-        (&first, &second, Ordering::Less)
-    } else {
-        (&second, &first, Ordering::Greater)
-    };
-    let (Some(short), Some(long)) = (
-        reducing.iter().rev().find(|node| node.end == end),
-        shifting.iter().rev().find(|node| node.end > end),
-    ) else {
-        return Ordering::Equal;
-    };
-    let (own, next) = (meaningful(&short.children), meaningful(&long.children));
-    if own.len() >= next.len() || own.iter().zip(&next).any(|(x, y)| !same_tree(x, y)) {
-        return Ordering::Equal;
-    }
-    let order = shift_preferred(long, short, orders, grammar);
-    if kept == Ordering::Greater {
-        order
-    } else {
-        order.reverse()
-    }
-}
-
 /// Greater when the shift that built `long` is preferred to the reduction
 /// that ended `short` (the same node kind from the same offset), Less when
 /// the reduction is, Equal when the precedences cannot tell. The shift is in
@@ -807,7 +768,7 @@ fn chain_conflict(
 /// is the expression a statement is of, the long result reduced that operand
 /// to a silent rule where the short one reduced its node: the two reductions
 /// conflict instead, and a silent rule's reduction is of level 0.
-fn shift_preferred(
+pub(super) fn shift_preferred(
     long: &Rc<Tree>,
     short: &Rc<Tree>,
     orders: &[Vec<PrecedenceEntry>],
