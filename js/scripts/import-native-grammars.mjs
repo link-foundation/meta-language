@@ -61,8 +61,11 @@ export function grammarSourceOf(native) {
 
 /**
  * The cases of one tree-sitter corpus file, `{ title, source }` in file
- * order. A case is a `===` line, its title, a closing `===` line, the source,
- * a `---` line and the expected tree. Like `tree-sitter test`, the divider is
+ * order. A case is a `===` line, its title, its attribute lines, a closing
+ * `===` line, the source, a `---` line and the expected tree. A
+ * `:language(NAME)` attribute adds `language: NAME` (tree-sitter-typescript's
+ * corpus runs a case on the typescript or the tsx grammar only); the other
+ * attributes are kept as `attributes`. Like `tree-sitter test`, the divider is
  * the longest line of dashes before the next case, the last of equally long
  * ones, so a source may itself hold shorter `---` lines (Cargo script
  * frontmatter, YAML documents); of the line breaks that end the source, one
@@ -70,28 +73,46 @@ export function grammarSourceOf(native) {
  */
 export function corpusFileCases(corpus) {
   const lines = corpus.split('\n');
-  const header = (index) => /^={3,}/u.test(lines[index] ?? '') && /^={3,}/u.test(lines[index + 2] ?? '');
+  // The line after the closing `===` of a header at `index`, or -1.
+  const headerEnd = (index) => {
+    if (!/^={3,}/u.test(lines[index] ?? '') || index + 1 >= lines.length) return -1;
+    let close = index + 2;
+    while (/^:/u.test(lines[close] ?? '')) close += 1;
+    return /^={3,}/u.test(lines[close] ?? '') ? close + 1 : -1;
+  };
   const cases = [];
   for (let index = 0; index < lines.length; index += 1) {
-    if (!header(index)) continue;
-    const start = index + 3;
+    const start = headerEnd(index);
+    if (start < 0) continue;
+    const attributes = lines.slice(index + 2, start - 1).map((line) => line.slice(1).trim());
     let next = start;
-    while (next < lines.length && !header(next)) next += 1;
+    while (next < lines.length && headerEnd(next) < 0) next += 1;
     let divider = -1;
     for (let line = start; line < next; line += 1) {
       if (/^-{3,}\s*$/u.test(lines[line]) && (divider < 0 || lines[line].length >= lines[divider].length)) divider = line;
     }
     const end = divider < 0 ? next : divider;
-    cases.push({ title: lines[index + 1].trim(), source: lines.slice(start, end).join('\n').replace(/\n+$/u, '\n') });
+    const item = { title: lines[index + 1].trim(), source: lines.slice(start, end).join('\n').replace(/\n+$/u, '\n') };
+    const language = attributes.map((attribute) => attribute.match(/^language\((\S+)\)$/u)?.[1]).find(Boolean);
+    const others = attributes.filter((attribute) => !/^language\(/u.test(attribute));
+    cases.push({ ...item, ...(language ? { language } : {}), ...(others.length > 0 ? { attributes: others } : {}) });
     index = next - 1;
   }
   return cases;
 }
 
-/** The cases of the pinned upstream test corpus of a source, `{ file, title, source }` in corpus order. */
+/**
+ * The cases of the pinned upstream test corpus of a source, `{ file, title,
+ * source }` in corpus order. Where the corpus serves several grammars
+ * (`entry.corpus.language`), a case with a `:language` attribute counts for
+ * that grammar only.
+ */
 export function corpusCases(entry) {
   const { files } = JSON.parse(sourceText(entry.corpus));
-  return Object.entries(files).flatMap(([file, corpus]) => corpusFileCases(corpus).map((item) => ({ file, ...item })));
+  const wanted = entry.corpus.language;
+  return Object.entries(files).flatMap(([file, corpus]) => corpusFileCases(corpus)
+    .filter((item) => item.language === undefined || item.language === wanted)
+    .map(({ language: _language, ...item }) => ({ file, ...item })));
 }
 
 /**
