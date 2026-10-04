@@ -502,6 +502,13 @@ otherwise, and the tree's parse never reached that state (Rust's `m!('"')`,
 whose token tree also takes `'` alone and a string to the next `"`, where a
 later `_` type is a keyword `_` token, does not make that `_` keyword-only). A
 call's result is shared by every call that made it, so every chain counts.
+An immediate token of a literal (`(immediateToken (literal [))`) outranks
+the plain literal of the same text likewise: a plain literal leaf, in
+syntactic context, over a span where such an immediate token matched in the
+tree's parse state makes the span immediate-only, and the input is parsed
+again, where the plain literal does not match over it (Lean's `foo[1:2:3]`
+opens a subscript, which fails at the second `:`, rather than applying `foo`
+to a range).
 The keyword lexing of a parse does not reach the grammars it embeds.
 
 **Trivia.** Skipping trivia repeatedly takes the longest match, in token
