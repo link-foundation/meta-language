@@ -137,19 +137,19 @@ generative cases with the oracle and gives each difference a category.
 | --- | ---: | ---: | ---: | ---: | --- |
 | `native-c` | 33 | 33 | 7 | 41 | none |
 | `native-csv` | 15 | 15 | 15 | 0 | none |
-| `native-diff` | 14 | 14 | 5 | 30 | none |
-| `native-ini` | 15 | 15 | 6 | 13 | none |
-| `native-java` | 11 | 11 | 3 | 16 | none |
-| `native-javascript` | 24 | 24 | 4 | 34 | native-skips-more 8, oracle-skips-more 41, same-repair-sites 11, same-skipped-bytes 2 |
-| `native-json` | 10 | 10 | 7 | 3 | none |
-| `native-json5` | 36 | 36 | 28 | 34 | none |
-| `native-lean` | 42 | 42 | 25 | 51 | merged-extension 1, native-skips-more 20, oracle-skips-more 52, same-repair-sites 15, same-skipped-bytes 9 |
+| `native-diff` | 14 | 14 | 6 | 36 | none |
+| `native-ini` | 15 | 15 | 10 | 9 | none |
+| `native-java` | 11 | 11 | 4 | 15 | none |
+| `native-javascript` | 24 | 24 | 6 | 31 | native-skips-more 13, oracle-skips-more 35, same-repair-sites 13, same-skipped-bytes 1 |
+| `native-json` | 10 | 10 | 8 | 4 | none |
+| `native-json5` | 36 | 36 | 29 | 32 | none |
+| `native-lean` | 42 | 42 | 34 | 41 | merged-extension 1, native-skips-more 34, oracle-skips-more 35, same-repair-sites 19, same-skipped-bytes 8 |
 | `native-racket` | 60 | 60 | 29 | 75 | none |
-| `native-rocq` | 12 | 12 | 2 | 25 | native-skips-more 10, oracle-skips-more 53, same-repair-sites 2, same-skipped-bytes 7 |
-| `native-rust` | 38 | 38 | 15 | 58 | native-skips-more 14, oracle-skips-more 49, same-repair-sites 7, same-skipped-bytes 5 |
+| `native-rocq` | 12 | 12 | 2 | 25 | native-skips-more 16, oracle-skips-more 45, same-repair-sites 4, same-skipped-bytes 7 |
+| `native-rust` | 38 | 38 | 18 | 47 | native-skips-more 25, oracle-skips-more 36, same-repair-sites 7, same-skipped-bytes 7 |
 | `native-scheme` | 50 | 50 | 28 | 28 | none |
-| `native-tsx` | 16 | 16 | 3 | 17 | none |
-| `native-typescript` | 15 | 15 | 3 | 17 | none |
+| `native-tsx` | 16 | 16 | 5 | 15 | none |
+| `native-typescript` | 15 | 15 | 5 | 15 | none |
 
 ## Time and memory
 

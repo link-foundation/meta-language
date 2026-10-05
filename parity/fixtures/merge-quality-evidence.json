@@ -55,7 +55,7 @@
       "coverage": {"rules": {"normal": 17, "atomic": 0, "silent": 7, "token": 0}, "visibleRules": 17, "exercisedRules": 17, "checkedKinds": 23, "checkedFields": 2, "renamed": null, "expandedWords": null, "approximations": null, "unsupported": null},
       "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 1, "kind": 0},
       "correctness": {"matches": 115, "rows": 1175, "bytes": 3588, "divergences": 8, "rejections": 14},
-      "recovery": {"repaired": 14, "errorNodes": 5, "missingNodes": 30, "categories": {}},
+      "recovery": {"repaired": 14, "errorNodes": 6, "missingNodes": 36, "categories": {}},
       "reuse": {"shared": 2, "specific": 22}
     },
     {
@@ -73,7 +73,7 @@
       "coverage": {"rules": {"normal": 5, "atomic": 0, "silent": 0, "token": 0}, "visibleRules": 5, "exercisedRules": 5, "checkedKinds": 8, "checkedFields": 0, "renamed": null, "expandedWords": null, "approximations": null, "unsupported": null},
       "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 55, "rows": 444, "bytes": 710, "divergences": 9, "rejections": 15},
-      "recovery": {"repaired": 15, "errorNodes": 6, "missingNodes": 13, "categories": {}},
+      "recovery": {"repaired": 15, "errorNodes": 10, "missingNodes": 9, "categories": {}},
       "reuse": {"shared": 2, "specific": 3}
     },
     {
@@ -91,7 +91,7 @@
       "coverage": {"rules": {"normal": 120, "atomic": 0, "silent": 30, "token": 19}, "visibleRules": 120, "exercisedRules": 111, "checkedKinds": 133, "checkedFields": 36, "renamed": 29, "expandedWords": 3, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 0, "conflict": 13, "precedences": 0, "extra": 3, "kind": 1},
       "correctness": {"matches": 146, "rows": 4848, "bytes": 11744, "divergences": 0, "rejections": 11},
-      "recovery": {"repaired": 11, "errorNodes": 3, "missingNodes": 16, "categories": {}},
+      "recovery": {"repaired": 11, "errorNodes": 4, "missingNodes": 15, "categories": {}},
       "reuse": {"shared": 60, "specific": 109}
     },
     {
@@ -109,7 +109,7 @@
       "coverage": {"rules": {"normal": 94, "atomic": 0, "silent": 34, "token": 15}, "visibleRules": 94, "exercisedRules": 90, "checkedKinds": 113, "checkedFields": 36, "renamed": 25, "expandedWords": 2, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 5, "conflict": 18, "precedences": 9, "extra": 3, "kind": 0},
       "correctness": {"matches": 146, "rows": 5816, "bytes": 12130, "divergences": 0, "rejections": 24},
-      "recovery": {"repaired": 24, "errorNodes": 4, "missingNodes": 34, "categories": {"native-skips-more": 8, "oracle-skips-more": 41, "same-repair-sites": 11, "same-skipped-bytes": 2}},
+      "recovery": {"repaired": 24, "errorNodes": 6, "missingNodes": 31, "categories": {"native-skips-more": 13, "oracle-skips-more": 35, "same-repair-sites": 13, "same-skipped-bytes": 1}},
       "reuse": {"shared": 142, "specific": 1}
     },
     {
@@ -128,7 +128,7 @@
       "coverage": {"rules": {"normal": 5, "atomic": 0, "silent": 1, "token": 5}, "visibleRules": 5, "exercisedRules": 5, "checkedKinds": 12, "checkedFields": 2, "renamed": null, "expandedWords": null, "approximations": null, "unsupported": null},
       "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 34, "rows": 414, "bytes": 651, "divergences": 2, "rejections": 10},
-      "recovery": {"repaired": 10, "errorNodes": 7, "missingNodes": 3, "categories": {}},
+      "recovery": {"repaired": 10, "errorNodes": 8, "missingNodes": 4, "categories": {}},
       "reuse": {"shared": 11, "specific": 0}
     },
     {
@@ -146,7 +146,7 @@
       "coverage": {"rules": {"normal": 4, "atomic": 0, "silent": 1, "token": 7}, "visibleRules": 4, "exercisedRules": 4, "checkedKinds": 11, "checkedFields": 2, "renamed": null, "expandedWords": null, "approximations": null, "unsupported": null},
       "features": {"scanner": 0, "conflict": 0, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 120, "rows": 818, "bytes": 1503, "divergences": 26, "rejections": 36},
-      "recovery": {"repaired": 36, "errorNodes": 28, "missingNodes": 34, "categories": {}},
+      "recovery": {"repaired": 36, "errorNodes": 29, "missingNodes": 32, "categories": {}},
       "reuse": {"shared": 11, "specific": 1}
     },
     {
@@ -164,7 +164,7 @@
       "coverage": {"rules": {"normal": 106, "atomic": 0, "silent": 28, "token": 13}, "visibleRules": 106, "exercisedRules": 86, "checkedKinds": 97, "checkedFields": 50, "renamed": 35, "expandedWords": 8, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 1, "conflict": 11, "precedences": 0, "extra": 2, "kind": 0},
       "correctness": {"matches": 251, "rows": 5152, "bytes": 13446, "divergences": 1, "rejections": 42},
-      "recovery": {"repaired": 42, "errorNodes": 25, "missingNodes": 51, "categories": {"merged-extension": 1, "native-skips-more": 20, "oracle-skips-more": 52, "same-repair-sites": 15, "same-skipped-bytes": 9}},
+      "recovery": {"repaired": 42, "errorNodes": 34, "missingNodes": 41, "categories": {"merged-extension": 1, "native-skips-more": 34, "oracle-skips-more": 35, "same-repair-sites": 19, "same-skipped-bytes": 8}},
       "reuse": {"shared": 37, "specific": 110}
     },
     {
@@ -200,7 +200,7 @@
       "coverage": {"rules": {"normal": 203, "atomic": 0, "silent": 46, "token": 16}, "visibleRules": 203, "exercisedRules": 191, "checkedKinds": 203, "checkedFields": 29, "renamed": 84, "expandedWords": 27, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 0, "conflict": 16, "precedences": 2, "extra": 2, "kind": 0},
       "correctness": {"matches": 230, "rows": 9440, "bytes": 20820, "divergences": 0, "rejections": 12},
-      "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {"native-skips-more": 10, "oracle-skips-more": 53, "same-repair-sites": 2, "same-skipped-bytes": 7}},
+      "recovery": {"repaired": 12, "errorNodes": 2, "missingNodes": 25, "categories": {"native-skips-more": 16, "oracle-skips-more": 45, "same-repair-sites": 4, "same-skipped-bytes": 7}},
       "reuse": {"shared": 29, "specific": 236}
     },
     {
@@ -218,7 +218,7 @@
       "coverage": {"rules": {"normal": 147, "atomic": 0, "silent": 26, "token": 11}, "visibleRules": 147, "exercisedRules": 142, "checkedKinds": 163, "checkedFields": 31, "renamed": 45, "expandedWords": 12, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 6, "conflict": 9, "precedences": 0, "extra": 3, "kind": 3},
       "correctness": {"matches": 182, "rows": 7903, "bytes": 15796, "divergences": 0, "rejections": 38},
-      "recovery": {"repaired": 38, "errorNodes": 15, "missingNodes": 58, "categories": {"native-skips-more": 14, "oracle-skips-more": 49, "same-repair-sites": 7, "same-skipped-bytes": 5}},
+      "recovery": {"repaired": 38, "errorNodes": 18, "missingNodes": 47, "categories": {"native-skips-more": 25, "oracle-skips-more": 36, "same-repair-sites": 7, "same-skipped-bytes": 7}},
       "reuse": {"shared": 55, "specific": 129}
     },
     {
@@ -254,7 +254,7 @@
       "coverage": {"rules": {"normal": 166, "atomic": 0, "silent": 50, "token": 14}, "visibleRules": 166, "exercisedRules": 142, "checkedKinds": 159, "checkedFields": 40, "renamed": 44, "expandedWords": 3, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 7, "conflict": 49, "precedences": 44, "extra": 3, "kind": 0},
       "correctness": {"matches": 157, "rows": 6525, "bytes": 13617, "divergences": 0, "rejections": 16},
-      "recovery": {"repaired": 16, "errorNodes": 3, "missingNodes": 17, "categories": {}},
+      "recovery": {"repaired": 16, "errorNodes": 5, "missingNodes": 15, "categories": {}},
       "reuse": {"shared": 230, "specific": 0}
     },
     {
@@ -272,7 +272,7 @@
       "coverage": {"rules": {"normal": 166, "atomic": 0, "silent": 50, "token": 14}, "visibleRules": 166, "exercisedRules": 136, "checkedKinds": 152, "checkedFields": 37, "renamed": 44, "expandedWords": 3, "approximations": 0, "unsupported": 0},
       "features": {"scanner": 7, "conflict": 48, "precedences": 44, "extra": 3, "kind": 0},
       "correctness": {"matches": 155, "rows": 6447, "bytes": 13513, "divergences": 0, "rejections": 15},
-      "recovery": {"repaired": 15, "errorNodes": 3, "missingNodes": 17, "categories": {}},
+      "recovery": {"repaired": 15, "errorNodes": 5, "missingNodes": 15, "categories": {}},
       "reuse": {"shared": 230, "specific": 0}
     }
   ]
