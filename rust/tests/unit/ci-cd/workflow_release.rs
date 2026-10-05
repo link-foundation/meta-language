@@ -664,7 +664,7 @@ fn cargo_check_gates_every_compiling_job() {
 fn rust_test_suites_partition_the_tests_by_name() {
     let workflow = release_workflow();
     let test = job_block(&workflow, "test");
-    assert!(test.contains("suite: [grammar, inference, translation, remaining]"));
+    assert!(test.contains("suite: [grammar, inference, generative, translation, remaining]"));
     assert!(test.contains("os: [ubuntu-latest, macos-latest, windows-latest]"));
     let filters = |suite: &str| {
         let marker = format!("          - suite: {suite}\n            filters: ");
@@ -677,7 +677,7 @@ fn rust_test_suites_partition_the_tests_by_name() {
     // Each suite skips the filters of the suites before it, and `remaining`
     // skips every filter, so each test runs in exactly one suite.
     let mut earlier: Vec<String> = Vec::new();
-    for suite in ["grammar", "inference", "translation"] {
+    for suite in ["grammar", "inference", "generative", "translation"] {
         let line = filters(suite);
         let (own, skipped) = line
             .split_once("--skip")

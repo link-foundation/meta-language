@@ -454,7 +454,9 @@ jobs:
   # The suites partition the tests by name: each later suite skips the
   # filters of the earlier ones, and `remaining` skips all of them, so every
   # test runs in exactly one suite. Doc tests and the example check run with
-  # `remaining`.
+  # `remaining`. The generative suite runs alone: native Lean's malformed
+  # inputs repair over many rounds, and with the translation tests they
+  # outran the job's timeout on Windows.
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.suite }})
     runs-on: ${{ matrix.os }}
@@ -482,16 +484,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        suite: [grammar, inference, translation, remaining]
+        suite: [grammar, inference, generative, translation, remaining]
         include:
           - suite: grammar
             filters: grammar_
           - suite: inference
             filters: inference_ --skip grammar_
+          - suite: generative
+            filters: issue_195_generative --skip grammar_ --skip inference_
           - suite: translation
-            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
           - suite: remaining
-            filters: --skip grammar_ --skip inference_ --skip translation_ --skip issue_195_ --skip conformance
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
     steps:
       - uses: actions/checkout@v7
 
