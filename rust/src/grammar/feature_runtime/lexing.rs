@@ -1,6 +1,7 @@
 //! Trivia, terminals and tokens of the native executor: the lexical half of
 //! `js/src/grammar-runtime/executor.js`.
 
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
@@ -8,7 +9,7 @@ use super::executor::{Element, Executor, Run};
 use super::operations::State;
 use super::program::{Expr, Matcher, Name, Target};
 use super::results::{
-    Res, Skipped, Tree, TreeType, children_of, is_separator, longest_result, no_children,
+    Entry, Res, Skipped, Tree, TreeType, children_of, is_separator, longest_result, no_children,
     preferred_tokens, with_leaf,
 };
 use crate::grammar::RuleKind;
@@ -59,7 +60,11 @@ impl Executor<'_> {
                 leaves: no_children(),
             }));
         }
-        let key = (position, state.clone(), self.in_extra);
+        let outrank = self
+            .lex_frame(position)
+            .and_then(|frame| frame.borrow().outranks.get(&position).copied())
+            .unwrap_or(0);
+        let key = (position, state.clone(), self.in_extra, outrank);
         if let Some(cached) = self.trivia_memo.get(&key) {
             return Ok(cached.clone());
         }
@@ -67,7 +72,7 @@ impl Executor<'_> {
         let mut leaves = Vec::new();
         // A scanner in the trivia answers `expected` for where they start.
         let context = self.scan_context.replace(position);
-        let end = self.skip_from(position, &mut leaves, &mode, state);
+        let end = self.skip_from(position, &mut leaves, &mode, state, outrank);
         self.scan_context = context;
         let skipped = Rc::new(Skipped {
             end: end?,
@@ -85,6 +90,7 @@ impl Executor<'_> {
         leaves: &mut Vec<Rc<Tree>>,
         mode: &str,
         state: &State,
+        outrank: i64,
     ) -> Run<usize> {
         let trivia = &self.program.trivia;
         let mut cursor = position;
@@ -97,6 +103,9 @@ impl Executor<'_> {
                     .as_ref()
                     .is_some_and(|modes| !modes.iter().any(|allowed| **allowed == *mode))
                     || (self.in_extra && item.kind.is_some())
+                    || (cursor == position
+                        && outrank > 0
+                        && self.priority_of(&item.expression) < outrank)
                 {
                     continue;
                 }
@@ -121,6 +130,55 @@ impl Executor<'_> {
             }
         }
         Ok(cursor)
+    }
+
+    /// A lexer takes a valid token of a raised lexical precedence over an
+    /// extra of a lower one that starts where it does, however longer the
+    /// extra is: in JavaScript's `"//"` the string fragment `//` after the
+    /// quote is no comment running to the end of the line. So where an
+    /// immediate token of a raised level matches, in syntactic context, no
+    /// trivia of a lower level is lexed at its offset (see `skip_trivia`).
+    /// The level holds in the rule call the token is lexed for (see
+    /// `lex_frame`), as a lexer lexes it in one parse state: after the opening
+    /// quote of a string, not after a string the parse tried to open at its
+    /// closing quote.
+    pub(super) fn outrank_trivia(
+        &mut self,
+        item: &Expr,
+        position: usize,
+        state: &State,
+    ) -> Run<()> {
+        let level = self.priority_of(item);
+        if level <= 0 {
+            return Ok(());
+        }
+        let Some(frame) = self.lex_frame(position) else {
+            return Ok(());
+        };
+        if frame
+            .borrow()
+            .outranks
+            .get(&position)
+            .is_some_and(|known| *known >= level)
+        {
+            return Ok(());
+        }
+        let results = self.quietly(|this| this.evaluate(item, position, state, true))?;
+        if longest_result(results).is_some_and(|result| result.end > position) {
+            frame.borrow_mut().outranks.insert(position, level);
+        }
+        Ok(())
+    }
+
+    /// The innermost rule call that began before `position`: the one a token
+    /// at `position` is lexed for, the calls that begin there being part of
+    /// the same parse state.
+    fn lex_frame(&self, position: usize) -> Option<Rc<RefCell<Entry>>> {
+        self.call_stack
+            .iter()
+            .rev()
+            .find(|frame| frame.borrow().position < position)
+            .cloned()
     }
 
     /// The node an extra of a rule that builds one makes of its text, parsed

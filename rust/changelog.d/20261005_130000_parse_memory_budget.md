@@ -9,3 +9,4 @@ bump: minor
 ### Fixed
 
 - An ANTLR lexer rule with `-> type(NAME)` is re-typed only once, so importing an emitted ANTLR grammar again gives the same grammar.
+- A comment no longer starts inside a string. Where an immediate token of raised lexical precedence matches, such as JavaScript's string fragment `//` in `"//"`, no lower-precedence extra is lexed at its offset in the rule call it is lexed for, as in tree-sitter's lexer. An error later on the line is then reported where it is, not as a missing quote at the end of the line.

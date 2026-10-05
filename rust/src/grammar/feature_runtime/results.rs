@@ -795,6 +795,11 @@ pub(super) struct Entry {
     pub(super) results: Vec<Res>,
     /// Under keyword lexing, the call's index in `KeywordLexing`.
     pub(super) call: Option<usize>,
+    /// Where the call began.
+    pub(super) position: usize,
+    /// The offsets where an immediate token of a raised lexical precedence
+    /// matched in the call, with the highest such level (see `outrank_trivia`).
+    pub(super) outranks: HashMap<usize, i64>,
 }
 
 /// The trivia skipped at one offset.

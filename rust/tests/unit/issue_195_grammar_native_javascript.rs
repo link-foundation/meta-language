@@ -236,6 +236,70 @@ fn native_javascript_grammar_rejects_invalid_input() {
             .expect("the parse runs");
         assert!(!outcome.ok, "{source:?}");
     }
+    // The string fragment `//`, of lexical precedence 1, is no comment of
+    // precedence 0 after the opening quote, though the comment is longer: the
+    // error is where it is, not at the end of a string the comment ran to.
+    let recovering = FeatureParseOptions {
+        error_recovery: Some(true),
+        accept_recovery: Some(true),
+        ..FeatureParseOptions::default()
+    };
+    let repairs = |source: &str| -> Vec<String> {
+        let tree = parser
+            .parse_tree(source.as_bytes(), &recovering)
+            .expect("the parse runs")
+            .tree
+            .expect("a recovered tree");
+        leaves(&tree)
+            .into_iter()
+            .filter_map(|leaf| match leaf {
+                SyntaxTree::Missing { start, end, .. } => Some(format!("missing@{start}-{end}")),
+                SyntaxTree::Error { start, end, .. } => Some(format!("error@{start}-{end}")),
+                _ => None,
+            })
+            .collect()
+    };
+    for (source, offset) in [
+        ("x = a || 0 .1 ;", 12),
+        ("y = \"//\" ; x = a || 0 .1 ;", 23),
+        ("y = '/*' ; x = a || 0 .1 ;", 23),
+    ] {
+        let outcome = parser
+            .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+            .expect("the parse runs");
+        assert_eq!(
+            outcome.rejection.and_then(|rejection| rejection.offset),
+            Some(offset),
+            "{source:?}"
+        );
+        assert_eq!(
+            repairs(source),
+            [
+                format!("missing@{offset}-{offset}"),
+                format!("error@{offset}-{}", offset + 1)
+            ],
+            "{source:?}"
+        );
+    }
+    // An error after the string leaves the string as it is.
+    assert_eq!(
+        repairs("x = a || 0 .1 ; y = \"//\" ; z ;"),
+        ["missing@12-12", "error@12-13"]
+    );
+    // A comment right after a closing quote stays a comment.
+    for source in ["x = \"a\"// c\n", "x = \"a\"/* c */;"] {
+        let tree = parse(&parser, source).unwrap_or_else(|| panic!("{source:?}"));
+        let comments: Vec<usize> = leaves(&tree)
+            .into_iter()
+            .filter_map(|leaf| match leaf {
+                SyntaxTree::Token { kind, start, .. } if kind.as_deref() == Some("comment") => {
+                    Some(*start)
+                }
+                _ => None,
+            })
+            .collect();
+        assert_eq!(comments, [7], "{source:?}");
+    }
     observe(
         &["nativeJavaScriptRejectsInvalidInput"],
         "native JavaScript grammar rejects invalid input",

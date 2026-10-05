@@ -123,6 +123,7 @@ impl Executor<'_> {
         let entry = Rc::new(RefCell::new(Entry {
             evaluating: true,
             call,
+            position,
             ..Entry::default()
         }));
         self.retain(1)?;

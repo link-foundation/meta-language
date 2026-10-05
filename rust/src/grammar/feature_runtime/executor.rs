@@ -99,7 +99,7 @@ pub(super) struct Executor<'c> {
     pub(super) depth: usize,
     pub(super) memo: HashMap<MemoKey, Rc<RefCell<Entry>>>,
     pub(super) call_stack: Vec<Rc<RefCell<Entry>>>,
-    pub(super) trivia_memo: HashMap<(usize, State, bool), Rc<Skipped>>,
+    pub(super) trivia_memo: HashMap<(usize, State, bool, i64), Rc<Skipped>>,
     pub(super) operand_memo: HashMap<usize, Rc<Operands>>,
     /// The kinds whose nodes go on only with tokens of raised lexical
     /// precedence (see `lexed_shift`).
@@ -467,6 +467,9 @@ impl<'c> Executor<'c> {
             Expr::LexicalPrecedence { item, .. } => self.evaluate(item, position, state, in_token),
             Expr::Longest(items) => self.longest(items, position, state, in_token),
             Expr::Token(item) | Expr::ImmediateToken(item) => {
+                if matches!(expr, Expr::ImmediateToken(_)) && !in_token {
+                    self.outrank_trivia(item, position, state)?;
+                }
                 let starts = if matches!(expr, Expr::Token(_)) {
                     let skipped = self.terminal_start(position, state, in_token)?;
                     if self.lexing.is_some() && !skipped.leaves.is_empty() {

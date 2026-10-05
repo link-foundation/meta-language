@@ -130,6 +130,24 @@ test('the native JavaScript grammar rejects invalid input the oracle recovers fr
     assert.ok(oracleRecovers(source, 'JavaScript'), JSON.stringify(source));
     assert.equal(parser.parseTree(source).ok, false, JSON.stringify(source));
   }
+  // The string fragment `//`, of lexical precedence 1, is no comment of
+  // precedence 0 after the opening quote, though the comment is longer: the
+  // error is where it is, not at the end of a string the comment ran to.
+  for (const [source, offset] of [['x = a || 0 .1 ;', 12], ['y = "//" ; x = a || 0 .1 ;', 23], ["y = '/*' ; x = a || 0 .1 ;", 23]]) {
+    assert.equal(parser.parseTree(source).rejection?.offset, offset, JSON.stringify(source));
+    const recovered = parser.parseTree(source, { errorRecovery: true, recovery: 'accept' }).tree;
+    const repairs = leaves(recovered).filter(({ type }) => type !== 'token').map(({ type, start, end }) => `${type}@${start}-${end}`);
+    assert.deepEqual(repairs, [`missing@${offset}-${offset}`, `error@${offset}-${offset + 1}`], JSON.stringify(source));
+  }
+  // An error after the string leaves the string as it is.
+  const after = parser.parseTree('x = a || 0 .1 ; y = "//" ; z ;', { errorRecovery: true, recovery: 'accept' }).tree;
+  assert.deepEqual(leaves(after).filter(({ type }) => type !== 'token').map(({ type, start }) => `${type}@${start}`), ['missing@12', 'error@12']);
+  // A comment right after a closing quote stays a comment.
+  for (const source of ['x = "a"// c\n', 'x = "a"/* c */;']) {
+    const outcome = parser.parseTree(source);
+    assert.ok(outcome.ok, JSON.stringify(source));
+    assert.deepEqual(leaves(outcome.tree).filter(({ kind }) => kind === 'comment').map(({ start }) => start), [7], JSON.stringify(source));
+  }
   observe(['nativeJavaScriptRejectsInvalidInput'], context.name);
 });
 

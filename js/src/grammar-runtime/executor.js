@@ -1795,7 +1795,8 @@ export class Executor {
   skipTrivia(position, state) {
     const { trivia } = this.program;
     if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN };
-    const key = `${position}|${state.key}|${this.inExtra}`;
+    const outrank = this.lexFrame(position)?.outranks?.get(position) ?? 0;
+    const key = `${position}|${state.key}|${this.inExtra}|${outrank}`;
     const cached = this.triviaMemo.get(key);
     if (cached) return cached;
     const mode = state.modes[state.modes.length - 1];
@@ -1810,6 +1811,7 @@ export class Executor {
       for (const item of trivia) {
         if (item.modes && !item.modes.includes(mode)) continue;
         if (this.inExtra && item.kind !== null) continue;
+        if (cursor === position && outrank > 0 && this.priorityOf(item.expression) < outrank) continue;
         const end = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, state, true))?.end ?? -1);
         if (end > best) {
           best = end;
@@ -1856,6 +1858,34 @@ export class Executor {
     } finally {
       this.inExtra = false;
     }
+  }
+
+  // A lexer takes a valid token of a raised lexical precedence over an extra
+  // of a lower one that starts where it does, however longer the extra is: in
+  // JavaScript's `"//"` the string fragment `//` after the quote is no
+  // comment running to the end of the line. So where an immediate token of a
+  // raised level matches, in syntactic context, no trivia of a lower level is
+  // lexed at its offset (see `skipTrivia`).
+  // The level holds in the rule call the token is lexed for (see `lexFrame`),
+  // as a lexer lexes it in one parse state: after the opening quote of a
+  // string, not after a string the parse tried to open at its closing quote.
+  outrankTrivia(item, position, state) {
+    const level = this.priorityOf(item);
+    if (level <= 0) return;
+    const frame = this.lexFrame(position);
+    if (!frame || (frame.outranks?.get(position) ?? 0) >= level) return;
+    const end = this.quietly(() => longestResult(this.evaluate(item, position, state, true))?.end ?? -1);
+    if (end > position) (frame.outranks ??= new Map()).set(position, level);
+  }
+
+  // The innermost rule call that began before `position`: the one a token
+  // at `position` is lexed for, the calls that begin there being part of
+  // the same parse state.
+  lexFrame(position) {
+    for (let index = this.callStack.length - 1; index >= 0; index -= 1) {
+      if (this.callStack[index].position < position) return this.callStack[index];
+    }
+    return null;
   }
 
   // The start of a terminal: after trivia in syntactic context, at once in token context.
@@ -2005,6 +2035,7 @@ export class Executor {
       case 'lexicalPrecedence': return this.evaluate(expression.item, position, state, inToken);
       case 'longest': return this.longest(expression, position, state, inToken);
       case 'token': case 'immediateToken': {
+        if (expression.kind === 'immediateToken' && !inToken) this.outrankTrivia(expression.item, position, state);
         let starts = expression.kind === 'token'
           ? [this.terminalStart(position, state, inToken)]
           : this.immediateStarts(position, state, inToken);
@@ -2726,8 +2757,8 @@ export class Executor {
     // Under keyword lexing, the calls it was made from (`null` for none),
     // where it began and whether it builds a node: the parse states of a
     // keyword matched in it (see `KeywordLexing`).
-    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null };
-    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), position, builds: rule.kind === 'normal' });
+    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null, position };
+    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal' });
     this.retain(1);
     this.memo.set(key, entry);
     this.callStack.push(entry);
