@@ -446,7 +446,7 @@ function grammarFacts(program) {
       heads.set(name, new Set(directEdge(rule.expression, 'right', name).map(([ref]) => ref)));
       ranks.set(name, rule.index);
     }
-    facts = { heads, ranks, conflicts: (program.conflictGroups ?? []).map((group) => new Set(group)), rules: program.rules, first: null, forks: new Map(), reductions: null };
+    facts = { heads, ranks, conflicts: (program.conflictGroups ?? []).map((group) => new Set(group)), rules: program.rules, first: null, forks: new Map(), items: new Map(), reductions: null };
     GRAMMAR_FACTS.set(program, facts);
   }
   return facts;
@@ -739,6 +739,72 @@ function declaredFork(grammar, child, lookahead, orders) {
   return forks;
 }
 
+// How the items that shift `lookahead` after the part a node of `short`'s
+// rightmost chain reduced with `reduced` ends with rank against that
+// reduction, as tree-sitter's handle_conflict ranks a shift-reduce conflict:
+// 1 when some rank above it and none below, -1 when some rank below it and
+// none above, else 0. A precedence of none and a named one are incomparable,
+// so such an item ranks neither way. A node that ends with a token (Rust's
+// range `a + b..`) has no part an item goes on after.
+function itemsOrder(grammar, short, reduced, lookahead, orders) {
+  const rule = grammar?.rules.get(reduced.rule);
+  if (!rule || lookahead === null) return 0;
+  let node = short;
+  while (node?.type === 'node' && node.rule !== reduced.rule) node = node.children.findLast((child) => !isTrivia(child));
+  const last = node?.type === 'node' ? node.children.findLast((child) => !isTrivia(child)) : null;
+  if (last?.type !== 'node') return 0;
+  const slots = directEdge(rule.expression, 'left', rule.name).map(([slot]) => slot)
+    .filter((slot) => last.reducedTo?.includes(slot) || unitClosure(grammar, slot).has(last.rule));
+  const key = `${reduced.rule}|${reduced.level}|${reduced.name}|${lookahead}|${slots.join(' ')}`;
+  let order = grammar.items.get(key);
+  if (order !== undefined) return order;
+  grammar.first ??= firstSets(grammar.rules);
+  let [more, less] = [false, false];
+  for (const slot of new Set(slots)) {
+    for (const item of shiftItems(grammar, slot)) {
+      if (!firstOf({ kind: 'seq', items: item.rest }, grammar.rules, grammar.first).has(lookahead)) continue;
+      const rank = comparePrecedence(item.tag, reduced, orders);
+      if (rank > 0) more = true;
+      if (rank < 0) less = true;
+    }
+  }
+  order = more === less ? 0 : more ? 1 : -1;
+  grammar.items.set(key, order);
+  return order;
+}
+
+// The rules `slot` may be as a whole, itself included: a rule an alternative
+// of it is alone, through such rules (Rocq's `ltac_expression`, a
+// `tactic_invocation` among others).
+function unitClosure(grammar, slot) {
+  grammar.units ??= new Map();
+  let units = grammar.units.get(slot);
+  if (units) return units;
+  units = new Set();
+  const pending = [slot];
+  const walk = (expression) => {
+    switch (expression.kind) {
+      case 'ref': pending.push(expression.name); break;
+      case 'choice': for (const item of expression.items) walk(item); break;
+      case 'seq': {
+        const solid = expression.items.filter((item) => !nullable(item));
+        if (solid.length === 1 && expression.items.length === 1) walk(solid[0]);
+        break;
+      }
+      case 'precedence': case 'namedPrecedence': case 'capture': case 'dynamicPrecedence': walk(expression.item);
+    }
+  };
+  while (pending.length > 0) {
+    const name = pending.pop();
+    if (units.has(name)) continue;
+    units.add(name);
+    const rule = grammar.rules.get(name);
+    if (rule) walk(rule.expression);
+  }
+  grammar.units.set(slot, units);
+  return units;
+}
+
 // The items of an LR parser that go on after the part `slot`: each
 // production of a rule that may begin where `slot` begins and whose own
 // first part is `slot`, with its rule, its precedence and the parts after
@@ -855,8 +921,9 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
         const inner = childParting(first, second, orders);
         if (inner !== 0) return inner;
         const [long, short, sign] = first.end > second.end ? [first, second, 1] : [second, first, -1];
-        if (declaredFork(grammar, short, lookaheadOf(tokenAt(long, short.end), bytes), orders)) return -sign;
-        return sign * shiftPreferred(long, short, orders, grammar);
+        const lookahead = lookaheadOf(tokenAt(long, short.end), bytes);
+        if (declaredFork(grammar, short, lookahead, orders)) return -sign;
+        return sign * shiftPreferred(long, short, orders, grammar, lookahead);
       }
       // The same node reduced on in two ways (Rust's `m!(x);` in a block, a
       // macro invocation that `_expression_except_range` reduces under
@@ -896,7 +963,7 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
     const reduced = extraReduction(a, b, right, orders, owner) || -extraReduction(b, a, left, orders, owner);
     if (reduced !== 0) return reduced;
     if (a.type === 'node' && b.type === 'node' && a.start === b.start) {
-      const parted = chainConflict(a, b, orders, grammar);
+      const parted = chainConflict(a, b, orders, grammar, bytes);
       if (parted !== 0) return parted;
     }
     if (a.type !== 'node' && b.type !== 'node') return 0;
@@ -1317,7 +1384,7 @@ function partedPair(a, b) {
 // `shiftPreferred`, when the reduced node's children begin the other node's,
 // so the two parses agree up to that end. 1 when `a`'s result is kept, -1 when
 // `b`'s is, 0 when neither.
-function chainConflict(a, b, orders, grammar) {
+function chainConflict(a, b, orders, grammar, bytes = null) {
   const first = leftmostChain(a);
   const second = leftmostChain(b);
   const ends = (chain) => new Set(chain.map((node) => node.end));
@@ -1357,7 +1424,7 @@ function chainConflict(a, b, orders, grammar) {
     }
     [short, long] = [last, other];
   }
-  return sign * shiftPreferred(long, short, orders, grammar);
+  return sign * shiftPreferred(long, short, orders, grammar, bytes && lookaheadOf(tokenAt(long, short.end), bytes));
 }
 
 // Whether `child` is a subtree along the leftmost chain of `node`.
@@ -1376,8 +1443,13 @@ function beginsWith(node, child) {
 // node began with `short`, as a binary expression whose left operand is the
 // expression a statement is of, the long result reduced that operand to a
 // silent rule where the short one reduced its node: the two reductions
-// conflict instead, and a silent rule's reduction is of level 0.
-function shiftPreferred(long, short, orders, grammar) {
+// conflict instead, and a silent rule's reduction is of level 0. Where the
+// shift's own precedence cannot tell, every item that shifts `lookahead`
+// after the reduced part may, as tree-sitter's handle_conflict compares the
+// reduction with each (Rocq's `try x; [a | b]`, where `tactic_branch` of none
+// cannot rank the `tactical` of `tactic_application` but `tactic_sequence`,
+// ranked below it, shifts `;` too: the tactical is reduced).
+function shiftPreferred(long, short, orders, grammar, lookahead = null) {
   const begin = firstLeafStart(short);
   let progress = long;
   for (;;) {
@@ -1397,6 +1469,8 @@ function shiftPreferred(long, short, orders, grammar) {
   }
   const order = comparePrecedence(shifted, reduced, orders);
   if (order !== 0) return order;
+  const items = itemsOrder(grammar, short, reduced, lookahead, orders);
+  if (items !== 0) return items;
   if (reduced.associativity === 'right') return 1;
   if (reduced.associativity === 'left') return -1;
   return 0;
@@ -1673,6 +1747,7 @@ export class Executor {
     this.edgeMemo = new Map();
     this.belowMemo = new Map();
     this.inExtra = false;
+    this.extraStart = -1;
     // The repair points where a continuation after a MISSING leaf is open.
     this.chained = new Set();
     this.scannerMemo = new Map();
@@ -1791,12 +1866,16 @@ export class Executor {
   // Skips trivia: repeatedly the longest match of any trivia expression
   // allowed in the current mode. Returns the new offset and the trivia leaves.
   // Inside an extra that builds a node, only the extras that are no rule
-  // (white space) are trivia, as no extra nests in another.
+  // (white space) are trivia, unless the extra's rule reaches no scanner
+  // token: then every extra nests in it, as a tree-sitter lexer lexes extras
+  // there (see `nestingExtras` in load.js), except at its own start, where
+  // the extra is its own rule's first token.
   skipTrivia(position, state) {
     const { trivia } = this.program;
     if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN };
     const outrank = this.lexFrame(position)?.outranks?.get(position) ?? 0;
-    const key = `${position}|${state.key}|${this.inExtra}|${outrank}`;
+    const atExtra = this.inExtra === 'nesting' && position === this.extraStart;
+    const key = `${position}|${state.key}|${this.inExtra}|${atExtra}|${outrank}`;
     const cached = this.triviaMemo.get(key);
     if (cached) return cached;
     const mode = state.modes[state.modes.length - 1];
@@ -1810,7 +1889,7 @@ export class Executor {
       let bestKind = null;
       for (const item of trivia) {
         if (item.modes && !item.modes.includes(mode)) continue;
-        if (this.inExtra && item.kind !== null) continue;
+        if (item.kind !== null && (this.inExtra === true || (atExtra && cursor === position))) continue;
         if (cursor === position && outrank > 0 && this.priorityOf(item.expression) < outrank) continue;
         const end = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, state, true))?.end ?? -1);
         if (end > best) {
@@ -1840,7 +1919,11 @@ export class Executor {
   // node and its end.
   extraNode(kind, start, end, state) {
     if (kind === null || this.program.rules.get(kind)?.kind !== 'normal') return null;
-    this.inExtra = true;
+    const [outer, outerStart] = [this.inExtra, this.extraStart];
+    // `nesting` inside an extra another extra may nest in, `true` inside any
+    // other.
+    this.inExtra = this.program.nestingExtras.has(kind) ? 'nesting' : true;
+    this.extraStart = start;
     try {
       const results = this.quietly(() => this.evaluate({ kind: 'ref', name: kind }, start, state, false))
         .filter((result) => result.cost === 0 && result.children.some((child) => child.type === 'node'));
@@ -1856,7 +1939,8 @@ export class Executor {
       const node = best?.children.find((child) => child.type === 'node');
       return node ? { node: { ...node, trivia: true }, end: best.end } : null;
     } finally {
-      this.inExtra = false;
+      this.inExtra = outer;
+      this.extraStart = outerStart;
     }
   }
 
@@ -3244,10 +3328,12 @@ export class KeywordLexing {
 // each the farthest end of a node that begins with that leaf. A token the
 // external scanner scanned of no width does not count: the parser scanned it
 // before its lexer, in the parse state the next leaf is lexed in (JavaScript's
-// automatic semicolon before a line break and a keyword `class`).
+// automatic semicolon before a line break and a keyword `class`). `last`
+// holds the end of each leaf, by its start.
 function treeReach(root) {
   const starts = [];
   const ends = new Map();
+  const last = new Map();
   let open = [];
   const pending = [root];
   while (pending.length > 0) {
@@ -3259,10 +3345,11 @@ function treeReach(root) {
       continue;
     }
     starts.push(node.start);
+    last.set(node.start, Math.max(last.get(node.start) ?? -1, node.end));
     if (open.length > 0) ends.set(node.start, Math.max(ends.get(node.start) ?? -1, ...open));
     open = [];
   }
-  return { starts, ends };
+  return { starts, ends, last };
 }
 
 // Whether a keyword matched in `call` was in the parse state of the tree's
@@ -3285,6 +3372,10 @@ function inParseState(call, leaf, reach, seen) {
       }
       const first = reach.starts[low];
       if (first !== undefined && first < leaf.start && (reach.ends.get(first) ?? -1) < leaf.end) continue;
+      // A call that begins inside a leaf of the tree lexed that leaf's text
+      // otherwise (Rocq's `[` of a list where the tree has the token `=[`).
+      const previous = reach.starts[low - 1];
+      if (previous !== undefined && reach.last.get(previous) > current.position) continue;
     }
     pending.push(...current.parents);
   }

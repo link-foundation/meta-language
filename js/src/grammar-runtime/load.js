@@ -369,6 +369,7 @@ function loadInContext(grammar, context) {
       program.trivia.push({ expression: { kind: 'ref', name }, kind: rule.nodeKind, modes: rule.modes ?? null });
     }
   }
+  program.nestingExtras = nestingExtras(program.trivia, rules, scanners);
   for (const scanner of new Set(scanners.values())) {
     const known = program.expectedItems.size;
     checkOperations(scanner.operations, 'scanner', `scanner ${scanner.name}`, scanner.tokens);
@@ -393,6 +394,35 @@ function loadInContext(grammar, context) {
     context.languages.set(language, loadInContext(context.resolve(language, 'embed'), context));
   }
   return program;
+}
+
+// The extras of a rule that builds a node and reaches no token of an external
+// scanner, the extras another extra nests in (see `skipTrivia` in
+// executor.js). tree-sitter lexes the extras in every parse state, inside the
+// rule of an extra too, but runs the external scanner first wherever one of
+// its tokens is valid: so an extra starts inside an extra whose rule only the
+// lexer lexes (Rocq's nested `(* a (* b *) c *)`), and none inside one that
+// lexes scanner tokens (Rust's comments, whose scanner reads their content).
+function nestingExtras(trivia, rules, scanners) {
+  const nesting = new Set();
+  for (const { kind } of trivia) {
+    if (kind === null || rules.get(kind)?.kind !== 'normal') continue;
+    const seen = new Set([kind]);
+    const pending = [kind];
+    let scanned = false;
+    while (pending.length > 0 && !scanned) {
+      visitExpression(rules.get(pending.pop()).expression, (item) => {
+        if (item.kind !== 'ref') return;
+        if (scanners.has(item.name)) scanned = true;
+        else if (rules.has(item.name) && !seen.has(item.name)) {
+          seen.add(item.name);
+          pending.push(item.name);
+        }
+      });
+    }
+    if (!scanned) nesting.add(kind);
+  }
+  return nesting;
 }
 
 // The rank of each token of a `(matching longest)` grammar, by which two
@@ -436,11 +466,29 @@ function tokenRanks(rules) {
     if (inner.kind === 'literal') return inner;
     return ['lexicalPrecedence', 'token', 'immediateToken'].includes(inner.kind) ? bare(inner.item) : null;
   };
+  // The tokens of an alias of a choice of tokens, each perhaps aliased too
+  // (Rocq's `custom_operator` of four patterns), or null for another item.
+  const alternatives = (expression) => {
+    if (expression.kind === 'alias') return alternatives(expression.item);
+    if (lexical(expression)) return [expression];
+    if (expression.kind !== 'choice') return null;
+    const items = expression.items.map(alternatives);
+    return items.every(Boolean) ? items.flat() : null;
+  };
   const walk = (expression) => {
+    let choices = null;
     if (expression.kind === 'alias' && expression.item.kind === 'ref') {
       aliased.push(expression);
     } else if (expression.kind === 'alias' && lexical(expression.item)) {
       assign(kinds, expression.name, rankOf(expression.item));
+    } else if (expression.kind === 'alias' && (choices = alternatives(expression.item))) {
+      // The alias ranks as its tokens where they rank alike, as the leaf
+      // does not tell which one it matched.
+      const ranks = choices.map((choice) => rankOf(choice));
+      if (ranks.every((rank) => rank.priority === ranks[0].priority && rank.specificity === ranks[0].specificity)) {
+        assign(kinds, expression.name, ranks[0]);
+      }
+      walk(expression.item);
     } else if (lexical(expression)) {
       const literal = bare(expression);
       if (literal) assign(literals, literal.value, rankOf(expression));

@@ -278,6 +278,16 @@ function classItem(item) {
   }
 }
 
+// The native expression text of a PATTERN's tree: a pattern of fixed text
+// (Rocq's `\.\.`) is the sequence of its characters, not one literal, as a
+// tree-sitter lexer ranks a pattern below a string of the same text (see
+// `tokenRanks` in grammar-runtime/load.js).
+function fixedPattern(node) {
+  const chars = node.kind === 'char' ? [node] : node.kind === 'seq' && node.items.every((item) => item.kind === 'char') ? node.items : null;
+  if (!chars || chars.length < 2) return renderTreeSitterPattern(node);
+  return `(seq ${chars.map((item) => `(literal ${enc(item.value)})`).join(' ')})`;
+}
+
 /** The native expression text of a pattern tree. Adjacent characters join into one literal. */
 export function renderTreeSitterPattern(node) {
   switch (node.kind) {
@@ -481,7 +491,7 @@ export function importTreeSitterNative(source, options = {}) {
         if (!inToken && keywords.has(node.value)) return `(token (seq (literal ${enc(node.value)}) (not (ref ${wordRule}))))`;
         return `(literal ${enc(node.value)})`;
       case 'PATTERN': {
-        const text = renderTreeSitterPattern(parseTreeSitterPattern(node.value, node.flags ?? ''));
+        const text = fixedPattern(parseTreeSitterPattern(node.value, node.flags ?? ''));
         return inToken ? text : unnamed(`(token ${text})`, aliased);
       }
       case 'BLANK': return 'empty';
