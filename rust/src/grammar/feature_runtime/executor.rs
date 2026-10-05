@@ -25,6 +25,7 @@ use super::program::{
     Associativity, Compiled, Expr, InExtra, Matcher, Name, PrecedenceTag, Program, Settling,
     SettlingStep, Target,
 };
+use super::repetition::{ImmediateLiterals, immediate_pattern};
 use super::results::{
     ChildList, Children, Entry, KeywordLexing, MemoKey, Outcome, Repair, Res, ResultSet, Scanned,
     Shared, Skipped, TokenOrder, Tree, TreeType, children_of, concat, is_separator, no_children,
@@ -144,6 +145,17 @@ pub(super) struct Executor<'c> {
     /// Under `(matching longest)`, the keyword lexing of the parse (see
     /// `KeywordLexing`), or none.
     pub(super) keywords: Option<&'c RefCell<KeywordLexing>>,
+    /// The starts of separators a token lexed at them took, going on past
+    /// the trivia, each with the chains of node calls the token was lexed
+    /// in, their kinds and offsets (see `token_before_extra` and
+    /// `widen_tokens`).
+    pub(super) separator_taken: HashMap<usize, HashSet<Vec<(Name, usize)>>>,
+    /// The tokens an alias of no rule names, by that name (see
+    /// `aliased_tokens`).
+    pub(super) aliased: Option<HashMap<Name, Vec<&'c Expr>>>,
+    /// The immediate literals of each unordered choice, by the address of
+    /// its items (see `immediate_literals`).
+    pub(super) immediate_memo: HashMap<usize, Option<Rc<ImmediateLiterals>>>,
 }
 
 /// An element whose scan a repair point keeps (see `element_failed`): an
@@ -177,6 +189,7 @@ impl<'c> Executor<'c> {
             bytes,
             orders: &program.precedence_orders,
             grammar: &program.grammar,
+            trivia: &program.trivia,
         });
         Self {
             compiled,
@@ -215,6 +228,9 @@ impl<'c> Executor<'c> {
             repair_memo: HashMap::new(),
             chained: HashSet::new(),
             keywords: None,
+            separator_taken: HashMap::new(),
+            aliased: None,
+            immediate_memo: HashMap::new(),
         }
     }
 
@@ -448,7 +464,7 @@ impl<'c> Executor<'c> {
                 }
                 Ok(results)
             }
-            Expr::Alias { name, item } => self.alias(name, item, position, state, in_token),
+            Expr::Alias { name, item } => self.alias(expr, (name, item), position, state, in_token),
             Expr::Precedence {
                 level,
                 name,
@@ -497,6 +513,13 @@ impl<'c> Executor<'c> {
                 // before it lexes an extra: after a comment only where it
                 // fails before it.
                 let scanned = matches!(**item, Expr::Ref(Target::External(_)));
+                // The external scanner skips separators itself, so only a
+                // token of the lexer takes one in (Lean's layout tokens do
+                // not).
+                let separating = self
+                    .keywords
+                    .zip(self.lexing)
+                    .filter(|_| !in_token && matches!(expr, Expr::ImmediateToken(_)) && !scanned);
                 // The token is requested where the parse asks for it, though
                 // its item is evaluated in token context (TypeScript's
                 // function signature ends with `(immediateToken (ref
@@ -520,6 +543,14 @@ impl<'c> Executor<'c> {
                                     call,
                                     immediate,
                                 );
+                            }
+                            if let Some((keywords, lexing)) = separating
+                                && skipped.end == position
+                                && lexing.separator_text(skipped.end, result.end)
+                            {
+                                let call =
+                                    self.call_stack.last().and_then(|frame| frame.borrow().call);
+                                keywords.borrow_mut().matched_separator(position, call);
                             }
                             found.add(result);
                         }
@@ -789,7 +820,18 @@ impl<'c> Executor<'c> {
             return Ok(best.into_iter().collect());
         }
         let mut results = ResultSet::new(self.longest_tokens, self.settling);
+        let outranked = if self.lexing.is_some() && !in_token {
+            self.immediate_literals(items)
+        } else {
+            None
+        };
         for item in items {
+            if let Some(literals) = &outranked
+                && let Some(pattern) = immediate_pattern(item)
+                && self.literal_outranks(pattern, &literals.0, position, state)?
+            {
+                continue;
+            }
             for result in self.evaluate(item, position, state, in_token)? {
                 results.add(result);
             }

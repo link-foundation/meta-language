@@ -3,12 +3,13 @@
 
 use std::cell::RefCell;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use super::executor::{Element, Executor, Run};
 use super::forking::Lead;
 use super::operations::State;
-use super::program::{Expr, InExtra, Matcher, Name, Rule, Target};
+use super::program::{Expr, InExtra, Matcher, Name, Program, Rule, Target};
 use super::results::{
     Entry, Res, Skipped, Tree, TreeType, children_of, is_separator, longest_result, no_children,
     preferred_tokens, with_leaf,
@@ -110,6 +111,11 @@ impl Executor<'_> {
         at_extra: bool,
     ) -> Run<usize> {
         let trivia = &self.program.trivia;
+        // A separator an immediate token takes there is lexed, not skipped
+        // (see `KeywordLexing`).
+        let lexed = self
+            .keywords
+            .is_some_and(|keywords| keywords.borrow().lexes_separator(position));
         // A tree-sitter lexer skips a byte order mark at the start of the input.
         let mut cursor = if position == 0
             && self.longest_tokens.is_some()
@@ -133,6 +139,7 @@ impl Executor<'_> {
                     || (cursor == position
                         && outrank > 0
                         && self.priority_of(&item.expression) < outrank)
+                    || (cursor == position && lexed && item.kind.is_none())
                 {
                     continue;
                 }
@@ -314,13 +321,14 @@ impl Executor<'_> {
     /// names the extra takes it as its token (GraphQL's `comma`, an extra
     /// that ends a `variable_definition` and an `object_field`).
     pub(super) fn own_extra(
-        &self,
+        &mut self,
         rule: &Rule,
         skipped: Rc<Skipped>,
+        state: &State,
         in_token: bool,
-    ) -> Rc<Skipped> {
+    ) -> Run<Rc<Skipped>> {
         if self.lexing.is_none() || in_token {
-            return skipped;
+            return Ok(skipped);
         }
         let own = |leaf: &Rc<Tree>| {
             leaf.ty == TreeType::Token
@@ -331,11 +339,17 @@ impl Executor<'_> {
                     .is_some_and(|&index| std::ptr::eq(&raw const self.program.rules[index], rule))
         };
         match skipped.leaves.iter().position(own) {
-            Some(at) => Rc::new(Skipped {
+            Some(at) => Ok(Rc::new(Skipped {
                 end: skipped.leaves[at].start,
                 leaves: children_of(skipped.leaves[..at].to_vec()),
-            }),
-            None => skipped,
+            })),
+            // A token rule that matches a separator before it takes it, as a
+            // token does (see `token_before_extra`): Make's `raw_line` of a
+            // define directive keeps its indentation.
+            None if rule.kind == RuleKind::Token && !skipped.leaves.is_empty() => {
+                self.token_before_extra(&rule.expression, skipped, state)
+            }
+            None => Ok(skipped),
         }
     }
 
@@ -415,6 +429,15 @@ impl Executor<'_> {
                 Lead::Ref(name) => {
                     if program.external.contains_key(&**name) {
                         return Ok(false);
+                    }
+                    for item in self.aliased_tokens(name) {
+                        if longest_result(
+                            self.quietly(|this| this.evaluate(item, end, state, true))?,
+                        )
+                        .is_some_and(|result| result.end > end)
+                        {
+                            return Ok(false);
+                        }
                     }
                     if let Some(&index) = program.rule_index.get(&**name)
                         && matches!(
@@ -568,24 +591,64 @@ impl Executor<'_> {
     /// trivia before its end: at the first separator or extra of a silent
     /// rule (see `before_separator`) whose text the token's item also
     /// matches, at least as far, and without the trivia from it on (CSV's row
-    /// ends with a `\n` token where `\s` is trivia); otherwise `skipped`.
+    /// ends with a `\n` token where `\s` is trivia); otherwise `skipped`. An
+    /// extra that is a token rule is taken over too where the token wins the
+    /// lexical conflict with it, lexing longer at no lower precedence or as
+    /// far at a higher one: Make's `raw_line` of a define directive,
+    /// `#comment\n`, is no comment of a lower precedence.
     pub(super) fn token_before_extra(
         &mut self,
         item: &Expr,
         skipped: Rc<Skipped>,
         state: &State,
     ) -> Run<Rc<Skipped>> {
+        let level = self.priority_of(item);
         for (at, leaf) in skipped.leaves.iter().enumerate() {
-            if !(is_separator(leaf) || self.silent_extra(leaf)) {
+            let plain = is_separator(leaf) || self.silent_extra(leaf);
+            let other = if plain || leaf.ty != TreeType::Token || !leaf.trivia {
+                None
+            } else {
+                leaf.kind
+                    .as_ref()
+                    .and_then(|kind| self.program.rule_index.get(&**kind))
+                    .map(|&index| &self.program.rules[index])
+                    .filter(|rule| rule.kind == RuleKind::Token)
+                    .map(|rule| rule.lexical_priority)
+            };
+            if !plain && other.is_none() {
                 continue;
             }
-            let results = self.quietly(|this| this.evaluate(item, leaf.start, state, true))?;
-            if longest_result(results).is_some_and(|result| result.end >= leaf.end) {
-                return Ok(Rc::new(Skipped {
-                    end: leaf.start,
-                    leaves: children_of(skipped.leaves[..at].to_vec()),
-                }));
+            let reach =
+                longest_result(self.quietly(|this| this.evaluate(item, leaf.start, state, true))?)
+                    .map(|result| result.end);
+            let takes = match (plain, other, reach) {
+                (true, _, Some(reach)) => reach >= leaf.end,
+                (false, Some(other), Some(reach)) => {
+                    (reach > leaf.end && level >= other) || (reach == leaf.end && level > other)
+                }
+                _ => false,
+            };
+            if !takes {
+                continue;
             }
+            if is_separator(leaf) && reach.is_some_and(|reach| reach > skipped.end) {
+                let chain: Vec<(Name, usize)> = self
+                    .call_stack
+                    .iter()
+                    .filter_map(|entry| {
+                        let entry = entry.borrow();
+                        entry.builds.clone().map(|kind| (kind, entry.position))
+                    })
+                    .collect();
+                self.separator_taken
+                    .entry(leaf.start)
+                    .or_default()
+                    .insert(chain);
+            }
+            return Ok(Rc::new(Skipped {
+                end: leaf.start,
+                leaves: children_of(skipped.leaves[..at].to_vec()),
+            }));
         }
         Ok(skipped)
     }
@@ -618,5 +681,66 @@ impl Executor<'_> {
             with_leaf(&skipped.leaves, leaf)
         };
         Ok(vec![Res::new(best.end, best.state, children, best.dynamic)])
+    }
+}
+
+impl<'c> Executor<'c> {
+    /// The tokens an alias of no rule names `name` (Make's `unnamed_token`,
+    /// the alias of its inline tokens of text and blanks), any of which
+    /// follows where the name does (see `merged_longer`), as `aliased` of
+    /// mergedLexing in js/src/grammar-runtime/executor.js.
+    fn aliased_tokens(&mut self, name: &Name) -> Vec<&'c Expr> {
+        let program: &'c Program = self.program;
+        self.aliased
+            .get_or_insert_with(|| {
+                let mut aliased = HashMap::new();
+                for rule in &program.rules {
+                    if !matches!(rule.kind, RuleKind::Token | RuleKind::Atomic) {
+                        aliased_items(&rule.expression, program, &mut aliased);
+                    }
+                }
+                aliased
+            })
+            .get(name)
+            .cloned()
+            .unwrap_or_default()
+    }
+}
+
+/// Adds the item of each token an alias of no rule names in `expr` to
+/// `aliased`, by the alias name.
+fn aliased_items<'c>(
+    expr: &'c Expr,
+    program: &Program,
+    aliased: &mut HashMap<Name, Vec<&'c Expr>>,
+) {
+    match expr {
+        Expr::Alias { name, item } => {
+            if !program.rule_index.contains_key(&**name)
+                && let Expr::Token(inner) | Expr::ImmediateToken(inner) = &**item
+            {
+                aliased.entry(name.clone()).or_default().push(&**inner);
+            }
+            aliased_items(item, program, aliased);
+        }
+        Expr::Seq(items) | Expr::Choice { items, .. } | Expr::Longest(items) => {
+            for item in items {
+                aliased_items(item, program, aliased);
+            }
+        }
+        Expr::Repeat { item, .. }
+        | Expr::And(item)
+        | Expr::Not(item)
+        | Expr::Capture { item, .. }
+        | Expr::Precedence { item, .. }
+        | Expr::DynamicPrecedence { item, .. }
+        | Expr::LexicalPrecedence { item, .. }
+        | Expr::Token(item)
+        | Expr::ImmediateToken(item)
+        | Expr::Predicate { item, .. }
+        | Expr::Missing { item, .. }
+        | Expr::Embed { item, .. }
+        | Expr::Recover { item, .. } => aliased_items(item, program, aliased),
+        Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
     }
 }

@@ -12,6 +12,7 @@
 mod compile;
 mod executor;
 mod forking;
+mod keyword_lexing;
 mod lexing;
 mod load;
 mod operations;
@@ -22,8 +23,11 @@ mod program;
 mod reducing;
 mod repetition;
 mod results;
+mod roots;
 mod rules;
+mod separators;
 mod text;
+mod token_conflicts;
 mod token_ranks;
 mod tree;
 mod walk;
@@ -446,6 +450,7 @@ fn parse_program(
             bytes,
             orders: &compiled.programs[compiled.main].precedence_orders,
             grammar: &compiled.programs[compiled.main].grammar,
+            trivia: &compiled.programs[compiled.main].trivia,
         });
     let keywords = tokens.map(|_| RefCell::new(KeywordLexing::default()));
     let expectations = RefCell::new(Expectations::default());

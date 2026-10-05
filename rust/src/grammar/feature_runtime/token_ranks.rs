@@ -131,7 +131,20 @@ impl Ranking {
                     aliased.push((name.clone(), index));
                 }
             }
-            Expr::Alias { name, item } if lexical(item) => self.assign_kind(name, rank_of(item, 0)),
+            Expr::Alias { name, item } if lexical(item) => {
+                let (priority, specificity) = rank_of(item, 0);
+                self.assign_kind(name, (priority, specificity));
+                // Each alias ranks its own token too (see `expressions`).
+                let order = self.next();
+                self.ranks.expressions.insert(
+                    std::ptr::from_ref(expr) as usize,
+                    TokenRank {
+                        priority,
+                        specificity,
+                        order,
+                    },
+                );
+            }
             Expr::Alias { name, item } if alternatives(item).is_some() => {
                 // The alias ranks as its tokens where they rank alike, as the
                 // leaf does not tell which one it matched.

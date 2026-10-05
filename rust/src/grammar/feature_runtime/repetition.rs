@@ -1,13 +1,14 @@
 //! Repetitions, aliases and lexical longest matches of the native executor,
 //! as `js/src/grammar-runtime/executor.js` evaluates them.
 
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use super::executor::{Element, Executor, Run};
 use super::forking::reduced_early;
 use super::operations::State;
 use super::parting::starts_widthless;
-use super::program::{Expr, Name, Target};
+use super::program::{Expr, Matcher, Name, Target};
 use super::results::{
     Res, ResultSet, Tree, TreeType, children_of, longest_result, no_children, with_leaf,
 };
@@ -127,8 +128,8 @@ impl Executor<'_> {
 
     pub(super) fn alias(
         &mut self,
-        name: &Name,
-        item: &Expr,
+        expr: &Expr,
+        (name, item): (&Name, &Expr),
         position: usize,
         state: &State,
         in_token: bool,
@@ -145,6 +146,14 @@ impl Executor<'_> {
             .map(|result| {
                 let meaningful = result.children.iter().filter(|child| !child.trivia).count();
                 if meaningful == 1 && !wraps {
+                    // A token leaf keeps the rank of the token it names (see
+                    // `token_ranks`).
+                    let rank = self.program.token_ranks.as_ref().and_then(|ranks| {
+                        ranks
+                            .expressions
+                            .get(&(std::ptr::from_ref(expr) as usize))
+                            .copied()
+                    });
                     let children = result
                         .children
                         .iter()
@@ -157,6 +166,9 @@ impl Executor<'_> {
                                 copy.kind = Some(name.clone());
                                 if copy.ty == TreeType::Missing {
                                     copy.literal = false;
+                                }
+                                if copy.ty == TreeType::Token && rank.is_some() {
+                                    copy.rank = rank;
                                 }
                                 Rc::new(copy)
                             }
@@ -234,5 +246,104 @@ impl Executor<'_> {
             children,
             result.dynamic,
         )])
+    }
+}
+
+/// The immediate literals the alternatives of an unordered choice that are
+/// no immediate token of a pattern begin with, where some alternative is
+/// one (see `immediate_pattern` and `literal_outranks`).
+#[derive(Debug)]
+pub(super) struct ImmediateLiterals(pub(super) HashSet<Vec<u8>>);
+
+/// The expression of the immediate token of no literal an alternative is,
+/// under its aliases and captures, or None.
+pub(super) fn immediate_pattern(expr: &Expr) -> Option<&Expr> {
+    match expr {
+        Expr::Alias { item, .. } | Expr::Capture { item, .. } => immediate_pattern(item),
+        Expr::ImmediateToken(item)
+            if !matches!(
+                **item,
+                Expr::Terminal {
+                    matcher: Matcher::Literal(_),
+                    ..
+                } | Expr::LexicalPrecedence { .. }
+            ) =>
+        {
+            Some(item)
+        }
+        _ => None,
+    }
+}
+
+/// Adds the immediate literals `expr` begins with to `literals`.
+fn leading_literals(expr: &Expr, literals: &mut HashSet<Vec<u8>>) {
+    match expr {
+        Expr::ImmediateToken(item) => {
+            if let Expr::Terminal {
+                matcher: Matcher::Literal(literal),
+                ..
+            } = &**item
+            {
+                literals.insert(literal.clone());
+            }
+        }
+        Expr::Seq(items) => {
+            if let Some(first) = items.first() {
+                leading_literals(first, literals);
+            }
+        }
+        Expr::Choice { items, .. } => {
+            for item in items {
+                leading_literals(item, literals);
+            }
+        }
+        Expr::Alias { item, .. }
+        | Expr::Capture { item, .. }
+        | Expr::Precedence { item, .. }
+        | Expr::DynamicPrecedence { item, .. } => leading_literals(item, literals),
+        _ => {}
+    }
+}
+
+impl Executor<'_> {
+    /// The immediate literals of the unordered choice of `items`, or None
+    /// where no alternative is an immediate token of a pattern or none
+    /// begins with an immediate literal. It mirrors immediateLiterals in
+    /// js/src/grammar-runtime/executor.js.
+    pub(super) fn immediate_literals(&mut self, items: &[Expr]) -> Option<Rc<ImmediateLiterals>> {
+        let key = items.as_ptr().addr();
+        self.immediate_memo
+            .entry(key)
+            .or_insert_with(|| {
+                let mut literals = HashSet::new();
+                let mut patterns = false;
+                for item in items {
+                    if immediate_pattern(item).is_some() {
+                        patterns = true;
+                    } else {
+                        leading_literals(item, &mut literals);
+                    }
+                }
+                (patterns && !literals.is_empty()).then(|| Rc::new(ImmediateLiterals(literals)))
+            })
+            .clone()
+    }
+
+    /// Whether an immediate literal another alternative begins with matches
+    /// just what the immediate token `pattern` matches at `position`: a
+    /// lexer that lexes both takes the string over the pattern of one
+    /// length, so the pattern's alternative is not taken (Make's `$(` without
+    /// its `)`, whose `(` is no one-character variable name).
+    pub(super) fn literal_outranks(
+        &mut self,
+        pattern: &Expr,
+        literals: &HashSet<Vec<u8>>,
+        position: usize,
+        state: &State,
+    ) -> Run<bool> {
+        let end =
+            longest_result(self.quietly(|this| this.evaluate(pattern, position, state, true))?)
+                .map_or(position, |result| result.end);
+        Ok(end > position && literals.contains(&self.bytes[position..end]))
     }
 }

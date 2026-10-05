@@ -489,6 +489,38 @@ function directEdge(expression, side, owner, found = [], tag = null) {
 // per program: the rules each rule takes directly as its first part, by rule
 // name (see `shiftReduction`), the order the rules are defined in, and the
 // groups of rules whose conflicts the grammar declares (see `forkedOrder`).
+// The alternatives of an unordered choice that are an immediate token of no
+// literal (`patterns`, each to its token's expression) and the immediate
+// literals the other alternatives begin with (`literals`), or null where
+// there are not both: see `literalOutranks`.
+const IMMEDIATE_LITERALS = new WeakMap();
+function immediateLiterals(choice) {
+  if (IMMEDIATE_LITERALS.has(choice)) return IMMEDIATE_LITERALS.get(choice);
+  const patternOf = (expression) => {
+    if (expression.kind === 'alias' || expression.kind === 'capture') return patternOf(expression.item);
+    return expression.kind === 'immediateToken' && expression.item.kind !== 'literal' && expression.item.kind !== 'lexicalPrecedence' ? expression.item : null;
+  };
+  const leading = (expression) => {
+    switch (expression.kind) {
+      case 'immediateToken': return expression.item.kind === 'literal' ? [expression.item.value] : [];
+      case 'seq': return expression.items.length > 0 ? leading(expression.items[0]) : [];
+      case 'choice': return expression.items.flatMap(leading);
+      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': return leading(expression.item);
+      default: return [];
+    }
+  };
+  const patterns = new Map();
+  const literals = new Set();
+  for (const item of choice.items) {
+    const pattern = patternOf(item);
+    if (pattern) patterns.set(item, pattern);
+    else for (const value of leading(item)) literals.add(value);
+  }
+  const found = patterns.size > 0 && literals.size > 0 ? { patterns, literals } : null;
+  IMMEDIATE_LITERALS.set(choice, found);
+  return found;
+}
+
 const GRAMMAR_FACTS = new WeakMap();
 
 function grammarFacts(program) {
@@ -2178,6 +2210,9 @@ export class Executor {
     const { trivia } = this.program;
     if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN };
     const outrank = this.lexFrame(position)?.outranks?.get(position) ?? 0;
+    // A separator an immediate token takes there is lexed, not skipped (see
+    // `KeywordLexing`).
+    const lexed = this.keywords?.separators.has(position) ?? false;
     const atExtra = this.inExtra === 'nesting' && position === this.extraStart;
     const key = `${position}|${state.key}|${this.inExtra}|${atExtra}|${outrank}`;
     const cached = this.triviaMemo.get(key);
@@ -2200,6 +2235,7 @@ export class Executor {
         if (item.modes && !item.modes.includes(mode)) continue;
         if (item.kind !== null && (this.inExtra === true || (atExtra && cursor === position))) continue;
         if (cursor === position && outrank > 0 && this.priorityOf(item.expression) < outrank) continue;
+        if (cursor === position && lexed && item.kind === null) continue;
         const end = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, state, true))?.end ?? -1);
         if (end > best) {
           best = end;
@@ -2517,6 +2553,9 @@ export class Executor {
         // succeeds, as a lexer runs the external scanner before it lexes an
         // extra: after a comment only where it fails before it.
         const scanned = expression.item.kind === 'ref' && this.program.externalTokens.has(expression.item.name);
+        // The external scanner skips separators itself, so only a token of
+        // the lexer takes one in (Lean's layout tokens do not).
+        const separating = this.keywords !== null && this.lexing && !inToken && expression.kind === 'immediateToken' && !scanned;
         // The token is requested where the parse asks for it, though its
         // item is evaluated in token context (TypeScript's function
         // signature ends with `(immediateToken (ref
@@ -2529,6 +2568,7 @@ export class Executor {
           for (const { end, leaves } of starts) {
             for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
               if (keyword || immediate) this.keywords.match(`${end}|${result.end}`, this.callStack[this.callStack.length - 1] ?? null, immediate);
+              if (separating && end === position && this.separatorText(end, result.end)) this.keywords.matchSeparator(end, this.callStack[this.callStack.length - 1] ?? null);
               addResult(found, result, this.longestTokens, this.settling);
             }
             if (scanned && found.size > 0) break;
@@ -2663,10 +2703,24 @@ export class Executor {
       return best ? [best] : [];
     }
     const results = new Map();
+    const outranked = this.lexing && !inToken ? immediateLiterals(expression) : null;
     for (const item of expression.items) {
+      if (outranked?.patterns.has(item) && this.literalOutranks(outranked.patterns.get(item), outranked.literals, position, state)) continue;
       for (const result of this.evaluate(item, position, state, inToken)) addResult(results, result, this.longestTokens, this.settling);
     }
     return [...results.values()];
+  }
+
+  // Whether an immediate literal another alternative begins with matches
+  // just what the immediate token `pattern` matches at `position`: a lexer
+  // that lexes both takes the string over the pattern of one length, so the
+  // pattern's alternative is not taken (Make's `$(` without its `)`, whose
+  // `(` is no one-character variable name).
+  literalOutranks(pattern, literals, position, state) {
+    const end = this.quietly(() => longestResult(this.evaluate(pattern, position, state, true))?.end ?? -1);
+    if (end <= position) return false;
+    const text = textOf(this.bytes, position, end);
+    return literals.has(text);
   }
 
   repetition(item, min, max, position, state, inToken) {
@@ -3743,6 +3797,13 @@ function keywordTexts(rules) {
  * (`matchedImmediate`) become immediate-only (`immediates`) alike where the
  * tree took the plain literal (a `plain` leaf), whose parse state the
  * immediate one matched in.
+ *
+ * An immediate token that matched separator text alone at an offset
+ * (`matchedSeparators`, Make's line break that ends a rule) is lexed there
+ * where the tree skipped a separator in its parse state: a tree-sitter lexer
+ * that completed it takes no separator transition after it, so the offset
+ * skips no separator (`separators`) when the input is parsed again (Make's
+ * `a:\nb\n`, whose rule ends at the line break, with no `b` prerequisite).
  */
 export class KeywordLexing {
   constructor(tokens, program = null) {
@@ -3753,6 +3814,15 @@ export class KeywordLexing {
     this.matched = new Map();
     this.immediates = new Set();
     this.matchedImmediate = new Map();
+    this.separators = new Set();
+    this.matchedSeparators = new Map();
+  }
+
+  /** Records an immediate token of separator text alone matched at `position` in the rule call `call`. */
+  matchSeparator(position, call) {
+    const calls = this.matchedSeparators.get(position);
+    if (!calls) this.matchedSeparators.set(position, new Set([call]));
+    else calls.add(call);
   }
 
   /** Records a keyword or `immediate` literal token matched over `span` in the rule call `call`. */
@@ -3803,6 +3873,16 @@ export class KeywordLexing {
         for (let index = node.children.length - 1; index >= 0; index -= 1) pending.push(node.children[index]);
         continue;
       }
+      if (node.trivia && node.kind == null) {
+        const calls = this.matchedSeparators.get(node.start);
+        if (!calls || this.separators.has(node.start)) continue;
+        reach ??= treeReach(root, this.leadsOf(), this.tokens.bytes);
+        const seen = new Set();
+        if (![...calls].some((call) => builtAround(call, node, reach) && inParseState(call, node, reach, seen, this.leads))) continue;
+        this.separators.add(node.start);
+        found = true;
+        continue;
+      }
       const span = `${node.start}|${node.end}`;
       let [matched, only] = [this.matched, this.only];
       if (node.plain) [matched, only] = [this.matchedImmediate, this.immediates];
@@ -3817,6 +3897,7 @@ export class KeywordLexing {
     }
     this.matched = new Map();
     this.matchedImmediate = new Map();
+    this.matchedSeparators = new Map();
     return found;
   }
 }
@@ -3902,6 +3983,28 @@ function inParseState(call, leaf, reach, seen, leads = null) {
       // returns the identifier `as`).
       const keyword = first !== undefined && first < leaf.start ? reach.keywords.get(first) : undefined;
       if (keyword !== undefined && leads?.first.get(current.name)?.has(`literal ${keyword}`) === false) continue;
+    }
+    pending.push(...current.parents);
+  }
+  return false;
+}
+
+// Whether the node the rule call `call` builds, or the first call that
+// made it that builds one, through some chain, is a node of the tree around
+// `leaf` (see `KeywordLexing`): a call whose node the tree lacks lexed in a
+// parse state the tree never had (Make's `list` of a target `-include`,
+// where the tree has the `-include` of a directive).
+function builtAround(call, leaf, reach) {
+  const pending = [call];
+  const seen = new Set();
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (current === null) return true;
+    if (seen.has(current)) continue;
+    seen.add(current);
+    if (current.builds) {
+      if ((reach.rules.get(`${current.position}|${current.nodeKind}`) ?? -1) > leaf.start) return true;
+      continue;
     }
     pending.push(...current.parents);
   }

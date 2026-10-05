@@ -16,8 +16,7 @@ use super::operations::{
 use super::program::{Expr, Name, PrecedenceTag, Rule, Target};
 use super::results::{
     Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, complete_order,
-    concat, content_start, is_separator, longest_result, no_children, reduced_alone, same_children,
-    with_leaf,
+    concat, content_start, longest_result, no_children, reduced_alone, same_children, with_leaf,
 };
 use super::text::{column_of, decode_at};
 use super::walk::first_meaningful;
@@ -129,6 +128,7 @@ impl Executor<'_> {
             evaluating: true,
             call,
             position,
+            builds: matches!(rule.kind, RuleKind::Normal).then(|| rule.node_kind.clone()),
             ..Entry::default()
         }));
         self.retain(1)?;
@@ -324,7 +324,7 @@ impl Executor<'_> {
         let mut built = Vec::new();
         if matches!(rule.kind, RuleKind::Token | RuleKind::Atomic) {
             let skipped = self.terminal_start(position, state, in_token)?;
-            let skipped = self.own_extra(rule, skipped, in_token);
+            let skipped = self.own_extra(rule, skipped, state, in_token)?;
             let start = skipped.end;
             let mut results =
                 self.quietly(|this| this.evaluate(&rule.expression, start, state, true))?;
@@ -739,67 +739,6 @@ impl Executor<'_> {
             });
         }
         Ok(Outcome::Parsed(root))
-    }
-
-    /// The rest of the input from `start` as an ERROR leaf. As tree-sitter
-    /// keeps the white space at the end of the input out of an ERROR node,
-    /// the separators that end the input follow the leaf; the rest costs the
-    /// same.
-    fn rest_leaves(&mut self, start: usize, state: &State) -> Run<Vec<Rc<Tree>>> {
-        let mut at = self.end;
-        while at > start
-            && matches!(
-                self.bytes[at - 1],
-                b'\t' | b'\n' | 0x0b | 0x0c | b'\r' | b' '
-            )
-        {
-            at -= 1;
-        }
-        if at > start && at < self.end {
-            let tail = self.skip_trivia(at, state)?;
-            if tail.end == self.end && tail.leaves.iter().all(|leaf| is_separator(leaf)) {
-                let mut leaves = vec![Rc::new(Tree::new(TreeType::Error, None, start, at))];
-                leaves.extend(tail.leaves.iter().cloned());
-                return Ok(leaves);
-            }
-        }
-        Ok(vec![Rc::new(Tree::new(
-            TreeType::Error,
-            None,
-            start,
-            self.end,
-        ))])
-    }
-
-    fn root(&self, start_rule: usize, result: &Res, trailing: &[Rc<Tree>], several: bool) -> Tree {
-        let ambiguous = several || result.ambiguous;
-        match &result.children[..] {
-            [only] if only.ty == TreeType::Node => {
-                let mut root = (**only).clone();
-                root.end = self.end;
-                root.children = concat(&only.children, trailing);
-                root.ambiguous = only.ambiguous || ambiguous;
-                root
-            }
-            children => {
-                let kind = &self.program.rules[start_rule].node_kind;
-                let mut root = Tree::node(kind, self.begin, self.end, concat(children, trailing));
-                root.ambiguous = ambiguous;
-                root
-            }
-        }
-    }
-
-    // The root when the start rule matches nothing even with repairs.
-    fn error_root(&self, start_rule: usize) -> Tree {
-        let kind = &self.program.rules[start_rule].node_kind;
-        let error = Tree::new(TreeType::Error, None, self.begin, self.end);
-        Tree::node(
-            kind,
-            self.begin,
-            self.end,
-            children_of(vec![Rc::new(error)]),
-        )
     }
 }
 

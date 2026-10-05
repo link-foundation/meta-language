@@ -392,6 +392,11 @@ pub(super) struct TokenRanks {
     /// (`(immediateToken (literal [))`), which a lexer prefers to the plain
     /// literal of the same text where both are valid (see `KeywordLexing`).
     pub(super) immediate: HashSet<Vec<u8>>,
+    /// The rank of each alias of a token, keyed by the address of its
+    /// expression: aliases of one name may name tokens of other ranks
+    /// (Make's `unnamed_token`, both the immediate blank and the text after
+    /// `=`).
+    pub(super) expressions: HashMap<usize, TokenRank>,
 }
 
 /// One external scanner.

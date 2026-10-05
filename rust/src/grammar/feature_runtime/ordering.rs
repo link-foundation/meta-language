@@ -14,11 +14,10 @@ use super::parting::{
     chain_conflict, child_parting, has_node, holds_first, one_token, parting_end, reduced_first,
     same_tokens, shifted_past, silent_parting,
 };
-use super::program::{
-    Associativity, PrecedenceTag, Settling, SettlingStep, TokenRank, compare_precedence,
-};
+use super::program::{Associativity, PrecedenceTag, Settling, SettlingStep, compare_precedence};
 use super::reducing::{ending_reduction, first_reduction, leading_dynamic};
 use super::results::{Children, Res, TokenOrder, Tree, TreeType, join_children};
+use super::token_conflicts::{other_ranks, same_literal, starts_at_separator, token_conflict};
 use super::walk::{
     TreeMemo, Walk, first_leaf_start, first_meaningful, items, leftmost_chain, meaningful,
     next_item, open_node, open_part, same_tree, same_tree_in,
@@ -68,11 +67,18 @@ pub(super) fn preferred_tokens(
             }
         }
     };
+    // An extra token of another kind is covered where the leaf wins the
+    // lexical conflict with it (Make's `raw_line` `#comment\n`, longer than
+    // the comment of a lower precedence).
     let covers = |leaf: &Tree, trivia: &[Rc<Tree>]| {
         trivia.iter().any(|item| {
-            (item.kind.is_none() || item.kind == leaf.kind)
-                && item.start == leaf.start
-                && leaf.end >= item.end
+            item.start == leaf.start
+                && if item.kind.is_none() || item.kind == leaf.kind {
+                    leaf.end >= item.end
+                } else {
+                    item.ty == TreeType::Token
+                        && token_conflict(leaf, item, tokens) == Ordering::Greater
+                }
         })
     };
     loop {
@@ -156,14 +162,28 @@ pub(super) fn preferred_tokens(
                         right.pop();
                     }
                 } else if a.start < b.start && covers(&a, &skipped[1]) {
-                    return Ordering::Greater;
+                    return if starts_at_separator(&b, &a, tokens) {
+                        Ordering::Less
+                    } else {
+                        Ordering::Greater
+                    };
                 } else if b.start < a.start && covers(&b, &skipped[0]) {
-                    return Ordering::Less;
-                } else if a.end != b.end || !one_token(&a, &b) {
+                    return if starts_at_separator(&a, &b, tokens) {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Less
+                    };
+                } else if a.end != b.end
+                    || (!one_token(&a, &b) && !same_literal(&a, &b, tokens))
+                    || other_ranks(&a, &b)
+                {
                     // Two leaves of one span the same token rule built
                     // (JavaScript's `identifier` and its alias
                     // `shorthand_property_identifier`) are one token to the
-                    // lexer.
+                    // lexer, as are two of one literal (Make's `$$`, an
+                    // `escape` and the start of a variable reference). Two
+                    // leaves of one kind may be two tokens (see
+                    // `other_ranks`).
                     lookahead(&a, pending, &mut decided);
                     lookahead(&b, pending, &mut decided);
                     if a.start.min(b.start) > decided {
@@ -930,61 +950,4 @@ pub(super) fn complete_order(
         tokens,
         None,
     )
-}
-
-/// The rank of a token leaf, or None for another leaf or an unranked token.
-/// A leaf matched under a lexical precedence ranks at that level, as the
-/// token defined there (Rust's `//!` marker `!` outranks the comment text).
-pub(super) fn token_rank(leaf: &Tree, tokens: TokenOrder<'_>) -> Option<TokenRank> {
-    if leaf.ty != TreeType::Token {
-        return None;
-    }
-    let rank = leaf.kind.as_ref().map_or_else(
-        || {
-            tokens
-                .bytes
-                .get(leaf.start..leaf.end)
-                .and_then(|text| tokens.ranks.literals.get(text))
-                .copied()
-        },
-        |kind| tokens.ranks.kinds.get(kind).copied(),
-    );
-    let Some(priority) = leaf.priority else {
-        return rank;
-    };
-    Some(TokenRank {
-        priority,
-        ..rank.unwrap_or(TokenRank {
-            priority,
-            specificity: 0,
-            order: usize::MAX,
-        })
-    })
-}
-
-/// Two leaves that differ in end or kind: Greater when a lexer prefers `a`,
-/// Less when it prefers `b`, Equal when it cannot tell. The ranks decide only
-/// between two tokens at one offset; otherwise the longer leaf wins.
-pub(super) fn token_conflict(a: &Tree, b: &Tree, tokens: TokenOrder<'_>) -> Ordering {
-    let ranks = if a.start == b.start {
-        token_rank(a, tokens).zip(token_rank(b, tokens))
-    } else {
-        None
-    };
-    if let Some((first, second)) = ranks
-        && first.priority != second.priority
-    {
-        return first.priority.cmp(&second.priority);
-    }
-    if a.end != b.end {
-        return a.end.cmp(&b.end);
-    }
-    match ranks {
-        None => Ordering::Equal,
-        Some((first, second)) if first == second => Ordering::Equal,
-        Some((first, second)) if first.specificity != second.specificity => {
-            first.specificity.cmp(&second.specificity)
-        }
-        Some((first, second)) => second.order.cmp(&first.order),
-    }
 }
