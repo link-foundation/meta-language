@@ -133,6 +133,7 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("lint", 10),
         ("test", 15),
         ("coverage", 15),
+        ("coverage-report", 10),
         ("build", 10),
         ("auto-release", 30),
         ("manual-release", 30),
@@ -228,21 +229,40 @@ fn windows_test_cache_does_not_archive_target_directory() {
 fn coverage_job_enforces_recorded_line_coverage_floor() {
     let workflow = release_workflow();
     let coverage = job_block(&workflow, "coverage");
+    let report = job_block(&workflow, "coverage-report");
 
     assert!(
-        coverage.contains("cargo llvm-cov --all-features --lcov --output-path lcov.info"),
-        "coverage job should keep producing an lcov artifact"
+        coverage.contains(
+            "cargo llvm-cov --all-features --lcov --output-path lcov.info --no-fail-fast -- $SUITE_FILTERS"
+        ),
+        "each coverage shard should produce an lcov report of its suite"
     );
     assert!(
-        coverage.contains("--fail-under-lines 84.30"),
-        "coverage job should fail below the recorded 84.30% line coverage floor"
+        coverage.contains("suite: [grammar, inference, generative, translation, remaining]"),
+        "coverage should shard the tests by the suites of the test job"
+    );
+    assert!(
+        coverage.contains("group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}"),
+        "coverage shards should not cancel each other"
+    );
+    assert!(
+        coverage.contains("name: coverage-${{ matrix.suite }}"),
+        "each coverage shard should upload its report"
+    );
+    assert!(report.contains("needs: [coverage]"));
+    assert!(report.contains("pattern: coverage-*"));
+    assert!(
+        report.contains(
+            "node scripts/merge-lcov.mjs --output rust/lcov.info --fail-under-lines 84.30"
+        ),
+        "the merged coverage should fail below the recorded 84.30% line coverage floor"
     );
 }
 
 #[test]
 fn coverage_upload_requires_token_and_reports_missing_token_as_notice() {
     let workflow = release_workflow();
-    let coverage = job_block(&workflow, "coverage");
+    let coverage = job_block(&workflow, "coverage-report");
     let upload = step_block(coverage, "Upload coverage to Codecov");
 
     assert!(coverage.contains("CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}"));
@@ -264,7 +284,7 @@ fn coverage_upload_requires_token_and_reports_missing_token_as_notice() {
 fn coverage_upload_uses_current_node24_codecov_action() {
     let workflow = release_workflow();
     let upload = step_block(
-        job_block(&workflow, "coverage"),
+        job_block(&workflow, "coverage-report"),
         "Upload coverage to Codecov",
     );
 

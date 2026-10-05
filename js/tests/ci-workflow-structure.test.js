@@ -9,6 +9,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
+import { lineCoverage, mergeLcov, renderLcov } from '../../scripts/merge-lcov.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -195,4 +196,18 @@ test('a failed JavaScript job is one aggregate gate error naming the failed jobs
   assert.match(aggregate.header, /actions: read/u);
   observe('I195-CI-SKIPPED-STAGE-ONE-GATE-ERROR', ['failedJavaScriptIsOneGateError'],
     'a failed JavaScript job is one aggregate gate error naming the failed jobs');
+});
+
+test('the Rust coverage shards run the test suites and their merged report counts the hits of every shard', () => {
+  const rust = jobs('rust.yml');
+  const shards = rust.get('coverage');
+  const report = rust.get('coverage-report');
+  assert.match(shards.header, /suite: \[grammar, inference, generative, translation, remaining\]/u);
+  assert.deepEqual(needs(report), ['coverage']);
+  assert.match(report.steps.map((step) => step.run ?? '').join('\n'), /merge-lcov\.mjs --output rust\/lcov\.info --fail-under-lines 84\.30/u);
+  const shard = (lines, hit) => `TN:\nSF:/src/a.rs\nFN:1,f\nFNDA:${hit},f\nFNF:1\nFNH:${hit > 0 ? 1 : 0}\nBRDA:2,0,0,${hit > 0 ? hit : '-'}\n${lines}\nend_of_record\n`;
+  const files = mergeLcov([shard('DA:1,0\nDA:2,3\nDA:3,0', 0), shard('DA:1,2\nDA:2,0\nDA:3,0', 2)]);
+  assert.deepEqual(lineCoverage(files), { covered: 2, total: 3, percent: 200 / 3 });
+  assert.equal(renderLcov(files), 'TN:\nSF:/src/a.rs\nFN:1,f\nFNDA:2,f\nFNF:1\nFNH:1\nBRDA:2,0,0,2\nBRF:1\nBRH:1\nDA:1,2\nDA:2,3\nDA:3,0\nLF:3\nLH:2\nend_of_record\n');
+  assert.deepEqual(lineCoverage(mergeLcov([renderLcov(files)])), lineCoverage(files));
 });

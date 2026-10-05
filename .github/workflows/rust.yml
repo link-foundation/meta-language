@@ -616,20 +616,21 @@ jobs:
         run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === CODE COVERAGE ===
-  # Generate and upload code coverage using cargo-llvm-cov
+  # Generate code coverage with cargo-llvm-cov in the suites of the test job,
+  # so that each shard runs a part of the tests under instrumentation within
+  # its timeout, then merge the shards' reports, enforce the line coverage
+  # floor on the merged report and upload it to Codecov.
   coverage:
-    name: Code Coverage
+    name: Code Coverage (${{ matrix.suite }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: rust-${{ github.ref }}-coverage
+      group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock, check]
     defaults:
       run:
         working-directory: rust
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     if: |
       !cancelled() && needs.cargo-lock.result == 'success' && needs.check.result == 'success' && (
         github.event_name == 'push' ||
@@ -637,6 +638,21 @@ jobs:
         needs.detect-changes.outputs.rs-changed == 'true' ||
         needs.detect-changes.outputs.toml-changed == 'true'
       )
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [grammar, inference, generative, translation, remaining]
+        include:
+          - suite: grammar
+            filters: grammar_
+          - suite: inference
+            filters: inference_ --skip grammar_
+          - suite: generative
+            filters: issue_195_generative --skip grammar_ --skip inference_
+          - suite: translation
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: remaining
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
     steps:
       - uses: actions/checkout@v7
 
@@ -659,8 +675,47 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
+      # The filters are word-split on purpose: they are separate arguments.
       - name: Generate code coverage
-        run: node ../scripts/with-cache-cleanup.mjs --event coverage --protect lcov.info -- cargo llvm-cov --all-features --lcov --output-path lcov.info --fail-under-lines 84.30 --no-fail-fast
+        shell: bash
+        env:
+          SUITE_FILTERS: ${{ matrix.filters }}
+        run: node ../scripts/with-cache-cleanup.mjs --event coverage --protect lcov.info -- cargo llvm-cov --all-features --lcov --output-path lcov.info --no-fail-fast -- $SUITE_FILTERS
+
+      - name: Upload the shard's coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ matrix.suite }}
+          path: rust/lcov.info
+          retention-days: 1
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  coverage-report:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: rust-${{ github.ref }}-coverage-report
+      cancel-in-progress: true
+    needs: [coverage]
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    if: ${{ !cancelled() && needs.coverage.result == 'success' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download the shards' coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-*
+          path: coverage-shards
+
+      - name: Merge coverage and enforce the line coverage floor
+        run: node scripts/merge-lcov.mjs --output rust/lcov.info --fail-under-lines 84.30 coverage-shards/*/lcov.info
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
@@ -674,11 +729,6 @@ jobs:
       - name: Report skipped Codecov upload
         if: env.CODECOV_TOKEN == ''
         run: echo "::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"
-
-      - name: Clean regenerable caches
-        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
-        working-directory: ${{ github.workspace }}
-        run: node scripts/clean-caches.mjs --event ci-teardown
 
   # === BUILD ===
   # Build package - only runs if lint and test pass
