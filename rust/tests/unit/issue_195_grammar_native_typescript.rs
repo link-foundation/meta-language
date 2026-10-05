@@ -292,6 +292,71 @@ fn native_typescript_trees_keep_every_byte() {
 }
 
 #[test]
+fn native_typescript_trees_follow_the_oracle_on_an_identifier_as() {
+    let fixture = fixture();
+    let rows = Rows::new(&fixture);
+    let parser = parser();
+    // The tree-sitter-typescript oracle rows of
+    // js/tests/issue-195-grammar-native-typescript.test.js: `as` after a
+    // keyword and after a line break is an identifier.
+    for (source, oracle) in [
+        (
+            "return as ;",
+            json!([
+                [0, null, "program", 1, 0, 11, ""],
+                [1, null, "return_statement", 1, 0, 11, ""],
+                [2, null, "return", 0, 0, 6, ""],
+                [2, null, "identifier", 1, 7, 9, ""],
+                [2, null, ";", 0, 10, 11, ""]
+            ]),
+        ),
+        (
+            "if ( x ) as ( 1 ) ;",
+            json!([
+                [0, null, "program", 1, 0, 19, ""],
+                [1, null, "if_statement", 1, 0, 19, ""],
+                [2, null, "if", 0, 0, 2, ""],
+                [2, "condition", "parenthesized_expression", 1, 3, 8, ""],
+                [3, null, "(", 0, 3, 4, ""],
+                [3, null, "identifier", 1, 5, 6, ""],
+                [3, null, ")", 0, 7, 8, ""],
+                [2, "consequence", "expression_statement", 1, 9, 19, ""],
+                [3, null, "call_expression", 1, 9, 17, ""],
+                [4, "function", "identifier", 1, 9, 11, ""],
+                [4, "arguments", "arguments", 1, 12, 17, ""],
+                [5, null, "(", 0, 12, 13, ""],
+                [5, null, "number", 1, 14, 15, ""],
+                [5, null, ")", 0, 16, 17, ""],
+                [3, null, ";", 0, 18, 19, ""]
+            ]),
+        ),
+        (
+            "a\nas ( t ) ;",
+            json!([
+                [0, null, "program", 1, 0, 12, ""],
+                [1, null, "expression_statement", 1, 0, 1, ""],
+                [2, null, "identifier", 1, 0, 1, ""],
+                [1, null, "expression_statement", 1, 2, 12, ""],
+                [2, null, "call_expression", 1, 2, 10, ""],
+                [3, "function", "identifier", 1, 2, 4, ""],
+                [3, "arguments", "arguments", 1, 5, 10, ""],
+                [4, null, "(", 0, 5, 6, ""],
+                [4, null, "identifier", 1, 7, 8, ""],
+                [4, null, ")", 0, 9, 10, ""],
+                [2, null, ";", 0, 11, 12, ""]
+            ]),
+        ),
+    ] {
+        let tree = parse(&parser, source).unwrap_or_else(|| panic!("{source:?}"));
+        assert_eq!(Value::Array(rows.rows(&tree, source)), oracle, "{source:?}");
+    }
+    observe(
+        &["nativeTypeScriptTreesMatchOracle"],
+        "native TypeScript trees follow the oracle on an identifier `as` after a keyword and after a line break",
+    );
+}
+
+#[test]
 fn pinned_typescript_oracle_gives_the_fixture() {
     // The oracle is a development dependency since the native grammar
     // replaced it as the default TypeScript parse.

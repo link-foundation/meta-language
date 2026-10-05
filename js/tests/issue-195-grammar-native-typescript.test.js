@@ -132,6 +132,18 @@ test('native TypeScript trees keep every byte of the source, comments and white 
   observe(['nativeTypeScriptTreesLossless'], context.name);
 });
 
+test('native TypeScript trees follow the oracle on an identifier `as` after a keyword and after a line break', (context) => {
+  // A tree-sitter lexer lexes the keyword `as` only in the parse states that
+  // take it: not after `return` or an `if` condition, and not after the
+  // automatic semicolon its scanner scans before a line break.
+  for (const source of ['return as ;', 'if ( x ) as ( 1 ) ;', 'a\nas ( t ) ;']) {
+    const outcome = parser.parseTree(source);
+    assert.equal(outcome.ok, true, JSON.stringify(source));
+    assert.deepEqual(nativeRows(outcome.tree, source, fixture), oracleRows(source, 'TypeScript'), JSON.stringify(source));
+  }
+  observe(['nativeTypeScriptTreesMatchOracle'], context.name);
+});
+
 test('the native TypeScript fixture is current', () => {
   assert.equal(renderFixture(buildNativeGrammarFixture(entry)), read(fixturePath(entry)));
 });

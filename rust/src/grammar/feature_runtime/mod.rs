@@ -498,7 +498,11 @@ fn parse_program(
             });
         if let (Ok(Outcome::Parsed(root)), Some(keywords), Some(tokens)) =
             (&outcome, &keywords, tokens)
-            && keywords.borrow_mut().conflicts(root, tokens)
+            && keywords.borrow_mut().conflicts(
+                root,
+                tokens,
+                &compiled.programs[compiled.main].rules,
+            )
         {
             continue;
         }

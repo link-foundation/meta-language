@@ -9,11 +9,11 @@ use std::fmt;
 use std::ops::Deref;
 use std::rc::Rc;
 
-use super::forking::{GrammarFacts, Lead};
+use super::forking::{GrammarFacts, KeywordLeads, Lead};
 use super::operations::{OperationValue, State};
 pub(super) use super::ordering::{complete_order, preferred_tokens};
 use super::ordering::{settled_order, token_conflict};
-use super::program::{Name, PrecedenceTag, Settling, TokenRanks};
+use super::program::{Name, PrecedenceTag, Rule, Settling, TokenRanks};
 pub(super) use super::walk::same_children;
 use super::walk::same_output;
 use crate::grammar::PrecedenceEntry;
@@ -469,13 +469,14 @@ pub(super) struct KeywordLexing {
 }
 
 /// One rule call of a parse under keyword lexing: where it began, whether it
-/// builds a node, the kind of the node it builds and the calls it was made
-/// from (`None` for none).
+/// builds a node, the kind of the node it builds, the rule's name and the
+/// calls it was made from (`None` for none).
 #[derive(Debug)]
 struct Call {
     position: usize,
     builds: bool,
     rule: Name,
+    name: Name,
     parents: HashSet<Option<usize>>,
 }
 
@@ -486,12 +487,14 @@ impl KeywordLexing {
         position: usize,
         builds: bool,
         rule: Name,
+        name: Name,
         parent: Option<usize>,
     ) -> usize {
         self.calls.push(Call {
             position,
             builds,
             rule,
+            name,
             parents: HashSet::from([parent]),
         });
         self.calls.len() - 1
@@ -524,8 +527,13 @@ impl KeywordLexing {
     }
 
     /// Marks the spans where `root` took a token rule's leaf over a keyword;
-    /// true when one is new.
-    pub(super) fn conflicts(&mut self, root: &Tree, tokens: TokenOrder<'_>) -> bool {
+    /// true when one is new. `rules` are the program's.
+    pub(super) fn conflicts(
+        &mut self,
+        root: &Tree,
+        tokens: TokenOrder<'_>,
+        rules: &[Rule],
+    ) -> bool {
         let mut found = false;
         let mut reach = None;
         let mut pending = vec![root];
@@ -554,11 +562,12 @@ impl KeywordLexing {
                     continue;
                 }
             }
-            let reach = reach.get_or_insert_with(|| TreeReach::of(root));
+            let leads = tokens.grammar.keyword_leads(rules);
+            let reach = reach.get_or_insert_with(|| TreeReach::of(root, leads, tokens.bytes));
             let mut seen = HashSet::new();
             if !calls
                 .iter()
-                .any(|call| self.in_parse_state(*call, node, reach, &mut seen))
+                .any(|call| self.in_parse_state(*call, node, reach, &mut seen, leads))
             {
                 continue;
             }
@@ -578,13 +587,15 @@ impl KeywordLexing {
     /// Whether a keyword matched in `call` was in the parse state of the
     /// tree's `leaf` over its span: whether some chain of the calls that made
     /// it, up to the first, holds no call that builds a node the tree does
-    /// not have in progress there. `seen` holds the calls already searched.
+    /// not have in progress there. `seen` holds the calls already searched,
+    /// and `leads` the FIRST sets of the rules.
     fn in_parse_state(
         &self,
         call: Option<usize>,
         leaf: &Tree,
         reach: &TreeReach,
         seen: &mut HashSet<usize>,
+        leads: &KeywordLeads,
     ) -> bool {
         let mut pending = vec![call];
         while let Some(current) = pending.pop() {
@@ -619,13 +630,34 @@ impl KeywordLexing {
                 // preceding `leaf` is no longer in progress there: the call
                 // matched the keyword on a parse that read that leaf otherwise
                 // (Rocq's `match ... end > 0 end`, where the first `end` closes
-                // the match and the second is an identifier).
+                // the match and the second is an identifier), or by a token
+                // the external scanner scanned of no width before it, which
+                // the parser shifted before it lexed `leaf` (TypeScript's
+                // automatic semicolon before a line break and an identifier
+                // `as`).
                 if let Some(&own) = reach.rules.get(&(call.position, call.rule.clone()))
                     && own < leaf.start
-                    && reach
+                    && (reach
                         .starts
                         .get(reach.starts.partition_point(|start| *start < own))
                         .is_some_and(|start| *start < leaf.start)
+                        || reach.widthless.contains(&own))
+                {
+                    continue;
+                }
+                // A call whose rule begins with no keyword the tree took where
+                // the call began read that keyword's text otherwise, as a
+                // token a lexer never lexes where the keyword is valid
+                // (TypeScript's identifier `return` before an `as`
+                // expression, where the tree's `return as` returns the
+                // identifier `as`).
+                if let Some(keyword) = first
+                    .filter(|first| *first < leaf.start)
+                    .and_then(|first| reach.keywords.get(&first))
+                    && leads
+                        .first
+                        .get(&call.name)
+                        .is_some_and(|set| !set.contains(&Lead::Literal(keyword.clone())))
                 {
                     continue;
                 }
@@ -641,27 +673,37 @@ impl KeywordLexing {
 /// external scanner scanned of no width does not count: the parser scanned it
 /// before its lexer, in the parse state the next leaf is lexed in
 /// (JavaScript's automatic semicolon before a line break and a keyword
-/// `class`). `last` holds the end of each leaf, by its start, and `rules` the
-/// farthest end of a node of each rule, by its start and rule. It mirrors
-/// treeReach in js/src/grammar-runtime/executor.js.
+/// `class`). `last` holds the end of each leaf, by its start, `rules` the
+/// farthest end of a node of each rule, by its start and rule, and
+/// `keywords` the text of each token leaf of the input `bytes` that is a
+/// keyword of the `leads`, by its start. `widthless` holds the offsets of the
+/// tokens the external scanner scanned of no width. It mirrors treeReach in
+/// js/src/grammar-runtime/executor.js.
 struct TreeReach {
     starts: Vec<usize>,
     ends: HashMap<usize, usize>,
     last: HashMap<usize, usize>,
     rules: HashMap<(usize, Name), usize>,
+    keywords: HashMap<usize, Vec<u8>>,
+    widthless: HashSet<usize>,
 }
 
 impl TreeReach {
-    fn of(root: &Tree) -> Self {
+    fn of(root: &Tree, leads: &KeywordLeads, bytes: &[u8]) -> Self {
         let mut starts = Vec::new();
         let mut ends = HashMap::new();
         let mut last = HashMap::new();
         let mut rules = HashMap::new();
+        let mut keywords = HashMap::new();
+        let mut widthless = HashSet::new();
         let mut open: Option<usize> = None;
         let mut pending = vec![root];
         while let Some(node) = pending.pop() {
-            if node.trivia || (node.ty != TreeType::Node && node.start == node.end && node.scanned)
-            {
+            if node.trivia {
+                continue;
+            }
+            if node.ty != TreeType::Node && node.start == node.end && node.scanned {
+                widthless.insert(node.start);
                 continue;
             }
             if node.ty == TreeType::Node {
@@ -676,6 +718,14 @@ impl TreeReach {
             starts.push(node.start);
             let leaf_end = last.entry(node.start).or_insert(node.end);
             *leaf_end = (*leaf_end).max(node.end);
+            if node.ty == TreeType::Token
+                && node.kind.is_none()
+                && node.end - node.start <= leads.longest
+                && let Some(text) = bytes.get(node.start..node.end)
+                && leads.keywords.contains(text)
+            {
+                keywords.insert(node.start, text.to_vec());
+            }
             if let Some(end) = open.take() {
                 let farthest = ends.entry(node.start).or_insert(end);
                 *farthest = (*farthest).max(end);
@@ -686,6 +736,8 @@ impl TreeReach {
             ends,
             last,
             rules,
+            keywords,
+            widthless,
         }
     }
 }

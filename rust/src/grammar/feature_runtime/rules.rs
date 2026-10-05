@@ -120,6 +120,7 @@ impl Executor<'_> {
                 position,
                 matches!(rule.kind, RuleKind::Normal),
                 rule.node_kind.clone(),
+                rule.name.clone(),
                 parent,
             )
         });

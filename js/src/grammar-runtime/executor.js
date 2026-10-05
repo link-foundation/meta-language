@@ -2942,7 +2942,7 @@ export class Executor {
     // where it began and whether it builds a node: the parse states of a
     // keyword matched in it (see `KeywordLexing`).
     const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null, position };
-    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal', rule: rule.nodeKind });
+    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal', rule: rule.nodeKind, name });
     this.retain(1);
     this.memo.set(key, entry);
     this.callStack.push(entry);
@@ -3334,6 +3334,20 @@ function isKeyword(expression) {
   return expression.items.slice(1).every((item) => item.kind === 'not' || item.kind === 'and');
 }
 
+// The texts of the keywords of `rules` (see `isKeyword`), each by its UTF-8
+// bytes as one character a byte.
+function keywordTexts(rules) {
+  const texts = new Map();
+  const pending = [...rules.values()].map(({ expression }) => expression);
+  while (pending.length > 0) {
+    const expression = pending.pop();
+    if (isKeyword(expression)) texts.set(String.fromCharCode(...new TextEncoder().encode(expression.items[0].value)), expression.items[0].value);
+    if (expression.item) pending.push(expression.item);
+    if (expression.items) pending.push(...expression.items);
+  }
+  return texts;
+}
+
 /**
  * Keyword lexing under `(matching longest)`. A tree-sitter lexer lexes a
  * keyword wherever the parse state admits it, before any parse goes on, so a
@@ -3364,8 +3378,10 @@ function isKeyword(expression) {
  * immediate one matched in.
  */
 export class KeywordLexing {
-  constructor(tokens) {
+  constructor(tokens, program = null) {
     this.tokens = tokens;
+    this.program = program;
+    this.leads = null;
     this.only = new Set();
     this.matched = new Map();
     this.immediates = new Set();
@@ -3395,6 +3411,20 @@ export class KeywordLexing {
     return tokenConflict({ type: 'token', kind: null, start: leaf.start, end: leaf.end }, leaf, this.tokens) > 0;
   }
 
+  // The FIRST sets of the program's rules, the texts of its keywords and the
+  // byte length of the longest, computed once (see `inParseState`), or null
+  // without a program.
+  leadsOf() {
+    if (!this.program) return null;
+    if (!this.leads) {
+      const facts = grammarFacts(this.program);
+      facts.first ??= firstSets(facts.rules);
+      const keywords = keywordTexts(this.program.rules);
+      this.leads = { first: facts.first, keywords, longest: Math.max(0, ...[...keywords.keys()].map(({ length }) => length)) };
+    }
+    return this.leads;
+  }
+
   /** Marks the spans where `root` took a token rule's leaf over a keyword; true when one is new. */
   conflicts(root) {
     let found = false;
@@ -3412,9 +3442,9 @@ export class KeywordLexing {
       else if (node.lexed === undefined) continue;
       if (!matched.has(span) || only.has(span)) continue;
       if (!node.plain && !this.outranksAt({ type: 'token', kind: node.lexed, start: node.start, end: node.end })) continue;
-      reach ??= treeReach(root);
+      reach ??= treeReach(root, this.leadsOf(), this.tokens.bytes);
       const seen = new Set();
-      if (![...matched.get(span)].some((call) => inParseState(call, node, reach, seen))) continue;
+      if (![...matched.get(span)].some((call) => inParseState(call, node, reach, seen, this.leads))) continue;
       only.add(span);
       found = true;
     }
@@ -3429,18 +3459,27 @@ export class KeywordLexing {
 // external scanner scanned of no width does not count: the parser scanned it
 // before its lexer, in the parse state the next leaf is lexed in (JavaScript's
 // automatic semicolon before a line break and a keyword `class`). `last`
-// holds the end of each leaf, by its start, and `rules` the farthest end of
-// a node of each rule, by its start and rule.
-function treeReach(root) {
+// holds the end of each leaf, by its start, `rules` the farthest end of a
+// node of each rule, by its start and rule, and `keywords` the text of each
+// token leaf of the input `bytes` that is a keyword of the `leads` (see
+// `KeywordLexing.leadsOf`), by its start. `widthless` holds the offsets of
+// the tokens the external scanner scanned of no width.
+function treeReach(root, leads = null, bytes = null) {
   const starts = [];
   const ends = new Map();
   const last = new Map();
   const rules = new Map();
+  const keywords = new Map();
+  const widthless = new Set();
   let open = [];
   const pending = [root];
   while (pending.length > 0) {
     const node = pending.pop();
-    if (isTrivia(node) || (node.type !== 'node' && node.start === node.end && scannedToken(node) === 1)) continue;
+    if (isTrivia(node)) continue;
+    if (node.type !== 'node' && node.start === node.end && scannedToken(node) === 1) {
+      widthless.add(node.start);
+      continue;
+    }
     if (node.type === 'node') {
       open.push(node.end);
       const key = `${node.start}|${node.rule}`;
@@ -3450,17 +3489,21 @@ function treeReach(root) {
     }
     starts.push(node.start);
     last.set(node.start, Math.max(last.get(node.start) ?? -1, node.end));
+    const text = node.type === 'token' && node.kind == null && leads && bytes && node.end - node.start <= leads.longest
+      ? leads.keywords.get(String.fromCharCode(...bytes.subarray(node.start, node.end))) : undefined;
+    if (text !== undefined) keywords.set(node.start, text);
     if (open.length > 0) ends.set(node.start, Math.max(ends.get(node.start) ?? -1, ...open));
     open = [];
   }
-  return { starts, ends, last, rules };
+  return { starts, ends, last, rules, keywords, widthless };
 }
 
 // Whether a keyword matched in `call` was in the parse state of the tree's
 // `leaf` over its span (see `KeywordLexing`): whether some chain of the calls
 // that made it, up to the first, holds no call that builds a node the tree
-// does not have in progress there. `seen` holds the calls already searched.
-function inParseState(call, leaf, reach, seen) {
+// does not have in progress there. `seen` holds the calls already searched,
+// and `leads` the FIRST sets of the rules, or null.
+function inParseState(call, leaf, reach, seen, leads = null) {
   const pending = [call];
   while (pending.length > 0) {
     const current = pending.pop();
@@ -3479,9 +3522,19 @@ function inParseState(call, leaf, reach, seen) {
       // preceding `leaf` is no longer in progress there: the call matched
       // the keyword on a parse that read that leaf otherwise (Rocq's
       // `match ... end > 0 end`, where the first `end` closes the match and
-      // the second is an identifier).
+      // the second is an identifier), or by a token the external scanner
+      // scanned of no width before it, which the parser shifted before it
+      // lexed `leaf` (TypeScript's automatic semicolon before a line break
+      // and an identifier `as`).
       const own = reach.rules.get(`${current.position}|${current.rule}`);
-      if (own !== undefined && own < leaf.start && reach.starts[firstStart(reach.starts, own)] < leaf.start) continue;
+      if (own !== undefined && own < leaf.start && (reach.starts[firstStart(reach.starts, own)] < leaf.start || reach.widthless.has(own))) continue;
+      // A call whose rule begins with no keyword the tree took where the
+      // call began read that keyword's text otherwise, as a token a lexer
+      // never lexes where the keyword is valid (TypeScript's identifier
+      // `return` before an `as` expression, where the tree's `return as`
+      // returns the identifier `as`).
+      const keyword = first !== undefined && first < leaf.start ? reach.keywords.get(first) : undefined;
+      if (keyword !== undefined && leads?.first.get(current.name)?.has(`literal ${keyword}`) === false) continue;
     }
     pending.push(...current.parents);
   }

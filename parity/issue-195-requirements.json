@@ -1789,7 +1789,7 @@
     "planned:repository-directive:i195-merge-quality-evidence": {
       "path": "parity/fixtures/merge-quality-evidence.json",
       "selector": "docs/vision.md#automatic-merging-concept-recognition-deduplication-and-renaming: published merge quality comparison against the source grammars",
-      "sha256": "95adb458e2bec1d055ef25af8c8f8a4dabb2c81ab67eda063353c0d0752ad813"
+      "sha256": "7e84c931598d6c2fe0ec50a95696fa364166034642c896c85479f8d07c4a4816"
     },
     "planned:repository-directive:i195-merge-real-reconciliation": {
       "path": "parity/grammars/reconcile/pairs.json",

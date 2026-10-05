@@ -4,6 +4,7 @@
 
 use std::collections::{HashMap, HashSet};
 
+use super::super::lexing::is_keyword;
 use super::super::precedence::nullable;
 use super::super::program::{Expr, Matcher, Rule, Target};
 use super::Lead;
@@ -240,6 +241,45 @@ fn literal_walk(
         }
         _ => {}
     }
+}
+
+/// The texts of the keywords of `rules` (see `is_keyword`). It mirrors
+/// keywordTexts in js/src/grammar-runtime/executor.js.
+pub(super) fn keyword_texts(rules: &[Rule]) -> HashSet<Vec<u8>> {
+    let mut texts = HashSet::new();
+    let mut pending: Vec<&Expr> = rules.iter().map(|rule| &rule.expression).collect();
+    while let Some(expr) = pending.pop() {
+        if is_keyword(expr)
+            && let Expr::Seq(items) = expr
+            && let Expr::Terminal {
+                matcher: Matcher::Literal(text),
+                ..
+            } = &items[0]
+        {
+            texts.insert(text.clone());
+        }
+        match expr {
+            Expr::Seq(items) | Expr::Longest(items) | Expr::Choice { items, .. } => {
+                pending.extend(items);
+            }
+            Expr::Repeat { item, .. }
+            | Expr::And(item)
+            | Expr::Not(item)
+            | Expr::Capture { item, .. }
+            | Expr::Alias { item, .. }
+            | Expr::Precedence { item, .. }
+            | Expr::DynamicPrecedence { item, .. }
+            | Expr::LexicalPrecedence { item, .. }
+            | Expr::Token(item)
+            | Expr::ImmediateToken(item)
+            | Expr::Predicate { item, .. }
+            | Expr::Recover { item, .. }
+            | Expr::Missing { item, .. }
+            | Expr::Embed { item, .. } => pending.push(item),
+            _ => {}
+        }
+    }
+    texts
 }
 
 /// The rules `expr` is a unit chain over (a choice, a precedence, a field or

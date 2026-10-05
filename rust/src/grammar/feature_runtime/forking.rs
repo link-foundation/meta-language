@@ -20,7 +20,8 @@ use super::results::{ChildList, Children, Tree, TreeType};
 use super::walk::{first_meaningful, meaningful, same_tree};
 use crate::grammar::{PrecedenceEntry, RuleKind};
 use lead_sets::{
-    first_of, first_of_items, first_sets, follow_sets, left_corner_follow, literal_follow_sets,
+    first_of, first_of_items, first_sets, follow_sets, keyword_texts, left_corner_follow,
+    literal_follow_sets,
 };
 
 /// The rules each rule takes directly as its first part, by rule name (see
@@ -51,6 +52,20 @@ pub(super) struct GrammarFacts {
     /// What a lexer of merged lex states asks of the rules, found once asked
     /// for (see `merged_lexing`).
     merged: OnceLock<MergedLexing>,
+    /// What keyword lexing asks of the rules, found once asked for (see
+    /// `keyword_leads`).
+    keyword: OnceLock<KeywordLeads>,
+}
+
+/// What keyword lexing asks of a program (see `in_parse_state` in
+/// results.rs): the FIRST sets of its rules, by rule name, the texts of its
+/// keywords and the length of the longest. It mirrors leadsOf in
+/// js/src/grammar-runtime/executor.js.
+#[derive(Debug, Default)]
+pub(super) struct KeywordLeads {
+    pub(super) first: HashMap<Name, HashSet<Lead>>,
+    pub(super) keywords: HashSet<Vec<u8>>,
+    pub(super) longest: usize,
 }
 
 /// What a lexer of merged lex states asks of a program (see `merged_longer`
@@ -157,6 +172,7 @@ impl GrammarFacts {
             forks: Mutex::default(),
             reductions: OnceLock::new(),
             merged: OnceLock::new(),
+            keyword: OnceLock::new(),
         }
     }
 
@@ -189,6 +205,23 @@ impl GrammarFacts {
                     })
                     .collect(),
                 follow: literal_follow_sets(rules, &first_sets(rules)),
+            }
+        })
+    }
+
+    /// What keyword lexing asks of the program's `rules` (see `KeywordLeads`).
+    pub(super) fn keyword_leads(&self, rules: &[Rule]) -> &KeywordLeads {
+        self.keyword.get_or_init(|| {
+            let first = first_sets(rules);
+            let keywords = keyword_texts(rules);
+            KeywordLeads {
+                first: rules
+                    .iter()
+                    .zip(first)
+                    .map(|(rule, set)| (rule.name.clone(), set))
+                    .collect(),
+                longest: keywords.iter().map(Vec::len).max().unwrap_or(0),
+                keywords,
             }
         })
     }

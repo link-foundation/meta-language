@@ -17,7 +17,7 @@ use crate::grammar::RuleKind;
 
 // Whether a token is a keyword, a literal closed by lookaheads (`(seq
 // (literal typedef) (not (ref word_characters)))`).
-pub(super) fn is_keyword(expr: &Expr) -> bool {
+pub(in crate::grammar::feature_runtime) fn is_keyword(expr: &Expr) -> bool {
     match expr {
         Expr::Seq(items) if items.len() >= 2 => {
             matches!(
